@@ -4,7 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "apps/backend/src",
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -13,6 +13,6 @@
     ]
   },
   "include": [
-    "src/**/*.ts"
+    "apps/backend/src/**/*.ts"
   ]
 }
