@@ -25,6 +25,17 @@
   - Node 22 pinned for CI (`.nvmrc`).
   - `npm ci`, `npm run typecheck`, and `npm run build` configured on `main`.
 
+## Phase 0 Exit Gate
+
+- Status: PASS
+- Verified:
+  - `npm run typecheck` PASS
+  - `npm run build` PASS
+  - `npm run db:migrate` PASS
+  - `npm run db:verify:audit-append-only` PASS
+  - `npm run db:verify:outbox-drain` PASS
+  - Render healthcheck `/api/v1/_healthcheck` remains 200 OK
+
 ## Section E — Deviations / Decisions
 
 | Date | Note | Owner | Status | Reference |
