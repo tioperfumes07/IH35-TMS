@@ -10,13 +10,19 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "dev": "tsx watch apps/backend/src/index.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:verify:audit-append-only": "node scripts/db-verify-audit-append-only.mjs"
   },
   "dependencies": {
-    "fastify": "^5.0.0"
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "fastify": "^5.0.0",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.31.10",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   }
