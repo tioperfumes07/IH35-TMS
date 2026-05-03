@@ -20,6 +20,11 @@
   - Worker drain implemented (`scripts/outbox-worker.mjs`).
   - Verify script passed: row drained in <5 minutes.
 
+- BT-0-CI-01: ✓ Done
+  - GitHub Actions workflow added at `.github/workflows/ci.yml`.
+  - Node 22 pinned for CI (`.nvmrc`).
+  - `npm ci`, `npm run typecheck`, and `npm run build` configured on `main`.
+
 ## Section E — Deviations / Decisions
 
 | Date | Note | Owner | Status | Reference |
