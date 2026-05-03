@@ -15,6 +15,11 @@
   - Append-only enforced; verification passes.
   - RLS-vs-trigger note logged in Section E.
 
+- BT-0-OUTBOX-01: ✓ Done
+  - `outbox.outbox_queue` migrated (`0003_outbox_init.sql`).
+  - Worker drain implemented (`scripts/outbox-worker.mjs`).
+  - Verify script passed: row drained in <5 minutes.
+
 ## Section E — Deviations / Decisions
 
 | Date | Note | Owner | Status | Reference |
