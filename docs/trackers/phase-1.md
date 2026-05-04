@@ -23,6 +23,7 @@
 | 2026-05-04 | BT-1-MDATA-01 created enum types `mdata.driver_status`, `mdata.unit_status`, and `mdata.equipment_status` with locked vocabulary values per spec. Future status transitions will route through approval workflows in BT-1-MDATA-03. | Jorge | Resolved | Master Blueprint Part 7 §7.2 |
 | 2026-05-04 | BT-1-MDATA-02 implements 10 FULL endpoints for drivers (5) + units (5). Customers, vendors, locations, equipment, and equipment_log endpoints are deferred to BT-1-MDATA-02b to keep this delivery focused on operationally critical entities first. | Jorge | Resolved | Build Spec §13.2 + Master Blueprint Part 7 §7.2 |
 | 2026-05-04 | BT-1-MDATA-02 introduces `isWriteRole(role)` for app-layer write gating (`Owner`, `Administrator`, `Manager`). Non-write roles receive clean 403 responses before query execution, while RLS remains the final database guardrail. | Jorge | Resolved | Build Spec MUST 6.6.1 |
+| 2026-05-04 | BT-1-MDATA-02b implements 24 FULL endpoints for customers (5), vendors (5), locations (5), equipment (5), equipment_log (4). equipment_log is append-only — no PATCH or deactivate endpoints. payment_terms_id FK on customers nullable until BT-1-CATAL-01 lands. | Jorge | Resolved | Build Spec §13.2 + Master Blueprint Part 7 §7.2 |
 
 ## TODO
 
