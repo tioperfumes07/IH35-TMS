@@ -68,6 +68,14 @@ const EVENT_CLASSES = [
   "catalogs.equipment_types.updated",
   "catalogs.equipment_line_item_templates.created",
   "catalogs.equipment_line_item_templates.updated",
+  "mdata.driver_equipment_qualifications.created",
+  "mdata.driver_equipment_qualifications.updated",
+  "mdata.driver_equipment_qualifications.deactivated",
+  "mdata.driver_pay_rates.created",
+  "mdata.driver_pay_rates.changed",
+  "mdata.driver_company_authorizations.granted",
+  "mdata.driver_company_authorizations.revoked",
+  "mdata.driver_company_authorizations.updated",
 ];
 
 const WARNING_EVENTS = new Set([
