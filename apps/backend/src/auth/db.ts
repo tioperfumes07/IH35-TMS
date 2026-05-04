@@ -20,22 +20,22 @@ export const luciaPool = new Pool({
   idleTimeoutMillis: 30_000,
 });
 
-luciaPool.on("connect", (client) => {
-  void client
-    .query(`SET ROLE ${APP_DB_ROLE}`)
-    .then(() => client.query("SET app.bypass_rls = 'lucia'"))
-    .catch((err) => {
-      console.error("Failed to set auth role / bypass for luciaPool connection:", err);
-    });
+luciaPool.on("connect", async (client) => {
+  try {
+    await client.query(`SET ROLE ${APP_DB_ROLE}`);
+    await client.query("SET app.bypass_rls = 'lucia'");
+  } catch (err) {
+    console.error("Failed to set auth role / bypass for luciaPool connection:", err);
+  }
 });
 
-pool.on("connect", (client) => {
-  void client
-    .query(`SET ROLE ${APP_DB_ROLE}`)
-    .then(() => client.query("RESET app.bypass_rls"))
-    .catch((err) => {
-      console.error("Failed to set auth role for pool connection:", err);
-    });
+pool.on("connect", async (client) => {
+  try {
+    await client.query(`SET ROLE ${APP_DB_ROLE}`);
+    await client.query("RESET app.bypass_rls");
+  } catch (err) {
+    console.error("Failed to set auth role for pool connection:", err);
+  }
 });
 
 luciaPool.on("error", (err) => {
