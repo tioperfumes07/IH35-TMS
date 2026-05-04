@@ -3,7 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
-const locationTypeSchema = z.enum(["Customer", "Vendor", "IH35Yard", "TruckStop", "Other", "Yard"]);
+const locationTypeSchema = z.enum(["Customer", "Vendor", "IH35Yard", "TruckStop", "Other"]);
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -55,14 +55,6 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
-function normalizeLocationType(input: z.infer<typeof locationTypeSchema>): string {
-  return input === "Yard" ? "IH35Yard" : input;
-}
-
-function externalizeLocationType(input: string): string {
-  return input === "IH35Yard" ? "Yard" : input;
-}
-
 async function assertUniqueLocationName(authUserId: string, name: string, excludeId?: string): Promise<boolean> {
   return withCurrentUser(authUserId, async (client) => {
     const values: unknown[] = [name];
@@ -74,13 +66,6 @@ async function assertUniqueLocationName(authUserId: string, name: string, exclud
     const res = await client.query(`SELECT id FROM mdata.locations WHERE ${where} LIMIT 1`, values);
     return res.rows.length > 0;
   });
-}
-
-function mapLocationRow(row: Record<string, unknown>) {
-  return {
-    ...row,
-    location_type: externalizeLocationType(String(row.location_type)),
-  };
 }
 
 export async function registerLocationRoutes(app: FastifyInstance) {
@@ -97,7 +82,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
       if (status === "active") filters.push("deactivated_at IS NULL");
       if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
       if (location_type) {
-        values.push(normalizeLocationType(location_type));
+        values.push(location_type);
         filters.push(`location_type = $${values.length}`);
       }
       if (search) {
@@ -134,7 +119,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows.map(mapLocationRow);
+      return res.rows;
     });
     return { locations };
   });
@@ -181,7 +166,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
           [
             b.name,
             b.location_code ?? null,
-            normalizeLocationType(b.location_type),
+            b.location_type,
             b.linked_customer_id ?? null,
             b.linked_vendor_id ?? null,
             b.address ?? null,
@@ -191,7 +176,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
             authUser.uuid,
           ]
         );
-        return mapLocationRow(res.rows[0]);
+        return res.rows[0];
       });
       return reply.code(201).send(created);
     } catch (err) {
@@ -233,8 +218,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
         `,
         [parsedParams.data.id]
       );
-      const raw = res.rows[0] ?? null;
-      return raw ? mapLocationRow(raw) : null;
+      return res.rows[0] ?? null;
     });
 
     if (!row) return reply.code(404).send({ error: "mdata_location_not_found" });
@@ -264,7 +248,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
 
     if ("name" in b) add("location_name", b.name ?? null);
     if ("location_code" in b) add("location_code", b.location_code ?? null);
-    if ("location_type" in b && b.location_type) add("location_type", normalizeLocationType(b.location_type));
+    if ("location_type" in b && b.location_type) add("location_type", b.location_type);
     if ("linked_customer_id" in b) add("linked_customer_id", b.linked_customer_id ?? null);
     if ("linked_vendor_id" in b) add("linked_vendor_id", b.linked_vendor_id ?? null);
     if ("address" in b) add("address_line1", b.address ?? null);
@@ -302,8 +286,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
           `,
           values
         );
-        const raw = res.rows[0] ?? null;
-        return raw ? mapLocationRow(raw) : null;
+        return res.rows[0] ?? null;
       });
       if (!updated) return reply.code(404).send({ error: "mdata_location_not_found" });
       return updated;

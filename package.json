@@ -18,6 +18,7 @@
     "db:verify:identity-rls": "node scripts/db-verify-identity-rls.mjs",
     "db:verify:workflows": "node scripts/db-verify-workflows.mjs",
     "db:verify:mdata-rls": "node scripts/db-verify-mdata-rls.mjs",
+    "db:verify:mdata-workflows": "node scripts/db-verify-mdata-workflows.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
   },
   "dependencies": {
