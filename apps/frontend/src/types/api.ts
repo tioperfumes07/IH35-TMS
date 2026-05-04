@@ -62,6 +62,24 @@ export type Driver = {
   termination_date: string | null;
   dot_medical_expires_at: string | null;
   hazmat_endorsement_expires_at: string | null;
+  visa_type: string | null;
+  visa_number: string | null;
+  visa_expires_at: string | null;
+  passport_number: string | null;
+  passport_expires_at: string | null;
+  ine_number: string | null;
+  curp: string | null;
+  mx_address_line1: string | null;
+  mx_address_line2: string | null;
+  mx_city: string | null;
+  mx_state: string | null;
+  mx_postal_code: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_relationship: string | null;
+  emergency_contact_phone_primary: string | null;
+  emergency_contact_phone_alternate: string | null;
+  emergency_contact_address: string | null;
+  emergency_contact_notes: string | null;
   status: DriverStatus;
   notes: string | null;
   created_at: string;
@@ -85,6 +103,24 @@ export type CreateDriverInput = {
   hire_date?: string;
   dot_medical_expires_at?: string;
   hazmat_endorsement_expires_at?: string;
+  visa_type?: string;
+  visa_number?: string;
+  visa_expires_at?: string;
+  passport_number?: string;
+  passport_expires_at?: string;
+  ine_number?: string;
+  curp?: string;
+  mx_address_line1?: string;
+  mx_address_line2?: string;
+  mx_city?: string;
+  mx_state?: string;
+  mx_postal_code?: string;
+  emergency_contact_name?: string;
+  emergency_contact_relationship?: string;
+  emergency_contact_phone_primary?: string;
+  emergency_contact_phone_alternate?: string;
+  emergency_contact_address?: string;
+  emergency_contact_notes?: string;
   status?: DriverStatus;
   notes?: string;
 };
@@ -104,6 +140,24 @@ export type UpdateDriverInput = Partial<
     | "hire_date"
     | "dot_medical_expires_at"
     | "hazmat_endorsement_expires_at"
+    | "visa_type"
+    | "visa_number"
+    | "visa_expires_at"
+    | "passport_number"
+    | "passport_expires_at"
+    | "ine_number"
+    | "curp"
+    | "mx_address_line1"
+    | "mx_address_line2"
+    | "mx_city"
+    | "mx_state"
+    | "mx_postal_code"
+    | "emergency_contact_name"
+    | "emergency_contact_relationship"
+    | "emergency_contact_phone_primary"
+    | "emergency_contact_phone_alternate"
+    | "emergency_contact_address"
+    | "emergency_contact_notes"
     | "status"
     | "notes"
     | "deactivated_at"

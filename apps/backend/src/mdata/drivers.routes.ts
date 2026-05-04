@@ -8,6 +8,11 @@ const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminate
 const cdlClassSchema = z.enum(["A", "B", "C"]);
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const e164PhoneSchema = z.string().regex(/^\+\d{10,15}$/, "phone must be E.164 format (e.g., +19565550001)");
+const curpSchema = z
+  .string()
+  .trim()
+  .regex(/^[A-Z0-9]{18}$/i, "CURP must be 18 alphanumeric characters");
+const ineSchema = z.string().trim().min(8, "INE must be between 8 and 20 characters").max(20, "INE must be between 8 and 20 characters");
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -36,6 +41,24 @@ const createDriverBodySchema = z.object({
   hire_date: isoDateSchema.optional(),
   dot_medical_expires_at: isoDateSchema.optional(),
   hazmat_endorsement_expires_at: isoDateSchema.optional(),
+  visa_type: z.string().trim().max(100).optional(),
+  visa_number: z.string().trim().max(100).optional(),
+  visa_expires_at: isoDateSchema.optional(),
+  passport_number: z.string().trim().max(100).optional(),
+  passport_expires_at: isoDateSchema.optional(),
+  ine_number: ineSchema.optional(),
+  curp: curpSchema.optional(),
+  mx_address_line1: z.string().trim().max(200).optional(),
+  mx_address_line2: z.string().trim().max(200).optional(),
+  mx_city: z.string().trim().max(120).optional(),
+  mx_state: z.string().trim().max(120).optional(),
+  mx_postal_code: z.string().trim().max(20).optional(),
+  emergency_contact_name: z.string().trim().max(160).optional(),
+  emergency_contact_relationship: z.string().trim().max(80).optional(),
+  emergency_contact_phone_primary: z.string().trim().max(40).optional(),
+  emergency_contact_phone_alternate: z.string().trim().max(40).optional(),
+  emergency_contact_address: z.string().trim().max(300).optional(),
+  emergency_contact_notes: z.string().trim().max(2000).optional(),
   status: driverStatusSchema.default("Active"),
   notes: z.string().trim().max(2000).optional(),
 });
@@ -59,6 +82,24 @@ const updateDriverBodySchema = z
     hire_date: isoDateSchema.nullable().optional(),
     dot_medical_expires_at: isoDateSchema.nullable().optional(),
     hazmat_endorsement_expires_at: isoDateSchema.nullable().optional(),
+    visa_type: z.string().trim().max(100).nullable().optional(),
+    visa_number: z.string().trim().max(100).nullable().optional(),
+    visa_expires_at: isoDateSchema.nullable().optional(),
+    passport_number: z.string().trim().max(100).nullable().optional(),
+    passport_expires_at: isoDateSchema.nullable().optional(),
+    ine_number: ineSchema.nullable().optional(),
+    curp: curpSchema.nullable().optional(),
+    mx_address_line1: z.string().trim().max(200).nullable().optional(),
+    mx_address_line2: z.string().trim().max(200).nullable().optional(),
+    mx_city: z.string().trim().max(120).nullable().optional(),
+    mx_state: z.string().trim().max(120).nullable().optional(),
+    mx_postal_code: z.string().trim().max(20).nullable().optional(),
+    emergency_contact_name: z.string().trim().max(160).nullable().optional(),
+    emergency_contact_relationship: z.string().trim().max(80).nullable().optional(),
+    emergency_contact_phone_primary: z.string().trim().max(40).nullable().optional(),
+    emergency_contact_phone_alternate: z.string().trim().max(40).nullable().optional(),
+    emergency_contact_address: z.string().trim().max(300).nullable().optional(),
+    emergency_contact_notes: z.string().trim().max(2000).nullable().optional(),
     status: driverStatusSchema.optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: isoDateSchema.nullable().optional(),
@@ -110,6 +151,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           SELECT
             id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
             cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+            visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+            mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
+            emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
+            emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
             status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
           ${whereClause}
@@ -155,14 +200,23 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           `
             INSERT INTO mdata.drivers (
               identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-              cdl_expires_at, hire_date, dot_medical_expires_at, hazmat_endorsement_expires_at, status, notes,
+              cdl_expires_at, hire_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
+              emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
+              emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+              status, notes,
               created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$33
             )
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
+              emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
+              emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           [
@@ -178,6 +232,24 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             b.hire_date ?? null,
             b.dot_medical_expires_at ?? null,
             b.hazmat_endorsement_expires_at ?? null,
+            b.visa_type ?? null,
+            b.visa_number ?? null,
+            b.visa_expires_at ?? null,
+            b.passport_number ?? null,
+            b.passport_expires_at ?? null,
+            b.ine_number ?? null,
+            b.curp ?? null,
+            b.mx_address_line1 ?? null,
+            b.mx_address_line2 ?? null,
+            b.mx_city ?? null,
+            b.mx_state ?? null,
+            b.mx_postal_code ?? null,
+            b.emergency_contact_name ?? null,
+            b.emergency_contact_relationship ?? null,
+            b.emergency_contact_phone_primary ?? null,
+            b.emergency_contact_phone_alternate ?? null,
+            b.emergency_contact_address ?? null,
+            b.emergency_contact_notes ?? null,
             b.status,
             b.notes ?? null,
             authUser.uuid,
@@ -232,6 +304,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           SELECT
             id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
             cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+            visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+            mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
+            emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
+            emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
             status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
           WHERE id = $1
@@ -276,6 +352,24 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("hire_date" in b) add("hire_date", b.hire_date ?? null);
     if ("dot_medical_expires_at" in b) add("dot_medical_expires_at", b.dot_medical_expires_at ?? null);
     if ("hazmat_endorsement_expires_at" in b) add("hazmat_endorsement_expires_at", b.hazmat_endorsement_expires_at ?? null);
+    if ("visa_type" in b) add("visa_type", b.visa_type ?? null);
+    if ("visa_number" in b) add("visa_number", b.visa_number ?? null);
+    if ("visa_expires_at" in b) add("visa_expires_at", b.visa_expires_at ?? null);
+    if ("passport_number" in b) add("passport_number", b.passport_number ?? null);
+    if ("passport_expires_at" in b) add("passport_expires_at", b.passport_expires_at ?? null);
+    if ("ine_number" in b) add("ine_number", b.ine_number ?? null);
+    if ("curp" in b) add("curp", b.curp ?? null);
+    if ("mx_address_line1" in b) add("mx_address_line1", b.mx_address_line1 ?? null);
+    if ("mx_address_line2" in b) add("mx_address_line2", b.mx_address_line2 ?? null);
+    if ("mx_city" in b) add("mx_city", b.mx_city ?? null);
+    if ("mx_state" in b) add("mx_state", b.mx_state ?? null);
+    if ("mx_postal_code" in b) add("mx_postal_code", b.mx_postal_code ?? null);
+    if ("emergency_contact_name" in b) add("emergency_contact_name", b.emergency_contact_name ?? null);
+    if ("emergency_contact_relationship" in b) add("emergency_contact_relationship", b.emergency_contact_relationship ?? null);
+    if ("emergency_contact_phone_primary" in b) add("emergency_contact_phone_primary", b.emergency_contact_phone_primary ?? null);
+    if ("emergency_contact_phone_alternate" in b) add("emergency_contact_phone_alternate", b.emergency_contact_phone_alternate ?? null);
+    if ("emergency_contact_address" in b) add("emergency_contact_address", b.emergency_contact_address ?? null);
+    if ("emergency_contact_notes" in b) add("emergency_contact_notes", b.emergency_contact_notes ?? null);
     if ("status" in b) add("status", b.status);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
@@ -290,6 +384,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             SELECT
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
+              emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
+              emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
             FROM mdata.drivers
             WHERE id = $1
@@ -308,6 +406,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
+              emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
+              emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           values

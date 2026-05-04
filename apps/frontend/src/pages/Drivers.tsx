@@ -28,6 +28,28 @@ const createDriverSchema = z.object({
   cdl_expires_at: z.string().optional(),
   hire_date: z.string().optional(),
   dot_medical_expires_at: z.string().optional(),
+  visa_type: z.string().trim().optional(),
+  visa_number: z.string().trim().optional(),
+  visa_expires_at: z.string().optional(),
+  passport_number: z.string().trim().optional(),
+  passport_expires_at: z.string().optional(),
+  ine_number: z.string().trim().optional(),
+  curp: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || /^[A-Z0-9]{18}$/i.test(value), "CURP must be 18 alphanumeric characters"),
+  mx_address_line1: z.string().trim().optional(),
+  mx_address_line2: z.string().trim().optional(),
+  mx_city: z.string().trim().optional(),
+  mx_state: z.string().trim().optional(),
+  mx_postal_code: z.string().trim().optional(),
+  emergency_contact_name: z.string().trim().optional(),
+  emergency_contact_relationship: z.string().trim().optional(),
+  emergency_contact_phone_primary: z.string().trim().optional(),
+  emergency_contact_phone_alternate: z.string().trim().optional(),
+  emergency_contact_address: z.string().trim().optional(),
+  emergency_contact_notes: z.string().trim().optional(),
   status: z.enum(["Probation", "Active", "Inactive", "Terminated", "OnLeave"]).default("Probation"),
 });
 
@@ -45,6 +67,8 @@ export function DriversPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>("All");
   const [addOpen, setAddOpen] = useState(false);
+  const [showMexicanIdentity, setShowMexicanIdentity] = useState(false);
+  const [showVisaEmergency, setShowVisaEmergency] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({
     first_name: "",
     last_name: "",
@@ -57,6 +81,24 @@ export function DriversPage() {
     cdl_expires_at: "",
     hire_date: "",
     dot_medical_expires_at: "",
+    visa_type: "",
+    visa_number: "",
+    visa_expires_at: "",
+    passport_number: "",
+    passport_expires_at: "",
+    ine_number: "",
+    curp: "",
+    mx_address_line1: "",
+    mx_address_line2: "",
+    mx_city: "",
+    mx_state: "",
+    mx_postal_code: "",
+    emergency_contact_name: "",
+    emergency_contact_relationship: "",
+    emergency_contact_phone_primary: "",
+    emergency_contact_phone_alternate: "",
+    emergency_contact_address: "",
+    emergency_contact_notes: "",
     status: "Probation",
     allow_phone_login: "false",
   });
@@ -88,9 +130,29 @@ export function DriversPage() {
         cdl_expires_at: "",
         hire_date: "",
         dot_medical_expires_at: "",
+        visa_type: "",
+        visa_number: "",
+        visa_expires_at: "",
+        passport_number: "",
+        passport_expires_at: "",
+        ine_number: "",
+        curp: "",
+        mx_address_line1: "",
+        mx_address_line2: "",
+        mx_city: "",
+        mx_state: "",
+        mx_postal_code: "",
+        emergency_contact_name: "",
+        emergency_contact_relationship: "",
+        emergency_contact_phone_primary: "",
+        emergency_contact_phone_alternate: "",
+        emergency_contact_address: "",
+        emergency_contact_notes: "",
         status: "Probation",
         allow_phone_login: "false",
       });
+      setShowMexicanIdentity(false);
+      setShowVisaEmergency(false);
     },
   });
 
@@ -179,6 +241,24 @@ export function DriversPage() {
                 cdl_expires_at: parsed.data.cdl_expires_at || undefined,
                 hire_date: parsed.data.hire_date || undefined,
                 dot_medical_expires_at: parsed.data.dot_medical_expires_at || undefined,
+                visa_type: parsed.data.visa_type || undefined,
+                visa_number: parsed.data.visa_number || undefined,
+                visa_expires_at: parsed.data.visa_expires_at || undefined,
+                passport_number: parsed.data.passport_number || undefined,
+                passport_expires_at: parsed.data.passport_expires_at || undefined,
+                ine_number: parsed.data.ine_number || undefined,
+                curp: parsed.data.curp || undefined,
+                mx_address_line1: parsed.data.mx_address_line1 || undefined,
+                mx_address_line2: parsed.data.mx_address_line2 || undefined,
+                mx_city: parsed.data.mx_city || undefined,
+                mx_state: parsed.data.mx_state || undefined,
+                mx_postal_code: parsed.data.mx_postal_code || undefined,
+                emergency_contact_name: parsed.data.emergency_contact_name || undefined,
+                emergency_contact_relationship: parsed.data.emergency_contact_relationship || undefined,
+                emergency_contact_phone_primary: parsed.data.emergency_contact_phone_primary || undefined,
+                emergency_contact_phone_alternate: parsed.data.emergency_contact_phone_alternate || undefined,
+                emergency_contact_address: parsed.data.emergency_contact_address || undefined,
+                emergency_contact_notes: parsed.data.emergency_contact_notes || undefined,
                 status: parsed.data.status,
                 create_login_user: form.allow_phone_login === "true",
               });
@@ -269,6 +349,92 @@ export function DriversPage() {
                 Allow phone login (creates a user account so this driver can sign in via WhatsApp/SMS)
               </span>
             </label>
+          </div>
+
+          <div className="col-span-full space-y-2 rounded-md border border-gray-200 p-3">
+            <button
+              type="button"
+              onClick={() => setShowMexicanIdentity((value) => !value)}
+              className="w-full text-left text-sm font-semibold text-gray-700"
+            >
+              Mexican Identity (optional) {showMexicanIdentity ? "▲" : "▼"}
+            </button>
+            {showMexicanIdentity ? (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {[
+                  ["ine_number", "INE Number"],
+                  ["curp", "CURP"],
+                  ["mx_address_line1", "MX Address Line 1"],
+                  ["mx_address_line2", "MX Address Line 2"],
+                  ["mx_city", "MX City"],
+                  ["mx_state", "MX State"],
+                  ["mx_postal_code", "MX Postal Code"],
+                ].map(([key, label]) => (
+                  <div key={key} className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-600">{label}</label>
+                    <input
+                      type="text"
+                      value={form[key] ?? ""}
+                      onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                      className="rounded border border-gray-300 px-2 py-2 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="col-span-full space-y-2 rounded-md border border-gray-200 p-3">
+            <button
+              type="button"
+              onClick={() => setShowVisaEmergency((value) => !value)}
+              className="w-full text-left text-sm font-semibold text-gray-700"
+            >
+              Visa & Emergency Contact (optional) {showVisaEmergency ? "▲" : "▼"}
+            </button>
+            {showVisaEmergency ? (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {[
+                  ["visa_type", "Visa Type"],
+                  ["visa_number", "Visa Number"],
+                  ["visa_expires_at", "Visa Expires"],
+                  ["passport_number", "Passport Number"],
+                  ["passport_expires_at", "Passport Expires"],
+                  ["emergency_contact_name", "Emergency Contact Name"],
+                  ["emergency_contact_relationship", "Relationship"],
+                  ["emergency_contact_phone_primary", "Emergency Phone Primary"],
+                  ["emergency_contact_phone_alternate", "Emergency Phone Alternate"],
+                ].map(([key, label]) => (
+                  <div key={key} className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-gray-600">{label}</label>
+                    <input
+                      type={key.includes("expires") ? "date" : "text"}
+                      value={form[key] ?? ""}
+                      onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                      className="rounded border border-gray-300 px-2 py-2 text-sm"
+                    />
+                  </div>
+                ))}
+                <div className="md:col-span-2 flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-600">Emergency Contact Address</label>
+                  <textarea
+                    value={form.emergency_contact_address ?? ""}
+                    onChange={(event) => setForm((current) => ({ ...current, emergency_contact_address: event.target.value }))}
+                    className="rounded border border-gray-300 px-2 py-2 text-sm"
+                    rows={2}
+                  />
+                </div>
+                <div className="md:col-span-2 flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-600">Emergency Contact Notes</label>
+                  <textarea
+                    value={form.emergency_contact_notes ?? ""}
+                    onChange={(event) => setForm((current) => ({ ...current, emergency_contact_notes: event.target.value }))}
+                    className="rounded border border-gray-300 px-2 py-2 text-sm"
+                    rows={2}
+                  />
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="col-span-full flex justify-end gap-2">

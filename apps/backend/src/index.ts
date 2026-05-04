@@ -9,6 +9,7 @@ import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
 import { registerCatalogsRoutes } from "./catalogs/index.js";
 import { registerEquipmentTypeRoutes } from "./catalogs/equipment-types.routes.js";
 import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
+import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
@@ -51,6 +52,7 @@ async function main() {
   await registerIdentityRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);
+  await registerDriverProfileRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerCatalogsRoutes(app);
   await registerEquipmentTypeRoutes(app);
