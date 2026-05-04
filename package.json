@@ -15,6 +15,7 @@
     "db:verify:audit-append-only": "node scripts/db-verify-audit-append-only.mjs",
     "outbox:worker": "node scripts/outbox-worker.mjs",
     "db:verify:outbox-drain": "node scripts/db-verify-outbox-drain.mjs",
+    "db:verify:identity-rls": "node scripts/db-verify-identity-rls.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
   },
   "dependencies": {
