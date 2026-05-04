@@ -16,6 +16,7 @@ import {
   getDriverQualificationRateHistory,
   listDriverCompanyAuthorizations,
   listDriverQualifications,
+  reactivateQualification,
   upsertDriverCompanyAuthorization,
   updateDriver,
 } from "../api/mdata";
@@ -66,6 +67,9 @@ export function DriverDetailPage() {
   const [addQualificationOpen, setAddQualificationOpen] = useState(false);
   const [rateModalOpen, setRateModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [reactivateModalOpen, setReactivateModalOpen] = useState(false);
+  const [showInactiveQualifications, setShowInactiveQualifications] = useState(false);
+  const [reactivateTargetQualification, setReactivateTargetQualification] = useState<{ id: string; name: string } | null>(null);
   const [selectedQualificationId, setSelectedQualificationId] = useState("");
   const [selectedLineItemId, setSelectedLineItemId] = useState("");
   const [selectedEquipmentName, setSelectedEquipmentName] = useState("");
@@ -92,8 +96,8 @@ export function DriverDetailPage() {
   });
 
   const qualificationsQuery = useQuery({
-    queryKey: ["driver-qualifications", id],
-    queryFn: () => listDriverQualifications(id).then((result) => result.qualifications),
+    queryKey: ["driver-qualifications", id, showInactiveQualifications],
+    queryFn: () => listDriverQualifications(id, showInactiveQualifications).then((result) => result.qualifications),
     enabled: Boolean(id),
   });
 
@@ -252,6 +256,25 @@ export function DriverDetailPage() {
       pushToast("Rate changed", "success");
     },
     onError: () => pushToast("Failed to change rate", "error"),
+  });
+
+  const reactivateQualificationMutation = useMutation({
+    mutationFn: ({ driverId, qualificationId }: { driverId: string; qualificationId: string }) =>
+      reactivateQualification(driverId, qualificationId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["driver-qualifications", id] });
+      const restoredCount = result.qualification.rates_restored.length;
+      pushToast(`Qualification reactivated. ${restoredCount} rates restored.`, "success");
+      setReactivateModalOpen(false);
+      setReactivateTargetQualification(null);
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 400) {
+        pushToast("Qualification is already active", "info");
+        return;
+      }
+      pushToast("Failed to reactivate qualification", "error");
+    },
   });
 
   const upsertCompanyAuthMutation = useMutation({
@@ -630,21 +653,40 @@ export function DriverDetailPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">Qualifications</h2>
-            {canManageRates ? (
-              <Button onClick={() => setAddQualificationOpen(true)} disabled={equipmentTypeOptions.length === 0}>
-                + Add Equipment Qualification
-              </Button>
-            ) : null}
+            <div className="flex items-center gap-2">
+              {canManageRates ? (
+                <label className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={showInactiveQualifications}
+                    onChange={(event) => setShowInactiveQualifications(event.target.checked)}
+                  />
+                  Show inactive qualifications
+                </label>
+              ) : null}
+              {canManageRates ? (
+                <Button onClick={() => setAddQualificationOpen(true)} disabled={equipmentTypeOptions.length === 0}>
+                  + Add Equipment Qualification
+                </Button>
+              ) : null}
+            </div>
           </div>
           <div className="space-y-3">
             {qualifications.map((qualification) => (
-              <div key={qualification.id} className="rounded border border-gray-200 p-3">
+              <div
+                key={qualification.id}
+                className={`rounded border p-3 ${
+                  qualification.is_active ? "border-gray-200 bg-white" : "border-gray-300 bg-gray-100"
+                }`}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="rounded bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-800">{qualification.equipment_type.name}</span>
+                    <span className="rounded bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-800">
+                      {qualification.equipment_type.name}
+                    </span>
                     <span
                       className={`rounded px-2 py-1 text-xs font-semibold ${
-                        qualification.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-700"
+                        qualification.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-200 text-gray-700"
                       }`}
                     >
                       {qualification.is_active ? "Active" : "Inactive"}
@@ -662,7 +704,7 @@ export function DriverDetailPage() {
                         <div className="text-sm text-gray-700">{line.amount ? `$${Number(line.amount).toFixed(2)}` : "No rate set"}</div>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {canManageRates ? (
+                        {canManageRates && qualification.is_active ? (
                           <Button
                             variant="secondary"
                             onClick={() => {
@@ -710,6 +752,22 @@ export function DriverDetailPage() {
                       loading={deactivateQualificationMutation.isPending}
                     >
                       Deactivate qualification
+                    </Button>
+                  </div>
+                ) : null}
+                {canManageRates && !qualification.is_active ? (
+                  <div className="mt-3">
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setReactivateTargetQualification({
+                          id: qualification.id,
+                          name: qualification.equipment_type.name,
+                        });
+                        setReactivateModalOpen(true);
+                      }}
+                    >
+                      Reactivate qualification
                     </Button>
                   </div>
                 ) : null}
@@ -1017,6 +1075,38 @@ export function DriverDetailPage() {
             </Button>
             <Button onClick={() => enablePhoneLoginMutation.mutate()} loading={enablePhoneLoginMutation.isPending}>
               Yes
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={reactivateModalOpen} onClose={() => setReactivateModalOpen(false)} title="Reactivate qualification">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            Reactivate {reactivateTargetQualification?.name || "this qualification"}? The most recent rate per line item will be restored.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setReactivateModalOpen(false);
+                setReactivateTargetQualification(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!reactivateTargetQualification) return;
+                reactivateQualificationMutation.mutate({
+                  driverId: id,
+                  qualificationId: reactivateTargetQualification.id,
+                });
+              }}
+              loading={reactivateQualificationMutation.isPending}
+            >
+              Reactivate
             </Button>
           </div>
         </div>

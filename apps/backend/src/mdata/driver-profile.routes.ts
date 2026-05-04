@@ -8,6 +8,9 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 const qualificationIdParamSchema = z.object({ id: z.string().uuid(), qual_id: z.string().uuid() });
 const qualificationRateHistoryParamSchema = z.object({ id: z.string().uuid(), qual_id: z.string().uuid() });
 const companyAuthorizationIdParamSchema = z.object({ id: z.string().uuid(), auth_id: z.string().uuid() });
+const listQualificationsQuerySchema = z.object({
+  include_inactive: z.enum(["true", "false"]).optional(),
+});
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const payRateChangeReasonSchema = z.enum([
@@ -88,8 +91,11 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsed = idParamSchema.safeParse(req.params ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const parsedQuery = listQualificationsQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
+      const includeInactive = parsedQuery.data.include_inactive === "true";
       const qualificationsRes = await client.query(
         `
           SELECT
@@ -105,7 +111,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
           FROM mdata.driver_equipment_qualifications dq
           JOIN catalogs.equipment_types et ON et.id = dq.equipment_type_id
           WHERE dq.driver_id = $1
-            AND dq.deactivated_at IS NULL
+            ${includeInactive ? "" : "AND dq.deactivated_at IS NULL"}
           ORDER BY dq.qualified_at DESC, et.sort_order, et.name
         `,
         [parsed.data.id]
@@ -169,6 +175,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
           is_active: row.is_active,
           qualified_at: row.qualified_at,
           notes: row.notes,
+          deactivated_at: row.deactivated_at,
           current_rates: byQualification.get(String(row.id)) ?? [],
         })),
       };
@@ -649,6 +656,168 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
       return { ok: true };
     });
   });
+
+  app.post<{ Params: { id: string; qual_id: string } }>(
+    "/api/v1/mdata/drivers/:id/qualifications/:qual_id/reactivate",
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return;
+      if (!canManageDriverRates(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+      const parsedParams = qualificationIdParamSchema.safeParse(req.params ?? {});
+      if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+      return withCurrentUser(authUser.uuid, async (client) => {
+        const qualificationRes = await client.query(
+          `
+            SELECT id, driver_id, equipment_type_id, is_active, qualified_at, notes, deactivated_at
+            FROM mdata.driver_equipment_qualifications
+            WHERE id = $1
+              AND driver_id = $2
+            LIMIT 1
+          `,
+          [parsedParams.data.qual_id, parsedParams.data.id]
+        );
+        if (qualificationRes.rows.length === 0) return reply.code(404).send({ error: "driver_qualification_not_found" });
+        const qualification = qualificationRes.rows[0];
+        if (qualification.is_active === true && qualification.deactivated_at === null) {
+          return reply.code(400).send({ error: "qualification_already_active" });
+        }
+
+        await client.query(
+          `
+            UPDATE mdata.driver_equipment_qualifications
+            SET is_active = true,
+                deactivated_at = NULL,
+                updated_at = now(),
+                updated_by_user_id = $2
+            WHERE id = $1
+          `,
+          [parsedParams.data.qual_id, authUser.uuid]
+        );
+
+        const priorRatesRes = await client.query(
+          `
+            SELECT DISTINCT ON (r.line_item_template_id)
+              r.id,
+              r.line_item_template_id,
+              r.amount,
+              r.effective_to,
+              r.deactivated_at
+            FROM mdata.driver_pay_rates r
+            WHERE r.driver_qualification_id = $1
+            ORDER BY r.line_item_template_id, r.effective_from DESC, r.created_at DESC
+          `,
+          [parsedParams.data.qual_id]
+        );
+
+        const ratesRestored: Array<{ line_item_template_id: string; amount: string; action: "reopened" | "reactivated" }> = [];
+        for (const rate of priorRatesRes.rows) {
+          if (rate.deactivated_at !== null) {
+            await client.query(
+              `
+                UPDATE mdata.driver_pay_rates
+                SET deactivated_at = NULL,
+                    effective_to = NULL,
+                    updated_at = now(),
+                    updated_by_user_id = $2
+                WHERE id = $1
+              `,
+              [rate.id, authUser.uuid]
+            );
+            ratesRestored.push({
+              line_item_template_id: String(rate.line_item_template_id),
+              amount: String(rate.amount),
+              action: "reactivated",
+            });
+            continue;
+          }
+          if (rate.effective_to !== null) {
+            await client.query(
+              `
+                UPDATE mdata.driver_pay_rates
+                SET effective_to = NULL,
+                    updated_at = now(),
+                    updated_by_user_id = $2
+                WHERE id = $1
+              `,
+              [rate.id, authUser.uuid]
+            );
+            ratesRestored.push({
+              line_item_template_id: String(rate.line_item_template_id),
+              amount: String(rate.amount),
+              action: "reopened",
+            });
+          }
+        }
+
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "mdata.driver_equipment_qualifications.reactivated",
+          {
+            resource_id: parsedParams.data.qual_id,
+            resource_type: "mdata.driver_equipment_qualifications",
+            driver_id: parsedParams.data.id,
+            equipment_type_id: qualification.equipment_type_id,
+            rates_restored: ratesRestored,
+          },
+          "info",
+          "BT-1-QUALIFICATION-REACTIVATION"
+        );
+
+        const equipmentTypeRes = await client.query(
+          `
+            SELECT code, name
+            FROM catalogs.equipment_types
+            WHERE id = $1
+            LIMIT 1
+          `,
+          [qualification.equipment_type_id]
+        );
+
+        const currentRatesRes = await client.query(
+          `
+            SELECT
+              lit.id AS line_item_template_id,
+              lit.code AS line_item_code,
+              lit.name AS line_item_name,
+              lit.unit AS line_item_unit,
+              r.amount,
+              r.effective_from,
+              r.change_reason
+            FROM catalogs.equipment_line_item_templates lit
+            LEFT JOIN mdata.driver_pay_rates r
+              ON r.line_item_template_id = lit.id
+             AND r.driver_qualification_id = $1
+             AND r.effective_to IS NULL
+             AND r.deactivated_at IS NULL
+            WHERE lit.equipment_type_id = $2
+              AND lit.deactivated_at IS NULL
+              AND lit.is_active = true
+            ORDER BY lit.sort_order, lit.name
+          `,
+          [parsedParams.data.qual_id, qualification.equipment_type_id]
+        );
+
+        return {
+          qualification: {
+            id: parsedParams.data.qual_id,
+            equipment_type_id: qualification.equipment_type_id,
+            equipment_type: {
+              code: equipmentTypeRes.rows[0]?.code ?? "",
+              name: equipmentTypeRes.rows[0]?.name ?? "",
+            },
+            is_active: true,
+            qualified_at: qualification.qualified_at,
+            notes: qualification.notes,
+            deactivated_at: null,
+            current_rates: currentRatesRes.rows,
+            rates_restored: ratesRestored,
+          },
+        };
+      });
+    }
+  );
 
   app.get<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/company-authorizations", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);

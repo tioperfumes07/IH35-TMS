@@ -71,6 +71,7 @@ export type DriverQualification = {
   is_active: boolean;
   qualified_at: string;
   notes: string | null;
+  deactivated_at?: string | null;
   current_rates: DriverQualificationCurrentRate[];
 };
 
@@ -167,8 +168,9 @@ export type UpdateCustomerInput = Partial<{
   deactivated_at: string | null;
 }>;
 
-export function listDriverQualifications(driverId: string) {
-  return apiRequest<{ qualifications: DriverQualification[] }>(`/api/v1/mdata/drivers/${driverId}/qualifications`);
+export function listDriverQualifications(driverId: string, includeInactive?: boolean) {
+  const query = includeInactive ? "?include_inactive=true" : "";
+  return apiRequest<{ qualifications: DriverQualification[] }>(`/api/v1/mdata/drivers/${driverId}/qualifications${query}`);
 }
 
 export function createDriverQualification(
@@ -202,6 +204,20 @@ export function deactivateDriverQualification(driverId: string, qualificationId:
   return apiRequest<{ qualification: DriverQualification }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}`, {
     method: "PATCH",
     body: { is_active: false },
+  });
+}
+
+export function reactivateQualification(driverId: string, qualificationId: string) {
+  return apiRequest<{
+    qualification: DriverQualification & {
+      rates_restored: Array<{
+        line_item_template_id: string;
+        amount: string;
+        action: "reopened" | "reactivated";
+      }>;
+    };
+  }>(`/api/v1/mdata/drivers/${driverId}/qualifications/${qualificationId}/reactivate`, {
+    method: "POST",
   });
 }
 
