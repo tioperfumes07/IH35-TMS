@@ -136,7 +136,7 @@ export function HomePage() {
             type="button"
             onClick={async () => {
               try {
-                await signOut();
+                await signOut(window.location.origin);
               } finally {
                 window.location.href = "/login";
               }

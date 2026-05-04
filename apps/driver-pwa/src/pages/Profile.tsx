@@ -24,7 +24,7 @@ export function ProfilePage() {
             className="mt-4 w-full"
             onClick={async () => {
               try {
-                await signOut();
+                await signOut(window.location.origin);
               } finally {
                 queryClient.removeQueries({ queryKey: ["auth", "me"] });
                 window.location.href = "/login";

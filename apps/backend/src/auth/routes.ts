@@ -7,16 +7,57 @@ const STATE_COOKIE = "ih35_oauth_state";
 const VERIFIER_COOKIE = "ih35_oauth_verifier";
 const COOKIE_MAX_AGE = 60 * 10;
 const DEFAULT_FRONTEND_BASE_URL = "https://ih35-tms-web.onrender.com";
+const ALLOWED_RETURN_URLS = (
+  process.env.CORS_ALLOWED_ORIGINS ??
+  "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174"
+)
+  .split(",")
+  .map((value) => value.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
+type PackedState = {
+  state: string;
+  returnTo: string;
+};
 
 function frontendBaseUrl(): string {
   return (process.env.FRONTEND_BASE_URL || DEFAULT_FRONTEND_BASE_URL).replace(/\/$/, "");
 }
 
+function validateReturnTo(returnTo: string | undefined): string {
+  const fallback = frontendBaseUrl();
+  if (!returnTo) return fallback;
+  const normalized = returnTo.trim().replace(/\/$/, "");
+  if (!normalized) return fallback;
+  if (!ALLOWED_RETURN_URLS.includes(normalized)) return fallback;
+  return normalized;
+}
+
+function encodeOAuthState(payload: PackedState): string {
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+}
+
+function decodeOAuthState(encoded: string): PackedState | null {
+  try {
+    const decoded = Buffer.from(encoded, "base64url").toString("utf8");
+    const parsed = JSON.parse(decoded) as Partial<PackedState>;
+    if (typeof parsed.state !== "string" || typeof parsed.returnTo !== "string") {
+      return null;
+    }
+    return { state: parsed.state, returnTo: parsed.returnTo };
+  } catch {
+    return null;
+  }
+}
+
 export async function registerAuthRoutes(app: FastifyInstance) {
   app.get("/api/v1/auth/google/login", async (req, reply) => {
+    const query = req.query as Record<string, string | undefined>;
     const state = generateState();
+    const returnTo = validateReturnTo(query["returnTo"]);
+    const packedState = encodeOAuthState({ state, returnTo });
     const codeVerifier = generateCodeVerifier();
-    const url = await google.createAuthorizationURL(state, codeVerifier, ["openid", "email", "profile"]);
+    const url = await google.createAuthorizationURL(packedState, codeVerifier, ["openid", "email", "profile"]);
     const secure = process.env.NODE_ENV === "production";
     reply.setCookie(STATE_COOKIE, state, {
       httpOnly: true,
@@ -38,12 +79,14 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   app.get("/api/v1/auth/google/callback", async (req, reply) => {
     const query = req.query as Record<string, string | undefined>;
     const code = query["code"];
-    const state = query["state"];
+    const packedState = query["state"];
+    const parsedState = packedState ? decodeOAuthState(packedState) : null;
     const storedState = req.cookies[STATE_COOKIE];
     const codeVerifier = req.cookies[VERIFIER_COOKIE];
-    if (!code || !state || !storedState || !codeVerifier || state !== storedState) {
+    if (!code || !parsedState || !storedState || !codeVerifier || parsedState.state !== storedState) {
       return reply.code(400).send({ error: "invalid_oauth_state" });
     }
+    const returnTo = validateReturnTo(parsedState.returnTo);
     try {
       const tokens = await google.validateAuthorizationCode(code, codeVerifier);
       const userInfoResp = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
@@ -64,7 +107,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       reply.setCookie(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
       reply.clearCookie(STATE_COOKIE, { path: "/" });
       reply.clearCookie(VERIFIER_COOKIE, { path: "/" });
-      return reply.redirect(`${frontendBaseUrl()}/home`);
+      return reply.redirect(`${returnTo}/home`);
     } catch (err) {
       if (err instanceof OAuth2RequestError) {
         return reply.code(400).send({ error: "oauth_validation_failed" });
@@ -84,18 +127,18 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/auth/logout", async (req, reply) => {
+    const query = req.query as Record<string, string | undefined>;
+    const returnTo = validateReturnTo(query["returnTo"]);
     const sessionId = req.cookies["ih35_session"];
     if (sessionId) {
       await lucia.invalidateSession(sessionId);
     }
     reply.clearCookie("ih35_session", { path: "/" });
-    const frontendUrl = frontendBaseUrl();
     const origin = String(req.headers.origin || "");
     const acceptsHtml = String(req.headers.accept || "").includes("text/html");
-    const query = req.query as Record<string, string | undefined>;
-    const wantsRedirect = acceptsHtml || origin === frontendUrl || query["redirect"] === "true";
+    const wantsRedirect = acceptsHtml || Boolean(query["returnTo"]) || origin === returnTo || query["redirect"] === "true";
     if (wantsRedirect) {
-      return reply.redirect(`${frontendUrl}/login`);
+      return reply.redirect(`${returnTo}/login`);
     }
     return { ok: true };
   });
