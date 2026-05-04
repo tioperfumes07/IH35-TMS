@@ -14,9 +14,11 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:verify:audit-append-only": "node scripts/db-verify-audit-append-only.mjs",
     "outbox:worker": "node scripts/outbox-worker.mjs",
-    "db:verify:outbox-drain": "node scripts/db-verify-outbox-drain.mjs"
+    "db:verify:outbox-drain": "node scripts/db-verify-outbox-drain.mjs",
+    "r2:verify": "node scripts/r2-verify.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1041.0",
     "@fastify/cookie": "^11.0.2",
     "@lucia-auth/adapter-postgresql": "^3.1.2",
     "arctic": "^2.3.4",
