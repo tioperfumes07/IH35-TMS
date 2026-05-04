@@ -17,6 +17,7 @@
     "db:verify:outbox-drain": "node scripts/db-verify-outbox-drain.mjs",
     "db:verify:identity-rls": "node scripts/db-verify-identity-rls.mjs",
     "db:verify:workflows": "node scripts/db-verify-workflows.mjs",
+    "db:verify:mdata-rls": "node scripts/db-verify-mdata-rls.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
   },
   "dependencies": {
