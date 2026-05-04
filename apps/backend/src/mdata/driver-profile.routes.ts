@@ -11,6 +11,7 @@ const companyAuthorizationIdParamSchema = z.object({ id: z.string().uuid(), auth
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const payRateChangeReasonSchema = z.enum([
+  "initial_hire",
   "raise",
   "demotion",
   "contract_renegotiation",
@@ -29,7 +30,7 @@ const createQualificationSchema = z.object({
       z.object({
         line_item_template_id: z.string().uuid(),
         amount: z.number().min(0),
-        change_reason: payRateChangeReasonSchema.optional().default("other"),
+        change_reason: payRateChangeReasonSchema.optional(),
         change_notes: z.string().trim().max(2000).optional(),
       })
     )
@@ -243,8 +244,8 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
                 rate.line_item_template_id,
                 rate.amount,
                 parsedBody.data.qualified_at ?? new Date().toISOString().slice(0, 10),
-                rate.change_reason ?? "other",
-                rate.change_notes ?? null,
+                rate.change_reason ?? "initial_hire",
+                rate.change_notes ?? "Initial agreed rate at qualification creation",
                 authUser.uuid,
               ]
             );
@@ -427,12 +428,13 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
               r.change_notes,
               r.created_at,
               r.created_by_user_id,
-              u.email AS created_by_user_email
+              u.email AS created_by_user_email,
+              (r.deactivated_at IS NOT NULL) AS was_corrected,
+              r.deactivated_at
             FROM mdata.driver_pay_rates r
             LEFT JOIN identity.users u ON u.id = r.created_by_user_id
             WHERE r.driver_qualification_id = $1
-              AND r.deactivated_at IS NULL
-            ORDER BY r.line_item_template_id, r.effective_from DESC
+            ORDER BY r.line_item_template_id, r.effective_from DESC, r.created_at DESC
           `,
           [parsedParams.data.qual_id]
         );
@@ -450,6 +452,8 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             created_at: row.created_at,
             created_by_user_id: row.created_by_user_id,
             created_by_user_email: row.created_by_user_email,
+            was_corrected: row.was_corrected,
+            deactivated_at: row.deactivated_at,
           });
           historyByLineItem.set(lineItemId, list);
         }

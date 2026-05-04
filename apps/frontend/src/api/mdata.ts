@@ -1,5 +1,5 @@
 import { apiRequest } from "./client";
-import type { CreateDriverInput, Driver, UpdateDriverInput } from "../types/api";
+import type { CreateDriverInput, CustomerType, Driver, MilesBasis, UpdateDriverInput } from "../types/api";
 
 export function listDrivers(params: { status?: string; search?: string }) {
   const query = new URLSearchParams();
@@ -42,6 +42,7 @@ export function disableDriverPhoneLogin(id: string) {
 }
 
 export type PayRateChangeReason =
+  | "initial_hire"
   | "raise"
   | "demotion"
   | "contract_renegotiation"
@@ -82,6 +83,8 @@ export type DriverQualificationRateHistoryItem = {
   created_at: string;
   created_by_user_id: string | null;
   created_by_user_email: string | null;
+  was_corrected: boolean;
+  deactivated_at: string | null;
 };
 
 export type DriverQualificationRateHistoryLineItem = {
@@ -105,6 +108,64 @@ export type DriverCompanyAuthorization = {
   authorized_by_user_email: string | null;
   notes: string | null;
 };
+
+export type Customer = {
+  id: string;
+  name: string;
+  customer_code: string | null;
+  email: string | null;
+  phone: string | null;
+  billing_address: string | null;
+  mc_number: string | null;
+  dot_number: string | null;
+  payment_terms_id: string | null;
+  operating_company_id: string;
+  customer_type: CustomerType | null;
+  default_billing_miles_basis: MilesBasis;
+  default_free_time_hours: string;
+  default_detention_rate: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  deactivated_at: string | null;
+  created_by_user_id: string;
+  updated_by_user_id: string;
+};
+
+export type CreateCustomerInput = {
+  name: string;
+  customer_code?: string;
+  email?: string;
+  phone?: string;
+  billing_address?: string;
+  mc_number?: string;
+  dot_number?: string;
+  payment_terms_id?: string | null;
+  operating_company_id?: string;
+  customer_type?: CustomerType;
+  default_billing_miles_basis?: MilesBasis;
+  default_free_time_hours?: number;
+  default_detention_rate?: number;
+  notes?: string;
+};
+
+export type UpdateCustomerInput = Partial<{
+  name: string;
+  customer_code: string | null;
+  email: string | null;
+  phone: string | null;
+  billing_address: string | null;
+  mc_number: string | null;
+  dot_number: string | null;
+  payment_terms_id: string | null;
+  operating_company_id: string;
+  customer_type: CustomerType | null;
+  default_billing_miles_basis: MilesBasis;
+  default_free_time_hours: number;
+  default_detention_rate: number;
+  notes: string | null;
+  deactivated_at: string | null;
+}>;
 
 export function listDriverQualifications(driverId: string) {
   return apiRequest<{ qualifications: DriverQualification[] }>(`/api/v1/mdata/drivers/${driverId}/qualifications`);
@@ -232,7 +293,15 @@ export function listCustomers(params: CompanyScopedListParams = {}) {
   const query = new URLSearchParams();
   appendCompanyScopedQuery(query, params);
   const qs = query.toString();
-  return apiRequest<{ customers: unknown[] }>(`/api/v1/mdata/customers${qs ? `?${qs}` : ""}`);
+  return apiRequest<{ customers: Customer[] }>(`/api/v1/mdata/customers${qs ? `?${qs}` : ""}`);
+}
+
+export function createCustomer(body: CreateCustomerInput) {
+  return apiRequest<Customer>("/api/v1/mdata/customers", { method: "POST", body });
+}
+
+export function updateCustomer(id: string, body: UpdateCustomerInput) {
+  return apiRequest<Customer>(`/api/v1/mdata/customers/${id}`, { method: "PATCH", body });
 }
 
 export function listVendors(params: CompanyScopedListParams = {}) {

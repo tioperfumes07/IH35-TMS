@@ -13,6 +13,8 @@ const listQuerySchema = z.object({
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+const customerTypeSchema = z.enum(["broker", "direct_shipper"]);
+const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
 
 const createCustomerBodySchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -28,6 +30,10 @@ const createCustomerBodySchema = z.object({
   dot_number: z.string().trim().max(100).optional(),
   payment_terms_id: z.string().uuid().nullable().optional(),
   operating_company_id: z.string().uuid().optional(),
+  customer_type: customerTypeSchema.optional(),
+  default_billing_miles_basis: milesBasisSchema.optional(),
+  default_free_time_hours: z.number().min(0).max(99).optional(),
+  default_detention_rate: z.number().min(0).max(99999.99).optional(),
   notes: z.string().trim().max(2000).optional(),
 });
 
@@ -47,6 +53,10 @@ const updateCustomerBodySchema = z
     dot_number: z.string().trim().max(100).nullable().optional(),
     payment_terms_id: z.string().uuid().nullable().optional(),
     operating_company_id: z.string().uuid().optional(),
+    customer_type: customerTypeSchema.nullable().optional(),
+    default_billing_miles_basis: milesBasisSchema.optional(),
+    default_free_time_hours: z.number().min(0).max(99).optional(),
+    default_detention_rate: z.number().min(0).max(99999.99).optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
   })
@@ -152,6 +162,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
             dot_number,
             payment_terms_id,
             operating_company_id,
+            customer_type,
+            default_billing_miles_basis,
+            default_free_time_hours,
+            default_detention_rate,
             notes,
             created_at,
             updated_at,
@@ -192,9 +206,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           `
             INSERT INTO mdata.customers (
               customer_name, customer_code, billing_email, billing_phone, billing_address_line1,
-              mc_number, dot_number, payment_terms_id, operating_company_id, notes, created_by_user_id, updated_by_user_id
+              mc_number, dot_number, payment_terms_id, operating_company_id, customer_type,
+              default_billing_miles_basis, default_free_time_hours, default_detention_rate,
+              notes, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15
             )
             RETURNING
               id,
@@ -207,6 +223,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
               dot_number,
               payment_terms_id,
               operating_company_id,
+              customer_type,
+              default_billing_miles_basis,
+              default_free_time_hours,
+              default_detention_rate,
               notes,
               created_at,
               updated_at,
@@ -224,6 +244,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
             b.dot_number ?? null,
             b.payment_terms_id ?? null,
             resolvedOperatingCompanyId,
+            b.customer_type ?? null,
+            b.default_billing_miles_basis ?? "practical_miles",
+            b.default_free_time_hours ?? 4,
+            b.default_detention_rate ?? 50,
             b.notes ?? null,
             authUser.uuid,
           ]
@@ -271,6 +295,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
             dot_number,
             payment_terms_id,
             operating_company_id,
+            customer_type,
+            default_billing_miles_basis,
+            default_free_time_hours,
+            default_detention_rate,
             notes,
             created_at,
             updated_at,
@@ -326,6 +354,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("dot_number" in b) add("dot_number", b.dot_number ?? null);
     if ("payment_terms_id" in b) add("payment_terms_id", b.payment_terms_id ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
+    if ("customer_type" in b) add("customer_type", b.customer_type ?? null);
+    if ("default_billing_miles_basis" in b) add("default_billing_miles_basis", b.default_billing_miles_basis);
+    if ("default_free_time_hours" in b) add("default_free_time_hours", b.default_free_time_hours);
+    if ("default_detention_rate" in b) add("default_detention_rate", b.default_detention_rate);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     add("updated_by_user_id", authUser.uuid);
@@ -347,6 +379,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
               dot_number,
               payment_terms_id,
               operating_company_id,
+              customer_type,
+              default_billing_miles_basis,
+              default_free_time_hours,
+              default_detention_rate,
               notes,
               created_at,
               updated_at,
@@ -377,6 +413,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
               mc_number,
               dot_number,
               payment_terms_id,
+              operating_company_id,
+              customer_type,
+              default_billing_miles_basis,
+              default_free_time_hours,
+              default_detention_rate,
               notes,
               created_at,
               updated_at,

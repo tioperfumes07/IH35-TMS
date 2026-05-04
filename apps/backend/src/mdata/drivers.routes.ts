@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
 const cdlClassSchema = z.enum(["A", "B", "C"]);
+const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const e164PhoneSchema = z.string().regex(/^\+\d{10,15}$/, "phone must be E.164 format (e.g., +19565550001)");
 const curpSchema = z
@@ -39,6 +40,7 @@ const createDriverBodySchema = z.object({
   cdl_class: cdlClassSchema.optional(),
   cdl_expires_at: isoDateSchema.optional(),
   hire_date: isoDateSchema.optional(),
+  pay_basis: milesBasisSchema.optional(),
   dot_medical_expires_at: isoDateSchema.optional(),
   hazmat_endorsement_expires_at: isoDateSchema.optional(),
   visa_type: z.string().trim().max(100).optional(),
@@ -80,6 +82,7 @@ const updateDriverBodySchema = z
     cdl_class: cdlClassSchema.nullable().optional(),
     cdl_expires_at: isoDateSchema.nullable().optional(),
     hire_date: isoDateSchema.nullable().optional(),
+    pay_basis: milesBasisSchema.optional(),
     dot_medical_expires_at: isoDateSchema.nullable().optional(),
     hazmat_endorsement_expires_at: isoDateSchema.nullable().optional(),
     visa_type: z.string().trim().max(100).nullable().optional(),
@@ -150,7 +153,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         `
           SELECT
             id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-            cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+            cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
             visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -200,7 +203,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           `
             INSERT INTO mdata.drivers (
               identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-              cdl_expires_at, hire_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              cdl_expires_at, hire_date, pay_basis, dot_medical_expires_at, hazmat_endorsement_expires_at,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -208,11 +211,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               status, notes,
               created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$33
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$34
             )
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-              cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -230,6 +233,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             b.cdl_class ?? null,
             b.cdl_expires_at ?? null,
             b.hire_date ?? null,
+            b.pay_basis ?? "short_miles",
             b.dot_medical_expires_at ?? null,
             b.hazmat_endorsement_expires_at ?? null,
             b.visa_type ?? null,
@@ -303,7 +307,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         `
           SELECT
             id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-            cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+            cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
             visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -350,6 +354,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("cdl_class" in b) add("cdl_class", b.cdl_class ?? null);
     if ("cdl_expires_at" in b) add("cdl_expires_at", b.cdl_expires_at ?? null);
     if ("hire_date" in b) add("hire_date", b.hire_date ?? null);
+    if ("pay_basis" in b) add("pay_basis", b.pay_basis);
     if ("dot_medical_expires_at" in b) add("dot_medical_expires_at", b.dot_medical_expires_at ?? null);
     if ("hazmat_endorsement_expires_at" in b) add("hazmat_endorsement_expires_at", b.hazmat_endorsement_expires_at ?? null);
     if ("visa_type" in b) add("visa_type", b.visa_type ?? null);
@@ -383,7 +388,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           `
             SELECT
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-              cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -405,7 +410,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             WHERE id = $${idIdx}
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-              cdl_expires_at, hire_date, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
