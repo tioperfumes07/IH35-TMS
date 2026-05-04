@@ -6,6 +6,11 @@ import { withLuciaBypass } from "./db.js";
 const STATE_COOKIE = "ih35_oauth_state";
 const VERIFIER_COOKIE = "ih35_oauth_verifier";
 const COOKIE_MAX_AGE = 60 * 10;
+const DEFAULT_FRONTEND_BASE_URL = "https://ih35-tms-web.onrender.com";
+
+function frontendBaseUrl(): string {
+  return (process.env.FRONTEND_BASE_URL || DEFAULT_FRONTEND_BASE_URL).replace(/\/$/, "");
+}
 
 export async function registerAuthRoutes(app: FastifyInstance) {
   app.get("/api/v1/auth/google/login", async (req, reply) => {
@@ -59,7 +64,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       reply.setCookie(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
       reply.clearCookie(STATE_COOKIE, { path: "/" });
       reply.clearCookie(VERIFIER_COOKIE, { path: "/" });
-      return reply.redirect("/");
+      return reply.redirect(`${frontendBaseUrl()}/home`);
     } catch (err) {
       if (err instanceof OAuth2RequestError) {
         return reply.code(400).send({ error: "oauth_validation_failed" });
@@ -84,6 +89,14 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       await lucia.invalidateSession(sessionId);
     }
     reply.clearCookie("ih35_session", { path: "/" });
+    const frontendUrl = frontendBaseUrl();
+    const origin = String(req.headers.origin || "");
+    const acceptsHtml = String(req.headers.accept || "").includes("text/html");
+    const query = req.query as Record<string, string | undefined>;
+    const wantsRedirect = acceptsHtml || origin === frontendUrl || query["redirect"] === "true";
+    if (wantsRedirect) {
+      return reply.redirect(`${frontendUrl}/login`);
+    }
     return { ok: true };
   });
 }
