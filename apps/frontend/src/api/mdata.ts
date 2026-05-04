@@ -40,3 +40,47 @@ export function disableDriverPhoneLogin(id: string) {
     method: "POST",
   });
 }
+
+type CompanyScopedListParams = {
+  status?: string;
+  search?: string;
+  operating_company_id?: string | null;
+};
+
+function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedListParams) {
+  if (params.status && params.status !== "All") {
+    query.set("status", params.status);
+  }
+  if (params.search) query.set("search", params.search);
+  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
+}
+
+export function listCustomers(params: CompanyScopedListParams = {}) {
+  const query = new URLSearchParams();
+  appendCompanyScopedQuery(query, params);
+  const qs = query.toString();
+  return apiRequest<{ customers: unknown[] }>(`/api/v1/mdata/customers${qs ? `?${qs}` : ""}`);
+}
+
+export function listVendors(params: CompanyScopedListParams = {}) {
+  const query = new URLSearchParams();
+  appendCompanyScopedQuery(query, params);
+  const qs = query.toString();
+  return apiRequest<{ vendors: unknown[] }>(`/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`);
+}
+
+export function listLocations(params: CompanyScopedListParams = {}) {
+  const query = new URLSearchParams();
+  appendCompanyScopedQuery(query, params);
+  const qs = query.toString();
+  return apiRequest<{ locations: unknown[] }>(`/api/v1/mdata/locations${qs ? `?${qs}` : ""}`);
+}
+
+export function listUnits(params: { status?: string; search?: string; operating_company_id?: string | null } = {}) {
+  const query = new URLSearchParams();
+  if (params.status && params.status !== "All") query.set("status", params.status);
+  if (params.search) query.set("search", params.search);
+  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
+  const qs = query.toString();
+  return apiRequest<{ units: unknown[] }>(`/api/v1/mdata/units${qs ? `?${qs}` : ""}`);
+}

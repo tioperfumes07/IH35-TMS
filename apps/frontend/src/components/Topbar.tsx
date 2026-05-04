@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { signOut } from "../api/identity";
 import type { AuthMeResponse } from "../types/api";
+import { CompanySwitcher } from "./CompanySwitcher";
 import { useToast } from "./Toast";
 
 type Props = {
@@ -43,8 +44,11 @@ export function Topbar({ auth }: Props) {
         </div>
       </div>
 
-      <div className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
-        QuickBooks · Samsara · Relay not yet connected
+      <div className="flex items-center gap-3">
+        <div className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+          QuickBooks · Samsara · Relay not yet connected
+        </div>
+        <CompanySwitcher />
       </div>
 
       <div className="relative flex items-center gap-3 text-sm text-gray-700">

@@ -12,6 +12,7 @@ const listQuerySchema = z.object({
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
   location_type: locationTypeSchema.optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -22,6 +23,7 @@ const createLocationBodySchema = z.object({
   location_type: locationTypeSchema,
   linked_customer_id: z.string().uuid().optional(),
   linked_vendor_id: z.string().uuid().optional(),
+  operating_company_id: z.string().uuid().optional(),
   address: z.string().trim().max(500).optional(),
   lat: z.number().min(-90).max(90).optional(),
   lng: z.number().min(-180).max(180).optional(),
@@ -35,6 +37,7 @@ const updateLocationBodySchema = z
     location_type: locationTypeSchema.optional(),
     linked_customer_id: z.string().uuid().nullable().optional(),
     linked_vendor_id: z.string().uuid().nullable().optional(),
+    operating_company_id: z.string().uuid().optional(),
     address: z.string().trim().max(500).nullable().optional(),
     lat: z.number().min(-90).max(90).nullable().optional(),
     lng: z.number().min(-180).max(180).nullable().optional(),
@@ -53,7 +56,32 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 function isWriteRole(role: string): boolean {
-  return role === "Owner" || role === "Administrator" || role === "Manager";
+  return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Dispatcher";
+}
+
+async function resolveOperatingCompanyId(
+  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  requested?: string
+) {
+  if (requested) return requested;
+  const res = await client.query(
+    `
+      SELECT c.id
+      FROM identity.users u
+      JOIN org.companies c ON c.id = u.default_company_id
+      WHERE u.id = $1
+        AND c.deactivated_at IS NULL
+      UNION
+      SELECT c.id
+      FROM org.companies c
+      WHERE c.id IN (SELECT org.user_accessible_company_ids())
+      ORDER BY id
+      LIMIT 1
+    `,
+    [userId]
+  );
+  return res.rows[0]?.id ?? null;
 }
 
 async function assertUniqueLocationName(authUserId: string, name: string, excludeId?: string): Promise<boolean> {
@@ -76,7 +104,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, location_type } = parsedQuery.data;
+    const { limit, offset, status, search, location_type, operating_company_id } = parsedQuery.data;
     const locations = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
@@ -91,6 +119,10 @@ export async function registerLocationRoutes(app: FastifyInstance) {
         const idx = values.length;
         filters.push(`(location_name ILIKE $${idx} OR location_code ILIKE $${idx} OR address_line1 ILIKE $${idx})`);
       }
+      if (operating_company_id) {
+        values.push(operating_company_id);
+        filters.push(`operating_company_id = $${values.length}`);
+      }
       values.push(limit);
       values.push(offset);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -103,6 +135,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
             location_type,
             linked_customer_id,
             linked_vendor_id,
+            operating_company_id,
             address_line1 AS address,
             latitude AS lat,
             longitude AS lng,
@@ -139,13 +172,17 @@ export async function registerLocationRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (!resolvedOperatingCompanyId) {
+          throw new Error("operating_company_id_required");
+        }
         const res = await client.query(
           `
             INSERT INTO mdata.locations (
-              location_name, location_code, location_type, linked_customer_id, linked_vendor_id, address_line1,
+              location_name, location_code, location_type, linked_customer_id, linked_vendor_id, operating_company_id, address_line1,
               latitude, longitude, notes, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11
             )
             RETURNING
               id,
@@ -154,6 +191,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
               location_type,
               linked_customer_id,
               linked_vendor_id,
+              operating_company_id,
               address_line1 AS address,
               latitude AS lat,
               longitude AS lng,
@@ -170,6 +208,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
             b.location_type,
             b.linked_customer_id ?? null,
             b.linked_vendor_id ?? null,
+            resolvedOperatingCompanyId,
             b.address ?? null,
             b.lat ?? null,
             b.lng ?? null,
@@ -193,6 +232,9 @@ export async function registerLocationRoutes(app: FastifyInstance) {
       const code = (err as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "mdata_location_conflict" });
       if (code === "23503") return reply.code(400).send({ error: "invalid_location_reference_fk" });
+      if ((err as Error).message === "operating_company_id_required") {
+        return reply.code(400).send({ error: "operating_company_id_required" });
+      }
       throw err;
     }
   });
@@ -213,6 +255,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
             location_type,
             linked_customer_id,
             linked_vendor_id,
+            operating_company_id,
             address_line1 AS address,
             latitude AS lat,
             longitude AS lng,
@@ -261,6 +304,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     if ("location_type" in b && b.location_type) add("location_type", b.location_type);
     if ("linked_customer_id" in b) add("linked_customer_id", b.linked_customer_id ?? null);
     if ("linked_vendor_id" in b) add("linked_vendor_id", b.linked_vendor_id ?? null);
+    if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("address" in b) add("address_line1", b.address ?? null);
     if ("lat" in b) add("latitude", b.lat ?? null);
     if ("lng" in b) add("longitude", b.lng ?? null);
@@ -281,6 +325,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
               location_type,
               linked_customer_id,
               linked_vendor_id,
+              operating_company_id,
               address_line1 AS address,
               latitude AS lat,
               longitude AS lng,

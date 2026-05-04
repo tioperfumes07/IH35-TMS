@@ -12,6 +12,7 @@ const listQuerySchema = z.object({
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
   vendor_type: vendorTypeSchema.optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -26,6 +27,7 @@ const createVendorBodySchema = z.object({
     .email()
     .transform((v) => v.toLowerCase())
     .optional(),
+  operating_company_id: z.string().uuid().optional(),
   address: z.string().trim().max(500).optional(),
   tax_id: z.string().trim().max(100).optional(),
   notes: z.string().trim().max(2000).optional(),
@@ -43,6 +45,7 @@ const updateVendorBodySchema = z
       .transform((v) => v.toLowerCase())
       .nullable()
       .optional(),
+    operating_company_id: z.string().uuid().optional(),
     address: z.string().trim().max(500).nullable().optional(),
     tax_id: z.string().trim().max(100).nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
@@ -60,7 +63,32 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 function isWriteRole(role: string): boolean {
-  return role === "Owner" || role === "Administrator" || role === "Manager";
+  return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Accountant";
+}
+
+async function resolveOperatingCompanyId(
+  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  requested?: string
+) {
+  if (requested) return requested;
+  const res = await client.query(
+    `
+      SELECT c.id
+      FROM identity.users u
+      JOIN org.companies c ON c.id = u.default_company_id
+      WHERE u.id = $1
+        AND c.deactivated_at IS NULL
+      UNION
+      SELECT c.id
+      FROM org.companies c
+      WHERE c.id IN (SELECT org.user_accessible_company_ids())
+      ORDER BY id
+      LIMIT 1
+    `,
+    [userId]
+  );
+  return res.rows[0]?.id ?? null;
 }
 
 export async function registerVendorRoutes(app: FastifyInstance) {
@@ -70,7 +98,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, vendor_type } = parsedQuery.data;
+    const { limit, offset, status, search, vendor_type, operating_company_id } = parsedQuery.data;
     const vendors = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
@@ -85,6 +113,10 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         const idx = values.length;
         filters.push(`(vendor_name ILIKE $${idx} OR vendor_code ILIKE $${idx} OR email ILIKE $${idx})`);
       }
+      if (operating_company_id) {
+        values.push(operating_company_id);
+        filters.push(`operating_company_id = $${values.length}`);
+      }
       values.push(limit);
       values.push(offset);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -97,6 +129,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
             vendor_type,
             phone,
             email,
+            operating_company_id,
             address_line1 AS address,
             tax_id,
             notes,
@@ -128,13 +161,17 @@ export async function registerVendorRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (!resolvedOperatingCompanyId) {
+          throw new Error("operating_company_id_required");
+        }
         const res = await client.query(
           `
             INSERT INTO mdata.vendors (
-              vendor_name, vendor_code, vendor_type, phone, email, address_line1, tax_id, notes,
+              vendor_name, vendor_code, vendor_type, phone, email, operating_company_id, address_line1, tax_id, notes,
               created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$9
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10
             )
             RETURNING
               id,
@@ -143,6 +180,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
               vendor_type,
               phone,
               email,
+              operating_company_id,
               address_line1 AS address,
               tax_id,
               notes,
@@ -158,6 +196,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
             b.vendor_type,
             b.phone ?? null,
             b.email ?? null,
+            resolvedOperatingCompanyId,
             b.address ?? null,
             b.tax_id ?? null,
             b.notes ?? null,
@@ -180,6 +219,9 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       if ((err as { code?: string }).code === "23505") {
         return reply.code(409).send({ error: "mdata_vendor_conflict" });
       }
+      if ((err as Error).message === "operating_company_id_required") {
+        return reply.code(400).send({ error: "operating_company_id_required" });
+      }
       throw err;
     }
   });
@@ -200,6 +242,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
             vendor_type,
             phone,
             email,
+            operating_company_id,
             address_line1 AS address,
             tax_id,
             notes,
@@ -242,6 +285,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if ("vendor_type" in b) add("vendor_type", b.vendor_type);
     if ("phone" in b) add("phone", b.phone ?? null);
     if ("email" in b) add("email", b.email ?? null);
+    if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("address" in b) add("address_line1", b.address ?? null);
     if ("tax_id" in b) add("tax_id", b.tax_id ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
@@ -261,6 +305,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
               vendor_type,
               phone,
               email,
+              operating_company_id,
               address_line1 AS address,
               tax_id,
               notes,

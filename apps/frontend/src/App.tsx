@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "./auth/useAuth";
 import { Shell } from "./components/Shell";
+import { CompanyProvider } from "./contexts/CompanyContext";
 import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriversPage } from "./pages/Drivers";
 import { HomePage } from "./pages/Home";
@@ -36,42 +37,44 @@ function HomeRoute() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<RootRedirect />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/home"
-        element={
-          <ProtectedRoute>
-            <HomeRoute />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute>
-            <UsersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/drivers"
-        element={
-          <ProtectedRoute>
-            <DriversPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/drivers/:id"
-        element={
-          <ProtectedRoute>
-            <DriverDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <CompanyProvider>
+      <Routes>
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <HomeRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers"
+          element={
+            <ProtectedRoute>
+              <DriversPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/:id"
+          element={
+            <ProtectedRoute>
+              <DriverDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </CompanyProvider>
   );
 }
