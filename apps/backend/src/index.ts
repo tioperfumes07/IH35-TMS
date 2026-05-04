@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
+import { registerIdentityRoutes } from "./identity/routes.js";
 
 const app = Fastify({ logger: true });
 
@@ -13,6 +14,7 @@ async function main() {
   await app.register(cookie);
   await registerSessionMiddleware(app);
   await registerAuthRoutes(app);
+  await registerIdentityRoutes(app);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {
