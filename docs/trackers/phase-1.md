@@ -21,6 +21,8 @@
 | 2026-05-04 | BT-1-IDENT-03 enforces `cannot decide own request` in app code (403) rather than RLS. This keeps policies simple while preserving explicit business-rule guardrails for approve/reject actions. | Jorge | Resolved | Build Spec MUST 6.6.1 |
 | 2026-05-04 | BT-1-MDATA-01 introduces `mdata` schema with 7 tables (`drivers`, `units`, `customers`, `vendors`, `locations`, `equipment`, `equipment_log`). Phase 1 RLS is base-level (Owner/Admin/Manager write, all authenticated users SELECT). Granular role policies are deferred to BT-1-MDATA-02 endpoint hardening. | Jorge | Resolved | Master Blueprint Part 7 §7.2 + Build Spec §13.2 |
 | 2026-05-04 | BT-1-MDATA-01 created enum types `mdata.driver_status`, `mdata.unit_status`, and `mdata.equipment_status` with locked vocabulary values per spec. Future status transitions will route through approval workflows in BT-1-MDATA-03. | Jorge | Resolved | Master Blueprint Part 7 §7.2 |
+| 2026-05-04 | BT-1-MDATA-02 implements 10 FULL endpoints for drivers (5) + units (5). Customers, vendors, locations, equipment, and equipment_log endpoints are deferred to BT-1-MDATA-02b to keep this delivery focused on operationally critical entities first. | Jorge | Resolved | Build Spec §13.2 + Master Blueprint Part 7 §7.2 |
+| 2026-05-04 | BT-1-MDATA-02 introduces `isWriteRole(role)` for app-layer write gating (`Owner`, `Administrator`, `Manager`). Non-write roles receive clean 403 responses before query execution, while RLS remains the final database guardrail. | Jorge | Resolved | Build Spec MUST 6.6.1 |
 
 ## TODO
 
