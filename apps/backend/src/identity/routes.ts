@@ -1,0 +1,276 @@
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
+import { withCurrentUser } from "../auth/db.js";
+import { requireAuth } from "../auth/session-middleware.js";
+
+const roleSchema = z.enum([
+  "Owner",
+  "Administrator",
+  "Manager",
+  "Accountant",
+  "Dispatcher",
+  "Safety",
+  "Driver",
+  "Mechanic",
+]);
+
+const paginationSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+const userIdParamSchema = z.object({
+  id: z.string().uuid(),
+});
+
+const patchUserBodySchema = z.object({
+  role: roleSchema,
+});
+
+const createUserBodySchema = z.object({
+  email: z.string().email().refine((email) => email === email.toLowerCase(), {
+    message: "email must be lowercase",
+  }),
+  role: roleSchema,
+});
+
+type IdentityUserRow = {
+  id: string;
+  email: string;
+  role: string;
+  created_at: string;
+  deactivated_at: string | null;
+};
+
+function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
+  if (!requireAuth(req, reply)) {
+    return null;
+  }
+  return req.user;
+}
+
+function sendValidationError(reply: FastifyReply, error: z.ZodError) {
+  return reply.code(400).send({
+    error: "validation_error",
+    details: error.flatten(),
+  });
+}
+
+function isAdminRole(role: string): boolean {
+  return role === "Owner" || role === "Administrator";
+}
+
+function mapIdentityUser(row: IdentityUserRow) {
+  return {
+    id: String(row.id),
+    email: String(row.email),
+    role: String(row.role),
+    created_at: row.created_at,
+    deactivated_at: row.deactivated_at,
+  };
+}
+
+export async function registerIdentityRoutes(app: FastifyInstance) {
+  app.get("/api/v1/identity/me", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) {
+      return;
+    }
+    const row = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query<IdentityUserRow>(
+        `
+          SELECT id, email, role, created_at, deactivated_at
+          FROM identity.users
+          WHERE id = $1
+          LIMIT 1
+        `,
+        [authUser.uuid]
+      );
+      return res.rows[0] ?? null;
+    });
+
+    if (!row) {
+      return reply.code(404).send({ error: "identity_user_not_found" });
+    }
+
+    return mapIdentityUser(row);
+  });
+
+  app.get("/api/v1/identity/users", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) {
+      return;
+    }
+    const parsedQuery = paginationSchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) {
+      return sendValidationError(reply, parsedQuery.error);
+    }
+
+    const { limit, offset } = parsedQuery.data;
+    const users = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query<IdentityUserRow>(
+        `
+          SELECT id, email, role, created_at, deactivated_at
+          FROM identity.users
+          ORDER BY created_at DESC
+          LIMIT $1
+          OFFSET $2
+        `,
+        [limit, offset]
+      );
+      return res.rows.map(mapIdentityUser);
+    });
+
+    return { users };
+  });
+
+  app.get("/api/v1/identity/users/:id", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) {
+      return;
+    }
+    const parsedParams = userIdParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) {
+      return sendValidationError(reply, parsedParams.error);
+    }
+
+    const row = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query<IdentityUserRow>(
+        `
+          SELECT id, email, role, created_at, deactivated_at
+          FROM identity.users
+          WHERE id = $1
+          LIMIT 1
+        `,
+        [parsedParams.data.id]
+      );
+      return res.rows[0] ?? null;
+    });
+
+    if (!row) {
+      return reply.code(404).send({ error: "identity_user_not_found" });
+    }
+
+    return mapIdentityUser(row);
+  });
+
+  app.patch("/api/v1/identity/users/:id", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) {
+      return;
+    }
+    if (!isAdminRole(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+
+    const parsedParams = userIdParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) {
+      return sendValidationError(reply, parsedParams.error);
+    }
+    const parsedBody = patchUserBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      return sendValidationError(reply, parsedBody.error);
+    }
+
+    const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query<IdentityUserRow>(
+        `
+          UPDATE identity.users
+          SET role = $1
+          WHERE id = $2
+          RETURNING id, email, role, created_at, deactivated_at
+        `,
+        [parsedBody.data.role, parsedParams.data.id]
+      );
+      return res.rows[0] ?? null;
+    });
+
+    if (!updated) {
+      return reply.code(404).send({ error: "identity_user_not_found" });
+    }
+
+    return mapIdentityUser(updated);
+  });
+
+  app.post("/api/v1/identity/users", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) {
+      return;
+    }
+    if (!isAdminRole(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+
+    const parsedBody = createUserBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      return sendValidationError(reply, parsedBody.error);
+    }
+
+    try {
+      const created = await withCurrentUser(authUser.uuid, async (client) => {
+        const res = await client.query<IdentityUserRow>(
+          `
+            INSERT INTO identity.users (email, role)
+            VALUES ($1, $2)
+            RETURNING id, email, role, created_at, deactivated_at
+          `,
+          [parsedBody.data.email, parsedBody.data.role]
+        );
+        return res.rows[0];
+      });
+      return reply.code(201).send(mapIdentityUser(created));
+    } catch (err) {
+      const pgErr = err as { code?: string };
+      if (pgErr.code === "23505") {
+        return reply.code(409).send({ error: "identity_user_conflict" });
+      }
+      throw err;
+    }
+  });
+
+  app.post("/api/v1/identity/users/:id/deactivate", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) {
+      return;
+    }
+    if (!isAdminRole(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+
+    const parsedParams = userIdParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) {
+      return sendValidationError(reply, parsedParams.error);
+    }
+
+    try {
+      const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        const res = await client.query<{ id: string; deactivated_at: string }>(
+          `
+            UPDATE identity.users
+            SET deactivated_at = now()
+            WHERE id = $1
+              AND deactivated_at IS NULL
+            RETURNING id, deactivated_at
+          `,
+          [parsedParams.data.id]
+        );
+        return res.rows[0] ?? null;
+      });
+
+      if (!updated) {
+        return reply.code(404).send({ error: "identity_user_not_found" });
+      }
+
+      return {
+        id: updated.id,
+        deactivated_at: updated.deactivated_at,
+      };
+    } catch (err) {
+      const msg = String((err as { message?: string })?.message || "");
+      if (msg.includes("cannot deactivate the last active Owner")) {
+        return reply.code(400).send({ error: "cannot_deactivate_last_owner" });
+      }
+      throw err;
+    }
+  });
+}

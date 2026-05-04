@@ -70,3 +70,25 @@ export async function withLuciaBypass<T>(
     client.release();
   }
 }
+
+export async function withCurrentUser<T>(
+  userUuid: string,
+  fn: (client: pg.PoolClient) => Promise<T>
+): Promise<T> {
+  if (!/^[0-9a-f-]{36}$/i.test(userUuid)) {
+    throw new Error("Invalid UUID for app.current_user_id");
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`SET LOCAL app.current_user_id = '${userUuid}'`);
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
