@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { generateState, generateCodeVerifier, OAuth2RequestError } from "arctic";
 import { lucia, google } from "./lucia.js";
-import { luciaPool } from "./db.js";
+import { withLuciaBypass } from "./db.js";
 
 const STATE_COOKIE = "ih35_oauth_state";
 const VERIFIER_COOKIE = "ih35_oauth_verifier";
@@ -79,21 +79,23 @@ export async function registerAuthRoutes(app: FastifyInstance) {
 }
 
 async function findOrCreateUser(email: string, googleUserId: string): Promise<string> {
-  const existing = await luciaPool.query(
-    "SELECT id FROM identity.users WHERE google_user_id = $1 OR email = $2 LIMIT 1",
-    [googleUserId, email]
-  );
-  if (existing.rows.length > 0) {
-    const row = existing.rows[0];
-    await luciaPool.query(
-      "UPDATE identity.users SET google_user_id = $1 WHERE id = $2 AND google_user_id IS NULL",
-      [googleUserId, row["id"]]
+  return withLuciaBypass(async (client) => {
+    const existing = await client.query(
+      "SELECT id FROM identity.users WHERE google_user_id = $1 OR email = $2 LIMIT 1",
+      [googleUserId, email]
     );
-    return String(row["id"]);
-  }
-  const inserted = await luciaPool.query(
-    "INSERT INTO identity.users (email, google_user_id, role) VALUES ($1, $2, $3) RETURNING id",
-    [email, googleUserId, "Driver"]
-  );
-  return String(inserted.rows[0]["id"]);
+    if (existing.rows.length > 0) {
+      const row = existing.rows[0];
+      await client.query(
+        "UPDATE identity.users SET google_user_id = $1 WHERE id = $2 AND google_user_id IS NULL",
+        [googleUserId, row["id"]]
+      );
+      return String(row["id"]);
+    }
+    const inserted = await client.query(
+      "INSERT INTO identity.users (email, google_user_id, role) VALUES ($1, $2, $3) RETURNING id",
+      [email, googleUserId, "Driver"]
+    );
+    return String(inserted.rows[0]["id"]);
+  });
 }
