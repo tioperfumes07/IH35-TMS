@@ -105,7 +105,7 @@ async function appendWorkflowAudit(
 }
 
 function extractToRole(payload: Record<string, unknown>): string | null {
-  const parsed = roleSchema.safeParse(payload?.["to_role"]);
+  const parsed = roleSchema.safeParse(payload?.["to_role"] ?? payload?.["new_role"]);
   return parsed.success ? parsed.data : null;
 }
 

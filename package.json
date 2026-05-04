@@ -3,13 +3,20 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "apps/frontend"
+  ],
   "engines": {
     "node": "22.x"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "build:backend": "tsc -p tsconfig.json",
+    "build:frontend": "cd apps/frontend && npm run build",
     "start": "node dist/index.js",
     "dev": "tsx watch apps/backend/src/index.ts",
+    "dev:backend": "cd apps/backend && npm run dev",
+    "dev:frontend": "cd apps/frontend && npm run dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:verify:audit-append-only": "node scripts/db-verify-audit-append-only.mjs",
