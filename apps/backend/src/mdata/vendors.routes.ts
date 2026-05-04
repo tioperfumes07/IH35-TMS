@@ -1,0 +1,303 @@
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { z } from "zod";
+import { withCurrentUser } from "../auth/db.js";
+import { requireAuth } from "../auth/session-middleware.js";
+
+const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);
+
+const listQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+  status: z.enum(["active", "inactive"]).optional(),
+  search: z.string().trim().min(1).max(100).optional(),
+  vendor_type: vendorTypeSchema.optional(),
+});
+
+const idParamSchema = z.object({ id: z.string().uuid() });
+
+const createVendorBodySchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  vendor_code: z.string().trim().max(100).optional(),
+  vendor_type: vendorTypeSchema,
+  phone: z.string().trim().max(50).optional(),
+  email: z
+    .string()
+    .email()
+    .transform((v) => v.toLowerCase())
+    .optional(),
+  address: z.string().trim().max(500).optional(),
+  tax_id: z.string().trim().max(100).optional(),
+  notes: z.string().trim().max(2000).optional(),
+});
+
+const updateVendorBodySchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    vendor_code: z.string().trim().max(100).nullable().optional(),
+    vendor_type: vendorTypeSchema.optional(),
+    phone: z.string().trim().max(50).nullable().optional(),
+    email: z
+      .string()
+      .email()
+      .transform((v) => v.toLowerCase())
+      .nullable()
+      .optional(),
+    address: z.string().trim().max(500).nullable().optional(),
+    tax_id: z.string().trim().max(100).nullable().optional(),
+    notes: z.string().trim().max(2000).nullable().optional(),
+    deactivated_at: z.string().datetime().nullable().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
+
+function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
+  if (!requireAuth(req, reply)) return null;
+  return req.user;
+}
+
+function sendValidationError(reply: FastifyReply, error: z.ZodError) {
+  return reply.code(400).send({ error: "validation_error", details: error.flatten() });
+}
+
+function isWriteRole(role: string): boolean {
+  return role === "Owner" || role === "Administrator" || role === "Manager";
+}
+
+export async function registerVendorRoutes(app: FastifyInstance) {
+  app.get("/api/v1/mdata/vendors", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const { limit, offset, status, search, vendor_type } = parsedQuery.data;
+    const vendors = await withCurrentUser(authUser.uuid, async (client) => {
+      const values: unknown[] = [];
+      const filters: string[] = [];
+      if (status === "active") filters.push("deactivated_at IS NULL");
+      if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
+      if (vendor_type) {
+        values.push(vendor_type);
+        filters.push(`vendor_type = $${values.length}`);
+      }
+      if (search) {
+        values.push(`%${search}%`);
+        const idx = values.length;
+        filters.push(`(vendor_name ILIKE $${idx} OR vendor_code ILIKE $${idx} OR email ILIKE $${idx})`);
+      }
+      values.push(limit);
+      values.push(offset);
+      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      const res = await client.query(
+        `
+          SELECT
+            id,
+            vendor_name AS name,
+            vendor_code,
+            vendor_type,
+            phone,
+            email,
+            address_line1 AS address,
+            tax_id,
+            notes,
+            created_at,
+            updated_at,
+            deactivated_at,
+            created_by_user_id,
+            updated_by_user_id
+          FROM mdata.vendors
+          ${whereClause}
+          ORDER BY created_at DESC
+          LIMIT $${values.length - 1}
+          OFFSET $${values.length}
+        `,
+        values
+      );
+      return res.rows;
+    });
+    return { vendors };
+  });
+
+  app.post("/api/v1/mdata/vendors", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedBody = createVendorBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const b = parsedBody.data;
+
+    try {
+      const created = await withCurrentUser(authUser.uuid, async (client) => {
+        const res = await client.query(
+          `
+            INSERT INTO mdata.vendors (
+              vendor_name, vendor_code, vendor_type, phone, email, address_line1, tax_id, notes,
+              created_by_user_id, updated_by_user_id
+            ) VALUES (
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$9
+            )
+            RETURNING
+              id,
+              vendor_name AS name,
+              vendor_code,
+              vendor_type,
+              phone,
+              email,
+              address_line1 AS address,
+              tax_id,
+              notes,
+              created_at,
+              updated_at,
+              deactivated_at,
+              created_by_user_id,
+              updated_by_user_id
+          `,
+          [
+            b.name,
+            b.vendor_code ?? null,
+            b.vendor_type,
+            b.phone ?? null,
+            b.email ?? null,
+            b.address ?? null,
+            b.tax_id ?? null,
+            b.notes ?? null,
+            authUser.uuid,
+          ]
+        );
+        return res.rows[0];
+      });
+      return reply.code(201).send(created);
+    } catch (err) {
+      if ((err as { code?: string }).code === "23505") {
+        return reply.code(409).send({ error: "mdata_vendor_conflict" });
+      }
+      throw err;
+    }
+  });
+
+  app.get("/api/v1/mdata/vendors/:id", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const row = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query(
+        `
+          SELECT
+            id,
+            vendor_name AS name,
+            vendor_code,
+            vendor_type,
+            phone,
+            email,
+            address_line1 AS address,
+            tax_id,
+            notes,
+            created_at,
+            updated_at,
+            deactivated_at,
+            created_by_user_id,
+            updated_by_user_id
+          FROM mdata.vendors
+          WHERE id = $1
+          LIMIT 1
+        `,
+        [parsedParams.data.id]
+      );
+      return res.rows[0] ?? null;
+    });
+
+    if (!row) return reply.code(404).send({ error: "mdata_vendor_not_found" });
+    return row;
+  });
+
+  app.patch("/api/v1/mdata/vendors/:id", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedBody = updateVendorBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const b = parsedBody.data;
+
+    const setParts: string[] = [];
+    const values: unknown[] = [];
+    const add = (col: string, val: unknown) => {
+      values.push(val);
+      setParts.push(`${col} = $${values.length}`);
+    };
+    if ("name" in b) add("vendor_name", b.name ?? null);
+    if ("vendor_code" in b) add("vendor_code", b.vendor_code ?? null);
+    if ("vendor_type" in b) add("vendor_type", b.vendor_type);
+    if ("phone" in b) add("phone", b.phone ?? null);
+    if ("email" in b) add("email", b.email ?? null);
+    if ("address" in b) add("address_line1", b.address ?? null);
+    if ("tax_id" in b) add("tax_id", b.tax_id ?? null);
+    if ("notes" in b) add("notes", b.notes ?? null);
+    if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
+    add("updated_by_user_id", authUser.uuid);
+
+    values.push(parsedParams.data.id);
+    const idIdx = values.length;
+    try {
+      const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        const res = await client.query(
+          `
+            UPDATE mdata.vendors
+            SET ${setParts.join(", ")}
+            WHERE id = $${idIdx}
+            RETURNING
+              id,
+              vendor_name AS name,
+              vendor_code,
+              vendor_type,
+              phone,
+              email,
+              address_line1 AS address,
+              tax_id,
+              notes,
+              created_at,
+              updated_at,
+              deactivated_at,
+              created_by_user_id,
+              updated_by_user_id
+          `,
+          values
+        );
+        return res.rows[0] ?? null;
+      });
+      if (!updated) return reply.code(404).send({ error: "mdata_vendor_not_found" });
+      return updated;
+    } catch (err) {
+      if ((err as { code?: string }).code === "23505") {
+        return reply.code(409).send({ error: "mdata_vendor_conflict" });
+      }
+      throw err;
+    }
+  });
+
+  app.post("/api/v1/mdata/vendors/:id/deactivate", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query(
+        `
+          UPDATE mdata.vendors
+          SET deactivated_at = now(), updated_by_user_id = $2
+          WHERE id = $1
+            AND deactivated_at IS NULL
+          RETURNING id, deactivated_at
+        `,
+        [parsedParams.data.id, authUser.uuid]
+      );
+      return res.rows[0] ?? null;
+    });
+    if (!deactivated) return reply.code(404).send({ error: "mdata_vendor_not_found" });
+    return deactivated;
+  });
+}
