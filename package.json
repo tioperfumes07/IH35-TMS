@@ -17,15 +17,20 @@
     "db:verify:outbox-drain": "node scripts/db-verify-outbox-drain.mjs"
   },
   "dependencies": {
+    "@lucia-auth/adapter-postgresql": "^3.1.2",
+    "arctic": "^2.3.4",
     "bullmq": "^5.76.5",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "fastify": "^5.0.0",
     "ioredis": "^5.10.1",
+    "lucia": "^3.2.2",
+    "oslo": "^1.2.1",
     "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
