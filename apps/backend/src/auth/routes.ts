@@ -95,20 +95,20 @@ function parseCookies(header: string): Record<string, string> {
 
 async function findOrCreateUser(email: string, googleUserId: string): Promise<string> {
   const existing = await pool.query(
-    "SELECT uuid FROM identity.users WHERE google_user_id = $1 OR email = $2 LIMIT 1",
+    "SELECT id FROM identity.users WHERE google_user_id = $1 OR email = $2 LIMIT 1",
     [googleUserId, email]
   );
   if (existing.rows.length > 0) {
     const row = existing.rows[0];
     await pool.query(
-      "UPDATE identity.users SET google_user_id = $1 WHERE uuid = $2 AND google_user_id IS NULL",
-      [googleUserId, row["uuid"]]
+      "UPDATE identity.users SET google_user_id = $1 WHERE id = $2 AND google_user_id IS NULL",
+      [googleUserId, row["id"]]
     );
-    return String(row["uuid"]);
+    return String(row["id"]);
   }
   const inserted = await pool.query(
-    "INSERT INTO identity.users (email, google_user_id, role) VALUES ($1, $2, $3) RETURNING uuid",
+    "INSERT INTO identity.users (email, google_user_id, role) VALUES ($1, $2, $3) RETURNING id",
     [email, googleUserId, "Driver"]
   );
-  return String(inserted.rows[0]["uuid"]);
+  return String(inserted.rows[0]["id"]);
 }
