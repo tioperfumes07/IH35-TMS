@@ -3,7 +3,7 @@ import { lucia } from "./lucia.js";
 
 declare module "fastify" {
   interface FastifyRequest {
-    user: { uuid: string; email: string; role: string } | null;
+    user: { uuid: string; email: string | null; role: string } | null;
     session: { id: string } | null;
   }
 }
@@ -34,7 +34,7 @@ export async function registerSessionMiddleware(app: FastifyInstance) {
       // Phase 1 identity RLS uses this UUID as the request auth context source.
       req.user = {
         uuid: String(result.user.id),
-        email: String((result.user as unknown as Record<string, unknown>)["email"] || ""),
+        email: ((result.user as unknown as Record<string, unknown>)["email"] as string | null) ?? null,
         role: String((result.user as unknown as Record<string, unknown>)["role"] || ""),
       };
     }

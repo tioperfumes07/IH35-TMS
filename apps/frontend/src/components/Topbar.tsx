@@ -25,6 +25,7 @@ export function Topbar({ auth }: Props) {
   const [open, setOpen] = useState(false);
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const emailLabel = auth.email ?? "Phone login";
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -53,7 +54,7 @@ export function Topbar({ auth }: Props) {
           className="flex items-center gap-1 rounded border border-gray-200 px-2 py-1 text-xs hover:bg-gray-50"
           onClick={() => setOpen((current) => !current)}
         >
-          {auth.email}
+          {emailLabel}
           <ChevronDown className="h-3 w-3" />
         </button>
         {open ? (

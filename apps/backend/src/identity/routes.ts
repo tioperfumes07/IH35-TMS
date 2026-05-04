@@ -37,7 +37,7 @@ const createUserBodySchema = z.object({
 
 type IdentityUserRow = {
   id: string;
-  email: string;
+  email: string | null;
   role: string;
   created_at: string;
   deactivated_at: string | null;
@@ -64,7 +64,7 @@ function isAdminRole(role: string): boolean {
 function mapIdentityUser(row: IdentityUserRow) {
   return {
     id: String(row.id),
-    email: String(row.email),
+    email: row.email,
     role: String(row.role),
     created_at: row.created_at,
     deactivated_at: row.deactivated_at,
