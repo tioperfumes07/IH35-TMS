@@ -5,6 +5,7 @@ import { Shell } from "./components/Shell";
 import { CompanyProvider } from "./contexts/CompanyContext";
 import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriversPage } from "./pages/Drivers";
+import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
 import { UsersPage } from "./pages/Users";
@@ -62,6 +63,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DriversPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/catalogs/equipment-types"
+          element={
+            <ProtectedRoute>
+              <EquipmentTypesPage />
             </ProtectedRoute>
           }
         />
