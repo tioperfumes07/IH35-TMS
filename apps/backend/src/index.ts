@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cookie from "@fastify/cookie";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
 
@@ -9,6 +10,7 @@ app.get("/api/v1/_healthcheck", async () => {
 });
 
 async function main() {
+  await app.register(cookie);
   await registerSessionMiddleware(app);
   await registerAuthRoutes(app);
   const port = Number(process.env.PORT || 3000);

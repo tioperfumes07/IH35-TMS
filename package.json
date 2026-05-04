@@ -17,6 +17,7 @@
     "db:verify:outbox-drain": "node scripts/db-verify-outbox-drain.mjs"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.0.2",
     "@lucia-auth/adapter-postgresql": "^3.1.2",
     "arctic": "^2.3.4",
     "bullmq": "^5.76.5",
