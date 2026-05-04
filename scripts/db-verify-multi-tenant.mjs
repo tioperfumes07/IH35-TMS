@@ -161,7 +161,7 @@ try {
   await startServer(process.cwd());
 
   results.push(
-    await pass("Owner user (Jorge) sees all 3 companies via /api/v1/org/me/companies", async () => {
+    await pass("Owner user (Jorge) sees only active companies via /api/v1/org/me/companies", async () => {
       const response = await fetch(`${apiBase}/api/v1/org/me/companies`, {
         headers: {
           Cookie: `ih35_session=${ownerSessionId}`,
@@ -172,8 +172,8 @@ try {
       }
       const payload = await response.json();
       const codes = new Set((payload.companies ?? []).map((row) => row.code));
-      if (!codes.has("TRK") || !codes.has("TRANSP") || !codes.has("USMCA")) {
-        throw new Error(`Expected TRK/TRANSP/USMCA, got ${Array.from(codes).join(",")}`);
+      if (!codes.has("TRK") || !codes.has("TRANSP") || codes.has("USMCA")) {
+        throw new Error(`Expected TRK/TRANSP only, got ${Array.from(codes).join(",")}`);
       }
     })
   );
