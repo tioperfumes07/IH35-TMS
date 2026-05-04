@@ -10,7 +10,7 @@ export type UserRole =
 
 export type IdentityUser = {
   id: string;
-  email: string;
+  email: string | null;
   role: UserRole;
   created_at: string;
   deactivated_at: string | null;
@@ -19,7 +19,7 @@ export type IdentityUser = {
 export type AuthMeResponse = {
   user: {
     uuid: string;
-    email: string;
+    email: string | null;
     role: UserRole;
   };
   session: {
@@ -73,6 +73,7 @@ export type Driver = {
 
 export type CreateDriverInput = {
   identity_user_id?: string;
+  create_login_user?: boolean;
   first_name: string;
   last_name: string;
   phone: string;

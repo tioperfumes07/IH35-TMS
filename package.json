@@ -32,6 +32,7 @@
     "db:verify:catalogs-rls": "node scripts/db-verify-catalogs-rls.mjs",
     "db:verify:catalogs-workflows": "node scripts/db-verify-catalogs-workflows.mjs",
     "db:verify:phase1-audit-coverage": "node scripts/db-verify-phase1-audit-coverage.mjs",
+    "db:verify:phone-auth": "node scripts/db-verify-phone-auth.mjs",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
   },
@@ -49,6 +50,7 @@
     "lucia": "^3.2.2",
     "oslo": "^1.2.1",
     "pg": "^8.20.0",
+    "twilio": "^6.0.0",
     "zod": "^4.4.2"
   },
   "devDependencies": {

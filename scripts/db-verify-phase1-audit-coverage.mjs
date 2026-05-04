@@ -58,13 +58,19 @@ const EVENT_CLASSES = [
   "catalogs.posting_templates.is_active_changed",
   "catalogs.account_role_bindings.created",
   "catalogs.account_role_bindings.updated",
+  "auth.phone.verification_started",
+  "auth.phone.verification_fallback_sms",
+  "auth.phone.verified",
+  "identity.users.deactivated_via_driver_deactivation",
 ];
 
 const WARNING_EVENTS = new Set([
   "identity.users.updated",
+  "identity.users.deactivated_via_driver_deactivation",
   "catalogs.posting_templates.is_active_changed",
   "catalogs.account_role_bindings.created",
   "catalogs.account_role_bindings.updated",
+  "auth.phone.verification_fallback_sms",
 ]);
 
 async function runWithBypass(client, fn) {
@@ -124,7 +130,7 @@ try {
   });
 
   results.push(
-    await pass("All 39 CRUD event classes append successfully", async () => {
+    await pass(`All ${EVENT_CLASSES.length} CRUD event classes append successfully`, async () => {
       await runWithBypass(client, async () => {
         for (const eventClass of EVENT_CLASSES) {
           const severity = WARNING_EVENTS.has(eventClass) ? "warning" : "info";
@@ -146,7 +152,7 @@ try {
   );
 
   results.push(
-    await pass("Coverage run wrote all 39 expected audit rows", async () => {
+    await pass(`Coverage run wrote all ${EVENT_CLASSES.length} expected audit rows`, async () => {
       await client.query("RESET ROLE");
       await client.query("BEGIN");
       try {

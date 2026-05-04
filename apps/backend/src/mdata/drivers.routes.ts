@@ -7,6 +7,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
 const cdlClassSchema = z.enum(["A", "B", "C"]);
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const e164PhoneSchema = z.string().regex(/^\+\d{10,15}$/, "phone must be E.164 format (e.g., +19565550001)");
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -19,9 +20,10 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 
 const createDriverBodySchema = z.object({
   identity_user_id: z.string().uuid().optional(),
+  create_login_user: z.boolean().optional().default(false),
   first_name: z.string().trim().min(1).max(100),
   last_name: z.string().trim().min(1).max(100),
-  phone: z.string().trim().min(1).max(50),
+  phone: e164PhoneSchema,
   email: z
     .string()
     .email()
@@ -74,6 +76,10 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 
 function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager";
+}
+
+function statusDisablesDriverLogin(status: string): boolean {
+  return status === "Inactive" || status === "Terminated";
 }
 
 export async function registerDriverRoutes(app: FastifyInstance) {
@@ -129,6 +135,22 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        let identityUserId = b.identity_user_id ?? null;
+        if (b.create_login_user) {
+          const userRes = await client.query<{ id: string }>(
+            `
+              INSERT INTO identity.users (email, role, phone)
+              VALUES (NULL, 'Driver', $1)
+              RETURNING id
+            `,
+            [b.phone]
+          );
+          identityUserId = userRes.rows[0]?.id ?? null;
+          if (!identityUserId) {
+            throw new Error("failed_to_create_identity_user");
+          }
+        }
+
         const res = await client.query(
           `
             INSERT INTO mdata.drivers (
@@ -144,7 +166,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           [
-            b.identity_user_id ?? null,
+            identityUserId,
             b.first_name,
             b.last_name,
             b.phone,
@@ -162,6 +184,22 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           ]
         );
         const row = res.rows[0];
+        if (b.create_login_user && identityUserId) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "identity.users.created",
+            {
+              resource_id: identityUserId,
+              resource_type: "identity.users",
+              phone: b.phone,
+              role: "Driver",
+              linked_driver_id: row.id,
+            },
+            "warning",
+            "BT-1-AUTH-DRIVER"
+          );
+        }
         await appendCrudAudit(client, authUser.uuid, "mdata.drivers.created", {
           resource_id: row.id,
           resource_type: "mdata.drivers",
@@ -277,6 +315,38 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         const updatedRow = res.rows[0] ?? null;
         if (!updatedRow) return null;
 
+        const oldStatus = String(oldRow.status ?? "");
+        const newStatus = String(updatedRow.status ?? oldStatus);
+        const identityUserId = (updatedRow.identity_user_id as string | null) ?? (oldRow.identity_user_id as string | null);
+        if (identityUserId && !statusDisablesDriverLogin(oldStatus) && statusDisablesDriverLogin(newStatus)) {
+          const identityDeactivateRes = await client.query<{ deactivated_at: string | null }>(
+            `
+              UPDATE identity.users
+              SET deactivated_at = now()
+              WHERE id = $1
+                AND deactivated_at IS NULL
+              RETURNING deactivated_at
+            `,
+            [identityUserId]
+          );
+          if (identityDeactivateRes.rows.length > 0) {
+            await appendCrudAudit(
+              client,
+              authUser.uuid,
+              "identity.users.deactivated_via_driver_deactivation",
+              {
+                resource_id: identityUserId,
+                resource_type: "identity.users",
+                driver_id: updatedRow.id,
+                driver_status_from: oldStatus,
+                driver_status_to: newStatus,
+              },
+              "warning",
+              "BT-1-AUTH-DRIVER"
+            );
+          }
+        }
+
         const changes = buildPatchChanges(
           b as unknown as Record<string, unknown>,
           oldRow as Record<string, unknown>,
@@ -309,7 +379,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, deactivated_at
+          SELECT id, deactivated_at, identity_user_id, status
           FROM mdata.drivers
           WHERE id = $1
           LIMIT 1
@@ -336,6 +406,35 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         wasAlreadyDeactivated = false;
       }
 
+      const identityUserId = oldRow.identity_user_id as string | null;
+      if (identityUserId) {
+        const identityDeactivateRes = await client.query<{ deactivated_at: string | null }>(
+          `
+            UPDATE identity.users
+            SET deactivated_at = now()
+            WHERE id = $1
+              AND deactivated_at IS NULL
+            RETURNING deactivated_at
+          `,
+          [identityUserId]
+        );
+        if (identityDeactivateRes.rows.length > 0) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "identity.users.deactivated_via_driver_deactivation",
+            {
+              resource_id: identityUserId,
+              resource_type: "identity.users",
+              driver_id: oldRow.id,
+              driver_status: oldRow.status,
+            },
+            "warning",
+            "BT-1-AUTH-DRIVER"
+          );
+        }
+      }
+
       await appendCrudAudit(client, authUser.uuid, "mdata.drivers.deactivated", {
         resource_id: oldRow.id,
         resource_type: "mdata.drivers",
@@ -346,5 +445,134 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     });
     if (!deactivated) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return deactivated;
+  });
+
+  app.post("/api/v1/mdata/drivers/:id/enable-phone-login", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    try {
+      const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        const driverRes = await client.query<{ id: string; phone: string; identity_user_id: string | null }>(
+          `
+            SELECT id, phone, identity_user_id
+            FROM mdata.drivers
+            WHERE id = $1
+            LIMIT 1
+          `,
+          [parsedParams.data.id]
+        );
+        const driver = driverRes.rows[0];
+        if (!driver) return { error: "mdata_driver_not_found" as const };
+        if (driver.identity_user_id) return { error: "driver_phone_login_already_enabled" as const };
+
+        const userRes = await client.query<{ id: string }>(
+          `
+            INSERT INTO identity.users (email, role, phone)
+            VALUES (NULL, 'Driver', $1)
+            RETURNING id
+          `,
+          [driver.phone]
+        );
+        const identityUserId = userRes.rows[0]?.id;
+        if (!identityUserId) return { error: "identity_user_create_failed" as const };
+
+        await client.query(`UPDATE mdata.drivers SET identity_user_id = $2, updated_by_user_id = $3 WHERE id = $1`, [
+          driver.id,
+          identityUserId,
+          authUser.uuid,
+        ]);
+
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "identity.users.created",
+          {
+            resource_id: identityUserId,
+            resource_type: "identity.users",
+            role: "Driver",
+            phone: driver.phone,
+            linked_driver_id: driver.id,
+          },
+          "warning",
+          "BT-1-AUTH-DRIVER"
+        );
+
+        return { identity_user_id: identityUserId };
+      });
+
+      if ("error" in updated) {
+        if (updated.error === "mdata_driver_not_found") return reply.code(404).send({ error: updated.error });
+        if (updated.error === "driver_phone_login_already_enabled") return reply.code(409).send({ error: updated.error });
+        return reply.code(400).send({ error: updated.error });
+      }
+
+      return { ok: true, ...updated };
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === "23505") return reply.code(409).send({ error: "identity_user_phone_conflict" });
+      throw err;
+    }
+  });
+
+  app.post("/api/v1/mdata/drivers/:id/disable-phone-login", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      const driverRes = await client.query<{ id: string; identity_user_id: string | null }>(
+        `
+          SELECT id, identity_user_id
+          FROM mdata.drivers
+          WHERE id = $1
+          LIMIT 1
+        `,
+        [parsedParams.data.id]
+      );
+      const driver = driverRes.rows[0];
+      if (!driver) return { error: "mdata_driver_not_found" as const };
+      if (!driver.identity_user_id) return { error: "driver_phone_login_not_enabled" as const };
+
+      const deactivateRes = await client.query<{ deactivated_at: string | null }>(
+        `
+          UPDATE identity.users
+          SET deactivated_at = now()
+          WHERE id = $1
+            AND deactivated_at IS NULL
+          RETURNING deactivated_at
+        `,
+        [driver.identity_user_id]
+      );
+      const changed = deactivateRes.rows.length > 0;
+      if (changed) {
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "identity.users.deactivated",
+          {
+            resource_id: driver.identity_user_id,
+            resource_type: "identity.users",
+            driver_id: driver.id,
+            reason: "manual_phone_login_disable",
+          },
+          "warning",
+          "BT-1-AUTH-DRIVER"
+        );
+      }
+      return { identity_user_id: driver.identity_user_id, changed };
+    });
+
+    if ("error" in result) {
+      if (result.error === "mdata_driver_not_found") return reply.code(404).send({ error: result.error });
+      return reply.code(409).send({ error: result.error });
+    }
+
+    return { ok: true, ...result };
   });
 }

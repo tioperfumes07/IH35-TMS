@@ -75,7 +75,7 @@ export function UsersPage() {
     const list = usersQuery.data ?? [];
     const keyword = search.trim().toLowerCase();
     if (!keyword) return list;
-    return list.filter((user) => user.email.toLowerCase().includes(keyword) || user.role.toLowerCase().includes(keyword));
+    return list.filter((user) => (user.email ?? "").toLowerCase().includes(keyword) || user.role.toLowerCase().includes(keyword));
   }, [usersQuery.data, search]);
 
   return (

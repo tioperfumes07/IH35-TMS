@@ -30,3 +30,13 @@ export function deactivateDriver(id: string) {
     { method: "POST" }
   );
 }
+
+export function enableDriverPhoneLogin(id: string) {
+  return apiRequest<{ ok: true; identity_user_id: string }>(`/api/v1/mdata/drivers/${id}/enable-phone-login`, { method: "POST" });
+}
+
+export function disableDriverPhoneLogin(id: string) {
+  return apiRequest<{ ok: true; identity_user_id: string; changed: boolean }>(`/api/v1/mdata/drivers/${id}/disable-phone-login`, {
+    method: "POST",
+  });
+}

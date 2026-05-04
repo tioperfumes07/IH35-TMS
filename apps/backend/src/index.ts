@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
+import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerIdentityRoutes } from "./identity/routes.js";
@@ -21,6 +22,11 @@ const ALLOWED_ORIGINS = (
   .map((value) => value.trim())
   .filter(Boolean);
 
+// Required for BT-1-AUTH-DRIVER phone auth:
+// - TWILIO_ACCOUNT_SID
+// - TWILIO_AUTH_TOKEN
+// - TWILIO_VERIFY_SERVICE_SID
+
 app.get("/api/v1/_healthcheck", async () => {
   return { status: "ok" };
 });
@@ -39,6 +45,7 @@ async function main() {
   await app.register(cookie);
   await registerSessionMiddleware(app);
   await registerAuthRoutes(app);
+  await registerPhoneAuthRoutes(app);
   await registerIdentityRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);

@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { deactivateDriver, getDriver, updateDriver } from "../api/mdata";
+import { ApiError } from "../api/client";
+import { deactivateDriver, disableDriverPhoneLogin, enableDriverPhoneLogin, getDriver, updateDriver } from "../api/mdata";
 import { Button } from "../components/Button";
+import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 
@@ -19,6 +21,7 @@ export function DriverDetailPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
+  const [enableModalOpen, setEnableModalOpen] = useState(false);
 
   const driverQuery = useQuery({
     queryKey: ["driver", id],
@@ -82,6 +85,33 @@ export function DriverDetailPage() {
     onError: () => pushToast("Failed to deactivate driver", "error"),
   });
 
+  const enablePhoneLoginMutation = useMutation({
+    mutationFn: () => enableDriverPhoneLogin(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["driver", id] });
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      setEnableModalOpen(false);
+      pushToast("Phone login enabled", "success");
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 409) {
+        pushToast("Phone login is already enabled", "info");
+        return;
+      }
+      pushToast("Failed to enable phone login", "error");
+    },
+  });
+
+  const disablePhoneLoginMutation = useMutation({
+    mutationFn: () => disableDriverPhoneLogin(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["driver", id] });
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      pushToast("Phone login disabled", "info");
+    },
+    onError: () => pushToast("Failed to disable phone login", "error"),
+  });
+
   if (driverQuery.isLoading) {
     return <div className="text-sm text-gray-500">Loading driver...</div>;
   }
@@ -109,6 +139,9 @@ export function DriverDetailPage() {
     ["dot_medical_expires_at", "DOT Medical Expires", "date"],
     ["hazmat_endorsement_expires_at", "Hazmat Endorsement Expires", "date"],
   ];
+
+  const hasPhoneLogin = Boolean(driver.identity_user_id);
+  const maskedPhone = driver.phone.replace(/^(\+?\d{0,2})?(\d{3})(\d{3})(\d{4})$/, "$2-$3-$4");
 
   return (
     <div className="space-y-4">
@@ -186,11 +219,49 @@ export function DriverDetailPage() {
             <option value="OnLeave">OnLeave</option>
           </select>
         </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-600">Has phone login</label>
+          <div className="rounded border border-gray-300 px-2 py-2 text-sm">{hasPhoneLogin ? "Yes" : "No"}</div>
+        </div>
+        <div className="flex items-end">
+          {!hasPhoneLogin ? (
+            <Button onClick={() => setEnableModalOpen(true)} loading={enablePhoneLoginMutation.isPending}>
+              Enable phone login
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">Phone login enabled</span>
+              <Button
+                variant="danger"
+                onClick={() => disablePhoneLoginMutation.mutate()}
+                loading={disablePhoneLoginMutation.isPending}
+              >
+                Disable login
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
         Last updated by {driver.updated_by_user_id} on {new Date(driver.updated_at).toLocaleString()}
       </div>
+
+      <Modal open={enableModalOpen} onClose={() => setEnableModalOpen(false)} title="Enable phone login">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            Use phone {maskedPhone} from this driver's record?
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setEnableModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => enablePhoneLoginMutation.mutate()} loading={enablePhoneLoginMutation.isPending}>
+              Yes
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

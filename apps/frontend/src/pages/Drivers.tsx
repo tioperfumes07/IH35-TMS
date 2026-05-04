@@ -10,12 +10,17 @@ import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 
-const statusOptions = ["All", "Probation", "Active", "Suspended", "Terminated"] as const;
+const statusOptions = ["All", "Probation", "Active", "Inactive", "Terminated", "OnLeave"] as const;
+
+function normalizePhoneDigits(value: string) {
+  return value.replace(/\D/g, "").slice(-10);
+}
 
 const createDriverSchema = z.object({
   first_name: z.string().trim().min(1),
   last_name: z.string().trim().min(1),
-  phone: z.string().trim().min(1),
+  phone_input: z.string().trim().min(1).refine((value) => normalizePhoneDigits(value).length === 10, "phone must have 10 digits"),
+  country_code: z.enum(["+1", "+52"]).default("+1"),
   email: z.string().trim().email().optional().or(z.literal("")),
   cdl_number: z.string().trim().optional(),
   cdl_state: z.string().trim().optional(),
@@ -43,7 +48,8 @@ export function DriversPage() {
   const [form, setForm] = useState<Record<string, string>>({
     first_name: "",
     last_name: "",
-    phone: "",
+    phone_input: "",
+    country_code: "+1",
     email: "",
     cdl_number: "",
     cdl_state: "",
@@ -52,6 +58,7 @@ export function DriversPage() {
     hire_date: "",
     dot_medical_expires_at: "",
     status: "Probation",
+    allow_phone_login: "false",
   });
 
   const driversQuery = useQuery({
@@ -72,7 +79,8 @@ export function DriversPage() {
       setForm({
         first_name: "",
         last_name: "",
-        phone: "",
+        phone_input: "",
+        country_code: "+1",
         email: "",
         cdl_number: "",
         cdl_state: "",
@@ -81,6 +89,7 @@ export function DriversPage() {
         hire_date: "",
         dot_medical_expires_at: "",
         status: "Probation",
+        allow_phone_login: "false",
       });
     },
   });
@@ -158,14 +167,20 @@ export function DriversPage() {
             }
 
             try {
+              const normalizedPhone = `${parsed.data.country_code}${normalizePhoneDigits(parsed.data.phone_input)}`;
               await createMutation.mutateAsync({
-                ...parsed.data,
+                first_name: parsed.data.first_name,
+                last_name: parsed.data.last_name,
+                phone: normalizedPhone,
                 email: parsed.data.email || undefined,
                 cdl_number: parsed.data.cdl_number || undefined,
                 cdl_state: parsed.data.cdl_state || undefined,
+                cdl_class: parsed.data.cdl_class,
                 cdl_expires_at: parsed.data.cdl_expires_at || undefined,
                 hire_date: parsed.data.hire_date || undefined,
                 dot_medical_expires_at: parsed.data.dot_medical_expires_at || undefined,
+                status: parsed.data.status,
+                create_login_user: form.allow_phone_login === "true",
               });
             } catch (error) {
               if (error instanceof ApiError && error.status === 409) {
@@ -179,7 +194,6 @@ export function DriversPage() {
           {[
             ["first_name", "First Name"],
             ["last_name", "Last Name"],
-            ["phone", "Phone"],
             ["email", "Email"],
             ["cdl_number", "CDL #"],
             ["cdl_state", "CDL State"],
@@ -197,6 +211,26 @@ export function DriversPage() {
               />
             </div>
           ))}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Country</label>
+            <select
+              value={form.country_code}
+              onChange={(event) => setForm((current) => ({ ...current, country_code: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            >
+              <option value="+1">US (+1)</option>
+              <option value="+52">Mexico (+52)</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Phone (10 digits)</label>
+            <input
+              value={form.phone_input}
+              onChange={(event) => setForm((current) => ({ ...current, phone_input: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              placeholder="(956) 555-0001"
+            />
+          </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">CDL Class</label>
             <select
@@ -222,6 +256,19 @@ export function DriversPage() {
               <option value="Terminated">Terminated</option>
               <option value="OnLeave">OnLeave</option>
             </select>
+          </div>
+          <div className="col-span-full rounded-md border border-gray-200 p-3">
+            <label className="flex items-start gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={form.allow_phone_login === "true"}
+                onChange={(event) => setForm((current) => ({ ...current, allow_phone_login: String(event.target.checked) }))}
+                className="mt-0.5"
+              />
+              <span>
+                Allow phone login (creates a user account so this driver can sign in via WhatsApp/SMS)
+              </span>
+            </label>
           </div>
 
           <div className="col-span-full flex justify-end gap-2">
