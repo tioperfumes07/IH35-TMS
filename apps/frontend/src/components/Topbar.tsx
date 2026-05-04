@@ -1,4 +1,5 @@
 import { ChevronDown } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { signOut } from "../api/identity";
 import type { AuthMeResponse } from "../types/api";
@@ -23,6 +24,7 @@ export function Topbar({ auth }: Props) {
   const [now, setNow] = useState(() => new Date());
   const [open, setOpen] = useState(false);
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -71,8 +73,14 @@ export function Topbar({ auth }: Props) {
               className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-gray-100"
               onClick={async () => {
                 setOpen(false);
-                await signOut();
-                window.location.href = "/login";
+                try {
+                  await signOut();
+                } catch {
+                  pushToast("Sign out failed, redirecting to login", "info");
+                } finally {
+                  queryClient.removeQueries({ queryKey: ["auth", "me"] });
+                  window.location.href = "/login";
+                }
               }}
             >
               Sign out
