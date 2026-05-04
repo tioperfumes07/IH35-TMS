@@ -5,6 +5,7 @@ import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerIdentityRoutes } from "./identity/routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
+import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 
 const app = Fastify({ logger: true });
 
@@ -19,6 +20,7 @@ async function main() {
   await registerIdentityRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);
+  await registerMdataWorkflowRoutes(app);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {
