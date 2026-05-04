@@ -17,3 +17,9 @@
 | 2026-05-04 | BT-1-IDENT-01 third hot fix: pg pool checkout reset behavior could clear session-level `app.bypass_rls`, so Lucia adapter and `findOrCreateUser` sometimes ran without active bypass at query time. Fixed by setting lucia bypass as a startup connection option (`options=-c app.bypass_rls=lucia`) on `luciaPool` and wrapping `findOrCreateUser` in `withLuciaBypass` (`BEGIN` + `SET LOCAL` + `COMMIT`). | Jorge | Resolved | Build Spec MUST 6.6.1 |
 | 2026-05-04 | BT-1-IDENT-01 fourth hot fix: Neon's pooler (PgBouncer) rejects custom startup parameters. Switched `luciaPool` to `DATABASE_DIRECT_URL` (unpooled) so `options=-c app.bypass_rls=lucia` works. Regular `pool` remains on `DATABASE_URL` (pooled). `luciaPool` is auth-only low-volume traffic. | Jorge | Resolved | Build Spec MUST 6.6.1; Neon docs https://neon.tech/docs/connect/connection-errors#unsupported-startup-parameter |
 | 2026-05-04 | BT-1-IDENT-02 implements per-request DB helper `withCurrentUser(userUuid, fn)` that wraps queries in `BEGIN / SET LOCAL app.current_user_id / COMMIT`. This is the deferred wiring from BT-1-IDENT-01 and is now used for identity endpoints to enforce RLS correctly. | Jorge | Resolved | Build Spec MUST 6.6.2 |
+| 2026-05-04 | BT-1-IDENT-03 introduces `identity.workflow_requests` for WF-064 identity actions. RLS allows requester + target + admin visibility and workflow decision transitions emit audit events inside the same transaction for atomicity. | Jorge | Resolved | Master Blueprint Part 4 §4.7 + MUST 4.9 |
+| 2026-05-04 | BT-1-IDENT-03 enforces `cannot decide own request` in app code (403) rather than RLS. This keeps policies simple while preserving explicit business-rule guardrails for approve/reject actions. | Jorge | Resolved | Build Spec MUST 6.6.1 |
+
+## TODO
+
+- Add end-to-end HTTP integration harness for identity/workflow endpoints in Phase 1 (currently relying on DB verification scripts + production smoke checks).
