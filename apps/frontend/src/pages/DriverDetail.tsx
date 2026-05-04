@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { History, Pencil } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
@@ -382,7 +383,7 @@ export function DriverDetailPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="text-xs font-semibold text-gray-500">
         <button type="button" className="text-sky-700 hover:underline" onClick={() => navigate("/drivers")}>
           Drivers
@@ -426,14 +427,14 @@ export function DriverDetailPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-1">
+      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
         <div className="flex min-w-max gap-1">
           {tabs.map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`rounded px-3 py-2 text-sm font-medium ${
+              className={`rounded px-2.5 py-1.5 text-xs font-medium ${
                 activeTab === tab ? "bg-sky-100 text-sky-800" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
@@ -671,11 +672,11 @@ export function DriverDetailPage() {
               ) : null}
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {qualifications.map((qualification) => (
               <div
                 key={qualification.id}
-                className={`rounded border p-3 ${
+                className={`rounded border p-2.5 ${
                   qualification.is_active ? "border-gray-200 bg-white" : "border-gray-300 bg-gray-100"
                 }`}
               >
@@ -692,21 +693,24 @@ export function DriverDetailPage() {
                       {qualification.is_active ? "Active" : "Inactive"}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-600">Qualified: {formatDate(qualification.qualified_at)}</div>
+                  <div className="text-[11px] text-gray-600">Qualified: {formatDate(qualification.qualified_at)}</div>
                 </div>
-                <div className="mt-2 space-y-2">
+                <div className="mt-1.5 space-y-1.5">
                   {qualification.current_rates.map((line) => (
-                    <div key={line.line_item_template_id} className="rounded border border-gray-100 bg-gray-50 p-2">
+                    <div key={line.line_item_template_id} className="rounded border border-gray-100 bg-gray-50 p-1.5">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-sm font-medium text-gray-800">
+                        <div className="text-[13px] font-medium text-gray-800">
                           {line.line_item_name} ({line.line_item_code})
                         </div>
-                        <div className="text-sm text-gray-700">{line.amount ? `$${Number(line.amount).toFixed(2)}` : "No rate set"}</div>
+                        <div className="text-[13px] font-semibold text-gray-700">
+                          {line.amount ? `$${Number(line.amount).toFixed(2)}` : "No rate set"}
+                        </div>
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {canManageRates && qualification.is_active ? (
                           <Button
                             variant="secondary"
+                            size="sm"
                             onClick={() => {
                               setSelectedQualificationId(qualification.id);
                               setSelectedLineItemId(line.line_item_template_id);
@@ -720,11 +724,12 @@ export function DriverDetailPage() {
                               setRateModalOpen(true);
                             }}
                           >
-                            Edit rate
+                            <Pencil className="h-3.5 w-3.5" />
                           </Button>
                         ) : null}
                         <Button
                           variant="secondary"
+                          size="sm"
                           onClick={() => {
                             setSelectedQualificationId(qualification.id);
                             setSelectedLineItemId(line.line_item_template_id);
@@ -733,16 +738,17 @@ export function DriverDetailPage() {
                             setHistoryModalOpen(true);
                           }}
                         >
-                          View history
+                          <History className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>
                   ))}
                 </div>
                 {canManageRates && qualification.is_active ? (
-                  <div className="mt-3">
+                  <div className="mt-2">
                     <Button
                       variant="danger"
+                      size="sm"
                       onClick={() =>
                         deactivateQualificationMutation.mutate({
                           driverId: id,
@@ -751,14 +757,15 @@ export function DriverDetailPage() {
                       }
                       loading={deactivateQualificationMutation.isPending}
                     >
-                      Deactivate qualification
+                      Deactivate
                     </Button>
                   </div>
                 ) : null}
                 {canManageRates && !qualification.is_active ? (
-                  <div className="mt-3">
+                  <div className="mt-2">
                     <Button
                       variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setReactivateTargetQualification({
                           id: qualification.id,
@@ -767,13 +774,13 @@ export function DriverDetailPage() {
                         setReactivateModalOpen(true);
                       }}
                     >
-                      Reactivate qualification
+                      Reactivate
                     </Button>
                   </div>
                 ) : null}
               </div>
             ))}
-            {qualifications.length === 0 ? <div className="text-sm text-gray-500">No qualifications found for this driver.</div> : null}
+            {qualifications.length === 0 ? <div className="text-[13px] text-gray-500">No qualifications found for this driver.</div> : null}
           </div>
         </div>
       ) : null}

@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { Pencil } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import {
   createDriverLoadStatus,
@@ -69,6 +71,7 @@ export function DriverLoadStatusesPage() {
   const [selectedStatus, setSelectedStatus] = useState<DriverLoadStatus | null>(null);
   const [createForm, setCreateForm] = useState<StatusFormState>(emptyForm());
   const [editForm, setEditForm] = useState<StatusFormState>(emptyForm());
+  const [searchParams] = useSearchParams();
 
   const statusesQuery = useQuery({
     queryKey: ["catalogs", "driver-load-statuses", includeInactive],
@@ -97,9 +100,15 @@ export function DriverLoadStatusesPage() {
   });
 
   const statuses = useMemo(() => statusesQuery.data ?? [], [statusesQuery.data]);
+  const highlightId = searchParams.get("highlight");
+
+  useEffect(() => {
+    if (!highlightId) return;
+    document.getElementById(`driver-status-${highlightId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightId]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">Driver Load Statuses Catalog</h1>
         <div className="flex items-center gap-2">
@@ -114,31 +123,38 @@ export function DriverLoadStatusesPage() {
       </div>
 
       {statusesQuery.isLoading ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading statuses...</div>
+        <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading statuses...</div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {statuses.map((status) => (
-            <div key={status.id} className="rounded border border-gray-200 bg-white p-3">
-              <div className="flex items-start justify-between gap-3">
+            <div
+              key={status.id}
+              id={`driver-status-${status.id}`}
+              className={`rounded border bg-white p-2.5 ${
+                highlightId === status.id ? "border-blue-300 ring-1 ring-blue-200" : "border-gray-200"
+              }`}
+            >
+              <div className="flex min-h-8 items-start justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{status.code}</span>
-                    <span className="text-sm font-semibold text-gray-900">{status.name}</span>
-                    <span className="rounded bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">{phaseLabel[status.phase]}</span>
+                    <span className="text-[13px] font-semibold text-gray-900">{status.name}</span>
+                    <span className="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">{phaseLabel[status.phase]}</span>
                     <span
-                      className={`rounded px-2 py-0.5 text-xs font-semibold ${
+                      className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
                         status.is_active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
                       }`}
                     >
                       {status.is_active ? "Active" : "Inactive"}
                     </span>
                   </div>
-                  <div className="mt-1 text-xs text-gray-600">Sort {status.sort_order}</div>
-                  {status.description ? <div className="mt-1 text-xs text-gray-600">{status.description}</div> : null}
+                  <div className="mt-0.5 text-[11px] text-gray-600">Sort {status.sort_order}</div>
+                  {status.description ? <div className="mt-0.5 text-[11px] text-gray-600">{status.description}</div> : null}
                 </div>
                 {canManage ? (
                   <Button
                     variant="secondary"
+                    size="sm"
                     onClick={() => {
                       setSelectedStatus(status);
                       setEditForm({
@@ -152,13 +168,13 @@ export function DriverLoadStatusesPage() {
                       setEditOpen(true);
                     }}
                   >
-                    Edit
+                    <Pencil className="h-3.5 w-3.5" />
                   </Button>
                 ) : null}
               </div>
             </div>
           ))}
-          {statuses.length === 0 ? <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">No statuses found.</div> : null}
+          {statuses.length === 0 ? <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No statuses found.</div> : null}
         </div>
       )}
 

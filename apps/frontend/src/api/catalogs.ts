@@ -103,6 +103,59 @@ export type UpdateDriverLoadStatusInput = {
   is_active?: boolean;
 };
 
+export type CatalogRegistryDepartment = "dispatch" | "safety" | "accounting" | "identity" | "operations";
+
+export type CatalogRegistryItem = {
+  code: string;
+  name: string;
+  description: string | null;
+  route_path: string;
+  icon_label: string;
+  sort_order: number;
+  item_count: number;
+  last_updated_at: string | null;
+};
+
+export type CatalogRegistryDepartmentGroup = {
+  code: CatalogRegistryDepartment;
+  name: string;
+  catalogs: CatalogRegistryItem[];
+};
+
+export type CatalogPreviewItem = {
+  id: string;
+  label: string;
+  sub_label: string | null;
+  route_path: string;
+};
+
+export type CatalogPreviewResponse = {
+  code: string;
+  name: string;
+  items: CatalogPreviewItem[];
+  truncated: boolean;
+};
+
+export type CreateCatalogRegistryEntryInput = {
+  code: string;
+  name: string;
+  description?: string;
+  department: CatalogRegistryDepartment;
+  route_path: string;
+  icon_label: string;
+  sort_order?: number;
+};
+
+export type UpdateCatalogRegistryEntryInput = Partial<{
+  name: string;
+  description: string | null;
+  department: CatalogRegistryDepartment;
+  route_path: string;
+  icon_label: string;
+  sort_order: number;
+  is_active: boolean;
+}>;
+
 export function listEquipmentTypes(includeInactive = false) {
   const query = includeInactive ? "?include_inactive=true" : "";
   return apiRequest<{ equipment_types: EquipmentType[] }>(`/api/v1/catalogs/equipment-types${query}`);
@@ -142,4 +195,20 @@ export function createDriverLoadStatus(payload: CreateDriverLoadStatusInput) {
 
 export function updateDriverLoadStatus(id: string, payload: UpdateDriverLoadStatusInput) {
   return apiRequest<{ status: DriverLoadStatus }>(`/api/v1/catalogs/driver-load-statuses/${id}`, { method: "PATCH", body: payload });
+}
+
+export function listCatalogRegistry() {
+  return apiRequest<{ departments: CatalogRegistryDepartmentGroup[] }>("/api/v1/catalogs/registry");
+}
+
+export function previewCatalog(code: string) {
+  return apiRequest<CatalogPreviewResponse>(`/api/v1/catalogs/registry/${code}/preview`);
+}
+
+export function createCatalogRegistryEntry(payload: CreateCatalogRegistryEntryInput) {
+  return apiRequest<{ entry: unknown }>("/api/v1/catalogs/registry", { method: "POST", body: payload });
+}
+
+export function updateCatalogRegistryEntry(id: string, payload: UpdateCatalogRegistryEntryInput) {
+  return apiRequest<{ entry: unknown }>(`/api/v1/catalogs/registry/${id}`, { method: "PATCH", body: payload });
 }

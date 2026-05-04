@@ -162,7 +162,7 @@ export function DriversPage() {
   const drivers = useMemo(() => driversQuery.data ?? [], [driversQuery.data]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">Drivers</h1>
         <Button onClick={() => setAddOpen(true)}>Add Driver</Button>
@@ -172,7 +172,7 @@ export function DriversPage() {
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as (typeof statusOptions)[number])}
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
+          className="h-8 rounded border border-gray-300 px-2 text-[13px]"
         >
           {statusOptions.map((option) => (
             <option key={option} value={option}>
@@ -184,7 +184,7 @@ export function DriversPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search by name"
-          className="w-full max-w-xs rounded border border-gray-300 px-3 py-2 text-sm"
+          className="h-8 w-full max-w-xs rounded border border-gray-300 px-2 text-[13px]"
         />
       </div>
 

@@ -50,16 +50,16 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" onMouseDown={onClose}>
       <div
         ref={panelRef}
-        className="w-full max-w-lg rounded-lg bg-white p-4 shadow-xl"
+        className="w-full max-w-lg rounded-lg bg-white shadow-xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="mb-3 flex items-center justify-between border-b border-gray-200 pb-2">
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-          <button className="text-sm text-gray-500 hover:text-gray-700" onClick={onClose} type="button">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+          <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+          <button className="text-xs text-gray-500 hover:text-gray-700" onClick={onClose} type="button">
             Close
           </button>
         </div>
-        {children}
+        <div className="px-4 py-4">{children}</div>
       </div>
     </div>,
     document.body

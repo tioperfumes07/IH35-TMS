@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Pencil } from "lucide-react";
 import { z } from "zod";
+import { useSearchParams } from "react-router-dom";
 import {
   addLineItemTemplate,
   createEquipmentType,
@@ -156,6 +158,7 @@ export function EquipmentTypesPage() {
     is_required: false,
     is_active: true,
   });
+  const [searchParams] = useSearchParams();
 
   const equipmentTypesQuery = useQuery({
     queryKey: ["catalogs", "equipment-types", includeInactive],
@@ -214,8 +217,18 @@ export function EquipmentTypesPage() {
     setExpandedIds((current) => (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]));
   }
 
+  const highlightId = searchParams.get("highlight");
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const el =
+      document.getElementById(`equipment-type-${highlightId}`) ??
+      document.getElementById(`equipment-line-item-${highlightId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightId]);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">Equipment Types Catalog</h1>
         <div className="flex items-center gap-2">
@@ -230,22 +243,26 @@ export function EquipmentTypesPage() {
       </div>
 
       {equipmentTypesQuery.isLoading ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading equipment types...</div>
+        <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading equipment types...</div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {rows.map((typeRow) => {
             const expanded = expandedIds.includes(typeRow.id);
             return (
-              <div key={typeRow.id} className="rounded border border-gray-200 bg-white">
+              <div
+                key={typeRow.id}
+                id={`equipment-type-${typeRow.id}`}
+                className={`rounded border bg-white ${highlightId === typeRow.id ? "border-blue-400 ring-1 ring-blue-200" : "border-gray-200"}`}
+              >
                 <button
                   type="button"
                   onClick={() => toggleExpanded(typeRow.id)}
-                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-gray-50"
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left hover:bg-gray-50"
                 >
                   <div className="flex min-w-0 flex-col">
                     <div className="flex items-center gap-2">
                       <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{typeRow.code}</span>
-                      <span className="text-sm font-semibold text-gray-900">{typeRow.name}</span>
+                      <span className="text-[13px] font-semibold text-gray-900">{typeRow.name}</span>
                       <span
                         className={`rounded px-2 py-0.5 text-xs font-semibold ${
                           typeRow.is_active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
@@ -254,7 +271,7 @@ export function EquipmentTypesPage() {
                         {typeRow.is_active ? "Active" : "Inactive"}
                       </span>
                     </div>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                    <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
                       <span>Sort {typeRow.sort_order}</span>
                       <span>•</span>
                       <span>{typeRow.line_items.length} line items</span>
@@ -288,34 +305,41 @@ export function EquipmentTypesPage() {
                           });
                         }
                       }}
-                      className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100"
+                      className="flex h-7 w-7 items-center justify-center rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      title="Edit equipment type"
                     >
-                      Edit
+                      <Pencil className="h-3.5 w-3.5" />
                     </span>
                   ) : null}
                 </button>
 
                 {expanded ? (
-                  <div className="border-t border-gray-200 px-4 py-3">
-                    <div className="space-y-2">
+                  <div className="border-t border-gray-200 px-3 py-2">
+                    <div className="space-y-1.5">
                       {typeRow.line_items.map((item) => (
-                        <div key={item.id} className="flex items-center justify-between gap-3 rounded border border-gray-200 px-3 py-2">
+                        <div
+                          key={item.id}
+                          id={`equipment-line-item-${item.id}`}
+                          className={`flex min-h-8 items-center justify-between gap-2 rounded border px-2 py-1 ${
+                            highlightId === item.id ? "border-blue-300 bg-blue-50" : "border-gray-200"
+                          }`}
+                        >
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{item.code}</span>
-                              <span className="text-sm text-gray-900">{item.name}</span>
+                              <span className="text-[13px] text-gray-900">{item.name}</span>
                               {item.is_required ? (
                                 <span className="rounded bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">Required</span>
                               ) : null}
                             </div>
-                            <div className="mt-1 text-xs text-gray-500">
+                            <div className="mt-0.5 text-[11px] text-gray-500">
                               {lineItemUnitLabel(item.unit)} • sort {item.sort_order}
                             </div>
                           </div>
                           {canManage ? (
                             <Button
                               variant="secondary"
-                              className="px-2 py-1 text-xs"
+                              size="sm"
                               onClick={() => {
                                 setEditingLineItem(item);
                                 setEditingLineItemForm({
@@ -328,22 +352,23 @@ export function EquipmentTypesPage() {
                                 });
                               }}
                             >
-                              Edit
+                              <Pencil className="h-3.5 w-3.5" />
                             </Button>
                           ) : null}
                         </div>
                       ))}
                     </div>
                     {canManage ? (
-                      <div className="mt-3">
+                      <div className="mt-2">
                         <Button
                           variant="secondary"
+                          size="sm"
                           onClick={() => {
                             setLineItemTargetType(typeRow);
                             setAddLineItemForm(emptyLineItem(typeRow.line_items.length * 10 + 10));
                           }}
                         >
-                          Add line item
+                          + line item
                         </Button>
                       </div>
                     ) : null}
@@ -352,7 +377,7 @@ export function EquipmentTypesPage() {
               </div>
             );
           })}
-          {rows.length === 0 ? <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">No equipment types found.</div> : null}
+          {rows.length === 0 ? <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No equipment types found.</div> : null}
         </div>
       )}
 

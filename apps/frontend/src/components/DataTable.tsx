@@ -49,11 +49,11 @@ export function DataTable<T>({
 
   return (
     <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
-      <table className="min-w-full text-left text-sm">
+      <table className="min-w-full text-left text-[13px]">
         <thead className="bg-gray-50">
           <tr>
             {columns.map((column) => (
-              <th key={String(column.key)} className={`px-3 py-2 font-semibold text-gray-700 ${column.className ?? ""}`}>
+              <th key={String(column.key)} className={`px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-600 ${column.className ?? ""}`}>
                 {column.sortable ? (
                   <button
                     type="button"
@@ -81,13 +81,13 @@ export function DataTable<T>({
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-4 text-center text-gray-500">
+              <td colSpan={columns.length} className="px-2 py-3 text-center text-[12px] text-gray-500">
                 Loading...
               </td>
             </tr>
           ) : pageRows.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-4 text-center text-gray-500">
+              <td colSpan={columns.length} className="px-2 py-3 text-center text-[12px] text-gray-500">
                 No records found.
               </td>
             </tr>
@@ -99,7 +99,7 @@ export function DataTable<T>({
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >
                 {columns.map((column) => (
-                  <td key={String(column.key)} className={`px-3 py-2 text-gray-800 ${column.className ?? ""}`}>
+                  <td key={String(column.key)} className={`h-8 px-2 py-1 text-gray-800 ${column.className ?? ""}`}>
                     {column.render ? column.render(row) : String((row as Record<string, unknown>)[String(column.key)] ?? "")}
                   </td>
                 ))}
@@ -108,14 +108,14 @@ export function DataTable<T>({
           )}
         </tbody>
       </table>
-      <div className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-xs text-gray-600">
+      <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600">
         <span>
           {sortedRows.length === 0 ? 0 : offset + 1}-{Math.min(offset + pageSize, sortedRows.length)} of {sortedRows.length}
         </span>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+            className="h-7 rounded border border-gray-300 px-2 disabled:opacity-40"
             onClick={() => setPage((current) => Math.max(1, current - 1))}
             disabled={safePage <= 1}
           >
@@ -126,7 +126,7 @@ export function DataTable<T>({
           </span>
           <button
             type="button"
-            className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+            className="h-7 rounded border border-gray-300 px-2 disabled:opacity-40"
             onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
             disabled={safePage >= pageCount}
           >
