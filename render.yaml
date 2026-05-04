@@ -16,3 +16,15 @@ services:
     envVars:
       - key: VITE_API_BASE_URL
         value: https://ih35-tms.onrender.com
+
+  - type: static
+    name: ih35-tms-driver
+    buildCommand: cd apps/driver-pwa && npm install && npm run build
+    staticPublishPath: apps/driver-pwa/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://ih35-tms.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

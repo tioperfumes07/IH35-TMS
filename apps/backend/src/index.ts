@@ -13,7 +13,10 @@ import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
 const app = Fastify({ logger: true });
-const ALLOWED_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS ?? "https://ih35-tms-web.onrender.com,http://localhost:5173")
+const ALLOWED_ORIGINS = (
+  process.env.CORS_ALLOWED_ORIGINS ??
+  "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174"
+)
   .split(",")
   .map((value) => value.trim())
   .filter(Boolean);
