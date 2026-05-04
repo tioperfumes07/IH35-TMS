@@ -64,6 +64,10 @@ const EVENT_CLASSES = [
   "identity.users.deactivated_via_driver_deactivation",
   "org.companies.updated",
   "org.user_company_access.granted",
+  "catalogs.equipment_types.created",
+  "catalogs.equipment_types.updated",
+  "catalogs.equipment_line_item_templates.created",
+  "catalogs.equipment_line_item_templates.updated",
 ];
 
 const WARNING_EVENTS = new Set([
