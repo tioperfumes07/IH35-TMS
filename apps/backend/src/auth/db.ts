@@ -6,6 +6,9 @@ const APP_DB_ROLE = "ih35_app";
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is required");
 }
+if (!process.env.DATABASE_DIRECT_URL) {
+  throw new Error("DATABASE_DIRECT_URL is required");
+}
 
 function buildLuciaConnString(baseUrl: string): string {
   const url = new URL(baseUrl);
@@ -20,7 +23,7 @@ export const pool = new Pool({
 });
 
 export const luciaPool = new Pool({
-  connectionString: buildLuciaConnString(process.env.DATABASE_URL),
+  connectionString: buildLuciaConnString(process.env.DATABASE_DIRECT_URL),
   ssl: { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30_000,
