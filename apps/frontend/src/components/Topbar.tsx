@@ -36,7 +36,7 @@ export function Topbar({ auth }: Props) {
   const dateLabel = useMemo(() => formatNow(now), [now]);
 
   return (
-    <header className="flex h-12 items-center justify-between border-b border-gray-200 bg-white px-4">
+    <header className="flex h-11 items-center justify-between border-b border-gray-200 bg-white px-3">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-sm font-bold text-gray-900">
           IH 35 TRANSPORTATION LLC
@@ -45,24 +45,24 @@ export function Topbar({ auth }: Props) {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+        <div className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
           QuickBooks · Samsara · Relay not yet connected
         </div>
         <CompanySwitcher />
       </div>
 
-      <div className="relative flex items-center gap-3 text-sm text-gray-700">
-        <span className="text-xs">{dateLabel}</span>
+      <div className="relative flex items-center gap-2 text-sm text-gray-700">
+        <span className="text-[11px]">{dateLabel}</span>
         <button
           type="button"
-          className="flex items-center gap-1 rounded border border-gray-200 px-2 py-1 text-xs hover:bg-gray-50"
+          className="flex h-7 items-center gap-1 rounded border border-gray-200 px-2 text-[11px] hover:bg-gray-50"
           onClick={() => setOpen((current) => !current)}
         >
           {emailLabel}
           <ChevronDown className="h-3 w-3" />
         </button>
         {open ? (
-          <div className="absolute right-0 top-9 z-30 w-40 rounded border border-gray-200 bg-white p-1 shadow">
+          <div className="absolute right-0 top-8 z-30 w-40 rounded border border-gray-200 bg-white p-1 shadow">
             <button
               type="button"
               className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-gray-100"

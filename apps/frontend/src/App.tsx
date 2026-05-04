@@ -4,6 +4,7 @@ import { useAuth } from "./auth/useAuth";
 import { Shell } from "./components/Shell";
 import { CompanyProvider } from "./contexts/CompanyContext";
 import { CustomersPage } from "./pages/Customers";
+import { CatalogsHubPage } from "./pages/CatalogsHubPage";
 import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
@@ -36,6 +37,15 @@ function HomeRoute() {
   const auth = useAuth();
   if (!auth.user) return null;
   return <HomePage auth={auth.user} />;
+}
+
+function CatalogComingSoonPage({ title }: { title: string }) {
+  return (
+    <div className="rounded border border-gray-200 bg-white p-4">
+      <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+      <p className="mt-1 text-sm text-gray-600">Catalog detail page is coming in a follow-up block.</p>
+    </div>
+  );
 }
 
 export default function App() {
@@ -77,6 +87,14 @@ export default function App() {
           }
         />
         <Route
+          path="/catalogs"
+          element={
+            <ProtectedRoute>
+              <CatalogsHubPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/catalogs/equipment-types"
           element={
             <ProtectedRoute>
@@ -89,6 +107,54 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DriverLoadStatusesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/catalogs/accounts"
+          element={
+            <ProtectedRoute>
+              <CatalogComingSoonPage title="Chart of Accounts" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/catalogs/classes"
+          element={
+            <ProtectedRoute>
+              <CatalogComingSoonPage title="Classes" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/catalogs/items"
+          element={
+            <ProtectedRoute>
+              <CatalogComingSoonPage title="Items" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/catalogs/payment-terms"
+          element={
+            <ProtectedRoute>
+              <CatalogComingSoonPage title="Payment Terms" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/catalogs/posting-templates"
+          element={
+            <ProtectedRoute>
+              <CatalogComingSoonPage title="Posting Templates" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/catalogs/account-role-bindings"
+          element={
+            <ProtectedRoute>
+              <CatalogComingSoonPage title="Account Role Bindings" />
             </ProtectedRoute>
           }
         />

@@ -79,7 +79,7 @@ export function UsersPage() {
   }, [usersQuery.data, search]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="border-b border-gray-200 pb-2">
         <div className="flex gap-4 text-sm">
           <span className="border-b-[1.5px] border-info pb-1 font-semibold text-gray-900">Users</span>
@@ -92,7 +92,7 @@ export function UsersPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search users"
-          className="w-full max-w-sm rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="h-8 w-full max-w-sm rounded-md border border-gray-300 px-2 text-[13px]"
         />
         <Button onClick={() => setInviteOpen(true)}>Invite User</Button>
       </div>
@@ -122,13 +122,13 @@ export function UsersPage() {
               <div className="relative">
                 <button
                   type="button"
-                  className="rounded border border-gray-300 p-1 hover:bg-gray-100"
+                  className="flex h-7 w-7 items-center justify-center rounded border border-gray-300 hover:bg-gray-100"
                   onClick={(event) => {
                     event.stopPropagation();
                     setMenuUserId((current) => (current === row.id ? null : row.id));
                   }}
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                    <MoreHorizontal className="h-3.5 w-3.5" />
                 </button>
                 {menuUserId === row.id ? (
                   <div className="absolute right-0 z-20 mt-1 w-36 rounded border border-gray-200 bg-white p-1 text-xs shadow">

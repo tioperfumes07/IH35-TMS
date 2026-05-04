@@ -7,6 +7,7 @@ import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerIdentityRoutes } from "./identity/routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
 import { registerCatalogsRoutes } from "./catalogs/index.js";
+import { registerCatalogRegistryRoutes } from "./catalogs/catalog-registry.routes.js";
 import { registerDriverLoadStatusRoutes } from "./catalogs/driver-load-statuses.routes.js";
 import { registerEquipmentTypeRoutes } from "./catalogs/equipment-types.routes.js";
 import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
@@ -56,6 +57,7 @@ async function main() {
   await registerDriverProfileRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerCatalogsRoutes(app);
+  await registerCatalogRegistryRoutes(app);
   await registerEquipmentTypeRoutes(app);
   await registerDriverLoadStatusRoutes(app);
   await registerCatalogsWorkflowRoutes(app);

@@ -107,7 +107,7 @@ export function CustomersPage() {
   const customers = useMemo(() => customersQuery.data ?? [], [customersQuery.data]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-900">Customers</h1>
         {canManage ? <Button onClick={() => setAddOpen(true)}>Add Customer</Button> : null}
@@ -118,7 +118,7 @@ export function CustomersPage() {
       ) : (
         <div className="space-y-3">
           {customers.map((customer) => (
-            <div key={customer.id} className="rounded border border-gray-200 bg-white p-4">
+            <div key={customer.id} className="rounded border border-gray-200 bg-white p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export function CustomersPage() {
                 ) : null}
               </div>
 
-              <div className="mt-3 rounded border border-gray-100 bg-gray-50 p-3">
+              <div className="mt-2 rounded border border-gray-100 bg-gray-50 p-2.5">
                 <div className="mb-2 text-xs font-semibold text-gray-700">Billing Configuration</div>
                 <div className="grid grid-cols-1 gap-2 text-xs text-gray-700 md:grid-cols-4">
                   <div>Type: {customerTypeLabel(customer.customer_type)}</div>
@@ -166,7 +166,7 @@ export function CustomersPage() {
               </div>
             </div>
           ))}
-          {customers.length === 0 ? <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">No customers found.</div> : null}
+          {customers.length === 0 ? <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No customers found.</div> : null}
         </div>
       )}
 
