@@ -19,6 +19,7 @@
     "db:verify:workflows": "node scripts/db-verify-workflows.mjs",
     "db:verify:mdata-rls": "node scripts/db-verify-mdata-rls.mjs",
     "db:verify:mdata-workflows": "node scripts/db-verify-mdata-workflows.mjs",
+    "db:verify:catalogs-rls": "node scripts/db-verify-catalogs-rls.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
   },
   "dependencies": {
