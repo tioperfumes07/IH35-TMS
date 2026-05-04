@@ -13,8 +13,7 @@ export async function registerSessionMiddleware(app: FastifyInstance) {
   app.decorateRequest("session", null);
 
   app.addHook("preHandler", async (req: FastifyRequest, reply: FastifyReply) => {
-    const cookieHeader = (req.headers["cookie"] as string | undefined) || "";
-    const sessionId = lucia.readSessionCookie(cookieHeader);
+    const sessionId = req.cookies["ih35_session"];
     if (!sessionId) {
       req.user = null;
       req.session = null;
@@ -23,11 +22,10 @@ export async function registerSessionMiddleware(app: FastifyInstance) {
     const result = await lucia.validateSession(sessionId);
     if (result.session && result.session.fresh) {
       const fresh = lucia.createSessionCookie(result.session.id);
-      reply.header("Set-Cookie", fresh.serialize());
+      reply.setCookie(fresh.name, fresh.value, fresh.attributes);
     }
     if (!result.session) {
-      const blank = lucia.createBlankSessionCookie();
-      reply.header("Set-Cookie", blank.serialize());
+      reply.clearCookie("ih35_session", { path: "/" });
       req.user = null;
       req.session = null;
       return;

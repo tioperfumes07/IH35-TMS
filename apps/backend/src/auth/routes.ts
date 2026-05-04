@@ -12,10 +12,21 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
     const url = await google.createAuthorizationURL(state, codeVerifier, ["openid", "email", "profile"]);
-    reply.header("Set-Cookie", [
-      buildCookie(STATE_COOKIE, state, COOKIE_MAX_AGE),
-      buildCookie(VERIFIER_COOKIE, codeVerifier, COOKIE_MAX_AGE),
-    ]);
+    const secure = process.env.NODE_ENV === "production";
+    reply.setCookie(STATE_COOKIE, state, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure,
+      maxAge: COOKIE_MAX_AGE,
+    });
+    reply.setCookie(VERIFIER_COOKIE, codeVerifier, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure,
+      maxAge: COOKIE_MAX_AGE,
+    });
     return reply.redirect(url.toString());
   });
 
@@ -23,10 +34,8 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     const query = req.query as Record<string, string | undefined>;
     const code = query["code"];
     const state = query["state"];
-    const cookieHeader = (req.headers["cookie"] as string | undefined) || "";
-    const cookies = parseCookies(cookieHeader);
-    const storedState = cookies[STATE_COOKIE];
-    const codeVerifier = cookies[VERIFIER_COOKIE];
+    const storedState = req.cookies[STATE_COOKIE];
+    const codeVerifier = req.cookies[VERIFIER_COOKIE];
     if (!code || !state || !storedState || !codeVerifier || state !== storedState) {
       return reply.code(400).send({ error: "invalid_oauth_state" });
     }
@@ -47,11 +56,9 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       const userUuid = await findOrCreateUser(email, googleUserId);
       const session = await lucia.createSession(userUuid, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      reply.header("Set-Cookie", [
-        sessionCookie.serialize(),
-        buildCookie(STATE_COOKIE, "", 0),
-        buildCookie(VERIFIER_COOKIE, "", 0),
-      ]);
+      reply.setCookie(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+      reply.clearCookie(STATE_COOKIE, { path: "/" });
+      reply.clearCookie(VERIFIER_COOKIE, { path: "/" });
       return reply.redirect("/");
     } catch (err) {
       if (err instanceof OAuth2RequestError) {
@@ -62,35 +69,13 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/auth/logout", async (req, reply) => {
-    const cookieHeader = (req.headers["cookie"] as string | undefined) || "";
-    const cookies = parseCookies(cookieHeader);
-    const sessionId = cookies["ih35_session"];
+    const sessionId = req.cookies["ih35_session"];
     if (sessionId) {
       await lucia.invalidateSession(sessionId);
     }
-    const blank = lucia.createBlankSessionCookie();
-    reply.header("Set-Cookie", blank.serialize());
+    reply.clearCookie("ih35_session", { path: "/" });
     return { ok: true };
   });
-}
-
-function buildCookie(name: string, value: string, maxAge: number): string {
-  const flags = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  return name + "=" + value + "; HttpOnly; Path=/; Max-Age=" + String(maxAge) + "; SameSite=Lax" + flags;
-}
-
-function parseCookies(header: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const part of header.split(";")) {
-    const trimmed = part.trim();
-    if (!trimmed) continue;
-    const eqIdx = trimmed.indexOf("=");
-    if (eqIdx === -1) continue;
-    const k = trimmed.substring(0, eqIdx);
-    const v = trimmed.substring(eqIdx + 1);
-    out[k] = decodeURIComponent(v);
-  }
-  return out;
 }
 
 async function findOrCreateUser(email: string, googleUserId: string): Promise<string> {
