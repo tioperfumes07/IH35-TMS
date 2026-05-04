@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
@@ -173,6 +174,18 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     }
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const oldRes = await client.query<IdentityUserRow>(
+        `
+          SELECT id, email, role, created_at, deactivated_at
+          FROM identity.users
+          WHERE id = $1
+          LIMIT 1
+        `,
+        [parsedParams.data.id]
+      );
+      const oldRow = oldRes.rows[0];
+      if (!oldRow) return null;
+
       const res = await client.query<IdentityUserRow>(
         `
           UPDATE identity.users
@@ -182,7 +195,34 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
         `,
         [parsedBody.data.role, parsedParams.data.id]
       );
-      return res.rows[0] ?? null;
+      const updatedRow = res.rows[0] ?? null;
+      if (!updatedRow) return null;
+
+      const changes = buildPatchChanges(
+        { role: parsedBody.data.role },
+        oldRow as unknown as Record<string, unknown>,
+        updatedRow as unknown as Record<string, unknown>
+      );
+      const roleChanged = Object.prototype.hasOwnProperty.call(changes, "role");
+      await appendCrudAudit(
+        client,
+        authUser.uuid,
+        "identity.users.updated",
+        {
+          resource_id: updatedRow.id,
+          resource_type: "identity.users",
+          changes,
+          ...(roleChanged
+            ? {
+                role_changed_from: oldRow.role,
+                role_changed_to: updatedRow.role,
+              }
+            : {}),
+        },
+        roleChanged ? "warning" : "info"
+      );
+
+      return updatedRow;
     });
 
     if (!updated) {
@@ -216,7 +256,15 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
           `,
           [parsedBody.data.email, parsedBody.data.role]
         );
-        return res.rows[0];
+        const row = res.rows[0];
+        await appendCrudAudit(client, authUser.uuid, "identity.users.created", {
+          resource_id: row.id,
+          resource_type: "identity.users",
+          id: row.id,
+          email: row.email,
+          role: row.role,
+        });
+        return row;
       });
       return reply.code(201).send(mapIdentityUser(created));
     } catch (err) {
@@ -244,17 +292,42 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const res = await client.query<{ id: string; deactivated_at: string }>(
+        const oldRes = await client.query<{ id: string; deactivated_at: string | null }>(
           `
-            UPDATE identity.users
-            SET deactivated_at = now()
+            SELECT id, deactivated_at
+            FROM identity.users
             WHERE id = $1
-              AND deactivated_at IS NULL
-            RETURNING id, deactivated_at
+            LIMIT 1
           `,
           [parsedParams.data.id]
         );
-        return res.rows[0] ?? null;
+        const oldRow = oldRes.rows[0];
+        if (!oldRow) return null;
+
+        let deactivatedAt = oldRow.deactivated_at;
+        let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
+        if (!wasAlreadyDeactivated) {
+          const res = await client.query<{ id: string; deactivated_at: string }>(
+            `
+              UPDATE identity.users
+              SET deactivated_at = now()
+              WHERE id = $1
+                AND deactivated_at IS NULL
+              RETURNING id, deactivated_at
+            `,
+            [parsedParams.data.id]
+          );
+          deactivatedAt = res.rows[0]?.deactivated_at ?? oldRow.deactivated_at;
+          wasAlreadyDeactivated = false;
+        }
+
+        await appendCrudAudit(client, authUser.uuid, "identity.users.deactivated", {
+          resource_id: oldRow.id,
+          resource_type: "identity.users",
+          was_already_deactivated: wasAlreadyDeactivated,
+        });
+
+        return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
       });
 
       if (!updated) {
@@ -264,6 +337,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
       return {
         id: updated.id,
         deactivated_at: updated.deactivated_at,
+        was_already_deactivated: updated.was_already_deactivated,
       };
     } catch (err) {
       const msg = String((err as { message?: string })?.message || "");

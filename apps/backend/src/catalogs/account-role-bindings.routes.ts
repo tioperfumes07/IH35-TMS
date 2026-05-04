@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -110,7 +111,21 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
           `,
           [b.role_key, b.account_id, b.description ?? null, authUser.uuid]
         );
-        return res.rows[0];
+        const row = res.rows[0];
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "catalogs.account_role_bindings.created",
+          {
+            resource_id: row.id,
+            resource_type: "catalogs.account_role_bindings",
+            id: row.id,
+            role_key: row.role_key,
+            account_id: row.account_id,
+          },
+          "warning"
+        );
+        return row;
       });
       return reply.code(201).send(created);
     } catch (err) {
@@ -174,6 +189,20 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        const oldRes = await client.query(
+          `
+            SELECT
+              id, role_key, account_id, description, created_at, updated_at, deactivated_at,
+              created_by_user_id, updated_by_user_id
+            FROM catalogs.account_role_bindings
+            WHERE id = $1
+            LIMIT 1
+          `,
+          [parsedParams.data.id]
+        );
+        const oldRow = oldRes.rows[0] ?? null;
+        if (!oldRow) return null;
+
         const res = await client.query(
           `
             UPDATE catalogs.account_role_bindings
@@ -185,7 +214,25 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
           `,
           values
         );
-        return res.rows[0] ?? null;
+        const updatedRow = res.rows[0] ?? null;
+        if (!updatedRow) return null;
+        const changes = buildPatchChanges(
+          b as unknown as Record<string, unknown>,
+          oldRow as Record<string, unknown>,
+          updatedRow as Record<string, unknown>
+        );
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "catalogs.account_role_bindings.updated",
+          {
+            resource_id: updatedRow.id,
+            resource_type: "catalogs.account_role_bindings",
+            changes,
+          },
+          "warning"
+        );
+        return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "catalog_account_role_binding_not_found" });
       return updated;
