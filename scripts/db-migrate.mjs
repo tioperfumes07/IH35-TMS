@@ -23,9 +23,16 @@ try {
   for (const file of files) {
     const sql = fs.readFileSync(path.join(migrationsDir, file), "utf8");
     console.log(`Applying migration: ${file}`);
-    await client.query("BEGIN");
-    await client.query(sql);
-    await client.query("COMMIT");
+    const hasExplicitTx =
+      /\bBEGIN\b/i.test(sql) &&
+      /\bCOMMIT\b/i.test(sql);
+    if (hasExplicitTx) {
+      await client.query(sql);
+    } else {
+      await client.query("BEGIN");
+      await client.query(sql);
+      await client.query("COMMIT");
+    }
   }
   console.log("Migrations applied successfully.");
 } catch (err) {

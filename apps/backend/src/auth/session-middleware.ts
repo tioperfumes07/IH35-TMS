@@ -31,6 +31,7 @@ export async function registerSessionMiddleware(app: FastifyInstance) {
       return;
     }
     if (result.user) {
+      // Phase 1 identity RLS uses this UUID as the request auth context source.
       req.user = {
         uuid: String(result.user.id),
         email: String((result.user as unknown as Record<string, unknown>)["email"] || ""),

@@ -1,7 +1,7 @@
 import { Lucia } from "lucia";
 import { NodePostgresAdapter } from "@lucia-auth/adapter-postgresql";
 import { Google } from "arctic";
-import { pool } from "./db.js";
+import { luciaPool } from "./db.js";
 
 if (!process.env.OAUTH_GOOGLE_CLIENT_ID) {
   throw new Error("OAUTH_GOOGLE_CLIENT_ID is required");
@@ -13,7 +13,7 @@ if (!process.env.OAUTH_REDIRECT_URI) {
   throw new Error("OAUTH_REDIRECT_URI is required");
 }
 
-const adapter = new NodePostgresAdapter(pool, {
+const adapter = new NodePostgresAdapter(luciaPool, {
   user: "identity.users",
   session: "identity.sessions",
 });

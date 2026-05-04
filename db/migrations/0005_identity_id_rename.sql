@@ -5,7 +5,29 @@
 BEGIN;
 
 ALTER TABLE identity.sessions DROP CONSTRAINT IF EXISTS sessions_user_id_fkey;
-ALTER TABLE identity.users RENAME COLUMN uuid TO id;
-ALTER TABLE identity.sessions ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'identity'
+      AND table_name = 'users'
+      AND column_name = 'uuid'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'identity'
+      AND table_name = 'users'
+      AND column_name = 'id'
+  ) THEN
+    ALTER TABLE identity.users RENAME COLUMN uuid TO id;
+  END IF;
+END
+$$;
+
+ALTER TABLE identity.sessions
+  ADD CONSTRAINT sessions_user_id_fkey
+  FOREIGN KEY (user_id) REFERENCES identity.users(id) ON DELETE CASCADE;
 
 COMMIT;
