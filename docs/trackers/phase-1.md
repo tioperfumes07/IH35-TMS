@@ -19,6 +19,8 @@
 | 2026-05-04 | BT-1-IDENT-02 implements per-request DB helper `withCurrentUser(userUuid, fn)` that wraps queries in `BEGIN / SET LOCAL app.current_user_id / COMMIT`. This is the deferred wiring from BT-1-IDENT-01 and is now used for identity endpoints to enforce RLS correctly. | Jorge | Resolved | Build Spec MUST 6.6.2 |
 | 2026-05-04 | BT-1-IDENT-03 introduces `identity.workflow_requests` for WF-064 identity actions. RLS allows requester + target + admin visibility and workflow decision transitions emit audit events inside the same transaction for atomicity. | Jorge | Resolved | Master Blueprint Part 4 §4.7 + MUST 4.9 |
 | 2026-05-04 | BT-1-IDENT-03 enforces `cannot decide own request` in app code (403) rather than RLS. This keeps policies simple while preserving explicit business-rule guardrails for approve/reject actions. | Jorge | Resolved | Build Spec MUST 6.6.1 |
+| 2026-05-04 | BT-1-MDATA-01 introduces `mdata` schema with 7 tables (`drivers`, `units`, `customers`, `vendors`, `locations`, `equipment`, `equipment_log`). Phase 1 RLS is base-level (Owner/Admin/Manager write, all authenticated users SELECT). Granular role policies are deferred to BT-1-MDATA-02 endpoint hardening. | Jorge | Resolved | Master Blueprint Part 7 §7.2 + Build Spec §13.2 |
+| 2026-05-04 | BT-1-MDATA-01 created enum types `mdata.driver_status`, `mdata.unit_status`, and `mdata.equipment_status` with locked vocabulary values per spec. Future status transitions will route through approval workflows in BT-1-MDATA-03. | Jorge | Resolved | Master Blueprint Part 7 §7.2 |
 
 ## TODO
 
