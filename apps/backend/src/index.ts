@@ -5,6 +5,7 @@ import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerIdentityRoutes } from "./identity/routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
 import { registerCatalogsRoutes } from "./catalogs/index.js";
+import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 
@@ -23,6 +24,7 @@ async function main() {
   await registerMdataRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerCatalogsRoutes(app);
+  await registerCatalogsWorkflowRoutes(app);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {
