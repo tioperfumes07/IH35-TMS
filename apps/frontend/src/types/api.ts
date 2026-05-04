@@ -46,6 +46,8 @@ export type IdentityWorkflowRequest = {
 
 export type DriverStatus = "Active" | "Probation" | "Inactive" | "Terminated" | "OnLeave";
 export type CdlClass = "A" | "B" | "C";
+export type MilesBasis = "short_miles" | "practical_miles";
+export type CustomerType = "broker" | "direct_shipper";
 
 export type Driver = {
   id: string;
@@ -59,6 +61,7 @@ export type Driver = {
   cdl_class: CdlClass | null;
   cdl_expires_at: string | null;
   hire_date: string | null;
+  pay_basis: MilesBasis;
   termination_date: string | null;
   dot_medical_expires_at: string | null;
   hazmat_endorsement_expires_at: string | null;
@@ -101,6 +104,7 @@ export type CreateDriverInput = {
   cdl_class?: CdlClass;
   cdl_expires_at?: string;
   hire_date?: string;
+  pay_basis?: MilesBasis;
   dot_medical_expires_at?: string;
   hazmat_endorsement_expires_at?: string;
   visa_type?: string;
@@ -138,6 +142,7 @@ export type UpdateDriverInput = Partial<
     | "cdl_class"
     | "cdl_expires_at"
     | "hire_date"
+    | "pay_basis"
     | "dot_medical_expires_at"
     | "hazmat_endorsement_expires_at"
     | "visa_type"

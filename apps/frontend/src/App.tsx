@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 import { useAuth } from "./auth/useAuth";
 import { Shell } from "./components/Shell";
 import { CompanyProvider } from "./contexts/CompanyContext";
+import { CustomersPage } from "./pages/Customers";
 import { DriverDetailPage } from "./pages/DriverDetail";
+import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
 import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
@@ -67,10 +69,26 @@ export default function App() {
           }
         />
         <Route
+          path="/customers"
+          element={
+            <ProtectedRoute>
+              <CustomersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/catalogs/equipment-types"
           element={
             <ProtectedRoute>
               <EquipmentTypesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/catalogs/driver-load-statuses"
+          element={
+            <ProtectedRoute>
+              <DriverLoadStatusesPage />
             </ProtectedRoute>
           }
         />

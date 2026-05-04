@@ -68,6 +68,8 @@ const EVENT_CLASSES = [
   "catalogs.equipment_types.updated",
   "catalogs.equipment_line_item_templates.created",
   "catalogs.equipment_line_item_templates.updated",
+  "catalogs.driver_load_statuses.created",
+  "catalogs.driver_load_statuses.updated",
   "mdata.driver_equipment_qualifications.created",
   "mdata.driver_equipment_qualifications.updated",
   "mdata.driver_equipment_qualifications.deactivated",

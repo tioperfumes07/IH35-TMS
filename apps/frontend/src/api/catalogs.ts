@@ -63,6 +63,46 @@ export type UpdateLineItemTemplateInput = {
   is_active?: boolean;
 };
 
+export type DriverLoadStatusPhase =
+  | "pickup"
+  | "transit_to_pickup"
+  | "at_pickup"
+  | "transit_to_delivery"
+  | "at_delivery"
+  | "completed"
+  | "other";
+
+export type DriverLoadStatus = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  phase: DriverLoadStatusPhase;
+  sort_order: number;
+  is_active: boolean;
+  deactivated_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by_user_id: string | null;
+  updated_by_user_id: string | null;
+};
+
+export type CreateDriverLoadStatusInput = {
+  code: string;
+  name: string;
+  description?: string;
+  phase: DriverLoadStatusPhase;
+  sort_order?: number;
+};
+
+export type UpdateDriverLoadStatusInput = {
+  name?: string;
+  description?: string | null;
+  phase?: DriverLoadStatusPhase;
+  sort_order?: number;
+  is_active?: boolean;
+};
+
 export function listEquipmentTypes(includeInactive = false) {
   const query = includeInactive ? "?include_inactive=true" : "";
   return apiRequest<{ equipment_types: EquipmentType[] }>(`/api/v1/catalogs/equipment-types${query}`);
@@ -89,4 +129,17 @@ export function addLineItemTemplate(equipmentTypeId: string, payload: EquipmentT
 
 export function updateLineItemTemplate(id: string, payload: UpdateLineItemTemplateInput) {
   return apiRequest<{ ok: true }>(`/api/v1/catalogs/equipment-line-items/${id}`, { method: "PATCH", body: payload });
+}
+
+export function listDriverLoadStatuses(includeInactive = false) {
+  const query = includeInactive ? "?include_inactive=true" : "";
+  return apiRequest<{ statuses: DriverLoadStatus[] }>(`/api/v1/catalogs/driver-load-statuses${query}`);
+}
+
+export function createDriverLoadStatus(payload: CreateDriverLoadStatusInput) {
+  return apiRequest<{ status: DriverLoadStatus }>("/api/v1/catalogs/driver-load-statuses", { method: "POST", body: payload });
+}
+
+export function updateDriverLoadStatus(id: string, payload: UpdateDriverLoadStatusInput) {
+  return apiRequest<{ status: DriverLoadStatus }>(`/api/v1/catalogs/driver-load-statuses/${id}`, { method: "PATCH", body: payload });
 }

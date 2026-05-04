@@ -27,6 +27,7 @@ const createDriverSchema = z.object({
   cdl_class: z.enum(["A", "B", "C"]).optional(),
   cdl_expires_at: z.string().optional(),
   hire_date: z.string().optional(),
+  pay_basis: z.enum(["short_miles", "practical_miles"]).default("short_miles"),
   dot_medical_expires_at: z.string().optional(),
   visa_type: z.string().trim().optional(),
   visa_number: z.string().trim().optional(),
@@ -80,6 +81,7 @@ export function DriversPage() {
     cdl_class: "A",
     cdl_expires_at: "",
     hire_date: "",
+    pay_basis: "short_miles",
     dot_medical_expires_at: "",
     visa_type: "",
     visa_number: "",
@@ -129,6 +131,7 @@ export function DriversPage() {
         cdl_class: "A",
         cdl_expires_at: "",
         hire_date: "",
+        pay_basis: "short_miles",
         dot_medical_expires_at: "",
         visa_type: "",
         visa_number: "",
@@ -240,6 +243,7 @@ export function DriversPage() {
                 cdl_class: parsed.data.cdl_class,
                 cdl_expires_at: parsed.data.cdl_expires_at || undefined,
                 hire_date: parsed.data.hire_date || undefined,
+                pay_basis: parsed.data.pay_basis,
                 dot_medical_expires_at: parsed.data.dot_medical_expires_at || undefined,
                 visa_type: parsed.data.visa_type || undefined,
                 visa_number: parsed.data.visa_number || undefined,
@@ -335,6 +339,17 @@ export function DriversPage() {
               <option value="Inactive">Inactive</option>
               <option value="Terminated">Terminated</option>
               <option value="OnLeave">OnLeave</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Pay Basis</label>
+            <select
+              value={form.pay_basis}
+              onChange={(event) => setForm((current) => ({ ...current, pay_basis: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            >
+              <option value="short_miles">Short Miles</option>
+              <option value="practical_miles">Practical Miles</option>
             </select>
           </div>
           <div className="col-span-full rounded-md border border-gray-200 p-3">

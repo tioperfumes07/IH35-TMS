@@ -48,6 +48,11 @@ function formatDateRange(from: string, to: string | null) {
   return `${formatDate(from)} - ${to ? formatDate(to) : "current"}`;
 }
 
+function formatReasonLabel(reason: string) {
+  if (reason === "initial_hire") return "Initial hire agreement";
+  return reason.replaceAll("_", " ");
+}
+
 export function DriverDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -132,6 +137,7 @@ export function DriverDetailPage() {
       cdl_class: driver.cdl_class ?? "A",
       cdl_expires_at: formatDate(driver.cdl_expires_at),
       hire_date: formatDate(driver.hire_date),
+      pay_basis: driver.pay_basis ?? "short_miles",
       dot_medical_expires_at: formatDate(driver.dot_medical_expires_at),
       hazmat_endorsement_expires_at: formatDate(driver.hazmat_endorsement_expires_at),
       visa_type: driver.visa_type ?? "",
@@ -172,6 +178,7 @@ export function DriverDetailPage() {
         notes: hydratedForm.notes || null,
         cdl_expires_at: hydratedForm.cdl_expires_at || null,
         hire_date: hydratedForm.hire_date || null,
+        pay_basis: hydratedForm.pay_basis as "short_miles" | "practical_miles",
         dot_medical_expires_at: hydratedForm.dot_medical_expires_at || null,
         hazmat_endorsement_expires_at: hydratedForm.hazmat_endorsement_expires_at || null,
         visa_type: hydratedForm.visa_type || null,
@@ -454,6 +461,18 @@ export function DriverDetailPage() {
               <option value="Inactive">Inactive</option>
               <option value="Terminated">Terminated</option>
               <option value="OnLeave">OnLeave</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Pay Basis</label>
+            <select
+              disabled={!editMode}
+              value={hydratedForm.pay_basis ?? "short_miles"}
+              onChange={(event) => setForm((current) => ({ ...current, pay_basis: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+            >
+              <option value="short_miles">Short Miles</option>
+              <option value="practical_miles">Practical Miles</option>
             </select>
           </div>
           <div className="flex flex-col gap-1">
@@ -866,6 +885,7 @@ export function DriverDetailPage() {
                 amount: Number(rateChangeForm.amount),
                 effective_from: rateChangeForm.effective_from,
                 change_reason: rateChangeForm.change_reason as
+                  | "initial_hire"
                   | "raise"
                   | "demotion"
                   | "contract_renegotiation"
@@ -952,10 +972,25 @@ export function DriverDetailPage() {
             </thead>
             <tbody>
               {selectedLineHistory.map((item) => (
-                <tr key={`${item.effective_from}-${item.created_at}`} className="border-b border-gray-100">
+                <tr
+                  key={`${item.effective_from}-${item.created_at}-${item.amount}-${String(item.was_corrected)}`}
+                  className={`border-b border-gray-100 ${item.was_corrected ? "bg-gray-100 text-gray-500" : ""}`}
+                >
                   <td className="py-1">{formatDateRange(item.effective_from, item.effective_to)}</td>
-                  <td className="py-1">${Number(item.amount).toFixed(2)}</td>
-                  <td className="py-1">{item.change_reason}</td>
+                  <td className={`py-1 ${item.was_corrected ? "line-through" : ""}`}>${Number(item.amount).toFixed(2)}</td>
+                  <td className="py-1">
+                    <div className="flex items-center gap-2">
+                      <span className="capitalize">{formatReasonLabel(item.change_reason)}</span>
+                      {item.was_corrected ? (
+                        <span
+                          className="rounded bg-gray-300 px-2 py-0.5 text-[10px] font-semibold uppercase text-gray-700"
+                          title="This rate was corrected on the same day before settlement could occur"
+                        >
+                          Corrected
+                        </span>
+                      ) : null}
+                    </div>
+                  </td>
                   <td className="py-1">{item.change_notes || "—"}</td>
                   <td className="py-1">{item.created_by_user_email || item.created_by_user_id || "—"}</td>
                   <td className="py-1">{new Date(item.created_at).toLocaleString()}</td>
