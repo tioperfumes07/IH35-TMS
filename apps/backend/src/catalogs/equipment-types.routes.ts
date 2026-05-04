@@ -177,6 +177,10 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     if (!user) return;
     const parsed = createEquipmentTypeSchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const lineItemCodes = parsed.data.line_items.map((lineItem) => lineItem.code);
+    if (new Set(lineItemCodes).size !== lineItemCodes.length) {
+      return reply.code(400).send({ error: "duplicate_line_item_codes_in_request" });
+    }
 
     return withCurrentUser(user.uuid, async (client) => {
       try {
