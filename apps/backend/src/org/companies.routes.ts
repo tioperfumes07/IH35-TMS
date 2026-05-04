@@ -61,6 +61,7 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
           FROM org.companies
           WHERE id IN (SELECT org.user_accessible_company_ids())
             AND deactivated_at IS NULL
+            AND is_active = true
           ORDER BY legal_name
         `
       );
@@ -198,6 +199,7 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
           WHERE u.id = $1
             AND c.id IN (SELECT org.user_accessible_company_ids())
             AND c.deactivated_at IS NULL
+            AND c.is_active = true
           ORDER BY c.legal_name
         `,
         [user.uuid]
@@ -221,6 +223,7 @@ export async function registerCompanyRoutes(app: FastifyInstance) {
           WHERE c.id = $1
             AND c.id IN (SELECT org.user_accessible_company_ids())
             AND c.deactivated_at IS NULL
+            AND c.is_active = true
           LIMIT 1
         `,
         [parsedBody.data.company_id]
