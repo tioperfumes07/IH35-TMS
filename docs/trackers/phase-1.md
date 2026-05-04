@@ -49,6 +49,7 @@
 | 2026-05-04 | BT-1-WEB-01 topbar status pill displays "QuickBooks · Samsara · Relay not yet connected" since integrations are Phase 5. The pill text will switch to "connected" individually per integration as they wire up. | Jorge | Resolved | Master Blueprint Phase 5 |
 | 2026-05-04 | BT-1-WEB-01 home page is a minimal placeholder showing user info + Phase 1 task status. Full home dashboard (7 KPI cards, attention list, fleet snapshot per screen 01-home.png) deferred until supporting Phase 3 data exists (loads, dispatch state, etc.). | Jorge | Pending — full home dashboard in BT-3-WEB-* | docs/design/approved-screens/01-home.png |
 | 2026-05-04 | BT-1-WEB-01 sidebar shows all 12 module icons but only 3 are clickable in Phase 1 (HOME, DRIVERS, LISTS routing to /home, /drivers, /users). The other 9 render with cursor:not-allowed and tooltip "Coming in next phase". This avoids broken nav while signaling which areas are functional. | Jorge | Resolved | docs/design/approved-screens/INDEX.md |
+| 2026-05-04 | BT-1-WEB-01 deviated from spec on package versions: React 19.2 instead of 18.3, react-router-dom 7.x instead of 6.x, Vite version per latest stable. All are current stable releases. Spec versions were a baseline; current stables are forward-compatible for our usage patterns. No functional impact. | Jorge | Resolved | BT-1-WEB-01 spec |
 
 ## TODO
 
