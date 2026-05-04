@@ -62,6 +62,8 @@ const EVENT_CLASSES = [
   "auth.phone.verification_fallback_sms",
   "auth.phone.verified",
   "identity.users.deactivated_via_driver_deactivation",
+  "org.companies.updated",
+  "org.user_company_access.granted",
 ];
 
 const WARNING_EVENTS = new Set([

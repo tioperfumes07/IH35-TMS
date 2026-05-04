@@ -21,6 +21,7 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   status: equipmentStatusSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -35,6 +36,8 @@ const createEquipmentBodySchema = z.object({
   status: equipmentStatusSchema.default("InService"),
   current_unit_id: z.string().uuid().optional(),
   current_location_id: z.string().uuid().optional(),
+  owner_company_id: z.string().uuid().optional(),
+  currently_leased_to_company_id: z.string().uuid().optional(),
   notes: z.string().trim().max(2000).optional(),
 });
 
@@ -49,6 +52,8 @@ const updateEquipmentBodySchema = z
     status: equipmentStatusSchema.optional(),
     current_unit_id: z.string().uuid().nullable().optional(),
     current_location_id: z.string().uuid().nullable().optional(),
+    owner_company_id: z.string().uuid().optional(),
+    currently_leased_to_company_id: z.string().uuid().nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
   })
@@ -67,13 +72,58 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
+async function resolveAssetCompanyIds(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  ownerCompanyId?: string,
+  leasedCompanyId?: string
+) {
+  const resolvedOwnerId =
+    ownerCompanyId ??
+    (
+      await client.query(
+        `
+          SELECT id
+          FROM org.companies
+          WHERE code = 'TRK'
+            AND deactivated_at IS NULL
+          LIMIT 1
+        `
+      )
+    ).rows[0]?.id ??
+    null;
+
+  let resolvedLeasedId = leasedCompanyId ?? null;
+  if (!resolvedLeasedId) {
+    const res = await client.query(
+      `
+        SELECT c.id
+        FROM identity.users u
+        JOIN org.companies c ON c.id = u.default_company_id
+        WHERE u.id = $1
+          AND c.deactivated_at IS NULL
+        UNION
+        SELECT c.id
+        FROM org.companies c
+        WHERE c.id IN (SELECT org.user_accessible_company_ids())
+        ORDER BY id
+        LIMIT 1
+      `,
+      [userId]
+    );
+    resolvedLeasedId = res.rows[0]?.id ?? null;
+  }
+
+  return { resolvedOwnerId, resolvedLeasedId };
+}
+
 export async function registerEquipmentRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/equipment", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
-    const { limit, offset, status, search } = parsedQuery.data;
+    const { limit, offset, status, search, operating_company_id } = parsedQuery.data;
 
     const equipment = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
@@ -86,6 +136,11 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         values.push(`%${search}%`);
         const idx = values.length;
         filters.push(`(equipment_number ILIKE $${idx} OR vin ILIKE $${idx} OR make ILIKE $${idx} OR model ILIKE $${idx})`);
+      }
+      if (operating_company_id) {
+        values.push(operating_company_id);
+        const idx = values.length;
+        filters.push(`(owner_company_id = $${idx} OR currently_leased_to_company_id = $${idx})`);
       }
       values.push(limit);
       values.push(offset);
@@ -103,6 +158,8 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
             status,
             current_unit_id,
             current_location_id,
+            owner_company_id,
+            currently_leased_to_company_id,
             acquired_date,
             disposed_date,
             notes,
@@ -134,13 +191,22 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        const { resolvedOwnerId, resolvedLeasedId } = await resolveAssetCompanyIds(
+          client,
+          authUser.uuid,
+          b.owner_company_id,
+          b.currently_leased_to_company_id
+        );
+        if (!resolvedOwnerId) {
+          throw new Error("owner_company_id_required");
+        }
         const res = await client.query(
           `
             INSERT INTO mdata.equipment (
               equipment_number, vin, equipment_type, make, model, year, status, current_unit_id, current_location_id,
-              notes, created_by_user_id, updated_by_user_id
+              owner_company_id, currently_leased_to_company_id, notes, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13
             )
             RETURNING
               id,
@@ -153,6 +219,8 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
               status,
               current_unit_id,
               current_location_id,
+              owner_company_id,
+              currently_leased_to_company_id,
               acquired_date,
               disposed_date,
               notes,
@@ -172,6 +240,8 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
             b.status,
             b.current_unit_id ?? null,
             b.current_location_id ?? null,
+            resolvedOwnerId,
+            resolvedLeasedId,
             b.notes ?? null,
             authUser.uuid,
           ]
@@ -192,6 +262,9 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
       const code = (err as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "mdata_equipment_conflict" });
       if (code === "23503") return reply.code(400).send({ error: "invalid_equipment_fk_reference" });
+      if ((err as Error).message === "owner_company_id_required") {
+        return reply.code(400).send({ error: "owner_company_id_required" });
+      }
       throw err;
     }
   });
@@ -216,6 +289,8 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
             status,
             current_unit_id,
             current_location_id,
+            owner_company_id,
+            currently_leased_to_company_id,
             acquired_date,
             disposed_date,
             notes,
@@ -263,6 +338,8 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     if ("status" in b) add("status", b.status);
     if ("current_unit_id" in b) add("current_unit_id", b.current_unit_id ?? null);
     if ("current_location_id" in b) add("current_location_id", b.current_location_id ?? null);
+    if ("owner_company_id" in b) add("owner_company_id", b.owner_company_id ?? null);
+    if ("currently_leased_to_company_id" in b) add("currently_leased_to_company_id", b.currently_leased_to_company_id ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     add("updated_by_user_id", authUser.uuid);
@@ -284,6 +361,8 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
               status,
               current_unit_id,
               current_location_id,
+              owner_company_id,
+              currently_leased_to_company_id,
               acquired_date,
               disposed_date,
               notes,

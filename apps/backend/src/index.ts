@@ -10,6 +10,7 @@ import { registerCatalogsRoutes } from "./catalogs/index.js";
 import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
+import { registerCompanyRoutes } from "./org/companies.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -52,6 +53,7 @@ async function main() {
   await registerMdataWorkflowRoutes(app);
   await registerCatalogsRoutes(app);
   await registerCatalogsWorkflowRoutes(app);
+  await registerCompanyRoutes(app);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {

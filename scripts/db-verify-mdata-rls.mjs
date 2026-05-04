@@ -111,29 +111,53 @@ const tableConfigs = [
     bypassInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.units (
-          unit_number, vin, status, assigned_driver_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'InService', $3, $4, $5)
+          unit_number, vin, status, assigned_driver_id, owner_company_id, currently_leased_to_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'InService', $3, $4, $5, $6, $7)
         RETURNING id
       `,
-      values: [makeCode("FIX-UNIT"), makeCode("FIXVINUNIT"), ctx.fixtureIds.drivers, "fixture", ctx.ownerUserId],
+      values: [
+        makeCode("FIX-UNIT"),
+        makeCode("FIXVINUNIT"),
+        ctx.fixtureIds.drivers,
+        ctx.trkCompanyId,
+        ctx.transpCompanyId,
+        "fixture",
+        ctx.ownerUserId,
+      ],
     }),
     managerInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.units (
-          unit_number, vin, status, assigned_driver_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'InService', $3, $4, $5)
+          unit_number, vin, status, assigned_driver_id, owner_company_id, currently_leased_to_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'InService', $3, $4, $5, $6, $7)
         RETURNING id
       `,
-      values: [makeCode("MGR-UNIT"), makeCode("MGRVINUNIT"), ctx.fixtureIds.drivers, "manager insert", ctx.managerUserId],
+      values: [
+        makeCode("MGR-UNIT"),
+        makeCode("MGRVINUNIT"),
+        ctx.fixtureIds.drivers,
+        ctx.trkCompanyId,
+        ctx.transpCompanyId,
+        "manager insert",
+        ctx.managerUserId,
+      ],
     }),
     driverInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.units (
-          unit_number, vin, status, assigned_driver_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'InService', $3, $4, $5)
+          unit_number, vin, status, assigned_driver_id, owner_company_id, currently_leased_to_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'InService', $3, $4, $5, $6, $7)
         RETURNING id
       `,
-      values: [makeCode("DRV-UNIT"), makeCode("DRVVINUNIT"), ctx.fixtureIds.drivers, "driver insert", ctx.driverUserId],
+      values: [
+        makeCode("DRV-UNIT"),
+        makeCode("DRVVINUNIT"),
+        ctx.fixtureIds.drivers,
+        ctx.trkCompanyId,
+        ctx.transpCompanyId,
+        "driver insert",
+        ctx.driverUserId,
+      ],
     }),
     managerUpdate: () => ({
       sql: `UPDATE mdata.units SET notes = 'manager updated' WHERE id = $1`,
@@ -147,29 +171,35 @@ const tableConfigs = [
     bypassInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.customers (
-          customer_name, customer_code, notes, created_by_user_id
-        ) VALUES ($1, $2, $3, $4)
+          customer_name, customer_code, operating_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, $3, $4, $5)
         RETURNING id
       `,
-      values: [`Fixture Customer ${ctx.suffix}`, makeCode("FIX-CUST"), "fixture", ctx.ownerUserId],
+      values: [`Fixture Customer ${ctx.suffix}`, makeCode("FIX-CUST"), ctx.transpCompanyId, "fixture", ctx.ownerUserId],
     }),
     managerInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.customers (
-          customer_name, customer_code, notes, created_by_user_id
-        ) VALUES ($1, $2, $3, $4)
+          customer_name, customer_code, operating_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, $3, $4, $5)
         RETURNING id
       `,
-      values: [`Manager Customer ${ctx.suffix}`, makeCode("MGR-CUST"), "manager insert", ctx.managerUserId],
+      values: [
+        `Manager Customer ${ctx.suffix}`,
+        makeCode("MGR-CUST"),
+        ctx.transpCompanyId,
+        "manager insert",
+        ctx.managerUserId,
+      ],
     }),
     driverInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.customers (
-          customer_name, customer_code, notes, created_by_user_id
-        ) VALUES ($1, $2, $3, $4)
+          customer_name, customer_code, operating_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, $3, $4, $5)
         RETURNING id
       `,
-      values: [`Driver Customer ${ctx.suffix}`, makeCode("DRV-CUST"), "driver insert", ctx.driverUserId],
+      values: [`Driver Customer ${ctx.suffix}`, makeCode("DRV-CUST"), ctx.transpCompanyId, "driver insert", ctx.driverUserId],
     }),
     managerUpdate: () => ({
       sql: `UPDATE mdata.customers SET notes = 'manager updated' WHERE id = $1`,
@@ -183,29 +213,29 @@ const tableConfigs = [
     bypassInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.vendors (
-          vendor_name, vendor_code, vendor_type, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Repair', $3, $4)
+          vendor_name, vendor_code, vendor_type, operating_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'Repair', $3, $4, $5)
         RETURNING id
       `,
-      values: [`Fixture Vendor ${ctx.suffix}`, makeCode("FIX-VEND"), "fixture", ctx.ownerUserId],
+      values: [`Fixture Vendor ${ctx.suffix}`, makeCode("FIX-VEND"), ctx.transpCompanyId, "fixture", ctx.ownerUserId],
     }),
     managerInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.vendors (
-          vendor_name, vendor_code, vendor_type, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Fuel', $3, $4)
+          vendor_name, vendor_code, vendor_type, operating_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'Fuel', $3, $4, $5)
         RETURNING id
       `,
-      values: [`Manager Vendor ${ctx.suffix}`, makeCode("MGR-VEND"), "manager insert", ctx.managerUserId],
+      values: [`Manager Vendor ${ctx.suffix}`, makeCode("MGR-VEND"), ctx.transpCompanyId, "manager insert", ctx.managerUserId],
     }),
     driverInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.vendors (
-          vendor_name, vendor_code, vendor_type, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Tires', $3, $4)
+          vendor_name, vendor_code, vendor_type, operating_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'Tires', $3, $4, $5)
         RETURNING id
       `,
-      values: [`Driver Vendor ${ctx.suffix}`, makeCode("DRV-VEND"), "driver insert", ctx.driverUserId],
+      values: [`Driver Vendor ${ctx.suffix}`, makeCode("DRV-VEND"), ctx.transpCompanyId, "driver insert", ctx.driverUserId],
     }),
     managerUpdate: () => ({
       sql: `UPDATE mdata.vendors SET notes = 'manager updated' WHERE id = $1`,
@@ -219,8 +249,8 @@ const tableConfigs = [
     bypassInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.locations (
-          location_name, location_code, location_type, linked_customer_id, linked_vendor_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Other', $3, $4, $5, $6)
+          location_name, location_code, location_type, linked_customer_id, linked_vendor_id, operating_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'Other', $3, $4, $5, $6, $7)
         RETURNING id
       `,
       values: [
@@ -228,6 +258,7 @@ const tableConfigs = [
         makeCode("FIX-LOC"),
         ctx.fixtureIds.customers,
         ctx.fixtureIds.vendors,
+        ctx.transpCompanyId,
         "fixture",
         ctx.ownerUserId,
       ],
@@ -235,8 +266,8 @@ const tableConfigs = [
     managerInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.locations (
-          location_name, location_code, location_type, linked_customer_id, linked_vendor_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Other', $3, $4, $5, $6)
+          location_name, location_code, location_type, linked_customer_id, linked_vendor_id, operating_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'Other', $3, $4, $5, $6, $7)
         RETURNING id
       `,
       values: [
@@ -244,6 +275,7 @@ const tableConfigs = [
         makeCode("MGR-LOC"),
         ctx.fixtureIds.customers,
         ctx.fixtureIds.vendors,
+        ctx.transpCompanyId,
         "manager insert",
         ctx.managerUserId,
       ],
@@ -251,8 +283,8 @@ const tableConfigs = [
     driverInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.locations (
-          location_name, location_code, location_type, linked_customer_id, linked_vendor_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Other', $3, $4, $5, $6)
+          location_name, location_code, location_type, linked_customer_id, linked_vendor_id, operating_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'Other', $3, $4, $5, $6, $7)
         RETURNING id
       `,
       values: [
@@ -260,6 +292,7 @@ const tableConfigs = [
         makeCode("DRV-LOC"),
         ctx.fixtureIds.customers,
         ctx.fixtureIds.vendors,
+        ctx.transpCompanyId,
         "driver insert",
         ctx.driverUserId,
       ],
@@ -276,8 +309,8 @@ const tableConfigs = [
     bypassInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.equipment (
-          equipment_number, vin, equipment_type, status, current_unit_id, current_location_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'DryVan', 'InService', $3, $4, $5, $6)
+          equipment_number, vin, equipment_type, status, current_unit_id, current_location_id, owner_company_id, currently_leased_to_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'DryVan', 'InService', $3, $4, $5, $6, $7, $8)
         RETURNING id
       `,
       values: [
@@ -285,6 +318,8 @@ const tableConfigs = [
         makeCode("FIXVINEQP"),
         ctx.fixtureIds.units,
         ctx.fixtureIds.locations,
+        ctx.trkCompanyId,
+        ctx.transpCompanyId,
         "fixture",
         ctx.ownerUserId,
       ],
@@ -292,8 +327,8 @@ const tableConfigs = [
     managerInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.equipment (
-          equipment_number, vin, equipment_type, status, current_unit_id, current_location_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Flatbed', 'InService', $3, $4, $5, $6)
+          equipment_number, vin, equipment_type, status, current_unit_id, current_location_id, owner_company_id, currently_leased_to_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'Flatbed', 'InService', $3, $4, $5, $6, $7, $8)
         RETURNING id
       `,
       values: [
@@ -301,6 +336,8 @@ const tableConfigs = [
         makeCode("MGRVINEQP"),
         ctx.fixtureIds.units,
         ctx.fixtureIds.locations,
+        ctx.trkCompanyId,
+        ctx.transpCompanyId,
         "manager insert",
         ctx.managerUserId,
       ],
@@ -308,8 +345,8 @@ const tableConfigs = [
     driverInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.equipment (
-          equipment_number, vin, equipment_type, status, current_unit_id, current_location_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Reefer', 'InService', $3, $4, $5, $6)
+          equipment_number, vin, equipment_type, status, current_unit_id, current_location_id, owner_company_id, currently_leased_to_company_id, notes, created_by_user_id
+        ) VALUES ($1, $2, 'Reefer', 'InService', $3, $4, $5, $6, $7, $8)
         RETURNING id
       `,
       values: [
@@ -317,6 +354,8 @@ const tableConfigs = [
         makeCode("DRVVINEQP"),
         ctx.fixtureIds.units,
         ctx.fixtureIds.locations,
+        ctx.trkCompanyId,
+        ctx.transpCompanyId,
         "driver insert",
         ctx.driverUserId,
       ],
@@ -399,10 +438,39 @@ try {
 
   createdUserIds.push(userIds.ownerUserId, userIds.managerUserId, userIds.dispatcherUserId, userIds.driverUserId);
 
+  const companyRes = await runWithBypass(client, async () => {
+    const res = await client.query(`SELECT code, id FROM org.companies WHERE code IN ('TRK', 'TRANSP', 'USMCA')`);
+    const byCode = new Map(res.rows.map((row) => [row.code, row.id]));
+    return {
+      trkCompanyId: byCode.get("TRK") ?? "",
+      transpCompanyId: byCode.get("TRANSP") ?? "",
+      usmcaCompanyId: byCode.get("USMCA") ?? "",
+    };
+  });
+
+  await runWithBypass(client, async () => {
+    await client.query(
+      `
+        INSERT INTO org.user_company_access (user_id, company_id, granted_by_user_id)
+        VALUES
+          ($1, $4, $1),
+          ($2, $4, $1),
+          ($3, $4, $1)
+        ON CONFLICT (user_id, company_id) DO NOTHING
+      `,
+      [userIds.managerUserId, userIds.dispatcherUserId, userIds.driverUserId, companyRes.transpCompanyId]
+    );
+    await client.query(
+      `UPDATE identity.users SET default_company_id = $2 WHERE id IN ($1, $3, $4)`,
+      [userIds.managerUserId, companyRes.transpCompanyId, userIds.dispatcherUserId, userIds.driverUserId]
+    );
+  });
+
   for (const cfg of tableConfigs) {
     const ctx = {
       suffix,
       ...userIds,
+      ...companyRes,
       fixtureIds,
       managerRowIds,
     };
