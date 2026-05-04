@@ -74,7 +74,7 @@ export function Topbar({ auth }: Props) {
               onClick={async () => {
                 setOpen(false);
                 try {
-                  await signOut();
+                  await signOut(window.location.origin);
                 } catch {
                   pushToast("Sign out failed, redirecting to login", "info");
                 } finally {

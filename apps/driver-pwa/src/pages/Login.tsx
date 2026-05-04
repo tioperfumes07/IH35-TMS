@@ -5,7 +5,9 @@ import { PwaButton } from "../components/PwaButton";
 export function LoginPage() {
   const auth = useAuth();
   const authBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
-  const loginHref = authBase ? `${authBase}/api/v1/auth/google/login` : "/api/v1/auth/google/login";
+  const returnTo = encodeURIComponent(window.location.origin);
+  const loginPath = `/api/v1/auth/google/login?returnTo=${returnTo}`;
+  const loginHref = authBase ? `${authBase}${loginPath}` : loginPath;
 
   if (auth.isLoading) {
     return <div className="flex min-h-screen items-center justify-center text-sm text-pwa-text-secondary">Checking session...</div>;

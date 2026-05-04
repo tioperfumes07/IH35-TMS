@@ -15,6 +15,7 @@ export function getMe() {
   return apiRequest<AuthMeResponse>("/api/v1/auth/me");
 }
 
-export function signOut() {
-  return apiRequest<{ ok: boolean }>("/api/v1/auth/logout", { method: "POST" });
+export function signOut(returnTo?: string) {
+  const query = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
+  return apiRequest<{ ok: boolean }>(`/api/v1/auth/logout${query}`, { method: "POST" });
 }
