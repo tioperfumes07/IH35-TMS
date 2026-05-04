@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ih35-tms-backend
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npm run build:backend
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+
+  - type: static
+    name: ih35-tms-frontend
+    buildCommand: cd apps/frontend && npm install && npm run build
+    staticPublishPath: apps/frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://ih35-tms.onrender.com

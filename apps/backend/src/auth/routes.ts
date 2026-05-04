@@ -68,6 +68,16 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     }
   });
 
+  app.get("/api/v1/auth/me", async (req, reply) => {
+    if (!req.user || !req.session) {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
+    return {
+      user: req.user,
+      session: req.session,
+    };
+  });
+
   app.post("/api/v1/auth/logout", async (req, reply) => {
     const sessionId = req.cookies["ih35_session"];
     if (sessionId) {
