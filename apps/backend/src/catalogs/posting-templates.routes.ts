@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -133,7 +134,16 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
             authUser.uuid,
           ]
         );
-        return res.rows[0];
+        const row = res.rows[0];
+        await appendCrudAudit(client, authUser.uuid, "catalogs.posting_templates.created", {
+          resource_id: row.id,
+          resource_type: "catalogs.posting_templates",
+          id: row.id,
+          template_name: row.template_name,
+          template_code: row.template_code,
+          is_active: row.is_active,
+        });
+        return row;
       });
       return reply.code(201).send(created);
     } catch (err) {
@@ -180,18 +190,6 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
 
-    const existing = await withCurrentUser(authUser.uuid, async (client) => {
-      const res = await client.query(
-        `SELECT debit_account_id, credit_account_id FROM catalogs.posting_templates WHERE id = $1 LIMIT 1`,
-        [parsedParams.data.id]
-      );
-      return res.rows[0] ?? null;
-    });
-    if (!existing) return reply.code(404).send({ error: "catalog_posting_template_not_found" });
-    const finalDebit = b.debit_account_id ?? String(existing.debit_account_id);
-    const finalCredit = b.credit_account_id ?? String(existing.credit_account_id);
-    if (finalDebit === finalCredit) return reply.code(400).send({ error: "debit_credit_must_differ" });
-
     const setParts: string[] = [];
     const values: unknown[] = [];
     const add = (col: string, val: unknown) => {
@@ -212,6 +210,26 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        const oldRes = await client.query(
+          `
+            SELECT
+              id, template_name, template_code, description, debit_account_id, credit_account_id,
+              default_class_id, default_memo, is_active,
+              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            FROM catalogs.posting_templates
+            WHERE id = $1
+            LIMIT 1
+          `,
+          [parsedParams.data.id]
+        );
+        const oldRow = oldRes.rows[0] ?? null;
+        if (!oldRow) return null;
+        const finalDebit = b.debit_account_id ?? String(oldRow.debit_account_id);
+        const finalCredit = b.credit_account_id ?? String(oldRow.credit_account_id);
+        if (finalDebit === finalCredit) {
+          return { error: "debit_credit_must_differ" as const };
+        }
+
         const res = await client.query(
           `
             UPDATE catalogs.posting_templates
@@ -224,10 +242,38 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
           `,
           values
         );
-        return res.rows[0] ?? null;
+        const updatedRow = res.rows[0] ?? null;
+        if (!updatedRow) return null;
+        const changes = buildPatchChanges(
+          b as unknown as Record<string, unknown>,
+          oldRow as Record<string, unknown>,
+          updatedRow as Record<string, unknown>
+        );
+        const isActiveChanged = Object.prototype.hasOwnProperty.call(changes, "is_active");
+        const isActiveChangedFrom = oldRow.is_active;
+        const isActiveChangedTo = updatedRow.is_active;
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "catalogs.posting_templates.updated",
+          {
+            resource_id: updatedRow.id,
+            resource_type: "catalogs.posting_templates",
+            changes,
+            ...(isActiveChanged
+              ? {
+                  is_active_changed_from: isActiveChangedFrom,
+                  is_active_changed_to: isActiveChangedTo,
+                }
+              : {}),
+          },
+          isActiveChanged && isActiveChangedFrom === true && isActiveChangedTo === false ? "warning" : "info"
+        );
+        return { row: updatedRow };
       });
       if (!updated) return reply.code(404).send({ error: "catalog_posting_template_not_found" });
-      return updated;
+      if ("error" in updated) return reply.code(400).send({ error: updated.error });
+      return updated.row;
     } catch (err) {
       const code = (err as { code?: string }).code;
       const constraint = (err as { constraint?: string }).constraint;
@@ -245,16 +291,48 @@ export async function registerPostingTemplateRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
-      const res = await client.query(
+      const oldRes = await client.query(
         `
-          UPDATE catalogs.posting_templates
-          SET is_active = false, updated_by_user_id = $2
+          SELECT id, is_active
+          FROM catalogs.posting_templates
           WHERE id = $1
-          RETURNING id, is_active
+          LIMIT 1
         `,
-        [parsedParams.data.id, authUser.uuid]
+        [parsedParams.data.id]
       );
-      return res.rows[0] ?? null;
+      const oldRow = oldRes.rows[0] ?? null;
+      if (!oldRow) return null;
+
+      let isActive = Boolean(oldRow.is_active);
+      const wasAlreadyDeactivated = !isActive;
+      if (!wasAlreadyDeactivated) {
+        const res = await client.query(
+          `
+            UPDATE catalogs.posting_templates
+            SET is_active = false, updated_by_user_id = $2
+            WHERE id = $1
+            RETURNING id, is_active
+          `,
+          [parsedParams.data.id, authUser.uuid]
+        );
+        isActive = Boolean(res.rows[0]?.is_active ?? false);
+      }
+
+      await appendCrudAudit(
+        client,
+        authUser.uuid,
+        "catalogs.posting_templates.is_active_changed",
+        {
+          resource_id: oldRow.id,
+          resource_type: "catalogs.posting_templates",
+          was_already_deactivated: wasAlreadyDeactivated,
+          is_active_from: oldRow.is_active,
+          is_active_to: false,
+        },
+        "warning"
+      );
+
+      return { id: oldRow.id, is_active: isActive, was_already_deactivated: wasAlreadyDeactivated };
     });
     if (!deactivated) return reply.code(404).send({ error: "catalog_posting_template_not_found" });
     return deactivated;

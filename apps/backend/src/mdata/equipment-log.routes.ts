@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
@@ -46,13 +47,20 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
-function mapEquipmentLogRow(row: Record<string, unknown>) {
+type EquipmentLogRow = Record<string, unknown> & {
+  id: string;
+  equipment_id: string;
+  event_type: string;
+  event_at: string;
+};
+
+function mapEquipmentLogRow(row: Record<string, unknown>): EquipmentLogRow {
   return {
     ...row,
     new_unit_id: row.to_unit_id ?? null,
     new_location_id: row.to_location_id ?? null,
     new_status: row.status_after ?? null,
-  };
+  } as unknown as EquipmentLogRow;
 }
 
 export async function registerEquipmentLogRoutes(app: FastifyInstance) {
@@ -166,7 +174,16 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
             authUser.uuid,
           ]
         );
-        return mapEquipmentLogRow(res.rows[0]);
+        const row = mapEquipmentLogRow(res.rows[0]);
+        await appendCrudAudit(client, authUser.uuid, "mdata.equipment_log.created", {
+          resource_id: row.id,
+          resource_type: "mdata.equipment_log",
+          id: row.id,
+          equipment_id: row.equipment_id,
+          event_type: row.event_type,
+          event_at: row.event_at,
+        });
+        return row;
       });
       return reply.code(201).send(created);
     } catch (err) {

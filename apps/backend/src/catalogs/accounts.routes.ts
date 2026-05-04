@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -161,7 +162,16 @@ export async function registerAccountRoutes(app: FastifyInstance) {
             authUser.uuid,
           ]
         );
-        return res.rows[0];
+        const row = res.rows[0];
+        await appendCrudAudit(client, authUser.uuid, "catalogs.accounts.created", {
+          resource_id: row.id,
+          resource_type: "catalogs.accounts",
+          id: row.id,
+          account_number: row.account_number,
+          account_name: row.account_name,
+          account_type: row.account_type,
+        });
+        return row;
       });
       return reply.code(201).send(created);
     } catch (err) {
@@ -238,6 +248,21 @@ export async function registerAccountRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        const oldRes = await client.query(
+          `
+            SELECT
+              id, account_number, account_name, account_type, account_subtype, parent_account_id,
+              qbo_account_id, qbo_account_qrn, is_postable, currency_code, opening_balance_cents, notes,
+              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            FROM catalogs.accounts
+            WHERE id = $1
+            LIMIT 1
+          `,
+          [parsedParams.data.id]
+        );
+        const oldRow = oldRes.rows[0] ?? null;
+        if (!oldRow) return null;
+
         const res = await client.query(
           `
             UPDATE catalogs.accounts
@@ -250,7 +275,19 @@ export async function registerAccountRoutes(app: FastifyInstance) {
           `,
           values
         );
-        return res.rows[0] ?? null;
+        const updatedRow = res.rows[0] ?? null;
+        if (!updatedRow) return null;
+        const changes = buildPatchChanges(
+          b as unknown as Record<string, unknown>,
+          oldRow as Record<string, unknown>,
+          updatedRow as Record<string, unknown>
+        );
+        await appendCrudAudit(client, authUser.uuid, "catalogs.accounts.updated", {
+          resource_id: updatedRow.id,
+          resource_type: "catalogs.accounts",
+          changes,
+        });
+        return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "catalog_account_not_found" });
       return updated;
@@ -272,17 +309,42 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
-      const res = await client.query(
+      const oldRes = await client.query(
         `
-          UPDATE catalogs.accounts
-          SET deactivated_at = now(), updated_by_user_id = $2
+          SELECT id, deactivated_at
+          FROM catalogs.accounts
           WHERE id = $1
-            AND deactivated_at IS NULL
-          RETURNING id, deactivated_at
+          LIMIT 1
         `,
-        [parsedParams.data.id, authUser.uuid]
+        [parsedParams.data.id]
       );
-      return res.rows[0] ?? null;
+      const oldRow = oldRes.rows[0] ?? null;
+      if (!oldRow) return null;
+
+      let deactivatedAt = oldRow.deactivated_at as string | null;
+      let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
+      if (!wasAlreadyDeactivated) {
+        const res = await client.query(
+          `
+            UPDATE catalogs.accounts
+            SET deactivated_at = now(), updated_by_user_id = $2
+            WHERE id = $1
+              AND deactivated_at IS NULL
+            RETURNING id, deactivated_at
+          `,
+          [parsedParams.data.id, authUser.uuid]
+        );
+        deactivatedAt = (res.rows[0]?.deactivated_at as string | undefined) ?? deactivatedAt;
+        wasAlreadyDeactivated = false;
+      }
+
+      await appendCrudAudit(client, authUser.uuid, "catalogs.accounts.deactivated", {
+        resource_id: oldRow.id,
+        resource_type: "catalogs.accounts",
+        was_already_deactivated: wasAlreadyDeactivated,
+      });
+
+      return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
     });
     if (!deactivated) return reply.code(404).send({ error: "catalog_account_not_found" });
     return deactivated;
