@@ -10,6 +10,8 @@ import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 
+type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
+
 const app = Fastify({ logger: true });
 const ALLOWED_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS ?? "https://ih35-tms-web.onrender.com,http://localhost:5173")
   .split(",")
@@ -22,7 +24,7 @@ app.get("/api/v1/_healthcheck", async () => {
 
 async function main() {
   await app.register(cors, {
-    origin: (origin, cb) => {
+    origin: (origin: string | undefined, cb: (err: Error | null, allow: CorsOriginValue) => void) => {
       if (!origin) return cb(null, true);
       if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
       return cb(new Error("CORS: origin not allowed"), false);
