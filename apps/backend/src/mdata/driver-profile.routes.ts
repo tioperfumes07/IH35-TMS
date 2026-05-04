@@ -509,7 +509,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         const effectiveFrom = parsedBody.data.effective_from ?? new Date().toISOString().slice(0, 10);
         const currentRes = await client.query(
           `
-            SELECT id, amount
+            SELECT id, amount, effective_from
             FROM mdata.driver_pay_rates
             WHERE driver_qualification_id = $1
               AND line_item_template_id = $2
@@ -521,16 +521,35 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         );
         const previousRateId = currentRes.rows[0]?.id ? String(currentRes.rows[0].id) : null;
         const previousAmount = currentRes.rows[0]?.amount ?? null;
+        const previousEffectiveFromRaw = currentRes.rows[0]?.effective_from;
+        const previousEffectiveFrom =
+          previousEffectiveFromRaw instanceof Date
+            ? previousEffectiveFromRaw.toISOString().slice(0, 10)
+            : previousEffectiveFromRaw
+              ? String(previousEffectiveFromRaw).slice(0, 10)
+              : null;
+        const sameDayCorrection = Boolean(previousEffectiveFrom && previousEffectiveFrom === effectiveFrom);
 
         if (previousRateId) {
-          await client.query(
-            `
-              UPDATE mdata.driver_pay_rates
-              SET effective_to = ($1::date - interval '1 day')::date, updated_by_user_id = $3
-              WHERE id = $2
-            `,
-            [effectiveFrom, previousRateId, authUser.uuid]
-          );
+          if (sameDayCorrection) {
+            await client.query(
+              `
+                UPDATE mdata.driver_pay_rates
+                SET deactivated_at = now(), updated_by_user_id = $2
+                WHERE id = $1
+              `,
+              [previousRateId, authUser.uuid]
+            );
+          } else {
+            await client.query(
+              `
+                UPDATE mdata.driver_pay_rates
+                SET effective_to = ($1::date - interval '1 day')::date, updated_by_user_id = $3
+                WHERE id = $2
+              `,
+              [effectiveFrom, previousRateId, authUser.uuid]
+            );
+          }
         }
 
         const newRateRes = await client.query(
@@ -566,6 +585,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             from_amount: previousAmount,
             to_amount: parsedBody.data.amount,
             change_reason: parsedBody.data.change_reason,
+            same_day_correction: sameDayCorrection,
           },
           "info",
           "BT-1-DRIVER-PROFILE-EXPANSION"

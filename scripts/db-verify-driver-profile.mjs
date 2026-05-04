@@ -327,6 +327,7 @@ try {
   await startServer(process.cwd());
 
   let apiQualificationId = "";
+  let priorRateIdAfterFirstChange = "";
   results.push(
     await pass("POST qualification creates qualification and initial rate", async () => {
       const response = await fetch(`${apiBase}/api/v1/mdata/drivers/${refs.primaryDriverId}/qualifications`, {
@@ -380,6 +381,9 @@ try {
         const body = await response.text();
         throw new Error(`rate change failed ${response.status} body=${body}`);
       }
+      const ratePayload = await response.json();
+      priorRateIdAfterFirstChange = String(ratePayload?.rate?.id ?? "");
+      if (!priorRateIdAfterFirstChange) throw new Error("missing rate id from first change");
 
       await runWithBypass(client, async () => {
         const res = await client.query(
@@ -400,6 +404,64 @@ try {
         if (!newest.previous_rate_id) throw new Error("expected previous_rate_id on newest row");
         if (String(newest.previous_rate_id) !== String(previous.id)) throw new Error("newest row previous_rate_id mismatch");
         if (!previous.effective_to) throw new Error("previous row effective_to should be closed");
+      });
+    })
+  );
+
+  results.push(
+    await pass("Same-day correction soft-deletes prior rate and keeps CHECK valid", async () => {
+      const response = await fetch(`${apiBase}/api/v1/mdata/drivers/${refs.primaryDriverId}/qualifications/${apiQualificationId}/rates/change`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `ih35_session=${refs.ownerSessionId}`,
+        },
+        body: JSON.stringify({
+          line_item_template_id: refs.lineItemTemplateId,
+          amount: 0.5,
+          effective_from: "2026-02-01",
+          change_reason: "correction",
+          change_notes: "same day typo fix",
+        }),
+      });
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`same-day correction failed ${response.status} body=${body}`);
+      }
+      const payload = await response.json();
+      const newRateId = String(payload?.rate?.id ?? "");
+      if (!newRateId) throw new Error("missing new rate id for same-day correction");
+
+      await runWithBypass(client, async () => {
+        const previousRes = await client.query(
+          `
+            SELECT id, amount, deactivated_at
+            FROM mdata.driver_pay_rates
+            WHERE id = $1
+            LIMIT 1
+          `,
+          [priorRateIdAfterFirstChange]
+        );
+        if (previousRes.rows.length !== 1) throw new Error("prior rate row missing");
+        if (!previousRes.rows[0].deactivated_at) throw new Error("prior same-day row was not soft-deleted");
+
+        const currentRes = await client.query(
+          `
+            SELECT id, amount, previous_rate_id, effective_to, deactivated_at
+            FROM mdata.driver_pay_rates
+            WHERE id = $1
+            LIMIT 1
+          `,
+          [newRateId]
+        );
+        if (currentRes.rows.length !== 1) throw new Error("new same-day rate row missing");
+        const row = currentRes.rows[0];
+        if (String(row.amount) !== "0.5000") throw new Error(`expected corrected amount 0.5000, got ${row.amount}`);
+        if (String(row.previous_rate_id ?? "") !== priorRateIdAfterFirstChange) {
+          throw new Error("new same-day rate row previous_rate_id mismatch");
+        }
+        if (row.effective_to !== null) throw new Error("new corrected row should remain current (effective_to NULL)");
+        if (row.deactivated_at !== null) throw new Error("new corrected row should not be deactivated");
       });
     })
   );
@@ -526,6 +588,22 @@ try {
           if ((got.get(eventClass) ?? 0) < 1) {
             throw new Error(`missing audit event ${eventClass}`);
           }
+        }
+
+        const sameDayAuditRes = await client.query(
+          `
+            SELECT 1
+            FROM audit.audit_events
+            WHERE source = $1
+              AND event_class = 'mdata.driver_pay_rates.changed'
+              AND payload ->> 'same_day_correction' = 'true'
+              AND payload ->> 'driver_qualification_id' = $2
+            LIMIT 1
+          `,
+          [verifySource, apiQualificationId]
+        );
+        if (sameDayAuditRes.rows.length === 0) {
+          throw new Error("missing same_day_correction=true audit payload on rate change");
         }
       } catch (error) {
         await client.query("ROLLBACK");

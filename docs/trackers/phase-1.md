@@ -75,6 +75,7 @@
 | 2026-05-04 | BT-1-DRIVER-PROFILE-EXPANSION pay rate change permissions: Owner, Administrator, Manager (Option β). Manager can adjust pay (e.g., dispatch manager negotiates a temporary rate increase). Future workflow approval pattern can be added if needed without schema changes. | Jorge | Resolved | RBAC decision |
 | 2026-05-04 | BT-1-DRIVER-PROFILE-EXPANSION adds mdata.driver_company_authorizations (driver_id × company_id × is_authorized). Simple boolean (no effective dating yet — can add later if needed). RLS scopes by user's accessible companies (same pattern as customers/vendors/locations). Required role for changes: Owner, Administrator, Manager, Safety. | Jorge | Resolved | data model |
 | 2026-05-04 | BT-1-DRIVER-PROFILE-EXPANSION Mexican identity fields are OPTIONAL in the database schema. Form-level validation enforces INE+CURP requirement when visa_type='B1'. This allows the schema to handle non-Mexican drivers (US citizens, permanent residents) without bogus placeholder data. | Jorge | Resolved | schema decision |
+| 2026-05-04 | BT-1-DRIVER-PROFILE-EXPANSION hot-fix #20.1: same-day rate correction edge case. When a rate is changed on the same day it became effective (e.g., typo correction within minutes), the close-by-effective_to logic would set effective_to = effective_from - 1 day, violating the CHECK constraint. Fixed: same-day corrections soft-delete the prior rate via deactivated_at instead. Audit event includes same_day_correction=true. | Jorge | Resolved | edge case caught at cross-check |
 
 ## TODO
 
