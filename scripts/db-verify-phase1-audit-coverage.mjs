@@ -73,6 +73,7 @@ const EVENT_CLASSES = [
   "mdata.driver_equipment_qualifications.created",
   "mdata.driver_equipment_qualifications.updated",
   "mdata.driver_equipment_qualifications.deactivated",
+  "mdata.driver_equipment_qualifications.reactivated",
   "mdata.driver_pay_rates.created",
   "mdata.driver_pay_rates.changed",
   "mdata.driver_company_authorizations.granted",

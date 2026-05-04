@@ -69,7 +69,7 @@ async function pass(name, fn) {
   }
 }
 
-async function waitForHealth(baseUrl, timeoutMs = 20000) {
+async function waitForHealth(baseUrl, timeoutMs = 45000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
@@ -174,17 +174,25 @@ try {
 
     const lineItemRes = await client.query(
       `
-        SELECT id
+        SELECT id, code
         FROM catalogs.equipment_line_item_templates
         WHERE equipment_type_id = $1
-          AND code = 'LOADED_MILE'
           AND deactivated_at IS NULL
-        LIMIT 1
+        ORDER BY sort_order, name
+        LIMIT 2
       `,
       [apiEquipmentTypeId]
     );
-    const lineItemTemplateId = String(lineItemRes.rows[0]?.id ?? "");
+    const loadedLineItemRow =
+      lineItemRes.rows.find((row) => String(row.code) === "LOADED_MILE") ??
+      lineItemRes.rows[0];
+    const secondLineItemRow =
+      lineItemRes.rows.find((row) => String(row.id) !== String(loadedLineItemRow?.id)) ??
+      null;
+    const lineItemTemplateId = String(loadedLineItemRow?.id ?? "");
+    const secondLineItemTemplateId = String(secondLineItemRow?.id ?? "");
     if (!lineItemTemplateId) throw new Error("LOADED_MILE line item not found");
+    if (!secondLineItemTemplateId) throw new Error("second line item template not found");
 
     const primaryDriverRes = await client.query(
       `
@@ -204,9 +212,19 @@ try {
       `,
       [`DriverProfile-${suffix}`, "Duplicate", `+1554${suffix.slice(0, 6)}`, ownerId]
     );
+    const reactivationDriverRes = await client.query(
+      `
+        INSERT INTO mdata.drivers (
+          first_name, last_name, phone, status, created_by_user_id, updated_by_user_id
+        ) VALUES ($1, $2, $3, 'Active', $4, $4)
+        RETURNING id
+      `,
+      [`DriverProfile-${suffix}`, "Reactivation", `+1553${suffix.slice(0, 6)}`, ownerId]
+    );
     const primaryDriverId = String(primaryDriverRes.rows[0].id);
     const duplicateCurpDriverId = String(duplicateCurpDriverRes.rows[0].id);
-    createdDriverIds.push(primaryDriverId, duplicateCurpDriverId);
+    const reactivationDriverId = String(reactivationDriverRes.rows[0].id);
+    createdDriverIds.push(primaryDriverId, duplicateCurpDriverId, reactivationDriverId);
 
     return {
       ownerId,
@@ -215,9 +233,11 @@ try {
       ownerSessionId,
       primaryDriverId,
       duplicateCurpDriverId,
+      reactivationDriverId,
       equipmentTypeId,
       apiEquipmentTypeId,
       lineItemTemplateId,
+      secondLineItemTemplateId,
       transpId,
       usmcaId,
     };
@@ -486,6 +506,180 @@ try {
       const first = new Date(line.history[0].effective_from).getTime();
       const second = new Date(line.history[1].effective_from).getTime();
       if (first < second) throw new Error("history is not sorted descending");
+    })
+  );
+
+  let reactivationQualificationId = "";
+  results.push(
+    await pass("Reactivate deactivated qualification restores prior rates", async () => {
+      const createResponse = await fetch(`${apiBase}/api/v1/mdata/drivers/${refs.reactivationDriverId}/qualifications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `ih35_session=${refs.ownerSessionId}`,
+        },
+        body: JSON.stringify({
+          equipment_type_id: refs.apiEquipmentTypeId,
+          qualified_at: "2026-03-01",
+          notes: "reactivation fixture",
+          initial_rates: [
+            {
+              line_item_template_id: refs.lineItemTemplateId,
+              amount: 0.5,
+            },
+            {
+              line_item_template_id: refs.secondLineItemTemplateId,
+              amount: 0.45,
+            },
+          ],
+        }),
+      });
+      if (createResponse.status !== 201) {
+        const body = await createResponse.text();
+        throw new Error(`reactivation fixture create failed ${createResponse.status} body=${body}`);
+      }
+      const createPayload = await createResponse.json();
+      reactivationQualificationId = String(createPayload?.qualification?.id ?? "");
+      if (!reactivationQualificationId) throw new Error("missing reactivation qualification id");
+      createdQualificationIds.push(reactivationQualificationId);
+
+      const changeResponse = await fetch(
+        `${apiBase}/api/v1/mdata/drivers/${refs.reactivationDriverId}/qualifications/${reactivationQualificationId}/rates/change`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `ih35_session=${refs.ownerSessionId}`,
+          },
+          body: JSON.stringify({
+            line_item_template_id: refs.lineItemTemplateId,
+            amount: 0.55,
+            effective_from: "2026-03-10",
+            change_reason: "raise",
+          }),
+        }
+      );
+      if (!changeResponse.ok) {
+        const body = await changeResponse.text();
+        throw new Error(`reactivation fixture rate change failed ${changeResponse.status} body=${body}`);
+      }
+
+      const deactivateResponse = await fetch(
+        `${apiBase}/api/v1/mdata/drivers/${refs.reactivationDriverId}/qualifications/${reactivationQualificationId}`,
+        {
+          method: "DELETE",
+          headers: { Cookie: `ih35_session=${refs.ownerSessionId}` },
+        }
+      );
+      if (!deactivateResponse.ok) {
+        const body = await deactivateResponse.text();
+        throw new Error(`reactivation fixture deactivate failed ${deactivateResponse.status} body=${body}`);
+      }
+
+      const listActiveResponse = await fetch(`${apiBase}/api/v1/mdata/drivers/${refs.reactivationDriverId}/qualifications`, {
+        headers: { Cookie: `ih35_session=${refs.ownerSessionId}` },
+      });
+      if (!listActiveResponse.ok) throw new Error(`list qualifications failed ${listActiveResponse.status}`);
+      const listActivePayload = await listActiveResponse.json();
+      const stillActive = (listActivePayload?.qualifications ?? []).some((row) => row.id === reactivationQualificationId);
+      if (stillActive) throw new Error("deactivated qualification should not appear in default list");
+
+      const listInactiveResponse = await fetch(
+        `${apiBase}/api/v1/mdata/drivers/${refs.reactivationDriverId}/qualifications?include_inactive=true`,
+        {
+          headers: { Cookie: `ih35_session=${refs.ownerSessionId}` },
+        }
+      );
+      if (!listInactiveResponse.ok) throw new Error(`list include_inactive failed ${listInactiveResponse.status}`);
+      const listInactivePayload = await listInactiveResponse.json();
+      const inactiveQual = (listInactivePayload?.qualifications ?? []).find((row) => row.id === reactivationQualificationId);
+      if (!inactiveQual) throw new Error("qualification missing from include_inactive list");
+      if (inactiveQual.is_active !== false) throw new Error("qualification should be inactive before reactivation");
+
+      const reactivateResponse = await fetch(
+        `${apiBase}/api/v1/mdata/drivers/${refs.reactivationDriverId}/qualifications/${reactivationQualificationId}/reactivate`,
+        {
+          method: "POST",
+          headers: { Cookie: `ih35_session=${refs.ownerSessionId}` },
+        }
+      );
+      if (!reactivateResponse.ok) {
+        const body = await reactivateResponse.text();
+        throw new Error(`reactivate endpoint failed ${reactivateResponse.status} body=${body}`);
+      }
+      const reactivatePayload = await reactivateResponse.json();
+      if (reactivatePayload?.qualification?.is_active !== true) {
+        throw new Error("qualification is_active should be true after reactivation");
+      }
+      if (reactivatePayload?.qualification?.deactivated_at !== null) {
+        throw new Error("qualification deactivated_at should be null after reactivation");
+      }
+      const restoredRows = reactivatePayload?.qualification?.rates_restored ?? [];
+      if (restoredRows.length < 2) throw new Error("expected at least 2 restored rate rows");
+
+      const loadedRate = (reactivatePayload?.qualification?.current_rates ?? []).find(
+        (row) => row.line_item_template_id === refs.lineItemTemplateId
+      );
+      if (!loadedRate || String(loadedRate.amount) !== "0.5500") {
+        throw new Error(`expected loaded current rate 0.5500, got ${String(loadedRate?.amount ?? "missing")}`);
+      }
+      const secondRate = (reactivatePayload?.qualification?.current_rates ?? []).find(
+        (row) => row.line_item_template_id === refs.secondLineItemTemplateId
+      );
+      if (!secondRate || String(secondRate.amount) !== "0.4500") {
+        throw new Error(`expected second current rate 0.4500, got ${String(secondRate?.amount ?? "missing")}`);
+      }
+
+      await client.query("RESET ROLE");
+      await client.query("BEGIN");
+      try {
+        const auditRes = await client.query(
+          `
+            SELECT payload
+            FROM audit.audit_events
+            WHERE source = 'BT-1-QUALIFICATION-REACTIVATION'
+              AND event_class = 'mdata.driver_equipment_qualifications.reactivated'
+              AND payload ->> 'resource_id' = $1
+            ORDER BY created_at DESC
+            LIMIT 1
+          `,
+          [reactivationQualificationId]
+        );
+        if (auditRes.rows.length === 0) {
+          throw new Error("reactivation audit event not found");
+        }
+        const restored = auditRes.rows[0]?.payload?.rates_restored;
+        if (!Array.isArray(restored) || restored.length < 2) {
+          throw new Error("reactivation audit payload missing rates_restored entries");
+        }
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        await client.query("SET ROLE ih35_app");
+      }
+    })
+  );
+
+  results.push(
+    await pass("Reactivate endpoint rejects already-active qualification", async () => {
+      if (!reactivationQualificationId) throw new Error("reactivation fixture qualification missing");
+      const response = await fetch(
+        `${apiBase}/api/v1/mdata/drivers/${refs.reactivationDriverId}/qualifications/${reactivationQualificationId}/reactivate`,
+        {
+          method: "POST",
+          headers: { Cookie: `ih35_session=${refs.ownerSessionId}` },
+        }
+      );
+      if (response.status !== 400) {
+        const body = await response.text();
+        throw new Error(`expected 400 qualification_already_active, got ${response.status} body=${body}`);
+      }
+      const payload = await response.json();
+      if (payload?.error !== "qualification_already_active") {
+        throw new Error(`unexpected error payload: ${JSON.stringify(payload)}`);
+      }
     })
   );
 
