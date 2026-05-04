@@ -23,8 +23,9 @@ export const lucia = new Lucia(adapter, {
     name: "ih35_session",
     expires: false,
     attributes: {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
+      path: "/",
     },
   },
   getUserAttributes: (attrs) => {
