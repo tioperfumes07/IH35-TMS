@@ -27,6 +27,7 @@ import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -427,6 +428,20 @@ export function CustomerDetailPage() {
     },
   });
 
+  const qualityEvents = qualityEventsQuery.data ?? [];
+  const qualityStats = useMemo(() => {
+    const active = qualityEvents.filter((event) => !event.voided_at);
+    const severeCount = active.filter((event) => event.severity === "severe").length;
+    const totalImpact = active.reduce((sum, event) => sum + Number(event.dollar_impact_amount ?? 0), 0);
+    const lateEvents = active.filter((event) => event.event_type === "late_payment" && typeof event.days_late === "number");
+    const avgDaysLate = lateEvents.length > 0 ? lateEvents.reduce((sum, event) => sum + Number(event.days_late ?? 0), 0) / lateEvents.length : 0;
+    return { totalEvents: active.length, severeCount, totalImpact, avgDaysLate };
+  }, [qualityEvents]);
+  const visibleTabs = useMemo(
+    () => tabs.filter((tab) => (tab === "Quality & History" ? canReadQuality : tab === "Documents" ? canViewDocuments : true)),
+    [canReadQuality, canViewDocuments]
+  );
+
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading customer...</div>;
   if (!customer) {
     return (
@@ -456,19 +471,6 @@ export function CustomerDetailPage() {
   }
 
   const primaryContact = contacts.find((contact) => contact.is_primary && contact.deactivated_at === null);
-  const qualityEvents = qualityEventsQuery.data ?? [];
-  const qualityStats = useMemo(() => {
-    const active = qualityEvents.filter((event) => !event.voided_at);
-    const severeCount = active.filter((event) => event.severity === "severe").length;
-    const totalImpact = active.reduce((sum, event) => sum + Number(event.dollar_impact_amount ?? 0), 0);
-    const lateEvents = active.filter((event) => event.event_type === "late_payment" && typeof event.days_late === "number");
-    const avgDaysLate = lateEvents.length > 0 ? lateEvents.reduce((sum, event) => sum + Number(event.days_late ?? 0), 0) / lateEvents.length : 0;
-    return { totalEvents: active.length, severeCount, totalImpact, avgDaysLate };
-  }, [qualityEvents]);
-  const visibleTabs = useMemo(
-    () => tabs.filter((tab) => (tab === "Quality & History" ? canReadQuality : tab === "Documents" ? canViewDocuments : true)),
-    [canReadQuality, canViewDocuments]
-  );
 
   return (
     <div className="space-y-3">
@@ -942,7 +944,9 @@ export function CustomerDetailPage() {
 
       {activeTab === "Documents" ? (
         canViewDocuments ? (
-          <DocumentsTab entityType="customer" entityId={customer.id} entityName={customer.name} />
+          <ErrorBoundary>
+            <DocumentsTab entityType="customer" entityId={customer.id} entityName={customer.name} />
+          </ErrorBoundary>
         ) : (
           <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
             You do not have permission to view customer documents.

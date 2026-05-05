@@ -30,6 +30,10 @@ function formatDate(value: string | null) {
   return new Date(value).toISOString().slice(0, 10);
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabProps) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -51,6 +55,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
   const isOwner = user?.role === "Owner";
   const canEdit = canUpload;
   const canDelete = canUpload;
+  const hasValidEntityId = isUuid(entityId);
 
   const categoriesQuery = useQuery({
     queryKey: ["file-categories", entityType],
@@ -67,7 +72,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
         limit: 200,
         offset: 0,
       }).then((result) => result.files),
-    enabled: Boolean(entityId),
+    enabled: hasValidEntityId,
   });
 
   const restoreMutation = useMutation({
@@ -96,7 +101,11 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
   }, [filesQuery.data, categoryFilter, search, dateFrom, dateTo]);
 
   const documentsError =
-    filesQuery.error instanceof ApiError && filesQuery.error.status === 403
+    !hasValidEntityId
+      ? "Invalid record identifier. Documents cannot load for this record."
+      : filesQuery.error instanceof ApiError && filesQuery.error.status === 400
+      ? "Invalid documents query. Please refresh."
+      : filesQuery.error instanceof ApiError && filesQuery.error.status === 403
       ? "You do not have permission to view documents for this record."
       : filesQuery.isError
       ? "Unable to load documents."
