@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { colors, spacing, typography } from "../design/tokens";
 
 type Column<T> = {
   key: keyof T | string;
@@ -49,11 +50,15 @@ export function DataTable<T>({
 
   return (
     <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
-      <table className="min-w-full text-left text-[13px]">
+      <table className="min-w-full text-left" style={{ fontSize: typography.tableRow }}>
         <thead className="bg-gray-50">
-          <tr>
+          <tr style={{ height: spacing.tableHeaderHeight }}>
             {columns.map((column) => (
-              <th key={String(column.key)} className={`px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-gray-600 ${column.className ?? ""}`}>
+              <th
+                key={String(column.key)}
+                className={`font-semibold uppercase text-gray-600 ${column.className ?? ""}`}
+                style={{ paddingLeft: spacing.tableCellPaddingX, paddingRight: spacing.tableCellPaddingX, fontSize: typography.kpiLabel, letterSpacing: typography.tightUpper }}
+              >
                 {column.sortable ? (
                   <button
                     type="button"
@@ -81,13 +86,13 @@ export function DataTable<T>({
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan={columns.length} className="px-2 py-3 text-center text-[12px] text-gray-500">
+                  <td colSpan={columns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
                 Loading...
               </td>
             </tr>
           ) : pageRows.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-2 py-3 text-center text-[12px] text-gray-500">
+                  <td colSpan={columns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
                 No records found.
               </td>
             </tr>
@@ -96,10 +101,15 @@ export function DataTable<T>({
               <tr
                 key={rowKey(row)}
                 className={`border-t border-gray-100 ${onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}`}
+                style={{ height: spacing.tableRowHeight }}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
               >
                 {columns.map((column) => (
-                  <td key={String(column.key)} className={`h-8 px-2 py-1 text-gray-800 ${column.className ?? ""}`}>
+                  <td
+                    key={String(column.key)}
+                    className={`py-1 text-gray-800 ${column.className ?? ""}`}
+                    style={{ paddingLeft: spacing.tableCellPaddingX, paddingRight: spacing.tableCellPaddingX }}
+                  >
                     {column.render ? column.render(row) : String((row as Record<string, unknown>)[String(column.key)] ?? "")}
                   </td>
                 ))}
@@ -108,7 +118,7 @@ export function DataTable<T>({
           )}
         </tbody>
       </table>
-      <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600">
+      <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600" style={{ color: colors.mutedText }}>
         <span>
           {sortedRows.length === 0 ? 0 : offset + 1}-{Math.min(offset + pageSize, sortedRows.length)} of {sortedRows.length}
         </span>

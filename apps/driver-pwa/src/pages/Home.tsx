@@ -56,6 +56,10 @@ export function HomePage() {
             <HosCell label="70-Hour" value="42h" subtitle="of 70h" tone="driving" />
             <HosCell label="Tank" value="21%" subtitle="refuel alert" tone="violation" />
           </div>
+          <div className="mt-3 rounded-lg border border-pwa-border bg-[#1A2030] p-2 text-center">
+            <div className="text-[10px] uppercase tracking-wide text-pwa-text-secondary">Tank Percentage</div>
+            <div className="text-xl font-bold text-pwa-text-primary">21%</div>
+          </div>
         </PwaCard>
 
         <PwaCard title="Active Load #2024-0058" subtitle="Phase 1 placeholder — live load data in Phase 3">

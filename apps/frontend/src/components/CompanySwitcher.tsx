@@ -18,7 +18,8 @@ export function CompanySwitcher() {
     <div className="relative">
       <button
         type="button"
-        className="inline-flex items-center gap-1 rounded border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+        className="inline-flex items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-white/10"
+        style={{ borderColor: "#2A3242", color: "#E5E7EB", backgroundColor: "#151A24" }}
         onClick={() => setOpen((current) => !current)}
       >
         {selectedLabel}

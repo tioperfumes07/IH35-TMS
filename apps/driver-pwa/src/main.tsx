@@ -7,6 +7,7 @@ import { ToastProvider } from "./components/Toast";
 import "./index.css";
 
 const queryClient = new QueryClient();
+document.documentElement.style.backgroundColor = "#0F1219";
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

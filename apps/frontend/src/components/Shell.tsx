@@ -1,5 +1,6 @@
 import type { AuthMeResponse } from "../types/api";
 import type { ReactNode } from "react";
+import { colors, spacing, typography } from "../design/tokens";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -10,11 +11,13 @@ type Props = {
 
 export function Shell({ auth, children }: Props) {
   return (
-    <div className="flex min-h-screen flex-col bg-white font-sans">
+    <div className="flex min-h-screen flex-col" style={{ backgroundColor: colors.bodyBg, fontFamily: typography.fontSans }}>
       <Topbar auth={auth} />
       <div className="flex min-h-[calc(100vh-48px)]">
         <Sidebar />
-        <main className="flex-1 bg-white p-4">{children}</main>
+        <main className="flex-1" style={{ backgroundColor: colors.bodyBg, padding: spacing.pageContentPadding }}>
+          {children}
+        </main>
       </div>
     </div>
   );

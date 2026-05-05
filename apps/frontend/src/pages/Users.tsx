@@ -5,6 +5,7 @@ import { ApiError } from "../api/client";
 import { createIdentityWorkflow, createUser, deactivateUser, listUsers } from "../api/identity";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
+import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -80,12 +81,7 @@ export function UsersPage() {
 
   return (
     <div className="space-y-3">
-      <div className="border-b border-gray-200 pb-2">
-        <div className="flex gap-4 text-sm">
-          <span className="border-b-[1.5px] border-info pb-1 font-semibold text-gray-900">Users</span>
-          <span className="pb-1 text-gray-500">Roles</span>
-        </div>
-      </div>
+      <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} />
 
       <div className="flex items-center justify-between gap-3">
         <input

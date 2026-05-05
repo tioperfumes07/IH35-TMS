@@ -11,6 +11,7 @@ import { DriversPage } from "./pages/Drivers";
 import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
+import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { UsersPage } from "./pages/Users";
 
 function RootRedirect() {
@@ -37,15 +38,6 @@ function HomeRoute() {
   const auth = useAuth();
   if (!auth.user) return null;
   return <HomePage auth={auth.user} />;
-}
-
-function CatalogComingSoonPage({ title }: { title: string }) {
-  return (
-    <div className="rounded border border-gray-200 bg-white p-4">
-      <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
-      <p className="mt-1 text-sm text-gray-600">Catalog detail page is coming in a follow-up block.</p>
-    </div>
-  );
 }
 
 export default function App() {
@@ -95,6 +87,34 @@ export default function App() {
           }
         />
         <Route
+          path="/coming-soon"
+          element={
+            <ProtectedRoute>
+              <ComingSoonPage />
+            </ProtectedRoute>
+          }
+        />
+        {[
+          ["/maintenance", "Maintenance", "2"],
+          ["/accounting", "Accounting", "2"],
+          ["/banking", "Banking", "2"],
+          ["/fuel", "Fuel", "2"],
+          ["/safety", "Safety", "2"],
+          ["/dispatch", "Dispatch", "3"],
+          ["/reports", "Reports", "3"],
+          ["/form-425c", "Form 425C", "3"],
+        ].map(([path, feature, phase]) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <ProtectedRoute>
+                <Navigate to={`/coming-soon?feature=${encodeURIComponent(feature)}&phase=${phase}&eta=Roadmap`} replace />
+              </ProtectedRoute>
+            }
+          />
+        ))}
+        <Route
           path="/catalogs/equipment-types"
           element={
             <ProtectedRoute>
@@ -114,7 +134,7 @@ export default function App() {
           path="/catalogs/accounts"
           element={
             <ProtectedRoute>
-              <CatalogComingSoonPage title="Chart of Accounts" />
+              <Navigate to="/coming-soon?feature=Chart%20of%20Accounts&phase=2&eta=Roadmap" replace />
             </ProtectedRoute>
           }
         />
@@ -122,7 +142,7 @@ export default function App() {
           path="/catalogs/classes"
           element={
             <ProtectedRoute>
-              <CatalogComingSoonPage title="Classes" />
+              <Navigate to="/coming-soon?feature=Classes&phase=2&eta=Roadmap" replace />
             </ProtectedRoute>
           }
         />
@@ -130,7 +150,7 @@ export default function App() {
           path="/catalogs/items"
           element={
             <ProtectedRoute>
-              <CatalogComingSoonPage title="Items" />
+              <Navigate to="/coming-soon?feature=Items&phase=2&eta=Roadmap" replace />
             </ProtectedRoute>
           }
         />
@@ -138,7 +158,7 @@ export default function App() {
           path="/catalogs/payment-terms"
           element={
             <ProtectedRoute>
-              <CatalogComingSoonPage title="Payment Terms" />
+              <Navigate to="/coming-soon?feature=Payment%20Terms&phase=2&eta=Roadmap" replace />
             </ProtectedRoute>
           }
         />
@@ -146,7 +166,7 @@ export default function App() {
           path="/catalogs/posting-templates"
           element={
             <ProtectedRoute>
-              <CatalogComingSoonPage title="Posting Templates" />
+              <Navigate to="/coming-soon?feature=Posting%20Templates&phase=2&eta=Roadmap" replace />
             </ProtectedRoute>
           }
         />
@@ -154,7 +174,7 @@ export default function App() {
           path="/catalogs/account-role-bindings"
           element={
             <ProtectedRoute>
-              <CatalogComingSoonPage title="Account Role Bindings" />
+              <Navigate to="/coming-soon?feature=Account%20Role%20Bindings&phase=2&eta=Roadmap" replace />
             </ProtectedRoute>
           }
         />

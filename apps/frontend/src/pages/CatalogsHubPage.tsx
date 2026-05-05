@@ -2,6 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listCatalogRegistry, previewCatalog, type CatalogPreviewResponse } from "../api/catalogs";
+import { KpiCard } from "../components/layout/KpiCard";
+import { KpiStrip } from "../components/layout/KpiStrip";
+import { PageHeader } from "../components/layout/PageHeader";
+import { colors } from "../design/tokens";
 
 const DEPARTMENT_STYLES: Record<string, { dot: string; border: string; tint: string }> = {
   dispatch: { dot: "bg-blue-500", border: "hover:border-blue-300", tint: "hover:bg-blue-50" },
@@ -56,10 +60,14 @@ export function CatalogsHubPage() {
 
   return (
     <div ref={rootRef} className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-gray-900">Lists & Catalogs</h1>
-        <p className="mt-1 text-sm text-gray-600">Reference data and configuration catalogs, organized by department</p>
-      </div>
+      <PageHeader title="Lists & Catalogs" subtitle="hover any domain → click a catalog to open its page" />
+      <KpiStrip>
+        <KpiCard label="Master Names" number="8" accent={colors.info.strong} />
+        <KpiCard label="QBO Synced" number="—" accent={colors.positive.strong} />
+        <KpiCard label="Pending Sync" number="—" accent={colors.warn.strong} />
+        <KpiCard label="Edited 7D" number="—" accent={colors.dispatch.strong} />
+        <KpiCard label="Last Sync" number="—" accent={colors.accounting.strong} />
+      </KpiStrip>
 
       {registryQuery.isLoading ? (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading catalog registry...</div>
@@ -84,7 +92,7 @@ export function CatalogsHubPage() {
                       <button
                         type="button"
                         onClick={() => navigate(catalog.route_path)}
-                        className={`flex h-9 w-full items-center gap-2 rounded border border-gray-200 bg-white px-2 py-1 text-left transition ${style.border} ${style.tint}`}
+                        className={`flex h-8 w-full items-center gap-2 rounded border border-gray-200 bg-white px-2 py-1 text-left transition ${style.border} ${style.tint}`}
                       >
                         <span className={`h-2 w-2 shrink-0 rounded-full ${style.dot}`} />
                         <span className="min-w-0 flex-1 truncate text-xs font-medium text-gray-800">{catalog.name}</span>
