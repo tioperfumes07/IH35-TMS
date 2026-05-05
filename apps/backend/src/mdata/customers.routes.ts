@@ -29,6 +29,7 @@ const createCustomerBodySchema = z
   email: z.string().email().transform((v) => v.toLowerCase()).optional(),
   phone: z.string().trim().max(50).optional(),
   billing_address: z.string().trim().max(500).optional(),
+  billing_state: z.string().trim().max(8).optional(),
   mc_number: z.string().trim().max(50).optional(),
   dot_number: z.string().trim().max(50).optional(),
   tax_id: z.string().trim().max(50).optional(),
@@ -76,6 +77,7 @@ const updateCustomerBodySchema = z
     email: z.string().email().transform((v) => v.toLowerCase()).nullable().optional(),
     phone: z.string().trim().max(50).nullable().optional(),
     billing_address: z.string().trim().max(500).nullable().optional(),
+    billing_state: z.string().trim().max(8).nullable().optional(),
     mc_number: z.string().trim().max(50).nullable().optional(),
     dot_number: z.string().trim().max(50).nullable().optional(),
     tax_id: z.string().trim().max(50).nullable().optional(),
@@ -184,6 +186,7 @@ const CUSTOMER_SELECT_COLUMNS = `
   billing_email AS email,
   billing_phone AS phone,
   billing_address_line1 AS billing_address,
+  billing_state,
   mc_number,
   dot_number,
   tax_id_encrypted,
@@ -327,6 +330,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("billing_email", b.email);
         addOptional("billing_phone", b.phone);
         addOptional("billing_address_line1", b.billing_address);
+        addOptional("billing_state", b.billing_state);
         addOptional("mc_number", b.mc_number);
         addOptional("dot_number", b.dot_number);
         if (b.tax_id !== undefined) addOptional("tax_id_encrypted", b.tax_id ? encrypt(b.tax_id) : null);
@@ -488,6 +492,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("email" in b) add("billing_email", b.email ?? null);
     if ("phone" in b) add("billing_phone", b.phone ?? null);
     if ("billing_address" in b) add("billing_address_line1", b.billing_address ?? null);
+    if ("billing_state" in b) add("billing_state", b.billing_state ?? null);
     if ("mc_number" in b) add("mc_number", b.mc_number ?? null);
     if ("dot_number" in b) add("dot_number", b.dot_number ?? null);
     if ("tax_id" in b) add("tax_id_encrypted", b.tax_id ? encrypt(b.tax_id) : null);

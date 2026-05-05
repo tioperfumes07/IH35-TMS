@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
+import { listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
 import {
   createCustomerContact,
@@ -18,6 +19,7 @@ import {
 } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
+import { Combobox } from "../components/Combobox";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -36,6 +38,7 @@ const customerSchema = z.object({
   dot_number: z.string().trim().max(50).optional(),
   mc_number: z.string().trim().max(50).optional(),
   tax_id: z.string().trim().max(50).optional(),
+  billing_state: z.string().trim().max(8).optional(),
   status: z.enum(["active", "inactive", "credit_hold", "blacklist"]),
   customer_type: z.enum(["broker", "direct_shipper"]).optional().or(z.literal("")),
   billing_address: z.string().trim().max(500).optional(),
@@ -144,6 +147,10 @@ export function CustomerDetailPage() {
       listVendors({ status: "active", operating_company_id: detailQuery.data?.operating_company_id ?? undefined }).then((result) => result.vendors),
     enabled: Boolean(detailQuery.data?.operating_company_id),
   });
+  const usStatesQuery = useQuery({
+    queryKey: ["catalogs", "us-states"],
+    queryFn: () => listUsStates().then((result) => result.states),
+  });
 
   const customer = detailQuery.data;
   const contacts = contactsQuery.data ?? customer?.contacts ?? [];
@@ -168,6 +175,7 @@ export function CustomerDetailPage() {
       email: customer.email ?? "",
       phone: customer.phone ?? "",
       billing_address: customer.billing_address ?? "",
+      billing_state: customer.billing_state ?? "",
       dot_number: customer.dot_number ?? "",
       mc_number: customer.mc_number ?? "",
       tax_id: customer.tax_id ?? "",
@@ -207,6 +215,7 @@ export function CustomerDetailPage() {
         email: hydratedForm.email || null,
         phone: hydratedForm.phone || null,
         billing_address: hydratedForm.billing_address || null,
+        billing_state: hydratedForm.billing_state || null,
         dot_number: hydratedForm.dot_number || null,
         mc_number: hydratedForm.mc_number || null,
         tax_id: hydratedForm.tax_id || null,
@@ -370,6 +379,21 @@ export function CustomerDetailPage() {
             <Field label="DOT Number" value={hydratedForm.dot_number} onChange={(value) => setForm((current) => ({ ...current, dot_number: value }))} disabled={!editMode} />
             <Field label="MC Number" value={hydratedForm.mc_number} onChange={(value) => setForm((current) => ({ ...current, mc_number: value }))} disabled={!editMode} />
             <Field label="Tax ID (EIN)" value={hydratedForm.tax_id} onChange={(value) => setForm((current) => ({ ...current, tax_id: value }))} disabled={!editMode} />
+            <div className="mb-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Billing State</label>
+              <Combobox
+                options={(usStatesQuery.data ?? []).map((state) => ({
+                  value: state.code,
+                  label: `${state.code} - ${state.name}`,
+                  sublabel: state.region,
+                }))}
+                value={hydratedForm.billing_state || null}
+                onChange={(nextValue) => setForm((current) => ({ ...current, billing_state: nextValue ?? "" }))}
+                loading={usStatesQuery.isLoading}
+                disabled={!editMode || usStatesQuery.isError}
+                placeholder="Select state"
+              />
+            </div>
           </DataPanel>
 
           <DataPanel title="Main Contact">

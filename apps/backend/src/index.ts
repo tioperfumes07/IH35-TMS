@@ -10,6 +10,7 @@ import { registerCatalogsRoutes } from "./catalogs/index.js";
 import { registerCatalogRegistryRoutes } from "./catalogs/catalog-registry.routes.js";
 import { registerDriverLoadStatusRoutes } from "./catalogs/driver-load-statuses.routes.js";
 import { registerEquipmentTypeRoutes } from "./catalogs/equipment-types.routes.js";
+import { registerStatesRoutes } from "./catalogs/states.routes.js";
 import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
 import { registerDriverReturningDetectionRoutes } from "./mdata/driver-returning-detection.routes.js";
@@ -66,6 +67,7 @@ async function main() {
   await registerCatalogRegistryRoutes(app);
   await registerEquipmentTypeRoutes(app);
   await registerDriverLoadStatusRoutes(app);
+  await registerStatesRoutes(app);
   await registerCatalogsWorkflowRoutes(app);
   await registerCompanyRoutes(app);
   const port = Number(process.env.PORT || 3000);

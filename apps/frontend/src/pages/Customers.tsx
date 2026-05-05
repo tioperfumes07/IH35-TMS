@@ -2,10 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
 import { createCustomer, listCustomers, listPaymentTermOptions, listVendors, updateCustomer, type Customer, type VendorOption } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
+import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
@@ -36,6 +38,7 @@ const createCustomerSchema = z.object({
   ar_phone: z.string().trim().max(50).optional(),
   ap_email: z.union([z.literal(""), z.string().trim().email("Invalid email")]).optional(),
   ap_phone: z.string().trim().max(50).optional(),
+  billing_state: z.string().trim().max(8).optional(),
   credit_limit: z.coerce.number().min(0).optional(),
   payment_terms_id: z.string().uuid().optional().or(z.literal("")),
   free_time_pickup_minutes: z.coerce.number().int().min(0).optional(),
@@ -85,6 +88,7 @@ function emptyCreateForm() {
     ar_phone: "",
     ap_email: "",
     ap_phone: "",
+    billing_state: "",
     credit_limit: "",
     payment_terms_id: "",
     free_time_pickup_minutes: "120",
@@ -169,6 +173,10 @@ export function CustomersPage() {
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "active"],
     queryFn: () => listVendors({ status: "active" }).then((result) => result.vendors),
+  });
+  const usStatesQuery = useQuery({
+    queryKey: ["catalogs", "us-states"],
+    queryFn: () => listUsStates().then((result) => result.states),
   });
 
   const createMutation = useMutation({
@@ -309,6 +317,7 @@ export function CustomersPage() {
                 ar_phone: parsed.data.ar_phone || undefined,
                 ap_email: parsed.data.ap_email || undefined,
                 ap_phone: parsed.data.ap_phone || undefined,
+                billing_state: parsed.data.billing_state || undefined,
                 free_time_pickup_minutes: parsed.data.free_time_pickup_minutes,
                 free_time_delivery_minutes: parsed.data.free_time_delivery_minutes,
                 detention_rate_per_hour: parsed.data.detention_rate_per_hour,
@@ -341,6 +350,9 @@ export function CustomersPage() {
             showTaxId={showTaxId}
             paymentTermOptions={paymentTermsQuery.data ?? []}
             vendors={vendorsQuery.data ?? []}
+            usStates={usStatesQuery.data ?? []}
+            usStatesLoading={usStatesQuery.isLoading}
+            usStatesError={usStatesQuery.isError}
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setAddOpen(false)}>
@@ -407,6 +419,9 @@ function CreateCustomerFormFields({
   showTaxId,
   paymentTermOptions,
   vendors,
+  usStates,
+  usStatesLoading,
+  usStatesError,
 }: {
   form: CreateCustomerFormState;
   setForm: Dispatch<SetStateAction<CreateCustomerFormState>>;
@@ -414,6 +429,9 @@ function CreateCustomerFormFields({
   showTaxId: boolean;
   paymentTermOptions: Array<{ id: string; terms_name: string; days_until_due: number }>;
   vendors: VendorOption[];
+  usStates: Array<{ id: string; code: string; name: string; region: string }>;
+  usStatesLoading: boolean;
+  usStatesError: boolean;
 }) {
   const FieldLabel = ({ text, required }: { text: string; required?: boolean }) => (
     <label className="text-xs font-semibold text-gray-600">
@@ -526,6 +544,21 @@ function CreateCustomerFormFields({
           <div className="flex flex-col gap-1">
             <FieldLabel text="A/P Phone" />
             <input value={form.ap_phone} onChange={(event) => setForm((current) => ({ ...current, ap_phone: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Billing State" />
+            <Combobox
+              options={usStates.map((state) => ({
+                value: state.code,
+                label: `${state.code} - ${state.name}`,
+                sublabel: state.region,
+              }))}
+              value={form.billing_state || null}
+              onChange={(nextValue) => setForm((current) => ({ ...current, billing_state: nextValue ?? "" }))}
+              loading={usStatesLoading}
+              disabled={usStatesError}
+              placeholder="Select state"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Credit Limit" />

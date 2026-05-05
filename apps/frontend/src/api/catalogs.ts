@@ -136,6 +136,20 @@ export type CatalogPreviewResponse = {
   truncated: boolean;
 };
 
+export type UsState = {
+  id: string;
+  code: string;
+  name: string;
+  region: "Northeast" | "Midwest" | "South" | "West" | "Territory";
+};
+
+export type MexicoState = {
+  id: string;
+  code: string;
+  name: string;
+  region: "Norte" | "Centro" | "Sur" | "Sureste" | "Bajio" | "Pacifico";
+};
+
 export type CreateCatalogRegistryEntryInput = {
   code: string;
   name: string;
@@ -211,4 +225,12 @@ export function createCatalogRegistryEntry(payload: CreateCatalogRegistryEntryIn
 
 export function updateCatalogRegistryEntry(id: string, payload: UpdateCatalogRegistryEntryInput) {
   return apiRequest<{ entry: unknown }>(`/api/v1/catalogs/registry/${id}`, { method: "PATCH", body: payload });
+}
+
+export function listUsStates() {
+  return apiRequest<{ states: UsState[] }>("/api/v1/catalogs/us-states");
+}
+
+export function listMexicoStates() {
+  return apiRequest<{ states: MexicoState[] }>("/api/v1/catalogs/mexico-states");
 }
