@@ -12,6 +12,7 @@ import { registerDriverLoadStatusRoutes } from "./catalogs/driver-load-statuses.
 import { registerEquipmentTypeRoutes } from "./catalogs/equipment-types.routes.js";
 import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
+import { registerCustomerContactRoutes } from "./mdata/customer-contacts.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
@@ -55,6 +56,7 @@ async function main() {
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);
   await registerDriverProfileRoutes(app);
+  await registerCustomerContactRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerCatalogsRoutes(app);
   await registerCatalogRegistryRoutes(app);

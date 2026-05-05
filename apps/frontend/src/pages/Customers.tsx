@@ -1,16 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { ApiError } from "../api/client";
 import { createCustomer, listCustomers, updateCustomer, type Customer } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
+import { Modal } from "../components/Modal";
+import { useToast } from "../components/Toast";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
-import { Modal } from "../components/Modal";
-import { useToast } from "../components/Toast";
+import { StatusBadge } from "../components/layout/StatusBadge";
 import { colors } from "../design/tokens";
 
 const createCustomerSchema = z.object({
@@ -20,26 +22,13 @@ const createCustomerSchema = z.object({
   phone: z.string().trim().max(50).optional(),
   mc_number: z.string().trim().max(100).optional(),
   dot_number: z.string().trim().max(100).optional(),
-  customer_type: z.enum(["broker", "direct_shipper"]),
-  default_billing_miles_basis: z.enum(["short_miles", "practical_miles"]).default("practical_miles"),
-  default_free_time_hours: z.coerce.number().min(0).max(99).default(4),
-  default_detention_rate: z.coerce.number().min(0).max(99999.99).default(50),
+  customer_type: z.enum(["broker", "direct_shipper"]).optional().or(z.literal("")),
+  status: z.enum(["active", "inactive", "credit_hold", "blacklist"]).default("active"),
+  credit_limit: z.coerce.number().min(0).optional(),
   notes: z.string().trim().max(2000).optional(),
 });
 
-const updateCustomerSchema = z.object({
-  name: z.string().trim().min(1).max(200),
-  customer_code: z.string().trim().max(100).optional(),
-  email: z.string().trim().email().optional().or(z.literal("")),
-  phone: z.string().trim().max(50).optional(),
-  mc_number: z.string().trim().max(100).optional(),
-  dot_number: z.string().trim().max(100).optional(),
-  customer_type: z.enum(["broker", "direct_shipper"]).optional().or(z.literal("")),
-  default_billing_miles_basis: z.enum(["short_miles", "practical_miles"]),
-  default_free_time_hours: z.coerce.number().min(0).max(99),
-  default_detention_rate: z.coerce.number().min(0).max(99999.99),
-  notes: z.string().trim().max(2000).optional(),
-});
+const updateCustomerSchema = createCustomerSchema;
 
 function emptyCreateForm() {
   return {
@@ -49,13 +38,13 @@ function emptyCreateForm() {
     phone: "",
     mc_number: "",
     dot_number: "",
-    customer_type: "broker",
-    default_billing_miles_basis: "practical_miles",
-    default_free_time_hours: "4",
-    default_detention_rate: "50",
+    customer_type: "",
+    status: "active",
+    credit_limit: "",
     notes: "",
   };
 }
+
 type CustomerFormState = ReturnType<typeof emptyCreateForm>;
 
 function customerTypeLabel(value: "broker" | "direct_shipper" | null) {
@@ -64,15 +53,27 @@ function customerTypeLabel(value: "broker" | "direct_shipper" | null) {
   return "Not set";
 }
 
-function milesBasisLabel(value: "short_miles" | "practical_miles") {
-  return value === "short_miles" ? "Short Miles" : "Practical Miles";
+function customerStatusLabel(status: Customer["status"]) {
+  if (status === "credit_hold") return "Credit Hold";
+  if (status === "blacklist") return "Blacklist";
+  if (status === "inactive") return "Inactive";
+  return "Active";
 }
 
-function formatMoney(value: string) {
+function customerStatusVariant(status: Customer["status"]): "crit" | "warn" | "neutral" | "positive" {
+  if (status === "blacklist") return "crit";
+  if (status === "credit_hold") return "warn";
+  if (status === "inactive") return "neutral";
+  return "positive";
+}
+
+function formatMoney(value: string | number | null) {
+  if (value === null) return "-";
   return `$${Number(value).toFixed(2)}`;
 }
 
 export function CustomersPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const canManage = ["Owner", "Administrator", "Manager", "Accountant", "Dispatcher"].includes(user?.role ?? "");
   const { pushToast } = useToast();
@@ -110,15 +111,18 @@ export function CustomersPage() {
   });
 
   const customers = useMemo(() => customersQuery.data ?? [], [customersQuery.data]);
+  const activeCount = customers.filter((customer) => customer.status === "active").length;
+  const creditHoldCount = customers.filter((customer) => customer.status === "credit_hold").length;
+  const blacklistCount = customers.filter((customer) => customer.status === "blacklist").length;
 
   return (
     <div className="space-y-3">
       <PageHeader title="Customers" subtitle={`${customers.length} records`} actions={canManage ? <Button onClick={() => setAddOpen(true)}>Add Customer</Button> : null} />
 
       <KpiStrip>
-        <KpiCard label="Active" number={customers.length} accent={colors.dispatch.strong} />
-        <KpiCard label="Credit Hold" number={0} accent={colors.warn.strong} />
-        <KpiCard label="Blacklist" number={0} accent={colors.crit.strong} />
+        <KpiCard label="Active" number={activeCount} accent={colors.positive.strong} />
+        <KpiCard label="Credit Hold" number={creditHoldCount} accent={colors.warn.strong} />
+        <KpiCard label="Blacklist" number={blacklistCount} accent={colors.crit.strong} />
       </KpiStrip>
 
       {customersQuery.isLoading ? (
@@ -128,18 +132,20 @@ export function CustomersPage() {
           <DataTable
             rows={customers}
             rowKey={(row) => row.id}
+            onRowClick={(row) => navigate(`/customers/${row.id}`)}
             columns={[
               { key: "name", label: "Customer", render: (row) => row.name },
-              { key: "customer_code", label: "Code", render: (row) => row.customer_code ?? "—" },
-              { key: "email", label: "Email", render: (row) => row.email ?? "—" },
-              { key: "phone", label: "Phone", render: (row) => row.phone ?? "—" },
+              { key: "customer_code", label: "Code", render: (row) => row.customer_code ?? "-" },
               { key: "type", label: "Type", render: (row) => customerTypeLabel(row.customer_type) },
-              { key: "miles", label: "Miles", render: (row) => milesBasisLabel(row.default_billing_miles_basis) },
               {
-                key: "detention",
-                label: "Detention",
-                render: (row) => `${formatMoney(row.default_detention_rate)}/hr`,
+                key: "status",
+                label: "Status",
+                render: (row) => <StatusBadge variant={customerStatusVariant(row.status)}>{customerStatusLabel(row.status)}</StatusBadge>,
               },
+              { key: "mc_dot", label: "MC / DOT", render: (row) => `${row.mc_number ?? "-"} / ${row.dot_number ?? "-"}` },
+              { key: "contact", label: "Main Contact", render: (row) => row.main_contact_name ?? "-" },
+              { key: "ar_email", label: "A/R Email", render: (row) => row.ar_email ?? "-" },
+              { key: "detention", label: "Detention", render: (row) => `${formatMoney(row.detention_rate_per_hour)}/hr` },
               {
                 key: "actions",
                 label: "Actions",
@@ -158,10 +164,9 @@ export function CustomersPage() {
                           phone: row.phone ?? "",
                           mc_number: row.mc_number ?? "",
                           dot_number: row.dot_number ?? "",
-                          customer_type: row.customer_type ?? "broker",
-                          default_billing_miles_basis: row.default_billing_miles_basis,
-                          default_free_time_hours: String(row.default_free_time_hours),
-                          default_detention_rate: String(row.default_detention_rate),
+                          customer_type: row.customer_type ?? "",
+                          status: row.status,
+                          credit_limit: row.credit_limit ? String(row.credit_limit) : "",
                           notes: row.notes ?? "",
                         });
                         setEditOpen(true);
@@ -195,10 +200,9 @@ export function CustomersPage() {
                 phone: parsed.data.phone || undefined,
                 mc_number: parsed.data.mc_number || undefined,
                 dot_number: parsed.data.dot_number || undefined,
-                customer_type: parsed.data.customer_type,
-                default_billing_miles_basis: parsed.data.default_billing_miles_basis,
-                default_free_time_hours: parsed.data.default_free_time_hours,
-                default_detention_rate: parsed.data.default_detention_rate,
+                customer_type: parsed.data.customer_type ? (parsed.data.customer_type as "broker" | "direct_shipper") : undefined,
+                status: parsed.data.status,
+                credit_limit: parsed.data.credit_limit,
                 notes: parsed.data.notes || undefined,
               });
             } catch (error) {
@@ -210,7 +214,7 @@ export function CustomersPage() {
             }
           }}
         >
-          <CustomerFormFields form={createForm} setForm={setCreateForm} requireCustomerType />
+          <CustomerFormFields form={createForm} setForm={setCreateForm} />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setAddOpen(false)}>
               Cancel
@@ -243,10 +247,9 @@ export function CustomersPage() {
                   phone: parsed.data.phone || null,
                   mc_number: parsed.data.mc_number || null,
                   dot_number: parsed.data.dot_number || null,
-                  customer_type: parsed.data.customer_type || null,
-                  default_billing_miles_basis: parsed.data.default_billing_miles_basis,
-                  default_free_time_hours: parsed.data.default_free_time_hours,
-                  default_detention_rate: parsed.data.default_detention_rate,
+                  customer_type: parsed.data.customer_type ? (parsed.data.customer_type as "broker" | "direct_shipper") : null,
+                  status: parsed.data.status,
+                  credit_limit: parsed.data.credit_limit ?? null,
                   notes: parsed.data.notes || null,
                 },
               });
@@ -255,7 +258,7 @@ export function CustomersPage() {
             }
           }}
         >
-          <CustomerFormFields form={editForm} setForm={setEditForm} requireCustomerType={false} />
+          <CustomerFormFields form={editForm} setForm={setEditForm} />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setEditOpen(false)}>
               Cancel
@@ -273,11 +276,9 @@ export function CustomersPage() {
 function CustomerFormFields({
   form,
   setForm,
-  requireCustomerType,
 }: {
   form: CustomerFormState;
   setForm: Dispatch<SetStateAction<CustomerFormState>>;
-  requireCustomerType: boolean;
 }) {
   return (
     <>
@@ -289,6 +290,7 @@ function CustomerFormFields({
           ["phone", "Phone"],
           ["mc_number", "MC Number"],
           ["dot_number", "DOT Number"],
+          ["credit_limit", "Credit Limit"],
         ] as Array<[keyof CustomerFormState, string]>).map(([key, label]) => (
           <div key={key} className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">{label}</label>
@@ -302,56 +304,32 @@ function CustomerFormFields({
       </div>
 
       <div className="rounded border border-gray-200 p-3">
-        <div className="mb-2 text-xs font-semibold text-gray-700">Billing Configuration</div>
+        <div className="mb-2 text-xs font-semibold text-gray-700">Commercial Configuration</div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">
-              Customer Type {requireCustomerType ? <span className="text-red-500">*</span> : null}
-            </label>
+            <label className="text-xs font-semibold text-gray-600">Customer Type</label>
             <select
               value={form.customer_type}
               onChange={(event) => setForm((current) => ({ ...current, customer_type: event.target.value }))}
               className="rounded border border-gray-300 px-2 py-2 text-sm"
             >
-              {!requireCustomerType ? <option value="">Not set</option> : null}
+              <option value="">Not set</option>
               <option value="broker">Broker</option>
               <option value="direct_shipper">Direct Shipper</option>
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Default Billing Miles Basis</label>
+            <label className="text-xs font-semibold text-gray-600">Status</label>
             <select
-              value={form.default_billing_miles_basis}
-              onChange={(event) => setForm((current) => ({ ...current, default_billing_miles_basis: event.target.value }))}
+              value={form.status}
+              onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}
               className="rounded border border-gray-300 px-2 py-2 text-sm"
             >
-              <option value="short_miles">Short Miles</option>
-              <option value="practical_miles">Practical Miles</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="credit_hold">Credit Hold</option>
+              <option value="blacklist">Blacklist</option>
             </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Default Free Time Hours</label>
-            <input
-              type="number"
-              step="0.25"
-              min="0"
-              max="99"
-              value={form.default_free_time_hours}
-              onChange={(event) => setForm((current) => ({ ...current, default_free_time_hours: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Default Detention Rate ($/hr)</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              max="99999.99"
-              value={form.default_detention_rate}
-              onChange={(event) => setForm((current) => ({ ...current, default_detention_rate: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            />
           </div>
         </div>
       </div>
