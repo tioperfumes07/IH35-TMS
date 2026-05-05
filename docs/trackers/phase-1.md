@@ -1,3 +1,41 @@
+## Phase 1 — CLOSED 2026-05-05
+
+**Status:** STRUCTURALLY COMPLETE  
+**Closure block:** BT-1-GATE-01 (Block #26)  
+**Final main commit:** Pending merge commit for BT-1-GATE-01  
+**Database migrations applied:** 26 (0001 through 0026)  
+**Verify scripts passing:** 19 of 20 (phone-auth blocked on Twilio env)  
+**Audit event coverage:** 84 CRUD events  
+**Phase 1 task count:** 24 of 24 + 5 hot-fixes ✅  
+**Phase 1 duration:** Day 1 (2026-05-04) through Day 2 night (2026-05-05) at Jorge's pace
+
+### Phase 1 deliverables
+
+- Identity schema with Lucia auth + WhatsApp/SMS phone OTP fallback (Twilio prod env pending)
+- Master data schema: drivers (full Mexican identity + emergency contact + insurance auth + safety file + rehire chain), customers (full profile + contacts + factoring config + quality flags + credit limit source), vendors (Faro Factoring + CCG seeded), units, equipment, locations, equipment_log
+- Catalogs schema: equipment types, driver load statuses, driver termination reasons (16), dispatcher error reasons (25), customer quality reasons (24), US states (56), Mexico states (32), payment terms, posting templates, account role bindings, classes, accounts, items, catalog registry hub
+- Multi-tenant scoping: 3 operating companies (TRANSP active, TRK active, USMCA hidden until July 2026 launch)
+- RLS enforced across all schemas
+- Append-only audit trail with 84 event classes
+- Outbox pattern for async event delivery
+- Workflow approval framework (identity, mdata, catalogs)
+- Office UI: Drivers + DriverDetail (6 tabs incl. Safety File), Customers + CustomerDetail (6 tabs incl. Factoring + Quality & History), Users + UserDetail (4 tabs incl. Safety File for non-Owner non-Driver users), Catalogs hub, Equipment Types, Driver Load Statuses
+- Driver PWA: dark theme, foundation only (Phase 4+ for telemetry features)
+- Combobox component with type-ahead autofill applied system-wide to ALL office UI dropdowns (country code +1/+52 selector remains native as established exception)
+- Driver safety file: permanent append-only events with returning-driver detection by CURP/CDL+state + rehire chain workflow
+- Dispatcher safety file: permanent append-only events with cost attribution for Phase 5 dispatcher payroll deductions
+- Customer quality flags: 4-tier (preferred/standard/caution/avoid) with quality events tracking late_payment, disputes, cancellations, damage claims, commendations
+- Credit limit source tracking (factor / manual / rmis_future)
+
+### Phase 1 by the numbers
+
+- Migrations: 26
+- Verify scripts: 20 (19 passing, 1 env-blocked)
+- Audit event classes: 84
+- Pre-seeded catalog rows: ~150 (across all catalogs)
+- Backend endpoints: 60+
+- Frontend pages: 12+
+
 ## Phase 1 Status Updates (2026-05-04)
 
 - BT-1-IDENT-01: In Progress
@@ -104,6 +142,41 @@
 | 2026-05-05 | BT-1-DISPATCHER-SAFETY-FILE (#22.2) extends safety event pattern to non-Driver users. Architectural extension of v3 Master Blueprint Part 9 §9.2 (which originally scoped only driver safety events). Cost attribution fields are Phase 1 schema; Phase 5 dispatcher payroll/commission module will use them for deductions. | Jorge | Architectural decision | Phase 5 Banking |
 | 2026-05-05 | BT-1-CUSTOMER-QUALITY-FLAGS (#25.5): Customer quality/behavior tracking. New mdata.customer_quality_events with 10 event types (late_payment, non_payment, lumper/detention/tonu/rate disputes, load_cancelled, damage_claim, commendation, other). New catalogs.customer_quality_event_reasons with 24 pre-populated reasons. mdata.customers gets quality_overall_flag (preferred/standard/caution/avoid), quality scores (payment/cancellation/disputes_count), and credit_limit_source (factor/manual/rmis_future). RLS read access: Owner/Admin/Manager/Dispatcher/Accountant/Safety. Owner-only mutations. Customer Detail gets new "Quality & History" tab. Customers list gets quality flag column + filter. Phase 6 reports will compute scores from events. | Jorge | Resolved | Operational requirement during Block #22 smoke test discussion |
 | 2026-05-05 | BT-1-COMBOBOX-ROLLOUT (#25.4): Replaced all remaining native HTML `<select>` elements in office UI with Combobox component (built in Block #22.1). Rollout covered Drivers, DriverDetail, Customers, CustomerDetail, Users, UserDetail, EquipmentTypes, and DriverLoadStatuses pages. Driver PWA selects remain native (touch UX differs; Phase 4 work). Country code selector in Add Driver modal remains native (only 2 options). allowAddNew enabled only on owner-extensible catalog-backed fields (termination reasons, dispatcher error reasons, payment terms, factoring vendors). allowClear enabled on filter/optional selections. Type-ahead autofill is now the office UI standard. | Jorge | Resolved | UX standard requested during Block #22.1 |
+| 2026-05-05 | Load cancellation reasons catalog (catalogs.load_cancellation_reasons) for fraud detection + operational analytics. Categorized: weather, customer_cancelled, accident, driver_abandoned, equipment_failure, rate_dispute, dispatcher_error, other (notes required). Cancellation events also link to driver safety events when driver abandonment is the reason. | Jorge | DEFERRED to Phase 3 Dispatch | Phase 3 |
+| 2026-05-05 | Load reassignment workflow when driver leaves mid-trip. Two scenarios: (1) swap driver only (same truck), (2) swap truck/trailer (bobtail rescue). Same load_id continues with assignment history. New table mdata.load_assignments with effective_from/effective_to per assignment. | Jorge | DEFERRED to Phase 3 Dispatch | Phase 3 |
+| 2026-05-05 | Phase 3 to add FK constraints linking events to loads: mdata.driver_safety_events.related_load_id, mdata.dispatcher_safety_events.related_load_id, mdata.customer_quality_events.related_load_id all -> mdata.loads(id). Update event creation flows: load abandonment on Dispatch board pre-fills safety event with load context. Driver safety file shows load # for each load-related event. | Jorge | DEFERRED to Phase 3 | Phase 3 |
+| 2026-05-05 | Per-location intelligence at customer pickup/delivery facilities: dwell time tracking, lumper required flag, appointment system (yes/no), hours of operation by day-of-week, receiving manager contact, "drivers refuse this location" flag, restroom available, parking available, overnight allowed. | Jorge | DEFERRED to Phase 3 | Phase 3 |
+| 2026-05-05 | Dispatch board flag color indicator showing customer quality flag at booking time (preferred=green, standard=neutral, caution=amber, avoid=red). Operations decisions evidence-based. | Jorge | DEFERRED to Phase 3 | Phase 3 |
+| 2026-05-05 | Maintenance integration with dispatch board: truck due maintenance surfaces red flag; block dispatcher from assigning unit due maintenance to long run; Owner override allowed. Per blueprint line 10915 lightning-bolt icon. | Jorge | DEFERRED to Phase 3 + Maintenance module | Phase 3 |
+| 2026-05-05 | Team drivers concept (mdata.driver_teams table) for 50/50 settlement splits. Schema in Phase 3 (loads); settlement logic in Phase 5. | Jorge | DEFERRED to Phase 3+5 | Phase 3 |
+| 2026-05-05 | OCR rate confirmation parsing via Claude API or GPT-4 Vision (~$5-15/month variable cost, $0.01-0.03 per parse, 95%+ accuracy on clean PDFs). Auto-creates load drafts from broker emails. Saves ~30 hours/month dispatcher time. Alvys-style functionality Jorge specifically requested. | Jorge | DEFERRED to Phase 3 | Phase 3 |
+| 2026-05-05 | Email ingest for rate confirmations: set up loads@ih35dispatch.com mailbox via Cloudflare Email Workers ($0 setup). Backend pulls PDFs, runs through OCR pipeline, auto-creates load draft for dispatcher to confirm. Solves "dispatcher books in morning but doesn't enter into TMS until night" problem. Dispatcher sees badge "N rate confirmations awaiting review". Alert to Owner if not confirmed within 30 min. | Jorge | DEFERRED to Phase 3 | Phase 3 |
+| 2026-05-05 | FMCSA broker authority verification on customer creation. Free SAFER API. Blocks customer creation if MC authority revoked. Catches typos (wrong MC# = wrong company name returned). | Jorge | DEFERRED to Phase 2 (small block, fits early Phase 2) | Phase 2 |
+| 2026-05-05 | Driver PWA offline-first architecture: indexedDB queue for HOS, location, photos, BOL submissions when offline. Sync when connection returns. Status indicator "N items pending sync". Drivers spend hours in dead zones (mountains, remote shipper yards, weigh stations, border crossings). | Jorge | DEFERRED to Phase 4 (PWA expansion) | Phase 4 |
+| 2026-05-05 | Web Push notifications for driver PWA: works even when PWA closed, iOS Safari 16.4+ and Android. Sound + buzz on lock screen. Plus Web Audio API for sounds while PWA is open. Driver gets alerts without needing native app install. | Jorge | DEFERRED to Phase 4 | Phase 4 |
+| 2026-05-05 | Driver in-app messaging (logged): drivers and dispatchers communicate via WhatsApp/SMS constantly. Need lightweight in-app messaging that delivers via WhatsApp/SMS bridge BUT also stores conversation in database for audit trail. Currently chats kept only in WhatsApp (no audit trail for disputes). | Jorge | DEFERRED to Phase 4 or Phase 6 | Phase 4 |
+| 2026-05-05 | Spanish driver PWA i18n via react-i18next. Driver workforce heavily Mexican. Spanish-by-default for drivers with Spanish phone locale. Office UI English-first; Office Spanish in Phase 6+. Earlier i18n setup = less retrofit pain later. | Jorge | DEFERRED to Phase 4 | Phase 4 |
+| 2026-05-05 | Driver app reports damages, maintenance issues, any operational problem from PWA back to office. | Jorge | DEFERRED to Phase 4 (PWA expansion) | Phase 4 |
+| 2026-05-05 | Settlement disputes workflow: driver flags via PWA; dispatcher/owner reviews with mileage data; adjustment line item added to next settlement with explanation. All disputes have audit trail (no more text-message arguments). | Jorge | DEFERRED to Phase 5 | Phase 5 |
+| 2026-05-05 | Customer credit memo / chargeback workflow: disputed amounts logged, decisions tracked (approved/denied/partial), reasons categorized. Feeds customer scoring. | Jorge | DEFERRED to Phase 5+6 | Phase 5 |
+| 2026-05-05 | Dispatcher payroll deductions using cost_amount fields from Block #22.2: when customer fines us due to dispatcher error, auto-deduct from dispatcher pay. Cost recovery workflow automation. Phase 5 payroll/commission module uses these fields. | Jorge | DEFERRED to Phase 5 | Phase 5 |
+| 2026-05-05 | Banking schema for factoring (Phase 5 Banking module): banking.factoring_transactions (advance/reserve_held/chargeback/release/fee), banking.factoring_daily_reports (daily upload + reconciliation), banking.factoring_ar_tiers (aging tier rules), banking.factoring_aging_snapshots (daily AR snapshot), mdata.financing_arrangements (CCG loan formal tracking with terms), CCG subordination sweep posting logic, daily report upload UI for Faro/RTS, factor switching support (Faro->RTS migration). | Jorge | DEFERRED to Phase 5 | Phase 5 |
+| 2026-05-05 | Factor-source credit_limit edit restriction: when factor sync active, even Admin cannot edit credit_limit; only Owner can override. Currently #25.5 has Owner+Admin uniformly. | Jorge | DEFERRED to Phase 5 hardening | Phase 5 |
+| 2026-05-05 | Cancellation event reports (categorized by reason, dispatcher, customer, time period, cost impact). | Jorge | DEFERRED to Phase 6 Reports | Phase 6 |
+| 2026-05-05 | Customer scoring algorithm (Phase 6 reports compute payment_score, cancellation_score from event aggregation; updates customers.quality_payment_score, .quality_cancellation_score, .quality_last_evaluated_at). | Jorge | DEFERRED to Phase 6 | Phase 6 |
+| 2026-05-05 | Auto-flag suggestion engine: Phase 6 reports suggest customer quality flag changes based on event frequency patterns. Owner approves/rejects suggestions. | Jorge | DEFERRED to Phase 6 | Phase 6 |
+| 2026-05-05 | Aggregated dispatcher accountability report. | Jorge | DEFERRED to Phase 6 | Phase 6 |
+| 2026-05-05 | RMIS broker credit integration (~$30-100/month). Only needed if Faro coverage outgrown. Currently factor-provided credit limits suffice. RMIS preferred over Truckstop SaferWatch. | Jorge | DEFERRED to Phase 6 | Phase 6 |
+| 2026-05-05 | Unified activity timeline view: cross-table events filtered by entity context. "Show me everything that happened with Load #4521 in last 8 hours" interleaving status changes + GPS + driver messages + customer emails + invoice events. Foundation in audit events (consistent entity tagging from Phase 1). | Jorge | DEFERRED to Phase 6 | Phase 6 |
+| 2026-05-05 | Backup + Disaster Recovery strategy. Neon mirror tier validation, off-site backup (S3 or B2), R2 bucket backup, tested restore procedure, and RPO/RTO definitions. CRITICAL for Chapter 11 DIP audit obligations. Configure before May 20 launch. | Jorge | DEFERRED to Phase 7 + pre-launch infrastructure work | Phase 7 |
+| 2026-05-05 | Always Track historical import + cancel ~June 20-25 for $250-355/month savings post-cutover. | Jorge | DEFERRED to Phase 7 | Phase 7 |
+| 2026-05-05 | Production Twilio WhatsApp Business sender (Meta verification 7-14 days). | Jorge | DEFERRED to Phase 7 | Phase 7 |
+| 2026-05-05 | QBO production credentials approval (call Intuit during Phase 2). | Jorge | DEFERRED to Phase 7 | Phase 7 |
+| 2026-05-05 | PC*MILER Web Services subscription (call Trimble during Phase 2, ~$200-300/month). Questions sent include pricing tiers, Mexico cross-border coverage, practical vs short miles, hazmat routing, API rate limits, and sandbox access. | Jorge | DEFERRED to Phase 3 (PC*MILER needed for routing) | Phase 3 |
+| 2026-05-05 | Subscription/SaaS productization vision (Phase 8+): multi-tenant architecture already foundational (org.companies + org.user_company_access from Phase 1). 12-18 months post-launch once IH 35 has run on the system. Would need tenant isolation hardening, billing/subscription module, self-service onboarding, customer support tooling, white-label customization, and SLA/monitoring infrastructure. | Jorge | FUTURE PRODUCT STRATEGY | Phase 8+ |
+| 2026-05-05 | Outbox-drain transient FAIL->PASS retry observed during Block #22.1 verification. Investigate before Phase 5 banking reliability requirements. Async event delivery infrastructure must be reliable for daily factor reports. | Jorge | DEFERRED to Phase 5 hardening | Phase 5 |
+| 2026-05-05 | Rehire chain validation walks immediate prior driver only, not full chain. UI controls protect (only terminated drivers appear in rehire selector), but theoretical bug exists if future UI surfaces non-most-recent terminated driver. Capture as Phase 2 hardening. | Jorge | DEFERRED to Phase 2 hardening | Phase 2 |
+| 2026-05-05 | BT-1-GATE-01 (#26): Phase 1 closure verification complete. All 26 migrations applied cleanly. 19 of 20 verify scripts pass (phone-auth requires Twilio prod env, deferred). 84 audit event classes covered. Build/typecheck green for backend + frontend + driver-pwa. Documented Phase 1 deliverables and Phase 2 entry conditions. Phase 1 STRUCTURALLY COMPLETE. | Jorge | Resolved | Phase 1 close |
 
 ## TODO
 
