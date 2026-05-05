@@ -38,6 +38,7 @@
     "db:verify:driver-profile": "node scripts/db-verify-driver-profile.mjs",
     "db:verify:cust-driver-fields": "node scripts/db-verify-cust-driver-fields.mjs",
     "db:verify:catalog-registry": "node scripts/db-verify-catalog-registry.mjs",
+    "db:verify:customer-full-profile": "tsx scripts/db-verify-customer-full-profile.ts",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
   },

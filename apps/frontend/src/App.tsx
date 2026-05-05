@@ -4,6 +4,7 @@ import { useAuth } from "./auth/useAuth";
 import { Shell } from "./components/Shell";
 import { CompanyProvider } from "./contexts/CompanyContext";
 import { CustomersPage } from "./pages/Customers";
+import { CustomerDetailPage } from "./pages/CustomerDetail";
 import { CatalogsHubPage } from "./pages/CatalogsHubPage";
 import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
@@ -75,6 +76,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CustomersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customers/:id"
+          element={
+            <ProtectedRoute>
+              <CustomerDetailPage />
             </ProtectedRoute>
           }
         />
