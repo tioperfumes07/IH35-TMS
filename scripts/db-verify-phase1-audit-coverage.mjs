@@ -89,6 +89,11 @@ const EVENT_CLASSES = [
   "mdata.driver_company_authorizations.granted",
   "mdata.driver_company_authorizations.revoked",
   "mdata.driver_company_authorizations.updated",
+  "mdata.driver_safety_events.created",
+  "mdata.driver_safety_events.updated",
+  "mdata.driver_safety_events.voided",
+  "mdata.drivers.returning_driver_detected",
+  "mdata.drivers.returning_driver_override",
 ];
 
 const WARNING_EVENTS = new Set([

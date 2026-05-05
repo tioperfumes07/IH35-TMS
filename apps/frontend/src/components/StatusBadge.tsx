@@ -8,7 +8,7 @@ function normalizeStatus(status: string) {
 
 function badgeClasses(status: string) {
   const normalized = normalizeStatus(status);
-  if (["critical", "crit", "terminated", "violation", "error"].includes(normalized)) {
+  if (["critical", "crit", "terminated", "violation", "error", "severe"].includes(normalized)) {
     return "bg-crit/15 text-crit border-crit/30";
   }
   if (["warning", "warn", "probation", "on-duty waiting", "pending"].includes(normalized)) {
