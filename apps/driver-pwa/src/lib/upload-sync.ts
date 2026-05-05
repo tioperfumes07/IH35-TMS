@@ -5,6 +5,7 @@ const RETRY_BACKOFF_MS = [5000, 30000, 120000, 600000, 1800000];
 const SYNC_INTERVAL_MS = 5 * 60 * 1000;
 const MAX_RETRIES = 5;
 const SYNCED_RETENTION_MS = 24 * 60 * 60 * 1000;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type SyncEventMap = {
   syncStarted: { total: number };
@@ -54,6 +55,17 @@ function computeNextRetryAt(retryCount: number) {
   return new Date(Date.now() + waitMs).toISOString();
 }
 
+function cleanOptionalString(value: string | null | undefined) {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "undefined" || trimmed === "null") return undefined;
+  return trimmed;
+}
+
+function isUuid(value: string) {
+  return UUID_PATTERN.test(value);
+}
+
 async function cleanupSyncedItems() {
   const rows = await getAllQueueItems();
   const now = Date.now();
@@ -73,7 +85,8 @@ async function shouldProcessItem(item: UploadQueueItem) {
 }
 
 async function processQueueItem(item: UploadQueueItem) {
-  if (item.entity_type === "driver" && !item.entity_id) {
+  const cleanedEntityId = cleanOptionalString(item.entity_id);
+  if (item.entity_type === "driver" && (!cleanedEntityId || !isUuid(cleanedEntityId))) {
     await updateQueueItem(item.id, {
       status: "failed",
       retry_count: MAX_RETRIES,
@@ -88,20 +101,25 @@ async function processQueueItem(item: UploadQueueItem) {
   await refreshPendingCount();
 
   try {
+    const cleanedCategoryId = cleanOptionalString(item.category_id);
+    const entityLinks =
+      item.entity_type === "standalone"
+        ? undefined
+        : cleanedEntityId && isUuid(cleanedEntityId)
+          ? [
+              {
+                entity_type: (item.entity_type === "load" ? "load" : "driver") as "load" | "driver",
+                entity_id: cleanedEntityId,
+              },
+            ]
+          : undefined;
+
     const uploadInit = await requestUploadUrl({
       original_filename: item.original_filename,
       mime_type: item.mime_type || "application/octet-stream",
       size_bytes: item.size_bytes,
-      category_id: item.category_id ?? undefined,
-      entity_links:
-        item.entity_type === "standalone"
-          ? undefined
-          : [
-              {
-                entity_type: item.entity_type === "load" ? "load" : "driver",
-                entity_id: item.entity_id as string,
-              },
-            ],
+      category_id: cleanedCategoryId,
+      entity_links: entityLinks,
     });
 
     await uploadBlobToR2(uploadInit.presigned_url, item.file_blob, item.mime_type || "application/octet-stream", 60000);
