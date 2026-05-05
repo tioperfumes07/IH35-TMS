@@ -14,13 +14,17 @@ const listQuerySchema = z.object({
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
-const customerTypeSchema = z.enum(["broker", "direct_shipper"]);
+const customerTypeInputSchema = z.enum(["broker", "direct", "direct_shipper"]);
 const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
 const customerStatusSchema = z.enum(["active", "inactive", "credit_hold", "blacklist"]);
 
-const createCustomerBodySchema = z.object({
-  name: z.string().trim().min(1).max(200),
+const createCustomerBodySchema = z
+  .object({
+  name: z.string().trim().min(1).max(200).optional(),
+  legal_name: z.string().trim().min(1).max(200).optional(),
+  dba: z.string().trim().max(200).optional(),
   customer_code: z.string().trim().max(100).optional(),
+  code: z.string().trim().max(100).optional(),
   email: z.string().email().transform((v) => v.toLowerCase()).optional(),
   phone: z.string().trim().max(50).optional(),
   billing_address: z.string().trim().max(500).optional(),
@@ -30,7 +34,7 @@ const createCustomerBodySchema = z.object({
   credit_limit: z.number().min(0).optional(),
   payment_terms_id: z.string().uuid().nullable().optional(),
   operating_company_id: z.string().uuid().optional(),
-  customer_type: customerTypeSchema.optional(),
+  customer_type: customerTypeInputSchema.optional(),
   status: customerStatusSchema.optional(),
   default_billing_miles_basis: milesBasisSchema.optional(),
   default_free_time_hours: z.number().min(0).max(99).optional(),
@@ -51,12 +55,17 @@ const createCustomerBodySchema = z.object({
   free_time_pickup_minutes: z.number().int().min(0).max(1440).optional(),
   free_time_delivery_minutes: z.number().int().min(0).max(1440).optional(),
   detention_rate_per_hour: z.number().min(0).max(9999.99).optional(),
-});
+  })
+  .refine((value) => Boolean(value.legal_name ?? value.name), { message: "legal_name is required" })
+  .refine((value) => Boolean(value.customer_type), { message: "customer_type is required" });
 
 const updateCustomerBodySchema = z
   .object({
     name: z.string().trim().min(1).max(200).optional(),
+    legal_name: z.string().trim().min(1).max(200).optional(),
+    dba: z.string().trim().max(200).nullable().optional(),
     customer_code: z.string().trim().max(100).nullable().optional(),
+    code: z.string().trim().max(100).nullable().optional(),
     email: z.string().email().transform((v) => v.toLowerCase()).nullable().optional(),
     phone: z.string().trim().max(50).nullable().optional(),
     billing_address: z.string().trim().max(500).nullable().optional(),
@@ -66,7 +75,7 @@ const updateCustomerBodySchema = z
     credit_limit: z.number().min(0).nullable().optional(),
     payment_terms_id: z.string().uuid().nullable().optional(),
     operating_company_id: z.string().uuid().optional(),
-    customer_type: customerTypeSchema.nullable().optional(),
+    customer_type: customerTypeInputSchema.nullable().optional(),
     status: customerStatusSchema.optional(),
     status_change_reason: z.string().trim().max(1000).optional(),
     default_billing_miles_basis: milesBasisSchema.optional(),
@@ -207,9 +216,17 @@ function mapCustomerRow(row: Record<string, unknown>, includeTaxId: boolean) {
   }
   return {
     ...row,
+    legal_name: row.name,
+    code: row.customer_code,
+    dba: null,
     tax_id: taxId,
     tax_id_encrypted: undefined,
   };
+}
+
+function normalizeCustomerType(input: "broker" | "direct" | "direct_shipper" | null | undefined): "broker" | "direct_shipper" | null {
+  if (!input) return null;
+  return input === "direct" ? "direct_shipper" : input;
 }
 
 export async function registerCustomerRoutes(app: FastifyInstance) {
@@ -262,78 +279,97 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedBody = createCustomerBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
-    const conflict = await assertUniqueCustomerFields(authUser.uuid, b);
+    const normalizedName = b.legal_name ?? b.name ?? "";
+    const normalizedCode = b.code ?? b.customer_code;
+    const normalizedCustomerType = normalizeCustomerType(b.customer_type);
+    const conflict = await assertUniqueCustomerFields(authUser.uuid, {
+      name: normalizedName,
+      mc_number: b.mc_number ?? null,
+      dot_number: b.dot_number ?? null,
+    });
     if (conflict) return reply.code(409).send({ error: `mdata_customer_${conflict}_conflict` });
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
         const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
         if (!resolvedOperatingCompanyId) throw new Error("operating_company_id_required");
-        const encryptedTaxId = b.tax_id ? encrypt(b.tax_id) : null;
+        const columns: string[] = ["customer_name", "customer_type", "status", "operating_company_id", "created_by_user_id", "updated_by_user_id"];
+        const values: unknown[] = [normalizedName, normalizedCustomerType, b.status ?? "active", resolvedOperatingCompanyId, authUser.uuid, authUser.uuid];
+        const placeholders: string[] = ["$1", "$2", "$3", "$4", "$5", "$6"];
+
+        const addOptional = (column: string, value: unknown) => {
+          if (value === undefined) return;
+          columns.push(column);
+          values.push(value);
+          placeholders.push(`$${values.length}`);
+        };
+
+        addOptional("customer_code", normalizedCode);
+        addOptional("billing_email", b.email);
+        addOptional("billing_phone", b.phone);
+        addOptional("billing_address_line1", b.billing_address);
+        addOptional("mc_number", b.mc_number);
+        addOptional("dot_number", b.dot_number);
+        if (b.tax_id !== undefined) addOptional("tax_id_encrypted", b.tax_id ? encrypt(b.tax_id) : null);
+        addOptional("credit_limit", b.credit_limit);
+        addOptional("payment_terms_id", b.payment_terms_id);
+        addOptional("default_billing_miles_basis", b.default_billing_miles_basis ?? "practical_miles");
+        addOptional("default_free_time_hours", b.default_free_time_hours ?? 4);
+        addOptional("default_detention_rate", b.default_detention_rate ?? 50);
+        addOptional("website", b.website);
+        addOptional("office_phone", b.office_phone);
+        addOptional("fax_phone", b.fax_phone);
+        addOptional("main_contact_name", b.main_contact_name);
+        addOptional("main_contact_title", b.main_contact_title);
+        addOptional("main_contact_email", b.main_contact_email);
+        addOptional("main_contact_phone", b.main_contact_phone);
+        addOptional("main_contact_mobile", b.main_contact_mobile);
+        addOptional("ar_email", b.ar_email);
+        addOptional("ar_phone", b.ar_phone);
+        addOptional("ap_email", b.ap_email);
+        addOptional("ap_phone", b.ap_phone);
+        addOptional("free_time_pickup_minutes", b.free_time_pickup_minutes ?? 120);
+        addOptional("free_time_delivery_minutes", b.free_time_delivery_minutes ?? 120);
+        addOptional("detention_rate_per_hour", b.detention_rate_per_hour ?? 0);
+        if (b.notes !== undefined || b.dba !== undefined) {
+          const notesParts = [b.notes, b.dba ? `DBA: ${b.dba}` : null].filter(Boolean);
+          addOptional("notes", notesParts.length > 0 ? notesParts.join("\n") : null);
+        }
+
         const res = await client.query(
-          `
-            INSERT INTO mdata.customers (
-              customer_name, customer_code, billing_email, billing_phone, billing_address_line1,
-              mc_number, dot_number, tax_id_encrypted, credit_limit, payment_terms_id, operating_company_id, customer_type, status,
-              default_billing_miles_basis, default_free_time_hours, default_detention_rate,
-              notes, website, office_phone, fax_phone, main_contact_name, main_contact_title, main_contact_email, main_contact_phone, main_contact_mobile,
-              ar_email, ar_phone, ap_email, ap_phone, free_time_pickup_minutes, free_time_delivery_minutes, detention_rate_per_hour,
-              created_by_user_id, updated_by_user_id
-            ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$34
-            )
-            RETURNING ${CUSTOMER_SELECT_COLUMNS}
-          `,
-          [
-            b.name,
-            b.customer_code ?? null,
-            b.email ?? null,
-            b.phone ?? null,
-            b.billing_address ?? null,
-            b.mc_number ?? null,
-            b.dot_number ?? null,
-            encryptedTaxId,
-            b.credit_limit ?? null,
-            b.payment_terms_id ?? null,
-            resolvedOperatingCompanyId,
-            b.customer_type ?? null,
-            b.status ?? "active",
-            b.default_billing_miles_basis ?? "practical_miles",
-            b.default_free_time_hours ?? 4,
-            b.default_detention_rate ?? 50,
-            b.notes ?? null,
-            b.website ?? null,
-            b.office_phone ?? null,
-            b.fax_phone ?? null,
-            b.main_contact_name ?? null,
-            b.main_contact_title ?? null,
-            b.main_contact_email ?? null,
-            b.main_contact_phone ?? null,
-            b.main_contact_mobile ?? null,
-            b.ar_email ?? null,
-            b.ar_phone ?? null,
-            b.ap_email ?? null,
-            b.ap_phone ?? null,
-            b.free_time_pickup_minutes ?? 120,
-            b.free_time_delivery_minutes ?? 120,
-            b.detention_rate_per_hour ?? 0,
-            authUser.uuid,
-          ]
+          `INSERT INTO mdata.customers (${columns.join(", ")}) VALUES (${placeholders.join(", ")}) RETURNING ${CUSTOMER_SELECT_COLUMNS}`,
+          values
         );
         const row = res.rows[0];
-        await appendCrudAudit(client, authUser.uuid, "mdata.customers.created", {
-          resource_id: row.id,
-          resource_type: "mdata.customers",
-          id: row.id,
-          name: row.name,
-          customer_code: row.customer_code,
-          email: row.email,
-        });
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "mdata.customers.created",
+          {
+            resource_id: row.id,
+            resource_type: "mdata.customers",
+            id: row.id,
+            name: row.name,
+            customer_code: row.customer_code,
+            email: row.email,
+          },
+          "info",
+          "BT-1-CUSTOMER-FULL-PROFILE"
+        );
         return mapCustomerRow(row, canReadTaxId(authUser.role));
       });
       return reply.code(201).send(created);
     } catch (err) {
-      if ((err as { code?: string }).code === "23505") return reply.code(409).send({ error: "mdata_customer_conflict" });
+      if ((err as { code?: string }).code === "23505") {
+        const constraint = String((err as { constraint?: string }).constraint ?? "");
+        if (constraint.includes("customer_code")) {
+          return reply.code(409).send({ error: "duplicate_code" });
+        }
+        return reply.code(409).send({ error: "mdata_customer_conflict" });
+      }
+      if ((err as { code?: string }).code === "23502") {
+        return reply.code(400).send({ error: "not_null_violation", column: (err as { column?: string }).column ?? null });
+      }
       if ((err as Error).message === "operating_company_id_required") return reply.code(400).send({ error: "operating_company_id_required" });
       throw err;
     }
@@ -406,7 +442,8 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedBody = updateCustomerBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
-    const conflict = await assertUniqueCustomerFields(authUser.uuid, { name: b.name ?? null, mc_number: b.mc_number ?? null, dot_number: b.dot_number ?? null }, parsedParams.data.id);
+    const patchName = b.legal_name ?? b.name ?? null;
+    const conflict = await assertUniqueCustomerFields(authUser.uuid, { name: patchName, mc_number: b.mc_number ?? null, dot_number: b.dot_number ?? null }, parsedParams.data.id);
     if (conflict) return reply.code(409).send({ error: `mdata_customer_${conflict}_conflict` });
 
     const setParts: string[] = [];
@@ -415,8 +452,8 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       values.push(val);
       setParts.push(`${col} = $${values.length}`);
     };
-    if ("name" in b) add("customer_name", b.name ?? null);
-    if ("customer_code" in b) add("customer_code", b.customer_code ?? null);
+    if ("name" in b || "legal_name" in b) add("customer_name", b.legal_name ?? b.name ?? null);
+    if ("customer_code" in b || "code" in b) add("customer_code", b.code ?? b.customer_code ?? null);
     if ("email" in b) add("billing_email", b.email ?? null);
     if ("phone" in b) add("billing_phone", b.phone ?? null);
     if ("billing_address" in b) add("billing_address_line1", b.billing_address ?? null);
@@ -426,12 +463,14 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("credit_limit" in b) add("credit_limit", b.credit_limit ?? null);
     if ("payment_terms_id" in b) add("payment_terms_id", b.payment_terms_id ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
-    if ("customer_type" in b) add("customer_type", b.customer_type ?? null);
+    if ("customer_type" in b) add("customer_type", normalizeCustomerType(b.customer_type ?? null));
     if ("status" in b) add("status", b.status);
     if ("default_billing_miles_basis" in b) add("default_billing_miles_basis", b.default_billing_miles_basis);
     if ("default_free_time_hours" in b) add("default_free_time_hours", b.default_free_time_hours);
     if ("default_detention_rate" in b) add("default_detention_rate", b.default_detention_rate);
-    if ("notes" in b) add("notes", b.notes ?? null);
+    if ("notes" in b || "dba" in b) {
+      add("notes", b.notes ?? (b.dba ? `DBA: ${b.dba}` : null));
+    }
     if ("website" in b) add("website", b.website ?? null);
     if ("office_phone" in b) add("office_phone", b.office_phone ?? null);
     if ("fax_phone" in b) add("fax_phone", b.fax_phone ?? null);
