@@ -24,6 +24,7 @@ const createdSessionIds: string[] = [];
 const createdCompanyIds: string[] = [];
 const createdCustomerIds: string[] = [];
 const createdContactIds: string[] = [];
+const createdVendorIds: string[] = [];
 let serverProcess: any = null;
 
 async function runWithBypass(client, fn) {
@@ -188,9 +189,15 @@ try {
             "free_time_pickup_minutes",
             "free_time_delivery_minutes",
             "detention_rate_per_hour",
+            "factoring_eligible",
+            "factoring_company_vendor_id",
+            "factoring_advance_rate_override",
+            "factoring_reserve_pct_override",
+            "factoring_recourse_type",
+            "factoring_notes",
           ]]
         );
-        if (colsRes.rows.length !== 20) throw new Error(`expected 20 columns, got ${colsRes.rows.length}`);
+        if (colsRes.rows.length !== 26) throw new Error(`expected 26 columns, got ${colsRes.rows.length}`);
       });
     })
   );
@@ -207,8 +214,97 @@ try {
     })
   );
 
+  let faroVendorId = "";
+  let ccgVendorId = "";
+  let scopedFactorVendorId = "";
+
+  results.push(
+    await pass("Schema: factoring config columns defaults/checks are present", async () => {
+      await runWithBypass(client, async () => {
+        const rows = await client.query(
+          `SELECT column_name, is_nullable, column_default
+           FROM information_schema.columns
+           WHERE table_schema = 'mdata'
+             AND table_name = 'customers'
+             AND column_name IN ('factoring_eligible', 'factoring_company_vendor_id', 'factoring_advance_rate_override', 'factoring_reserve_pct_override', 'factoring_recourse_type', 'factoring_notes')`
+        );
+        if (rows.rows.length !== 6) throw new Error("missing factoring columns");
+        const byName = new Map(rows.rows.map((row) => [row.column_name, row]));
+        const eligible = byName.get("factoring_eligible");
+        if (!eligible) throw new Error("factoring_eligible missing");
+        if (eligible.is_nullable !== "NO") throw new Error("factoring_eligible must be NOT NULL");
+        if (!String(eligible.column_default ?? "").includes("true")) throw new Error("factoring_eligible default should be true");
+      });
+    })
+  );
+
+  results.push(
+    await pass("Schema: idx_customers_factoring_company index exists", async () => {
+      await runWithBypass(client, async () => {
+        const idxRes = await client.query(
+          `SELECT indexname
+           FROM pg_indexes
+           WHERE schemaname = 'mdata'
+             AND tablename = 'customers'
+             AND indexname = 'idx_customers_factoring_company'`
+        );
+        if (idxRes.rows.length !== 1) throw new Error("idx_customers_factoring_company missing");
+      });
+    })
+  );
+
+  results.push(
+    await pass("Seed vendors: Faro (TRANSP) and CCG (TRK) exist", async () => {
+      await runWithBypass(client, async () => {
+        const faroRes = await client.query(
+          `SELECT v.id
+           FROM mdata.vendors v
+           JOIN org.companies c ON c.id = v.operating_company_id
+           WHERE v.vendor_name = 'Faro Factoring'
+             AND c.code = 'TRANSP'
+             AND v.deactivated_at IS NULL
+           LIMIT 1`
+        );
+        const ccgRes = await client.query(
+          `SELECT v.id
+           FROM mdata.vendors v
+           JOIN org.companies c ON c.id = v.operating_company_id
+           WHERE v.vendor_name = 'Commercial Credit Group'
+             AND c.code = 'TRK'
+             AND v.deactivated_at IS NULL
+           LIMIT 1`
+        );
+        faroVendorId = String(faroRes.rows[0]?.id ?? "");
+        ccgVendorId = String(ccgRes.rows[0]?.id ?? "");
+        if (!faroVendorId) throw new Error("Faro vendor missing for TRANSP");
+        if (!ccgVendorId) throw new Error("CCG vendor missing for TRK");
+      });
+    })
+  );
+
   let customerId = "";
   let secondContactId = "";
+
+  results.push(
+    await pass("Create scoped factoring vendor for company-local join tests", async () => {
+      await runAsUser(client, refs.managerId, async () => {
+        const res = await client.query(
+          `
+          INSERT INTO mdata.vendors (
+            vendor_name, vendor_type, operating_company_id, notes, created_by_user_id, updated_by_user_id
+          ) VALUES (
+            $1, 'Other', $2, 'Scoped factoring test vendor', $3, $3
+          )
+          RETURNING id
+        `,
+          [`Scoped Factor ${suffix}`, refs.companyAId, refs.managerId]
+        );
+        scopedFactorVendorId = String(res.rows[0]?.id ?? "");
+        if (scopedFactorVendorId) createdVendorIds.push(scopedFactorVendorId);
+      });
+      if (!scopedFactorVendorId) throw new Error("failed to create scoped factoring vendor");
+    })
+  );
 
   results.push(
     await pass("Insert customer with full profile fields", async () => {
@@ -221,10 +317,11 @@ try {
             notes, website, office_phone, fax_phone, main_contact_name, main_contact_title, main_contact_email, main_contact_phone, main_contact_mobile,
             ar_email, ar_phone, ap_email, ap_phone,
             free_time_pickup_minutes, free_time_delivery_minutes, detention_rate_per_hour,
+            factoring_eligible, factoring_company_vendor_id, factoring_recourse_type,
             created_by_user_id, updated_by_user_id
           )
           VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,'active',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$26
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,'active',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$29
           )
           RETURNING id
         `,
@@ -254,11 +351,56 @@ try {
             120,
             120,
             75,
+            true,
+            scopedFactorVendorId,
+            "recourse",
             refs.managerId,
           ]
         );
         customerId = String(res.rows[0].id);
         createdCustomerIds.push(customerId);
+      });
+    })
+  );
+
+  results.push(
+    await pass("Insert rejects factoring_advance_rate_override > 100", async () => {
+      await runAsUser(client, refs.managerId, async () => {
+        let failedAsExpected = false;
+        try {
+          await client.query(
+            `
+            INSERT INTO mdata.customers (
+              customer_name, customer_type, operating_company_id, factoring_advance_rate_override, created_by_user_id, updated_by_user_id
+            ) VALUES ($1, 'broker', $2, 101, $3, $3)
+          `,
+            [`Invalid Factor Advance ${suffix}`, refs.companyAId, refs.managerId]
+          );
+        } catch (error) {
+          if (String(error?.code) === "23514") failedAsExpected = true;
+        }
+        if (!failedAsExpected) throw new Error("expected check constraint violation for factoring_advance_rate_override");
+      });
+    })
+  );
+
+  results.push(
+    await pass("Insert rejects invalid factoring_recourse_type", async () => {
+      await runAsUser(client, refs.managerId, async () => {
+        let failedAsExpected = false;
+        try {
+          await client.query(
+            `
+            INSERT INTO mdata.customers (
+              customer_name, customer_type, operating_company_id, factoring_recourse_type, created_by_user_id, updated_by_user_id
+            ) VALUES ($1, 'broker', $2, 'invalid', $3, $3)
+          `,
+            [`Invalid Factor Recourse ${suffix}`, refs.companyAId, refs.managerId]
+          );
+        } catch (error) {
+          if (String(error?.code) === "23514") failedAsExpected = true;
+        }
+        if (!failedAsExpected) throw new Error("expected check constraint violation for factoring_recourse_type");
       });
     })
   );
@@ -290,6 +432,24 @@ try {
       const payload = await detailRes.json();
       const primaryCount = (payload.customer.contacts ?? []).filter((c) => c.is_primary).length;
       if (primaryCount !== 1) throw new Error(`expected one primary, got ${primaryCount}`);
+      if (payload.customer.factoring_company_name !== `Scoped Factor ${suffix}`) {
+        throw new Error(`expected factoring_company_name Scoped Factor ${suffix}, got ${payload.customer.factoring_company_name ?? "null"}`);
+      }
+    })
+  );
+
+  results.push(
+    await pass("PATCH customer factoring recourse_type to non_recourse succeeds", async () => {
+      const patchRes = await fetch(`${apiBase}/api/v1/mdata/customers/${customerId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: `ih35_session=${refs.managerSessionId}` },
+        body: JSON.stringify({ factoring_recourse_type: "non_recourse" }),
+      });
+      if (!patchRes.ok) throw new Error(`factoring patch failed ${patchRes.status}`);
+      const payload = await patchRes.json();
+      if (payload.factoring_recourse_type !== "non_recourse") {
+        throw new Error("factoring_recourse_type did not update to non_recourse");
+      }
     })
   );
 
@@ -378,6 +538,7 @@ try {
     try {
       if (createdContactIds.length > 0) await client.query(`DELETE FROM mdata.customer_contacts WHERE uuid = ANY($1::uuid[])`, [createdContactIds]);
       if (createdCustomerIds.length > 0) await client.query(`DELETE FROM mdata.customers WHERE id = ANY($1::uuid[])`, [createdCustomerIds]);
+      if (createdVendorIds.length > 0) await client.query(`DELETE FROM mdata.vendors WHERE id = ANY($1::uuid[])`, [createdVendorIds]);
       if (createdSessionIds.length > 0) await client.query(`DELETE FROM identity.sessions WHERE id = ANY($1::text[])`, [createdSessionIds]);
       if (createdUserIds.length > 0) {
         await client.query(`DELETE FROM org.user_company_access WHERE user_id = ANY($1::uuid[])`, [createdUserIds]);
