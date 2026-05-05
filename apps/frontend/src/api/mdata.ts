@@ -110,6 +110,69 @@ export type DriverCompanyAuthorization = {
   notes: string | null;
 };
 
+export type TerminationReason = {
+  id: string;
+  code: string;
+  label: string;
+  description: string | null;
+  severity: "info" | "warning" | "severe";
+  is_active: boolean;
+  deactivated_at: string | null;
+};
+
+export type SafetyEvent = {
+  id: string;
+  driver_id: string;
+  event_type: "termination" | "incident" | "complaint" | "commendation" | "dispute";
+  event_date: string;
+  severity: "info" | "warning" | "severe";
+  summary: string;
+  details: string | null;
+  termination_reason_id: string | null;
+  termination_reason_code?: string | null;
+  termination_reason_label?: string | null;
+  termination_reason_severity?: "info" | "warning" | "severe" | null;
+  related_load_id: string | null;
+  document_ids: string[] | null;
+  curp_snapshot: string | null;
+  cdl_number_snapshot: string | null;
+  cdl_state_snapshot: string | null;
+  voided_at: string | null;
+  voided_by_user_id: string | null;
+  voided_by_user_email?: string | null;
+  void_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by_user_id: string | null;
+  updated_by_user_id: string | null;
+};
+
+export type ReturningDetectionResult = {
+  returning_driver: boolean;
+  matched_events: Array<{
+    event_id: string;
+    event_type: string;
+    event_date: string;
+    severity: "info" | "warning" | "severe";
+    summary: string;
+    termination_reason: {
+      code: string;
+      label: string;
+      severity: "info" | "warning" | "severe";
+    } | null;
+    voided: boolean;
+    matched_driver_id: string;
+    matched_driver_name: string;
+    matched_driver_curp: string | null;
+    matched_driver_status: string | null;
+  }>;
+  severity_summary: {
+    severe_count: number;
+    warning_count: number;
+    info_count: number;
+  };
+};
+
 export type Customer = {
   id: string;
   name: string;
@@ -383,6 +446,67 @@ export function upsertDriverCompanyAuthorization(
   return apiRequest<{ authorization: DriverCompanyAuthorization }>(`/api/v1/mdata/drivers/${driverId}/company-authorizations`, {
     method: "POST",
     body,
+  });
+}
+
+export function listTerminationReasons(includeInactive = false) {
+  const query = includeInactive ? "?include_inactive=true" : "";
+  return apiRequest<{ reasons: TerminationReason[] }>(`/api/v1/catalogs/driver-termination-reasons${query}`);
+}
+
+export function listSafetyEvents(driverId: string, includeVoided = false) {
+  const query = includeVoided ? "?include_voided=true" : "";
+  return apiRequest<{ events: SafetyEvent[] }>(`/api/v1/mdata/drivers/${driverId}/safety-events${query}`);
+}
+
+export function createSafetyEvent(
+  driverId: string,
+  body: {
+    event_type: SafetyEvent["event_type"];
+    event_date: string;
+    severity: SafetyEvent["severity"];
+    summary: string;
+    details?: string;
+    termination_reason_id?: string;
+    related_load_id?: string;
+    document_ids?: string[];
+  }
+) {
+  return apiRequest<{ event: SafetyEvent }>(`/api/v1/mdata/drivers/${driverId}/safety-events`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function updateSafetyEvent(
+  driverId: string,
+  eventId: string,
+  body: {
+    details?: string | null;
+    document_ids?: string[] | null;
+  }
+) {
+  return apiRequest<{ event: SafetyEvent }>(`/api/v1/mdata/drivers/${driverId}/safety-events/${eventId}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function voidSafetyEvent(driverId: string, eventId: string, voidReason: string) {
+  return apiRequest<{ event: SafetyEvent }>(`/api/v1/mdata/drivers/${driverId}/safety-events/${eventId}/void`, {
+    method: "PATCH",
+    body: { void_reason: voidReason },
+  });
+}
+
+export function checkReturningDriver(curp?: string, cdlNumber?: string, cdlState?: string) {
+  return apiRequest<ReturningDetectionResult>("/api/v1/mdata/drivers/check-returning", {
+    method: "POST",
+    body: {
+      curp: curp || undefined,
+      cdl_number: cdlNumber || undefined,
+      cdl_state: cdlState || undefined,
+    },
   });
 }
 

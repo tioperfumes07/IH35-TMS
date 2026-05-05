@@ -127,6 +127,7 @@ export type CreateDriverInput = {
   emergency_contact_notes?: string;
   status?: DriverStatus;
   notes?: string;
+  override_returning_warning?: boolean;
 };
 
 export type UpdateDriverInput = Partial<

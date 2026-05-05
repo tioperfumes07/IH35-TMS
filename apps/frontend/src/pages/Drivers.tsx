@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { ApiError } from "../api/client";
-import { createDriver, listDrivers } from "../api/mdata";
+import { checkReturningDriver, createDriver, listDrivers, type ReturningDetectionResult } from "../api/mdata";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -67,6 +67,13 @@ function formatDate(value: string | null) {
   return date.toLocaleDateString();
 }
 
+function getDetectionSeverityClass(detection: ReturningDetectionResult | null) {
+  if (!detection) return "border-gray-300 bg-gray-50 text-gray-800";
+  if (detection.severity_summary.severe_count > 0) return "border-red-300 bg-red-50 text-red-900";
+  if (detection.severity_summary.warning_count > 0) return "border-amber-300 bg-amber-50 text-amber-900";
+  return "border-blue-300 bg-blue-50 text-blue-900";
+}
+
 export function DriversPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -76,6 +83,9 @@ export function DriversPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [showMexicanIdentity, setShowMexicanIdentity] = useState(false);
   const [showVisaEmergency, setShowVisaEmergency] = useState(false);
+  const [returningDetection, setReturningDetection] = useState<ReturningDetectionResult | null>(null);
+  const [returningCheckLoading, setReturningCheckLoading] = useState(false);
+  const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({
     first_name: "",
     last_name: "",
@@ -110,6 +120,45 @@ export function DriversPage() {
     status: "Probation",
     allow_phone_login: "false",
   });
+
+  useEffect(() => {
+    if (!addOpen) return;
+    const curp = form.curp?.trim().toUpperCase() ?? "";
+    const cdlNumber = form.cdl_number?.trim().toUpperCase() ?? "";
+    const cdlState = form.cdl_state?.trim().toUpperCase() ?? "";
+    const hasCurp = curp.length === 18;
+    const hasCdlPair = cdlNumber.length > 0 && cdlState.length > 0;
+
+    if (!hasCurp && !hasCdlPair) {
+      setReturningDetection(null);
+      setOverrideReturningWarning(false);
+      setReturningCheckLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setReturningCheckLoading(true);
+    const timeout = window.setTimeout(async () => {
+      try {
+        const result = await checkReturningDriver(hasCurp ? curp : undefined, hasCdlPair ? cdlNumber : undefined, hasCdlPair ? cdlState : undefined);
+        if (cancelled) return;
+        setReturningDetection(result.returning_driver ? result : null);
+        if (!result.returning_driver) setOverrideReturningWarning(false);
+      } catch {
+        if (!cancelled) {
+          setReturningDetection(null);
+          setOverrideReturningWarning(false);
+        }
+      } finally {
+        if (!cancelled) setReturningCheckLoading(false);
+      }
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [addOpen, form.curp, form.cdl_number, form.cdl_state]);
 
   const driversQuery = useQuery({
     queryKey: ["drivers", { status: statusFilter, search }],
@@ -162,6 +211,8 @@ export function DriversPage() {
       });
       setShowMexicanIdentity(false);
       setShowVisaEmergency(false);
+      setReturningDetection(null);
+      setOverrideReturningWarning(false);
     },
   });
 
@@ -298,8 +349,22 @@ export function DriversPage() {
                 emergency_contact_notes: parsed.data.emergency_contact_notes || undefined,
                 status: parsed.data.status,
                 create_login_user: form.allow_phone_login === "true",
+                override_returning_warning: returningDetection?.returning_driver ? overrideReturningWarning : undefined,
               });
             } catch (error) {
+              if (error instanceof ApiError && error.status === 409) {
+                const detectionPayload = error.data as ReturningDetectionResult & { error?: string };
+                if (detectionPayload?.error === "returning_driver_detected") {
+                  setReturningDetection({
+                    returning_driver: true,
+                    matched_events: detectionPayload.matched_events ?? [],
+                    severity_summary: detectionPayload.severity_summary ?? { severe_count: 0, warning_count: 0, info_count: 0 },
+                  });
+                  setOverrideReturningWarning(false);
+                  pushToast("Returning driver records found. Review and confirm override.", "error");
+                  return;
+                }
+              }
               if (error instanceof ApiError && error.status === 409) {
                 pushToast("Driver with this CDL # already exists", "error");
                 return;
@@ -485,11 +550,46 @@ export function DriversPage() {
             ) : null}
           </div>
 
+          {returningDetection?.returning_driver ? (
+            <div className={`col-span-full rounded-md border p-3 text-sm ${getDetectionSeverityClass(returningDetection)}`}>
+              <div className="font-semibold">RETURNING DRIVER DETECTED</div>
+              <div className="mt-1 text-xs">
+                Prior safety events match this CURP/CDL identity. Review before proceeding.
+              </div>
+              <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded bg-white/70 p-2 text-xs">
+                {returningDetection.matched_events.map((event) => (
+                  <div key={event.event_id} className="rounded border border-gray-200 bg-white p-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{event.event_date}</span>
+                      <StatusBadge status={event.severity} />
+                    </div>
+                    <div className="font-medium capitalize">{event.event_type}</div>
+                    <div>{event.summary}</div>
+                    <div className="text-[11px] text-gray-600">From prior record under name {event.matched_driver_name}</div>
+                  </div>
+                ))}
+              </div>
+              <label className="mt-2 flex items-start gap-2 text-xs font-medium">
+                <input
+                  type="checkbox"
+                  checked={overrideReturningWarning}
+                  onChange={(event) => setOverrideReturningWarning(event.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>I have reviewed prior safety records and want to proceed with this hire</span>
+              </label>
+            </div>
+          ) : null}
+
           <div className="col-span-full flex justify-end gap-2">
             <Button variant="secondary" type="button" onClick={() => setAddOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" loading={createMutation.isPending}>
+            <Button
+              type="submit"
+              loading={createMutation.isPending}
+              disabled={(returningDetection?.returning_driver && !overrideReturningWarning) || returningCheckLoading}
+            >
               Save
             </Button>
           </div>

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
 
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
 const cdlClassSchema = z.enum(["A", "B", "C"]);
@@ -63,6 +64,7 @@ const createDriverBodySchema = z.object({
   emergency_contact_notes: z.string().trim().max(2000).optional(),
   status: driverStatusSchema.default("Active"),
   notes: z.string().trim().max(2000).optional(),
+  override_returning_warning: z.boolean().optional().default(false),
 });
 
 const updateDriverBodySchema = z
@@ -183,6 +185,33 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        const returningDetection = await findReturningDriverMatches(client, {
+          curp: b.curp,
+          cdl_number: b.cdl_number,
+          cdl_state: b.cdl_state,
+        });
+        if (returningDetection.returning_driver) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.drivers.returning_driver_detected",
+            {
+              resource_type: "mdata.drivers",
+              match_count: returningDetection.matched_events.length,
+              severity_summary: returningDetection.severity_summary,
+              matched_events: returningDetection.matched_events,
+            },
+            returningDetection.severity_summary.severe_count > 0 ? "warning" : "info",
+            "BT-1-DRIVER-SAFETY-FILE"
+          );
+          if (!b.override_returning_warning) {
+            return {
+              error: "returning_driver_detected" as const,
+              detection: returningDetection,
+            };
+          }
+        }
+
         let identityUserId = b.identity_user_id ?? null;
         if (b.create_login_user) {
           const userRes = await client.query<{ id: string }>(
@@ -285,8 +314,31 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           email: row.email,
           status: row.status,
         });
+
+        if (returningDetection.returning_driver && b.override_returning_warning) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.drivers.returning_driver_override",
+            {
+              resource_id: row.id,
+              resource_type: "mdata.drivers",
+              match_count: returningDetection.matched_events.length,
+              severity_summary: returningDetection.severity_summary,
+              matched_events: returningDetection.matched_events,
+            },
+            "warning",
+            "BT-1-DRIVER-SAFETY-FILE"
+          );
+        }
         return row;
       });
+      if (created && typeof created === "object" && "error" in created && created.error === "returning_driver_detected") {
+        return reply.code(409).send({
+          error: "returning_driver_detected",
+          ...created.detection,
+        });
+      }
       return reply.code(201).send(created);
     } catch (err) {
       const code = (err as { code?: string }).code;

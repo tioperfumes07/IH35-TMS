@@ -7,7 +7,10 @@ import { useAuth } from "../auth/useAuth";
 import { listEquipmentTypes } from "../api/catalogs";
 import { listMyCompanies } from "../api/org";
 import {
+  createSafetyEvent,
   changeDriverQualificationRate,
+  listSafetyEvents,
+  listTerminationReasons,
   createDriverQualification,
   deactivateDriver,
   deactivateDriverQualification,
@@ -18,6 +21,7 @@ import {
   listDriverCompanyAuthorizations,
   listDriverQualifications,
   reactivateQualification,
+  voidSafetyEvent,
   upsertDriverCompanyAuthorization,
   updateDriver,
 } from "../api/mdata";
@@ -27,7 +31,7 @@ import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 
-const tabs = ["Identity", "Mexican Identity", "Equipment & Pay", "Insurance Authorizations"] as const;
+const tabs = ["Profile", "Earnings & Debt", "Equipment Assignments", "Safety File", "Documents", "Audit History"] as const;
 type DriverTab = (typeof tabs)[number];
 
 const reasonOptions = [
@@ -64,7 +68,7 @@ export function DriverDetailPage() {
   const queryClient = useQueryClient();
 
   const [editMode, setEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<DriverTab>("Identity");
+  const [activeTab, setActiveTab] = useState<DriverTab>("Profile");
   const [enableModalOpen, setEnableModalOpen] = useState(false);
   const [addQualificationOpen, setAddQualificationOpen] = useState(false);
   const [rateModalOpen, setRateModalOpen] = useState(false);
@@ -76,6 +80,19 @@ export function DriverDetailPage() {
   const [selectedLineItemId, setSelectedLineItemId] = useState("");
   const [selectedEquipmentName, setSelectedEquipmentName] = useState("");
   const [selectedLineItemName, setSelectedLineItemName] = useState("");
+  const [showVoidedSafetyEvents, setShowVoidedSafetyEvents] = useState(false);
+  const [addSafetyEventOpen, setAddSafetyEventOpen] = useState(false);
+  const [expandedSafetyEventId, setExpandedSafetyEventId] = useState<string | null>(null);
+  const [voidTargetEventId, setVoidTargetEventId] = useState<string | null>(null);
+  const [voidReason, setVoidReason] = useState("");
+  const [safetyForm, setSafetyForm] = useState({
+    event_type: "incident" as "termination" | "incident" | "complaint" | "commendation" | "dispute",
+    event_date: new Date().toISOString().slice(0, 10),
+    severity: "warning" as "info" | "warning" | "severe",
+    summary: "",
+    details: "",
+    termination_reason_id: "",
+  });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState<Record<string, string>>({});
   const [newQualificationForm, setNewQualificationForm] = useState<Record<string, string>>({
@@ -127,8 +144,23 @@ export function DriverDetailPage() {
 
   const driver = driverQuery.data;
   const canManageRates = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager";
+  const canViewSafetyFile =
+    user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager" || user?.role === "Safety";
+  const isOwner = user?.role === "Owner";
   const canManageCompanyAuth =
     user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager" || user?.role === "Safety";
+
+  const safetyEventsQuery = useQuery({
+    queryKey: ["driver-safety-events", id, showVoidedSafetyEvents],
+    queryFn: () => listSafetyEvents(id, showVoidedSafetyEvents).then((result) => result.events),
+    enabled: Boolean(id) && canViewSafetyFile && activeTab === "Safety File",
+  });
+
+  const terminationReasonsQuery = useQuery({
+    queryKey: ["driver-termination-reasons"],
+    queryFn: () => listTerminationReasons(false).then((result) => result.reasons),
+    enabled: canViewSafetyFile && isOwner && activeTab === "Safety File",
+  });
 
   const hydratedForm = useMemo(() => {
     if (!driver) return form;
@@ -326,6 +358,46 @@ export function DriverDetailPage() {
     onError: () => pushToast("Failed to disable phone login", "error"),
   });
 
+  const createSafetyEventMutation = useMutation({
+    mutationFn: () =>
+      createSafetyEvent(id, {
+        event_type: safetyForm.event_type,
+        event_date: safetyForm.event_date,
+        severity: safetyForm.severity,
+        summary: safetyForm.summary.trim(),
+        details: safetyForm.details.trim() || undefined,
+        termination_reason_id: safetyForm.event_type === "termination" ? safetyForm.termination_reason_id || undefined : undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["driver-safety-events", id] });
+      setAddSafetyEventOpen(false);
+      setSafetyForm({
+        event_type: "incident",
+        event_date: new Date().toISOString().slice(0, 10),
+        severity: "warning",
+        summary: "",
+        details: "",
+        termination_reason_id: "",
+      });
+      pushToast("Safety event added", "success");
+    },
+    onError: () => pushToast("Failed to add safety event", "error"),
+  });
+
+  const voidSafetyEventMutation = useMutation({
+    mutationFn: () => {
+      if (!voidTargetEventId) throw new Error("No event selected");
+      return voidSafetyEvent(id, voidTargetEventId, voidReason);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["driver-safety-events", id] });
+      setVoidTargetEventId(null);
+      setVoidReason("");
+      pushToast("Safety event voided", "success");
+    },
+    onError: () => pushToast("Failed to void safety event", "error"),
+  });
+
   if (driverQuery.isLoading) {
     return <div className="text-sm text-gray-500">Loading driver...</div>;
   }
@@ -359,12 +431,15 @@ export function DriverDetailPage() {
   const qualifications = qualificationsQuery.data ?? [];
   const companies = companiesQuery.data ?? [];
   const authorizations = companyAuthQuery.data ?? [];
+  const safetyEvents = safetyEventsQuery.data ?? [];
+  const terminationReasons = terminationReasonsQuery.data ?? [];
   const equipmentTypeOptions =
     equipmentTypesQuery.data?.filter((type) => !qualifications.some((qualification) => qualification.equipment_type_id === type.id)) ?? [];
 
   const selectedRateFromCard = qualifications
     .find((qualification) => qualification.id === selectedQualificationId)
     ?.current_rates.find((line) => line.line_item_template_id === selectedLineItemId);
+  const visibleTabs = tabs.filter((tab) => tab !== "Safety File" || canViewSafetyFile);
 
   const saveDriver = async () => {
     const errors: Record<string, string> = {};
@@ -418,7 +493,7 @@ export function DriverDetailPage() {
 
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
         <div className="flex min-w-max gap-1">
-          {tabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab}
               type="button"
@@ -433,7 +508,7 @@ export function DriverDetailPage() {
         </div>
       </div>
 
-      {activeTab === "Identity" ? (
+      {activeTab === "Profile" ? (
         <div className="grid gap-3 md:grid-cols-2">
           {fields.map(([key, label, type]) => (
             <div key={key} className="flex flex-col gap-1">
@@ -592,7 +667,7 @@ export function DriverDetailPage() {
         </div>
       ) : null}
 
-      {activeTab === "Mexican Identity" ? (
+      {activeTab === "Profile" ? (
         <div className="space-y-3 rounded-md border border-gray-200 p-3">
           <p className="text-sm text-gray-700">Required for B1/Mexican drivers. Leave blank for non-Mexican drivers.</p>
           <div className="grid gap-3 md:grid-cols-2">
@@ -639,7 +714,7 @@ export function DriverDetailPage() {
         </div>
       ) : null}
 
-      {activeTab === "Equipment & Pay" ? (
+      {activeTab === "Equipment Assignments" ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">Qualifications</h2>
@@ -774,7 +849,111 @@ export function DriverDetailPage() {
         </div>
       ) : null}
 
-      {activeTab === "Insurance Authorizations" ? (
+      {activeTab === "Earnings & Debt" ? (
+        <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          Earnings and debt settlement workspace is coming in a subsequent phase.
+        </div>
+      ) : null}
+
+      {activeTab === "Safety File" ? (
+        <div className="space-y-3">
+          {!canViewSafetyFile ? (
+            <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+              You do not have permission to view Safety File records.
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-gray-900">Safety File</h2>
+                <div className="flex items-center gap-2">
+                  {isOwner ? (
+                    <label className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={showVoidedSafetyEvents}
+                        onChange={(event) => setShowVoidedSafetyEvents(event.target.checked)}
+                      />
+                      Show voided
+                    </label>
+                  ) : null}
+                  {isOwner ? <Button onClick={() => setAddSafetyEventOpen(true)}>+ Add Event</Button> : null}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {safetyEventsQuery.isLoading ? <div className="text-sm text-gray-500">Loading safety events...</div> : null}
+                {safetyEvents.map((event) => {
+                  const expanded = expandedSafetyEventId === event.id;
+                  const isVoided = Boolean(event.voided_at);
+                  const typePillClass =
+                    event.event_type === "termination"
+                      ? "bg-red-100 text-red-800"
+                      : event.event_type === "incident"
+                      ? "bg-amber-100 text-amber-800"
+                      : event.event_type === "complaint"
+                      ? "bg-orange-100 text-orange-800"
+                      : event.event_type === "commendation"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-blue-100 text-blue-800";
+                  return (
+                    <div key={event.id} className={`rounded border p-3 ${isVoided ? "border-gray-300 bg-gray-100" : "border-gray-200 bg-white"}`}>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedSafetyEventId((current) => (current === event.id ? null : event.id))}
+                        className="flex w-full items-center justify-between gap-2 text-left"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-gray-600">{formatDate(event.event_date)}</span>
+                          <span className={`rounded px-2 py-0.5 text-xs font-semibold capitalize ${typePillClass}`}>{event.event_type}</span>
+                          <StatusBadge status={event.severity} />
+                        </div>
+                        <div className={`text-sm font-medium ${isVoided ? "line-through text-gray-500" : "text-gray-800"}`}>{event.summary}</div>
+                      </button>
+
+                      {expanded ? (
+                        <div className="mt-2 space-y-2 text-sm">
+                          <div>{event.details || "No additional details provided."}</div>
+                          <div className="text-xs text-gray-600">
+                            Termination reason: {event.termination_reason_label || "N/A"} | Documents: {event.document_ids?.length ?? 0}
+                          </div>
+                          {isOwner && !isVoided ? (
+                            <Button variant="danger" size="sm" onClick={() => setVoidTargetEventId(event.id)}>
+                              Void
+                            </Button>
+                          ) : null}
+                          {isVoided ? (
+                            <div className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-700">
+                              VOIDED on {new Date(event.voided_at || "").toLocaleString()} by {event.voided_by_user_email || event.voided_by_user_id}:{" "}
+                              {event.void_reason}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+                {safetyEvents.length === 0 && !safetyEventsQuery.isLoading ? (
+                  <div className="text-sm text-gray-500">No safety events recorded for this driver.</div>
+                ) : null}
+              </div>
+            </>
+          )}
+        </div>
+      ) : null}
+
+      {activeTab === "Documents" ? (
+        <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          Driver documents workspace is a placeholder for the Phase 2 document module.
+        </div>
+      ) : null}
+
+      {activeTab === "Audit History" ? (
+        <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+          Audit history viewer placeholder. Full drill-down ships in a later phase.
+        </div>
+      ) : null}
+
+      {activeTab === "Profile" ? (
         <div className="space-y-3">
           {companies.map((company) => {
             const existing = authorizations.find((authorization) => authorization.company_id === company.id);
@@ -909,6 +1088,157 @@ export function DriverDetailPage() {
             </Button>
             <Button type="submit" loading={addQualificationMutation.isPending}>
               Save
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={addSafetyEventOpen} onClose={() => setAddSafetyEventOpen(false)} title="Add Safety Event">
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!safetyForm.summary.trim()) {
+              pushToast("Summary is required", "error");
+              return;
+            }
+            if (safetyForm.event_type === "termination" && !safetyForm.termination_reason_id) {
+              pushToast("Termination reason is required for termination events", "error");
+              return;
+            }
+            createSafetyEventMutation.mutate();
+          }}
+        >
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Event type</label>
+              <select
+                value={safetyForm.event_type}
+                onChange={(event) =>
+                  setSafetyForm((current) => ({
+                    ...current,
+                    event_type: event.target.value as typeof current.event_type,
+                    termination_reason_id: event.target.value === "termination" ? current.termination_reason_id : "",
+                  }))
+                }
+                className="rounded border border-gray-300 px-2 py-2 text-sm"
+              >
+                <option value="termination">Termination</option>
+                <option value="incident">Incident</option>
+                <option value="complaint">Complaint</option>
+                <option value="commendation">Commendation</option>
+                <option value="dispute">Dispute</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Event date</label>
+              <input
+                type="date"
+                max={new Date().toISOString().slice(0, 10)}
+                value={safetyForm.event_date}
+                onChange={(event) => setSafetyForm((current) => ({ ...current, event_date: event.target.value }))}
+                className="rounded border border-gray-300 px-2 py-2 text-sm"
+              />
+            </div>
+            {safetyForm.event_type === "termination" ? (
+              <div className="flex flex-col gap-1 md:col-span-2">
+                <label className="text-xs font-semibold text-gray-600">Termination reason</label>
+                <select
+                  value={safetyForm.termination_reason_id}
+                  onChange={(event) => {
+                    const nextId = event.target.value;
+                    const selectedReason = terminationReasons.find((reason) => reason.id === nextId);
+                    setSafetyForm((current) => ({
+                      ...current,
+                      termination_reason_id: nextId,
+                      severity: selectedReason?.severity ?? current.severity,
+                    }));
+                  }}
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                >
+                  <option value="">Select reason</option>
+                  {terminationReasons.map((reason) => (
+                    <option key={reason.id} value={reason.id}>
+                      {reason.label} ({reason.severity})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Severity</label>
+              <select
+                value={safetyForm.severity}
+                disabled={safetyForm.event_type === "termination"}
+                onChange={(event) => setSafetyForm((current) => ({ ...current, severity: event.target.value as typeof current.severity }))}
+                className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
+              >
+                <option value="info">Info</option>
+                <option value="warning">Warning</option>
+                <option value="severe">Severe</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1 md:col-span-2">
+              <label className="text-xs font-semibold text-gray-600">Summary</label>
+              <input
+                value={safetyForm.summary}
+                onChange={(event) => setSafetyForm((current) => ({ ...current, summary: event.target.value }))}
+                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                maxLength={500}
+              />
+            </div>
+            <div className="flex flex-col gap-1 md:col-span-2">
+              <label className="text-xs font-semibold text-gray-600">Details</label>
+              <textarea
+                value={safetyForm.details}
+                onChange={(event) => setSafetyForm((current) => ({ ...current, details: event.target.value }))}
+                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                rows={4}
+                maxLength={5000}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setAddSafetyEventOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={createSafetyEventMutation.isPending}>
+              Save event
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={Boolean(voidTargetEventId)} onClose={() => setVoidTargetEventId(null)} title="Void this safety event?">
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (voidReason.trim().length < 10) {
+              pushToast("Void reason must be at least 10 characters", "error");
+              return;
+            }
+            voidSafetyEventMutation.mutate();
+          }}
+        >
+          <p className="text-sm text-gray-700">Voided records remain visible for institutional and legal traceability.</p>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Void reason</label>
+            <textarea
+              value={voidReason}
+              onChange={(event) => setVoidReason(event.target.value)}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              rows={4}
+              minLength={10}
+              maxLength={1000}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setVoidTargetEventId(null)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="danger" loading={voidSafetyEventMutation.isPending}>
+              Void event
             </Button>
           </div>
         </form>
