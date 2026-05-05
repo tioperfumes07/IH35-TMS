@@ -1,9 +1,24 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { useAuth } from "./auth/useAuth";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
+import { MyDocumentsPage } from "./pages/MyDocuments";
 import { ProfilePage } from "./pages/Profile";
+import { startSyncService, stopSyncService } from "./lib/upload-sync";
+import { initDB } from "./lib/upload-queue";
+
+function SyncBootstrap() {
+  useEffect(() => {
+    void initDB();
+    startSyncService();
+    return () => {
+      stopSyncService();
+    };
+  }, []);
+  return null;
+}
 
 function RootRedirect() {
   const auth = useAuth();
@@ -16,7 +31,12 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   const auth = useAuth();
   if (auth.isLoading) return <div className="flex min-h-screen items-center justify-center text-pwa-text-secondary">Loading...</div>;
   if (!auth.user || auth.isUnauthenticated) return <Navigate to="/login" replace />;
-  return <>{children}</>;
+  return (
+    <>
+      <SyncBootstrap />
+      {children}
+    </>
+  );
 }
 
 export default function App() {
@@ -37,6 +57,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/documents"
+        element={
+          <ProtectedRoute>
+            <MyDocumentsPage />
           </ProtectedRoute>
         }
       />

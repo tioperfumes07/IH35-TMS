@@ -1,14 +1,16 @@
 import { AlertTriangle, FileText, Fuel, Navigation, Settings, Truck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { signOut } from "../api/identity";
 import { useAuth } from "../auth/useAuth";
+import { UploadDocumentModal } from "../components/UploadDocumentModal";
 import { HosCell } from "../components/HosCell";
 import { InstallPrompt } from "../components/InstallPrompt";
 import { Modal } from "../components/Modal";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
 import { useToast } from "../components/Toast";
+import { subscribeSyncState, syncOnce } from "../lib/upload-sync";
 
 const issues = [
   "Mechanical",
@@ -30,8 +32,21 @@ export function HomePage() {
   const auth = useAuth();
   const { pushToast } = useToast();
   const [issueOpen, setIssueOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [pendingUploads, setPendingUploads] = useState(0);
+  const [onlineStatus, setOnlineStatus] = useState<"online" | "connecting" | "offline">(navigator.onLine ? "connecting" : "offline");
 
   const driverName = useMemo(() => deriveDriverName(auth.user?.email ?? "driver"), [auth.user?.email]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeSyncState((state) => {
+      setPendingUploads(state.pendingCount);
+      setOnlineStatus(state.onlineStatus);
+    });
+    return unsubscribe;
+  }, []);
+
+  const onlineIndicator = onlineStatus === "online" ? "ONLINE" : onlineStatus === "connecting" ? "CONNECTING" : "OFFLINE";
 
   return (
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-sm text-pwa-text-primary">
@@ -41,12 +56,23 @@ export function HomePage() {
             <div>
               <p className="text-lg font-semibold">{driverName}</p>
               <p className="text-sm text-pwa-text-secondary">Unit 0234</p>
+              <p className="mt-1 text-xs text-pwa-text-secondary">{onlineIndicator}</p>
             </div>
             <Link to="/profile" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-pwa-border">
               <Settings className="h-5 w-5 text-pwa-text-secondary" />
             </Link>
           </div>
           <p className="mt-2 text-sm text-pwa-text-secondary">Welcome back</p>
+          <div className="mt-3 flex gap-2">
+            <PwaButton className="flex-1" onClick={() => setUploadOpen(true)}>
+              + Upload Document
+            </PwaButton>
+            <Link to="/documents" className="flex-1">
+              <PwaButton variant="secondary" className="w-full">
+                My Documents{pendingUploads > 0 ? ` (${pendingUploads})` : ""}
+              </PwaButton>
+            </Link>
+          </div>
         </header>
 
         <PwaCard title="HOS Overview" subtitle="Phase 1 placeholder data — will sync with Samsara in Phase 4">
@@ -116,7 +142,7 @@ export function HomePage() {
             <PwaButton
               variant="secondary"
               className="min-h-20 flex-col"
-              onClick={() => pushToast("Coming in Phase 2")}
+              onClick={() => setUploadOpen(true)}
               icon={<FileText className="h-5 w-5" />}
             >
               Upload BOL
@@ -152,6 +178,13 @@ export function HomePage() {
       </div>
 
       <InstallPrompt />
+      <UploadDocumentModal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onQueued={() => {
+          void syncOnce();
+        }}
+      />
 
       <Modal open={issueOpen} onClose={() => setIssueOpen(false)} title="Report issue">
         <div className="space-y-3">
