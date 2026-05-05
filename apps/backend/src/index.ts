@@ -23,10 +23,12 @@ import { registerCustomerQualityEventsRoutes } from "./mdata/customer-quality-ev
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
+import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
 const app = Fastify({ logger: true });
+let shuttingDown = false;
 const ALLOWED_ORIGINS = (
   process.env.CORS_ALLOWED_ORIGINS ??
   "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174"
@@ -43,6 +45,23 @@ const ALLOWED_ORIGINS = (
 app.get("/api/v1/_healthcheck", async () => {
   return { status: "ok" };
 });
+
+async function shutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  app.log.info({ signal }, "Shutdown signal received");
+  try {
+    await stopOutboxProcessor();
+  } catch (error) {
+    app.log.error({ err: error }, "Failed to stop outbox processor cleanly");
+  }
+  try {
+    await app.close();
+  } catch (error) {
+    app.log.error({ err: error }, "Error while closing Fastify");
+  }
+  process.exit(0);
+}
 
 async function main() {
   await app.register(cors, {
@@ -82,11 +101,23 @@ async function main() {
   const host = "0.0.0.0";
   try {
     await app.listen({ port, host });
+    if (process.env.ENABLE_OUTBOX_PROCESSOR !== "false") {
+      startOutboxProcessor();
+      app.log.info("Outbox processor started");
+    }
     app.log.info({ port, host }, "Server started");
   } catch (err) {
     app.log.error(err, "Server failed to start");
     process.exit(1);
   }
 }
+
+process.on("SIGTERM", () => {
+  void shutdown("SIGTERM");
+});
+
+process.on("SIGINT", () => {
+  void shutdown("SIGINT");
+});
 
 main();
