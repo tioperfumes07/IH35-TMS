@@ -42,4 +42,6 @@ Build the documents module that all subsequent phases depend on:
 
 ## Section E
 
-(Will be populated as Phase 2 blocks are built.)
+| Date | Note | Owner | Status | Reference |
+|---|---|---|---|---|
+| 2026-05-05 | BT-2-DOCS-SCHEMA-AND-R2 (#2): Documents Module foundation. New docs schema with docs.files (master records, soft-delete only, versioning via parent_file_id chain) and docs.file_links (polymorphic entity attachments). New catalogs.file_categories with 20 pre-populated categories from Master Blueprint MUST 3.8.2. Cloudflare R2 client wrapper with presigned upload (15min) + download (5min) URLs. R2 key structure: org/<operating_company_id>/files/<file_uuid>/<version>/<original_filename>. Chain of custody via 8 audit events. RLS rules: standalone files Owner/Admin only; entity-linked files inherit entity visibility per role. NO UI in this block (Block #2.1 follows). | Jorge | Resolved | Phase 2 task 1 of 4 |

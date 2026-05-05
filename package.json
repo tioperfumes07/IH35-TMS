@@ -43,12 +43,14 @@
     "db:verify:dispatcher-safety-file": "tsx scripts/db-verify-dispatcher-safety-file.ts",
     "db:verify:customer-quality-flags": "tsx scripts/db-verify-customer-quality-flags.ts",
     "db:verify:states-and-rehire": "tsx scripts/db-verify-states-and-rehire.ts",
+    "db:verify:docs-schema": "tsx scripts/db-verify-docs-schema.ts",
     "db:verify:phase1-gate": "node scripts/db-verify-phase1-gate.mjs",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
+    "@aws-sdk/s3-request-presigner": "^3.1042.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.2.0",
     "@lucia-auth/adapter-postgresql": "^3.1.2",
