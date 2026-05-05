@@ -228,6 +228,9 @@ export type Customer = {
   quality_disputes_count: number;
   quality_last_evaluated_at: string | null;
   quality_notes: string | null;
+  fmcsa_verified_at: string | null;
+  fmcsa_lookup_id: string | null;
+  fmcsa_authority_status_at_verification: string | null;
   created_at: string;
   updated_at: string;
   deactivated_at: string | null;
