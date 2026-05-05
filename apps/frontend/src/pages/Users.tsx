@@ -1,8 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ApiError } from "../api/client";
-import { createIdentityWorkflow, createUser, deactivateUser, listUsers } from "../api/identity";
+import { useAuth } from "../auth/useAuth";
+import {
+  checkReturningDispatcher,
+  createIdentityWorkflow,
+  createUser,
+  deactivateUser,
+  listUsers,
+  type ReturningDispatcherDetectionResult,
+} from "../api/identity";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -28,20 +37,27 @@ function userStatus(user: IdentityUser): "Active" | "Inactive" {
 }
 
 export function UsersPage() {
+  const navigate = useNavigate();
+  const auth = useAuth();
   const [search, setSearch] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [roleModalUser, setRoleModalUser] = useState<IdentityUser | null>(null);
   const [menuUserId, setMenuUserId] = useState<string | null>(null);
   const [inviteRole, setInviteRole] = useState<UserRole | "Viewer">("Manager");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
+  const [returningDetection, setReturningDetection] = useState<ReturningDispatcherDetectionResult | null>(null);
+  const [checkingReturningDispatcher, setCheckingReturningDispatcher] = useState(false);
   const [roleChangeRole, setRoleChangeRole] = useState<UserRole>("Manager");
   const [roleReason, setRoleReason] = useState("");
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const isOwnerOrAdmin = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
 
   const usersQuery = useQuery({
-    queryKey: ["users"],
-    queryFn: () => listUsers().then((result) => result.users),
+    queryKey: ["users", showInactive],
+    queryFn: () => listUsers(showInactive).then((result) => result.users),
   });
 
   const createUserMutation = useMutation({
@@ -51,6 +67,8 @@ export function UsersPage() {
       setInviteOpen(false);
       setInviteEmail("");
       setInviteRole("Manager");
+      setOverrideReturningWarning(false);
+      setReturningDetection(null);
       pushToast("User invited successfully", "success");
     },
   });
@@ -79,6 +97,31 @@ export function UsersPage() {
     return list.filter((user) => (user.email ?? "").toLowerCase().includes(keyword) || user.role.toLowerCase().includes(keyword));
   }, [usersQuery.data, search]);
 
+  useEffect(() => {
+    if (!inviteOpen) return;
+    const normalizedEmail = inviteEmail.trim().toLowerCase();
+    const shouldCheck = normalizedEmail.length >= 5 && inviteRole !== "Owner" && inviteRole !== "Driver" && inviteRole !== "Viewer";
+    if (!shouldCheck) {
+      setReturningDetection(null);
+      setCheckingReturningDispatcher(false);
+      setOverrideReturningWarning(false);
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      setCheckingReturningDispatcher(true);
+      try {
+        const result = await checkReturningDispatcher(normalizedEmail);
+        setReturningDetection(result.returning_dispatcher ? result : null);
+        if (!result.returning_dispatcher) setOverrideReturningWarning(false);
+      } catch {
+        setReturningDetection(null);
+      } finally {
+        setCheckingReturningDispatcher(false);
+      }
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [inviteEmail, inviteOpen, inviteRole]);
+
   return (
     <div className="space-y-3">
       <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} />
@@ -90,13 +133,22 @@ export function UsersPage() {
           placeholder="Search users"
           className="h-8 w-full max-w-sm rounded-md border border-gray-300 px-2 text-[13px]"
         />
-        <Button onClick={() => setInviteOpen(true)}>Invite User</Button>
+        <div className="flex items-center gap-3">
+          {isOwnerOrAdmin ? (
+            <label className="inline-flex items-center gap-2 text-xs text-gray-600">
+              <input type="checkbox" checked={showInactive} onChange={(event) => setShowInactive(event.target.checked)} />
+              Show inactive
+            </label>
+          ) : null}
+          <Button onClick={() => setInviteOpen(true)}>Invite User</Button>
+        </div>
       </div>
 
       <DataTable
         rows={filteredUsers}
         loading={usersQuery.isLoading}
         rowKey={(row) => row.id}
+        onRowClick={(row) => navigate(`/users/${row.id}`)}
         columns={[
           { key: "email", label: "Email", sortable: true },
           { key: "role", label: "Role", sortable: true },
@@ -132,6 +184,7 @@ export function UsersPage() {
                       type="button"
                       className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100"
                       onClick={() => {
+                        if (!isOwnerOrAdmin) return;
                         setRoleModalUser(row);
                         setRoleChangeRole(row.role);
                         setMenuUserId(null);
@@ -143,6 +196,7 @@ export function UsersPage() {
                       type="button"
                       className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100"
                       onClick={async () => {
+                        if (!isOwnerOrAdmin) return;
                         setMenuUserId(null);
                         const ok = window.confirm("Deactivate this user?");
                         if (!ok) return;
@@ -169,8 +223,22 @@ export function UsersPage() {
               return;
             }
             try {
-              await createUserMutation.mutateAsync({ email: inviteEmail.trim().toLowerCase(), role: inviteRole });
+              await createUserMutation.mutateAsync({
+                email: inviteEmail.trim().toLowerCase(),
+                role: inviteRole,
+                override_returning_warning: overrideReturningWarning,
+              });
             } catch (error) {
+              if (error instanceof ApiError && error.status === 409 && (error.data as { error?: string })?.error === "returning_dispatcher_detected") {
+                const details = error.data as ReturningDispatcherDetectionResult & { error: string };
+                setReturningDetection({
+                  returning_dispatcher: true,
+                  matched_events: details.matched_events ?? [],
+                  severity_summary: details.severity_summary ?? { severe_count: 0, warning_count: 0, info_count: 0 },
+                });
+                pushToast("Returning dispatcher detected. Confirm override to continue.", "error");
+                return;
+              }
               if (error instanceof ApiError && error.status === 409) {
                 pushToast("User with this email already exists", "error");
                 return;
@@ -203,11 +271,33 @@ export function UsersPage() {
               ))}
             </select>
           </div>
+          {checkingReturningDispatcher ? <div className="text-xs text-gray-500">Checking returning dispatcher history...</div> : null}
+          {returningDetection ? (
+            <div className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+              <p className="font-semibold">
+                Returning dispatcher detected: {returningDetection.matched_events.length} prior safety events (
+                {returningDetection.severity_summary.severe_count} severe, {returningDetection.severity_summary.warning_count} warning,{" "}
+                {returningDetection.severity_summary.info_count} info)
+              </p>
+              <label className="mt-2 inline-flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={overrideReturningWarning}
+                  onChange={(event) => setOverrideReturningWarning(event.target.checked)}
+                />
+                Override warning and create user anyway
+              </label>
+            </div>
+          ) : null}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setInviteOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" loading={createUserMutation.isPending}>
+            <Button
+              type="submit"
+              loading={createUserMutation.isPending}
+              disabled={Boolean(returningDetection) && !overrideReturningWarning}
+            >
               Invite User
             </Button>
           </div>

@@ -95,6 +95,10 @@ const EVENT_CLASSES = [
   "mdata.drivers.returning_driver_detected",
   "mdata.drivers.returning_driver_override",
   "mdata.drivers.rehired",
+  "mdata.dispatcher_safety_events.created",
+  "mdata.dispatcher_safety_events.updated",
+  "mdata.dispatcher_safety_events.voided",
+  "mdata.dispatcher_safety_events.returning_dispatcher_override",
 ];
 
 const WARNING_EVENTS = new Set([
@@ -105,6 +109,7 @@ const WARNING_EVENTS = new Set([
   "catalogs.account_role_bindings.created",
   "catalogs.account_role_bindings.updated",
   "auth.phone.verification_fallback_sms",
+  "mdata.dispatcher_safety_events.returning_dispatcher_override",
 ]);
 
 async function runWithBypass(client, fn) {
