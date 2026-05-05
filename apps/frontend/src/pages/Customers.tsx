@@ -3,7 +3,7 @@ import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { ApiError } from "../api/client";
-import { createCustomer, listCustomers, listPaymentTermOptions, updateCustomer, type Customer } from "../api/mdata";
+import { createCustomer, listCustomers, listPaymentTermOptions, listVendors, updateCustomer, type Customer, type VendorOption } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
@@ -41,6 +41,12 @@ const createCustomerSchema = z.object({
   free_time_pickup_minutes: z.coerce.number().int().min(0).optional(),
   free_time_delivery_minutes: z.coerce.number().int().min(0).optional(),
   detention_rate_per_hour: z.coerce.number().min(0).optional(),
+  factoring_eligible: z.boolean().default(true),
+  factoring_company_vendor_id: z.string().uuid().optional().or(z.literal("")),
+  factoring_advance_rate_override: z.union([z.literal(""), z.coerce.number().min(0).max(100)]).optional(),
+  factoring_reserve_pct_override: z.union([z.literal(""), z.coerce.number().min(0).max(100)]).optional(),
+  factoring_recourse_type: z.enum(["", "recourse", "non_recourse"]).default(""),
+  factoring_notes: z.string().trim().max(1000).optional(),
   notes: z.string().trim().max(2000).optional(),
 });
 
@@ -84,6 +90,12 @@ function emptyCreateForm() {
     free_time_pickup_minutes: "120",
     free_time_delivery_minutes: "120",
     detention_rate_per_hour: "0",
+    factoring_eligible: true,
+    factoring_company_vendor_id: "",
+    factoring_advance_rate_override: "",
+    factoring_reserve_pct_override: "",
+    factoring_recourse_type: "",
+    factoring_notes: "",
     notes: "",
   };
 }
@@ -153,6 +165,10 @@ export function CustomersPage() {
   const paymentTermsQuery = useQuery({
     queryKey: ["catalogs", "payment-terms", "active"],
     queryFn: () => listPaymentTermOptions().then((result) => result.payment_terms),
+  });
+  const vendorsQuery = useQuery({
+    queryKey: ["vendors", "active"],
+    queryFn: () => listVendors({ status: "active" }).then((result) => result.vendors),
   });
 
   const createMutation = useMutation({
@@ -296,6 +312,17 @@ export function CustomersPage() {
                 free_time_pickup_minutes: parsed.data.free_time_pickup_minutes,
                 free_time_delivery_minutes: parsed.data.free_time_delivery_minutes,
                 detention_rate_per_hour: parsed.data.detention_rate_per_hour,
+                factoring_eligible: parsed.data.factoring_eligible,
+                factoring_company_vendor_id: parsed.data.factoring_company_vendor_id || undefined,
+                factoring_advance_rate_override:
+                  typeof parsed.data.factoring_advance_rate_override === "number" ? parsed.data.factoring_advance_rate_override : undefined,
+                factoring_reserve_pct_override:
+                  typeof parsed.data.factoring_reserve_pct_override === "number" ? parsed.data.factoring_reserve_pct_override : undefined,
+                factoring_recourse_type:
+                  parsed.data.factoring_recourse_type === ""
+                    ? undefined
+                    : (parsed.data.factoring_recourse_type as "recourse" | "non_recourse"),
+                factoring_notes: parsed.data.factoring_notes || undefined,
                 notes: parsed.data.notes || undefined,
               });
             } catch (error) {
@@ -313,6 +340,7 @@ export function CustomersPage() {
             errors={createErrors}
             showTaxId={showTaxId}
             paymentTermOptions={paymentTermsQuery.data ?? []}
+            vendors={vendorsQuery.data ?? []}
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setAddOpen(false)}>
@@ -378,12 +406,14 @@ function CreateCustomerFormFields({
   errors,
   showTaxId,
   paymentTermOptions,
+  vendors,
 }: {
   form: CreateCustomerFormState;
   setForm: Dispatch<SetStateAction<CreateCustomerFormState>>;
   errors: Partial<Record<keyof CreateCustomerFormState, string>>;
   showTaxId: boolean;
   paymentTermOptions: Array<{ id: string; terms_name: string; days_until_due: number }>;
+  vendors: VendorOption[];
 }) {
   const FieldLabel = ({ text, required }: { text: string; required?: boolean }) => (
     <label className="text-xs font-semibold text-gray-600">
@@ -393,6 +423,11 @@ function CreateCustomerFormFields({
   );
   const ErrorText = ({ field }: { field: keyof CreateCustomerFormState }) =>
     errors[field] ? <div className="text-[11px] text-red-600">{errors[field]}</div> : null;
+  const factoringVendors = vendors.filter((vendor) => {
+    const notes = (vendor.notes ?? "").toLowerCase();
+    const name = vendor.name.toLowerCase();
+    return vendor.vendor_type === "factoring_company" || notes.includes("factor") || name.includes("factor") || name.includes("faro") || name.includes("rts");
+  });
 
   return (
     <div className="space-y-3">
@@ -460,7 +495,7 @@ function CreateCustomerFormFields({
           ] as Array<[keyof CreateCustomerFormState, string]>).map(([field, label]) => (
             <div key={field} className="flex flex-col gap-1">
               <FieldLabel text={label} />
-              <input value={form[field] ?? ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+              <input value={String(form[field] ?? "")} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
             </div>
           ))}
           <div className="flex flex-col gap-1">
@@ -472,7 +507,7 @@ function CreateCustomerFormFields({
       </details>
 
       <details className="rounded border border-gray-200 p-3">
-        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-gray-700">Billing & Detention</summary>
+        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-gray-700">Billing, Detention & Factoring</summary>
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="flex flex-col gap-1">
             <FieldLabel text="A/R Email" />
@@ -522,6 +557,73 @@ function CreateCustomerFormFields({
           <div className="flex flex-col gap-1 md:col-span-2">
             <FieldLabel text="Notes" />
             <textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} rows={2} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="md:col-span-2 mt-2 border-t border-gray-200 pt-3">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-700">Factoring Configuration</div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <label className="flex items-center gap-2 text-xs text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={form.factoring_eligible}
+                  onChange={(event) => setForm((current) => ({ ...current, factoring_eligible: event.target.checked }))}
+                />
+                Factoring Eligible
+              </label>
+              <div className="flex flex-col gap-1">
+                <FieldLabel text="Factoring Company" />
+                <select
+                  value={form.factoring_company_vendor_id}
+                  onChange={(event) => setForm((current) => ({ ...current, factoring_company_vendor_id: event.target.value }))}
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                >
+                  <option value="">(none)</option>
+                  {factoringVendors.map((vendor) => (
+                    <option key={vendor.id} value={vendor.id}>
+                      {vendor.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <FieldLabel text="Advance Rate Override (%)" />
+                <input
+                  value={form.factoring_advance_rate_override}
+                  placeholder="uses default"
+                  onChange={(event) => setForm((current) => ({ ...current, factoring_advance_rate_override: event.target.value }))}
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <FieldLabel text="Reserve Override (%)" />
+                <input
+                  value={form.factoring_reserve_pct_override}
+                  placeholder="uses default"
+                  onChange={(event) => setForm((current) => ({ ...current, factoring_reserve_pct_override: event.target.value }))}
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <FieldLabel text="Recourse Type" />
+                <select
+                  value={form.factoring_recourse_type}
+                  onChange={(event) => setForm((current) => ({ ...current, factoring_recourse_type: event.target.value as "" | "recourse" | "non_recourse" }))}
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                >
+                  <option value="">Use default</option>
+                  <option value="recourse">Recourse</option>
+                  <option value="non_recourse">Non-recourse</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1 md:col-span-2">
+                <FieldLabel text="Factoring Notes" />
+                <textarea
+                  value={form.factoring_notes}
+                  onChange={(event) => setForm((current) => ({ ...current, factoring_notes: event.target.value }))}
+                  rows={2}
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </details>

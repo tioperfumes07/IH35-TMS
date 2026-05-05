@@ -144,6 +144,13 @@ export type Customer = {
   free_time_pickup_minutes: number;
   free_time_delivery_minutes: number;
   detention_rate_per_hour: string;
+  factoring_eligible: boolean;
+  factoring_company_vendor_id: string | null;
+  factoring_company_name?: string | null;
+  factoring_advance_rate_override: string | null;
+  factoring_reserve_pct_override: string | null;
+  factoring_recourse_type: "recourse" | "non_recourse" | null;
+  factoring_notes: string | null;
   created_at: string;
   updated_at: string;
   deactivated_at: string | null;
@@ -187,6 +194,12 @@ export type CreateCustomerInput = {
   free_time_pickup_minutes?: number;
   free_time_delivery_minutes?: number;
   detention_rate_per_hour?: number;
+  factoring_eligible?: boolean;
+  factoring_company_vendor_id?: string | null;
+  factoring_advance_rate_override?: number | null;
+  factoring_reserve_pct_override?: number | null;
+  factoring_recourse_type?: "recourse" | "non_recourse" | null;
+  factoring_notes?: string | null;
 };
 
 export type UpdateCustomerInput = Partial<{
@@ -223,8 +236,16 @@ export type UpdateCustomerInput = Partial<{
   free_time_pickup_minutes: number;
   free_time_delivery_minutes: number;
   detention_rate_per_hour: number;
+  factoring_eligible: boolean;
+  factoring_company_vendor_id: string | null;
+  factoring_advance_rate_override: number | null;
+  factoring_reserve_pct_override: number | null;
+  factoring_recourse_type: "recourse" | "non_recourse" | null;
+  factoring_notes: string | null;
   deactivated_at: string | null;
 }>;
+
+export type CustomerDetailFull = Customer & { contacts: CustomerContact[] };
 
 export type CustomerContactDepartment = "sales" | "billing" | "dispatch" | "operations" | "owner" | "other";
 
@@ -248,6 +269,15 @@ export type PaymentTermOption = {
   id: string;
   terms_name: string;
   days_until_due: number;
+};
+
+export type VendorOption = {
+  id: string;
+  name: string;
+  vendor_type: string;
+  notes: string | null;
+  operating_company_id: string;
+  deactivated_at: string | null;
 };
 
 export function listDriverQualifications(driverId: string, includeInactive?: boolean) {
@@ -403,7 +433,7 @@ export function updateCustomer(id: string, body: UpdateCustomerInput) {
 }
 
 export function getCustomerDetail(id: string) {
-  return apiRequest<{ customer: Customer & { contacts: CustomerContact[] } }>(`/api/v1/mdata/customers/${id}/detail`);
+  return apiRequest<{ customer: CustomerDetailFull }>(`/api/v1/mdata/customers/${id}/detail`);
 }
 
 export function listCustomerContacts(customerId: string, includeInactive = false) {
@@ -467,7 +497,7 @@ export function listVendors(params: CompanyScopedListParams = {}) {
   const query = new URLSearchParams();
   appendCompanyScopedQuery(query, params);
   const qs = query.toString();
-  return apiRequest<{ vendors: unknown[] }>(`/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`);
+  return apiRequest<{ vendors: VendorOption[] }>(`/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`);
 }
 
 export function listLocations(params: CompanyScopedListParams = {}) {

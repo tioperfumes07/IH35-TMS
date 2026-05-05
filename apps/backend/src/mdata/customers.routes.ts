@@ -17,6 +17,7 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 const customerTypeInputSchema = z.enum(["broker", "direct", "direct_shipper"]);
 const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
 const customerStatusSchema = z.enum(["active", "inactive", "credit_hold", "blacklist"]);
+const factoringRecourseTypeSchema = z.enum(["recourse", "non_recourse"]);
 
 const createCustomerBodySchema = z
   .object({
@@ -55,6 +56,12 @@ const createCustomerBodySchema = z
   free_time_pickup_minutes: z.number().int().min(0).max(1440).optional(),
   free_time_delivery_minutes: z.number().int().min(0).max(1440).optional(),
   detention_rate_per_hour: z.number().min(0).max(9999.99).optional(),
+  factoring_eligible: z.boolean().optional(),
+  factoring_company_vendor_id: z.string().uuid().nullable().optional(),
+  factoring_advance_rate_override: z.number().min(0).max(100).nullable().optional(),
+  factoring_reserve_pct_override: z.number().min(0).max(100).nullable().optional(),
+  factoring_recourse_type: factoringRecourseTypeSchema.nullable().optional(),
+  factoring_notes: z.string().trim().max(5000).nullable().optional(),
   })
   .refine((value) => Boolean(value.legal_name ?? value.name), { message: "legal_name is required" })
   .refine((value) => Boolean(value.customer_type), { message: "customer_type is required" });
@@ -97,6 +104,12 @@ const updateCustomerBodySchema = z
     free_time_pickup_minutes: z.number().int().min(0).max(1440).optional(),
     free_time_delivery_minutes: z.number().int().min(0).max(1440).optional(),
     detention_rate_per_hour: z.number().min(0).max(9999.99).optional(),
+    factoring_eligible: z.boolean().optional(),
+    factoring_company_vendor_id: z.string().uuid().nullable().optional(),
+    factoring_advance_rate_override: z.number().min(0).max(100).nullable().optional(),
+    factoring_reserve_pct_override: z.number().min(0).max(100).nullable().optional(),
+    factoring_recourse_type: factoringRecourseTypeSchema.nullable().optional(),
+    factoring_notes: z.string().trim().max(5000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
@@ -198,6 +211,12 @@ const CUSTOMER_SELECT_COLUMNS = `
   free_time_pickup_minutes,
   free_time_delivery_minutes,
   detention_rate_per_hour,
+  factoring_eligible,
+  factoring_company_vendor_id,
+  factoring_advance_rate_override,
+  factoring_reserve_pct_override,
+  factoring_recourse_type,
+  factoring_notes,
   created_at,
   updated_at,
   deactivated_at,
@@ -331,6 +350,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("free_time_pickup_minutes", b.free_time_pickup_minutes ?? 120);
         addOptional("free_time_delivery_minutes", b.free_time_delivery_minutes ?? 120);
         addOptional("detention_rate_per_hour", b.detention_rate_per_hour ?? 0);
+        addOptional("factoring_eligible", b.factoring_eligible);
+        addOptional("factoring_company_vendor_id", b.factoring_company_vendor_id);
+        addOptional("factoring_advance_rate_override", b.factoring_advance_rate_override);
+        addOptional("factoring_reserve_pct_override", b.factoring_reserve_pct_override);
+        addOptional("factoring_recourse_type", b.factoring_recourse_type);
+        addOptional("factoring_notes", b.factoring_notes);
         if (b.notes !== undefined || b.dba !== undefined) {
           const notesParts = [b.notes, b.dba ? `DBA: ${b.dba}` : null].filter(Boolean);
           addOptional("notes", notesParts.length > 0 ? notesParts.join("\n") : null);
@@ -398,6 +423,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         `
           SELECT
             ${CUSTOMER_SELECT_COLUMNS},
+            (
+              SELECT v.vendor_name
+              FROM mdata.vendors v
+              WHERE v.id = c.factoring_company_vendor_id
+              LIMIT 1
+            ) AS factoring_company_name,
             COALESCE((
               SELECT json_agg(
                 json_build_object(
@@ -486,6 +517,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("free_time_pickup_minutes" in b) add("free_time_pickup_minutes", b.free_time_pickup_minutes);
     if ("free_time_delivery_minutes" in b) add("free_time_delivery_minutes", b.free_time_delivery_minutes);
     if ("detention_rate_per_hour" in b) add("detention_rate_per_hour", b.detention_rate_per_hour);
+    if ("factoring_eligible" in b) add("factoring_eligible", b.factoring_eligible);
+    if ("factoring_company_vendor_id" in b) add("factoring_company_vendor_id", b.factoring_company_vendor_id ?? null);
+    if ("factoring_advance_rate_override" in b) add("factoring_advance_rate_override", b.factoring_advance_rate_override ?? null);
+    if ("factoring_reserve_pct_override" in b) add("factoring_reserve_pct_override", b.factoring_reserve_pct_override ?? null);
+    if ("factoring_recourse_type" in b) add("factoring_recourse_type", b.factoring_recourse_type ?? null);
+    if ("factoring_notes" in b) add("factoring_notes", b.factoring_notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     if (setParts.length === 0) return reply.code(400).send({ error: "no_fields_to_update" });
     add("updated_by_user_id", authUser.uuid);

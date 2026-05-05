@@ -7,6 +7,7 @@ import {
   createCustomerContact,
   deactivateCustomerContact,
   getCustomerDetail,
+  listVendors,
   listCustomerContacts,
   reactivateCustomerContact,
   updateCustomer,
@@ -54,6 +55,12 @@ const customerSchema = z.object({
   free_time_pickup_minutes: z.string().trim(),
   free_time_delivery_minutes: z.string().trim(),
   detention_rate_per_hour: z.string().trim(),
+  factoring_eligible: z.enum(["true", "false"]),
+  factoring_company_vendor_id: z.string().uuid().optional().or(z.literal("")),
+  factoring_advance_rate_override: z.string().trim().optional(),
+  factoring_reserve_pct_override: z.string().trim().optional(),
+  factoring_recourse_type: z.enum(["", "recourse", "non_recourse"]).default(""),
+  factoring_notes: z.string().trim().max(5000).optional(),
   notes: z.string().trim().max(5000).optional(),
 });
 
@@ -131,9 +138,24 @@ export function CustomerDetailPage() {
     queryFn: () => listCustomerContacts(id, includeInactiveContacts).then((result) => result.contacts),
     enabled: Boolean(id),
   });
+  const vendorsQuery = useQuery({
+    queryKey: ["vendors", "active", detailQuery.data?.operating_company_id ?? "none"],
+    queryFn: () =>
+      listVendors({ status: "active", operating_company_id: detailQuery.data?.operating_company_id ?? undefined }).then((result) => result.vendors),
+    enabled: Boolean(detailQuery.data?.operating_company_id),
+  });
 
   const customer = detailQuery.data;
   const contacts = contactsQuery.data ?? customer?.contacts ?? [];
+  const factoringVendors = useMemo(
+    () =>
+      (vendorsQuery.data ?? []).filter((vendor) => {
+        const notes = (vendor.notes ?? "").toLowerCase();
+        const name = vendor.name.toLowerCase();
+        return vendor.vendor_type === "factoring_company" || notes.includes("factor") || name.includes("factor") || name.includes("faro") || name.includes("rts");
+      }),
+    [vendorsQuery.data]
+  );
   const canManageContacts = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canViewInactiveContacts = ["Owner", "Administrator"].includes(user?.role ?? "");
 
@@ -167,6 +189,12 @@ export function CustomerDetailPage() {
       free_time_pickup_minutes: String(customer.free_time_pickup_minutes ?? 120),
       free_time_delivery_minutes: String(customer.free_time_delivery_minutes ?? 120),
       detention_rate_per_hour: String(customer.detention_rate_per_hour ?? "0"),
+      factoring_eligible: customer.factoring_eligible ? "true" : "false",
+      factoring_company_vendor_id: customer.factoring_company_vendor_id ?? "",
+      factoring_advance_rate_override: customer.factoring_advance_rate_override ? String(customer.factoring_advance_rate_override) : "",
+      factoring_reserve_pct_override: customer.factoring_reserve_pct_override ? String(customer.factoring_reserve_pct_override) : "",
+      factoring_recourse_type: customer.factoring_recourse_type ?? "",
+      factoring_notes: customer.factoring_notes ?? "",
       notes: customer.notes ?? "",
     };
   }, [customer, form]);
@@ -201,6 +229,12 @@ export function CustomerDetailPage() {
         free_time_pickup_minutes: Number(hydratedForm.free_time_pickup_minutes || "0"),
         free_time_delivery_minutes: Number(hydratedForm.free_time_delivery_minutes || "0"),
         detention_rate_per_hour: Number(hydratedForm.detention_rate_per_hour || "0"),
+        factoring_eligible: hydratedForm.factoring_eligible === "true",
+        factoring_company_vendor_id: hydratedForm.factoring_company_vendor_id || null,
+        factoring_advance_rate_override: hydratedForm.factoring_advance_rate_override ? Number(hydratedForm.factoring_advance_rate_override) : null,
+        factoring_reserve_pct_override: hydratedForm.factoring_reserve_pct_override ? Number(hydratedForm.factoring_reserve_pct_override) : null,
+        factoring_recourse_type: hydratedForm.factoring_recourse_type ? (hydratedForm.factoring_recourse_type as "recourse" | "non_recourse") : null,
+        factoring_notes: hydratedForm.factoring_notes || null,
         notes: hydratedForm.notes || null,
       }),
     onSuccess: () => {
@@ -375,6 +409,79 @@ export function CustomerDetailPage() {
               disabled={!editMode}
               type="number"
             />
+          </DataPanel>
+
+          <DataPanel title="Factoring Configuration">
+            <div className="mb-2 flex items-center gap-2">
+              <input
+                id="factoring-eligible"
+                type="checkbox"
+                checked={hydratedForm.factoring_eligible === "true"}
+                onChange={(event) => setForm((current) => ({ ...current, factoring_eligible: event.target.checked ? "true" : "false" }))}
+                disabled={!editMode}
+              />
+              <label htmlFor="factoring-eligible" className="text-xs font-semibold text-gray-600">
+                Factoring eligible
+              </label>
+            </div>
+            <SelectField
+              label="Factoring Company"
+              value={hydratedForm.factoring_company_vendor_id}
+              onChange={(value) => setForm((current) => ({ ...current, factoring_company_vendor_id: value }))}
+              disabled={!editMode}
+              options={[
+                { value: "", label: "(none)" },
+                ...factoringVendors.map((vendor) => ({ value: vendor.id, label: vendor.name })),
+              ]}
+            />
+            <Field
+              label="Advance Rate Override (%)"
+              value={hydratedForm.factoring_advance_rate_override}
+              onChange={(value) => setForm((current) => ({ ...current, factoring_advance_rate_override: value }))}
+              disabled={!editMode}
+              type="number"
+            />
+            <Field
+              label="Reserve Override (%)"
+              value={hydratedForm.factoring_reserve_pct_override}
+              onChange={(value) => setForm((current) => ({ ...current, factoring_reserve_pct_override: value }))}
+              disabled={!editMode}
+              type="number"
+            />
+            <SelectField
+              label="Recourse Type"
+              value={hydratedForm.factoring_recourse_type}
+              onChange={(value) => setForm((current) => ({ ...current, factoring_recourse_type: value }))}
+              disabled={!editMode}
+              options={[
+                { value: "", label: "Use default" },
+                { value: "recourse", label: "Recourse" },
+                { value: "non_recourse", label: "Non-recourse" },
+              ]}
+            />
+            <div className="mb-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Factoring Notes</label>
+              <textarea
+                value={hydratedForm.factoring_notes}
+                onChange={(event) => setForm((current) => ({ ...current, factoring_notes: event.target.value }))}
+                disabled={!editMode}
+                rows={3}
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+              />
+            </div>
+          </DataPanel>
+
+          <DataPanel title="Notes">
+            <div className="mb-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">General Notes</label>
+              <textarea
+                value={hydratedForm.notes}
+                onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+                disabled={!editMode}
+                rows={4}
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+              />
+            </div>
           </DataPanel>
 
           <div className="lg:col-span-2">
