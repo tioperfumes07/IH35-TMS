@@ -16,6 +16,7 @@ import {
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
+import { Combobox } from "../components/Combobox";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
@@ -29,6 +30,7 @@ const lineItemUnitOptions: Array<{ value: LineItemUnit; label: string }> = [
   { value: "percent_of_load_revenue", label: "percent of load revenue" },
   { value: "flat_per_hour", label: "flat per hour" },
 ];
+const lineItemUnitComboboxOptions = lineItemUnitOptions.map((option) => ({ value: option.value, label: option.label }));
 
 const lineItemSchema = z.object({
   code: z
@@ -492,24 +494,19 @@ export function EquipmentTypesPage() {
                   placeholder="Name"
                   className="rounded border border-gray-300 px-2 py-1 text-xs"
                 />
-                <select
+                <Combobox
+                  options={lineItemUnitComboboxOptions}
                   value={lineItem.unit}
-                  onChange={(event) =>
+                  onChange={(nextValue) =>
                     setAddEquipmentForm((current) => ({
                       ...current,
                       line_items: current.line_items.map((row, rowIdx) =>
-                        rowIdx === index ? { ...row, unit: event.target.value as LineItemUnit } : row
+                        rowIdx === index ? { ...row, unit: (nextValue as LineItemUnit) ?? "per_loaded_mile" } : row
                       ),
                     }))
                   }
-                  className="rounded border border-gray-300 px-2 py-1 text-xs"
-                >
-                  {lineItemUnitOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Unit"
+                />
                 <input
                   type="number"
                   value={lineItem.sort_order}
@@ -702,17 +699,12 @@ export function EquipmentTypesPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-600">Unit</label>
-              <select
+              <Combobox
+                options={lineItemUnitComboboxOptions}
                 value={addLineItemForm.unit}
-                onChange={(event) => setAddLineItemForm((current) => ({ ...current, unit: event.target.value as LineItemUnit }))}
-                className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
-              >
-                {lineItemUnitOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(nextValue) => setAddLineItemForm((current) => ({ ...current, unit: (nextValue as LineItemUnit) ?? "per_loaded_mile" }))}
+                placeholder="Select unit"
+              />
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-600">Sort order</label>
@@ -788,17 +780,12 @@ export function EquipmentTypesPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-600">Unit</label>
-              <select
+              <Combobox
+                options={lineItemUnitComboboxOptions}
                 value={editingLineItemForm.unit}
-                onChange={(event) => setEditingLineItemForm((current) => ({ ...current, unit: event.target.value as LineItemUnit }))}
-                className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
-              >
-                {lineItemUnitOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(nextValue) => setEditingLineItemForm((current) => ({ ...current, unit: (nextValue as LineItemUnit) ?? "per_loaded_mile" }))}
+                placeholder="Select unit"
+              />
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-600">Sort order</label>

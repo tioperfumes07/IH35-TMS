@@ -19,6 +19,15 @@ import { useToast } from "../components/Toast";
 import { colors } from "../design/tokens";
 
 const statusOptions = ["All", "Probation", "Active", "Inactive", "Terminated", "OnLeave"] as const;
+const statusFilterComboboxOptions = statusOptions.map((value) => ({ value, label: value === "All" ? "All statuses" : value }));
+const statusFieldComboboxOptions = statusOptions
+  .filter((value) => value !== "All")
+  .map((value) => ({ value, label: value }));
+const cdlClassComboboxOptions = ["A", "B", "C"].map((value) => ({ value, label: value }));
+const payBasisComboboxOptions = [
+  { value: "short_miles", label: "Short Miles" },
+  { value: "practical_miles", label: "Practical Miles" },
+];
 
 function normalizePhoneDigits(value: string) {
   return value.replace(/\D/g, "").slice(-10);
@@ -291,17 +300,15 @@ export function DriversPage() {
       </KpiStrip>
 
       <div className="flex flex-wrap gap-2">
-        <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value as (typeof statusOptions)[number])}
-          className="h-8 rounded border border-gray-300 px-2 text-[13px]"
-        >
-          {statusOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+        <div className="w-full max-w-[220px]">
+          <Combobox
+            options={statusFilterComboboxOptions}
+            value={statusFilter}
+            onChange={(value) => setStatusFilter((value as (typeof statusOptions)[number]) ?? "All")}
+            allowClear
+            placeholder="All statuses"
+          />
+        </div>
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -492,40 +499,30 @@ export function DriversPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">CDL Class</label>
-            <select
-              value={form.cdl_class}
-              onChange={(event) => setForm((current) => ({ ...current, cdl_class: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="C">C</option>
-            </select>
+            <Combobox
+              options={cdlClassComboboxOptions}
+              value={form.cdl_class || null}
+              onChange={(nextValue) => setForm((current) => ({ ...current, cdl_class: nextValue ?? "" }))}
+              placeholder="Select CDL class"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Status</label>
-            <select
-              value={form.status}
-              onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              <option value="Probation">Probation</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="Terminated">Terminated</option>
-              <option value="OnLeave">OnLeave</option>
-            </select>
+            <Combobox
+              options={statusFieldComboboxOptions}
+              value={form.status || null}
+              onChange={(nextValue) => setForm((current) => ({ ...current, status: nextValue ?? "" }))}
+              placeholder="Select status"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Pay Basis</label>
-            <select
-              value={form.pay_basis}
-              onChange={(event) => setForm((current) => ({ ...current, pay_basis: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              <option value="short_miles">Short Miles</option>
-              <option value="practical_miles">Practical Miles</option>
-            </select>
+            <Combobox
+              options={payBasisComboboxOptions}
+              value={form.pay_basis || null}
+              onChange={(nextValue) => setForm((current) => ({ ...current, pay_basis: nextValue ?? "" }))}
+              placeholder="Select pay basis"
+            />
           </div>
           <div className="col-span-full rounded-md border border-gray-200 p-3">
             <label className="flex items-start gap-2 text-sm text-gray-700">

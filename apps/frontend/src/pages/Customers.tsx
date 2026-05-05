@@ -7,7 +7,7 @@ import { ApiError } from "../api/client";
 import { createCustomer, listCustomers, listPaymentTermOptions, listVendors, updateCustomer, type Customer, type VendorOption } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
-import { Combobox } from "../components/Combobox";
+import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
@@ -156,10 +156,50 @@ function formatMoney(value: string | number | null) {
   return `$${Number(value).toFixed(2)}`;
 }
 
+const QUALITY_FILTER_OPTIONS: ComboboxOption[] = [
+  { value: "all", label: "All quality flags" },
+  { value: "preferred", label: "Preferred" },
+  { value: "standard", label: "Standard" },
+  { value: "caution", label: "Caution" },
+  { value: "avoid", label: "Avoid" },
+];
+
+const CREATE_CUSTOMER_TYPE_OPTIONS: ComboboxOption[] = [
+  { value: "broker", label: "Broker" },
+  { value: "direct", label: "Direct" },
+];
+
+const CUSTOMER_STATUS_OPTIONS: ComboboxOption[] = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+  { value: "credit_hold", label: "Credit Hold" },
+  { value: "blacklist", label: "Blacklist" },
+];
+
+const CREDIT_LIMIT_SOURCE_OPTIONS: ComboboxOption[] = [
+  { value: "", label: "(unset)" },
+  { value: "factor", label: "Factor" },
+  { value: "manual", label: "Manual" },
+  { value: "rmis_future", label: "RMIS Future" },
+];
+
+const RECOURSE_TYPE_OPTIONS: ComboboxOption[] = [
+  { value: "", label: "Use default" },
+  { value: "recourse", label: "Recourse" },
+  { value: "non_recourse", label: "Non-recourse" },
+];
+
+const EDIT_CUSTOMER_TYPE_OPTIONS: ComboboxOption[] = [
+  { value: "", label: "Not set" },
+  { value: "broker", label: "Broker" },
+  { value: "direct_shipper", label: "Direct Shipper" },
+];
+
 export function CustomersPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const canManage = ["Owner", "Administrator", "Manager", "Accountant", "Dispatcher"].includes(user?.role ?? "");
+  const canOwnerExtendCatalogs = user?.role === "Owner";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
 
@@ -234,17 +274,15 @@ export function CustomersPage() {
       </KpiStrip>
       <div className="flex flex-wrap items-center gap-2">
         <label className="text-xs font-semibold text-gray-600">Quality</label>
-        <select
-          value={qualityFilter}
-          onChange={(event) => setQualityFilter(event.target.value as "all" | Customer["quality_overall_flag"])}
-          className="h-8 rounded border border-gray-300 px-2 text-xs"
-        >
-          <option value="all">All</option>
-          <option value="preferred">Preferred</option>
-          <option value="standard">Standard</option>
-          <option value="caution">Caution</option>
-          <option value="avoid">Avoid</option>
-        </select>
+        <div className="w-full max-w-[240px]">
+          <Combobox
+            options={QUALITY_FILTER_OPTIONS}
+            value={qualityFilter}
+            onChange={(value) => setQualityFilter((value as "all" | Customer["quality_overall_flag"]) ?? "all")}
+            allowClear
+            placeholder="All quality flags"
+          />
+        </div>
         <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
           <input type="checkbox" checked={sortByDisputes} onChange={(event) => setSortByDisputes(event.target.checked)} />
           Sort by disputes
@@ -391,10 +429,12 @@ export function CustomersPage() {
             errors={createErrors}
             showTaxId={showTaxId}
             paymentTermOptions={paymentTermsQuery.data ?? []}
+            paymentTermsLoading={paymentTermsQuery.isLoading}
             vendors={vendorsQuery.data ?? []}
             usStates={usStatesQuery.data ?? []}
             usStatesLoading={usStatesQuery.isLoading}
             usStatesError={usStatesQuery.isError}
+            canOwnerExtendCatalogs={canOwnerExtendCatalogs}
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setAddOpen(false)}>
@@ -460,20 +500,24 @@ function CreateCustomerFormFields({
   errors,
   showTaxId,
   paymentTermOptions,
+  paymentTermsLoading,
   vendors,
   usStates,
   usStatesLoading,
   usStatesError,
+  canOwnerExtendCatalogs,
 }: {
   form: CreateCustomerFormState;
   setForm: Dispatch<SetStateAction<CreateCustomerFormState>>;
   errors: Partial<Record<keyof CreateCustomerFormState, string>>;
   showTaxId: boolean;
   paymentTermOptions: Array<{ id: string; terms_name: string; days_until_due: number }>;
+  paymentTermsLoading: boolean;
   vendors: VendorOption[];
   usStates: Array<{ id: string; code: string; name: string; region: string }>;
   usStatesLoading: boolean;
   usStatesError: boolean;
+  canOwnerExtendCatalogs: boolean;
 }) {
   const FieldLabel = ({ text, required }: { text: string; required?: boolean }) => (
     <label className="text-xs font-semibold text-gray-600">
@@ -509,20 +553,22 @@ function CreateCustomerFormFields({
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Customer Type" required />
-            <select value={form.customer_type} onChange={(event) => setForm((current) => ({ ...current, customer_type: event.target.value as "broker" | "direct" }))} className="rounded border border-gray-300 px-2 py-2 text-sm">
-              <option value="broker">Broker</option>
-              <option value="direct">Direct</option>
-            </select>
+            <Combobox
+              options={CREATE_CUSTOMER_TYPE_OPTIONS}
+              value={form.customer_type}
+              onChange={(nextValue) => setForm((current) => ({ ...current, customer_type: ((nextValue as "broker" | "direct") ?? "broker") }))}
+              placeholder="Select customer type"
+            />
             <ErrorText field="customer_type" />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Status" />
-            <select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="credit_hold">Credit Hold</option>
-              <option value="blacklist">Blacklist</option>
-            </select>
+            <Combobox
+              options={CUSTOMER_STATUS_OPTIONS}
+              value={form.status}
+              onChange={(nextValue) => setForm((current) => ({ ...current, status: nextValue ?? "active" }))}
+              placeholder="Select status"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="DOT Number" />
@@ -608,30 +654,41 @@ function CreateCustomerFormFields({
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Credit Limit Source" />
-            <select
+            <Combobox
+              options={CREDIT_LIMIT_SOURCE_OPTIONS}
               value={form.credit_limit_source}
-              onChange={(event) => setForm((current) => ({ ...current, credit_limit_source: event.target.value as "" | "factor" | "manual" | "rmis_future" }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              <option value="">(unset)</option>
-              <option value="factor">Factor</option>
-              <option value="manual">Manual</option>
-              <option value="rmis_future">RMIS Future</option>
-            </select>
+              onChange={(nextValue) =>
+                setForm((current) => ({ ...current, credit_limit_source: ((nextValue ?? "") as "" | "factor" | "manual" | "rmis_future") }))
+              }
+              placeholder="Select credit limit source"
+            />
             <div className="text-[11px] text-gray-500">
               If set by your factor (Faro/RTS), select Factor and let daily report sync update. Otherwise select Manual.
             </div>
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Payment Terms" />
-            <select value={form.payment_terms_id} onChange={(event) => setForm((current) => ({ ...current, payment_terms_id: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm">
-              <option value="">Default</option>
-              {paymentTermOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.terms_name} ({option.days_until_due} days)
-                </option>
-              ))}
-            </select>
+            <Combobox
+              options={[
+                { value: "", label: "Default" },
+                ...paymentTermOptions.map((option) => ({
+                  value: option.id,
+                  label: `${option.terms_name} (${option.days_until_due} days)`,
+                })),
+              ]}
+              value={form.payment_terms_id}
+              onChange={(nextValue) => setForm((current) => ({ ...current, payment_terms_id: nextValue ?? "" }))}
+              placeholder="Select payment terms"
+              loading={paymentTermsLoading}
+              allowAddNew={
+                canOwnerExtendCatalogs
+                  ? {
+                      label: "Add payment terms in catalog",
+                      onAdd: (query) => setForm((current) => ({ ...current, notes: `${current.notes}\nRequested payment terms: ${query}`.trim() })),
+                    }
+                  : undefined
+              }
+            />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Free Time Pickup (minutes)" />
@@ -662,18 +719,24 @@ function CreateCustomerFormFields({
               </label>
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Factoring Company" />
-                <select
+                <Combobox
+                  options={[
+                    { value: "", label: "(none)" },
+                    ...factoringVendors.map((vendor) => ({ value: vendor.id, label: vendor.name })),
+                  ]}
                   value={form.factoring_company_vendor_id}
-                  onChange={(event) => setForm((current) => ({ ...current, factoring_company_vendor_id: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
-                >
-                  <option value="">(none)</option>
-                  {factoringVendors.map((vendor) => (
-                    <option key={vendor.id} value={vendor.id}>
-                      {vendor.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(nextValue) => setForm((current) => ({ ...current, factoring_company_vendor_id: nextValue ?? "" }))}
+                  placeholder="Select factoring vendor"
+                  allowClear
+                  allowAddNew={
+                    canOwnerExtendCatalogs
+                      ? {
+                          label: "Add vendor in catalog",
+                          onAdd: (query) => setForm((current) => ({ ...current, factoring_notes: `${current.factoring_notes}\nRequested vendor: ${query}`.trim() })),
+                        }
+                      : undefined
+                  }
+                />
               </div>
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Advance Rate Override (%)" />
@@ -695,15 +758,14 @@ function CreateCustomerFormFields({
               </div>
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Recourse Type" />
-                <select
+                <Combobox
+                  options={RECOURSE_TYPE_OPTIONS}
                   value={form.factoring_recourse_type}
-                  onChange={(event) => setForm((current) => ({ ...current, factoring_recourse_type: event.target.value as "" | "recourse" | "non_recourse" }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
-                >
-                  <option value="">Use default</option>
-                  <option value="recourse">Recourse</option>
-                  <option value="non_recourse">Non-recourse</option>
-                </select>
+                  onChange={(nextValue) =>
+                    setForm((current) => ({ ...current, factoring_recourse_type: ((nextValue ?? "") as "" | "recourse" | "non_recourse") }))
+                  }
+                  placeholder="Select recourse type"
+                />
               </div>
               <div className="flex flex-col gap-1 md:col-span-2">
                 <FieldLabel text="Factoring Notes" />
@@ -757,28 +819,22 @@ function CustomerFormFields({
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Customer Type</label>
-            <select
+            <Combobox
+              options={EDIT_CUSTOMER_TYPE_OPTIONS}
               value={form.customer_type}
-              onChange={(event) => setForm((current) => ({ ...current, customer_type: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              <option value="">Not set</option>
-              <option value="broker">Broker</option>
-              <option value="direct_shipper">Direct Shipper</option>
-            </select>
+              onChange={(nextValue) => setForm((current) => ({ ...current, customer_type: nextValue ?? "" }))}
+              placeholder="Not set"
+              allowClear
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Status</label>
-            <select
+            <Combobox
+              options={CUSTOMER_STATUS_OPTIONS}
               value={form.status}
-              onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="credit_hold">Credit Hold</option>
-              <option value="blacklist">Blacklist</option>
-            </select>
+              onChange={(nextValue) => setForm((current) => ({ ...current, status: nextValue ?? "active" }))}
+              placeholder="Select status"
+            />
           </div>
         </div>
       </div>

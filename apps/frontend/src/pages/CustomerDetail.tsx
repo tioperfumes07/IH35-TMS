@@ -1138,18 +1138,13 @@ function SelectField({
   return (
     <div className="mb-2 flex flex-col gap-1">
       <label className="text-xs font-semibold text-gray-600">{label}</label>
-      <select
+      <Combobox
+        options={options}
         value={value ?? ""}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(nextValue) => onChange(nextValue ?? "")}
         disabled={disabled}
-        className="h-9 rounded border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        placeholder="Select option"
+      />
     </div>
   );
 }
