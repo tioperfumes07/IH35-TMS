@@ -189,6 +189,11 @@ try {
             "free_time_pickup_minutes",
             "free_time_delivery_minutes",
             "detention_rate_per_hour",
+            "layover_charge_per_day",
+            "layover_currency",
+            "layover_first_night_free",
+            "layover_max_days",
+            "layover_notes",
             "factoring_eligible",
             "factoring_company_vendor_id",
             "factoring_advance_rate_override",
@@ -197,7 +202,7 @@ try {
             "factoring_notes",
           ]]
         );
-        if (colsRes.rows.length !== 26) throw new Error(`expected 26 columns, got ${colsRes.rows.length}`);
+        if (colsRes.rows.length !== 31) throw new Error(`expected 31 columns, got ${colsRes.rows.length}`);
       });
     })
   );
@@ -317,11 +322,12 @@ try {
             notes, website, office_phone, fax_phone, main_contact_name, main_contact_title, main_contact_email, main_contact_phone, main_contact_mobile,
             ar_email, ar_phone, ap_email, ap_phone,
             free_time_pickup_minutes, free_time_delivery_minutes, detention_rate_per_hour,
+            layover_charge_per_day, layover_currency, layover_first_night_free, layover_max_days, layover_notes,
             factoring_eligible, factoring_company_vendor_id, factoring_recourse_type,
             created_by_user_id, updated_by_user_id
           )
           VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,'active',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$29
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,'active',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$34
           )
           RETURNING id
         `,
@@ -351,6 +357,11 @@ try {
             120,
             120,
             75,
+            300,
+            "USD",
+            true,
+            10,
+            "Layover fixture note",
             true,
             scopedFactorVendorId,
             "recourse",
@@ -359,6 +370,48 @@ try {
         );
         customerId = String(res.rows[0].id);
         createdCustomerIds.push(customerId);
+      });
+    })
+  );
+
+  results.push(
+    await pass("Insert rejects layover_charge_per_day < 0", async () => {
+      await runAsUser(client, refs.managerId, async () => {
+        let failedAsExpected = false;
+        try {
+          await client.query(
+            `
+            INSERT INTO mdata.customers (
+              customer_name, customer_type, operating_company_id, layover_charge_per_day, created_by_user_id, updated_by_user_id
+            ) VALUES ($1, 'broker', $2, -1, $3, $3)
+          `,
+            [`Invalid Layover Amount ${suffix}`, refs.companyAId, refs.managerId]
+          );
+        } catch (error) {
+          if (String(error?.code) === "23514") failedAsExpected = true;
+        }
+        if (!failedAsExpected) throw new Error("expected check constraint violation for layover_charge_per_day");
+      });
+    })
+  );
+
+  results.push(
+    await pass("Insert rejects invalid layover_currency", async () => {
+      await runAsUser(client, refs.managerId, async () => {
+        let failedAsExpected = false;
+        try {
+          await client.query(
+            `
+            INSERT INTO mdata.customers (
+              customer_name, customer_type, operating_company_id, layover_currency, created_by_user_id, updated_by_user_id
+            ) VALUES ($1, 'broker', $2, 'EUR', $3, $3)
+          `,
+            [`Invalid Layover Currency ${suffix}`, refs.companyAId, refs.managerId]
+          );
+        } catch (error) {
+          if (String(error?.code) === "23514") failedAsExpected = true;
+        }
+        if (!failedAsExpected) throw new Error("expected check constraint violation for layover_currency");
       });
     })
   );
@@ -449,6 +502,21 @@ try {
       const payload = await patchRes.json();
       if (payload.factoring_recourse_type !== "non_recourse") {
         throw new Error("factoring_recourse_type did not update to non_recourse");
+      }
+    })
+  );
+
+  results.push(
+    await pass("PATCH customer layover_first_night_free succeeds", async () => {
+      const patchRes = await fetch(`${apiBase}/api/v1/mdata/customers/${customerId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: `ih35_session=${refs.managerSessionId}` },
+        body: JSON.stringify({ layover_first_night_free: false }),
+      });
+      if (!patchRes.ok) throw new Error(`layover patch failed ${patchRes.status}`);
+      const payload = await patchRes.json();
+      if (payload.layover_first_night_free !== false) {
+        throw new Error("layover_first_night_free did not update to false");
       }
     })
   );

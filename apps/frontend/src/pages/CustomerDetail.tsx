@@ -68,6 +68,11 @@ const customerSchema = z.object({
   free_time_pickup_minutes: z.string().trim(),
   free_time_delivery_minutes: z.string().trim(),
   detention_rate_per_hour: z.string().trim(),
+  layover_charge_per_day: z.string().trim().optional(),
+  layover_currency: z.enum(["", "USD", "MXN", "CAD"]).default("USD"),
+  layover_first_night_free: z.enum(["true", "false"]).default("true"),
+  layover_max_days: z.string().trim().optional(),
+  layover_notes: z.string().trim().max(2000).optional(),
   factoring_eligible: z.enum(["true", "false"]),
   factoring_company_vendor_id: z.string().uuid().optional().or(z.literal("")),
   factoring_advance_rate_override: z.string().trim().optional(),
@@ -246,6 +251,11 @@ export function CustomerDetailPage() {
       free_time_pickup_minutes: String(customer.free_time_pickup_minutes ?? 120),
       free_time_delivery_minutes: String(customer.free_time_delivery_minutes ?? 120),
       detention_rate_per_hour: String(customer.detention_rate_per_hour ?? "0"),
+      layover_charge_per_day: customer.layover_charge_per_day ? String(customer.layover_charge_per_day) : "",
+      layover_currency: customer.layover_currency ?? "USD",
+      layover_first_night_free: customer.layover_first_night_free ? "true" : "false",
+      layover_max_days: customer.layover_max_days ? String(customer.layover_max_days) : "",
+      layover_notes: customer.layover_notes ?? "",
       factoring_eligible: customer.factoring_eligible ? "true" : "false",
       factoring_company_vendor_id: customer.factoring_company_vendor_id ?? "",
       factoring_advance_rate_override: customer.factoring_advance_rate_override ? String(customer.factoring_advance_rate_override) : "",
@@ -291,6 +301,11 @@ export function CustomerDetailPage() {
         free_time_pickup_minutes: Number(hydratedForm.free_time_pickup_minutes || "0"),
         free_time_delivery_minutes: Number(hydratedForm.free_time_delivery_minutes || "0"),
         detention_rate_per_hour: Number(hydratedForm.detention_rate_per_hour || "0"),
+        layover_charge_per_day: hydratedForm.layover_charge_per_day ? Number(hydratedForm.layover_charge_per_day) : null,
+        layover_currency: hydratedForm.layover_currency ? (hydratedForm.layover_currency as "USD" | "MXN" | "CAD") : null,
+        layover_first_night_free: hydratedForm.layover_first_night_free === "true",
+        layover_max_days: hydratedForm.layover_max_days ? Number(hydratedForm.layover_max_days) : null,
+        layover_notes: hydratedForm.layover_notes || null,
         factoring_eligible: hydratedForm.factoring_eligible === "true",
         factoring_company_vendor_id: hydratedForm.factoring_company_vendor_id || null,
         factoring_advance_rate_override: hydratedForm.factoring_advance_rate_override ? Number(hydratedForm.factoring_advance_rate_override) : null,
@@ -588,6 +603,84 @@ export function CustomerDetailPage() {
               disabled={!editMode}
               type="number"
             />
+          </DataPanel>
+
+          <DataPanel title="Layover Charges">
+            {editMode ? (
+              <>
+                <Field
+                  label="Layover Charge per Day ($)"
+                  value={hydratedForm.layover_charge_per_day}
+                  onChange={(value) => setForm((current) => ({ ...current, layover_charge_per_day: value }))}
+                  type="number"
+                />
+                <SelectField
+                  label="Currency"
+                  value={hydratedForm.layover_currency}
+                  onChange={(value) => setForm((current) => ({ ...current, layover_currency: value }))}
+                  options={[
+                    { value: "USD", label: "USD" },
+                    { value: "MXN", label: "MXN" },
+                    { value: "CAD", label: "CAD" },
+                  ]}
+                />
+                <div className="mb-2 flex items-center gap-2">
+                  <input
+                    id="layover-first-night-free"
+                    type="checkbox"
+                    checked={hydratedForm.layover_first_night_free === "true"}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        layover_first_night_free: event.target.checked ? "true" : "false",
+                      }))
+                    }
+                  />
+                  <label htmlFor="layover-first-night-free" className="text-xs font-semibold text-gray-600">
+                    First night included in detention rate (no layover charge)
+                  </label>
+                </div>
+                <Field
+                  label="Max billable layover days"
+                  value={hydratedForm.layover_max_days}
+                  onChange={(value) => setForm((current) => ({ ...current, layover_max_days: value }))}
+                  type="number"
+                />
+                <div className="mb-2 flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-600">Layover notes</label>
+                  <textarea
+                    value={hydratedForm.layover_notes}
+                    onChange={(event) => setForm((current) => ({ ...current, layover_notes: event.target.value }))}
+                    rows={3}
+                    className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <DataPanelRow>
+                  <span className="text-xs font-semibold text-gray-600">Layover Charge per Day</span>
+                  <span className="text-[13px] text-gray-900">
+                    {customer.layover_charge_per_day ? `${customer.layover_currency ?? "USD"} ${Number(customer.layover_charge_per_day).toFixed(2)}` : "Not set"}
+                  </span>
+                </DataPanelRow>
+                <DataPanelRow>
+                  <span className="text-xs font-semibold text-gray-600">First Night Included</span>
+                  <span className="text-[13px] text-gray-900">{customer.layover_first_night_free ? "Yes" : "No"}</span>
+                </DataPanelRow>
+                <DataPanelRow>
+                  <span className="text-xs font-semibold text-gray-600">Max Billable Days</span>
+                  <span className="text-[13px] text-gray-900">{customer.layover_max_days ?? "No cap"}</span>
+                </DataPanelRow>
+                <DataPanelRow>
+                  <span className="text-xs font-semibold text-gray-600">Layover Notes</span>
+                  <span className="text-[13px] text-gray-900">{customer.layover_notes || "-"}</span>
+                </DataPanelRow>
+              </>
+            )}
+            <p className="text-[11px] text-gray-500">
+              Industry standard layover ranges $250-500/day. Most customers expect the first night included in detention rate.
+            </p>
           </DataPanel>
 
           <DataPanel title="Factoring Configuration">

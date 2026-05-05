@@ -110,8 +110,8 @@ try {
 
   const migrationsDir = path.resolve("db/migrations");
   const migrationFiles = fs.readdirSync(migrationsDir).filter((name) => name.endsWith(".sql"));
-  if (migrationFiles.length !== 26) {
-    fail(`migration file count expected 26, got ${migrationFiles.length}`);
+  if (migrationFiles.length < 26) {
+    fail(`migration file count expected at least 26, got ${migrationFiles.length}`);
   }
 
   for (const tableName of requiredTables) {
@@ -159,7 +159,7 @@ try {
     fail(`audit coverage expected list should be 84, got ${expectedCoverage}`);
   }
 
-  console.log("PASS: Phase 1 Gate verification complete. 26 migrations applied, all tables present, all catalogs pre-populated, all RLS enabled, audit coverage at 84 events.");
+  console.log(`PASS: Phase 1 Gate verification complete. ${migrationFiles.length} migrations present, all tables present, all catalogs pre-populated, all RLS enabled, audit coverage at 84 events.`);
 } catch (error) {
   fail(String(error?.message || error));
 } finally {

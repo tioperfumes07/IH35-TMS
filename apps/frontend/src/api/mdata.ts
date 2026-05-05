@@ -210,6 +210,11 @@ export type Customer = {
   free_time_pickup_minutes: number;
   free_time_delivery_minutes: number;
   detention_rate_per_hour: string;
+  layover_charge_per_day: string | null;
+  layover_currency: "USD" | "MXN" | "CAD" | null;
+  layover_first_night_free: boolean;
+  layover_max_days: number | null;
+  layover_notes: string | null;
   factoring_eligible: boolean;
   factoring_company_vendor_id: string | null;
   factoring_company_name?: string | null;
@@ -269,6 +274,11 @@ export type CreateCustomerInput = {
   free_time_pickup_minutes?: number;
   free_time_delivery_minutes?: number;
   detention_rate_per_hour?: number;
+  layover_charge_per_day?: number | null;
+  layover_currency?: "USD" | "MXN" | "CAD" | null;
+  layover_first_night_free?: boolean;
+  layover_max_days?: number | null;
+  layover_notes?: string | null;
   factoring_eligible?: boolean;
   factoring_company_vendor_id?: string | null;
   factoring_advance_rate_override?: number | null;
@@ -316,6 +326,11 @@ export type UpdateCustomerInput = Partial<{
   free_time_pickup_minutes: number;
   free_time_delivery_minutes: number;
   detention_rate_per_hour: number;
+  layover_charge_per_day: number | null;
+  layover_currency: "USD" | "MXN" | "CAD" | null;
+  layover_first_night_free: boolean;
+  layover_max_days: number | null;
+  layover_notes: string | null;
   factoring_eligible: boolean;
   factoring_company_vendor_id: string | null;
   factoring_advance_rate_override: number | null;

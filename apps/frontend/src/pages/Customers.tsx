@@ -45,6 +45,11 @@ const createCustomerSchema = z.object({
   free_time_pickup_minutes: z.coerce.number().int().min(0).optional(),
   free_time_delivery_minutes: z.coerce.number().int().min(0).optional(),
   detention_rate_per_hour: z.coerce.number().min(0).optional(),
+  layover_charge_per_day: z.union([z.literal(""), z.coerce.number().min(0)]).optional(),
+  layover_currency: z.enum(["USD", "MXN", "CAD"]).default("USD"),
+  layover_first_night_free: z.boolean().default(true),
+  layover_max_days: z.union([z.literal(""), z.coerce.number().int().min(1)]).optional(),
+  layover_notes: z.string().trim().max(2000).optional(),
   factoring_eligible: z.boolean().default(true),
   factoring_company_vendor_id: z.string().uuid().optional().or(z.literal("")),
   factoring_advance_rate_override: z.union([z.literal(""), z.coerce.number().min(0).max(100)]).optional(),
@@ -96,6 +101,11 @@ function emptyCreateForm() {
     free_time_pickup_minutes: "120",
     free_time_delivery_minutes: "120",
     detention_rate_per_hour: "0",
+    layover_charge_per_day: "",
+    layover_currency: "USD",
+    layover_first_night_free: true,
+    layover_max_days: "",
+    layover_notes: "",
     factoring_eligible: true,
     factoring_company_vendor_id: "",
     factoring_advance_rate_override: "",
@@ -187,6 +197,11 @@ const RECOURSE_TYPE_OPTIONS: ComboboxOption[] = [
   { value: "", label: "Use default" },
   { value: "recourse", label: "Recourse" },
   { value: "non_recourse", label: "Non-recourse" },
+];
+const LAYOVER_CURRENCY_OPTIONS: ComboboxOption[] = [
+  { value: "USD", label: "USD" },
+  { value: "MXN", label: "MXN" },
+  { value: "CAD", label: "CAD" },
 ];
 
 const EDIT_CUSTOMER_TYPE_OPTIONS: ComboboxOption[] = [
@@ -401,6 +416,11 @@ export function CustomersPage() {
                 free_time_pickup_minutes: parsed.data.free_time_pickup_minutes,
                 free_time_delivery_minutes: parsed.data.free_time_delivery_minutes,
                 detention_rate_per_hour: parsed.data.detention_rate_per_hour,
+                layover_charge_per_day: typeof parsed.data.layover_charge_per_day === "number" ? parsed.data.layover_charge_per_day : undefined,
+                layover_currency: parsed.data.layover_currency ?? "USD",
+                layover_first_night_free: parsed.data.layover_first_night_free,
+                layover_max_days: typeof parsed.data.layover_max_days === "number" ? parsed.data.layover_max_days : undefined,
+                layover_notes: parsed.data.layover_notes || undefined,
                 factoring_eligible: parsed.data.factoring_eligible,
                 factoring_company_vendor_id: parsed.data.factoring_company_vendor_id || undefined,
                 factoring_advance_rate_override:
@@ -701,6 +721,58 @@ function CreateCustomerFormFields({
           <div className="flex flex-col gap-1">
             <FieldLabel text="Detention Rate / Hour" />
             <input value={form.detention_rate_per_hour} onChange={(event) => setForm((current) => ({ ...current, detention_rate_per_hour: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="md:col-span-2 mt-2 rounded border border-gray-200 p-3">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-700">Layover Charges</div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <FieldLabel text="Layover Charge per Day ($)" />
+                <input
+                  value={form.layover_charge_per_day}
+                  onChange={(event) => setForm((current) => ({ ...current, layover_charge_per_day: event.target.value }))}
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  placeholder="e.g. 300"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <FieldLabel text="Currency" />
+                <Combobox
+                  options={LAYOVER_CURRENCY_OPTIONS}
+                  value={form.layover_currency}
+                  onChange={(nextValue) => setForm((current) => ({ ...current, layover_currency: (nextValue as "USD" | "MXN" | "CAD") ?? "USD" }))}
+                  placeholder="Select currency"
+                />
+              </div>
+              <label className="md:col-span-2 flex items-center gap-2 text-xs text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={form.layover_first_night_free}
+                  onChange={(event) => setForm((current) => ({ ...current, layover_first_night_free: event.target.checked }))}
+                />
+                First night included in detention rate (no layover charge)
+              </label>
+              <div className="flex flex-col gap-1">
+                <FieldLabel text="Max billable layover days" />
+                <input
+                  value={form.layover_max_days}
+                  onChange={(event) => setForm((current) => ({ ...current, layover_max_days: event.target.value }))}
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  placeholder="No cap"
+                />
+              </div>
+              <div className="flex flex-col gap-1 md:col-span-2">
+                <FieldLabel text="Layover notes" />
+                <textarea
+                  value={form.layover_notes}
+                  onChange={(event) => setForm((current) => ({ ...current, layover_notes: event.target.value }))}
+                  rows={2}
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="mt-2 text-[11px] text-gray-500">
+              Industry standard layover ranges $250-500/day. Most customers expect the first night included in detention rate.
+            </div>
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
             <FieldLabel text="Notes" />

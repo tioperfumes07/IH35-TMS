@@ -20,6 +20,7 @@ const customerStatusSchema = z.enum(["active", "inactive", "credit_hold", "black
 const factoringRecourseTypeSchema = z.enum(["recourse", "non_recourse"]);
 const qualityOverallFlagSchema = z.enum(["preferred", "standard", "caution", "avoid"]);
 const creditLimitSourceSchema = z.enum(["factor", "manual", "rmis_future"]);
+const layoverCurrencySchema = z.enum(["USD", "MXN", "CAD"]);
 
 const createCustomerBodySchema = z
   .object({
@@ -61,6 +62,11 @@ const createCustomerBodySchema = z
   free_time_pickup_minutes: z.number().int().min(0).max(1440).optional(),
   free_time_delivery_minutes: z.number().int().min(0).max(1440).optional(),
   detention_rate_per_hour: z.number().min(0).max(9999.99).optional(),
+  layover_charge_per_day: z.number().min(0).nullable().optional(),
+  layover_currency: layoverCurrencySchema.nullable().optional(),
+  layover_first_night_free: z.boolean().optional(),
+  layover_max_days: z.number().int().min(1).nullable().optional(),
+  layover_notes: z.string().trim().max(2000).nullable().optional(),
   factoring_eligible: z.boolean().optional(),
   factoring_company_vendor_id: z.string().uuid().nullable().optional(),
   factoring_advance_rate_override: z.number().min(0).max(100).nullable().optional(),
@@ -114,6 +120,11 @@ const updateCustomerBodySchema = z
     free_time_pickup_minutes: z.number().int().min(0).max(1440).optional(),
     free_time_delivery_minutes: z.number().int().min(0).max(1440).optional(),
     detention_rate_per_hour: z.number().min(0).max(9999.99).optional(),
+    layover_charge_per_day: z.number().min(0).nullable().optional(),
+    layover_currency: layoverCurrencySchema.nullable().optional(),
+    layover_first_night_free: z.boolean().optional(),
+    layover_max_days: z.number().int().min(1).nullable().optional(),
+    layover_notes: z.string().trim().max(2000).nullable().optional(),
     factoring_eligible: z.boolean().optional(),
     factoring_company_vendor_id: z.string().uuid().nullable().optional(),
     factoring_advance_rate_override: z.number().min(0).max(100).nullable().optional(),
@@ -226,6 +237,11 @@ const CUSTOMER_SELECT_COLUMNS = `
   free_time_pickup_minutes,
   free_time_delivery_minutes,
   detention_rate_per_hour,
+  layover_charge_per_day,
+  layover_currency,
+  layover_first_night_free,
+  layover_max_days,
+  layover_notes,
   factoring_eligible,
   factoring_company_vendor_id,
   factoring_advance_rate_override,
@@ -375,6 +391,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("free_time_pickup_minutes", b.free_time_pickup_minutes ?? 120);
         addOptional("free_time_delivery_minutes", b.free_time_delivery_minutes ?? 120);
         addOptional("detention_rate_per_hour", b.detention_rate_per_hour ?? 0);
+        addOptional("layover_charge_per_day", b.layover_charge_per_day);
+        addOptional("layover_currency", b.layover_currency);
+        addOptional("layover_first_night_free", b.layover_first_night_free ?? true);
+        addOptional("layover_max_days", b.layover_max_days);
+        addOptional("layover_notes", b.layover_notes);
         addOptional("factoring_eligible", b.factoring_eligible);
         addOptional("factoring_company_vendor_id", b.factoring_company_vendor_id);
         addOptional("factoring_advance_rate_override", b.factoring_advance_rate_override);
@@ -580,6 +601,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("free_time_pickup_minutes" in b) add("free_time_pickup_minutes", b.free_time_pickup_minutes);
     if ("free_time_delivery_minutes" in b) add("free_time_delivery_minutes", b.free_time_delivery_minutes);
     if ("detention_rate_per_hour" in b) add("detention_rate_per_hour", b.detention_rate_per_hour);
+    if ("layover_charge_per_day" in b) add("layover_charge_per_day", b.layover_charge_per_day ?? null);
+    if ("layover_currency" in b) add("layover_currency", b.layover_currency ?? null);
+    if ("layover_first_night_free" in b) add("layover_first_night_free", b.layover_first_night_free);
+    if ("layover_max_days" in b) add("layover_max_days", b.layover_max_days ?? null);
+    if ("layover_notes" in b) add("layover_notes", b.layover_notes ?? null);
     if ("factoring_eligible" in b) add("factoring_eligible", b.factoring_eligible);
     if ("factoring_company_vendor_id" in b) add("factoring_company_vendor_id", b.factoring_company_vendor_id ?? null);
     if ("factoring_advance_rate_override" in b) add("factoring_advance_rate_override", b.factoring_advance_rate_override ?? null);
