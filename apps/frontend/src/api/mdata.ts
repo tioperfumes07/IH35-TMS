@@ -418,8 +418,17 @@ export type VendorOption = {
   id: string;
   name: string;
   vendor_type: string;
+  vendor_code?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  tax_id?: string | null;
   notes: string | null;
   operating_company_id: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by_user_id?: string;
+  updated_by_user_id?: string;
   deactivated_at: string | null;
 };
 
@@ -757,6 +766,10 @@ export function listVendors(params: CompanyScopedListParams = {}) {
   appendCompanyScopedQuery(query, params);
   const qs = query.toString();
   return apiRequest<{ vendors: VendorOption[] }>(`/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`);
+}
+
+export function getVendor(id: string) {
+  return apiRequest<VendorOption>(`/api/v1/mdata/vendors/${id}`);
 }
 
 export function listLocations(params: CompanyScopedListParams = {}) {

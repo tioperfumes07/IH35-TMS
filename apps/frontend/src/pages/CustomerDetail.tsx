@@ -26,6 +26,7 @@ import {
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
+import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -215,6 +216,7 @@ export function CustomerDetailPage() {
   const canWriteQuality = user?.role === "Owner";
   const canEditQualityNotes = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canEditCreditLimit = user?.role === "Owner" || user?.role === "Administrator";
+  const canViewDocuments = ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant"].includes(user?.role ?? "");
 
   const hydratedForm = useMemo(() => {
     if (!customer) return form;
@@ -464,8 +466,8 @@ export function CustomerDetailPage() {
     return { totalEvents: active.length, severeCount, totalImpact, avgDaysLate };
   }, [qualityEvents]);
   const visibleTabs = useMemo(
-    () => tabs.filter((tab) => (tab === "Quality & History" ? canReadQuality : true)),
-    [canReadQuality]
+    () => tabs.filter((tab) => (tab === "Quality & History" ? canReadQuality : tab === "Documents" ? canViewDocuments : true)),
+    [canReadQuality, canViewDocuments]
   );
 
   return (
@@ -938,7 +940,17 @@ export function CustomerDetailPage() {
         </div>
       ) : null}
 
-      {activeTab !== "Profile" && activeTab !== "Quality & History" ? (
+      {activeTab === "Documents" ? (
+        canViewDocuments ? (
+          <DocumentsTab entityType="customer" entityId={customer.id} entityName={customer.name} />
+        ) : (
+          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+            You do not have permission to view customer documents.
+          </div>
+        )
+      ) : null}
+
+      {activeTab !== "Profile" && activeTab !== "Quality & History" && activeTab !== "Documents" ? (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">{activeTab} view will be delivered in the next block. The tab is intentionally present to preserve the final information architecture.</div>
       ) : null}
 

@@ -13,8 +13,11 @@ import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { DocumentsPage } from "./pages/Documents";
 import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
+import { VendorsPage } from "./pages/Vendors";
+import { VendorDetailPage } from "./pages/VendorDetail";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -93,6 +96,30 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CustomerDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendors"
+          element={
+            <ProtectedRoute>
+              <VendorsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendors/:id"
+          element={
+            <ProtectedRoute>
+              <VendorDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/documents"
+          element={
+            <ProtectedRoute>
+              <DocumentsPage />
             </ProtectedRoute>
           }
         />
