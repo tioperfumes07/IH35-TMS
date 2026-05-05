@@ -94,6 +94,7 @@ const EVENT_CLASSES = [
   "mdata.driver_safety_events.voided",
   "mdata.drivers.returning_driver_detected",
   "mdata.drivers.returning_driver_override",
+  "mdata.drivers.rehired",
 ];
 
 const WARNING_EVENTS = new Set([

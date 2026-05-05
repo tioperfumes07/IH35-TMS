@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { History, Pencil } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/useAuth";
-import { listEquipmentTypes } from "../api/catalogs";
+import { listEquipmentTypes, listMexicoStates, listUsStates } from "../api/catalogs";
 import { listMyCompanies } from "../api/org";
 import {
   createSafetyEvent,
@@ -26,6 +26,7 @@ import {
   updateDriver,
 } from "../api/mdata";
 import { Button } from "../components/Button";
+import { Combobox } from "../components/Combobox";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
@@ -134,6 +135,16 @@ export function DriverDetailPage() {
   const equipmentTypesQuery = useQuery({
     queryKey: ["equipment-types-for-driver-detail"],
     queryFn: () => listEquipmentTypes(false).then((result) => result.equipment_types),
+  });
+
+  const usStatesQuery = useQuery({
+    queryKey: ["catalogs", "us-states"],
+    queryFn: () => listUsStates().then((result) => result.states),
+  });
+
+  const mexicoStatesQuery = useQuery({
+    queryKey: ["catalogs", "mexico-states"],
+    queryFn: () => listMexicoStates().then((result) => result.states),
   });
 
   const historyQuery = useQuery({
@@ -419,7 +430,6 @@ export function DriverDetailPage() {
     ["phone", "Phone", "text"],
     ["email", "Email", "email"],
     ["cdl_number", "CDL #", "text"],
-    ["cdl_state", "CDL State", "text"],
     ["cdl_expires_at", "CDL Expires", "date"],
     ["hire_date", "Hire Date", "date"],
     ["dot_medical_expires_at", "DOT Medical Expires", "date"],
@@ -510,6 +520,16 @@ export function DriverDetailPage() {
 
       {activeTab === "Profile" ? (
         <div className="grid gap-3 md:grid-cols-2">
+          {driver.is_rehire ? (
+            <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <span className="rounded bg-amber-200 px-2 py-1 text-xs font-semibold">REHIRE (stint #{driver.rehire_count + 1})</span>
+              {driver.prior_driver_id ? (
+                <Link to={`/drivers/${driver.prior_driver_id}`} className="text-xs font-semibold text-blue-700 hover:underline">
+                  ← View prior driver record
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
           {fields.map(([key, label, type]) => (
             <div key={key} className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">{label}</label>
@@ -522,6 +542,21 @@ export function DriverDetailPage() {
               />
             </div>
           ))}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">CDL State</label>
+            <Combobox
+              options={(usStatesQuery.data ?? []).map((state) => ({
+                value: state.code,
+                label: `${state.code} - ${state.name}`,
+                sublabel: state.region,
+              }))}
+              value={hydratedForm.cdl_state || null}
+              onChange={(nextValue) => setForm((current) => ({ ...current, cdl_state: nextValue ?? "" }))}
+              loading={usStatesQuery.isLoading}
+              disabled={!editMode || usStatesQuery.isError}
+              placeholder="Select US state"
+            />
+          </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">CDL Class</label>
@@ -671,6 +706,22 @@ export function DriverDetailPage() {
         <div className="space-y-3 rounded-md border border-gray-200 p-3">
           <p className="text-sm text-gray-700">Required for B1/Mexican drivers. Leave blank for non-Mexican drivers.</p>
           <div className="grid gap-3 md:grid-cols-2">
+            {driver.prior_driver_id ? (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-600">Prior driver record</label>
+                <div className="rounded border border-gray-300 bg-gray-50 px-2 py-2 text-sm">
+                  <Link to={`/drivers/${driver.prior_driver_id}`} className="text-blue-700 hover:underline">
+                    {driver.prior_driver_id}
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+            {driver.rehire_count > 0 ? (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-600">Rehire count</label>
+                <div className="rounded border border-gray-300 bg-gray-50 px-2 py-2 text-sm">{driver.rehire_count}</div>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">INE Number</label>
               <input
@@ -697,7 +748,6 @@ export function DriverDetailPage() {
               ["mx_address_line1", "Street line 1"],
               ["mx_address_line2", "Street line 2"],
               ["mx_city", "City"],
-              ["mx_state", "State"],
               ["mx_postal_code", "Postal code"],
             ].map(([key, label]) => (
               <div key={key} className="flex flex-col gap-1">
@@ -710,6 +760,21 @@ export function DriverDetailPage() {
                 />
               </div>
             ))}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">State</label>
+              <Combobox
+                options={(mexicoStatesQuery.data ?? []).map((state) => ({
+                  value: state.code,
+                  label: `${state.code} - ${state.name}`,
+                  sublabel: state.region,
+                }))}
+                value={hydratedForm.mx_state || null}
+                onChange={(nextValue) => setForm((current) => ({ ...current, mx_state: nextValue ?? "" }))}
+                loading={mexicoStatesQuery.isLoading}
+                disabled={!editMode || mexicoStatesQuery.isError}
+                placeholder="Select Mexico state"
+              />
+            </div>
           </div>
         </div>
       ) : null}

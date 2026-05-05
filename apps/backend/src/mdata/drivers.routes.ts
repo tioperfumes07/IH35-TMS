@@ -65,6 +65,8 @@ const createDriverBodySchema = z.object({
   status: driverStatusSchema.default("Active"),
   notes: z.string().trim().max(2000).optional(),
   override_returning_warning: z.boolean().optional().default(false),
+  prior_driver_id: z.string().uuid().optional(),
+  is_rehire: z.boolean().optional().default(false),
 });
 
 const updateDriverBodySchema = z
@@ -128,6 +130,34 @@ function statusDisablesDriverLogin(status: string): boolean {
   return status === "Inactive" || status === "Terminated";
 }
 
+function driverIdentityMatches(
+  prior: { curp: string | null; cdl_number: string | null; cdl_state: string | null },
+  incoming: { curp?: string; cdl_number?: string; cdl_state?: string }
+): "curp" | "cdl" | null {
+  const normalizedPriorCurp = prior.curp?.trim().toUpperCase() ?? "";
+  const normalizedIncomingCurp = incoming.curp?.trim().toUpperCase() ?? "";
+  if (normalizedPriorCurp && normalizedIncomingCurp && normalizedPriorCurp === normalizedIncomingCurp) {
+    return "curp";
+  }
+
+  const normalizedPriorCdlNumber = prior.cdl_number?.trim().toUpperCase() ?? "";
+  const normalizedPriorCdlState = prior.cdl_state?.trim().toUpperCase() ?? "";
+  const normalizedIncomingCdlNumber = incoming.cdl_number?.trim().toUpperCase() ?? "";
+  const normalizedIncomingCdlState = incoming.cdl_state?.trim().toUpperCase() ?? "";
+  if (
+    normalizedPriorCdlNumber &&
+    normalizedPriorCdlState &&
+    normalizedIncomingCdlNumber &&
+    normalizedIncomingCdlState &&
+    normalizedPriorCdlNumber === normalizedIncomingCdlNumber &&
+    normalizedPriorCdlState === normalizedIncomingCdlState
+  ) {
+    return "cdl";
+  }
+
+  return null;
+}
+
 export async function registerDriverRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/drivers", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -160,7 +190,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
-            status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            status, notes, prior_driver_id, rehire_count, is_rehire,
+            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
           ${whereClause}
           ORDER BY created_at DESC
@@ -185,6 +216,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        if (b.prior_driver_id && !b.override_returning_warning) {
+          return { error: "override_required_for_rehire" as const };
+        }
+
         const returningDetection = await findReturningDriverMatches(client, {
           curp: b.curp,
           cdl_number: b.cdl_number,
@@ -212,6 +247,58 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           }
         }
 
+        const rehireState: {
+          prior_driver_id: string | null;
+          is_rehire: boolean;
+          rehire_count: number;
+          matched_via: "curp" | "cdl" | null;
+        } = {
+          prior_driver_id: null,
+          is_rehire: false,
+          rehire_count: 0,
+          matched_via: null,
+        };
+
+        if (b.override_returning_warning && b.prior_driver_id) {
+          const priorRes = await client.query<{
+            id: string;
+            status: string;
+            curp: string | null;
+            cdl_number: string | null;
+            cdl_state: string | null;
+            rehire_count: number | null;
+          }>(
+            `
+              SELECT id, status, curp, cdl_number, cdl_state, rehire_count
+              FROM mdata.drivers
+              WHERE id = $1
+              LIMIT 1
+            `,
+            [b.prior_driver_id]
+          );
+          const priorDriver = priorRes.rows[0] ?? null;
+          if (!priorDriver) {
+            return { error: "prior_driver_not_found" as const };
+          }
+          if (priorDriver.status !== "Terminated") {
+            return { error: "prior_driver_not_terminated" as const };
+          }
+
+          const matchedVia = driverIdentityMatches(priorDriver, {
+            curp: b.curp,
+            cdl_number: b.cdl_number,
+            cdl_state: b.cdl_state,
+          });
+          if (!matchedVia) {
+            return { error: "prior_driver_identity_mismatch" as const };
+          }
+
+          rehireState.prior_driver_id = priorDriver.id;
+          rehireState.is_rehire = true;
+          rehireState.rehire_count = Number(priorDriver.rehire_count ?? 0) + 1;
+          rehireState.matched_via = matchedVia;
+        }
+
         let identityUserId = b.identity_user_id ?? null;
         if (b.create_login_user) {
           const userRes = await client.query<{ id: string }>(
@@ -237,10 +324,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
-              status, notes,
+              status, notes, prior_driver_id, rehire_count, is_rehire,
               created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$34
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$37
             )
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
@@ -249,7 +336,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
-              status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+              status, notes, prior_driver_id, rehire_count, is_rehire,
+              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           [
             identityUserId,
@@ -285,6 +373,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             b.emergency_contact_notes ?? null,
             b.status,
             b.notes ?? null,
+            rehireState.prior_driver_id,
+            rehireState.rehire_count,
+            rehireState.is_rehire,
             authUser.uuid,
           ]
         );
@@ -316,20 +407,38 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         });
 
         if (returningDetection.returning_driver && b.override_returning_warning) {
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            "mdata.drivers.returning_driver_override",
-            {
-              resource_id: row.id,
-              resource_type: "mdata.drivers",
-              match_count: returningDetection.matched_events.length,
-              severity_summary: returningDetection.severity_summary,
-              matched_events: returningDetection.matched_events,
-            },
-            "warning",
-            "BT-1-DRIVER-SAFETY-FILE"
-          );
+          if (rehireState.is_rehire && rehireState.prior_driver_id) {
+            await appendCrudAudit(
+              client,
+              authUser.uuid,
+              "mdata.drivers.rehired",
+              {
+                resource_id: row.id,
+                resource_type: "mdata.drivers",
+                new_driver_id: row.id,
+                prior_driver_id: rehireState.prior_driver_id,
+                rehire_count: rehireState.rehire_count,
+                matched_via: rehireState.matched_via,
+              },
+              "warning",
+              "BT-1-REHIRE-STATES-COMBOBOX"
+            );
+          } else {
+            await appendCrudAudit(
+              client,
+              authUser.uuid,
+              "mdata.drivers.returning_driver_override",
+              {
+                resource_id: row.id,
+                resource_type: "mdata.drivers",
+                match_count: returningDetection.matched_events.length,
+                severity_summary: returningDetection.severity_summary,
+                matched_events: returningDetection.matched_events,
+              },
+              "warning",
+              "BT-1-DRIVER-SAFETY-FILE"
+            );
+          }
         }
         return row;
       });
@@ -338,6 +447,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           error: "returning_driver_detected",
           ...created.detection,
         });
+      }
+      if (created && typeof created === "object" && "error" in created) {
+        if (created.error === "prior_driver_not_found") return reply.code(404).send({ error: "prior_driver_not_found" });
+        if (created.error === "prior_driver_not_terminated") return reply.code(400).send({ error: "prior_driver_not_terminated" });
+        if (created.error === "prior_driver_identity_mismatch") return reply.code(400).send({ error: "prior_driver_identity_mismatch" });
+        if (created.error === "override_required_for_rehire") return reply.code(400).send({ error: "override_required_for_rehire" });
       }
       return reply.code(201).send(created);
     } catch (err) {
@@ -364,7 +479,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
-            status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            status, notes, prior_driver_id, rehire_count, is_rehire,
+            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
           WHERE id = $1
           LIMIT 1
@@ -445,7 +561,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
-              status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+              status, notes, prior_driver_id, rehire_count, is_rehire,
+              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
             FROM mdata.drivers
             WHERE id = $1
             LIMIT 1
@@ -467,7 +584,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
-              status, notes, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+              status, notes, prior_driver_id, rehire_count, is_rehire,
+              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           values
         );

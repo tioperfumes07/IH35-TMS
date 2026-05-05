@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { listMexicoStates, listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
 import { checkReturningDriver, createDriver, listDrivers, type ReturningDetectionResult } from "../api/mdata";
 import { Button } from "../components/Button";
+import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
@@ -86,6 +88,8 @@ export function DriversPage() {
   const [returningDetection, setReturningDetection] = useState<ReturningDetectionResult | null>(null);
   const [returningCheckLoading, setReturningCheckLoading] = useState(false);
   const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
+  const [rehireAction, setRehireAction] = useState<"rehire" | "new">("rehire");
+  const [selectedPriorDriverId, setSelectedPriorDriverId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({
     first_name: "",
     last_name: "",
@@ -160,6 +164,54 @@ export function DriversPage() {
     };
   }, [addOpen, form.curp, form.cdl_number, form.cdl_state]);
 
+  const usStatesQuery = useQuery({
+    queryKey: ["catalogs", "us-states"],
+    queryFn: () => listUsStates().then((result) => result.states),
+  });
+
+  const mexicoStatesQuery = useQuery({
+    queryKey: ["catalogs", "mexico-states"],
+    queryFn: () => listMexicoStates().then((result) => result.states),
+  });
+
+  const terminatedMatches = useMemo(() => {
+    const deduped = new Map<
+      string,
+      {
+        driverId: string;
+        label: string;
+        eventDate: string;
+      }
+    >();
+    for (const event of returningDetection?.matched_events ?? []) {
+      if (event.matched_driver_status !== "Terminated") continue;
+      const previous = deduped.get(event.matched_driver_id);
+      if (previous && previous.eventDate >= event.event_date) continue;
+      const reason = event.termination_reason?.code ?? "termination";
+      deduped.set(event.matched_driver_id, {
+        driverId: event.matched_driver_id,
+        eventDate: event.event_date,
+        label: `${event.matched_driver_name} - terminated ${event.event_date} (${reason})`,
+      });
+    }
+    return Array.from(deduped.values());
+  }, [returningDetection]);
+
+  useEffect(() => {
+    if (!returningDetection?.returning_driver) {
+      setRehireAction("rehire");
+      setSelectedPriorDriverId(null);
+      return;
+    }
+    if (terminatedMatches.length === 0) {
+      setRehireAction("new");
+      setSelectedPriorDriverId(null);
+      return;
+    }
+    setRehireAction("rehire");
+    setSelectedPriorDriverId((current) => current ?? terminatedMatches[0]?.driverId ?? null);
+  }, [returningDetection, terminatedMatches]);
+
   const driversQuery = useQuery({
     queryKey: ["drivers", { status: statusFilter, search }],
     queryFn: () =>
@@ -213,6 +265,8 @@ export function DriversPage() {
       setShowVisaEmergency(false);
       setReturningDetection(null);
       setOverrideReturningWarning(false);
+      setRehireAction("rehire");
+      setSelectedPriorDriverId(null);
     },
   });
 
@@ -317,6 +371,11 @@ export function DriversPage() {
 
             try {
               const normalizedPhone = `${parsed.data.country_code}${normalizePhoneDigits(parsed.data.phone_input)}`;
+              const shouldLinkRehire =
+                Boolean(returningDetection?.returning_driver) &&
+                overrideReturningWarning &&
+                rehireAction === "rehire" &&
+                Boolean(selectedPriorDriverId);
               await createMutation.mutateAsync({
                 first_name: parsed.data.first_name,
                 last_name: parsed.data.last_name,
@@ -350,6 +409,8 @@ export function DriversPage() {
                 status: parsed.data.status,
                 create_login_user: form.allow_phone_login === "true",
                 override_returning_warning: returningDetection?.returning_driver ? overrideReturningWarning : undefined,
+                is_rehire: shouldLinkRehire ? true : undefined,
+                prior_driver_id: shouldLinkRehire ? selectedPriorDriverId ?? undefined : undefined,
               });
             } catch (error) {
               if (error instanceof ApiError && error.status === 409) {
@@ -361,6 +422,8 @@ export function DriversPage() {
                     severity_summary: detectionPayload.severity_summary ?? { severe_count: 0, warning_count: 0, info_count: 0 },
                   });
                   setOverrideReturningWarning(false);
+                  setRehireAction("rehire");
+                  setSelectedPriorDriverId(null);
                   pushToast("Returning driver records found. Review and confirm override.", "error");
                   return;
                 }
@@ -378,7 +441,6 @@ export function DriversPage() {
             ["last_name", "Last Name"],
             ["email", "Email"],
             ["cdl_number", "CDL #"],
-            ["cdl_state", "CDL State"],
             ["cdl_expires_at", "CDL Expires"],
             ["hire_date", "Hire Date"],
             ["dot_medical_expires_at", "DOT Medical Expires"],
@@ -393,6 +455,21 @@ export function DriversPage() {
               />
             </div>
           ))}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">CDL State</label>
+            <Combobox
+              options={(usStatesQuery.data ?? []).map((state) => ({
+                value: state.code,
+                label: `${state.code} - ${state.name}`,
+                sublabel: state.region,
+              }))}
+              value={form.cdl_state || null}
+              onChange={(nextValue) => setForm((current) => ({ ...current, cdl_state: nextValue ?? "" }))}
+              placeholder="Select US state"
+              loading={usStatesQuery.isLoading}
+              disabled={usStatesQuery.isError}
+            />
+          </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Country</label>
             <select
@@ -480,7 +557,6 @@ export function DriversPage() {
                   ["mx_address_line1", "MX Address Line 1"],
                   ["mx_address_line2", "MX Address Line 2"],
                   ["mx_city", "MX City"],
-                  ["mx_state", "MX State"],
                   ["mx_postal_code", "MX Postal Code"],
                 ].map(([key, label]) => (
                   <div key={key} className="flex flex-col gap-1">
@@ -493,6 +569,21 @@ export function DriversPage() {
                     />
                   </div>
                 ))}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-600">MX State</label>
+                  <Combobox
+                    options={(mexicoStatesQuery.data ?? []).map((state) => ({
+                      value: state.code,
+                      label: `${state.code} - ${state.name}`,
+                      sublabel: state.region,
+                    }))}
+                    value={form.mx_state || null}
+                    onChange={(nextValue) => setForm((current) => ({ ...current, mx_state: nextValue ?? "" }))}
+                    placeholder="Select Mexico state"
+                    loading={mexicoStatesQuery.isLoading}
+                    disabled={mexicoStatesQuery.isError}
+                  />
+                </div>
               </div>
             ) : null}
           </div>
@@ -578,6 +669,36 @@ export function DriversPage() {
                 />
                 <span>I have reviewed prior safety records and want to proceed with this hire</span>
               </label>
+              {overrideReturningWarning && terminatedMatches.length > 0 ? (
+                <div className="mt-2 space-y-2 rounded border border-amber-200 bg-amber-50 p-2">
+                  <label className="flex items-center gap-2 text-xs">
+                    <input
+                      type="radio"
+                      name="rehire_action"
+                      checked={rehireAction === "new"}
+                      onChange={() => setRehireAction("new")}
+                    />
+                    Hire as a NEW driver (not linked to prior record)
+                  </label>
+                  <label className="flex items-center gap-2 text-xs">
+                    <input
+                      type="radio"
+                      name="rehire_action"
+                      checked={rehireAction === "rehire"}
+                      onChange={() => setRehireAction("rehire")}
+                    />
+                    Mark as REHIRE of prior driver
+                  </label>
+                  {rehireAction === "rehire" ? (
+                    <Combobox
+                      options={terminatedMatches.map((match) => ({ value: match.driverId, label: match.label }))}
+                      value={selectedPriorDriverId}
+                      onChange={(nextValue) => setSelectedPriorDriverId(nextValue)}
+                      placeholder="Select prior terminated driver"
+                    />
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -588,7 +709,11 @@ export function DriversPage() {
             <Button
               type="submit"
               loading={createMutation.isPending}
-              disabled={(returningDetection?.returning_driver && !overrideReturningWarning) || returningCheckLoading}
+              disabled={
+                (returningDetection?.returning_driver && !overrideReturningWarning) ||
+                (overrideReturningWarning && rehireAction === "rehire" && terminatedMatches.length > 0 && !selectedPriorDriverId) ||
+                returningCheckLoading
+              }
             >
               Save
             </Button>

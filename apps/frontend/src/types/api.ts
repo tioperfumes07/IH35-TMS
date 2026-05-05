@@ -85,6 +85,9 @@ export type Driver = {
   emergency_contact_notes: string | null;
   status: DriverStatus;
   notes: string | null;
+  prior_driver_id: string | null;
+  rehire_count: number;
+  is_rehire: boolean;
   created_at: string;
   updated_at: string;
   deactivated_at: string | null;
@@ -128,6 +131,8 @@ export type CreateDriverInput = {
   status?: DriverStatus;
   notes?: string;
   override_returning_warning?: boolean;
+  prior_driver_id?: string;
+  is_rehire?: boolean;
 };
 
 export type UpdateDriverInput = Partial<
