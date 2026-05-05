@@ -27,6 +27,7 @@ import {
 } from "../api/mdata";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
+import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
@@ -185,6 +186,13 @@ export function DriverDetailPage() {
   const canManageRates = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager";
   const canViewSafetyFile =
     user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager" || user?.role === "Safety";
+  const canViewDocuments =
+    user?.role === "Owner" ||
+    user?.role === "Administrator" ||
+    user?.role === "Manager" ||
+    user?.role === "Dispatcher" ||
+    user?.role === "Safety" ||
+    (user?.role === "Driver" && user.uuid === driver?.identity_user_id);
   const isOwner = user?.role === "Owner";
   const canManageCompanyAuth =
     user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager" || user?.role === "Safety";
@@ -477,7 +485,9 @@ export function DriverDetailPage() {
   const selectedRateFromCard = qualifications
     .find((qualification) => qualification.id === selectedQualificationId)
     ?.current_rates.find((line) => line.line_item_template_id === selectedLineItemId);
-  const visibleTabs = tabs.filter((tab) => tab !== "Safety File" || canViewSafetyFile);
+  const visibleTabs = tabs.filter(
+    (tab) => (tab !== "Safety File" || canViewSafetyFile) && (tab !== "Documents" || canViewDocuments)
+  );
 
   const saveDriver = async () => {
     const errors: Record<string, string> = {};
@@ -1022,9 +1032,13 @@ export function DriverDetailPage() {
       ) : null}
 
       {activeTab === "Documents" ? (
-        <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-          Driver documents workspace is a placeholder for the Phase 2 document module.
-        </div>
+        canViewDocuments ? (
+          <DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} />
+        ) : (
+          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+            You do not have permission to view documents for this driver.
+          </div>
+        )
       ) : null}
 
       {activeTab === "Audit History" ? (

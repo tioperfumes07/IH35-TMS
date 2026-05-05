@@ -5,6 +5,7 @@ import {
   Calculator,
   CarFront,
   ClipboardList,
+  FileText,
   Fuel,
   Home,
   ShieldCheck,
@@ -16,12 +17,14 @@ import {
 import type { ComponentType } from "react";
 import { NavLink } from "react-router-dom";
 import { colors, spacing } from "../design/tokens";
+import type { UserRole } from "../types/api";
 
 type SidebarItem = {
   key: string;
   label: string;
   Icon: ComponentType<{ className?: string }>;
   to: string;
+  visibleRoles?: UserRole[];
 };
 
 const ITEMS: SidebarItem[] = [
@@ -33,6 +36,8 @@ const ITEMS: SidebarItem[] = [
   { key: "SAFETY", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
   { key: "DRIVERS", label: "DRIVERS", Icon: Users, to: "/drivers" },
   { key: "CUSTOMERS", label: "CUSTOMERS", Icon: Building2, to: "/customers" },
+  { key: "VENDORS", label: "VENDORS", Icon: Building2, to: "/vendors" },
+  { key: "DOCUMENTS", label: "DOCS", Icon: FileText, to: "/documents", visibleRoles: ["Owner", "Administrator"] },
   { key: "DISPATCH", label: "DISPATCH", Icon: Truck, to: "/dispatch" },
   { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/catalogs" },
   { key: "REPORTS", label: "REPORTS", Icon: ClipboardList, to: "/reports" },
@@ -40,14 +45,20 @@ const ITEMS: SidebarItem[] = [
   { key: "DRV_APP", label: "DRV APP", Icon: Activity, to: "/coming-soon?feature=Driver%20App&phase=2&eta=Phase%202" },
 ];
 
-export function Sidebar() {
+type SidebarProps = {
+  role: UserRole;
+};
+
+export function Sidebar({ role }: SidebarProps) {
+  const visibleItems = ITEMS.filter((item) => !item.visibleRoles || item.visibleRoles.includes(role));
+
   return (
     <aside
       className="shrink-0 text-white"
       style={{ width: spacing.sidebarWidth, backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.sidebarBorder}` }}
     >
       <div className="flex h-full flex-col items-center gap-1 py-2">
-        {ITEMS.map(({ key, label, Icon, to }) => {
+        {visibleItems.map(({ key, label, Icon, to }) => {
           return (
             <NavLink
               key={key}
