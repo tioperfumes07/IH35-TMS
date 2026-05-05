@@ -24,6 +24,21 @@ function maskPhone(phone: string) {
   return `${phone.slice(0, 3)}***${phone.slice(-2)}`;
 }
 
+async function appendOutboxTrailEvent(
+  eventType: "twilio.sms.send" | "twilio.whatsapp.send",
+  payload: Record<string, unknown>
+) {
+  await withLuciaBypass(async (client) => {
+    await client.query(
+      `
+        INSERT INTO outbox.events (event_type, payload, next_retry_at)
+        VALUES ($1, $2::jsonb, now())
+      `,
+      [eventType, JSON.stringify(payload)]
+    );
+  });
+}
+
 export async function registerPhoneAuthRoutes(app: FastifyInstance) {
   app.post("/api/v1/auth/phone/start", async (req, reply) => {
     const parsed = startBodySchema.safeParse(req.body ?? {});
@@ -48,6 +63,16 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
 
     try {
       const result = await startVerification(phone, channel as TwilioChannel);
+      try {
+        await appendOutboxTrailEvent(result.channel === "sms" ? "twilio.sms.send" : "twilio.whatsapp.send", {
+          phone_masked: maskPhone(phone),
+          channel: result.channel,
+          twilio_sid: result.sid,
+          source: "auth.phone.start",
+        });
+      } catch (outboxError) {
+        req.log.warn({ err: outboxError }, "Failed to append outbox trail event for phone start");
+      }
       await withLuciaBypass(async (client) => {
         await appendCrudAudit(
           client,
@@ -69,6 +94,17 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
       if (channel === "whatsapp" && errorMessage.includes("twilio_send_failed")) {
         try {
           const fallback = await startVerification(phone, "sms");
+          try {
+            await appendOutboxTrailEvent("twilio.sms.send", {
+              phone_masked: maskPhone(phone),
+              channel: "sms",
+              twilio_sid: fallback.sid,
+              source: "auth.phone.start.fallback",
+              previous_error: errorMessage,
+            });
+          } catch (outboxError) {
+            req.log.warn({ err: outboxError }, "Failed to append outbox trail event for fallback SMS");
+          }
           await withLuciaBypass(async (client) => {
             await appendCrudAudit(
               client,

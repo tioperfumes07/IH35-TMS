@@ -111,6 +111,9 @@ const EVENT_CLASSES = [
   "docs.files.soft_deleted",
   "docs.files.restored",
   "docs.files.version_uploaded",
+  "outbox.event.delivered",
+  "outbox.event.retried",
+  "outbox.event.failed",
 ];
 
 const WARNING_EVENTS = new Set([
@@ -125,6 +128,8 @@ const WARNING_EVENTS = new Set([
   "mdata.customers.quality_flag_changed",
   "docs.files.unlinked_from_entity",
   "docs.files.soft_deleted",
+  "outbox.event.retried",
+  "outbox.event.failed",
 ]);
 
 async function runWithBypass(client, fn) {
