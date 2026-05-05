@@ -85,6 +85,15 @@
 - Workflow + audit emission are required for key state transitions.
 - Phase boundaries are hard gates: no pulling Phase 3+ features into Phase 2 blocks.
 - Driver PWA UX exceptions remain valid where explicitly documented.
+- R2 CORS policy is required for `app.ih35dispatch.com`, `driver.ih35dispatch.com`, `api.ih35dispatch.com`, and localhost dev origins.
+- `DATABASE_URL` is Neon; Render `ih35-db` is not in active use.
+- Outbox processor runs in-process inside backend (no separate Render worker).
+- Documents are soft-delete only with a 90-day Owner recovery window.
+- `docs.file_links` is polymorphic; `entity_id` is not enforced as a single FK.
+- Documents preview uses native browser PDF viewer (not PDF.js).
+- Driver self-resolution uses dedicated `/me` endpoint (never list-and-take-first).
+- FMCSA lookups are cached 7 days, with no automatic re-verification (Phase 6).
+- Manager can update document metadata but cannot soft-delete files.
 
 ## 9) Deferred Items By Phase
 
@@ -135,3 +144,11 @@
   - tracker finalization performed
   - phase-2 entry document created
 - Known external blocker remains: `db:verify:phone-auth` requires Twilio env (`TWILIO_ACCOUNT_SID`).
+
+## 15) Known Production Blockers Before May 20
+
+- Driver onboarding flow is still required (HIGH priority, P3-T0).
+- Verify-script fixture cleanup in `identity.users` is pending.
+- Backup and disaster-recovery strategy is pending (P7-T1).
+- Production Twilio WhatsApp Business sender approval is pending (P7-T3, Meta verification 7-14 days).
+- QBO production credentials approval is pending (P7-T4).
