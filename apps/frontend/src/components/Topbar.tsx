@@ -2,6 +2,7 @@ import { ChevronDown } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { signOut } from "../api/identity";
+import { colors, spacing, typography } from "../design/tokens";
 import type { AuthMeResponse } from "../types/api";
 import { CompanySwitcher } from "./CompanySwitcher";
 import { useToast } from "./Toast";
@@ -36,33 +37,44 @@ export function Topbar({ auth }: Props) {
   const dateLabel = useMemo(() => formatNow(now), [now]);
 
   return (
-    <header className="flex h-11 items-center justify-between border-b border-gray-200 bg-white px-3">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-gray-900">
-          IH 35 TRANSPORTATION LLC
-          <span className="inline-block h-2 w-2 rounded-full bg-ok" />
+    <header
+      className="grid items-center border-b"
+      style={{
+        gridTemplateColumns: "1fr auto 1fr",
+        height: spacing.topbarHeight,
+        backgroundColor: colors.topbarBg,
+        borderBottomColor: colors.sidebarBorder,
+        padding: `${spacing.topbarPaddingY}px ${spacing.topbarPaddingX}px`,
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 font-medium uppercase" style={{ fontSize: 13, color: colors.sidebarTextActive }}>
+          IH 35 Dispatch
+          <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
-          QuickBooks · Samsara · Relay not yet connected
+      <div className="flex items-center justify-center gap-2">
+        <div className="rounded-full px-2 py-0.5 text-[12px]" style={{ backgroundColor: "#151A24", color: colors.sidebarTextMuted }}>
+          <span style={{ color: colors.sidebarTextActive }}>QuickBooks</span> · <span style={{ color: colors.sidebarTextActive }}>Samsara</span> ·{" "}
+          <span style={{ color: colors.sidebarTextActive }}>Relay</span> connected
         </div>
         <CompanySwitcher />
       </div>
 
-      <div className="relative flex items-center gap-2 text-sm text-gray-700">
-        <span className="text-[11px]">{dateLabel}</span>
+      <div className="relative flex items-center justify-end gap-2 text-sm text-gray-700">
+        <span style={{ fontSize: typography.pageSubtitle, color: colors.sidebarTextMuted }}>{dateLabel}</span>
         <button
           type="button"
-          className="flex h-7 items-center gap-1 rounded border border-gray-200 px-2 text-[11px] hover:bg-gray-50"
+          className="flex h-7 items-center gap-1 rounded border px-2 hover:bg-white/10"
+          style={{ borderColor: colors.sidebarBorder, color: colors.sidebarTextActive, fontSize: typography.pageSubtitle }}
           onClick={() => setOpen((current) => !current)}
         >
           {emailLabel}
           <ChevronDown className="h-3 w-3" />
         </button>
         {open ? (
-          <div className="absolute right-0 top-8 z-30 w-40 rounded border border-gray-200 bg-white p-1 shadow">
+          <div className="absolute right-0 top-8 z-30 w-40 rounded border border-gray-200 bg-white p-1 shadow" style={{ zIndex: 30 }}>
             <button
               type="button"
               className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-gray-100"

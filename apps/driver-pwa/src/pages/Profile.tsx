@@ -18,7 +18,7 @@ export function ProfilePage() {
           Back
         </Link>
         <PwaCard title="Profile" subtitle="Driver settings foundation">
-          <p className="text-base text-pwa-text-primary">{auth.user?.email ?? "unknown"}</p>
+          <p className="text-lg font-semibold text-pwa-text-primary">{auth.user?.email ?? "unknown"}</p>
           <p className="mt-1 text-sm text-pwa-text-secondary">Role: {auth.user?.role ?? "Driver"}</p>
           <PwaButton
             className="mt-4 w-full"

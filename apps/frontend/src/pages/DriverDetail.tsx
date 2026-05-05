@@ -22,6 +22,7 @@ import {
   updateDriver,
 } from "../api/mdata";
 import { Button } from "../components/Button";
+import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -384,48 +385,36 @@ export function DriverDetailPage() {
 
   return (
     <div className="space-y-3">
-      <div className="text-xs font-semibold text-gray-500">
-        <button type="button" className="text-sky-700 hover:underline" onClick={() => navigate("/drivers")}>
-          Drivers
-        </button>
-        <span className="mx-1">/</span>
-        <span>
-          {driver.first_name} {driver.last_name}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {driver.first_name} {driver.last_name}
-          </h1>
-          <div className="mt-1">
+      <PageHeader
+        backHref="/drivers"
+        title={`${driver.first_name} ${driver.last_name}`}
+        subtitle={driver.status}
+        actions={
+          <div className="flex items-center gap-2">
             <StatusBadge status={driver.status} />
+            {!editMode ? (
+              <Button onClick={() => setEditMode(true)}>Edit</Button>
+            ) : (
+              <Button onClick={() => void saveDriver()} loading={updateMutation.isPending}>
+                Save
+              </Button>
+            )}
+            {driver.status !== "Terminated" ? (
+              <Button
+                variant="danger"
+                onClick={async () => {
+                  const ok = window.confirm("Deactivate this driver?");
+                  if (!ok) return;
+                  await deactivateMutation.mutateAsync();
+                }}
+                loading={deactivateMutation.isPending}
+              >
+                Deactivate
+              </Button>
+            ) : null}
           </div>
-        </div>
-        <div className="flex gap-2">
-          {!editMode ? (
-            <Button onClick={() => setEditMode(true)}>Edit</Button>
-          ) : (
-            <Button onClick={() => void saveDriver()} loading={updateMutation.isPending}>
-              Save
-            </Button>
-          )}
-          {driver.status !== "Terminated" ? (
-            <Button
-              variant="danger"
-              onClick={async () => {
-                const ok = window.confirm("Deactivate this driver?");
-                if (!ok) return;
-                await deactivateMutation.mutateAsync();
-              }}
-              loading={deactivateMutation.isPending}
-            >
-              Deactivate
-            </Button>
-          ) : null}
-        </div>
-      </div>
+        }
+      />
 
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
         <div className="flex min-w-max gap-1">
@@ -435,7 +424,7 @@ export function DriverDetailPage() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`rounded px-2.5 py-1.5 text-xs font-medium ${
-                activeTab === tab ? "bg-sky-100 text-sky-800" : "text-gray-700 hover:bg-gray-100"
+                activeTab === tab ? "bg-blue-100 text-blue-800" : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               {tab}

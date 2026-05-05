@@ -1,68 +1,72 @@
 import {
+  Activity,
+  Banknote,
   Calculator,
+  CarFront,
+  ClipboardList,
+  Fuel,
   Home,
-  MapPinned,
+  ShieldCheck,
   ListChecks,
+  SquareStack,
   Truck,
   Users,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { NavLink } from "react-router-dom";
+import { colors, spacing } from "../design/tokens";
 
 type SidebarItem = {
   key: string;
   label: string;
   Icon: ComponentType<{ className?: string }>;
-  to?: string;
+  to: string;
 };
 
 const ITEMS: SidebarItem[] = [
   { key: "HOME", label: "HOME", Icon: Home, to: "/home" },
+  { key: "MAINT", label: "MAINT", Icon: CarFront, to: "/maintenance" },
+  { key: "ACCTG", label: "ACCTG", Icon: Calculator, to: "/accounting" },
+  { key: "BANK", label: "BANK", Icon: Banknote, to: "/banking" },
+  { key: "FUEL", label: "FUEL", Icon: Fuel, to: "/fuel" },
+  { key: "SAFETY", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
   { key: "DRIVERS", label: "DRIVERS", Icon: Users, to: "/drivers" },
-  { key: "CUSTOMERS", label: "CUSTOMERS", Icon: Users, to: "/customers" },
-  { key: "VENDORS", label: "VENDORS", Icon: Truck },
-  { key: "LOCATIONS", label: "LOCATIONS", Icon: MapPinned },
-  { key: "LISTS_CATALOGS", label: "LISTS&CAT", Icon: ListChecks, to: "/catalogs" },
-  { key: "USERS", label: "USERS", Icon: Users, to: "/users" },
-  { key: "SETTINGS", label: "SETTINGS", Icon: Calculator },
+  { key: "DISPATCH", label: "DISPATCH", Icon: Truck, to: "/dispatch" },
+  { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/catalogs" },
+  { key: "REPORTS", label: "REPORTS", Icon: ClipboardList, to: "/reports" },
+  { key: "425C", label: "425C", Icon: SquareStack, to: "/form-425c" },
+  { key: "DRV_APP", label: "DRV APP", Icon: Activity, to: "/coming-soon?feature=Driver%20App&phase=2&eta=Phase%202" },
 ];
 
 export function Sidebar() {
   return (
-    <aside className="w-[72px] shrink-0 bg-sidebar-bg text-white">
+    <aside
+      className="shrink-0 text-white"
+      style={{ width: spacing.sidebarWidth, backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.sidebarBorder}` }}
+    >
       <div className="flex h-full flex-col items-center gap-1 py-2">
         {ITEMS.map(({ key, label, Icon, to }) => {
-          if (!to) {
-            return (
-              <button
-                key={key}
-                title="Coming in next phase"
-                type="button"
-                className="group relative flex w-full cursor-not-allowed flex-col items-center px-1 py-1 opacity-50"
-              >
-                <div className="flex h-7 w-7 items-center justify-center rounded bg-transparent group-hover:bg-sidebar-active">
-                  <Icon className="h-4 w-4" />
-                </div>
-                <span className="mt-0.5 text-[8px] leading-none tracking-[0.04em]">{label}</span>
-              </button>
-            );
-          }
-
           return (
             <NavLink
               key={key}
               to={to}
               className={({ isActive }) =>
-                `relative flex w-full flex-col items-center px-1 py-1 hover:bg-sidebar-active ${isActive ? "bg-sidebar-active" : ""}`
+                `relative flex w-full flex-col items-center justify-center px-1 py-1 hover:bg-white/5 ${isActive ? "bg-white/10" : ""}`
               }
+              style={{ height: spacing.sidebarItemHeight }}
             >
               {({ isActive }) => (
                 <>
-                  {isActive ? <span className="absolute left-0 top-1 h-7 w-1 rounded-r bg-info" /> : null}
-                  <div className="flex h-7 w-7 items-center justify-center rounded border border-white/40">
+                  {isActive ? <span className="absolute left-0 top-0 h-full" style={{ width: 3, backgroundColor: colors.sidebarActiveBorder }} /> : null}
+                  <div className="flex items-center justify-center">
                     <Icon className="h-4 w-4" />
                   </div>
-                  <span className="mt-0.5 text-[8px] leading-none tracking-[0.04em]">{label}</span>
+                  <span
+                    className="mt-1 text-[10px] leading-none uppercase"
+                    style={{ color: isActive ? colors.sidebarTextActive : colors.sidebarTextMuted, letterSpacing: "0.4px" }}
+                  >
+                    {label}
+                  </span>
                 </>
               )}
             </NavLink>

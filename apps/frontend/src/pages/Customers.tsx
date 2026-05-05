@@ -5,8 +5,13 @@ import { ApiError } from "../api/client";
 import { createCustomer, listCustomers, updateCustomer, type Customer } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
+import { DataTable } from "../components/DataTable";
+import { KpiCard } from "../components/layout/KpiCard";
+import { KpiStrip } from "../components/layout/KpiStrip";
+import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
+import { colors } from "../design/tokens";
 
 const createCustomerSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -108,64 +113,66 @@ export function CustomersPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Customers</h1>
-        {canManage ? <Button onClick={() => setAddOpen(true)}>Add Customer</Button> : null}
-      </div>
+      <PageHeader title="Customers" subtitle={`${customers.length} records`} actions={canManage ? <Button onClick={() => setAddOpen(true)}>Add Customer</Button> : null} />
+
+      <KpiStrip>
+        <KpiCard label="Active" number={customers.length} accent={colors.dispatch.strong} />
+        <KpiCard label="Credit Hold" number={0} accent={colors.warn.strong} />
+        <KpiCard label="Blacklist" number={0} accent={colors.crit.strong} />
+      </KpiStrip>
 
       {customersQuery.isLoading ? (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading customers...</div>
       ) : (
         <div className="space-y-3">
-          {customers.map((customer) => (
-            <div key={customer.id} className="rounded border border-gray-200 bg-white p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-semibold text-gray-900">{customer.name}</h2>
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{customerTypeLabel(customer.customer_type)}</span>
-                  </div>
-                  <div className="mt-1 text-xs text-gray-600">
-                    {customer.customer_code || "No code"} • {customer.email || "No email"} • {customer.phone || "No phone"}
-                  </div>
-                </div>
-                {canManage ? (
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setSelectedCustomer(customer);
-                      setEditForm({
-                        name: customer.name,
-                        customer_code: customer.customer_code ?? "",
-                        email: customer.email ?? "",
-                        phone: customer.phone ?? "",
-                        mc_number: customer.mc_number ?? "",
-                        dot_number: customer.dot_number ?? "",
-                        customer_type: customer.customer_type ?? "broker",
-                        default_billing_miles_basis: customer.default_billing_miles_basis,
-                        default_free_time_hours: String(customer.default_free_time_hours),
-                        default_detention_rate: String(customer.default_detention_rate),
-                        notes: customer.notes ?? "",
-                      });
-                      setEditOpen(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                ) : null}
-              </div>
-
-              <div className="mt-2 rounded border border-gray-100 bg-gray-50 p-2.5">
-                <div className="mb-2 text-xs font-semibold text-gray-700">Billing Configuration</div>
-                <div className="grid grid-cols-1 gap-2 text-xs text-gray-700 md:grid-cols-4">
-                  <div>Type: {customerTypeLabel(customer.customer_type)}</div>
-                  <div>Miles: {milesBasisLabel(customer.default_billing_miles_basis)}</div>
-                  <div>Free Time: {Number(customer.default_free_time_hours).toFixed(2)} hrs</div>
-                  <div>Detention: {formatMoney(customer.default_detention_rate)}/hr</div>
-                </div>
-              </div>
-            </div>
-          ))}
+          <DataTable
+            rows={customers}
+            rowKey={(row) => row.id}
+            columns={[
+              { key: "name", label: "Customer", render: (row) => row.name },
+              { key: "customer_code", label: "Code", render: (row) => row.customer_code ?? "—" },
+              { key: "email", label: "Email", render: (row) => row.email ?? "—" },
+              { key: "phone", label: "Phone", render: (row) => row.phone ?? "—" },
+              { key: "type", label: "Type", render: (row) => customerTypeLabel(row.customer_type) },
+              { key: "miles", label: "Miles", render: (row) => milesBasisLabel(row.default_billing_miles_basis) },
+              {
+                key: "detention",
+                label: "Detention",
+                render: (row) => `${formatMoney(row.default_detention_rate)}/hr`,
+              },
+              {
+                key: "actions",
+                label: "Actions",
+                render: (row) =>
+                  canManage ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setSelectedCustomer(row);
+                        setEditForm({
+                          name: row.name,
+                          customer_code: row.customer_code ?? "",
+                          email: row.email ?? "",
+                          phone: row.phone ?? "",
+                          mc_number: row.mc_number ?? "",
+                          dot_number: row.dot_number ?? "",
+                          customer_type: row.customer_type ?? "broker",
+                          default_billing_miles_basis: row.default_billing_miles_basis,
+                          default_free_time_hours: String(row.default_free_time_hours),
+                          default_detention_rate: String(row.default_detention_rate),
+                          notes: row.notes ?? "",
+                        });
+                        setEditOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  ) : null,
+              },
+            ]}
+          />
           {customers.length === 0 ? <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No customers found.</div> : null}
         </div>
       )}

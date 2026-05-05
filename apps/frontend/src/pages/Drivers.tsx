@@ -6,9 +6,15 @@ import { ApiError } from "../api/client";
 import { createDriver, listDrivers } from "../api/mdata";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
+import { DataPanel } from "../components/layout/DataPanel";
+import { DataPanelRow } from "../components/layout/DataPanelRow";
+import { KpiCard } from "../components/layout/KpiCard";
+import { KpiStrip } from "../components/layout/KpiStrip";
+import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
+import { colors } from "../design/tokens";
 
 const statusOptions = ["All", "Probation", "Active", "Inactive", "Terminated", "OnLeave"] as const;
 
@@ -163,10 +169,21 @@ export function DriversPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Drivers</h1>
-        <Button onClick={() => setAddOpen(true)}>Add Driver</Button>
-      </div>
+      <PageHeader
+        title="Drivers"
+        subtitle={`${drivers.length} new in last 3 days`}
+        actions={<Button onClick={() => setAddOpen(true)}>Add Driver</Button>}
+      />
+
+      <KpiStrip>
+        <KpiCard label="Active" number={drivers.filter((d) => d.status === "Active").length} accent={colors.drivers.strong} />
+        <KpiCard label="On Loads" number="—" accent={colors.dispatch.strong} />
+        <KpiCard label="Available" number="—" accent={colors.info.strong} />
+        <KpiCard label="On Leave" number={drivers.filter((d) => d.status === "OnLeave").length} accent={colors.warn.strong} />
+        <KpiCard label="Settle Due" number="—" accent={colors.accounting.strong} />
+        <KpiCard label="Drivers Owe" number="—" accent={colors.crit.strong} />
+        <KpiCard label="Escrow" number="—" accent={colors.fleet.strong} />
+      </KpiStrip>
 
       <div className="flex flex-wrap gap-2">
         <select
@@ -219,6 +236,22 @@ export function DriversPage() {
           },
         ]}
       />
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {[
+          "Settlements Ready",
+          "Debt Alert",
+          "Active Drivers Samsara Live",
+          "Permit Expirations",
+        ].map((title) => (
+          <DataPanel key={title} title={title} accentColor={colors.accounting.strong}>
+            <DataPanelRow>
+              <span className="text-xs text-gray-500">Coming in Phase X</span>
+              <span />
+            </DataPanelRow>
+          </DataPanel>
+        ))}
+      </div>
 
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add Driver">
         <form

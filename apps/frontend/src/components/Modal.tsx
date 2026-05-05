@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { colors, spacing, typography } from "../design/tokens";
 
 type ModalProps = {
   open: boolean;
@@ -48,18 +49,17 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
   return createPortal(
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" onMouseDown={onClose}>
-      <div
-        ref={panelRef}
-        className="w-full max-w-lg rounded-lg bg-white shadow-xl"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
-          <button className="text-xs text-gray-500 hover:text-gray-700" onClick={onClose} type="button">
+      <div ref={panelRef} className="w-full max-w-lg bg-white shadow-xl" style={{ borderRadius: spacing.radiusCard }} onMouseDown={(event) => event.stopPropagation()}>
+        <div
+          className="flex items-center justify-between border-b border-gray-200 bg-gray-50"
+          style={{ height: spacing.panelHeaderHeight, paddingLeft: spacing.panelPaddingX, paddingRight: spacing.panelPaddingX }}
+        >
+          <h2 className="uppercase" style={{ fontSize: typography.panelHeader, color: colors.bodyText, letterSpacing: typography.tightUpper }}>{title}</h2>
+          <button className="text-[11px] text-gray-500 hover:text-gray-700" onClick={onClose} type="button">
             Close
           </button>
         </div>
-        <div className="px-4 py-4">{children}</div>
+        <div style={{ padding: `${spacing.panelPaddingY}px ${spacing.panelPaddingX}px` }}>{children}</div>
       </div>
     </div>,
     document.body

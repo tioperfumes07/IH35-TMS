@@ -16,6 +16,7 @@ import {
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
+import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 
@@ -229,18 +230,21 @@ export function EquipmentTypesPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Equipment Types Catalog</h1>
-        <div className="flex items-center gap-2">
-          {canManage ? (
-            <label className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">
-              <input type="checkbox" checked={includeInactive} onChange={(event) => setIncludeInactive(event.target.checked)} />
-              Show inactive
-            </label>
-          ) : null}
-          {canManage ? <Button onClick={() => setAddEquipmentOpen(true)}>Add Equipment Type</Button> : null}
-        </div>
-      </div>
+      <PageHeader
+        title="Equipment Types Catalog"
+        subtitle={`${rows.length} registered types`}
+        actions={
+          <div className="flex items-center gap-2">
+            {canManage ? (
+              <label className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">
+                <input type="checkbox" checked={includeInactive} onChange={(event) => setIncludeInactive(event.target.checked)} />
+                Show inactive
+              </label>
+            ) : null}
+            {canManage ? <Button onClick={() => setAddEquipmentOpen(true)}>Add Equipment Type</Button> : null}
+          </div>
+        }
+      />
 
       {equipmentTypesQuery.isLoading ? (
         <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">Loading equipment types...</div>
