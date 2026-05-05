@@ -17,6 +17,7 @@ import { registerDriverReturningDetectionRoutes } from "./mdata/driver-returning
 import { registerDriverSafetyEventsRoutes } from "./mdata/driver-safety-events.routes.js";
 import { registerDispatcherSafetyEventsRoutes } from "./mdata/dispatcher-safety-events.routes.js";
 import { registerCustomerContactRoutes } from "./mdata/customer-contacts.routes.js";
+import { registerCustomerQualityEventsRoutes } from "./mdata/customer-quality-events.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
@@ -64,6 +65,7 @@ async function main() {
   await registerDriverSafetyEventsRoutes(app);
   await registerDispatcherSafetyEventsRoutes(app);
   await registerCustomerContactRoutes(app);
+  await registerCustomerQualityEventsRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerCatalogsRoutes(app);
   await registerCatalogRegistryRoutes(app);

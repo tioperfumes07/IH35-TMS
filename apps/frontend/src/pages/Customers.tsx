@@ -40,6 +40,7 @@ const createCustomerSchema = z.object({
   ap_phone: z.string().trim().max(50).optional(),
   billing_state: z.string().trim().max(8).optional(),
   credit_limit: z.coerce.number().min(0).optional(),
+  credit_limit_source: z.enum(["", "factor", "manual", "rmis_future"]).default(""),
   payment_terms_id: z.string().uuid().optional().or(z.literal("")),
   free_time_pickup_minutes: z.coerce.number().int().min(0).optional(),
   free_time_delivery_minutes: z.coerce.number().int().min(0).optional(),
@@ -90,6 +91,7 @@ function emptyCreateForm() {
     ap_phone: "",
     billing_state: "",
     credit_limit: "",
+    credit_limit_source: "manual",
     payment_terms_id: "",
     free_time_pickup_minutes: "120",
     free_time_delivery_minutes: "120",
@@ -142,6 +144,13 @@ function customerStatusVariant(status: Customer["status"]): "crit" | "warn" | "n
   return "positive";
 }
 
+function qualityFlagVariant(flag: Customer["quality_overall_flag"]): "positive" | "neutral" | "warn" | "crit" {
+  if (flag === "preferred") return "positive";
+  if (flag === "caution") return "warn";
+  if (flag === "avoid") return "crit";
+  return "neutral";
+}
+
 function formatMoney(value: string | number | null) {
   if (value === null) return "-";
   return `$${Number(value).toFixed(2)}`;
@@ -160,6 +169,8 @@ export function CustomersPage() {
   const [createForm, setCreateForm] = useState<CreateCustomerFormState>(emptyCreateForm());
   const [editForm, setEditForm] = useState<CustomerFormState>(emptyEditForm());
   const [createErrors, setCreateErrors] = useState<Partial<Record<keyof CreateCustomerFormState, string>>>({});
+  const [qualityFilter, setQualityFilter] = useState<"all" | Customer["quality_overall_flag"]>("all");
+  const [sortByDisputes, setSortByDisputes] = useState(false);
   const showTaxId = user?.role === "Owner";
 
   const customersQuery = useQuery({
@@ -200,7 +211,14 @@ export function CustomersPage() {
     },
   });
 
-  const customers = useMemo(() => customersQuery.data ?? [], [customersQuery.data]);
+  const customers = useMemo(() => {
+    const base = [...(customersQuery.data ?? [])];
+    const filtered = qualityFilter === "all" ? base : base.filter((customer) => customer.quality_overall_flag === qualityFilter);
+    if (sortByDisputes) {
+      filtered.sort((a, b) => (b.quality_disputes_count ?? 0) - (a.quality_disputes_count ?? 0));
+    }
+    return filtered;
+  }, [customersQuery.data, qualityFilter, sortByDisputes]);
   const activeCount = customers.filter((customer) => customer.status === "active").length;
   const creditHoldCount = customers.filter((customer) => customer.status === "credit_hold").length;
   const blacklistCount = customers.filter((customer) => customer.status === "blacklist").length;
@@ -214,6 +232,24 @@ export function CustomersPage() {
         <KpiCard label="Credit Hold" number={creditHoldCount} accent={colors.warn.strong} />
         <KpiCard label="Blacklist" number={blacklistCount} accent={colors.crit.strong} />
       </KpiStrip>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="text-xs font-semibold text-gray-600">Quality</label>
+        <select
+          value={qualityFilter}
+          onChange={(event) => setQualityFilter(event.target.value as "all" | Customer["quality_overall_flag"])}
+          className="h-8 rounded border border-gray-300 px-2 text-xs"
+        >
+          <option value="all">All</option>
+          <option value="preferred">Preferred</option>
+          <option value="standard">Standard</option>
+          <option value="caution">Caution</option>
+          <option value="avoid">Avoid</option>
+        </select>
+        <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+          <input type="checkbox" checked={sortByDisputes} onChange={(event) => setSortByDisputes(event.target.checked)} />
+          Sort by disputes
+        </label>
+      </div>
 
       {customersQuery.isLoading ? (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading customers...</div>
@@ -231,6 +267,11 @@ export function CustomersPage() {
                 key: "status",
                 label: "Status",
                 render: (row) => <StatusBadge variant={customerStatusVariant(row.status)}>{customerStatusLabel(row.status)}</StatusBadge>,
+              },
+              {
+                key: "quality",
+                label: "Quality",
+                render: (row) => <StatusBadge variant={qualityFlagVariant(row.quality_overall_flag)}>{row.quality_overall_flag}</StatusBadge>,
               },
               { key: "mc_dot", label: "MC / DOT", render: (row) => `${row.mc_number ?? "-"} / ${row.dot_number ?? "-"}` },
               { key: "contact", label: "Main Contact", render: (row) => row.main_contact_name ?? "-" },
@@ -307,6 +348,7 @@ export function CustomersPage() {
                 customer_type: parsed.data.customer_type === "direct" ? "direct_shipper" : "broker",
                 status: parsed.data.status,
                 credit_limit: parsed.data.credit_limit,
+                credit_limit_source: parsed.data.credit_limit_source || undefined,
                 payment_terms_id: parsed.data.payment_terms_id || undefined,
                 main_contact_name: parsed.data.main_contact_name || undefined,
                 main_contact_title: parsed.data.main_contact_title || undefined,
@@ -563,6 +605,22 @@ function CreateCustomerFormFields({
           <div className="flex flex-col gap-1">
             <FieldLabel text="Credit Limit" />
             <input value={form.credit_limit} onChange={(event) => setForm((current) => ({ ...current, credit_limit: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Credit Limit Source" />
+            <select
+              value={form.credit_limit_source}
+              onChange={(event) => setForm((current) => ({ ...current, credit_limit_source: event.target.value as "" | "factor" | "manual" | "rmis_future" }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            >
+              <option value="">(unset)</option>
+              <option value="factor">Factor</option>
+              <option value="manual">Manual</option>
+              <option value="rmis_future">RMIS Future</option>
+            </select>
+            <div className="text-[11px] text-gray-500">
+              If set by your factor (Faro/RTS), select Factor and let daily report sync update. Otherwise select Manual.
+            </div>
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Payment Terms" />
