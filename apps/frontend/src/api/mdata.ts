@@ -153,6 +153,9 @@ export type Customer = {
 
 export type CreateCustomerInput = {
   name: string;
+  legal_name?: string;
+  dba?: string;
+  code?: string;
   customer_code?: string;
   email?: string;
   phone?: string;
@@ -163,7 +166,7 @@ export type CreateCustomerInput = {
   credit_limit?: number;
   payment_terms_id?: string | null;
   operating_company_id?: string;
-  customer_type?: CustomerType;
+  customer_type?: CustomerType | "direct";
   status?: "active" | "inactive" | "credit_hold" | "blacklist";
   default_billing_miles_basis?: MilesBasis;
   default_free_time_hours?: number;

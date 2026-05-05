@@ -3,7 +3,7 @@ import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { ApiError } from "../api/client";
-import { createCustomer, listCustomers, updateCustomer, type Customer } from "../api/mdata";
+import { createCustomer, listCustomers, listPaymentTermOptions, updateCustomer, type Customer } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { DataTable } from "../components/DataTable";
@@ -16,6 +16,35 @@ import { StatusBadge } from "../components/layout/StatusBadge";
 import { colors } from "../design/tokens";
 
 const createCustomerSchema = z.object({
+  legal_name: z.string().trim().min(1, "Legal name is required").max(200),
+  dba: z.string().trim().max(200).optional(),
+  code: z.string().trim().max(100).optional(),
+  customer_type: z.enum(["broker", "direct"]),
+  status: z.enum(["active", "inactive", "credit_hold", "blacklist"]).default("active"),
+  dot_number: z.string().trim().max(100).optional(),
+  mc_number: z.string().trim().max(100).optional(),
+  tax_id: z.string().trim().max(50).optional(),
+  office_phone: z.string().trim().max(50).optional(),
+  fax_phone: z.string().trim().max(50).optional(),
+  website: z.string().trim().max(200).optional(),
+  main_contact_name: z.string().trim().max(120).optional(),
+  main_contact_title: z.string().trim().max(120).optional(),
+  main_contact_email: z.union([z.literal(""), z.string().trim().email("Invalid email")]).optional(),
+  main_contact_phone: z.string().trim().max(50).optional(),
+  main_contact_mobile: z.string().trim().max(50).optional(),
+  ar_email: z.union([z.literal(""), z.string().trim().email("Invalid email")]).optional(),
+  ar_phone: z.string().trim().max(50).optional(),
+  ap_email: z.union([z.literal(""), z.string().trim().email("Invalid email")]).optional(),
+  ap_phone: z.string().trim().max(50).optional(),
+  credit_limit: z.coerce.number().min(0).optional(),
+  payment_terms_id: z.string().uuid().optional().or(z.literal("")),
+  free_time_pickup_minutes: z.coerce.number().int().min(0).optional(),
+  free_time_delivery_minutes: z.coerce.number().int().min(0).optional(),
+  detention_rate_per_hour: z.coerce.number().min(0).optional(),
+  notes: z.string().trim().max(2000).optional(),
+});
+
+const updateCustomerSchema = z.object({
   name: z.string().trim().min(1).max(200),
   customer_code: z.string().trim().max(100).optional(),
   email: z.string().trim().email().optional().or(z.literal("")),
@@ -28,9 +57,38 @@ const createCustomerSchema = z.object({
   notes: z.string().trim().max(2000).optional(),
 });
 
-const updateCustomerSchema = createCustomerSchema;
-
 function emptyCreateForm() {
+  return {
+    legal_name: "",
+    dba: "",
+    code: "",
+    customer_type: "broker",
+    status: "active",
+    dot_number: "",
+    mc_number: "",
+    tax_id: "",
+    office_phone: "",
+    fax_phone: "",
+    website: "",
+    main_contact_name: "",
+    main_contact_title: "",
+    main_contact_email: "",
+    main_contact_phone: "",
+    main_contact_mobile: "",
+    ar_email: "",
+    ar_phone: "",
+    ap_email: "",
+    ap_phone: "",
+    credit_limit: "",
+    payment_terms_id: "",
+    free_time_pickup_minutes: "120",
+    free_time_delivery_minutes: "120",
+    detention_rate_per_hour: "0",
+    notes: "",
+  };
+}
+
+function emptyEditForm() {
   return {
     name: "",
     customer_code: "",
@@ -45,7 +103,8 @@ function emptyCreateForm() {
   };
 }
 
-type CustomerFormState = ReturnType<typeof emptyCreateForm>;
+type CreateCustomerFormState = ReturnType<typeof emptyCreateForm>;
+type CustomerFormState = ReturnType<typeof emptyEditForm>;
 
 function customerTypeLabel(value: "broker" | "direct_shipper" | null) {
   if (value === "broker") return "Broker";
@@ -82,12 +141,18 @@ export function CustomersPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [createForm, setCreateForm] = useState<CustomerFormState>(emptyCreateForm());
-  const [editForm, setEditForm] = useState<CustomerFormState>(emptyCreateForm());
+  const [createForm, setCreateForm] = useState<CreateCustomerFormState>(emptyCreateForm());
+  const [editForm, setEditForm] = useState<CustomerFormState>(emptyEditForm());
+  const [createErrors, setCreateErrors] = useState<Partial<Record<keyof CreateCustomerFormState, string>>>({});
+  const showTaxId = user?.role === "Owner";
 
   const customersQuery = useQuery({
     queryKey: ["customers"],
     queryFn: () => listCustomers({ status: "active" }).then((result) => result.customers),
+  });
+  const paymentTermsQuery = useQuery({
+    queryKey: ["catalogs", "payment-terms", "active"],
+    queryFn: () => listPaymentTermOptions().then((result) => result.payment_terms),
   });
 
   const createMutation = useMutation({
@@ -96,6 +161,7 @@ export function CustomersPage() {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       setAddOpen(false);
       setCreateForm(emptyCreateForm());
+      setCreateErrors({});
       pushToast("Customer created", "success");
     },
   });
@@ -189,20 +255,47 @@ export function CustomersPage() {
             event.preventDefault();
             const parsed = createCustomerSchema.safeParse(createForm);
             if (!parsed.success) {
+              const fieldErrors = parsed.error.flatten().fieldErrors;
+              setCreateErrors({
+                legal_name: fieldErrors.legal_name?.[0],
+                customer_type: fieldErrors.customer_type?.[0],
+                main_contact_email: fieldErrors.main_contact_email?.[0],
+                ar_email: fieldErrors.ar_email?.[0],
+                ap_email: fieldErrors.ap_email?.[0],
+              });
               pushToast(parsed.error.issues[0]?.message ?? "Please complete required fields", "error");
               return;
             }
+            setCreateErrors({});
             try {
               await createMutation.mutateAsync({
-                name: parsed.data.name,
-                customer_code: parsed.data.customer_code || undefined,
-                email: parsed.data.email || undefined,
-                phone: parsed.data.phone || undefined,
+                name: parsed.data.legal_name,
+                legal_name: parsed.data.legal_name,
+                dba: parsed.data.dba || undefined,
+                customer_code: parsed.data.code || undefined,
+                code: parsed.data.code || undefined,
+                website: parsed.data.website || undefined,
+                office_phone: parsed.data.office_phone || undefined,
+                fax_phone: parsed.data.fax_phone || undefined,
                 mc_number: parsed.data.mc_number || undefined,
                 dot_number: parsed.data.dot_number || undefined,
-                customer_type: parsed.data.customer_type ? (parsed.data.customer_type as "broker" | "direct_shipper") : undefined,
+                tax_id: showTaxId ? parsed.data.tax_id || undefined : undefined,
+                customer_type: parsed.data.customer_type === "direct" ? "direct_shipper" : "broker",
                 status: parsed.data.status,
                 credit_limit: parsed.data.credit_limit,
+                payment_terms_id: parsed.data.payment_terms_id || undefined,
+                main_contact_name: parsed.data.main_contact_name || undefined,
+                main_contact_title: parsed.data.main_contact_title || undefined,
+                main_contact_email: parsed.data.main_contact_email || undefined,
+                main_contact_phone: parsed.data.main_contact_phone || undefined,
+                main_contact_mobile: parsed.data.main_contact_mobile || undefined,
+                ar_email: parsed.data.ar_email || undefined,
+                ar_phone: parsed.data.ar_phone || undefined,
+                ap_email: parsed.data.ap_email || undefined,
+                ap_phone: parsed.data.ap_phone || undefined,
+                free_time_pickup_minutes: parsed.data.free_time_pickup_minutes,
+                free_time_delivery_minutes: parsed.data.free_time_delivery_minutes,
+                detention_rate_per_hour: parsed.data.detention_rate_per_hour,
                 notes: parsed.data.notes || undefined,
               });
             } catch (error) {
@@ -214,7 +307,13 @@ export function CustomersPage() {
             }
           }}
         >
-          <CustomerFormFields form={createForm} setForm={setCreateForm} />
+          <CreateCustomerFormFields
+            form={createForm}
+            setForm={setCreateForm}
+            errors={createErrors}
+            showTaxId={showTaxId}
+            paymentTermOptions={paymentTermsQuery.data ?? []}
+          />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setAddOpen(false)}>
               Cancel
@@ -269,6 +368,163 @@ export function CustomersPage() {
           </div>
         </form>
       </Modal>
+    </div>
+  );
+}
+
+function CreateCustomerFormFields({
+  form,
+  setForm,
+  errors,
+  showTaxId,
+  paymentTermOptions,
+}: {
+  form: CreateCustomerFormState;
+  setForm: Dispatch<SetStateAction<CreateCustomerFormState>>;
+  errors: Partial<Record<keyof CreateCustomerFormState, string>>;
+  showTaxId: boolean;
+  paymentTermOptions: Array<{ id: string; terms_name: string; days_until_due: number }>;
+}) {
+  const FieldLabel = ({ text, required }: { text: string; required?: boolean }) => (
+    <label className="text-xs font-semibold text-gray-600">
+      {text}
+      {required ? <span className="ml-1 text-red-500">*</span> : null}
+    </label>
+  );
+  const ErrorText = ({ field }: { field: keyof CreateCustomerFormState }) =>
+    errors[field] ? <div className="text-[11px] text-red-600">{errors[field]}</div> : null;
+
+  return (
+    <div className="space-y-3">
+      <details className="rounded border border-gray-200 p-3" open>
+        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-gray-700">Required + Identification</summary>
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Legal Name" required />
+            <input value={form.legal_name} onChange={(event) => setForm((current) => ({ ...current, legal_name: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <ErrorText field="legal_name" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="DBA" />
+            <input value={form.dba} onChange={(event) => setForm((current) => ({ ...current, dba: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Code" />
+            <input value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Customer Type" required />
+            <select value={form.customer_type} onChange={(event) => setForm((current) => ({ ...current, customer_type: event.target.value as "broker" | "direct" }))} className="rounded border border-gray-300 px-2 py-2 text-sm">
+              <option value="broker">Broker</option>
+              <option value="direct">Direct</option>
+            </select>
+            <ErrorText field="customer_type" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Status" />
+            <select value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="credit_hold">Credit Hold</option>
+              <option value="blacklist">Blacklist</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="DOT Number" />
+            <input value={form.dot_number} onChange={(event) => setForm((current) => ({ ...current, dot_number: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="MC Number" />
+            <input value={form.mc_number} onChange={(event) => setForm((current) => ({ ...current, mc_number: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          {showTaxId ? (
+            <div className="flex flex-col gap-1">
+              <FieldLabel text="Tax ID" />
+              <input value={form.tax_id} onChange={(event) => setForm((current) => ({ ...current, tax_id: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            </div>
+          ) : null}
+        </div>
+      </details>
+
+      <details className="rounded border border-gray-200 p-3" open>
+        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-gray-700">Contact Info</summary>
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+          {([
+            ["office_phone", "Office Phone"],
+            ["fax_phone", "Fax Phone"],
+            ["website", "Website"],
+            ["main_contact_name", "Main Contact Name"],
+            ["main_contact_title", "Main Contact Title"],
+            ["main_contact_phone", "Main Contact Phone"],
+            ["main_contact_mobile", "Main Contact Mobile"],
+          ] as Array<[keyof CreateCustomerFormState, string]>).map(([field, label]) => (
+            <div key={field} className="flex flex-col gap-1">
+              <FieldLabel text={label} />
+              <input value={form[field] ?? ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            </div>
+          ))}
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Main Contact Email" />
+            <input value={form.main_contact_email} onChange={(event) => setForm((current) => ({ ...current, main_contact_email: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <ErrorText field="main_contact_email" />
+          </div>
+        </div>
+      </details>
+
+      <details className="rounded border border-gray-200 p-3">
+        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-gray-700">Billing & Detention</summary>
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="A/R Email" />
+            <input value={form.ar_email} onChange={(event) => setForm((current) => ({ ...current, ar_email: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <ErrorText field="ar_email" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="A/R Phone" />
+            <input value={form.ar_phone} onChange={(event) => setForm((current) => ({ ...current, ar_phone: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="A/P Email" />
+            <input value={form.ap_email} onChange={(event) => setForm((current) => ({ ...current, ap_email: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <ErrorText field="ap_email" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="A/P Phone" />
+            <input value={form.ap_phone} onChange={(event) => setForm((current) => ({ ...current, ap_phone: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Credit Limit" />
+            <input value={form.credit_limit} onChange={(event) => setForm((current) => ({ ...current, credit_limit: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Payment Terms" />
+            <select value={form.payment_terms_id} onChange={(event) => setForm((current) => ({ ...current, payment_terms_id: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm">
+              <option value="">Default</option>
+              {paymentTermOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.terms_name} ({option.days_until_due} days)
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Free Time Pickup (minutes)" />
+            <input value={form.free_time_pickup_minutes} onChange={(event) => setForm((current) => ({ ...current, free_time_pickup_minutes: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Free Time Delivery (minutes)" />
+            <input value={form.free_time_delivery_minutes} onChange={(event) => setForm((current) => ({ ...current, free_time_delivery_minutes: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <FieldLabel text="Detention Rate / Hour" />
+            <input value={form.detention_rate_per_hour} onChange={(event) => setForm((current) => ({ ...current, detention_rate_per_hour: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <FieldLabel text="Notes" />
+            <textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} rows={2} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+        </div>
+      </details>
     </div>
   );
 }
