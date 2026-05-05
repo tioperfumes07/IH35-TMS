@@ -4,7 +4,8 @@ import { ArrowLeft, RefreshCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { getDownloadUrl, listFiles, type DocsFile } from "../api/docs";
-import { getMyDriverRecord } from "../api/mdata";
+import { getCurrentDriver } from "../api/mdata";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { UploadDocumentModal } from "../components/UploadDocumentModal";
 import { Modal } from "../components/Modal";
 import { PwaButton } from "../components/PwaButton";
@@ -40,7 +41,7 @@ export function MyDocumentsPage() {
 
   const driverQuery = useQuery({
     queryKey: ["driver-pwa-my-driver-record", "documents-page"],
-    queryFn: getMyDriverRecord,
+    queryFn: getCurrentDriver,
   });
 
   const syncedFilesQuery = useQuery({
@@ -212,6 +213,14 @@ export function MyDocumentsPage() {
 
         <section className="rounded-xl border border-pwa-border bg-pwa-card p-3">
           <h2 className="mb-2 font-semibold">Synced documents</h2>
+          {driverQuery.isLoading ? <div className="mb-2 text-xs text-pwa-text-secondary">Loading your driver profile...</div> : null}
+          {driverQuery.error ? (
+            <div className="mb-2 text-xs text-hos-violation">
+              {driverQuery.error instanceof ApiError && driverQuery.error.status === 404
+                ? "Your account is not linked to a driver profile. Contact dispatch."
+                : "Unable to load your driver profile."}
+            </div>
+          ) : null}
           {apiSyncedUnavailable ? (
             <div className="mb-2 text-xs text-pwa-text-secondary">
               Server list unavailable for Driver role. Showing local synced history from this device.
@@ -261,14 +270,16 @@ export function MyDocumentsPage() {
         </section>
       </div>
 
-      <UploadDocumentModal
-        open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        onQueued={() => {
-          void loadQueue();
-          void syncOnce();
-        }}
-      />
+      <ErrorBoundary>
+        <UploadDocumentModal
+          open={uploadOpen}
+          onClose={() => setUploadOpen(false)}
+          onQueued={() => {
+            void loadQueue();
+            void syncOnce();
+          }}
+        />
+      </ErrorBoundary>
 
       <Modal
         open={Boolean(previewFile)}

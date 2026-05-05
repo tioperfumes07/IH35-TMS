@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ApiError } from "../api/client";
 import { listFileCategories } from "../api/docs";
-import { getMyDriverRecord } from "../api/mdata";
+import { getCurrentDriver } from "../api/mdata";
 import { compressImage } from "../lib/image-compress";
 import { enqueueUpload, type UploadQueueItem } from "../lib/upload-queue";
 import { syncOnce } from "../lib/upload-sync";
@@ -16,9 +17,14 @@ type UploadDocumentModalProps = {
 };
 
 const QUICK_CODES = ["cdl", "medical_card", "dot_inspection", "dvir", "damage_photo", "other"];
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function isUuid(value: string) {
+  return UUID_PATTERN.test(value);
 }
 
 export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentModalProps) {
@@ -44,7 +50,7 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
 
   const driverQuery = useQuery({
     queryKey: ["driver-pwa-self-driver-record"],
-    queryFn: getMyDriverRecord,
+    queryFn: getCurrentDriver,
     enabled: open,
   });
 
@@ -92,8 +98,8 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
     }
 
     const driverId = driverQuery.data?.id ?? null;
-    if (entityType === "driver" && !driverId) {
-      pushToast("Driver record unavailable. Try again.", "error");
+    if (entityType === "driver" && (!driverId || !isUuid(driverId))) {
+      pushToast("Your account is not linked to a driver profile. Contact dispatch.", "error");
       return;
     }
 
@@ -318,7 +324,21 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
         {step === 4 ? (
           <div className="space-y-3">
             <p className="text-sm text-pwa-text-secondary">Step 4: Submit</p>
-            <PwaButton className="w-full" onClick={() => void handleQueueUpload()} disabled={submitting}>
+            {entityType === "driver" && driverQuery.isLoading ? (
+              <p className="text-xs text-pwa-text-secondary">Loading your driver profile...</p>
+            ) : null}
+            {entityType === "driver" && driverQuery.error ? (
+              <p className="text-xs text-hos-violation">
+                {driverQuery.error instanceof ApiError && driverQuery.error.status === 404
+                  ? "Your account is not linked to a driver profile. Contact dispatch."
+                  : "Unable to load your driver profile. Try again."}
+              </p>
+            ) : null}
+            <PwaButton
+              className="w-full"
+              onClick={() => void handleQueueUpload()}
+              disabled={submitting || (entityType === "driver" && (driverQuery.isLoading || Boolean(driverQuery.error) || !driverQuery.data?.id))}
+            >
               {submitting ? "Optimizing..." : "Queue Upload"}
             </PwaButton>
           </div>

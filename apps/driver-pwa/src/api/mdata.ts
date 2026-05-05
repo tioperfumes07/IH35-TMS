@@ -7,7 +7,10 @@ export type DriverSelfRecord = {
   last_name: string;
 };
 
+export async function getCurrentDriver() {
+  return apiRequest<DriverSelfRecord>("/api/v1/mdata/drivers/me");
+}
+
 export async function getMyDriverRecord() {
-  const result = await apiRequest<{ drivers: DriverSelfRecord[] }>("/api/v1/mdata/drivers?limit=1&offset=0");
-  return result.drivers[0] ?? null;
+  return getCurrentDriver();
 }

@@ -2,6 +2,18 @@ import { apiRequest, ApiError } from "./client";
 
 export type DriverFileEntityType = "driver" | "load" | "standalone";
 type ApiFileEntityType = "driver" | "customer" | "vendor" | "unit" | "equipment" | "load" | "settlement" | "invoice";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function cleanOptionalString(value: string | undefined | null) {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "undefined" || trimmed === "null") return undefined;
+  return trimmed;
+}
+
+function isUuid(value: string) {
+  return UUID_PATTERN.test(value);
+}
 
 export type FileCategory = {
   id: string;
@@ -44,11 +56,39 @@ export function requestUploadUrl(payload: {
   category_id?: string | null;
   entity_links?: Array<{ entity_type: ApiFileEntityType; entity_id: string }>;
 }) {
+  const categoryId = cleanOptionalString(payload.category_id ?? undefined);
+  const entityLinks =
+    payload.entity_links
+      ?.map((link) => ({
+        entity_type: link.entity_type,
+        entity_id: cleanOptionalString(link.entity_id),
+      }))
+      .filter((link): link is { entity_type: ApiFileEntityType; entity_id: string } => Boolean(link.entity_id && isUuid(link.entity_id))) ?? [];
+
+  const body: {
+    original_filename: string;
+    mime_type: string;
+    size_bytes: number;
+    category_id?: string;
+    entity_links?: Array<{ entity_type: ApiFileEntityType; entity_id: string }>;
+  } = {
+    original_filename: payload.original_filename,
+    mime_type: payload.mime_type,
+    size_bytes: payload.size_bytes,
+  };
+
+  if (categoryId && isUuid(categoryId)) {
+    body.category_id = categoryId;
+  }
+  if (entityLinks.length > 0) {
+    body.entity_links = entityLinks;
+  }
+
   return apiRequest<{
     file_id: string;
     presigned_url: string;
     expires_at: string;
-  }>("/api/v1/docs/files/upload-url", { method: "POST", body: payload });
+  }>("/api/v1/docs/files/upload-url", { method: "POST", body });
 }
 
 export function confirmUpload(fileId: string) {
@@ -68,17 +108,11 @@ export function updateFileMetadata(
 }
 
 export function listFiles(filters: Partial<{ entity_type: ApiFileEntityType; entity_id: string; limit: number; offset: number }> = {}) {
-  const clean = (value: string | undefined) => {
-    if (!value) return undefined;
-    const trimmed = value.trim();
-    if (!trimmed || trimmed === "undefined" || trimmed === "null") return undefined;
-    return trimmed;
-  };
   const query = new URLSearchParams();
-  const entityType = clean(filters.entity_type);
-  const entityId = clean(filters.entity_id);
+  const entityType = cleanOptionalString(filters.entity_type);
+  const entityId = cleanOptionalString(filters.entity_id);
   if (entityType) query.set("entity_type", entityType);
-  if (entityId) query.set("entity_id", entityId);
+  if (entityId && isUuid(entityId)) query.set("entity_id", entityId);
   if (filters.limit !== undefined) query.set("limit", String(filters.limit));
   if (filters.offset !== undefined) query.set("offset", String(filters.offset));
   const qs = query.toString();

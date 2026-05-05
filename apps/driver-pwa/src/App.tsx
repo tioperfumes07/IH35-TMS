@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { useAuth } from "./auth/useAuth";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
 import { MyDocumentsPage } from "./pages/MyDocuments";
@@ -64,7 +65,9 @@ export default function App() {
         path="/documents"
         element={
           <ProtectedRoute>
-            <MyDocumentsPage />
+            <ErrorBoundary>
+              <MyDocumentsPage />
+            </ErrorBoundary>
           </ProtectedRoute>
         }
       />

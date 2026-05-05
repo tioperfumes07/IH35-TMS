@@ -206,6 +206,33 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     return { drivers };
   });
 
+  app.get("/api/v1/mdata/drivers/me", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+
+    const row = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query(
+        `
+          SELECT
+            id, identity_user_id, first_name, last_name, phone, email, status, created_at, updated_at
+          FROM mdata.drivers
+          WHERE identity_user_id = $1
+          LIMIT 1
+        `,
+        [authUser.uuid]
+      );
+      return res.rows[0] ?? null;
+    });
+
+    if (!row) {
+      return reply.code(404).send({
+        error: "driver_profile_not_linked",
+        message: "your account is not linked to a driver profile",
+      });
+    }
+    return row;
+  });
+
   app.post("/api/v1/mdata/drivers", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { signOut } from "../api/identity";
 import { useAuth } from "../auth/useAuth";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { UploadDocumentModal } from "../components/UploadDocumentModal";
 import { HosCell } from "../components/HosCell";
 import { InstallPrompt } from "../components/InstallPrompt";
@@ -178,13 +179,15 @@ export function HomePage() {
       </div>
 
       <InstallPrompt />
-      <UploadDocumentModal
-        open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        onQueued={() => {
-          void syncOnce();
-        }}
-      />
+      <ErrorBoundary>
+        <UploadDocumentModal
+          open={uploadOpen}
+          onClose={() => setUploadOpen(false)}
+          onQueued={() => {
+            void syncOnce();
+          }}
+        />
+      </ErrorBoundary>
 
       <Modal open={issueOpen} onClose={() => setIssueOpen(false)} title="Report issue">
         <div className="space-y-3">
