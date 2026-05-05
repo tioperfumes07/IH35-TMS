@@ -13,6 +13,7 @@ import {
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
+import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
@@ -47,6 +48,14 @@ const phaseLabel: Record<DriverLoadStatusPhase, string> = {
   completed: "Completed",
   other: "Other",
 };
+const DRIVER_LOAD_PHASE_OPTIONS: ComboboxOption[] = (Object.keys(phaseLabel) as DriverLoadStatusPhase[]).map((phase) => ({
+  value: phase,
+  label: phaseLabel[phase],
+}));
+const ACTIVE_STATUS_OPTIONS: ComboboxOption[] = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+];
 
 function emptyForm() {
   return {
@@ -300,17 +309,12 @@ function StatusForm({
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Phase</label>
-          <select
+          <Combobox
+            options={DRIVER_LOAD_PHASE_OPTIONS}
             value={form.phase}
-            onChange={(event) => setForm((current) => ({ ...current, phase: event.target.value }))}
-            className="rounded border border-gray-300 px-2 py-2 text-sm"
-          >
-            {(Object.keys(phaseLabel) as DriverLoadStatusPhase[]).map((phase) => (
-              <option key={phase} value={phase}>
-                {phaseLabel[phase]}
-              </option>
-            ))}
-          </select>
+            onChange={(nextValue) => setForm((current) => ({ ...current, phase: (nextValue as DriverLoadStatusPhase) ?? "transit_to_pickup" }))}
+            placeholder="Select phase"
+          />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Sort Order</label>
@@ -334,14 +338,12 @@ function StatusForm({
         {disableCode ? (
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Active</label>
-            <select
+            <Combobox
+              options={ACTIVE_STATUS_OPTIONS}
               value={form.is_active}
-              onChange={(event) => setForm((current) => ({ ...current, is_active: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
+              onChange={(nextValue) => setForm((current) => ({ ...current, is_active: nextValue ?? "true" }))}
+              placeholder="Select status"
+            />
           </div>
         ) : null}
       </div>

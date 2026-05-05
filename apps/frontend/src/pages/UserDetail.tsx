@@ -44,6 +44,19 @@ const EVENT_TYPE_OPTIONS: ComboboxOption[] = [
   "policy_violation",
   "other",
 ].map((value) => ({ value, label: eventTypeLabel(value as DispatcherErrorReason["event_type"]) }));
+const SEVERITY_OPTIONS: ComboboxOption[] = [
+  { value: "info", label: "info" },
+  { value: "warning", label: "warning" },
+  { value: "severe", label: "severe" },
+];
+const COST_RECOVERY_STATUS_OPTIONS: ComboboxOption[] = [
+  { value: "pending", label: "pending" },
+  { value: "partial", label: "partial" },
+  { value: "recovered", label: "recovered" },
+  { value: "waived", label: "waived" },
+  { value: "absorbed", label: "absorbed" },
+];
+const CURRENCY_OPTIONS: ComboboxOption[] = [{ value: "USD", label: "USD" }];
 
 export function UserDetailPage() {
   const params = useParams<{ id: string }>();
@@ -467,20 +480,25 @@ export function UserDetailPage() {
               placeholder="Select reason"
               disabled={!eventType}
               loading={reasonsQuery.isLoading}
+              allowAddNew={
+                isOwner
+                  ? {
+                      label: "Add reason in catalog",
+                      onAdd: (query) => pushToast(`Add "${query}" from dispatcher error reasons catalog`, "info"),
+                    }
+                  : undefined
+              }
             />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Severity</label>
-            <select
+            <Combobox
+              options={SEVERITY_OPTIONS}
               value={severity}
-              onChange={(event) => setSeverity(event.target.value as DispatcherErrorReason["severity"])}
-              className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+              onChange={(value) => setSeverity(((value as DispatcherErrorReason["severity"]) ?? "warning"))}
               disabled={Boolean(selectedReason)}
-            >
-              <option value="info">info</option>
-              <option value="warning">warning</option>
-              <option value="severe">severe</option>
-            </select>
+              placeholder="Select severity"
+            />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Summary</label>
@@ -506,21 +524,19 @@ export function UserDetailPage() {
                   placeholder="Cost amount"
                   className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
                 />
-                <select value={costCurrency} onChange={(event) => setCostCurrency(event.target.value)} className="w-full rounded border border-gray-300 px-2 py-2 text-sm">
-                  <option value="USD">USD</option>
-                </select>
-                <select
+                <Combobox
+                  options={CURRENCY_OPTIONS}
+                  value={costCurrency}
+                  onChange={(value) => setCostCurrency(value ?? "USD")}
+                  placeholder="Currency"
+                />
+                <Combobox
+                  options={COST_RECOVERY_STATUS_OPTIONS}
                   value={costRecoveryStatus ?? ""}
-                  onChange={(event) => setCostRecoveryStatus((event.target.value || null) as DispatcherSafetyEvent["cost_recovery_status"])}
-                  className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
-                >
-                  <option value="">Select recovery status</option>
-                  <option value="pending">pending</option>
-                  <option value="partial">partial</option>
-                  <option value="recovered">recovered</option>
-                  <option value="waived">waived</option>
-                  <option value="absorbed">absorbed</option>
-                </select>
+                  onChange={(value) => setCostRecoveryStatus((value || null) as DispatcherSafetyEvent["cost_recovery_status"])}
+                  allowClear
+                  placeholder="Select recovery status"
+                />
                 {costRecoveryStatus === "partial" || costRecoveryStatus === "recovered" ? (
                   <input
                     type="number"
@@ -607,18 +623,13 @@ export function UserDetailPage() {
             className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
             placeholder="Details"
           />
-          <select
+          <Combobox
+            options={COST_RECOVERY_STATUS_OPTIONS}
             value={editRecoveryStatus ?? ""}
-            onChange={(event) => setEditRecoveryStatus((event.target.value || null) as DispatcherSafetyEvent["cost_recovery_status"])}
-            className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
-          >
-            <option value="">No recovery status</option>
-            <option value="pending">pending</option>
-            <option value="partial">partial</option>
-            <option value="recovered">recovered</option>
-            <option value="waived">waived</option>
-            <option value="absorbed">absorbed</option>
-          </select>
+            onChange={(value) => setEditRecoveryStatus((value || null) as DispatcherSafetyEvent["cost_recovery_status"])}
+            allowClear
+            placeholder="No recovery status"
+          />
           <input
             type="number"
             min="0"

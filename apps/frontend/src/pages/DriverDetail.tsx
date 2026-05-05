@@ -26,7 +26,7 @@ import {
   updateDriver,
 } from "../api/mdata";
 import { Button } from "../components/Button";
-import { Combobox } from "../components/Combobox";
+import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
@@ -44,6 +44,34 @@ const reasonOptions = [
   { value: "correction", label: "Correction" },
   { value: "other", label: "Other" },
 ] as const;
+const CDL_CLASS_OPTIONS: ComboboxOption[] = ["A", "B", "C"].map((value) => ({ value, label: value }));
+const DRIVER_STATUS_OPTIONS: ComboboxOption[] = ["Probation", "Active", "Inactive", "Terminated", "OnLeave"].map((value) => ({
+  value,
+  label: value,
+}));
+const PAY_BASIS_OPTIONS: ComboboxOption[] = [
+  { value: "short_miles", label: "Short Miles" },
+  { value: "practical_miles", label: "Practical Miles" },
+];
+const VISA_TYPE_OPTIONS: ComboboxOption[] = [
+  { value: "", label: "None" },
+  { value: "B1", label: "B1" },
+  { value: "B2", label: "B2" },
+  { value: "Other", label: "Other" },
+];
+const SAFETY_EVENT_TYPE_OPTIONS: ComboboxOption[] = [
+  { value: "termination", label: "Termination" },
+  { value: "incident", label: "Incident" },
+  { value: "complaint", label: "Complaint" },
+  { value: "commendation", label: "Commendation" },
+  { value: "dispute", label: "Dispute" },
+];
+const SAFETY_SEVERITY_OPTIONS: ComboboxOption[] = [
+  { value: "info", label: "Info" },
+  { value: "warning", label: "Warning" },
+  { value: "severe", label: "Severe" },
+];
+const RATE_CHANGE_REASON_OPTIONS: ComboboxOption[] = reasonOptions.map((reason) => ({ value: reason.value, label: reason.label }));
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -560,43 +588,33 @@ export function DriverDetailPage() {
 
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">CDL Class</label>
-            <select
+            <Combobox
+              options={CDL_CLASS_OPTIONS}
               disabled={!editMode}
               value={hydratedForm.cdl_class ?? "A"}
-              onChange={(event) => setForm((current) => ({ ...current, cdl_class: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
-            >
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="C">C</option>
-            </select>
+              onChange={(nextValue) => setForm((current) => ({ ...current, cdl_class: nextValue ?? "A" }))}
+              placeholder="Select CDL class"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Status</label>
-            <select
+            <Combobox
+              options={DRIVER_STATUS_OPTIONS}
               disabled={!editMode}
               value={hydratedForm.status ?? "Probation"}
-              onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
-            >
-              <option value="Probation">Probation</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="Terminated">Terminated</option>
-              <option value="OnLeave">OnLeave</option>
-            </select>
+              onChange={(nextValue) => setForm((current) => ({ ...current, status: nextValue ?? "Probation" }))}
+              placeholder="Select status"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Pay Basis</label>
-            <select
+            <Combobox
+              options={PAY_BASIS_OPTIONS}
               disabled={!editMode}
               value={hydratedForm.pay_basis ?? "short_miles"}
-              onChange={(event) => setForm((current) => ({ ...current, pay_basis: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
-            >
-              <option value="short_miles">Short Miles</option>
-              <option value="practical_miles">Practical Miles</option>
-            </select>
+              onChange={(nextValue) => setForm((current) => ({ ...current, pay_basis: nextValue ?? "short_miles" }))}
+              placeholder="Select pay basis"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Has phone login</label>
@@ -643,17 +661,14 @@ export function DriverDetailPage() {
               ))}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Visa Type</label>
-                <select
+                <Combobox
+                  options={VISA_TYPE_OPTIONS}
                   value={hydratedForm.visa_type ?? ""}
                   disabled={!editMode}
-                  onChange={(event) => setForm((current) => ({ ...current, visa_type: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
-                >
-                  <option value="">None</option>
-                  <option value="B1">B1</option>
-                  <option value="B2">B2</option>
-                  <option value="Other">Other</option>
-                </select>
+                  onChange={(nextValue) => setForm((current) => ({ ...current, visa_type: nextValue ?? "" }))}
+                  placeholder="Select visa type"
+                  allowClear
+                />
               </div>
             </div>
           </div>
@@ -1116,18 +1131,12 @@ export function DriverDetailPage() {
         >
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Equipment type</label>
-            <select
-              value={newQualificationForm.equipment_type_id}
-              onChange={(event) => setNewQualificationForm((current) => ({ ...current, equipment_type_id: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              <option value="">Select equipment type</option>
-              {equipmentTypeOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
+            <Combobox
+              options={equipmentTypeOptions.map((option) => ({ value: option.id, label: option.name }))}
+              value={newQualificationForm.equipment_type_id || null}
+              onChange={(nextValue) => setNewQualificationForm((current) => ({ ...current, equipment_type_id: nextValue ?? "" }))}
+              placeholder="Select equipment type"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Qualified date</label>
@@ -1177,23 +1186,18 @@ export function DriverDetailPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Event type</label>
-              <select
+              <Combobox
+                options={SAFETY_EVENT_TYPE_OPTIONS}
                 value={safetyForm.event_type}
-                onChange={(event) =>
+                onChange={(value) =>
                   setSafetyForm((current) => ({
                     ...current,
-                    event_type: event.target.value as typeof current.event_type,
-                    termination_reason_id: event.target.value === "termination" ? current.termination_reason_id : "",
+                    event_type: ((value ?? "incident") as typeof current.event_type),
+                    termination_reason_id: value === "termination" ? current.termination_reason_id : "",
                   }))
                 }
-                className="rounded border border-gray-300 px-2 py-2 text-sm"
-              >
-                <option value="termination">Termination</option>
-                <option value="incident">Incident</option>
-                <option value="complaint">Complaint</option>
-                <option value="commendation">Commendation</option>
-                <option value="dispute">Dispute</option>
-              </select>
+                placeholder="Select event type"
+              />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Event date</label>
@@ -1208,10 +1212,15 @@ export function DriverDetailPage() {
             {safetyForm.event_type === "termination" ? (
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="text-xs font-semibold text-gray-600">Termination reason</label>
-                <select
-                  value={safetyForm.termination_reason_id}
-                  onChange={(event) => {
-                    const nextId = event.target.value;
+                <Combobox
+                  options={terminationReasons.map((reason) => ({
+                    value: reason.id,
+                    label: reason.label,
+                    sublabel: reason.severity,
+                  }))}
+                  value={safetyForm.termination_reason_id || null}
+                  onChange={(nextValue) => {
+                    const nextId = nextValue ?? "";
                     const selectedReason = terminationReasons.find((reason) => reason.id === nextId);
                     setSafetyForm((current) => ({
                       ...current,
@@ -1219,29 +1228,28 @@ export function DriverDetailPage() {
                       severity: selectedReason?.severity ?? current.severity,
                     }));
                   }}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
-                >
-                  <option value="">Select reason</option>
-                  {terminationReasons.map((reason) => (
-                    <option key={reason.id} value={reason.id}>
-                      {reason.label} ({reason.severity})
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select reason"
+                  loading={terminationReasonsQuery.isLoading}
+                  allowAddNew={
+                    isOwner
+                      ? {
+                          label: "Add reason in catalog",
+                          onAdd: (query) => pushToast(`Add "${query}" from termination reasons catalog`, "info"),
+                        }
+                      : undefined
+                  }
+                />
               </div>
             ) : null}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Severity</label>
-              <select
+              <Combobox
+                options={SAFETY_SEVERITY_OPTIONS}
                 value={safetyForm.severity}
                 disabled={safetyForm.event_type === "termination"}
-                onChange={(event) => setSafetyForm((current) => ({ ...current, severity: event.target.value as typeof current.severity }))}
-                className="rounded border border-gray-300 px-2 py-2 text-sm disabled:bg-gray-100"
-              >
-                <option value="info">Info</option>
-                <option value="warning">Warning</option>
-                <option value="severe">Severe</option>
-              </select>
+                onChange={(nextValue) => setSafetyForm((current) => ({ ...current, severity: (nextValue as typeof current.severity) ?? "warning" }))}
+                placeholder="Select severity"
+              />
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
               <label className="text-xs font-semibold text-gray-600">Summary</label>
@@ -1374,17 +1382,12 @@ export function DriverDetailPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Change reason</label>
-            <select
+            <Combobox
+              options={RATE_CHANGE_REASON_OPTIONS}
               value={rateChangeForm.change_reason}
-              onChange={(event) => setRateChangeForm((current) => ({ ...current, change_reason: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              {reasonOptions.map((reason) => (
-                <option key={reason.value} value={reason.value}>
-                  {reason.label}
-                </option>
-              ))}
-            </select>
+              onChange={(nextValue) => setRateChangeForm((current) => ({ ...current, change_reason: nextValue ?? "raise" }))}
+              placeholder="Select change reason"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Notes</label>

@@ -13,6 +13,7 @@ import {
   type ReturningDispatcherDetectionResult,
 } from "../api/identity";
 import { Button } from "../components/Button";
+import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
@@ -31,6 +32,11 @@ const ROLE_OPTIONS: Array<UserRole | "Viewer"> = [
   "Mechanic",
   "Viewer",
 ];
+const roleComboboxOptions = ROLE_OPTIONS.map((role) => ({ value: role, label: role }));
+const roleChangeComboboxOptions = ROLE_OPTIONS.filter((role): role is UserRole => role !== "Viewer").map((role) => ({
+  value: role,
+  label: role,
+}));
 
 function userStatus(user: IdentityUser): "Active" | "Inactive" {
   return user.deactivated_at ? "Inactive" : "Active";
@@ -259,17 +265,12 @@ export function UsersPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Role</label>
-            <select
+            <Combobox
+              options={roleComboboxOptions}
               value={inviteRole}
-              onChange={(event) => setInviteRole(event.target.value as UserRole | "Viewer")}
-              className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              {ROLE_OPTIONS.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setInviteRole((value as UserRole | "Viewer") ?? "Manager")}
+              placeholder="Select role"
+            />
           </div>
           {checkingReturningDispatcher ? <div className="text-xs text-gray-500">Checking returning dispatcher history...</div> : null}
           {returningDetection ? (
@@ -327,17 +328,12 @@ export function UsersPage() {
           <div className="text-sm text-gray-600">Current role: {roleModalUser?.role ?? "—"}</div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">New role</label>
-            <select
+            <Combobox
+              options={roleChangeComboboxOptions}
               value={roleChangeRole}
-              onChange={(event) => setRoleChangeRole(event.target.value as UserRole)}
-              className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
-            >
-              {ROLE_OPTIONS.filter((role): role is UserRole => role !== "Viewer").map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setRoleChangeRole((value as UserRole) ?? "Manager")}
+              placeholder="Select role"
+            />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Reason (optional)</label>
