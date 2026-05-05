@@ -185,6 +185,8 @@ export type Customer = {
   dot_number: string | null;
   tax_id: string | null;
   credit_limit: string | null;
+  credit_limit_source: "factor" | "manual" | "rmis_future" | null;
+  credit_limit_updated_at: string | null;
   payment_terms_id: string | null;
   operating_company_id: string;
   customer_type: CustomerType | null;
@@ -215,6 +217,12 @@ export type Customer = {
   factoring_reserve_pct_override: string | null;
   factoring_recourse_type: "recourse" | "non_recourse" | null;
   factoring_notes: string | null;
+  quality_overall_flag: "preferred" | "standard" | "caution" | "avoid";
+  quality_payment_score: string | null;
+  quality_cancellation_score: string | null;
+  quality_disputes_count: number;
+  quality_last_evaluated_at: string | null;
+  quality_notes: string | null;
   created_at: string;
   updated_at: string;
   deactivated_at: string | null;
@@ -236,6 +244,8 @@ export type CreateCustomerInput = {
   dot_number?: string;
   tax_id?: string;
   credit_limit?: number;
+  credit_limit_source?: "factor" | "manual" | "rmis_future" | null;
+  credit_limit_updated_at?: string | null;
   payment_terms_id?: string | null;
   operating_company_id?: string;
   customer_type?: CustomerType | "direct";
@@ -265,6 +275,8 @@ export type CreateCustomerInput = {
   factoring_reserve_pct_override?: number | null;
   factoring_recourse_type?: "recourse" | "non_recourse" | null;
   factoring_notes?: string | null;
+  quality_overall_flag?: "preferred" | "standard" | "caution" | "avoid";
+  quality_notes?: string;
 };
 
 export type UpdateCustomerInput = Partial<{
@@ -278,6 +290,8 @@ export type UpdateCustomerInput = Partial<{
   dot_number: string | null;
   tax_id: string | null;
   credit_limit: number | null;
+  credit_limit_source: "factor" | "manual" | "rmis_future" | null;
+  credit_limit_updated_at: string | null;
   payment_terms_id: string | null;
   operating_company_id: string;
   customer_type: CustomerType | null;
@@ -308,6 +322,8 @@ export type UpdateCustomerInput = Partial<{
   factoring_reserve_pct_override: number | null;
   factoring_recourse_type: "recourse" | "non_recourse" | null;
   factoring_notes: string | null;
+  quality_overall_flag: "preferred" | "standard" | "caution" | "avoid";
+  quality_notes: string | null;
   deactivated_at: string | null;
 }>;
 
@@ -327,6 +343,52 @@ export type CustomerContact = {
   is_primary: boolean;
   notes: string | null;
   deactivated_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CustomerQualityEventReason = {
+  id: string;
+  code: string;
+  label: string;
+  description: string | null;
+  event_type: CustomerQualityEvent["event_type"];
+  severity: CustomerQualityEvent["severity"];
+  is_active: boolean;
+  deactivated_at: string | null;
+};
+
+export type CustomerQualityEvent = {
+  id: string;
+  customer_id: string;
+  event_type:
+    | "late_payment"
+    | "non_payment"
+    | "lumper_dispute"
+    | "detention_dispute"
+    | "tonu_dispute"
+    | "load_cancelled"
+    | "rate_dispute"
+    | "damage_claim"
+    | "commendation"
+    | "other";
+  event_date: string;
+  severity: "info" | "warning" | "severe";
+  summary: string;
+  details: string | null;
+  reason_id: string | null;
+  reason_code?: string | null;
+  reason_label?: string | null;
+  dollar_impact_amount: string | null;
+  dollar_currency: string;
+  days_late: number | null;
+  related_load_id: string | null;
+  related_invoice_id: string | null;
+  document_ids: string[] | null;
+  voided_at: string | null;
+  voided_by_user_id: string | null;
+  voided_by_user_email?: string | null;
+  void_reason: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -561,6 +623,61 @@ export function updateCustomer(id: string, body: UpdateCustomerInput) {
 
 export function getCustomerDetail(id: string) {
   return apiRequest<{ customer: CustomerDetailFull }>(`/api/v1/mdata/customers/${id}/detail`);
+}
+
+export function listCustomerQualityEventReasons(
+  eventType?: CustomerQualityEvent["event_type"],
+  includeInactive = false
+) {
+  const query = new URLSearchParams();
+  if (eventType) query.set("event_type", eventType);
+  if (includeInactive) query.set("include_inactive", "true");
+  const qs = query.toString();
+  return apiRequest<{ reasons: CustomerQualityEventReason[] }>(
+    `/api/v1/catalogs/customer-quality-event-reasons${qs ? `?${qs}` : ""}`
+  );
+}
+
+export function listCustomerQualityEvents(customerId: string, includeVoided = false) {
+  const query = includeVoided ? "?include_voided=true" : "";
+  return apiRequest<{ events: CustomerQualityEvent[] }>(`/api/v1/mdata/customers/${customerId}/quality-events${query}`);
+}
+
+export function createCustomerQualityEvent(
+  customerId: string,
+  body: {
+    event_type: CustomerQualityEvent["event_type"];
+    event_date: string;
+    severity: CustomerQualityEvent["severity"];
+    summary: string;
+    details?: string;
+    reason_id?: string;
+    dollar_impact_amount?: number;
+    days_late?: number;
+    related_load_id?: string;
+    related_invoice_id?: string;
+    document_ids?: string[];
+  }
+) {
+  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events`, { method: "POST", body });
+}
+
+export function voidCustomerQualityEvent(customerId: string, eventId: string, voidReason: string) {
+  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}/void`, {
+    method: "PATCH",
+    body: { void_reason: voidReason },
+  });
+}
+
+export function updateCustomerQualityEvent(
+  customerId: string,
+  eventId: string,
+  body: { details?: string | null; document_ids?: string[] | null; dollar_impact_amount?: number | null }
+) {
+  return apiRequest<{ event: CustomerQualityEvent }>(`/api/v1/mdata/customers/${customerId}/quality-events/${eventId}`, {
+    method: "PATCH",
+    body,
+  });
 }
 
 export function listCustomerContacts(customerId: string, includeInactive = false) {

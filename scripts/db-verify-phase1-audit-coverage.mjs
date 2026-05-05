@@ -99,6 +99,10 @@ const EVENT_CLASSES = [
   "mdata.dispatcher_safety_events.updated",
   "mdata.dispatcher_safety_events.voided",
   "mdata.dispatcher_safety_events.returning_dispatcher_override",
+  "mdata.customer_quality_events.created",
+  "mdata.customer_quality_events.updated",
+  "mdata.customer_quality_events.voided",
+  "mdata.customers.quality_flag_changed",
 ];
 
 const WARNING_EVENTS = new Set([
@@ -110,6 +114,7 @@ const WARNING_EVENTS = new Set([
   "catalogs.account_role_bindings.updated",
   "auth.phone.verification_fallback_sms",
   "mdata.dispatcher_safety_events.returning_dispatcher_override",
+  "mdata.customers.quality_flag_changed",
 ]);
 
 async function runWithBypass(client, fn) {

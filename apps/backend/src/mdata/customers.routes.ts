@@ -18,6 +18,8 @@ const customerTypeInputSchema = z.enum(["broker", "direct", "direct_shipper"]);
 const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
 const customerStatusSchema = z.enum(["active", "inactive", "credit_hold", "blacklist"]);
 const factoringRecourseTypeSchema = z.enum(["recourse", "non_recourse"]);
+const qualityOverallFlagSchema = z.enum(["preferred", "standard", "caution", "avoid"]);
+const creditLimitSourceSchema = z.enum(["factor", "manual", "rmis_future"]);
 
 const createCustomerBodySchema = z
   .object({
@@ -34,6 +36,8 @@ const createCustomerBodySchema = z
   dot_number: z.string().trim().max(50).optional(),
   tax_id: z.string().trim().max(50).optional(),
   credit_limit: z.number().min(0).optional(),
+  credit_limit_source: creditLimitSourceSchema.nullable().optional(),
+  credit_limit_updated_at: z.string().datetime().nullable().optional(),
   payment_terms_id: z.string().uuid().nullable().optional(),
   operating_company_id: z.string().uuid().optional(),
   customer_type: customerTypeInputSchema.optional(),
@@ -63,6 +67,8 @@ const createCustomerBodySchema = z
   factoring_reserve_pct_override: z.number().min(0).max(100).nullable().optional(),
   factoring_recourse_type: factoringRecourseTypeSchema.nullable().optional(),
   factoring_notes: z.string().trim().max(5000).nullable().optional(),
+  quality_overall_flag: qualityOverallFlagSchema.optional(),
+  quality_notes: z.string().trim().max(5000).optional(),
   })
   .refine((value) => Boolean(value.legal_name ?? value.name), { message: "legal_name is required" })
   .refine((value) => Boolean(value.customer_type), { message: "customer_type is required" });
@@ -82,6 +88,8 @@ const updateCustomerBodySchema = z
     dot_number: z.string().trim().max(50).nullable().optional(),
     tax_id: z.string().trim().max(50).nullable().optional(),
     credit_limit: z.number().min(0).nullable().optional(),
+    credit_limit_source: creditLimitSourceSchema.nullable().optional(),
+    credit_limit_updated_at: z.string().datetime().nullable().optional(),
     payment_terms_id: z.string().uuid().nullable().optional(),
     operating_company_id: z.string().uuid().optional(),
     customer_type: customerTypeInputSchema.nullable().optional(),
@@ -112,6 +120,8 @@ const updateCustomerBodySchema = z
     factoring_reserve_pct_override: z.number().min(0).max(100).nullable().optional(),
     factoring_recourse_type: factoringRecourseTypeSchema.nullable().optional(),
     factoring_notes: z.string().trim().max(5000).nullable().optional(),
+    quality_overall_flag: qualityOverallFlagSchema.optional(),
+    quality_notes: z.string().trim().max(5000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
@@ -191,6 +201,8 @@ const CUSTOMER_SELECT_COLUMNS = `
   dot_number,
   tax_id_encrypted,
   credit_limit,
+  credit_limit_source,
+  credit_limit_updated_at,
   payment_terms_id,
   operating_company_id,
   customer_type,
@@ -220,6 +232,12 @@ const CUSTOMER_SELECT_COLUMNS = `
   factoring_reserve_pct_override,
   factoring_recourse_type,
   factoring_notes,
+  quality_overall_flag,
+  quality_payment_score,
+  quality_cancellation_score,
+  quality_disputes_count,
+  quality_last_evaluated_at,
+  quality_notes,
   created_at,
   updated_at,
   deactivated_at,
@@ -335,6 +353,9 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("dot_number", b.dot_number);
         if (b.tax_id !== undefined) addOptional("tax_id_encrypted", b.tax_id ? encrypt(b.tax_id) : null);
         addOptional("credit_limit", b.credit_limit);
+        if (b.credit_limit !== undefined && b.credit_limit_updated_at === undefined) addOptional("credit_limit_updated_at", new Date().toISOString());
+        addOptional("credit_limit_source", b.credit_limit_source ?? (b.credit_limit !== undefined ? "manual" : undefined));
+        addOptional("credit_limit_updated_at", b.credit_limit_updated_at);
         addOptional("payment_terms_id", b.payment_terms_id);
         addOptional("default_billing_miles_basis", b.default_billing_miles_basis ?? "practical_miles");
         addOptional("default_free_time_hours", b.default_free_time_hours ?? 4);
@@ -360,6 +381,8 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("factoring_reserve_pct_override", b.factoring_reserve_pct_override);
         addOptional("factoring_recourse_type", b.factoring_recourse_type);
         addOptional("factoring_notes", b.factoring_notes);
+        addOptional("quality_overall_flag", b.quality_overall_flag);
+        addOptional("quality_notes", b.quality_notes);
         if (b.notes !== undefined || b.dba !== undefined) {
           const notesParts = [b.notes, b.dba ? `DBA: ${b.dba}` : null].filter(Boolean);
           addOptional("notes", notesParts.length > 0 ? notesParts.join("\n") : null);
@@ -477,9 +500,38 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedBody = updateCustomerBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    const role = authUser.role;
+    const qualityFlagRequested = "quality_overall_flag" in b;
+    const qualityNotesRequested = "quality_notes" in b;
+    const creditLimitRequested = "credit_limit" in b;
+    const creditSourceRequested = "credit_limit_source" in b;
+    const creditUpdatedAtRequested = "credit_limit_updated_at" in b;
+
+    if (qualityFlagRequested && role !== "Owner") return reply.code(403).send({ error: "quality_flag_owner_only" });
+    if (qualityNotesRequested && role !== "Owner" && role !== "Administrator" && role !== "Manager") {
+      return reply.code(403).send({ error: "quality_notes_forbidden" });
+    }
+    if ((creditLimitRequested || creditSourceRequested || creditUpdatedAtRequested) && role !== "Owner" && role !== "Administrator") {
+      return reply.code(403).send({ error: "credit_limit_forbidden" });
+    }
     const patchName = b.legal_name ?? b.name ?? null;
     const conflict = await assertUniqueCustomerFields(authUser.uuid, { name: patchName, mc_number: b.mc_number ?? null, dot_number: b.dot_number ?? null }, parsedParams.data.id);
     if (conflict) return reply.code(409).send({ error: `mdata_customer_${conflict}_conflict` });
+    const existingRow = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query(`SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      return res.rows[0] ?? null;
+    });
+    if (!existingRow) return reply.code(404).send({ error: "mdata_customer_not_found" });
+
+    if (creditLimitRequested) {
+      const nextSource = (b.credit_limit_source ?? (existingRow.credit_limit_source as string | null) ?? null) as string | null;
+      if (nextSource === "factor" && authUser.role !== "Owner") {
+        return reply.code(403).send({ error: "credit_limit_locked_by_factor" });
+      }
+      if (nextSource !== "manual" && authUser.role !== "Owner") {
+        return reply.code(403).send({ error: "credit_limit_owner_only_for_source" });
+      }
+    }
 
     const setParts: string[] = [];
     const values: unknown[] = [];
@@ -497,6 +549,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("dot_number" in b) add("dot_number", b.dot_number ?? null);
     if ("tax_id" in b) add("tax_id_encrypted", b.tax_id ? encrypt(b.tax_id) : null);
     if ("credit_limit" in b) add("credit_limit", b.credit_limit ?? null);
+    if ("credit_limit_source" in b) add("credit_limit_source", b.credit_limit_source ?? null);
+    if ("credit_limit" in b) {
+      add("credit_limit_updated_at", new Date().toISOString());
+    } else if ("credit_limit_updated_at" in b) {
+      add("credit_limit_updated_at", b.credit_limit_updated_at ?? null);
+    }
     if ("payment_terms_id" in b) add("payment_terms_id", b.payment_terms_id ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("customer_type" in b) add("customer_type", normalizeCustomerType(b.customer_type ?? null));
@@ -528,6 +586,8 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("factoring_reserve_pct_override" in b) add("factoring_reserve_pct_override", b.factoring_reserve_pct_override ?? null);
     if ("factoring_recourse_type" in b) add("factoring_recourse_type", b.factoring_recourse_type ?? null);
     if ("factoring_notes" in b) add("factoring_notes", b.factoring_notes ?? null);
+    if ("quality_overall_flag" in b) add("quality_overall_flag", b.quality_overall_flag);
+    if ("quality_notes" in b) add("quality_notes", b.quality_notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     if (setParts.length === 0) return reply.code(400).send({ error: "no_fields_to_update" });
     add("updated_by_user_id", authUser.uuid);
@@ -539,6 +599,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         const oldRes = await client.query(`SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
+
         const res = await client.query(
           `UPDATE mdata.customers SET ${setParts.join(", ")} WHERE id = $${idIdx} RETURNING ${CUSTOMER_SELECT_COLUMNS}`,
           values
@@ -592,6 +653,23 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
             },
             newStatus === "blacklist" || newStatus === "credit_hold" ? "warning" : "info",
             "BT-1-CUSTOMER-FULL-PROFILE"
+          );
+        }
+
+        if (oldRow.quality_overall_flag !== updatedRow.quality_overall_flag) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.customers.quality_flag_changed",
+            {
+              resource_id: updatedRow.id,
+              resource_type: "mdata.customers",
+              customer_id: updatedRow.id,
+              previous_quality_flag: oldRow.quality_overall_flag,
+              new_quality_flag: updatedRow.quality_overall_flag,
+            },
+            "warning",
+            "BT-1-CUSTOMER-QUALITY-FLAGS"
           );
         }
 

@@ -5,17 +5,23 @@ import { z } from "zod";
 import { listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
 import {
+  createCustomerQualityEvent,
   createCustomerContact,
   deactivateCustomerContact,
   getCustomerDetail,
+  listCustomerQualityEventReasons,
+  listCustomerQualityEvents,
   listVendors,
   listCustomerContacts,
   reactivateCustomerContact,
   updateCustomer,
   updateCustomerContact,
+  updateCustomerQualityEvent,
+  voidCustomerQualityEvent,
   type Customer,
   type CustomerContact,
   type CustomerContactDepartment,
+  type CustomerQualityEvent,
 } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
@@ -27,7 +33,7 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/layout/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
 
-const tabs = ["Profile", "Locations", "Loads", "Invoices", "Detention History", "Audit"] as const;
+const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents"] as const;
 type CustomerTab = (typeof tabs)[number];
 
 const customerSchema = z.object({
@@ -55,6 +61,10 @@ const customerSchema = z.object({
   ap_email: z.string().trim().email().optional().or(z.literal("")),
   ap_phone: z.string().trim().max(50).optional(),
   credit_limit: z.string().trim().optional(),
+  credit_limit_source: z.enum(["", "factor", "manual", "rmis_future"]).default(""),
+  credit_limit_updated_at: z.string().trim().optional(),
+  quality_overall_flag: z.enum(["preferred", "standard", "caution", "avoid"]),
+  quality_notes: z.string().trim().max(5000).optional(),
   free_time_pickup_minutes: z.string().trim(),
   free_time_delivery_minutes: z.string().trim(),
   detention_rate_per_hour: z.string().trim(),
@@ -100,6 +110,13 @@ function departmentVariant(department: CustomerContactDepartment): "crit" | "war
   return "neutral";
 }
 
+function qualityFlagVariant(flag: Customer["quality_overall_flag"]): "positive" | "neutral" | "warn" | "crit" {
+  if (flag === "preferred") return "positive";
+  if (flag === "caution") return "warn";
+  if (flag === "avoid") return "crit";
+  return "neutral";
+}
+
 function emptyContactForm() {
   return {
     name: "",
@@ -129,6 +146,20 @@ export function CustomerDetailPage() {
   const [includeInactiveContacts, setIncludeInactiveContacts] = useState(false);
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
   const [statusReason, setStatusReason] = useState("");
+  const [showVoidedQuality, setShowVoidedQuality] = useState(false);
+  const [qualityModalOpen, setQualityModalOpen] = useState(false);
+  const [voidingQualityEvent, setVoidingQualityEvent] = useState<CustomerQualityEvent | null>(null);
+  const [qualityForm, setQualityForm] = useState({
+    event_type: "late_payment" as CustomerQualityEvent["event_type"],
+    event_date: new Date().toISOString().slice(0, 10),
+    reason_id: "",
+    severity: "info" as CustomerQualityEvent["severity"],
+    summary: "",
+    details: "",
+    dollar_impact_amount: "",
+    days_late: "",
+  });
+  const [voidReason, setVoidReason] = useState("");
 
   const detailQuery = useQuery({
     queryKey: ["customer-detail", id],
@@ -151,6 +182,16 @@ export function CustomerDetailPage() {
     queryKey: ["catalogs", "us-states"],
     queryFn: () => listUsStates().then((result) => result.states),
   });
+  const qualityEventsQuery = useQuery({
+    queryKey: ["customer-quality-events", id, showVoidedQuality],
+    queryFn: () => listCustomerQualityEvents(id, showVoidedQuality).then((result) => result.events),
+    enabled: Boolean(id),
+  });
+  const qualityReasonsQuery = useQuery({
+    queryKey: ["customer-quality-reasons", qualityForm.event_type],
+    queryFn: () => listCustomerQualityEventReasons(qualityForm.event_type).then((result) => result.reasons),
+    enabled: qualityModalOpen,
+  });
 
   const customer = detailQuery.data;
   const contacts = contactsQuery.data ?? customer?.contacts ?? [];
@@ -165,6 +206,10 @@ export function CustomerDetailPage() {
   );
   const canManageContacts = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canViewInactiveContacts = ["Owner", "Administrator"].includes(user?.role ?? "");
+  const canReadQuality = ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"].includes(user?.role ?? "");
+  const canWriteQuality = user?.role === "Owner";
+  const canEditQualityNotes = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
+  const canEditCreditLimit = user?.role === "Owner" || user?.role === "Administrator";
 
   const hydratedForm = useMemo(() => {
     if (!customer) return form;
@@ -194,6 +239,10 @@ export function CustomerDetailPage() {
       ap_email: customer.ap_email ?? "",
       ap_phone: customer.ap_phone ?? "",
       credit_limit: customer.credit_limit ? String(customer.credit_limit) : "",
+      credit_limit_source: customer.credit_limit_source ?? "",
+      credit_limit_updated_at: customer.credit_limit_updated_at ?? "",
+      quality_overall_flag: customer.quality_overall_flag ?? "standard",
+      quality_notes: customer.quality_notes ?? "",
       free_time_pickup_minutes: String(customer.free_time_pickup_minutes ?? 120),
       free_time_delivery_minutes: String(customer.free_time_delivery_minutes ?? 120),
       detention_rate_per_hour: String(customer.detention_rate_per_hour ?? "0"),
@@ -235,6 +284,10 @@ export function CustomerDetailPage() {
         ap_email: hydratedForm.ap_email || null,
         ap_phone: hydratedForm.ap_phone || null,
         credit_limit: hydratedForm.credit_limit ? Number(hydratedForm.credit_limit) : null,
+        credit_limit_source: hydratedForm.credit_limit_source ? (hydratedForm.credit_limit_source as "factor" | "manual" | "rmis_future") : null,
+        credit_limit_updated_at: hydratedForm.credit_limit_updated_at || null,
+        quality_overall_flag: hydratedForm.quality_overall_flag as "preferred" | "standard" | "caution" | "avoid",
+        quality_notes: hydratedForm.quality_notes || null,
         free_time_pickup_minutes: Number(hydratedForm.free_time_pickup_minutes || "0"),
         free_time_delivery_minutes: Number(hydratedForm.free_time_delivery_minutes || "0"),
         detention_rate_per_hour: Number(hydratedForm.detention_rate_per_hour || "0"),
@@ -305,6 +358,58 @@ export function CustomerDetailPage() {
     },
   });
 
+  const createQualityEventMutation = useMutation({
+    mutationFn: () =>
+      createCustomerQualityEvent(id, {
+        event_type: qualityForm.event_type,
+        event_date: qualityForm.event_date,
+        reason_id: qualityForm.reason_id || undefined,
+        severity: qualityForm.severity,
+        summary: qualityForm.summary,
+        details: qualityForm.details || undefined,
+        dollar_impact_amount: qualityForm.dollar_impact_amount ? Number(qualityForm.dollar_impact_amount) : undefined,
+        days_late: qualityForm.days_late ? Number(qualityForm.days_late) : undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
+      queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      setQualityModalOpen(false);
+      setQualityForm({
+        event_type: "late_payment",
+        event_date: new Date().toISOString().slice(0, 10),
+        reason_id: "",
+        severity: "info",
+        summary: "",
+        details: "",
+        dollar_impact_amount: "",
+        days_late: "",
+      });
+      pushToast("Quality event created", "success");
+    },
+    onError: () => pushToast("Failed to create quality event", "error"),
+  });
+
+  const voidQualityEventMutation = useMutation({
+    mutationFn: ({ eventId, reason }: { eventId: string; reason: string }) => voidCustomerQualityEvent(id, eventId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
+      queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      setVoidingQualityEvent(null);
+      setVoidReason("");
+      pushToast("Quality event voided", "info");
+    },
+  });
+
+  const updateQualityEventMutation = useMutation({
+    mutationFn: ({ eventId, details }: { eventId: string; details: string }) => updateCustomerQualityEvent(id, eventId, { details }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-quality-events", id] });
+      pushToast("Quality event updated", "success");
+    },
+  });
+
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading customer...</div>;
   if (!customer) {
     return (
@@ -334,6 +439,19 @@ export function CustomerDetailPage() {
   }
 
   const primaryContact = contacts.find((contact) => contact.is_primary && contact.deactivated_at === null);
+  const qualityEvents = qualityEventsQuery.data ?? [];
+  const qualityStats = useMemo(() => {
+    const active = qualityEvents.filter((event) => !event.voided_at);
+    const severeCount = active.filter((event) => event.severity === "severe").length;
+    const totalImpact = active.reduce((sum, event) => sum + Number(event.dollar_impact_amount ?? 0), 0);
+    const lateEvents = active.filter((event) => event.event_type === "late_payment" && typeof event.days_late === "number");
+    const avgDaysLate = lateEvents.length > 0 ? lateEvents.reduce((sum, event) => sum + Number(event.days_late ?? 0), 0) / lateEvents.length : 0;
+    return { totalEvents: active.length, severeCount, totalImpact, avgDaysLate };
+  }, [qualityEvents]);
+  const visibleTabs = useMemo(
+    () => tabs.filter((tab) => (tab === "Quality & History" ? canReadQuality : true)),
+    [canReadQuality]
+  );
 
   return (
     <div className="space-y-3">
@@ -358,7 +476,7 @@ export function CustomerDetailPage() {
 
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
         <div className="flex min-w-max gap-1">
-          {tabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab}
               type="button"
@@ -409,6 +527,43 @@ export function CustomerDetailPage() {
             <Field label="A/R Phone" value={hydratedForm.ar_phone} onChange={(value) => setForm((current) => ({ ...current, ar_phone: value }))} disabled={!editMode} />
             <Field label="A/P Email" value={hydratedForm.ap_email} onChange={(value) => setForm((current) => ({ ...current, ap_email: value }))} disabled={!editMode} />
             <Field label="A/P Phone" value={hydratedForm.ap_phone} onChange={(value) => setForm((current) => ({ ...current, ap_phone: value }))} disabled={!editMode} />
+          </DataPanel>
+
+          <DataPanel title="Credit Limit">
+            <Field
+              label="Credit Limit (USD)"
+              value={hydratedForm.credit_limit}
+              onChange={(value) => setForm((current) => ({ ...current, credit_limit: value }))}
+              disabled={
+                !editMode ||
+                !canEditCreditLimit ||
+                (hydratedForm.credit_limit_source === "factor" && user?.role !== "Owner")
+              }
+              type="number"
+            />
+            <div className="mb-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Credit Limit Source</label>
+              <Combobox
+                options={[
+                  { value: "factor", label: "Factor" },
+                  { value: "manual", label: "Manual" },
+                  { value: "rmis_future", label: "RMIS Future" },
+                ]}
+                value={hydratedForm.credit_limit_source || null}
+                onChange={(nextValue) => setForm((current) => ({ ...current, credit_limit_source: nextValue ?? "" }))}
+                disabled={!editMode || !canEditCreditLimit}
+                placeholder="Select source"
+              />
+            </div>
+            <Field
+              label="Last Updated"
+              value={hydratedForm.credit_limit_updated_at ? new Date(hydratedForm.credit_limit_updated_at).toLocaleString() : "Not set"}
+              onChange={() => {}}
+              disabled
+            />
+            <p className="text-[11px] text-gray-500">
+              If set by your factor (Faro/RTS), select Factor and let daily report sync update. Otherwise select Manual.
+            </p>
           </DataPanel>
 
           <DataPanel title="Detention Configuration">
@@ -587,7 +742,110 @@ export function CustomerDetailPage() {
         </div>
       ) : null}
 
-      {activeTab !== "Profile" ? (
+      {activeTab === "Quality & History" ? (
+        <div className="space-y-3">
+          <DataPanel title="Quality Overview">
+            <div className="mb-3 flex items-center justify-between">
+              <StatusBadge variant={qualityFlagVariant((hydratedForm.quality_overall_flag as Customer["quality_overall_flag"]) ?? customer.quality_overall_flag)}>
+                {(hydratedForm.quality_overall_flag || customer.quality_overall_flag).toUpperCase()}
+              </StatusBadge>
+              {canWriteQuality && editMode ? (
+                <SelectField
+                  label="Overall Flag"
+                  value={hydratedForm.quality_overall_flag}
+                  onChange={(value) => setForm((current) => ({ ...current, quality_overall_flag: value }))}
+                  options={[
+                    { value: "preferred", label: "Preferred" },
+                    { value: "standard", label: "Standard" },
+                    { value: "caution", label: "Caution" },
+                    { value: "avoid", label: "Avoid" },
+                  ]}
+                />
+              ) : null}
+            </div>
+            <div className="grid gap-2 md:grid-cols-3">
+              <MetricCell label="Payment Score" value={customer.quality_payment_score ?? "Not evaluated"} />
+              <MetricCell label="Cancellation Score" value={customer.quality_cancellation_score ?? "Not evaluated"} />
+              <MetricCell label="Disputes (12m)" value={String(customer.quality_disputes_count ?? 0)} />
+            </div>
+            <div className="mt-3">
+              <label className="mb-1 block text-xs font-semibold text-gray-600">Quality Notes</label>
+              <textarea
+                value={hydratedForm.quality_notes ?? ""}
+                onChange={(event) => setForm((current) => ({ ...current, quality_notes: event.target.value }))}
+                disabled={!editMode || !canEditQualityNotes}
+                rows={3}
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+              />
+            </div>
+          </DataPanel>
+
+          <DataPanel title="Event Summary">
+            <div className="grid gap-2 md:grid-cols-4">
+              <MetricCell label="Total Events" value={String(qualityStats.totalEvents)} />
+              <MetricCell label="Severe" value={String(qualityStats.severeCount)} />
+              <MetricCell label="Dollar Impact" value={`$${qualityStats.totalImpact.toFixed(2)}`} />
+              <MetricCell label="Avg Days Late" value={qualityStats.avgDaysLate.toFixed(1)} />
+            </div>
+          </DataPanel>
+
+          <DataPanel title="Timeline">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {canWriteQuality ? (
+                  <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                    <input type="checkbox" checked={showVoidedQuality} onChange={(event) => setShowVoidedQuality(event.target.checked)} />
+                    Show voided
+                  </label>
+                ) : null}
+              </div>
+              {canWriteQuality ? (
+                <Button size="sm" onClick={() => setQualityModalOpen(true)}>
+                  + Add Event
+                </Button>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              {qualityEventsQuery.isLoading ? <div className="text-xs text-gray-500">Loading events...</div> : null}
+              {qualityEvents.map((event) => (
+                <div key={event.id} className={`rounded border px-3 py-2 ${event.voided_at ? "border-gray-200 bg-gray-50 text-gray-500" : "border-gray-300 bg-white"}`}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded bg-gray-100 px-2 py-0.5 text-[11px]">{event.event_date}</span>
+                    <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>
+                    <span className="text-xs uppercase tracking-wide">{event.event_type.replaceAll("_", " ")}</span>
+                    {event.dollar_impact_amount ? <strong className="text-sm">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
+                    {typeof event.days_late === "number" ? <span className="text-xs">Days late: {event.days_late}</span> : null}
+                  </div>
+                  <div className={event.voided_at ? "mt-1 text-sm line-through" : "mt-1 text-sm"}>{event.summary}</div>
+                  {event.reason_label ? <div className="text-xs text-gray-500">Reason: {event.reason_label}</div> : null}
+                  {event.details ? <div className="mt-1 text-xs text-gray-600">{event.details}</div> : null}
+                  {event.voided_at ? <div className="mt-1 text-xs text-gray-500">Voided: {event.void_reason}</div> : null}
+                  {canWriteQuality && !event.voided_at ? (
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          const next = window.prompt("Update details", event.details ?? "");
+                          if (next === null) return;
+                          updateQualityEventMutation.mutate({ eventId: event.id, details: next });
+                        }}
+                      >
+                        Edit Details
+                      </Button>
+                      <Button size="sm" variant="danger" onClick={() => setVoidingQualityEvent(event)}>
+                        Void
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </DataPanel>
+        </div>
+      ) : null}
+
+      {activeTab !== "Profile" && activeTab !== "Quality & History" ? (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">{activeTab} view will be delivered in the next block. The tab is intentionally present to preserve the final information architecture.</div>
       ) : null}
 
@@ -673,6 +931,136 @@ export function CustomerDetailPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={qualityModalOpen} onClose={() => setQualityModalOpen(false)} title="Add Quality Event">
+        <form
+          className="space-y-3"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (!qualityForm.summary.trim()) {
+              pushToast("Summary is required", "error");
+              return;
+            }
+            await createQualityEventMutation.mutateAsync();
+          }}
+        >
+          <div className="grid gap-2 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-xs font-semibold text-gray-600">Event Type</label>
+              <Combobox
+                options={[
+                  "late_payment",
+                  "non_payment",
+                  "lumper_dispute",
+                  "detention_dispute",
+                  "tonu_dispute",
+                  "load_cancelled",
+                  "rate_dispute",
+                  "damage_claim",
+                  "commendation",
+                  "other",
+                ].map((value) => ({ value, label: value.replaceAll("_", " ") }))}
+                value={qualityForm.event_type}
+                onChange={(nextValue) =>
+                  setQualityForm((current) => ({ ...current, event_type: (nextValue as CustomerQualityEvent["event_type"]) ?? "late_payment", reason_id: "" }))
+                }
+                placeholder="Select event type"
+              />
+            </div>
+            <Field
+              label="Event Date"
+              value={qualityForm.event_date}
+              onChange={(value) => setQualityForm((current) => ({ ...current, event_date: value }))}
+              type="date"
+            />
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600">Reason</label>
+              <Combobox
+                options={(qualityReasonsQuery.data ?? []).map((reason) => ({
+                  value: reason.id,
+                  label: reason.label,
+                  sublabel: reason.severity,
+                }))}
+                value={qualityForm.reason_id || null}
+                onChange={(nextValue) => {
+                  const reason = (qualityReasonsQuery.data ?? []).find((entry) => entry.id === nextValue);
+                  setQualityForm((current) => ({ ...current, reason_id: nextValue ?? "", severity: reason?.severity ?? current.severity }));
+                }}
+                loading={qualityReasonsQuery.isLoading}
+                placeholder="Select reason"
+              />
+            </div>
+            <SelectField
+              label="Severity"
+              value={qualityForm.severity}
+              onChange={(value) => setQualityForm((current) => ({ ...current, severity: value as CustomerQualityEvent["severity"] }))}
+              options={[
+                { value: "info", label: "Info" },
+                { value: "warning", label: "Warning" },
+                { value: "severe", label: "Severe" },
+              ]}
+            />
+            <Field label="Dollar Impact" value={qualityForm.dollar_impact_amount} onChange={(value) => setQualityForm((current) => ({ ...current, dollar_impact_amount: value }))} type="number" />
+            {qualityForm.event_type === "late_payment" ? (
+              <Field label="Days Late" value={qualityForm.days_late} onChange={(value) => setQualityForm((current) => ({ ...current, days_late: value }))} type="number" />
+            ) : null}
+            <div className="md:col-span-2">
+              <Field label="Summary" value={qualityForm.summary} onChange={(value) => setQualityForm((current) => ({ ...current, summary: value }))} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-xs font-semibold text-gray-600">Details</label>
+              <textarea
+                value={qualityForm.details}
+                onChange={(event) => setQualityForm((current) => ({ ...current, details: event.target.value }))}
+                rows={3}
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setQualityModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={createQualityEventMutation.isPending}>
+              Add Event
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={Boolean(voidingQualityEvent)} onClose={() => setVoidingQualityEvent(null)} title="Void Quality Event">
+        <div className="space-y-3">
+          <p className="text-sm text-gray-700">Voiding keeps the historical record but marks this event as inactive.</p>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600">Void reason</label>
+            <textarea
+              value={voidReason}
+              onChange={(event) => setVoidReason(event.target.value)}
+              rows={3}
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setVoidingQualityEvent(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (!voidingQualityEvent) return;
+                if (voidReason.trim().length < 10) {
+                  pushToast("Void reason must be at least 10 characters", "error");
+                  return;
+                }
+                voidQualityEventMutation.mutate({ eventId: voidingQualityEvent.id, reason: voidReason.trim() });
+              }}
+              loading={voidQualityEventMutation.isPending}
+            >
+              Void Event
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       <Modal open={statusConfirmOpen} onClose={() => setStatusConfirmOpen(false)} title="Confirm Status Change">
@@ -762,6 +1150,15 @@ function SelectField({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function MetricCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1.5">
+      <div className="text-[11px] font-semibold text-gray-500">{label}</div>
+      <div className="text-sm font-semibold text-gray-800">{value}</div>
     </div>
   );
 }
