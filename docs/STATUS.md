@@ -1,41 +1,35 @@
-# IH35-TMS Build Status — Phase 1 CLOSED
+# IH35-TMS Build Status — v7
 
 **As of:** 2026-05-05  
-**Latest main commit:** c1f2d12  
-**Phase:** 1 of 7 closed; Phase 2 next
+**Phase 1:** ✅ CLOSED (29 tasks + 1 hot-fix)  
+**Phase 2:** ✅ CLOSED (7 tasks + 1 hot-fix + 1 unplanned cycle) — Documents Module + Outbox Processor + FMCSA Verification  
+**Phase 3:** ⏳ PENDING — Dispatch Core  
+**Audit event classes:** 97 (was 92 entering Phase 2)  
+**Migrations:** 32  
+**Production launch target:** 2026-05-20 (15 days remaining)
 
-## Phase progress
+## Phase Progress
 
-- Phase 0: Foundation ✅ (Day 1)
-- Phase 1: Identity + Master Data + Catalogs + Office UI + Safety + Quality ✅ (Day 1-2)
-- Phase 2: Documents Module — pending (next)
-- Phase 3: Dispatch Core — pending (BIGGEST phase, ~5-6 days)
-- Phase 4: Samsara + Telemetry + Driver PWA expansion — pending
-- Phase 5: Banking + Settlements + QBO — pending
-- Phase 6: Reports + Notifications — pending
-- Phase 7: Cutover + Production Launch — pending (target May 20)
+- Phase 0: Foundation ✅
+- Phase 1: Identity + Master Data + Catalogs + Office UI + Safety + Quality ✅
+- Phase 2: Documents Module + FMCSA + Outbox gap closure ✅
+- Phase 3: Dispatch Core ⏳
+- Phase 4: Samsara + Telemetry + Driver PWA expansion ⏳
+- Phase 5: Banking + Settlements + QBO ⏳
+- Phase 6: Reports + Notifications ⏳
+- Phase 7: Cutover + Production Launch ⏳
 
-## Phase 1 by the numbers
+## What's Live in Production
 
-- Migrations: 26
-- Verify scripts: 20 (19 passing, 1 env-blocked)
-- Audit event classes: 84
-- Operating companies: 3
-- Pre-seeded catalog rows: ~150
-- Backend endpoints: 60+
-- Frontend pages: 12+
+- Office UI Documents tabs (`Customer`/`Driver`/`Vendor` + standalone library).
+- Driver PWA document upload with offline IndexedDB queue.
+- R2 storage with presigned URL chain-of-custody flow.
+- Outbox processor for async event delivery (Twilio-ready).
+- FMCSA SAFER broker authority verification in customer flow.
 
-## What's deployed
+## Known Gaps for Phase 3
 
-- https://api.ih35dispatch.com (backend)
-- https://app.ih35dispatch.com (office UI)
-- https://driver.ih35dispatch.com (driver PWA, foundation only)
-
-## Known deferred items (post-launch)
-
-- phone-auth Twilio production env vars
-- WhatsApp Business Production sender (Meta verification 7-14 days)
-- Always Track historical import (Phase 7 cutover)
-- PC*MILER subscription (Casey Adams contacted; await pricing)
-- QBO production credentials approval (call Intuit during Phase 2)
-- Backup/DR strategy (configure before May 20)
+- Driver onboarding flow: manual SQL still required for new driver access bootstrapping.
+- Backend `operating_company_id` resolution currently defaults to session active company for uploads; should resolve from driver company context for driver uploads.
+- Verify-script fixture users (~25) still present in `identity.users` (`cq-*`, `wf-*`, `rls-*`, `phase1-gate-*`).
+- `outbox.outbox_queue` deprecation cleanup (replaced by `outbox.events`).
