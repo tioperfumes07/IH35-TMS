@@ -1,6 +1,7 @@
 import {
   Activity,
   Banknote,
+  Building2,
   Calculator,
   CarFront,
   ClipboardList,
@@ -31,6 +32,7 @@ const ITEMS: SidebarItem[] = [
   { key: "FUEL", label: "FUEL", Icon: Fuel, to: "/fuel" },
   { key: "SAFETY", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
   { key: "DRIVERS", label: "DRIVERS", Icon: Users, to: "/drivers" },
+  { key: "CUSTOMERS", label: "CUSTOMERS", Icon: Building2, to: "/customers" },
   { key: "DISPATCH", label: "DISPATCH", Icon: Truck, to: "/dispatch" },
   { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/catalogs" },
   { key: "REPORTS", label: "REPORTS", Icon: ClipboardList, to: "/reports" },
