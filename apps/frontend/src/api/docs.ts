@@ -91,10 +91,21 @@ export function listFiles(filters: Partial<{
   limit: number;
   offset: number;
 }> = {}) {
+  const clean = (value: string | undefined) => {
+    if (!value) return undefined;
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === "undefined" || trimmed === "null") return undefined;
+    return trimmed;
+  };
+
   const query = new URLSearchParams();
-  if (filters.entity_type) query.set("entity_type", filters.entity_type);
-  if (filters.entity_id) query.set("entity_id", filters.entity_id);
-  if (filters.category) query.set("category", filters.category);
+  const entityType = clean(filters.entity_type);
+  const entityId = clean(filters.entity_id);
+  const category = clean(filters.category);
+
+  if (entityType) query.set("entity_type", entityType);
+  if (entityId) query.set("entity_id", entityId);
+  if (category) query.set("category", category);
   if (filters.include_deleted !== undefined) query.set("include_deleted", String(filters.include_deleted));
   if (filters.include_incomplete !== undefined) query.set("include_incomplete", String(filters.include_incomplete));
   if (filters.limit !== undefined) query.set("limit", String(filters.limit));

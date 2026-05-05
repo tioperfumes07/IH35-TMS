@@ -28,6 +28,7 @@ import {
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { StatusBadge } from "../components/StatusBadge";
@@ -1033,7 +1034,9 @@ export function DriverDetailPage() {
 
       {activeTab === "Documents" ? (
         canViewDocuments ? (
-          <DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} />
+          <ErrorBoundary>
+            <DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} />
+          </ErrorBoundary>
         ) : (
           <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
             You do not have permission to view documents for this driver.
