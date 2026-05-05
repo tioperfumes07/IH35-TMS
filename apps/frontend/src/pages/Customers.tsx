@@ -11,6 +11,7 @@ import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
+import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -225,7 +226,9 @@ export function CustomersPage() {
   const [editForm, setEditForm] = useState<CustomerFormState>(emptyEditForm());
   const [createErrors, setCreateErrors] = useState<Partial<Record<keyof CreateCustomerFormState, string>>>({});
   const [qualityFilter, setQualityFilter] = useState<"all" | Customer["quality_overall_flag"]>("all");
+  const [showOnlyFmcsaVerified, setShowOnlyFmcsaVerified] = useState(false);
   const [sortByDisputes, setSortByDisputes] = useState(false);
+  const [fmcsaModalOpen, setFmcsaModalOpen] = useState(false);
   const showTaxId = user?.role === "Owner";
 
   const customersQuery = useQuery({
@@ -268,12 +271,15 @@ export function CustomersPage() {
 
   const customers = useMemo(() => {
     const base = [...(customersQuery.data ?? [])];
-    const filtered = qualityFilter === "all" ? base : base.filter((customer) => customer.quality_overall_flag === qualityFilter);
+    let filtered = qualityFilter === "all" ? base : base.filter((customer) => customer.quality_overall_flag === qualityFilter);
+    if (showOnlyFmcsaVerified) {
+      filtered = filtered.filter((customer) => Boolean(customer.fmcsa_verified_at));
+    }
     if (sortByDisputes) {
-      filtered.sort((a, b) => (b.quality_disputes_count ?? 0) - (a.quality_disputes_count ?? 0));
+      filtered = [...filtered].sort((a, b) => (b.quality_disputes_count ?? 0) - (a.quality_disputes_count ?? 0));
     }
     return filtered;
-  }, [customersQuery.data, qualityFilter, sortByDisputes]);
+  }, [customersQuery.data, qualityFilter, showOnlyFmcsaVerified, sortByDisputes]);
   const activeCount = customers.filter((customer) => customer.status === "active").length;
   const creditHoldCount = customers.filter((customer) => customer.status === "credit_hold").length;
   const blacklistCount = customers.filter((customer) => customer.status === "blacklist").length;
@@ -302,6 +308,10 @@ export function CustomersPage() {
           <input type="checkbox" checked={sortByDisputes} onChange={(event) => setSortByDisputes(event.target.checked)} />
           Sort by disputes
         </label>
+        <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+          <input type="checkbox" checked={showOnlyFmcsaVerified} onChange={(event) => setShowOnlyFmcsaVerified(event.target.checked)} />
+          Show only verified
+        </label>
       </div>
 
       {customersQuery.isLoading ? (
@@ -327,6 +337,15 @@ export function CustomersPage() {
                 render: (row) => <StatusBadge variant={qualityFlagVariant(row.quality_overall_flag)}>{row.quality_overall_flag}</StatusBadge>,
               },
               { key: "mc_dot", label: "MC / DOT", render: (row) => `${row.mc_number ?? "-"} / ${row.dot_number ?? "-"}` },
+              {
+                key: "fmcsa_verified",
+                label: "FMCSA Verified",
+                render: (row) => (
+                  <StatusBadge variant={row.fmcsa_verified_at ? "positive" : "crit"}>
+                    {row.fmcsa_verified_at ? "Yes" : "No"}
+                  </StatusBadge>
+                ),
+              },
               { key: "contact", label: "Main Contact", render: (row) => row.main_contact_name ?? "-" },
               { key: "ar_email", label: "A/R Email", render: (row) => row.ar_email ?? "-" },
               { key: "detention", label: "Detention", render: (row) => `${formatMoney(row.detention_rate_per_hour)}/hr` },
@@ -455,6 +474,7 @@ export function CustomersPage() {
             usStatesLoading={usStatesQuery.isLoading}
             usStatesError={usStatesQuery.isError}
             canOwnerExtendCatalogs={canOwnerExtendCatalogs}
+            onOpenFmcsaVerification={() => setFmcsaModalOpen(true)}
           />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setAddOpen(false)}>
@@ -510,6 +530,24 @@ export function CustomersPage() {
           </div>
         </form>
       </Modal>
+
+      <FMCSAVerificationModal
+        open={fmcsaModalOpen}
+        onClose={() => setFmcsaModalOpen(false)}
+        initialUsdot={createForm.dot_number}
+        initialMc={createForm.mc_number}
+        onApplyToCustomer={(fmcsaResult) => {
+          setCreateForm((current) => ({
+            ...current,
+            legal_name: fmcsaResult.legal_name ?? current.legal_name,
+            dba: fmcsaResult.dba_name ?? current.dba,
+            dot_number: fmcsaResult.usdot_number ?? current.dot_number,
+            mc_number: fmcsaResult.mc_number ?? current.mc_number,
+            office_phone: fmcsaResult.phone ?? current.office_phone,
+          }));
+          pushToast("FMCSA values applied to customer form", "success");
+        }}
+      />
     </div>
   );
 }
@@ -526,6 +564,7 @@ function CreateCustomerFormFields({
   usStatesLoading,
   usStatesError,
   canOwnerExtendCatalogs,
+  onOpenFmcsaVerification,
 }: {
   form: CreateCustomerFormState;
   setForm: Dispatch<SetStateAction<CreateCustomerFormState>>;
@@ -538,6 +577,7 @@ function CreateCustomerFormFields({
   usStatesLoading: boolean;
   usStatesError: boolean;
   canOwnerExtendCatalogs: boolean;
+  onOpenFmcsaVerification: () => void;
 }) {
   const FieldLabel = ({ text, required }: { text: string; required?: boolean }) => (
     <label className="text-xs font-semibold text-gray-600">
@@ -597,6 +637,11 @@ function CreateCustomerFormFields({
           <div className="flex flex-col gap-1">
             <FieldLabel text="MC Number" />
             <input value={form.mc_number} onChange={(event) => setForm((current) => ({ ...current, mc_number: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+          </div>
+          <div className="flex items-end">
+            <Button type="button" variant="secondary" onClick={onOpenFmcsaVerification}>
+              Verify FMCSA Authority
+            </Button>
           </div>
           {showTaxId ? (
             <div className="flex flex-col gap-1">

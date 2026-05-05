@@ -114,6 +114,8 @@ const EVENT_CLASSES = [
   "outbox.event.delivered",
   "outbox.event.retried",
   "outbox.event.failed",
+  "catalogs.fmcsa_lookup.executed",
+  "mdata.customer.fmcsa_verified",
 ];
 
 const WARNING_EVENTS = new Set([

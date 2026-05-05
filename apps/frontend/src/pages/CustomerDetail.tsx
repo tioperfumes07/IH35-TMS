@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
+import { listFmcsaLookups } from "../api/fmcsa";
 import {
   createCustomerQualityEvent,
   createCustomerContact,
@@ -26,6 +27,7 @@ import {
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
+import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
@@ -156,6 +158,8 @@ export function CustomerDetailPage() {
   const [showVoidedQuality, setShowVoidedQuality] = useState(false);
   const [qualityModalOpen, setQualityModalOpen] = useState(false);
   const [voidingQualityEvent, setVoidingQualityEvent] = useState<CustomerQualityEvent | null>(null);
+  const [fmcsaModalOpen, setFmcsaModalOpen] = useState(false);
+  const [fmcsaHistoryOpen, setFmcsaHistoryOpen] = useState(false);
   const [qualityForm, setQualityForm] = useState({
     event_type: "late_payment" as CustomerQualityEvent["event_type"],
     event_date: new Date().toISOString().slice(0, 10),
@@ -198,6 +202,11 @@ export function CustomerDetailPage() {
     queryKey: ["customer-quality-reasons", qualityForm.event_type],
     queryFn: () => listCustomerQualityEventReasons(qualityForm.event_type).then((result) => result.reasons),
     enabled: qualityModalOpen,
+  });
+  const fmcsaHistoryQuery = useQuery({
+    queryKey: ["fmcsa-lookups", detailQuery.data?.operating_company_id ?? "none"],
+    queryFn: () => listFmcsaLookups({ limit: 25 }).then((res) => res.lookups),
+    enabled: fmcsaHistoryOpen,
   });
 
   const customer = detailQuery.data;
@@ -491,6 +500,14 @@ export function CustomerDetailPage() {
 
       <div className="flex items-center gap-2">
         <StatusBadge variant={statusVariant(customer.status)}>{statusLabel(customer.status)}</StatusBadge>
+        {customer.fmcsa_verified_at ? (
+          <button type="button" onClick={() => setFmcsaHistoryOpen(true)}>
+            <StatusBadge variant="positive">{`FMCSA Verified ${new Date(customer.fmcsa_verified_at).toLocaleDateString()}`}</StatusBadge>
+          </button>
+        ) : null}
+        <Button size="sm" variant="secondary" onClick={() => setFmcsaModalOpen(true)}>
+          Verify FMCSA Authority
+        </Button>
       </div>
 
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
@@ -1200,6 +1217,48 @@ export function CustomerDetailPage() {
           </div>
         </div>
       </Modal>
+
+      <Modal open={fmcsaHistoryOpen} onClose={() => setFmcsaHistoryOpen(false)} title="FMCSA Verification History">
+        <div className="space-y-2">
+          {fmcsaHistoryQuery.isLoading ? <div className="text-sm text-gray-500">Loading verification history...</div> : null}
+          {(fmcsaHistoryQuery.data ?? []).map((lookup) => (
+            <div key={lookup.lookup_id} className="rounded border border-gray-200 p-2 text-sm">
+              <div className="flex items-center justify-between">
+                <strong>{lookup.legal_name ?? "Unknown carrier"}</strong>
+                <StatusBadge variant={lookup.authority_status === "ACTIVE" ? "positive" : "crit"}>{lookup.authority_status}</StatusBadge>
+              </div>
+              <div className="text-xs text-gray-600">
+                {lookup.lookup_type.toUpperCase()} {lookup.lookup_value} • {new Date(lookup.fetched_at).toLocaleString()}
+              </div>
+            </div>
+          ))}
+          {(fmcsaHistoryQuery.data ?? []).length === 0 && !fmcsaHistoryQuery.isLoading ? (
+            <div className="text-sm text-gray-500">No FMCSA verifications found for this company.</div>
+          ) : null}
+        </div>
+      </Modal>
+
+      <FMCSAVerificationModal
+        open={fmcsaModalOpen}
+        onClose={() => setFmcsaModalOpen(false)}
+        customerId={customer.id}
+        initialUsdot={hydratedForm.dot_number}
+        initialMc={hydratedForm.mc_number}
+        onApplyToCustomer={(fmcsaResult) => {
+          setForm((current) => ({
+            ...current,
+            name: fmcsaResult.legal_name ?? current.name,
+            dot_number: fmcsaResult.usdot_number ?? current.dot_number,
+            mc_number: fmcsaResult.mc_number ?? current.mc_number,
+            office_phone: fmcsaResult.phone ?? current.office_phone,
+          }));
+          pushToast("FMCSA values applied. Save customer to persist profile changes.", "success");
+        }}
+        onSavedAsVerified={() => {
+          queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
+          queryClient.invalidateQueries({ queryKey: ["customers"] });
+        }}
+      />
     </div>
   );
 }
