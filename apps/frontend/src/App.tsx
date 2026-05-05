@@ -13,6 +13,7 @@ import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
 
 function RootRedirect() {
@@ -60,6 +61,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users/:id"
+          element={
+            <ProtectedRoute>
+              <UserDetailPage />
             </ProtectedRoute>
           }
         />

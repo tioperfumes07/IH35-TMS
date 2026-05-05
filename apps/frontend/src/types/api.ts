@@ -12,6 +12,7 @@ export type IdentityUser = {
   id: string;
   email: string | null;
   role: UserRole;
+  default_company_id?: string | null;
   created_at: string;
   deactivated_at: string | null;
 };
