@@ -6,8 +6,6 @@ import {
   finalizeSettlement,
   getEscrowTimeline,
   getSettlement,
-  type DebtSummary,
-  type SettlementListRow,
 } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
@@ -43,7 +41,7 @@ function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] 
 export function SettlementDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const settlementId = searchParams.get("settlement_id");

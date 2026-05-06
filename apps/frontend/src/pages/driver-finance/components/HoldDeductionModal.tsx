@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { holdDeduction, type SettlementListRow } from "../../../api/driverFinance";
+import { holdDeduction } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
