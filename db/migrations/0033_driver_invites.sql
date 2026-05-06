@@ -24,7 +24,9 @@ DROP POLICY IF EXISTS driver_invites_select ON identity.driver_invites;
 CREATE POLICY driver_invites_select ON identity.driver_invites
   FOR SELECT TO ih35_app
   USING (
-    operating_company_id IN (
+    identity.is_lucia_bypass()
+    OR identity.current_user_role() = 'Owner'
+    OR operating_company_id IN (
       SELECT company_id FROM org.user_company_access
       WHERE user_id = identity.current_user_id() AND deactivated_at IS NULL
     )
