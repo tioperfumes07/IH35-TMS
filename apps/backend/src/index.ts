@@ -24,6 +24,8 @@ import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
+import { registerSafetyRoutes } from "./safety/safety.routes.js";
+import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
 import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
 import { registerBankingFactoringVirtualRoutes } from "./banking/factoring-virtual.routes.js";
@@ -123,6 +125,8 @@ async function main() {
   await registerDriverFinanceDeductionRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
+  await registerSafetyRoutes(app);
+  await registerLiabilitiesRoutes(app);
   await registerBankingRoutes(app);
   await registerBankingManualJeRoutes(app);
   await registerBankingFactoringVirtualRoutes(app);

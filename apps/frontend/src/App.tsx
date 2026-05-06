@@ -14,6 +14,8 @@ import { DispatchHomePage } from "./pages/dispatch/DispatchHome";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
+import { SafetyHomePage } from "./pages/safety/SafetyHome";
+import { LiabilitiesHomePage } from "./pages/liabilities/LiabilitiesHome";
 import { MaintenanceHomePage } from "./pages/maintenance/MaintenanceHome";
 import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
@@ -155,6 +157,22 @@ export default function App() {
           }
         />
         <Route
+          path="/safety"
+          element={
+            <ProtectedRoute>
+              <SafetyHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/liabilities"
+          element={
+            <ProtectedRoute>
+              <LiabilitiesHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/maintenance"
           element={
             <ProtectedRoute>
@@ -188,8 +206,6 @@ export default function App() {
         />
         {[
           ["/accounting", "Accounting", "5", "Post-launch"],
-          ["/safety", "Safety", "3", "T11.10 this week"],
-          ["/liabilities", "Liabilities", "3", "T11.10 this week"],
           ["/cash-advances", "Cash Advances", "3", "T11.11 this week"],
           ["/factoring", "Factoring", "3", "T11.12 this week"],
           ["/form-425c", "Form 425C", "3", "T11.13 this week"],
