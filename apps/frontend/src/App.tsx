@@ -11,6 +11,7 @@ import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
 import { DispatchHomePage } from "./pages/dispatch/DispatchHome";
+import { MaintenanceHomePage } from "./pages/maintenance/MaintenanceHome";
 import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
@@ -135,6 +136,14 @@ export default function App() {
           }
         />
         <Route
+          path="/maintenance"
+          element={
+            <ProtectedRoute>
+              <MaintenanceHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/catalogs"
           element={
             <ProtectedRoute>
@@ -151,7 +160,6 @@ export default function App() {
           }
         />
         {[
-          ["/maintenance", "Maintenance", "2"],
           ["/accounting", "Accounting", "2"],
           ["/banking", "Banking", "2"],
           ["/fuel", "Fuel", "2"],
