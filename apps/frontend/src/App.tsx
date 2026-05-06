@@ -228,7 +228,7 @@ export default function App() {
           path="/catalogs/accounts"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Chart%20of%20Accounts&phase=2&eta=Roadmap" replace />
+              <Navigate to="/coming-soon?feature=Chart%20of%20Accounts&phase=5&eta=After%20accounting%20cutover" replace />
             </ProtectedRoute>
           }
         />
@@ -236,7 +236,7 @@ export default function App() {
           path="/catalogs/classes"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Classes&phase=2&eta=Roadmap" replace />
+              <Navigate to="/coming-soon?feature=Classes&phase=5&eta=After%20accounting%20cutover" replace />
             </ProtectedRoute>
           }
         />
@@ -244,7 +244,7 @@ export default function App() {
           path="/catalogs/items"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Items&phase=2&eta=Roadmap" replace />
+              <Navigate to="/coming-soon?feature=Items&phase=5&eta=After%20accounting%20cutover" replace />
             </ProtectedRoute>
           }
         />
@@ -252,7 +252,7 @@ export default function App() {
           path="/catalogs/payment-terms"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Payment%20Terms&phase=2&eta=Roadmap" replace />
+              <Navigate to="/coming-soon?feature=Payment%20Terms&phase=5&eta=After%20accounting%20cutover" replace />
             </ProtectedRoute>
           }
         />
@@ -260,7 +260,7 @@ export default function App() {
           path="/catalogs/posting-templates"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Posting%20Templates&phase=2&eta=Roadmap" replace />
+              <Navigate to="/coming-soon?feature=Posting%20Templates&phase=5&eta=After%20accounting%20cutover" replace />
             </ProtectedRoute>
           }
         />
@@ -268,7 +268,7 @@ export default function App() {
           path="/catalogs/account-role-bindings"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Account%20Role%20Bindings&phase=2&eta=Roadmap" replace />
+              <Navigate to="/coming-soon?feature=Account%20Role%20Bindings&phase=5&eta=After%20accounting%20cutover" replace />
             </ProtectedRoute>
           }
         />
