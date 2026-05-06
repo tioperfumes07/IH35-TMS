@@ -18,6 +18,9 @@ import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellati
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
+import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
+import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
+import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
@@ -107,6 +110,9 @@ async function main() {
   await registerFileCategoriesRoutes(app);
   await registerDocsFilesRoutes(app);
   await registerDispatchLoadRoutes(app);
+  await registerDriverFinanceSettlementRoutes(app);
+  await registerDriverFinanceDebtRoutes(app);
+  await registerDriverFinanceDeductionRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
