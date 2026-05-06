@@ -42,7 +42,7 @@ const ITEMS: SidebarItem[] = [
   { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/catalogs" },
   { key: "REPORTS", label: "REPORTS", Icon: ClipboardList, to: "/reports" },
   { key: "425C", label: "425C", Icon: SquareStack, to: "/form-425c" },
-  { key: "DRV_APP", label: "DRV APP", Icon: Activity, to: "/coming-soon?feature=Driver%20App&phase=2&eta=Phase%202" },
+  { key: "DRV_APP", label: "DRV APP", Icon: Activity, to: "/driver-app" },
 ];
 
 type SidebarProps = {
