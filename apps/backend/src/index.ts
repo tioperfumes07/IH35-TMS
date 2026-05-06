@@ -18,6 +18,9 @@ import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellati
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
+import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
+import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
+import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
 import { registerDriverReturningDetectionRoutes } from "./mdata/driver-returning-detection.routes.js";
 import { registerDriverSafetyEventsRoutes } from "./mdata/driver-safety-events.routes.js";
@@ -104,6 +107,9 @@ async function main() {
   await registerFileCategoriesRoutes(app);
   await registerDocsFilesRoutes(app);
   await registerDispatchLoadRoutes(app);
+  await registerMaintenanceWorkOrderRoutes(app);
+  await registerMaintenanceDashboardRoutes(app);
+  await registerMaintenanceTriageRoutes(app);
   await registerCompanyRoutes(app);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
