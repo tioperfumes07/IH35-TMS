@@ -273,7 +273,7 @@ try {
     const locationRes = await client.query(
       `
         INSERT INTO mdata.locations (location_name, location_code, location_type, operating_company_id, created_by_user_id, updated_by_user_id)
-        VALUES ($1, $2, 'Other', $3, $4, $4)
+        VALUES ($1, $2, 'other', $3, $4, $4)
         RETURNING id
       `,
       [`USMCA Location ${suffix}`, `USMCA-LOC-${suffix}`, refs.usmcaCompanyId, refs.ownerUserId]

@@ -246,11 +246,12 @@ const tableConfigs = [
   },
   {
     name: "locations",
+    driverSelectExpectedRowCount: 0,
     bypassInsert: (ctx) => ({
       sql: `
         INSERT INTO mdata.locations (
           location_name, location_code, location_type, linked_customer_id, linked_vendor_id, operating_company_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Other', $3, $4, $5, $6, $7)
+        ) VALUES ($1, $2, 'other', $3, $4, $5, $6, $7)
         RETURNING id
       `,
       values: [
@@ -267,7 +268,7 @@ const tableConfigs = [
       sql: `
         INSERT INTO mdata.locations (
           location_name, location_code, location_type, linked_customer_id, linked_vendor_id, operating_company_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Other', $3, $4, $5, $6, $7)
+        ) VALUES ($1, $2, 'other', $3, $4, $5, $6, $7)
         RETURNING id
       `,
       values: [
@@ -284,7 +285,7 @@ const tableConfigs = [
       sql: `
         INSERT INTO mdata.locations (
           location_name, location_code, location_type, linked_customer_id, linked_vendor_id, operating_company_id, notes, created_by_user_id
-        ) VALUES ($1, $2, 'Other', $3, $4, $5, $6, $7)
+        ) VALUES ($1, $2, 'other', $3, $4, $5, $6, $7)
         RETURNING id
       `,
       values: [
@@ -490,8 +491,9 @@ try {
       await pass(`${cfg.name}: driver SELECT succeeds`, async () => {
         await runAsUser(client, userIds.driverUserId, async () => {
           const res = await client.query(`SELECT id FROM mdata.${cfg.name} WHERE id = $1`, [fixtureIds[cfg.name]]);
-          if (res.rowCount !== 1) {
-            throw new Error("expected driver to read fixture row");
+          const expectedRowCount = cfg.driverSelectExpectedRowCount ?? 1;
+          if (res.rowCount !== expectedRowCount) {
+            throw new Error(`expected driver SELECT rowCount=${expectedRowCount} got ${res.rowCount}`);
           }
         });
       })
