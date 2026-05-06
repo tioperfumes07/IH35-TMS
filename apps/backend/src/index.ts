@@ -44,6 +44,7 @@ import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
+import { registerDispatchOverrideAuditRoutes } from "./audit/dispatch-overrides.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -136,6 +137,7 @@ async function main() {
   await registerMaintenanceWorkOrderRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
+  await registerDispatchOverrideAuditRoutes(app);
   await registerCompanyRoutes(app);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
