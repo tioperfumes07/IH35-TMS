@@ -23,14 +23,45 @@ const loadStatusSchema = z.enum([
 const stopTypeSchema = z.enum(["pickup", "delivery", "fuel", "rest", "border"]);
 const stopStatusSchema = z.enum(["pending", "arrived", "departed", "cancelled"]);
 const isoDatetimeSchema = z.string().datetime({ offset: true });
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const listLoadsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
-  status: loadStatusSchema.optional(),
+  status: z
+    .preprocess((value) => {
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string") return value.split(",").map((entry) => entry.trim()).filter(Boolean);
+      return undefined;
+    }, z.array(loadStatusSchema).max(20).optional())
+    .optional(),
   customer_id: z.string().uuid().optional(),
-  from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  driver_id: z.string().uuid().optional(),
+  operating_company_id: z
+    .preprocess((value) => {
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string") return value.split(",").map((entry) => entry.trim()).filter(Boolean);
+      return undefined;
+    }, z.array(z.string().uuid()).max(20).optional())
+    .optional(),
+  pickup_date_from: isoDateSchema.optional(),
+  pickup_date_to: isoDateSchema.optional(),
+  delivery_date_from: isoDateSchema.optional(),
+  delivery_date_to: isoDateSchema.optional(),
+  from_date: isoDateSchema.optional(),
+  to_date: isoDateSchema.optional(),
+  search: z.string().trim().min(1).max(120).optional(),
+  sort: z
+    .string()
+    .trim()
+    .regex(/^(created_at|load_number|status|rate_total_cents):(asc|desc)$/i)
+    .default("created_at:desc"),
+});
+
+const loadStatusTransitionBodySchema = z.object({
+  new_status: loadStatusSchema,
+  cancellation_reason_code: z.string().trim().min(2).max(80).optional(),
+  cancellation_notes: z.string().trim().max(2000).optional(),
 });
 
 const loadIdParamSchema = z.object({ id: z.string().uuid() });
@@ -49,6 +80,22 @@ const createLoadBodySchema = z.object({
   assigned_primary_driver_id: z.string().uuid().optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
   notes: z.string().trim().max(5000).optional(),
+  pickup: z.object({
+    location_id: z.string().uuid().optional(),
+    address_line1: z.string().trim().max(300).optional(),
+    city: z.string().trim().min(1).max(120),
+    state: z.string().trim().min(1).max(120),
+    country: z.string().trim().min(1).max(120),
+    scheduled_arrival_at: isoDatetimeSchema,
+  }).optional(),
+  delivery: z.object({
+    location_id: z.string().uuid().optional(),
+    address_line1: z.string().trim().max(300).optional(),
+    city: z.string().trim().min(1).max(120),
+    state: z.string().trim().min(1).max(120),
+    country: z.string().trim().min(1).max(120),
+    scheduled_arrival_at: isoDatetimeSchema,
+  }).optional(),
 });
 
 const updateLoadBodySchema = z
@@ -119,6 +166,31 @@ function toCompanyLoadToken(input: string | null | undefined): string {
   return cleaned || "COMP";
 }
 
+function statusToFlagCode(status: z.infer<typeof loadStatusSchema>): string {
+  if (status === "cancelled") return "RED";
+  if (status === "closed" || status === "paid" || status === "invoiced") return "BLACK";
+  if (status === "delivered") return "GREEN";
+  if (status === "at_pickup" || status === "in_transit" || status === "at_delivery") return "BLUE";
+  if (status === "assigned" || status === "dispatched") return "YELLOW";
+  return "GRAY";
+}
+
+const allowedStatusTransitions: Record<z.infer<typeof loadStatusSchema>, z.infer<typeof loadStatusSchema>[]> = {
+  draft: ["booked", "planned", "cancelled"],
+  booked: ["planned", "assigned", "cancelled"],
+  planned: ["assigned", "cancelled"],
+  assigned: ["dispatched", "cancelled"],
+  dispatched: ["at_pickup", "cancelled"],
+  at_pickup: ["in_transit", "cancelled"],
+  in_transit: ["at_delivery", "cancelled"],
+  at_delivery: ["delivered", "cancelled"],
+  delivered: ["invoiced", "cancelled"],
+  invoiced: ["paid", "closed"],
+  paid: ["closed"],
+  closed: [],
+  cancelled: [],
+};
+
 async function nextLoadNumber(
   client: {
     query: <T extends Record<string, unknown> = Record<string, unknown>>(
@@ -165,6 +237,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     const parsedBody = createLoadBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+
+    if ((b.pickup && !b.delivery) || (!b.pickup && b.delivery)) {
+      return reply.code(400).send({ error: "pickup_and_delivery_required_together" });
+    }
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
@@ -225,6 +301,42 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         }
         if (!inserted) throw new Error("load_insert_failed");
 
+        const createdStops: Array<Record<string, unknown>> = [];
+        if (b.pickup && b.delivery) {
+          const stopDefs = [
+            { sequence_number: 1, stop_type: "pickup" as const, stop: b.pickup },
+            { sequence_number: 2, stop_type: "delivery" as const, stop: b.delivery },
+          ];
+          for (const stopDef of stopDefs) {
+            const stopRes = await client.query(
+              `
+                INSERT INTO mdata.load_stops (
+                  load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status
+                ) VALUES (
+                  $1,$2,$3,$4,$5,$6,$7,$8,$9,'pending'
+                )
+                RETURNING
+                  id, load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
+                  scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at,
+                  status, notes, created_at, updated_at
+              `,
+              [
+                inserted.id,
+                stopDef.sequence_number,
+                stopDef.stop_type,
+                stopDef.stop.location_id ?? null,
+                stopDef.stop.address_line1 ?? null,
+                stopDef.stop.city,
+                stopDef.stop.state,
+                stopDef.stop.country,
+                stopDef.stop.scheduled_arrival_at,
+              ]
+            );
+            const stopRow = stopRes.rows[0] ?? null;
+            if (stopRow) createdStops.push(stopRow);
+          }
+        }
+
         await appendCrudAudit(
           client,
           authUser.uuid,
@@ -232,14 +344,36 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           {
             resource_id: inserted.id,
             resource_type: "mdata.loads",
+            entity_type: "load",
+            entity_id: inserted.id,
             load_number: inserted.load_number,
             operating_company_id: inserted.operating_company_id,
             customer_id: inserted.customer_id,
             status: inserted.status,
           },
           "info",
-          "BT-3-LOADS-SCHEMA"
+          "BT-3-DISPATCH-BOARD"
         );
+
+        for (const stopRow of createdStops) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.load_stops.created",
+            {
+              resource_id: stopRow.id,
+              resource_type: "mdata.load_stops",
+              entity_type: "load",
+              entity_id: inserted.id,
+              load_id: inserted.id,
+              sequence_number: stopRow.sequence_number,
+              stop_type: stopRow.stop_type,
+              status: stopRow.status,
+            },
+            "info",
+            "BT-3-DISPATCH-BOARD"
+          );
+        }
 
         if (inserted.assigned_unit_id || inserted.assigned_primary_driver_id || inserted.assigned_secondary_driver_id) {
           await appendCrudAudit(
@@ -249,16 +383,21 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             {
               resource_id: inserted.id,
               resource_type: "mdata.loads",
+              entity_type: "load",
+              entity_id: inserted.id,
               assigned_unit_id: inserted.assigned_unit_id,
               assigned_primary_driver_id: inserted.assigned_primary_driver_id,
               assigned_secondary_driver_id: inserted.assigned_secondary_driver_id,
             },
             "info",
-            "BT-3-LOADS-SCHEMA"
+            "BT-3-DISPATCH-BOARD"
           );
         }
 
-        return inserted;
+        if (createdStops.length === 0) {
+          return inserted;
+        }
+        return { ...inserted, stops: createdStops };
       });
 
       if (created && typeof created === "object" && "error" in created) {
@@ -279,48 +418,163 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedQuery = listLoadsQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
-    const { limit, offset, status, customer_id, from_date, to_date } = parsedQuery.data;
+    const {
+      limit,
+      offset,
+      status,
+      customer_id,
+      driver_id,
+      operating_company_id,
+      pickup_date_from,
+      pickup_date_to,
+      delivery_date_from,
+      delivery_date_to,
+      from_date,
+      to_date,
+      search,
+      sort,
+    } = parsedQuery.data;
+    const [sortField, sortDir] = sort.toLowerCase().split(":") as [string, "asc" | "desc"];
+    const sortColumnMap: Record<string, string> = {
+      created_at: "l.created_at",
+      load_number: "l.load_number",
+      status: "l.status",
+      rate_total_cents: "l.rate_total_cents",
+    };
+    const sortColumn = sortColumnMap[sortField] ?? "l.created_at";
+    const sortDirection = sortDir === "asc" ? "ASC" : "DESC";
 
-    const rows = await withCurrentUser(authUser.uuid, async (client) => {
+    const listResult = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
-      const filters: string[] = ["soft_deleted_at IS NULL"];
-      if (status) {
+      const filters: string[] = ["l.soft_deleted_at IS NULL"];
+
+      if (status && status.length > 0) {
         values.push(status);
-        filters.push(`status = $${values.length}`);
+        filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       }
       if (customer_id) {
         values.push(customer_id);
-        filters.push(`customer_id = $${values.length}`);
+        filters.push(`l.customer_id = $${values.length}`);
       }
-      if (from_date) {
-        values.push(from_date);
-        filters.push(`created_at::date >= $${values.length}`);
+      if (driver_id) {
+        values.push(driver_id);
+        filters.push(`(l.assigned_primary_driver_id = $${values.length} OR l.assigned_secondary_driver_id = $${values.length})`);
       }
-      if (to_date) {
-        values.push(to_date);
-        filters.push(`created_at::date <= $${values.length}`);
+      if (operating_company_id && operating_company_id.length > 0) {
+        values.push(operating_company_id);
+        filters.push(`l.operating_company_id = ANY($${values.length}::uuid[])`);
       }
-      values.push(limit);
-      values.push(offset);
+      const pickupFrom = pickup_date_from ?? from_date;
+      const pickupTo = pickup_date_to ?? to_date;
+      if (pickupFrom) {
+        values.push(pickupFrom);
+        filters.push(`sp.scheduled_arrival_at::date >= $${values.length}::date`);
+      }
+      if (pickupTo) {
+        values.push(pickupTo);
+        filters.push(`sp.scheduled_arrival_at::date <= $${values.length}::date`);
+      }
+      if (delivery_date_from) {
+        values.push(delivery_date_from);
+        filters.push(`sd.scheduled_arrival_at::date >= $${values.length}::date`);
+      }
+      if (delivery_date_to) {
+        values.push(delivery_date_to);
+        filters.push(`sd.scheduled_arrival_at::date <= $${values.length}::date`);
+      }
+      if (search) {
+        values.push(`%${search}%`);
+        const idx = values.length;
+        filters.push(
+          `(l.load_number ILIKE $${idx} OR c.customer_name ILIKE $${idx} OR COALESCE(sp.city, '') ILIKE $${idx} OR COALESCE(sd.city, '') ILIKE $${idx})`
+        );
+      }
+
       const whereClause = `WHERE ${filters.join(" AND ")}`;
-      const res = await client.query(
+      const countRes = await client.query<{ total_count: number }>(
         `
-          SELECT
-            id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-            assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
-            dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
-          FROM mdata.loads
+          SELECT COUNT(*)::int AS total_count
+          FROM mdata.loads l
+          JOIN mdata.customers c ON c.id = l.customer_id
+          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+          LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+          LEFT JOIN LATERAL (
+            SELECT city, scheduled_arrival_at
+            FROM mdata.load_stops
+            WHERE load_id = l.id AND stop_type = 'pickup'
+            ORDER BY sequence_number ASC
+            LIMIT 1
+          ) sp ON true
+          LEFT JOIN LATERAL (
+            SELECT city, scheduled_arrival_at
+            FROM mdata.load_stops
+            WHERE load_id = l.id AND stop_type = 'delivery'
+            ORDER BY sequence_number DESC
+            LIMIT 1
+          ) sd ON true
           ${whereClause}
-          ORDER BY created_at DESC
-          LIMIT $${values.length - 1}
-          OFFSET $${values.length}
         `,
         values
       );
-      return res.rows;
+
+      values.push(limit);
+      values.push(offset);
+      const limitIdx = values.length - 1;
+      const offsetIdx = values.length;
+
+      const res = await client.query(
+        `
+          SELECT
+            l.id, l.operating_company_id, l.load_number, l.customer_id, l.status, l.rate_total_cents, l.currency_code,
+            l.assigned_unit_id, l.assigned_primary_driver_id, l.assigned_secondary_driver_id,
+            l.dispatcher_user_id, l.notes, l.created_at, l.updated_at, l.soft_deleted_at, l.deleted_by_user_id,
+            c.customer_name AS customer_name,
+            u.unit_number AS assigned_unit_number,
+            CASE
+              WHEN d.id IS NULL THEN NULL
+              ELSE CONCAT_WS(' ', d.first_name, d.last_name)
+            END AS assigned_primary_driver_name,
+            sp.city AS first_pickup_city,
+            sd.city AS first_delivery_city
+          FROM mdata.loads l
+          JOIN mdata.customers c ON c.id = l.customer_id
+          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+          LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+          LEFT JOIN LATERAL (
+            SELECT city, scheduled_arrival_at
+            FROM mdata.load_stops
+            WHERE load_id = l.id AND stop_type = 'pickup'
+            ORDER BY sequence_number ASC
+            LIMIT 1
+          ) sp ON true
+          LEFT JOIN LATERAL (
+            SELECT city, scheduled_arrival_at
+            FROM mdata.load_stops
+            WHERE load_id = l.id AND stop_type = 'delivery'
+            ORDER BY sequence_number DESC
+            LIMIT 1
+          ) sd ON true
+          ${whereClause}
+          ORDER BY ${sortColumn} ${sortDirection}
+          LIMIT $${limitIdx}
+          OFFSET $${offsetIdx}
+        `,
+        values
+      );
+      return {
+        rows: res.rows.map((row) => ({
+          ...row,
+          flag_code: statusToFlagCode(row.status as z.infer<typeof loadStatusSchema>),
+        })),
+        totalCount: Number(countRes.rows[0]?.total_count ?? 0),
+      };
     });
 
-    return { loads: rows };
+    return {
+      loads: listResult.rows,
+      total_count: listResult.totalCount,
+      has_more: offset + limit < listResult.totalCount,
+    };
   });
 
   app.get("/api/v1/mdata/loads/:id", async (req, reply) => {
@@ -362,6 +616,140 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
     if (!detail) return reply.code(404).send({ error: "mdata_load_not_found" });
     return detail;
+  });
+
+  app.get("/api/v1/mdata/loads/:id/audit", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const rows = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query(
+        `
+          SELECT uuid, created_at, event_class, severity, payload, actor_user_uuid, source
+          FROM audit.audit_events
+          WHERE
+            (
+              payload->>'entity_type' = 'load'
+              AND payload->>'entity_id' = $1
+            )
+            OR (
+              payload->>'resource_type' = 'mdata.loads'
+              AND payload->>'resource_id' = $1
+            )
+          ORDER BY created_at DESC
+          LIMIT 200
+        `,
+        [parsedParams.data.id]
+      );
+      return res.rows;
+    });
+
+    return { events: rows };
+  });
+
+  app.patch("/api/v1/mdata/loads/:id/status", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+
+    const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedBody = loadStatusTransitionBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const { new_status: newStatus, cancellation_reason_code: cancellationReasonCode, cancellation_notes: cancellationNotes } = parsedBody.data;
+
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      const currentRes = await client.query<{ id: string; status: z.infer<typeof loadStatusSchema> }>(
+        `SELECT id, status FROM mdata.loads WHERE id = $1 AND soft_deleted_at IS NULL LIMIT 1`,
+        [parsedParams.data.id]
+      );
+      const current = currentRes.rows[0] ?? null;
+      if (!current) return { error: "mdata_load_not_found" as const };
+      if (current.status === newStatus) return { ok: true as const, no_change: true, status: current.status };
+
+      const allowed = allowedStatusTransitions[current.status] ?? [];
+      if (!allowed.includes(newStatus)) {
+        return { error: "invalid_status_transition" as const, from_status: current.status, to_status: newStatus };
+      }
+
+      if (newStatus === "cancelled" && !cancellationReasonCode) {
+        return { error: "cancellation_reason_required" as const };
+      }
+
+      const updateRes = await client.query(
+        `
+          UPDATE mdata.loads
+          SET status = $2
+          WHERE id = $1
+          RETURNING
+            id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
+            assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
+            dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
+        `,
+        [parsedParams.data.id, newStatus]
+      );
+      const row = updateRes.rows[0] ?? null;
+      if (!row) return { error: "mdata_load_not_found" as const };
+
+      await appendCrudAudit(
+        client,
+        authUser.uuid,
+        "mdata.loads.status_changed",
+        {
+          resource_id: row.id,
+          resource_type: "mdata.loads",
+          entity_type: "load",
+          entity_id: row.id,
+          from_status: current.status,
+          to_status: row.status,
+        },
+        "info",
+        "BT-3-DISPATCH-BOARD"
+      );
+
+      if (row.status === "cancelled") {
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "mdata.loads.cancelled",
+          {
+            resource_id: row.id,
+            resource_type: "mdata.loads",
+            entity_type: "load",
+            entity_id: row.id,
+            from_status: current.status,
+            to_status: row.status,
+            reason_code: cancellationReasonCode ?? null,
+            notes: cancellationNotes ?? null,
+          },
+          "warning",
+          "BT-3-DISPATCH-BOARD"
+        );
+      }
+
+      return { ok: true as const, row };
+    });
+
+    if ("error" in result) {
+      if (result.error === "mdata_load_not_found") return reply.code(404).send({ error: "mdata_load_not_found" });
+      if (result.error === "invalid_status_transition") {
+        return reply.code(400).send({
+          error: "invalid_status_transition",
+          from_status: result.from_status,
+          to_status: result.to_status,
+        });
+      }
+      if (result.error === "cancellation_reason_required") {
+        return reply.code(400).send({ error: "cancellation_reason_required" });
+      }
+    }
+
+    if ("no_change" in result && result.no_change) {
+      return { ok: true, status: result.status };
+    }
+    return result.row;
   });
 
   app.patch("/api/v1/mdata/loads/:id", async (req, reply) => {
