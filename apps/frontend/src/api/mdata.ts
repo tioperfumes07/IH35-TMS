@@ -1,5 +1,5 @@
 import { apiRequest } from "./client";
-import type { CreateDriverInput, CustomerType, Driver, MilesBasis, UpdateDriverInput } from "../types/api";
+import type { CreateDriverInput, CustomerType, Driver, DriverOnboardingCreateResponse, MilesBasis, UpdateDriverInput } from "../types/api";
 
 export function listDrivers(params: { status?: string; search?: string }) {
   const query = new URLSearchParams();
@@ -17,7 +17,7 @@ export function getDriver(id: string) {
 }
 
 export function createDriver(body: CreateDriverInput) {
-  return apiRequest<Driver>("/api/v1/mdata/drivers", { method: "POST", body });
+  return apiRequest<DriverOnboardingCreateResponse>("/api/v1/mdata/drivers", { method: "POST", body });
 }
 
 export function updateDriver(id: string, body: UpdateDriverInput) {
