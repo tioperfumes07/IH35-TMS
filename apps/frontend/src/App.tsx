@@ -17,6 +17,7 @@ import { BankingHomePage } from "./pages/banking/BankingHome";
 import { SafetyHomePage } from "./pages/safety/SafetyHome";
 import { LiabilitiesHomePage } from "./pages/liabilities/LiabilitiesHome";
 import { MaintenanceHomePage } from "./pages/maintenance/MaintenanceHome";
+import { CashAdvancesHomePage } from "./pages/cash-advances/CashAdvancesHome";
 import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
@@ -181,6 +182,14 @@ export default function App() {
           }
         />
         <Route
+          path="/cash-advances"
+          element={
+            <ProtectedRoute>
+              <CashAdvancesHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/driver-finance/settlements"
           element={
             <ProtectedRoute>
@@ -206,7 +215,6 @@ export default function App() {
         />
         {[
           ["/accounting", "Accounting", "5", "Post-launch"],
-          ["/cash-advances", "Cash Advances", "3", "T11.11 this week"],
           ["/factoring", "Factoring", "3", "T11.12 this week"],
           ["/form-425c", "Form 425C", "3", "T11.13 this week"],
           ["/425c", "Form 425C", "3", "T11.13 this week"],
