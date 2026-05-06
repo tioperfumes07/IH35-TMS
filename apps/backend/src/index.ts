@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
+import multipart from "@fastify/multipart";
 import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
 import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
@@ -21,6 +22,8 @@ import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
+import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
+import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
@@ -85,6 +88,7 @@ async function main() {
     allowedHeaders: ["Content-Type", "Authorization"],
   });
   await app.register(cookie);
+  await app.register(multipart);
   await registerSessionMiddleware(app);
   await registerAuthRoutes(app);
   await registerPhoneAuthRoutes(app);
@@ -113,6 +117,8 @@ async function main() {
   await registerDriverFinanceSettlementRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
+  await registerFuelPlannerRoutes(app);
+  await registerFuelLovesUploadRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);

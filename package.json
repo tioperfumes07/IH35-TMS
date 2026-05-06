@@ -60,6 +60,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1042.0",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.2.0",
+    "@fastify/multipart": "^10.0.0",
     "@lucia-auth/adapter-postgresql": "^3.1.2",
     "arctic": "^2.3.4",
     "bullmq": "^5.76.5",
@@ -71,6 +72,7 @@
     "oslo": "^1.2.1",
     "pg": "^8.20.0",
     "twilio": "^6.0.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.2"
   },
   "devDependencies": {

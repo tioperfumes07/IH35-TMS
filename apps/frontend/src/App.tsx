@@ -12,6 +12,7 @@ import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
 import { DispatchHomePage } from "./pages/dispatch/DispatchHome";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
+import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { MaintenanceHomePage } from "./pages/maintenance/MaintenanceHome";
 import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
@@ -137,6 +138,14 @@ export default function App() {
           }
         />
         <Route
+          path="/fuel"
+          element={
+            <ProtectedRoute>
+              <FuelPlannerHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/maintenance"
           element={
             <ProtectedRoute>
@@ -171,7 +180,6 @@ export default function App() {
         {[
           ["/accounting", "Accounting", "2"],
           ["/banking", "Banking", "2"],
-          ["/fuel", "Fuel", "2"],
           ["/safety", "Safety", "2"],
           ["/reports", "Reports", "3"],
           ["/form-425c", "Form 425C", "3"],
