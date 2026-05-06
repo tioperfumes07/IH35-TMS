@@ -39,6 +39,12 @@ export type DispatchLoad = {
   unit_number: string | null;
   trailer_number: string | null;
   driver_short_name: string | null;
+  has_open_pm_due_wo?: boolean;
+  is_dispatch_blocked?: boolean;
+  dispatch_block_reason?: string | null;
+  hos_badge_color?: "green" | "yellow" | "red" | null;
+  hos_is_in_violation?: boolean;
+  hos_minutes_until_violation?: number;
   pickup_city: string | null;
   pickup_state: string | null;
   delivery_city: string | null;
@@ -110,6 +116,8 @@ export type DispatchBookLoadPayload = {
     scheduled_arrival_at?: string;
   }>;
   save_mode: "draft" | "book_dispatch";
+  override_token?: string;
+  override_reason?: string;
 };
 
 export function getDispatchPreferences() {
@@ -157,6 +165,18 @@ export function getDispatchLoadDetail(id: string, operatingCompanyId: string) {
 export function getDispatchDriverStatus(id: string, operatingCompanyId: string) {
   return apiRequest<Record<string, unknown>>(
     `/api/v1/dispatch/loads/${id}/driver-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function getUnitDispatchStatus(unitId: string, operatingCompanyId: string) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/dispatch/units/${unitId}/dispatch-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function getDriverHosStatus(driverId: string, operatingCompanyId: string) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/dispatch/drivers/${driverId}/hos-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
 }
 

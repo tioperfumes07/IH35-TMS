@@ -38,11 +38,37 @@ export function LoadTable({ rows, selectedLoadId, onRowClick, onDriverStatusClic
               className={`cursor-pointer border-t border-gray-100 hover:bg-gray-50 ${selectedLoadId === row.id ? "bg-[#E6F1FB]" : ""}`}
             >
               <td className="px-2 py-1 font-semibold text-blue-700">{row.load_number}</td>
-              <td className="px-2 py-1">{row.unit_number ?? "-"}</td>
+              <td className="px-2 py-1">
+                <span className="inline-flex items-center gap-1">
+                  {row.unit_number ?? "-"}
+                  {row.has_open_pm_due_wo ? <span title="PM-due advisory (WF-044)">⚡</span> : null}
+                  {row.is_dispatch_blocked ? <span title={row.dispatch_block_reason ?? "Dispatch blocked"}>🔒</span> : null}
+                </span>
+              </td>
               <td className="px-2 py-1">{row.trailer_number ?? "-"}</td>
               <td className="px-2 py-1 text-amber-700">—</td>
               <td className="px-2 py-1">dry</td>
-              <td className="px-2 py-1">{row.driver_short_name ?? "Unassigned"}</td>
+              <td className="px-2 py-1">
+                <span className="inline-flex items-center gap-1">
+                  {row.driver_short_name ?? "Unassigned"}
+                  {row.driver_short_name ? (
+                    <span
+                      className={`inline-block h-2 w-2 rounded-full ${
+                        row.hos_badge_color === "red"
+                          ? "bg-red-500"
+                          : row.hos_badge_color === "yellow"
+                            ? "bg-amber-500"
+                            : "bg-green-500"
+                      }`}
+                      title={
+                        row.hos_is_in_violation
+                          ? "HOS violation"
+                          : `HOS: ${Math.max(Number(row.hos_minutes_until_violation ?? 0), 0)}m until violation`
+                      }
+                    />
+                  ) : null}
+                </span>
+              </td>
               <td className="px-2 py-1">{row.created_at ? new Date(row.created_at).toLocaleDateString() : "-"}</td>
               <td className="px-2 py-1">{row.created_at ? new Date(row.created_at).toLocaleDateString() : "-"}</td>
               <td className="px-2 py-1">{row.customer_name ?? "-"}</td>
