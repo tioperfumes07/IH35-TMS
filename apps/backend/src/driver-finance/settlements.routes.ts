@@ -103,7 +103,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           const debt = await recomputeDebtSync(client, String(row.driver_id));
           return {
             ...row,
-            live_debt_flag: Number(debt?.total_active_debt ?? 0),
+            live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
             debt_computed_at: debt?.computed_at ?? null,
           };
         })

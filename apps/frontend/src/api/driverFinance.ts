@@ -14,7 +14,7 @@ export type SettlementListRow = {
   deductions_total: number;
   net_pay: number;
   has_pending_acks: boolean;
-  live_debt_flag: number;
+  live_debt_flag: number | null;
   debt_computed_at: string | null;
 };
 

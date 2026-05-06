@@ -52,20 +52,13 @@ export async function registerDriverFinanceDebtRoutes(app: FastifyInstance) {
           source_liabilities: row.source_liabilities ?? [],
         };
       } catch {
-        return {
-          driver_id: params.data.id,
-          total_active_debt: 0,
-          pending_ack_count: 0,
-          pending_ack_total: 0,
-          escrow_pre_clause: 0,
-          escrow_post_clause: 0,
-          computed_at: new Date().toISOString(),
-          source_liabilities: [],
-          warning: "recompute_driver_debt unavailable in local schema",
-        };
+        return { unavailable: true as const };
       }
     });
 
+    if ("unavailable" in payload) {
+      return reply.code(501).send({ error: "recompute_driver_debt_unavailable" });
+    }
     return payload;
   });
 }

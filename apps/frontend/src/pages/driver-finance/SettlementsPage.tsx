@@ -23,7 +23,7 @@ export function SettlementsPage() {
   const kpis = {
     total_unpaid: settlements.filter((s) => s.status !== "paid").length,
     this_period: settlements.length,
-    drivers_with_debt: settlements.filter((s) => s.live_debt_flag > 0).length,
+    drivers_with_debt: settlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0).length,
     pending_acks: settlements.filter((s) => s.has_pending_acks).length,
     held_deductions: settlements.filter((s) => s.status === "held").length,
     ytd_settlements: settlements.length,

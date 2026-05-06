@@ -38,7 +38,11 @@ export function SettlementsTable({ rows, onOpen }: Props) {
               <td className="px-2 py-1 font-semibold text-green-700">${Number(row.net_pay ?? 0).toFixed(2)}</td>
               <td className="px-2 py-1"><span className={`rounded-full px-2 py-0.5 ${statusClass(row.status)}`}>{row.status}</span></td>
               <td className="px-2 py-1">
-                {row.live_debt_flag > 0 ? <span className="font-semibold text-red-700">${row.live_debt_flag.toFixed(2)}</span> : <span className="text-gray-500">—</span>}
+                {typeof row.live_debt_flag === "number" && row.live_debt_flag > 0 ? (
+                  <span className="font-semibold text-red-700">${row.live_debt_flag.toFixed(2)}</span>
+                ) : (
+                  <span className="text-gray-500">—</span>
+                )}
               </td>
               <td className="px-2 py-1">
                 <button type="button" className="text-blue-700 underline" onClick={() => onOpen(row.id)}>
