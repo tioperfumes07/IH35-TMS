@@ -797,7 +797,7 @@ export function CustomerDetailPage() {
                         setContactModalOpen(true);
                       }}
                     >
-                      + Add Contact
+                      + Create Contact
                     </Button>
                   ) : null}
                 </div>
@@ -915,7 +915,7 @@ export function CustomerDetailPage() {
               </div>
               {canWriteQuality ? (
                 <Button size="sm" onClick={() => setQualityModalOpen(true)}>
-                  + Add Event
+                  + Create Event
                 </Button>
               ) : null}
             </div>

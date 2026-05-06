@@ -822,7 +822,7 @@ export function DriverDetailPage() {
               ) : null}
               {canManageRates ? (
                 <Button onClick={() => setAddQualificationOpen(true)} disabled={equipmentTypeOptions.length === 0}>
-                  + Add Equipment Qualification
+                  + Create Equipment Qualification
                 </Button>
               ) : null}
             </div>
@@ -967,7 +967,7 @@ export function DriverDetailPage() {
                       Show voided
                     </label>
                   ) : null}
-                  {isOwner ? <Button onClick={() => setAddSafetyEventOpen(true)}>+ Add Event</Button> : null}
+                  {isOwner ? <Button onClick={() => setAddSafetyEventOpen(true)}>+ Create Event</Button> : null}
                 </div>
               </div>
 

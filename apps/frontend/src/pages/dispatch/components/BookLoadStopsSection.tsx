@@ -32,7 +32,7 @@ export function BookLoadStopsSection({ control, register }: Props) {
             })
           }
         >
-          + Add Stop
+          + Create Stop
         </Button>
       </div>
       <div className="space-y-2">
