@@ -297,7 +297,7 @@ export function UserDetailPage() {
                   Show voided
                 </label>
               ) : null}
-              {isOwner ? <Button onClick={() => setAddEventOpen(true)}>+ Add Event</Button> : null}
+              {isOwner ? <Button onClick={() => setAddEventOpen(true)}>+ Create Event</Button> : null}
             </div>
           </div>
 

@@ -166,7 +166,7 @@ export function DispatchPage() {
               List
             </Button>
             <Button type="button" onClick={() => setNewLoadOpen(true)}>
-              + New Load
+              + Book Load
             </Button>
           </div>
         }
