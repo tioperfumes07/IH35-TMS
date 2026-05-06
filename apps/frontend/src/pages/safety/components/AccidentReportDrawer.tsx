@@ -41,6 +41,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, onClo
           <div>Unit: {String(accident.unit_id ?? "—")}</div>
           <div>Severity: {String(accident.severity ?? "—")}</div>
           <div>Status: {String(accident.status ?? "open")}</div>
+          <div>Structured WO: {String(accident.spawned_wo_display_id ?? "—")}</div>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Button size="sm" variant="secondary" onClick={() => setStatus("under-investigation")}>Set Investigating</Button>
@@ -64,9 +65,9 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, onClo
             size="sm"
             variant="secondary"
             onClick={() =>
-              void spawnSafetyWo(id, operatingCompanyId)
-                .then(() => {
-                  pushToast("Spawn WO requested", "success");
+              void spawnSafetyWo(id, operatingCompanyId, { source_type: "AC", external_vendor_id: String(accident.vendor_id ?? "") || undefined })
+                .then((payload) => {
+                  pushToast(`Spawn WO requested (${String(payload.spawned_wo_display_id ?? "pending")})`, "success");
                   onUpdated();
                 })
                 .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"))

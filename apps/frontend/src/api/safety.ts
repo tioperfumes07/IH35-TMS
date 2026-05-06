@@ -33,9 +33,14 @@ export function spawnSafetyLiability(id: string, companyId: string) {
   });
 }
 
-export function spawnSafetyWo(id: string, companyId: string) {
+export function spawnSafetyWo(
+  id: string,
+  companyId: string,
+  payload?: { source_type?: "AC"; external_vendor_id?: string }
+) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/accidents/${id}/spawn-wo?${q(companyId)}`, {
     method: "POST",
+    body: payload,
   });
 }
 
