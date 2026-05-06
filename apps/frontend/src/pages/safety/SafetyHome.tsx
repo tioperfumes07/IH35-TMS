@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDrugAlcoholTests, getLatestCsa, getSafetyAccidents, getSafetyEvents, getSafetyKpis, getTrainingCompletions } from "../../api/safety";
+import { getIntegrityDriverHistory, getIntegrityFleetBaselines, getIntegrityUnitHistory, getIntegrityVendorHistory } from "../../api/maintenance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccidentReportDrawer } from "./components/AccidentReportDrawer";
@@ -9,6 +10,7 @@ import { DrugAlcoholTable } from "./components/DrugAlcoholTable";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { SafetyKpiRow } from "./components/SafetyKpiRow";
 import { TrainingTable } from "./components/TrainingTable";
+import { IntegrityAlertsTab } from "./components/IntegrityAlertsTab";
 
 const SAFETY_SUBNAV = [
   "Events",
@@ -16,6 +18,7 @@ const SAFETY_SUBNAV = [
   "Drug/Alcohol",
   "Accident Reports",
   "CSA Score",
+  "Integrity Alerts",
   "HOS Violations",
   "Vehicle Inspections",
   "Settings",
@@ -61,6 +64,26 @@ export function SafetyHomePage() {
     queryFn: () => getLatestCsa(companyId),
     enabled: Boolean(companyId),
   });
+  const integrityUnitQuery = useQuery({
+    queryKey: ["safety", "integrity", "unit", companyId],
+    queryFn: () => getIntegrityUnitHistory(companyId),
+    enabled: Boolean(companyId) && tab === "Integrity Alerts",
+  });
+  const integrityDriverQuery = useQuery({
+    queryKey: ["safety", "integrity", "driver", companyId],
+    queryFn: () => getIntegrityDriverHistory(companyId),
+    enabled: Boolean(companyId) && tab === "Integrity Alerts",
+  });
+  const integrityVendorQuery = useQuery({
+    queryKey: ["safety", "integrity", "vendor", companyId],
+    queryFn: () => getIntegrityVendorHistory(companyId),
+    enabled: Boolean(companyId) && tab === "Integrity Alerts",
+  });
+  const integrityBaselineQuery = useQuery({
+    queryKey: ["safety", "integrity", "fleet", companyId],
+    queryFn: () => getIntegrityFleetBaselines(companyId),
+    enabled: Boolean(companyId) && tab === "Integrity Alerts",
+  });
 
   const eventRows = useMemo(() => {
     if (tab === "Accident Reports") return accidentsQuery.data?.accidents ?? [];
@@ -94,6 +117,13 @@ export function SafetyHomePage() {
         <DrugAlcoholTable rows={testsQuery.data?.tests ?? []} />
       ) : tab === "CSA Score" ? (
         <CSAScoreCard latest={csaQuery.data?.latest} />
+      ) : tab === "Integrity Alerts" ? (
+        <IntegrityAlertsTab
+          unitRows={integrityUnitQuery.data?.rows ?? []}
+          driverRows={integrityDriverQuery.data?.rows ?? []}
+          vendorRows={integrityVendorQuery.data?.rows ?? []}
+          baselineRows={integrityBaselineQuery.data?.rows ?? []}
+        />
       ) : (
         <SafetyEventsTable
           rows={eventRows}

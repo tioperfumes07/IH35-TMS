@@ -23,6 +23,10 @@ const idParamsSchema = z.object({
 const statusBodySchema = z.object({
   status: z.enum(["open", "under-investigation", "closed-no-fault", "closed-driver-at-fault"]),
 });
+const spawnWoBodySchema = z.object({
+  source_type: z.enum(["AC"]).default("AC"),
+  external_vendor_id: z.string().uuid().optional(),
+});
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -390,8 +394,49 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     if (!params.success) return sendValidationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
+    const body = spawnWoBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const accRes = await client.query(
+        `SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const accident = accRes.rows[0] as Record<string, unknown> | undefined;
+      if (!accident) return { notFound: true as const };
+      const seqRes = await client.query(
+        `SELECT display_id, sequence FROM maintenance.next_wo_display_id($1, $2, now()::date, $3)`,
+        [accident.unit_id, body.data.source_type, query.data.operating_company_id]
+      );
+      const next = seqRes.rows[0] as { display_id: string; sequence: number } | undefined;
+      if (!next) return { notFound: true as const };
+      const woRes = await client.query(
+        `
+          INSERT INTO maintenance.work_orders (
+            operating_company_id, wo_type, status, unit_id, driver_id, opened_at, repair_location, description,
+            source_type, unit_sequence, display_id, v5_suffix, external_vendor_id
+          )
+          VALUES ($1,'accident','open',$2,$3,now(),'external_shop',$4,$5,$6,$7,'PEND0',$8)
+          RETURNING id, display_id
+        `,
+        [
+          query.data.operating_company_id,
+          accident.unit_id,
+          accident.driver_id ?? null,
+          accident.description ?? "Accident spawned work order",
+          body.data.source_type,
+          next.sequence,
+          next.display_id,
+          body.data.external_vendor_id ?? null,
+        ]
+      );
+      const workOrder = woRes.rows[0] as { id: string; display_id: string } | undefined;
+      if (workOrder) {
+        await client.query(
+          `UPDATE safety.accident_reports SET spawned_wo_id = $2, spawned_wo_display_id = $3, updated_at = now() WHERE id = $1`,
+          [params.data.id, workOrder.id, workOrder.display_id]
+        ).catch(() => ({ rows: [] }));
+      }
       await appendCrudAudit(
         client,
         user.uuid,
@@ -400,12 +445,16 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           resource_type: "safety.accident_reports",
           resource_id: params.data.id,
           operating_company_id: query.data.operating_company_id,
+          source_type: body.data.source_type,
+          spawned_wo_id: workOrder?.id ?? null,
+          spawned_wo_display_id: workOrder?.display_id ?? null,
         },
         "info",
         "BT-3-SAFETY-LIABILITIES-REBUILD"
       );
-      return { accident_id: params.data.id, spawned_wo_id: null };
+      return { accident_id: params.data.id, spawned_wo_id: workOrder?.id ?? null, spawned_wo_display_id: workOrder?.display_id ?? null };
     });
+    if ("notFound" in payload) return reply.code(404).send({ error: "accident_not_found" });
     return payload;
   });
 

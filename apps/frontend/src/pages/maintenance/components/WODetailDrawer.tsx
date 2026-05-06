@@ -1,0 +1,67 @@
+import { Button } from "../../../components/Button";
+
+type Props = {
+  open: boolean;
+  workOrder: Record<string, unknown> | null;
+  canRefreshDisplayId?: boolean;
+  onRefreshDisplayId?: () => void;
+  onComplete?: () => void;
+  onClose: () => void;
+};
+
+export function WODetailDrawer({ open, workOrder, canRefreshDisplayId, onRefreshDisplayId, onComplete, onClose }: Props) {
+  if (!open || !workOrder) return null;
+  const sourceType = String(workOrder.source_type ?? "—");
+  const status = String(workOrder.status ?? "open");
+  const isExternal = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
+  const canMarkComplete = Boolean(workOrder.v5_suffix) && String(workOrder.v5_suffix) !== "PEND0";
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
+      <aside className="fixed right-0 top-0 z-50 h-full w-[520px] overflow-y-auto border-l border-gray-200 bg-white p-4 text-xs">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Work Order Detail</h3>
+          <button type="button" className="text-gray-500 underline" onClick={onClose}>Close</button>
+        </div>
+        <div className="space-y-1 rounded border border-gray-200 bg-gray-50 p-2">
+          <div>Display ID: {String(workOrder.display_id ?? "—")}</div>
+          <div>Source Type: <span className="rounded bg-gray-200 px-1 py-0.5">{sourceType}</span></div>
+          <div>Status: {status}</div>
+          <div>V5: {String(workOrder.v5_suffix ?? "—")}</div>
+          <div>Legacy ID: {String(workOrder.legacy_display_id ?? "—")}</div>
+          <div>Cost (total): {String(workOrder.total_actual_cost ?? "0")}</div>
+        </div>
+        {isExternal ? (
+          <div className="mt-2 rounded border border-gray-200 p-2">
+            <div className="mb-1 font-semibold">External Vendor Invoice</div>
+            <div>Vendor: {String(workOrder.external_vendor_id ?? "—")}</div>
+            <div>WO #: {String(workOrder.external_vendor_wo_number ?? "—")}</div>
+            <div>Invoice #: {String(workOrder.external_vendor_invoice_number ?? "—")}</div>
+            <div>Invoice Amount: {String(workOrder.external_vendor_invoice_amount ?? "—")}</div>
+            <div>R2 PDF Doc ID: {String(workOrder.external_vendor_invoice_doc_id ?? "—")}</div>
+          </div>
+        ) : (
+          <div className="mt-2 rounded border border-gray-200 p-2">
+            <div className="mb-1 font-semibold">Parts Links (IS/IT)</div>
+            <div className="text-gray-600">Linked parts invoices render here from maintenance.parts_invoice_links.</div>
+          </div>
+        )}
+        <div className="mt-3 rounded border border-gray-200 p-2">
+          <div className="mb-1 font-semibold">Audit History</div>
+          <div className="text-gray-600">Display ID changes and completion actions are available in audit events.</div>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {canRefreshDisplayId ? (
+            <Button size="sm" variant="secondary" onClick={onRefreshDisplayId}>
+              Refresh Display ID
+            </Button>
+          ) : null}
+          <Button size="sm" onClick={onComplete} disabled={!canMarkComplete} title={canMarkComplete ? "" : "Cannot mark completed while V5 is PEND0"}>
+            Mark Completed
+          </Button>
+        </div>
+      </aside>
+    </>
+  );
+}

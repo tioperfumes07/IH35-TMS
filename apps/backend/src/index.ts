@@ -34,6 +34,9 @@ import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
+import { registerMaintenancePartsInvoiceLinksRoutes } from "./maintenance/parts-invoice-links.routes.js";
+import { registerMaintenancePartsInventoryRoutes } from "./maintenance/parts-inventory.routes.js";
+import { registerMaintenanceIntegrityRoutes } from "./maintenance/integrity.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
 import { registerDriverReturningDetectionRoutes } from "./mdata/driver-returning-detection.routes.js";
 import { registerDriverSafetyEventsRoutes } from "./mdata/driver-safety-events.routes.js";
@@ -137,6 +140,9 @@ async function main() {
   await registerMaintenanceWorkOrderRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
+  await registerMaintenancePartsInvoiceLinksRoutes(app);
+  await registerMaintenancePartsInventoryRoutes(app);
+  await registerMaintenanceIntegrityRoutes(app);
   await registerDispatchOverrideAuditRoutes(app);
   await registerCompanyRoutes(app);
   const port = Number(process.env.PORT || 3000);
