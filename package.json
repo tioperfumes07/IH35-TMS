@@ -44,6 +44,7 @@
     "db:verify:customer-quality-flags": "tsx scripts/db-verify-customer-quality-flags.ts",
     "db:verify:states-and-rehire": "tsx scripts/db-verify-states-and-rehire.ts",
     "db:verify:docs-schema": "tsx scripts/db-verify-docs-schema.ts",
+    "db:verify:loads-schema": "tsx scripts/db-verify-loads-schema.ts",
     "db:verify:phase1-gate": "node scripts/db-verify-phase1-gate.mjs",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
