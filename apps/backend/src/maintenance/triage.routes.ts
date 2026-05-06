@@ -130,39 +130,12 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
     const body = convertToDamageBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    const result = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
-      if (!(await relationExists(client, "dispatch.intransit_issues"))) {
-        return { unavailable: true as const };
-      }
-
-      const issueRes = await client.query(
-        `SELECT * FROM dispatch.intransit_issues WHERE id = $1 AND promoted_to_wo_id IS NULL AND promoted_to_damage_report_id IS NULL LIMIT 1`,
-        [params.data.issue_id]
-      );
-      const issue = issueRes.rows[0];
-      if (!issue) return { notFound: true as const };
-
-      // Phase 3 stub: damage report module is out of scope. Use generated UUID reference for linkage.
-      const damageRes = await client.query(`SELECT gen_random_uuid()::text AS id`);
-      const damageReportId = String((damageRes.rows[0] as { id: string }).id);
-      await client.query(`UPDATE dispatch.intransit_issues SET promoted_to_damage_report_id = $2 WHERE id = $1`, [
-        params.data.issue_id,
-        damageReportId,
-      ]);
-      for (const target of ["dispatcher", "safety", "owner"]) {
-        await client.query(
-          `
-            INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-            VALUES ($1,$2,$3,$4::jsonb)
-          `,
-          ["dispatch.intransit_issues", params.data.issue_id, "maintenance.triage.converted_to_damage", JSON.stringify({ issue_id: params.data.issue_id, damage_report_id: damageReportId, damage_category: body.data.damage_category, notify_target: target })]
-        );
-      }
-      return { unavailable: false as const, damage_report_id: damageReportId };
+    return reply.code(501).send({
+      error: "damage_conversion_not_implemented",
+      message: "Damage conversion is a Phase 4 follow-up (tracked: P3-T11.6-FOLLOWUP-1).",
+      issue_id: params.data.issue_id,
+      damage_category: body.data.damage_category,
+      additional_notes: body.data.additional_notes ?? null,
     });
-
-    if ("unavailable" in result) return reply.code(501).send({ error: "intransit_schema_not_available" });
-    if ("notFound" in result) return reply.code(404).send({ error: "intransit_issue_not_found_or_already_promoted" });
-    return reply.code(201).send(result);
   });
 }

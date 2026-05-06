@@ -4,6 +4,30 @@ CREATE SCHEMA IF NOT EXISTS views;
 
 DO $$
 BEGIN
+  IF current_setting('app.environment', true) = 'production' THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+    ) THEN
+      RAISE EXCEPTION 'P3-T11.6 migration cannot run in production: maintenance.work_orders missing';
+    END IF;
+
+    IF NOT EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'dispatch'
+        AND table_name = 'intransit_issues'
+    ) THEN
+      RAISE EXCEPTION 'P3-T11.6 migration cannot run in production: dispatch.intransit_issues missing';
+    END IF;
+  END IF;
+END
+$$;
+
+DO $$
+BEGIN
   IF to_regclass('dispatch.intransit_issues') IS NOT NULL
      AND to_regclass('mdata.units') IS NOT NULL
      AND to_regclass('mdata.drivers') IS NOT NULL THEN
