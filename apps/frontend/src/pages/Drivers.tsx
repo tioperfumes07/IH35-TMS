@@ -5,6 +5,7 @@ import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
 import { checkReturningDriver, createDriver, listDrivers, type ReturningDetectionResult } from "../api/mdata";
+import { listMyCompanies } from "../api/org";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
@@ -34,6 +35,7 @@ function normalizePhoneDigits(value: string) {
 }
 
 const createDriverSchema = z.object({
+  operating_company_id: z.string().uuid("operating company is required"),
   first_name: z.string().trim().min(1),
   last_name: z.string().trim().min(1),
   phone_input: z.string().trim().min(1).refine((value) => normalizePhoneDigits(value).length === 10, "phone must have 10 digits"),
@@ -99,7 +101,14 @@ export function DriversPage() {
   const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
   const [rehireAction, setRehireAction] = useState<"rehire" | "new">("rehire");
   const [selectedPriorDriverId, setSelectedPriorDriverId] = useState<string | null>(null);
+  const [createSummary, setCreateSummary] = useState<{
+    driver_id: string;
+    phone: string;
+    invite_url: string;
+    linked_user_event_type: "existing_user" | "new_user_created";
+  } | null>(null);
   const [form, setForm] = useState<Record<string, string>>({
+    operating_company_id: "",
     first_name: "",
     last_name: "",
     phone_input: "",
@@ -131,7 +140,6 @@ export function DriversPage() {
     emergency_contact_address: "",
     emergency_contact_notes: "",
     status: "Probation",
-    allow_phone_login: "false",
   });
 
   useEffect(() => {
@@ -183,6 +191,19 @@ export function DriversPage() {
     queryFn: () => listMexicoStates().then((result) => result.states),
   });
 
+  const companiesQuery = useQuery({
+    queryKey: ["org", "my-companies"],
+    queryFn: () => listMyCompanies().then((result) => result.companies),
+  });
+
+  useEffect(() => {
+    if (!addOpen) return;
+    if (form.operating_company_id) return;
+    const defaultCompany = (companiesQuery.data ?? []).find((company) => company.is_default) ?? companiesQuery.data?.[0];
+    if (!defaultCompany) return;
+    setForm((current) => ({ ...current, operating_company_id: defaultCompany.id }));
+  }, [addOpen, companiesQuery.data, form.operating_company_id]);
+
   const terminatedMatches = useMemo(() => {
     const deduped = new Map<
       string,
@@ -232,11 +253,18 @@ export function DriversPage() {
 
   const createMutation = useMutation({
     mutationFn: createDriver,
-    onSuccess: () => {
+    onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
       setAddOpen(false);
-      pushToast("Driver created", "success");
+      setCreateSummary({
+        driver_id: created.id,
+        phone: created.phone,
+        invite_url: created.invite_url,
+        linked_user_event_type: created.linked_user_event_type,
+      });
+      pushToast("Driver created and invite sent", "success");
       setForm({
+        operating_company_id: "",
         first_name: "",
         last_name: "",
         phone_input: "",
@@ -268,7 +296,6 @@ export function DriversPage() {
         emergency_contact_address: "",
         emergency_contact_notes: "",
         status: "Probation",
-        allow_phone_login: "false",
       });
       setShowMexicanIdentity(false);
       setShowVisaEmergency(false);
@@ -384,6 +411,7 @@ export function DriversPage() {
                 rehireAction === "rehire" &&
                 Boolean(selectedPriorDriverId);
               await createMutation.mutateAsync({
+                operating_company_id: parsed.data.operating_company_id,
                 first_name: parsed.data.first_name,
                 last_name: parsed.data.last_name,
                 phone: normalizedPhone,
@@ -414,7 +442,6 @@ export function DriversPage() {
                 emergency_contact_address: parsed.data.emergency_contact_address || undefined,
                 emergency_contact_notes: parsed.data.emergency_contact_notes || undefined,
                 status: parsed.data.status,
-                create_login_user: form.allow_phone_login === "true",
                 override_returning_warning: returningDetection?.returning_driver ? overrideReturningWarning : undefined,
                 is_rehire: shouldLinkRehire ? true : undefined,
                 prior_driver_id: shouldLinkRehire ? selectedPriorDriverId ?? undefined : undefined,
@@ -435,6 +462,11 @@ export function DriversPage() {
                   return;
                 }
               }
+              const errorPayload = error instanceof ApiError && error.data && typeof error.data === "object" ? error.data as { error?: string } : null;
+              if (error instanceof ApiError && error.status === 400 && errorPayload?.error === "operating_company_not_found") {
+                pushToast("Select an active operating company", "error");
+                return;
+              }
               if (error instanceof ApiError && error.status === 409) {
                 pushToast("Driver with this CDL # already exists", "error");
                 return;
@@ -443,6 +475,21 @@ export function DriversPage() {
             }
           }}
         >
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Operating Company</label>
+            <Combobox
+              options={(companiesQuery.data ?? []).map((company) => ({
+                value: company.id,
+                label: `${company.code} - ${company.short_name || company.legal_name}`,
+                sublabel: company.legal_name,
+              }))}
+              value={form.operating_company_id || null}
+              onChange={(nextValue) => setForm((current) => ({ ...current, operating_company_id: nextValue ?? "" }))}
+              placeholder="Select operating company"
+              loading={companiesQuery.isLoading}
+              disabled={companiesQuery.isError}
+            />
+          </div>
           {[
             ["first_name", "First Name"],
             ["last_name", "Last Name"],
@@ -523,19 +570,6 @@ export function DriversPage() {
               onChange={(nextValue) => setForm((current) => ({ ...current, pay_basis: nextValue ?? "" }))}
               placeholder="Select pay basis"
             />
-          </div>
-          <div className="col-span-full rounded-md border border-gray-200 p-3">
-            <label className="flex items-start gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={form.allow_phone_login === "true"}
-                onChange={(event) => setForm((current) => ({ ...current, allow_phone_login: String(event.target.checked) }))}
-                className="mt-0.5"
-              />
-              <span>
-                Allow phone login (creates a user account so this driver can sign in via WhatsApp/SMS)
-              </span>
-            </label>
           </div>
 
           <div className="col-span-full space-y-2 rounded-md border border-gray-200 p-3">
@@ -707,15 +741,60 @@ export function DriversPage() {
               type="submit"
               loading={createMutation.isPending}
               disabled={
+                !form.operating_company_id ||
                 (returningDetection?.returning_driver && !overrideReturningWarning) ||
                 (overrideReturningWarning && rehireAction === "rehire" && terminatedMatches.length > 0 && !selectedPriorDriverId) ||
                 returningCheckLoading
               }
             >
-              Save
+              {createMutation.isPending ? "Creating driver and sending invite..." : "Save"}
             </Button>
           </div>
         </form>
+      </Modal>
+      <Modal open={Boolean(createSummary)} onClose={() => setCreateSummary(null)} title="Driver created successfully">
+        <div className="space-y-3">
+          <p className="text-sm text-gray-700">
+            WhatsApp invite sent to {createSummary?.phone}. Invite expires in 72 hours.
+          </p>
+          {createSummary?.linked_user_event_type === "existing_user" ? (
+            <p className="text-sm text-amber-700">
+              Phone {createSummary.phone} was already registered. Linked existing account.
+            </p>
+          ) : null}
+          <div className="rounded border border-gray-200 bg-gray-50 p-2 text-xs break-all">{createSummary?.invite_url}</div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={async () => {
+                if (!createSummary?.invite_url) return;
+                try {
+                  await navigator.clipboard.writeText(createSummary.invite_url);
+                  pushToast("Invite URL copied", "success");
+                } catch {
+                  pushToast("Could not copy invite URL", "error");
+                }
+              }}
+            >
+              Copy
+            </Button>
+            <Button variant="secondary" type="button" onClick={() => setCreateSummary(null)}>
+              Done
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (!createSummary?.driver_id) return;
+                const nextDriverId = createSummary.driver_id;
+                setCreateSummary(null);
+                navigate(`/drivers/${nextDriverId}`);
+              }}
+            >
+              View Driver
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { randomBytes } from "crypto";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -28,6 +29,7 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 const createDriverBodySchema = z.object({
   identity_user_id: z.string().uuid().optional(),
   create_login_user: z.boolean().optional().default(false),
+  operating_company_id: z.string().uuid().optional(),
   first_name: z.string().trim().min(1).max(100),
   last_name: z.string().trim().min(1).max(100),
   phone: e164PhoneSchema,
@@ -159,6 +161,8 @@ function driverIdentityMatches(
 }
 
 export async function registerDriverRoutes(app: FastifyInstance) {
+  const driverInviteBaseUrl = (process.env.DRIVER_PWA_BASE_URL || "https://driver.ih35dispatch.com").replace(/\/$/, "");
+
   app.get("/api/v1/mdata/drivers", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -327,7 +331,101 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         }
 
         let identityUserId = b.identity_user_id ?? null;
-        if (b.create_login_user) {
+        let linkedUserEventType: "existing_user" | "new_user_created" | null = null;
+        let operatingCompany: { id: string; legal_name: string } | null = null;
+        let resolvedOperatingCompanyId: string | null = null;
+        const onboardingEnabled = Boolean(b.operating_company_id);
+
+        if (onboardingEnabled) {
+          const companyRes = await client.query<{ id: string; legal_name: string }>(
+            `
+              SELECT id, legal_name
+              FROM org.companies
+              WHERE ($1::uuid IS NULL OR id = $1)
+                AND id IN (SELECT org.user_accessible_company_ids())
+                AND deactivated_at IS NULL
+                AND is_active = true
+              ORDER BY legal_name
+              LIMIT 1
+            `,
+            [b.operating_company_id]
+          );
+          operatingCompany = companyRes.rows[0] ?? null;
+          if (!operatingCompany) {
+            return { error: "operating_company_not_found" as const };
+          }
+          resolvedOperatingCompanyId = operatingCompany.id;
+
+          await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+
+          if (!identityUserId) {
+            const existingUserRes = await client.query<{ id: string }>(
+              `
+                SELECT id
+                FROM identity.users
+                WHERE phone = $1
+                LIMIT 1
+              `,
+              [b.phone]
+            );
+            const existingUser = existingUserRes.rows[0] ?? null;
+            if (existingUser) {
+              identityUserId = existingUser.id;
+              linkedUserEventType = "existing_user";
+            } else {
+              try {
+                const userRes = await client.query<{ id: string }>(
+                  `
+                    INSERT INTO identity.users (email, role, phone, default_company_id, deactivated_at)
+                    VALUES (NULL, 'Driver', $1, $2, NULL)
+                    RETURNING id
+                  `,
+                  [b.phone, resolvedOperatingCompanyId]
+                );
+                identityUserId = userRes.rows[0]?.id ?? null;
+                linkedUserEventType = "new_user_created";
+              } catch (err) {
+                const code = (err as { code?: string }).code;
+                if (code !== "23505") throw err;
+                const conflictUserRes = await client.query<{ id: string }>(
+                  `
+                    SELECT id
+                    FROM identity.users
+                    WHERE phone = $1
+                    LIMIT 1
+                  `,
+                  [b.phone]
+                );
+                identityUserId = conflictUserRes.rows[0]?.id ?? null;
+                linkedUserEventType = "existing_user";
+              }
+            }
+          }
+          if (!identityUserId) throw new Error("failed_to_resolve_identity_user");
+
+          await client.query(
+            `
+              UPDATE identity.users
+              SET default_company_id = $2,
+                  deactivated_at = NULL
+              WHERE id = $1
+            `,
+            [identityUserId, resolvedOperatingCompanyId]
+          );
+
+          await client.query(
+            `
+              INSERT INTO org.user_company_access (user_id, company_id, granted_by_user_id, deactivated_at, granted_at)
+              VALUES ($1, $2, $3, NULL, now())
+              ON CONFLICT (user_id, company_id)
+              DO UPDATE
+              SET deactivated_at = NULL,
+                  granted_by_user_id = EXCLUDED.granted_by_user_id,
+                  granted_at = now()
+            `,
+            [identityUserId, resolvedOperatingCompanyId, authUser.uuid]
+          );
+        } else if (b.create_login_user) {
           const userRes = await client.query<{ id: string }>(
             `
               INSERT INTO identity.users (email, role, phone)
@@ -337,9 +435,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             [b.phone]
           );
           identityUserId = userRes.rows[0]?.id ?? null;
-          if (!identityUserId) {
-            throw new Error("failed_to_create_identity_user");
-          }
+          if (!identityUserId) throw new Error("failed_to_create_identity_user");
         }
 
         const res = await client.query(
@@ -407,7 +503,86 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           ]
         );
         const row = res.rows[0];
-        if (b.create_login_user && identityUserId) {
+        let inviteUrl: string | null = null;
+        let inviteExpiresAt: string | null = null;
+
+        if (onboardingEnabled && resolvedOperatingCompanyId && operatingCompany && identityUserId) {
+          const inviteToken = randomBytes(32).toString("hex");
+          inviteUrl = `${driverInviteBaseUrl}/invite?token=${inviteToken}`;
+          await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+          const inviteRes = await client.query<{ expires_at: string }>(
+            `
+              INSERT INTO identity.driver_invites (
+                operating_company_id,
+                driver_id,
+                identity_user_id,
+                token,
+                phone,
+                expires_at,
+                created_by_user_id
+              )
+              VALUES ($1, $2, $3, $4, $5, now() + interval '72 hours', $6)
+              RETURNING expires_at
+            `,
+            [resolvedOperatingCompanyId, row.id, identityUserId, inviteToken, b.phone, authUser.uuid]
+          );
+          inviteExpiresAt = inviteRes.rows[0]?.expires_at ?? null;
+
+          await client.query(
+            `
+              INSERT INTO outbox.events (event_type, payload, next_retry_at)
+              VALUES ($1, $2::jsonb, now())
+            `,
+            [
+              "twilio.whatsapp.send",
+              JSON.stringify({
+                to: b.phone,
+                template: "driver_invite",
+                variables: {
+                  driver_first_name: row.first_name,
+                  company_name: operatingCompany.legal_name,
+                  invite_url: inviteUrl,
+                  expires_hours: 72,
+                },
+              }),
+            ]
+          );
+
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.driver.linked_to_user",
+            {
+              resource_id: row.id,
+              resource_type: "mdata.drivers",
+              driver_id: row.id,
+              identity_user_id: identityUserId,
+              phone: b.phone,
+              event_type: linkedUserEventType,
+              operating_company_id: resolvedOperatingCompanyId,
+            },
+            "info",
+            "BT-3-DRIVER-ONBOARDING"
+          );
+
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "identity.driver_invite.created",
+            {
+              resource_id: row.id,
+              resource_type: "identity.driver_invites",
+              driver_id: row.id,
+              identity_user_id: identityUserId,
+              phone: b.phone,
+              invite_url: inviteUrl,
+              expires_at: inviteExpiresAt,
+              event_type: linkedUserEventType,
+            },
+            "info",
+            "BT-3-DRIVER-ONBOARDING"
+          );
+        } else if (b.create_login_user && identityUserId) {
           await appendCrudAudit(
             client,
             authUser.uuid,
@@ -423,6 +598,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             "BT-1-AUTH-DRIVER"
           );
         }
+
         await appendCrudAudit(client, authUser.uuid, "mdata.drivers.created", {
           resource_id: row.id,
           resource_type: "mdata.drivers",
@@ -467,7 +643,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             );
           }
         }
-        return row;
+        return {
+          ...row,
+          invite_url: inviteUrl,
+          invite_expires_at: inviteExpiresAt,
+          linked_user_event_type: linkedUserEventType,
+        };
       });
       if (created && typeof created === "object" && "error" in created && created.error === "returning_driver_detected") {
         return reply.code(409).send({
@@ -476,6 +657,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         });
       }
       if (created && typeof created === "object" && "error" in created) {
+        if (created.error === "operating_company_not_found") return reply.code(400).send({ error: "operating_company_not_found" });
         if (created.error === "prior_driver_not_found") return reply.code(404).send({ error: "prior_driver_not_found" });
         if (created.error === "prior_driver_not_terminated") return reply.code(400).send({ error: "prior_driver_not_terminated" });
         if (created.error === "prior_driver_identity_mismatch") return reply.code(400).send({ error: "prior_driver_identity_mismatch" });

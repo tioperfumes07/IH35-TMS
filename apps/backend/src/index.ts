@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
+import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerIdentityRoutes } from "./identity/users.routes.js";
@@ -78,6 +79,7 @@ async function main() {
   await registerSessionMiddleware(app);
   await registerAuthRoutes(app);
   await registerPhoneAuthRoutes(app);
+  await registerInviteAuthRoutes(app);
   await registerIdentityRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);

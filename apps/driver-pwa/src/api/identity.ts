@@ -27,6 +27,17 @@ export type PhoneVerifyResponse = {
   session: { id: string };
 };
 
+export type InviteRedeemResponse = {
+  ok: true;
+  user: {
+    id: string;
+    email: string | null;
+    role: string;
+  };
+  session: { id: string };
+  driver_id: string;
+};
+
 export function getMe() {
   return apiRequest<AuthMeResponse>("/api/v1/auth/me");
 }
@@ -42,4 +53,8 @@ export function startPhoneLogin(body: { phone: string; channel?: "whatsapp" | "s
 
 export function verifyPhoneLogin(body: { phone: string; code: string }) {
   return apiRequest<PhoneVerifyResponse>("/api/v1/auth/phone/verify", { method: "POST", body });
+}
+
+export function redeemDriverInvite(body: { token: string }) {
+  return apiRequest<InviteRedeemResponse>("/api/v1/auth/invite/redeem", { method: "POST", body });
 }

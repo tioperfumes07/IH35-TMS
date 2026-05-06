@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useAuth } from "./auth/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { HomePage } from "./pages/Home";
+import { InviteRedeemPage } from "./pages/InviteRedeem";
 import { LoginPage } from "./pages/Login";
 import { MyDocumentsPage } from "./pages/MyDocuments";
 import { ProfilePage } from "./pages/Profile";
@@ -44,6 +45,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />
+      <Route path="/invite" element={<InviteRedeemPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route
         path="/home"

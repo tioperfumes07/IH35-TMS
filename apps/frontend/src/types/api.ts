@@ -99,6 +99,7 @@ export type Driver = {
 export type CreateDriverInput = {
   identity_user_id?: string;
   create_login_user?: boolean;
+  operating_company_id: string;
   first_name: string;
   last_name: string;
   phone: string;
@@ -134,6 +135,12 @@ export type CreateDriverInput = {
   override_returning_warning?: boolean;
   prior_driver_id?: string;
   is_rehire?: boolean;
+};
+
+export type DriverOnboardingCreateResponse = Driver & {
+  invite_url: string;
+  invite_expires_at: string | null;
+  linked_user_event_type: "existing_user" | "new_user_created";
 };
 
 export type UpdateDriverInput = Partial<
