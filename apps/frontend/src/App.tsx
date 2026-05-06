@@ -9,6 +9,7 @@ import { CatalogsHubPage } from "./pages/CatalogsHubPage";
 import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
+import { DispatchPage } from "./pages/Dispatch";
 import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
@@ -124,6 +125,14 @@ export default function App() {
           }
         />
         <Route
+          path="/dispatch"
+          element={
+            <ProtectedRoute>
+              <DispatchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/catalogs"
           element={
             <ProtectedRoute>
@@ -145,7 +154,6 @@ export default function App() {
           ["/banking", "Banking", "2"],
           ["/fuel", "Fuel", "2"],
           ["/safety", "Safety", "2"],
-          ["/dispatch", "Dispatch", "3"],
           ["/reports", "Reports", "3"],
           ["/form-425c", "Form 425C", "3"],
         ].map(([path, feature, phase]) => (

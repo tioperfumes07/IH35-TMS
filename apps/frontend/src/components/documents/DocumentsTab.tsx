@@ -20,7 +20,7 @@ import { UploadModal } from "./UploadModal";
 import { VersionHistoryModal } from "./VersionHistoryModal";
 
 type DocumentsTabProps = {
-  entityType: "driver" | "customer" | "vendor" | "unit" | "equipment";
+  entityType: "driver" | "customer" | "vendor" | "unit" | "equipment" | "load";
   entityId: string;
   entityName: string;
 };

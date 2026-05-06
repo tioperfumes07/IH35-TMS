@@ -150,6 +150,30 @@ export type MexicoState = {
   region: "Norte" | "Centro" | "Sur" | "Sureste" | "Bajio" | "Pacifico";
 };
 
+export type LoadCancellationReason = {
+  id: string;
+  operating_company_id: string;
+  reason_code: string;
+  display_name: string;
+  category: "customer_initiated" | "carrier_initiated" | "force_majeure" | "other";
+  is_active: boolean;
+  sort_order: number;
+  description: string | null;
+};
+
+export type DispatchFlagColor = {
+  id: string;
+  operating_company_id: string;
+  flag_code: string;
+  display_name: string;
+  hex_color: string;
+  icon_emoji: string | null;
+  severity_order: number;
+  sort_order: number;
+  description: string | null;
+  is_active: boolean;
+};
+
 export type CreateCatalogRegistryEntryInput = {
   code: string;
   name: string;
@@ -233,4 +257,14 @@ export function listUsStates() {
 
 export function listMexicoStates() {
   return apiRequest<{ states: MexicoState[] }>("/api/v1/catalogs/mexico-states");
+}
+
+export function listLoadCancellationReasons(operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ reasons: LoadCancellationReason[] }>(`/api/v1/catalogs/load-cancellation-reasons?${query.toString()}`);
+}
+
+export function listDispatchFlagColors(operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ flags: DispatchFlagColor[] }>(`/api/v1/catalogs/dispatch-flag-colors?${query.toString()}`);
 }
