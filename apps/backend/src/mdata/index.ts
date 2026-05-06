@@ -4,6 +4,7 @@ import { registerDriverRoutes } from "./drivers.routes.js";
 import { registerEquipmentLogRoutes } from "./equipment-log.routes.js";
 import { registerEquipmentRoutes } from "./equipment.routes.js";
 import { registerLocationRoutes } from "./locations.routes.js";
+import { registerLoadRoutes } from "./loads.routes.js";
 import { registerUnitsRoutes } from "./units.routes.js";
 import { registerVendorRoutes } from "./vendors.routes.js";
 
@@ -13,6 +14,7 @@ export async function registerMdataRoutes(app: FastifyInstance) {
   await registerCustomerRoutes(app);
   await registerVendorRoutes(app);
   await registerLocationRoutes(app);
+  await registerLoadRoutes(app);
   await registerEquipmentRoutes(app);
   await registerEquipmentLogRoutes(app);
 }
