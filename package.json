@@ -48,6 +48,7 @@
     "db:verify:load-cancellation-reasons": "tsx scripts/db-verify-load-cancellation-reasons.ts",
     "db:verify:locations-expansion": "tsx scripts/db-verify-locations-expansion.ts",
     "db:verify:driver-teams": "tsx scripts/db-verify-driver-teams.ts",
+    "db:verify:dispatch-flag-colors": "tsx scripts/db-verify-dispatch-flag-colors.ts",
     "db:verify:phase1-gate": "node scripts/db-verify-phase1-gate.mjs",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"

@@ -15,6 +15,7 @@ import { registerEquipmentTypeRoutes } from "./catalogs/equipment-types.routes.j
 import { registerStatesRoutes } from "./catalogs/states.routes.js";
 import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellation-reasons.routes.js";
+import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
 import { registerDriverReturningDetectionRoutes } from "./mdata/driver-returning-detection.routes.js";
@@ -97,6 +98,7 @@ async function main() {
   await registerDriverLoadStatusRoutes(app);
   await registerStatesRoutes(app);
   await registerLoadCancellationReasonRoutes(app);
+  await registerDispatchFlagColorRoutes(app);
   await registerCatalogsWorkflowRoutes(app);
   await registerFileCategoriesRoutes(app);
   await registerDocsFilesRoutes(app);
