@@ -4,30 +4,73 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
-const locationTypeSchema = z.enum(["Customer", "Vendor", "IH35Yard", "TruckStop", "Other"]);
+const locationTypeSchema = z.enum([
+  "customer_warehouse",
+  "customer_terminal",
+  "shipper_facility",
+  "consignee_facility",
+  "distribution_center",
+  "cross_dock",
+  "port",
+  "rail_terminal",
+  "fuel_stop",
+  "truck_stop",
+  "rest_area",
+  "border_crossing",
+  "customs_broker",
+  "mechanic_shop",
+  "tire_shop",
+  "wash_facility",
+  "scale",
+  "yard",
+  "office",
+  "other",
+]);
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   status: z.enum(["active", "inactive"]).optional(),
+  is_active: z.enum(["true", "false"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
+  city: z.string().trim().min(1).max(100).optional(),
+  state: z.string().trim().min(1).max(100).optional(),
   location_type: locationTypeSchema.optional(),
   operating_company_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+const contactParamSchema = z.object({ id: z.string().uuid(), contactId: z.string().uuid() });
+const hoursSchema = z.record(z.string(), z.unknown());
 
 const createLocationBodySchema = z.object({
   name: z.string().trim().min(1).max(200),
   location_code: z.string().trim().max(100).optional(),
-  location_type: locationTypeSchema,
+  location_type: locationTypeSchema.default("other"),
   linked_customer_id: z.string().uuid().optional(),
   linked_vendor_id: z.string().uuid().optional(),
   operating_company_id: z.string().uuid().optional(),
   address: z.string().trim().max(500).optional(),
+  address_line2: z.string().trim().max(500).optional(),
+  city: z.string().trim().max(120).optional(),
+  state: z.string().trim().max(120).optional(),
+  postal_code: z.string().trim().max(40).optional(),
+  country: z.string().trim().max(10).optional(),
   lat: z.number().min(-90).max(90).optional(),
   lng: z.number().min(-180).max(180).optional(),
-  notes: z.string().trim().max(2000).optional(),
+  geocoding_source: z.string().trim().max(120).optional(),
+  hours_of_operation_jsonb: hoursSchema.optional(),
+  dock_count: z.number().int().min(0).max(1000).optional(),
+  appointment_required: z.boolean().optional(),
+  appointment_lead_time_hours: z.number().int().min(0).max(720).optional(),
+  dock_high: z.boolean().optional(),
+  power_only_friendly: z.boolean().optional(),
+  drop_trailer_friendly: z.boolean().optional(),
+  phone: z.string().trim().max(50).optional(),
+  security_instructions: z.string().trim().max(2000).optional(),
+  dock_instructions: z.string().trim().max(2000).optional(),
+  parking_instructions: z.string().trim().max(2000).optional(),
+  notes: z.string().trim().max(5000).optional(),
 });
 
 const updateLocationBodySchema = z
@@ -39,10 +82,48 @@ const updateLocationBodySchema = z
     linked_vendor_id: z.string().uuid().nullable().optional(),
     operating_company_id: z.string().uuid().optional(),
     address: z.string().trim().max(500).nullable().optional(),
+    address_line2: z.string().trim().max(500).nullable().optional(),
+    city: z.string().trim().max(120).nullable().optional(),
+    state: z.string().trim().max(120).nullable().optional(),
+    postal_code: z.string().trim().max(40).nullable().optional(),
+    country: z.string().trim().max(10).nullable().optional(),
     lat: z.number().min(-90).max(90).nullable().optional(),
     lng: z.number().min(-180).max(180).nullable().optional(),
+    geocoding_source: z.string().trim().max(120).nullable().optional(),
+    hours_of_operation_jsonb: hoursSchema.nullable().optional(),
+    dock_count: z.number().int().min(0).max(1000).nullable().optional(),
+    appointment_required: z.boolean().optional(),
+    appointment_lead_time_hours: z.number().int().min(0).max(720).nullable().optional(),
+    dock_high: z.boolean().nullable().optional(),
+    power_only_friendly: z.boolean().nullable().optional(),
+    drop_trailer_friendly: z.boolean().nullable().optional(),
+    phone: z.string().trim().max(50).nullable().optional(),
+    security_instructions: z.string().trim().max(2000).nullable().optional(),
+    dock_instructions: z.string().trim().max(2000).nullable().optional(),
+    parking_instructions: z.string().trim().max(2000).nullable().optional(),
+    notes: z.string().trim().max(5000).nullable().optional(),
+    deactivated_at: z.string().datetime({ offset: true }).nullable().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
+
+const createContactBodySchema = z.object({
+  contact_name: z.string().trim().min(1).max(200),
+  role: z.string().trim().max(120).optional(),
+  phone: z.string().trim().max(50).optional(),
+  email: z.string().trim().email().max(200).optional(),
+  is_primary: z.boolean().optional(),
+  notes: z.string().trim().max(2000).optional(),
+});
+
+const updateContactBodySchema = z
+  .object({
+    contact_name: z.string().trim().min(1).max(200).optional(),
+    role: z.string().trim().max(120).nullable().optional(),
+    phone: z.string().trim().max(50).nullable().optional(),
+    email: z.string().trim().email().max(200).nullable().optional(),
+    is_primary: z.boolean().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
-    deactivated_at: z.string().datetime().nullable().optional(),
+    is_active: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -57,6 +138,47 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 
 function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Dispatcher";
+}
+
+function locationSelectSql() {
+  return `
+    SELECT
+      id,
+      location_name AS name,
+      location_code,
+      location_type,
+      linked_customer_id,
+      linked_vendor_id,
+      operating_company_id,
+      address_line1 AS address,
+      address_line2,
+      city,
+      state,
+      postal_code,
+      country,
+      latitude AS lat,
+      longitude AS lng,
+      geocoded_at,
+      geocoding_source,
+      hours_of_operation_jsonb,
+      dock_count,
+      appointment_required,
+      appointment_lead_time_hours,
+      dock_high,
+      power_only_friendly,
+      drop_trailer_friendly,
+      phone,
+      security_instructions,
+      dock_instructions,
+      parking_instructions,
+      notes,
+      created_at,
+      updated_at,
+      deactivated_at,
+      created_by_user_id,
+      updated_by_user_id
+    FROM mdata.locations
+  `;
 }
 
 async function resolveOperatingCompanyId(
@@ -84,19 +206,6 @@ async function resolveOperatingCompanyId(
   return res.rows[0]?.id ?? null;
 }
 
-async function assertUniqueLocationName(authUserId: string, name: string, excludeId?: string): Promise<boolean> {
-  return withCurrentUser(authUserId, async (client) => {
-    const values: unknown[] = [name];
-    let where = "location_name = $1";
-    if (excludeId) {
-      values.push(excludeId);
-      where += " AND id <> $2";
-    }
-    const res = await client.query(`SELECT id FROM mdata.locations WHERE ${where} LIMIT 1`, values);
-    return res.rows.length > 0;
-  });
-}
-
 export async function registerLocationRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/locations", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -104,20 +213,30 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, location_type, operating_company_id } = parsedQuery.data;
+    const { limit, offset, status, is_active, search, city, state, location_type, operating_company_id } = parsedQuery.data;
     const locations = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
-      if (status === "active") filters.push("deactivated_at IS NULL");
-      if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
+      if (status === "active" || is_active === "true") filters.push("deactivated_at IS NULL");
+      if (status === "inactive" || is_active === "false") filters.push("deactivated_at IS NOT NULL");
       if (location_type) {
         values.push(location_type);
-        filters.push(`location_type = $${values.length}`);
+        filters.push(`location_type = $${values.length}::mdata.location_type_enum`);
+      }
+      if (city) {
+        values.push(city);
+        filters.push(`city = $${values.length}`);
+      }
+      if (state) {
+        values.push(state);
+        filters.push(`state = $${values.length}`);
       }
       if (search) {
         values.push(`%${search}%`);
         const idx = values.length;
-        filters.push(`(location_name ILIKE $${idx} OR location_code ILIKE $${idx} OR address_line1 ILIKE $${idx})`);
+        filters.push(
+          `(location_name ILIKE $${idx} OR location_code ILIKE $${idx} OR address_line1 ILIKE $${idx} OR city ILIKE $${idx})`
+        );
       }
       if (operating_company_id) {
         values.push(operating_company_id);
@@ -128,24 +247,7 @@ export async function registerLocationRoutes(app: FastifyInstance) {
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
-          SELECT
-            id,
-            location_name AS name,
-            location_code,
-            location_type,
-            linked_customer_id,
-            linked_vendor_id,
-            operating_company_id,
-            address_line1 AS address,
-            latitude AS lat,
-            longitude AS lng,
-            notes,
-            created_at,
-            updated_at,
-            deactivated_at,
-            created_by_user_id,
-            updated_by_user_id
-          FROM mdata.locations
+          ${locationSelectSql()}
           ${whereClause}
           ORDER BY created_at DESC
           LIMIT $${values.length - 1}
@@ -166,41 +268,37 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
 
-    if (await assertUniqueLocationName(authUser.uuid, b.name)) {
-      return reply.code(409).send({ error: "mdata_location_name_conflict" });
-    }
-
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
         const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
         if (!resolvedOperatingCompanyId) {
           throw new Error("operating_company_id_required");
         }
+        const conflictRes = await client.query<{ id: string }>(
+          `
+            SELECT id
+            FROM mdata.locations
+            WHERE operating_company_id = $1
+              AND location_name = $2
+            LIMIT 1
+          `,
+          [resolvedOperatingCompanyId, b.name]
+        );
+        if (conflictRes.rows.length > 0) return { error: "mdata_location_name_conflict" as const };
+
+        const geocodedAt = b.lat !== undefined && b.lng !== undefined ? new Date().toISOString() : null;
         const res = await client.query(
           `
             INSERT INTO mdata.locations (
-              location_name, location_code, location_type, linked_customer_id, linked_vendor_id, operating_company_id, address_line1,
-              latitude, longitude, notes, created_by_user_id, updated_by_user_id
+              location_name, location_code, location_type, linked_customer_id, linked_vendor_id, operating_company_id,
+              address_line1, address_line2, city, state, postal_code, country,
+              latitude, longitude, geocoded_at, geocoding_source, hours_of_operation_jsonb,
+              dock_count, appointment_required, appointment_lead_time_hours, dock_high, power_only_friendly, drop_trailer_friendly,
+              phone, security_instructions, dock_instructions, parking_instructions, notes, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11
+              $1,$2,$3::mdata.location_type_enum,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$29
             )
-            RETURNING
-              id,
-              location_name AS name,
-              location_code,
-              location_type,
-              linked_customer_id,
-              linked_vendor_id,
-              operating_company_id,
-              address_line1 AS address,
-              latitude AS lat,
-              longitude AS lng,
-              notes,
-              created_at,
-              updated_at,
-              deactivated_at,
-              created_by_user_id,
-              updated_by_user_id
+            RETURNING *
           `,
           [
             b.name,
@@ -210,8 +308,26 @@ export async function registerLocationRoutes(app: FastifyInstance) {
             b.linked_vendor_id ?? null,
             resolvedOperatingCompanyId,
             b.address ?? null,
+            b.address_line2 ?? null,
+            b.city ?? null,
+            b.state ?? null,
+            b.postal_code ?? null,
+            b.country ?? "US",
             b.lat ?? null,
             b.lng ?? null,
+            geocodedAt,
+            b.geocoding_source ?? (geocodedAt ? "manual" : null),
+            b.hours_of_operation_jsonb ? JSON.stringify(b.hours_of_operation_jsonb) : null,
+            b.dock_count ?? null,
+            b.appointment_required ?? false,
+            b.appointment_lead_time_hours ?? null,
+            b.dock_high ?? null,
+            b.power_only_friendly ?? null,
+            b.drop_trailer_friendly ?? null,
+            b.phone ?? null,
+            b.security_instructions ?? null,
+            b.dock_instructions ?? null,
+            b.parking_instructions ?? null,
             b.notes ?? null,
             authUser.uuid,
           ]
@@ -221,13 +337,62 @@ export async function registerLocationRoutes(app: FastifyInstance) {
           resource_id: row.id,
           resource_type: "mdata.locations",
           id: row.id,
-          name: row.name,
+          name: row.location_name,
           location_code: row.location_code,
           location_type: row.location_type,
         });
+        if (row.latitude !== null && row.longitude !== null) {
+          await appendCrudAudit(client, authUser.uuid, "mdata.locations.geocoded", {
+            resource_id: row.id,
+            resource_type: "mdata.locations",
+            latitude: row.latitude,
+            longitude: row.longitude,
+            geocoding_source: row.geocoding_source,
+          });
+        }
         return row;
       });
-      return reply.code(201).send(created);
+
+      if (created && typeof created === "object" && "error" in created) {
+        if (created.error === "mdata_location_name_conflict") return reply.code(409).send({ error: created.error });
+      }
+
+      return reply.code(201).send({
+        id: created.id,
+        name: created.location_name,
+        location_code: created.location_code,
+        location_type: created.location_type,
+        linked_customer_id: created.linked_customer_id,
+        linked_vendor_id: created.linked_vendor_id,
+        operating_company_id: created.operating_company_id,
+        address: created.address_line1,
+        address_line2: created.address_line2,
+        city: created.city,
+        state: created.state,
+        postal_code: created.postal_code,
+        country: created.country,
+        lat: created.latitude,
+        lng: created.longitude,
+        geocoded_at: created.geocoded_at,
+        geocoding_source: created.geocoding_source,
+        hours_of_operation_jsonb: created.hours_of_operation_jsonb,
+        dock_count: created.dock_count,
+        appointment_required: created.appointment_required,
+        appointment_lead_time_hours: created.appointment_lead_time_hours,
+        dock_high: created.dock_high,
+        power_only_friendly: created.power_only_friendly,
+        drop_trailer_friendly: created.drop_trailer_friendly,
+        phone: created.phone,
+        security_instructions: created.security_instructions,
+        dock_instructions: created.dock_instructions,
+        parking_instructions: created.parking_instructions,
+        notes: created.notes,
+        created_at: created.created_at,
+        updated_at: created.updated_at,
+        deactivated_at: created.deactivated_at,
+        created_by_user_id: created.created_by_user_id,
+        updated_by_user_id: created.updated_by_user_id,
+      });
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "mdata_location_conflict" });
@@ -246,32 +411,57 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      const res = await client.query(
+      const res = await client.query(`${locationSelectSql()} WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      const location = res.rows[0] ?? null;
+      if (!location) return null;
+      const contactsRes = await client.query(
         `
           SELECT
-            id,
-            location_name AS name,
-            location_code,
-            location_type,
-            linked_customer_id,
-            linked_vendor_id,
-            operating_company_id,
-            address_line1 AS address,
-            latitude AS lat,
-            longitude AS lng,
-            notes,
-            created_at,
-            updated_at,
-            deactivated_at,
-            created_by_user_id,
-            updated_by_user_id
-          FROM mdata.locations
-          WHERE id = $1
-          LIMIT 1
+            id, operating_company_id, location_id, contact_name, role, phone, email, is_primary, notes, is_active,
+            created_at, updated_at, created_by_user_id
+          FROM mdata.location_contacts
+          WHERE location_id = $1
+          ORDER BY is_primary DESC, created_at ASC
         `,
         [parsedParams.data.id]
       );
-      return res.rows[0] ?? null;
+      return {
+        id: location.id,
+        name: location.name,
+        location_code: location.location_code,
+        location_type: location.location_type,
+        linked_customer_id: location.linked_customer_id,
+        linked_vendor_id: location.linked_vendor_id,
+        operating_company_id: location.operating_company_id,
+        address: location.address,
+        address_line2: location.address_line2,
+        city: location.city,
+        state: location.state,
+        postal_code: location.postal_code,
+        country: location.country,
+        lat: location.lat,
+        lng: location.lng,
+        geocoded_at: location.geocoded_at,
+        geocoding_source: location.geocoding_source,
+        hours_of_operation_jsonb: location.hours_of_operation_jsonb,
+        dock_count: location.dock_count,
+        appointment_required: location.appointment_required,
+        appointment_lead_time_hours: location.appointment_lead_time_hours,
+        dock_high: location.dock_high,
+        power_only_friendly: location.power_only_friendly,
+        drop_trailer_friendly: location.drop_trailer_friendly,
+        phone: location.phone,
+        security_instructions: location.security_instructions,
+        dock_instructions: location.dock_instructions,
+        parking_instructions: location.parking_instructions,
+        notes: location.notes,
+        created_at: location.created_at,
+        updated_at: location.updated_at,
+        deactivated_at: location.deactivated_at,
+        created_by_user_id: location.created_by_user_id,
+        updated_by_user_id: location.updated_by_user_id,
+        contacts: contactsRes.rows,
+      };
     });
 
     if (!row) return reply.code(404).send({ error: "mdata_location_not_found" });
@@ -288,10 +478,6 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
 
-    if (b.name && (await assertUniqueLocationName(authUser.uuid, b.name, parsedParams.data.id))) {
-      return reply.code(409).send({ error: "mdata_location_name_conflict" });
-    }
-
     const setParts: string[] = [];
     const values: unknown[] = [];
     const add = (col: string, val: unknown) => {
@@ -306,91 +492,362 @@ export async function registerLocationRoutes(app: FastifyInstance) {
     if ("linked_vendor_id" in b) add("linked_vendor_id", b.linked_vendor_id ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("address" in b) add("address_line1", b.address ?? null);
+    if ("address_line2" in b) add("address_line2", b.address_line2 ?? null);
+    if ("city" in b) add("city", b.city ?? null);
+    if ("state" in b) add("state", b.state ?? null);
+    if ("postal_code" in b) add("postal_code", b.postal_code ?? null);
+    if ("country" in b) add("country", b.country ?? null);
     if ("lat" in b) add("latitude", b.lat ?? null);
     if ("lng" in b) add("longitude", b.lng ?? null);
+    if ("geocoding_source" in b) add("geocoding_source", b.geocoding_source ?? null);
+    if ("hours_of_operation_jsonb" in b) {
+      add("hours_of_operation_jsonb", b.hours_of_operation_jsonb ? JSON.stringify(b.hours_of_operation_jsonb) : null);
+    }
+    if ("dock_count" in b) add("dock_count", b.dock_count ?? null);
+    if ("appointment_required" in b) add("appointment_required", b.appointment_required);
+    if ("appointment_lead_time_hours" in b) add("appointment_lead_time_hours", b.appointment_lead_time_hours ?? null);
+    if ("dock_high" in b) add("dock_high", b.dock_high ?? null);
+    if ("power_only_friendly" in b) add("power_only_friendly", b.power_only_friendly ?? null);
+    if ("drop_trailer_friendly" in b) add("drop_trailer_friendly", b.drop_trailer_friendly ?? null);
+    if ("phone" in b) add("phone", b.phone ?? null);
+    if ("security_instructions" in b) add("security_instructions", b.security_instructions ?? null);
+    if ("dock_instructions" in b) add("dock_instructions", b.dock_instructions ?? null);
+    if ("parking_instructions" in b) add("parking_instructions", b.parking_instructions ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
+    if ("lat" in b || "lng" in b) add("geocoded_at", b.lat !== null && b.lng !== null ? new Date().toISOString() : null);
     add("updated_by_user_id", authUser.uuid);
 
     values.push(parsedParams.data.id);
     const idIdx = values.length;
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const oldRes = await client.query(
-          `
-            SELECT
-              id,
-              location_name AS name,
-              location_code,
-              location_type,
-              linked_customer_id,
-              linked_vendor_id,
-              operating_company_id,
-              address_line1 AS address,
-              latitude AS lat,
-              longitude AS lng,
-              notes,
-              created_at,
-              updated_at,
-              deactivated_at,
-              created_by_user_id,
-              updated_by_user_id
-            FROM mdata.locations
-            WHERE id = $1
-            LIMIT 1
-          `,
-          [parsedParams.data.id]
-        );
+        const oldRes = await client.query(`${locationSelectSql()} WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
+
+        const targetCompanyId = b.operating_company_id ?? oldRow.operating_company_id;
+        if ("name" in b && b.name) {
+          const conflictRes = await client.query<{ id: string }>(
+            `
+              SELECT id
+              FROM mdata.locations
+              WHERE operating_company_id = $1
+                AND location_name = $2
+                AND id <> $3
+              LIMIT 1
+            `,
+            [targetCompanyId, b.name, parsedParams.data.id]
+          );
+          if (conflictRes.rows.length > 0) return { error: "mdata_location_name_conflict" as const };
+        }
 
         const res = await client.query(
           `
             UPDATE mdata.locations
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
-            RETURNING
-              id,
-              location_name AS name,
-              location_code,
-              location_type,
-              linked_customer_id,
-              linked_vendor_id,
-              address_line1 AS address,
-              latitude AS lat,
-              longitude AS lng,
-              notes,
-              created_at,
-              updated_at,
-              deactivated_at,
-              created_by_user_id,
-              updated_by_user_id
+            RETURNING *
           `,
           values
         );
         const updatedRow = res.rows[0] ?? null;
         if (!updatedRow) return null;
 
+        const normalizedUpdated = {
+          ...updatedRow,
+          name: updatedRow.location_name,
+          address: updatedRow.address_line1,
+          lat: updatedRow.latitude,
+          lng: updatedRow.longitude,
+        };
         const changes = buildPatchChanges(
           b as unknown as Record<string, unknown>,
           oldRow as Record<string, unknown>,
-          updatedRow as Record<string, unknown>
+          normalizedUpdated as Record<string, unknown>
         );
-        await appendCrudAudit(client, authUser.uuid, "mdata.locations.updated", {
+        await appendCrudAudit(client, authUser.uuid, "mdata.locations.profile_updated", {
           resource_id: updatedRow.id,
           resource_type: "mdata.locations",
           changes,
         });
+
+        const oldLat = oldRow.lat;
+        const oldLng = oldRow.lng;
+        const newLat = updatedRow.latitude;
+        const newLng = updatedRow.longitude;
+        const geocodedChanged = (oldLat !== newLat || oldLng !== newLng) && newLat !== null && newLng !== null;
+        if (geocodedChanged) {
+          await appendCrudAudit(client, authUser.uuid, "mdata.locations.geocoded", {
+            resource_id: updatedRow.id,
+            resource_type: "mdata.locations",
+            latitude: newLat,
+            longitude: newLng,
+            geocoding_source: updatedRow.geocoding_source,
+          });
+        }
+
         return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "mdata_location_not_found" });
-      return updated;
+      if (typeof updated === "object" && "error" in updated && updated.error === "mdata_location_name_conflict") {
+        return reply.code(409).send({ error: updated.error });
+      }
+
+      return {
+        id: updated.id,
+        name: updated.location_name,
+        location_code: updated.location_code,
+        location_type: updated.location_type,
+        linked_customer_id: updated.linked_customer_id,
+        linked_vendor_id: updated.linked_vendor_id,
+        operating_company_id: updated.operating_company_id,
+        address: updated.address_line1,
+        address_line2: updated.address_line2,
+        city: updated.city,
+        state: updated.state,
+        postal_code: updated.postal_code,
+        country: updated.country,
+        lat: updated.latitude,
+        lng: updated.longitude,
+        geocoded_at: updated.geocoded_at,
+        geocoding_source: updated.geocoding_source,
+        hours_of_operation_jsonb: updated.hours_of_operation_jsonb,
+        dock_count: updated.dock_count,
+        appointment_required: updated.appointment_required,
+        appointment_lead_time_hours: updated.appointment_lead_time_hours,
+        dock_high: updated.dock_high,
+        power_only_friendly: updated.power_only_friendly,
+        drop_trailer_friendly: updated.drop_trailer_friendly,
+        phone: updated.phone,
+        security_instructions: updated.security_instructions,
+        dock_instructions: updated.dock_instructions,
+        parking_instructions: updated.parking_instructions,
+        notes: updated.notes,
+        created_at: updated.created_at,
+        updated_at: updated.updated_at,
+        deactivated_at: updated.deactivated_at,
+        created_by_user_id: updated.created_by_user_id,
+        updated_by_user_id: updated.updated_by_user_id,
+      };
     } catch (err) {
       const code = (err as { code?: string }).code;
       if (code === "23505") return reply.code(409).send({ error: "mdata_location_conflict" });
       if (code === "23503") return reply.code(400).send({ error: "invalid_location_reference_fk" });
       throw err;
     }
+  });
+
+  app.post("/api/v1/mdata/locations/:id/contacts", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedBody = createContactBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+
+    const b = parsedBody.data;
+    const created = await withCurrentUser(authUser.uuid, async (client) => {
+      const locationRes = await client.query<{ id: string; operating_company_id: string }>(
+        `SELECT id, operating_company_id FROM mdata.locations WHERE id = $1 LIMIT 1`,
+        [parsedParams.data.id]
+      );
+      const location = locationRes.rows[0] ?? null;
+      if (!location) return null;
+
+      if (b.is_primary) {
+        await client.query(`UPDATE mdata.location_contacts SET is_primary = false WHERE location_id = $1`, [location.id]);
+      }
+
+      const res = await client.query(
+        `
+          INSERT INTO mdata.location_contacts (
+            operating_company_id, location_id, contact_name, role, phone, email, is_primary, notes, created_by_user_id
+          ) VALUES (
+            $1,$2,$3,$4,$5,$6,$7,$8,$9
+          )
+          RETURNING *
+        `,
+        [
+          location.operating_company_id,
+          location.id,
+          b.contact_name,
+          b.role ?? null,
+          b.phone ?? null,
+          b.email ?? null,
+          b.is_primary ?? false,
+          b.notes ?? null,
+          authUser.uuid,
+        ]
+      );
+      const row = res.rows[0];
+      await appendCrudAudit(client, authUser.uuid, "mdata.location_contacts.created", {
+        resource_id: row.id,
+        resource_type: "mdata.location_contacts",
+        location_id: row.location_id,
+        is_primary: row.is_primary,
+      });
+      return row;
+    });
+
+    if (!created) return reply.code(404).send({ error: "mdata_location_not_found" });
+    return reply.code(201).send({ contact: created });
+  });
+
+  app.patch("/api/v1/mdata/locations/:id/contacts/:contactId", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = contactParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedBody = updateContactBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const b = parsedBody.data;
+
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    const add = (col: string, val: unknown) => {
+      values.push(val);
+      fields.push(`${col} = $${values.length}`);
+    };
+
+    if ("contact_name" in b) add("contact_name", b.contact_name);
+    if ("role" in b) add("role", b.role ?? null);
+    if ("phone" in b) add("phone", b.phone ?? null);
+    if ("email" in b) add("email", b.email ?? null);
+    if ("is_primary" in b) add("is_primary", b.is_primary);
+    if ("notes" in b) add("notes", b.notes ?? null);
+    if ("is_active" in b) add("is_active", b.is_active);
+    values.push(parsedParams.data.id);
+    const idIdx = values.length;
+    values.push(parsedParams.data.contactId);
+    const contactIdx = values.length;
+
+    const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const oldRes = await client.query(
+        `
+          SELECT *
+          FROM mdata.location_contacts
+          WHERE location_id = $1
+            AND id = $2
+          LIMIT 1
+        `,
+        [parsedParams.data.id, parsedParams.data.contactId]
+      );
+      const oldRow = oldRes.rows[0] ?? null;
+      if (!oldRow) return null;
+
+      if (b.is_primary === true) {
+        await client.query(`UPDATE mdata.location_contacts SET is_primary = false WHERE location_id = $1`, [parsedParams.data.id]);
+      }
+
+      const res = await client.query(
+        `
+          UPDATE mdata.location_contacts
+          SET ${fields.join(", ")}
+          WHERE location_id = $${idIdx}
+            AND id = $${contactIdx}
+          RETURNING *
+        `,
+        values
+      );
+      const row = res.rows[0] ?? null;
+      if (!row) return null;
+      const changes = buildPatchChanges(
+        b as unknown as Record<string, unknown>,
+        oldRow as Record<string, unknown>,
+        row as Record<string, unknown>
+      );
+      await appendCrudAudit(client, authUser.uuid, "mdata.location_contacts.updated", {
+        resource_id: row.id,
+        resource_type: "mdata.location_contacts",
+        location_id: row.location_id,
+        changes,
+      });
+      return row;
+    });
+
+    if (!updated) return reply.code(404).send({ error: "mdata_location_contact_not_found" });
+    return { contact: updated };
+  });
+
+  app.post("/api/v1/mdata/locations/:id/contacts/:contactId/deactivate", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = contactParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const res = await client.query(
+        `
+          UPDATE mdata.location_contacts
+          SET is_active = false, is_primary = false
+          WHERE location_id = $1
+            AND id = $2
+          RETURNING *
+        `,
+        [parsedParams.data.id, parsedParams.data.contactId]
+      );
+      const row = res.rows[0] ?? null;
+      if (!row) return null;
+      await appendCrudAudit(client, authUser.uuid, "mdata.location_contacts.deactivated", {
+        resource_id: row.id,
+        resource_type: "mdata.location_contacts",
+        location_id: row.location_id,
+      });
+      return row;
+    });
+
+    if (!updated) return reply.code(404).send({ error: "mdata_location_contact_not_found" });
+    return { contact: updated };
+  });
+
+  app.post("/api/v1/mdata/locations/:id/contacts/:contactId/set-primary", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = contactParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      const existsRes = await client.query<{ id: string }>(
+        `
+          SELECT id
+          FROM mdata.location_contacts
+          WHERE location_id = $1
+            AND id = $2
+            AND is_active = true
+          LIMIT 1
+        `,
+        [parsedParams.data.id, parsedParams.data.contactId]
+      );
+      if (existsRes.rows.length === 0) return null;
+
+      await client.query(`UPDATE mdata.location_contacts SET is_primary = false WHERE location_id = $1`, [parsedParams.data.id]);
+      const res = await client.query(
+        `
+          UPDATE mdata.location_contacts
+          SET is_primary = true
+          WHERE location_id = $1
+            AND id = $2
+          RETURNING *
+        `,
+        [parsedParams.data.id, parsedParams.data.contactId]
+      );
+      const row = res.rows[0] ?? null;
+      if (!row) return null;
+      await appendCrudAudit(client, authUser.uuid, "mdata.location_contacts.set_primary", {
+        resource_id: row.id,
+        resource_type: "mdata.location_contacts",
+        location_id: row.location_id,
+      });
+      return row;
+    });
+
+    if (!updated) return reply.code(404).send({ error: "mdata_location_contact_not_found" });
+    return { contact: updated };
   });
 
   app.post("/api/v1/mdata/locations/:id/deactivate", async (req, reply) => {

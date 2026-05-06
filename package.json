@@ -46,6 +46,7 @@
     "db:verify:docs-schema": "tsx scripts/db-verify-docs-schema.ts",
     "db:verify:loads-schema": "tsx scripts/db-verify-loads-schema.ts",
     "db:verify:load-cancellation-reasons": "tsx scripts/db-verify-load-cancellation-reasons.ts",
+    "db:verify:locations-expansion": "tsx scripts/db-verify-locations-expansion.ts",
     "db:verify:phase1-gate": "node scripts/db-verify-phase1-gate.mjs",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
