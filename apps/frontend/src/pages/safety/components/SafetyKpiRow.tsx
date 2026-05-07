@@ -4,12 +4,12 @@ type Props = {
 
 export function SafetyKpiRow({ kpis }: Props) {
   const cards = [
-    ["Open Events", Number(kpis?.open_events ?? 0)],
-    ["Pending Acks", Number(kpis?.pending_acks ?? 0)],
-    ["MTD Violations", Number(kpis?.mtd_violations ?? 0)],
-    ["Training Due (30d)", Number(kpis?.training_due_30d ?? 0)],
-    ["D/A Tests YTD", Number(kpis?.da_tests_ytd ?? 0)],
-    ["CSA Score", Number(kpis?.csa_score_latest ?? 0)],
+    ["Active Drivers", Number(kpis?.active_drivers ?? 0)],
+    ["Drivers with Open Fines", Number(kpis?.drivers_with_open_fines ?? 0)],
+    ["Open Company Violations", Number(kpis?.open_company_violations ?? 0)],
+    ["Critical Integrity Alerts", Number(kpis?.critical_integrity_alerts ?? 0)],
+    ["Pending Acknowledgments", Number(kpis?.pending_acknowledgments ?? kpis?.pending_acks ?? 0)],
+    ["Open Liabilities", Number(kpis?.open_liabilities ?? 0)],
   ] as const;
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">

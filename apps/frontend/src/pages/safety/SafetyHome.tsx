@@ -1,7 +1,16 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getDrugAlcoholTests, getLatestCsa, getSafetyAccidents, getSafetyEvents, getSafetyKpis, getTrainingCompletions } from "../../api/safety";
-import { getIntegrityDriverHistory, getIntegrityFleetBaselines, getIntegrityUnitHistory, getIntegrityVendorHistory } from "../../api/maintenance";
+import {
+  getCompanyViolations,
+  getDrugAlcoholTests,
+  getIntegrityAlerts,
+  getLatestCsa,
+  getSafetyAccidents,
+  getSafetyEvents,
+  getSafetyFines,
+  getSafetyKpis,
+  getTrainingCompletions,
+} from "../../api/safety";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccidentReportDrawer } from "./components/AccidentReportDrawer";
@@ -10,7 +19,10 @@ import { DrugAlcoholTable } from "./components/DrugAlcoholTable";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { SafetyKpiRow } from "./components/SafetyKpiRow";
 import { TrainingTable } from "./components/TrainingTable";
-import { IntegrityAlertsTab } from "./components/IntegrityAlertsTab";
+import { FinesPage } from "./FinesPage";
+import { CompanyViolationsPage } from "./CompanyViolationsPage";
+import { IntegrityAlertsPage } from "./IntegrityAlertsPage";
+import { SafetySettingsPage } from "./SafetySettingsPage";
 
 const SAFETY_SUBNAV = [
   "Events",
@@ -18,9 +30,12 @@ const SAFETY_SUBNAV = [
   "Drug/Alcohol",
   "Accident Reports",
   "CSA Score",
-  "Integrity Alerts",
   "HOS Violations",
   "Vehicle Inspections",
+  "Liabilities",
+  "Fines",
+  "Company Violations",
+  "Integrity Alerts",
   "Settings",
 ] as const;
 
@@ -64,25 +79,20 @@ export function SafetyHomePage() {
     queryFn: () => getLatestCsa(companyId),
     enabled: Boolean(companyId),
   });
-  const integrityUnitQuery = useQuery({
-    queryKey: ["safety", "integrity", "unit", companyId],
-    queryFn: () => getIntegrityUnitHistory(companyId),
-    enabled: Boolean(companyId) && tab === "Integrity Alerts",
+  const finesQuery = useQuery({
+    queryKey: ["safety", "fines", companyId],
+    queryFn: () => getSafetyFines(companyId, { status: "open" }),
+    enabled: Boolean(companyId),
   });
-  const integrityDriverQuery = useQuery({
-    queryKey: ["safety", "integrity", "driver", companyId],
-    queryFn: () => getIntegrityDriverHistory(companyId),
-    enabled: Boolean(companyId) && tab === "Integrity Alerts",
+  const companyViolationsQuery = useQuery({
+    queryKey: ["safety", "company-violations", companyId],
+    queryFn: () => getCompanyViolations(companyId),
+    enabled: Boolean(companyId),
   });
-  const integrityVendorQuery = useQuery({
-    queryKey: ["safety", "integrity", "vendor", companyId],
-    queryFn: () => getIntegrityVendorHistory(companyId),
-    enabled: Boolean(companyId) && tab === "Integrity Alerts",
-  });
-  const integrityBaselineQuery = useQuery({
-    queryKey: ["safety", "integrity", "fleet", companyId],
-    queryFn: () => getIntegrityFleetBaselines(companyId),
-    enabled: Boolean(companyId) && tab === "Integrity Alerts",
+  const integrityAlertsQuery = useQuery({
+    queryKey: ["safety", "integrity-alerts", companyId],
+    queryFn: () => getIntegrityAlerts(companyId, { severity: "critical" }),
+    enabled: Boolean(companyId),
   });
 
   const eventRows = useMemo(() => {
@@ -109,7 +119,19 @@ export function SafetyHomePage() {
         </div>
       </div>
 
-      <SafetyKpiRow kpis={kpisQuery.data} />
+      <SafetyKpiRow
+        kpis={{
+          ...(kpisQuery.data ?? {}),
+          drivers_with_open_fines: finesQuery.data?.fines?.length ?? 0,
+          open_company_violations: (companyViolationsQuery.data?.company_violations ?? []).filter(
+            (row) => String(row.status ?? "open") !== "closed"
+          ).length,
+          critical_integrity_alerts: integrityAlertsQuery.data?.integrity_alerts?.length ?? 0,
+          pending_acknowledgments: (integrityAlertsQuery.data?.integrity_alerts ?? []).filter(
+            (row) => !row.acknowledged_at
+          ).length,
+        }}
+      />
 
       {tab === "Training" ? (
         <TrainingTable rows={trainingQuery.data?.training_completions ?? []} />
@@ -117,13 +139,14 @@ export function SafetyHomePage() {
         <DrugAlcoholTable rows={testsQuery.data?.tests ?? []} />
       ) : tab === "CSA Score" ? (
         <CSAScoreCard latest={csaQuery.data?.latest} />
+      ) : tab === "Fines" ? (
+        <FinesPage operatingCompanyId={companyId} />
+      ) : tab === "Company Violations" ? (
+        <CompanyViolationsPage operatingCompanyId={companyId} />
       ) : tab === "Integrity Alerts" ? (
-        <IntegrityAlertsTab
-          unitRows={integrityUnitQuery.data?.rows ?? []}
-          driverRows={integrityDriverQuery.data?.rows ?? []}
-          vendorRows={integrityVendorQuery.data?.rows ?? []}
-          baselineRows={integrityBaselineQuery.data?.rows ?? []}
-        />
+        <IntegrityAlertsPage operatingCompanyId={companyId} />
+      ) : tab === "Settings" ? (
+        <SafetySettingsPage operatingCompanyId={companyId} />
       ) : (
         <SafetyEventsTable
           rows={eventRows}

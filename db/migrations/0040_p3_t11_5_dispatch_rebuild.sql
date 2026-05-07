@@ -19,8 +19,8 @@ EXCEPTION
 END
 $$;
 
-UPDATE mdata.loads SET status = 'assigned_not_dispatched'::mdata.load_status_enum WHERE status = 'assigned'::mdata.load_status_enum;
-UPDATE mdata.loads SET status = 'delivered_pending_docs'::mdata.load_status_enum WHERE status = 'delivered'::mdata.load_status_enum;
+-- NOTE: enum additions in PostgreSQL are not safely reusable in the same transaction.
+-- Backfill can run safely in a later migration/job after commit.
 
 CREATE SCHEMA IF NOT EXISTS dispatch;
 CREATE SCHEMA IF NOT EXISTS views;
@@ -86,13 +86,13 @@ SELECT
   l.soft_deleted_at,
   l.deleted_by_user_id,
   CASE
-    WHEN l.status = 'assigned_not_dispatched'::mdata.load_status_enum THEN 'pretrip'
-    WHEN l.status = 'dispatched'::mdata.load_status_enum THEN 'pretrip'
-    WHEN l.status = 'in_transit'::mdata.load_status_enum THEN 'enroute_del'
-    WHEN l.status = 'delivered_pending_docs'::mdata.load_status_enum THEN 'unloaded'
-    WHEN l.status = 'completed_docs_received'::mdata.load_status_enum THEN 'off_duty'
-    WHEN l.status = 'cancelled'::mdata.load_status_enum THEN 'off_duty'
-    WHEN l.status = 'unassigned'::mdata.load_status_enum THEN 'off_duty'
+    WHEN l.status::text = 'assigned_not_dispatched' THEN 'pretrip'
+    WHEN l.status::text = 'dispatched' THEN 'pretrip'
+    WHEN l.status::text = 'in_transit' THEN 'enroute_del'
+    WHEN l.status::text = 'delivered_pending_docs' THEN 'unloaded'
+    WHEN l.status::text = 'completed_docs_received' THEN 'off_duty'
+    WHEN l.status::text = 'cancelled' THEN 'off_duty'
+    WHEN l.status::text = 'unassigned' THEN 'off_duty'
     ELSE 'off_duty'
   END AS driver_lifecycle_stage,
   (

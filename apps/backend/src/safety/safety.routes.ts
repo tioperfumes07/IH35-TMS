@@ -63,62 +63,99 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const kpiRes = await client
-        .query(
+      const settingsRes = await client
+        .query<{ active_window: number; inactive_threshold: number }>(
           `
-            SELECT *
-            FROM views.safety_dashboard_kpis
+            SELECT
+              dashboard_active_window_days AS active_window,
+              dashboard_inactive_threshold_days AS inactive_threshold
+            FROM safety.safety_settings
             WHERE operating_company_id = $1
             LIMIT 1
           `,
           [companyId]
         )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      const pendingAckRes = await client
+        .catch(() => ({ rows: [{ active_window: 10, inactive_threshold: 15 }] }));
+      const activeWindow = Number(settingsRes.rows[0]?.active_window ?? 10);
+
+      const activeDriversRes = await client
+        .query<{ count: number }>(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM mdata.drivers
+            WHERE operating_company_id = $1
+              AND status = 'Active'
+              AND COALESCE(updated_at, created_at, now()) >= now() - ($2::text || ' days')::interval
+          `,
+          [companyId, activeWindow]
+        )
+        .catch(() => ({ rows: [{ count: 0 }] }));
+      const openFinesRes = await client
+        .query<{ count: number }>(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM safety.fines
+            WHERE operating_company_id = $1
+              AND status IN ('open', 'reduced')
+              AND deactivated_at IS NULL
+          `,
+          [companyId]
+        )
+        .catch(() => ({ rows: [{ count: 0 }] }));
+      const openCompanyViolationsRes = await client
+        .query<{ count: number }>(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM safety.company_violations
+            WHERE operating_company_id = $1
+              AND status IN ('open', 'in_progress', 'escalated')
+              AND deactivated_at IS NULL
+          `,
+          [companyId]
+        )
+        .catch(() => ({ rows: [{ count: 0 }] }));
+      const criticalAlertsRes = await client
+        .query<{ count: number }>(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM safety.integrity_alerts
+            WHERE operating_company_id = $1
+              AND severity = 'critical'
+              AND resolution_status IN ('unresolved', 'investigating')
+          `,
+          [companyId]
+        )
+        .catch(() => ({ rows: [{ count: 0 }] }));
+      const pendingAckAlertsRes = await client
+        .query<{ count: number }>(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM safety.integrity_alerts
+            WHERE operating_company_id = $1
+              AND acknowledged_at IS NULL
+          `,
+          [companyId]
+        )
+        .catch(() => ({ rows: [{ count: 0 }] }));
+      const openLiabilitiesRes = await client
         .query<{ count: number }>(
           `
             SELECT COUNT(*)::int AS count
             FROM driver_finance.driver_liabilities
             WHERE operating_company_id = $1
-              AND requires_acknowledgment = true
-              AND acknowledgment_uuid IS NULL
+              AND COALESCE(current_balance, 0) > 0
           `,
           [companyId]
         )
         .catch(() => ({ rows: [{ count: 0 }] }));
-      const testsRes = await client
-        .query<{ count: number }>(
-          `
-            SELECT COUNT(*)::int AS count
-            FROM safety.drug_alcohol_tests
-            WHERE operating_company_id = $1
-              AND test_date >= date_trunc('year', now())
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
-      const csaRes = await client
-        .query<{ score: number }>(
-          `
-            SELECT COALESCE(score_total, 0)::numeric AS score
-            FROM safety.csa_scores_cache
-            WHERE operating_company_id = $1
-            ORDER BY cached_at DESC
-            LIMIT 1
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ score: 0 }] }));
       return {
-        ...(kpiRes.rows[0] ?? {
-          operating_company_id: companyId,
-          open_events: 0,
-          mtd_violations: 0,
-          training_due_30d: 0,
-        }),
-        pending_acks: Number(pendingAckRes.rows[0]?.count ?? 0),
-        da_tests_ytd: Number(testsRes.rows[0]?.count ?? 0),
-        csa_score_latest: Number(csaRes.rows[0]?.score ?? 0),
+        operating_company_id: companyId,
+        active_drivers: Number(activeDriversRes.rows[0]?.count ?? 0),
+        drivers_with_open_fines: Number(openFinesRes.rows[0]?.count ?? 0),
+        open_company_violations: Number(openCompanyViolationsRes.rows[0]?.count ?? 0),
+        critical_integrity_alerts: Number(criticalAlertsRes.rows[0]?.count ?? 0),
+        pending_acknowledgments: Number(pendingAckAlertsRes.rows[0]?.count ?? 0),
+        open_liabilities: Number(openLiabilitiesRes.rows[0]?.count ?? 0),
       };
     });
     return payload;

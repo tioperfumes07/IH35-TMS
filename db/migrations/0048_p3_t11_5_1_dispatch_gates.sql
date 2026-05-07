@@ -1,6 +1,7 @@
 BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS views;
+CREATE SCHEMA IF NOT EXISTS safety;
 
 DO $$
 BEGIN
@@ -94,14 +95,15 @@ $$;
 
 DO $$
 BEGIN
-  IF to_regclass('mdata.units') IS NOT NULL THEN
+  IF to_regclass('mdata.units') IS NOT NULL
+     AND to_regclass('maintenance.work_orders') IS NOT NULL THEN
     EXECUTE $VIEW$
       CREATE OR REPLACE VIEW views.units_with_dispatch_status
       WITH (security_invoker = true) AS
       SELECT
         u.id,
         COALESCE(u.unit_number, u.id::text) AS display_id,
-        u.operating_company_id,
+        COALESCE(u.currently_leased_to_company_id, u.owner_company_id) AS operating_company_id,
         u.is_dispatch_blocked,
         u.dispatch_block_reason,
         u.dispatch_block_source_type,
@@ -142,7 +144,8 @@ $$;
 
 DO $$
 BEGIN
-  IF to_regclass('mdata.drivers') IS NOT NULL THEN
+  IF to_regclass('mdata.drivers') IS NOT NULL
+     AND to_regclass('safety.driver_hos_status') IS NOT NULL THEN
     EXECUTE $VIEW$
       CREATE OR REPLACE VIEW views.drivers_with_hos_status
       WITH (security_invoker = true) AS
