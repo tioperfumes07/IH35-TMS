@@ -4,6 +4,8 @@ import { useForm } from "react-hook-form";
 import { createWorkOrder, type PaymentTiming, type WorkOrderType } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
+import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
+import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
@@ -47,16 +49,17 @@ type Props = {
   onCreated: () => void;
 };
 
-const typeTabs: Array<{ id: WorkOrderType; label: string; danger?: boolean }> = [
+const typeTabs: Array<{ id: WorkOrderType; label: string }> = [
   { id: "pm", label: "PM" },
   { id: "repair", label: "Repair" },
   { id: "tire", label: "Tire" },
-  { id: "accident", label: "Accident", danger: true },
+  { id: "accident", label: "Accident" },
 ];
 
 export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "pm", initialValues, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
+  const [taxRate, setTaxRate] = useState(8.25);
   const form = useForm<CreateWOFormValues>({
     defaultValues: {
       wo_type: initialType,
@@ -138,6 +141,12 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     }))
     .filter((line) => line.service_item_uuid);
 
+  const subtotal = lines.reduce((sum, line) => {
+    if (line.section === "A") return sum + Number(line.amount || 0);
+    const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
+    return sum + Math.max(Number(line.amount || 0), subRowsTotal);
+  }, 0);
+
   const submit = async (mode: "full" | "wo_only") => {
     const values = form.getValues();
     if (mode === "wo_only" && values.payment_timing !== "in_house") {
@@ -187,29 +196,29 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     <Modal open={open} onClose={onClose} title="Create Work Order">
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
-          {typeTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => {
-                form.setValue("wo_type", tab.id);
-                if (tab.id === "accident") form.setValue("source_type", "AC");
-                else if (tab.id === "tire") form.setValue("source_type", "IT");
-                else form.setValue("source_type", "IS");
-              }}
-              className={`rounded border px-2 py-1 text-xs font-semibold ${selectedType === tab.id ? (tab.danger ? "border-red-500 bg-red-100 text-red-700" : "border-blue-500 bg-blue-100 text-blue-700") : "border-gray-300 bg-white text-gray-700"}`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          <TypeTabBar
+            tabs={typeTabs.map((tab) => ({ id: tab.id, label: tab.label }))}
+            activeId={selectedType}
+            onChange={(tabId) => {
+              const typed = tabId as WorkOrderType;
+              form.setValue("wo_type", typed);
+              if (typed === "accident") form.setValue("source_type", "AC");
+              else if (typed === "tire") form.setValue("source_type", "IT");
+              else form.setValue("source_type", "IS");
+            }}
+          />
         </div>
 
+        <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+          Work Order Details
+        </div>
         <CreateWOSectionIdentification register={form.register} watch={form.watch} />
         <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} />
         <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
           Class auto-derive: <span className="font-semibold">{form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`}</span>
         </div>
         <TwoSectionLineEditor mode="wo" initialLines={[]} onChange={setLines} />
+        <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="WO Total = A + B" />
         <CreateWOSectionValidation checks={checks} />
 
         <div className="flex items-center justify-between">

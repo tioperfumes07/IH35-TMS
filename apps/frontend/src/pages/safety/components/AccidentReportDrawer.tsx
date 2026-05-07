@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { addAccidentPhoto, setSafetyAccidentStatus, spawnSafetyLiability, spawnSafetyWo } from "../../../api/safety";
 import { Button } from "../../../components/Button";
+import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
+import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { useToast } from "../../../components/Toast";
 
 type Props = {
@@ -15,8 +17,15 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, onClo
   const { pushToast } = useToast();
   const [uploading, setUploading] = useState(false);
   const [spawnedWoDisplayId, setSpawnedWoDisplayId] = useState<string | null>(null);
+  const [costLines, setCostLines] = useState<TwoSectionLine[]>([]);
+  const [taxRate, setTaxRate] = useState(8.25);
   if (!open || !accident) return null;
   const id = String(accident.id ?? "");
+  const subtotal = costLines.reduce((sum, line) => {
+    if (line.section === "A") return sum + Number(line.amount || 0);
+    const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
+    return sum + Math.max(Number(line.amount || 0), subRowsTotal);
+  }, 0);
 
   const setStatus = (status: string) => {
     void setSafetyAccidentStatus(id, operatingCompanyId, status)
@@ -32,7 +41,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, onClo
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
       <aside className="fixed right-0 top-0 z-50 h-full w-[480px] overflow-y-auto border-l border-gray-200 bg-white p-4 text-xs">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Accident Report</h3>
+          <h3 className="text-sm font-semibold">Accident Damage Details</h3>
           <button type="button" className="text-gray-500 underline" onClick={onClose}>Close</button>
         </div>
         <div className="space-y-1 rounded border border-gray-200 bg-gray-50 p-2">
@@ -102,6 +111,12 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, onClo
             New WO (source type AC): {spawnedWoDisplayId}
           </div>
         ) : null}
+        <div className="mt-3">
+          <TwoSectionLineEditor mode="expense" onChange={setCostLines} partsLaborMode="parts-and-labor" />
+        </div>
+        <div className="mt-2">
+          <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Accident Total = A + B" />
+        </div>
       </aside>
     </>
   );

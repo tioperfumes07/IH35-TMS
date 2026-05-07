@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Modal } from "../../../components/Modal";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
+import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
+import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
 
 type Props = {
   open: boolean;
@@ -9,24 +11,47 @@ type Props = {
 
 export function CreateExpenseModal({ open, onClose }: Props) {
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
-  const subtotal = lines.reduce((sum, line) => sum + Number(line.amount || 0), 0);
+  const [taxRate, setTaxRate] = useState(8.25);
+  const [expenseType, setExpenseType] = useState("fuel");
+  const subtotal = lines.reduce((sum, line) => {
+    if (line.section === "A") return sum + Number(line.amount || 0);
+    const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
+    return sum + Math.max(Number(line.amount || 0), subRowsTotal);
+  }, 0);
+
+  const expenseTabs = [
+    { id: "fuel", label: "Fuel Expense" },
+    { id: "repair", label: "Repair Expense" },
+    { id: "travel", label: "Travel Expense" },
+    { id: "toll", label: "Toll Expense" },
+    { id: "other", label: "Other Expense" },
+  ];
 
   return (
     <Modal open={open} onClose={onClose} title="Create Expense">
       <div className="space-y-3">
-        <div className="grid gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-3">
-          <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Vendor UUID" />
-          <select className="rounded border border-gray-300 px-2 py-1 text-xs" defaultValue="">
+        <TypeTabBar tabs={expenseTabs} activeId={expenseType} onChange={setExpenseType} />
+
+        <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+          Expense Details
+        </div>
+
+        <div className="grid gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
+          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-2" placeholder="Payee" />
+          <div className="md:col-span-3" />
+          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Load Number" />
+          <select className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-2" defaultValue="">
             <option value="" disabled>
               Account Paid From
             </option>
             <option value="bank">Bank account</option>
             <option value="credit-card">Credit card</option>
           </select>
-          <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Transaction date" type="date" />
+          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Transaction date" type="date" />
         </div>
-        <TwoSectionLineEditor mode="expense" onChange={setLines} />
-        <div className="text-right text-xs font-semibold">Expense total: ${subtotal.toFixed(2)}</div>
+
+        <TwoSectionLineEditor mode="expense" onChange={setLines} showFuelColumns={expenseType === "fuel"} partsLaborMode="parts-and-labor" />
+        <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Expense Total = A + B" />
       </div>
     </Modal>
   );
