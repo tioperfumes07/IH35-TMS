@@ -257,6 +257,8 @@ export default function App() {
           }
         />
         {[
+          // Keep only truly unshipped module redirects here.
+          // Shipped modules (Factoring, 425C, Lists) must never be routed via /coming-soon.
           ["/accounting", "Accounting", "5", "Post-launch"],
           ["/reports", "Reports", "3", "T11.16 next week"],
           ["/driver-app", "Driver App", "3", "T11.15 next week"],
