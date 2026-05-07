@@ -36,6 +36,7 @@ import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.ro
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
+import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
 import { registerDriverReturningDetectionRoutes } from "./mdata/driver-returning-detection.routes.js";
 import { registerDriverSafetyEventsRoutes } from "./mdata/driver-safety-events.routes.js";
@@ -140,6 +141,7 @@ async function main() {
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);
+  await registerForm425CRoutes(app);
   await registerCompanyRoutes(app);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";

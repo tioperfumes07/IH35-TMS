@@ -28,6 +28,7 @@ import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
 import { VendorsPage } from "./pages/Vendors";
 import { VendorDetailPage } from "./pages/VendorDetail";
+import { Form425CHome } from "./pages/form425c/Form425CHome";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -207,6 +208,15 @@ export default function App() {
           }
         />
         <Route
+          path="/425c"
+          element={
+            <ProtectedRoute>
+              <Form425CHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/form-425c" element={<Navigate to="/425c" replace />} />
+        <Route
           path="/catalogs"
           element={
             <ProtectedRoute>
@@ -224,8 +234,6 @@ export default function App() {
         />
         {[
           ["/accounting", "Accounting", "5", "Post-launch"],
-          ["/form-425c", "Form 425C", "3", "T11.13 this week"],
-          ["/425c", "Form 425C", "3", "T11.13 this week"],
           ["/lists", "Lists", "3", "T11.14 this week"],
           ["/reports", "Reports", "3", "T11.16 next week"],
           ["/driver-app", "Driver App", "3", "T11.15 next week"],

@@ -606,7 +606,7 @@ Reports Generated MTD · Scheduled Reports · Top Lane (revenue) · Top Customer
 
 ## MODULE 14 — 425C (Ch.11 DIP UST Report)
 
-**Route:** `/425c`
+**Route:** `/form-425c` (legacy alias `/425c`)
 **Approved screen:** `11-Form_425-Design.png`
 **Phase 3 task:** T11.13 (pending)
 **Purpose:** UST monthly operating report — Ch.11 DIP regulatory requirement
@@ -614,15 +614,19 @@ Reports Generated MTD · Scheduled Reports · Top Lane (revenue) · Top Customer
 ### Top action button
 **+ Generate New Submission**
 
-### Sub-nav tabs (5)
+### Sub-nav tabs (9)
 
 | Tab | What it shows |
 |-----|---------------|
-| **Current Period** | Live 425C in progress |
-| **Submission History** | Past UST filings + acknowledgments |
-| **Cash Flow Projection** | 13-week rolling forecast |
-| **Reconciliation** | Form lines vs source GL data |
-| **Settings** | Period config · Owner sign-off · Submission method |
+| **Form (Lines 1-37)** | Full monthly operating report form with all 8 parts |
+| **Exhibit A** | Explanations for Part 1 "No" answers (lines 1-9) |
+| **Exhibit B** | Explanations for Part 2 "Yes" answers (lines 10-18) |
+| **Exhibit C (auto)** | Cash receipts detail auto-derived from Banking |
+| **Exhibit D (auto)** | Cash disbursements detail auto-derived from Banking |
+| **Exhibit E (auto)** | Payables aging sourced from Accounting bills |
+| **Exhibit F (auto)** | Receivables aging sourced from Accounting invoices |
+| **Merge & Export** | Generate filing PDF package for manual court upload |
+| **Filing History** | All prior reports with filed/amended status timeline |
 
 ### KPI row — 5 cards
 Days to Next Submission · Current Period Cash Receipts · Current Period Disbursements · YTD Operating Loss/Profit · Compliance Status
