@@ -15,7 +15,10 @@ import {
   Users,
 } from "lucide-react";
 import type { ComponentType } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
+import { getArrivingSoon } from "../api/maintenance";
+import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors, spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
 
@@ -50,6 +53,22 @@ type SidebarProps = {
 };
 
 export function Sidebar({ role }: SidebarProps) {
+  const { selectedCompanyId } = useCompanyContext();
+  const severeArrivingSoonQuery = useQuery({
+    queryKey: ["sidebar", "maintenance-severe-badge", selectedCompanyId ?? ""],
+    queryFn: () =>
+      getArrivingSoon({
+        operating_company_id: selectedCompanyId!,
+        within_hours: 48,
+        severity_min: "severe",
+        include_already_arrived: true,
+        include_non_yard_destination: true,
+      }),
+    enabled: Boolean(selectedCompanyId),
+    refetchInterval: 60_000,
+  });
+
+  const severeBadgeCount = Number(severeArrivingSoonQuery.data?.counts?.severe ?? 0);
   const visibleItems = ITEMS.filter((item) => !item.visibleRoles || item.visibleRoles.includes(role));
 
   return (
@@ -73,6 +92,11 @@ export function Sidebar({ role }: SidebarProps) {
                   {isActive ? <span className="absolute left-0 top-0 h-full" style={{ width: 3, backgroundColor: colors.sidebarActiveBorder }} /> : null}
                   <div className="flex items-center justify-center">
                     <Icon className="h-4 w-4" />
+                    {key === "MAINT" && severeBadgeCount > 0 ? (
+                      <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
+                        {severeBadgeCount}
+                      </span>
+                    ) : null}
                   </div>
                   <span
                     className="mt-1 text-[10px] leading-none uppercase"

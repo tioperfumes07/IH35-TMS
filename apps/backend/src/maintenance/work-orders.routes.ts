@@ -6,7 +6,6 @@ import { withCurrentUser } from "../auth/db.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
 const workOrderTypeSchema = z.enum(["pm", "repair", "tire", "accident"]);
-const sourceTypeSchema = z.enum(["IS", "ES", "AC", "ET", "RT", "IT", "RS"]);
 const paymentTimingSchema = z.enum(["in_house", "paid_same_day", "vendor_invoice"]);
 
 const listQuerySchema = z.object({
@@ -15,6 +14,8 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   status: z.string().optional(),
   wo_type: z.string().optional(),
+  source_type: z.string().optional(),
+  external_vendor_id: z.string().uuid().optional(),
   search: z.string().trim().max(120).optional(),
 });
 
@@ -24,7 +25,7 @@ const lineItemParamsSchema = z.object({ id: z.string().uuid(), lid: z.string().u
 const createWorkOrderSchema = z.object({
   operating_company_id: z.string().uuid(),
   wo_type: workOrderTypeSchema,
-  source_type: sourceTypeSchema,
+  source_type: z.enum(["IS", "ES", "AC", "ET", "RT", "IT", "RS"]),
   status: workOrderStatusSchema.default("open"),
   unit_id: z.string().uuid(),
   driver_id: z.string().uuid().optional(),
@@ -33,14 +34,11 @@ const createWorkOrderSchema = z.object({
   repair_location: z.string().default("in_house"),
   vendor_id: z.string().uuid().optional(),
   vendor_invoice_number: z.string().trim().max(120).optional(),
-  description: z.string().trim().max(2000),
-  severity: z.string().optional(),
   external_vendor_id: z.string().uuid().optional(),
   external_vendor_wo_number: z.string().trim().max(120).optional(),
   external_vendor_invoice_number: z.string().trim().max(120).optional(),
-  external_vendor_invoice_amount: z.number().min(0).optional(),
-  external_vendor_invoice_doc_id: z.string().uuid().optional(),
-  labor_only_no_parts: z.boolean().default(false),
+  description: z.string().trim().max(2000),
+  severity: z.string().optional(),
   payment_timing: paymentTimingSchema.default("vendor_invoice"),
   bill_terms: z.string().optional(),
   bill_date: z.string().optional(),
@@ -56,21 +54,12 @@ const createWorkOrderSchema = z.object({
   ).default([]),
 });
 
-const updateWorkOrderSchema = z
-  .object({
-    status: workOrderStatusSchema.optional(),
-    source_type: sourceTypeSchema.optional(),
-    external_vendor_id: z.string().uuid().nullable().optional(),
-    external_vendor_wo_number: z.string().trim().max(120).nullable().optional(),
-    external_vendor_invoice_number: z.string().trim().max(120).nullable().optional(),
-    external_vendor_invoice_amount: z.number().min(0).nullable().optional(),
-    external_vendor_invoice_doc_id: z.string().uuid().nullable().optional(),
-    labor_only_no_parts: z.boolean().optional(),
-    total_actual_cost: z.number().min(0).optional(),
-    description: z.string().trim().max(2000).optional(),
-    severity: z.string().trim().max(80).nullable().optional(),
-  })
-  .refine((v) => Object.keys(v).length > 0, { message: "empty_patch_not_allowed" });
+const updateWorkOrderSchema = z.object({
+  external_vendor_id: z.string().uuid().nullable().optional(),
+  external_vendor_wo_number: z.string().trim().max(120).nullable().optional(),
+  external_vendor_invoice_number: z.string().trim().max(120).nullable().optional(),
+  description: z.string().trim().max(2000).optional(),
+});
 
 const transitionSchema = z.object({
   new_status: workOrderStatusSchema,
@@ -116,10 +105,6 @@ async function maintenanceReady(client: any) {
   return Boolean((res.rows[0] as { ok?: boolean } | undefined)?.ok);
 }
 
-function isDisplayRefreshCandidate(sourceType: string) {
-  return ["ES", "AC", "ET", "RT", "RS", "IS", "IT"].includes(sourceType);
-}
-
 export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/work-orders", async (req, reply) => {
     const user = authed(req, reply);
@@ -139,6 +124,14 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (q.wo_type) {
         values.push(q.wo_type);
         where.push(`w.wo_type = $${values.length}`);
+      }
+      if (q.source_type) {
+        values.push(q.source_type);
+        where.push(`w.source_type = $${values.length}`);
+      }
+      if (q.external_vendor_id) {
+        values.push(q.external_vendor_id);
+        where.push(`w.external_vendor_id = $${values.length}`);
       }
       if (q.search) {
         values.push(`%${q.search}%`);
@@ -203,34 +196,41 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if (body.repair_location !== "in_house" && !body.vendor_id) {
       return reply.code(400).send({ error: "vendor_required_for_external_repairs" });
     }
+    if (["ES", "AC", "ET", "RT", "RS"].includes(body.source_type)) {
+      if (!body.external_vendor_id || !body.external_vendor_wo_number || !body.external_vendor_invoice_number) {
+        return reply.code(400).send({
+          error: "external_vendor_fields_required",
+          message:
+            "source_type ES/AC/ET/RT/RS requires external_vendor_id, external_vendor_wo_number, external_vendor_invoice_number",
+        });
+      }
+    }
 
     const created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) {
         return { unavailable: true as const };
       }
 
-      const seqRes = await client.query(
+      const displayIdRes = await client.query(
         `
           SELECT display_id, sequence
-          FROM maintenance.next_wo_display_id($1, $2, COALESCE($3::date, now()::date), $4)
+          FROM maintenance.next_wo_display_id($1, $2, COALESCE($3::date, CURRENT_DATE), $4)
         `,
         [body.unit_id, body.source_type, body.service_date ?? null, body.operating_company_id]
       );
-      const next = seqRes.rows[0] as { display_id: string; sequence: number } | undefined;
-      if (!next) return { unavailable: true as const };
+      const display = displayIdRes.rows[0];
 
       const woRes = await client.query(
         `
           INSERT INTO maintenance.work_orders (
             operating_company_id, wo_type, status, unit_id, driver_id, load_id, opened_at,
             repair_location, assigned_vendor, vendor_invoice_number, description, severity,
-            source_type, unit_sequence, display_id, v5_suffix, legacy_display_id,
-            external_vendor_id, external_vendor_wo_number, external_vendor_invoice_number,
-            external_vendor_invoice_amount, external_vendor_invoice_doc_id, labor_only_no_parts
+            source_type, external_vendor_id, external_vendor_wo_number, external_vendor_invoice_number,
+            display_id, unit_sequence
           )
           VALUES (
             $1,$2,$3,$4,$5,$6,COALESCE($7::timestamptz, now()),$8,$9,$10,$11,$12,
-            $13,$14,$15,$16,$17,$18,$19,$20,$21,$22
+            $13,$14,$15,$16,$17,$18
           )
           RETURNING *
         `,
@@ -248,16 +248,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.description,
           body.severity ?? null,
           body.source_type,
-          next.sequence,
-          next.display_id,
-          "PEND0",
-          null,
           body.external_vendor_id ?? null,
           body.external_vendor_wo_number ?? null,
           body.external_vendor_invoice_number ?? null,
-          body.external_vendor_invoice_amount ?? null,
-          body.external_vendor_invoice_doc_id ?? null,
-          body.labor_only_no_parts,
+          display?.display_id ?? null,
+          Number(display?.sequence ?? 0) || null,
         ]
       );
       const wo = woRes.rows[0];
@@ -312,22 +307,20 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         "BT-3-MAINTENANCE-REBUILD"
       );
 
-      if (isDisplayRefreshCandidate(body.source_type)) {
-        try {
-          const refreshRes = await client.query(`SELECT maintenance.refresh_wo_display_id($1) AS display_id`, [wo.id]);
-          const refreshedId = (refreshRes.rows[0] as { display_id?: string } | undefined)?.display_id ?? wo.display_id;
-          await appendCrudAudit(
-            client,
-            user.uuid,
-            "maintenance.wo.display_id_refreshed",
-            { resource_id: wo.id, display_id: refreshedId, trigger: "create" },
-            "info",
-            "BT-3-WO-FORMAT-VENDOR-INVENTORY-INTEGRITY"
-          );
-        } catch {
-          // If the function is unavailable in a pre-migration environment, keep create non-breaking.
-        }
-      }
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "maintenance.wo_display_id_generated",
+        {
+          resource_type: "maintenance.work_orders",
+          resource_id: wo.id,
+          operating_company_id: wo.operating_company_id,
+          display_id: wo.display_id,
+          unit_sequence: wo.unit_sequence,
+        },
+        "info",
+        "BT-3-MAINTENANCE-REBUILD"
+      );
 
       return { unavailable: false as const, row: wo };
     });
@@ -347,85 +340,67 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
     const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
+    const body = parsed.data;
 
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await maintenanceReady(client))) return { unavailable: true as const };
-      const currentRes = await client.query(
-        `SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
-        [params.data.id, companyId]
-      );
-      const current = currentRes.rows[0] as Record<string, any> | undefined;
+      const currentRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+        params.data.id,
+        companyId,
+      ]);
+      const current = currentRes.rows[0];
       if (!current) return { notFound: true as const };
-      if (parsed.data.source_type && parsed.data.source_type !== current.source_type) {
-        return { immutableSourceType: true as const };
+      if (body.external_vendor_id === null || body.external_vendor_wo_number === null || body.external_vendor_invoice_number === null) {
+        return { invalid: true as const, error: "external_vendor_fields_cannot_be_cleared" };
       }
-
-      const updates: string[] = [];
-      const values: unknown[] = [params.data.id, companyId];
-      const fields: Array<keyof z.infer<typeof updateWorkOrderSchema>> = [
-        "status",
-        "external_vendor_id",
-        "external_vendor_wo_number",
-        "external_vendor_invoice_number",
-        "external_vendor_invoice_amount",
-        "external_vendor_invoice_doc_id",
-        "labor_only_no_parts",
-        "total_actual_cost",
-        "description",
-        "severity",
-      ];
-      for (const field of fields) {
-        if (field in parsed.data) {
-          values.push((parsed.data as Record<string, unknown>)[field]);
-          updates.push(`${field} = $${values.length}`);
-        }
-      }
-      updates.push("updated_at = now()");
       const updatedRes = await client.query(
-        `UPDATE maintenance.work_orders SET ${updates.join(", ")} WHERE id = $1 AND operating_company_id = $2 RETURNING *`,
-        values
+        `
+          UPDATE maintenance.work_orders
+          SET
+            external_vendor_id = COALESCE($2, external_vendor_id),
+            external_vendor_wo_number = COALESCE($3, external_vendor_wo_number),
+            external_vendor_invoice_number = COALESCE($4, external_vendor_invoice_number),
+            description = COALESCE($5, description),
+            updated_at = now()
+          WHERE id = $1
+          RETURNING *
+        `,
+        [
+          params.data.id,
+          body.external_vendor_id ?? null,
+          body.external_vendor_wo_number ?? null,
+          body.external_vendor_invoice_number ?? null,
+          body.description ?? null,
+        ]
       );
-      const updated = updatedRes.rows[0] as Record<string, any>;
-
-      const vendorChanged =
-        ("external_vendor_invoice_number" in parsed.data && parsed.data.external_vendor_invoice_number !== current.external_vendor_invoice_number) ||
-        ("external_vendor_wo_number" in parsed.data && parsed.data.external_vendor_wo_number !== current.external_vendor_wo_number) ||
-        ("labor_only_no_parts" in parsed.data && parsed.data.labor_only_no_parts !== current.labor_only_no_parts);
-
-      if (vendorChanged && !["complete", "completed"].includes(String(updated.status ?? ""))) {
-        const refreshRes = await client.query(`SELECT maintenance.refresh_wo_display_id($1) AS display_id`, [params.data.id]);
-        updated.display_id = (refreshRes.rows[0] as { display_id?: string } | undefined)?.display_id ?? updated.display_id;
-        await appendCrudAudit(
-          client,
-          user.uuid,
-          "maintenance.wo.display_id_refreshed",
-          { resource_id: params.data.id, display_id: updated.display_id, trigger: "vendor_update" },
-          "info",
-          "BT-3-WO-FORMAT-VENDOR-INVENTORY-INTEGRITY"
-        );
-      }
-
+      const updated = updatedRes.rows[0];
       await appendCrudAudit(
         client,
         user.uuid,
         "maintenance.wo.updated",
-        { resource_id: params.data.id, patch_keys: Object.keys(parsed.data) },
+        {
+          resource_type: "maintenance.work_orders",
+          resource_id: params.data.id,
+          operating_company_id: companyId,
+          changes: {
+            external_vendor_id: body.external_vendor_id ?? undefined,
+            external_vendor_wo_number: body.external_vendor_wo_number ?? undefined,
+            external_vendor_invoice_number: body.external_vendor_invoice_number ?? undefined,
+            description: body.description ?? undefined,
+          },
+        },
         "info",
-        "BT-3-WO-FORMAT-VENDOR-INVENTORY-INTEGRITY"
+        "P3-T11.6.2-ARRIVING-SOON"
       );
-
-      return { updated };
+      return { row: updated };
     });
-
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
-    if ("immutableSourceType" in result) {
-      return reply.code(422).send({ error: "E_WO_SOURCE_TYPE_IMMUTABLE", message: "source_type cannot be changed after creation" });
-    }
-    return result.updated;
+    if ("invalid" in result) return reply.code(400).send({ error: result.error });
+    return result.row;
   });
 
-  app.post("/api/v1/maintenance/work-orders/:id/complete", async (req, reply) => {
+  app.patch("/api/v1/maintenance/work-orders/:id/complete", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -435,39 +410,49 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
 
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await maintenanceReady(client))) return { unavailable: true as const };
+      const currentRes = await client.query(`SELECT * FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+        params.data.id,
+        companyId,
+      ]);
+      const current = currentRes.rows[0];
+      if (!current) return { notFound: true as const };
       try {
-        const res = await client.query(
-          `UPDATE maintenance.work_orders SET status = 'complete', updated_at = now() WHERE id = $1 AND operating_company_id = $2 RETURNING *`,
-          [params.data.id, companyId]
+        const updateRes = await client.query(
+          `
+            UPDATE maintenance.work_orders
+            SET status = 'complete',
+                updated_at = now()
+            WHERE id = $1
+            RETURNING *
+          `,
+          [params.data.id]
         );
-        if (res.rowCount === 0) return { notFound: true as const };
         await appendCrudAudit(
           client,
           user.uuid,
           "maintenance.wo.completed",
-          { resource_id: params.data.id },
+          {
+            resource_type: "maintenance.work_orders",
+            resource_id: params.data.id,
+            operating_company_id: companyId,
+            source_type: updateRes.rows[0]?.source_type,
+          },
           "info",
-          "BT-3-WO-FORMAT-VENDOR-INVENTORY-INTEGRITY"
+          "P3-T11.6.2-ARRIVING-SOON"
         );
-        return { row: res.rows[0] };
+        return { row: updateRes.rows[0] };
       } catch (error) {
-        const message = error instanceof Error ? error.message : "unknown_error";
-        if (
-          message.includes("E_EXTERNAL_VENDOR_FIELDS_REQUIRED") ||
-          message.includes("E_COST_RECONCILIATION_FAILED") ||
-          message.includes("E_PARTS_INVOICE_LINK_REQUIRED") ||
-          message.includes("E_WO_V5_PENDING")
-        ) {
-          return { invariant: true as const, message };
+        const message = String((error as Error).message ?? "completion_failed");
+        if (message.includes("E_EXTERNAL_VENDOR_FIELDS_REQUIRED")) {
+          return { blocked: true as const, code: "E_EXTERNAL_VENDOR_FIELDS_REQUIRED", message };
         }
         throw error;
       }
     });
-
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
-    if ("invariant" in result) return reply.code(422).send({ error: result.message });
-    return result.row;
+    if ("blocked" in result) return reply.code(422).send({ error: result.code, message: result.message });
+    return { ok: true, work_order: result.row };
   });
 
   app.patch("/api/v1/maintenance/work-orders/:id/transition", async (req, reply) => {

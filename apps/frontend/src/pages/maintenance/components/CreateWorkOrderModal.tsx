@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { createWorkOrder, type PaymentTiming, type WorkOrderSourceType, type WorkOrderType } from "../../../api/maintenance";
+import { createWorkOrder, type PaymentTiming, type WorkOrderType } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
@@ -11,7 +11,7 @@ import { CreateWOSectionValidation } from "./CreateWOSectionValidation";
 
 export type CreateWOFormValues = {
   wo_type: WorkOrderType;
-  source_type: WorkOrderSourceType;
+  source_type: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
   service_date: string;
   unit_id: string;
   driver_id: string;
@@ -22,9 +22,6 @@ export type CreateWOFormValues = {
   external_vendor_id: string;
   external_vendor_wo_number: string;
   external_vendor_invoice_number: string;
-  external_vendor_invoice_amount: number;
-  external_vendor_invoice_doc_id: string;
-  labor_only_no_parts: boolean;
   load_id: string;
   description: string;
   payment_timing: PaymentTiming;
@@ -55,14 +52,13 @@ const typeTabs: Array<{ id: WorkOrderType; label: string; danger?: boolean }> = 
   { id: "tire", label: "Tire" },
   { id: "accident", label: "Accident", danger: true },
 ];
-const externalTypes: WorkOrderSourceType[] = ["ES", "AC", "ET", "RT", "RS"];
 
 export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "pm", initialValues, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
   const form = useForm<CreateWOFormValues>({
     defaultValues: {
       wo_type: initialType,
-      source_type: initialType === "accident" ? "AC" : "IS",
+      source_type: initialType === "accident" ? "AC" : initialType === "tire" ? "IT" : "IS",
       service_date: new Date().toISOString().slice(0, 10),
       unit_id: "",
       driver_id: "",
@@ -73,9 +69,6 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       external_vendor_id: "",
       external_vendor_wo_number: "",
       external_vendor_invoice_number: "",
-      external_vendor_invoice_amount: 0,
-      external_vendor_invoice_doc_id: "",
-      labor_only_no_parts: false,
       load_id: "",
       description: "",
       payment_timing: "vendor_invoice",
@@ -99,15 +92,15 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const selectedType = form.watch("wo_type");
   const sourceType = form.watch("source_type");
   const paymentTiming = form.watch("payment_timing");
-  const lineItems = form.watch("line_items") ?? [];
-  const totalCost = lineItems.reduce((acc, item) => acc + Number(item.amount || 0), 0);
-  const vendorInvoiceAmount = Number(form.watch("external_vendor_invoice_amount") || 0);
-  const showReconWarning = externalTypes.includes(sourceType) && Math.abs(totalCost - vendorInvoiceAmount) > 0.01;
-  const displayPreview = `Will be: WO-${form.watch("unit_id") || "{unit}"}-${sourceType}-${form.watch("service_date") || "{date}"}-XXXX-PEND0 (V5 updates when vendor reference entered)`;
+  const needsExternalVendor = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   const checks = [
     { label: "Unit active and class set", ok: Boolean(form.watch("unit_id")) },
     { label: "Driver and load required for non-PM types", ok: selectedType === "pm" || (Boolean(form.watch("driver_id")) && Boolean(form.watch("load_id"))) },
     { label: "Vendor required for non in-house location", ok: form.watch("repair_location") === "in_house" || Boolean(form.watch("vendor_id")) },
+    {
+      label: "External WO fields required for ES/AC/ET/RT/RS",
+      ok: !needsExternalVendor || (Boolean(form.watch("external_vendor_id")) && Boolean(form.watch("external_vendor_wo_number")) && Boolean(form.watch("external_vendor_invoice_number"))),
+    },
     { label: "At least one cost line item", ok: (form.watch("line_items") ?? []).length > 0 },
   ];
 
@@ -132,9 +125,6 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         external_vendor_id: values.external_vendor_id || undefined,
         external_vendor_wo_number: values.external_vendor_wo_number || undefined,
         external_vendor_invoice_number: values.external_vendor_invoice_number || undefined,
-        external_vendor_invoice_amount: Number(values.external_vendor_invoice_amount || 0) || undefined,
-        external_vendor_invoice_doc_id: values.external_vendor_invoice_doc_id || undefined,
-        labor_only_no_parts: values.labor_only_no_parts,
         description: values.description,
         payment_timing: mode === "wo_only" ? "in_house" : values.payment_timing,
         bill_terms: values.bill_terms || undefined,
@@ -153,12 +143,6 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   return (
     <Modal open={open} onClose={onClose} title="Create Work Order">
       <div className="space-y-3">
-        <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700">{displayPreview}</div>
-        {showReconWarning ? (
-          <div className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
-            Cost reconciliation warning: line-item total ({totalCost.toFixed(2)}) does not match external invoice amount ({vendorInvoiceAmount.toFixed(2)}).
-          </div>
-        ) : null}
         <div className="flex flex-wrap gap-2">
           {typeTabs.map((tab) => (
             <button
@@ -167,6 +151,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               onClick={() => {
                 form.setValue("wo_type", tab.id);
                 if (tab.id === "accident") form.setValue("source_type", "AC");
+                else if (tab.id === "tire") form.setValue("source_type", "IT");
+                else form.setValue("source_type", "IS");
               }}
               className={`rounded border px-2 py-1 text-xs font-semibold ${selectedType === tab.id ? (tab.danger ? "border-red-500 bg-red-100 text-red-700" : "border-blue-500 bg-blue-100 text-blue-700") : "border-gray-300 bg-white text-gray-700"}`}
             >
@@ -192,6 +178,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               {paymentTiming === "vendor_invoice" ? "Save WO & Create Bill" : paymentTiming === "paid_same_day" ? "Save WO & Create Expense" : "Save WO"}
             </Button>
           </div>
+        </div>
+        <div className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-900">
+          Will be: WO-{form.watch("unit_id") || "UNIT"}-{sourceType}-{new Date().toLocaleDateString("en-US").replace(/\//g, "-")}-XXXX (XXXX auto-generated)
         </div>
       </div>
     </Modal>

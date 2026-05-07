@@ -8,7 +8,7 @@ import {
   getMaintenanceRecentActivity,
   getMaintenanceRmStatus,
   getMaintenanceSevereAlerts,
-  listPartsInventory,
+  listWorkOrdersFiltered,
 } from "../../api/maintenance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
@@ -22,7 +22,19 @@ import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { RecentActivityRow } from "./components/RecentActivityRow";
 import { SevereAlertsBand } from "./components/SevereAlertsBand";
 import { TriageModal } from "./components/TriageModal";
-import { PartsInventoryTable } from "./components/PartsInventoryTable";
+import { WorkOrdersTable } from "./components/WorkOrdersTable";
+import { ArrivingSoonPage } from "./ArrivingSoonPage";
+
+const SUBNAV = [
+  { id: "active_wos", label: "Active WOs" },
+  { id: "rm_status", label: "R&M Status Board" },
+  { id: "arriving_soon", label: "Arriving Soon" },
+  { id: "in_transit_issues", label: "In-Transit Issues" },
+  { id: "damage_reports", label: "Damage Reports" },
+  { id: "severe_repairs", label: "Severe Repairs" },
+  { id: "parts_inventory", label: "Parts Inventory" },
+  { id: "settings", label: "Settings" },
+] as const;
 
 export function MaintenanceHomePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -33,7 +45,9 @@ export function MaintenanceHomePage() {
   const [createWoType, setCreateWoType] = useState<WorkOrderType>("pm");
   const [prefillFromIssue, setPrefillFromIssue] = useState<InTransitIssue | null>(null);
   const [triageIssue, setTriageIssue] = useState<InTransitIssue | null>(null);
-  const [subnav, setSubnav] = useState<"Maintenance" | "Parts Inventory">("Maintenance");
+  const [tab, setTab] = useState<(typeof SUBNAV)[number]["id"]>("active_wos");
+  const [sourceTypeFilter, setSourceTypeFilter] = useState("");
+  const [externalVendorFilter, setExternalVendorFilter] = useState("");
 
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "kpis", companyId],
@@ -60,10 +74,14 @@ export function MaintenanceHomePage() {
     queryFn: () => getMaintenanceRecentActivity(companyId),
     enabled: Boolean(companyId),
   });
-  const partsInventoryQuery = useQuery({
-    queryKey: ["maintenance", "parts-inventory", companyId],
-    queryFn: () => listPartsInventory(companyId),
-    enabled: Boolean(companyId) && subnav === "Parts Inventory",
+  const workOrdersQuery = useQuery({
+    queryKey: ["maintenance", "work-orders", companyId, sourceTypeFilter, externalVendorFilter],
+    queryFn: () =>
+      listWorkOrdersFiltered(companyId, {
+        source_type: sourceTypeFilter || undefined,
+        external_vendor_id: externalVendorFilter || undefined,
+      }),
+    enabled: Boolean(companyId),
   });
 
   const kpis = useMemo(
@@ -103,55 +121,66 @@ export function MaintenanceHomePage() {
 
       <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
-          {["Maintenance", "Work Orders ▾", "R&M Status", "Service / Location", "Fleet by Type", "PM Schedule", "In-Transit Issues", "Damage Reports"].map((item) => (
+          {SUBNAV.map((item) => (
             <button
-              key={item}
+              key={item.id}
               type="button"
-              className={
-                (item === "Maintenance" && subnav === "Maintenance") || (item === "Parts Inventory" && subnav === "Parts Inventory")
-                  ? "border-b border-white pb-0.5 font-semibold"
-                  : ""
-              }
-              onClick={() => {
-                if (item === "Maintenance") setSubnav("Maintenance");
-                if (item === "Parts Inventory") setSubnav("Parts Inventory");
-              }}
+              className={tab === item.id ? "border-b border-white pb-0.5 font-semibold" : ""}
+              onClick={() => setTab(item.id)}
             >
-              {item}
+              {item.label}
             </button>
           ))}
-          <button type="button" onClick={() => setSubnav("Parts Inventory")} className={subnav === "Parts Inventory" ? "border-b border-white pb-0.5 font-semibold" : ""}>
-            Parts Inventory
-          </button>
         </div>
       </div>
 
-      {subnav === "Parts Inventory" ? (
-        <PartsInventoryTable companyId={companyId} rows={partsInventoryQuery.data?.rows ?? []} />
-      ) : (
-        <>
-          <MaintKpiRows kpis={kpis} />
-          <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
+      <MaintKpiRows kpis={kpis} />
+      <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
 
-          <RMBucketsGrid
-            inHouse={rmStatusQuery.data?.in_house ?? []}
-            external={rmStatusQuery.data?.external ?? []}
-            roadside={rmStatusQuery.data?.roadside ?? []}
-            onOpen={() => pushToast("WO detail drawer integration is pending follow-up", "info")}
-          />
+      {tab === "active_wos" ? (
+        <WorkOrdersTable
+          rows={workOrdersQuery.data?.work_orders ?? []}
+          sourceTypeFilter={sourceTypeFilter}
+          externalVendorFilter={externalVendorFilter}
+          onSourceTypeChange={setSourceTypeFilter}
+          onExternalVendorChange={setExternalVendorFilter}
+        />
+      ) : null}
 
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-            <SevereAlertsBand alerts={severeQuery.data?.alerts ?? []} />
-            <InTransitTriageBand issues={triageQuery.data?.issues ?? []} onTriage={(issue) => setTriageIssue(issue)} />
-          </div>
+      {tab === "rm_status" ? (
+        <RMBucketsGrid
+          inHouse={rmStatusQuery.data?.in_house ?? []}
+          external={rmStatusQuery.data?.external ?? []}
+          roadside={rmStatusQuery.data?.roadside ?? []}
+          onOpen={() => pushToast("WO detail drawer integration is pending follow-up", "info")}
+        />
+      ) : null}
 
-          <RecentActivityRow
-            recent={recentQuery.data?.recent ?? []}
-            completed={recentQuery.data?.completed ?? []}
-            onOpen={() => pushToast("WO detail drawer integration is pending follow-up", "info")}
-          />
-        </>
-      )}
+      {tab === "arriving_soon" ? <ArrivingSoonPage operatingCompanyId={companyId} /> : null}
+
+      {tab === "in_transit_issues" ? (
+        <InTransitTriageBand issues={triageQuery.data?.issues ?? []} onTriage={(issue) => setTriageIssue(issue)} />
+      ) : null}
+
+      {tab === "damage_reports" ? (
+        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Damage reports queue is in active development.</div>
+      ) : null}
+
+      {tab === "severe_repairs" ? <SevereAlertsBand alerts={severeQuery.data?.alerts ?? []} /> : null}
+
+      {tab === "parts_inventory" ? (
+        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Parts inventory panel is available in the Parts Inventory module components.</div>
+      ) : null}
+
+      {tab === "settings" ? (
+        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Maintenance settings are owner/admin scoped and ship in follow-up.</div>
+      ) : null}
+
+      <RecentActivityRow
+        recent={recentQuery.data?.recent ?? []}
+        completed={recentQuery.data?.completed ?? []}
+        onOpen={() => pushToast("WO detail drawer integration is pending follow-up", "info")}
+      />
 
       <TriageModal
         open={Boolean(triageIssue)}

@@ -21,7 +21,6 @@ const expectedViews = [
 try {
   const client = await pool.connect();
   try {
-    await client.query("SET ROLE ih35_app");
     await client.query("BEGIN");
     await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
 

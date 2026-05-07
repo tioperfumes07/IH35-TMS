@@ -1,0 +1,83 @@
+import type { WorkOrder } from "../../../api/maintenance";
+
+type Props = {
+  rows: WorkOrder[];
+  sourceTypeFilter: string;
+  externalVendorFilter: string;
+  onSourceTypeChange: (value: string) => void;
+  onExternalVendorChange: (value: string) => void;
+};
+
+export function WorkOrdersTable({
+  rows,
+  sourceTypeFilter,
+  externalVendorFilter,
+  onSourceTypeChange,
+  onExternalVendorChange,
+}: Props) {
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        <label className="space-y-1 text-xs">
+          <span className="text-gray-600">Filter by source type</span>
+          <select className="h-8 w-full rounded border border-gray-300 px-2 text-sm" value={sourceTypeFilter} onChange={(e) => onSourceTypeChange(e.target.value)}>
+            <option value="">All</option>
+            <option value="IS">IS</option>
+            <option value="ES">ES</option>
+            <option value="AC">AC</option>
+            <option value="ET">ET</option>
+            <option value="RT">RT</option>
+            <option value="IT">IT</option>
+            <option value="RS">RS</option>
+          </select>
+        </label>
+        <label className="space-y-1 text-xs md:col-span-2">
+          <span className="text-gray-600">Filter by external vendor (id)</span>
+          <input
+            className="h-8 w-full rounded border border-gray-300 px-2 text-sm"
+            value={externalVendorFilter}
+            onChange={(e) => onExternalVendorChange(e.target.value)}
+            placeholder="Vendor id..."
+          />
+        </label>
+      </div>
+      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+        <table className="min-w-[1200px] w-full text-left text-xs">
+          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
+            <tr>
+              <th className="px-2 py-1">Display ID</th>
+              <th className="px-2 py-1">Source Type</th>
+              <th className="px-2 py-1">Unit</th>
+              <th className="px-2 py-1">Driver</th>
+              <th className="px-2 py-1">Vendor</th>
+              <th className="px-2 py-1">Status</th>
+              <th className="px-2 py-1">Cost</th>
+              <th className="px-2 py-1">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id} className="border-t border-gray-100">
+                <td className="px-2 py-1 font-medium">{row.display_id ?? row.id.slice(0, 8)}</td>
+                <td className="px-2 py-1">{row.source_type ?? "—"}</td>
+                <td className="px-2 py-1">{row.unit_id}</td>
+                <td className="px-2 py-1">{row.driver_id ?? "—"}</td>
+                <td className="px-2 py-1">{row.external_vendor_id ?? "—"}</td>
+                <td className="px-2 py-1">{row.status}</td>
+                <td className="px-2 py-1">${Number((row as Record<string, unknown>).total_actual_cost ?? 0).toFixed(2)}</td>
+                <td className="px-2 py-1">{String(row.opened_at ?? "").slice(0, 10)}</td>
+              </tr>
+            ))}
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-2 py-3 text-center text-gray-500">
+                  No work orders found.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
