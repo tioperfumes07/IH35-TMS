@@ -40,38 +40,37 @@ ALTER TABLE mdata.locations
 ALTER TABLE mdata.locations
   ALTER COLUMN location_type DROP DEFAULT;
 
-UPDATE mdata.locations
-SET location_type = CASE location_type
-  WHEN 'Customer' THEN 'customer_warehouse'
-  WHEN 'Vendor' THEN 'shipper_facility'
-  WHEN 'IH35Yard' THEN 'yard'
-  WHEN 'TruckStop' THEN 'truck_stop'
-  WHEN 'Other' THEN 'other'
-  WHEN 'customer_warehouse' THEN 'customer_warehouse'
-  WHEN 'customer_terminal' THEN 'customer_terminal'
-  WHEN 'shipper_facility' THEN 'shipper_facility'
-  WHEN 'consignee_facility' THEN 'consignee_facility'
-  WHEN 'distribution_center' THEN 'distribution_center'
-  WHEN 'cross_dock' THEN 'cross_dock'
-  WHEN 'port' THEN 'port'
-  WHEN 'rail_terminal' THEN 'rail_terminal'
-  WHEN 'fuel_stop' THEN 'fuel_stop'
-  WHEN 'truck_stop' THEN 'truck_stop'
-  WHEN 'rest_area' THEN 'rest_area'
-  WHEN 'border_crossing' THEN 'border_crossing'
-  WHEN 'customs_broker' THEN 'customs_broker'
-  WHEN 'mechanic_shop' THEN 'mechanic_shop'
-  WHEN 'tire_shop' THEN 'tire_shop'
-  WHEN 'wash_facility' THEN 'wash_facility'
-  WHEN 'scale' THEN 'scale'
-  WHEN 'yard' THEN 'yard'
-  WHEN 'office' THEN 'office'
-  WHEN 'other' THEN 'other'
-  ELSE 'other'
-END;
-
 ALTER TABLE mdata.locations
-  ALTER COLUMN location_type TYPE mdata.location_type_enum USING location_type::mdata.location_type_enum,
+  ALTER COLUMN location_type TYPE mdata.location_type_enum USING (
+    CASE location_type::text
+      WHEN 'Customer' THEN 'customer_warehouse'
+      WHEN 'Vendor' THEN 'shipper_facility'
+      WHEN 'IH35Yard' THEN 'yard'
+      WHEN 'TruckStop' THEN 'truck_stop'
+      WHEN 'Other' THEN 'other'
+      WHEN 'customer_warehouse' THEN 'customer_warehouse'
+      WHEN 'customer_terminal' THEN 'customer_terminal'
+      WHEN 'shipper_facility' THEN 'shipper_facility'
+      WHEN 'consignee_facility' THEN 'consignee_facility'
+      WHEN 'distribution_center' THEN 'distribution_center'
+      WHEN 'cross_dock' THEN 'cross_dock'
+      WHEN 'port' THEN 'port'
+      WHEN 'rail_terminal' THEN 'rail_terminal'
+      WHEN 'fuel_stop' THEN 'fuel_stop'
+      WHEN 'truck_stop' THEN 'truck_stop'
+      WHEN 'rest_area' THEN 'rest_area'
+      WHEN 'border_crossing' THEN 'border_crossing'
+      WHEN 'customs_broker' THEN 'customs_broker'
+      WHEN 'mechanic_shop' THEN 'mechanic_shop'
+      WHEN 'tire_shop' THEN 'tire_shop'
+      WHEN 'wash_facility' THEN 'wash_facility'
+      WHEN 'scale' THEN 'scale'
+      WHEN 'yard' THEN 'yard'
+      WHEN 'office' THEN 'office'
+      WHEN 'other' THEN 'other'
+      ELSE 'other'
+    END
+  )::mdata.location_type_enum,
   ALTER COLUMN location_type SET NOT NULL,
   ALTER COLUMN location_type SET DEFAULT 'other';
 

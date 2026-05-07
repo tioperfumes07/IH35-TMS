@@ -1,6 +1,7 @@
 BEGIN;
 
 DROP POLICY IF EXISTS files_insert ON docs.files;
+DROP POLICY IF EXISTS files_insert_office ON docs.files;
 
 CREATE POLICY files_insert_office
   ON docs.files

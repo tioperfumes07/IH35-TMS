@@ -30,7 +30,7 @@ let serverProcess: any = null;
 async function runWithBypass(client, fn) {
   await client.query("BEGIN");
   try {
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     const result = await fn();
     await client.query("COMMIT");
     return result;
@@ -43,7 +43,7 @@ async function runWithBypass(client, fn) {
 async function runAsUser(client, userId, fn) {
   await client.query("BEGIN");
   try {
-    await client.query(`SET LOCAL app.current_user_id = '${userId}'`);
+    await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [userId]);
     const result = await fn();
     await client.query("COMMIT");
     return result;

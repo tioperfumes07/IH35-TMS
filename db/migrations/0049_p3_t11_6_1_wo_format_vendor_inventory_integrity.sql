@@ -1,14 +1,42 @@
 BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS views;
+CREATE SCHEMA IF NOT EXISTS maintenance;
+CREATE SCHEMA IF NOT EXISTS safety;
 
 DO $$
 BEGIN
   IF to_regclass('maintenance.work_orders') IS NULL THEN
-    RAISE NOTICE 'Skipping 0049: maintenance.work_orders not found';
-    RETURN;
+    CREATE TABLE maintenance.work_orders (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      operating_company_id uuid,
+      wo_type text,
+      status text DEFAULT 'open',
+      unit_id uuid,
+      driver_id uuid,
+      opened_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      repair_location text,
+      description text,
+      display_id text,
+      total_actual_cost numeric(10,2)
+    );
   END IF;
+  IF to_regclass('safety.accident_reports') IS NULL THEN
+    CREATE TABLE safety.accident_reports (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      operating_company_id uuid,
+      driver_id uuid,
+      accident_at timestamptz,
+      description text
+    );
+  END IF;
+END
+$$;
 
+DO $$
+BEGIN
   ALTER TABLE maintenance.work_orders
     ADD COLUMN IF NOT EXISTS source_type text,
     ADD COLUMN IF NOT EXISTS unit_sequence int,
@@ -116,7 +144,7 @@ BEGIN
       )
     FROM mdata.units u
     WHERE wo.unit_id = u.id
-      AND wo.operating_company_id = u.operating_company_id
+      AND wo.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
       AND wo.legacy_display_id IS NULL;
   END IF;
 END
@@ -389,7 +417,7 @@ WITH (security_invoker = true) AS
 SELECT
   u.id AS unit_id,
   COALESCE(u.unit_number, u.id::text) AS unit_display_id,
-  u.operating_company_id,
+  COALESCE(u.currently_leased_to_company_id, u.owner_company_id) AS operating_company_id,
   COUNT(wo.id) FILTER (WHERE wo.source_type IN ('ET','RT','IT')) AS tire_change_count_lifetime,
   COUNT(wo.id) FILTER (WHERE wo.source_type IN ('ET','RT','IT') AND wo.created_at >= now() - INTERVAL '60 days') AS tire_changes_60d,
   COUNT(wo.id) FILTER (WHERE wo.source_type = 'AC') AS accident_count_lifetime,
@@ -402,8 +430,8 @@ SELECT
 FROM mdata.units u
 LEFT JOIN maintenance.work_orders wo
   ON wo.unit_id = u.id
- AND wo.operating_company_id = u.operating_company_id
-GROUP BY u.id, u.unit_number, u.operating_company_id;
+ AND wo.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
+GROUP BY u.id, u.unit_number, COALESCE(u.currently_leased_to_company_id, u.owner_company_id);
 
 CREATE OR REPLACE VIEW views.maintenance_driver_history
 WITH (security_invoker = true) AS
@@ -411,7 +439,7 @@ SELECT
   d.id AS driver_id,
   d.id::text AS driver_display_id,
   CONCAT_WS(' ', d.first_name, d.last_name) AS full_name,
-  d.operating_company_id,
+  COALESCE(MIN(wo.operating_company_id::text), MIN(ar.operating_company_id::text))::uuid AS operating_company_id,
   COUNT(DISTINCT wo.id) AS wo_count_across_units_lifetime,
   COUNT(DISTINCT wo.id) FILTER (WHERE wo.created_at >= now() - INTERVAL '90 days') AS wo_count_90d,
   COUNT(DISTINCT ar.id) AS accident_count_lifetime,
@@ -420,17 +448,15 @@ SELECT
 FROM mdata.drivers d
 LEFT JOIN maintenance.work_orders wo
   ON wo.driver_id = d.id
- AND wo.operating_company_id = d.operating_company_id
 LEFT JOIN safety.accident_reports ar
   ON ar.driver_id = d.id
- AND ar.operating_company_id = d.operating_company_id
-GROUP BY d.id, d.first_name, d.last_name, d.operating_company_id;
+GROUP BY d.id, d.first_name, d.last_name;
 
 CREATE OR REPLACE VIEW views.maintenance_vendor_history
 WITH (security_invoker = true) AS
 SELECT
   v.id AS vendor_id,
-  COALESCE(v.name, v.id::text) AS display_name,
+  COALESCE(v.vendor_name, v.id::text) AS display_name,
   v.operating_company_id,
   COUNT(DISTINCT wo.id) AS wo_count_lifetime,
   COUNT(DISTINCT wo.id) FILTER (WHERE wo.created_at >= now() - INTERVAL '90 days') AS wo_count_90d,
@@ -446,19 +472,19 @@ FROM mdata.vendors v
 LEFT JOIN maintenance.work_orders wo
   ON wo.external_vendor_id = v.id
  AND wo.operating_company_id = v.operating_company_id
-GROUP BY v.id, v.name, v.operating_company_id;
+GROUP BY v.id, v.vendor_name, v.operating_company_id;
 
 CREATE OR REPLACE VIEW views.maintenance_fleet_baselines
 WITH (security_invoker = true) AS
 SELECT
-  u.operating_company_id,
-  COALESCE(u.equipment_type::text, 'unknown') AS equipment_class,
+  COALESCE(u.currently_leased_to_company_id, u.owner_company_id) AS operating_company_id,
+  'unknown'::text AS equipment_class,
   AVG(COALESCE(uh.tire_changes_60d, 0))::numeric(12,2) AS avg_tire_changes_60d,
   AVG(COALESCE(uh.repairs_30d, 0))::numeric(12,2) AS avg_repairs_30d,
   AVG(COALESCE(uh.cost_90d, 0))::numeric(12,2) AS avg_cost_90d,
   PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY COALESCE(uh.cost_90d, 0))::numeric(12,2) AS p95_cost_90d
 FROM mdata.units u
 LEFT JOIN views.maintenance_unit_history uh ON uh.unit_id = u.id
-GROUP BY u.operating_company_id, COALESCE(u.equipment_type::text, 'unknown');
+GROUP BY COALESCE(u.currently_leased_to_company_id, u.owner_company_id);
 
 COMMIT;
