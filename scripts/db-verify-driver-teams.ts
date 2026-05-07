@@ -22,7 +22,7 @@ const createdAccessPairs: Array<{ userId: string; companyId: string }> = [];
 async function runWithBypass<T>(client: pg.PoolClient, fn: () => Promise<T>) {
   await client.query("BEGIN");
   try {
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     const result = await fn();
     await client.query("COMMIT");
     return result;
@@ -35,7 +35,7 @@ async function runWithBypass<T>(client: pg.PoolClient, fn: () => Promise<T>) {
 async function runAsUser<T>(client: pg.PoolClient, userId: string, fn: () => Promise<T>) {
   await client.query("BEGIN");
   try {
-    await client.query(`SET LOCAL app.current_user_id = '${userId}'`);
+    await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [userId]);
     const result = await fn();
     await client.query("COMMIT");
     return result;

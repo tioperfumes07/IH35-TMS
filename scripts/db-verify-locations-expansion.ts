@@ -20,7 +20,7 @@ const createdAccessPairs: Array<{ userId: string; companyId: string }> = [];
 async function runWithBypass<T>(client: pg.PoolClient, fn: () => Promise<T>) {
   await client.query("BEGIN");
   try {
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     const result = await fn();
     await client.query("COMMIT");
     return result;
@@ -33,7 +33,7 @@ async function runWithBypass<T>(client: pg.PoolClient, fn: () => Promise<T>) {
 async function runAsUser<T>(client: pg.PoolClient, userId: string, fn: () => Promise<T>) {
   await client.query("BEGIN");
   try {
-    await client.query(`SET LOCAL app.current_user_id = '${userId}'`);
+    await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [userId]);
     const result = await fn();
     await client.query("COMMIT");
     return result;
@@ -246,8 +246,8 @@ try {
       await client.query("RESET ROLE");
       await client.query("BEGIN");
       try {
-        await client.query("SET LOCAL row_security = off");
-        await client.query("SET LOCAL enable_seqscan = off");
+        await client.query(`SELECT set_config('row_security', 'off', true)`);
+        await client.query(`SELECT set_config('enable_seqscan', 'off', true)`);
         const explainRes = await client.query<{ "QUERY PLAN": string }>(
           `EXPLAIN SELECT id FROM mdata.locations WHERE location_type = 'fuel_stop'::mdata.location_type_enum`
         );

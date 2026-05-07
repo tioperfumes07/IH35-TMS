@@ -31,10 +31,23 @@ let companyId = "";
 let ownerId = "";
 let alertId = "";
 
+async function runAsOwner(fn: () => Promise<void>) {
+  await client.query("BEGIN");
+  try {
+    await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [ownerId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
+    await fn();
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
+}
+
 try {
   await client.query("SET ROLE ih35_app");
   await client.query("BEGIN");
-  await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+  await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
   const companyRes = await client.query(`SELECT id FROM org.companies ORDER BY created_at LIMIT 1`);
   companyId = String(companyRes.rows[0]?.id ?? "");
   const ownerRes = await client.query(
@@ -42,13 +55,16 @@ try {
     [`verify-integrity-alerts-owner-${suffix}@example.com`, `verify-integrity-alerts-owner-${suffix}`, companyId]
   );
   ownerId = String(ownerRes.rows[0].id);
+  await client.query(
+    `INSERT INTO org.user_company_access (user_id, company_id, granted_by_user_id) VALUES ($1,$2,$1) ON CONFLICT DO NOTHING`,
+    [ownerId, companyId]
+  );
   await client.query("COMMIT");
 
   results.push(
     await pass("create + acknowledge + resolve", async () => {
-      await client.query("BEGIN");
-      await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-      const created = await client.query(
+      await runAsOwner(async () => {
+        const created = await client.query(
         `
           INSERT INTO safety.integrity_alerts (
             operating_company_id, alert_category, severity, subject_type, detection_summary, detection_metric, source_view, created_by_user_id
@@ -56,10 +72,10 @@ try {
           RETURNING id
         `,
         [companyId, `Integrity alert ${suffix}`, JSON.stringify({ z: 2.8 }), ownerId]
-      );
-      alertId = String(created.rows[0].id);
+        );
+        alertId = String(created.rows[0].id);
 
-      await client.query(
+        await client.query(
         `
           UPDATE safety.integrity_alerts
           SET acknowledged_by_user_id = $2,
@@ -69,7 +85,7 @@ try {
         `,
         [alertId, ownerId]
       );
-      await client.query(
+        await client.query(
         `
           UPDATE safety.integrity_alerts
           SET resolution_status = 'confirmed_action_taken',
@@ -78,11 +94,11 @@ try {
         `,
         [alertId]
       );
-      const check = await client.query(`SELECT resolution_status FROM safety.integrity_alerts WHERE id = $1`, [alertId]);
-      if (String(check.rows[0]?.resolution_status) !== "confirmed_action_taken") {
-        throw new Error("resolution_status not updated");
-      }
-      await client.query("COMMIT");
+        const check = await client.query(`SELECT resolution_status FROM safety.integrity_alerts WHERE id = $1`, [alertId]);
+        if (String(check.rows[0]?.resolution_status) !== "confirmed_action_taken") {
+          throw new Error("resolution_status not updated");
+        }
+      });
     })
   );
 
@@ -91,8 +107,8 @@ try {
       let failed = false;
       await client.query("BEGIN");
       try {
-        await client.query(`SET LOCAL app.current_user_id = '${ownerId}'`);
-        await client.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+        await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [ownerId]);
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
         await client.query(`DELETE FROM safety.integrity_alerts WHERE id = $1`, [alertId]);
       } catch {
         failed = true;

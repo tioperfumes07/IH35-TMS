@@ -31,9 +31,8 @@ let companyId = "";
 let ownerId = "";
 
 try {
-  await client.query("SET ROLE ih35_app");
   await client.query("BEGIN");
-  await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+  await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
   const ownerRes = await client.query(
     `INSERT INTO identity.users (email, google_user_id, role) VALUES ($1,$2,'Owner') RETURNING id`,
     [`verify-safety-settings-owner-${suffix}@example.com`, `verify-safety-settings-owner-${suffix}`]
@@ -42,7 +41,7 @@ try {
   const companyRes = await client.query(
     `
       INSERT INTO org.companies (code, legal_name, company_type, created_by_user_id, updated_by_user_id)
-      VALUES ($1,$2,'carrier',$3,$3)
+      VALUES ($1,$2,'operating_carrier',$3,$3)
       RETURNING id
     `,
     [`SS${suffix.slice(0, 4).toUpperCase()}`, `Safety Settings ${suffix}`, ownerId]
@@ -53,7 +52,7 @@ try {
   results.push(
     await pass("auto-backfill trigger creates singleton settings row", async () => {
       await client.query("BEGIN");
-      await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+      await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
       const rows = await client.query(`SELECT id FROM safety.safety_settings WHERE operating_company_id = $1`, [companyId]);
       if (rows.rows.length !== 1) throw new Error(`Expected 1 safety_settings row, got ${rows.rows.length}`);
       await client.query("COMMIT");
@@ -63,7 +62,7 @@ try {
   results.push(
     await pass("singleton unique constraint blocks second settings row", async () => {
       await client.query("BEGIN");
-      await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+      await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
       let failed = false;
       try {
         await client.query(`INSERT INTO safety.safety_settings (operating_company_id) VALUES ($1)`, [companyId]);

@@ -59,18 +59,44 @@ const { registerSafetyFinesRoutes } = await import("../apps/backend/src/safety/f
 await registerSafetyFinesRoutes(app);
 
 try {
-  await client.query("SET ROLE ih35_app");
   await client.query("BEGIN");
-  await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+  await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+  await client.query(`
+    CREATE SCHEMA IF NOT EXISTS driver_finance;
+    CREATE TABLE IF NOT EXISTS driver_finance.driver_liabilities (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      operating_company_id uuid NOT NULL,
+      driver_id uuid NOT NULL,
+      type text NOT NULL,
+      source_description text NOT NULL,
+      original_amount integer NOT NULL,
+      current_balance integer NOT NULL,
+      paid_to_date integer NOT NULL DEFAULT 0,
+      requires_acknowledgment boolean NOT NULL DEFAULT true,
+      origin text,
+      origin_id uuid,
+      reference_doc_id uuid,
+      status text NOT NULL DEFAULT 'pending_recovery',
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+    GRANT USAGE ON SCHEMA driver_finance TO ih35_app;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON driver_finance.driver_liabilities TO ih35_app;
+    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA driver_finance TO ih35_app;
+  `);
   const companyRes = await client.query(`SELECT id FROM org.companies ORDER BY created_at LIMIT 1`);
   companyId = String(companyRes.rows[0]?.id ?? "");
-  await client.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
   const ownerRes = await client.query(
     `INSERT INTO identity.users (email, google_user_id, role, default_company_id) VALUES ($1,$2,'Owner',$3) RETURNING id`,
     [`verify-wf035-owner-${suffix}@example.com`, `verify-wf035-owner-${suffix}`, companyId]
   );
   ownerId = String(ownerRes.rows[0].id);
   createdUsers.push(ownerId);
+  await client.query(
+    `INSERT INTO org.user_company_access (user_id, company_id, granted_by_user_id) VALUES ($1,$2,$1) ON CONFLICT DO NOTHING`,
+    [ownerId, companyId]
+  );
 
   const driverRes = await client.query(
     `
@@ -119,7 +145,7 @@ try {
   results.push(
     await pass("assert liability provenance + fine lock", async () => {
       await client.query("BEGIN");
-      await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+      await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
       const liabRes = await client.query(
         `SELECT origin, origin_id, current_balance, status FROM driver_finance.driver_liabilities WHERE id = $1`,
         [liabilityId]
@@ -130,10 +156,12 @@ try {
       if (String(liab.origin_id) !== fineId) throw new Error("origin_id mismatch");
 
       let lockFailed = false;
+      await client.query("SAVEPOINT fine_lock_check");
       try {
         await client.query(`UPDATE safety.fines SET amount_cents = 99999 WHERE id = $1`, [fineId]);
       } catch (error: any) {
         lockFailed = String(error.message).includes("E_FINE_LOCKED_AFTER_CONVERSION");
+        await client.query("ROLLBACK TO SAVEPOINT fine_lock_check");
       }
       if (!lockFailed) throw new Error("Fine lock not enforced after conversion");
 

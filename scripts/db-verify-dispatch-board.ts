@@ -32,7 +32,7 @@ const { registerLoadRoutes } = await import("../apps/backend/src/mdata/loads.rou
 async function runWithBypass<T>(client: pg.PoolClient, fn: () => Promise<T>) {
   await client.query("BEGIN");
   try {
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     const result = await fn();
     await client.query("COMMIT");
     return result;

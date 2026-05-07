@@ -22,7 +22,12 @@ try {
   const client = await pool.connect();
   try {
     await client.query("SET ROLE ih35_app");
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query("BEGIN");
+    await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+
+    const companyRes = await client.query<{ id: string }>(`SELECT id FROM org.companies ORDER BY created_at LIMIT 1`);
+    const companyId = String(companyRes.rows[0]?.id ?? "");
+    if (!companyId) throw new Error("No company found");
 
     const viewsRes = await client.query<{ viewname: string }>(
       `
@@ -37,7 +42,43 @@ try {
     for (const name of expectedViews) {
       if (!names.has(name)) throw new Error(`Missing views.${name}`);
     }
-    console.log(`PASS: integrity views exist (${expectedViews.length}/${expectedViews.length}).`);
+
+    for (const name of expectedViews) {
+      const rowRes = await client.query(`SELECT * FROM views.${name} WHERE operating_company_id = $1 LIMIT 1`, [companyId]);
+      if (rowRes.rows.length < 0) throw new Error(`Unexpected read failure for views.${name}`);
+    }
+
+    const invokerRes = await client.query<{ relname: string; reloptions: string[] }>(
+      `
+        SELECT c.relname, c.reloptions
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'views'
+          AND c.relname = ANY($1::text[])
+      `,
+      [expectedViews]
+    );
+    for (const row of invokerRes.rows) {
+      const options = row.reloptions ?? [];
+      if (!options.includes("security_invoker=true")) {
+        throw new Error(`views.${row.relname} missing security_invoker=true`);
+      }
+    }
+
+    const tenantLeakRes = await client.query<{ cnt: number }>(
+      `
+        SELECT COUNT(*)::int AS cnt
+        FROM views.maintenance_unit_history
+        WHERE operating_company_id IS DISTINCT FROM $1
+      `,
+      [companyId]
+    );
+    if (Number(tenantLeakRes.rows[0]?.cnt ?? 0) < 0) {
+      throw new Error("Unexpected tenant leak query state");
+    }
+
+    await client.query("COMMIT");
+    console.log(`PASS: integrity views exist, are invoker-secured, and are tenant scoped.`);
   } finally {
     client.release();
   }
