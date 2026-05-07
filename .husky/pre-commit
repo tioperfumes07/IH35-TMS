@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+# Pre-commit hook: spec drift reminder for IH35-TMS
+#
+# Reminds Cursor (and human committers) when frontend module files change
+# but the architectural design was not updated in the same commit.
+#
+# This is a REMINDER, not a hard block. The hard block lives in CI
+# (verify:arch-design). This hook catches drift earlier, before push.
+
+CHANGED_FILES=$(git diff --cached --name-only)
+
+if echo "$CHANGED_FILES" | grep -qE "apps/frontend/src/pages/(safety|maintenance|dispatch|drivers|customers|banking|fuel|accounting|home|docs|lists|reports|form425c|vendors)/.*\.(tsx|ts)$"; then
+  if ! echo "$CHANGED_FILES" | grep -q "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"; then
+    echo ""
+    echo "⚠️  REMINDER — Module file(s) changed but IH35_ARCHITECTURAL_DESIGN.md was not."
+    echo ""
+    echo "If this commit ADDS, REMOVES, or RENAMES a sub-nav tab, you MUST"
+    echo "update docs/specs/IH35_ARCHITECTURAL_DESIGN.md in the same commit."
+    echo ""
+    echo "If this commit only modifies INSIDE a tab without changing tab"
+    echo "count or names, no design update needed — proceed."
+    echo ""
+    echo "To bypass this reminder when no tab change applies:"
+    echo "  git commit --no-verify"
+    echo ""
+  fi
+fi
+
+# Run typecheck on staged changes (existing behavior — keep)
+# This is a soft check; CI is authoritative.
+if command -v npm >/dev/null 2>&1; then
+  npm run typecheck --if-present
+fi
