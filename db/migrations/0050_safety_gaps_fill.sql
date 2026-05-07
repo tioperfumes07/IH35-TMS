@@ -253,6 +253,12 @@ ALTER TABLE safety.company_violations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE safety.integrity_alerts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE safety.safety_settings ENABLE ROW LEVEL SECURITY;
 
+GRANT USAGE ON SCHEMA safety TO ih35_app;
+GRANT SELECT, INSERT, UPDATE ON safety.fines TO ih35_app;
+GRANT SELECT, INSERT, UPDATE ON safety.company_violations TO ih35_app;
+GRANT SELECT, INSERT, UPDATE ON safety.integrity_alerts TO ih35_app;
+GRANT SELECT, UPDATE ON safety.safety_settings TO ih35_app;
+
 DO $$
 BEGIN
   IF NOT EXISTS (

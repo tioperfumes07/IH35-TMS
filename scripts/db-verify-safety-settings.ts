@@ -41,11 +41,11 @@ try {
   ownerId = String(ownerRes.rows[0].id);
   const companyRes = await client.query(
     `
-      INSERT INTO org.companies (code, legal_name, usdot_number, mc_number)
-      VALUES ($1,$2,$3,$4)
+      INSERT INTO org.companies (code, legal_name, company_type, created_by_user_id, updated_by_user_id)
+      VALUES ($1,$2,'carrier',$3,$3)
       RETURNING id
     `,
-    [`SS${suffix.slice(0, 4).toUpperCase()}`, `Safety Settings ${suffix}`, `USDOT-${suffix}`, `MC-${suffix}`]
+    [`SS${suffix.slice(0, 4).toUpperCase()}`, `Safety Settings ${suffix}`, ownerId]
   );
   companyId = String(companyRes.rows[0].id);
   await client.query("COMMIT");

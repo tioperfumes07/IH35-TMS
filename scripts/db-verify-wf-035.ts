@@ -74,11 +74,11 @@ try {
   const driverRes = await client.query(
     `
       INSERT INTO mdata.drivers (
-        first_name, last_name, phone, status, operating_company_id, created_by_user_id, updated_by_user_id
-      ) VALUES ($1,$2,$3,'Active',$4,$5,$5)
+        first_name, last_name, phone, status, created_by_user_id, updated_by_user_id
+      ) VALUES ($1,$2,$3,'Active',$4,$4)
       RETURNING id
     `,
-    [`WF${suffix}`, "Driver", `+1956${Math.floor(1000000 + Math.random() * 9000000)}`, companyId, ownerId]
+    [`WF${suffix}`, "Driver", `+1956${Math.floor(1000000 + Math.random() * 9000000)}`, ownerId]
   );
   driverId = String(driverRes.rows[0].id);
   createdDrivers.push(driverId);
