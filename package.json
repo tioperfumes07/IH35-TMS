@@ -51,6 +51,8 @@
     "db:verify:dispatch-flag-colors": "tsx scripts/db-verify-dispatch-flag-colors.ts",
     "db:verify:fk-events-to-loads": "tsx scripts/db-verify-fk-events-to-loads.ts",
     "db:verify:dispatch-board": "tsx scripts/db-verify-dispatch-board.ts",
+    "db:verify:form-425c": "tsx scripts/db-verify-form-425c.ts",
+    "db:verify:form-425c-rls": "tsx scripts/db-verify-form-425c-rls.ts",
     "db:verify:wo-format": "node --import tsx scripts/db-verify-wo-format.ts",
     "db:verify:wo-completion-guards": "node --import tsx scripts/db-verify-wo-completion-guards.ts",
     "db:verify:parts-invoice-links": "node --import tsx scripts/db-verify-parts-invoice-links.ts",
