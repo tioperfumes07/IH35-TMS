@@ -280,6 +280,7 @@ BEGIN
   IF to_regclass('safety.company_violations') IS NOT NULL THEN
     EXECUTE '
       ALTER TABLE safety.company_violations
+        ADD COLUMN IF NOT EXISTS violation_type_uuid uuid REFERENCES catalogs.company_violation_types(id),
         ADD COLUMN IF NOT EXISTS violation_type_id uuid REFERENCES catalogs.company_violation_types(id),
         ADD COLUMN IF NOT EXISTS severity smallint CHECK (severity BETWEEN 1 AND 10),
         ADD COLUMN IF NOT EXISTS evidence_doc_ids uuid[],
