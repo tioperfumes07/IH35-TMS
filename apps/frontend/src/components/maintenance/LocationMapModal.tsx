@@ -39,7 +39,6 @@ const MAP_NODES: MapNode[] = [
   { code: "CAB", x: 86, y: 24 },
   { code: "SLEEPER", x: 122, y: 24 },
   { code: "HOOD", x: 30, y: 24 },
-  { code: "BUMPER", x: 16, y: 82 },
   { code: "MIRROR-L", x: 76, y: 8 },
   { code: "MIRROR-R", x: 76, y: 132 },
   { code: "KINGPIN", x: 234, y: 80 },

@@ -27,7 +27,6 @@ export const POS_DICT: Record<string, PositionMeta> = {
   CAB: { name: "Cab / Interior", group: "Tractor Body", side: "center" },
   SLEEPER: { name: "Sleeper Cabin", group: "Tractor Body", side: "center" },
   HOOD: { name: "Hood / Front Body", group: "Tractor Body", side: "center" },
-  BUMPER: { name: "Front Bumper", group: "Tractor Body", side: "center" },
   "MIRROR-L": { name: "Driver Side Mirror", group: "Tractor Body", side: "left" },
   "MIRROR-R": { name: "Passenger Side Mirror", group: "Tractor Body", side: "right" },
   "TT1-OUT-L": { name: "Trailer Tandem Axle 1 Outer Left Tire", group: "Trailer Tandem", side: "left" },
