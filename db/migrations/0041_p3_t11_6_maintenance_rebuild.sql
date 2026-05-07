@@ -82,10 +82,77 @@ END
 $$;
 
 DO $$
+DECLARE
+  v_vendor_expr text := 'NULL::text';
+  v_total_estimated_expr text := 'NULL::numeric';
+  v_severity_expr text := 'NULL::text';
 BEGIN
   IF to_regclass('maintenance.work_orders') IS NOT NULL
      AND to_regclass('mdata.units') IS NOT NULL THEN
-    EXECUTE $VIEW$
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'assigned_vendor'
+    ) THEN
+      v_vendor_expr := 'w.assigned_vendor';
+    ELSIF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'vendor_id'
+    ) THEN
+      v_vendor_expr := 'w.vendor_id::text';
+    ELSIF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'external_vendor_id'
+    ) THEN
+      v_vendor_expr := 'w.external_vendor_id::text';
+    END IF;
+
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'total_estimated_cost'
+    ) THEN
+      v_total_estimated_expr := 'w.total_estimated_cost::numeric';
+    ELSIF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'total_actual_cost'
+    ) THEN
+      v_total_estimated_expr := 'w.total_actual_cost::numeric';
+    ELSIF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'total_cost'
+    ) THEN
+      v_total_estimated_expr := 'w.total_cost::numeric';
+    END IF;
+
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'severity'
+    ) THEN
+      v_severity_expr := 'w.severity';
+    END IF;
+
+    EXECUTE format(
+      $VIEW$
       CREATE OR REPLACE VIEW views.maintenance_severe_repair_alerts AS
       SELECT
         w.id,
@@ -93,20 +160,26 @@ BEGIN
         w.unit_id,
         w.opened_at,
         w.repair_location,
-        w.assigned_vendor,
-        w.total_estimated_cost,
-        w.severity,
+        %s AS assigned_vendor,
+        %s AS total_estimated_cost,
+        %s AS severity,
         w.status,
         COALESCE(u.unit_number, '') AS unit_display_id
       FROM maintenance.work_orders w
       JOIN mdata.units u ON u.id = w.unit_id
       WHERE w.status NOT IN ('complete', 'cancelled')
         AND (
-          w.severity = 'severe'
+          %s = 'severe'
           OR (w.status = 'waiting_parts' AND w.opened_at < now() - INTERVAL '5 days')
         )
-      ORDER BY w.total_estimated_cost DESC NULLS LAST
-    $VIEW$;
+      ORDER BY %s DESC NULLS LAST
+      $VIEW$,
+      v_vendor_expr,
+      v_total_estimated_expr,
+      v_severity_expr,
+      v_severity_expr,
+      v_total_estimated_expr
+    );
   ELSE
     EXECUTE $EMPTY$
       CREATE OR REPLACE VIEW views.maintenance_severe_repair_alerts AS
@@ -128,9 +201,38 @@ END
 $$;
 
 DO $$
+DECLARE
+  v_cost_expr text := 'NULL::numeric';
 BEGIN
   IF to_regclass('maintenance.work_orders') IS NOT NULL THEN
-    EXECUTE $VIEW$
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'total_actual_cost'
+    ) THEN
+      v_cost_expr := 'total_actual_cost';
+    ELSIF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'total_estimated_cost'
+    ) THEN
+      v_cost_expr := 'total_estimated_cost';
+    ELSIF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'maintenance'
+        AND table_name = 'work_orders'
+        AND column_name = 'total_cost'
+    ) THEN
+      v_cost_expr := 'total_cost';
+    END IF;
+
+    EXECUTE format(
+      $VIEW$
       CREATE OR REPLACE VIEW views.maintenance_dashboard_kpis AS
       SELECT
         operating_company_id,
@@ -138,17 +240,20 @@ BEGIN
         COUNT(*) FILTER (WHERE status = 'in_progress' AND repair_location = 'in_house') AS in_shop,
         AVG(EXTRACT(epoch FROM (now() - opened_at)) / 86400)
           FILTER (WHERE status NOT IN ('complete', 'cancelled')) AS avg_wo_age_days,
-        SUM(total_actual_cost) FILTER (
+        SUM(%s) FILTER (
           WHERE wo_type = 'repair'
             AND opened_at >= date_trunc('month', now())
         ) AS mtd_repair_cost,
-        AVG(total_actual_cost) FILTER (
+        AVG(%s) FILTER (
           WHERE status = 'complete'
             AND opened_at >= date_trunc('month', now())
         ) AS avg_wo_cost
       FROM maintenance.work_orders
       GROUP BY operating_company_id
-    $VIEW$;
+      $VIEW$,
+      v_cost_expr,
+      v_cost_expr
+    );
   ELSE
     EXECUTE $EMPTY$
       CREATE OR REPLACE VIEW views.maintenance_dashboard_kpis AS

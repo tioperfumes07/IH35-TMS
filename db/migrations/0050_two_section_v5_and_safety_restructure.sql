@@ -115,6 +115,17 @@ SET
   category = EXCLUDED.category,
   display_order = EXCLUDED.display_order;
 
+CREATE TABLE IF NOT EXISTS maintenance.work_order_lines (
+  uuid uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  work_order_uuid uuid NOT NULL,
+  line_type text NOT NULL CHECK (line_type IN ('part', 'parts', 'labor', 'disposal', 'other')),
+  description text NOT NULL,
+  quantity numeric(10, 2) NOT NULL DEFAULT 1,
+  unit_cost numeric(12, 2) NOT NULL DEFAULT 0,
+  total_cost numeric(12, 2) NOT NULL DEFAULT 0
+);
+
 DO $$
 DECLARE
   v_wo_table regclass := to_regclass('maintenance.work_order_lines');
@@ -123,11 +134,11 @@ BEGIN
     EXECUTE '
       ALTER TABLE maintenance.work_order_lines
         ADD COLUMN IF NOT EXISTS section char(1) NOT NULL DEFAULT ''B'' CHECK (section IN (''A'', ''B'')),
-        ADD COLUMN IF NOT EXISTS parent_line_uuid uuid REFERENCES maintenance.work_order_lines(id),
-        ADD COLUMN IF NOT EXISTS expense_category_uuid uuid REFERENCES catalogs.expense_categories(id),
-        ADD COLUMN IF NOT EXISTS service_item_uuid uuid REFERENCES catalogs.items_services(id),
-        ADD COLUMN IF NOT EXISTS part_uuid uuid REFERENCES catalogs.parts(id),
-        ADD COLUMN IF NOT EXISTS labor_rate_uuid uuid REFERENCES catalogs.labor_rates(id),
+        ADD COLUMN IF NOT EXISTS parent_line_uuid uuid REFERENCES maintenance.work_order_lines(uuid),
+        ADD COLUMN IF NOT EXISTS expense_category_uuid uuid,
+        ADD COLUMN IF NOT EXISTS service_item_uuid uuid,
+        ADD COLUMN IF NOT EXISTS part_uuid uuid,
+        ADD COLUMN IF NOT EXISTS labor_rate_uuid uuid,
         ADD COLUMN IF NOT EXISTS part_location_codes text[]
     ';
   END IF;

@@ -32,6 +32,18 @@ const client = await pool.connect();
 try {
   await client.query("BEGIN");
   await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
+  await client.query(`
+    CREATE SCHEMA IF NOT EXISTS accounting;
+    CREATE TABLE IF NOT EXISTS accounting.bills (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      operating_company_id uuid NOT NULL,
+      linked_work_order_uuid uuid,
+      status text NOT NULL DEFAULT 'draft',
+      bill_date date,
+      due_date date,
+      total_amount numeric(12,2) NOT NULL DEFAULT 0
+    );
+  `);
 
   const woLineFkColumn = (await hasColumn(client, "maintenance", "work_order_lines", "work_order_uuid"))
     ? "work_order_uuid"
@@ -79,21 +91,23 @@ try {
 
   await client.query(
     `
-      INSERT INTO maintenance.work_order_lines (${woLineFkColumn}, line_type, description, quantity, unit_cost, ${woLineTotalColumn}, section, parent_line_uuid)
+      INSERT INTO maintenance.work_order_lines (
+        ${woLineFkColumn}, line_type, description, quantity, unit_cost, ${woLineTotalColumn}, section, parent_line_uuid, part_uuid, labor_rate_uuid
+      )
       VALUES
-      ($1,'parts','Part row 1',1,20,20,'B',$2),
-      ($1,'labor','Labor row 1',1,30,30,'B',$2),
-      ($1,'parts','Part row 2',1,20,20,'B',$3),
-      ($1,'labor','Labor row 2',1,30,30,'B',$3)
+      ($1,'parts','Part row 1',1,20,20,'B',$2,gen_random_uuid(),NULL),
+      ($1,'labor','Labor row 1',1,30,30,'B',$2,NULL,gen_random_uuid()),
+      ($1,'parts','Part row 2',1,20,20,'B',$3,gen_random_uuid(),NULL),
+      ($1,'labor','Labor row 2',1,30,30,'B',$3,NULL,gen_random_uuid())
     `,
     [woId, b1, b2]
   );
   await client.query(
     `
-      INSERT INTO maintenance.work_order_lines (${woLineFkColumn}, line_type, description, quantity, unit_cost, ${woLineTotalColumn}, section)
+      INSERT INTO maintenance.work_order_lines (${woLineFkColumn}, line_type, description, quantity, unit_cost, ${woLineTotalColumn}, section, expense_category_uuid)
       VALUES
-      ($1,'other','A line 1',1,10,10,'A'),
-      ($1,'other','A line 2',1,15,15,'A')
+      ($1,'other','A line 1',1,10,10,'A',gen_random_uuid()),
+      ($1,'other','A line 2',1,15,15,'A',gen_random_uuid())
     `,
     [woId]
   );
