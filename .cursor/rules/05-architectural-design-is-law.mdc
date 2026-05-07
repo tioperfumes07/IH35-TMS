@@ -1,0 +1,56 @@
+---
+description: The architectural design defines every module's tabs and is enforced by CI
+alwaysApply: true
+---
+
+# RULE 05 — ARCHITECTURAL DESIGN IS LAW
+
+The file `docs/specs/IH35_ARCHITECTURAL_DESIGN.md` is the canonical reference for what every module contains.
+
+It enumerates every module, every tab, what each tab does, what actions exist, and which Phase ships which tab.
+
+## Before writing any UI work
+
+1. Open the architectural design
+2. Find the relevant module section
+3. List every tab the module is supposed to have
+4. Compare against current implementation
+5. If tabs are missing, EITHER:
+   - Add ALL missing tabs in this block, OR
+   - Explicitly defer specific tabs by name with a tracker entry that names the future block that will add them
+
+## Forbidden patterns
+
+You may NEVER:
+- Ship a module with FEWER tabs than the architectural design calls for, unless Jorge has explicitly approved the deferral with a tracker entry naming the missing tab AND the future block that will add it
+- Add a tab to code that is NOT in the architectural design (this is drift in the other direction — equally forbidden)
+- Rename a tab without updating the architectural design in the same commit
+
+## When you discover a mismatch
+
+If you discover a tab in code that is NOT in the architectural design:
+- STOP
+- Ask Jorge whether to add it to the design or remove it from code
+- Do not proceed with implementation until resolved
+
+If you discover the architectural design calls for a tab that is NOT in code AND your block is touching that module:
+- Add the tab in your current block, OR
+- Explicitly defer it by adding a tracker entry to `docs/trackers/phase-3.md` (or relevant phase) naming the future block that will add it
+
+## Enforcement layer 1 — CI gate
+
+`npm run verify:arch-design` parses the architectural design, scans the frontend for sub-nav tab counts per module, and FAILS the build if any module's actual tab count diverges from the design.
+
+This script runs on every push to main and every PR, via `.github/workflows/ci.yml`.
+
+## Enforcement layer 2 — PR template
+
+`.github/PULL_REQUEST_TEMPLATE.md` requires the author to confirm they reviewed the architectural design. Unchecked boxes block merge.
+
+## Enforcement layer 3 — Pre-commit hook
+
+`.husky/pre-commit` reminds when frontend module files change but `IH35_ARCHITECTURAL_DESIGN.md` is not in the same commit. The reminder can be bypassed only with `git commit --no-verify` for cases where tab count is genuinely unchanged.
+
+## Why this rule exists
+
+Adding tabs without updating the design = drift = the patch-on-patch problem the previous system died from. This rule + the three enforcement layers make drift impossible to ship undetected.

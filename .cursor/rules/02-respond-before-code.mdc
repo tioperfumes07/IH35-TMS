@@ -1,0 +1,44 @@
+---
+description: Cursor must respond with spec-review acknowledgment BEFORE writing any code
+alwaysApply: true
+---
+
+# RULE 02 — RESPOND BEFORE CODING
+
+Before generating ANY code on a new block, Cursor MUST first respond with this exact format and WAIT for Jorge to acknowledge before continuing:
+
+```
+Spec sources reviewed:
+- docs/specs/CURSOR-PERMANENT-RULES.md
+- docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md (sections: [list])
+- docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md (sections: [list])
+- docs/specs/IH35_ARCHITECTURAL_DESIGN.md (modules: [list])
+
+Approved screens reviewed:
+- docs/approved-screens/[filename.png]
+- [add more if multiple]
+
+Tab count check:
+- Module: [name]
+- Architectural design says: [N tabs]
+- Current code has: [N tabs]
+- This block changes count to: [N tabs] (✅ matches design / ⚠️ design needs update in this commit)
+
+Deviations from spec required (with rationale):
+- [list any deviation, or write "None"]
+
+NEW SPEC items (in this block but not in either spec source):
+- [list with rationale, or write "None"]
+
+Proceeding.
+```
+
+## Exception
+
+For pure file-renaming, doc-only commits, or trivial typo fixes that don't touch code logic, Cursor may skip the spec-review block but MUST still note in the commit message that the change is doc-only or rename-only.
+
+## Why this rule exists
+
+Cursor was generating code without first checking what the architectural design said the module should contain. This caused Safety to ship missing 4 tabs (Fines, Company Violations, Liabilities cross-link, Integrity Alerts) — exactly the patch-on-patch failure mode Jorge is preventing.
+
+The respond-before-code gate forces a moment of explicit verification. If the spec review reveals a gap, Cursor pauses and asks rather than building partial work.

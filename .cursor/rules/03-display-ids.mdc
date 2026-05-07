@@ -1,0 +1,71 @@
+---
+description: All locked display ID formats including WO with V5 vendor digit suffix
+alwaysApply: true
+---
+
+# RULE 03 — DISPLAY ID FORMATS (LOCKED)
+
+All display IDs are server-generated only. The frontend never composes a display ID. The user never edits one.
+
+## Format table (locked)
+
+| Entity | Format | Example |
+|--------|--------|---------|
+| Load | `L-{n}` | L-12047 |
+| Driver Bill | `B-{load_number}` | B-L-12047 |
+| Settlement | `S-YYYY-NNNN` | S-2026-0185 |
+| Cash Advance | `CA-YYYY-NNNN` | CA-2026-0033 |
+| Factoring Advance | `FA-YYYY-NNNN` | FA-2026-1842 |
+| Work Order | `WO-{UNIT}-{TYPE}-{MM-DD-YYYY}-{NNNN}-{V5}` | WO-T169-IS-05-06-2026-0035-23914 |
+
+## WO format detailed spec (Jorge confirmed chat 2026-05-06)
+
+### Segments
+
+- `{UNIT}` — `master_data.units.display_id` (e.g., T169, T177)
+- `{TYPE}` — source_type code (2 chars, see source types below)
+- `{MM-DD-YYYY}` — leading zeros, 4-digit year
+- `{NNNN}` — per-unit cumulative LIFETIME sequence (4-digit zero-padded; NEVER resets)
+- `{V5}` — last 5 chars of vendor invoice# OR vendor WO#, for cross-reference safety
+
+### Source types (7)
+
+| Code | Meaning |
+|------|---------|
+| IS | Internal Shop (IH35 own shop, non-tire) |
+| ES | External Shop |
+| AC | Accident (linked to safety accident report) |
+| ET | External Tires (Loves, TA, Pilot, etc.) |
+| RT | Roadside Tires (vendor came to truck) |
+| IT | Internal Tires (IH35 own shop, tire-specific) |
+| RS | Roadside Service (non-tire roadside: tow, jump, breakdown) |
+
+### V5 selection rule
+
+- For ES/AC/ET/RT/RS: last 5 chars of `external_vendor_invoice_number` (preferred) OR `external_vendor_wo_number` (if invoice not yet entered). Use whichever is set first; lock V5 once set.
+- For IS/IT with parts: last 5 chars of FIRST `parts_invoice_links.vendor_invoice_number` for the WO (FIFO order by `created_at`)
+- For IS/IT with `labor_only_no_parts = true`: literal string `LABOR`
+- If vendor reference shorter than 5 chars: zero-pad on left (e.g., invoice "42" → "00042")
+- For pending vendor entry: literal `PEND0`
+- For backfilled rows: literal `LEGCY`
+
+### Refresh rule
+
+V5 is recomputed when:
+- WO created with vendor reference (initial)
+- Vendor invoice number changed BEFORE completion
+- First `parts_invoice_links` added to IS/IT WO (recompute V5)
+
+V5 is IMMUTABLE after WO transitions to `status='completed'`.
+
+### Sequence rule
+
+`{NNNN}` is per-unit cumulative across ALL source types, lifetime — never resets.
+
+Example for unit T169:
+- WO-T169-IS-03-15-2026-0033-78321
+- WO-T169-AC-04-02-2026-0034-LT441
+- WO-T169-IS-05-06-2026-0035-23914
+- WO-T169-ET-05-08-2026-0036-08821
+
+Unit T177 has its own independent counter starting at 0001.

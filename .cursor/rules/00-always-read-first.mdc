@@ -1,0 +1,87 @@
+---
+description: ALWAYS READ FIRST — Cursor must consult these spec files before any code work
+alwaysApply: true
+---
+
+# IH35-TMS — ALWAYS READ FIRST (every block, every file edit, every conversation)
+
+This file is auto-loaded by Cursor at the start of every interaction in this repo.
+
+## STEP 1 — Before writing ANY code, read these files in order:
+
+1. `docs/specs/CURSOR-PERMANENT-RULES.md` — the permanent ruleset
+2. `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` — the formal canonical blueprint (read the section relevant to the current block)
+3. `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` — chat-derived additions and refinements
+4. `docs/specs/IH35_ARCHITECTURAL_DESIGN.md` — every module, every tab, what each does
+5. `docs/approved-screens/<relevant-module>.png` — the approved UI for the module being touched
+
+If guidance conflicts: chat-derived additions WIN over the formal blueprint, and the architectural design WINS over both for tab-count and tab-name questions.
+
+## STEP 2 — RESPOND BEFORE CODING
+
+Before generating any code, respond with this exact format:
+
+```
+Spec sources reviewed:
+- [list each file actually read]
+
+Approved screens reviewed:
+- [list each PNG actually viewed]
+
+Deviations from spec required (with rationale):
+- [list any deviation, or write "None"]
+
+NEW SPEC items (in this block but not in either spec source):
+- [list, or write "None"]
+
+Proceeding.
+```
+
+This response is the audit gate. Code generation does NOT begin without it.
+
+## STEP 3 — LOCKED INVARIANTS (carry into every block)
+
+- `operating_company_id` RLS on every table touched
+- All views: `WITH (security_invoker = true)`
+- Lockstep INSERT pattern for atomic transactions
+- Append-only audit events on every mutation
+- Permanent records: void, never delete
+- Migrations idempotent (DO + IF NOT EXISTS pattern)
+- Cache from `master_data.drivers` NEVER used in render path (Part 4.5.4.2)
+- Single-link constraint per WF-012
+- Single-factor invariant per WF-017
+- Display IDs server-generated, never editable
+- Production NEVER serves fake data — env-gate fixture fallbacks
+- Primary buttons: "+ Create" or "+ Book" (NEVER "+ New", NEVER "+ Add")
+
+## STEP 4 — POST-PUSH CONFIRMATION
+
+After every commit + push, paste back to Claude (planning):
+1. Feature branch head commit hash
+2. Diff stat
+3. Per the block's PAUSE section, every numbered confirmation requested
+4. Confirmation typecheck + build green
+5. Confirmation `db:verify:*` PASS (only known pre-existing failures acceptable)
+6. Confirmation route registrations updated in `apps/backend/src/index.ts` if new routes added
+
+## STEP 5 — TAB DRIFT IS FORBIDDEN
+
+If your work adds, removes, or renames a sub-nav tab in any module:
+- You MUST update `docs/specs/IH35_ARCHITECTURAL_DESIGN.md` in the SAME commit
+- The CI gate `npm run verify:arch-design` will FAIL the build if tab counts diverge
+- The PR template checklist will block the PR if you didn't check the design-was-reviewed box
+
+If you discover a tab in code that is NOT in the architectural design: STOP. Ask Jorge whether to add it to the design or remove it from code.
+
+## STEP 6 — DO NOT LIST (universal)
+
+- Do NOT modify Phase 1 closed deliverables
+- Do NOT serve fake data in production (env-gate fixtures)
+- Do NOT delete records (void instead)
+- Do NOT skip audit events
+- Do NOT inline-write SQL that bypasses RLS
+- Do NOT mutate the canonical blueprint MD file (additions go in `IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`)
+- Do NOT add a tab without updating `IH35_ARCHITECTURAL_DESIGN.md` in the same commit
+- Do NOT use "+ New" or "+ Add" — always "+ Create" or "+ Book"
+
+End of mandatory startup file.

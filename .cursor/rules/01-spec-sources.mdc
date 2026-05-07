@@ -1,0 +1,38 @@
+---
+description: Spec source-of-truth hierarchy for all IH35-TMS work
+alwaysApply: true
+---
+
+# RULE 01 — DUAL-SOURCE SPEC LAW
+
+For every block in this repo, the spec source-of-truth is the combination of THREE files:
+
+## 1. Formal canonical blueprint
+**Path:** `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md`
+**Authority:** Definitive on schema, workflows (WF-XXX), invariants, phase mapping, and all foundational design decisions made before chat-derived refinements.
+
+## 2. Chat-derived additions
+**Path:** `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`
+**Authority:** Definitive on every refinement, clarification, or new spec decision Jorge has approved in chat that is NOT yet in the formal blueprint.
+
+## 3. Architectural design
+**Path:** `docs/specs/IH35_ARCHITECTURAL_DESIGN.md`
+**Authority:** Definitive on every module's tab list, what each tab does, what actions exist on each tab, and which Phase ships which tab.
+
+## Conflict resolution
+
+If guidance disagrees between sources, the precedence is:
+
+1. **Architectural design WINS** for tab-count, tab-name, and tab-purpose questions
+2. **Chat-derived additions WIN** over the formal blueprint for everything else where they conflict (additions are newer)
+3. **Formal blueprint** is authoritative when neither of the above addresses the question
+
+## NEW SPEC items
+
+If a feature/behavior request appears in NONE of the three sources:
+- STOP coding
+- Flag the missing spec in your "RESPOND BEFORE CODING" reply as `NEW SPEC: [description]`
+- Ask Jorge for explicit approval before implementing
+- After Jorge approves, update `IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` AND (if relevant) `IH35_ARCHITECTURAL_DESIGN.md` in the SAME commit as the implementation
+
+Inventing features that are in no spec source = drift = forbidden.

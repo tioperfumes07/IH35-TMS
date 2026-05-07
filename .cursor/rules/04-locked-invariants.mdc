@@ -1,0 +1,45 @@
+---
+description: Locked architectural invariants every block must enforce
+alwaysApply: true
+---
+
+# RULE 04 — LOCKED INVARIANTS
+
+These invariants are non-negotiable. Every block MUST enforce them. Violations are blocked at PR review and CI.
+
+## Database invariants
+
+- **`operating_company_id` RLS** — every table touched must have RLS scoped to operating company
+- **All views** must use `WITH (security_invoker = true)` — never SQL SECURITY DEFINER
+- **Lockstep INSERT pattern** for atomic transactions involving multiple tables
+- **Append-only audit events** on every mutation (insert/update/state-change)
+- **Permanent records** — void records, never `DELETE FROM`. Use `voided_at` + `voided_by` columns.
+- **Migrations idempotent** — use `DO $$ BEGIN ... END $$;` blocks with `IF NOT EXISTS` guards
+- **Cache from `master_data.drivers` NEVER used in render path** (Part 4.5.4.2 of formal blueprint) — render path must always read from canonical source
+- **Single-link constraint** per WF-012 — one bank txn maps to one entity link
+- **Single-factor invariant** per WF-017 — only one active factor per company; partial unique index + trigger raising `E_FACTOR_MULTIPLE_ACTIVE`
+
+## API + frontend invariants
+
+- **Display IDs server-generated only** — never composed in frontend, never user-editable
+- **Production NEVER serves fake data** — all fixture/seed data fallbacks must be env-gated (e.g., `if (NODE_ENV !== 'production')`)
+- **Primary buttons:** `+ Create` or `+ Book` — NEVER `+ New`, NEVER `+ Add`
+- **Operating company switcher** must be respected in every module — RLS + UI filter
+
+## Workflow invariants (LOCKED)
+
+- **WF-038** — HOS violation block on driver assignment
+- **WF-044** — Maintenance-due advisory warning on dispatch
+- **WF-050** — DVIR major defect → `is_dispatch_blocked = true` hard block
+- **WF-053** — cross-module posting service config
+- **WF-064** — Manager high-risk action notifies Owner
+
+## 425C invariant
+
+Virtual banks (Factoring · Escrow) EXCLUDED from main bank totals on lines 19-23 of Form 425C per UST guidance. This is a Ch.11 DIP regulatory requirement.
+
+## Enforcement
+
+- `db:verify:*` scripts validate database invariants
+- `npm run verify:arch-design` validates UI tab counts (CI gate)
+- PR template checklist requires explicit acknowledgment of invariant compliance
