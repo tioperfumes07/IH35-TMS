@@ -44,7 +44,7 @@ const ITEMS: SidebarItem[] = [
   { key: "DOCUMENTS", label: "DOCS", Icon: FileText, to: "/documents", visibleRoles: ["Owner", "Administrator"] },
   { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/catalogs" },
   { key: "REPORTS", label: "REPORTS", Icon: ClipboardList, to: "/reports" },
-  { key: "425C", label: "425C", Icon: SquareStack, to: "/form-425c" },
+  { key: "425C", label: "425C", Icon: SquareStack, to: "/425c" },
   { key: "DRV_APP", label: "DRV APP", Icon: Activity, to: "/driver-app" },
 ];
 

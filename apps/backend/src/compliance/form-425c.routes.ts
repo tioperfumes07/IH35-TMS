@@ -66,6 +66,21 @@ const attachmentBodySchema = COMPANY_QUERY.extend({
   file_uuid: z.string().uuid(),
 });
 
+const profileSchema = COMPANY_QUERY.extend({
+  company_key: z.enum(["trucking", "transportation"]),
+  company_name: z.string().trim().min(1),
+  case_number: z.string().default(""),
+  district: z.string().default("Texas"),
+  division: z.string().default("San Antonio"),
+  judge: z.string().default(""),
+  ein: z.string().default(""),
+  filing_address: z.string().default(""),
+  line_of_business: z.string().default(""),
+  naisc_code: z.string().default(""),
+  default_questionnaire_answers: z.record(z.string(), z.string()).default({}),
+  bank_accounts: z.array(z.object({ id: z.string(), label: z.string(), number: z.string() })).default([]),
+});
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -100,6 +115,84 @@ function monthWindow(month: string) {
     endDate: end.toISOString().slice(0, 10),
     prevMonthDate: prev.toISOString().slice(0, 10),
   };
+}
+
+async function ensureDefaultProfiles(
+  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  operatingCompanyId: string,
+  userId: string
+) {
+  const defaultAnswers = {
+    "1": "yes",
+    "2": "yes",
+    "3": "yes",
+    "4": "yes",
+    "5": "yes",
+    "6": "yes",
+    "7": "yes",
+    "8": "yes",
+    "9": "yes",
+    "10": "no",
+    "11": "no",
+    "12": "no",
+    "13": "no",
+    "14": "no",
+    "15": "no",
+    "16": "no",
+    "17": "no",
+    "18": "no",
+  };
+  const rows = [
+    {
+      company_key: "trucking",
+      company_name: "IH 35 TRUCKING LLC",
+      line_of_business: "Freight Trucking",
+      naisc_code: "484121",
+      bank_accounts: [{ id: "WF-3500", label: "Wells Fargo – WF-3500", number: "xxxx3500" }],
+    },
+    {
+      company_key: "transportation",
+      company_name: "IH 35 TRANSPORTATION LLC",
+      line_of_business: "Transportation",
+      naisc_code: "485",
+      bank_accounts: [
+        { id: "WF-1", label: "Wells Fargo – WF (Account 1)", number: "xxxx" },
+        { id: "WF-2", label: "Wells Fargo – WF (Account 2)", number: "xxxx" },
+        { id: "WF-3", label: "Wells Fargo – WF (Account 3)", number: "xxxx" },
+      ],
+    },
+  ];
+  for (const row of rows) {
+    await client.query(
+      `
+        INSERT INTO catalogs.form_425c_company_profiles (
+          operating_company_id,
+          company_key,
+          company_name,
+          district,
+          division,
+          filing_address,
+          line_of_business,
+          naisc_code,
+          default_questionnaire_answers,
+          bank_accounts,
+          last_updated_by_user_id
+        )
+        VALUES ($1, $2, $3, 'Texas', 'San Antonio', 'Laredo, TX 78041', $4, $5, $6::jsonb, $7::jsonb, $8)
+        ON CONFLICT (operating_company_id, company_key) DO NOTHING
+      `,
+      [
+        operatingCompanyId,
+        row.company_key,
+        row.company_name,
+        row.line_of_business,
+        row.naisc_code,
+        JSON.stringify(defaultAnswers),
+        JSON.stringify(row.bank_accounts),
+        userId,
+      ]
+    );
+  }
 }
 
 async function computeBankingSummary(client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }, companyId: string, month: string) {
@@ -247,6 +340,97 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     return payload;
   });
 
+  app.get("/api/v1/form-425c/profiles", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = COMPANY_QUERY.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const companyId = query.data.operating_company_id;
+    const profiles = await withCompanyScope(user.uuid, companyId, async (client) => {
+      await ensureDefaultProfiles(client, companyId, user.uuid);
+      const res = await client.query(
+        `
+          SELECT *
+          FROM catalogs.form_425c_company_profiles
+          WHERE operating_company_id = $1
+          ORDER BY CASE company_key WHEN 'trucking' THEN 1 ELSE 2 END
+        `,
+        [companyId]
+      );
+      return res.rows;
+    });
+    return { profiles };
+  });
+
+  app.post("/api/v1/form-425c/profiles", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const body = profileSchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const b = body.data;
+
+    const profile = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+      const res = await client.query(
+        `
+          INSERT INTO catalogs.form_425c_company_profiles (
+            operating_company_id,
+            company_key,
+            company_name,
+            case_number,
+            district,
+            division,
+            judge,
+            ein,
+            filing_address,
+            line_of_business,
+            naisc_code,
+            default_questionnaire_answers,
+            bank_accounts,
+            last_updated_at,
+            last_updated_by_user_id
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13::jsonb, now(), $14)
+          ON CONFLICT (operating_company_id, company_key)
+          DO UPDATE SET
+            company_name = EXCLUDED.company_name,
+            case_number = EXCLUDED.case_number,
+            district = EXCLUDED.district,
+            division = EXCLUDED.division,
+            judge = EXCLUDED.judge,
+            ein = EXCLUDED.ein,
+            filing_address = EXCLUDED.filing_address,
+            line_of_business = EXCLUDED.line_of_business,
+            naisc_code = EXCLUDED.naisc_code,
+            default_questionnaire_answers = EXCLUDED.default_questionnaire_answers,
+            bank_accounts = EXCLUDED.bank_accounts,
+            last_updated_at = now(),
+            last_updated_by_user_id = EXCLUDED.last_updated_by_user_id,
+            updated_at = now()
+          RETURNING *
+        `,
+        [
+          b.operating_company_id,
+          b.company_key,
+          b.company_name,
+          b.case_number,
+          b.district,
+          b.division,
+          b.judge,
+          b.ein,
+          b.filing_address,
+          b.line_of_business,
+          b.naisc_code,
+          JSON.stringify(b.default_questionnaire_answers ?? {}),
+          JSON.stringify(b.bank_accounts ?? []),
+          user.uuid,
+        ]
+      );
+      return res.rows[0];
+    });
+
+    return reply.code(201).send(profile);
+  });
+
   app.post("/api/v1/form-425c", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -257,6 +441,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     const { prevMonthDate } = monthWindow(reportingMonth.slice(0, 7));
 
     const created = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
+      await ensureDefaultProfiles(client, b.operating_company_id, user.uuid);
       const prevRes = await client.query(
         `
           SELECT id, line_35_next_proj_receipts, line_36_next_proj_disbursements, line_37_next_proj_net_cash_flow
@@ -541,7 +726,13 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
         "info",
         "BT-3-FORM-425C"
       );
-      return { report, generated };
+      return {
+        filing_record_id: generated.filingRecordId,
+        docs_file_id: generated.fileId,
+        print_html: generated.printHtml,
+        suggested_filename: generated.suggestedFilename,
+        report,
+      };
     });
     if (!payload) return reply.code(404).send({ error: "report_not_found" });
     return payload;

@@ -69,7 +69,8 @@
     "db:verify:arriving-soon": "node --import tsx scripts/db-verify-arriving-soon.ts",
     "db:verify:arriving-soon-rls": "node --import tsx scripts/db-verify-arriving-soon-rls.ts",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
-    "r2:verify": "node scripts/r2-verify.mjs"
+    "r2:verify": "node scripts/r2-verify.mjs",
+    "db:verify:form-425c-profiles": "node --import tsx scripts/db-verify-form-425c-profiles.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

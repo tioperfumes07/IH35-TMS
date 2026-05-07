@@ -26,6 +26,10 @@ try {
     if (!exhibitBRes.rows[0]?.ok) throw new Error("compliance.form_425c_exhibit_b_entries missing");
     console.log("PASS: compliance.form_425c_exhibit_b_entries exists");
 
+    const profilesRes = await client.query<{ ok: boolean }>("SELECT to_regclass('catalogs.form_425c_company_profiles') IS NOT NULL AS ok");
+    if (!profilesRes.rows[0]?.ok) throw new Error("catalogs.form_425c_company_profiles missing");
+    console.log("PASS: catalogs.form_425c_company_profiles exists");
+
     const sample = await client.query("SELECT id, reporting_month, status FROM compliance.form_425c_reports LIMIT 5");
     console.log(`PASS: sample report query executed (${sample.rows.length} row(s))`);
   } finally {

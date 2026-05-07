@@ -10,6 +10,31 @@ export type Form425CReport = Record<string, unknown> & {
   status: "draft" | "ready_to_file" | "filed" | "amended";
 };
 
+export type Form425CProfileRecord = {
+  id: string;
+  operating_company_id: string;
+  company_key: "trucking" | "transportation";
+  company_name: string;
+  case_number: string;
+  district: string;
+  division: string;
+  judge: string;
+  ein: string;
+  filing_address: string;
+  line_of_business: string;
+  naisc_code: string;
+  default_questionnaire_answers: Record<string, string>;
+  bank_accounts: Array<{ id: string; label: string; number: string }>;
+  last_updated_at: string;
+};
+
+export type GenerateForm425CPdfResponse = {
+  filing_record_id: string;
+  docs_file_id: string | null;
+  print_html: string;
+  suggested_filename: string;
+};
+
 export function listForm425CReports(companyId: string) {
   return apiRequest<{ reports: Form425CReport[] }>(`/api/v1/form-425c?${q(companyId)}`);
 }
@@ -49,7 +74,7 @@ export function importForm425CBanking(id: string, companyId: string) {
 }
 
 export function generateForm425CPdf(id: string, companyId: string) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/form-425c/${id}/generate-filing-pdf`, {
+  return apiRequest<GenerateForm425CPdfResponse>(`/api/v1/form-425c/${id}/generate-filing-pdf`, {
     method: "POST",
     body: { operating_company_id: companyId },
   });
@@ -87,5 +112,19 @@ export function attachForm425CLineFile(id: string, companyId: string, line: numb
   return apiRequest<Record<string, unknown>>(`/api/v1/form-425c/${id}/attachments/${line}`, {
     method: "POST",
     body: { operating_company_id: companyId, file_uuid: fileUuid },
+  });
+}
+
+export function listForm425CProfiles(companyId: string) {
+  return apiRequest<{ profiles: Form425CProfileRecord[] }>(`/api/v1/form-425c/profiles?${q(companyId)}`);
+}
+
+export function upsertForm425CProfile(
+  companyId: string,
+  payload: Omit<Form425CProfileRecord, "id" | "operating_company_id" | "last_updated_at">
+) {
+  return apiRequest<Form425CProfileRecord>(`/api/v1/form-425c/profiles`, {
+    method: "POST",
+    body: { operating_company_id: companyId, ...payload },
   });
 }
