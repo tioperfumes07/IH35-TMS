@@ -1,0 +1,45 @@
+import { useState } from "react";
+import { Modal } from "../../../components/Modal";
+import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
+import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
+import { BILL_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
+
+type Props = {
+  open: boolean;
+  linkedWoDisplayId?: string;
+  onClose: () => void;
+};
+
+export function CreateBillModal({ open, linkedWoDisplayId, onClose }: Props) {
+  const [lines, setLines] = useState<TwoSectionLine[]>([]);
+  const [taxRate, setTaxRate] = useState(8.25);
+  const [billType, setBillType] = useState("repair");
+  const subtotal = lines.reduce((sum, line) => {
+    if (line.section === "A") return sum + Number(line.amount || 0);
+    const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
+    return sum + Math.max(Number(line.amount || 0), subRowsTotal);
+  }, 0);
+
+  return (
+    <Modal open={open} onClose={onClose} title="Create Bill">
+      <div className="space-y-3">
+        <TypeTabBar tabs={BILL_TYPE_TABS} activeId={billType} onChange={setBillType} />
+
+        <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Bill Details</div>
+
+        <div className="grid gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
+          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Vendor" />
+          <div className="md:col-span-4" />
+          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Load Number" />
+          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Bill date" type="date" />
+          <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900 md:col-span-5">
+            Linked - {linkedWoDisplayId || "WO-XXXX"}
+          </div>
+        </div>
+
+        <TwoSectionLineEditor mode="bill" onChange={setLines} partsLaborMode="parts-and-labor" />
+        <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Bill Total = A + B" />
+      </div>
+    </Modal>
+  );
+}

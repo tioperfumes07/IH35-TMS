@@ -101,7 +101,7 @@ export type PartsInventoryRow = {
   updated_at: string;
 };
 
-export type CreateWorkOrderPayload = {
+export type CreateWorkOrderLegacyPayload = {
   operating_company_id: string;
   wo_type: WorkOrderType;
   status?: WorkOrderStatus;
@@ -128,6 +128,53 @@ export type CreateWorkOrderPayload = {
     quantity: number;
     unit_cost: number;
     amount: number;
+  }>;
+};
+
+export type CreateWorkOrderTwoSectionPayload = {
+  header: {
+    operating_company_id: string;
+    wo_type: WorkOrderType;
+    source_type?: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
+    unit_id: string;
+    driver_id?: string;
+    load_id?: string;
+    service_date?: string;
+    repair_location: string;
+    vendor_id?: string;
+    vendor_invoice_number?: string;
+    external_vendor_id?: string;
+    external_vendor_wo_number?: string;
+    external_vendor_invoice_number?: string;
+    description: string;
+    payment_timing: PaymentTiming;
+    bill_terms?: string;
+    bill_date?: string;
+    due_date?: string;
+    payment_account_uuid?: string;
+  };
+  sectionA: Array<{
+    description: string;
+    quantity: number;
+    amount: number;
+    expense_category_uuid: string;
+  }>;
+  sectionB: Array<{
+    description: string;
+    quantity: number;
+    unit_cost: number;
+    amount: number;
+    service_item_uuid: string;
+    sub_rows: Array<{
+      line_type: "parts" | "labor";
+      description: string;
+      quantity: number;
+      unit_cost: number;
+      amount: number;
+      part_uuid?: string;
+      labor_rate_uuid?: string;
+      part_location_codes?: string[];
+    }>;
   }>;
 };
 
@@ -182,8 +229,11 @@ export function getWorkOrder(id: string, companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/work-orders/${id}?${query(companyId)}`);
 }
 
-export function createWorkOrder(payload: CreateWorkOrderPayload) {
-  return apiRequest<WorkOrder>("/api/v1/maintenance/work-orders", { method: "POST", body: payload });
+export function createWorkOrder(payload: CreateWorkOrderLegacyPayload | CreateWorkOrderTwoSectionPayload) {
+  return apiRequest<WorkOrder | { wo: { uuid: string; display_id: string }; bill?: { uuid: string }; expense?: { uuid: string } }>(
+    "/api/v1/maintenance/work-orders",
+    { method: "POST", body: payload }
+  );
 }
 
 export function updateWorkOrder(

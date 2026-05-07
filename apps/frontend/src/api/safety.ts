@@ -33,14 +33,9 @@ export function spawnSafetyLiability(id: string, companyId: string) {
   });
 }
 
-export function spawnSafetyWo(
-  id: string,
-  companyId: string,
-  payload?: { source_type?: "AC"; external_vendor_id?: string }
-) {
+export function spawnSafetyWo(id: string, companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/accidents/${id}/spawn-wo?${q(companyId)}`, {
     method: "POST",
-    body: payload,
   });
 }
 
@@ -60,135 +55,119 @@ export function getLatestCsa(companyId: string) {
 
 export function getSafetyFines(
   companyId: string,
-  filters?: {
-    status?: string;
-    subject_type?: "driver" | "company";
-    subject_driver_id?: string;
-    issued_date_from?: string;
-    issued_date_to?: string;
-  }
+  params: { status?: string; subject_type?: "driver" | "company"; subject_driver_id?: string } = {}
 ) {
-  const params = new URLSearchParams({ operating_company_id: companyId });
-  if (filters?.status) params.set("status", filters.status);
-  if (filters?.subject_type) params.set("subject_type", filters.subject_type);
-  if (filters?.subject_driver_id) params.set("subject_driver_id", filters.subject_driver_id);
-  if (filters?.issued_date_from) params.set("issued_date_from", filters.issued_date_from);
-  if (filters?.issued_date_to) params.set("issued_date_to", filters.issued_date_to);
-  return apiRequest<{ fines: Array<Record<string, unknown>> }>(`/api/v1/safety/fines?${params.toString()}`);
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (params.status) qs.set("status", params.status);
+  if (params.subject_type) qs.set("subject_type", params.subject_type);
+  if (params.subject_driver_id) qs.set("subject_driver_id", params.subject_driver_id);
+  return apiRequest<{ fines: Array<Record<string, unknown>> }>(`/api/v1/safety/fines?${qs.toString()}`);
 }
 
-export function createSafetyFine(
-  companyId: string,
-  payload: {
-    subject_type: "driver" | "company";
-    subject_driver_id?: string | null;
-    issued_by_authority: string;
-    jurisdiction?: string | null;
-    violation_code?: string | null;
-    violation_description: string;
-    issued_date: string;
-    amount_cents: number;
-    related_load_id?: string | null;
-    related_unit_id?: string | null;
-    source_doc_id?: string | null;
-    notes?: string | null;
-  }
-) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/fines?${q(companyId)}`, { method: "POST", body: payload });
+export function createSafetyFine(companyId: string, body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/fines?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
 }
 
-export function updateSafetyFine(id: string, companyId: string, payload: Record<string, unknown>) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/fines/${id}?${q(companyId)}`, { method: "PATCH", body: payload });
-}
-
-export function convertFineToLiability(id: string, companyId: string) {
-  return apiRequest<{ fine: Record<string, unknown>; liability: Record<string, unknown>; message: string }>(
-    `/api/v1/safety/fines/${id}/convert-to-liability?${q(companyId)}`,
+export function convertFineToLiability(fineId: string, companyId: string) {
+  return apiRequest<{ fine: Record<string, unknown>; liability?: Record<string, unknown> }>(
+    `/api/v1/safety/fines/${fineId}/convert-to-liability?${q(companyId)}`,
     { method: "POST" }
   );
-}
-
-export function contestFine(id: string, companyId: string, notes?: string) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/fines/${id}/contest?${q(companyId)}`, {
-    method: "POST",
-    body: { notes },
-  });
-}
-
-export function dismissFine(id: string, companyId: string, notes?: string) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/fines/${id}/dismiss?${q(companyId)}`, {
-    method: "POST",
-    body: { notes },
-  });
-}
-
-export function reduceFine(id: string, companyId: string, amount_cents: number, reason: string) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/fines/${id}/reduce?${q(companyId)}`, {
-    method: "POST",
-    body: { amount_cents, reason },
-  });
-}
-
-export function linkFinePayment(
-  id: string,
-  companyId: string,
-  payload: { bank_transaction_id: string; paid_date: string; paid_amount_cents: number }
-) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/fines/${id}/link-payment?${q(companyId)}`, {
-    method: "POST",
-    body: payload,
-  });
 }
 
 export function getCompanyViolations(companyId: string) {
   return apiRequest<{ company_violations: Array<Record<string, unknown>> }>(`/api/v1/safety/company-violations?${q(companyId)}`);
 }
 
-export function createCompanyViolation(companyId: string, payload: Record<string, unknown>) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/company-violations?${q(companyId)}`, { method: "POST", body: payload });
-}
-
-export function updateCompanyViolation(id: string, companyId: string, payload: Record<string, unknown>) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/company-violations/${id}?${q(companyId)}`, { method: "PATCH", body: payload });
-}
-
-export function completeCompanyViolationCorrectiveAction(id: string, companyId: string, payload?: Record<string, unknown>) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/company-violations/${id}/complete-corrective-action?${q(companyId)}`, {
+export function createCompanyViolation(companyId: string, body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/company-violations?${q(companyId)}`, {
     method: "POST",
-    body: payload ?? {},
+    body,
   });
 }
 
-export function escalateCompanyViolation(id: string, companyId: string, reason?: string) {
+export function updateCompanyViolation(id: string, companyId: string, body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/company-violations/${id}?${q(companyId)}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function completeCompanyViolationCorrectiveAction(id: string, companyId: string, body: Record<string, unknown> = {}) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/company-violations/${id}/complete-corrective-action?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function escalateCompanyViolation(id: string, companyId: string, reason: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/company-violations/${id}/escalate?${q(companyId)}`, {
     method: "POST",
     body: { reason },
   });
 }
 
-export function getIntegrityAlerts(companyId: string, filters?: Record<string, string>) {
-  const params = new URLSearchParams({ operating_company_id: companyId });
-  for (const [key, value] of Object.entries(filters ?? {})) {
-    if (value) params.set(key, value);
-  }
-  return apiRequest<{ integrity_alerts: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity-alerts/list?${params.toString()}`);
+export function getDotInspections(companyId: string) {
+  return apiRequest<{ inspections: Array<Record<string, unknown>> }>(`/api/v1/safety/dot-inspections?${q(companyId)}`);
 }
 
-export function acknowledgeIntegrityAlert(id: string, companyId: string, acknowledgment_note?: string) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/integrity-alerts/${id}/acknowledge?${q(companyId)}`, {
+export function createDotInspection(
+  companyId: string,
+  body: Record<string, unknown>
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/dot-inspections?${q(companyId)}`, {
     method: "POST",
-    body: { acknowledgment_note },
+    body,
   });
 }
 
-export function resolveIntegrityAlert(
-  id: string,
+export function getInternalFines(companyId: string) {
+  return apiRequest<{ fines: Array<Record<string, unknown>> }>(`/api/v1/safety/internal-fines?${q(companyId)}`);
+}
+
+export function createInternalFine(companyId: string, body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/internal-fines?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function getComplaints(companyId: string) {
+  return apiRequest<{ complaints: Array<Record<string, unknown>> }>(`/api/v1/safety/complaints?${q(companyId)}`);
+}
+
+export function createComplaint(companyId: string, body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/complaints?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function getIntegrityAlerts(
   companyId: string,
-  payload: { resolution_status: "unresolved" | "investigating" | "false_positive" | "confirmed_action_taken" | "dismissed"; resolution_action?: string }
+  params: { alert_category?: string; severity?: string; resolution_status?: string } = {}
 ) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (params.alert_category) qs.set("alert_category", params.alert_category);
+  if (params.severity) qs.set("severity", params.severity);
+  if (params.resolution_status) qs.set("resolution_status", params.resolution_status);
+  return apiRequest<{ integrity_alerts: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity-alerts?${qs.toString()}`);
+}
+
+export function acknowledgeIntegrityAlert(id: string, companyId: string, note: string) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/integrity-alerts/${id}/acknowledge?${q(companyId)}`, {
+    method: "POST",
+    body: { acknowledgment_note: note },
+  });
+}
+
+export function resolveIntegrityAlert(id: string, companyId: string, body: Record<string, unknown>) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/integrity-alerts/${id}/resolve?${q(companyId)}`, {
     method: "POST",
-    body: payload,
+    body,
   });
 }
 
@@ -196,8 +175,11 @@ export function getSafetySettings(companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/settings?${q(companyId)}`);
 }
 
-export function updateSafetySettings(companyId: string, payload: Record<string, unknown>) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/safety/settings?${q(companyId)}`, { method: "PATCH", body: payload });
+export function updateSafetySettings(companyId: string, body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/settings?${q(companyId)}`, {
+    method: "PATCH",
+    body,
+  });
 }
 
 export async function addAccidentPhoto(id: string, companyId: string, file: File) {

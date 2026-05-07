@@ -14125,7 +14125,8 @@ Cross-cuts WF-024 (RBAC) and WF-064 across all three modules.
 
 **MUST 9.1.2.2.2 — Overview tab fields:** wo_id, wo_type, status, unit (linked to master_data), opened_at + opened_by, assigned_vendor (linked), expected_completion_at, total_estimated_cost, total_actual_cost, internal_notes, external_notes (visible to vendor when shared).
 
-**MUST 9.1.2.2.3 — Parts & Labor tab:** itemized list of `maintenance.wo_line_items` rows; each row shows line_type (parts | labor | other), description, quantity, unit_cost, total_cost, posted_to_account_uuid (linked to catalogs).
+**MUST 9.1.2.2.3 — Parts & Labor tab:** itemized list of `maintenance.wo_line_items` rows; each row shows line_type (parts | labor | other), description, quantity, unit_cost, total_cost, posted_to_account_uuid (linked to catalogs).  
+**V5 addendum (P3-T11.17):** WO/Bill/Expense forms support Two-Section structure: Section A uses only `catalogs.expense_categories`; Section B uses `catalogs.items_services` parent lines with Parts/Labor sub-rows; location selection is allowed only for Parts sub-rows.
 
 **MUST 9.1.2.2.4 — Photos tab:** chronological list of attached `documents.evidence_records` of types `wo_before_photo`, `wo_during_photo`, `wo_after_photo`, `wo_damage_photo` per WF-026 + WF-058. Each photo shows captured_at, captured_by, lat/lng (if geolocation captured), thumbnail, full-size on click.
 

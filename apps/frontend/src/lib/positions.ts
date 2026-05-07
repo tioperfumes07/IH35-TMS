@@ -1,0 +1,48 @@
+export type PositionMeta = {
+  name: string;
+  group: string;
+  side: "left" | "right" | "center";
+};
+
+export const POS_DICT: Record<string, PositionMeta> = {
+  "STEER-L": { name: "Steer Axle Left Tire", group: "Steer Axle", side: "left" },
+  "STEER-R": { name: "Steer Axle Right Tire", group: "Steer Axle", side: "right" },
+  "D1-OUT-L": { name: "Drive Tandem Axle 1 Outer Left Tire", group: "Drive Tandem", side: "left" },
+  "D1-IN-L": { name: "Drive Tandem Axle 1 Inner Left Tire", group: "Drive Tandem", side: "left" },
+  "D1-IN-R": { name: "Drive Tandem Axle 1 Inner Right Tire", group: "Drive Tandem", side: "right" },
+  "D1-OUT-R": { name: "Drive Tandem Axle 1 Outer Right Tire", group: "Drive Tandem", side: "right" },
+  "D2-OUT-L": { name: "Drive Tandem Axle 2 Outer Left Tire", group: "Drive Tandem", side: "left" },
+  "D2-IN-L": { name: "Drive Tandem Axle 2 Inner Left Tire", group: "Drive Tandem", side: "left" },
+  "D2-IN-R": { name: "Drive Tandem Axle 2 Inner Right Tire", group: "Drive Tandem", side: "right" },
+  "D2-OUT-R": { name: "Drive Tandem Axle 2 Outer Right Tire", group: "Drive Tandem", side: "right" },
+  "BC-D1-L": { name: "Drive Axle 1 Left Brake Chamber", group: "Drive Tandem", side: "left" },
+  "BC-D1-R": { name: "Drive Axle 1 Right Brake Chamber", group: "Drive Tandem", side: "right" },
+  "BC-D2-L": { name: "Drive Axle 2 Left Brake Chamber", group: "Drive Tandem", side: "left" },
+  "BC-D2-R": { name: "Drive Axle 2 Right Brake Chamber", group: "Drive Tandem", side: "right" },
+  "AB-D1-L": { name: "Drive Axle 1 Left Air Bag", group: "Drive Tandem", side: "left" },
+  "AB-D1-R": { name: "Drive Axle 1 Right Air Bag", group: "Drive Tandem", side: "right" },
+  "AB-D2-L": { name: "Drive Axle 2 Left Air Bag", group: "Drive Tandem", side: "left" },
+  "AB-D2-R": { name: "Drive Axle 2 Right Air Bag", group: "Drive Tandem", side: "right" },
+  ENGINE: { name: "Engine Compartment", group: "Tractor Body", side: "center" },
+  CAB: { name: "Cab / Interior", group: "Tractor Body", side: "center" },
+  SLEEPER: { name: "Sleeper Cabin", group: "Tractor Body", side: "center" },
+  HOOD: { name: "Hood / Front Body", group: "Tractor Body", side: "center" },
+  "MIRROR-L": { name: "Driver Side Mirror", group: "Tractor Body", side: "left" },
+  "MIRROR-R": { name: "Passenger Side Mirror", group: "Tractor Body", side: "right" },
+  "TT1-OUT-L": { name: "Trailer Tandem Axle 1 Outer Left Tire", group: "Trailer Tandem", side: "left" },
+  "TT1-IN-L": { name: "Trailer Tandem Axle 1 Inner Left Tire", group: "Trailer Tandem", side: "left" },
+  "TT1-IN-R": { name: "Trailer Tandem Axle 1 Inner Right Tire", group: "Trailer Tandem", side: "right" },
+  "TT1-OUT-R": { name: "Trailer Tandem Axle 1 Outer Right Tire", group: "Trailer Tandem", side: "right" },
+  "TT2-OUT-L": { name: "Trailer Tandem Axle 2 Outer Left Tire", group: "Trailer Tandem", side: "left" },
+  "TT2-IN-L": { name: "Trailer Tandem Axle 2 Inner Left Tire", group: "Trailer Tandem", side: "left" },
+  "TT2-IN-R": { name: "Trailer Tandem Axle 2 Inner Right Tire", group: "Trailer Tandem", side: "right" },
+  "TT2-OUT-R": { name: "Trailer Tandem Axle 2 Outer Right Tire", group: "Trailer Tandem", side: "right" },
+  "BC-T1-L": { name: "Trailer Axle 1 Left Brake Chamber", group: "Trailer Tandem", side: "left" },
+  "BC-T1-R": { name: "Trailer Axle 1 Right Brake Chamber", group: "Trailer Tandem", side: "right" },
+  "BC-T2-L": { name: "Trailer Axle 2 Left Brake Chamber", group: "Trailer Tandem", side: "left" },
+  "BC-T2-R": { name: "Trailer Axle 2 Right Brake Chamber", group: "Trailer Tandem", side: "right" },
+  KINGPIN: { name: "Kingpin", group: "Trailer Body", side: "center" },
+  "LANDING-GEAR": { name: "Landing Gear", group: "Trailer Body", side: "center" },
+  ABS: { name: "ABS Module", group: "Trailer Body", side: "center" },
+  "GLAD-HANDS": { name: "Glad Hands", group: "Trailer Body", side: "center" },
+};

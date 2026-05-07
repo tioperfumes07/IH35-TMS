@@ -59,7 +59,36 @@ $$;
 DO $$
 BEGIN
   IF to_regclass('driver_finance.driver_liabilities') IS NOT NULL
-     AND to_regclass('mdata.drivers') IS NOT NULL THEN
+     AND to_regclass('mdata.drivers') IS NOT NULL
+     AND to_regclass('driver_finance.deduction_schedule') IS NOT NULL
+     AND EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'driver_finance'
+         AND table_name = 'driver_liabilities'
+         AND column_name = 'acknowledgment_uuid'
+     )
+     AND EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'driver_finance'
+         AND table_name = 'driver_liabilities'
+         AND column_name = 'forfeiture_clause_active'
+     )
+     AND EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'driver_finance'
+         AND table_name = 'driver_liabilities'
+         AND column_name = 'forfeiture_clause_signed_at'
+     )
+     AND EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'driver_finance'
+         AND table_name = 'driver_liabilities'
+         AND column_name = 'spawned_from_event_id'
+     ) THEN
     EXECUTE $VIEW$
       CREATE OR REPLACE VIEW views.liabilities_active_with_context
       WITH (security_invoker = true) AS
@@ -160,7 +189,14 @@ $$;
 
 DO $$
 BEGIN
-  IF to_regclass('driver_finance.driver_liabilities') IS NOT NULL THEN
+  IF to_regclass('driver_finance.driver_liabilities') IS NOT NULL
+     AND EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'driver_finance'
+         AND table_name = 'driver_liabilities'
+         AND column_name = 'acknowledgment_uuid'
+     ) THEN
     EXECUTE $VIEW$
       CREATE OR REPLACE VIEW views.liabilities_dashboard_kpis
       WITH (security_invoker = true) AS

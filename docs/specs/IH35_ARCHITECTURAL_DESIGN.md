@@ -311,7 +311,7 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 ### Top action button
 **+ Log Safety Event**
 
-### Sub-nav tabs (12 — UPDATED with all missing tabs Jorge identified)
+### Sub-nav tabs (15 — V5 locked order)
 
 | Tab | What it shows | Status | Phase |
 |-----|---------------|--------|-------|
@@ -322,10 +322,13 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 | **CSA Score** | FMCSA SAFER cached score + BASIC breakdown | ✅ shipped (cached only — live in Phase 6) |
 | **HOS Violations** | Driver HOS violation log + escalation | ✅ shipped | Phase 3 |
 | **Vehicle Inspections** | DVIR records + roadside inspections + OOS tracking | ✅ shipped | Phase 3 |
-| **Fines** ← MISSING | Driver/company fines log · per-fine status · payment via WF-035 → driver liability | ❌ **GAP — needs T11.10.1** |
-| **Company Violations** ← MISSING | DOT/FMCSA company-level violations · CSA improvement plans · audit prep | ❌ **GAP — needs T11.10.1** |
-| **Integrity Alerts** ← MISSING (T11.6.1 will add) | Theft/collusion anomaly detection (per-unit, per-driver, per-vendor, fleet baselines) | ⏸ Pending T11.6.1 merge |
-| **Liabilities** (cross-link) | Read-only view of `driver_liabilities` filtered to safety-source records | ❌ **GAP** — mirror of /liabilities scoped |
+| **DOT Inspections** | DOT inspection log with OOS auto-spawn WO flow | ✅ shipped in P3-T11.17 |
+| **Civil Fines** | Driver/company civil fines log · convert to liability via WF-035 | ✅ shipped in P3-T11.17 |
+| **Internal Fines** | Office-imposed policy fines with approved→liability conversion | ✅ shipped in P3-T11.17 |
+| **Company Violations** | DOT/FMCSA company-level violations · CSA improvement plans · audit prep | ✅ shipped in P3-T11.17 |
+| **Complaints** | HR/safety complaints workflow with role-restricted access | ✅ shipped in P3-T11.17 |
+| **Liabilities** (cross-link) | Read-only view of `driver_liabilities` filtered to safety-source records | ✅ shipped |
+| **Integrity Alerts** | Theft/collusion anomaly detection (per-unit, per-driver, per-vendor, fleet baselines) | ✅ shipped |
 | **Settings** | CSA targets · Training intervals · Violation thresholds | Owner only |
 
 ### KPI row — 6 cards (UPDATED)

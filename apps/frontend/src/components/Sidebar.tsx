@@ -19,7 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
 import { getArrivingSoon } from "../api/maintenance";
 import { useCompanyContext } from "../contexts/CompanyContext";
-import { colors, spacing } from "../design/tokens";
+import { spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
 
 type SidebarItem = {
@@ -74,7 +74,7 @@ export function Sidebar({ role }: SidebarProps) {
   return (
     <aside
       className="shrink-0 text-white"
-      style={{ width: spacing.sidebarWidth, backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.sidebarBorder}` }}
+      style={{ width: 80, background: "rgb(27, 35, 51)", borderRight: "1px solid rgb(42, 50, 66)" }}
     >
       <div className="flex h-full flex-col items-center gap-1 py-2">
         {visibleItems.map(({ key, label, Icon, to }) => {
@@ -83,13 +83,12 @@ export function Sidebar({ role }: SidebarProps) {
               key={key}
               to={to}
               className={({ isActive }) =>
-                `relative flex w-full flex-col items-center justify-center px-1 py-1 hover:bg-white/5 ${isActive ? "bg-white/10" : ""}`
+                `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive ? "bg-white/10" : ""}`
               }
-              style={{ height: spacing.sidebarItemHeight }}
+              style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
             >
               {({ isActive }) => (
                 <>
-                  {isActive ? <span className="absolute left-0 top-0 h-full" style={{ width: 3, backgroundColor: colors.sidebarActiveBorder }} /> : null}
                   <div className="flex items-center justify-center">
                     <Icon className="h-4 w-4" />
                     {key === "MAINT" && severeBadgeCount > 0 ? (
@@ -100,7 +99,7 @@ export function Sidebar({ role }: SidebarProps) {
                   </div>
                   <span
                     className="mt-1 text-[10px] leading-none uppercase"
-                    style={{ color: isActive ? colors.sidebarTextActive : colors.sidebarTextMuted, letterSpacing: "0.4px" }}
+                    style={{ color: "white", letterSpacing: "0.4px", fontWeight: isActive ? 600 : 400 }}
                   >
                     {label}
                   </span>
