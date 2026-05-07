@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "./auth/useAuth";
 import { Shell } from "./components/Shell";
@@ -54,6 +54,19 @@ function HomeRoute() {
   const auth = useAuth();
   if (!auth.user) return null;
   return <HomePage auth={auth.user} />;
+}
+
+function ComingSoonRoute() {
+  const location = useLocation();
+  const feature = (new URLSearchParams(location.search).get("feature") ?? "").toLowerCase();
+
+  // Defensive hotfix: legacy /coming-soon links for already-shipped modules
+  // should resolve to the live routes.
+  if (feature.includes("lists")) return <Navigate to="/lists" replace />;
+  if (feature.includes("425c") || feature.includes("form 425c")) return <Navigate to="/425c" replace />;
+  if (feature.includes("factoring")) return <Navigate to="/factoring" replace />;
+
+  return <ComingSoonPage />;
 }
 
 export default function App() {
@@ -252,7 +265,7 @@ export default function App() {
           path="/coming-soon"
           element={
             <ProtectedRoute>
-              <ComingSoonPage />
+              <ComingSoonRoute />
             </ProtectedRoute>
           }
         />
