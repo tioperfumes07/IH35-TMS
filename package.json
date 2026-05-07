@@ -71,6 +71,7 @@
     "db:verify:two-section-schema": "node --import tsx scripts/db-verify-two-section-schema.ts",
     "db:verify:wo-bill-auto-create": "node --import tsx scripts/db-verify-wo-bill-auto-create.ts",
     "db:verify:safety-restructure": "node --import tsx scripts/db-verify-safety-restructure.ts",
+    "db:verify:safety-v6-4": "node scripts/db-verify-safety-v6-4.mjs",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
     "r2:verify": "node scripts/r2-verify.mjs"
   },

@@ -80,7 +80,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 
 export async function registerSafetyV5Routes(app: FastifyInstance) {
-  app.get("/api/v1/safety/dot-inspections", async (req, reply) => {
+  app.get("/api/v1/safety/v5/dot-inspections", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -95,7 +95,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     return { inspections };
   });
 
-  app.post("/api/v1/safety/dot-inspections", async (req, reply) => {
+  app.post("/api/v1/safety/v5/dot-inspections", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!validateRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -299,7 +299,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     return { fines };
   });
 
-  app.post("/api/v1/safety/complaints", async (req, reply) => {
+  app.post("/api/v1/safety/v5/complaints", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!validateRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -351,7 +351,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     return reply.code(201).send({ complaint });
   });
 
-  app.get("/api/v1/safety/complaints", async (req, reply) => {
+  app.get("/api/v1/safety/v5/complaints", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!validateRole(user.role)) return reply.code(403).send({ error: "forbidden" });
