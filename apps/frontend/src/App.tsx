@@ -5,7 +5,7 @@ import { Shell } from "./components/Shell";
 import { CompanyProvider } from "./contexts/CompanyContext";
 import { CustomersPage } from "./pages/Customers";
 import { CustomerDetailPage } from "./pages/CustomerDetail";
-import { CatalogsHubPage } from "./pages/CatalogsHubPage";
+import { ListsHubPage } from "./pages/lists/ListsHubPage";
 import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
@@ -220,7 +220,31 @@ export default function App() {
           path="/catalogs"
           element={
             <ProtectedRoute>
-              <CatalogsHubPage />
+              <Navigate to="/lists" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists"
+          element={
+            <ProtectedRoute>
+              <ListsHubPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/:domain"
+          element={
+            <ProtectedRoute>
+              <ComingSoonPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/:domain/:catalogKey"
+          element={
+            <ProtectedRoute>
+              <ComingSoonPage />
             </ProtectedRoute>
           }
         />
@@ -234,7 +258,6 @@ export default function App() {
         />
         {[
           ["/accounting", "Accounting", "5", "Post-launch"],
-          ["/lists", "Lists", "3", "T11.14 this week"],
           ["/reports", "Reports", "3", "T11.16 next week"],
           ["/driver-app", "Driver App", "3", "T11.15 next week"],
         ].map(([path, feature, phase, eta]) => (

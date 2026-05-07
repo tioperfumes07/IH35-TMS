@@ -42,7 +42,7 @@ const ITEMS: SidebarItem[] = [
   { key: "DISPATCH", label: "DISPATCH", Icon: Truck, to: "/dispatch" },
   { key: "VENDORS", label: "VENDORS", Icon: Building2, to: "/vendors" },
   { key: "DOCUMENTS", label: "DOCS", Icon: FileText, to: "/documents", visibleRoles: ["Owner", "Administrator"] },
-  { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/catalogs" },
+  { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/lists" },
   { key: "REPORTS", label: "REPORTS", Icon: ClipboardList, to: "/reports" },
   { key: "425C", label: "425C", Icon: SquareStack, to: "/425c" },
   { key: "DRV_APP", label: "DRV APP", Icon: Activity, to: "/driver-app" },
