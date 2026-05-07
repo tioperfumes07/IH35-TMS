@@ -53,7 +53,8 @@
     "db:verify:dispatch-board": "tsx scripts/db-verify-dispatch-board.ts",
     "db:verify:phase1-gate": "node scripts/db-verify-phase1-gate.mjs",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
-    "r2:verify": "node scripts/r2-verify.mjs"
+    "r2:verify": "node scripts/r2-verify.mjs",
+    "verify:arch-design": "tsx scripts/verify-architectural-design.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

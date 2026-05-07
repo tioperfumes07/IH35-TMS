@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify architectural design alignment
+        run: npm run verify:arch-design
+
       - name: Typecheck
         run: npm run typecheck
 
