@@ -1,28 +1,20 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  getCompanyViolations,
-  getDrugAlcoholTests,
-  getIntegrityAlerts,
-  getLatestCsa,
-  getSafetyAccidents,
-  getSafetyEvents,
-  getSafetyFines,
-  getSafetyKpis,
-  getTrainingCompletions,
-} from "../../api/safety";
+import { getDrugAlcoholTests, getLatestCsa, getSafetyAccidents, getSafetyEvents, getSafetyKpis, getTrainingCompletions } from "../../api/safety";
+import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { CompanyViolationsPage } from "./CompanyViolationsPage";
+import { ComplaintsPage } from "./ComplaintsPage";
+import { DotInspectionsPage } from "./DotInspectionsPage";
+import { FinesPage } from "./FinesPage";
+import { InternalFinesPage } from "./InternalFinesPage";
 import { AccidentReportDrawer } from "./components/AccidentReportDrawer";
 import { CSAScoreCard } from "./components/CSAScoreCard";
 import { DrugAlcoholTable } from "./components/DrugAlcoholTable";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { SafetyKpiRow } from "./components/SafetyKpiRow";
 import { TrainingTable } from "./components/TrainingTable";
-import { FinesPage } from "./FinesPage";
-import { CompanyViolationsPage } from "./CompanyViolationsPage";
-import { IntegrityAlertsPage } from "./IntegrityAlertsPage";
-import { SafetySettingsPage } from "./SafetySettingsPage";
 
 const SAFETY_SUBNAV = [
   "Events",
@@ -32,9 +24,12 @@ const SAFETY_SUBNAV = [
   "CSA Score",
   "HOS Violations",
   "Vehicle Inspections",
-  "Liabilities",
-  "Fines",
+  "DOT Inspections",
+  "Civil Fines",
+  "Internal Fines",
   "Company Violations",
+  "Complaints",
+  "Liabilities",
   "Integrity Alerts",
   "Settings",
 ] as const;
@@ -42,9 +37,12 @@ const SAFETY_SUBNAV = [
 type SafetyTab = (typeof SAFETY_SUBNAV)[number];
 
 export function SafetyHomePage() {
+  const auth = useAuth();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
+  const canViewComplaintsTab = ["Owner", "Administrator", "Safety"].includes(String(auth.user?.role ?? ""));
+  const safetyTabs = canViewComplaintsTab ? SAFETY_SUBNAV : SAFETY_SUBNAV.filter((item) => item !== "Complaints");
   const [tab, setTab] = useState<SafetyTab>("Events");
   const [selectedAccident, setSelectedAccident] = useState<Record<string, unknown> | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -79,21 +77,6 @@ export function SafetyHomePage() {
     queryFn: () => getLatestCsa(companyId),
     enabled: Boolean(companyId),
   });
-  const finesQuery = useQuery({
-    queryKey: ["safety", "fines", companyId],
-    queryFn: () => getSafetyFines(companyId, { status: "open" }),
-    enabled: Boolean(companyId),
-  });
-  const companyViolationsQuery = useQuery({
-    queryKey: ["safety", "company-violations", companyId],
-    queryFn: () => getCompanyViolations(companyId),
-    enabled: Boolean(companyId),
-  });
-  const integrityAlertsQuery = useQuery({
-    queryKey: ["safety", "integrity-alerts", companyId],
-    queryFn: () => getIntegrityAlerts(companyId, { severity: "critical" }),
-    enabled: Boolean(companyId),
-  });
 
   const eventRows = useMemo(() => {
     if (tab === "Accident Reports") return accidentsQuery.data?.accidents ?? [];
@@ -106,7 +89,7 @@ export function SafetyHomePage() {
 
       <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
-          {SAFETY_SUBNAV.map((item) => (
+          {safetyTabs.map((item) => (
             <button
               key={item}
               type="button"
@@ -119,19 +102,7 @@ export function SafetyHomePage() {
         </div>
       </div>
 
-      <SafetyKpiRow
-        kpis={{
-          ...(kpisQuery.data ?? {}),
-          drivers_with_open_fines: finesQuery.data?.fines?.length ?? 0,
-          open_company_violations: (companyViolationsQuery.data?.company_violations ?? []).filter(
-            (row) => String(row.status ?? "open") !== "closed"
-          ).length,
-          critical_integrity_alerts: integrityAlertsQuery.data?.integrity_alerts?.length ?? 0,
-          pending_acknowledgments: (integrityAlertsQuery.data?.integrity_alerts ?? []).filter(
-            (row) => !row.acknowledged_at
-          ).length,
-        }}
-      />
+      <SafetyKpiRow kpis={kpisQuery.data} />
 
       {tab === "Training" ? (
         <TrainingTable rows={trainingQuery.data?.training_completions ?? []} />
@@ -139,24 +110,30 @@ export function SafetyHomePage() {
         <DrugAlcoholTable rows={testsQuery.data?.tests ?? []} />
       ) : tab === "CSA Score" ? (
         <CSAScoreCard latest={csaQuery.data?.latest} />
-      ) : tab === "Fines" ? (
+      ) : tab === "DOT Inspections" ? (
+        <DotInspectionsPage operatingCompanyId={companyId} />
+      ) : tab === "Civil Fines" ? (
         <FinesPage operatingCompanyId={companyId} />
+      ) : tab === "Internal Fines" ? (
+        <InternalFinesPage operatingCompanyId={companyId} />
       ) : tab === "Company Violations" ? (
         <CompanyViolationsPage operatingCompanyId={companyId} />
-      ) : tab === "Integrity Alerts" ? (
-        <IntegrityAlertsPage operatingCompanyId={companyId} />
-      ) : tab === "Settings" ? (
-        <SafetySettingsPage operatingCompanyId={companyId} />
+      ) : tab === "Complaints" ? (
+        <ComplaintsPage operatingCompanyId={companyId} role={auth.user?.role} />
       ) : (
-        <SafetyEventsTable
-          rows={eventRows}
-          onOpenAccident={(row) => {
-            setSelectedAccident(row);
-            if (String(row.event_type ?? "").toLowerCase().includes("accident") || tab === "Accident Reports") {
-              setDrawerOpen(true);
-            }
-          }}
-        />
+        tab === "HOS Violations" || tab === "Vehicle Inspections" || tab === "Liabilities" || tab === "Integrity Alerts" || tab === "Settings" ? (
+          <div className="rounded border border-gray-200 bg-white px-3 py-8 text-center text-sm text-gray-500">This tab is available in v5 shell and will be expanded with dedicated workflows.</div>
+        ) : (
+          <SafetyEventsTable
+            rows={eventRows}
+            onOpenAccident={(row) => {
+              setSelectedAccident(row);
+              if (String(row.event_type ?? "").toLowerCase().includes("accident") || tab === "Accident Reports") {
+                setDrawerOpen(true);
+              }
+            }}
+          />
+        )
       )}
 
       <AccidentReportDrawer

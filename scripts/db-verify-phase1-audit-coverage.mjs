@@ -116,6 +116,20 @@ const EVENT_CLASSES = [
   "outbox.event.failed",
   "catalogs.fmcsa_lookup.executed",
   "mdata.customer.fmcsa_verified",
+  "maintenance.wo.section_a_line_added",
+  "maintenance.wo.section_b_line_added",
+  "maintenance.wo.parts_subrow_added",
+  "maintenance.wo.part_location_set",
+  "maintenance.wo.in_house_allocated",
+  "accounting.bill.auto_created_from_wo",
+  "accounting.expense.auto_created_from_wo",
+  "safety.dot_inspection.created",
+  "safety.dot_inspection.spawned_wo",
+  "safety.internal_fine.created",
+  "safety.internal_fine.converted_to_liability",
+  "safety.complaint.created",
+  "safety.complaint.resolved",
+  "safety.company_violation.repurposed",
 ];
 
 const WARNING_EVENTS = new Set([
@@ -132,6 +146,11 @@ const WARNING_EVENTS = new Set([
   "docs.files.soft_deleted",
   "outbox.event.retried",
   "outbox.event.failed",
+  "safety.dot_inspection.spawned_wo",
+  "safety.internal_fine.converted_to_liability",
+  "safety.complaint.created",
+  "safety.complaint.resolved",
+  "safety.company_violation.repurposed",
 ]);
 
 async function runWithBypass(client, fn) {

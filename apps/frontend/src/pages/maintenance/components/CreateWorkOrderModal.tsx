@@ -1,10 +1,11 @@
 import { useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { createWorkOrder, type PaymentTiming, type WorkOrderType } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
+import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
-import { CreateWOSectionCostBreakdown } from "./CreateWOSectionCostBreakdown";
 import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
 import { CreateWOSectionPaymentTiming } from "./CreateWOSectionPaymentTiming";
 import { CreateWOSectionValidation } from "./CreateWOSectionValidation";
@@ -55,6 +56,7 @@ const typeTabs: Array<{ id: WorkOrderType; label: string; danger?: boolean }> = 
 
 export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "pm", initialValues, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
+  const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const form = useForm<CreateWOFormValues>({
     defaultValues: {
       wo_type: initialType,
@@ -75,7 +77,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       bill_terms: "net_30",
       bill_date: new Date().toISOString().slice(0, 10),
       due_date: "",
-      line_items: [{ line_type: "parts", description: "", quantity: 1, unit_cost: 0, amount: 0 }],
+      line_items: [],
       ...initialValues,
     },
   });
@@ -87,6 +89,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       wo_type: initialType,
       ...initialValues,
     });
+    setLines([]);
   }, [form, initialType, initialValues, open]);
 
   const selectedType = form.watch("wo_type");
@@ -104,6 +107,37 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     { label: "At least one cost line item", ok: (form.watch("line_items") ?? []).length > 0 },
   ];
 
+  const sectionALines = lines
+    .filter((line) => line.section === "A")
+    .map((line) => ({
+      description: line.description,
+      quantity: Number(line.quantity || 0),
+      amount: Number(line.unit_cost || 0),
+      expense_category_uuid: line.expense_category_uuid || "",
+    }))
+    .filter((line) => line.expense_category_uuid);
+
+  const sectionBLines = lines
+    .filter((line) => line.section === "B")
+    .map((line) => ({
+      description: line.description,
+      quantity: Number(line.quantity || 0),
+      unit_cost: Number(line.unit_cost || 0),
+      amount: Number(line.amount || 0),
+      service_item_uuid: line.service_item_uuid || "",
+      sub_rows: (line.sub_rows ?? []).map((row) => ({
+        line_type: row.line_type,
+        description: row.description,
+        quantity: Number(row.quantity || 0),
+        unit_cost: Number(row.unit_cost || 0),
+        amount: Number(row.amount || 0),
+        part_uuid: row.part_uuid,
+        labor_rate_uuid: row.labor_rate_uuid,
+        part_location_codes: row.part_location_codes ?? [],
+      })),
+    }))
+    .filter((line) => line.service_item_uuid);
+
   const submit = async (mode: "full" | "wo_only") => {
     const values = form.getValues();
     if (mode === "wo_only" && values.payment_timing !== "in_house") {
@@ -111,28 +145,37 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       return;
     }
     try {
-      await createWorkOrder({
-        operating_company_id: operatingCompanyId,
-        wo_type: values.wo_type,
-        source_type: values.source_type,
-        unit_id: values.unit_id,
-        driver_id: values.driver_id || undefined,
-        load_id: values.load_id || undefined,
-        service_date: values.service_date || undefined,
-        repair_location: values.repair_location,
-        vendor_id: values.vendor_id || undefined,
-        vendor_invoice_number: values.vendor_invoice_number || undefined,
-        external_vendor_id: values.external_vendor_id || undefined,
-        external_vendor_wo_number: values.external_vendor_wo_number || undefined,
-        external_vendor_invoice_number: values.external_vendor_invoice_number || undefined,
-        description: values.description,
-        payment_timing: mode === "wo_only" ? "in_house" : values.payment_timing,
-        bill_terms: values.bill_terms || undefined,
-        bill_date: values.bill_date || undefined,
-        due_date: values.due_date || undefined,
-        line_items: values.line_items,
+      const response = await createWorkOrder({
+        header: {
+          operating_company_id: operatingCompanyId,
+          wo_type: values.wo_type,
+          source_type: values.source_type,
+          unit_id: values.unit_id,
+          driver_id: values.driver_id || undefined,
+          load_id: values.load_id || undefined,
+          service_date: values.service_date || undefined,
+          repair_location: values.repair_location,
+          vendor_id: values.vendor_id || undefined,
+          vendor_invoice_number: values.vendor_invoice_number || undefined,
+          external_vendor_id: values.external_vendor_id || undefined,
+          external_vendor_wo_number: values.external_vendor_wo_number || undefined,
+          external_vendor_invoice_number: values.external_vendor_invoice_number || undefined,
+          description: values.description,
+          payment_timing: mode === "wo_only" ? "in_house" : values.payment_timing,
+          bill_terms: values.bill_terms || undefined,
+          bill_date: values.bill_date || undefined,
+          due_date: values.due_date || undefined,
+        },
+        sectionA: sectionALines,
+        sectionB: sectionBLines,
       });
-      pushToast("Work order created", "success");
+      if ((response as { bill?: { uuid?: string } }).bill?.uuid) {
+        pushToast("Work order created. Bill auto-created (Open Bill).", "success");
+      } else if ((response as { expense?: { uuid?: string } }).expense?.uuid) {
+        pushToast("Work order created. Expense auto-created (Open Expense).", "success");
+      } else {
+        pushToast("Work order created", "success");
+      }
       onCreated();
       onClose();
     } catch (error) {
@@ -163,7 +206,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
         <CreateWOSectionIdentification register={form.register} watch={form.watch} />
         <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} />
-        <CreateWOSectionCostBreakdown control={form.control} register={form.register} watch={form.watch} />
+        <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+          Class auto-derive: <span className="font-semibold">{form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`}</span>
+        </div>
+        <TwoSectionLineEditor mode="wo" initialLines={[]} onChange={setLines} />
         <CreateWOSectionValidation checks={checks} />
 
         <div className="flex items-center justify-between">

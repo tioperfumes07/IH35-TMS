@@ -3,6 +3,12 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
+import {
+  allocateInHouseFromWO,
+  autoCreateBillFromWO,
+  autoCreateExpenseFromWO,
+  createWorkOrderWithLines,
+} from "./two-section-service.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
 const workOrderTypeSchema = z.enum(["pm", "repair", "tire", "accident"]);
@@ -52,6 +58,61 @@ const createWorkOrderSchema = z.object({
       amount: z.number().min(0),
     })
   ).default([]),
+});
+
+const sectionALineSchema = z.object({
+  description: z.string().trim().min(1).max(500),
+  quantity: z.number().min(0).default(1),
+  amount: z.number().min(0),
+  expense_category_uuid: z.string().uuid(),
+});
+
+const sectionBSubRowSchema = z.object({
+  line_type: z.enum(["parts", "labor"]),
+  description: z.string().trim().min(1).max(500),
+  quantity: z.number().min(0),
+  unit_cost: z.number().min(0),
+  amount: z.number().min(0),
+  part_uuid: z.string().uuid().optional(),
+  labor_rate_uuid: z.string().uuid().optional(),
+  part_location_codes: z.array(z.string()).optional(),
+});
+
+const sectionBLineSchema = z.object({
+  description: z.string().trim().min(1).max(500),
+  quantity: z.number().min(0).default(1),
+  unit_cost: z.number().min(0),
+  amount: z.number().min(0),
+  service_item_uuid: z.string().uuid(),
+  sub_rows: z.array(sectionBSubRowSchema).default([]),
+});
+
+const createWorkOrderV5Schema = z.object({
+  header: z.object({
+    operating_company_id: z.string().uuid(),
+    wo_type: workOrderTypeSchema,
+    source_type: z.enum(["IS", "ES", "AC", "ET", "RT", "IT", "RS"]),
+    status: workOrderStatusSchema.default("open"),
+    unit_id: z.string().uuid(),
+    driver_id: z.string().uuid().optional(),
+    load_id: z.string().uuid().optional(),
+    service_date: z.string().optional(),
+    repair_location: z.string().default("in_house"),
+    vendor_id: z.string().uuid().optional(),
+    vendor_invoice_number: z.string().trim().max(120).optional(),
+    external_vendor_id: z.string().uuid().optional(),
+    external_vendor_wo_number: z.string().trim().max(120).optional(),
+    external_vendor_invoice_number: z.string().trim().max(120).optional(),
+    description: z.string().trim().max(2000),
+    severity: z.string().optional(),
+    payment_timing: paymentTimingSchema.default("vendor_invoice"),
+    bill_terms: z.string().optional(),
+    bill_date: z.string().optional(),
+    due_date: z.string().optional(),
+    payment_account_uuid: z.string().uuid().optional(),
+  }),
+  sectionA: z.array(sectionALineSchema).default([]),
+  sectionB: z.array(sectionBLineSchema).default([]),
 });
 
 const updateWorkOrderSchema = z.object({
@@ -166,7 +227,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         companyId,
       ]);
       if (wo.rowCount === 0) return null;
-      const lines = await client.query(`SELECT * FROM maintenance.wo_line_items WHERE work_order_id = $1 ORDER BY created_at ASC`, [params.data.id]);
+      const lines = await client.query(`SELECT * FROM maintenance.work_order_lines WHERE work_order_id = $1 ORDER BY created_at ASC`, [params.data.id]);
       const history = await client.query(`SELECT * FROM maintenance.wo_status_history WHERE work_order_id = $1 ORDER BY created_at ASC`, [params.data.id]);
       return { ...wo.rows[0], line_items: lines.rows, status_history: history.rows };
     });
@@ -175,9 +236,75 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return detail;
   });
 
+  app.get("/api/v1/maintenance/part-locations", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    const unitClass = String((req.query as Record<string, unknown> | undefined)?.["unit_class"] ?? "").trim();
+    if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
+    const rows = await withCompany(user.uuid, companyId, async (client) => {
+      const values: unknown[] = [companyId];
+      let where = "operating_company_id = $1 AND is_active = true";
+      if (unitClass) {
+        values.push(unitClass);
+        where += ` AND (applies_to = 'both' OR applies_to = $${values.length})`;
+      }
+      const res = await client.query(
+        `
+          SELECT id, location_code, location_name, applies_to, category, display_order
+          FROM catalogs.maintenance_part_locations
+          WHERE ${where}
+          ORDER BY display_order ASC, location_code ASC
+        `,
+        values
+      );
+      return res.rows;
+    });
+    return { rows };
+  });
+
   app.post("/api/v1/maintenance/work-orders", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
+    const v5Parsed = createWorkOrderV5Schema.safeParse(req.body ?? {});
+    if (v5Parsed.success) {
+      const body = v5Parsed.data;
+      const role = user.role;
+      if (!["Owner", "Administrator", "Manager", "Dispatcher", "Safety"].includes(role)) {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      const result = await withCompany(user.uuid, body.header.operating_company_id, async (client) => {
+        await client.query("BEGIN");
+        try {
+          const created = await createWorkOrderWithLines(client as never, user.uuid, body.header, body.sectionA, body.sectionB);
+          let bill: { uuid: string } | null = null;
+          let expense: { uuid: string } | null = null;
+          if (body.header.payment_timing === "vendor_invoice") {
+            bill = await autoCreateBillFromWO(client as never, user.uuid, created.woUuid);
+          } else if (body.header.payment_timing === "paid_same_day") {
+            expense = await autoCreateExpenseFromWO(
+              client as never,
+              user.uuid,
+              created.woUuid,
+              body.header.payment_account_uuid ?? null
+            );
+          } else {
+            await allocateInHouseFromWO(client as never, user.uuid, created.woUuid);
+          }
+          await client.query("COMMIT");
+          return {
+            wo: { uuid: created.woUuid, display_id: created.display_id },
+            bill: bill ?? undefined,
+            expense: expense ?? undefined,
+          };
+        } catch (error) {
+          await client.query("ROLLBACK");
+          throw error;
+        }
+      });
+      return reply.code(201).send(result);
+    }
+
     const parsed = createWorkOrderSchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const body = parsed.data;
@@ -260,7 +387,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       for (const line of body.line_items) {
         await client.query(
           `
-            INSERT INTO maintenance.wo_line_items (work_order_id, line_type, description, quantity, unit_cost, amount)
+            INSERT INTO maintenance.work_order_lines (work_order_id, line_type, description, quantity, unit_cost, amount)
             VALUES ($1,$2,$3,$4,$5,$6)
           `,
           [wo.id, line.line_type, line.description, line.quantity, line.unit_cost, line.amount]
@@ -523,7 +650,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (wo.rowCount === 0) return undefined;
       const res = await client.query(
         `
-          INSERT INTO maintenance.wo_line_items (work_order_id, line_type, description, quantity, unit_cost, amount)
+          INSERT INTO maintenance.work_order_lines (work_order_id, line_type, description, quantity, unit_cost, amount)
           VALUES ($1,$2,$3,$4,$5,$6)
           RETURNING *
         `,
@@ -548,7 +675,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!(await maintenanceReady(client))) return null;
       const res = await client.query(
         `
-          DELETE FROM maintenance.wo_line_items li
+          DELETE FROM maintenance.work_order_lines li
           USING maintenance.work_orders w
           WHERE li.id = $1
             AND li.work_order_id = w.id
