@@ -239,7 +239,7 @@ Sub-nav routes show: "Available after accounting cutover (Phase 5)" — wired in
 | **All Transactions** | Unified ledger across all accounts | Phase 3 ✅ |
 | **BOA Checking** | Bank of America operating account | Phase 3 ✅ |
 | **IBC Checking** | IBC operating account | Phase 3 ✅ |
-| **Factoring (Faro)** | Recourse pipeline · chargebacks · reserve releases · fee statements | T11.12 pending |
+| **Factoring (Faro)** | Entry tab inside Banking that shows thin summary + **navigates to standalone `/factoring`** deep-dive page. `/factoring` sub-tabs: **Recourse Pipeline**, **Chargebacks & Fees**, **Statements & Settings** | T11.12 pending |
 | **Escrow (virtual)** | Per-driver escrow balances | Phase 3 ✅ |
 | **Categorize Drawer** | Uncategorized transactions queue (8 actions) | Phase 3 ✅ |
 | **Reconciliation Workspace** | Match bank txns to GL entries · sign-off | Phase 6 (P6) |

@@ -60,12 +60,14 @@
     "db:verify:integrity-alerts": "node --import tsx scripts/db-verify-integrity-alerts.ts",
     "db:verify:safety-settings": "node --import tsx scripts/db-verify-safety-settings.ts",
     "db:verify:wf-035": "node --import tsx scripts/db-verify-wf-035.ts",
+    "db:verify:factoring": "tsx scripts/db-verify-factoring.ts",
+    "db:verify:factoring-rls": "tsx scripts/db-verify-factoring-rls.ts",
     "db:verify:phase1-gate": "node scripts/db-verify-phase1-gate.mjs",
-    "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
-    "r2:verify": "node scripts/r2-verify.mjs",
     "verify:arch-design": "tsx scripts/verify-architectural-design.ts",
     "db:verify:arriving-soon": "node --import tsx scripts/db-verify-arriving-soon.ts",
-    "db:verify:arriving-soon-rls": "node --import tsx scripts/db-verify-arriving-soon-rls.ts"
+    "db:verify:arriving-soon-rls": "node --import tsx scripts/db-verify-arriving-soon-rls.ts",
+    "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
+    "r2:verify": "node scripts/r2-verify.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
