@@ -64,6 +64,7 @@ try {
   await client.query("SET LOCAL app.bypass_rls = 'lucia'");
   const companyRes = await client.query(`SELECT id FROM org.companies ORDER BY created_at LIMIT 1`);
   companyId = String(companyRes.rows[0]?.id ?? "");
+  await client.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
   const ownerRes = await client.query(
     `INSERT INTO identity.users (email, google_user_id, role, default_company_id) VALUES ($1,$2,'Owner',$3) RETURNING id`,
     [`verify-wf035-owner-${suffix}@example.com`, `verify-wf035-owner-${suffix}`, companyId]
