@@ -26,7 +26,12 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
     },
   });
   const adjustMutation = useMutation({
-    mutationFn: () => (adjustRow ? adjustPartsInventory(adjustRow.id, companyId, { delta_qty: deltaQty, reason }) : Promise.resolve()),
+    mutationFn: () => {
+      if (!adjustRow) {
+        throw new Error("No parts inventory row selected");
+      }
+      return adjustPartsInventory(adjustRow.id, companyId, { delta_qty: deltaQty, reason });
+    },
     onSuccess: async () => {
       setAdjustRow(null);
       setDeltaQty(0);

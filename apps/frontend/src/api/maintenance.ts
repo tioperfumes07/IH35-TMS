@@ -87,6 +87,20 @@ export type InTransitIssue = {
   hours_since_report: number;
 };
 
+export type PartsInventoryRow = {
+  id: string;
+  operating_company_id: string;
+  part_description: string;
+  vendor_id: string | null;
+  last_purchase_invoice_number: string | null;
+  last_purchase_amount: number | null;
+  last_purchase_date: string | null;
+  on_hand_qty: number;
+  location: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type CreateWorkOrderPayload = {
   operating_company_id: string;
   wo_type: WorkOrderType;
@@ -264,4 +278,46 @@ export function logArrivingSoonView(companyId: string) {
   return apiRequest<{ ok: boolean }>(`/api/v1/maintenance/arriving-soon/audit-view?${query(companyId)}`, {
     method: "POST",
   });
+}
+
+export function listPartsInventory(operatingCompanyId: string) {
+  return apiRequest<{ rows: PartsInventoryRow[] }>(
+    `/api/v1/maintenance/parts-inventory?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  ).then((result) => result.rows);
+}
+
+export function adjustPartsInventory(
+  rowId: string,
+  operatingCompanyId: string,
+  body: { delta_qty: number; reason: "used" | "discarded" | "shrinkage" | "recount" }
+) {
+  return apiRequest<PartsInventoryRow>(
+    `/api/v1/maintenance/parts-inventory/${encodeURIComponent(rowId)}/adjust?operating_company_id=${encodeURIComponent(
+      operatingCompanyId
+    )}`,
+    {
+      method: "PATCH",
+      body,
+    }
+  );
+}
+
+export function recordPartsPurchase(
+  operatingCompanyId: string,
+  body: {
+    part_description: string;
+    qty_received: number;
+    vendor_id?: string;
+    vendor_invoice_number?: string;
+    purchase_amount?: number;
+    location?: string;
+  }
+) {
+  return apiRequest<PartsInventoryRow>(
+    `/api/v1/maintenance/parts-inventory/purchases?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    {
+      method: "POST",
+      body,
+    }
+  );
 }

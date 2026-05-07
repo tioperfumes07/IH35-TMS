@@ -52,6 +52,7 @@ export type CustomerType = "broker" | "direct_shipper";
 
 export type Driver = {
   id: string;
+  operating_company_id: string;
   identity_user_id: string | null;
   first_name: string;
   last_name: string;
