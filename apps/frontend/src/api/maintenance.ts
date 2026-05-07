@@ -3,7 +3,6 @@ import { apiRequest } from "./client";
 export type WorkOrderType = "pm" | "repair" | "tire" | "accident";
 export type WorkOrderStatus = "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
 export type PaymentTiming = "in_house" | "paid_same_day" | "vendor_invoice";
-export type WorkOrderSourceType = "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
 
 export type MaintenanceKpis = {
   open_wos: number;
@@ -23,20 +22,53 @@ export type MaintenanceKpis = {
 export type WorkOrder = {
   id: string;
   display_id?: string | null;
-  legacy_display_id?: string | null;
-  v5_suffix?: string | null;
   operating_company_id?: string;
   wo_type: WorkOrderType;
-  source_type?: WorkOrderSourceType;
   status: WorkOrderStatus;
   unit_id: string;
   driver_id?: string | null;
   load_id?: string | null;
   repair_location?: string | null;
   description?: string | null;
+  source_type?: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS" | null;
+  external_vendor_id?: string | null;
+  external_vendor_wo_number?: string | null;
+  external_vendor_invoice_number?: string | null;
   severity?: string | null;
   opened_at?: string | null;
   updated_at?: string | null;
+};
+
+export type ArrivingSoonCard = {
+  load_id: string;
+  load_display_id: string;
+  load_status: string;
+  unit_id: string;
+  unit_number: string;
+  driver_id: string | null;
+  driver_name: string | null;
+  final_dest_name: string | null;
+  final_dest_city: string | null;
+  final_dest_state: string | null;
+  final_dest_is_yard: boolean;
+  predicted_yard_arrival_at: string | null;
+  hours_until_yard_arrival: number | null;
+  already_arrived: boolean;
+  eta_confidence: string | null;
+  issues: Array<{
+    issue_id: string;
+    issue_type: string;
+    severity: "info" | "warning" | "severe" | string;
+    description: string;
+    reported_at: string;
+    reported_lat?: number | null;
+    reported_lon?: number | null;
+  }>;
+  severe_count: number;
+  warning_count: number;
+  info_count: number;
+  total_open_issues: number;
+  suggested_wo_source_type: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
 };
 
 export type InTransitIssue = {
@@ -58,7 +90,6 @@ export type InTransitIssue = {
 export type CreateWorkOrderPayload = {
   operating_company_id: string;
   wo_type: WorkOrderType;
-  source_type: WorkOrderSourceType;
   status?: WorkOrderStatus;
   unit_id: string;
   driver_id?: string;
@@ -67,14 +98,12 @@ export type CreateWorkOrderPayload = {
   repair_location: string;
   vendor_id?: string;
   vendor_invoice_number?: string;
-  description: string;
-  severity?: string;
+  source_type?: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
   external_vendor_id?: string;
   external_vendor_wo_number?: string;
   external_vendor_invoice_number?: string;
-  external_vendor_invoice_amount?: number;
-  external_vendor_invoice_doc_id?: string;
-  labor_only_no_parts?: boolean;
+  description: string;
+  severity?: string;
   payment_timing: PaymentTiming;
   bill_terms?: string;
   bill_date?: string;
@@ -86,33 +115,6 @@ export type CreateWorkOrderPayload = {
     unit_cost: number;
     amount: number;
   }>;
-};
-
-export type PartsInventoryRow = {
-  id: string;
-  part_description: string;
-  vendor_id?: string | null;
-  last_purchase_invoice_number?: string | null;
-  last_purchase_amount?: number | null;
-  last_purchase_date?: string | null;
-  on_hand_qty: number;
-  location?: string | null;
-  operating_company_id: string;
-  created_at?: string;
-  updated_at?: string;
-};
-
-export type PartsInvoiceLink = {
-  id: string;
-  work_order_id: string;
-  vendor_id: string;
-  vendor_invoice_number: string;
-  vendor_invoice_amount: number;
-  qty_used: number;
-  part_description: string;
-  parts_inventory_id?: string | null;
-  operating_company_id: string;
-  created_at?: string;
 };
 
 function query(companyId: string) {
@@ -151,12 +153,45 @@ export function listWorkOrders(companyId: string) {
   return apiRequest<{ work_orders: WorkOrder[]; total_count: number }>(`/api/v1/maintenance/work-orders?${query(companyId)}`);
 }
 
+export function listWorkOrdersFiltered(
+  companyId: string,
+  params: { source_type?: string; external_vendor_id?: string; status?: string } = {}
+) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (params.source_type) qs.set("source_type", params.source_type);
+  if (params.external_vendor_id) qs.set("external_vendor_id", params.external_vendor_id);
+  if (params.status) qs.set("status", params.status);
+  return apiRequest<{ work_orders: WorkOrder[]; total_count: number }>(`/api/v1/maintenance/work-orders?${qs.toString()}`);
+}
+
 export function getWorkOrder(id: string, companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/work-orders/${id}?${query(companyId)}`);
 }
 
 export function createWorkOrder(payload: CreateWorkOrderPayload) {
   return apiRequest<WorkOrder>("/api/v1/maintenance/work-orders", { method: "POST", body: payload });
+}
+
+export function updateWorkOrder(
+  id: string,
+  companyId: string,
+  payload: {
+    external_vendor_id?: string | null;
+    external_vendor_wo_number?: string | null;
+    external_vendor_invoice_number?: string | null;
+    description?: string;
+  }
+) {
+  return apiRequest<WorkOrder>(`/api/v1/maintenance/work-orders/${id}?${query(companyId)}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function completeWorkOrder(id: string, companyId: string) {
+  return apiRequest<{ ok: boolean; work_order?: WorkOrder }>(`/api/v1/maintenance/work-orders/${id}/complete?${query(companyId)}`, {
+    method: "PATCH",
+  });
 }
 
 export function transitionWorkOrder(
@@ -168,87 +203,6 @@ export function transitionWorkOrder(
     method: "PATCH",
     body: payload,
   });
-}
-
-export function updateWorkOrder(id: string, companyId: string, payload: Record<string, unknown>) {
-  return apiRequest<WorkOrder>(`/api/v1/maintenance/work-orders/${id}?${query(companyId)}`, {
-    method: "PATCH",
-    body: payload,
-  });
-}
-
-export function completeWorkOrder(id: string, companyId: string) {
-  return apiRequest<WorkOrder>(`/api/v1/maintenance/work-orders/${id}/complete?${query(companyId)}`, {
-    method: "POST",
-  });
-}
-
-export function addPartsInvoiceLink(
-  workOrderId: string,
-  companyId: string,
-  payload: {
-    vendor_id: string;
-    vendor_invoice_number: string;
-    vendor_invoice_amount: number;
-    qty_used: number;
-    part_description: string;
-    parts_inventory_id?: string;
-  }
-) {
-  return apiRequest<{ link: PartsInvoiceLink; display_id: string | null }>(
-    `/api/v1/maintenance/work-orders/${workOrderId}/parts-invoice-links?${query(companyId)}`,
-    { method: "POST", body: payload }
-  );
-}
-
-export function removePartsInvoiceLink(id: string, companyId: string) {
-  return apiRequest<void>(`/api/v1/maintenance/parts-invoice-links/${id}?${query(companyId)}`, {
-    method: "DELETE",
-  });
-}
-
-export function listPartsInventory(companyId: string) {
-  return apiRequest<{ rows: PartsInventoryRow[] }>(`/api/v1/maintenance/parts-inventory?${query(companyId)}`);
-}
-
-export function recordPartsPurchase(
-  companyId: string,
-  payload: {
-    part_description: string;
-    vendor_id?: string;
-    vendor_invoice_number?: string;
-    purchase_amount?: number;
-    qty_received: number;
-    location?: string;
-  }
-) {
-  return apiRequest<PartsInventoryRow>(`/api/v1/maintenance/parts-inventory/purchases?${query(companyId)}`, {
-    method: "POST",
-    body: payload,
-  });
-}
-
-export function adjustPartsInventory(id: string, companyId: string, payload: { delta_qty: number; reason: "used" | "discarded" | "shrinkage" | "recount" }) {
-  return apiRequest<PartsInventoryRow>(`/api/v1/maintenance/parts-inventory/${id}/adjust?${query(companyId)}`, {
-    method: "PATCH",
-    body: payload,
-  });
-}
-
-export function getIntegrityUnitHistory(companyId: string) {
-  return apiRequest<{ rows: Array<Record<string, unknown>> }>(`/api/v1/maintenance/integrity/unit-history?${query(companyId)}`);
-}
-
-export function getIntegrityDriverHistory(companyId: string) {
-  return apiRequest<{ rows: Array<Record<string, unknown>> }>(`/api/v1/maintenance/integrity/driver-history?${query(companyId)}`);
-}
-
-export function getIntegrityVendorHistory(companyId: string) {
-  return apiRequest<{ rows: Array<Record<string, unknown>> }>(`/api/v1/maintenance/integrity/vendor-history?${query(companyId)}`);
-}
-
-export function getIntegrityFleetBaselines(companyId: string) {
-  return apiRequest<{ rows: Array<Record<string, unknown>> }>(`/api/v1/maintenance/integrity/fleet-baselines?${query(companyId)}`);
 }
 
 export function convertInTransitIssueToWo(
@@ -274,4 +228,40 @@ export function convertInTransitIssueToDamage(
       body: payload,
     }
   );
+}
+
+export function getArrivingSoon(params: {
+  operating_company_id: string;
+  within_hours?: number;
+  include_already_arrived?: boolean;
+  include_non_yard_destination?: boolean;
+  severity_min?: "info" | "warning" | "severe";
+}) {
+  const qs = new URLSearchParams();
+  qs.set("operating_company_id", params.operating_company_id);
+  if (params.within_hours != null) qs.set("within_hours", String(params.within_hours));
+  if (params.include_already_arrived != null) qs.set("include_already_arrived", String(params.include_already_arrived));
+  if (params.include_non_yard_destination != null) qs.set("include_non_yard_destination", String(params.include_non_yard_destination));
+  if (params.severity_min) qs.set("severity_min", params.severity_min);
+  return apiRequest<{ cards: ArrivingSoonCard[]; counts: Record<string, number> }>(`/api/v1/maintenance/arriving-soon?${qs.toString()}`);
+}
+
+export function convertIssueToWo(
+  loadId: string,
+  companyId: string,
+  payload: { issue_id: string; wo_source_type: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS"; additional_notes?: string }
+) {
+  return apiRequest<{ wo: WorkOrder; issue_updated: Record<string, unknown>; unit_blocked: boolean }>(
+    `/api/v1/maintenance/arriving-soon/${loadId}/convert-issue-to-wo?${query(companyId)}`,
+    {
+      method: "POST",
+      body: payload,
+    }
+  );
+}
+
+export function logArrivingSoonView(companyId: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/maintenance/arriving-soon/audit-view?${query(companyId)}`, {
+    method: "POST",
+  });
 }

@@ -25,10 +25,6 @@ import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deduction
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
 import { registerSafetyRoutes } from "./safety/safety.routes.js";
-import { registerSafetyFinesRoutes } from "./safety/fines.routes.js";
-import { registerSafetyCompanyViolationsRoutes } from "./safety/company-violations.routes.js";
-import { registerSafetyIntegrityAlertsRoutes } from "./safety/integrity-alerts.routes.js";
-import { registerSafetySettingsRoutes } from "./safety/settings.routes.js";
 import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
 import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
@@ -38,9 +34,7 @@ import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
-import { registerMaintenancePartsInvoiceLinksRoutes } from "./maintenance/parts-invoice-links.routes.js";
-import { registerMaintenancePartsInventoryRoutes } from "./maintenance/parts-inventory.routes.js";
-import { registerMaintenanceIntegrityRoutes } from "./maintenance/integrity.routes.js";
+import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
 import { registerDriverReturningDetectionRoutes } from "./mdata/driver-returning-detection.routes.js";
 import { registerDriverSafetyEventsRoutes } from "./mdata/driver-safety-events.routes.js";
@@ -51,7 +45,6 @@ import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
-import { registerDispatchOverrideAuditRoutes } from "./audit/dispatch-overrides.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -135,10 +128,6 @@ async function main() {
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);
-  await registerSafetyFinesRoutes(app);
-  await registerSafetyCompanyViolationsRoutes(app);
-  await registerSafetyIntegrityAlertsRoutes(app);
-  await registerSafetySettingsRoutes(app);
   await registerLiabilitiesRoutes(app);
   await registerCashAdvancesRoutes(app);
   await registerBankingRoutes(app);
@@ -148,10 +137,7 @@ async function main() {
   await registerMaintenanceWorkOrderRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
-  await registerMaintenancePartsInvoiceLinksRoutes(app);
-  await registerMaintenancePartsInventoryRoutes(app);
-  await registerMaintenanceIntegrityRoutes(app);
-  await registerDispatchOverrideAuditRoutes(app);
+  await registerMaintenanceArrivingSoonRoutes(app);
   await registerCompanyRoutes(app);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";

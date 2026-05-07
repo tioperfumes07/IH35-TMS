@@ -23,10 +23,6 @@ const idParamsSchema = z.object({
 const statusBodySchema = z.object({
   status: z.enum(["open", "under-investigation", "closed-no-fault", "closed-driver-at-fault"]),
 });
-const spawnWoBodySchema = z.object({
-  source_type: z.enum(["AC"]).default("AC"),
-  external_vendor_id: z.string().uuid().optional(),
-});
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -63,99 +59,62 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const settingsRes = await client
-        .query<{ active_window: number; inactive_threshold: number }>(
+      const kpiRes = await client
+        .query(
           `
-            SELECT
-              dashboard_active_window_days AS active_window,
-              dashboard_inactive_threshold_days AS inactive_threshold
-            FROM safety.safety_settings
+            SELECT *
+            FROM views.safety_dashboard_kpis
             WHERE operating_company_id = $1
             LIMIT 1
           `,
           [companyId]
         )
-        .catch(() => ({ rows: [{ active_window: 10, inactive_threshold: 15 }] }));
-      const activeWindow = Number(settingsRes.rows[0]?.active_window ?? 10);
-
-      const activeDriversRes = await client
-        .query<{ count: number }>(
-          `
-            SELECT COUNT(*)::int AS count
-            FROM mdata.drivers
-            WHERE operating_company_id = $1
-              AND status = 'Active'
-              AND COALESCE(updated_at, created_at, now()) >= now() - ($2::text || ' days')::interval
-          `,
-          [companyId, activeWindow]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
-      const openFinesRes = await client
-        .query<{ count: number }>(
-          `
-            SELECT COUNT(*)::int AS count
-            FROM safety.fines
-            WHERE operating_company_id = $1
-              AND status IN ('open', 'reduced')
-              AND deactivated_at IS NULL
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
-      const openCompanyViolationsRes = await client
-        .query<{ count: number }>(
-          `
-            SELECT COUNT(*)::int AS count
-            FROM safety.company_violations
-            WHERE operating_company_id = $1
-              AND status IN ('open', 'in_progress', 'escalated')
-              AND deactivated_at IS NULL
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
-      const criticalAlertsRes = await client
-        .query<{ count: number }>(
-          `
-            SELECT COUNT(*)::int AS count
-            FROM safety.integrity_alerts
-            WHERE operating_company_id = $1
-              AND severity = 'critical'
-              AND resolution_status IN ('unresolved', 'investigating')
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
-      const pendingAckAlertsRes = await client
-        .query<{ count: number }>(
-          `
-            SELECT COUNT(*)::int AS count
-            FROM safety.integrity_alerts
-            WHERE operating_company_id = $1
-              AND acknowledged_at IS NULL
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
-      const openLiabilitiesRes = await client
+        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+      const pendingAckRes = await client
         .query<{ count: number }>(
           `
             SELECT COUNT(*)::int AS count
             FROM driver_finance.driver_liabilities
             WHERE operating_company_id = $1
-              AND COALESCE(current_balance, 0) > 0
+              AND requires_acknowledgment = true
+              AND acknowledgment_uuid IS NULL
           `,
           [companyId]
         )
         .catch(() => ({ rows: [{ count: 0 }] }));
+      const testsRes = await client
+        .query<{ count: number }>(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM safety.drug_alcohol_tests
+            WHERE operating_company_id = $1
+              AND test_date >= date_trunc('year', now())
+          `,
+          [companyId]
+        )
+        .catch(() => ({ rows: [{ count: 0 }] }));
+      const csaRes = await client
+        .query<{ score: number }>(
+          `
+            SELECT COALESCE(score_total, 0)::numeric AS score
+            FROM safety.csa_scores_cache
+            WHERE operating_company_id = $1
+            ORDER BY cached_at DESC
+            LIMIT 1
+          `,
+          [companyId]
+        )
+        .catch(() => ({ rows: [{ score: 0 }] }));
       return {
-        operating_company_id: companyId,
-        active_drivers: Number(activeDriversRes.rows[0]?.count ?? 0),
-        drivers_with_open_fines: Number(openFinesRes.rows[0]?.count ?? 0),
-        open_company_violations: Number(openCompanyViolationsRes.rows[0]?.count ?? 0),
-        critical_integrity_alerts: Number(criticalAlertsRes.rows[0]?.count ?? 0),
-        pending_acknowledgments: Number(pendingAckAlertsRes.rows[0]?.count ?? 0),
-        open_liabilities: Number(openLiabilitiesRes.rows[0]?.count ?? 0),
+        ...(kpiRes.rows[0] ?? {
+          operating_company_id: companyId,
+          open_events: 0,
+          mtd_violations: 0,
+          training_due_30d: 0,
+        }),
+        pending_acks: Number(pendingAckRes.rows[0]?.count ?? 0),
+        da_tests_ytd: Number(testsRes.rows[0]?.count ?? 0),
+        csa_score_latest: Number(csaRes.rows[0]?.score ?? 0),
       };
     });
     return payload;
@@ -431,49 +390,87 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     if (!params.success) return sendValidationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const body = spawnWoBodySchema.safeParse(req.body ?? {});
-    if (!body.success) return sendValidationError(reply, body.error);
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const accRes = await client.query(
-        `SELECT * FROM safety.accident_reports WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+      const accidentRes = await client.query(
+        `
+          SELECT *
+          FROM safety.accident_reports
+          WHERE id = $1
+            AND operating_company_id = $2
+          LIMIT 1
+        `,
         [params.data.id, query.data.operating_company_id]
       );
-      const accident = accRes.rows[0] as Record<string, unknown> | undefined;
-      if (!accident) return { notFound: true as const };
-      const seqRes = await client.query(
-        `SELECT display_id, sequence FROM maintenance.next_wo_display_id($1, $2, now()::date, $3)`,
-        [accident.unit_id, body.data.source_type, query.data.operating_company_id]
+      const accident = accidentRes.rows[0];
+      if (!accident) return null;
+
+      const displayRes = await client.query<{ display_id: string; sequence: number }>(
+        `
+          SELECT display_id, sequence
+          FROM maintenance.next_wo_display_id($1, 'AC', CURRENT_DATE, $2)
+        `,
+        [accident.unit_id, query.data.operating_company_id]
       );
-      const next = seqRes.rows[0] as { display_id: string; sequence: number } | undefined;
-      if (!next) return { notFound: true as const };
+      const display = displayRes.rows[0];
+
       const woRes = await client.query(
         `
           INSERT INTO maintenance.work_orders (
-            operating_company_id, wo_type, status, unit_id, driver_id, opened_at, repair_location, description,
-            source_type, unit_sequence, display_id, v5_suffix, external_vendor_id
+            operating_company_id,
+            wo_type,
+            source_type,
+            status,
+            unit_id,
+            driver_id,
+            opened_at,
+            repair_location,
+            description,
+            severity,
+            display_id,
+            unit_sequence
           )
-          VALUES ($1,'accident','open',$2,$3,now(),'external_shop',$4,$5,$6,$7,'PEND0',$8)
+          VALUES (
+            $1,
+            'accident',
+            'AC',
+            'open',
+            $2,
+            $3,
+            now(),
+            'external_shop',
+            $4,
+            'severe',
+            $5,
+            $6
+          )
           RETURNING id, display_id
         `,
         [
           query.data.operating_company_id,
           accident.unit_id,
           accident.driver_id ?? null,
-          accident.description ?? "Accident spawned work order",
-          body.data.source_type,
-          next.sequence,
-          next.display_id,
-          body.data.external_vendor_id ?? null,
+          `Auto-created from accident report ${params.data.id}. Fill external vendor WO/invoice fields before completion.`,
+          display?.display_id ?? null,
+          Number(display?.sequence ?? 0) || null,
         ]
       );
-      const workOrder = woRes.rows[0] as { id: string; display_id: string } | undefined;
-      if (workOrder) {
-        await client.query(
-          `UPDATE safety.accident_reports SET spawned_wo_id = $2, spawned_wo_display_id = $3, updated_at = now() WHERE id = $1`,
-          [params.data.id, workOrder.id, workOrder.display_id]
-        ).catch(() => ({ rows: [] }));
-      }
+      const wo = woRes.rows[0];
+
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "maintenance.wo_display_id_generated",
+        {
+          resource_type: "maintenance.work_orders",
+          resource_id: wo.id,
+          display_id: wo.display_id,
+          unit_sequence: Number(display?.sequence ?? 0),
+          operating_company_id: query.data.operating_company_id,
+        },
+        "info",
+        "P3-T11.6.2-ARRIVING-SOON"
+      );
       await appendCrudAudit(
         client,
         user.uuid,
@@ -481,17 +478,16 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         {
           resource_type: "safety.accident_reports",
           resource_id: params.data.id,
+          spawned_wo_id: wo.id,
+          spawned_wo_display_id: wo.display_id,
           operating_company_id: query.data.operating_company_id,
-          source_type: body.data.source_type,
-          spawned_wo_id: workOrder?.id ?? null,
-          spawned_wo_display_id: workOrder?.display_id ?? null,
         },
         "info",
         "BT-3-SAFETY-LIABILITIES-REBUILD"
       );
-      return { accident_id: params.data.id, spawned_wo_id: workOrder?.id ?? null, spawned_wo_display_id: workOrder?.display_id ?? null };
+      return { accident_id: params.data.id, spawned_wo_id: wo.id, spawned_wo_display_id: wo.display_id };
     });
-    if ("notFound" in payload) return reply.code(404).send({ error: "accident_not_found" });
+    if (!payload) return reply.code(404).send({ error: "accident_not_found" });
     return payload;
   });
 

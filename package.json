@@ -63,7 +63,9 @@
     "db:verify:phase1-gate": "node scripts/db-verify-phase1-gate.mjs",
     "ops:bootstrap-owner": "node scripts/ops-bootstrap-owner.mjs",
     "r2:verify": "node scripts/r2-verify.mjs",
-    "verify:arch-design": "tsx scripts/verify-architectural-design.ts"
+    "verify:arch-design": "tsx scripts/verify-architectural-design.ts",
+    "db:verify:arriving-soon": "node --import tsx scripts/db-verify-arriving-soon.ts",
+    "db:verify:arriving-soon-rls": "node --import tsx scripts/db-verify-arriving-soon-rls.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

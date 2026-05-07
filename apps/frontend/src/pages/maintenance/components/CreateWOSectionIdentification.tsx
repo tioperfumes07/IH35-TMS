@@ -18,29 +18,28 @@ function Field({ label, children }: { label: string; children: JSX.Element }) {
 export function CreateWOSectionIdentification({ register, watch }: Props) {
   const type = watch("wo_type");
   const sourceType = watch("source_type");
-  const isExternal = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
-  const isInternal = ["IS", "IT"].includes(sourceType);
   const requireDriverAndLoad = type === "repair" || type === "tire" || type === "accident";
+  const requireExternalFields = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   return (
     <section className="rounded border border-gray-200 bg-gray-50 p-3">
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-700">A. Identification & Where</h3>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
-        <Field label="Source Type *">
-          <select {...register("source_type", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
-            <option value="IS">IS - Internal Shop</option>
-            <option value="ES">ES - External Shop</option>
-            <option value="AC">AC - Accident</option>
-            <option value="ET">ET - External Tires</option>
-            <option value="RT">RT - Roadside Tires</option>
-            <option value="IT">IT - Internal Tires</option>
-            <option value="RS">RS - Roadside Service</option>
-          </select>
-        </Field>
         <Field label="WO #">
           <input value="Auto on save" readOnly className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-sm" />
         </Field>
         <Field label="Service Type">
           <input {...register("wo_type")} readOnly className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-sm capitalize" />
+        </Field>
+        <Field label="Source Type *">
+          <select {...register("source_type", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
+            <option value="IS">Internal Shop (IS)</option>
+            <option value="ES">External Shop (ES)</option>
+            <option value="AC">Accident (AC)</option>
+            <option value="ET">External Tires (ET)</option>
+            <option value="RT">Roadside Tires (RT)</option>
+            <option value="IT">Internal Tires (IT)</option>
+            <option value="RS">Roadside Service (RS)</option>
+          </select>
         </Field>
         <Field label="Date">
           <input type="date" {...register("service_date")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
@@ -70,30 +69,18 @@ export function CreateWOSectionIdentification({ register, watch }: Props) {
           <input {...register("vendor_invoice_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
       </div>
-      {isExternal ? (
-        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-5">
-          <Field label="External Vendor ID">
-            <input {...register("external_vendor_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+      {requireExternalFields ? (
+        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+          <Field label="External Vendor *">
+            <input {...register("external_vendor_id", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
           </Field>
-          <Field label="Vendor WO #">
-            <input {...register("external_vendor_wo_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          <Field label="External Vendor WO Number *">
+            <input {...register("external_vendor_wo_number", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
           </Field>
-          <Field label="Vendor Invoice #">
-            <input {...register("external_vendor_invoice_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-          </Field>
-          <Field label="Invoice Amount">
-            <input type="number" step="0.01" min="0" {...register("external_vendor_invoice_amount", { valueAsNumber: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-          </Field>
-          <Field label="Invoice Doc ID (optional)">
-            <input {...register("external_vendor_invoice_doc_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          <Field label="External Vendor Invoice Number *">
+            <input {...register("external_vendor_invoice_number", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
           </Field>
         </div>
-      ) : null}
-      {isInternal ? (
-        <label className="mt-2 flex items-center gap-2 text-xs font-semibold text-gray-700">
-          <input type="checkbox" {...register("labor_only_no_parts")} />
-          Labor Only (no parts)
-        </label>
       ) : null}
       <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
         <Field label={`Load #${requireDriverAndLoad ? " *" : ""}`}>

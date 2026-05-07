@@ -14,7 +14,6 @@ const pool = new pg.Pool({ connectionString });
 try {
   const client = await pool.connect();
   try {
-    await client.query("SET ROLE ih35_app");
     await client.query("BEGIN");
     await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
 
@@ -27,7 +26,7 @@ try {
     const unitRes = await client.query<{ id: string }>(
       `
         INSERT INTO mdata.units (unit_number, vin, make, model, year, status, owner_company_id, currently_leased_to_company_id)
-        VALUES ('WG-${to_char(now(),'HH24MISS')}', md5(random()::text), 'KW', 'T680', 2020, 'active', $1, $1)
+        VALUES ('WG-' || to_char(now(),'HH24MISS'), md5(random()::text), 'KW', 'T680', 2020, 'InService', $1, $1)
         RETURNING id
       `,
       [companyId]
@@ -37,7 +36,7 @@ try {
     const vendorRes = await client.query<{ id: string }>(
       `
         INSERT INTO mdata.vendors (vendor_name, vendor_code, vendor_type, operating_company_id)
-        VALUES ('Verify Vendor', md5(random()::text), 'maintenance', $1)
+        VALUES ('Verify Vendor', md5(random()::text), 'Repair', $1)
         RETURNING id
       `,
       [companyId]
