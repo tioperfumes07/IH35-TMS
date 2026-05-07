@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Modal } from "../../../components/Modal";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
-import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
+import { EXPENSE_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
 
 type Props = {
   open: boolean;
@@ -19,18 +19,10 @@ export function CreateExpenseModal({ open, onClose }: Props) {
     return sum + Math.max(Number(line.amount || 0), subRowsTotal);
   }, 0);
 
-  const expenseTabs = [
-    { id: "fuel", label: "Fuel Expense" },
-    { id: "repair", label: "Repair Expense" },
-    { id: "travel", label: "Travel Expense" },
-    { id: "toll", label: "Toll Expense" },
-    { id: "other", label: "Other Expense" },
-  ];
-
   return (
     <Modal open={open} onClose={onClose} title="Create Expense">
       <div className="space-y-3">
-        <TypeTabBar tabs={expenseTabs} activeId={expenseType} onChange={setExpenseType} />
+        <TypeTabBar tabs={EXPENSE_TYPE_TABS} activeId={expenseType} onChange={setExpenseType} />
 
         <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
           Expense Details

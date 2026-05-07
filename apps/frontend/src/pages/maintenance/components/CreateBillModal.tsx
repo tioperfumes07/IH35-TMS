@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Modal } from "../../../components/Modal";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
-import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
+import { BILL_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
 
 type Props = {
   open: boolean;
@@ -13,26 +13,17 @@ type Props = {
 export function CreateBillModal({ open, linkedWoDisplayId, onClose }: Props) {
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
-  const [billType, setBillType] = useState("fuel");
+  const [billType, setBillType] = useState("repair");
   const subtotal = lines.reduce((sum, line) => {
     if (line.section === "A") return sum + Number(line.amount || 0);
     const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
     return sum + Math.max(Number(line.amount || 0), subRowsTotal);
   }, 0);
 
-  const billTabs = [
-    { id: "repair", label: "Repair Bill" },
-    { id: "fuel", label: "Fuel Bill" },
-    { id: "tire", label: "Tire Bill" },
-    { id: "accident", label: "Accident Bill" },
-    { id: "permit", label: "Permit Bill" },
-    { id: "other", label: "Other Bill" },
-  ];
-
   return (
     <Modal open={open} onClose={onClose} title="Create Bill">
       <div className="space-y-3">
-        <TypeTabBar tabs={billTabs} activeId={billType} onChange={setBillType} />
+        <TypeTabBar tabs={BILL_TYPE_TABS} activeId={billType} onChange={setBillType} />
 
         <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Bill Details</div>
 
