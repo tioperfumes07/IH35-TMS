@@ -103,7 +103,7 @@ async function processQueueItem(item: UploadQueueItem) {
   try {
     const cleanedCategoryId = cleanOptionalString(item.category_id);
     const entityLinks =
-      item.entity_type === "standalone"
+      item.entity_type === "standalone" || item.entity_type === "load_stop"
         ? undefined
         : cleanedEntityId && isUuid(cleanedEntityId)
           ? [
