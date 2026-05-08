@@ -14,7 +14,30 @@ import { DispatchHomePage } from "./pages/dispatch/DispatchHome";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
-import { SafetyHomePage } from "./pages/safety/SafetyHome";
+import { SafetyLayout } from "./pages/safety/SafetyLayout";
+import {
+  AccidentsIncidentsTab,
+  CargoClaimsTab,
+  ComplaintsTab,
+  CSAScoreTab,
+  DamageReportsTab,
+  DOTComplianceTab,
+  DOTInspectionsTab,
+  DriverFilesTab,
+  DrugAlcoholTab,
+  EscrowRecordTab,
+  ExternalFinesTab,
+  HOSViolationsTab,
+  HoursOfServiceTab,
+  IDVRTab,
+  IntegrityReportsTab,
+  InsuranceTab,
+  InternalFinesTab,
+  PermitsTab,
+  SafetyMeetingsTab,
+  SettingsTab,
+  TrailerInterchangesTab,
+} from "./pages/safety/tabs";
 import { LiabilitiesHomePage } from "./pages/liabilities/LiabilitiesHome";
 import { MaintenanceHomePage } from "./pages/maintenance/MaintenanceHome";
 import { CashAdvancesHomePage } from "./pages/cash-advances/CashAdvancesHome";
@@ -163,10 +186,34 @@ export default function App() {
           path="/safety"
           element={
             <ProtectedRoute>
-              <SafetyHomePage />
+              <SafetyLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="/safety/driver-files" replace />} />
+          <Route path="driver-files" element={<DriverFilesTab />} />
+          <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
+          <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
+          <Route path="hos" element={<HoursOfServiceTab />} />
+          <Route path="hos-violations" element={<HOSViolationsTab />} />
+          <Route path="idvr" element={<IDVRTab />} />
+          <Route path="dot-inspections" element={<DOTInspectionsTab />} />
+          <Route path="csa-score" element={<CSAScoreTab />} />
+          <Route path="dot-compliance" element={<DOTComplianceTab />} />
+          <Route path="accidents" element={<AccidentsIncidentsTab />} />
+          <Route path="damage-reports" element={<DamageReportsTab />} />
+          <Route path="trailer-interchanges" element={<TrailerInterchangesTab />} />
+          <Route path="cargo-claims" element={<CargoClaimsTab />} />
+          <Route path="internal-fines" element={<InternalFinesTab />} />
+          <Route path="external-fines" element={<ExternalFinesTab />} />
+          <Route path="complaints" element={<ComplaintsTab />} />
+          <Route path="escrow-record" element={<EscrowRecordTab />} />
+          <Route path="insurance" element={<InsuranceTab />} />
+          <Route path="permits" element={<PermitsTab />} />
+          <Route path="integrity-reports" element={<IntegrityReportsTab />} />
+          <Route path="settings" element={<SettingsTab />} />
+          <Route path="vehicle-inspections" element={<Navigate to="/safety/idvr" replace />} />
+        </Route>
         <Route
           path="/liabilities"
           element={
