@@ -16,6 +16,7 @@ import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
+import { ActionButton } from "../components/shared/ActionButton";
 import { useToast } from "../components/Toast";
 
 const createSchema = z.object({
@@ -130,7 +131,7 @@ export function DriverLoadStatusesPage() {
                 Show inactive
               </label>
             ) : null}
-            {canManage ? <Button onClick={() => setAddOpen(true)}>Add Status</Button> : null}
+            {canManage ? <ActionButton onClick={() => setAddOpen(true)}>+ Create Status</ActionButton> : null}
           </div>
         }
       />
@@ -191,7 +192,7 @@ export function DriverLoadStatusesPage() {
         </div>
       )}
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add Driver Load Status">
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Driver Load Status">
         <StatusForm
           form={createForm}
           setForm={setCreateForm}

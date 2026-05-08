@@ -10,6 +10,7 @@ import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { Modal } from "../components/Modal";
+import { ActionButton } from "../components/shared/ActionButton";
 import { useToast } from "../components/Toast";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { KpiCard } from "../components/layout/KpiCard";
@@ -286,7 +287,11 @@ export function CustomersPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Customers" subtitle={`${customers.length} records`} actions={canManage ? <Button onClick={() => setAddOpen(true)}>Add Customer</Button> : null} />
+      <PageHeader
+        title="Customers"
+        subtitle={`${customers.length} records`}
+        actions={canManage ? <ActionButton onClick={() => setAddOpen(true)}>+ Create Customer</ActionButton> : null}
+      />
 
       <KpiStrip>
         <KpiCard label="Active" number={activeCount} accent={colors.positive.strong} />
@@ -385,7 +390,7 @@ export function CustomersPage() {
         </div>
       )}
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add Customer">
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Customer">
         <form
           className="space-y-3"
           onSubmit={async (event) => {

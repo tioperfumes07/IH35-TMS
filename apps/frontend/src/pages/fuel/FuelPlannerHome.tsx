@@ -9,8 +9,9 @@ import {
   getFuelSavingsSummary,
   sendFuelRecommendationToDriver,
 } from "../../api/fuelPlanner";
-import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ActionButton } from "../../components/shared/ActionButton";
+import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ActiveTripStrip } from "./components/ActiveTripStrip";
@@ -24,12 +25,24 @@ import { StopReasoningTable } from "./components/StopReasoningTable";
 import { TripPlanSummaryBanner } from "./components/TripPlanSummaryBanner";
 import { UploadLovesPricesModal } from "./components/UploadLovesPricesModal";
 
+const SUBNAV = [
+  { id: "active_plan", label: "Active Plan" },
+  { id: "fuel_log", label: "Fuel Log" },
+  { id: "loves_prices", label: "Loves Prices" },
+  { id: "relay_transactions", label: "Relay Transactions" },
+  { id: "def", label: "DEF" },
+  { id: "compliance_tracker", label: "Compliance Tracker" },
+  { id: "ifta", label: "Fuel by Unit/Driver/State (IFTA)" },
+  { id: "settings", label: "Settings" },
+] as const;
+
 export function FuelPlannerHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [tab, setTab] = useState<(typeof SUBNAV)[number]["id"]>("active_plan");
 
   const dashboardQuery = useQuery({
     queryKey: ["fuel", "planner", "dashboard", companyId],
@@ -80,11 +93,8 @@ export function FuelPlannerHomePage() {
         subtitle="HOS-aware route optimizer + compliance"
         actions={
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" onClick={() => setUploadOpen(true)}>
-              + Upload Loves Prices
-            </Button>
-            <Button
-              size="sm"
+            <ActionButton onClick={() => setUploadOpen(true)}>+ Upload Loves Prices</ActionButton>
+            <ActionButton
               onClick={() => {
                 if (!activeRoute || !companyId) return;
                 void sendFuelRecommendationToDriver(activeRoute.id, companyId)
@@ -95,19 +105,17 @@ export function FuelPlannerHomePage() {
                   .catch((error) => pushToast(String((error as Error).message || "Send failed"), "error"));
               }}
             >
-              Send to Driver App
-            </Button>
+              + Send to Driver App
+            </ActionButton>
           </div>
         }
       />
 
-      <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
-        <div className="flex min-w-max gap-4">
-          {["Active Plan", "Fuel Log", "Loves Prices", "Relay Transactions", "DEF", "Compliance Tracker", "Fuel by Unit/Driver/State (IFTA)", "Settings"].map((item, idx) => (
-            <span key={item} className={idx === 0 ? "border-b border-white pb-0.5 font-semibold" : ""}>{item}</span>
-          ))}
-        </div>
-      </div>
+      <SecondaryNavTabs
+        tabs={SUBNAV.map((item) => ({ id: item.id, label: item.label }))}
+        activeId={tab}
+        onChange={(next) => setTab(next as (typeof SUBNAV)[number]["id"])}
+      />
 
       <FuelKpiRow dashboard={dashboardQuery.data} />
       <ActiveTripStrip route={activeRoute} />

@@ -15,6 +15,7 @@ import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
+import { ActionButton } from "../components/shared/ActionButton";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { colors } from "../design/tokens";
@@ -313,7 +314,7 @@ export function DriversPage() {
       <PageHeader
         title="Drivers"
         subtitle={`${drivers.length} new in last 3 days`}
-        actions={<Button onClick={() => setAddOpen(true)}>Add Driver</Button>}
+        actions={<ActionButton onClick={() => setAddOpen(true)}>+ Create Driver</ActionButton>}
       />
 
       <KpiStrip>
@@ -392,7 +393,7 @@ export function DriversPage() {
         ))}
       </div>
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add Driver">
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Driver">
         <form
           className="grid grid-cols-1 gap-3 md:grid-cols-2"
           onSubmit={async (event) => {
