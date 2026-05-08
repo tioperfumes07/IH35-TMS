@@ -17,6 +17,7 @@ import {
 import type { ComponentType } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { getArrivingSoon } from "../api/maintenance";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { spacing } from "../design/tokens";
@@ -53,6 +54,7 @@ type SidebarProps = {
 };
 
 export function Sidebar({ role }: SidebarProps) {
+  const location = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   const severeArrivingSoonQuery = useQuery({
     queryKey: ["sidebar", "maintenance-severe-badge", selectedCompanyId ?? ""],
@@ -78,12 +80,13 @@ export function Sidebar({ role }: SidebarProps) {
     >
       <div className="flex h-full flex-col items-center gap-1 py-2">
         {visibleItems.map(({ key, label, Icon, to }) => {
+          const forceReportsActive = key === "REPORTS" && location.pathname.startsWith("/reports/");
           return (
             <NavLink
               key={key}
               to={to}
               className={({ isActive }) =>
-                `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive ? "bg-white/10" : ""}`
+                `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceReportsActive ? "bg-white/10" : ""}`
               }
               style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
             >
@@ -99,7 +102,7 @@ export function Sidebar({ role }: SidebarProps) {
                   </div>
                   <span
                     className="mt-1 text-[10px] leading-none uppercase"
-                    style={{ color: "white", letterSpacing: "0.4px", fontWeight: isActive ? 600 : 400 }}
+                    style={{ color: "white", letterSpacing: "0.4px", fontWeight: isActive || forceReportsActive ? 600 : 400 }}
                   >
                     {label}
                   </span>
