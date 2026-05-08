@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "today": "Hoy",
+    "loads": "Cargas",
+    "earnings": "Ganancias",
+    "profile": "Perfil"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "retry": "Reintentar",
+    "online": "En línea",
+    "offline": "Sin conexión",
+    "pending_sync": "Sincronización pendiente"
+  },
+  "home": {
+    "greeting": "Bienvenido, {{name}}",
+    "no_loads_today": "No hay cargas asignadas hoy",
+    "unit": "Unidad 0234",
+    "upload_document": "+ Subir documento",
+    "my_documents": "Mis documentos",
+    "hos_overview": "Resumen HOS",
+    "hos_subtitle": "Datos de fase 1 — se sincroniza con Samsara en fase 4",
+    "active_load": "Carga activa #2024-0058",
+    "active_load_subtitle": "Fase 1 — datos en vivo en fase 3",
+    "driving": "Conduciendo",
+    "status": "Estado",
+    "directions": "Direcciones",
+    "docs": "Docs",
+    "fuel_recommendation": "Próxima recomendación de combustible",
+    "fuel_subtitle": "Fase 1 — recomendaciones en vivo en fase 4",
+    "navigate": "Tocar para navegar",
+    "driver_actions": "Acciones del conductor",
+    "pre_trip": "Previa",
+    "log_fuel": "Registrar combustible",
+    "upload_bol": "Subir BOL",
+    "report_issue": "Reportar problema",
+    "actions_subtitle": "Fase 1 — los flujos llegan en fase 2",
+    "backend_version": "Versión backend",
+    "sign_out": "Cerrar sesión",
+    "report_issue_title": "Reportar problema",
+    "photo_upload_placeholder": "Marcador de carga de foto",
+    "phase_two": "Implementación fase 2"
+  },
+  "profile": {
+    "signed_in_as": "Sesión iniciada como",
+    "language": "Idioma",
+    "sign_out": "Cerrar sesión",
+    "language_en": "EN",
+    "language_es": "ES",
+    "back": "Atrás",
+    "title": "Perfil",
+    "subtitle": "Base de configuración del conductor",
+    "role": "Rol"
+  },
+  "sync": {
+    "syncing": "Sincronizando {{count}}…",
+    "offline_waiting": "{{count}} en espera · sin conexión",
+    "error_retry": "Error de sincronización · reintentar",
+    "online": "En línea"
+  }
+}
