@@ -3,6 +3,15 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "paths": {
+      "@ih35/shared-types": [
+        "./packages/shared-types/src/index.ts"
+      ],
+      "@ih35/shared-types/*": [
+        "./packages/shared-types/src/*"
+      ]
+    },
     "outDir": "dist",
     "rootDir": "apps/backend/src",
     "strict": true,

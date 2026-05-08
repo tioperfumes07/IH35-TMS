@@ -1,16 +1,37 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { signOut } from "../api/identity";
 import { useAuth } from "../auth/useAuth";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
+import { useToast } from "../components/Toast";
+import { clearByStatus, getQueueSummary } from "../lib/upload-queue";
 
 export function ProfilePage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
+  const { pushToast } = useToast();
+  const [queueSummary, setQueueSummary] = useState({
+    total: 0,
+    pending: 0,
+    uploading: 0,
+    synced: 0,
+    failed: 0,
+  });
+
+  useEffect(() => {
+    void getQueueSummary().then(setQueueSummary);
+  }, []);
+
+  async function handleClearFailed() {
+    const count = await clearByStatus(["failed"]);
+    pushToast(t("profile.cleared_failed", { count }), "success");
+    void getQueueSummary().then(setQueueSummary);
+  }
 
   return (
     <div className="min-h-screen bg-pwa-bg px-4 py-3">
@@ -21,7 +42,7 @@ export function ProfilePage() {
         </Link>
         <PwaCard title={t("profile.title")} subtitle={t("profile.subtitle")}>
           <p className="text-xs text-pwa-text-secondary">{t("profile.signed_in_as")}</p>
-          <p className="text-lg font-semibold text-pwa-text-primary">{auth.user?.email ?? "unknown"}</p>
+          <p className="text-lg font-semibold text-pwa-text-primary">{auth.user?.full_name || auth.user?.email || t("profile.no_name")}</p>
           <p className="mt-1 text-sm text-pwa-text-secondary">{t("profile.role")}: {auth.user?.role ?? "Driver"}</p>
           <div className="mt-4">
             <div className="mb-2 text-xs font-semibold text-pwa-text-secondary">{t("profile.language")}</div>
@@ -70,6 +91,27 @@ export function ProfilePage() {
           >
             {t("profile.sign_out")}
           </PwaButton>
+        </PwaCard>
+        <PwaCard title={t("profile.upload_queue_title")}>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between text-pwa-text-secondary">
+              <span>{t("profile.queue_pending")}</span>
+              <span className="font-mono">{queueSummary.pending}</span>
+            </div>
+            <div className="flex justify-between text-pwa-text-secondary">
+              <span>{t("profile.queue_uploading")}</span>
+              <span className="font-mono">{queueSummary.uploading}</span>
+            </div>
+            <div className="flex justify-between text-pwa-text-secondary">
+              <span>{t("profile.queue_failed")}</span>
+              <span className="font-mono text-hos-violation">{queueSummary.failed}</span>
+            </div>
+          </div>
+          {queueSummary.failed > 0 ? (
+            <PwaButton variant="secondary" className="mt-3 w-full" onClick={() => void handleClearFailed()}>
+              {t("profile.clear_failed", { count: queueSummary.failed })}
+            </PwaButton>
+          ) : null}
         </PwaCard>
       </div>
     </div>

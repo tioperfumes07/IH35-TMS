@@ -38,10 +38,7 @@
     "report_issue": "Reportar problema",
     "actions_subtitle": "Fase 1 — los flujos llegan en fase 2",
     "backend_version": "Versión backend",
-    "sign_out": "Cerrar sesión",
-    "report_issue_title": "Reportar problema",
-    "photo_upload_placeholder": "Marcador de carga de foto",
-    "phase_two": "Implementación fase 2"
+    "sign_out": "Cerrar sesión"
   },
   "profile": {
     "signed_in_as": "Sesión iniciada como",
@@ -52,7 +49,17 @@
     "back": "Atrás",
     "title": "Perfil",
     "subtitle": "Base de configuración del conductor",
-    "role": "Rol"
+    "role": "Rol",
+    "no_name": "—",
+    "upload_queue_title": "Cola de subidas",
+    "queue_pending": "Pendientes",
+    "queue_uploading": "Subiendo",
+    "queue_failed": "Fallidas",
+    "clear_failed": "Limpiar {{count}} fallida(s)",
+    "cleared_failed": "Eliminadas {{count}} elemento(s)"
+  },
+  "login": {
+    "session_expired": "Tu sesión expiró. Inicia sesión de nuevo."
   },
   "sync": {
     "syncing": "Sincronizando {{count}}…",

@@ -3,6 +3,7 @@ import { apiRequest } from "./client";
 export type AuthMeResponse = {
   user: {
     uuid: string;
+    full_name?: string | null;
     email: string | null;
     role: string;
   };

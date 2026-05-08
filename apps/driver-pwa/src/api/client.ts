@@ -39,6 +39,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const isJson = response.headers.get("content-type")?.includes("application/json");
   const payload = isJson ? await response.json() : await response.text();
 
+  if (response.status === 401) {
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login?reason=session_expired";
+    }
+    throw new ApiError(response.status, payload);
+  }
+
   if (!response.ok) {
     throw new ApiError(response.status, payload);
   }
