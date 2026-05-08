@@ -27,8 +27,6 @@ export type ItemLine = {
   quantity: number;
   unit_cost: number;
   amount: number;
-  odo_fill_at?: string;
-  mpg?: number;
   sub_rows?: ItemSubRow[];
 };
 
@@ -36,7 +34,6 @@ type Props = {
   sectionA: { lines: CategoryLine[] };
   sectionB: { lines: ItemLine[] };
   partsLaborMode: "none" | "parts-only" | "parts-and-labor";
-  showFuelColumns?: boolean;
   onSectionAChange: (lines: CategoryLine[]) => void;
   onSectionBChange: (lines: ItemLine[]) => void;
   onOpenLocationMap?: (lineId: string, subId: string) => void;
@@ -71,7 +68,6 @@ export function CostBreakdownBox({
   sectionA,
   sectionB,
   partsLaborMode,
-  showFuelColumns = false,
   onSectionAChange,
   onSectionBChange,
   onOpenLocationMap,
@@ -212,7 +208,7 @@ export function CostBreakdownBox({
           <div className="space-y-2 p-2">
             {sectionB.lines.map((line) => (
               <div key={line.id} className="rounded border border-gray-200 bg-white p-2">
-                <div className={`grid gap-2 ${showFuelColumns ? "md:grid-cols-[1fr_1.2fr_1fr_120px_80px_80px_90px_95px_40px]" : "md:grid-cols-[1fr_1.2fr_1fr_110px_90px_95px_40px]"}`}>
+                <div className="grid gap-2 md:grid-cols-[1fr_1.2fr_1fr_110px_90px_95px_40px]">
                   <input
                     disabled={readOnly}
                     value={line.service_item_uuid ?? ""}
@@ -238,28 +234,6 @@ export function CostBreakdownBox({
                     className="rounded border border-gray-300 px-2 py-1 text-xs"
                     placeholder="Location"
                   />
-                  {showFuelColumns ? (
-                    <>
-                      <input
-                        disabled={readOnly}
-                        value={line.odo_fill_at ?? ""}
-                        onChange={(event) => onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, odo_fill_at: event.target.value } : entry)))}
-                        className="rounded border border-gray-300 px-2 py-1 text-xs"
-                        placeholder="ODO Fill At"
-                      />
-                      <input
-                        disabled={readOnly}
-                        type="number"
-                        min={0}
-                        value={line.mpg ?? ""}
-                        onChange={(event) =>
-                          onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, mpg: Number(event.target.value || 0) } : entry)))
-                        }
-                        className="rounded border border-gray-300 px-2 py-1 text-xs"
-                        placeholder="MPG"
-                      />
-                    </>
-                  ) : null}
                   <input
                     disabled={readOnly}
                     type="number"
