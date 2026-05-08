@@ -1,13 +1,14 @@
 import { apiRequest } from "./client";
 import type { CreateDriverInput, CustomerType, Driver, DriverOnboardingCreateResponse, MilesBasis, UpdateDriverInput } from "../types/api";
 
-export function listDrivers(params: { status?: string; search?: string }) {
+export function listDrivers(params: { status?: string; search?: string; operating_company_id?: string | null }) {
   const query = new URLSearchParams();
   if (params.status && params.status !== "All") {
     const statusValue = params.status === "Suspended" ? "Inactive" : params.status;
     query.set("status", statusValue);
   }
   if (params.search) query.set("search", params.search);
+  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
   const qs = query.toString();
   return apiRequest<{ drivers: Driver[] }>(`/api/v1/mdata/drivers${qs ? `?${qs}` : ""}`);
 }
