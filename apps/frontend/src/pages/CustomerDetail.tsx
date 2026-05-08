@@ -6,20 +6,27 @@ import { listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
 import { listFmcsaLookups } from "../api/fmcsa";
 import {
+  createCustomerLane,
   createCustomerQualityEvent,
   createCustomerContact,
+  deactivateCustomerLane,
   deactivateCustomerContact,
+  getCustomerBillingSummary,
   getCustomerDetail,
+  listCustomerLanes,
   listCustomerQualityEventReasons,
   listCustomerQualityEvents,
   listVendors,
   listCustomerContacts,
   reactivateCustomerContact,
+  updateCustomerLane,
   updateCustomer,
   updateCustomerContact,
   updateCustomerQualityEvent,
   voidCustomerQualityEvent,
   type Customer,
+  type CustomerBillingSummary,
+  type CustomerLane,
   type CustomerContact,
   type CustomerContactDepartment,
   type CustomerQualityEvent,
@@ -100,6 +107,18 @@ const contactSchema = z.object({
   notes: z.string().trim().max(2000).optional(),
 });
 
+const laneSchema = z.object({
+  lane_label: z.string().trim().min(1).max(150),
+  origin_city: z.string().trim().min(1).max(120),
+  origin_state: z.string().trim().min(1).max(12),
+  destination_city: z.string().trim().min(1).max(120),
+  destination_state: z.string().trim().min(1).max(12),
+  typical_miles: z.string().trim().optional(),
+  base_rate_cents: z.string().trim().min(1),
+  fsc_per_mile_cents: z.string().trim().optional(),
+  notes: z.string().trim().max(2000).optional(),
+});
+
 function statusVariant(status: Customer["status"]): "crit" | "warn" | "neutral" | "positive" {
   if (status === "blacklist") return "crit";
   if (status === "credit_hold") return "warn";
@@ -142,6 +161,20 @@ function emptyContactForm() {
   };
 }
 
+function emptyLaneForm() {
+  return {
+    lane_label: "",
+    origin_city: "",
+    origin_state: "",
+    destination_city: "",
+    destination_state: "",
+    typical_miles: "",
+    base_rate_cents: "",
+    fsc_per_mile_cents: "",
+    notes: "",
+  };
+}
+
 export function CustomerDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -156,6 +189,10 @@ export function CustomerDetailPage() {
   const [editingContact, setEditingContact] = useState<CustomerContact | null>(null);
   const [contactForm, setContactForm] = useState(emptyContactForm());
   const [includeInactiveContacts, setIncludeInactiveContacts] = useState(false);
+  const [laneModalOpen, setLaneModalOpen] = useState(false);
+  const [editingLane, setEditingLane] = useState<CustomerLane | null>(null);
+  const [laneForm, setLaneForm] = useState(emptyLaneForm());
+  const [includeInactiveLanes, setIncludeInactiveLanes] = useState(false);
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
   const [statusReason, setStatusReason] = useState("");
   const [showVoidedQuality, setShowVoidedQuality] = useState(false);
@@ -180,11 +217,22 @@ export function CustomerDetailPage() {
     queryFn: () => getCustomerDetail(id).then((result) => result.customer),
     enabled: Boolean(id),
   });
+  const operatingCompanyId = detailQuery.data?.operating_company_id ?? null;
 
   const contactsQuery = useQuery({
-    queryKey: ["customer-contacts", id, includeInactiveContacts],
-    queryFn: () => listCustomerContacts(id, includeInactiveContacts).then((result) => result.contacts),
-    enabled: Boolean(id),
+    queryKey: ["customer-contacts", id, includeInactiveContacts, operatingCompanyId],
+    queryFn: () => listCustomerContacts(id, includeInactiveContacts, operatingCompanyId).then((result) => result.contacts),
+    enabled: Boolean(id && operatingCompanyId),
+  });
+  const billingSummaryQuery = useQuery({
+    queryKey: ["customer-billing-summary", id, operatingCompanyId],
+    queryFn: () => getCustomerBillingSummary(id, operatingCompanyId!),
+    enabled: Boolean(id && operatingCompanyId),
+  });
+  const lanesQuery = useQuery({
+    queryKey: ["customer-lanes", id, operatingCompanyId, includeInactiveLanes],
+    queryFn: () => listCustomerLanes(id, operatingCompanyId!, includeInactiveLanes).then((result) => result.lanes),
+    enabled: Boolean(id && operatingCompanyId),
   });
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "active", detailQuery.data?.operating_company_id ?? "none"],
@@ -225,6 +273,7 @@ export function CustomerDetailPage() {
   );
   const canManageContacts = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canViewInactiveContacts = ["Owner", "Administrator"].includes(user?.role ?? "");
+  const canManageLanes = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canReadQuality = ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"].includes(user?.role ?? "");
   const canWriteQuality = user?.role === "Owner";
   const canEditQualityNotes = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
@@ -347,7 +396,7 @@ export function CustomerDetailPage() {
   });
 
   const createContactMutation = useMutation({
-    mutationFn: (payload: Parameters<typeof createCustomerContact>[1]) => createCustomerContact(id, payload),
+    mutationFn: (payload: Parameters<typeof createCustomerContact>[1]) => createCustomerContact(id, payload, operatingCompanyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -360,7 +409,7 @@ export function CustomerDetailPage() {
 
   const updateContactMutation = useMutation({
     mutationFn: ({ contactId, payload }: { contactId: string; payload: Parameters<typeof updateCustomerContact>[2] }) =>
-      updateCustomerContact(id, contactId, payload),
+      updateCustomerContact(id, contactId, payload, operatingCompanyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -371,7 +420,7 @@ export function CustomerDetailPage() {
   });
 
   const deactivateContactMutation = useMutation({
-    mutationFn: (contactId: string) => deactivateCustomerContact(id, contactId),
+    mutationFn: (contactId: string) => deactivateCustomerContact(id, contactId, operatingCompanyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -380,7 +429,7 @@ export function CustomerDetailPage() {
   });
 
   const reactivateContactMutation = useMutation({
-    mutationFn: (contactId: string) => reactivateCustomerContact(id, contactId),
+    mutationFn: (contactId: string) => reactivateCustomerContact(id, contactId, operatingCompanyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-contacts", id] });
       queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
@@ -440,7 +489,40 @@ export function CustomerDetailPage() {
     },
   });
 
+  const createLaneMutation = useMutation({
+    mutationFn: (payload: Parameters<typeof createCustomerLane>[2]) => createCustomerLane(id, operatingCompanyId!, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-lanes", id] });
+      setLaneModalOpen(false);
+      setEditingLane(null);
+      setLaneForm(emptyLaneForm());
+      pushToast("Lane created", "success");
+    },
+  });
+
+  const updateLaneMutation = useMutation({
+    mutationFn: ({ laneId, payload }: { laneId: string; payload: Parameters<typeof updateCustomerLane>[3] }) =>
+      updateCustomerLane(id, laneId, operatingCompanyId!, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-lanes", id] });
+      setLaneModalOpen(false);
+      setEditingLane(null);
+      setLaneForm(emptyLaneForm());
+      pushToast("Lane updated", "success");
+    },
+  });
+
+  const deactivateLaneMutation = useMutation({
+    mutationFn: (laneId: string) => deactivateCustomerLane(id, laneId, operatingCompanyId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-lanes", id] });
+      pushToast("Lane deactivated", "info");
+    },
+  });
+
   const qualityEvents = qualityEventsQuery.data ?? [];
+  const billingSummary = billingSummaryQuery.data as CustomerBillingSummary | undefined;
+  const customerLanes = lanesQuery.data ?? [];
   const qualityStats = useMemo(() => {
     const active = qualityEvents.filter((event) => !event.voided_at);
     const severeCount = active.filter((event) => event.severity === "severe").length;
@@ -973,6 +1055,29 @@ export function CustomerDetailPage() {
 
       {activeTab === "Contacts" ? (
         <DataPanel title={`Contacts (${contacts.length})`}>
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-xs text-gray-600">Operational contacts and communication owners</div>
+            <div className="flex items-center gap-2">
+              {canViewInactiveContacts ? (
+                <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                  <input type="checkbox" checked={includeInactiveContacts} onChange={(event) => setIncludeInactiveContacts(event.target.checked)} />
+                  Show inactive
+                </label>
+              ) : null}
+              {canManageContacts ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setEditingContact(null);
+                    setContactForm(emptyContactForm());
+                    setContactModalOpen(true);
+                  }}
+                >
+                  + Create Contact
+                </Button>
+              ) : null}
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-xs">
               <thead>
@@ -982,6 +1087,8 @@ export function CustomerDetailPage() {
                   <th className="px-2 py-1.5 font-semibold">Phone</th>
                   <th className="px-2 py-1.5 font-semibold">Email</th>
                   <th className="px-2 py-1.5 font-semibold">Primary</th>
+                  <th className="px-2 py-1.5 font-semibold">Status</th>
+                  <th className="px-2 py-1.5 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -992,6 +1099,42 @@ export function CustomerDetailPage() {
                     <td className="px-2 py-1.5 text-gray-700">{contact.phone || contact.mobile || "-"}</td>
                     <td className="px-2 py-1.5 text-gray-700">{contact.email || "-"}</td>
                     <td className="px-2 py-1.5 text-gray-700">{contact.is_primary ? "Yes" : "No"}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{contact.deactivated_at ? "Inactive" : "Active"}</td>
+                    <td className="px-2 py-1.5 text-gray-700">
+                      {canManageContacts ? (
+                        !contact.deactivated_at ? (
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                setEditingContact(contact);
+                                setContactForm({
+                                  name: contact.name,
+                                  title: contact.title ?? "",
+                                  email: contact.email ?? "",
+                                  phone: contact.phone ?? "",
+                                  mobile: contact.mobile ?? "",
+                                  department: contact.department,
+                                  is_primary: contact.is_primary,
+                                  notes: contact.notes ?? "",
+                                });
+                                setContactModalOpen(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button size="sm" variant="danger" onClick={() => deactivateContactMutation.mutate(contact.id)}>
+                              Deactivate
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button size="sm" variant="secondary" onClick={() => reactivateContactMutation.mutate(contact.id)}>
+                            Reactivate
+                          </Button>
+                        )
+                      ) : null}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1003,47 +1146,184 @@ export function CustomerDetailPage() {
 
       {activeTab === "Billing & Receivables" ? (
         <div className="grid gap-3 md:grid-cols-3">
-          {/* TODO: wire to accounting.invoices API in P3-T11.17.7 */}
-          <DataPanel title="Open Invoices">
+          <DataPanel title="Factoring Config">
             <div className="space-y-1 text-sm text-gray-700">
-              <div>Count: -</div>
-              <div>Total: -</div>
+              <div>Eligible: {billingSummary?.factoring_eligible ? "Yes" : "No"}</div>
+              <div>Recourse: {billingSummary?.factoring_recourse_type ?? "Default"}</div>
+              <div>Company Vendor: {billingSummary?.factoring_company_vendor_id ?? "Not set"}</div>
             </div>
           </DataPanel>
-          <DataPanel title="AR Aging">
+          <DataPanel title="Credit Terms">
             <div className="space-y-1 text-sm text-gray-700">
-              <div>Current: -</div>
-              <div>30: -</div>
-              <div>60: -</div>
-              <div>90+: -</div>
+              <div>A/R Email: {billingSummary?.ar_email ?? "-"}</div>
+              <div>Terms (days): {billingSummary?.credit_terms_days ?? "-"}</div>
+              <div>Outstanding Balance: {billingSummary?.outstanding_balance_cents == null ? "-" : billingSummary.outstanding_balance_cents}</div>
             </div>
           </DataPanel>
-          <DataPanel title="Last Payment Date">
-            <div className="text-sm text-gray-700">-</div>
+          <DataPanel title="Detention + Layover Defaults">
+            <div className="space-y-1 text-sm text-gray-700">
+              <div>Detention/hr: {billingSummary?.default_detention_rate ?? "-"}</div>
+              <div>Free time hrs: {billingSummary?.default_free_time_hours ?? "-"}</div>
+              <div>Layover/day: {billingSummary?.layover_config.layover_charge_per_day ?? "-"}</div>
+            </div>
           </DataPanel>
+          <div className="md:col-span-3 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            {billingSummary?.partial_message ?? "Receivables aging requires accounting module which ships in Phase 5."}
+          </div>
         </div>
       ) : null}
 
       {activeTab === "Lanes & Pricing" ? (
         <div className="rounded border border-gray-200 bg-white p-4">
-          {/* TODO: wire customer lanes aggregation to dispatch.loads API in P3-T11.17.7 */}
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-sm text-gray-600">Customer lane pricing definitions</div>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                <input type="checkbox" checked={includeInactiveLanes} onChange={(event) => setIncludeInactiveLanes(event.target.checked)} />
+                Show inactive
+              </label>
+              {canManageLanes ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setEditingLane(null);
+                    setLaneForm(emptyLaneForm());
+                    setLaneModalOpen(true);
+                  }}
+                >
+                  + Add Lane
+                </Button>
+              ) : null}
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-gray-200 text-gray-600">
+                  <th className="px-2 py-1.5 font-semibold">Lane</th>
                   <th className="px-2 py-1.5 font-semibold">Origin</th>
                   <th className="px-2 py-1.5 font-semibold">Destination</th>
-                  <th className="px-2 py-1.5 font-semibold">Loads Count</th>
-                  <th className="px-2 py-1.5 font-semibold">Avg Rate</th>
-                  <th className="px-2 py-1.5 font-semibold">Last Load Date</th>
+                  <th className="px-2 py-1.5 font-semibold">Miles</th>
+                  <th className="px-2 py-1.5 font-semibold">Base Rate</th>
+                  <th className="px-2 py-1.5 font-semibold">FSC/mi</th>
+                  <th className="px-2 py-1.5 font-semibold">Status</th>
+                  <th className="px-2 py-1.5 font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody />
+              <tbody>
+                {customerLanes.map((lane) => (
+                  <tr key={lane.id} className="border-b border-gray-100">
+                    <td className="px-2 py-1.5 text-gray-900">{lane.lane_label}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{lane.origin_city}, {lane.origin_state}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{lane.destination_city}, {lane.destination_state}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{lane.typical_miles ?? "-"}</td>
+                    <td className="px-2 py-1.5 text-gray-700">${(Number(lane.base_rate_cents ?? 0) / 100).toFixed(2)}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{lane.fsc_per_mile_cents == null ? "-" : `$${(lane.fsc_per_mile_cents / 100).toFixed(2)}`}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{lane.deactivated_at ? "Inactive" : "Active"}</td>
+                    <td className="px-2 py-1.5 text-gray-700">
+                      {canManageLanes && !lane.deactivated_at ? (
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              setEditingLane(lane);
+                              setLaneForm({
+                                lane_label: lane.lane_label,
+                                origin_city: lane.origin_city,
+                                origin_state: lane.origin_state,
+                                destination_city: lane.destination_city,
+                                destination_state: lane.destination_state,
+                                typical_miles: lane.typical_miles?.toString() ?? "",
+                                base_rate_cents: lane.base_rate_cents?.toString() ?? "",
+                                fsc_per_mile_cents: lane.fsc_per_mile_cents?.toString() ?? "",
+                                notes: lane.notes ?? "",
+                              });
+                              setLaneModalOpen(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button size="sm" variant="danger" onClick={() => deactivateLaneMutation.mutate(lane.id)}>
+                            Deactivate
+                          </Button>
+                        </div>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
-          <div className="mt-3 text-sm text-gray-600">Lane analysis coming in P3-T11.17.7</div>
+          {customerLanes.length === 0 ? <div className="mt-3 text-sm text-gray-600">Add your first lane to track customer pricing.</div> : null}
         </div>
       ) : null}
+
+      <Modal open={laneModalOpen} onClose={() => setLaneModalOpen(false)} title={editingLane ? "Edit Lane" : "Add Lane"}>
+        <form
+          className="space-y-3"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const parsed = laneSchema.safeParse(laneForm);
+            if (!parsed.success) {
+              pushToast(parsed.error.issues[0]?.message ?? "Please complete lane details", "error");
+              return;
+            }
+            const payload = {
+              lane_label: parsed.data.lane_label,
+              origin_city: parsed.data.origin_city,
+              origin_state: parsed.data.origin_state,
+              destination_city: parsed.data.destination_city,
+              destination_state: parsed.data.destination_state,
+              typical_miles: parsed.data.typical_miles ? Number(parsed.data.typical_miles) : undefined,
+              base_rate_cents: Number(parsed.data.base_rate_cents),
+              fsc_per_mile_cents: parsed.data.fsc_per_mile_cents ? Number(parsed.data.fsc_per_mile_cents) : undefined,
+              notes: parsed.data.notes || undefined,
+            };
+            if (!editingLane) {
+              await createLaneMutation.mutateAsync(payload);
+              return;
+            }
+            await updateLaneMutation.mutateAsync({
+              laneId: editingLane.id,
+              payload: {
+                ...payload,
+                typical_miles: payload.typical_miles ?? null,
+                fsc_per_mile_cents: payload.fsc_per_mile_cents ?? null,
+                notes: payload.notes ?? null,
+              },
+            });
+          }}
+        >
+          <div className="grid gap-2 md:grid-cols-2">
+            <Field label="Lane Label" value={laneForm.lane_label} onChange={(value) => setLaneForm((current) => ({ ...current, lane_label: value }))} />
+            <Field label="Typical Miles" value={laneForm.typical_miles} onChange={(value) => setLaneForm((current) => ({ ...current, typical_miles: value }))} />
+            <Field label="Origin City" value={laneForm.origin_city} onChange={(value) => setLaneForm((current) => ({ ...current, origin_city: value }))} />
+            <Field label="Origin State" value={laneForm.origin_state} onChange={(value) => setLaneForm((current) => ({ ...current, origin_state: value }))} />
+            <Field label="Destination City" value={laneForm.destination_city} onChange={(value) => setLaneForm((current) => ({ ...current, destination_city: value }))} />
+            <Field label="Destination State" value={laneForm.destination_state} onChange={(value) => setLaneForm((current) => ({ ...current, destination_state: value }))} />
+            <Field label="Base Rate (cents)" value={laneForm.base_rate_cents} onChange={(value) => setLaneForm((current) => ({ ...current, base_rate_cents: value }))} />
+            <Field label="FSC per mile (cents)" value={laneForm.fsc_per_mile_cents} onChange={(value) => setLaneForm((current) => ({ ...current, fsc_per_mile_cents: value }))} />
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-xs font-semibold text-gray-600">Notes</label>
+              <textarea
+                value={laneForm.notes}
+                onChange={(event) => setLaneForm((current) => ({ ...current, notes: event.target.value }))}
+                rows={3}
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-[13px]"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setLaneModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={createLaneMutation.isPending || updateLaneMutation.isPending}>
+              {editingLane ? "Update Lane" : "Create Lane"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       <Modal open={contactModalOpen} onClose={() => setContactModalOpen(false)} title={editingContact ? "Edit Contact" : "Add Contact"}>
         <form
