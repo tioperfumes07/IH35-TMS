@@ -4,6 +4,7 @@ import { deleteQueueItem, getAllQueueItems, getPendingCount, initDB, updateQueue
 const RETRY_BACKOFF_MS = [5000, 30000, 120000, 600000, 1800000];
 const SYNC_INTERVAL_MS = 5 * 60 * 1000;
 const MAX_RETRIES = 5;
+const STUCK_AGE_HOURS = 24;
 const SYNCED_RETENTION_MS = 24 * 60 * 60 * 1000;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -75,11 +76,27 @@ async function cleanupSyncedItems() {
 
 async function shouldProcessItem(item: UploadQueueItem) {
   if (item.status === "synced") return false;
+  const ageHours = (Date.now() - new Date(item.created_at).getTime()) / (1000 * 60 * 60);
+  if (ageHours > STUCK_AGE_HOURS) {
+    await updateQueueItem(item.id, {
+      status: "failed",
+      last_error: `Item stale (${Math.round(ageHours)}h old)`,
+      next_retry_at: null,
+    });
+    return false;
+  }
   if (item.status === "uploading") {
     await updateQueueItem(item.id, { status: "pending" });
     return true;
   }
-  if (item.retry_count >= MAX_RETRIES) return false;
+  if (item.retry_count >= MAX_RETRIES) {
+    await updateQueueItem(item.id, {
+      status: "failed",
+      last_error: `Max retries (${MAX_RETRIES}) exceeded`,
+      next_retry_at: null,
+    });
+    return false;
+  }
   if (item.next_retry_at && new Date(item.next_retry_at).getTime() > Date.now()) return false;
   return item.status === "pending" || item.status === "failed";
 }

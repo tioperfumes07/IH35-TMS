@@ -8,20 +8,10 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 import { UploadDocumentModal } from "../components/UploadDocumentModal";
 import { HosCell } from "../components/HosCell";
 import { InstallPrompt } from "../components/InstallPrompt";
-import { Modal } from "../components/Modal";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
 import { useToast } from "../components/Toast";
 import { subscribeSyncState, syncOnce } from "../lib/upload-sync";
-
-const issues = [
-  "Mechanical",
-  "Road condition",
-  "Customer issue",
-  "Accident",
-  "Medical",
-  "Other",
-];
 
 function deriveDriverName(email: string): string {
   const base = email.split("@")[0];
@@ -34,7 +24,6 @@ export function HomePage() {
   const auth = useAuth();
   const { pushToast } = useToast();
   const { t } = useTranslation();
-  const [issueOpen, setIssueOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [pendingUploads, setPendingUploads] = useState(0);
   const [onlineStatus, setOnlineStatus] = useState<"online" | "connecting" | "offline">(navigator.onLine ? "connecting" : "offline");
@@ -153,7 +142,9 @@ export function HomePage() {
             <PwaButton
               variant="secondary"
               className="min-h-20 flex-col border-hos-violation/50 text-hos-violation"
-              onClick={() => setIssueOpen(true)}
+              onClick={() => {
+                window.location.href = "/incident/new";
+              }}
               icon={<AlertTriangle className="h-5 w-5" />}
             >
               {t("home.report_issue")}
@@ -190,27 +181,6 @@ export function HomePage() {
           }}
         />
       </ErrorBoundary>
-
-      <Modal open={issueOpen} onClose={() => setIssueOpen(false)} title={t("home.report_issue_title")}>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            {issues.map((issue) => (
-              <PwaButton key={issue} variant="secondary" className="min-h-14" onClick={() => pushToast(`${issue} saved as placeholder`)}>
-                {issue}
-              </PwaButton>
-            ))}
-          </div>
-          <div className="rounded-xl border border-dashed border-pwa-border p-4 text-center text-pwa-text-secondary">
-            {t("home.photo_upload_placeholder")}
-          </div>
-          <p className="text-xs text-pwa-text-secondary">{t("home.phase_two")}</p>
-          <div className="flex gap-2">
-            <PwaButton variant="secondary" className="flex-1" onClick={() => setIssueOpen(false)}>
-              {t("common.cancel")}
-            </PwaButton>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

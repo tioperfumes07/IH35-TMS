@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { ApiError } from "../api/client";
 import { startPhoneLogin, verifyPhoneLogin } from "../api/identity";
 import { useAuth } from "../auth/useAuth";
@@ -31,6 +32,7 @@ function maskPhoneForMessage(digits: string) {
 export function LoginPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const authBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
   const returnTo = encodeURIComponent(window.location.origin);
   const loginPath = `/api/v1/auth/google/login?returnTo=${returnTo}`;
@@ -45,6 +47,7 @@ export function LoginPage() {
   const [nextResendAt, setNextResendAt] = useState<number>(0);
   const [nowMs, setNowMs] = useState(Date.now());
   const [errorText, setErrorText] = useState("");
+  const sessionExpired = new URLSearchParams(window.location.search).get("reason") === "session_expired";
 
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -101,6 +104,11 @@ export function LoginPage() {
       <div className="w-full max-w-sm rounded-2xl border border-pwa-border bg-pwa-card p-6">
         <h1 className="text-3xl font-semibold text-pwa-text-primary">IH 35 Driver</h1>
         <p className="mt-2 text-base text-pwa-text-secondary">Sign in to continue</p>
+        {sessionExpired ? (
+          <p className="mt-3 rounded-md border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-amber-200">
+            {t("login.session_expired")}
+          </p>
+        ) : null}
         <div className="mt-6 rounded-xl border border-pwa-border bg-pwa-bg p-4">
           <h2 className="text-base font-semibold text-pwa-text-primary">Sign in with phone</h2>
           {step === "collect" ? (

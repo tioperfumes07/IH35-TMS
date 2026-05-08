@@ -111,3 +111,44 @@ export async function getFailedCount() {
   const rows = await getAllQueueItems();
   return rows.filter((row) => row.status === "failed").length;
 }
+
+export async function clearByStatus(statuses: UploadQueueStatus[]): Promise<number> {
+  const db = await initDB();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  const store = tx.objectStore(STORE_NAME);
+  const allRequest = store.getAll();
+  const all = await requestToPromise(allRequest as IDBRequest<UploadQueueItem[]>);
+  const toDelete = all.filter((item) => statuses.includes(item.status));
+  for (const item of toDelete) {
+    store.delete(item.id);
+  }
+  await txDone(tx);
+  return toDelete.length;
+}
+
+export async function getQueueSummary(): Promise<{
+  total: number;
+  pending: number;
+  uploading: number;
+  synced: number;
+  failed: number;
+}> {
+  const db = await initDB();
+  const tx = db.transaction(STORE_NAME, "readonly");
+  const store = tx.objectStore(STORE_NAME);
+  const all = await requestToPromise(store.getAll() as IDBRequest<UploadQueueItem[]>);
+  const counts = {
+    total: all.length,
+    pending: 0,
+    uploading: 0,
+    synced: 0,
+    failed: 0,
+  };
+  for (const item of all) {
+    if (item.status === "pending") counts.pending += 1;
+    if (item.status === "uploading") counts.uploading += 1;
+    if (item.status === "synced") counts.synced += 1;
+    if (item.status === "failed") counts.failed += 1;
+  }
+  return counts;
+}
