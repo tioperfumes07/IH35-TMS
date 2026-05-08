@@ -8,7 +8,12 @@ type Props = {
 };
 
 function ReadyBadge({ label }: { label: string }) {
-  const palette = label === "awaits Q close" ? { bg: "#fef3c7", fg: "#92400e" } : { bg: "#d1fae5", fg: "#065f46" };
+  const palette =
+    label === "awaits Q close"
+      ? { bg: "#fef3c7", fg: "#92400e" }
+      : label === "pending · awaits backend"
+        ? { bg: "#e2e8f0", fg: "#334155" }
+        : { bg: "#d1fae5", fg: "#065f46" };
   return (
     <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em]" style={{ background: palette.bg, color: palette.fg }}>
       {label}
@@ -36,17 +41,17 @@ export function IftaPreparerCard({ status }: Props) {
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">1</span>
           <span className="text-slate-700">Pull state-by-state miles and gallons from closed trips</span>
-          <ReadyBadge label={status.step1Ready ? "auto · ready" : "awaits Q close"} />
+          <ReadyBadge label={status.step1Ready ? "auto · ready" : "pending · awaits backend"} />
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">2</span>
           <span className="text-slate-700">Validate fuel tax exceptions and unit-level anomalies</span>
-          <ReadyBadge label={status.step2Ready ? "auto · ready" : "awaits Q close"} />
+          <ReadyBadge label={status.step2Ready ? "auto · ready" : "pending · awaits backend"} />
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">3</span>
           <span className="text-slate-700">Review jurisdiction totals with safety + accounting</span>
-          <ReadyBadge label={status.step3Ready ? "auto · ready" : "awaits Q close"} />
+          <ReadyBadge label={status.step3Ready ? "auto · ready" : "pending · awaits backend"} />
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">4</span>

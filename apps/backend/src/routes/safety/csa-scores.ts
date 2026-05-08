@@ -29,7 +29,7 @@ async function withCompany<T>(userId: string, role: string, companyId: string, f
   });
 }
 
-async function computeAndUpsertScore(client: any, companyId: string, actorId: string) {
+export async function computeAndUpsertScore(client: any, companyId: string, actorId: string) {
   const res = await client.query(
     `
       SELECT
