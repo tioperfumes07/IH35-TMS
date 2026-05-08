@@ -42,7 +42,7 @@ export function CreateExpenseModal({ open, onClose }: Props) {
           <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Transaction date" type="date" />
         </div>
 
-        <TwoSectionLineEditor mode="expense" onChange={setLines} showFuelColumns={expenseType === "fuel"} partsLaborMode="parts-and-labor" />
+        <TwoSectionLineEditor mode="expense" onChange={setLines} partsLaborMode="parts-and-labor" />
         <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Expense Total = A + B" />
       </div>
     </Modal>

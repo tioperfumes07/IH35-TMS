@@ -22,8 +22,6 @@ export type TwoSectionLine = {
   service_item_uuid?: string;
   location_label?: string;
   sub_rows?: ItemSubRow[];
-  odo_fill_at?: string;
-  mpg?: number;
 };
 
 type Props = {
@@ -32,7 +30,6 @@ type Props = {
   onChange: (lines: TwoSectionLine[]) => void;
   unitUuid?: string;
   readOnly?: boolean;
-  showFuelColumns?: boolean;
   partsLaborMode?: "none" | "parts-only" | "parts-and-labor";
 };
 
@@ -41,7 +38,6 @@ export function TwoSectionLineEditor({
   initialLines = [],
   onChange,
   readOnly = false,
-  showFuelColumns = false,
   partsLaborMode,
 }: Props) {
   const [lines, setLines] = useState<TwoSectionLine[]>(initialLines);
@@ -76,7 +72,6 @@ export function TwoSectionLineEditor({
         sectionA={{ lines: sectionA }}
         sectionB={{ lines: sectionB }}
         partsLaborMode={partsLaborMode ?? (mode === "wo" || mode === "bill" ? "parts-and-labor" : "parts-only")}
-        showFuelColumns={showFuelColumns}
         onSectionAChange={onSectionAChange}
         onSectionBChange={onSectionBChange}
         onOpenLocationMap={(lineId, subId) => setLocationTarget({ lineId, subId })}
