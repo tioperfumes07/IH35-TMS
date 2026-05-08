@@ -61,22 +61,49 @@
   - merge protocol (pause or direct merge)
 - Cross-check merge rules from request text are authoritative per block.
 
-## 7) What Has Been Built (Phase 1)
+## 7) Current Project Knowledge (Safety v6.4 lock)
 
-- Identity/RBAC foundation with workflows.
-- Full master data core (drivers, customers, vendors, units, locations, equipment).
-- Catalog foundation (accounting + ops + safety + quality + geography catalogs).
-- Multi-tenant company scoping + RLS.
-- Audit + outbox patterns.
-- Safety systems:
-  - driver safety file
-  - dispatcher safety file
-- Customer quality and risk history:
-  - quality events
-  - quality flags
-  - credit limit source tracking
-- Office UI core pages and detail pages shipped.
-- Combobox type-ahead rollout completed system-wide for office UI (with approved exclusions).
+Locked 2026-05-07 (P3-T11.17.2 schema + P3-T11.17.3 UI + hotfix-1).  
+Top hover-dropdown navigation only for Safety. Never side panel (Jorge G3).
+
+### Safety module structure (21 tabs, 8 groups)
+
+1. Driver Files & Training
+   - Driver Files
+   - Drug & Alcohol
+   - Safety Meetings
+2. Hours & Fatigue
+   - Hours of Service
+   - HOS Violations
+3. Inspections & FMCSA
+   - Vehicle Inspections-IDVR
+   - DOT Inspections
+   - CSA Score
+   - DOT Compliance
+4. Incidents & Claims
+   - Accidents & Incidents
+   - Damage Reports
+   - Trailer Interchanges
+   - Cargo Claims
+5. Fines & Discipline
+   - Internal Fines
+   - External Fines
+   - Complaints (privacy-gated for Owner/Admin/Safety)
+6. Driver Financial Safety
+   - Escrow Record
+7. Compliance Docs & Monitoring
+   - Insurance
+   - Permits
+   - Integrity Reports
+8. Settings
+   - Settings
+
+### Safety UI lock notes
+
+- Active driver filter default: `Active 7-10 days`.
+- Header pattern: back-arrow + breadcrumb + `Safety` title + descriptor.
+- Legacy route redirect retained: `/safety/vehicle-inspections` -> `/safety/idvr`.
+- v6.3 HTML preview references (including `docs/specs/02_PRODUCTION_CLEAN_v6_3.html`) are superseded by v6.4 and kept for historical reference only.
 
 ## 8) Locked Architectural Decisions
 
