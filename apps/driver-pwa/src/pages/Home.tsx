@@ -1,5 +1,6 @@
 import { AlertTriangle, FileText, Fuel, Navigation, Settings, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { signOut } from "../api/identity";
 import { useAuth } from "../auth/useAuth";
@@ -32,6 +33,7 @@ function deriveDriverName(email: string): string {
 export function HomePage() {
   const auth = useAuth();
   const { pushToast } = useToast();
+  const { t } = useTranslation();
   const [issueOpen, setIssueOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [pendingUploads, setPendingUploads] = useState(0);
@@ -56,27 +58,28 @@ export function HomePage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-lg font-semibold">{driverName}</p>
-              <p className="text-sm text-pwa-text-secondary">Unit 0234</p>
-              <p className="mt-1 text-xs text-pwa-text-secondary">{onlineIndicator}</p>
+              <p className="text-sm text-pwa-text-secondary">{t("home.unit")}</p>
+              <p className="mt-1 text-xs text-pwa-text-secondary">{onlineIndicator === "ONLINE" ? t("common.online") : t("common.offline")}</p>
             </div>
             <Link to="/profile" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-pwa-border">
               <Settings className="h-5 w-5 text-pwa-text-secondary" />
             </Link>
           </div>
-          <p className="mt-2 text-sm text-pwa-text-secondary">Welcome back</p>
+          <p className="mt-2 text-sm text-pwa-text-secondary">{t("home.greeting", { name: driverName })}</p>
           <div className="mt-3 flex gap-2">
             <PwaButton className="flex-1" onClick={() => setUploadOpen(true)}>
-              + Upload Document
+              {t("home.upload_document")}
             </PwaButton>
             <Link to="/documents" className="flex-1">
               <PwaButton variant="secondary" className="w-full">
-                My Documents{pendingUploads > 0 ? ` (${pendingUploads})` : ""}
+                {t("home.my_documents")}
+                {pendingUploads > 0 ? ` (${pendingUploads})` : ""}
               </PwaButton>
             </Link>
           </div>
         </header>
 
-        <PwaCard title="HOS Overview" subtitle="Phase 1 placeholder data — will sync with Samsara in Phase 4">
+        <PwaCard title={t("home.hos_overview")} subtitle={t("home.hos_subtitle")}>
           <div className="grid grid-cols-2 gap-3">
             <HosCell label="Drive" value="8h 12m" subtitle="of 11h limit" tone="driving" />
             <HosCell label="Shift" value="11h 04m" subtitle="of 14h limit" tone="driving" />
@@ -89,28 +92,27 @@ export function HomePage() {
           </div>
         </PwaCard>
 
-        <PwaCard title="Active Load #2024-0058" subtitle="Phase 1 placeholder — live load data in Phase 3">
+        <PwaCard title={t("home.active_load")} subtitle={t("home.active_load_subtitle")}>
           <p className="font-medium">Houston, TX → Atlanta, GA</p>
+          <p className="mt-1 text-xs text-pwa-text-secondary">{t("home.no_loads_today")}</p>
           <div className="mt-2 inline-flex rounded-full border border-hos-driving/40 bg-hos-driving/10 px-2 py-1 text-xs font-semibold text-hos-driving">
-            Driving
+            {t("home.driving")}
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2">
-            <PwaButton className="w-full">Status</PwaButton>
+            <PwaButton className="w-full">{t("home.status")}</PwaButton>
             <PwaButton
               variant="secondary"
               className="w-full"
               onClick={() => window.open("https://maps.google.com/?q=Atlanta,GA", "_blank")}
             >
               <Navigation className="h-4 w-4" />
-              Directions
+              {t("home.directions")}
             </PwaButton>
-            <PwaButton variant="secondary" className="w-full">
-              Docs
-            </PwaButton>
+            <PwaButton variant="secondary" className="w-full">{t("home.docs")}</PwaButton>
           </div>
         </PwaCard>
 
-        <PwaCard title="Next Fuel Recommendation" subtitle="Phase 1 placeholder — live recommendations in Phase 4">
+        <PwaCard title={t("home.fuel_recommendation")} subtitle={t("home.fuel_subtitle")}>
           <p className="font-medium">Recommended fuel stop: Pilot #492 — Tyler, TX</p>
           <p className="mt-1 text-pwa-text-secondary">120 mi away · saves $48 vs nearest</p>
           <PwaButton
@@ -118,11 +120,11 @@ export function HomePage() {
             className="mt-3 w-full"
             onClick={() => window.open("https://maps.google.com/?q=Pilot+492+Tyler+TX", "_blank")}
           >
-            Tap to navigate
+            {t("home.navigate")}
           </PwaButton>
         </PwaCard>
 
-        <PwaCard title="Driver Actions">
+        <PwaCard title={t("home.driver_actions")}>
           <div className="grid grid-cols-2 gap-3">
             <PwaButton
               variant="secondary"
@@ -130,7 +132,7 @@ export function HomePage() {
               onClick={() => pushToast("Coming in Phase 2")}
               icon={<Truck className="h-5 w-5" />}
             >
-              Pre-trip
+              {t("home.pre_trip")}
             </PwaButton>
             <PwaButton
               variant="secondary"
@@ -138,7 +140,7 @@ export function HomePage() {
               onClick={() => pushToast("Coming in Phase 2")}
               icon={<Fuel className="h-5 w-5" />}
             >
-              Log Fuel
+              {t("home.log_fuel")}
             </PwaButton>
             <PwaButton
               variant="secondary"
@@ -146,7 +148,7 @@ export function HomePage() {
               onClick={() => setUploadOpen(true)}
               icon={<FileText className="h-5 w-5" />}
             >
-              Upload BOL
+              {t("home.upload_bol")}
             </PwaButton>
             <PwaButton
               variant="secondary"
@@ -154,14 +156,14 @@ export function HomePage() {
               onClick={() => setIssueOpen(true)}
               icon={<AlertTriangle className="h-5 w-5" />}
             >
-              Report Issue
+              {t("home.report_issue")}
             </PwaButton>
           </div>
-          <p className="mt-3 text-xs text-pwa-text-secondary">Phase 1 placeholder — action flows land in Phase 2</p>
+          <p className="mt-3 text-xs text-pwa-text-secondary">{t("home.actions_subtitle")}</p>
         </PwaCard>
 
         <footer className="space-y-2 rounded-xl border border-pwa-border bg-pwa-card p-4 text-xs text-pwa-text-secondary">
-          <p>Backend version: {import.meta.env.VITE_BUILD_COMMIT ? String(import.meta.env.VITE_BUILD_COMMIT) : "dev"}</p>
+          <p>{t("home.backend_version")}: {import.meta.env.VITE_BUILD_COMMIT ? String(import.meta.env.VITE_BUILD_COMMIT) : "dev"}</p>
           <button
             className="text-pwa-text-primary underline"
             type="button"
@@ -173,7 +175,7 @@ export function HomePage() {
               }
             }}
           >
-            Sign out
+            {t("home.sign_out")}
           </button>
         </footer>
       </div>
@@ -189,7 +191,7 @@ export function HomePage() {
         />
       </ErrorBoundary>
 
-      <Modal open={issueOpen} onClose={() => setIssueOpen(false)} title="Report issue">
+      <Modal open={issueOpen} onClose={() => setIssueOpen(false)} title={t("home.report_issue_title")}>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             {issues.map((issue) => (
@@ -199,12 +201,12 @@ export function HomePage() {
             ))}
           </div>
           <div className="rounded-xl border border-dashed border-pwa-border p-4 text-center text-pwa-text-secondary">
-            Photo upload placeholder
+            {t("home.photo_upload_placeholder")}
           </div>
-          <p className="text-xs text-pwa-text-secondary">Phase 2 implementation</p>
+          <p className="text-xs text-pwa-text-secondary">{t("home.phase_two")}</p>
           <div className="flex gap-2">
             <PwaButton variant="secondary" className="flex-1" onClick={() => setIssueOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </PwaButton>
           </div>
         </div>

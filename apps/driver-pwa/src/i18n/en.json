@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "today": "Today",
+    "loads": "Loads",
+    "earnings": "Earnings",
+    "profile": "Profile"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "online": "Online",
+    "offline": "Offline",
+    "pending_sync": "Pending sync"
+  },
+  "home": {
+    "greeting": "Welcome back, {{name}}",
+    "no_loads_today": "No loads assigned today",
+    "unit": "Unit 0234",
+    "upload_document": "+ Upload Document",
+    "my_documents": "My Documents",
+    "hos_overview": "HOS Overview",
+    "hos_subtitle": "Phase 1 placeholder data — will sync with Samsara in Phase 4",
+    "active_load": "Active Load #2024-0058",
+    "active_load_subtitle": "Phase 1 placeholder — live load data in Phase 3",
+    "driving": "Driving",
+    "status": "Status",
+    "directions": "Directions",
+    "docs": "Docs",
+    "fuel_recommendation": "Next Fuel Recommendation",
+    "fuel_subtitle": "Phase 1 placeholder — live recommendations in Phase 4",
+    "navigate": "Tap to navigate",
+    "driver_actions": "Driver Actions",
+    "pre_trip": "Pre-trip",
+    "log_fuel": "Log Fuel",
+    "upload_bol": "Upload BOL",
+    "report_issue": "Report Issue",
+    "actions_subtitle": "Phase 1 placeholder — action flows land in Phase 2",
+    "backend_version": "Backend version",
+    "sign_out": "Sign out",
+    "report_issue_title": "Report issue",
+    "photo_upload_placeholder": "Photo upload placeholder",
+    "phase_two": "Phase 2 implementation"
+  },
+  "profile": {
+    "signed_in_as": "Signed in as",
+    "language": "Language",
+    "sign_out": "Sign out",
+    "language_en": "EN",
+    "language_es": "ES",
+    "back": "Back",
+    "title": "Profile",
+    "subtitle": "Driver settings foundation",
+    "role": "Role"
+  },
+  "sync": {
+    "syncing": "Syncing {{count}}…",
+    "offline_waiting": "{{count}} waiting · offline",
+    "error_retry": "Sync error · retry",
+    "online": "Online"
+  }
+}

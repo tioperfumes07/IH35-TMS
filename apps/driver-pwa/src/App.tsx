@@ -2,7 +2,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { useAuth } from "./auth/useAuth";
+import { BottomNav } from "./components/BottomNav";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { PendingSyncBar } from "./components/PendingSyncBar";
 import { HomePage } from "./pages/Home";
 import { InviteRedeemPage } from "./pages/InviteRedeem";
 import { LoginPage } from "./pages/Login";
@@ -37,6 +39,8 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
     <>
       <SyncBootstrap />
       {children}
+      <PendingSyncBar />
+      <BottomNav />
     </>
   );
 }
@@ -70,6 +74,22 @@ export default function App() {
             <ErrorBoundary>
               <MyDocumentsPage />
             </ErrorBoundary>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/loads"
+        element={
+          <ProtectedRoute>
+            <Navigate to="/home" replace />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/earnings"
+        element={
+          <ProtectedRoute>
+            <Navigate to="/home" replace />
           </ProtectedRoute>
         }
       />
