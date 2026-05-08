@@ -1,15 +1,22 @@
+import { apiRequest } from "./client";
+
 export type ReportCategory = "all" | "operations" | "financial" | "drivers" | "fleet" | "fuel" | "safety" | "compliance" | "saved";
 
 export type FrequentlyRunReport = {
   id: string;
   name: string;
+  category?: string;
+  description?: string;
+  status?: "real" | "stub";
   filters: string;
   runs: number;
 };
 
 export type ScheduledReport = {
   id: string;
+  report_id?: string;
   cadence: string;
+  cadence_label?: string;
   name: string;
   recipients: string;
 };
@@ -23,51 +30,203 @@ export type IftaStatus = {
   step2Ready: boolean;
   step3Ready: boolean;
   step4WaitsClose: boolean;
+  notes?: string;
 };
 
-export async function getFrequentlyRun(): Promise<FrequentlyRunReport[]> {
-  return [
-    {
-      id: "profit-truck-mtd",
-      name: "Profit per truck · MTD",
-      filters: "100 units · current month · in-house, external, roadside cost split",
-      runs: 14,
-    },
-    {
-      id: "driver-settlement",
-      name: "Driver settlement summary",
-      filters: "last cycle Sun-Sat · advances + deductions + escrow + minus run",
-      runs: 12,
-    },
-    { id: "ar-aging", name: "A/R aging", filters: "customer · current / 30 / 31-60 / 61+ · with debt by", runs: 9 },
-    { id: "fuel-savings", name: "Fuel savings · rec vs actual", filters: "recommendation accuracy · driver / unit · variance %", runs: 8 },
-    { id: "maint-cost-unit", name: "Maintenance cost per unit", filters: "all WO costs · in-house + external + roadside", runs: 6 },
-    { id: "detention-claims", name: "Detention claims", filters: "customer · time · billed · collected", runs: 5 },
-    { id: "driver-pay-history", name: "Driver pay history", filters: "all settlements + advances + deductions", runs: 4 },
-    { id: "csa-fleet", name: "CSA fleet score", filters: "FMCSA categories · vs threshold · trend", runs: 3 },
-  ];
+export type ReportLibraryItem = {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  status: "real" | "stub";
+};
+
+export type KpiSummary = {
+  available_reports: number;
+  scheduled: number;
+  run_last_7d: number;
+  ifta_status: { quarter: string; dueAt: string; daysUntilDue: number };
+};
+
+type ReportRunLogBody = {
+  operating_company_id: string;
+  report_id: string;
+  report_name?: string;
+  filters?: Record<string, unknown>;
+  duration_ms?: number;
+  rows_returned?: number;
+};
+
+function withCompany(path: string, companyId: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}operating_company_id=${encodeURIComponent(companyId)}`;
 }
 
-export async function getScheduledReports(): Promise<ScheduledReport[]> {
-  return [
-    { id: "s1", cadence: "Daily 7:00a", name: "Dispatch board · units & loads", recipients: "→ owner" },
-    { id: "s2", cadence: "Daily 6:00p", name: "Cash position + AR aging", recipients: "→ owner, acctg" },
-    { id: "s3", cadence: "Mon 8:00a", name: "Profit per truck · last week", recipients: "→ owner" },
-    { id: "s4", cadence: "Fri 5:00p", name: "Driver settlements ready", recipients: "→ acctg" },
-    { id: "s5", cadence: "Mon weekly", name: "Maintenance + open WOs", recipients: "→ safety" },
-    { id: "s6", cadence: "Quarterly", name: "IFTA state-by-state · CSV", recipients: "→ safety" },
-  ];
+async function postRunLog(body: ReportRunLogBody) {
+  await apiRequest<{ ok: boolean }>("/api/v1/reports/run-log", { method: "POST", body });
 }
 
-export async function getIftaStatus(): Promise<IftaStatus> {
-  return {
-    currentQuarter: "Q2",
-    filedAt: "2026-04-28",
-    nextDueAt: "2026-05-30",
-    daysUntilDue: 28,
-    step1Ready: true,
-    step2Ready: true,
-    step3Ready: true,
-    step4WaitsClose: true,
-  };
+export async function getReportLibrary(companyId: string): Promise<ReportLibraryItem[]> {
+  const response = await apiRequest<{ reports: ReportLibraryItem[] }>(withCompany("/api/v1/reports/library", companyId));
+  return response.reports;
+}
+
+export async function getFrequentlyRun(companyId: string): Promise<FrequentlyRunReport[]> {
+  const response = await apiRequest<{ rows: Array<Record<string, unknown>> }>(
+    withCompany("/api/v1/reports/frequently-run?period=7d", companyId)
+  );
+  return response.rows.map((row) => ({
+    id: String(row.id ?? ""),
+    name: String(row.name ?? ""),
+    category: row.category ? String(row.category) : undefined,
+    description: row.description ? String(row.description) : undefined,
+    status: (row.status as "real" | "stub" | undefined) ?? "real",
+    filters: String(row.filters ?? "default"),
+    runs: Number(row.runs ?? row.run_count ?? 0),
+  }));
+}
+
+export async function getScheduledReports(companyId: string): Promise<ScheduledReport[]> {
+  const response = await apiRequest<{ rows: Array<Record<string, unknown>> }>(withCompany("/api/v1/reports/scheduled", companyId));
+  return response.rows.map((row) => ({
+    id: String(row.id ?? ""),
+    report_id: row.report_id ? String(row.report_id) : undefined,
+    cadence: String(row.cadence_label ?? row.cadence ?? ""),
+    cadence_label: row.cadence_label ? String(row.cadence_label) : undefined,
+    name: String(row.name ?? ""),
+    recipients: String(row.recipients ?? "—"),
+  }));
+}
+
+export async function getKpiSummary(companyId: string): Promise<KpiSummary> {
+  return apiRequest<KpiSummary>(withCompany("/api/v1/reports/kpi-summary", companyId));
+}
+
+export async function getIftaStatus(companyId: string): Promise<IftaStatus> {
+  return apiRequest<IftaStatus>(withCompany("/api/v1/reports/ifta-status", companyId));
+}
+
+export async function runProfitPerTruck(companyId: string, month: string) {
+  const startedAt = Date.now();
+  const result = await apiRequest<{ rows: unknown[] }>(
+    withCompany(`/api/v1/reports/profit-per-truck?month=${encodeURIComponent(month)}`, companyId)
+  );
+  await postRunLog({
+    operating_company_id: companyId,
+    report_id: "profit-per-truck",
+    report_name: "Profit per truck · MTD",
+    filters: { month },
+    duration_ms: Date.now() - startedAt,
+    rows_returned: result.rows.length,
+  });
+  return result;
+}
+
+export async function runDriverSettlementSummary(companyId: string, cycleStart?: string, cycleEnd?: string) {
+  const startedAt = Date.now();
+  const query = new URLSearchParams();
+  if (cycleStart) query.set("cycle_start", cycleStart);
+  if (cycleEnd) query.set("cycle_end", cycleEnd);
+  const base = "/api/v1/reports/driver-settlement-summary";
+  const path = query.toString() ? `${base}?${query.toString()}` : base;
+  const result = await apiRequest<{ rows: unknown[] }>(withCompany(path, companyId));
+  await postRunLog({
+    operating_company_id: companyId,
+    report_id: "driver-settlement",
+    report_name: "Driver settlement summary",
+    filters: { cycleStart, cycleEnd },
+    duration_ms: Date.now() - startedAt,
+    rows_returned: result.rows.length,
+  });
+  return result;
+}
+
+export async function runArAging(companyId: string) {
+  const startedAt = Date.now();
+  const result = await apiRequest<{ status: string; message: string; rows: unknown[] }>(withCompany("/api/v1/reports/ar-aging", companyId));
+  await postRunLog({
+    operating_company_id: companyId,
+    report_id: "ar-aging",
+    report_name: "A/R aging",
+    duration_ms: Date.now() - startedAt,
+    rows_returned: result.rows.length,
+  });
+  return result;
+}
+
+export async function runFuelSavings(companyId: string, period: string) {
+  const startedAt = Date.now();
+  const result = await apiRequest<{ rows: unknown[] }>(
+    withCompany(`/api/v1/reports/fuel-savings?period=${encodeURIComponent(period)}`, companyId)
+  );
+  await postRunLog({
+    operating_company_id: companyId,
+    report_id: "fuel-savings",
+    report_name: "Fuel savings · rec vs actual",
+    filters: { period },
+    duration_ms: Date.now() - startedAt,
+    rows_returned: result.rows.length,
+  });
+  return result;
+}
+
+export async function runMaintenanceCostPerUnit(companyId: string, period: string) {
+  const startedAt = Date.now();
+  const result = await apiRequest<{ rows: unknown[] }>(
+    withCompany(`/api/v1/reports/maintenance-cost-per-unit?period=${encodeURIComponent(period)}`, companyId)
+  );
+  await postRunLog({
+    operating_company_id: companyId,
+    report_id: "maint-cost-unit",
+    report_name: "Maintenance cost per unit",
+    filters: { period },
+    duration_ms: Date.now() - startedAt,
+    rows_returned: result.rows.length,
+  });
+  return result;
+}
+
+export async function runDetentionClaims(companyId: string) {
+  const startedAt = Date.now();
+  const result = await apiRequest<{ status: string; message: string; rows: unknown[] }>(
+    withCompany("/api/v1/reports/detention-claims", companyId)
+  );
+  await postRunLog({
+    operating_company_id: companyId,
+    report_id: "detention-claims",
+    report_name: "Detention claims",
+    duration_ms: Date.now() - startedAt,
+    rows_returned: result.rows.length,
+  });
+  return result;
+}
+
+export async function runDriverPayHistory(companyId: string, driverId: string, start?: string, end?: string) {
+  const startedAt = Date.now();
+  const query = new URLSearchParams({ driver_id: driverId });
+  if (start) query.set("start", start);
+  if (end) query.set("end", end);
+  const result = await apiRequest<{ settlements: unknown[] }>(withCompany(`/api/v1/reports/driver-pay-history?${query.toString()}`, companyId));
+  await postRunLog({
+    operating_company_id: companyId,
+    report_id: "driver-pay-history",
+    report_name: "Driver pay history",
+    filters: { driverId, start, end },
+    duration_ms: Date.now() - startedAt,
+    rows_returned: result.settlements.length,
+  });
+  return result;
+}
+
+export async function runCsaFleetScore(companyId: string) {
+  const startedAt = Date.now();
+  const result = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/reports/csa-fleet-score", companyId));
+  await postRunLog({
+    operating_company_id: companyId,
+    report_id: "csa-fleet",
+    report_name: "CSA fleet score",
+    duration_ms: Date.now() - startedAt,
+    rows_returned: 1,
+  });
+  return result;
 }

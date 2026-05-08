@@ -53,6 +53,7 @@ import { VendorsPage } from "./pages/Vendors";
 import { VendorDetailPage } from "./pages/VendorDetail";
 import { Form425CHome } from "./pages/form425c/Form425CHome";
 import { ReportsHomePage } from "./pages/reports/ReportsHome";
+import { ReportsRunPlaceholderPage } from "./pages/reports/ReportsRunPlaceholder";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -309,6 +310,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ReportsHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/run/:reportId"
+          element={
+            <ProtectedRoute>
+              <ReportsRunPlaceholderPage />
             </ProtectedRoute>
           }
         />

@@ -25,6 +25,7 @@ import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
+import { registerReportsRoutes } from "./reports/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
 import { registerSafetyRoutes } from "./safety/safety.routes.js";
@@ -142,6 +143,7 @@ async function main() {
   await registerDriverFinanceSettlementRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
+  await registerReportsRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);

@@ -2,9 +2,10 @@ import type { FrequentlyRunReport } from "../../api/reports";
 
 type Props = {
   rows: FrequentlyRunReport[];
+  onRun: (row: FrequentlyRunReport) => void;
 };
 
-export function FrequentlyRunTable({ rows }: Props) {
+export function FrequentlyRunTable({ rows, onRun }: Props) {
   return (
     <section className="rounded border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
@@ -26,7 +27,7 @@ export function FrequentlyRunTable({ rows }: Props) {
             {rows.map((row) => (
               <tr key={row.id} className="border-b border-slate-100">
                 <td className="px-3 py-2">
-                  <button type="button" className="text-left font-semibold text-slate-800 hover:text-[#1f2a44] hover:underline">
+                  <button type="button" onClick={() => onRun(row)} className="text-left font-semibold text-slate-800 hover:text-[#1f2a44] hover:underline">
                     {row.name}
                   </button>
                 </td>
