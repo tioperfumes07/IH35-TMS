@@ -20,6 +20,8 @@
     "dev:backend": "cd apps/backend && npm run dev",
     "dev:driver-pwa": "cd apps/driver-pwa && npm run dev",
     "dev:frontend": "cd apps/frontend && npm run dev",
+    "test:frontend": "cd apps/frontend && npm run test",
+    "test:frontend:e2e": "cd apps/frontend && npm run test:e2e",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:verify:audit-append-only": "node scripts/db-verify-audit-append-only.mjs",
