@@ -15,14 +15,17 @@ declare module "fastify" {
 }
 
 function isDriverRole(role: string): boolean {
-  return role === "Driver" || role === "Owner" || role === "Administrator" || role === "Manager";
+  return role === "Driver";
 }
 
 export async function requireDriverSession(req: FastifyRequest, reply: FastifyReply): Promise<boolean> {
   if (!requireAuth(req, reply)) return false;
   if (!req.user) return false;
   if (!isDriverRole(req.user.role)) {
-    reply.code(403).send({ error: "forbidden" });
+    reply.code(403).send({
+      error: "drivers_only",
+      message: "This app is for drivers only. Office staff please use app.ih35dispatch.com",
+    });
     return false;
   }
   const driver = await withCurrentUser(req.user.uuid, async (client) => {

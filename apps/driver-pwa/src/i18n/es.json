@@ -59,7 +59,15 @@
     "cleared_failed": "Eliminadas {{count}} elemento(s)"
   },
   "login": {
-    "session_expired": "Tu sesión expiró. Inicia sesión de nuevo."
+    "session_expired": "Tu sesión expiró. Inicia sesión de nuevo.",
+    "tab_phone": "Teléfono",
+    "tab_email": "Correo",
+    "email_label": "Correo",
+    "email_placeholder": "conductor@ejemplo.com",
+    "email_send_code": "Enviar código",
+    "email_verify": "Verificar",
+    "email_help": "Te enviaremos un código de 6 dígitos.",
+    "drivers_only_error": "Esta app es solo para conductores. Personal de oficina: usa app.ih35dispatch.com"
   },
   "sync": {
     "syncing": "Sincronizando {{count}}…",
