@@ -19,6 +19,7 @@ import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
+import { ActionButton } from "../components/shared/ActionButton";
 import { useToast } from "../components/Toast";
 
 const lineItemUnitOptions: Array<{ value: LineItemUnit; label: string }> = [
@@ -243,7 +244,7 @@ export function EquipmentTypesPage() {
                 Show inactive
               </label>
             ) : null}
-            {canManage ? <Button onClick={() => setAddEquipmentOpen(true)}>Add Equipment Type</Button> : null}
+            {canManage ? <ActionButton onClick={() => setAddEquipmentOpen(true)}>+ Create Equipment Type</ActionButton> : null}
           </div>
         }
       />
@@ -387,7 +388,7 @@ export function EquipmentTypesPage() {
         </div>
       )}
 
-      <Modal open={addEquipmentOpen} onClose={() => setAddEquipmentOpen(false)} title="Add Equipment Type">
+      <Modal open={addEquipmentOpen} onClose={() => setAddEquipmentOpen(false)} title="Create Equipment Type">
         <form
           className="space-y-3"
           onSubmit={async (event) => {

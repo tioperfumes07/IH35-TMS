@@ -11,6 +11,7 @@ import {
   listWorkOrdersFiltered,
 } from "../../api/maintenance";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
@@ -26,8 +27,13 @@ import { WorkOrdersTable } from "./components/WorkOrdersTable";
 import { ArrivingSoonPage } from "./ArrivingSoonPage";
 
 const SUBNAV = [
+  { id: "wo_list", label: "WO List" },
+  { id: "fleet_table", label: "Fleet Table" },
+  { id: "rm_status", label: "R&M Status" },
+  { id: "service_location", label: "Service / Location" },
+  { id: "open_damage", label: "Open Damage" },
   { id: "active_wos", label: "Active WOs" },
-  { id: "rm_status", label: "R&M Status Board" },
+  { id: "rm_status_board", label: "R&M Status Board" },
   { id: "arriving_soon", label: "Arriving Soon" },
   { id: "in_transit_issues", label: "In-Transit Issues" },
   { id: "damage_reports", label: "Damage Reports" },
@@ -35,6 +41,25 @@ const SUBNAV = [
   { id: "parts_inventory", label: "Parts Inventory" },
   { id: "settings", label: "Settings" },
 ] as const;
+
+type MaintenanceTabId = (typeof SUBNAV)[number]["id"];
+
+function resolveQuickTab(tab: MaintenanceTabId): "wo_list" | "fleet_table" | "rm_status" | "service_location" | "open_damage" {
+  if (tab === "active_wos") return "wo_list";
+  if (tab === "rm_status_board") return "rm_status";
+  if (tab === "damage_reports") return "open_damage";
+  if (tab === "fleet_table") return "fleet_table";
+  if (tab === "service_location") return "service_location";
+  if (tab === "open_damage") return "open_damage";
+  return "wo_list";
+}
+
+function quickToMainTab(tab: "wo_list" | "fleet_table" | "rm_status" | "service_location" | "open_damage"): MaintenanceTabId {
+  if (tab === "wo_list") return "active_wos";
+  if (tab === "rm_status") return "rm_status_board";
+  if (tab === "open_damage") return "damage_reports";
+  return tab;
+}
 
 export function MaintenanceHomePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -45,7 +70,7 @@ export function MaintenanceHomePage() {
   const [createWoType, setCreateWoType] = useState<WorkOrderType>("pm");
   const [prefillFromIssue, setPrefillFromIssue] = useState<InTransitIssue | null>(null);
   const [triageIssue, setTriageIssue] = useState<InTransitIssue | null>(null);
-  const [tab, setTab] = useState<(typeof SUBNAV)[number]["id"]>("active_wos");
+  const [tab, setTab] = useState<MaintenanceTabId>("active_wos");
   const [sourceTypeFilter, setSourceTypeFilter] = useState("");
   const [externalVendorFilter, setExternalVendorFilter] = useState("");
 
@@ -115,29 +140,22 @@ export function MaintenanceHomePage() {
               setPrefillFromIssue(null);
               setCreateWoOpen(true);
             }}
+            quickTab={resolveQuickTab(tab)}
+            onQuickTabChange={(quickTab) => setTab(quickToMainTab(quickTab))}
           />
         }
       />
 
-      <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
-        <div className="flex min-w-max gap-4">
-          {SUBNAV.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={tab === item.id ? "border-b border-white pb-0.5 font-semibold" : ""}
-              onClick={() => setTab(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <SecondaryNavTabs
+        tabs={SUBNAV.map((item) => ({ id: item.id, label: item.label }))}
+        activeId={tab}
+        onChange={(next) => setTab(next as (typeof SUBNAV)[number]["id"])}
+      />
 
       <MaintKpiRows kpis={kpis} />
       <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
 
-      {tab === "active_wos" ? (
+      {tab === "active_wos" || tab === "wo_list" ? (
         <WorkOrdersTable
           rows={workOrdersQuery.data?.work_orders ?? []}
           sourceTypeFilter={sourceTypeFilter}
@@ -147,7 +165,7 @@ export function MaintenanceHomePage() {
         />
       ) : null}
 
-      {tab === "rm_status" ? (
+      {tab === "rm_status" || tab === "rm_status_board" ? (
         <RMBucketsGrid
           inHouse={rmStatusQuery.data?.in_house ?? []}
           external={rmStatusQuery.data?.external ?? []}
@@ -156,13 +174,21 @@ export function MaintenanceHomePage() {
         />
       ) : null}
 
+      {tab === "fleet_table" ? (
+        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Fleet table view is in active development.</div>
+      ) : null}
+
+      {tab === "service_location" ? (
+        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Service / location board is in active development.</div>
+      ) : null}
+
       {tab === "arriving_soon" ? <ArrivingSoonPage operatingCompanyId={companyId} /> : null}
 
       {tab === "in_transit_issues" ? (
         <InTransitTriageBand issues={triageQuery.data?.issues ?? []} onTriage={(issue) => setTriageIssue(issue)} />
       ) : null}
 
-      {tab === "damage_reports" ? (
+      {tab === "damage_reports" || tab === "open_damage" ? (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Damage reports queue is in active development.</div>
       ) : null}
 

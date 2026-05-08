@@ -15,6 +15,7 @@ import {
 } from "../../api/form425c";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { buildPrintHTML, suggestedFilename } from "./lib/buildPrintHTML";
 import { DEFAULT_PROFILES } from "./lib/constants";
 import type { CompanyKey, CompanyProfiles, CurrentFormState, HistoryReportRow } from "./types";
@@ -301,18 +302,12 @@ export function Form425CHome() {
         <div className="text-xs opacity-75">Official Form 425C — Monthly Operating Report System</div>
       </div>
 
-      <div className="flex gap-1 bg-white px-4 pt-2 shadow-sm">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`rounded-t px-3 py-2 text-sm font-semibold ${tab === t.id ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <SecondaryNavTabs
+        className="px-4 pt-2"
+        tabs={TABS.map((t) => ({ id: t.id, label: t.label }))}
+        activeId={tab}
+        onChange={(next) => setTab(next as TabId)}
+      />
 
       {tab === "profile" ? (
         <ProfilesTab
