@@ -300,74 +300,48 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 
 ---
 
-## MODULE 6 — SAFETY ⚠️ MOST GAPS — JORGE'S CALLOUT
+## MODULE 6 — SAFETY (V6.4 UI)
 
-**Route:** `/safety`
-**Approved screen:** `6-Safety.png`
-**Phase 3 task:** T11.10 (shipped at `d24d926` — INCOMPLETE per Jorge audit)
-**Pending:** T11.10.1 — add missing Fines / Company Violations / Integrity Alerts tabs
-**Purpose:** All compliance + driver safety + accident handling + violations + integrity alerts
+**Route:** `/safety/*`  
+**Phase 3 task:** `P3-T11.17.3`  
+**Purpose:** Compliance, inspections, discipline, liabilities, integrity monitoring in a single shell.
 
-### Top action button
-**+ Log Safety Event**
+### Layout invariants (Jorge G3, G4, G25)
+- Top horizontal navigation only. No secondary sidebar is allowed.
+- The global 80px navy module sidebar remains unchanged and is outside the safety layout.
+- Safety sub-navigation uses hover-dropdown group buttons that open downward.
+- Active group uses navy text with navy bottom-border underline.
+- Active tab in dropdown uses navy left-border accent, bold text, and light gray background.
+- Active tab name is displayed on the far right of the group navigation strip.
+- Header includes back-arrow, breadcrumb `Modules > Safety > {group}`, page title `Safety`, and descriptor text.
+- Driver filter strip defaults to **Active 7-10 days** and is visible on all safety routes.
 
-### Sub-nav tabs (15 — V5 locked order)
+### Grouped top navigation (21 tabs across 8 groups)
 
-| Tab | What it shows | Status | Phase |
-|-----|---------------|--------|-------|
-| **Events** | All driver safety events table | ✅ shipped | Phase 3 |
-| **Training** | Driver training records + certifications + expiry | ✅ shipped | Phase 3 |
-| **Drug/Alcohol** | D/A test schedule + results + chain of custody | ✅ shipped | Phase 3 |
-| **Accident Reports** | Accident records with AccidentReportDrawer (photos · spawn WO · spawn liability) | ✅ shipped | Phase 3 |
-| **CSA Score** | FMCSA SAFER cached score + BASIC breakdown | ✅ shipped (cached only — live in Phase 6) |
-| **HOS Violations** | Driver HOS violation log + escalation | ✅ shipped | Phase 3 |
-| **Vehicle Inspections** | DVIR records + roadside inspections + OOS tracking | ✅ shipped | Phase 3 |
-| **DOT Inspections** | DOT inspection log with OOS auto-spawn WO flow | ✅ shipped in P3-T11.17 |
-| **Civil Fines** | Driver/company civil fines log · convert to liability via WF-035 | ✅ shipped in P3-T11.17 |
-| **Internal Fines** | Office-imposed policy fines with approved→liability conversion | ✅ shipped in P3-T11.17 |
-| **Company Violations** | DOT/FMCSA company-level violations · CSA improvement plans · audit prep | ✅ shipped in P3-T11.17 |
-| **Complaints** | HR/safety complaints workflow with role-restricted access | ✅ shipped in P3-T11.17 |
-| **Liabilities** (cross-link) | Read-only view of `driver_liabilities` filtered to safety-source records | ✅ shipped |
-| **Integrity Alerts** | Theft/collusion anomaly detection (per-unit, per-driver, per-vendor, fleet baselines) | ✅ shipped |
-| **Settings** | CSA targets · Training intervals · Violation thresholds | Owner only |
+### Sub-nav tabs (21 — V6.4 top hover-dropdown)
 
-### KPI row — 6 cards (UPDATED)
-Open Events · Pending Acks · MTD Violations · Training Due (30d) · Open Fines · CSA Score
+| Group | Tabs |
+|---|---|
+| Driver Files & Training | Driver Files, Drug & Alcohol, Safety Meetings |
+| Hours & Fatigue | Hours of Service, HOS Violations |
+| Inspections & FMCSA | Vehicle Inspections-IDVR, DOT Inspections, CSA Score, DOT Compliance |
+| Incidents & Claims | Accidents & Incidents, Damage Reports, Trailer Interchanges, Cargo Claims |
+| Fines & Discipline | Internal Fines, External Fines, Complaints |
+| Driver Financial Safety | Escrow Record |
+| Compliance Docs & Monitoring | Insurance, Permits, Integrity Reports |
+| Settings | Settings |
 
-### NEW: Fines tab detail
-- Table: Date · Driver · Type (DOT / Permit / Toll / Speeding / Equipment / Other) · Amount · Status (Open / Paid / Disputed / Forwarded to Liability) · Source (Roadside / Office / Court Notice) · Action
-- Action: "Convert to Driver Liability" → creates `driver_liabilities` entry per WF-035 (Company Paid Driver Expense Recovery)
-- Filter: by driver / by type / by status / by date range
-- Empty state: "No fines on record."
+### V6.4 tab behaviors shipped in Phase 3
+- HOS Violations: list/create/void flow with driver/date/source filtering and action column.
+- DOT Inspections: list/create/void flow, OOS confirmation prompt for auto-spawned WO, PDF upload endpoint wiring.
+- CSA Score: current score + BASIC categories, Hazmat always rendered as `-`, manual recompute button, SAFER pull 501 stub.
+- Complaints: privacy-gated workflow with `403 E_COMPLAINT_PRIVACY_GATED` restricted screen for unauthorized roles.
+- Escrow Record: escrow summary table with owner-only forfeit action and legacy-driver clause block path in UI.
+- Integrity Reports: four sub-tabs (WO Cost, Fuel MPG, Driver Dwell, HOS Pattern) with per-row Review action.
 
-### NEW: Company Violations tab detail
-- Table: Date · Violation Code · Severity (1-10) · Description · BASIC Category (Unsafe Driving / Crash Indicator / HOS / Vehicle Maintenance / Controlled Substances / HazMat / Driver Fitness) · Status · Action
-- Action: "Create Improvement Plan" → opens task list with assigned owner + due date
-- Linked to: company-level CSA score history
-- Audit prep export: PDF for FMCSA audit
-
-### NEW: Integrity Alerts tab detail (when T11.6.1 ships)
-- 4 panels: By Unit · By Driver · By Vendor · Fleet Baselines
-- Each panel: table of entities flagged + threshold breach + last event date
-- Detection categories (Phase 6 alert engine):
-  1. Tire frequency anomaly (per unit)
-  2. Repair frequency anomaly (per unit)
-  3. Unit cost anomaly
-  4. Accident frequency (per unit)
-  5. Driver incident/accident count
-  6. Driver repair frequency (cross-unit)
-  7. Driver fuel consumption (MPG anomaly)
-  8. Driver tire change frequency
-  9. Vendor cost anomaly (price gouging)
-  10. Vendor invoice frequency
-  11. Vendor-driver collusion pattern
-
-### AccidentReportDrawer (right slide-in, already shipped — to be enhanced)
-- Accident summary + status (under-investigation / closed-no-fault / closed-driver-at-fault)
-- Photo upload (R2)
-- "Spawn Liability" button → creates `driver_liabilities` row
-- "Spawn WO" button → creates `maintenance.work_orders` with source_type='AC' (when T11.6.1 merges)
-- "Send Ack Request" → WhatsApp/SMS/Email (WF-036 office side)
+### Route compatibility
+- `/safety` redirects to `/safety/driver-files`.
+- Legacy bookmark route `/safety/vehicle-inspections` redirects to `/safety/idvr`.
 
 ---
 
