@@ -9,10 +9,6 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "paths": {
-      "@ih35/shared-types": ["../../packages/shared-types/src/index.ts"],
-      "@ih35/shared-types/*": ["../../packages/shared-types/src/*"]
-    },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",

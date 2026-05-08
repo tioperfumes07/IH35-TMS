@@ -1,7 +1,6 @@
 import { apiRequest } from "./client";
-import type { SettlementStatus } from "@ih35/shared-types";
 
-export type { SettlementStatus } from "@ih35/shared-types";
+export type SettlementStatus = "draft" | "presettle" | "acked" | "locked" | "paid" | "held" | "cancelled";
 
 export type SettlementListRow = {
   id: string;
