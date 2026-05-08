@@ -77,7 +77,7 @@ export function StopActionPage() {
           {status === "departed" ? <div className="text-sm text-pwa-text-secondary">{t("stop.departed_at")}: {new Date().toLocaleTimeString()}</div> : null}
         </PwaCard>
 
-        <PwaButton variant="secondary" onClick={() => navigate(`/incident/new?stopId=${resolvedStop.id}`)}>
+        <PwaButton variant="secondary" onClick={() => navigate(`/incident/new?loadId=${resolvedLoad.id}&stopId=${resolvedStop.id}`)}>
           {t("stop.report_issue")}
         </PwaButton>
       </div>

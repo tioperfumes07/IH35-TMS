@@ -82,7 +82,7 @@ export function AcceptancePage() {
                   scroll_completed: scrolledToBottom,
                   accepted_at: new Date().toISOString(),
                 });
-                navigate(`/loads/${load.id}`);
+                navigate(`/dvir/pre/${load.id}`);
               } catch {
                 pushToast(t("common.retry"), "error");
               }
