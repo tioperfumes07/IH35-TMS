@@ -52,6 +52,7 @@ import { UsersPage } from "./pages/Users";
 import { VendorsPage } from "./pages/Vendors";
 import { VendorDetailPage } from "./pages/VendorDetail";
 import { Form425CHome } from "./pages/form425c/Form425CHome";
+import { ReportsHomePage } from "./pages/reports/ReportsHome";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -303,11 +304,18 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <ReportsHomePage />
+            </ProtectedRoute>
+          }
+        />
         {[
           // Keep only truly unshipped module redirects here.
           // Shipped modules (Factoring, 425C, Lists) must never be routed via /coming-soon.
           ["/accounting", "Accounting", "5", "Post-launch"],
-          ["/reports", "Reports", "3", "T11.16 next week"],
           ["/driver-app", "Driver App", "3", "T11.15 next week"],
         ].map(([path, feature, phase, eta]) => (
           <Route

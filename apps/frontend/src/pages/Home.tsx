@@ -1,37 +1,47 @@
 import type { AuthMeResponse } from "../types/api";
-import { DataPanel } from "../components/layout/DataPanel";
-import { DataPanelRow } from "../components/layout/DataPanelRow";
-import { KpiCard } from "../components/layout/KpiCard";
-import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
-import { SubAreaGrid } from "../components/layout/SubAreaGrid";
-import { SubAreaTile } from "../components/layout/SubAreaTile";
-import { colors } from "../design/tokens";
+import { Button } from "../components/Button";
+import { SectionQuickJump } from "../components/home/SectionQuickJump";
+import { AttentionListRow } from "../components/home/AttentionListRow";
+import { FleetSnapshotPanel } from "../components/home/FleetSnapshotPanel";
 
-const DONE_ITEMS = [
-  "BT-1-IDENT-01",
-  "BT-1-IDENT-02",
-  "BT-1-IDENT-03",
-  "BT-1-MDATA-01",
-  "BT-1-MDATA-02",
-  "BT-1-MDATA-02b",
-  "BT-1-MDATA-03",
-  "BT-1-CATAL-01",
-  "BT-1-CATAL-02",
-  "BT-1-CATAL-03",
-  "BT-1-PHASE1-AUDIT",
+const KPI_ITEMS = [
+  { label: "Tracked Assets", number: "142", meta: "100 trucks · 42 trailers" },
+  { label: "Assigned / Working", number: "68", meta: "on active loads" },
+  { label: "Maint Past Due", number: "7", meta: "3 critical", alert: "crit" as const },
+  { label: "QBO Vendors", number: "284", meta: "synced 9:38 AM" },
+  { label: "Vehicles in Service", number: "94", meta: "Samsara live", healthy: true },
+  { label: "Open Damage", number: "4", meta: "2 awaiting estimate", alert: "warn" as const },
+  { label: "Pending QBO Sync", number: "12", meta: "retry in 60s", alert: "warn" as const },
 ];
 
-const COMING_SOON = [
-  "Maintenance",
-  "Accounting",
-  "Banking",
-  "Fuel",
-  "Safety",
-  "Dispatch",
-  "Reports",
-  "425C",
-  "Driver App",
+const QUICK_JUMPS = [
+  { title: "Maintenance", subtitle: "Work orders, R&M, Severe Repair", count: 14 },
+  { title: "Accounting", subtitle: "Bills, Expenses, Bill payment", count: 38 },
+  { title: "Banking", subtitle: "Categorize, Reconcile, Transfer", count: 22 },
+  { title: "Fuel", subtitle: "Relay inbox, Settings, Planner", count: 19 },
+  { title: "Safety", subtitle: "HOS, Antidoping, Accidents, DOT", count: 6 },
+  { title: "Drivers", subtitle: "Profiles, Settlements, Permits", count: 3 },
+  { title: "Dispatch", subtitle: "Loads, Settlements, Geofencing", count: 27 },
+  { title: "Lists & Catalogs", subtitle: "Grouped by domain · 8 sets", count: null },
+];
+
+const ATTENTION_ITEMS = [
+  { severity: "CRIT" as const, text: "3 maintenance past-due jobs exceed 24h threshold", module: "Maintenance" },
+  { severity: "WARN" as const, text: "12 QBO sync retries pending in accounting queue", module: "Accounting" },
+  { severity: "WARN" as const, text: "4 open damage cases waiting external estimate", module: "Safety" },
+  { severity: "INFO" as const, text: "27 dispatch loads changed state in last 24h", module: "Dispatch" },
+  { severity: "INFO" as const, text: "19 fuel planner recommendations generated", module: "Fuel" },
+  { severity: "WARN" as const, text: "6 driver files require monthly permit refresh", module: "Drivers" },
+];
+
+const FLEET_ROWS = [
+  { leftLabel: "Trucks", leftValue: "100", rightLabel: "Refrigerated", rightValue: "28" },
+  { leftLabel: "Flatbeds", leftValue: "34", rightLabel: "Dry vans", rightValue: "38" },
+  { leftLabel: "Trailers", leftValue: "42", rightLabel: "Out of service", rightValue: "6" },
+  { leftLabel: "In shop", leftValue: "9", rightLabel: "Roadside", rightValue: "2" },
+  { leftLabel: "Assigned units", leftValue: "68", rightLabel: "Idle units", rightValue: "32" },
+  { leftLabel: "Samsara live", leftValue: "94", rightLabel: "No signal >6h", rightValue: "3" },
 ];
 
 type Props = {
@@ -43,61 +53,51 @@ export function HomePage({ auth }: Props) {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Home" subtitle={`Workspace snapshot · last 3 days · ${displayName}`} />
+      <PageHeader
+        title="Home"
+        subtitle={`Workspace snapshot · last 3 days · ${displayName}`}
+        actions={<Button variant="secondary">Refresh</Button>}
+      />
 
-      <KpiStrip>
-        <KpiCard label="Tracked Assets" number={42} accent={colors.fleet.strong} />
-        <KpiCard label="Assigned/Working" number={19} accent={colors.dispatch.strong} />
-        <KpiCard label="Maint Past Due" number={3} accent={colors.maintenance.strong} />
-        <KpiCard label="QBO Vendors" number={12} accent={colors.accounting.strong} />
-        <KpiCard label="In Service" number={27} accent={colors.drivers.strong} />
-        <KpiCard label="Open Damage" number={1} accent={colors.safety.strong} />
-        <KpiCard label="Pending QBO Sync" number={7} accent={colors.warn.strong} />
-      </KpiStrip>
-
-      <SubAreaGrid>
-        <SubAreaTile name="Maintenance" count={3} description="Past due checks" domain="maintenance" urgency="warn" />
-        <SubAreaTile name="Accounting" count={7} description="Pending syncs" domain="accounting" urgency="warn" />
-        <SubAreaTile name="Banking" count={2} description="Unmatched deposits" domain="accounting" />
-        <SubAreaTile name="Fuel" count={4} description="Stops to review" domain="fuel" />
-        <SubAreaTile name="Safety" count={1} description="Critical incident" domain="safety" urgency="critical" />
-        <SubAreaTile name="Drivers" count={11} description="Active today" domain="drivers" />
-        <SubAreaTile name="Dispatch" count={8} description="Loads in transit" domain="dispatch" />
-        <SubAreaTile name="Lists & Catalogs" count={8} description="Core registries" domain="fleet" />
-      </SubAreaGrid>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <DataPanel title="Today's attention list" accentColor={colors.warn.strong}>
-          {DONE_ITEMS.slice(0, 6).map((item) => (
-            <DataPanelRow key={item}>
-              <span>{item}</span>
-              <span className="text-xs text-gray-500">OK</span>
-            </DataPanelRow>
-          ))}
-        </DataPanel>
-        <DataPanel title="Fleet snapshot" accentColor={colors.fleet.strong}>
-          {[
-            ["Trucks", "18"],
-            ["Trailers", "21"],
-            ["Equipment", "42"],
-            ["Drivers", "28"],
-          ].map(([label, value]) => (
-            <DataPanelRow key={label}>
-              <span>{label}</span>
-              <span className="font-semibold text-gray-700">{value}</span>
-            </DataPanelRow>
-          ))}
-        </DataPanel>
+      {/* TODO: wire dashboard snapshot values to backend in P3-T11.16.1 */}
+      <div className="grid grid-cols-1 gap-2 xl:grid-cols-7">
+        {KPI_ITEMS.map((item) => (
+          <div
+            key={item.label}
+            className={`rounded border bg-white px-3 py-2 ${
+              item.alert === "crit"
+                ? "border-l-[3px] border-l-[#dc2626]"
+                : item.alert === "warn"
+                  ? "border-l-[3px] border-l-[#f59e0b]"
+                  : "border-slate-200"
+            }`}
+          >
+            <div className="text-[10px] font-semibold uppercase tracking-[0.04em] text-slate-500">{item.label}</div>
+            <div className={`text-base font-semibold ${item.alert === "crit" ? "text-[#dc2626]" : item.alert === "warn" ? "text-[#92400e]" : item.healthy ? "text-[#16a34a]" : "text-slate-900"}`}>
+              {item.number}
+            </div>
+            <div className="text-[11px] text-slate-500">{item.meta}</div>
+          </div>
+        ))}
       </div>
 
-      <DataPanel title="Coming soon" accentColor={colors.info.strong}>
-        {COMING_SOON.slice(0, 6).map((item) => (
-          <DataPanelRow key={item}>
-            <span>{item}</span>
-            <span className="text-xs text-gray-500">Phase roadmap</span>
-          </DataPanelRow>
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+        {QUICK_JUMPS.map((jump) => (
+          <SectionQuickJump key={jump.title} title={jump.title} subtitle={jump.subtitle} count={jump.count} />
         ))}
-      </DataPanel>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+        <section className="rounded border border-slate-200 bg-white">
+          <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Today&apos;s Attention List</div>
+          <div className="px-3 py-1">
+            {ATTENTION_ITEMS.map((item) => (
+              <AttentionListRow key={item.text} severity={item.severity} text={item.text} moduleLabel={item.module} />
+            ))}
+          </div>
+        </section>
+        <FleetSnapshotPanel rows={FLEET_ROWS} />
+      </div>
 
       <footer className="text-xs text-gray-500">
         Backend version: {import.meta.env.VITE_BUILD_COMMIT ? String(import.meta.env.VITE_BUILD_COMMIT) : "dev"}
