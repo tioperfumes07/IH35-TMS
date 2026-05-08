@@ -14,7 +14,11 @@ if (!connectionString) {
 }
 
 const migrationsDir = path.resolve("db/migrations");
-const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
+const migrationFilePattern = /^\d{4}[a-z]?_.+\.sql$/i;
+const files = fs
+  .readdirSync(migrationsDir)
+  .filter((f) => migrationFilePattern.test(f))
+  .sort();
 
 const client = new Client({ connectionString });
 
