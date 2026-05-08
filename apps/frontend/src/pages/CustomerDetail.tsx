@@ -31,6 +31,9 @@ import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificatio
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
+import { BackButton } from "../components/shared/BackButton";
+import { Breadcrumb } from "../components/shared/Breadcrumb";
+import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
@@ -483,8 +486,14 @@ export function CustomerDetailPage() {
 
   return (
     <div className="space-y-3">
+      <BackButton />
+      <Breadcrumb
+        items={[
+          { label: "Customers", href: "/customers" },
+          { label: customer.name },
+        ]}
+      />
       <PageHeader
-        backHref="/customers"
         title={customer.name}
         subtitle={customer.customer_code ?? "No code"}
         actions={
@@ -510,20 +519,11 @@ export function CustomerDetailPage() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
-        <div className="flex min-w-max gap-1">
-          {visibleTabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`rounded px-2.5 py-1.5 text-xs font-medium ${activeTab === tab ? "bg-sky-100 text-sky-800" : "text-gray-700 hover:bg-gray-100"}`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
+      <SecondaryNavTabs
+        tabs={visibleTabs.map((tab) => ({ id: tab, label: tab }))}
+        activeId={activeTab}
+        onChange={(nextTab) => setActiveTab(nextTab as CustomerTab)}
+      />
 
       {activeTab === "Profile" ? (
         <div className="grid gap-3 lg:grid-cols-2">
@@ -971,8 +971,78 @@ export function CustomerDetailPage() {
         )
       ) : null}
 
-      {activeTab !== "Profile" && activeTab !== "Quality & History" && activeTab !== "Documents" ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">{activeTab} view will be delivered in the next block. The tab is intentionally present to preserve the final information architecture.</div>
+      {activeTab === "Contacts" ? (
+        <DataPanel title={`Contacts (${contacts.length})`}>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-gray-200 text-gray-600">
+                  <th className="px-2 py-1.5 font-semibold">Name</th>
+                  <th className="px-2 py-1.5 font-semibold">Role</th>
+                  <th className="px-2 py-1.5 font-semibold">Phone</th>
+                  <th className="px-2 py-1.5 font-semibold">Email</th>
+                  <th className="px-2 py-1.5 font-semibold">Primary</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contacts.map((contact) => (
+                  <tr key={contact.id} className="border-b border-gray-100">
+                    <td className="px-2 py-1.5 text-gray-900">{contact.name}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{contact.title || contact.department}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{contact.phone || contact.mobile || "-"}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{contact.email || "-"}</td>
+                    <td className="px-2 py-1.5 text-gray-700">{contact.is_primary ? "Yes" : "No"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {contacts.length === 0 ? <div className="mt-3 text-sm text-gray-600">No contacts on file. Add via Edit Customer.</div> : null}
+        </DataPanel>
+      ) : null}
+
+      {activeTab === "Billing & Receivables" ? (
+        <div className="grid gap-3 md:grid-cols-3">
+          {/* TODO: wire to accounting.invoices API in P3-T11.17.7 */}
+          <DataPanel title="Open Invoices">
+            <div className="space-y-1 text-sm text-gray-700">
+              <div>Count: -</div>
+              <div>Total: -</div>
+            </div>
+          </DataPanel>
+          <DataPanel title="AR Aging">
+            <div className="space-y-1 text-sm text-gray-700">
+              <div>Current: -</div>
+              <div>30: -</div>
+              <div>60: -</div>
+              <div>90+: -</div>
+            </div>
+          </DataPanel>
+          <DataPanel title="Last Payment Date">
+            <div className="text-sm text-gray-700">-</div>
+          </DataPanel>
+        </div>
+      ) : null}
+
+      {activeTab === "Lanes & Pricing" ? (
+        <div className="rounded border border-gray-200 bg-white p-4">
+          {/* TODO: wire customer lanes aggregation to dispatch.loads API in P3-T11.17.7 */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-gray-200 text-gray-600">
+                  <th className="px-2 py-1.5 font-semibold">Origin</th>
+                  <th className="px-2 py-1.5 font-semibold">Destination</th>
+                  <th className="px-2 py-1.5 font-semibold">Loads Count</th>
+                  <th className="px-2 py-1.5 font-semibold">Avg Rate</th>
+                  <th className="px-2 py-1.5 font-semibold">Last Load Date</th>
+                </tr>
+              </thead>
+              <tbody />
+            </table>
+          </div>
+          <div className="mt-3 text-sm text-gray-600">Lane analysis coming in P3-T11.17.7</div>
+        </div>
       ) : null}
 
       <Modal open={contactModalOpen} onClose={() => setContactModalOpen(false)} title={editingContact ? "Edit Contact" : "Add Contact"}>
