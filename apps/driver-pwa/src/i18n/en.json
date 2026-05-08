@@ -130,7 +130,120 @@
     "breakdown": "Breakdown",
     "no_gps": "No GPS"
   },
+  "dvir": {
+    "title_pre": "Pre-trip DVIR",
+    "title_post": "Post-trip DVIR",
+    "unit": "Unit",
+    "trailer": "Trailer",
+    "odometer": "Odometer",
+    "location": "Location",
+    "cert_text": "I certify this inspection is complete and accurate.",
+    "signature": "Driver Signature",
+    "submit": "Submit DVIR",
+    "major_blocks": "Major defects place this unit out-of-service until cleared.",
+    "oos_banner": "OUT OF SERVICE: dispatch notified and movement blocked.",
+    "note_required": "Note required for major defect",
+    "photo_required": "photo(s)",
+    "status": {
+      "pass": "Pass",
+      "minor": "Minor",
+      "major": "Major"
+    },
+    "items": {
+      "service_brakes": "Service Brakes",
+      "parking_brake": "Parking Brake",
+      "steering": "Steering Mechanism",
+      "lights": "Lights/Reflectors",
+      "tires": "Tires",
+      "horn": "Horn",
+      "wipers": "Windshield Wipers",
+      "mirrors": "Mirrors",
+      "coupling": "Coupling Devices",
+      "wheels": "Wheels/Rims",
+      "emergency_eq": "Emergency Equipment",
+      "fuel_system": "Fuel System",
+      "exhaust": "Exhaust System",
+      "frame_body": "Frame and Body",
+      "suspension": "Suspension",
+      "reefer": "Reefer Unit"
+    }
+  },
+  "hos": {
+    "title": "HOS Clocks",
+    "duty_status_label": "Duty Status",
+    "duty_status": {
+      "driving": "Driving",
+      "on_duty_not_driving": "On Duty (Not Driving)",
+      "off_duty": "Off Duty",
+      "sleeper_berth": "Sleeper Berth"
+    },
+    "clock": {
+      "drive": "Drive",
+      "shift": "Shift",
+      "cycle": "Cycle",
+      "break": "Break"
+    },
+    "remaining": "Remaining",
+    "next_reset": "Next reset",
+    "last_synced": "Last synced {{ts}}",
+    "stale_data": "Data is stale. Pull to refresh when online.",
+    "threshold": {
+      "healthy": "healthy",
+      "caution": "caution",
+      "critical": "critical"
+    }
+  },
+  "earnings": {
+    "title": "Earnings",
+    "cycle_label": "Current cycle",
+    "loads_completed": "Loads completed",
+    "miles_driven": "Miles driven",
+    "gross": "Gross",
+    "advances": "Advances",
+    "deductions": "Deductions",
+    "escrow": "Escrow",
+    "net_preview": "Net preview",
+    "final_settlement": "Final settlement",
+    "past_cycles": "Past cycles",
+    "no_loads_in_cycle": "No loads in this cycle"
+  },
+  "true_status": {
+    "delivered": "Delivered",
+    "invoiced": "Invoiced",
+    "factored": "Factored",
+    "paid": "Paid",
+    "disputed": "Disputed",
+    "pending": "Pending",
+    "blocked": "Blocked"
+  },
   "incident": {
-    "coming_soon": "Incident report coming in T11.15.3"
+    "title": "Incident Report",
+    "type_label": "Incident type",
+    "severity_label": "Severity",
+    "location_label": "Location",
+    "use_my_location": "Use my location",
+    "description_label": "Description",
+    "description_min": "Minimum 10 characters",
+    "photos_label": "Photos",
+    "linked_load": "Linked load",
+    "linked_stop": "Linked stop",
+    "occurred_at": "Occurred at",
+    "submit": "Submit Incident",
+    "confirm_critical": "Confirm critical incident",
+    "alert_dispatch": "This will immediately alert dispatch and safety.",
+    "reported_toast": "Incident reported",
+    "types": {
+      "check_engine_warning": "Check Engine Warning",
+      "mechanical_breakdown": "Mechanical Breakdown",
+      "accident_minor": "Minor Accident",
+      "accident_major": "Major Accident",
+      "cargo_issue": "Cargo Issue",
+      "other": "Other"
+    },
+    "severities": {
+      "info": "Info",
+      "warning": "Warning",
+      "critical": "Critical"
+    }
   }
 }

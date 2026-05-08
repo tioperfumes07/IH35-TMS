@@ -6,8 +6,11 @@ import { BottomNav } from "./components/BottomNav";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PendingSyncBar } from "./components/PendingSyncBar";
 import { AcceptancePage } from "./pages/Acceptance";
+import { DvirPage } from "./pages/DVIR";
+import { EarningsPage } from "./pages/Earnings";
 import { HomePage } from "./pages/Home";
-import { IncidentPlaceholderPage } from "./pages/IncidentPlaceholder";
+import { HosPage } from "./pages/HOS";
+import { IncidentReportPage } from "./pages/IncidentReport";
 import { InviteRedeemPage } from "./pages/InviteRedeem";
 import { LoadDetailPage } from "./pages/LoadDetail";
 import { LoginPage } from "./pages/Login";
@@ -126,7 +129,31 @@ export default function App() {
         path="/earnings"
         element={
           <ProtectedRoute>
-            <Navigate to="/home" replace />
+            <EarningsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hos"
+        element={
+          <ProtectedRoute>
+            <HosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dvir/pre/:loadId"
+        element={
+          <ProtectedRoute>
+            <DvirPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dvir/post/:loadId"
+        element={
+          <ProtectedRoute>
+            <DvirPage />
           </ProtectedRoute>
         }
       />
@@ -134,7 +161,7 @@ export default function App() {
         path="/incident/new"
         element={
           <ProtectedRoute>
-            <IncidentPlaceholderPage />
+            <IncidentReportPage />
           </ProtectedRoute>
         }
       />

@@ -39,6 +39,15 @@ export function LoadDetailPage() {
           <div className="mt-1 text-xs text-pwa-text-secondary">
             {load.pickup_location} → {load.delivery_location}
           </div>
+          {load.lifecycle_stage === "unloaded" || load.lifecycle_stage === "off_duty" ? (
+            <button
+              type="button"
+              className="mt-2 min-h-11 rounded border border-pwa-border px-3 text-xs font-semibold text-pwa-text-secondary"
+              onClick={() => navigate(`/dvir/post/${load.id}`)}
+            >
+              Post-trip DVIR
+            </button>
+          ) : null}
         </PwaCard>
 
         <div className="overflow-x-auto border-b border-pwa-border bg-pwa-card px-2 py-1">

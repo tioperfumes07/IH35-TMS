@@ -130,7 +130,120 @@
     "breakdown": "Avería",
     "no_gps": "Sin GPS"
   },
+  "dvir": {
+    "title_pre": "DVIR previo al viaje",
+    "title_post": "DVIR posterior al viaje",
+    "unit": "Unidad",
+    "trailer": "Remolque",
+    "odometer": "Odómetro",
+    "location": "Ubicación",
+    "cert_text": "Certifico que esta inspección está completa y es precisa.",
+    "signature": "Firma del conductor",
+    "submit": "Enviar DVIR",
+    "major_blocks": "Los defectos mayores ponen esta unidad fuera de servicio.",
+    "oos_banner": "FUERA DE SERVICIO: despacho notificado y movimiento bloqueado.",
+    "note_required": "Nota obligatoria para defecto mayor",
+    "photo_required": "foto(s)",
+    "status": {
+      "pass": "Pasa",
+      "minor": "Menor",
+      "major": "Mayor"
+    },
+    "items": {
+      "service_brakes": "Frenos de servicio",
+      "parking_brake": "Freno de estacionamiento",
+      "steering": "Dirección",
+      "lights": "Luces/Reflectores",
+      "tires": "Llantas",
+      "horn": "Claxon",
+      "wipers": "Limpiaparabrisas",
+      "mirrors": "Espejos",
+      "coupling": "Dispositivos de acople",
+      "wheels": "Ruedas/Rines",
+      "emergency_eq": "Equipo de emergencia",
+      "fuel_system": "Sistema de combustible",
+      "exhaust": "Sistema de escape",
+      "frame_body": "Chasis y carrocería",
+      "suspension": "Suspensión",
+      "reefer": "Unidad de refrigeración"
+    }
+  },
+  "hos": {
+    "title": "Relojes HOS",
+    "duty_status_label": "Estado de servicio",
+    "duty_status": {
+      "driving": "Conduciendo",
+      "on_duty_not_driving": "En servicio (sin conducir)",
+      "off_duty": "Fuera de servicio",
+      "sleeper_berth": "Litera"
+    },
+    "clock": {
+      "drive": "Manejo",
+      "shift": "Jornada",
+      "cycle": "Ciclo",
+      "break": "Descanso"
+    },
+    "remaining": "Restante",
+    "next_reset": "Próximo reinicio",
+    "last_synced": "Última sincronización {{ts}}",
+    "stale_data": "Los datos están desactualizados. Actualiza cuando tengas conexión.",
+    "threshold": {
+      "healthy": "saludable",
+      "caution": "precaución",
+      "critical": "crítico"
+    }
+  },
+  "earnings": {
+    "title": "Ganancias",
+    "cycle_label": "Ciclo actual",
+    "loads_completed": "Cargas completadas",
+    "miles_driven": "Millas conducidas",
+    "gross": "Bruto",
+    "advances": "Anticipos",
+    "deductions": "Deducciones",
+    "escrow": "Reserva",
+    "net_preview": "Neto estimado",
+    "final_settlement": "Liquidación final",
+    "past_cycles": "Ciclos anteriores",
+    "no_loads_in_cycle": "No hay cargas en este ciclo"
+  },
+  "true_status": {
+    "delivered": "Entregado",
+    "invoiced": "Facturado",
+    "factored": "Factorizado",
+    "paid": "Pagado",
+    "disputed": "En disputa",
+    "pending": "Pendiente",
+    "blocked": "Bloqueado"
+  },
   "incident": {
-    "coming_soon": "Reporte de incidente llega en T11.15.3"
+    "title": "Reporte de incidente",
+    "type_label": "Tipo de incidente",
+    "severity_label": "Severidad",
+    "location_label": "Ubicación",
+    "use_my_location": "Usar mi ubicación",
+    "description_label": "Descripción",
+    "description_min": "Mínimo 10 caracteres",
+    "photos_label": "Fotos",
+    "linked_load": "Carga vinculada",
+    "linked_stop": "Parada vinculada",
+    "occurred_at": "Ocurrió a las",
+    "submit": "Enviar incidente",
+    "confirm_critical": "Confirmar incidente crítico",
+    "alert_dispatch": "Esto alertará de inmediato a despacho y seguridad.",
+    "reported_toast": "Incidente reportado",
+    "types": {
+      "check_engine_warning": "Advertencia de motor",
+      "mechanical_breakdown": "Avería mecánica",
+      "accident_minor": "Accidente menor",
+      "accident_major": "Accidente mayor",
+      "cargo_issue": "Problema de carga",
+      "other": "Otro"
+    },
+    "severities": {
+      "info": "Info",
+      "warning": "Advertencia",
+      "critical": "Crítico"
+    }
   }
 }

@@ -25,6 +25,15 @@ export function TodayPage() {
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary">
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-24">
         <PwaCard title={t("today.title")} subtitle={t("today.pull_to_refresh")}>
+          <div className="mb-3 flex justify-end">
+            <button
+              type="button"
+              className="min-h-11 rounded-full border border-pwa-border px-3 text-xs font-semibold text-pwa-text-secondary"
+              onClick={() => navigate("/hos")}
+            >
+              HOS
+            </button>
+          </div>
           <div className="mb-3">
             <button
               type="button"
