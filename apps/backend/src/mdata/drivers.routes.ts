@@ -244,6 +244,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const parsedBody = createDriverBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    const normalizedEmail = b.email?.toLowerCase() ?? null;
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
@@ -364,11 +365,17 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                 SELECT id
                 FROM identity.users
                 WHERE phone = $1
-                LIMIT 1
+                   OR ($2::text IS NOT NULL AND lower(email) = $2)
+                ORDER BY id
+                LIMIT 2
               `,
-              [b.phone]
+              [b.phone, normalizedEmail]
             );
-            const existingUser = existingUserRes.rows[0] ?? null;
+            const existingUsers = existingUserRes.rows;
+            if (existingUsers.length > 1 && existingUsers[0].id !== existingUsers[1].id) {
+              return { error: "identity_user_conflict_credentials" as const };
+            }
+            const existingUser = existingUsers[0] ?? null;
             if (existingUser) {
               identityUserId = existingUser.id;
               linkedUserEventType = "existing_user";
@@ -377,10 +384,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                 const userRes = await client.query<{ id: string }>(
                   `
                     INSERT INTO identity.users (email, role, phone, default_company_id, deactivated_at)
-                    VALUES (NULL, 'Driver', $1, $2, NULL)
+                    VALUES ($1, 'Driver', $2, $3, NULL)
                     RETURNING id
                   `,
-                  [b.phone, resolvedOperatingCompanyId]
+                  [normalizedEmail, b.phone, resolvedOperatingCompanyId]
                 );
                 identityUserId = userRes.rows[0]?.id ?? null;
                 linkedUserEventType = "new_user_created";
@@ -392,11 +399,17 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                     SELECT id
                     FROM identity.users
                     WHERE phone = $1
-                    LIMIT 1
+                       OR ($2::text IS NOT NULL AND lower(email) = $2)
+                    ORDER BY id
+                    LIMIT 2
                   `,
-                  [b.phone]
+                  [b.phone, normalizedEmail]
                 );
-                identityUserId = conflictUserRes.rows[0]?.id ?? null;
+                const conflictUsers = conflictUserRes.rows;
+                if (conflictUsers.length > 1 && conflictUsers[0].id !== conflictUsers[1].id) {
+                  return { error: "identity_user_conflict_credentials" as const };
+                }
+                identityUserId = conflictUsers[0]?.id ?? null;
                 linkedUserEventType = "existing_user";
               }
             }
@@ -407,10 +420,13 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             `
               UPDATE identity.users
               SET default_company_id = $2,
+                  role = 'Driver',
+                  phone = $3,
+                  email = COALESCE($4, email),
                   deactivated_at = NULL
               WHERE id = $1
             `,
-            [identityUserId, resolvedOperatingCompanyId]
+            [identityUserId, resolvedOperatingCompanyId, b.phone, normalizedEmail]
           );
 
           await client.query(
@@ -426,16 +442,49 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             [identityUserId, resolvedOperatingCompanyId, authUser.uuid]
           );
         } else if (b.create_login_user) {
-          const userRes = await client.query<{ id: string }>(
+          const existingUserRes = await client.query<{ id: string }>(
             `
-              INSERT INTO identity.users (email, role, phone)
-              VALUES (NULL, 'Driver', $1)
-              RETURNING id
+              SELECT id
+              FROM identity.users
+              WHERE phone = $1
+                 OR ($2::text IS NOT NULL AND lower(email) = $2)
+              ORDER BY id
+              LIMIT 2
             `,
-            [b.phone]
+            [b.phone, normalizedEmail]
           );
-          identityUserId = userRes.rows[0]?.id ?? null;
+          const existingUsers = existingUserRes.rows;
+          if (existingUsers.length > 1 && existingUsers[0].id !== existingUsers[1].id) {
+            return { error: "identity_user_conflict_credentials" as const };
+          }
+          if (existingUsers[0]) {
+            identityUserId = existingUsers[0].id;
+            linkedUserEventType = "existing_user";
+          } else {
+            const userRes = await client.query<{ id: string }>(
+              `
+                INSERT INTO identity.users (email, role, phone)
+                VALUES ($1, 'Driver', $2)
+                RETURNING id
+              `,
+              [normalizedEmail, b.phone]
+            );
+            identityUserId = userRes.rows[0]?.id ?? null;
+            linkedUserEventType = "new_user_created";
+          }
           if (!identityUserId) throw new Error("failed_to_create_identity_user");
+
+          await client.query(
+            `
+              UPDATE identity.users
+              SET role = 'Driver',
+                  phone = $2,
+                  email = COALESCE($3, email),
+                  deactivated_at = NULL
+              WHERE id = $1
+            `,
+            [identityUserId, b.phone, normalizedEmail]
+          );
         }
 
         const res = await client.query(
@@ -467,7 +516,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             b.first_name,
             b.last_name,
             b.phone,
-            b.email ?? null,
+            normalizedEmail,
             b.cdl_number ?? null,
             b.cdl_state ?? null,
             b.cdl_class ?? null,
@@ -586,11 +635,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           await appendCrudAudit(
             client,
             authUser.uuid,
-            "identity.users.created",
+            linkedUserEventType === "existing_user" ? "identity.users.linked" : "identity.users.created",
             {
               resource_id: identityUserId,
               resource_type: "identity.users",
               phone: b.phone,
+              email: normalizedEmail,
               role: "Driver",
               linked_driver_id: row.id,
             },
@@ -657,6 +707,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         });
       }
       if (created && typeof created === "object" && "error" in created) {
+        if (created.error === "identity_user_conflict_credentials") {
+          return reply.code(409).send({ error: "identity_user_conflict_credentials" });
+        }
         if (created.error === "operating_company_not_found") return reply.code(400).send({ error: "operating_company_not_found" });
         if (created.error === "prior_driver_not_found") return reply.code(404).send({ error: "prior_driver_not_found" });
         if (created.error === "prior_driver_not_terminated") return reply.code(400).send({ error: "prior_driver_not_terminated" });
@@ -942,9 +995,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const driverRes = await client.query<{ id: string; phone: string; identity_user_id: string | null }>(
+        const driverRes = await client.query<{ id: string; phone: string; email: string | null; identity_user_id: string | null }>(
           `
-            SELECT id, phone, identity_user_id
+            SELECT id, phone, email, identity_user_id
             FROM mdata.drivers
             WHERE id = $1
             LIMIT 1
@@ -958,10 +1011,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         const userRes = await client.query<{ id: string }>(
           `
             INSERT INTO identity.users (email, role, phone)
-            VALUES (NULL, 'Driver', $1)
+            VALUES ($1, 'Driver', $2)
             RETURNING id
           `,
-          [driver.phone]
+          [driver.email ? driver.email.toLowerCase() : null, driver.phone]
         );
         const identityUserId = userRes.rows[0]?.id;
         if (!identityUserId) return { error: "identity_user_create_failed" as const };
@@ -981,6 +1034,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             resource_type: "identity.users",
             role: "Driver",
             phone: driver.phone,
+            email: driver.email ? driver.email.toLowerCase() : null,
             linked_driver_id: driver.id,
           },
           "warning",

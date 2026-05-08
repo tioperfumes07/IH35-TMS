@@ -46,6 +46,18 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     throw new ApiError(response.status, payload);
   }
 
+  if (response.status === 403) {
+    const errorCode = typeof payload === "object" && payload !== null ? (payload as { error?: string }).error : undefined;
+    if (errorCode === "drivers_only" || errorCode === "driver_profile_not_found") {
+      const onDriversOnlyPage =
+        window.location.pathname === "/login" && new URLSearchParams(window.location.search).get("reason") === "drivers_only";
+      if (!onDriversOnlyPage) {
+        window.location.href = "/login?reason=drivers_only";
+      }
+      throw new ApiError(response.status, payload);
+    }
+  }
+
   if (!response.ok) {
     throw new ApiError(response.status, payload);
   }

@@ -28,6 +28,21 @@ export type PhoneVerifyResponse = {
   session: { id: string };
 };
 
+export type EmailStartResponse = {
+  ok: true;
+  message: string;
+};
+
+export type EmailVerifyResponse = {
+  ok: true;
+  user: {
+    id: string;
+    email: string | null;
+    role: string;
+  };
+  session: { id: string };
+};
+
 export type InviteRedeemResponse = {
   ok: true;
   user: {
@@ -54,6 +69,14 @@ export function startPhoneLogin(body: { phone: string; channel?: "whatsapp" | "s
 
 export function verifyPhoneLogin(body: { phone: string; code: string }) {
   return apiRequest<PhoneVerifyResponse>("/api/v1/auth/phone/verify", { method: "POST", body });
+}
+
+export function startEmailLogin(body: { email: string }) {
+  return apiRequest<EmailStartResponse>("/api/v1/auth/email/start", { method: "POST", body });
+}
+
+export function verifyEmailLogin(body: { email: string; code: string }) {
+  return apiRequest<EmailVerifyResponse>("/api/v1/auth/email/verify", { method: "POST", body });
 }
 
 export function redeemDriverInvite(body: { token: string }) {
