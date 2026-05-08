@@ -1,27 +1,7 @@
 import { apiRequest } from "./client";
 import { enqueueUpload, type UploadQueueItem } from "../lib/upload-queue";
-
-export type DriverIncidentType =
-  | "check_engine_warning"
-  | "mechanical_breakdown"
-  | "accident_minor"
-  | "accident_major"
-  | "cargo_issue"
-  | "other";
-
-export type IncidentSeverity = "info" | "warning" | "critical";
-
-export type IncidentPayload = {
-  load_id: string;
-  stop_id?: string;
-  type: DriverIncidentType;
-  severity: IncidentSeverity;
-  description: string;
-  lat: number | null;
-  lng: number | null;
-  occurred_at: string;
-  document_keys: string[];
-};
+import type { DriverIncidentType, IncidentPayload } from "@ih35/shared-types";
+export type { DriverIncidentType, IncidentSeverity, IncidentPayload } from "@ih35/shared-types";
 
 function mapIncidentCategory(type: DriverIncidentType): string {
   switch (type) {
@@ -38,8 +18,8 @@ function mapIncidentCategory(type: DriverIncidentType): string {
   }
 }
 
-// REAL wiring per T11.15.3 pre-flight discovery —
-// backend in_transit_issues exists. No T11.15.4 stub→real swap needed for incidents.
+// Real endpoint implemented in T11.15.4:
+// POST /api/v1/dispatch/intransit-issues
 export async function submitIncident(payload: IncidentPayload): Promise<{ queued: boolean }> {
   const body = {
     load_uuid: payload.load_id,
@@ -79,9 +59,20 @@ export async function submitIncident(payload: IncidentPayload): Promise<{ queued
     return { queued: true };
   }
 
-  await apiRequest<{ data?: unknown }>("/api/dispatch/intransit-issues", {
+  await apiRequest<{ id: string; created_at: string }>("/api/v1/dispatch/intransit-issues", {
     method: "POST",
-    body,
+    body: {
+      load_id: payload.load_id,
+      stop_id: payload.stop_id ?? null,
+      type: payload.type,
+      severity: payload.severity,
+      description: payload.description,
+      location: "Driver PWA",
+      geo_lat: payload.lat,
+      geo_lng: payload.lng,
+      occurred_at: payload.occurred_at,
+      photo_keys: payload.document_keys,
+    },
   });
   return { queued: false };
 }
