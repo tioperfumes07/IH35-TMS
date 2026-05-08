@@ -5,11 +5,16 @@ import { useAuth } from "./auth/useAuth";
 import { BottomNav } from "./components/BottomNav";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PendingSyncBar } from "./components/PendingSyncBar";
+import { AcceptancePage } from "./pages/Acceptance";
 import { HomePage } from "./pages/Home";
+import { IncidentPlaceholderPage } from "./pages/IncidentPlaceholder";
 import { InviteRedeemPage } from "./pages/InviteRedeem";
+import { LoadDetailPage } from "./pages/LoadDetail";
 import { LoginPage } from "./pages/Login";
 import { MyDocumentsPage } from "./pages/MyDocuments";
 import { ProfilePage } from "./pages/Profile";
+import { StopActionPage } from "./pages/StopAction";
+import { TodayPage } from "./pages/Today";
 import { startSyncService, stopSyncService } from "./lib/upload-sync";
 import { initDB } from "./lib/upload-queue";
 
@@ -28,7 +33,7 @@ function RootRedirect() {
   const auth = useAuth();
   if (auth.isLoading) return <div className="flex min-h-screen items-center justify-center text-pwa-text-secondary">Loading...</div>;
   if (!auth.user || auth.isUnauthenticated) return <Navigate to="/login" replace />;
-  return <Navigate to="/home" replace />;
+  return <Navigate to="/today" replace />;
 }
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -51,6 +56,14 @@ export default function App() {
       <Route path="/" element={<RootRedirect />} />
       <Route path="/invite" element={<InviteRedeemPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/today"
+        element={
+          <ProtectedRoute>
+            <TodayPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/home"
         element={
@@ -81,7 +94,31 @@ export default function App() {
         path="/loads"
         element={
           <ProtectedRoute>
-            <Navigate to="/home" replace />
+            <TodayPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/loads/:id"
+        element={
+          <ProtectedRoute>
+            <LoadDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/loads/:id/stops/:stopId"
+        element={
+          <ProtectedRoute>
+            <StopActionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/loads/:id/accept"
+        element={
+          <ProtectedRoute>
+            <AcceptancePage />
           </ProtectedRoute>
         }
       />
@@ -90,6 +127,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Navigate to="/home" replace />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/incident/new"
+        element={
+          <ProtectedRoute>
+            <IncidentPlaceholderPage />
           </ProtectedRoute>
         }
       />

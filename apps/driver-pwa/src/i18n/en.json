@@ -59,5 +59,78 @@
     "offline_waiting": "{{count}} waiting · offline",
     "error_retry": "Sync error · retry",
     "online": "Online"
+  },
+  "today": {
+    "title": "Today",
+    "empty": "No loads today",
+    "pull_to_refresh": "Pull to refresh"
+  },
+  "load": {
+    "tab_overview": "Overview",
+    "tab_stops": "Stops",
+    "tab_documents": "Documents",
+    "miles": "Miles",
+    "rate": "Rate",
+    "equipment": "Equipment",
+    "dispatcher": "Dispatcher",
+    "scheduled_pickup": "Scheduled pickup",
+    "scheduled_delivery": "Scheduled delivery",
+    "documents_coming_soon": "Documents linked to this load coming in T11.15.4",
+    "accept_required": "ACCEPT"
+  },
+  "stop": {
+    "pending": "Pending",
+    "arrived": "Arrived",
+    "loading": "Loading",
+    "loaded": "Loaded",
+    "departed": "Departed",
+    "geofence_inside": "At location · arrived auto-detected",
+    "geofence_approaching": "Approaching ({{distance}} mi)",
+    "geofence_outside": "Not at location ({{distance}} mi)",
+    "geofence_pending": "Locating…",
+    "geofence_denied": "Location permission required",
+    "mark_arrived": "Mark Arrived",
+    "mark_departed": "Mark Departed",
+    "upload_bol_pod": "Upload BOL/POD",
+    "departed_at": "Departed at",
+    "report_issue": "Report Issue",
+    "of_total": "Stop {{current}} of {{total}}"
+  },
+  "doc": {
+    "bol": "BOL",
+    "pod": "POD",
+    "lumper_receipt": "Lumper Receipt",
+    "damage_photo": "Damage Photo"
+  },
+  "acceptance": {
+    "title": "Accept Load {{display_id}}",
+    "scroll_to_bottom": "Scroll to the bottom to continue",
+    "signature_required": "Signature is required",
+    "geofence_required": "You are {{distance}} mi from pickup",
+    "sign_and_accept": "Sign and Accept",
+    "must_be_at_pickup": "Must be at pickup location to accept",
+    "signature_aria": "Sign here",
+    "clear_signature": "Clear signature",
+    "scroll_progress": "Scroll progress"
+  },
+  "lifecycle": {
+    "pre_trip": "Pre-trip",
+    "en_route_pickup": "En route PU",
+    "at_shipper": "At Shipper",
+    "loading": "Loading",
+    "loaded": "Loaded",
+    "en_route_delivery": "En route DEL",
+    "at_receiver": "At Receiver",
+    "unloading": "Unloading",
+    "unloaded": "Unloaded",
+    "detention": "Detention",
+    "hos_break": "HOS Break",
+    "off_duty": "Off-duty",
+    "accident": "Accident",
+    "breakdown": "Breakdown",
+    "no_gps": "No GPS"
+  },
+  "incident": {
+    "coming_soon": "Incident report coming in T11.15.3"
   }
 }

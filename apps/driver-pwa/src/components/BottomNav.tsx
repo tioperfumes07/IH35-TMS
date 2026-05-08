@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 const ITEMS = [
-  { to: "/home", key: "today", icon: Home },
+  { to: "/today", key: "today", icon: Home },
   { to: "/loads", key: "loads", icon: Truck },
   { to: "/earnings", key: "earnings", icon: DollarSign },
   { to: "/profile", key: "profile", icon: User },
@@ -20,7 +20,12 @@ export function BottomNav() {
     >
       <div className="mx-auto grid h-16 w-full max-w-md grid-cols-4">
         {ITEMS.map((item) => {
-          const active = location.pathname === item.to;
+          const active =
+            item.to === "/today"
+              ? location.pathname === "/today" || location.pathname === "/home"
+              : item.to === "/loads"
+                ? location.pathname.startsWith("/loads")
+                : location.pathname === item.to;
           const Icon = item.icon;
           return (
             <Link

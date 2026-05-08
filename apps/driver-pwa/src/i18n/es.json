@@ -59,5 +59,78 @@
     "offline_waiting": "{{count}} en espera · sin conexión",
     "error_retry": "Error de sincronización · reintentar",
     "online": "En línea"
+  },
+  "today": {
+    "title": "Hoy",
+    "empty": "Sin cargas hoy",
+    "pull_to_refresh": "Deslizar para actualizar"
+  },
+  "load": {
+    "tab_overview": "Resumen",
+    "tab_stops": "Paradas",
+    "tab_documents": "Documentos",
+    "miles": "Millas",
+    "rate": "Tarifa",
+    "equipment": "Equipo",
+    "dispatcher": "Despachador",
+    "scheduled_pickup": "Recogida programada",
+    "scheduled_delivery": "Entrega programada",
+    "documents_coming_soon": "Documentos vinculados a esta carga llegan en T11.15.4",
+    "accept_required": "ACEPTAR"
+  },
+  "stop": {
+    "pending": "Pendiente",
+    "arrived": "Arribado",
+    "loading": "Cargando",
+    "loaded": "Cargado",
+    "departed": "Salió",
+    "geofence_inside": "En ubicación · llegada detectada",
+    "geofence_approaching": "Acercándose ({{distance}} mi)",
+    "geofence_outside": "Fuera de ubicación ({{distance}} mi)",
+    "geofence_pending": "Localizando…",
+    "geofence_denied": "Se requiere permiso de ubicación",
+    "mark_arrived": "Marcar llegada",
+    "mark_departed": "Marcar salida",
+    "upload_bol_pod": "Subir BOL/POD",
+    "departed_at": "Salió a las",
+    "report_issue": "Reportar problema",
+    "of_total": "Parada {{current}} de {{total}}"
+  },
+  "doc": {
+    "bol": "BOL",
+    "pod": "POD",
+    "lumper_receipt": "Recibo de descargue",
+    "damage_photo": "Foto de daño"
+  },
+  "acceptance": {
+    "title": "Aceptar carga {{display_id}}",
+    "scroll_to_bottom": "Desplázate al final para continuar",
+    "signature_required": "La firma es obligatoria",
+    "geofence_required": "Estás a {{distance}} mi del pickup",
+    "sign_and_accept": "Firmar y aceptar",
+    "must_be_at_pickup": "Debes estar en el pickup para aceptar",
+    "signature_aria": "Firma aquí",
+    "clear_signature": "Borrar firma",
+    "scroll_progress": "Progreso de desplazamiento"
+  },
+  "lifecycle": {
+    "pre_trip": "Previa",
+    "en_route_pickup": "En ruta a pickup",
+    "at_shipper": "En cargador",
+    "loading": "Cargando",
+    "loaded": "Cargado",
+    "en_route_delivery": "En ruta a entrega",
+    "at_receiver": "En receptor",
+    "unloading": "Descargando",
+    "unloaded": "Descargado",
+    "detention": "Detención",
+    "hos_break": "Descanso HOS",
+    "off_duty": "Fuera de servicio",
+    "accident": "Accidente",
+    "breakdown": "Avería",
+    "no_gps": "Sin GPS"
+  },
+  "incident": {
+    "coming_soon": "Reporte de incidente llega en T11.15.3"
   }
 }

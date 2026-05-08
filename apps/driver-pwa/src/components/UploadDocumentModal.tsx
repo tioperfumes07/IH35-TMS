@@ -14,9 +14,13 @@ type UploadDocumentModalProps = {
   open: boolean;
   onClose: () => void;
   onQueued: () => void;
+  defaultEntityType?: "driver" | "standalone" | "load_stop";
+  defaultEntityId?: string | null;
+  allowedCategoryCodes?: string[];
+  title?: string;
 };
 
-const QUICK_CODES = ["cdl", "medical_card", "dot_inspection", "dvir", "damage_photo", "other"];
+const QUICK_CODES = ["cdl", "medical_card", "dot_inspection", "dvir", "bol", "pod", "lumper_receipt", "damage_photo", "other"];
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function todayIso() {
@@ -27,7 +31,15 @@ function isUuid(value: string) {
   return UUID_PATTERN.test(value);
 }
 
-export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentModalProps) {
+export function UploadDocumentModal({
+  open,
+  onClose,
+  onQueued,
+  defaultEntityType = "driver",
+  defaultEntityId = null,
+  allowedCategoryCodes,
+  title = "Upload Document",
+}: UploadDocumentModalProps) {
   const { pushToast } = useToast();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [file, setFile] = useState<File | null>(null);
@@ -37,7 +49,7 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
   const [documentDate, setDocumentDate] = useState(todayIso());
   const [expirationDate, setExpirationDate] = useState("");
   const [description, setDescription] = useState("");
-  const [entityType, setEntityType] = useState<"driver" | "standalone">("driver");
+  const [entityType, setEntityType] = useState<"driver" | "standalone" | "load_stop">(defaultEntityType);
   const [submitting, setSubmitting] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -54,19 +66,25 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
     enabled: open,
   });
 
+  const filteredCategories = useMemo(() => {
+    const all = categoriesQuery.data ?? [];
+    if (!allowedCategoryCodes || allowedCategoryCodes.length === 0) return all;
+    return all.filter((category) => allowedCategoryCodes.includes(category.code));
+  }, [allowedCategoryCodes, categoriesQuery.data]);
+
   const quickCategories = useMemo(() => {
-    const byCode = new Map((categoriesQuery.data ?? []).map((category) => [category.code, category]));
+    const byCode = new Map(filteredCategories.map((category) => [category.code, category]));
     return QUICK_CODES.map((code) => byCode.get(code)).filter(Boolean);
-  }, [categoriesQuery.data]);
+  }, [filteredCategories]);
 
   const otherCategories = useMemo(
-    () => (categoriesQuery.data ?? []).filter((category) => !QUICK_CODES.includes(category.code)),
-    [categoriesQuery.data]
+    () => filteredCategories.filter((category) => !QUICK_CODES.includes(category.code)),
+    [filteredCategories]
   );
 
   const selectedCategory = useMemo(
-    () => (categoriesQuery.data ?? []).find((category) => category.id === categoryId) ?? null,
-    [categoriesQuery.data, categoryId]
+    () => filteredCategories.find((category) => category.id === categoryId) ?? null,
+    [filteredCategories, categoryId]
   );
 
   function resetAndClose() {
@@ -78,7 +96,7 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
     setDocumentDate(todayIso());
     setExpirationDate("");
     setDescription("");
-    setEntityType("driver");
+    setEntityType(defaultEntityType);
     setSubmitting(false);
     onClose();
   }
@@ -114,7 +132,7 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
         size_bytes: optimizedFile.size,
         category_id: categoryId,
         entity_type: entityType,
-        entity_id: entityType === "driver" ? driverId : null,
+        entity_id: entityType === "driver" ? driverId : defaultEntityId,
         document_date: documentDate || null,
         expiration_date: expirationDate || null,
         description: description.trim() || null,
@@ -137,7 +155,7 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
   }
 
   return (
-    <Modal open={open} onClose={resetAndClose} title="Upload Document">
+    <Modal open={open} onClose={resetAndClose} title={title}>
       <div className="space-y-4">
         {step === 1 ? (
           <div className="space-y-3">
@@ -232,18 +250,20 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
         {step >= 3 ? (
           <div className="space-y-3">
             <p className="text-sm text-pwa-text-secondary">Step 3: Optional details</p>
-            <div className="grid grid-cols-2 gap-2">
-              <PwaButton variant={entityType === "driver" ? "primary" : "secondary"} className="min-h-12" onClick={() => setEntityType("driver")}>
-                Attach to me
-              </PwaButton>
-              <PwaButton
-                variant={entityType === "standalone" ? "primary" : "secondary"}
-                className="min-h-12"
-                onClick={() => setEntityType("standalone")}
-              >
-                Standalone
-              </PwaButton>
-            </div>
+            {defaultEntityType === "load_stop" ? null : (
+              <div className="grid grid-cols-2 gap-2">
+                <PwaButton variant={entityType === "driver" ? "primary" : "secondary"} className="min-h-12" onClick={() => setEntityType("driver")}>
+                  Attach to me
+                </PwaButton>
+                <PwaButton
+                  variant={entityType === "standalone" ? "primary" : "secondary"}
+                  className="min-h-12"
+                  onClick={() => setEntityType("standalone")}
+                >
+                  Standalone
+                </PwaButton>
+              </div>
+            )}
             <button
               type="button"
               className="w-full rounded-xl border border-pwa-border px-3 py-2 text-left text-sm text-pwa-text-secondary"
@@ -337,7 +357,10 @@ export function UploadDocumentModal({ open, onClose, onQueued }: UploadDocumentM
             <PwaButton
               className="w-full"
               onClick={() => void handleQueueUpload()}
-              disabled={submitting || (entityType === "driver" && (driverQuery.isLoading || Boolean(driverQuery.error) || !driverQuery.data?.id))}
+              disabled={
+                submitting ||
+                (entityType === "driver" && (driverQuery.isLoading || Boolean(driverQuery.error) || !driverQuery.data?.id))
+              }
             >
               {submitting ? "Optimizing..." : "Queue Upload"}
             </PwaButton>

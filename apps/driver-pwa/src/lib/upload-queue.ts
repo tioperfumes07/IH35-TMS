@@ -7,7 +7,7 @@ export type UploadQueueItem = {
   original_filename: string;
   size_bytes: number;
   category_id: string | null;
-  entity_type: "driver" | "load" | "standalone";
+  entity_type: "driver" | "load" | "load_stop" | "standalone";
   entity_id: string | null;
   document_date: string | null;
   expiration_date: string | null;
