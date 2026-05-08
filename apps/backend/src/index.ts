@@ -56,6 +56,9 @@ import { registerDriverSafetyEventsRoutes } from "./mdata/driver-safety-events.r
 import { registerDispatcherSafetyEventsRoutes } from "./mdata/dispatcher-safety-events.routes.js";
 import { registerCustomerContactRoutes } from "./mdata/customer-contacts.routes.js";
 import { registerCustomerQualityEventsRoutes } from "./mdata/customer-quality-events.routes.js";
+import { registerCustomerBillingRoutes } from "./mdata/customer-billing.routes.js";
+import { registerCustomerLanesRoutes } from "./mdata/customer-lanes.routes.js";
+import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
@@ -126,6 +129,9 @@ async function main() {
   await registerDispatcherSafetyEventsRoutes(app);
   await registerCustomerContactRoutes(app);
   await registerCustomerQualityEventsRoutes(app);
+  await registerCustomerBillingRoutes(app);
+  await registerCustomerLanesRoutes(app);
+  await registerCustomerDetailAliasRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerCatalogsRoutes(app);
   await registerCatalogRegistryRoutes(app);

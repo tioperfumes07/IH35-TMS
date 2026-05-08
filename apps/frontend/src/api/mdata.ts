@@ -365,6 +365,57 @@ export type CustomerContact = {
   updated_at: string;
 };
 
+export type CustomerBillingSummary = {
+  ar_email: string | null;
+  credit_terms_days: number | null;
+  factoring_eligible: boolean;
+  factoring_company_vendor_id: string | null;
+  factoring_recourse_type: "recourse" | "non_recourse" | null;
+  factoring_advance_rate_override: string | null;
+  factoring_reserve_pct_override: string | null;
+  factoring_notes: string | null;
+  default_detention_rate: string | null;
+  default_free_time_hours: string | null;
+  layover_config: {
+    layover_charge_per_day: string | null;
+    layover_currency: "USD" | "MXN" | "CAD" | null;
+    layover_first_night_free: boolean;
+    layover_max_days: number | null;
+    layover_notes: string | null;
+    free_time_pickup_minutes: number | null;
+    free_time_delivery_minutes: number | null;
+  };
+  last_payment_at: string | null;
+  outstanding_balance_cents: number | null;
+  aging_buckets: {
+    current: number;
+    "1_30": number;
+    "31_60": number;
+    "61_plus": number;
+  };
+  status: "partial";
+  partial_message: string;
+};
+
+export type CustomerLane = {
+  id: string;
+  operating_company_id: string;
+  customer_id: string;
+  lane_label: string;
+  origin_city: string;
+  origin_state: string;
+  destination_city: string;
+  destination_state: string;
+  typical_miles: number | null;
+  base_rate_cents: number;
+  fsc_per_mile_cents: number | null;
+  accessorials: Array<{ label: string; amount_cents: number }>;
+  notes: string | null;
+  deactivated_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type CustomerQualityEventReason = {
   id: string;
   code: string;
@@ -707,9 +758,12 @@ export function updateCustomerQualityEvent(
   });
 }
 
-export function listCustomerContacts(customerId: string, includeInactive = false) {
-  const query = includeInactive ? "?include_inactive=true" : "";
-  return apiRequest<{ contacts: CustomerContact[] }>(`/api/v1/mdata/customers/${customerId}/contacts${query}`);
+export function listCustomerContacts(customerId: string, includeInactive = false, operatingCompanyId?: string | null) {
+  const query = new URLSearchParams();
+  if (includeInactive) query.set("include_inactive", "true");
+  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
+  const qs = query.toString();
+  return apiRequest<{ contacts: CustomerContact[] }>(`/api/v1/mdata/customers/${customerId}/contacts${qs ? `?${qs}` : ""}`);
 }
 
 export function createCustomerContact(
@@ -723,9 +777,11 @@ export function createCustomerContact(
     department?: CustomerContactDepartment;
     is_primary?: boolean;
     notes?: string;
-  }
+  },
+  operatingCompanyId?: string | null
 ) {
-  return apiRequest<{ contact: CustomerContact }>(`/api/v1/mdata/customers/${customerId}/contacts`, { method: "POST", body: payload });
+  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  return apiRequest<{ contact: CustomerContact }>(`/api/v1/mdata/customers/${customerId}/contacts${query}`, { method: "POST", body: payload });
 }
 
 export function updateCustomerContact(
@@ -740,23 +796,92 @@ export function updateCustomerContact(
     department: CustomerContactDepartment;
     is_primary: boolean;
     notes: string | null;
-  }>
+  }>,
+  operatingCompanyId?: string | null
 ) {
-  return apiRequest<{ contact: CustomerContact }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}`, {
+  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  return apiRequest<{ contact: CustomerContact }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}${query}`, {
     method: "PATCH",
     body: payload,
   });
 }
 
-export function deactivateCustomerContact(customerId: string, contactId: string) {
-  return apiRequest<{ ok: true }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}`, {
+export function deactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId?: string | null) {
+  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  return apiRequest<{ ok: true }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}${query}`, {
     method: "DELETE",
   });
 }
 
-export function reactivateCustomerContact(customerId: string, contactId: string) {
-  return apiRequest<{ ok: true }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}/reactivate`, {
+export function reactivateCustomerContact(customerId: string, contactId: string, operatingCompanyId?: string | null) {
+  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  return apiRequest<{ ok: true }>(`/api/v1/mdata/customers/${customerId}/contacts/${contactId}/reactivate${query}`, {
     method: "POST",
+  });
+}
+
+export function getCustomerBillingSummary(customerId: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<CustomerBillingSummary>(`/api/v1/mdata/customers/${customerId}/billing-summary?${query.toString()}`);
+}
+
+export function listCustomerLanes(customerId: string, operatingCompanyId: string, includeInactive = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ lanes: CustomerLane[] }>(`/api/v1/mdata/customers/${customerId}/lanes?${query.toString()}`);
+}
+
+export function createCustomerLane(
+  customerId: string,
+  operatingCompanyId: string,
+  payload: {
+    lane_label: string;
+    origin_city: string;
+    origin_state: string;
+    destination_city: string;
+    destination_state: string;
+    typical_miles?: number;
+    base_rate_cents: number;
+    fsc_per_mile_cents?: number;
+    accessorials?: Array<{ label: string; amount_cents: number }>;
+    notes?: string;
+  }
+) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ lane: CustomerLane }>(`/api/v1/mdata/customers/${customerId}/lanes?${query.toString()}`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateCustomerLane(
+  customerId: string,
+  laneId: string,
+  operatingCompanyId: string,
+  payload: Partial<{
+    lane_label: string;
+    origin_city: string;
+    origin_state: string;
+    destination_city: string;
+    destination_state: string;
+    typical_miles: number | null;
+    base_rate_cents: number;
+    fsc_per_mile_cents: number | null;
+    accessorials: Array<{ label: string; amount_cents: number }>;
+    notes: string | null;
+  }>
+) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ lane: CustomerLane }>(`/api/v1/mdata/customers/${customerId}/lanes/${laneId}?${query.toString()}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function deactivateCustomerLane(customerId: string, laneId: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<void>(`/api/v1/mdata/customers/${customerId}/lanes/${laneId}?${query.toString()}`, {
+    method: "DELETE",
   });
 }
 
