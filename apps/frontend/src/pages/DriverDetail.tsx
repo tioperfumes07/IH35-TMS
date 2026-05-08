@@ -32,6 +32,9 @@ import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
+import { BackButton } from "../components/shared/BackButton";
+import { Breadcrumb } from "../components/shared/Breadcrumb";
+import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 
@@ -520,8 +523,14 @@ export function DriverDetailPage() {
 
   return (
     <div className="space-y-3">
+      <BackButton />
+      <Breadcrumb
+        items={[
+          { label: "Drivers", href: "/drivers" },
+          { label: `${driver.first_name} ${driver.last_name}` },
+        ]}
+      />
       <PageHeader
-        backHref="/drivers"
         title={`${driver.first_name} ${driver.last_name}`}
         subtitle={driver.status}
         actions={
@@ -551,22 +560,11 @@ export function DriverDetailPage() {
         }
       />
 
-      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
-        <div className="flex min-w-max gap-1">
-          {visibleTabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`rounded px-2.5 py-1.5 text-xs font-medium ${
-                activeTab === tab ? "bg-blue-100 text-blue-800" : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
+      <SecondaryNavTabs
+        tabs={visibleTabs.map((tab) => ({ id: tab, label: tab }))}
+        activeId={activeTab}
+        onChange={(nextTab) => setActiveTab(nextTab as DriverTab)}
+      />
 
       {activeTab === "Profile" ? (
         <div className="grid gap-3 md:grid-cols-2">
