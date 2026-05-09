@@ -84,10 +84,12 @@ const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Fleet",
     pillClass: "bg-purple-50 text-purple-700",
     catalogs: [
-      { name: "Unit Types", description: "Tractor/power unit classification", live: false },
-      { name: "Trailer Types", description: "Trailer equipment type taxonomy", live: false },
-      { name: "Asset Status Codes", description: "Lifecycle state definitions", live: false },
-      { name: "Ownership Types", description: "Owned/leased/rented categorization", live: false },
+      { name: "Tractor Statuses", description: "Lifecycle statuses for tractor units", live: true, catalogKey: "tractor-statuses" },
+      { name: "Trailer Statuses", description: "Lifecycle statuses for trailer units", live: true, catalogKey: "trailer-statuses" },
+      { name: "Condition Codes", description: "Standardized condition grading for fleet assets", live: true, catalogKey: "condition-codes" },
+      { name: "Equipment Types", description: "Tractor/trailer equipment type taxonomy", live: true, catalogKey: "equipment-types" },
+      { name: "Tire Positions", description: "Fixed tire positions for standard fleet setup", live: true, catalogKey: "tire-positions" },
+      { name: "Ownership Types", description: "Owned/leased/rented categorization", live: true, catalogKey: "ownership-types" },
     ],
   },
   {
