@@ -74,9 +74,11 @@ import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { registerPlaidWebhookRoutes } from "./integrations/plaid/webhook.routes.js";
 import { registerPlaidAdminRoutes } from "./integrations/plaid/admin.routes.js";
 import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
+import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { initializeScheduledReportsCron } from "./cron/scheduled-reports.js";
 import { initializePlaidDailySyncCron } from "./cron/plaid-daily-sync.js";
+import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -188,6 +190,7 @@ async function main() {
   await registerPlaidWebhookRoutes(app);
   await registerPlaidAdminRoutes(app);
   await registerPlaidLinkRoutes(app);
+  await registerQboForensicAdminRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);
@@ -217,6 +220,7 @@ async function main() {
   await registerCompanyRoutes(app);
   initializeScheduledReportsCron(app.log);
   initializePlaidDailySyncCron(app.log);
+  initializeQboHistoricalImportRunner(app.log);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {

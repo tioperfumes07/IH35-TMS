@@ -103,6 +103,7 @@ import { QboCategoriesListPage } from "./pages/lists/accounting/QboCategoriesLis
 import { ItemsListPage } from "./pages/lists/accounting/ItemsListPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { PrivacyPolicy } from "./pages/legal/PrivacyPolicy";
+import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -138,6 +139,14 @@ export default function App() {
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route
+          path="/admin/forensic-review"
+          element={
+            <ProtectedRoute>
+              <ForensicReviewPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/home"
           element={
