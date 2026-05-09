@@ -147,6 +147,7 @@ const EVENT_CLASSES = [
   "banking.bank_account.reauthenticated",
   "banking.transaction.imported",
   "banking.transaction.matched",
+  "banking.transaction.unmatched",
   "banking.transaction.qbo_synced",
   "banking.reconciliation.started",
   "banking.reconciliation.completed",

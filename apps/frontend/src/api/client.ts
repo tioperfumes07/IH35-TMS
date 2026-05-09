@@ -23,6 +23,20 @@ function buildUrl(path: string): string {
   return `${API_BASE_URL.replace(/\/$/, "")}${path}`;
 }
 
+export async function apiRequestFormData<T>(path: string, formData: FormData, method: "POST" | "PATCH" = "POST"): Promise<T> {
+  const response = await fetch(buildUrl(path), {
+    method,
+    credentials: "include",
+    body: formData,
+  });
+  const isJson = response.headers.get("content-type")?.includes("application/json");
+  const payload = isJson ? await response.json() : await response.text();
+  if (!response.ok) {
+    throw new ApiError(response.status, payload);
+  }
+  return payload as T;
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = { ...(options.headers ?? {}) };
   if (options.body !== undefined) {

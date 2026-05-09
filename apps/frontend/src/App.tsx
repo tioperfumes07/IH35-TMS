@@ -15,6 +15,7 @@ import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
 import { BankAccountDetailPage } from "./pages/banking/BankAccountDetail";
+import { ReconciliationWorkspacePage } from "./pages/banking/ReconciliationWorkspace";
 import { SafetyLayout } from "./pages/safety/SafetyLayout";
 import {
   AccidentsIncidentsTab,
@@ -238,6 +239,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <BankAccountDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/reconcile/:bankAccountId"
+          element={
+            <ProtectedRoute>
+              <ReconciliationWorkspacePage />
             </ProtectedRoute>
           }
         />
