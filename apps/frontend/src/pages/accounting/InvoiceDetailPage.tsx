@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice } from "../../api/accounting";
 import { Button } from "../../components/Button";
@@ -8,6 +8,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { RecordPaymentModal } from "./RecordPaymentModal";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -18,6 +19,7 @@ export function InvoiceDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
+  const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: ["accounting", "invoice", selectedCompanyId, id],
@@ -74,6 +76,7 @@ export function InvoiceDetailPage() {
 
   const invoice = detailQuery.data;
   const isDraft = invoice?.status === "draft";
+  const canRecordPayment = invoice?.status === "sent" || invoice?.status === "partial";
   const lineCount = invoice?.lines?.length ?? 0;
 
   const totals = useMemo(
@@ -97,6 +100,11 @@ export function InvoiceDetailPage() {
         subtitle={invoice.customer_name ?? "Invoice detail"}
         actions={
           <div className="flex gap-2">
+            {canRecordPayment ? (
+              <Button variant="secondary" onClick={() => setRecordPaymentOpen(true)}>
+                Record Payment
+              </Button>
+            ) : null}
             <Button variant="secondary" onClick={() => window.print()}>
               Print
             </Button>
@@ -270,6 +278,22 @@ export function InvoiceDetailPage() {
           </div>
         )}
       </DataPanel>
+
+      {selectedCompanyId ? (
+        <RecordPaymentModal
+          open={recordPaymentOpen}
+          operatingCompanyId={selectedCompanyId}
+          prefillCustomerId={invoice.customer_id}
+          prefillAmountCents={invoice.amount_open_cents}
+          prefillInvoiceId={invoice.id}
+          onClose={() => setRecordPaymentOpen(false)}
+          onRecorded={() => {
+            setRecordPaymentOpen(false);
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

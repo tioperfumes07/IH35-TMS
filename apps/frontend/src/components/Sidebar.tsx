@@ -35,6 +35,7 @@ const ITEMS: SidebarItem[] = [
   { key: "HOME", label: "HOME", Icon: Home, to: "/home" },
   { key: "MAINT", label: "MAINT", Icon: CarFront, to: "/maintenance" },
   { key: "ACCTG", label: "ACCTG", Icon: Calculator, to: "/accounting/invoices" },
+  { key: "PAYMENTS", label: "PAY", Icon: Calculator, to: "/accounting/payments" },
   { key: "BANK", label: "BANK", Icon: Banknote, to: "/banking" },
   { key: "FUEL", label: "FUEL", Icon: Fuel, to: "/fuel" },
   { key: "SAFETY", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
