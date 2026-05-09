@@ -5,15 +5,23 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { runScheduledReport, type ScheduledReportId } from "./scheduled-report-runner.js";
 
 const bodySchema = z.object({
-  report_id: z.enum([
-    "dispatch-board",
-    "cash-position-ar",
-    "profit-per-truck-week",
-    "settlements-ready",
-    "maintenance-open-wos",
-    "ifta-quarterly-state",
-  ]),
+  report_id: z.string().min(1).max(120),
 });
+
+const REPORT_ID_ALIASES: Record<string, ScheduledReportId> = {
+  "dispatch-board": "dispatch-board",
+  dispatch_board_daily: "dispatch-board",
+  "cash-position-ar": "cash-position-ar",
+  cash_ar_daily: "cash-position-ar",
+  "profit-per-truck-week": "profit-per-truck-week",
+  profit_per_truck_weekly: "profit-per-truck-week",
+  "settlements-ready": "settlements-ready",
+  driver_settlements_weekly: "settlements-ready",
+  "maintenance-open-wos": "maintenance-open-wos",
+  maintenance_weekly: "maintenance-open-wos",
+  "ifta-quarterly-state": "ifta-quarterly-state",
+  ifta_quarterly: "ifta-quarterly-state",
+};
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -28,7 +36,8 @@ export async function registerScheduledReportAdminRoutes(app: FastifyInstance) {
 
     const parsed = bodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
-    const reportId = parsed.data.report_id as ScheduledReportId;
+    const reportId = REPORT_ID_ALIASES[parsed.data.report_id];
+    if (!reportId) return reply.code(400).send({ error: "unsupported_report_id" });
 
     const companyAndRoles = await withCurrentUser(user.uuid, async (client) => {
       const companyRes = await client.query(
