@@ -60,6 +60,9 @@ import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
 import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
 import { FactoringListPage } from "./pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
+import { InternalFineReasonsListPage } from "./pages/lists/safety/InternalFineReasonsListPage";
+import { CivilFineTypesListPage } from "./pages/lists/safety/CivilFineTypesListPage";
+import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViolationTypesListPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -467,6 +470,32 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        {/* ─── Safety catalog routes (T11.21.2A) ─── */}
+        <Route
+          path="/lists/safety/internal-fine-reasons"
+          element={
+            <ProtectedRoute>
+              <InternalFineReasonsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/safety/civil-fine-types"
+          element={
+            <ProtectedRoute>
+              <CivilFineTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/safety/company-violation-types"
+          element={
+            <ProtectedRoute>
+              <CompanyViolationTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* ─── End Safety catalog routes ─── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </CompanyProvider>
