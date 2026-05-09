@@ -146,6 +146,27 @@ export function ListsHubPage() {
         return;
       }
     }
+    if (domain === "fleet") {
+      const fleetRouteMap: Record<string, string> = {
+        "tractor-statuses": "/lists/fleet/tractor-statuses",
+        tractor_statuses: "/lists/fleet/tractor-statuses",
+        "trailer-statuses": "/lists/fleet/trailer-statuses",
+        trailer_statuses: "/lists/fleet/trailer-statuses",
+        "condition-codes": "/lists/fleet/condition-codes",
+        asset_condition_codes: "/lists/fleet/condition-codes",
+        "equipment-types": "/lists/fleet/equipment-types",
+        equipment_types: "/lists/fleet/equipment-types",
+        "tire-positions": "/lists/fleet/tire-positions",
+        tire_positions: "/lists/fleet/tire-positions",
+        "ownership-types": "/lists/fleet/ownership-types",
+        unit_ownership_types: "/lists/fleet/ownership-types",
+      };
+      const fleetPath = fleetRouteMap[catalogKey];
+      if (fleetPath) {
+        navigate(fleetPath);
+        return;
+      }
+    }
     navigate(`/lists/${domain}/${catalogKey}`);
   }
 

@@ -24,6 +24,7 @@ import { registerDriverCatalogRoutes } from "./catalogs/driver/index.js";
 import { registerMaintenanceCatalogRoutes } from "./catalogs/maintenance/index.js";
 import { registerFuelCatalogRoutes } from "./catalogs/fuel/index.js";
 import { registerAccountingCatalogRoutes } from "./catalogs/accounting/index.js";
+import { registerFleetCatalogRoutes } from "./catalogs/fleet/index.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
@@ -165,6 +166,9 @@ async function main() {
   // ─── Accounting catalog routes (T11.21.7A) ───
   await registerAccountingCatalogRoutes(app);
   // ─── End Accounting catalog routes ───
+  // ─── Fleet catalog routes (T11.21.8A) ───
+  await registerFleetCatalogRoutes(app);
+  // ─── End Fleet catalog routes ───
   await registerCatalogsWorkflowRoutes(app);
   await registerFileCategoriesRoutes(app);
   await registerDocsFilesRoutes(app);

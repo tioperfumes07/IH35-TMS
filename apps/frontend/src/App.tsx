@@ -86,6 +86,12 @@ import { FuelStopReasonCodesListPage } from "./pages/lists/fuel/FuelStopReasonCo
 import { MpgBandsListPage } from "./pages/lists/fuel/MpgBandsListPage";
 import { ExpensiveStatesListPage } from "./pages/lists/fuel/ExpensiveStatesListPage";
 import { FuelTaxJurisdictionsListPage } from "./pages/lists/fuel/FuelTaxJurisdictionsListPage";
+import { TractorStatusesListPage } from "./pages/lists/fleet/TractorStatusesListPage";
+import { TrailerStatusesListPage } from "./pages/lists/fleet/TrailerStatusesListPage";
+import { ConditionCodesListPage } from "./pages/lists/fleet/ConditionCodesListPage";
+import { EquipmentTypesListPage } from "./pages/lists/fleet/EquipmentTypesListPage";
+import { TirePositionsListPage } from "./pages/lists/fleet/TirePositionsListPage";
+import { OwnershipTypesListPage } from "./pages/lists/fleet/OwnershipTypesListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
 import { ClassesListPage } from "./pages/lists/accounting/ClassesListPage";
 import { PaymentTermsListPage } from "./pages/lists/accounting/PaymentTermsListPage";
@@ -719,6 +725,56 @@ export default function App() {
           }
         />
         {/* ─── End Fuel catalog routes ─── */}
+        {/* ─── Fleet catalog routes (T11.21.8A) ─── */}
+        <Route
+          path="/lists/fleet/tractor-statuses"
+          element={
+            <ProtectedRoute>
+              <TractorStatusesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/trailer-statuses"
+          element={
+            <ProtectedRoute>
+              <TrailerStatusesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/condition-codes"
+          element={
+            <ProtectedRoute>
+              <ConditionCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/equipment-types"
+          element={
+            <ProtectedRoute>
+              <EquipmentTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/tire-positions"
+          element={
+            <ProtectedRoute>
+              <TirePositionsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/ownership-types"
+          element={
+            <ProtectedRoute>
+              <OwnershipTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* ─── End Fleet catalog routes ─── */}
         {/* ─── Accounting catalog routes (T11.21.7A) ─── */}
         <Route
           path="/lists/accounting/chart-of-accounts"
