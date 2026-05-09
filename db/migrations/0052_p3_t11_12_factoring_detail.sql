@@ -2,6 +2,11 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS views;
 
+DROP VIEW IF EXISTS views.factoring_statements_settings;
+DROP VIEW IF EXISTS views.factoring_chargebacks_fees;
+DROP VIEW IF EXISTS views.factoring_recourse_at_risk;
+DROP VIEW IF EXISTS views.factoring_summary;
+
 DO $$
 BEGIN
   IF to_regclass('accounting.factoring_companies') IS NOT NULL THEN
