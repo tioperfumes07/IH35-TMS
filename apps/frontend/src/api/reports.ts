@@ -54,6 +54,32 @@ export type KpiSummary = {
   ifta_status: { quarter: string; dueAt: string; daysUntilDue: number };
 };
 
+export type HomeAttentionItem = {
+  severity: "critical" | "warning" | "info";
+  message: string;
+  link: string;
+  count: number;
+};
+
+export type HomeAttentionListResponse = {
+  items: HomeAttentionItem[];
+};
+
+export type HomeFleetSnapshot = {
+  trucks: number;
+  flatbeds: number;
+  dry_vans: number;
+  refrigerated: number;
+  trailers: number;
+  in_shop: number;
+  out_of_service: number;
+  assigned_units: number;
+  idle_units: number;
+  samsara_live: number;
+  no_signal_6h: number;
+  roadside: number;
+};
+
 export type ARAgingRow = {
   customer_id: string;
   customer_name: string;
@@ -126,6 +152,14 @@ export async function getScheduledReports(companyId: string): Promise<ScheduledR
 
 export async function getKpiSummary(companyId: string): Promise<KpiSummary> {
   return apiRequest<KpiSummary>(withCompany("/api/v1/reports/kpi-summary", companyId));
+}
+
+export async function getHomeAttentionList(companyId: string): Promise<HomeAttentionListResponse> {
+  return apiRequest<HomeAttentionListResponse>(withCompany("/api/v1/reports/home-attention-list", companyId));
+}
+
+export async function getHomeFleetSnapshot(companyId: string): Promise<HomeFleetSnapshot> {
+  return apiRequest<HomeFleetSnapshot>(withCompany("/api/v1/reports/home-fleet-snapshot", companyId));
 }
 
 export async function getIftaStatus(companyId: string): Promise<IftaStatus> {
