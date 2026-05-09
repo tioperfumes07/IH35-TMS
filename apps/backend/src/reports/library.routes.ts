@@ -517,7 +517,18 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
             FROM mdata.loads
             WHERE operating_company_id = $1
               AND assigned_unit_id IS NOT NULL
-              AND COALESCE(status, '') NOT IN ('draft', 'delivered', 'invoiced', 'paid', 'closed', 'cancelled')
+              AND status::text IN (
+                'booked',
+                'planned',
+                'assigned',
+                'dispatched',
+                'at_pickup',
+                'in_transit',
+                'at_delivery',
+                'assigned_not_dispatched',
+                'delivered_pending_docs',
+                'completed_docs_received'
+              )
           `,
           [companyId]
         );
