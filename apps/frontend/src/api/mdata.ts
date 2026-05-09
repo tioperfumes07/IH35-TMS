@@ -42,6 +42,10 @@ export function disableDriverPhoneLogin(id: string) {
   });
 }
 
+export function resendDriverInvite(id: string) {
+  return apiRequest<{ sent_to: string; email_id: string }>(`/api/v1/mdata/drivers/${id}/resend-invite`, { method: "POST" });
+}
+
 export type PayRateChangeReason =
   | "initial_hire"
   | "raise"

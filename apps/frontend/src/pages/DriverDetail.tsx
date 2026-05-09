@@ -18,6 +18,7 @@ import {
   disableDriverPhoneLogin,
   enableDriverPhoneLogin,
   getDriver,
+  resendDriverInvite,
   getDriverQualificationRateHistory,
   listDriverCompanyAuthorizations,
   listDriverQualifications,
@@ -199,6 +200,7 @@ export function DriverDetailPage() {
     user?.role === "Safety" ||
     (user?.role === "Driver" && user.uuid === driver?.identity_user_id);
   const isOwner = user?.role === "Owner";
+  const canResendInvite = user?.role === "Owner" || user?.role === "Administrator";
   const canManageCompanyAuth =
     user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager" || user?.role === "Safety";
 
@@ -420,6 +422,14 @@ export function DriverDetailPage() {
     onError: () => pushToast("Failed to disable phone login", "error"),
   });
 
+  const resendInviteMutation = useMutation({
+    mutationFn: () => resendDriverInvite(id),
+    onSuccess: (result) => {
+      pushToast(`Invite re-sent to ${result.sent_to}`, "success");
+    },
+    onError: () => pushToast("Failed to re-send invite", "error"),
+  });
+
   const createSafetyEventMutation = useMutation({
     mutationFn: () =>
       createSafetyEvent(id, {
@@ -554,6 +564,16 @@ export function DriverDetailPage() {
                 loading={deactivateMutation.isPending}
               >
                 Deactivate
+              </Button>
+            ) : null}
+            {canResendInvite ? (
+              <Button
+                variant="secondary"
+                onClick={() => resendInviteMutation.mutate()}
+                loading={resendInviteMutation.isPending}
+                disabled={!driver.email}
+              >
+                Resend Invite
               </Button>
             ) : null}
           </div>

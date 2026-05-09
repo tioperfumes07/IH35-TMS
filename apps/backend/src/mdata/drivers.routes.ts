@@ -4,6 +4,8 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { sendEmail } from "../notifications/email.service.js";
+import { driverInviteHtml, driverInviteText } from "../notifications/templates/driver-invite.js";
 import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
 
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
@@ -128,6 +130,10 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
+function isOwnerOrAdmin(role: string): boolean {
+  return role === "Owner" || role === "Administrator";
+}
+
 function statusDisablesDriverLogin(status: string): boolean {
   return status === "Inactive" || status === "Terminated";
 }
@@ -162,6 +168,40 @@ function driverIdentityMatches(
 
 export async function registerDriverRoutes(app: FastifyInstance) {
   const driverInviteBaseUrl = (process.env.DRIVER_PWA_BASE_URL || "https://driver.ih35dispatch.com").replace(/\/$/, "");
+  const supportEmail = process.env.EMAIL_FROM_DISPATCH || "dispatch@ih35dispatch.com";
+
+  const sendDriverInvite = async (params: {
+    to: string;
+    driverName: string;
+    loginUrl: string;
+    actorUserId: string | null;
+    recipientUserUuid?: string | null;
+    operatingCompanyId?: string | null;
+  }) =>
+    sendEmail({
+      to: params.to,
+      subject: "Welcome to IH 35 Dispatch — your driver app login",
+      sender: "dispatch",
+      html: driverInviteHtml({
+        driverName: params.driverName,
+        loginUrl: params.loginUrl,
+        ownerName: "Jorge",
+        supportEmail,
+      }),
+      text: driverInviteText({
+        driverName: params.driverName,
+        loginUrl: params.loginUrl,
+        ownerName: "Jorge",
+        supportEmail,
+      }),
+      tags: [
+        { name: "type", value: "driver_invite" },
+        { name: "company", value: params.operatingCompanyId ?? "unknown" },
+      ],
+      eventClass: "identity.driver_invite.created",
+      actorUserId: params.actorUserId,
+      recipientUserUuid: params.recipientUserUuid ?? null,
+    });
 
   app.get("/api/v1/mdata/drivers", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -698,6 +738,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           invite_url: inviteUrl,
           invite_expires_at: inviteExpiresAt,
           linked_user_event_type: linkedUserEventType,
+          invite_operating_company_id: resolvedOperatingCompanyId,
         };
       });
       if (created && typeof created === "object" && "error" in created && created.error === "returning_driver_detected") {
@@ -716,6 +757,18 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         if (created.error === "prior_driver_identity_mismatch") return reply.code(400).send({ error: "prior_driver_identity_mismatch" });
         if (created.error === "override_required_for_rehire") return reply.code(400).send({ error: "override_required_for_rehire" });
       }
+
+      if (created?.invite_url && created?.email) {
+        void sendDriverInvite({
+          to: created.email,
+          driverName: `${created.first_name ?? ""} ${created.last_name ?? ""}`.trim() || "Driver",
+          loginUrl: created.invite_url,
+          actorUserId: authUser.uuid,
+          recipientUserUuid: created.identity_user_id ?? null,
+          operatingCompanyId: created.invite_operating_company_id ?? null,
+        }).catch(() => undefined);
+      }
+
       return reply.code(201).send(created);
     } catch (err) {
       const code = (err as { code?: string }).code;
@@ -754,6 +807,115 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     if (!row) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return row;
+  });
+
+  app.post("/api/v1/mdata/drivers/:id/resend-invite", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isOwnerOrAdmin(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      const driverRes = await client.query<{
+        id: string;
+        first_name: string;
+        last_name: string;
+        email: string | null;
+        identity_user_id: string | null;
+        operating_company_id: string | null;
+        operating_company_name: string | null;
+      }>(
+        `
+          SELECT
+            d.id,
+            d.first_name,
+            d.last_name,
+            d.email,
+            d.identity_user_id,
+            i.default_company_id AS operating_company_id,
+            c.legal_name AS operating_company_name
+          FROM mdata.drivers d
+          LEFT JOIN identity.users i ON i.id = d.identity_user_id
+          LEFT JOIN org.companies c ON c.id = i.default_company_id
+          WHERE d.id = $1
+          LIMIT 1
+        `,
+        [parsedParams.data.id]
+      );
+      const row = driverRes.rows[0] ?? null;
+      if (!row) return { error: "mdata_driver_not_found" as const };
+      if (!row.identity_user_id || !row.operating_company_id) return { error: "driver_not_linked" as const };
+      if (!row.email) return { error: "driver_email_missing" as const };
+
+      const inviteToken = randomBytes(32).toString("hex");
+      const inviteUrl = `${driverInviteBaseUrl}/invite?token=${inviteToken}`;
+      const inviteRes = await client.query<{ expires_at: string }>(
+        `
+          INSERT INTO identity.driver_invites (
+            operating_company_id,
+            driver_id,
+            identity_user_id,
+            token,
+            phone,
+            expires_at,
+            created_by_user_id
+          )
+          SELECT
+            $1,
+            d.id,
+            d.identity_user_id,
+            $2,
+            d.phone,
+            now() + interval '72 hours',
+            $3
+          FROM mdata.drivers d
+          WHERE d.id = $4
+          RETURNING expires_at
+        `,
+        [row.operating_company_id, inviteToken, authUser.uuid, row.id]
+      );
+      const inviteExpiresAt = inviteRes.rows[0]?.expires_at ?? null;
+
+      await appendCrudAudit(
+        client,
+        authUser.uuid,
+        "email.driver_invite.resent",
+        {
+          resource_id: row.id,
+          resource_type: "identity.driver_invites",
+          driver_id: row.id,
+          identity_user_id: row.identity_user_id,
+          invite_url: inviteUrl,
+          invite_expires_at: inviteExpiresAt,
+        },
+        "info",
+        "BT-3-DRIVER-ONBOARDING"
+      );
+
+      return {
+        row,
+        inviteUrl,
+      };
+    });
+
+    if ("error" in result) {
+      if (result.error === "mdata_driver_not_found") return reply.code(404).send({ error: result.error });
+      if (result.error === "driver_email_missing") return reply.code(400).send({ error: result.error });
+      return reply.code(400).send({ error: result.error });
+    }
+
+    const recipientEmail = result.row.email as string;
+    const emailResult = await sendDriverInvite({
+      to: recipientEmail,
+      driverName: `${result.row.first_name} ${result.row.last_name}`.trim() || "Driver",
+      loginUrl: result.inviteUrl,
+      actorUserId: authUser.uuid,
+      recipientUserUuid: result.row.identity_user_id,
+      operatingCompanyId: result.row.operating_company_id,
+    });
+
+    return reply.code(200).send({ sent_to: recipientEmail, email_id: emailResult.id });
   });
 
   app.patch("/api/v1/mdata/drivers/:id", async (req, reply) => {
