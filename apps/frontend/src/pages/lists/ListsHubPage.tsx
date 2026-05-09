@@ -123,6 +123,29 @@ export function ListsHubPage() {
         return;
       }
     }
+    if (domain === "accounting") {
+      const accountingRouteMap: Record<string, string> = {
+        "chart-of-accounts": "/lists/accounting/chart-of-accounts",
+        chart_of_accounts: "/lists/accounting/chart-of-accounts",
+        classes: "/lists/accounting/classes",
+        "payment-terms": "/lists/accounting/payment-terms",
+        payment_terms: "/lists/accounting/payment-terms",
+        "posting-templates": "/lists/accounting/posting-templates",
+        posting_templates: "/lists/accounting/posting-templates",
+        "journal-entry-types": "/lists/accounting/journal-entry-types",
+        journal_entry_types: "/lists/accounting/journal-entry-types",
+        "qbo-categories": "/lists/accounting/qbo-categories",
+        qbo_categories: "/lists/accounting/qbo-categories",
+        items: "/lists/accounting/items",
+        "account-role-bindings": "/lists/accounting/account-role-bindings",
+        account_role_bindings: "/lists/accounting/account-role-bindings",
+      };
+      const accountingPath = accountingRouteMap[catalogKey];
+      if (accountingPath) {
+        navigate(accountingPath);
+        return;
+      }
+    }
     navigate(`/lists/${domain}/${catalogKey}`);
   }
 

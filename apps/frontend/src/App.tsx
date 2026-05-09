@@ -86,6 +86,14 @@ import { FuelStopReasonCodesListPage } from "./pages/lists/fuel/FuelStopReasonCo
 import { MpgBandsListPage } from "./pages/lists/fuel/MpgBandsListPage";
 import { ExpensiveStatesListPage } from "./pages/lists/fuel/ExpensiveStatesListPage";
 import { FuelTaxJurisdictionsListPage } from "./pages/lists/fuel/FuelTaxJurisdictionsListPage";
+import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
+import { ClassesListPage } from "./pages/lists/accounting/ClassesListPage";
+import { PaymentTermsListPage } from "./pages/lists/accounting/PaymentTermsListPage";
+import { PostingTemplatesListPage } from "./pages/lists/accounting/PostingTemplatesListPage";
+import { JournalEntryTypesListPage } from "./pages/lists/accounting/JournalEntryTypesListPage";
+import { QboCategoriesListPage } from "./pages/lists/accounting/QboCategoriesListPage";
+import { ItemsListPage } from "./pages/lists/accounting/ItemsListPage";
+import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -711,6 +719,72 @@ export default function App() {
           }
         />
         {/* ─── End Fuel catalog routes ─── */}
+        {/* ─── Accounting catalog routes (T11.21.7A) ─── */}
+        <Route
+          path="/lists/accounting/chart-of-accounts"
+          element={
+            <ProtectedRoute>
+              <ChartOfAccountsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/classes"
+          element={
+            <ProtectedRoute>
+              <ClassesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/payment-terms"
+          element={
+            <ProtectedRoute>
+              <PaymentTermsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/posting-templates"
+          element={
+            <ProtectedRoute>
+              <PostingTemplatesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/journal-entry-types"
+          element={
+            <ProtectedRoute>
+              <JournalEntryTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/qbo-categories"
+          element={
+            <ProtectedRoute>
+              <QboCategoriesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/items"
+          element={
+            <ProtectedRoute>
+              <ItemsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/account-role-bindings"
+          element={
+            <ProtectedRoute>
+              <AccountRoleBindingsListPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* ─── End Accounting catalog routes ─── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </CompanyProvider>

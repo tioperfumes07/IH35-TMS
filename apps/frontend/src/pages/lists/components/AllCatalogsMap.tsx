@@ -95,10 +95,14 @@ const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Accounting",
     pillClass: "bg-slate-200 text-slate-800",
     catalogs: [
-      { name: "Invoice Item Types", description: "AR line-item type templates", live: false },
-      { name: "Payment Terms", description: "Net-term and due-date definitions", live: false },
-      { name: "Credit Memo Reasons", description: "Credit/write-off reason catalog", live: false },
-      { name: "Charge Codes", description: "Posting and categorization shortcuts", live: false },
+      { name: "Chart of Accounts", description: "GL account catalog and hierarchy", live: true, catalogKey: "chart-of-accounts" },
+      { name: "Classes", description: "Operational and financial classification tags", live: true, catalogKey: "classes" },
+      { name: "Payment Terms", description: "Net-term and due-date definitions", live: true, catalogKey: "payment-terms" },
+      { name: "Posting Templates", description: "Code-managed debit/credit posting templates", live: true, catalogKey: "posting-templates" },
+      { name: "Journal Entry Types", description: "Journal source and purpose classifications", live: true, catalogKey: "journal-entry-types" },
+      { name: "QBO Categories", description: "QuickBooks category and mapping helper list", live: true, catalogKey: "qbo-categories" },
+      { name: "Items", description: "Invoiceable services and products catalog", live: true, catalogKey: "items" },
+      { name: "Account Role Bindings", description: "Role-to-account mapping controls (read-only v1)", live: true, catalogKey: "account-role-bindings" },
     ],
   },
   {
