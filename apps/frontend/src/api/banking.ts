@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, apiRequestFormData } from "./client";
 
 export type BankingTile = {
   id: string;
@@ -47,6 +47,39 @@ export type PlaidBankTransaction = {
   matched_settlement_id: string | null;
   notes: string | null;
   created_at: string;
+};
+
+export type ReconciliationSession = {
+  id: string;
+  bank_account_id: string;
+  period_start: string;
+  period_end: string;
+  statement_balance_cents: number;
+  book_balance_cents: number | null;
+  variance_cents: number | null;
+  status: "open" | "reconciled" | "disputed";
+  reconciled_by_user_id: string | null;
+  reconciled_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ReconciliationWorkspacePayload = {
+  session: ReconciliationSession;
+  matched_transactions: PlaidBankTransaction[];
+  unmatched_transactions: PlaidBankTransaction[];
+  candidates: {
+    loads: Array<{ id: string; event_date: string; event_type: "load" }>;
+    bills: Array<{ id: string; event_date: string; event_type: "bill" }>;
+    settlements: Array<{ id: string; event_date: string; event_type: "settlement" }>;
+  };
+  summary: {
+    statement_balance_cents: number;
+    matched_credits_cents: number;
+    matched_debits_cents: number;
+    book_balance_cents: number;
+    variance_cents: number;
+  };
 };
 
 function q(companyId: string) {
@@ -179,4 +212,74 @@ export function disconnectPlaidBankAccount(id: string, operatingCompanyId: strin
     method: "POST",
     body: { operating_company_id: operatingCompanyId },
   });
+}
+
+export function getReconciliationSessions(operatingCompanyId: string) {
+  return apiRequest<{ open_sessions: ReconciliationSession[]; completed_sessions: ReconciliationSession[] }>(
+    `/api/v1/banking/reconciliation/sessions?${q(operatingCompanyId)}`
+  );
+}
+
+export function startReconciliationSession(payload: {
+  bank_account_id: string;
+  period_start: string;
+  period_end: string;
+  statement_balance_cents: number;
+}) {
+  return apiRequest<{ session_id: string }>(`/api/v1/banking/reconciliation/start`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function getReconciliationWorkspace(sessionId: string, operatingCompanyId: string) {
+  return apiRequest<ReconciliationWorkspacePayload>(
+    `/api/v1/banking/reconciliation/${sessionId}?${q(operatingCompanyId)}`
+  );
+}
+
+export function matchReconciliationTransaction(
+  sessionId: string,
+  operatingCompanyId: string,
+  payload: { transaction_id: string; matched_event_type: "load" | "bill" | "settlement"; matched_event_id: string }
+) {
+  return apiRequest<{ ok: true }>(`/api/v1/banking/reconciliation/${sessionId}/match?${q(operatingCompanyId)}`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function unmatchReconciliationTransaction(
+  sessionId: string,
+  operatingCompanyId: string,
+  payload: { transaction_id: string }
+) {
+  return apiRequest<{ ok: true }>(`/api/v1/banking/reconciliation/${sessionId}/unmatch?${q(operatingCompanyId)}`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function completeReconciliationSession(
+  sessionId: string,
+  operatingCompanyId: string,
+  payload: { force_complete?: boolean; reason?: string } = {}
+) {
+  return apiRequest<{ ok: true; variance_cents: number }>(
+    `/api/v1/banking/reconciliation/${sessionId}/complete?${q(operatingCompanyId)}`,
+    {
+      method: "POST",
+      body: payload,
+    }
+  );
+}
+
+export function uploadBankStatementCsv(file: File, bankAccountId: string) {
+  const form = new FormData();
+  form.append("csv_file", file);
+  form.append("bank_account_id", bankAccountId);
+  return apiRequestFormData<{ added: number; errors: Array<{ line: number; reason: string }> }>(
+    `/api/v1/banking/upload-statement`,
+    form
+  );
 }

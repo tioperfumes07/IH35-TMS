@@ -6,6 +6,8 @@ import {
   getBankingRegister,
   getBankingTiles,
   getPlaidBankAccounts,
+  getReconciliationSessions,
+  startReconciliationSession,
   type BankingTile,
   undoCategorization,
 } from "../../api/banking";
@@ -24,7 +26,7 @@ import { ManualJEModal } from "./components/ManualJEModal";
 import { RegisterTable } from "./components/RegisterTable";
 import { RegisterToolbar } from "./components/RegisterToolbar";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function syncStatusClasses(status: string) {
   if (status === "active") return "bg-green-100 text-green-700";
@@ -37,6 +39,7 @@ function syncStatusClasses(status: string) {
 
 export function BankingHomePage() {
   const auth = useAuth();
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -46,6 +49,12 @@ export function BankingHomePage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [manualJeOpen, setManualJeOpen] = useState(false);
+  const [startReconOpen, setStartReconOpen] = useState(false);
+  const [reconAccountId, setReconAccountId] = useState("");
+  const [reconPeriodStart, setReconPeriodStart] = useState("");
+  const [reconPeriodEnd, setReconPeriodEnd] = useState("");
+  const [reconStatementBalance, setReconStatementBalance] = useState("");
+  const [startingRecon, setStartingRecon] = useState(false);
 
   const kpiQuery = useQuery({
     queryKey: ["banking", "kpis", companyId],
@@ -65,6 +74,11 @@ export function BankingHomePage() {
   const plaidAccountsQuery = useQuery({
     queryKey: ["banking", "plaid-accounts", companyId],
     queryFn: () => getPlaidBankAccounts(companyId),
+    enabled: Boolean(companyId),
+  });
+  const reconciliationSessionsQuery = useQuery({
+    queryKey: ["banking", "reconciliation-sessions", companyId],
+    queryFn: () => getReconciliationSessions(companyId),
     enabled: Boolean(companyId),
   });
   const tiles = tilesQuery.data?.tiles ?? [];
@@ -96,7 +110,14 @@ export function BankingHomePage() {
                 void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
               }}
             />
-            <ActionButton>+ Reconcile</ActionButton>
+            <ActionButton
+              onClick={() => {
+                setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
+                setStartReconOpen(true);
+              }}
+            >
+              + Reconcile
+            </ActionButton>
             <ActionButton onClick={() => setManualJeOpen(true)}>+ Manual JE</ActionButton>
           </div>
         }
@@ -140,6 +161,53 @@ export function BankingHomePage() {
         {auth.user?.role !== "Owner" && auth.user?.role !== "Administrator" ? (
           <p className="mt-2 text-xs text-gray-500">Connect Bank Account is visible only to Owner/Admin roles.</p>
         ) : null}
+      </div>
+      <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Reconciliation</p>
+          <ActionButton
+            onClick={() => {
+              setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
+              setStartReconOpen(true);
+            }}
+          >
+            + Start Reconciliation
+          </ActionButton>
+        </div>
+        <p className="text-sm text-gray-700">Open sessions: {(reconciliationSessionsQuery.data?.open_sessions ?? []).length}</p>
+        <div className="mt-2 space-y-1">
+          {(reconciliationSessionsQuery.data?.open_sessions ?? []).map((session) => (
+            <button
+              key={session.id}
+              type="button"
+              className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+              onClick={() => navigate(`/banking/reconcile/${session.bank_account_id}?session_id=${session.id}`)}
+            >
+              Open: {session.period_start} to {session.period_end} ({Number(session.variance_cents ?? 0) / 100})
+            </button>
+          ))}
+          {(reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 ? (
+            <p className="text-xs text-gray-500">No open reconciliation sessions.</p>
+          ) : null}
+        </div>
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Recent completed</p>
+          <div className="mt-1 space-y-1">
+            {(reconciliationSessionsQuery.data?.completed_sessions ?? []).map((session) => (
+              <button
+                key={session.id}
+                type="button"
+                className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                onClick={() => navigate(`/banking/reconcile/${session.bank_account_id}?session_id=${session.id}`)}
+              >
+                {session.period_start} to {session.period_end} - variance {Number(session.variance_cents ?? 0) / 100}
+              </button>
+            ))}
+            {(reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
+              <p className="text-xs text-gray-500">No completed sessions yet.</p>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       <RegisterToolbar rowCount={registerRows.length} onRefresh={() => void registerQuery.refetch()} />
@@ -196,6 +264,71 @@ export function BankingHomePage() {
           void queryClient.invalidateQueries({ queryKey: ["banking"] });
         }}
       />
+      {startReconOpen ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg rounded bg-white p-4 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">Start reconciliation</h3>
+            <div className="mt-3 grid grid-cols-1 gap-3">
+              <select
+                value={reconAccountId}
+                onChange={(event) => setReconAccountId(event.target.value)}
+                className="rounded border border-gray-300 px-2 py-1 text-sm"
+              >
+                <option value="">Select bank account</option>
+                {(plaidAccountsQuery.data?.accounts ?? []).map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.institution_name || "Bank"} - {account.account_name || "Account"} {account.account_mask ? `••••${account.account_mask}` : ""}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="date"
+                value={reconPeriodStart}
+                onChange={(event) => setReconPeriodStart(event.target.value)}
+                className="rounded border border-gray-300 px-2 py-1 text-sm"
+              />
+              <input
+                type="date"
+                value={reconPeriodEnd}
+                onChange={(event) => setReconPeriodEnd(event.target.value)}
+                className="rounded border border-gray-300 px-2 py-1 text-sm"
+              />
+              <input
+                type="number"
+                step="0.01"
+                value={reconStatementBalance}
+                onChange={(event) => setReconStatementBalance(event.target.value)}
+                placeholder="Statement balance (USD)"
+                className="rounded border border-gray-300 px-2 py-1 text-sm"
+              />
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <ActionButton onClick={() => setStartReconOpen(false)}>Cancel</ActionButton>
+              <ActionButton
+                disabled={!reconAccountId || !reconPeriodStart || !reconPeriodEnd || !reconStatementBalance || startingRecon}
+                onClick={() => {
+                  setStartingRecon(true);
+                  void startReconciliationSession({
+                    bank_account_id: reconAccountId,
+                    period_start: reconPeriodStart,
+                    period_end: reconPeriodEnd,
+                    statement_balance_cents: Math.round(Number(reconStatementBalance) * 100),
+                  })
+                    .then((res) => {
+                      setStartReconOpen(false);
+                      void queryClient.invalidateQueries({ queryKey: ["banking", "reconciliation-sessions", companyId] });
+                      navigate(`/banking/reconcile/${reconAccountId}?session_id=${res.session_id}`);
+                    })
+                    .catch((error) => pushToast(String((error as Error).message || "Failed to start reconciliation"), "error"))
+                    .finally(() => setStartingRecon(false));
+                }}
+              >
+                {startingRecon ? "Starting..." : "Create Session"}
+              </ActionButton>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
