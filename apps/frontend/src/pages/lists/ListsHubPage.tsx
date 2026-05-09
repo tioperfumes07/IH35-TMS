@@ -100,6 +100,29 @@ export function ListsHubPage() {
         return;
       }
     }
+    if (domain === "fuel") {
+      const fuelRouteMap: Record<string, string> = {
+        "card-types": "/lists/fuel/card-types",
+        fuel_card_types: "/lists/fuel/card-types",
+        "exception-types": "/lists/fuel/exception-types",
+        fuel_exception_types: "/lists/fuel/exception-types",
+        "station-brands": "/lists/fuel/station-brands",
+        fuel_station_brands: "/lists/fuel/station-brands",
+        "stop-reason-codes": "/lists/fuel/stop-reason-codes",
+        fuel_stop_reason_codes: "/lists/fuel/stop-reason-codes",
+        "mpg-bands": "/lists/fuel/mpg-bands",
+        mpg_bands: "/lists/fuel/mpg-bands",
+        "expensive-states": "/lists/fuel/expensive-states",
+        expensive_states: "/lists/fuel/expensive-states",
+        "tax-jurisdictions": "/lists/fuel/tax-jurisdictions",
+        fuel_tax_jurisdictions: "/lists/fuel/tax-jurisdictions",
+      };
+      const fuelPath = fuelRouteMap[catalogKey];
+      if (fuelPath) {
+        navigate(fuelPath);
+        return;
+      }
+    }
     navigate(`/lists/${domain}/${catalogKey}`);
   }
 

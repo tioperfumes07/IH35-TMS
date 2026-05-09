@@ -70,10 +70,13 @@ const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Fuel",
     pillClass: "bg-amber-50 text-amber-700",
     catalogs: [
-      { name: "Fuel Product Types", description: "Diesel, DEF, additives, and misc products", live: false },
-      { name: "Discount Program Types", description: "Fuel discount ladder definitions", live: false },
-      { name: "Fuel Station Classes", description: "Stop and station grouping labels", live: false },
-      { name: "IFTA Adjustment Reasons", description: "Tax adjustment reason set", live: false },
+      { name: "Fuel Card Types", description: "Fuel card program and method types", live: true, catalogKey: "card-types" },
+      { name: "Fuel Exception Types", description: "Fuel anomaly and exception categories", live: true, catalogKey: "exception-types" },
+      { name: "Fuel Station Brands", description: "Station brand catalog with partner metadata", live: true, catalogKey: "station-brands" },
+      { name: "Fuel Stop Reason Codes", description: "Operational reasons for planned fuel stops", live: true, catalogKey: "stop-reason-codes" },
+      { name: "MPG Bands", description: "Efficiency ranges for MPG monitoring", live: true, catalogKey: "mpg-bands" },
+      { name: "Expensive States", description: "High-cost fuel states to avoid when possible", live: true, catalogKey: "expensive-states" },
+      { name: "Fuel Tax Jurisdictions", description: "Fuel tax jurisdiction registry (US/CA)", live: true, catalogKey: "tax-jurisdictions" },
     ],
   },
   {

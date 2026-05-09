@@ -79,6 +79,13 @@ import { MaintenanceServiceTasksListPage } from "./pages/lists/maintenance/Maint
 import { MaintenanceShopLocationsListPage } from "./pages/lists/maintenance/MaintenanceShopLocationsListPage";
 import { MaintenanceVendorsListPage } from "./pages/lists/maintenance/MaintenanceVendorsListPage";
 import { WorkOrderStatusesListPage } from "./pages/lists/maintenance/WorkOrderStatusesListPage";
+import { FuelCardTypesListPage } from "./pages/lists/fuel/FuelCardTypesListPage";
+import { FuelExceptionTypesListPage } from "./pages/lists/fuel/FuelExceptionTypesListPage";
+import { FuelStationBrandsListPage } from "./pages/lists/fuel/FuelStationBrandsListPage";
+import { FuelStopReasonCodesListPage } from "./pages/lists/fuel/FuelStopReasonCodesListPage";
+import { MpgBandsListPage } from "./pages/lists/fuel/MpgBandsListPage";
+import { ExpensiveStatesListPage } from "./pages/lists/fuel/ExpensiveStatesListPage";
+import { FuelTaxJurisdictionsListPage } from "./pages/lists/fuel/FuelTaxJurisdictionsListPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -646,6 +653,64 @@ export default function App() {
           }
         />
         {/* ─── End Maintenance catalog routes ─── */}
+        {/* ─── Fuel catalog routes (T11.21.6A) ─── */}
+        <Route
+          path="/lists/fuel/card-types"
+          element={
+            <ProtectedRoute>
+              <FuelCardTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/exception-types"
+          element={
+            <ProtectedRoute>
+              <FuelExceptionTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/station-brands"
+          element={
+            <ProtectedRoute>
+              <FuelStationBrandsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/stop-reason-codes"
+          element={
+            <ProtectedRoute>
+              <FuelStopReasonCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/mpg-bands"
+          element={
+            <ProtectedRoute>
+              <MpgBandsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/expensive-states"
+          element={
+            <ProtectedRoute>
+              <ExpensiveStatesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/tax-jurisdictions"
+          element={
+            <ProtectedRoute>
+              <FuelTaxJurisdictionsListPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* ─── End Fuel catalog routes ─── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </CompanyProvider>
