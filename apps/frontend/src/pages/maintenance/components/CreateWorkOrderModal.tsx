@@ -56,6 +56,8 @@ const typeTabs: Array<{ id: WorkOrderType; label: string }> = [
   { id: "accident", label: "Accident" },
 ];
 
+const G18_EXPENSE_REGEX = /\b(fuel|diesel|roadside|toll|parking)\b/i;
+
 export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "pm", initialValues, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
@@ -146,11 +148,18 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
     return sum + Math.max(Number(line.amount || 0), subRowsTotal);
   }, 0);
+  const requiresLoadForG18 =
+    paymentTiming === "paid_same_day" &&
+    sectionALines.some((line) => G18_EXPENSE_REGEX.test(line.description));
 
   const submit = async (mode: "full" | "wo_only") => {
     const values = form.getValues();
     if (mode === "wo_only" && values.payment_timing !== "in_house") {
       pushToast("Save WO Only is only available for in-house timing", "error");
+      return;
+    }
+    if (mode === "full" && requiresLoadForG18 && !values.load_id) {
+      pushToast("Diesel/over-the-road expenses must link to a load (G18 invariant)", "error");
       return;
     }
     try {
@@ -212,12 +221,17 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
           Work Order Details
         </div>
-        <CreateWOSectionIdentification register={form.register} watch={form.watch} />
+        <CreateWOSectionIdentification register={form.register} watch={form.watch} requireLoadForExpense={requiresLoadForG18} />
         <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} />
         <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
           Class auto-derive: <span className="font-semibold">{form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`}</span>
         </div>
         <TwoSectionLineEditor mode="wo" initialLines={[]} onChange={setLines} />
+        {requiresLoadForG18 ? (
+          <div className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+            Required: this expense type must link to a load (G18).
+          </div>
+        ) : null}
         <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="WO Total = A + B" />
         <CreateWOSectionValidation checks={checks} />
 
@@ -229,7 +243,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house"} onClick={() => void submit("wo_only")}>
               Save WO Only
             </Button>
-            <Button type="button" onClick={() => void submit("full")}>
+            <Button type="button" disabled={requiresLoadForG18 && !Boolean(form.watch("load_id"))} onClick={() => void submit("full")}>
               {paymentTiming === "vendor_invoice" ? "Save WO & Create Bill" : paymentTiming === "paid_same_day" ? "Save WO & Create Expense" : "Save WO"}
             </Button>
           </div>

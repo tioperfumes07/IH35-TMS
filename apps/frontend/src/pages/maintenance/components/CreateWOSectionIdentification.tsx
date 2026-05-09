@@ -4,6 +4,7 @@ import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 type Props = {
   register: UseFormRegister<CreateWOFormValues>;
   watch: UseFormWatch<CreateWOFormValues>;
+  requireLoadForExpense?: boolean;
 };
 
 function Field({ label, children }: { label: string; children: JSX.Element }) {
@@ -15,10 +16,11 @@ function Field({ label, children }: { label: string; children: JSX.Element }) {
   );
 }
 
-export function CreateWOSectionIdentification({ register, watch }: Props) {
+export function CreateWOSectionIdentification({ register, watch, requireLoadForExpense = false }: Props) {
   const type = watch("wo_type");
   const sourceType = watch("source_type");
   const requireDriverAndLoad = type === "repair" || type === "tire" || type === "accident";
+  const requireLoad = requireDriverAndLoad || requireLoadForExpense;
   const requireExternalFields = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   return (
     <section className="rounded border border-gray-200 bg-gray-50 p-3">
@@ -83,8 +85,8 @@ export function CreateWOSectionIdentification({ register, watch }: Props) {
         </div>
       ) : null}
       <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
-        <Field label={`Load #${requireDriverAndLoad ? " *" : ""}`}>
-          <input {...register("load_id", { required: requireDriverAndLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+        <Field label={`Load #${requireLoad ? " *" : ""}`}>
+          <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
         <div className="md:col-span-3">
           <Field label="Description">

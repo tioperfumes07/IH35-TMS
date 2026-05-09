@@ -65,6 +65,23 @@ async function relationExists(client: DbClient, rel: string) {
   return Boolean(res.rows[0]?.ok);
 }
 
+async function columnExists(client: DbClient, tableName: string, columnName: string) {
+  const [schema, table] = tableName.split(".");
+  const res = await client.query<{ ok: boolean }>(
+    `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = $1
+          AND table_name = $2
+          AND column_name = $3
+      ) AS ok
+    `,
+    [schema, table, columnName]
+  );
+  return Boolean(res.rows[0]?.ok);
+}
+
 async function deriveClassHint(client: DbClient, unitId: string, driverId?: string | null) {
   const unitRes = await client.query<{ unit_number: string | null; display_id: string | null }>(
     `SELECT unit_number, display_id FROM mdata.units WHERE id = $1 LIMIT 1`,
@@ -372,24 +389,98 @@ export async function autoCreateExpenseFromWO(
   paymentAccountUuid?: string | null
 ) {
   if (!(await relationExists(client, "accounting.expenses"))) return null;
-  const expenseRes = await client.query<{ id: string }>(
+  const woContext = await client.query<{
+    operating_company_id: string;
+    vendor_uuid: string | null;
+    load_id: string | null;
+    total_amount: number | null;
+  }>(
     `
-      INSERT INTO accounting.expenses (
-        operating_company_id, vendor_uuid, linked_work_order_uuid, status, transaction_date, total_amount, payment_account_uuid
-      )
       SELECT
         w.operating_company_id,
-        COALESCE(w.external_vendor_id, w.assigned_vendor),
-        w.id,
-        'posted',
-        CURRENT_DATE,
-        COALESCE(w.total_actual_cost, w.total_estimated_cost, 0),
-        $2
+        COALESCE(w.external_vendor_id, w.assigned_vendor) AS vendor_uuid,
+        w.load_id,
+        COALESCE(w.total_actual_cost, w.total_estimated_cost, 0) AS total_amount
       FROM maintenance.work_orders w
       WHERE w.id = $1
-      RETURNING id
+      LIMIT 1
     `,
-    [woUuid, paymentAccountUuid ?? null]
+    [woUuid]
+  );
+  const wo = woContext.rows[0];
+  if (!wo) return null;
+
+  const hasQboCategoryTable = await relationExists(client, "catalogs.qbo_categories");
+  const expenseCategoryRequiresLoad = await client.query<{ requires_load: boolean }>(
+    hasQboCategoryTable
+      ? `
+          WITH categories AS (
+            SELECT DISTINCT
+              wl.expense_category_uuid,
+              upper(trim(COALESCE(q.code, ''))) AS category_code,
+              upper(trim(COALESCE(q.display_name, ''))) AS category_name,
+              upper(COALESCE(wl.description, '')) AS line_desc
+            FROM maintenance.work_order_lines wl
+            LEFT JOIN catalogs.qbo_categories q ON q.id = wl.expense_category_uuid
+            WHERE wl.work_order_id = $1
+              AND wl.section = 'A'
+          )
+          SELECT EXISTS (
+            SELECT 1
+            FROM categories
+            WHERE category_code IN ('FUEL', 'DIESEL', 'ROADSIDE', 'TOLL', 'PARKING')
+               OR category_name IN ('FUEL', 'DIESEL', 'ROADSIDE', 'TOLL', 'PARKING')
+               OR line_desc ~ '(FUEL|DIESEL|ROADSIDE|TOLL|PARKING)'
+          ) AS requires_load
+        `
+      : `
+          SELECT EXISTS (
+            SELECT 1
+            FROM maintenance.work_order_lines wl
+            WHERE wl.work_order_id = $1
+              AND wl.section = 'A'
+              AND upper(COALESCE(wl.description, '')) ~ '(FUEL|DIESEL|ROADSIDE|TOLL|PARKING)'
+          ) AS requires_load
+        `,
+    [woUuid]
+  );
+  if (expenseCategoryRequiresLoad.rows[0]?.requires_load && !wo.load_id) {
+    throw new Error("E_DIESEL_REQUIRES_LOAD");
+  }
+
+  const hasLoadIdColumn = await columnExists(client, "accounting.expenses", "load_id");
+  const expenseRes = await client.query<{ id: string }>(
+    hasLoadIdColumn
+      ? `
+          INSERT INTO accounting.expenses (
+            operating_company_id,
+            vendor_uuid,
+            linked_work_order_uuid,
+            load_id,
+            status,
+            transaction_date,
+            total_amount,
+            payment_account_uuid
+          )
+          VALUES ($1, $2, $3, $4, 'posted', CURRENT_DATE, $5, $6)
+          RETURNING id
+        `
+      : `
+          INSERT INTO accounting.expenses (
+            operating_company_id,
+            vendor_uuid,
+            linked_work_order_uuid,
+            status,
+            transaction_date,
+            total_amount,
+            payment_account_uuid
+          )
+          VALUES ($1, $2, $3, 'posted', CURRENT_DATE, $4, $5)
+          RETURNING id
+        `,
+    hasLoadIdColumn
+      ? [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.load_id, wo.total_amount, paymentAccountUuid ?? null]
+      : [wo.operating_company_id, wo.vendor_uuid, woUuid, wo.total_amount, paymentAccountUuid ?? null]
   );
   const expenseId = String(expenseRes.rows[0]?.id ?? "");
   if (!expenseId) return null;
