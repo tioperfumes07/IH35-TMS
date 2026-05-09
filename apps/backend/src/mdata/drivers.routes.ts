@@ -1019,6 +1019,18 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         const oldStatus = String(oldRow.status ?? "");
         const newStatus = String(updatedRow.status ?? oldStatus);
         const identityUserId = (updatedRow.identity_user_id as string | null) ?? (oldRow.identity_user_id as string | null);
+        const nextPhone = "phone" in b ? (b.phone ?? null) : undefined;
+        if (identityUserId && nextPhone !== undefined) {
+          await client.query(
+            `
+              UPDATE identity.users
+              SET phone = $2
+              WHERE id = $1
+                AND phone IS DISTINCT FROM $2
+            `,
+            [identityUserId, nextPhone]
+          );
+        }
         if (identityUserId && !statusDisablesDriverLogin(oldStatus) && statusDisablesDriverLogin(newStatus)) {
           const identityDeactivateRes = await client.query<{ deactivated_at: string | null }>(
             `

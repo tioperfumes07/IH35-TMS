@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { getListsInventory, getListsQboSyncHealth, getListsRecentActivity, postForceListsQboSync } from "../../api/listsHub";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AllCatalogsMap } from "./components/AllCatalogsMap";
@@ -176,6 +177,13 @@ export function ListsHubPage() {
   return (
     <div className="space-y-4">
       <PageHeader title="Lists & Catalogs" subtitle="Catalog inventory hub + QBO bidirectional sync health" />
+      {inventoryQuery.isError || activityQuery.isError || qboHealthQuery.isError ? (
+        <ListErrorBanner
+          onRetry={() => {
+            void Promise.all([inventoryQuery.refetch(), activityQuery.refetch(), qboHealthQuery.refetch()]);
+          }}
+        />
+      ) : null}
 
       {inventoryQuery.isLoading ? <div className="rounded border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading lists inventory...</div> : null}
       <AllCatalogsMap onCatalogClick={openCatalog} />

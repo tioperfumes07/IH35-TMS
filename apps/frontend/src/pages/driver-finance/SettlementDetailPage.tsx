@@ -8,6 +8,8 @@ import {
   getSettlement,
 } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { BackButton } from "../../components/shared/BackButton";
+import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DebtBanner } from "./components/DebtBanner";
@@ -102,6 +104,13 @@ export function SettlementDetailPage() {
 
   return (
     <div className="space-y-3">
+      <BackButton label="Driver Settlements" />
+      <Breadcrumb
+        items={[
+          { label: "Driver Settlements", href: "/driver-finance/settlements" },
+          { label: "Settlement Detail" },
+        ]}
+      />
       <PageHeader title="Settlement Detail" subtitle="Debt-alert invariant enforced" />
       <SettlementHeader
         driverName={String(settlement.driver_full_name ?? "-")}

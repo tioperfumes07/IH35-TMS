@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { BackButton } from "../../components/shared/BackButton";
+import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { Modal } from "../../components/Modal";
@@ -98,6 +99,13 @@ export function PaymentDetailPage() {
   return (
     <div className="space-y-3">
       <BackButton label="Payments" />
+      <Breadcrumb
+        items={[
+          { label: "Accounting", href: "/accounting" },
+          { label: "Payments", href: "/accounting/payments" },
+          { label: payment.display_id },
+        ]}
+      />
 
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">

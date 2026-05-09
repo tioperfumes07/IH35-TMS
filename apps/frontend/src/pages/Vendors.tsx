@@ -22,7 +22,12 @@ export function VendorsPage() {
         loading={vendorsQuery.isLoading}
         onRowClick={(row) => navigate(`/vendors/${row.id}`)}
         columns={[
-          { key: "name", label: "Name" },
+          {
+            key: "name",
+            label: "Name",
+            className: "max-w-[240px] whitespace-nowrap",
+            render: (row) => <span className="block truncate">{row.name}</span>,
+          },
           { key: "vendor_type", label: "Type" },
           {
             key: "status",
