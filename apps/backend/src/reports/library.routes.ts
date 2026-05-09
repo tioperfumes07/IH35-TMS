@@ -20,7 +20,35 @@ const scheduledQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const homeAttentionListQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+});
+
+const homeFleetSnapshotQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+});
+
 export async function registerReportsLibraryRoutes(app: FastifyInstance) {
+  async function relationExists(client: any, qualifiedName: string) {
+    const res = await client.query(`SELECT to_regclass($1) AS rel`, [qualifiedName]);
+    return Boolean(res.rows[0]?.rel);
+  }
+
+  async function columnExists(client: any, schema: string, table: string, column: string) {
+    const res = await client.query(
+      `
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = $1
+          AND table_name = $2
+          AND column_name = $3
+        LIMIT 1
+      `,
+      [schema, table, column]
+    );
+    return res.rows.length > 0;
+  }
+
   app.get("/api/v1/reports/library", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -240,6 +268,282 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       pending_qbo_sync: data.pending_qbo_sync,
       ifta_status: getCurrentQuarterInfo(),
     };
+  });
+
+  app.get("/api/v1/reports/home-attention-list", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = homeAttentionListQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const items = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const companyId = query.data.operating_company_id;
+
+      let maintenancePastDue = 0;
+      if (await relationExists(client, "maintenance.work_orders")) {
+        const res = await client.query(
+          `
+            SELECT count(*)::text AS total
+            FROM maintenance.work_orders
+            WHERE operating_company_id = $1
+              AND status = 'past_due'
+              AND opened_at <= now() - interval '24 hours'
+          `,
+          [companyId]
+        );
+        maintenancePastDue = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
+      }
+
+      let qboRetriesPending = 0;
+      if (await relationExists(client, "outbox.events")) {
+        const res = await client.query(
+          `
+            SELECT count(*)::text AS total
+            FROM outbox.events e
+            WHERE e.event_type ILIKE '%qbo%'
+              AND e.delivered_at IS NULL
+              AND (
+                e.failed_at IS NOT NULL
+                OR COALESCE(e.retry_count, 0) > 0
+              )
+              AND (
+                e.payload->>'operating_company_id' = $1
+                OR e.payload->>'company_id' = $1
+              )
+          `,
+          [companyId]
+        );
+        qboRetriesPending = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
+      }
+
+      let openDamageAwaitingEstimate = 0;
+      if (await relationExists(client, "safety.accident_reports")) {
+        const res = await client.query(
+          `
+            SELECT count(*)::text AS total
+            FROM safety.accident_reports
+            WHERE operating_company_id = $1
+              AND COALESCE(trim(description), '') = ''
+          `,
+          [companyId]
+        );
+        openDamageAwaitingEstimate = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
+      }
+
+      let dispatchChanged24h = 0;
+      if (await relationExists(client, "mdata.loads")) {
+        const res = await client.query(
+          `
+            SELECT count(*)::text AS total
+            FROM mdata.loads
+            WHERE operating_company_id = $1
+              AND updated_at >= now() - interval '24 hours'
+          `,
+          [companyId]
+        );
+        dispatchChanged24h = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
+      }
+
+      let fuelRecommendations24h = 0;
+      if (
+        (await relationExists(client, "fuel.route_recommendations")) &&
+        (await columnExists(client, "fuel", "route_recommendations", "operating_company_id")) &&
+        (await columnExists(client, "fuel", "route_recommendations", "created_at"))
+      ) {
+        const res = await client.query(
+          `
+            SELECT count(*)::text AS total
+            FROM fuel.route_recommendations
+            WHERE operating_company_id = $1
+              AND created_at >= now() - interval '24 hours'
+          `,
+          [companyId]
+        );
+        fuelRecommendations24h = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
+      }
+
+      let permitRefreshDue30d = 0;
+      if (await relationExists(client, "mdata.drivers") && await relationExists(client, "mdata.driver_company_authorizations")) {
+        const res = await client.query(
+          `
+            SELECT count(*)::text AS total
+            FROM mdata.drivers d
+            JOIN mdata.driver_company_authorizations a
+              ON a.driver_id = d.id
+             AND a.company_id = $1
+             AND a.is_authorized = true
+             AND a.deactivated_at IS NULL
+            WHERE d.status = 'active'
+              AND (
+                (d.cdl_expires_at IS NOT NULL AND d.cdl_expires_at <= CURRENT_DATE + interval '30 days')
+                OR (d.dot_medical_expires_at IS NOT NULL AND d.dot_medical_expires_at <= CURRENT_DATE + interval '30 days')
+                OR (d.hazmat_endorsement_expires_at IS NOT NULL AND d.hazmat_endorsement_expires_at <= CURRENT_DATE + interval '30 days')
+              )
+          `,
+          [companyId]
+        );
+        permitRefreshDue30d = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
+      }
+
+      return [
+        {
+          severity: "critical" as const,
+          message: "maintenance past-due jobs exceed 24h threshold",
+          link: "/maintenance",
+          count: maintenancePastDue,
+        },
+        {
+          severity: "warning" as const,
+          message: "QBO sync retries pending in accounting queue",
+          link: "/accounting",
+          count: qboRetriesPending,
+        },
+        {
+          severity: "warning" as const,
+          message: "open damage cases waiting external estimate",
+          link: "/safety",
+          count: openDamageAwaitingEstimate,
+        },
+        {
+          severity: "info" as const,
+          message: "dispatch loads changed state in last 24h",
+          link: "/dispatch",
+          count: dispatchChanged24h,
+        },
+        {
+          severity: "info" as const,
+          message: "fuel planner recommendations generated",
+          link: "/fuel",
+          count: fuelRecommendations24h,
+        },
+        {
+          severity: "warning" as const,
+          message: "driver files require monthly permit refresh",
+          link: "/drivers",
+          count: permitRefreshDue30d,
+        },
+      ];
+    });
+
+    return { items };
+  });
+
+  app.get("/api/v1/reports/home-fleet-snapshot", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = homeFleetSnapshotQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const snapshot = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const companyId = query.data.operating_company_id;
+
+      let trucks = 0;
+      let flatbeds = 0;
+      let dryVans = 0;
+      let refrigerated = 0;
+      let trailers = 0;
+
+      if (await relationExists(client, "mdata.equipment")) {
+        const fleetRes = await client.query(
+          `
+            SELECT lower(COALESCE(equipment_type, '')) AS equipment_type, count(*)::text AS total
+            FROM mdata.equipment
+            WHERE deactivated_at IS NULL
+              AND (owner_company_id = $1 OR currently_leased_to_company_id = $1)
+            GROUP BY lower(COALESCE(equipment_type, ''))
+          `,
+          [companyId]
+        );
+        for (const row of fleetRes.rows as Array<{ equipment_type: string; total: string }>) {
+          const type = row.equipment_type;
+          const count = Number(row.total ?? 0);
+          if (type.includes("flatbed")) flatbeds += count;
+          if (type.includes("dry") && type.includes("van")) dryVans += count;
+          if (type.includes("reefer") || type.includes("refrigerated")) refrigerated += count;
+          if (type.includes("truck") || type.includes("tractor") || type.includes("power")) trucks += count;
+          if (type.includes("trailer") || type.includes("flatbed") || (type.includes("dry") && type.includes("van")) || type.includes("reefer") || type.includes("refrigerated")) {
+            trailers += count;
+          }
+        }
+      }
+
+      let inShop = 0;
+      let roadside = 0;
+      if (await relationExists(client, "maintenance.work_orders")) {
+        const repairRes = await client.query(
+          `
+            SELECT lower(COALESCE(repair_location, '')) AS repair_location, count(*)::text AS total
+            FROM maintenance.work_orders
+            WHERE operating_company_id = $1
+              AND status NOT IN ('complete', 'cancelled')
+            GROUP BY lower(COALESCE(repair_location, ''))
+          `,
+          [companyId]
+        );
+        for (const row of repairRes.rows as Array<{ repair_location: string; total: string }>) {
+          const location = row.repair_location;
+          const count = Number(row.total ?? 0);
+          if (location === "mobile_roadside") roadside += count;
+          if (location.includes("shop") || location.includes("yard") || location === "in_house_shop") inShop += count;
+        }
+      }
+
+      let outOfService = 0;
+      let totalUnits = 0;
+      let samsaraLive = 0;
+      if (await relationExists(client, "mdata.units")) {
+        const unitsRes = await client.query(
+          `
+            SELECT
+              count(*)::text AS total_units,
+              count(*) FILTER (WHERE is_oos = true OR lower(COALESCE(status, '')) LIKE '%out%')::text AS out_of_service,
+              count(*) FILTER (WHERE updated_at >= now() - interval '6 hours')::text AS samsara_live
+            FROM mdata.units
+            WHERE deactivated_at IS NULL
+              AND (owner_company_id = $1 OR currently_leased_to_company_id = $1)
+          `,
+          [companyId]
+        );
+        totalUnits = Number((unitsRes.rows[0] as { total_units?: string } | undefined)?.total_units ?? 0);
+        outOfService = Number((unitsRes.rows[0] as { out_of_service?: string } | undefined)?.out_of_service ?? 0);
+        samsaraLive = Number((unitsRes.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0);
+      }
+
+      let assignedUnits = 0;
+      if (await relationExists(client, "mdata.loads")) {
+        const assignedRes = await client.query(
+          `
+            SELECT count(DISTINCT assigned_unit_id)::text AS total
+            FROM mdata.loads
+            WHERE operating_company_id = $1
+              AND assigned_unit_id IS NOT NULL
+              AND COALESCE(status, '') NOT IN ('draft', 'delivered', 'invoiced', 'paid', 'closed', 'cancelled')
+          `,
+          [companyId]
+        );
+        assignedUnits = Number((assignedRes.rows[0] as { total?: string } | undefined)?.total ?? 0);
+      }
+
+      const idleUnits = Math.max(0, totalUnits - assignedUnits);
+      const noSignal6h = Math.max(0, totalUnits - samsaraLive);
+
+      return {
+        trucks,
+        flatbeds,
+        dry_vans: dryVans,
+        refrigerated,
+        trailers,
+        in_shop: inShop,
+        out_of_service: outOfService,
+        assigned_units: assignedUnits,
+        idle_units: idleUnits,
+        samsara_live: samsaraLive,
+        no_signal_6h: noSignal6h,
+        roadside,
+      };
+    });
+
+    return snapshot;
   });
 
   app.post("/api/v1/reports/run-log", async (req, reply) => {
