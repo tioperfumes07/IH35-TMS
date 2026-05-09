@@ -4,5 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "resend": "^6.12.3"
   }
 }
