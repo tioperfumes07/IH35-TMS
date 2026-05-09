@@ -56,6 +56,23 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
     ],
     csvFilename: (filters) => `driver-settlements-${String(filters.cycle_start ?? filters.from ?? "cycle")}.csv`,
   },
+  "ar-aging": {
+    id: "ar-aging",
+    name: "A/R Aging",
+    apiPath: "/api/v1/reports/ar-aging",
+    filters: [],
+    columns: [
+      { key: "customer_name", label: "Customer", align: "left", format: "text", sortable: true },
+      { key: "open_invoice_count", label: "Invoices", align: "right", format: "number", sortable: true },
+      { key: "current_cents", label: "Current", align: "right", format: "currency", sortable: true },
+      { key: "bucket_1_30_cents", label: "1-30", align: "right", format: "currency", sortable: true },
+      { key: "bucket_31_60_cents", label: "31-60", align: "right", format: "currency", sortable: true },
+      { key: "bucket_61_90_cents", label: "61-90", align: "right", format: "currency", sortable: true },
+      { key: "bucket_91_plus_cents", label: "91+", align: "right", format: "currency", sortable: true },
+      { key: "total_open_cents", label: "Total Open", align: "right", format: "currency", sortable: true },
+    ],
+    csvFilename: () => `ar-aging-${new Date().toISOString().slice(0, 10)}.csv`,
+  },
   "driver-pay-history": {
     id: "driver-pay-history",
     name: "Driver pay history",

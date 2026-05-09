@@ -390,12 +390,15 @@ export type CustomerBillingSummary = {
   outstanding_balance_cents: number | null;
   aging_buckets: {
     current: number;
-    "1_30": number;
-    "31_60": number;
-    "61_plus": number;
+    bucket_1_30: number;
+    bucket_31_60: number;
+    bucket_61_90: number;
+    bucket_91_plus: number;
+    total_open: number;
+    open_invoice_count: number;
   };
-  status: "partial";
-  partial_message: string;
+  status?: "real" | "partial";
+  partial_message?: string | null;
 };
 
 export type CustomerLane = {

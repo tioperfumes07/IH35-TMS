@@ -176,6 +176,19 @@ function emptyLaneForm() {
   };
 }
 
+const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+function formatCurrencyCents(cents: number | null | undefined) {
+  return usdFormatter.format((Number(cents ?? 0) || 0) / 100);
+}
+
+function formatDateShort(value: string | null | undefined) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US");
+}
+
 export function CustomerDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -533,6 +546,8 @@ export function CustomerDetailPage() {
   const billingSummary = billingSummaryQuery.data as CustomerBillingSummary | undefined;
   const customerLanes = lanesQuery.data ?? [];
   const recentInvoices = recentInvoicesQuery.data ?? [];
+  const aging = billingSummary?.aging_buckets;
+  const hasOpenInvoices = (aging?.total_open ?? 0) > 0;
   const qualityStats = useMemo(() => {
     const active = qualityEvents.filter((event) => !event.voided_at);
     const severeCount = active.filter((event) => event.severity === "severe").length;
@@ -1167,7 +1182,7 @@ export function CustomerDetailPage() {
             <div className="space-y-1 text-sm text-gray-700">
               <div>A/R Email: {billingSummary?.ar_email ?? "-"}</div>
               <div>Terms (days): {billingSummary?.credit_terms_days ?? "-"}</div>
-              <div>Outstanding Balance: {billingSummary?.outstanding_balance_cents == null ? "-" : billingSummary.outstanding_balance_cents}</div>
+              <div>Outstanding Balance: {billingSummary?.outstanding_balance_cents == null ? "-" : formatCurrencyCents(billingSummary.outstanding_balance_cents)}</div>
             </div>
           </DataPanel>
           <DataPanel title="Detention + Layover Defaults">
@@ -1177,8 +1192,51 @@ export function CustomerDetailPage() {
               <div>Layover/day: {billingSummary?.layover_config.layover_charge_per_day ?? "-"}</div>
             </div>
           </DataPanel>
-          <div className="md:col-span-3 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            {billingSummary?.partial_message ?? "Receivables aging requires accounting module which ships in Phase 5."}
+          <div className="md:col-span-3 rounded border border-gray-200 bg-white p-3">
+            <div className="mb-2 text-sm font-semibold text-gray-900">Receivables Aging</div>
+            {!hasOpenInvoices ? (
+              <div className="text-sm text-gray-600">No open invoices.</div>
+            ) : (
+              <div className="space-y-1 text-sm text-gray-700">
+                <div className="flex items-center justify-between">
+                  <span>Current</span>
+                  <span className="font-medium text-gray-900">{formatCurrencyCents(aging?.current)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>1-30 days</span>
+                  <span className="font-medium text-gray-900">{formatCurrencyCents(aging?.bucket_1_30)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>31-60 days</span>
+                  <span className="font-medium text-gray-900">{formatCurrencyCents(aging?.bucket_31_60)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>61-90 days</span>
+                  <span className={`font-medium ${Number(aging?.bucket_61_90 ?? 0) > 0 ? "text-amber-600" : "text-gray-900"}`}>
+                    {formatCurrencyCents(aging?.bucket_61_90)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>91+ days</span>
+                  <span className={`font-medium ${Number(aging?.bucket_91_plus ?? 0) > 0 ? "text-red-600" : "text-gray-900"}`}>
+                    {formatCurrencyCents(aging?.bucket_91_plus)}
+                  </span>
+                </div>
+                <div className="my-1 border-t border-gray-200" />
+                <div className="flex items-center justify-between font-semibold text-gray-900">
+                  <span>Total open</span>
+                  <span>{formatCurrencyCents(aging?.total_open)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Open invoices</span>
+                  <span className="font-medium text-gray-900">{Number(aging?.open_invoice_count ?? 0)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Last payment</span>
+                  <span className="font-medium text-gray-900">{formatDateShort(billingSummary?.last_payment_at)}</span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="md:col-span-3 rounded border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">

@@ -31,7 +31,10 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     return withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsedQuery.data.operating_company_id}'`);
+      const operatingCompanyId = parsedQuery.data.operating_company_id;
+      const customerId = parsedParams.data.customer_id;
+
+      await client.query(`SET LOCAL app.operating_company_id = '${operatingCompanyId}'`);
       const customerRes = await client.query(
         `
           SELECT
@@ -61,10 +64,60 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
             AND c.deactivated_at IS NULL
           LIMIT 1
         `,
-        [parsedParams.data.customer_id, parsedQuery.data.operating_company_id]
+        [customerId, operatingCompanyId]
       );
       const customer = customerRes.rows[0];
       if (!customer) return reply.code(404).send({ error: "mdata_customer_not_found" });
+
+      const agingRes = await client.query(
+        `
+          SELECT
+            current_cents,
+            bucket_1_30_cents,
+            bucket_31_60_cents,
+            bucket_61_90_cents,
+            bucket_91_plus_cents,
+            total_open_cents,
+            open_invoice_count
+          FROM views.ar_aging
+          WHERE operating_company_id = $1
+            AND customer_id = $2
+          LIMIT 1
+        `,
+        [operatingCompanyId, customerId]
+      );
+
+      const lastPaymentRes = await client.query(
+        `
+          SELECT MAX(payment_date) AS last_payment_at
+          FROM accounting.payments
+          WHERE customer_id = $1
+            AND voided_at IS NULL
+        `,
+        [customerId]
+      );
+
+      const agingRow = (agingRes.rows[0] ??
+        {
+          current_cents: 0,
+          bucket_1_30_cents: 0,
+          bucket_31_60_cents: 0,
+          bucket_61_90_cents: 0,
+          bucket_91_plus_cents: 0,
+          total_open_cents: 0,
+          open_invoice_count: 0,
+        }) as {
+        current_cents: number | string | bigint;
+        bucket_1_30_cents: number | string | bigint;
+        bucket_31_60_cents: number | string | bigint;
+        bucket_61_90_cents: number | string | bigint;
+        bucket_91_plus_cents: number | string | bigint;
+        total_open_cents: number | string | bigint;
+        open_invoice_count: number | string;
+      };
+
+      const lastPaymentAt = ((lastPaymentRes.rows[0] as { last_payment_at?: string | null } | undefined)?.last_payment_at ?? null) as string | null;
+
       return {
         ar_email: customer.ar_email ?? null,
         credit_terms_days: customer.credit_terms_days ?? null,
@@ -85,16 +138,18 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
           free_time_pickup_minutes: customer.free_time_pickup_minutes ?? null,
           free_time_delivery_minutes: customer.free_time_delivery_minutes ?? null,
         },
-        last_payment_at: null,
-        outstanding_balance_cents: null,
+        last_payment_at: lastPaymentAt,
+        outstanding_balance_cents: Number(agingRow.total_open_cents ?? 0),
         aging_buckets: {
-          current: 0,
-          "1_30": 0,
-          "31_60": 0,
-          "61_plus": 0,
+          current: Number(agingRow.current_cents ?? 0),
+          bucket_1_30: Number(agingRow.bucket_1_30_cents ?? 0),
+          bucket_31_60: Number(agingRow.bucket_31_60_cents ?? 0),
+          bucket_61_90: Number(agingRow.bucket_61_90_cents ?? 0),
+          bucket_91_plus: Number(agingRow.bucket_91_plus_cents ?? 0),
+          total_open: Number(agingRow.total_open_cents ?? 0),
+          open_invoice_count: Number(agingRow.open_invoice_count ?? 0),
         },
-        status: "partial",
-        partial_message: "Receivables aging requires accounting module which ships in Phase 5.",
+        status: "real",
       };
     });
   });
