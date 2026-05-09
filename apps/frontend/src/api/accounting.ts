@@ -2,6 +2,7 @@ import { apiRequest } from "./client";
 
 export type InvoiceStatus = "draft" | "sent" | "partial" | "paid" | "void" | "factored";
 export type InvoiceLineType = "linehaul" | "fsc" | "detention" | "layover" | "lumper" | "tonu" | "accessorial" | "tax" | "adjustment" | "other";
+export type PaymentMethod = "ach" | "wire" | "check" | "cash" | "factoring_advance" | "factoring_reserve" | "credit_card" | "other";
 
 export type InvoiceLine = {
   id: string;
@@ -52,6 +53,35 @@ export type Invoice = {
     payment_display_id?: string | null;
     payment_date?: string | null;
   }>;
+};
+
+export type Payment = {
+  id: string;
+  operating_company_id: string;
+  customer_id: string;
+  customer_name: string;
+  display_id: string;
+  payment_method: PaymentMethod;
+  payment_date: string;
+  reference: string | null;
+  amount_cents: number;
+  amount_applied_cents: number;
+  amount_unapplied_cents: number;
+  deposited_to_account_id: string | null;
+  notes: string | null;
+  voided_at: string | null;
+  void_reason: string | null;
+  created_at: string;
+};
+
+export type PaymentApplication = {
+  id: string;
+  payment_id: string;
+  invoice_id: string;
+  invoice_display_id: string;
+  invoice_amount_open_cents: number;
+  amount_cents: number;
+  applied_at: string;
 };
 
 function withCompany(path: string, operatingCompanyId: string) {
@@ -164,6 +194,87 @@ export function patchInvoiceLine(
 
 export function deleteInvoiceLine(invoiceId: string, lineId: string, operatingCompanyId: string) {
   return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/invoices/${invoiceId}/lines/${lineId}`, operatingCompanyId), {
+    method: "DELETE",
+  });
+}
+
+export function listPayments(
+  operatingCompanyId: string,
+  filters: {
+    status?: "active" | "voided" | "all";
+    customer_id?: string;
+    payment_method?: PaymentMethod;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+) {
+  const query = new URLSearchParams();
+  if (filters.status) query.set("status", filters.status);
+  if (filters.customer_id) query.set("customer_id", filters.customer_id);
+  if (filters.payment_method) query.set("payment_method", filters.payment_method);
+  if (filters.date_from) query.set("date_from", filters.date_from);
+  if (filters.date_to) query.set("date_to", filters.date_to);
+  if (filters.search) query.set("search", filters.search);
+  if (filters.limit !== undefined) query.set("limit", String(filters.limit));
+  if (filters.offset !== undefined) query.set("offset", String(filters.offset));
+  const qs = query.toString();
+  return apiRequest<{ rows: Payment[]; total: number }>(withCompany(`/api/v1/accounting/payments${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
+export function getPayment(id: string, operatingCompanyId: string) {
+  return apiRequest<Payment & { applications: PaymentApplication[] }>(withCompany(`/api/v1/accounting/payments/${id}`, operatingCompanyId));
+}
+
+export function createPayment(
+  operatingCompanyId: string,
+  body: {
+    customer_id: string;
+    payment_method: PaymentMethod;
+    payment_date: string;
+    reference?: string;
+    amount_cents: number;
+    deposited_to_account_id?: string;
+    notes?: string;
+    apply_to?: Array<{ invoice_id: string; amount_cents: number }>;
+  }
+) {
+  return apiRequest<{ id: string; display_id: string; amount_unapplied_cents: number; applications_count: number }>(
+    withCompany("/api/v1/accounting/payments", operatingCompanyId),
+    { method: "POST", body }
+  );
+}
+
+export function voidPayment(id: string, operatingCompanyId: string, reason: string) {
+  return apiRequest<Payment & { applications: PaymentApplication[] }>(withCompany(`/api/v1/accounting/payments/${id}/void`, operatingCompanyId), {
+    method: "POST",
+    body: { void_reason: reason },
+  });
+}
+
+export function applyPayment(
+  paymentId: string,
+  operatingCompanyId: string,
+  body: {
+    invoice_id: string;
+    amount_cents: number;
+  }
+) {
+  return apiRequest<{
+    id: string;
+    payment_amount_unapplied_cents: number;
+    invoice_amount_open_cents: number;
+    invoice_status: string;
+  }>(withCompany(`/api/v1/accounting/payments/${paymentId}/applications`, operatingCompanyId), {
+    method: "POST",
+    body,
+  });
+}
+
+export function unapplyPayment(paymentId: string, applicationId: string, operatingCompanyId: string) {
+  return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/payments/${paymentId}/applications/${applicationId}`, operatingCompanyId), {
     method: "DELETE",
   });
 }

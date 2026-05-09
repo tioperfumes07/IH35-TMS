@@ -56,6 +56,8 @@ import { ReportsHomePage } from "./pages/reports/ReportsHome";
 import { ReportsRunnerPage } from "./pages/reports/ReportsRunner";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
 import { InvoiceDetailPage } from "./pages/accounting/InvoiceDetailPage";
+import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
+import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -328,6 +330,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <InvoiceDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/payments"
+          element={
+            <ProtectedRoute>
+              <PaymentsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/payments/:id"
+          element={
+            <ProtectedRoute>
+              <PaymentDetailPage />
             </ProtectedRoute>
           }
         />
