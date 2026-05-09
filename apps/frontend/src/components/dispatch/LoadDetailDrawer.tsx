@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { updateLoad, useCancelLoad, useLoad, useLoadAudit } from "../../api/loads";
+import { createInvoiceFromLoad } from "../../api/accounting";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
 import { DocumentsTab } from "../documents/DocumentsTab";
@@ -18,6 +20,7 @@ const tabs = ["Overview", "Stops", "Documents", "Audit History"] as const;
 type DrawerTab = (typeof tabs)[number];
 
 export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<DrawerTab>("Overview");
   const [editing, setEditing] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -29,6 +32,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => updateLoad(id, body),
   });
+  const createInvoiceMutation = useMutation({
+    mutationFn: ({ operatingCompanyId, loadId }: { operatingCompanyId: string; loadId: string }) =>
+      createInvoiceFromLoad(operatingCompanyId, { load_id: loadId }),
+  });
 
   const load = loadQuery.data;
   const [notesDraft, setNotesDraft] = useState("");
@@ -37,6 +44,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
   const routeSummary = useMemo(() => {
     if (!load) return "-";
     return toRouteSummary(load.first_pickup_city, load.first_delivery_city);
+  }, [load]);
+  const canInvoiceFromLoad = useMemo(() => {
+    if (!load) return false;
+    return ["delivered", "invoiced", "paid", "closed"].includes(load.status);
   }, [load]);
 
   if (!isOpen || !loadId) return null;
@@ -118,9 +129,36 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded border border-gray-200 p-3">
-                    <div className="text-xs text-gray-600">Notes</div>
-                    <div className="mt-1 text-sm text-gray-800">{load.notes ?? "-"}</div>
+                  <div className="space-y-2 rounded border border-gray-200 p-3">
+                    <div>
+                      <div className="text-xs text-gray-600">Notes</div>
+                      <div className="mt-1 text-sm text-gray-800">{load.notes ?? "-"}</div>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
+                      <div>
+                        <div className="text-xs font-semibold text-gray-700">Invoice</div>
+                        <div className="text-[11px] text-gray-500">
+                          {canInvoiceFromLoad ? "Delivered loads can create/view invoice." : "Invoice creation is available once load is delivered."}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          if (!load) return;
+                          const result = await createInvoiceMutation.mutateAsync({
+                            operatingCompanyId: load.operating_company_id,
+                            loadId: load.id,
+                          });
+                          const invoiceId = result.invoice?.id;
+                          if (!invoiceId) return;
+                          navigate(`/accounting/invoices/${invoiceId}`);
+                        }}
+                        loading={createInvoiceMutation.isPending}
+                        disabled={!canInvoiceFromLoad}
+                      >
+                        Create / View Invoice
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>

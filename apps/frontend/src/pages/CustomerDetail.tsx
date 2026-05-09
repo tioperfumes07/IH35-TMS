@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
+import { listInvoices } from "../api/accounting";
 import { listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
 import { listFmcsaLookups } from "../api/fmcsa";
@@ -232,6 +233,14 @@ export function CustomerDetailPage() {
   const lanesQuery = useQuery({
     queryKey: ["customer-lanes", id, operatingCompanyId, includeInactiveLanes],
     queryFn: () => listCustomerLanes(id, operatingCompanyId!, includeInactiveLanes).then((result) => result.lanes),
+    enabled: Boolean(id && operatingCompanyId),
+  });
+  const recentInvoicesQuery = useQuery({
+    queryKey: ["customer-recent-invoices", id, operatingCompanyId],
+    queryFn: () =>
+      listInvoices(operatingCompanyId!, { customer_id: id }).then((res) =>
+        (res.invoices ?? []).slice(0, 10)
+      ),
     enabled: Boolean(id && operatingCompanyId),
   });
   const vendorsQuery = useQuery({
@@ -523,6 +532,7 @@ export function CustomerDetailPage() {
   const qualityEvents = qualityEventsQuery.data ?? [];
   const billingSummary = billingSummaryQuery.data as CustomerBillingSummary | undefined;
   const customerLanes = lanesQuery.data ?? [];
+  const recentInvoices = recentInvoicesQuery.data ?? [];
   const qualityStats = useMemo(() => {
     const active = qualityEvents.filter((event) => !event.voided_at);
     const severeCount = active.filter((event) => event.severity === "severe").length;
@@ -1169,6 +1179,45 @@ export function CustomerDetailPage() {
           </DataPanel>
           <div className="md:col-span-3 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             {billingSummary?.partial_message ?? "Receivables aging requires accounting module which ships in Phase 5."}
+          </div>
+          <div className="md:col-span-3 rounded border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">Recent Invoices</h3>
+              <button type="button" className="text-xs font-semibold text-blue-700 underline" onClick={() => navigate("/accounting/invoices")}>
+                View all
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200 text-gray-600">
+                    <th className="px-2 py-1.5 font-semibold">Invoice</th>
+                    <th className="px-2 py-1.5 font-semibold">Issue</th>
+                    <th className="px-2 py-1.5 font-semibold">Status</th>
+                    <th className="px-2 py-1.5 font-semibold">Total</th>
+                    <th className="px-2 py-1.5 font-semibold">Open</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentInvoices.map((invoice) => (
+                    <tr key={invoice.id} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
+                      <td className="px-2 py-1.5 text-gray-900">{invoice.display_id}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{invoice.issue_date}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{invoice.status}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{(Number(invoice.total_cents ?? 0) / 100).toFixed(2)}</td>
+                      <td className="px-2 py-1.5 text-gray-700">{(Number(invoice.amount_open_cents ?? 0) / 100).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                  {recentInvoices.length === 0 ? (
+                    <tr>
+                      <td className="px-2 py-2 text-gray-500" colSpan={5}>
+                        No invoices yet for this customer.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       ) : null}

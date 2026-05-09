@@ -61,6 +61,7 @@ import { registerCustomerLanesRoutes } from "./mdata/customer-lanes.routes.js";
 import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
+import { registerAccountingRoutes } from "./accounting/index.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 
@@ -174,6 +175,7 @@ async function main() {
   await registerMaintenanceArrivingSoonRoutes(app);
   await registerForm425CRoutes(app);
   await registerListsHubRoutes(app);
+  await registerAccountingRoutes(app);
   await registerCompanyRoutes(app);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";

@@ -54,6 +54,8 @@ import { VendorDetailPage } from "./pages/VendorDetail";
 import { Form425CHome } from "./pages/form425c/Form425CHome";
 import { ReportsHomePage } from "./pages/reports/ReportsHome";
 import { ReportsRunnerPage } from "./pages/reports/ReportsRunner";
+import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
+import { InvoiceDetailPage } from "./pages/accounting/InvoiceDetailPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -314,6 +316,22 @@ export default function App() {
           }
         />
         <Route
+          path="/accounting/invoices"
+          element={
+            <ProtectedRoute>
+              <InvoicesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/invoices/:id"
+          element={
+            <ProtectedRoute>
+              <InvoiceDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/reports/run/:reportId"
           element={
             <ProtectedRoute>
@@ -332,7 +350,11 @@ export default function App() {
             path={path}
             element={
               <ProtectedRoute>
-                <Navigate to={`/coming-soon?feature=${encodeURIComponent(feature)}&phase=${phase}&eta=${encodeURIComponent(eta)}`} replace />
+                {path === "/accounting" ? (
+                  <Navigate to="/accounting/invoices" replace />
+                ) : (
+                  <Navigate to={`/coming-soon?feature=${encodeURIComponent(feature)}&phase=${phase}&eta=${encodeURIComponent(eta)}`} replace />
+                )}
               </ProtectedRoute>
             }
           />
