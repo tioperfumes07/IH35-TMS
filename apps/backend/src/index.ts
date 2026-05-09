@@ -72,8 +72,10 @@ import { registerAccountingRoutes } from "./accounting/index.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { registerPlaidWebhookRoutes } from "./integrations/plaid/webhook.routes.js";
 import { registerPlaidAdminRoutes } from "./integrations/plaid/admin.routes.js";
+import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { initializeScheduledReportsCron } from "./cron/scheduled-reports.js";
+import { initializePlaidDailySyncCron } from "./cron/plaid-daily-sync.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -184,6 +186,7 @@ async function main() {
   await registerReportsRoutes(app);
   await registerPlaidWebhookRoutes(app);
   await registerPlaidAdminRoutes(app);
+  await registerPlaidLinkRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);
@@ -211,6 +214,7 @@ async function main() {
   await registerAccountingRoutes(app);
   await registerCompanyRoutes(app);
   initializeScheduledReportsCron(app.log);
+  initializePlaidDailySyncCron(app.log);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {
