@@ -331,7 +331,12 @@ export function CustomersPage() {
             rowKey={(row) => row.id}
             onRowClick={(row) => navigate(`/customers/${row.id}`)}
             columns={[
-              { key: "name", label: "Customer", render: (row) => row.name },
+              {
+                key: "name",
+                label: "Customer",
+                className: "max-w-[240px] whitespace-nowrap",
+                render: (row) => <span className="block truncate">{row.name}</span>,
+              },
               { key: "customer_code", label: "Code", render: (row) => row.customer_code ?? "-" },
               { key: "type", label: "Type", render: (row) => customerTypeLabel(row.customer_type) },
               {

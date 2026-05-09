@@ -165,6 +165,16 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
 
     await withLuciaBypass(async (client) => {
       await client.query(`UPDATE identity.users SET auth_phone_verified_at = now() WHERE id = $1`, [user.id]);
+      const syncedDrivers = await client.query<{ id: string }>(
+        `
+          UPDATE mdata.drivers
+          SET phone = $2
+          WHERE identity_user_id = $1
+            AND phone IS DISTINCT FROM $2
+          RETURNING id
+        `,
+        [user.id, phone]
+      );
       await appendCrudAudit(
         client,
         user.id,
@@ -177,6 +187,21 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
         "info",
         "BT-1-AUTH-DRIVER"
       );
+      if (syncedDrivers.rows.length > 0) {
+        await appendCrudAudit(
+          client,
+          user.id,
+          "mdata.drivers.phone_synced_from_auth_verify",
+          {
+            resource_type: "mdata.drivers",
+            driver_ids: syncedDrivers.rows.map((row) => row.id),
+            synced_phone_masked: maskPhone(phone),
+            source: "auth.phone.verify",
+          },
+          "info",
+          "BT-1-AUTH-DRIVER"
+        );
+      }
     });
 
     const session = await lucia.createSession(user.id, {});

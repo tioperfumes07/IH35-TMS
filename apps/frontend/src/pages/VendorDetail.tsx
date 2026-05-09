@@ -8,6 +8,8 @@ import { Button } from "../components/Button";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/layout/PageHeader";
+import { BackButton } from "../components/shared/BackButton";
+import { Breadcrumb } from "../components/shared/Breadcrumb";
 
 const tabs = ["Profile", "Documents", "Audit History"] as const;
 type VendorTab = (typeof tabs)[number];
@@ -50,8 +52,14 @@ export function VendorDetailPage() {
 
   return (
     <div className="space-y-3">
+      <BackButton label="Vendors" />
+      <Breadcrumb
+        items={[
+          { label: "Vendors", href: "/vendors" },
+          { label: vendor.name },
+        ]}
+      />
       <PageHeader
-        backHref="/vendors"
         title={vendor.name}
         subtitle={vendor.vendor_type}
         actions={
