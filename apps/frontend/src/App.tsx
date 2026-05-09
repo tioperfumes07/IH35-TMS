@@ -71,6 +71,14 @@ import { PayRateTemplatesListPage } from "./pages/lists/driver/PayRateTemplatesL
 import { DriverDeductionTypesListPage } from "./pages/lists/driver/DriverDeductionTypesListPage";
 import { DriverPayTypesListPage } from "./pages/lists/driver/DriverPayTypesListPage";
 import { EscrowTypesListPage } from "./pages/lists/driver/EscrowTypesListPage";
+import { MaintenanceFailureCodesListPage } from "./pages/lists/maintenance/MaintenanceFailureCodesListPage";
+import { MaintenanceLaborCodesListPage } from "./pages/lists/maintenance/MaintenanceLaborCodesListPage";
+import { MaintenancePartsListPage } from "./pages/lists/maintenance/MaintenancePartsListPage";
+import { MaintenancePriorityLevelsListPage } from "./pages/lists/maintenance/MaintenancePriorityLevelsListPage";
+import { MaintenanceServiceTasksListPage } from "./pages/lists/maintenance/MaintenanceServiceTasksListPage";
+import { MaintenanceShopLocationsListPage } from "./pages/lists/maintenance/MaintenanceShopLocationsListPage";
+import { MaintenanceVendorsListPage } from "./pages/lists/maintenance/MaintenanceVendorsListPage";
+import { WorkOrderStatusesListPage } from "./pages/lists/maintenance/WorkOrderStatusesListPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -572,6 +580,72 @@ export default function App() {
           }
         />
         {/* ─── End Driver catalog routes ─── */}
+        {/* ─── Maintenance catalog routes (T11.21.5A) ─── */}
+        <Route
+          path="/lists/maintenance/failure-codes"
+          element={
+            <ProtectedRoute>
+              <MaintenanceFailureCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/labor-codes"
+          element={
+            <ProtectedRoute>
+              <MaintenanceLaborCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/parts"
+          element={
+            <ProtectedRoute>
+              <MaintenancePartsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/priority-levels"
+          element={
+            <ProtectedRoute>
+              <MaintenancePriorityLevelsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/service-tasks"
+          element={
+            <ProtectedRoute>
+              <MaintenanceServiceTasksListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/shop-locations"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShopLocationsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/vendors"
+          element={
+            <ProtectedRoute>
+              <MaintenanceVendorsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/work-order-statuses"
+          element={
+            <ProtectedRoute>
+              <WorkOrderStatusesListPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* ─── End Maintenance catalog routes ─── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </CompanyProvider>
