@@ -45,7 +45,28 @@ export type KpiSummary = {
   available_reports: number;
   scheduled: number;
   run_last_7d: number;
+  outstanding_ar_cents: number;
   ifta_status: { quarter: string; dueAt: string; daysUntilDue: number };
+};
+
+export type ARAgingRow = {
+  customer_id: string;
+  customer_name: string;
+  open_invoice_count: number;
+  current_cents: number;
+  bucket_1_30_cents: number;
+  bucket_31_60_cents: number;
+  bucket_61_90_cents: number;
+  bucket_91_plus_cents: number;
+  total_open_cents: number;
+};
+
+export type ARAgingResponse = {
+  status: "real";
+  generated_at: string;
+  total_open_cents: number;
+  total_open_invoices: number;
+  rows: ARAgingRow[];
 };
 
 type ReportRunLogBody = {
@@ -143,7 +164,7 @@ export async function runDriverSettlementSummary(companyId: string, cycleStart?:
 
 export async function runArAging(companyId: string) {
   const startedAt = Date.now();
-  const result = await apiRequest<{ status: string; message: string; rows: unknown[] }>(withCompany("/api/v1/reports/ar-aging", companyId));
+  const result = await apiRequest<ARAgingResponse>(withCompany("/api/v1/reports/ar-aging", companyId));
   await postRunLog({
     operating_company_id: companyId,
     report_id: "ar-aging",

@@ -126,9 +126,18 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         `SELECT count(*)::text AS cnt FROM reports.run_log WHERE operating_company_id = $1 AND run_at >= now() - interval '7 days'`,
         [query.data.operating_company_id]
       );
+      const arSumRes = await client.query(
+        `
+          SELECT COALESCE(SUM(total_open_cents), 0) AS total
+          FROM views.ar_aging
+          WHERE operating_company_id = $1
+        `,
+        [query.data.operating_company_id]
+      );
       return {
         scheduled: Number(((scheduledRes.rows[0] as { cnt?: string } | undefined)?.cnt ?? 0)),
         run_last_7d: Number(((runRes.rows[0] as { cnt?: string } | undefined)?.cnt ?? 0)),
+        outstanding_ar_cents: Number(((arSumRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
       };
     });
 
@@ -136,6 +145,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       available_reports: REPORT_LIBRARY.length,
       scheduled: data.scheduled,
       run_last_7d: data.run_last_7d,
+      outstanding_ar_cents: data.outstanding_ar_cents,
       ifta_status: getCurrentQuarterInfo(),
     };
   });

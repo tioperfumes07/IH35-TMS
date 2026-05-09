@@ -34,8 +34,8 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     id: "ar-aging",
     name: "A/R aging",
     category: "financial",
-    description: "Customer aging buckets by invoice due date.",
-    status: "stub",
+    description: "Customer aging buckets sourced from open invoices.",
+    status: "real",
   },
   {
     id: "fuel-savings",
