@@ -22,6 +22,7 @@ import {
   reactivateCustomerContact,
   updateCustomerLane,
   updateCustomer,
+  verifyCustomerFmcsa,
   updateCustomerContact,
   updateCustomerQualityEvent,
   voidCustomerQualityEvent,
@@ -301,6 +302,7 @@ export function CustomerDetailPage() {
   const canEditQualityNotes = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canEditCreditLimit = user?.role === "Owner" || user?.role === "Administrator";
   const canViewDocuments = ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant"].includes(user?.role ?? "");
+  const canVerifyFmcsa = user?.role === "Owner" || user?.role === "Administrator";
 
   const hydratedForm = useMemo(() => {
     if (!customer) return form;
@@ -414,6 +416,18 @@ export function CustomerDetailPage() {
         return;
       }
       pushToast("Failed to update customer", "error");
+    },
+  });
+
+  const verifyFmcsaMutation = useMutation({
+    mutationFn: () => verifyCustomerFmcsa(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      pushToast("FMCSA verification refreshed", "success");
+    },
+    onError: () => {
+      pushToast("FMCSA verification failed", "error");
     },
   });
 
@@ -624,6 +638,12 @@ export function CustomerDetailPage() {
         <Button size="sm" variant="secondary" onClick={() => setFmcsaModalOpen(true)}>
           Verify FMCSA Authority
         </Button>
+        {canVerifyFmcsa ? (
+          <Button size="sm" variant="secondary" onClick={() => verifyFmcsaMutation.mutate()} loading={verifyFmcsaMutation.isPending}>
+            Verify FMCSA
+          </Button>
+        ) : null}
+        {customer.fmcsa_last_checked_at ? <span className="text-xs text-gray-500">{`Last checked ${new Date(customer.fmcsa_last_checked_at).toLocaleString()}`}</span> : null}
       </div>
 
       <SecondaryNavTabs
@@ -639,6 +659,13 @@ export function CustomerDetailPage() {
             <Field label="Code" value={hydratedForm.customer_code} onChange={(value) => setForm((current) => ({ ...current, customer_code: value }))} disabled={!editMode} />
             <Field label="DOT Number" value={hydratedForm.dot_number} onChange={(value) => setForm((current) => ({ ...current, dot_number: value }))} disabled={!editMode} />
             <Field label="MC Number" value={hydratedForm.mc_number} onChange={(value) => setForm((current) => ({ ...current, mc_number: value }))} disabled={!editMode} />
+            {canVerifyFmcsa ? (
+              <div className="mb-2">
+                <Button size="sm" variant="secondary" onClick={() => verifyFmcsaMutation.mutate()} loading={verifyFmcsaMutation.isPending}>
+                  Verify FMCSA
+                </Button>
+              </div>
+            ) : null}
             <Field label="Tax ID (EIN)" value={hydratedForm.tax_id} onChange={(value) => setForm((current) => ({ ...current, tax_id: value }))} disabled={!editMode} />
             <div className="mb-2 flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Billing State</label>

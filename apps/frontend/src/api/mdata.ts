@@ -236,6 +236,8 @@ export type Customer = {
   fmcsa_verified_at: string | null;
   fmcsa_lookup_id: string | null;
   fmcsa_authority_status_at_verification: string | null;
+  fmcsa_last_checked_at: string | null;
+  fmcsa_check_response: unknown | null;
   created_at: string;
   updated_at: string;
   deactivated_at: string | null;
@@ -709,6 +711,10 @@ export function updateCustomer(id: string, body: UpdateCustomerInput) {
 
 export function getCustomerDetail(id: string) {
   return apiRequest<{ customer: CustomerDetailFull }>(`/api/v1/mdata/customers/${id}/detail`);
+}
+
+export function verifyCustomerFmcsa(id: string) {
+  return apiRequest<{ customer: Customer }>(`/api/v1/mdata/customers/${id}/verify-fmcsa`, { method: "POST" });
 }
 
 export function listCustomerQualityEventReasons(
