@@ -100,6 +100,7 @@ import { JournalEntryTypesListPage } from "./pages/lists/accounting/JournalEntry
 import { QboCategoriesListPage } from "./pages/lists/accounting/QboCategoriesListPage";
 import { ItemsListPage } from "./pages/lists/accounting/ItemsListPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
+import { PrivacyPolicy } from "./pages/legal/PrivacyPolicy";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -134,6 +135,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route
           path="/home"
           element={
