@@ -5,7 +5,24 @@ CREATE SCHEMA IF NOT EXISTS views;
 DO $$
 BEGIN
   IF to_regclass('banking.bank_accounts') IS NOT NULL
-     AND to_regclass('banking.bank_transactions') IS NOT NULL THEN
+     AND to_regclass('banking.bank_transactions') IS NOT NULL
+     AND to_regclass('banking.bank_account_balances') IS NOT NULL
+     AND EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'banking'
+         AND table_name = 'bank_accounts'
+         AND column_name = 'visible'
+     )
+     AND EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'banking'
+         AND table_name = 'bank_transactions'
+         AND column_name IN ('account_id', 'status', 'txn_date', 'factoring_advance_id')
+       GROUP BY table_schema, table_name
+       HAVING COUNT(*) = 4
+     ) THEN
     EXECUTE $VIEW$
       CREATE OR REPLACE VIEW views.banking_account_tiles
       WITH (security_invoker = true) AS

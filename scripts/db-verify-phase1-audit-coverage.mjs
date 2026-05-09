@@ -153,6 +153,8 @@ const EVENT_CLASSES = [
   "banking.plaid.link_token_created",
   "banking.plaid.token_exchanged",
   "banking.plaid.webhook_received",
+  "banking.plaid.webhook_invalid",
+  "banking.plaid.manual_sync",
   "banking.plaid.error",
 ];
 
@@ -181,6 +183,7 @@ const WARNING_EVENTS = new Set([
   "safety.complaint.voided",
   "safety.company_violation.repurposed",
   "banking.bank_account.deactivated",
+  "banking.plaid.webhook_invalid",
   "banking.plaid.error",
 ]);
 
