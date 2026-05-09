@@ -373,7 +373,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
              AND a.company_id = $1
              AND a.is_authorized = true
              AND a.deactivated_at IS NULL
-            WHERE d.status = 'active'
+            WHERE d.status::text IN ('Active', 'Probation', 'OnLeave')
               AND (
                 (d.cdl_expires_at IS NOT NULL AND d.cdl_expires_at <= CURRENT_DATE + interval '30 days')
                 OR (d.dot_medical_expires_at IS NOT NULL AND d.dot_medical_expires_at <= CURRENT_DATE + interval '30 days')
@@ -496,7 +496,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           `
             SELECT
               count(*)::text AS total_units,
-              count(*) FILTER (WHERE is_oos = true OR lower(COALESCE(status, '')) LIKE '%out%')::text AS out_of_service,
+              count(*) FILTER (WHERE is_oos = true OR status::text = 'OutOfService')::text AS out_of_service,
               count(*) FILTER (WHERE updated_at >= now() - interval '6 hours')::text AS samsara_live
             FROM mdata.units
             WHERE deactivated_at IS NULL
