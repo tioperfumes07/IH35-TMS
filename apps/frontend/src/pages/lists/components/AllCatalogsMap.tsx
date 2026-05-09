@@ -1,62 +1,146 @@
-import { useMemo } from "react";
-import type { ListsInventoryRow } from "../../../api/listsHub";
-
-const DOMAIN_ORDER = ["safety", "maintenance", "dispatch", "fuel", "drivers", "fleet", "accounting", "names_master"] as const;
-
-const DOMAIN_LABELS: Record<(typeof DOMAIN_ORDER)[number], string> = {
-  safety: "Safety",
-  maintenance: "Maintenance",
-  dispatch: "Dispatch",
-  fuel: "Fuel",
-  drivers: "Drivers",
-  fleet: "Fleet",
-  accounting: "Accounting",
-  names_master: "Names master",
+type CatalogItem = {
+  name: string;
+  description: string;
+  live: boolean;
+  catalogKey?: string;
 };
 
-const DOMAIN_PILL: Record<(typeof DOMAIN_ORDER)[number], string> = {
-  safety: "bg-red-50 text-red-700",
-  maintenance: "bg-slate-100 text-slate-700",
-  dispatch: "bg-blue-50 text-blue-700",
-  fuel: "bg-amber-50 text-amber-700",
-  drivers: "bg-green-50 text-green-700",
-  fleet: "bg-purple-50 text-purple-700",
-  accounting: "bg-slate-200 text-slate-800",
-  names_master: "bg-orange-50 text-orange-700",
+type DomainConfig = {
+  key: string;
+  label: string;
+  pillClass: string;
+  catalogs: CatalogItem[];
 };
+
+const DOMAIN_CONFIG: DomainConfig[] = [
+  {
+    key: "safety",
+    label: "Safety",
+    pillClass: "bg-red-50 text-red-700",
+    catalogs: [
+      { name: "Internal Fine Reasons", description: "Default internal penalty reason codes", live: true, catalogKey: "internal-fine-reasons" },
+      { name: "Civil Fine Types", description: "External citation/fine category definitions", live: true, catalogKey: "civil-fine-types" },
+      { name: "Company Violation Types", description: "Policy and integrity violation code set", live: true, catalogKey: "company-violation-types" },
+      { name: "Complaint Types", description: "Driver and customer complaint classifications", live: false },
+      { name: "DOT Violation Types", description: "Inspection and DOT offense groupings", live: false },
+      { name: "Cargo Claim Reasons", description: "Claim cause categories for safety/legal", live: false },
+    ],
+  },
+  {
+    key: "dispatch",
+    label: "Dispatch",
+    pillClass: "bg-blue-50 text-blue-700",
+    catalogs: [
+      { name: "Load Types", description: "Linehaul mode/type setup", live: true, catalogKey: "load-types" },
+      { name: "Detention Reasons", description: "Detention billing reason catalog", live: true, catalogKey: "detention-reasons" },
+      { name: "Pickup Time Types", description: "Pickup scheduling semantics", live: true, catalogKey: "pickup-time-types" },
+      { name: "Additional Charges", description: "Accessorial and surcharge templates", live: true, catalogKey: "additional-charges" },
+      { name: "Load Cancellation Reasons", description: "Cancellation root-cause reporting taxonomy", live: false },
+    ],
+  },
+  {
+    key: "driver",
+    label: "Drivers",
+    pillClass: "bg-green-50 text-green-700",
+    catalogs: [
+      { name: "Pay Rate Templates", description: "Driver pay model templates", live: true, catalogKey: "pay-rate-templates" },
+      { name: "Driver Deduction Types", description: "Standard deduction reason set", live: true, catalogKey: "deduction-types" },
+      { name: "Driver Pay Types", description: "Pay event and compensation code set", live: true, catalogKey: "pay-types" },
+      { name: "Escrow Types", description: "Escrow bucket definitions", live: true, catalogKey: "escrow-types" },
+      { name: "Termination Reasons", description: "Offboarding reason taxonomy", live: false },
+    ],
+  },
+  {
+    key: "maintenance",
+    label: "Maintenance",
+    pillClass: "bg-slate-100 text-slate-700",
+    catalogs: [
+      { name: "Work Order Types", description: "Preventive and corrective WO classification", live: false },
+      { name: "Maintenance Priority Codes", description: "Urgency definitions for dispatch triage", live: false },
+      { name: "Repair Categories", description: "Service category breakdown for reporting", live: false },
+      { name: "Vendor Service Classes", description: "Preferred vendor capability tags", live: false },
+    ],
+  },
+  {
+    key: "fuel",
+    label: "Fuel",
+    pillClass: "bg-amber-50 text-amber-700",
+    catalogs: [
+      { name: "Fuel Product Types", description: "Diesel, DEF, additives, and misc products", live: false },
+      { name: "Discount Program Types", description: "Fuel discount ladder definitions", live: false },
+      { name: "Fuel Station Classes", description: "Stop and station grouping labels", live: false },
+      { name: "IFTA Adjustment Reasons", description: "Tax adjustment reason set", live: false },
+    ],
+  },
+  {
+    key: "fleet",
+    label: "Fleet",
+    pillClass: "bg-purple-50 text-purple-700",
+    catalogs: [
+      { name: "Unit Types", description: "Tractor/power unit classification", live: false },
+      { name: "Trailer Types", description: "Trailer equipment type taxonomy", live: false },
+      { name: "Asset Status Codes", description: "Lifecycle state definitions", live: false },
+      { name: "Ownership Types", description: "Owned/leased/rented categorization", live: false },
+    ],
+  },
+  {
+    key: "accounting",
+    label: "Accounting",
+    pillClass: "bg-slate-200 text-slate-800",
+    catalogs: [
+      { name: "Invoice Item Types", description: "AR line-item type templates", live: false },
+      { name: "Payment Terms", description: "Net-term and due-date definitions", live: false },
+      { name: "Credit Memo Reasons", description: "Credit/write-off reason catalog", live: false },
+      { name: "Charge Codes", description: "Posting and categorization shortcuts", live: false },
+    ],
+  },
+  {
+    key: "names_master",
+    label: "Names master",
+    pillClass: "bg-orange-50 text-orange-700",
+    catalogs: [
+      { name: "Shippers", description: "Canonical shipper naming set", live: false },
+      { name: "Consignees", description: "Canonical consignee naming set", live: false },
+      { name: "Brokers", description: "Broker naming and aliases", live: false },
+      { name: "Lenders", description: "Finance partner naming set", live: false },
+      { name: "Insurance Carriers", description: "Insurance provider directory names", live: false },
+    ],
+  },
+];
 
 type Props = {
-  inventory: ListsInventoryRow[];
   onCatalogClick: (domain: string, catalogKey: string) => void;
 };
 
-export function AllCatalogsMap({ inventory, onCatalogClick }: Props) {
-  const grouped = useMemo(() => {
-    const map: Record<string, ListsInventoryRow[]> = {};
-    for (const row of inventory) map[row.domain] = [...(map[row.domain] ?? []), row];
-    return map;
-  }, [inventory]);
+export function AllCatalogsMap({ onCatalogClick }: Props) {
 
   return (
     <div className="rounded border border-slate-200 bg-white p-3">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">All Catalogs Domain Map</div>
       <div className="space-y-2">
-        {DOMAIN_ORDER.map((domain) => {
-          const rows = grouped[domain] ?? [];
+        {DOMAIN_CONFIG.map((domain) => {
           return (
-            <div key={domain} className="flex items-start gap-3 rounded border border-slate-100 px-2 py-2 text-xs">
-              <span className={`rounded px-2 py-0.5 font-semibold ${DOMAIN_PILL[domain]}`}>{DOMAIN_LABELS[domain]}</span>
-              <div className="flex-1 whitespace-nowrap text-slate-700">
-                {rows.map((row, idx) => (
-                  <span key={row.catalog_key}>
-                    <button type="button" className="hover:text-blue-700 hover:underline" onClick={() => onCatalogClick(domain, row.catalog_key)}>
-                      {row.display_name}
-                    </button>
-                    {idx < rows.length - 1 ? " · " : ""}
-                  </span>
+            <div key={domain.key} className="rounded border border-slate-100 px-2 py-2 text-xs">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <span className={`rounded px-2 py-0.5 font-semibold ${domain.pillClass}`}>{domain.label}</span>
+                <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{domain.catalogs.length}</span>
+              </div>
+              <div className="grid gap-1.5 md:grid-cols-2">
+                {domain.catalogs.map((catalog) => (
+                  <div key={`${domain.key}-${catalog.name}`} className="rounded border border-slate-100 px-2 py-1.5">
+                    {catalog.live && catalog.catalogKey ? (
+                      <button type="button" className="text-left font-semibold text-blue-700 hover:underline" onClick={() => onCatalogClick(domain.key, catalog.catalogKey ?? "")}>
+                        {catalog.name}
+                      </button>
+                    ) : (
+                      <div className="font-semibold text-slate-500">
+                        {catalog.name} <span className="text-[10px] uppercase tracking-wide">(coming soon)</span>
+                      </div>
+                    )}
+                    <div className="text-[11px] text-slate-500">{catalog.description}</div>
+                  </div>
                 ))}
               </div>
-              <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{rows.length}</span>
             </div>
           );
         })}
