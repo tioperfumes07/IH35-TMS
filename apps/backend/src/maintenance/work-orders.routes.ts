@@ -152,6 +152,44 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: err.flatten() });
 }
 
+const G18_REQUIRED_CODES = new Set(["FUEL", "DIESEL", "ROADSIDE", "TOLL", "PARKING"]);
+const G18_DESCRIPTION_REGEX = /\b(fuel|diesel|roadside|toll|parking)\b/i;
+
+async function relationExists(
+  client: { query: <R = { ok: boolean }>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  relName: string
+) {
+  const res = await client.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [relName]);
+  return Boolean(res.rows[0]?.ok);
+}
+
+async function hasLoadRequiredExpenseCategories(
+  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  sectionA: Array<{ description: string; expense_category_uuid: string }>
+) {
+  if (sectionA.some((line) => G18_DESCRIPTION_REGEX.test(line.description))) {
+    return true;
+  }
+
+  if (!(await relationExists(client, "catalogs.qbo_categories"))) return false;
+  const categoryIds = Array.from(new Set(sectionA.map((line) => line.expense_category_uuid).filter(Boolean)));
+  if (categoryIds.length === 0) return false;
+
+  const categories = await client.query<{ code: string | null; display_name: string | null }>(
+    `
+      SELECT code, display_name
+      FROM catalogs.qbo_categories
+      WHERE id = ANY($1::uuid[])
+    `,
+    [categoryIds]
+  );
+  return categories.rows.some((row) => {
+    const code = String(row.code ?? "").toUpperCase();
+    const displayName = String(row.display_name ?? "").toUpperCase();
+    return G18_REQUIRED_CODES.has(code) || G18_REQUIRED_CODES.has(displayName);
+  });
+}
+
 async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
@@ -273,36 +311,58 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!["Owner", "Administrator", "Manager", "Dispatcher", "Safety"].includes(role)) {
         return reply.code(403).send({ error: "forbidden" });
       }
-      const result = await withCompany(user.uuid, body.header.operating_company_id, async (client) => {
-        await client.query("BEGIN");
-        try {
-          const created = await createWorkOrderWithLines(client as never, user.uuid, body.header, body.sectionA, body.sectionB);
-          let bill: { uuid: string } | null = null;
-          let expense: { uuid: string } | null = null;
-          if (body.header.payment_timing === "vendor_invoice") {
-            bill = await autoCreateBillFromWO(client as never, user.uuid, created.woUuid);
-          } else if (body.header.payment_timing === "paid_same_day") {
-            expense = await autoCreateExpenseFromWO(
-              client as never,
-              user.uuid,
-              created.woUuid,
-              body.header.payment_account_uuid ?? null
-            );
-          } else {
-            await allocateInHouseFromWO(client as never, user.uuid, created.woUuid);
-          }
-          await client.query("COMMIT");
-          return {
-            wo: { uuid: created.woUuid, display_id: created.display_id },
-            bill: bill ?? undefined,
-            expense: expense ?? undefined,
-          };
-        } catch (error) {
-          await client.query("ROLLBACK");
-          throw error;
+      if (body.header.payment_timing === "paid_same_day") {
+        const requiresLoad = await withCompany(user.uuid, body.header.operating_company_id, async (client) =>
+          hasLoadRequiredExpenseCategories(client, body.sectionA)
+        );
+        if (requiresLoad && !body.header.load_id) {
+          return reply.code(422).send({
+            error: "E_DIESEL_REQUIRES_LOAD",
+            message: "Diesel/over-the-road expenses must link to a load (G18 invariant)",
+          });
         }
-      });
-      return reply.code(201).send(result);
+      }
+      try {
+        const result = await withCompany(user.uuid, body.header.operating_company_id, async (client) => {
+          await client.query("BEGIN");
+          try {
+            const created = await createWorkOrderWithLines(client as never, user.uuid, body.header, body.sectionA, body.sectionB);
+            let bill: { uuid: string } | null = null;
+            let expense: { uuid: string } | null = null;
+            if (body.header.payment_timing === "vendor_invoice") {
+              bill = await autoCreateBillFromWO(client as never, user.uuid, created.woUuid);
+            } else if (body.header.payment_timing === "paid_same_day") {
+              expense = await autoCreateExpenseFromWO(
+                client as never,
+                user.uuid,
+                created.woUuid,
+                body.header.payment_account_uuid ?? null
+              );
+            } else {
+              await allocateInHouseFromWO(client as never, user.uuid, created.woUuid);
+            }
+            await client.query("COMMIT");
+            return {
+              wo: { uuid: created.woUuid, display_id: created.display_id },
+              bill: bill ?? undefined,
+              expense: expense ?? undefined,
+            };
+          } catch (error) {
+            await client.query("ROLLBACK");
+            throw error;
+          }
+        });
+        return reply.code(201).send(result);
+      } catch (error) {
+        const message = String((error as Error)?.message ?? "");
+        if (message.includes("E_DIESEL_REQUIRES_LOAD")) {
+          return reply.code(422).send({
+            error: "E_DIESEL_REQUIRES_LOAD",
+            message: "Diesel/over-the-road expenses must link to a load (G18 invariant)",
+          });
+        }
+        throw error;
+      }
     }
 
     const parsed = createWorkOrderSchema.safeParse(req.body ?? {});
