@@ -3,6 +3,7 @@ import { apiRequest } from "./client";
 export type InvoiceStatus = "draft" | "sent" | "partial" | "paid" | "void" | "factored";
 export type InvoiceLineType = "linehaul" | "fsc" | "detention" | "layover" | "lumper" | "tonu" | "accessorial" | "tax" | "adjustment" | "other";
 export type PaymentMethod = "ach" | "wire" | "check" | "cash" | "factoring_advance" | "factoring_reserve" | "credit_card" | "other";
+export type FactoringStatus = "submitted" | "advanced" | "reserve_held" | "collected" | "released" | "recourse_returned" | "voided";
 
 export type InvoiceLine = {
   id: string;
@@ -38,6 +39,9 @@ export type Invoice = {
   total_cents: number;
   amount_paid_cents: number;
   amount_open_cents: number;
+  factoring_advance_id?: string | null;
+  factoring_display_id?: string | null;
+  factoring_status?: "not_factored" | "submitted" | "advanced" | "reserve_held" | "collected" | "released" | "recourse_returned";
   payment_terms_label: string | null;
   payment_terms_days: number | null;
   internal_notes: string | null;
@@ -52,6 +56,44 @@ export type Invoice = {
     applied_at: string;
     payment_display_id?: string | null;
     payment_date?: string | null;
+  }>;
+};
+
+export type FactoringAdvance = {
+  id: string;
+  operating_company_id: string;
+  factoring_company_vendor_id: string;
+  factoring_company_name: string;
+  display_id: string;
+  status: FactoringStatus;
+  submitted_at: string;
+  submission_batch_ref: string | null;
+  invoice_total_cents: number;
+  advance_rate_pct: number;
+  advance_amount_cents: number;
+  reserve_pct: number;
+  reserve_amount_cents: number;
+  factor_fee_pct: number;
+  factor_fee_cents: number;
+  release_amount_cents: number;
+  advanced_at: string | null;
+  collected_at: string | null;
+  released_at: string | null;
+  recourse_returned_at: string | null;
+  recourse_reason: string | null;
+  notes: string | null;
+  invoice_count: number;
+};
+
+export type FactoringAdvanceDetail = FactoringAdvance & {
+  invoices: Array<{
+    id: string;
+    display_id: string;
+    customer_id: string;
+    customer_name: string;
+    issue_date: string;
+    total_cents: number;
+    factoring_status: string;
   }>;
 };
 
@@ -276,5 +318,98 @@ export function applyPayment(
 export function unapplyPayment(paymentId: string, applicationId: string, operatingCompanyId: string) {
   return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/payments/${paymentId}/applications/${applicationId}`, operatingCompanyId), {
     method: "DELETE",
+  });
+}
+
+export function listFactoringAdvances(
+  operatingCompanyId: string,
+  filters: {
+    status?: FactoringStatus | "all";
+    factoring_company_vendor_id?: string;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+    limit?: number;
+  } = {}
+) {
+  const query = new URLSearchParams();
+  if (filters.status) query.set("status", filters.status);
+  if (filters.factoring_company_vendor_id) query.set("factoring_company_vendor_id", filters.factoring_company_vendor_id);
+  if (filters.date_from) query.set("date_from", filters.date_from);
+  if (filters.date_to) query.set("date_to", filters.date_to);
+  if (filters.search) query.set("search", filters.search);
+  if (filters.limit !== undefined) query.set("limit", String(filters.limit));
+  const qs = query.toString();
+  return apiRequest<{ rows: FactoringAdvance[] }>(withCompany(`/api/v1/accounting/factoring-advances${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
+export function getFactoringAdvance(id: string, operatingCompanyId: string) {
+  return apiRequest<FactoringAdvanceDetail>(withCompany(`/api/v1/accounting/factoring-advances/${id}`, operatingCompanyId));
+}
+
+export function listFactoringCandidateInvoices(operatingCompanyId: string) {
+  return apiRequest<{
+    rows: Array<{
+      id: string;
+      display_id: string;
+      customer_id: string;
+      customer_name: string;
+      issue_date: string;
+      total_cents: number;
+      factoring_status: string;
+      customer_recourse_type: string;
+      factoring_eligible: boolean;
+    }>;
+  }>(withCompany("/api/v1/accounting/factoring-advances/candidate-invoices", operatingCompanyId));
+}
+
+export function submitFactoringBatch(
+  operatingCompanyId: string,
+  body: {
+    factoring_company_vendor_id: string;
+    submission_batch_ref?: string;
+    invoice_ids: string[];
+    advance_rate_pct: number;
+    reserve_pct: number;
+    factor_fee_pct?: number;
+    notes?: string;
+  }
+) {
+  return apiRequest<FactoringAdvanceDetail>(withCompany("/api/v1/accounting/factoring-advances", operatingCompanyId), { method: "POST", body });
+}
+
+export function markAdvanced(id: string, operatingCompanyId: string, body: { advanced_at?: string; notes?: string } = {}) {
+  return apiRequest<FactoringAdvanceDetail>(withCompany(`/api/v1/accounting/factoring-advances/${id}/advance`, operatingCompanyId), { method: "POST", body });
+}
+
+export function markReserveHeld(id: string, operatingCompanyId: string, body: { collected_at?: string; notes?: string } = {}) {
+  return apiRequest<FactoringAdvanceDetail>(withCompany(`/api/v1/accounting/factoring-advances/${id}/reserve-held`, operatingCompanyId), {
+    method: "POST",
+    body,
+  });
+}
+
+export function releaseReserve(
+  id: string,
+  operatingCompanyId: string,
+  body: { released_at?: string; factor_fee_cents: number; release_amount_cents: number; notes?: string }
+) {
+  return apiRequest<FactoringAdvanceDetail>(withCompany(`/api/v1/accounting/factoring-advances/${id}/release`, operatingCompanyId), {
+    method: "POST",
+    body,
+  });
+}
+
+export function recourseReturn(id: string, operatingCompanyId: string, body: { recourse_returned_at?: string; recourse_reason: string }) {
+  return apiRequest<FactoringAdvanceDetail>(withCompany(`/api/v1/accounting/factoring-advances/${id}/recourse-return`, operatingCompanyId), {
+    method: "POST",
+    body,
+  });
+}
+
+export function voidFactoring(id: string, operatingCompanyId: string, reason?: string) {
+  return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/factoring-advances/${id}/void`, operatingCompanyId), {
+    method: "POST",
+    body: { reason },
   });
 }

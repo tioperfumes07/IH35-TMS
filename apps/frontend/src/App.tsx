@@ -58,6 +58,8 @@ import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
 import { InvoiceDetailPage } from "./pages/accounting/InvoiceDetailPage";
 import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
 import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
+import { FactoringListPage } from "./pages/accounting/FactoringListPage";
+import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -346,6 +348,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <PaymentDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/factoring"
+          element={
+            <ProtectedRoute>
+              <FactoringListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/factoring/:id"
+          element={
+            <ProtectedRoute>
+              <FactoringDetailPage />
             </ProtectedRoute>
           }
         />

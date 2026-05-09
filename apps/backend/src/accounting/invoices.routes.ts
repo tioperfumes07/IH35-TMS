@@ -51,9 +51,10 @@ const voidBodySchema = z.object({
 async function enrichInvoice(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, invoiceId: string) {
   const invoiceRes = await client.query(
     `
-      SELECT i.*, c.customer_name
+      SELECT i.*, c.customer_name, fa.display_id AS factoring_display_id
       FROM accounting.invoices i
       JOIN mdata.customers c ON c.id = i.customer_id
+      LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
       WHERE i.id = $1
       LIMIT 1
     `,
@@ -126,6 +127,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           SELECT
             i.*,
             c.customer_name,
+            fa.display_id AS factoring_display_id,
             (
               SELECT COUNT(*)
               FROM accounting.invoice_lines l
@@ -133,6 +135,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             )::int AS line_count
           FROM accounting.invoices i
           JOIN mdata.customers c ON c.id = i.customer_id
+          LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
           WHERE ${where.join(" AND ")}
           ORDER BY i.issue_date DESC, i.created_at DESC
           LIMIT $${limitIdx}

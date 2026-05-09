@@ -87,3 +87,29 @@ export async function nextCreditMemoDisplayId(client: Queryable, operatingCompan
   const nextNumber = Number(res.rows[0]?.next_number ?? 1);
   return `${prefix}${String(nextNumber).padStart(4, "0")}`;
 }
+
+export async function nextFactoringDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
+  const year = toYear(referenceDate);
+  const prefix = `FAC-${year}-`;
+  await withDisplayLock(client, `accounting.factoring.display_id:${operatingCompanyId}:${year}`);
+  const res = await client.query<{ next_number: number }>(
+    `
+      SELECT COALESCE(
+        MAX(
+          CASE
+            WHEN display_id LIKE $2 || '%' THEN right(display_id, 5)::int
+            ELSE 0
+          END
+        ),
+        0
+      ) + 1 AS next_number
+      FROM accounting.factoring_advances
+      WHERE operating_company_id = $1
+        AND submitted_at >= make_date($3, 1, 1)
+        AND submitted_at < make_date($3 + 1, 1, 1)
+    `,
+    [operatingCompanyId, prefix, year]
+  );
+  const nextNumber = Number(res.rows[0]?.next_number ?? 1);
+  return `${prefix}${String(nextNumber).padStart(5, "0")}`;
+}

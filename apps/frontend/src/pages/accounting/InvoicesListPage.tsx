@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { ArrowRightCircle } from "lucide-react";
 import { listInvoices, type InvoiceStatus } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -119,7 +120,12 @@ export function InvoicesListPage() {
             ) : null}
             {invoices.map((invoice) => (
               <tr key={invoice.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
-                <td className="px-3 py-2 text-gray-900">{invoice.display_id}</td>
+                <td className="px-3 py-2 text-gray-900">
+                  <span className="inline-flex items-center gap-1">
+                    {invoice.display_id}
+                    {invoice.factoring_advance_id ? <ArrowRightCircle className="h-3.5 w-3.5 text-amber-600" /> : null}
+                  </span>
+                </td>
                 <td className="px-3 py-2 text-gray-700">{invoice.customer_name ?? "-"}</td>
                 <td className="px-3 py-2 text-gray-700">{invoice.issue_date}</td>
                 <td className="px-3 py-2 text-gray-700">{invoice.due_date}</td>
