@@ -37,7 +37,7 @@ export function DispatchHomePage() {
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
 
-  const companyId = searchParams.get("company") || selectedCompanyId || companies[0]?.id || "";
+  const companyId = selectedCompanyId || companies[0]?.id || "";
   const urlView = searchParams.get("view") as DispatchV2View | null;
   const [bookOpen, setBookOpen] = useState(false);
   const [selectedLoad, setSelectedLoad] = useState<string | null>(searchParams.get("load_id"));
@@ -58,6 +58,14 @@ export function DispatchHomePage() {
     next.set("view", prefQuery.data.dispatch_default_view);
     setSearchParams(next, { replace: true });
   }, [prefQuery.data?.dispatch_default_view, searchParams, setSearchParams, urlView]);
+
+  useEffect(() => {
+    if (!selectedCompanyId) return;
+    if (searchParams.get("company") === selectedCompanyId) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("company", selectedCompanyId);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, selectedCompanyId, setSearchParams]);
 
   const loadsQuery = useQuery({
     queryKey: ["dispatch", "v2", "loads", companyId, resolvedView, searchParams.toString()],

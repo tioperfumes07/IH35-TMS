@@ -46,6 +46,7 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideToken, setOverrideToken] = useState<string | null>(null);
   const [pendingCloseAfterAdvisory, setPendingCloseAfterAdvisory] = useState(false);
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
   const form = useForm<FormValues>({
     defaultValues: {
       customer_id: "",
@@ -72,6 +73,16 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
   const fuel = form.watch("fuel_surcharge_cents");
   const accessorial = form.watch("accessorial_cents");
   const driverBillPreview = useMemo(() => (linehaul || 0) + (fuel || 0) + (accessorial || 0), [accessorial, fuel, linehaul]);
+  const money = useMemo(
+    () =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    []
+  );
 
   const validationIssues = [
     "Unit PM up-to-date check (Phase 3 stub)",
@@ -86,6 +97,7 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     setGateBanner(null);
+    setSubmitErrorMessage(null);
     const token = opts?.override ? overrideToken ?? crypto.randomUUID() : undefined;
     if (opts?.override && !overrideToken) setOverrideToken(token ?? null);
     try {
@@ -147,6 +159,16 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
         const data = (error.data as Record<string, unknown>) ?? {};
         const code = String(data.error ?? "");
         const message = String(data.message ?? `API request failed with status ${error.status}`);
+        if (error.status === 400 && code === "invalid_customer_for_company") {
+          setSubmitErrorMessage(
+            "This customer is not associated with the selected operating company. Please choose a customer that matches the company."
+          );
+          return;
+        }
+        if (error.status === 400) {
+          setSubmitErrorMessage(message);
+          return;
+        }
         if (code === "E_UNIT_DISPATCH_BLOCKED") {
           setGateBanner({
             type: "hard_block",
@@ -176,6 +198,9 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
           await submitLoad(values, "book_dispatch");
         })}
       >
+        {submitErrorMessage ? (
+          <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
+        ) : null}
         {gateBanner ? (
           <div
             className={`rounded border px-3 py-2 text-xs ${
@@ -265,7 +290,9 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
         <BookLoadValidationSection issues={validationIssues} />
 
         <div className="flex items-center justify-between rounded border border-gray-200 bg-white px-3 py-2">
-          <div className="text-xs text-gray-600">Driver bill preview: <span className="font-semibold">${(driverBillPreview / 100).toFixed(2)}</span></div>
+          <div className="text-xs text-gray-600">
+            Driver bill preview: <span className="font-semibold">{money.format((driverBillPreview || 0) / 100)}</span>
+          </div>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
             <Button

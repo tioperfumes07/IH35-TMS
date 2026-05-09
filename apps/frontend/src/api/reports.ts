@@ -46,6 +46,11 @@ export type KpiSummary = {
   scheduled: number;
   run_last_7d: number;
   outstanding_ar_cents: number;
+  tracked_assets?: number;
+  assigned_working?: number;
+  maint_past_due?: number;
+  open_damage?: number;
+  pending_qbo_sync?: number;
   ifta_status: { quarter: string; dueAt: string; daysUntilDue: number };
 };
 
