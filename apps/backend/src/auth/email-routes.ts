@@ -82,7 +82,7 @@ export async function registerEmailAuthRoutes(app: FastifyInstance) {
       );
     });
 
-    await sendEmailCode(email, code);
+    void sendEmailCode(email, code, user.id).catch(() => undefined);
     return reply.code(200).send({ ok: true, message: GENERIC_MESSAGE });
   });
 
