@@ -71,6 +71,7 @@ import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
+import { initializeScheduledReportsCron } from "./cron/scheduled-reports.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -205,6 +206,7 @@ async function main() {
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);
   await registerCompanyRoutes(app);
+  initializeScheduledReportsCron(app.log);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {
