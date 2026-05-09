@@ -179,3 +179,29 @@ Top hover-dropdown navigation only for Safety. Never side panel (Jorge G3).
 - Backup and disaster-recovery strategy is pending (P7-T1).
 - Production Twilio WhatsApp Business sender approval is pending (P7-T3, Meta verification 7-14 days).
 - QBO production credentials approval is pending (P7-T4).
+
+## Database Grants
+
+The runtime database user `ih35_app` requires `USAGE` on each schema
+plus `SELECT/INSERT/UPDATE/DELETE` on each table. This is enforced
+via migration 0065.
+
+When adding a NEW schema in a future migration:
+1. Add the schema name to the `schemas[]` array in 0065 OR add a
+   small follow-up migration that grants on the new schema
+2. The DEFAULT PRIVILEGES from 0065 will auto-grant on new tables
+   IF the schema is in the array; otherwise tables need explicit
+   GRANT in the migration that creates them
+
+Example for a new schema:
+```sql
+GRANT USAGE ON SCHEMA my_new_schema TO ih35_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA
+  my_new_schema TO ih35_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA my_new_schema
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ih35_app;
+```
+
+This is enforced because legacy tables predating migration 0065 had
+no grants, leading to runtime 500 errors. Migration 0065 fixes this
+historically and DEFAULT PRIVILEGES prevents recurrence.
