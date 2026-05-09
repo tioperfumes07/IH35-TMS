@@ -141,6 +141,19 @@ const EVENT_CLASSES = [
   "safety.integrity.observation_created",
   "safety.integrity.observation_reviewed",
   "safety.company_violation.repurposed",
+  "banking.bank_account.created",
+  "banking.bank_account.updated",
+  "banking.bank_account.deactivated",
+  "banking.bank_account.reauthenticated",
+  "banking.transaction.imported",
+  "banking.transaction.matched",
+  "banking.transaction.qbo_synced",
+  "banking.reconciliation.started",
+  "banking.reconciliation.completed",
+  "banking.plaid.link_token_created",
+  "banking.plaid.token_exchanged",
+  "banking.plaid.webhook_received",
+  "banking.plaid.error",
 ];
 
 const WARNING_EVENTS = new Set([
@@ -167,6 +180,8 @@ const WARNING_EVENTS = new Set([
   "safety.complaint.resolved",
   "safety.complaint.voided",
   "safety.company_violation.repurposed",
+  "banking.bank_account.deactivated",
+  "banking.plaid.error",
 ]);
 
 async function runWithBypass(client, fn) {
