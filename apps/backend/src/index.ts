@@ -21,6 +21,7 @@ import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors
 import { registerSafetyCatalogRoutes } from "./catalogs/safety/index.js";
 import { registerDispatchCatalogRoutes } from "./catalogs/dispatch/index.js";
 import { registerDriverCatalogRoutes } from "./catalogs/driver/index.js";
+import { registerMaintenanceCatalogRoutes } from "./catalogs/maintenance/index.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
@@ -153,6 +154,9 @@ async function main() {
   // ─── Driver catalog routes (T11.21.4A) ───
   await registerDriverCatalogRoutes(app);
   // ─── End Driver catalog routes ───
+  // ─── Maintenance catalog routes (T11.21.5A) ───
+  await registerMaintenanceCatalogRoutes(app);
+  // ─── End Maintenance catalog routes ───
   await registerCatalogsWorkflowRoutes(app);
   await registerFileCategoriesRoutes(app);
   await registerDocsFilesRoutes(app);

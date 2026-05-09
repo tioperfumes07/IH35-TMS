@@ -75,6 +75,31 @@ export function ListsHubPage() {
         return;
       }
     }
+    if (domain === "maintenance") {
+      const maintenanceRouteMap: Record<string, string> = {
+        "failure-codes": "/lists/maintenance/failure-codes",
+        maintenance_failure_codes: "/lists/maintenance/failure-codes",
+        "labor-codes": "/lists/maintenance/labor-codes",
+        maintenance_labor_codes: "/lists/maintenance/labor-codes",
+        parts: "/lists/maintenance/parts",
+        maintenance_parts: "/lists/maintenance/parts",
+        "priority-levels": "/lists/maintenance/priority-levels",
+        maintenance_priority_levels: "/lists/maintenance/priority-levels",
+        "service-tasks": "/lists/maintenance/service-tasks",
+        maintenance_service_tasks: "/lists/maintenance/service-tasks",
+        "shop-locations": "/lists/maintenance/shop-locations",
+        maintenance_shop_locations: "/lists/maintenance/shop-locations",
+        vendors: "/lists/maintenance/vendors",
+        maintenance_vendors: "/lists/maintenance/vendors",
+        "work-order-statuses": "/lists/maintenance/work-order-statuses",
+        work_order_statuses: "/lists/maintenance/work-order-statuses",
+      };
+      const maintenancePath = maintenanceRouteMap[catalogKey];
+      if (maintenancePath) {
+        navigate(maintenancePath);
+        return;
+      }
+    }
     navigate(`/lists/${domain}/${catalogKey}`);
   }
 

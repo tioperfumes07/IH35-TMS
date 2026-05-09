@@ -55,10 +55,14 @@ const DOMAIN_CONFIG: DomainConfig[] = [
     label: "Maintenance",
     pillClass: "bg-slate-100 text-slate-700",
     catalogs: [
-      { name: "Work Order Types", description: "Preventive and corrective WO classification", live: false },
-      { name: "Maintenance Priority Codes", description: "Urgency definitions for dispatch triage", live: false },
-      { name: "Repair Categories", description: "Service category breakdown for reporting", live: false },
-      { name: "Vendor Service Classes", description: "Preferred vendor capability tags", live: false },
+      { name: "Maintenance Failure Codes", description: "Failure code taxonomy for diagnostics", live: true, catalogKey: "failure-codes" },
+      { name: "Maintenance Labor Codes", description: "Labor operation and billing codes", live: true, catalogKey: "labor-codes" },
+      { name: "Maintenance Parts", description: "Parts master with optional SKU metadata", live: true, catalogKey: "parts" },
+      { name: "Maintenance Priority Levels", description: "Priority/severity ladder for work orders", live: true, catalogKey: "priority-levels" },
+      { name: "Maintenance Service Tasks", description: "Standard PM and repair task templates", live: true, catalogKey: "service-tasks" },
+      { name: "Maintenance Shop Locations", description: "Internal and vendor repair location set", live: true, catalogKey: "shop-locations" },
+      { name: "Maintenance Vendors", description: "Maintenance-specific vendor list", live: true, catalogKey: "vendors" },
+      { name: "Work Order Statuses", description: "Lifecycle statuses for maintenance work orders", live: true, catalogKey: "work-order-statuses" },
     ],
   },
   {
