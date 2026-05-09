@@ -42,6 +42,23 @@ export function ListsHubPage() {
       navigate(`/lists/${domain}`);
       return;
     }
+    if (domain === "dispatch") {
+      const dispatchRouteMap: Record<string, string> = {
+        "load-types": "/lists/dispatch/load-types",
+        load_types: "/lists/dispatch/load-types",
+        "detention-reasons": "/lists/dispatch/detention-reasons",
+        detention_reasons: "/lists/dispatch/detention-reasons",
+        "pickup-time-types": "/lists/dispatch/pickup-time-types",
+        pickup_time_types: "/lists/dispatch/pickup-time-types",
+        "additional-charges": "/lists/dispatch/additional-charges",
+        additional_charges: "/lists/dispatch/additional-charges",
+      };
+      const dispatchPath = dispatchRouteMap[catalogKey];
+      if (dispatchPath) {
+        navigate(dispatchPath);
+        return;
+      }
+    }
     navigate(`/lists/${domain}/${catalogKey}`);
   }
 
