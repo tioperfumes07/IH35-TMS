@@ -9,6 +9,7 @@ import { registerCsaFleetScoreRoutes } from "./csa-fleet-score.routes.js";
 import { registerArAgingRoutes } from "./ar-aging.routes.js";
 import { registerDetentionClaimsRoutes } from "./detention-claims.routes.js";
 import { registerIftaStatusRoutes } from "./ifta-status.routes.js";
+import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.routes.js";
 
 export async function registerReportsRoutes(app: FastifyInstance) {
   await registerReportsLibraryRoutes(app);
@@ -21,4 +22,5 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerArAgingRoutes(app);
   await registerDetentionClaimsRoutes(app);
   await registerIftaStatusRoutes(app);
+  await registerScheduledReportAdminRoutes(app);
 }
