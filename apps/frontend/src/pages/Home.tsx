@@ -1,19 +1,12 @@
 import type { AuthMeResponse } from "../types/api";
+import { useQuery } from "@tanstack/react-query";
+import { getKpiSummary } from "../api/reports";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Button } from "../components/Button";
 import { SectionQuickJump } from "../components/home/SectionQuickJump";
 import { AttentionListRow } from "../components/home/AttentionListRow";
 import { FleetSnapshotPanel } from "../components/home/FleetSnapshotPanel";
-
-const KPI_ITEMS = [
-  { label: "Tracked Assets", number: "142", meta: "100 trucks · 42 trailers" },
-  { label: "Assigned / Working", number: "68", meta: "on active loads" },
-  { label: "Maint Past Due", number: "7", meta: "3 critical", alert: "crit" as const },
-  { label: "QBO Vendors", number: "284", meta: "synced 9:38 AM" },
-  { label: "Vehicles in Service", number: "94", meta: "Samsara live", healthy: true },
-  { label: "Open Damage", number: "4", meta: "2 awaiting estimate", alert: "warn" as const },
-  { label: "Pending QBO Sync", number: "12", meta: "retry in 60s", alert: "warn" as const },
-];
+import { useCompanyContext } from "../contexts/CompanyContext";
 
 const QUICK_JUMPS = [
   { title: "Maintenance", subtitle: "Work orders, R&M, Severe Repair", count: 14 },
@@ -50,6 +43,23 @@ type Props = {
 
 export function HomePage({ auth }: Props) {
   const displayName = auth.email ?? "Driver";
+  const { selectedCompanyId } = useCompanyContext();
+
+  const kpiSummaryQuery = useQuery({
+    queryKey: ["reports", "kpi-summary", selectedCompanyId],
+    queryFn: () => getKpiSummary(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+  });
+
+  const kpiItems = [
+    { label: "Tracked Assets", number: String(kpiSummaryQuery.data?.tracked_assets ?? 0), meta: "company-scoped total assets" },
+    { label: "Assigned / Working", number: String(kpiSummaryQuery.data?.assigned_working ?? 0), meta: "on active loads" },
+    { label: "Maint Past Due", number: String(kpiSummaryQuery.data?.maint_past_due ?? 0), meta: "work orders past due", alert: "crit" as const },
+    { label: "QBO Vendors", number: "284", meta: "synced 9:38 AM" },
+    { label: "Vehicles in Service", number: "94", meta: "Samsara live", healthy: true },
+    { label: "Open Damage", number: String(kpiSummaryQuery.data?.open_damage ?? 0), meta: "open accidents", alert: "warn" as const },
+    { label: "Pending QBO Sync", number: String(kpiSummaryQuery.data?.pending_qbo_sync ?? 0), meta: "outbox events pending", alert: "warn" as const },
+  ];
 
   return (
     <div className="space-y-4">
@@ -61,7 +71,7 @@ export function HomePage({ auth }: Props) {
 
       {/* TODO: wire dashboard snapshot values to backend in P3-T11.16.1 */}
       <div className="grid grid-cols-1 gap-2 xl:grid-cols-7">
-        {KPI_ITEMS.map((item) => (
+        {kpiItems.map((item) => (
           <div
             key={item.label}
             className={`rounded border bg-white px-3 py-2 ${

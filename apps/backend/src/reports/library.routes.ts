@@ -134,10 +134,97 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id]
       );
+      const trackedAssetsRes = await client.query(
+        `
+          SELECT CASE
+            WHEN to_regclass('mdata.units') IS NULL THEN 0
+            ELSE (
+              SELECT count(*)::bigint
+              FROM mdata.units u
+              WHERE u.deactivated_at IS NULL
+                AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
+            )
+          END AS total
+        `,
+        [query.data.operating_company_id]
+      );
+      const assignedWorkingRes = await client.query(
+        `
+          SELECT CASE
+            WHEN to_regclass('mdata.loads') IS NULL THEN 0
+            ELSE (
+              SELECT count(*)::bigint
+              FROM mdata.loads l
+              WHERE l.operating_company_id = $1
+                AND COALESCE(l.status, '') NOT IN ('draft', 'delivered', 'invoiced', 'paid', 'closed', 'cancelled')
+            )
+          END AS total
+        `,
+        [query.data.operating_company_id]
+      );
+      const maintPastDueRes = await client.query(
+        `
+          SELECT CASE
+            WHEN to_regclass('maintenance.work_orders') IS NULL THEN 0
+            ELSE (
+              SELECT count(*)::bigint
+              FROM maintenance.work_orders w
+              WHERE w.operating_company_id = $1
+                AND w.status NOT IN ('complete', 'cancelled')
+                AND w.due_date IS NOT NULL
+                AND w.due_date < CURRENT_DATE
+            )
+          END AS total
+        `,
+        [query.data.operating_company_id]
+      );
+      const openDamageRes = await client.query(
+        `
+          SELECT CASE
+            WHEN to_regclass('safety.accidents') IS NULL THEN 0
+            ELSE (
+              SELECT count(*)::bigint
+              FROM safety.accidents a
+              WHERE a.operating_company_id = $1
+                AND COALESCE(a.status, '') IN ('open', 'under-investigation')
+            )
+          END AS total
+        `,
+        [query.data.operating_company_id]
+      );
+      const pendingQboSyncRes = await client.query(
+        `
+          SELECT CASE
+            WHEN to_regclass('outbox.events') IS NULL THEN 0
+            ELSE (
+              SELECT count(*)::bigint
+              FROM outbox.events e
+              WHERE e.delivered_at IS NULL
+                AND e.failed_at IS NULL
+                AND e.event_type ILIKE '%qbo%'
+                AND EXISTS (
+                  SELECT 1
+                  FROM org.companies c
+                  WHERE c.id = $1
+                    AND (
+                      e.payload->>'operating_company_id' = c.id::text
+                      OR e.payload->>'company_id' = c.id::text
+                    )
+                )
+            )
+          END AS total
+        `,
+        [query.data.operating_company_id]
+      );
       return {
         scheduled: Number(((scheduledRes.rows[0] as { cnt?: string } | undefined)?.cnt ?? 0)),
         run_last_7d: Number(((runRes.rows[0] as { cnt?: string } | undefined)?.cnt ?? 0)),
         outstanding_ar_cents: Number(((arSumRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
+        tracked_assets: Number(((trackedAssetsRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
+        assigned_working: Number(((assignedWorkingRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
+        maint_past_due: Number(((maintPastDueRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
+        open_damage: Number(((openDamageRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
+        pending_qbo_sync: Number(((pendingQboSyncRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
       };
     });
 
@@ -146,6 +233,11 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       scheduled: data.scheduled,
       run_last_7d: data.run_last_7d,
       outstanding_ar_cents: data.outstanding_ar_cents,
+      tracked_assets: data.tracked_assets,
+      assigned_working: data.assigned_working,
+      maint_past_due: data.maint_past_due,
+      open_damage: data.open_damage,
+      pending_qbo_sync: data.pending_qbo_sync,
       ifta_status: getCurrentQuarterInfo(),
     };
   });

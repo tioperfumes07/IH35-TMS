@@ -34,14 +34,14 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   return (
     <div className="space-y-3">
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-6">
-        <input value={form.driver_uuid} placeholder="driver_uuid" onChange={(e) => setForm((v) => ({ ...v, driver_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <input value={form.reason_uuid} placeholder="reason_uuid" onChange={(e) => setForm((v) => ({ ...v, reason_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <input value={form.amount} type="number" min={1} onChange={(e) => setForm((v) => ({ ...v, amount: Number(e.target.value || 0) }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
+        <input value={form.driver_uuid} placeholder="Search by driver" onChange={(e) => setForm((v) => ({ ...v, driver_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
+        <input value={form.reason_uuid} placeholder="Filter by reason" onChange={(e) => setForm((v) => ({ ...v, reason_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
+        <input value={form.amount} type="number" min={1} placeholder="Show 25" onChange={(e) => setForm((v) => ({ ...v, amount: Number(e.target.value || 0) }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.imposed_date} type="date" onChange={(e) => setForm((v) => ({ ...v, imposed_date: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
-          <option value="pending">pending</option>
-          <option value="approved">approved</option>
-          <option value="disputed">disputed</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="disputed">Disputed</option>
         </select>
         <button type="button" className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white" disabled={!form.driver_uuid || !form.reason_uuid || createMutation.isPending} onClick={() => createMutation.mutate()}>
           + Create Internal Fine
@@ -66,7 +66,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
                 <td className="px-2 py-1">{String(row.driver_id ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.reason_code ?? row.reason_name ?? "—")}</td>
                 <td className="px-2 py-1">${Number(row.amount ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1">{String(row.status ?? "pending")}</td>
+                <td className="px-2 py-1">{toStatusLabel(String(row.status ?? "pending"))}</td>
                 <td className="px-2 py-1">{String(row.driver_liability_id ?? "—")}</td>
               </tr>
             ))}
@@ -75,4 +75,14 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
       </div>
     </div>
   );
+}
+
+function toStatusLabel(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "pending") return "Pending";
+  if (normalized === "approved") return "Approved";
+  if (normalized === "denied") return "Denied";
+  if (normalized === "paid") return "Paid";
+  if (normalized === "disputed") return "Disputed";
+  return value || "Pending";
 }

@@ -16,6 +16,13 @@ type Props = {
 };
 
 export function BookLoadCustomerSection({ register }: Props) {
+  const dollarsToCents = (value: unknown) => {
+    if (value === null || value === undefined || value === "") return 0;
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 0;
+    return Math.round(numeric * 100);
+  };
+
   return (
     <section className="rounded border border-amber-200 bg-amber-50 p-3">
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-800">A. Customer · Invoice · Charges</h3>
@@ -24,9 +31,45 @@ export function BookLoadCustomerSection({ register }: Props) {
         <Field label="Customer WO# / PU#" input={<input {...register("customer_wo_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <Field label="Commodity" input={<input {...register("commodity")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <Field label="Weight (lbs)" input={<input type="number" {...register("weight_lbs", { valueAsNumber: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
-        <Field label="Linehaul (cents)" input={<input type="number" {...register("linehaul_cents", { valueAsNumber: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
-        <Field label="Fuel surcharge (cents)" input={<input type="number" {...register("fuel_surcharge_cents", { valueAsNumber: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
-        <Field label="Accessorial (cents)" input={<input type="number" {...register("accessorial_cents", { valueAsNumber: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
+        <Field
+          label="Rate ($)"
+          input={
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              {...register("linehaul_cents", { setValueAs: dollarsToCents })}
+              className="h-8 w-full rounded border border-gray-300 px-2 text-sm"
+            />
+          }
+        />
+        <Field
+          label="Fuel surcharge ($)"
+          input={
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              {...register("fuel_surcharge_cents", { setValueAs: dollarsToCents })}
+              className="h-8 w-full rounded border border-gray-300 px-2 text-sm"
+            />
+          }
+        />
+        <Field
+          label="Accessorial ($)"
+          input={
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              {...register("accessorial_cents", { setValueAs: dollarsToCents })}
+              className="h-8 w-full rounded border border-gray-300 px-2 text-sm"
+            />
+          }
+        />
       </div>
       <div className="mt-2">
         <label className="text-[11px] font-semibold text-gray-600">Special notes</label>

@@ -26,7 +26,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       try {
         const result = await listMyCompanies();
-        return result.companies.filter((company) => company.is_active === true);
+        return result.companies;
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) return [];
         throw error;
