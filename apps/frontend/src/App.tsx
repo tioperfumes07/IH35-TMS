@@ -14,6 +14,7 @@ import { DispatchHomePage } from "./pages/dispatch/DispatchHome";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
+import { BankAccountDetailPage } from "./pages/banking/BankAccountDetail";
 import { SafetyLayout } from "./pages/safety/SafetyLayout";
 import {
   AccidentsIncidentsTab,
@@ -229,6 +230,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <BankingHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/accounts/:id"
+          element={
+            <ProtectedRoute>
+              <BankAccountDetailPage />
             </ProtectedRoute>
           }
         />

@@ -15,6 +15,40 @@ export type BankingTile = {
   last_txn_date?: string | null;
 };
 
+export type PlaidBankAccount = {
+  id: string;
+  operating_company_id: string;
+  institution_name: string | null;
+  account_name: string | null;
+  account_type: string | null;
+  account_mask: string | null;
+  current_balance_cents: number;
+  available_balance_cents: number;
+  currency_code: string;
+  sync_status: "pending" | "active" | "disconnected" | "needs_reauth" | "error";
+  is_active: boolean;
+  last_synced_at: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type PlaidBankTransaction = {
+  id: string;
+  transaction_date: string;
+  posted_date: string | null;
+  amount_cents: number;
+  description: string | null;
+  merchant_name: string | null;
+  plaid_category: string[];
+  pending: boolean;
+  is_credit: boolean;
+  matched_load_id: string | null;
+  matched_bill_id: string | null;
+  matched_settlement_id: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
 function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
@@ -90,5 +124,59 @@ export function createManualJe(
   return apiRequest<Record<string, unknown>>(`/api/v1/banking/manual-je`, {
     method: "POST",
     body: { operating_company_id: companyId, ...payload },
+  });
+}
+
+export function createPlaidLinkToken(operatingCompanyId: string) {
+  return apiRequest<{ link_token: string; expiration: string }>(`/api/v1/banking/plaid/create-link-token`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+export function exchangePlaidPublicToken(publicToken: string, operatingCompanyId: string) {
+  return apiRequest<{ accounts: PlaidBankAccount[] }>(`/api/v1/banking/plaid/exchange-public-token`, {
+    method: "POST",
+    body: {
+      public_token: publicToken,
+      operating_company_id: operatingCompanyId,
+    },
+  });
+}
+
+export function getPlaidBankAccounts(operatingCompanyId: string) {
+  return apiRequest<{ accounts: PlaidBankAccount[] }>(`/api/v1/banking/plaid/accounts?${q(operatingCompanyId)}`);
+}
+
+export function getPlaidBankAccount(id: string, operatingCompanyId: string) {
+  return apiRequest<{ account: PlaidBankAccount }>(`/api/v1/banking/plaid/accounts/${id}?${q(operatingCompanyId)}`);
+}
+
+export function getPlaidBankTransactions(
+  id: string,
+  operatingCompanyId: string,
+  options: { limit?: number; offset?: number; startDate?: string; endDate?: string } = {}
+) {
+  const params = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    limit: String(options.limit ?? 50),
+    offset: String(options.offset ?? 0),
+  });
+  if (options.startDate) params.set("start_date", options.startDate);
+  if (options.endDate) params.set("end_date", options.endDate);
+  return apiRequest<{ transactions: PlaidBankTransaction[] }>(`/api/v1/banking/plaid/accounts/${id}/transactions?${params.toString()}`);
+}
+
+export function syncPlaidBankAccount(bankAccountId: string) {
+  return apiRequest<{ ok: boolean; added: number; modified: number; removed: number }>(`/api/v1/admin/plaid/sync-account`, {
+    method: "POST",
+    body: { bank_account_id: bankAccountId },
+  });
+}
+
+export function disconnectPlaidBankAccount(id: string, operatingCompanyId: string) {
+  return apiRequest<{ ok: boolean; id: string }>(`/api/v1/banking/plaid/accounts/${id}/disconnect`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
   });
 }

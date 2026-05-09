@@ -5,10 +5,13 @@ import {
   getBankingKpis,
   getBankingRegister,
   getBankingTiles,
+  getPlaidBankAccounts,
   type BankingTile,
   undoCategorization,
 } from "../../api/banking";
+import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { PlaidLinkButton } from "../../components/banking/PlaidLinkButton";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
@@ -21,8 +24,19 @@ import { ManualJEModal } from "./components/ManualJEModal";
 import { RegisterTable } from "./components/RegisterTable";
 import { RegisterToolbar } from "./components/RegisterToolbar";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
+import { Link } from "react-router-dom";
+
+function syncStatusClasses(status: string) {
+  if (status === "active") return "bg-green-100 text-green-700";
+  if (status === "pending") return "bg-gray-100 text-gray-700";
+  if (status === "needs_reauth") return "bg-amber-100 text-amber-700";
+  if (status === "error") return "bg-red-100 text-red-700";
+  if (status === "disconnected") return "bg-gray-200 text-gray-600 line-through";
+  return "bg-gray-100 text-gray-700";
+}
 
 export function BankingHomePage() {
+  const auth = useAuth();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -48,6 +62,11 @@ export function BankingHomePage() {
     queryFn: () => getAllAccounts(companyId),
     enabled: Boolean(companyId),
   });
+  const plaidAccountsQuery = useQuery({
+    queryKey: ["banking", "plaid-accounts", companyId],
+    queryFn: () => getPlaidBankAccounts(companyId),
+    enabled: Boolean(companyId),
+  });
   const tiles = tilesQuery.data?.tiles ?? [];
   const selectedId = selectedAccountId ?? tiles[0]?.id ?? null;
   const registerQuery = useQuery({
@@ -71,6 +90,12 @@ export function BankingHomePage() {
           <div className="flex flex-wrap items-center gap-2">
             <ActionButton>+ Import Statement</ActionButton>
             <ActionButton onClick={() => setManageOpen(true)}>+ Manage Accounts</ActionButton>
+            <PlaidLinkButton
+              operatingCompanyId={companyId}
+              onSuccess={() => {
+                void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
+              }}
+            />
             <ActionButton>+ Reconcile</ActionButton>
             <ActionButton onClick={() => setManualJeOpen(true)}>+ Manual JE</ActionButton>
           </div>
@@ -91,6 +116,31 @@ export function BankingHomePage() {
         onSelect={(id) => setSelectedAccountId(id)}
         onManageAccounts={() => setManageOpen(true)}
       />
+      <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Connected bank accounts</div>
+        <div className="space-y-2">
+          {(plaidAccountsQuery.data?.accounts ?? []).length === 0 ? (
+            <p className="text-sm text-gray-500">No Plaid bank accounts connected yet.</p>
+          ) : (
+            (plaidAccountsQuery.data?.accounts ?? []).map((account) => (
+              <div key={account.id} className="flex items-center justify-between rounded border border-gray-100 px-3 py-2">
+                <div className="min-w-0">
+                  <Link to={`/banking/accounts/${account.id}`} className="truncate text-sm font-semibold text-blue-700 hover:underline">
+                    {account.institution_name || "Bank"} - {account.account_name || "Account"} {account.account_mask ? `••••${account.account_mask}` : ""}
+                  </Link>
+                  <p className="text-xs text-gray-500">
+                    {account.last_synced_at ? `Last synced ${new Date(account.last_synced_at).toLocaleString()}` : "Not synced yet"}
+                  </p>
+                </div>
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${syncStatusClasses(account.sync_status)}`}>{account.sync_status}</span>
+              </div>
+            ))
+          )}
+        </div>
+        {auth.user?.role !== "Owner" && auth.user?.role !== "Administrator" ? (
+          <p className="mt-2 text-xs text-gray-500">Connect Bank Account is visible only to Owner/Admin roles.</p>
+        ) : null}
+      </div>
 
       <RegisterToolbar rowCount={registerRows.length} onRefresh={() => void registerQuery.refetch()} />
       <RegisterTable
