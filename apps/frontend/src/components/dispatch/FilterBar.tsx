@@ -81,13 +81,9 @@ export function FilterBar({ value, onChange, companies, customers, drivers, onCl
                 onChange({ ...value, companyIds: [] });
                 return;
               }
-              const exists = value.companyIds.includes(nextCompanyId);
-              const nextCompanyIds = exists
-                ? value.companyIds.filter((id) => id !== nextCompanyId)
-                : [...value.companyIds, nextCompanyId];
-              onChange({ ...value, companyIds: nextCompanyIds });
+              onChange({ ...value, companyIds: [nextCompanyId] });
             }}
-            placeholder="Select company (multi)"
+            placeholder="Select company"
             allowClear
           />
         </div>

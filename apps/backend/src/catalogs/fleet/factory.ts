@@ -11,6 +11,7 @@ type CatalogFactoryConfig = {
   routePrefix: string;
   displayName: string;
   codeRegex: RegExp;
+  readOnly?: boolean;
 };
 
 const tableNameGuard = /^[a-z_]+$/;
@@ -122,6 +123,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   app.post(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
@@ -157,6 +159,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   app.patch(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
@@ -223,6 +226,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   app.delete(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);

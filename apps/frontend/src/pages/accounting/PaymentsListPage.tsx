@@ -5,6 +5,7 @@ import { listPayments, type Payment, type PaymentMethod } from "../../api/accoun
 import { Button } from "../../components/Button";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 
@@ -101,6 +102,7 @@ export function PaymentsListPage() {
           </div>
         }
       />
+      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-5">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

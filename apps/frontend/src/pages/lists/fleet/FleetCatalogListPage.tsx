@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { FleetCatalogRow } from "../../../api/catalogs-fleet";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { FleetCatalogModal, type FleetCatalogClient } from "./FleetCatalogModal";
 
@@ -18,13 +19,14 @@ type Props = {
   };
   displayName: string;
   breadcrumbPath: string;
+  readOnly?: boolean;
 };
 
 function statusPillClass(isActive: boolean) {
   return isActive ? "rounded bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700" : "rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600";
 }
 
-export function FleetCatalogListPage({ client, displayName, breadcrumbPath }: Props) {
+export function FleetCatalogListPage({ client, displayName, breadcrumbPath, readOnly = false }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
@@ -50,7 +52,25 @@ export function FleetCatalogListPage({ client, displayName, breadcrumbPath }: Pr
 
   return (
     <div className="space-y-3">
-      <PageHeader title={displayName} subtitle={`${breadcrumbPath} · ${total} entries`} actions={<Button onClick={() => { setModalMode("create"); setSelectedRow(null); setModalOpen(true); }}>+ New Entry</Button>} />
+      <PageHeader
+        title={displayName}
+        subtitle={`${breadcrumbPath} · ${total} entries`}
+        actions={
+          !readOnly ? (
+            <Button
+              onClick={() => {
+                setModalMode("create");
+                setSelectedRow(null);
+                setModalOpen(true);
+              }}
+            >
+              + Create
+            </Button>
+          ) : undefined
+        }
+      />
+
+      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or display name" className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
@@ -74,7 +94,16 @@ export function FleetCatalogListPage({ client, displayName, breadcrumbPath }: Pr
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => { setModalMode("edit"); setSelectedRow(row); setModalOpen(true); }}>
+              <tr
+                key={row.id}
+                className={`border-t border-gray-100 ${readOnly ? "" : "cursor-pointer hover:bg-gray-50"}`}
+                onClick={() => {
+                  if (readOnly) return;
+                  setModalMode("edit");
+                  setSelectedRow(row);
+                  setModalOpen(true);
+                }}
+              >
                 <td className="px-3 py-2 text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</td>
                 <td className="px-3 py-2">{row.display_name}</td>
                 <td className="px-3 py-2">{row.description || "—"}</td>
@@ -96,6 +125,7 @@ export function FleetCatalogListPage({ client, displayName, breadcrumbPath }: Pr
         client={client}
         mode={modalMode}
         row={selectedRow}
+        readOnly={readOnly}
         onClose={() => setModalOpen(false)}
         onSaved={() => {
           void query.refetch();

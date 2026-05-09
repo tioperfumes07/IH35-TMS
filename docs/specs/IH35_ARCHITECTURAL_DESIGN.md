@@ -105,16 +105,18 @@ Every page renders inside a 3-zone shell:
 ### Top action button
 **+ Create Work Order** (opens CreateWOModal with source type selector)
 
-### Sub-nav tabs (8 total — UPDATED with locked design)
+### Sub-nav tabs (10 total — UPDATED with locked design)
 
 | Tab | What it shows | Notes |
 |-----|---------------|-------|
 | **Active WOs** | All open + in-progress WOs in table view | Default view |
+| **Fleet Table** | Fleet-oriented maintenance table by unit | Phase 3 shell |
 | **R&M Status Board** | Kanban: Open / Awaiting Parts / In Progress / Awaiting Vendor / Completed | Drag-to-transition |
+| **Service / Location** | Service location board and queue split by location | Phase 3 shell |
 | **Arriving Soon Needs Service** ← NEW T11.6.2 | Cards of units arriving at yard with open in-transit issues + ETA | Phase 3 ships UI; Phase 4 wires live Samsara ETA |
 | **In-Transit Issues** | Triage queue from `dispatch.intransit_issues` (driver-reported failures) | "Promote to WO" action per WF-049 |
 | **Damage Reports** | Pre-WO damage photo intake | Auto-spawn WO-AC if accident |
-| **PM Schedule** | Per-unit PM-due forecast (next 30/60/90 days) | Read API per WF-044 |
+| **Severe Repairs** | High-severity repair alerts and escalations | Phase 3 shell |
 | **Parts Inventory** ← NEW T11.6.1 | Light stock tracking (anti-theft daily-purchase pattern) | "+ Record Purchase" button |
 | **Settings** | PM intervals per equipment class · Vendor preferences · Bay assignments | Owner+Admin only |
 
@@ -279,16 +281,17 @@ BOA Balance · IBC Balance · Factoring Available · Escrow Total · MTD Inflow 
 ### Top action button
 **+ Plan Fuel Route**
 
-### Sub-nav tabs (7 — locked design)
+### Sub-nav tabs (8 — locked design)
 
 | Tab | What it shows | Phase |
 |-----|---------------|-------|
-| **Active Routes** | Current driver routes with fuel stop plan | Phase 3 ✅ |
-| **Loves Upload** | Excel upload from Loves portal · auto-categorize transactions | Phase 3 ✅ |
+| **Active Plan** | Current route fuel plan with stop optimization | Phase 3 ✅ |
+| **Fuel Log** | Fuel transaction stream and review | Phase 3 shell |
+| **Loves Prices** | Excel upload from Loves portal · auto-categorize transactions | Phase 3 ✅ |
+| **Relay Transactions** | Relay transaction feed for reconciliation | Phase 3 shell |
+| **DEF** | DEF purchases and usage review | Phase 3 shell |
 | **Compliance Tracker** | Drivers with fuel/HOS compliance issues | Phase 3 ✅ |
-| **Savings Tracker** | Estimated savings from optimal stops vs actual | Phase 3 ✅ |
-| **IFTA Reports** | Per-state miles + gallons + tax | Phase 3 ✅ |
-| **Avoid States Map** | States with fuel tax issues to route around | Phase 3 ✅ |
+| **Fuel by Unit/Driver/State (IFTA)** | Per-state miles + gallons + tax | Phase 3 ✅ |
 | **Settings** | Preferred fuel networks · Avoid states · HOS thresholds | Owner only |
 
 ### KPI row — 5 cards

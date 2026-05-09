@@ -1298,7 +1298,7 @@ export function CustomerDetailPage() {
                     setLaneModalOpen(true);
                   }}
                 >
-                  + Add Lane
+                  + Create Lane
                 </Button>
               ) : null}
             </div>

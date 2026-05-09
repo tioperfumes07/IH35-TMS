@@ -6,6 +6,7 @@ import { listInvoices, type InvoiceStatus } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const STATUS_OPTIONS: Array<{ value: "" | InvoiceStatus; label: string }> = [
@@ -57,6 +58,7 @@ export function InvoicesListPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Invoices" subtitle="Accounts receivable invoice list" actions={<Button onClick={() => navigate("/dispatch")}>+ Create From Load</Button>} />
+      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <DataPanel title="Filters">
         <div className="grid gap-2 md:grid-cols-5">

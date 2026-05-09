@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { listVendors } from "../api/mdata";
 import { DataTable } from "../components/DataTable";
 import { PageHeader } from "../components/layout/PageHeader";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 
 export function VendorsPage() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export function VendorsPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Vendors" subtitle="Fuel, repair, tires, tolls, and more" />
+      {vendorsQuery.isError ? <ListErrorBanner onRetry={() => void vendorsQuery.refetch()} /> : null}
       <DataTable
         rows={vendorsQuery.data ?? []}
         rowKey={(row) => row.id}

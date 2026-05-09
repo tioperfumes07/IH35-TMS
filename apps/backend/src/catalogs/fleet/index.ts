@@ -31,7 +31,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     urlSegment: "equipment-types",
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Equipment Types",
-    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    codeRegex: /^[A-Z][A-Z0-9_-]+$/,
   });
 
   createCatalogRoutes(app, {
@@ -40,6 +40,7 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Tire Positions",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
+    readOnly: true,
   });
 
   createCatalogRoutes(app, {

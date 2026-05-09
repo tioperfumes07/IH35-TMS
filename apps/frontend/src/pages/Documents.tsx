@@ -9,6 +9,7 @@ import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { PreviewModal } from "../components/documents/PreviewModal";
 import { PageHeader } from "../components/layout/PageHeader";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
 
 const ENTITY_TYPE_OPTIONS = [
@@ -194,7 +195,7 @@ export function DocumentsPage() {
         ) : null}
       </div>
 
-      {documentsError ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{documentsError}</div> : null}
+      {documentsError ? <ListErrorBanner message={documentsError} onRetry={() => void filesQuery.refetch()} /> : null}
 
       <DataTable
         rows={filteredFiles}
