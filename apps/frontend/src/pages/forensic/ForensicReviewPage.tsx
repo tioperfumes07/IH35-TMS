@@ -1,6 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { generateForensicReport, listForensicAnomalies, listForensicBatches, reviewForensicAnomaly, startForensicImport } from "../../api/forensic";
+import {
+  disconnectQboConnection,
+  generateForensicReport,
+  getQboConnectionStatus,
+  listForensicAnomalies,
+  listForensicBatches,
+  reviewForensicAnomaly,
+  startForensicImport,
+} from "../../api/forensic";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
@@ -18,12 +26,21 @@ export function ForensicReviewPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, companies } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [reportLoadingBatchId, setReportLoadingBatchId] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [selectedAnomalyId, setSelectedAnomalyId] = useState<string | null>(null);
   const [reviewStatus, setReviewStatus] = useState<"pending" | "cleared" | "confirmed_issue" | "requires_legal">("pending");
+  const [disconnectingCompanyId, setDisconnectingCompanyId] = useState<string | null>(null);
+
+  const forensicCompanies = useMemo(() => {
+    const byCode = companies.filter((company) => {
+      const code = (company.code ?? "").toUpperCase();
+      return code === "TRK" || code === "TRANSP";
+    });
+    return byCode.length > 0 ? byCode : companies.slice(0, 2);
+  }, [companies]);
 
   const batchesQuery = useQuery({
     queryKey: ["forensic", "batches"],
@@ -33,11 +50,41 @@ export function ForensicReviewPage() {
     queryKey: ["forensic", "anomalies"],
     queryFn: listForensicAnomalies,
   });
+  const qboStatusQuery = useQuery({
+    queryKey: ["forensic", "qbo-status", forensicCompanies.map((company) => company.id).join(",")],
+    enabled: forensicCompanies.length > 0,
+    queryFn: async () => {
+      const statuses = await Promise.all(
+        forensicCompanies.map(async (company) => ({ companyId: company.id, status: await getQboConnectionStatus(company.id) }))
+      );
+      return statuses.reduce<Record<string, Awaited<ReturnType<typeof getQboConnectionStatus>>>>((acc, item) => {
+        acc[item.companyId] = item.status;
+        return acc;
+      }, {});
+    },
+  });
 
   const activeBatches = useMemo(
     () => (batchesQuery.data?.batches ?? []).filter((batch) => batch.status === "in_progress"),
     [batchesQuery.data?.batches]
   );
+  const selectedCompanyConnected = companyId ? Boolean(qboStatusQuery.data?.[companyId]?.connected) : false;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const authorized = params.get("qbo_authorized");
+    const companyFromQuery = params.get("company_id");
+    if (authorized === "true") {
+      const companyName = companies.find((company) => company.id === companyFromQuery)?.short_name ?? "company";
+      pushToast(`QBO authorization saved for ${companyName}`, "success");
+      params.delete("qbo_authorized");
+      params.delete("company_id");
+      const next = params.toString();
+      const url = `${window.location.pathname}${next ? `?${next}` : ""}`;
+      window.history.replaceState({}, "", url);
+      void queryClient.invalidateQueries({ queryKey: ["forensic", "qbo-status"] });
+    }
+  }, [companies, pushToast, queryClient]);
 
   if (auth.user?.role !== "Owner") {
     return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">Owner role required.</div>;
@@ -50,9 +97,14 @@ export function ForensicReviewPage() {
         subtitle="QBO historical archive + anomaly review"
         actions={
           <ActionButton
+            disabled={!selectedCompanyConnected}
             onClick={() => {
               if (!companyId) {
                 pushToast("Select operating company first", "error");
+                return;
+              }
+              if (!selectedCompanyConnected) {
+                pushToast("Authorize QBO for selected company first", "error");
                 return;
               }
               void startForensicImport(companyId)
@@ -68,7 +120,68 @@ export function ForensicReviewPage() {
         }
       />
 
-      {batchesQuery.isError || anomaliesQuery.isError ? <ListErrorBanner onRetry={() => { void batchesQuery.refetch(); void anomaliesQuery.refetch(); }} /> : null}
+      {batchesQuery.isError || anomaliesQuery.isError || qboStatusQuery.isError ? (
+        <ListErrorBanner
+          onRetry={() => {
+            void batchesQuery.refetch();
+            void anomaliesQuery.refetch();
+            void qboStatusQuery.refetch();
+          }}
+        />
+      ) : null}
+
+      <div className="rounded border border-gray-200 bg-white p-3">
+        <p className="text-sm font-semibold text-gray-900">QBO Authorization</p>
+        <div className="mt-2 space-y-2">
+          {forensicCompanies.map((company) => {
+            const status = qboStatusQuery.data?.[company.id];
+            const connected = Boolean(status?.connected);
+            const expiresAt = status?.refresh_token_expires_at ? new Date(status.refresh_token_expires_at) : null;
+            const expiresInDays = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
+            return (
+              <div key={company.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-100 p-2 text-xs">
+                <div>
+                  <p className="font-semibold text-gray-900">{company.short_name ?? company.legal_name}</p>
+                  <p className={connected ? "text-green-700" : "text-red-700"}>{connected ? "Connected" : "Not Connected"}</p>
+                  <p className="text-gray-500">
+                    Last refreshed: {status?.last_refreshed_at ? new Date(status.last_refreshed_at).toLocaleString() : "Never"}
+                  </p>
+                  <p className="text-gray-500">
+                    Refresh token expires: {expiresInDays !== null ? `${expiresInDays} day(s)` : "N/A"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <ActionButton
+                    onClick={() => {
+                      const url = `/api/v1/integrations/qbo/oauth-start?operating_company_id=${encodeURIComponent(company.id)}`;
+                      window.location.assign(url);
+                    }}
+                  >
+                    Authorize
+                  </ActionButton>
+                  {connected ? (
+                    <ActionButton
+                      disabled={disconnectingCompanyId === company.id}
+                      onClick={() => {
+                        setDisconnectingCompanyId(company.id);
+                        void disconnectQboConnection(company.id)
+                          .then(() => {
+                            pushToast(`Disconnected QBO for ${company.short_name ?? company.legal_name}`, "success");
+                            void queryClient.invalidateQueries({ queryKey: ["forensic", "qbo-status"] });
+                          })
+                          .catch((error) => pushToast(String((error as Error).message || "Failed to disconnect QBO"), "error"))
+                          .finally(() => setDisconnectingCompanyId(null));
+                      }}
+                    >
+                      {disconnectingCompanyId === company.id ? "Disconnecting..." : "Disconnect"}
+                    </ActionButton>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded border border-gray-200 bg-white p-3">

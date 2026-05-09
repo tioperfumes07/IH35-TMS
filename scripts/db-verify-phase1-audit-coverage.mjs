@@ -164,6 +164,12 @@ const EVENT_CLASSES = [
   "qbo_archive.import_failed",
   "qbo_archive.report.generated",
   "forensic.anomaly.reviewed",
+  "integrations.qbo.oauth_initiated",
+  "integrations.qbo.oauth_callback",
+  "integrations.qbo.authorized",
+  "integrations.qbo.token_refreshed",
+  "integrations.qbo.revoked",
+  "integrations.qbo.refresh_failed",
 ];
 
 const WARNING_EVENTS = new Set([
@@ -195,6 +201,8 @@ const WARNING_EVENTS = new Set([
   "banking.plaid.error",
   "qbo_archive.import_paused",
   "qbo_archive.import_failed",
+  "integrations.qbo.revoked",
+  "integrations.qbo.refresh_failed",
 ]);
 
 async function runWithBypass(client, fn) {

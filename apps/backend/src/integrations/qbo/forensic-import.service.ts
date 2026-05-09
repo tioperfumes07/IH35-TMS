@@ -9,6 +9,7 @@ import {
   qboPaginateEntity,
   type QboApiContext,
 } from "./qbo-client.js";
+import { getQboConnectionStatus } from "./qbo-oauth.service.js";
 
 type ImportCounts = {
   entitiesImported: number;
@@ -47,12 +48,6 @@ type BatchRow = {
   qbo_realm_id: string;
   status: string;
 };
-
-function getCompanyCodeForRealmId(realmId: string): "TRK" | "TRANSP" {
-  if ((process.env.QBO_REALM_ID_TRK ?? "").trim() === realmId) return "TRK";
-  if ((process.env.QBO_REALM_ID_TRANSP ?? "").trim() === realmId) return "TRANSP";
-  throw new Error(`Unknown realm id: ${realmId}`);
-}
 
 function getTxDate(txn: QboTransaction) {
   const meta = txn.MetaData as Record<string, unknown> | undefined;
@@ -125,8 +120,11 @@ async function loadBatch(batchId: string) {
   });
 }
 
-export async function startImportBatch(actorUserId: string, operatingCompanyId: string, companyCode: "TRK" | "TRANSP", sinceDate = "2015-01-01") {
-  const ctx = qboCompanyContext(operatingCompanyId, companyCode);
+export async function startImportBatch(actorUserId: string, operatingCompanyId: string, sinceDate = "2015-01-01") {
+  const auth = await getQboConnectionStatus(operatingCompanyId);
+  if (!auth.connected || !auth.realm_id) {
+    throw new Error("QBO not authorized for this company. Please authorize via /admin/forensic-review.");
+  }
   const batchId = await withCurrentUser(actorUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
@@ -143,7 +141,7 @@ export async function startImportBatch(actorUserId: string, operatingCompanyId: 
         VALUES ($1,$2,now(),now(),'in_progress',now(),now())
         RETURNING id
       `,
-      [operatingCompanyId, ctx.realmId]
+      [operatingCompanyId, auth.realm_id]
     );
     return res.rows[0]?.id ?? null;
   });
@@ -151,10 +149,10 @@ export async function startImportBatch(actorUserId: string, operatingCompanyId: 
   await appendSystemAudit(actorUserId, "qbo_archive.import_started", {
     batch_id: batchId,
     operating_company_id: operatingCompanyId,
-    qbo_realm_id: ctx.realmId,
+    qbo_realm_id: auth.realm_id,
     since_date: sinceDate,
   });
-  return { batchId, qboContext: ctx };
+  return { batchId };
 }
 
 export async function detectAnomalies(
@@ -384,7 +382,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
 
         const file = await qboDownloadAttachment(qboContext, downloadUri);
         const checksum = crypto.createHash("sha256").update(file.data).digest("hex");
-        const objectKey = `qbo-archive/${qboContext.companyCode.toLowerCase()}/${batchId}/${tx.qbo_txn_id}/${fileName}`;
+        const objectKey = `qbo-archive/${qboContext.operatingCompanyId}/${batchId}/${tx.qbo_txn_id}/${fileName}`;
         await r2.send(
           new PutObjectCommand({
             Bucket: bucket,
@@ -489,8 +487,11 @@ export async function runForensicImport(
 ) {
   const batch = await loadBatch(params.batchId);
   if (!batch) throw new Error("batch_not_found");
-  const companyCode = getCompanyCodeForRealmId(batch.qbo_realm_id);
-  const qboContext = qboCompanyContext(batch.operating_company_id, companyCode);
+  const auth = await getQboConnectionStatus(batch.operating_company_id);
+  if (!auth.connected || !auth.realm_id) {
+    throw new Error("QBO not authorized for this company. Please authorize via /admin/forensic-review.");
+  }
+  const qboContext = await qboCompanyContext(batch.operating_company_id);
   const sinceDate = params.sinceDate ?? "2015-01-01";
   const attachmentsSinceDate = params.attachmentsSinceDate ?? "2021-01-01";
 
