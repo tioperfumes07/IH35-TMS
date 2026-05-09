@@ -138,6 +138,18 @@ export function HomePage({ auth }: Props) {
                 <div className="h-5 animate-pulse rounded bg-slate-100" />
                 <div className="h-5 animate-pulse rounded bg-slate-100" />
               </div>
+            ) : attentionQuery.isError ? (
+              <div className="my-2 flex items-center justify-between rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+                <span>Failed to load attention list. Try refreshing.</span>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    void attentionQuery.refetch();
+                  }}
+                >
+                  Refresh
+                </Button>
+              </div>
             ) : attentionItems.length === 0 ? (
               <div className="py-3 text-sm text-slate-500">No items requiring attention.</div>
             ) : (
@@ -152,6 +164,21 @@ export function HomePage({ auth }: Props) {
               <div className="h-6 animate-pulse rounded bg-slate-100" />
               <div className="h-6 animate-pulse rounded bg-slate-100" />
               <div className="h-6 animate-pulse rounded bg-slate-100" />
+            </div>
+          </section>
+        ) : fleetSnapshotQuery.isError ? (
+          <section className="rounded border border-red-200 bg-red-50">
+            <div className="border-b border-red-200 px-3 py-2 text-sm font-semibold text-red-900">Fleet Snapshot</div>
+            <div className="flex items-center justify-between px-3 py-3 text-sm text-red-800">
+              <span>Failed to load fleet snapshot. Try refreshing.</span>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  void fleetSnapshotQuery.refetch();
+                }}
+              >
+                Refresh
+              </Button>
             </div>
           </section>
         ) : (
