@@ -70,6 +70,8 @@ import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
+import { registerPlaidWebhookRoutes } from "./integrations/plaid/webhook.routes.js";
+import { registerPlaidAdminRoutes } from "./integrations/plaid/admin.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { initializeScheduledReportsCron } from "./cron/scheduled-reports.js";
 
@@ -180,6 +182,8 @@ async function main() {
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
   await registerReportsRoutes(app);
+  await registerPlaidWebhookRoutes(app);
+  await registerPlaidAdminRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);
