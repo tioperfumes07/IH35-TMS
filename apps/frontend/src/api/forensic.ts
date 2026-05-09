@@ -30,6 +30,15 @@ export type ForensicAnomaly = {
   forensic_flags?: string[] | null;
 };
 
+export type QboConnectionStatus = {
+  connected: boolean;
+  realm_id: string | null;
+  refresh_token_expires_at: string | null;
+  last_used_at: string | null;
+  last_refreshed_at: string | null;
+  connection_id: string | null;
+};
+
 export function startForensicImport(operatingCompanyId: string, sinceDate = "2015-01-01") {
   return apiRequest<{ batch_id: string }>("/api/v1/admin/qbo-forensic/start-import", {
     method: "POST",
@@ -65,6 +74,16 @@ export function reviewForensicAnomaly(
   return apiRequest<{ ok: true; id: string }>(`/api/v1/admin/qbo-forensic/anomaly/${id}/review`, {
     method: "POST",
     body: payload,
+  });
+}
+
+export function getQboConnectionStatus(operatingCompanyId: string) {
+  return apiRequest<QboConnectionStatus>(`/api/v1/integrations/qbo/status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+}
+
+export function disconnectQboConnection(operatingCompanyId: string) {
+  return apiRequest<{ ok: true }>(`/api/v1/integrations/qbo/disconnect/${encodeURIComponent(operatingCompanyId)}`, {
+    method: "POST",
   });
 }
 

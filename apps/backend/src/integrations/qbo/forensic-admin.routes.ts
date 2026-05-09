@@ -29,13 +29,6 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   return req.user as { uuid: string; role: string };
 }
 
-function toCompanyCodeByOperatingCompanyId(id: string) {
-  if (id === (process.env.OPERATING_COMPANY_ID_TRK ?? "").trim()) return "TRK" as const;
-  if (id === (process.env.OPERATING_COMPANY_ID_TRANSP ?? "").trim()) return "TRANSP" as const;
-  const hint = (process.env.OPERATING_COMPANY_ID_TRK ?? "").trim() ? "TRK/TRANSP IDs not configured for env mapping" : "OP_ID env missing";
-  throw new Error(`Unsupported operating_company_id for forensic import (${hint})`);
-}
-
 export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
   app.post("/api/v1/admin/qbo-forensic/start-import", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -45,9 +38,16 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     const body = startBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
-    const companyCode = toCompanyCodeByOperatingCompanyId(body.data.operating_company_id);
-    const batch = await startImportBatch(user.uuid, body.data.operating_company_id, companyCode, body.data.since_date);
-    return { batch_id: batch.batchId };
+    try {
+      const batch = await startImportBatch(user.uuid, body.data.operating_company_id, body.data.since_date);
+      return { batch_id: batch.batchId };
+    } catch (error) {
+      const message = String((error as Error)?.message ?? "unable_to_start_import");
+      if (message.includes("QBO not authorized")) {
+        return reply.code(400).send({ error: "qbo_not_authorized", message });
+      }
+      throw error;
+    }
   });
 
   app.get("/api/v1/admin/qbo-forensic/batch/:batchId", async (req, reply) => {

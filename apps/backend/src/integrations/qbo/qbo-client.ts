@@ -1,4 +1,4 @@
-type SupportedCompany = "TRK" | "TRANSP";
+import { getValidAccessToken } from "./qbo-oauth.service.js";
 
 type QboEnv = "sandbox" | "production";
 
@@ -11,17 +11,8 @@ type QueryResult<T> = {
 
 export type QboApiContext = {
   operatingCompanyId: string;
-  companyCode: SupportedCompany;
   realmId: string;
 };
-
-type QboTokenSet = {
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: number;
-};
-
-const TOKENS = new Map<string, QboTokenSet>();
 
 const DEFAULT_PAGE_SIZE = 100;
 const MAX_RETRIES = 5;
@@ -37,91 +28,15 @@ function qboApiBase() {
     : "https://quickbooks.api.intuit.com/v3/company";
 }
 
-function qboOauthTokenBase() {
-  return qboEnv() === "sandbox"
-    ? "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
-    : "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer";
-}
-
-function companyConfig(companyCode: SupportedCompany) {
-  if (companyCode === "TRK") {
-    return {
-      realmId: (process.env.QBO_REALM_ID_TRK ?? "").trim(),
-      refreshToken: (process.env.QBO_REFRESH_TOKEN_TRK ?? "").trim(),
-    };
-  }
-  return {
-    realmId: (process.env.QBO_REALM_ID_TRANSP ?? "").trim(),
-    refreshToken: (process.env.QBO_REFRESH_TOKEN_TRANSP ?? "").trim(),
-  };
-}
-
 function redactHeaders(headers: Record<string, string>) {
   const cloned = { ...headers };
   if (cloned.Authorization) cloned.Authorization = "Bearer [REDACTED]";
   return cloned;
 }
 
-function assertQboCredentials(companyCode: SupportedCompany) {
-  const clientId = (process.env.QBO_CLIENT_ID ?? "").trim();
-  const clientSecret = (process.env.QBO_CLIENT_SECRET ?? "").trim();
-  const company = companyConfig(companyCode);
-  if (!clientId || !clientSecret) throw new Error("QBO_CLIENT_ID/QBO_CLIENT_SECRET missing");
-  if (!company.realmId) throw new Error(`QBO realm ID missing for ${companyCode}`);
-  if (!company.refreshToken) throw new Error(`QBO refresh token missing for ${companyCode}`);
-  return {
-    clientId,
-    clientSecret,
-    realmId: company.realmId,
-    refreshToken: company.refreshToken,
-  };
-}
-
-async function refreshAccessToken(companyCode: SupportedCompany) {
-  const creds = assertQboCredentials(companyCode);
-  const basic = Buffer.from(`${creds.clientId}:${creds.clientSecret}`).toString("base64");
-  const body = new URLSearchParams({
-    grant_type: "refresh_token",
-    refresh_token: creds.refreshToken,
-  });
-
-  const response = await fetch(qboOauthTokenBase(), {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${basic}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-      Accept: "application/json",
-    },
-    body,
-  });
-
-  const payload = (await response.json()) as {
-    access_token?: string;
-    refresh_token?: string;
-    expires_in?: number;
-  };
-
-  if (!response.ok || !payload.access_token) {
-    throw new Error(`QBO token refresh failed for ${companyCode}`);
-  }
-
-  const tokenSet: QboTokenSet = {
-    accessToken: payload.access_token,
-    refreshToken: payload.refresh_token || creds.refreshToken,
-    expiresAt: Date.now() + Math.max(30, Number(payload.expires_in ?? 3600) - 60) * 1000,
-  };
-  TOKENS.set(companyCode, tokenSet);
-  return { tokenSet, realmId: creds.realmId };
-}
-
-async function ensureAccessToken(companyCode: SupportedCompany) {
-  const cached = TOKENS.get(companyCode);
-  if (cached && cached.expiresAt > Date.now()) {
-    const realmId = companyConfig(companyCode).realmId;
-    return { accessToken: cached.accessToken, realmId };
-  }
-  const refreshed = await refreshAccessToken(companyCode);
-  return { accessToken: refreshed.tokenSet.accessToken, realmId: refreshed.realmId };
+async function ensureAccessToken(ctx: QboApiContext) {
+  const tokenSet = await getValidAccessToken(ctx.operatingCompanyId);
+  return { accessToken: tokenSet.access_token, realmId: tokenSet.realm_id };
 }
 
 async function sleep(ms: number) {
@@ -144,8 +59,8 @@ async function requestWithRetry(url: string, init: RequestInit, retries = 0): Pr
 }
 
 export async function qboQuery<T = Record<string, unknown>>(ctx: QboApiContext, query: string) {
-  const { accessToken } = await ensureAccessToken(ctx.companyCode);
-  const url = `${qboApiBase()}/${ctx.realmId}/query?query=${encodeURIComponent(query)}&minorversion=75`;
+  const { accessToken, realmId } = await ensureAccessToken(ctx);
+  const url = `${qboApiBase()}/${realmId}/query?query=${encodeURIComponent(query)}&minorversion=75`;
   const headers: Record<string, string> = {
     Accept: "application/json",
     Authorization: `Bearer ${accessToken}`,
@@ -170,8 +85,8 @@ export async function qboListEntity<T = Record<string, unknown>>(
 }
 
 export async function qboGetEntityById<T = Record<string, unknown>>(ctx: QboApiContext, entityName: string, id: string) {
-  const { accessToken } = await ensureAccessToken(ctx.companyCode);
-  const url = `${qboApiBase()}/${ctx.realmId}/${entityName}/${encodeURIComponent(id)}?minorversion=75`;
+  const { accessToken, realmId } = await ensureAccessToken(ctx);
+  const url = `${qboApiBase()}/${realmId}/${entityName}/${encodeURIComponent(id)}?minorversion=75`;
   const headers: Record<string, string> = {
     Accept: "application/json",
     Authorization: `Bearer ${accessToken}`,
@@ -184,7 +99,7 @@ export async function qboGetEntityById<T = Record<string, unknown>>(ctx: QboApiC
 }
 
 export async function qboDownloadAttachment(ctx: QboApiContext, downloadUrl: string) {
-  const { accessToken } = await ensureAccessToken(ctx.companyCode);
+  const { accessToken } = await ensureAccessToken(ctx);
   const headers: Record<string, string> = {
     Authorization: `Bearer ${accessToken}`,
   };
@@ -213,13 +128,11 @@ export async function qboPaginateEntity<T = Record<string, unknown>>(
   return rows;
 }
 
-export function qboCompanyContext(operatingCompanyId: string, companyCode: SupportedCompany): QboApiContext {
-  const config = companyConfig(companyCode);
-  if (!config.realmId) throw new Error(`QBO_REALM_ID missing for ${companyCode}`);
+export async function qboCompanyContext(operatingCompanyId: string): Promise<QboApiContext> {
+  const tokenSet = await getValidAccessToken(operatingCompanyId);
   return {
     operatingCompanyId,
-    companyCode,
-    realmId: config.realmId,
+    realmId: tokenSet.realm_id,
   };
 }
 
