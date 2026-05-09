@@ -63,6 +63,10 @@ import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
 import { InternalFineReasonsListPage } from "./pages/lists/safety/InternalFineReasonsListPage";
 import { CivilFineTypesListPage } from "./pages/lists/safety/CivilFineTypesListPage";
 import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViolationTypesListPage";
+import { LoadTypesListPage } from "./pages/lists/dispatch/LoadTypesListPage";
+import { DetentionReasonsListPage } from "./pages/lists/dispatch/DetentionReasonsListPage";
+import { PickupTimeTypesListPage } from "./pages/lists/dispatch/PickupTimeTypesListPage";
+import { AdditionalChargesListPage } from "./pages/lists/dispatch/AdditionalChargesListPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -496,6 +500,40 @@ export default function App() {
           }
         />
         {/* ─── End Safety catalog routes ─── */}
+        {/* ─── Dispatch catalog routes (T11.21.3A) ─── */}
+        <Route
+          path="/lists/dispatch/load-types"
+          element={
+            <ProtectedRoute>
+              <LoadTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/dispatch/detention-reasons"
+          element={
+            <ProtectedRoute>
+              <DetentionReasonsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/dispatch/pickup-time-types"
+          element={
+            <ProtectedRoute>
+              <PickupTimeTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/dispatch/additional-charges"
+          element={
+            <ProtectedRoute>
+              <AdditionalChargesListPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* ─── End Dispatch catalog routes ─── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </CompanyProvider>

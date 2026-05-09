@@ -19,6 +19,7 @@ import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellation-reasons.routes.js";
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerSafetyCatalogRoutes } from "./catalogs/safety/index.js";
+import { registerDispatchCatalogRoutes } from "./catalogs/dispatch/index.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
@@ -145,6 +146,9 @@ async function main() {
   // ─── Safety catalog routes (T11.21.2A) ───
   await registerSafetyCatalogRoutes(app);
   // ─── End Safety catalog routes ───
+  // ─── Dispatch catalog routes (T11.21.3A) ───
+  await registerDispatchCatalogRoutes(app);
+  // ─── End Dispatch catalog routes ───
   await registerCatalogsWorkflowRoutes(app);
   await registerFileCategoriesRoutes(app);
   await registerDocsFilesRoutes(app);
