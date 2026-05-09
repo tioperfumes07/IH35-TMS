@@ -75,7 +75,7 @@ export function DriverCatalogListPage({ client, displayName, breadcrumbPath }: P
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => { setModalMode("edit"); setSelectedRow(row); setModalOpen(true); }}>
-                <td className="px-3 py-2 font-mono text-xs">{row.code}</td>
+                <td className="px-3 py-2 text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.code}</td>
                 <td className="px-3 py-2">{row.display_name}</td>
                 <td className="px-3 py-2">{row.description || "—"}</td>
                 <td className="px-3 py-2">{row.sort_order}</td>

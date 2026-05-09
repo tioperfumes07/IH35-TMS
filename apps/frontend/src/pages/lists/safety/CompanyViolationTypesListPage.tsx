@@ -64,7 +64,7 @@ export function CompanyViolationTypesListPage() {
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => { setSelectedRow(row); setModalOpen(true); }}>
-                <td className="px-3 py-2 font-mono text-xs">{row.type_code}</td>
+                <td className="px-3 py-2 text-xs font-medium tracking-normal [font-variant-ligatures:none]">{row.type_code}</td>
                 <td className="px-3 py-2">{row.type_name}</td>
                 <td className="px-3 py-2">
                   <span className={severityBadgeClass(Number(row.default_severity ?? 1))}>{Number(row.default_severity ?? 1)}</span>
