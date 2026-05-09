@@ -14,6 +14,15 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
+function factoringPillClass(status: string | null | undefined) {
+  const base = "rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide";
+  if (status === "advanced") return `${base} bg-blue-50 text-blue-700 border border-blue-200`;
+  if (status === "reserve_held" || status === "collected") return `${base} bg-amber-50 text-amber-700 border border-amber-200`;
+  if (status === "released") return `${base} bg-emerald-50 text-emerald-700 border border-emerald-200`;
+  if (status === "recourse_returned") return `${base} bg-red-50 text-red-700 border border-red-200`;
+  return `${base} bg-slate-50 text-slate-700 border border-slate-200`;
+}
+
 export function InvoiceDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -186,6 +195,22 @@ export function InvoiceDetailPage() {
           </div>
         </DataPanel>
       </div>
+
+      {invoice.factoring_advance_id ? (
+        <DataPanel title="Factoring">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <div className="text-gray-700">
+              This invoice is part of {invoice.factoring_display_id ?? "a factoring batch"}.
+              {invoice.factoring_status ? (
+                <span className={`ml-2 ${factoringPillClass(invoice.factoring_status)}`}>{invoice.factoring_status.replaceAll("_", " ")}</span>
+              ) : null}
+            </div>
+            <Button size="sm" variant="secondary" onClick={() => navigate(`/accounting/factoring/${invoice.factoring_advance_id}`)}>
+              View batch
+            </Button>
+          </div>
+        </DataPanel>
+      ) : null}
 
       <DataPanel title={`Lines (${lineCount})`}>
         <div className="mb-2 flex items-center justify-between">

@@ -244,8 +244,8 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               SELECT
                 fa.id,
                 fa.created_at::date AS txn_date,
-                COALESCE(fa.memo, 'Factoring activity') AS description,
-                fa.advance_amount AS amount,
+                COALESCE(fa.memo, fa.notes, 'Factoring activity') AS description,
+                fa.advance_amount_cents AS amount,
                 'virtual_factoring'::text AS category,
                 'synced'::text AS status
               FROM accounting.factoring_advances fa
