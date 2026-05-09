@@ -4,7 +4,7 @@ import { createCatalogRoutes } from "./factory.js";
 export async function registerFuelCatalogRoutes(app: FastifyInstance) {
   createCatalogRoutes(app, {
     tableName: "fuel_card_types",
-    urlSegment: "fuel-card-types",
+    urlSegment: "card-types",
     routePrefix: "/api/v1/catalogs/fuel",
     displayName: "Fuel Card Types",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
@@ -12,7 +12,7 @@ export async function registerFuelCatalogRoutes(app: FastifyInstance) {
 
   createCatalogRoutes(app, {
     tableName: "fuel_exception_types",
-    urlSegment: "fuel-exception-types",
+    urlSegment: "exception-types",
     routePrefix: "/api/v1/catalogs/fuel",
     displayName: "Fuel Exception Types",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
@@ -20,7 +20,7 @@ export async function registerFuelCatalogRoutes(app: FastifyInstance) {
 
   createCatalogRoutes(app, {
     tableName: "fuel_station_brands",
-    urlSegment: "fuel-station-brands",
+    urlSegment: "station-brands",
     routePrefix: "/api/v1/catalogs/fuel",
     displayName: "Fuel Station Brands",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
@@ -28,7 +28,7 @@ export async function registerFuelCatalogRoutes(app: FastifyInstance) {
 
   createCatalogRoutes(app, {
     tableName: "fuel_stop_reason_codes",
-    urlSegment: "fuel-stop-reason-codes",
+    urlSegment: "stop-reason-codes",
     routePrefix: "/api/v1/catalogs/fuel",
     displayName: "Fuel Stop Reason Codes",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
@@ -52,7 +52,7 @@ export async function registerFuelCatalogRoutes(app: FastifyInstance) {
 
   createCatalogRoutes(app, {
     tableName: "fuel_tax_jurisdictions",
-    urlSegment: "fuel-tax-jurisdictions",
+    urlSegment: "tax-jurisdictions",
     routePrefix: "/api/v1/catalogs/fuel",
     displayName: "Fuel Tax Jurisdictions",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
