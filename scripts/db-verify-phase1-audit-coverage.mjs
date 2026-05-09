@@ -157,6 +157,13 @@ const EVENT_CLASSES = [
   "banking.plaid.webhook_invalid",
   "banking.plaid.manual_sync",
   "banking.plaid.error",
+  "qbo_archive.import_started",
+  "qbo_archive.import_paused",
+  "qbo_archive.import_resumed",
+  "qbo_archive.import_completed",
+  "qbo_archive.import_failed",
+  "qbo_archive.report.generated",
+  "forensic.anomaly.reviewed",
 ];
 
 const WARNING_EVENTS = new Set([
@@ -186,6 +193,8 @@ const WARNING_EVENTS = new Set([
   "banking.bank_account.deactivated",
   "banking.plaid.webhook_invalid",
   "banking.plaid.error",
+  "qbo_archive.import_paused",
+  "qbo_archive.import_failed",
 ]);
 
 async function runWithBypass(client, fn) {
