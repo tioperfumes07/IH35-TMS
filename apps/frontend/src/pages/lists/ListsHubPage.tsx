@@ -59,6 +59,23 @@ export function ListsHubPage() {
         return;
       }
     }
+    if (domain === "driver") {
+      const driverRouteMap: Record<string, string> = {
+        "pay-rate-templates": "/lists/driver/pay-rate-templates",
+        pay_rate_templates: "/lists/driver/pay-rate-templates",
+        "deduction-types": "/lists/driver/deduction-types",
+        driver_deduction_types: "/lists/driver/deduction-types",
+        "pay-types": "/lists/driver/pay-types",
+        driver_pay_types: "/lists/driver/pay-types",
+        "escrow-types": "/lists/driver/escrow-types",
+        escrow_types: "/lists/driver/escrow-types",
+      };
+      const driverPath = driverRouteMap[catalogKey];
+      if (driverPath) {
+        navigate(driverPath);
+        return;
+      }
+    }
     navigate(`/lists/${domain}/${catalogKey}`);
   }
 
