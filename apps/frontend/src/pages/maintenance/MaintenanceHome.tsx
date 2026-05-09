@@ -27,13 +27,10 @@ import { WorkOrdersTable } from "./components/WorkOrdersTable";
 import { ArrivingSoonPage } from "./ArrivingSoonPage";
 
 const SUBNAV = [
-  { id: "wo_list", label: "WO List" },
-  { id: "fleet_table", label: "Fleet Table" },
-  { id: "rm_status", label: "R&M Status" },
-  { id: "service_location", label: "Service / Location" },
-  { id: "open_damage", label: "Open Damage" },
   { id: "active_wos", label: "Active WOs" },
+  { id: "fleet_table", label: "Fleet Table" },
   { id: "rm_status_board", label: "R&M Status Board" },
+  { id: "service_location", label: "Service / Location" },
   { id: "arriving_soon", label: "Arriving Soon" },
   { id: "in_transit_issues", label: "In-Transit Issues" },
   { id: "damage_reports", label: "Damage Reports" },
@@ -43,23 +40,6 @@ const SUBNAV = [
 ] as const;
 
 type MaintenanceTabId = (typeof SUBNAV)[number]["id"];
-
-function resolveQuickTab(tab: MaintenanceTabId): "wo_list" | "fleet_table" | "rm_status" | "service_location" | "open_damage" {
-  if (tab === "active_wos") return "wo_list";
-  if (tab === "rm_status_board") return "rm_status";
-  if (tab === "damage_reports") return "open_damage";
-  if (tab === "fleet_table") return "fleet_table";
-  if (tab === "service_location") return "service_location";
-  if (tab === "open_damage") return "open_damage";
-  return "wo_list";
-}
-
-function quickToMainTab(tab: "wo_list" | "fleet_table" | "rm_status" | "service_location" | "open_damage"): MaintenanceTabId {
-  if (tab === "wo_list") return "active_wos";
-  if (tab === "rm_status") return "rm_status_board";
-  if (tab === "open_damage") return "damage_reports";
-  return tab;
-}
 
 export function MaintenanceHomePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -140,8 +120,6 @@ export function MaintenanceHomePage() {
               setPrefillFromIssue(null);
               setCreateWoOpen(true);
             }}
-            quickTab={resolveQuickTab(tab)}
-            onQuickTabChange={(quickTab) => setTab(quickToMainTab(quickTab))}
           />
         }
       />
@@ -155,7 +133,7 @@ export function MaintenanceHomePage() {
       <MaintKpiRows kpis={kpis} />
       <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
 
-      {tab === "active_wos" || tab === "wo_list" ? (
+      {tab === "active_wos" ? (
         <WorkOrdersTable
           rows={workOrdersQuery.data?.work_orders ?? []}
           sourceTypeFilter={sourceTypeFilter}
@@ -165,7 +143,7 @@ export function MaintenanceHomePage() {
         />
       ) : null}
 
-      {tab === "rm_status" || tab === "rm_status_board" ? (
+      {tab === "rm_status_board" ? (
         <RMBucketsGrid
           inHouse={rmStatusQuery.data?.in_house ?? []}
           external={rmStatusQuery.data?.external ?? []}
@@ -188,7 +166,7 @@ export function MaintenanceHomePage() {
         <InTransitTriageBand issues={triageQuery.data?.issues ?? []} onTriage={(issue) => setTriageIssue(issue)} />
       ) : null}
 
-      {tab === "damage_reports" || tab === "open_damage" ? (
+      {tab === "damage_reports" ? (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Damage reports queue is in active development.</div>
       ) : null}
 

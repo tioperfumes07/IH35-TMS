@@ -6,6 +6,7 @@ import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
 import { PageHeader } from "../components/layout/PageHeader";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
 import { DispatchKanban } from "../components/dispatch/DispatchKanban";
 import { DispatchList } from "../components/dispatch/DispatchList";
@@ -54,7 +55,7 @@ function serializeFilters(params: URLSearchParams, filters: DispatchFilterState)
 
 export function DispatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { companies } = useCompanyContext();
+  const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [newLoadOpen, setNewLoadOpen] = useState(false);
 
@@ -64,7 +65,10 @@ export function DispatchPage() {
   const limit = Number(searchParams.get("limit") ?? "50");
   const [sortField, sortDirection] = sort.split(":") as ["created_at" | "load_number" | "status" | "rate_total_cents", "asc" | "desc"];
 
-  const defaultCompanyIds = useMemo(() => companies.map((company) => company.id), [companies]);
+  const defaultCompanyIds = useMemo(() => {
+    if (selectedCompanyId) return [selectedCompanyId];
+    return companies.length > 0 ? [companies[0].id] : [];
+  }, [companies, selectedCompanyId]);
   const filters = useMemo(() => parseFilters(searchParams, defaultCompanyIds), [defaultCompanyIds, searchParams]);
 
   const loadsQuery = useLoadsList({
@@ -191,6 +195,7 @@ export function DispatchPage() {
           })
         }
       />
+      {loadsQuery.isError ? <ListErrorBanner onRetry={() => void loadsQuery.refetch()} /> : null}
 
       {view === "list" ? (
         <DispatchList

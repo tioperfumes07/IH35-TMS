@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingCatalogModal, type AccountingCatalogClient, type AccountingMetadataField } from "./AccountingCatalogModal";
 
@@ -75,11 +76,12 @@ export function AccountingCatalogListPage({
                 setModalOpen(true);
               }}
             >
-              + New Entry
+              + Create
             </Button>
           ) : undefined
         }
       />
+      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
         <input

@@ -19,6 +19,7 @@ type Props = {
   client: FleetCatalogClient;
   mode: "create" | "edit";
   row: FleetCatalogRow | null;
+  readOnly?: boolean;
   onClose: () => void;
   onSaved: () => void;
 };
@@ -31,7 +32,7 @@ type FormState = {
   is_active: boolean;
 };
 
-export function FleetCatalogModal({ open, operatingCompanyId, displayName, client, mode, row, onClose, onSaved }: Props) {
+export function FleetCatalogModal({ open, operatingCompanyId, displayName, client, mode, row, readOnly = false, onClose, onSaved }: Props) {
   const [form, setForm] = useState<FormState>({
     code: "",
     display_name: "",
@@ -124,8 +125,9 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
           Code
           <input
             value={form.code}
+            disabled={readOnly}
             onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase() }))}
-            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm disabled:bg-slate-100"
             placeholder="EXAMPLE-CODE"
           />
           {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
@@ -133,23 +135,23 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
 
         <label className="block text-xs font-semibold text-gray-600">
           Display Name
-          <input value={form.display_name} onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input value={form.display_name} disabled={readOnly} onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm disabled:bg-slate-100" />
           {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Description
-          <textarea value={form.description} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+          <textarea value={form.description} disabled={readOnly} onChange={(event) => setForm((value) => ({ ...value, description: event.target.value }))} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm disabled:bg-slate-100" />
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
           Sort Order
-          <input type="number" min={0} step={1} value={form.sort_order} onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" />
+          <input type="number" min={0} step={1} disabled={readOnly} value={form.sort_order} onChange={(event) => setForm((value) => ({ ...value, sort_order: Number(event.target.value || 0) }))} className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm disabled:bg-slate-100" />
           {errors.sort_order ? <div className="mt-1 text-[11px] text-red-700">{errors.sort_order}</div> : null}
         </label>
 
         <label className="flex items-center gap-2 text-xs text-gray-700">
-          <input type="checkbox" checked={form.is_active} onChange={(event) => setForm((value) => ({ ...value, is_active: event.target.checked }))} />
+          <input type="checkbox" checked={form.is_active} disabled={readOnly} onChange={(event) => setForm((value) => ({ ...value, is_active: event.target.checked }))} />
           Active
         </label>
 
@@ -157,7 +159,7 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
 
         <div className="flex items-center justify-between">
           <div>
-            {mode === "edit" ? (
+            {!readOnly && mode === "edit" ? (
               <Button type="button" variant="secondary" disabled={isSaving} onClick={() => void deactivate()}>
                 Deactivate
               </Button>
@@ -165,11 +167,13 @@ export function FleetCatalogModal({ open, operatingCompanyId, displayName, clien
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving}>
-              Cancel
+              Close
             </Button>
-            <Button type="button" onClick={() => void submit()} disabled={isSaving}>
-              {mode === "create" ? "Create" : "Save Changes"}
-            </Button>
+            {!readOnly ? (
+              <Button type="button" onClick={() => void submit()} disabled={isSaving}>
+                {mode === "create" ? "Create" : "Save Changes"}
+              </Button>
+            ) : null}
           </div>
         </div>
       </div>

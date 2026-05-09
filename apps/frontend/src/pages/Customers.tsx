@@ -11,6 +11,7 @@ import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { KpiCard } from "../components/layout/KpiCard";
@@ -318,6 +319,8 @@ export function CustomersPage() {
           Show only verified
         </label>
       </div>
+
+      {customersQuery.isError ? <ListErrorBanner onRetry={() => void customersQuery.refetch()} /> : null}
 
       {customersQuery.isLoading ? (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading customers...</div>

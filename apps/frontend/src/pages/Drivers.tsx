@@ -16,6 +16,7 @@ import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { colors } from "../design/tokens";
@@ -344,6 +345,8 @@ export function DriversPage() {
           className="h-8 w-full max-w-xs rounded border border-gray-300 px-2 text-[13px]"
         />
       </div>
+
+      {driversQuery.isError ? <ListErrorBanner onRetry={() => void driversQuery.refetch()} /> : null}
 
       <DataTable
         rows={drivers}

@@ -10,6 +10,7 @@ import {
 } from "../../api/banking";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountTilesRow } from "./components/AccountTilesRow";
@@ -75,6 +76,7 @@ export function BankingHomePage() {
           </div>
         }
       />
+      {kpiQuery.isError || tilesQuery.isError || registerQuery.isError ? <ListErrorBanner onRetry={() => void registerQuery.refetch()} /> : null}
 
       <SyncStatusStrip
         syncedAt={String(selectedTile?.last_txn_date ?? "") || null}

@@ -16,6 +16,7 @@ import {
 import { LoadDetailDrawer } from "../../components/dispatch/LoadDetailDrawer";
 import { Modal } from "../../components/Modal";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { BookLoadModal } from "./components/BookLoadModal";
 import { LoadTable } from "./components/LoadTable";
@@ -155,6 +156,7 @@ export function DispatchHomePage() {
           </div>
         }
       />
+      {loadsQuery.isError ? <ListErrorBanner onRetry={() => void loadsQuery.refetch()} /> : null}
 
       <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
