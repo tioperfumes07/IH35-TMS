@@ -67,6 +67,10 @@ import { LoadTypesListPage } from "./pages/lists/dispatch/LoadTypesListPage";
 import { DetentionReasonsListPage } from "./pages/lists/dispatch/DetentionReasonsListPage";
 import { PickupTimeTypesListPage } from "./pages/lists/dispatch/PickupTimeTypesListPage";
 import { AdditionalChargesListPage } from "./pages/lists/dispatch/AdditionalChargesListPage";
+import { PayRateTemplatesListPage } from "./pages/lists/driver/PayRateTemplatesListPage";
+import { DriverDeductionTypesListPage } from "./pages/lists/driver/DriverDeductionTypesListPage";
+import { DriverPayTypesListPage } from "./pages/lists/driver/DriverPayTypesListPage";
+import { EscrowTypesListPage } from "./pages/lists/driver/EscrowTypesListPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -534,6 +538,40 @@ export default function App() {
           }
         />
         {/* ─── End Dispatch catalog routes ─── */}
+        {/* ─── Driver catalog routes (T11.21.4A) ─── */}
+        <Route
+          path="/lists/driver/pay-rate-templates"
+          element={
+            <ProtectedRoute>
+              <PayRateTemplatesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/deduction-types"
+          element={
+            <ProtectedRoute>
+              <DriverDeductionTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/pay-types"
+          element={
+            <ProtectedRoute>
+              <DriverPayTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/escrow-types"
+          element={
+            <ProtectedRoute>
+              <EscrowTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* ─── End Driver catalog routes ─── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </CompanyProvider>
