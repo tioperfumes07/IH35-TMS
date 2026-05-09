@@ -19,6 +19,10 @@ $$;
 
 DO $$
 BEGIN
+  IF to_regclass('maintenance.v_arriving_soon') IS NOT NULL THEN
+    EXECUTE 'DROP VIEW maintenance.v_arriving_soon';
+  END IF;
+
   IF to_regclass('mdata.loads') IS NOT NULL
      AND to_regclass('dispatch.intransit_issues') IS NOT NULL
      AND to_regclass('dispatch.load_eta_predictions') IS NOT NULL

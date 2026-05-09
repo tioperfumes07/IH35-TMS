@@ -4,6 +4,7 @@ services:
     runtime: node
     plan: starter
     buildCommand: npm install && npm run build:backend
+    preDeployCommand: npm run db:migrate
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
