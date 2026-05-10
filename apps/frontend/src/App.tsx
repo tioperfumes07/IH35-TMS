@@ -12,6 +12,7 @@ import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
 import { DispatchHomePage } from "./pages/dispatch/DispatchHome";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
+import { EscrowDeductionsPendingTab } from "./pages/driver-finance/EscrowDeductionsPendingTab";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
 import { BankAccountDetailPage } from "./pages/banking/BankAccountDetail";
@@ -366,6 +367,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <SettlementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver-finance/escrow-deductions-pending"
+          element={
+            <ProtectedRoute>
+              <EscrowDeductionsPendingTab />
             </ProtectedRoute>
           }
         />
