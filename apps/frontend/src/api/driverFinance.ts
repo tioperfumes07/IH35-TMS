@@ -59,6 +59,49 @@ export type EscrowPendingDeduction = {
   status: "pending" | "approved" | "rejected" | "expired";
 };
 
+export type SettlementDisputeStatus =
+  | "open"
+  | "under_review"
+  | "resolved_in_favor"
+  | "resolved_rejected"
+  | "partially_resolved"
+  | "withdrawn";
+
+export type SettlementDisputeCategory =
+  | "missing_pay"
+  | "wrong_deduction"
+  | "miscalculated_mileage"
+  | "wrong_rate"
+  | "detention_not_paid"
+  | "cash_advance_dispute"
+  | "fine_dispute"
+  | "escrow_dispute"
+  | "other";
+
+export type SettlementDisputeRow = {
+  id: string;
+  operating_company_id: string;
+  settlement_id: string;
+  settlement_display_id?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  gross_pay?: number;
+  deductions_total?: number;
+  net_pay?: number;
+  driver_id: string;
+  driver_name?: string | null;
+  dispute_category: SettlementDisputeCategory;
+  dispute_description: string;
+  disputed_amount_cents: number | null;
+  status: SettlementDisputeStatus;
+  opened_at: string;
+  reviewed_at?: string | null;
+  closed_at?: string | null;
+  resolution_notes?: string | null;
+  resolution_amount_cents?: number | null;
+  resolution_journal_entry_id?: string | null;
+};
+
 function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
@@ -178,4 +221,57 @@ export function rejectPendingEscrowDeduction(id: string, payload: { operating_co
     `/api/v1/driver-finance/escrow-deductions-pending/${id}/reject`,
     { method: "POST", body: payload }
   );
+}
+
+export function listSettlementDisputes(
+  companyId: string,
+  options: { status?: "open" | "all"; driver_id?: string } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId, status: options.status ?? "open" });
+  if (options.driver_id) params.set("driver_id", options.driver_id);
+  return apiRequest<{ disputes: SettlementDisputeRow[] }>(`/api/v1/driver-finance/settlement-disputes?${params.toString()}`);
+}
+
+export function getSettlementDispute(id: string, companyId: string) {
+  return apiRequest<{ dispute: SettlementDisputeRow }>(`/api/v1/driver-finance/settlement-disputes/${id}?${q(companyId)}`);
+}
+
+export function openSettlementDispute(payload: {
+  operating_company_id: string;
+  settlement_id: string;
+  driver_id: string;
+  dispute_category: SettlementDisputeCategory;
+  dispute_description: string;
+  disputed_amount_cents?: number;
+}) {
+  return apiRequest<{ data: { id: string } }>("/api/v1/driver-finance/settlement-disputes", { method: "POST", body: payload });
+}
+
+export function markSettlementDisputeUnderReview(id: string, payload: { operating_company_id: string }) {
+  return apiRequest<{ data: { id: string } }>(`/api/v1/driver-finance/settlement-disputes/${id}/review`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function resolveSettlementDispute(
+  id: string,
+  payload: {
+    operating_company_id: string;
+    resolution: "in_favor" | "rejected" | "partial";
+    resolution_notes: string;
+    resolution_amount_cents?: number;
+  }
+) {
+  return apiRequest<{ data: { id: string; status: SettlementDisputeStatus; resolution_journal_entry_id: string | null } }>(
+    `/api/v1/driver-finance/settlement-disputes/${id}/resolve`,
+    { method: "POST", body: payload }
+  );
+}
+
+export function withdrawSettlementDispute(id: string, payload: { operating_company_id: string }) {
+  return apiRequest<{ data: { id: string } }>(`/api/v1/driver-finance/settlement-disputes/${id}/withdraw`, {
+    method: "POST",
+    body: payload,
+  });
 }
