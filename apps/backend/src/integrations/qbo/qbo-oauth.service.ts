@@ -239,43 +239,8 @@ export async function exchangeAuthCodeForTokens(
   const refreshTokenExpiresAt = expiryFromNow(Number(payload.x_refresh_token_expires_in ?? 8_640_000));
 
   const saved = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const existing = await client.query<{ id: string }>(
-      `
-        SELECT id
-        FROM integrations.qbo_connections
-        WHERE operating_company_id = $1
-          AND realm_id = $2
-          AND revoked_at IS NULL
-        LIMIT 1
-      `,
-      [operatingCompanyId, realmId]
-    );
-
-    if (existing.rows[0]?.id) {
-      const id = existing.rows[0].id;
-      await client.query(
-        `
-          UPDATE integrations.qbo_connections
-          SET
-            access_token = $2,
-            refresh_token = $3,
-            access_token_expires_at = $4,
-            refresh_token_expires_at = $5,
-            last_refreshed_at = now(),
-            last_used_at = now(),
-            authorized_by_user_id = $6,
-            authorized_at = now(),
-            updated_at = now(),
-            revoked_at = NULL
-          WHERE id = $1
-        `,
-        [id, accessTokenEncrypted, refreshTokenEncrypted, accessTokenExpiresAt, refreshTokenExpiresAt, userId]
-      );
-      return id;
-    }
-
-    const insert = await client.query<{ id: string }>(
+    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [operatingCompanyId]);
+    const upsert = await client.query<QboConnectionRow>(
       `
         INSERT INTO integrations.qbo_connections (
           operating_company_id,
@@ -289,28 +254,56 @@ export async function exchangeAuthCodeForTokens(
           authorized_by_user_id,
           authorized_at,
           created_at,
-          updated_at
+          updated_at,
+          revoked_at
         )
-        VALUES ($1,$2,$3,$4,$5,$6,now(),now(),$7,now(),now(),now())
-        RETURNING id
+        VALUES ($1,$2,$3,$4,$5,$6,now(),now(),$7,now(),now(),now(),NULL)
+        ON CONFLICT (operating_company_id, realm_id) WHERE revoked_at IS NULL
+        DO UPDATE SET
+          access_token = EXCLUDED.access_token,
+          refresh_token = EXCLUDED.refresh_token,
+          access_token_expires_at = EXCLUDED.access_token_expires_at,
+          refresh_token_expires_at = EXCLUDED.refresh_token_expires_at,
+          last_refreshed_at = now(),
+          last_used_at = now(),
+          authorized_by_user_id = EXCLUDED.authorized_by_user_id,
+          authorized_at = now(),
+          updated_at = now(),
+          revoked_at = NULL
+        RETURNING *
       `,
       [operatingCompanyId, realmId, accessTokenEncrypted, refreshTokenEncrypted, accessTokenExpiresAt, refreshTokenExpiresAt, userId]
     );
-    return insert.rows[0]?.id ?? null;
+
+    logOauthStep("info", {
+      step: "token_save_db_insert",
+      operatingCompanyId,
+      realmId,
+      rowCount: upsert.rowCount ?? 0,
+      hasReturnedRow: upsert.rows.length > 0,
+    });
+
+    if (!upsert.rows.length) {
+      const err = new Error(
+        `INSERT INTO integrations.qbo_connections returned 0 rows. Likely RLS blocked the write. Ensure app.operating_company_id=${operatingCompanyId} is set before INSERT.`
+      );
+      (err as { code?: string }).code = "TOKEN_SAVE_FAILED";
+      throw err;
+    }
+    return upsert.rows[0];
   });
 
-  if (!saved) throw new Error("failed_to_store_qbo_connection");
   await withCurrentUser(userId, async (client) => {
     await appendCrudAudit(
       client,
       userId,
       "integrations.qbo.authorized",
-      { operating_company_id: operatingCompanyId, realm_id: realmId, connection_id: saved },
+      { operating_company_id: operatingCompanyId, realm_id: realmId, connection_id: saved.id },
       "info",
       "P5-T6-HOTFIX-QBO-OAUTH"
     );
   });
-  return getConnectionById(saved);
+  return saved;
 }
 
 export async function refreshAccessToken(connectionId: string, actorUserId?: string | null) {

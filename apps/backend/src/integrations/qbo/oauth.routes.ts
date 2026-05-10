@@ -54,7 +54,7 @@ async function loadConnectionId(operatingCompanyId: string) {
 
 export async function registerQboOAuthRoutes(app: FastifyInstance) {
   function frontendBaseUrl() {
-    return (process.env.APP_BASE_URL ?? process.env.FRONTEND_BASE_URL ?? "https://ih35-tms-web.onrender.com").replace(/\/$/, "");
+    return (process.env.APP_BASE_URL ?? process.env.FRONTEND_BASE_URL ?? "https://app.ih35dispatch.com").replace(/\/$/, "");
   }
 
   app.get("/api/v1/integrations/qbo/oauth-start", async (req, reply) => {
