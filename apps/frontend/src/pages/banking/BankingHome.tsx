@@ -29,6 +29,8 @@ import { RegisterTable } from "./components/RegisterTable";
 import { RegisterToolbar } from "./components/RegisterToolbar";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { Link, useNavigate } from "react-router-dom";
+import { RecordTransferModal } from "./RecordTransferModal";
+import type { TransferType } from "../../api/banking";
 
 function syncStatusClasses(status: string) {
   if (status === "active") return "bg-green-100 text-green-700";
@@ -51,6 +53,8 @@ export function BankingHomePage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [manualJeOpen, setManualJeOpen] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [transferModalType, setTransferModalType] = useState<TransferType>("bank_to_bank");
   const [startReconOpen, setStartReconOpen] = useState(false);
   const [reconAccountId, setReconAccountId] = useState("");
   const [reconPeriodStart, setReconPeriodStart] = useState("");
@@ -131,6 +135,23 @@ export function BankingHomePage() {
               + Reconcile
             </ActionButton>
             <ActionButton onClick={() => setManualJeOpen(true)}>+ Manual JE</ActionButton>
+            <ActionButton
+              onClick={() => {
+                setTransferModalType("bank_to_bank");
+                setTransferModalOpen(true);
+              }}
+            >
+              + Record Transfer
+            </ActionButton>
+            <ActionButton
+              onClick={() => {
+                setTransferModalType("cc_payment");
+                setTransferModalOpen(true);
+              }}
+            >
+              + Pay Credit Card
+            </ActionButton>
+            <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
           </div>
         }
       />
@@ -323,6 +344,15 @@ export function BankingHomePage() {
         open={manualJeOpen}
         operatingCompanyId={companyId}
         onClose={() => setManualJeOpen(false)}
+        onSaved={() => {
+          void queryClient.invalidateQueries({ queryKey: ["banking"] });
+        }}
+      />
+      <RecordTransferModal
+        open={transferModalOpen}
+        operatingCompanyId={companyId}
+        defaultTransferType={transferModalType}
+        onClose={() => setTransferModalOpen(false)}
         onSaved={() => {
           void queryClient.invalidateQueries({ queryKey: ["banking"] });
         }}
