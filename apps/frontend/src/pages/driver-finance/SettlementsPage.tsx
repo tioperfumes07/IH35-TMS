@@ -12,10 +12,18 @@ export function SettlementsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const companyId = selectedCompanyId ?? "";
   const selectedSettlementId = searchParams.get("settlement_id");
+  const selectedPaymentState = searchParams.get("payment_state") as
+    | "unpaid"
+    | "queued"
+    | "sent_to_bank"
+    | "cleared"
+    | "bounced"
+    | "manual_paid"
+    | null;
 
   const listQuery = useQuery({
-    queryKey: ["driver-finance", "settlements", companyId],
-    queryFn: () => listSettlements(companyId),
+    queryKey: ["driver-finance", "settlements", companyId, selectedPaymentState ?? ""],
+    queryFn: () => listSettlements(companyId, { payment_state: selectedPaymentState ?? undefined }),
     enabled: Boolean(companyId),
   });
 
@@ -27,6 +35,13 @@ export function SettlementsPage() {
     pending_acks: settlements.filter((s) => s.has_pending_acks).length,
     held_deductions: settlements.filter((s) => s.status === "held").length,
     ytd_settlements: settlements.length,
+  };
+  const paymentPipeline = {
+    unpaid: settlements.filter((s) => (s.payment_state ?? "unpaid") === "unpaid").length,
+    queued: settlements.filter((s) => s.payment_state === "queued").length,
+    sent_to_bank: settlements.filter((s) => s.payment_state === "sent_to_bank").length,
+    cleared: settlements.filter((s) => s.payment_state === "cleared").length,
+    bounced: settlements.filter((s) => s.payment_state === "bounced").length,
   };
 
   if (selectedSettlementId) {
@@ -71,6 +86,37 @@ export function SettlementsPage() {
         <KpiCard label="Held Deductions" value={kpis.held_deductions} />
         <KpiCard label="YTD Settlements" value={kpis.ytd_settlements} />
       </div>
+      <div className="rounded border border-gray-200 bg-white p-2">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Pipeline</p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant={selectedPaymentState === null ? "primary" : "secondary"}
+            onClick={() => {
+              const next = new URLSearchParams(searchParams);
+              next.delete("payment_state");
+              setSearchParams(next);
+            }}
+          >
+            All
+          </Button>
+          <Button size="sm" variant={selectedPaymentState === "unpaid" ? "primary" : "secondary"} onClick={() => setFilter("unpaid", searchParams, setSearchParams)}>
+            Unpaid ({paymentPipeline.unpaid})
+          </Button>
+          <Button size="sm" variant={selectedPaymentState === "queued" ? "primary" : "secondary"} onClick={() => setFilter("queued", searchParams, setSearchParams)}>
+            Queued ({paymentPipeline.queued})
+          </Button>
+          <Button size="sm" variant={selectedPaymentState === "sent_to_bank" ? "primary" : "secondary"} onClick={() => setFilter("sent_to_bank", searchParams, setSearchParams)}>
+            Sent ({paymentPipeline.sent_to_bank})
+          </Button>
+          <Button size="sm" variant={selectedPaymentState === "cleared" ? "primary" : "secondary"} onClick={() => setFilter("cleared", searchParams, setSearchParams)}>
+            Cleared ({paymentPipeline.cleared})
+          </Button>
+          <Button size="sm" variant={selectedPaymentState === "bounced" ? "primary" : "secondary"} onClick={() => setFilter("bounced", searchParams, setSearchParams)}>
+            Bounced ({paymentPipeline.bounced})
+          </Button>
+        </div>
+      </div>
 
       <SettlementsTable
         rows={settlements}
@@ -82,6 +128,16 @@ export function SettlementsPage() {
       />
     </div>
   );
+}
+
+function setFilter(
+  state: "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced",
+  searchParams: URLSearchParams,
+  setSearchParams: (nextInit: URLSearchParams) => void
+) {
+  const next = new URLSearchParams(searchParams);
+  next.set("payment_state", state);
+  setSearchParams(next);
 }
 
 function KpiCard({ label, value }: { label: string; value: number }) {

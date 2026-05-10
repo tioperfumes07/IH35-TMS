@@ -17,6 +17,10 @@ export type SettlementListRow = {
   has_pending_acks: boolean;
   live_debt_flag: number | null;
   debt_computed_at: string | null;
+  payment_state?: "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid";
+  payment_bank_reference?: string | null;
+  payment_bounced_reason?: string | null;
+  payment_method?: string | null;
 };
 
 export type DebtSummary = {
@@ -30,12 +34,27 @@ export type DebtSummary = {
   source_liabilities: Array<Record<string, unknown>>;
 };
 
+export type SettlementPaymentEvent = {
+  id: string;
+  settlement_id: string;
+  operating_company_id: string;
+  event_type: "queued" | "sent" | "cleared" | "bounced" | "retried" | "marked_paid_manually";
+  payload: Record<string, unknown> | null;
+  user_id: string | null;
+  created_at: string;
+};
+
 function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
 
-export function listSettlements(companyId: string) {
-  return apiRequest<{ settlements: SettlementListRow[]; total_count: number }>(`/api/v1/driver-finance/settlements?${q(companyId)}`);
+export function listSettlements(
+  companyId: string,
+  options: { payment_state?: "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid" } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (options.payment_state) params.set("payment_state", options.payment_state);
+  return apiRequest<{ settlements: SettlementListRow[]; total_count: number }>(`/api/v1/driver-finance/settlements?${params.toString()}`);
 }
 
 export function getSettlement(id: string, companyId: string) {
@@ -57,6 +76,43 @@ export function finalizeSettlement(id: string, companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/driver-finance/settlements/${id}/finalize?${q(companyId)}`, {
     method: "PATCH",
   });
+}
+
+export function queueSettlementPayment(id: string) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/queue-payment`, {
+    method: "POST",
+  });
+}
+
+export function markSettlementSent(id: string, bankReference: string) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/mark-sent`, {
+    method: "POST",
+    body: { bank_reference: bankReference },
+  });
+}
+
+export function markSettlementCleared(id: string) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/mark-cleared`, {
+    method: "POST",
+  });
+}
+
+export function markSettlementBounced(id: string, reason: string) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/mark-bounced`, {
+    method: "POST",
+    body: { reason },
+  });
+}
+
+export function markSettlementPaidManually(id: string, payload: { payment_method: string; reference?: string }) {
+  return apiRequest<{ settlement: Record<string, unknown> }>(`/api/v1/driver-pay/settlements/${id}/mark-paid-manually`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function getSettlementPaymentEvents(id: string, companyId: string) {
+  return apiRequest<{ events: SettlementPaymentEvent[] }>(`/api/v1/driver-pay/settlements/${id}/payment-events?${q(companyId)}`);
 }
 
 export function getDebtSummary(driverId: string, companyId: string) {

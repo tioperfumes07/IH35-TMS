@@ -22,7 +22,7 @@ const retryParamsSchema = z.object({
 
 const postQueueBodySchema = z.object({
   operating_company_id: z.string().uuid(),
-  entity_type: z.enum(["bank_transaction", "bill", "expense", "invoice", "journal_entry"]),
+  entity_type: z.enum(["bank_transaction", "bill", "expense", "invoice", "journal_entry", "settlement"]),
   entity_id: z.string().uuid(),
   payload_hash: z.string().trim().min(1).max(128),
 });
