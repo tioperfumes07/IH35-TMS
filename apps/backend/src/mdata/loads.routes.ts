@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -18,6 +19,9 @@ const loadStatusSchema = z.enum([
   "paid",
   "closed",
   "cancelled",
+  "abandoned",
+  "driver_walkoff",
+  "driver_no_show",
 ]);
 
 const stopTypeSchema = z.enum(["pickup", "delivery", "fuel", "rest", "border"]);
@@ -168,6 +172,7 @@ function toCompanyLoadToken(input: string | null | undefined): string {
 
 function statusToFlagCode(status: z.infer<typeof loadStatusSchema>): string {
   if (status === "cancelled") return "RED";
+  if (status === "abandoned" || status === "driver_walkoff" || status === "driver_no_show") return "RED";
   if (status === "closed" || status === "paid" || status === "invoiced") return "BLACK";
   if (status === "delivered") return "GREEN";
   if (status === "at_pickup" || status === "in_transit" || status === "at_delivery") return "BLUE";
@@ -177,18 +182,21 @@ function statusToFlagCode(status: z.infer<typeof loadStatusSchema>): string {
 
 const allowedStatusTransitions: Record<z.infer<typeof loadStatusSchema>, z.infer<typeof loadStatusSchema>[]> = {
   draft: ["booked", "planned", "cancelled"],
-  booked: ["planned", "assigned", "cancelled"],
-  planned: ["assigned", "cancelled"],
-  assigned: ["dispatched", "cancelled"],
-  dispatched: ["at_pickup", "cancelled"],
-  at_pickup: ["in_transit", "cancelled"],
-  in_transit: ["at_delivery", "cancelled"],
+  booked: ["planned", "assigned", "driver_no_show", "cancelled"],
+  planned: ["assigned", "driver_no_show", "cancelled"],
+  assigned: ["dispatched", "driver_no_show", "cancelled"],
+  dispatched: ["at_pickup", "driver_no_show", "driver_walkoff", "cancelled"],
+  at_pickup: ["in_transit", "driver_walkoff", "cancelled"],
+  in_transit: ["at_delivery", "abandoned", "driver_walkoff", "cancelled"],
   at_delivery: ["delivered", "cancelled"],
   delivered: ["invoiced", "cancelled"],
   invoiced: ["paid", "closed"],
   paid: ["closed"],
   closed: [],
   cancelled: [],
+  abandoned: [],
+  driver_walkoff: [],
+  driver_no_show: [],
 };
 
 async function nextLoadNumber(
@@ -729,6 +737,16 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         );
       }
 
+      if (row.status === "abandoned" || row.status === "driver_walkoff" || row.status === "driver_no_show") {
+        await emitAutoProposedEscrowEvents({
+          client,
+          actor_user_id: authUser.uuid,
+          operating_company_id: String((row as { operating_company_id?: string }).operating_company_id ?? ""),
+          load_id: row.id,
+          load_status: row.status,
+        });
+      }
+
       return { ok: true as const, row };
     });
 
@@ -868,6 +886,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               "warning",
               "BT-3-LOADS-SCHEMA"
             );
+          }
+          if (row.status === "abandoned" || row.status === "driver_walkoff" || row.status === "driver_no_show") {
+            await emitAutoProposedEscrowEvents({
+              client,
+              actor_user_id: authUser.uuid,
+              operating_company_id: String((row as { operating_company_id?: string }).operating_company_id ?? ""),
+              load_id: row.id,
+              load_status: row.status,
+            });
           }
         }
 

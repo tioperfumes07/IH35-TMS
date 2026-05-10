@@ -44,6 +44,21 @@ export type SettlementPaymentEvent = {
   created_at: string;
 };
 
+export type EscrowPendingDeduction = {
+  id: string;
+  driver_id: string;
+  driver_name: string | null;
+  source_type: string;
+  load_id: string | null;
+  load_number: string | null;
+  proposed_amount_cents: number;
+  proposed_reason: string;
+  proposed_breakdown_json: Record<string, unknown> | null;
+  proposed_at: string;
+  expires_at: string;
+  status: "pending" | "approved" | "rejected" | "expired";
+};
+
 function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
@@ -139,5 +154,28 @@ export function resumeDeduction(id: string, companyId: string) {
 export function getEscrowTimeline(driverId: string, companyId: string) {
   return apiRequest<{ timeline: Array<Record<string, unknown>> }>(
     `/api/v1/driver-finance/drivers/${driverId}/escrow-timeline?${q(companyId)}`
+  );
+}
+
+export function listPendingEscrowDeductions(companyId: string) {
+  return apiRequest<{ data: EscrowPendingDeduction[] }>(
+    `/api/v1/driver-finance/escrow-deductions-pending?${q(companyId)}`
+  );
+}
+
+export function approvePendingEscrowDeduction(
+  id: string,
+  payload: { operating_company_id: string; override_amount_cents?: number; review_notes?: string }
+) {
+  return apiRequest<{ data: { pending_id: string; deduction_id: string; amount_cents: number } }>(
+    `/api/v1/driver-finance/escrow-deductions-pending/${id}/approve`,
+    { method: "POST", body: payload }
+  );
+}
+
+export function rejectPendingEscrowDeduction(id: string, payload: { operating_company_id: string; review_notes: string }) {
+  return apiRequest<{ data: { pending_id: string } }>(
+    `/api/v1/driver-finance/escrow-deductions-pending/${id}/reject`,
+    { method: "POST", body: payload }
   );
 }

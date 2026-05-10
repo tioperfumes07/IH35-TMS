@@ -33,6 +33,7 @@ import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settleme
 import { registerSettlementPaymentRoutes } from "./driver-finance/settlement-payment.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
+import { registerEscrowDeductionPendingRoutes } from "./driver-finance/escrow-deduction-pending.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
@@ -195,6 +196,7 @@ async function main() {
   await registerSettlementPaymentRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
+  await registerEscrowDeductionPendingRoutes(app);
   await registerReportsRoutes(app);
   await registerPlaidWebhookRoutes(app);
   await registerPlaidAdminRoutes(app);

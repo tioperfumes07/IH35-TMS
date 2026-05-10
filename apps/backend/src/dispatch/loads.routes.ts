@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 
 const dispatchStatusSchema = z.enum([
   "unassigned",
@@ -12,6 +13,9 @@ const dispatchStatusSchema = z.enum([
   "delivered_pending_docs",
   "completed_docs_received",
   "cancelled",
+  "abandoned",
+  "driver_walkoff",
+  "driver_no_show",
 ]);
 
 const listDispatchLoadsQuerySchema = z.object({
@@ -128,6 +132,9 @@ function fromMdataStatus(status: string): z.infer<typeof dispatchStatusSchema> {
   if (status === "in_transit") return "in_transit";
   if (status === "delivered_pending_docs") return "delivered_pending_docs";
   if (status === "completed_docs_received") return "completed_docs_received";
+  if (status === "abandoned") return "abandoned";
+  if (status === "driver_walkoff") return "driver_walkoff";
+  if (status === "driver_no_show") return "driver_no_show";
   return "unassigned";
 }
 
@@ -138,6 +145,9 @@ function toMdataStatus(status: z.infer<typeof dispatchStatusSchema>): string {
   if (status === "in_transit") return "in_transit";
   if (status === "delivered_pending_docs") return "delivered_pending_docs";
   if (status === "completed_docs_received") return "completed_docs_received";
+  if (status === "abandoned") return "abandoned";
+  if (status === "driver_walkoff") return "driver_walkoff";
+  if (status === "driver_no_show") return "driver_no_show";
   return "cancelled";
 }
 
@@ -151,12 +161,15 @@ function canOverrideHos(role: string) {
 
 const allowedTransitions: Record<z.infer<typeof dispatchStatusSchema>, z.infer<typeof dispatchStatusSchema>[]> = {
   unassigned: ["assigned_not_dispatched", "cancelled"],
-  assigned_not_dispatched: ["dispatched", "cancelled"],
-  dispatched: ["in_transit", "cancelled"],
-  in_transit: ["delivered_pending_docs", "cancelled"],
+  assigned_not_dispatched: ["dispatched", "driver_no_show", "cancelled"],
+  dispatched: ["in_transit", "driver_no_show", "driver_walkoff", "cancelled"],
+  in_transit: ["delivered_pending_docs", "abandoned", "driver_walkoff", "cancelled"],
   delivered_pending_docs: ["completed_docs_received", "cancelled"],
   completed_docs_received: [],
   cancelled: [],
+  abandoned: [],
+  driver_walkoff: [],
+  driver_no_show: [],
 };
 
 export async function registerDispatchLoadRoutes(app: FastifyInstance) {
@@ -813,7 +826,17 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         return { error: "invalid_transition" as const, from: currentStatus, to: targetStatus };
       }
 
-      await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, toMdataStatus(targetStatus)]);
+      const mdataStatus = toMdataStatus(targetStatus);
+      await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, mdataStatus]);
+      if (mdataStatus === "abandoned" || mdataStatus === "driver_walkoff" || mdataStatus === "driver_no_show") {
+        await emitAutoProposedEscrowEvents({
+          client,
+          actor_user_id: authUser.uuid,
+          operating_company_id: operatingCompanyId,
+          load_id: params.data.id,
+          load_status: mdataStatus,
+        });
+      }
       return { ok: true as const, status: targetStatus };
     });
 
