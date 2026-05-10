@@ -6,6 +6,7 @@ import {
   getBankingRegister,
   getBankingTiles,
   getPlaidBankAccounts,
+  getQboSyncQueueStats,
   getReconciliationSessions,
   startReconciliationSession,
   type BankingTile,
@@ -80,6 +81,11 @@ export function BankingHomePage() {
     queryKey: ["banking", "reconciliation-sessions", companyId],
     queryFn: () => getReconciliationSessions(companyId),
     enabled: Boolean(companyId),
+  });
+  const qboSyncStatsQuery = useQuery({
+    queryKey: ["banking", "qbo-sync-stats", companyId],
+    queryFn: () => getQboSyncQueueStats(companyId),
+    enabled: Boolean(companyId && (auth.user?.role === "Owner" || auth.user?.role === "Administrator")),
   });
   const tiles = tilesQuery.data?.tiles ?? [];
   const selectedId = selectedAccountId ?? tiles[0]?.id ?? null;
@@ -160,6 +166,34 @@ export function BankingHomePage() {
         </div>
         {auth.user?.role !== "Owner" && auth.user?.role !== "Administrator" ? (
           <p className="mt-2 text-xs text-gray-500">Connect Bank Account is visible only to Owner/Admin roles.</p>
+        ) : null}
+      </div>
+      <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">QBO Sync Status</p>
+          <Link to="/admin/qbo-sync-queue" className="text-xs font-medium text-blue-700 hover:underline">
+            Manage Queue
+          </Link>
+        </div>
+        {qboSyncStatsQuery.isLoading ? <p className="text-sm text-gray-500">Loading sync status...</p> : null}
+        {qboSyncStatsQuery.isError ? <p className="text-sm text-red-600">Unable to load QBO sync status.</p> : null}
+        {!qboSyncStatsQuery.isLoading && !qboSyncStatsQuery.isError ? (
+          <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 sm:grid-cols-3">
+            <p>
+              Pending: <span className="font-semibold">{Number(qboSyncStatsQuery.data?.pending ?? 0)}</span>
+            </p>
+            <p>
+              Failed: <span className="font-semibold text-red-600">{Number(qboSyncStatsQuery.data?.failed ?? 0)}</span>
+            </p>
+            <p>
+              Last synced:{" "}
+              <span className="font-semibold">
+                {qboSyncStatsQuery.data?.last_successful_sync_at
+                  ? new Date(qboSyncStatsQuery.data.last_successful_sync_at).toLocaleString()
+                  : "Never"}
+              </span>
+            </p>
+          </div>
         ) : null}
       </div>
       <div className="rounded border border-gray-200 bg-white p-3">
