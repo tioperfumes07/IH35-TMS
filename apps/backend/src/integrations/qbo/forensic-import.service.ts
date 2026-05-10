@@ -49,6 +49,10 @@ type BatchRow = {
   status: string;
 };
 
+type DbClientLike = {
+  query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
+};
+
 function getTxDate(txn: QboTransaction) {
   const meta = txn.MetaData as Record<string, unknown> | undefined;
   const txDate = String((txn.TxnDate as string | undefined) ?? (meta?.CreateTime as string | undefined) ?? "").slice(0, 10);
@@ -182,7 +186,8 @@ export async function detectAnomalies(
     vendorName: string | null;
     createdAt: string | null;
     attachmentsCount: number;
-  }
+  },
+  dbClient?: DbClientLike
 ) {
   const flags = new Set<string>();
   const out: Array<{ anomaly_type: string; severity: "review" | "suspicious" | "critical" }> = [];
@@ -204,7 +209,7 @@ export async function detectAnomalies(
   }
 
   if (params.vendorName) {
-    const windowCheck = await withLuciaBypass(async (client) => {
+    const countDuplicateWindow = async (client: DbClientLike) => {
       const res = await client.query<{ count: number }>(
         `
           SELECT COUNT(*)::int AS count
@@ -219,7 +224,10 @@ export async function detectAnomalies(
         [params.operatingCompanyId, params.batchId, params.vendorName, params.transactionDate, params.totalCents ?? 0]
       );
       return Number(res.rows[0]?.count ?? 0);
-    });
+    };
+    const windowCheck = dbClient
+      ? await countDuplicateWindow(dbClient)
+      : await withLuciaBypass(async (client) => countDuplicateWindow(client));
     if (windowCheck > 1) {
       addFlag(flags, "round_number_duplicate");
       out.push({ anomaly_type: "round_number_duplicate", severity: "suspicious" });
@@ -232,7 +240,7 @@ export async function detectAnomalies(
   }
 
   if (out.length > 0) {
-    await withCurrentUser(actorUserId, async (client) => {
+    const insertAnomalies = async (client: DbClientLike) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [params.operatingCompanyId]);
       for (const anomaly of out) {
         await client.query(
@@ -251,7 +259,12 @@ export async function detectAnomalies(
           [params.operatingCompanyId, params.transactionSnapshotId, anomaly.anomaly_type, anomaly.severity, params.batchId]
         );
       }
-    });
+    };
+    if (dbClient) {
+      await insertAnomalies(dbClient);
+    } else {
+      await withCurrentUser(actorUserId, async (client) => insertAnomalies(client));
+    }
   }
 
   return Array.from(flags);
@@ -315,7 +328,7 @@ export async function importTransactions(actorUserId: string, batchId: string, q
   let errors = 0;
   const insertedSnapshotIds: string[] = [];
   await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [qboContext.operatingCompanyId]);
     for (const txnType of TXN_TYPES) {
       const where = `TxnDate >= '${sinceDate}'`;
       let rows: QboTransaction[] = [];
@@ -357,8 +370,23 @@ export async function importTransactions(actorUserId: string, batchId: string, q
           `,
           [qboContext.operatingCompanyId, qboContext.realmId, txnType, txnId, txnDate, totalCents, JSON.stringify(row), batchId]
         );
+        console.info("[FORENSIC_TXN_INSERT]", {
+          step: "txn_insert",
+          operatingCompanyId: qboContext.operatingCompanyId,
+          batchId,
+          txnType,
+          txnId,
+          rowCount: insertRes.rowCount ?? 0,
+          hasReturnedRow: (insertRes.rows?.length ?? 0) > 0,
+        });
+        if ((insertRes.rowCount ?? 0) === 0) {
+          // ON CONFLICT DO NOTHING: no-op is expected for duplicates on re-runs.
+          continue;
+        }
         const snapshotId = insertRes.rows[0]?.id;
-        if (!snapshotId) continue;
+        if (!snapshotId) {
+          throw new Error(`txn_insert_missing_snapshot_id:${txnType}/${txnId}`);
+        }
         insertedSnapshotIds.push(snapshotId);
         const vendorName = ((row.VendorRef as { name?: string } | undefined)?.name ?? null) || null;
         try {
@@ -372,7 +400,7 @@ export async function importTransactions(actorUserId: string, batchId: string, q
             vendorName,
             createdAt: getCreateTime(row),
             attachmentsCount: 0,
-          });
+          }, client);
           if (flags.length > 0) {
             await client.query(`UPDATE qbo_archive.transactions_snapshot SET forensic_flags = $2::text[] WHERE id = $1`, [snapshotId, flags]);
           }
@@ -403,7 +431,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
   let imported = 0;
   let errors = 0;
   await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [qboContext.operatingCompanyId]);
     const txRows = await client.query<{
       id: string;
       qbo_txn_id: string;
@@ -449,7 +477,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
             })
           );
 
-          await client.query(
+          const insertRes = await client.query(
             `
               INSERT INTO qbo_archive.attachments_snapshot (
                 operating_company_id,
@@ -481,6 +509,18 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
               batchId,
             ]
           );
+          console.info("[FORENSIC_ATTACH_INSERT]", {
+            step: "attachment_insert",
+            operatingCompanyId: qboContext.operatingCompanyId,
+            batchId,
+            txnId: tx.qbo_txn_id,
+            attachmentId,
+            rowCount: insertRes.rowCount ?? 0,
+          });
+          if ((insertRes.rowCount ?? 0) === 0) {
+            // ON CONFLICT DO NOTHING: no-op only on duplicate attachment row.
+            continue;
+          }
           txAttachmentCount += 1;
           imported += 1;
         } catch (error) {
