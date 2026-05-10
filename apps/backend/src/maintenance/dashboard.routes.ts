@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { shouldUseDevFixturesForMaintenance, triageDevFixtures } from "./dev-fixtures.js";
+import { listWorkOrdersByBucket } from "./work-orders.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -83,26 +84,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
 
     const buckets = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await relationExists(client, "maintenance.work_orders"))) return { in_house: [], external: [], roadside: [] };
-      const res = await client.query(
-        `
-          SELECT id, COALESCE(display_id, id::text) AS wo_display_id, unit_id, repair_location, status, description, opened_at
-          FROM maintenance.work_orders
-          WHERE operating_company_id = $1
-            AND status NOT IN ('complete', 'cancelled')
-          ORDER BY opened_at DESC
-          LIMIT 30
-        `,
-        [companyId]
-      );
-      const in_house: any[] = [];
-      const external: any[] = [];
-      const roadside: any[] = [];
-      for (const row of res.rows) {
-        if (row.repair_location === "in_house") in_house.push(row);
-        else if (row.repair_location === "mobile_roadside") roadside.push(row);
-        else external.push(row);
-      }
-      return { in_house, external, roadside };
+      return listWorkOrdersByBucket(client, companyId);
     });
     return buckets;
   });

@@ -27,6 +27,7 @@ export function CreateWOSectionIdentification({
 }: Props) {
   const type = watch("wo_type");
   const sourceType = watch("source_type");
+  const bucket = watch("bucket");
   const selectedLoadId = watch("load_id");
   const requireDriverAndLoad = type === "repair" || type === "tire" || type === "accident";
   const requireLoad = requireDriverAndLoad || requireLoadForExpense;
@@ -51,6 +52,13 @@ export function CreateWOSectionIdentification({
             <option value="RT">Roadside Tires (RT)</option>
             <option value="IT">Internal Tires (IT)</option>
             <option value="RS">Roadside Service (RS)</option>
+          </select>
+        </Field>
+        <Field label="R&M Bucket">
+          <select {...register("bucket")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
+            <option value="in_house">In-House</option>
+            <option value="external">External</option>
+            <option value="roadside">Roadside</option>
           </select>
         </Field>
         <Field label="Date">
@@ -81,6 +89,27 @@ export function CreateWOSectionIdentification({
           <input {...register("vendor_invoice_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
       </div>
+      {bucket === "roadside" ? (
+        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
+          <Field label="Roadside Callout At *">
+            <input type="datetime-local" {...register("roadside_callout_at")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          </Field>
+          <Field label="Roadside Arrived At">
+            <input type="datetime-local" {...register("roadside_arrived_at")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          </Field>
+          <Field label="Roadside Provider Vendor ID *">
+            <input {...register("roadside_provider_vendor_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          </Field>
+          <Field label="Breakdown Load ID *">
+            <input {...register("roadside_breakdown_load_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          </Field>
+          <div className="md:col-span-4">
+            <Field label="Roadside Location (min 10 chars) *">
+              <input {...register("roadside_location")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+            </Field>
+          </div>
+        </div>
+      ) : null}
       {requireExternalFields ? (
         <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
           <Field label="External Vendor *">

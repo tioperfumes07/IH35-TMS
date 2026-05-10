@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getDrugAlcoholTests, getLatestCsa, getSafetyAccidents, getSafetyEvents, getSafetyKpis, getTrainingCompletions } from "../../api/safety";
+import { getDrugAlcoholTests, getLatestCsa, getSafetyAccidents, getSafetyEventsFiltered, getSafetyKpis, getTrainingCompletions } from "../../api/safety";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useSafetyUiContext } from "./SafetyLayout";
 import { CompanyViolationsPage } from "./CompanyViolationsPage";
 import { ComplaintsPage } from "./ComplaintsPage";
 import { DotInspectionsPage } from "./DotInspectionsPage";
@@ -44,6 +45,7 @@ export function SafetyHomePage() {
   const canViewComplaintsTab = ["Owner", "Administrator", "Safety"].includes(String(auth.user?.role ?? ""));
   const safetyTabs = canViewComplaintsTab ? SAFETY_SUBNAV : SAFETY_SUBNAV.filter((item) => item !== "Complaints");
   const [tab, setTab] = useState<SafetyTab>("Events");
+  const safetyUi = useSafetyUiContext();
   const [selectedAccident, setSelectedAccident] = useState<Record<string, unknown> | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -53,8 +55,8 @@ export function SafetyHomePage() {
     enabled: Boolean(companyId),
   });
   const eventsQuery = useQuery({
-    queryKey: ["safety", "events", companyId],
-    queryFn: () => getSafetyEvents(companyId),
+    queryKey: ["safety", "events", companyId, safetyUi.filter],
+    queryFn: () => getSafetyEventsFiltered(companyId, safetyUi.filter),
     enabled: Boolean(companyId),
   });
   const accidentsQuery = useQuery({
@@ -82,6 +84,12 @@ export function SafetyHomePage() {
     if (tab === "Accident Reports") return accidentsQuery.data?.accidents ?? [];
     return eventsQuery.data?.events ?? [];
   }, [tab, accidentsQuery.data?.accidents, eventsQuery.data?.events]);
+
+  useEffect(() => {
+    const counters = eventsQuery.data?.counters;
+    if (!counters) return;
+    safetyUi.setDriverCounts(Number(counters.active_count ?? 0), Number(counters.total_count ?? 0));
+  }, [eventsQuery.data?.counters, safetyUi]);
 
   return (
     <div className="space-y-3">

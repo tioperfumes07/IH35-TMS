@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { updateLoad, useCancelLoad, useLoad, useLoadAudit } from "../../api/loads";
 import { createInvoiceFromLoad } from "../../api/accounting";
+import { cancelDispatchLoad, getDispatchAssignmentHistory } from "../../api/dispatch";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
 import { DocumentsTab } from "../documents/DocumentsTab";
@@ -16,7 +17,7 @@ type Props = {
   onClose: () => void;
 };
 
-const tabs = ["Overview", "Stops", "Documents", "Audit History"] as const;
+const tabs = ["Overview", "Stops", "Documents", "Assignment History", "Audit History"] as const;
 type DrawerTab = (typeof tabs)[number];
 
 export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
@@ -38,6 +39,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
   });
 
   const load = loadQuery.data;
+  const assignmentHistoryQuery = useQuery({
+    queryKey: ["dispatch", "assignment-history", loadId, load?.operating_company_id],
+    queryFn: () => getDispatchAssignmentHistory(loadId as string, load?.operating_company_id as string),
+    enabled: Boolean(loadId && load?.operating_company_id && activeTab === "Assignment History"),
+  });
   const [notesDraft, setNotesDraft] = useState("");
   const [rateDraft, setRateDraft] = useState("");
 
@@ -201,6 +207,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
               {!auditQuery.isLoading && (auditQuery.data ?? []).length === 0 ? <div className="text-sm text-gray-500">No audit events found.</div> : null}
             </div>
           ) : null}
+          {activeTab === "Assignment History" ? (
+            <div className="space-y-2">
+              <pre className="overflow-x-auto rounded bg-gray-50 p-2 text-xs text-gray-700">
+                {JSON.stringify(assignmentHistoryQuery.data?.rows ?? [], null, 2)}
+              </pre>
+            </div>
+          ) : null}
         </div>
 
         <footer className="sticky bottom-0 flex items-center justify-between border-t border-gray-200 bg-white p-4">
@@ -235,9 +248,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
           open={cancelOpen}
           operatingCompanyId={load.operating_company_id}
           onClose={() => setCancelOpen(false)}
-          onSubmit={async (reason, notes) => {
-            await cancelMutation.mutateAsync({ id: load.id, reasonCode: reason.reason_code, notes });
-            pushToast("Load cancelled", "success");
+          onSubmit={async (payload) => {
+            await cancelDispatchLoad(load.id, {
+              operating_company_id: load.operating_company_id,
+              ...payload,
+            });
+            await cancelMutation.mutateAsync({ id: load.id, reasonCode: payload.reason_code, notes: payload.cancellation_notes });
+            pushToast("Load cancellation submitted", "success");
             setCancelOpen(false);
             void loadQuery.refetch();
             void auditQuery.refetch();

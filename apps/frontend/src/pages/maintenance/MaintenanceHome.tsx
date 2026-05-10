@@ -163,6 +163,11 @@ export function MaintenanceHomePage() {
           inHouse={rmStatusQuery.data?.in_house ?? []}
           external={rmStatusQuery.data?.external ?? []}
           roadside={rmStatusQuery.data?.roadside ?? []}
+          onCreateRoadside={() => {
+            setCreateWoType("repair");
+            setPrefillFromIssue(null);
+            setCreateWoOpen(true);
+          }}
           onOpen={() => pushToast("WO detail drawer integration is pending follow-up", "info")}
         />
       ) : null}
@@ -238,6 +243,7 @@ export function MaintenanceHomePage() {
                 driver_id: prefillFromIssue.driver_id,
                 description: `${prefillFromIssue.issue_description}\nGPS: ${prefillFromIssue.gps_lat ?? ""},${prefillFromIssue.gps_lng ?? ""} ${prefillFromIssue.gps_label ?? ""}`.trim(),
                 repair_location: "mobile_roadside",
+                bucket: "roadside",
                 class_hint: "Prefilled from triage issue",
               }
             : undefined

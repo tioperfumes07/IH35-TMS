@@ -1,8 +1,10 @@
 import { AlertTriangle, FileText, Fuel, Navigation, Settings, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { signOut } from "../api/identity";
+import { confirmMyTransfer, listMyPendingTransfers, rejectMyTransfer } from "../api/transfers";
 import { useAuth } from "../auth/useAuth";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { UploadDocumentModal } from "../components/UploadDocumentModal";
@@ -25,10 +27,30 @@ export function HomePage() {
   const { pushToast } = useToast();
   const { t } = useTranslation();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const queryClient = useQueryClient();
   const [pendingUploads, setPendingUploads] = useState(0);
   const [onlineStatus, setOnlineStatus] = useState<"online" | "connecting" | "offline">(navigator.onLine ? "connecting" : "offline");
 
   const driverName = useMemo(() => deriveDriverName(auth.user?.email ?? "driver"), [auth.user?.email]);
+  const pendingTransfersQuery = useQuery({
+    queryKey: ["driver-pwa", "pending-transfers"],
+    queryFn: listMyPendingTransfers,
+  });
+  const confirmTransferMutation = useMutation({
+    mutationFn: (id: string) => confirmMyTransfer(id),
+    onSuccess: () => {
+      pushToast("Transfer confirmed", "success");
+      void queryClient.invalidateQueries({ queryKey: ["driver-pwa", "pending-transfers"] });
+    },
+  });
+  const rejectTransferMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => rejectMyTransfer(id, reason),
+    onSuccess: () => {
+      pushToast("Transfer rejected", "info");
+      void queryClient.invalidateQueries({ queryKey: ["driver-pwa", "pending-transfers"] });
+    },
+  });
+  const pendingTransfer = pendingTransfersQuery.data?.rows?.[0];
 
   useEffect(() => {
     const unsubscribe = subscribeSyncState((state) => {
@@ -67,6 +89,38 @@ export function HomePage() {
             </Link>
           </div>
         </header>
+        {pendingTransfer ? (
+          <PwaCard title="Equipment Transfer Pending">
+            <p className="text-sm">
+              {`📦 Equipment transfer pending from ${pendingTransfer.from_driver_id} · expires ${new Date(pendingTransfer.expires_at).toLocaleString()}`}
+            </p>
+            <p className="mt-1 text-xs text-pwa-text-secondary">{pendingTransfer.transfer_location ?? "No location provided"}</p>
+            <div className="mt-2 flex gap-2">
+              <PwaButton
+                className="flex-1"
+                onClick={() => {
+                  void confirmTransferMutation.mutateAsync(pendingTransfer.id);
+                }}
+              >
+                Accept
+              </PwaButton>
+              <PwaButton
+                variant="secondary"
+                className="flex-1"
+                onClick={() => {
+                  const reason = window.prompt("Reason for rejection (min 10 chars):", "") ?? "";
+                  if (reason.trim().length < 10) {
+                    pushToast("Reason must be at least 10 characters", "error");
+                    return;
+                  }
+                  void rejectTransferMutation.mutateAsync({ id: pendingTransfer.id, reason });
+                }}
+              >
+                Reject
+              </PwaButton>
+            </div>
+          </PwaCard>
+        ) : null}
 
         <PwaCard title={t("home.hos_overview")} subtitle={t("home.hos_subtitle")}>
           <div className="grid grid-cols-2 gap-3">

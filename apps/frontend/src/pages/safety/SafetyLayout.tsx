@@ -1,6 +1,9 @@
 import { createContext, useContext, useMemo, useState } from "react";
+import { useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { getUserPreferences, patchUserPreferences } from "../../api/safety";
 import { SAFETY_GROUPS, findSafetyTab } from "../../components/safety/SAFETY_TABS_CONFIG";
 import { SafetyDashboardFilter, type SafetyDriverFilter } from "../../components/safety/SafetyDashboardFilter";
 import { SafetyGroupNav } from "../../components/safety/SafetyGroupNav";
@@ -26,9 +29,22 @@ export function useSafetyUiContext() {
 export function SafetyLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<SafetyDriverFilter>("active-7-10");
+  const [filter, setFilter] = useState<SafetyDriverFilter>("active");
   const [shownDrivers, setShownDrivers] = useState(0);
   const [totalDrivers, setTotalDrivers] = useState(0);
+  const prefsQuery = useQuery({
+    queryKey: ["user", "preferences"],
+    queryFn: getUserPreferences,
+  });
+  const prefsMutation = useMutation({
+    mutationFn: (preferences: Record<string, unknown>) => patchUserPreferences(preferences),
+  });
+
+  useEffect(() => {
+    const prefs = prefsQuery.data?.preferences as { safety?: { active_only?: boolean } } | undefined;
+    if (!prefs?.safety) return;
+    setFilter(prefs.safety.active_only === false ? "all" : "active");
+  }, [prefsQuery.data]);
 
   const activeTabId = useMemo(() => {
     const path = location.pathname;
@@ -45,7 +61,12 @@ export function SafetyLayout() {
   const contextValue = useMemo<SafetyUiContextValue>(
     () => ({
       filter,
-      setFilter,
+      setFilter: (next) => {
+        setFilter(next);
+        void prefsMutation.mutateAsync({
+          safety: { active_only: next === "active" },
+        });
+      },
       shownDrivers,
       totalDrivers,
       setDriverCounts: (shown, total) => {

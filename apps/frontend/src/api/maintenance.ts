@@ -29,6 +29,7 @@ export type WorkOrder = {
   driver_id?: string | null;
   load_id?: string | null;
   repair_location?: string | null;
+  bucket?: "in_house" | "external" | "roadside" | null;
   description?: string | null;
   source_type?: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS" | null;
   external_vendor_id?: string | null;
@@ -38,6 +39,13 @@ export type WorkOrder = {
   opened_at?: string | null;
   closed_at?: string | null;
   duration_seconds?: number | null;
+  roadside_callout_at?: string | null;
+  roadside_arrived_at?: string | null;
+  roadside_response_minutes?: number | null;
+  roadside_provider_vendor_id?: string | null;
+  roadside_provider_name?: string | null;
+  roadside_location?: string | null;
+  roadside_breakdown_load_id?: string | null;
   updated_at?: string | null;
 };
 
@@ -171,6 +179,7 @@ export type CreateWorkOrderTwoSectionPayload = {
     load_exemption_reason?: string;
     service_date?: string;
     repair_location: string;
+    bucket?: "in_house" | "external" | "roadside";
     vendor_id?: string;
     vendor_invoice_number?: string;
     external_vendor_id?: string;
@@ -182,6 +191,11 @@ export type CreateWorkOrderTwoSectionPayload = {
     bill_date?: string;
     due_date?: string;
     payment_account_uuid?: string;
+    roadside_callout_at?: string;
+    roadside_arrived_at?: string;
+    roadside_provider_vendor_id?: string;
+    roadside_location?: string;
+    roadside_breakdown_load_id?: string;
   };
   sectionA: Array<{
     description: string;

@@ -5,6 +5,7 @@ import { registerDriverTeamRoutes } from "./driver-teams.routes.js";
 import { registerDriverTeamSplitRoutes } from "./driver-team-split.routes.js";
 import { registerEquipmentLogRoutes } from "./equipment-log.routes.js";
 import { registerEquipmentRoutes } from "./equipment.routes.js";
+import { registerEquipmentTransferRoutes } from "./equipment-transfer.routes.js";
 import { registerLocationRoutes } from "./locations.routes.js";
 import { registerLoadRoutes } from "./loads.routes.js";
 import { registerUnitsRoutes } from "./units.routes.js";
@@ -21,4 +22,5 @@ export async function registerMdataRoutes(app: FastifyInstance) {
   await registerLoadRoutes(app);
   await registerEquipmentRoutes(app);
   await registerEquipmentLogRoutes(app);
+  await registerEquipmentTransferRoutes(app);
 }

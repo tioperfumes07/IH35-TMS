@@ -9,6 +9,7 @@ import {
   autoCreateExpenseFromWO,
   createWorkOrderWithLines,
 } from "./two-section-service.js";
+import { assertRoadsideFields, listWorkOrdersByBucket } from "./work-orders.service.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
 const workOrderTypeSchema = z.enum(["pm", "repair", "tire", "accident"]);
@@ -25,6 +26,10 @@ const listQuerySchema = z.object({
   search: z.string().trim().max(120).optional(),
 });
 
+const listByBucketQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+});
+
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const lineItemParamsSchema = z.object({ id: z.string().uuid(), lid: z.string().uuid() });
 
@@ -38,6 +43,7 @@ const createWorkOrderSchema = z.object({
   load_id: z.string().uuid().optional(),
   service_date: z.string().optional(),
   repair_location: z.string().default("in_house"),
+  bucket: z.enum(["in_house", "external", "roadside"]).default("in_house"),
   vendor_id: z.string().uuid().optional(),
   vendor_invoice_number: z.string().trim().max(120).optional(),
   external_vendor_id: z.string().uuid().optional(),
@@ -58,6 +64,11 @@ const createWorkOrderSchema = z.object({
       amount: z.number().min(0),
     })
   ).default([]),
+  roadside_callout_at: z.string().datetime({ offset: true }).optional(),
+  roadside_arrived_at: z.string().datetime({ offset: true }).optional(),
+  roadside_provider_vendor_id: z.string().uuid().optional(),
+  roadside_location: z.string().trim().max(1000).optional(),
+  roadside_breakdown_load_id: z.string().uuid().optional(),
 });
 
 const sectionALineSchema = z.object({
@@ -99,6 +110,7 @@ const createWorkOrderV5Schema = z.object({
     load_exemption_reason: z.string().trim().min(20).optional(),
     service_date: z.string().optional(),
     repair_location: z.string().default("in_house"),
+    bucket: z.enum(["in_house", "external", "roadside"]).default("in_house"),
     vendor_id: z.string().uuid().optional(),
     vendor_invoice_number: z.string().trim().max(120).optional(),
     external_vendor_id: z.string().uuid().optional(),
@@ -111,6 +123,11 @@ const createWorkOrderV5Schema = z.object({
     bill_date: z.string().optional(),
     due_date: z.string().optional(),
     payment_account_uuid: z.string().uuid().optional(),
+    roadside_callout_at: z.string().datetime({ offset: true }).optional(),
+    roadside_arrived_at: z.string().datetime({ offset: true }).optional(),
+    roadside_provider_vendor_id: z.string().uuid().optional(),
+    roadside_location: z.string().trim().max(1000).optional(),
+    roadside_breakdown_load_id: z.string().uuid().optional(),
   }),
   sectionA: z.array(sectionALineSchema).default([]),
   sectionB: z.array(sectionBLineSchema).default([]),
@@ -121,6 +138,7 @@ const updateWorkOrderSchema = z.object({
   external_vendor_wo_number: z.string().trim().max(120).nullable().optional(),
   external_vendor_invoice_number: z.string().trim().max(120).nullable().optional(),
   description: z.string().trim().max(2000).optional(),
+  bucket: z.enum(["in_house", "external", "roadside"]).optional(),
 });
 
 const transitionSchema = z.object({
@@ -207,6 +225,19 @@ async function maintenanceReady(client: any) {
 }
 
 export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
+  app.get("/api/v1/maintenance/work-orders/by-bucket", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const parsed = listByBucketQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const q = parsed.data;
+    const payload = await withCompany(user.uuid, q.operating_company_id, async (client) => {
+      if (!(await maintenanceReady(client))) return { in_house: [], external: [], roadside: [] };
+      return listWorkOrdersByBucket(client, q.operating_company_id);
+    });
+    return payload;
+  });
+
   app.get("/api/v1/maintenance/work-orders", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
@@ -325,10 +356,30 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         }
       }
       try {
+        assertRoadsideFields(body.header);
+      } catch (error) {
+        return reply.code(422).send({ error: String((error as Error).message || "E_ROADSIDE_INVALID") });
+      }
+      try {
         const result = await withCompany(user.uuid, body.header.operating_company_id, async (client) => {
           await client.query("BEGIN");
           try {
             const created = await createWorkOrderWithLines(client as never, user.uuid, body.header, body.sectionA, body.sectionB);
+            if (body.header.bucket === "roadside") {
+              await appendCrudAudit(
+                client,
+                user.uuid,
+                "maintenance.work_order.bucket_changed",
+                {
+                  resource_type: "maintenance.work_orders",
+                  resource_id: created.woUuid,
+                  operating_company_id: body.header.operating_company_id,
+                  bucket: body.header.bucket,
+                },
+                "info",
+                "P5-F1-ROADSIDE-BUCKET"
+              );
+            }
             let bill: { uuid: string } | null = null;
             let expense: { uuid: string } | null = null;
             if (body.header.payment_timing === "vendor_invoice") {
@@ -383,6 +434,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if (["repair", "tire", "accident"].includes(body.wo_type) && !body.load_id) {
       return reply.code(400).send({ error: "load_required_for_selected_type" });
     }
+    try {
+      assertRoadsideFields(body);
+    } catch (error) {
+      return reply.code(422).send({ error: String((error as Error).message || "E_ROADSIDE_INVALID") });
+    }
     if (body.repair_location !== "in_house" && !body.vendor_id) {
       return reply.code(400).send({ error: "vendor_required_for_external_repairs" });
     }
@@ -416,11 +472,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             operating_company_id, wo_type, status, unit_id, driver_id, load_id, opened_at,
             repair_location, assigned_vendor, vendor_invoice_number, description, severity,
             source_type, external_vendor_id, external_vendor_wo_number, external_vendor_invoice_number,
-            display_id, unit_sequence
+            display_id, unit_sequence,
+            bucket, roadside_callout_at, roadside_arrived_at, roadside_provider_vendor_id, roadside_location, roadside_breakdown_load_id
           )
           VALUES (
             $1,$2,$3,$4,$5,$6,COALESCE($7::timestamptz, now()),$8,$9,$10,$11,$12,
-            $13,$14,$15,$16,$17,$18
+            $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24
           )
           RETURNING *
         `,
@@ -443,6 +500,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.external_vendor_invoice_number ?? null,
           display?.display_id ?? null,
           Number(display?.sequence ?? 0) || null,
+          body.bucket ?? "in_house",
+          body.roadside_callout_at ?? null,
+          body.roadside_arrived_at ?? null,
+          body.roadside_provider_vendor_id ?? null,
+          body.roadside_location ?? null,
+          body.roadside_breakdown_load_id ?? null,
         ]
       );
       const wo = woRes.rows[0];
@@ -525,6 +588,21 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         "info",
         "BT-3-MAINTENANCE-REBUILD"
       );
+      if ((body.bucket ?? "in_house") !== "in_house") {
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "maintenance.work_order.bucket_changed",
+          {
+            resource_type: "maintenance.work_orders",
+            resource_id: wo.id,
+            operating_company_id: wo.operating_company_id,
+            bucket: body.bucket,
+          },
+          "info",
+          "P5-F1-ROADSIDE-BUCKET"
+        );
+      }
 
       return { unavailable: false as const, row: wo };
     });
@@ -557,6 +635,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (body.external_vendor_id === null || body.external_vendor_wo_number === null || body.external_vendor_invoice_number === null) {
         return { invalid: true as const, error: "external_vendor_fields_cannot_be_cleared" };
       }
+      if (body.bucket && CLOSED_STATUSES.has(String(current.status ?? ""))) {
+        return { invalid: true as const, error: "E_BUCKET_IMMUTABLE_WHEN_CLOSED" };
+      }
       const updatedRes = await client.query(
         `
           UPDATE maintenance.work_orders
@@ -565,6 +646,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             external_vendor_wo_number = COALESCE($3, external_vendor_wo_number),
             external_vendor_invoice_number = COALESCE($4, external_vendor_invoice_number),
             description = COALESCE($5, description),
+            bucket = COALESCE($6::maintenance.wo_bucket_enum, bucket),
             updated_at = now()
           WHERE id = $1
           RETURNING *
@@ -575,6 +657,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.external_vendor_wo_number ?? null,
           body.external_vendor_invoice_number ?? null,
           body.description ?? null,
+          body.bucket ?? null,
         ]
       );
       const updated = updatedRes.rows[0];
@@ -596,6 +679,22 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         "info",
         "P3-T11.6.2-ARRIVING-SOON"
       );
+      if (body.bucket && body.bucket !== String(current.bucket ?? "in_house")) {
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "maintenance.work_order.bucket_changed",
+          {
+            resource_type: "maintenance.work_orders",
+            resource_id: params.data.id,
+            operating_company_id: companyId,
+            previous_bucket: current.bucket ?? "in_house",
+            bucket: body.bucket,
+          },
+          "info",
+          "P5-F1-ROADSIDE-BUCKET"
+        );
+      }
       return { row: updated };
     });
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });

@@ -26,7 +26,10 @@ export type DispatchStatus =
   | "in_transit"
   | "delivered_pending_docs"
   | "completed_docs_received"
-  | "cancelled";
+  | "cancelled"
+  | "abandoned"
+  | "driver_walkoff"
+  | "driver_no_show";
 
 export type DispatchLoad = {
   id: string;
@@ -194,4 +197,63 @@ export function transitionDispatchLoad(
     `/api/v1/dispatch/loads/${id}/transition?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
     { method: "PATCH", body: payload }
   );
+}
+
+export function quickAssignDispatchLoad(
+  id: string,
+  body: {
+    operating_company_id: string;
+    driver_id: string;
+    unit_id?: string;
+    trailer_id?: string;
+    assignment_method?: "quicksave" | "drag_drop";
+    acknowledged_warnings?: string[];
+  }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/loads/${id}/quick-assign`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function completeQuicksaveDispatchLoad(
+  id: string,
+  body: { operating_company_id: string; fields: Record<string, unknown> }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/loads/${id}/complete-quicksave-draft`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function listQuicksaveDrafts(operatingCompanyId: string) {
+  return apiRequest<{ drafts: Array<Record<string, unknown>> }>(
+    `/api/v1/dispatch/loads/quicksave-drafts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function getDispatchAssignmentHistory(loadId: string, operatingCompanyId: string) {
+  return apiRequest<{ rows: Array<Record<string, unknown>> }>(
+    `/api/v1/dispatch/loads/${loadId}/assignment-history?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function cancelDispatchLoad(
+  id: string,
+  body: {
+    operating_company_id: string;
+    reason_code: string;
+    cancellation_notes: string;
+    billable_to_customer?: boolean;
+    cancellation_charge_cents?: number;
+  }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/loads/${id}/cancel`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function listDispatchCancellationReasons() {
+  return apiRequest<{ reasons: Array<Record<string, unknown>> }>("/api/v1/dispatch/cancellation-reasons");
 }
