@@ -66,6 +66,7 @@ import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
+import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 
@@ -179,6 +180,7 @@ async function main() {
   await registerBankingFactoringVirtualRoutes(app);
   await registerBankingEscrowVisualizerRoutes(app);
   await registerFactoringRoutes(app);
+  await registerDataInfrastructureRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
