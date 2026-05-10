@@ -104,6 +104,33 @@ export type QboSyncQueueItem = {
   next_attempt_at: string;
 };
 
+export type CategorizationRule = {
+  id: string;
+  operating_company_id: string;
+  plaid_category_pattern: string;
+  coa_account_id: string | null;
+  priority: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CategorizationRulesStats = {
+  active_rules: number;
+  matched_7d: number;
+  unmatched_7d: number;
+};
+
+export type CategorizationPreviewTransaction = {
+  id: string;
+  transaction_date: string;
+  description: string | null;
+  plaid_category: string[];
+  coa_account_id: string | null;
+  account_number: string | null;
+  account_name: string | null;
+};
+
 function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
@@ -244,6 +271,59 @@ export function getReconciliationSessions(operatingCompanyId: string) {
 
 export function getQboSyncQueueStats(operatingCompanyId: string) {
   return apiRequest<QboSyncQueueStats>(`/api/v1/integrations/qbo/sync-queue/stats?${q(operatingCompanyId)}`);
+}
+
+export function getCategorizationRules(operatingCompanyId: string) {
+  return apiRequest<{ rules: CategorizationRule[] }>(`/api/v1/banking/categorization-rules?${q(operatingCompanyId)}`);
+}
+
+export function getCategorizationRulesStats(operatingCompanyId: string) {
+  return apiRequest<CategorizationRulesStats>(`/api/v1/banking/categorization-rules/stats?${q(operatingCompanyId)}`);
+}
+
+export function getCategorizationPreview(operatingCompanyId: string) {
+  return apiRequest<{ transactions: CategorizationPreviewTransaction[] }>(
+    `/api/v1/banking/categorization-rules/preview?${q(operatingCompanyId)}`
+  );
+}
+
+export function createCategorizationRule(
+  operatingCompanyId: string,
+  payload: { plaid_category_pattern: string; coa_account_id?: string | null; priority: number }
+) {
+  return apiRequest<{ id: string }>(`/api/v1/banking/categorization-rules?${q(operatingCompanyId)}`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function updateCategorizationRule(
+  id: string,
+  operatingCompanyId: string,
+  payload: Partial<{ plaid_category_pattern: string; coa_account_id: string | null; priority: number; is_active: boolean }>
+) {
+  return apiRequest<{ ok: true; id: string }>(`/api/v1/banking/categorization-rules/${id}?${q(operatingCompanyId)}`, {
+    method: "PATCH",
+    body: payload,
+  });
+}
+
+export function deactivateCategorizationRule(id: string, operatingCompanyId: string) {
+  return apiRequest<{ ok: true; id: string }>(`/api/v1/banking/categorization-rules/${id}?${q(operatingCompanyId)}`, {
+    method: "DELETE",
+  });
+}
+
+export function applyCategorizationRuleHistorical(id: string, operatingCompanyId: string) {
+  return apiRequest<{ matched: number }>(`/api/v1/banking/categorization-rules/${id}/apply-historical?${q(operatingCompanyId)}`, {
+    method: "POST",
+  });
+}
+
+export function getCoaAccounts() {
+  return apiRequest<{ accounts: Array<{ id: string; account_number: string; account_name: string; deactivated_at?: string | null }> }>(
+    `/api/v1/catalogs/accounts?status=active&limit=200`
+  );
 }
 
 export function getQboSyncQueue(

@@ -46,6 +46,7 @@ import { registerSafetyComplaintsRoutes } from "./routes/safety/complaints.js";
 import { registerSafetyIntegrityRoutes } from "./routes/safety/integrity.js";
 import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
+import { registerCategorizationRulesRoutes } from "./banking/categorization-rules.routes.js";
 import { registerBankingReconciliationRoutes } from "./banking/reconciliation.routes.js";
 import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
 import { registerBankingFactoringVirtualRoutes } from "./banking/factoring-virtual.routes.js";
@@ -211,6 +212,7 @@ async function main() {
   await registerLiabilitiesRoutes(app);
   await registerCashAdvancesRoutes(app);
   await registerBankingRoutes(app);
+  await registerCategorizationRulesRoutes(app);
   await registerBankingReconciliationRoutes(app);
   await registerBankingManualJeRoutes(app);
   await registerBankingFactoringVirtualRoutes(app);
