@@ -21,7 +21,7 @@ type ImportCounts = {
 type QboEntity = Record<string, unknown>;
 type QboTransaction = Record<string, unknown>;
 
-const ENTITY_TYPES = ["Account", "Customer", "Vendor", "Item", "Class", "BankAccount"] as const;
+const ENTITY_TYPES = ["Account", "Customer", "Vendor", "Item", "Class"] as const;
 const TXN_TYPES = [
   "Bill",
   "Invoice",
@@ -390,7 +390,7 @@ export async function importTransactions(actorUserId: string, batchId: string, q
         insertedSnapshotIds.push(snapshotId);
         const vendorName = ((row.VendorRef as { name?: string } | undefined)?.name ?? null) || null;
         try {
-          const flags = await detectAnomalies(actorUserId, {
+          await detectAnomalies(actorUserId, {
             batchId,
             operatingCompanyId: qboContext.operatingCompanyId,
             transactionSnapshotId: snapshotId,
@@ -401,9 +401,6 @@ export async function importTransactions(actorUserId: string, batchId: string, q
             createdAt: getCreateTime(row),
             attachmentsCount: 0,
           }, client);
-          if (flags.length > 0) {
-            await client.query(`UPDATE qbo_archive.transactions_snapshot SET forensic_flags = $2::text[] WHERE id = $1`, [snapshotId, flags]);
-          }
         } catch (error) {
           errors += 1;
           console.error("[FORENSIC_IMPORT]", {
@@ -456,7 +453,6 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
         `TxnDate >= '${sinceDate}' AND AttachableRef.EntityRef.value = '${tx.qbo_txn_id}'`
       ).catch(() => []);
 
-      let txAttachmentCount = 0;
       for (const attachment of attachables) {
         const attachmentId = String(attachment.Id ?? "");
         const fileName = String(attachment.FileName ?? `${attachmentId}.bin`);
@@ -521,7 +517,6 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
             // ON CONFLICT DO NOTHING: no-op only on duplicate attachment row.
             continue;
           }
-          txAttachmentCount += 1;
           imported += 1;
         } catch (error) {
           errors += 1;
@@ -536,9 +531,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
         }
       }
 
-      if (txAttachmentCount > 0) {
-        await client.query(`UPDATE qbo_archive.transactions_snapshot SET attachments_count = $2 WHERE id = $1`, [tx.id, txAttachmentCount]);
-      }
+      // transactions_snapshot is append-only by design; keep attachment counts in attachments_snapshot.
     }
 
     await client.query(
