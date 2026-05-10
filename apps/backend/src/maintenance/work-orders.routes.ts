@@ -96,6 +96,7 @@ const createWorkOrderV5Schema = z.object({
     unit_id: z.string().uuid(),
     driver_id: z.string().uuid().optional(),
     load_id: z.string().uuid().optional(),
+    load_exemption_reason: z.string().trim().min(20).optional(),
     service_date: z.string().optional(),
     repair_location: z.string().default("in_house"),
     vendor_id: z.string().uuid().optional(),
@@ -154,6 +155,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 
 const G18_REQUIRED_CODES = new Set(["FUEL", "DIESEL", "ROADSIDE", "TOLL", "PARKING"]);
 const G18_DESCRIPTION_REGEX = /\b(fuel|diesel|roadside|toll|parking)\b/i;
+const CLOSED_STATUSES = new Set(["closed", "completed", "voided", "complete", "cancelled"]);
 
 async function relationExists(
   client: { query: <R = { ok: boolean }>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
@@ -315,7 +317,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         const requiresLoad = await withCompany(user.uuid, body.header.operating_company_id, async (client) =>
           hasLoadRequiredExpenseCategories(client, body.sectionA)
         );
-        if (requiresLoad && !body.header.load_id) {
+        if (requiresLoad && !body.header.load_id && !body.header.load_exemption_reason) {
           return reply.code(422).send({
             error: "E_DIESEL_REQUIRES_LOAD",
             message: "Diesel/over-the-road expenses must link to a load (G18 invariant)",
@@ -336,7 +338,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                 client as never,
                 user.uuid,
                 created.woUuid,
-                body.header.payment_account_uuid ?? null
+                body.header.payment_account_uuid ?? null,
+                body.header.load_exemption_reason ?? null
               );
             } else {
               await allocateInHouseFromWO(client as never, user.uuid, created.woUuid);
@@ -493,6 +496,20 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         "info",
         "BT-3-MAINTENANCE-REBUILD"
       );
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "maintenance.work_order.opened",
+        {
+          resource_type: "maintenance.work_orders",
+          resource_id: wo.id,
+          operating_company_id: wo.operating_company_id,
+          opened_at: wo.opened_at ?? wo.created_at ?? new Date().toISOString(),
+          status: wo.status,
+        },
+        "info",
+        "P5-D5-WO-TIME"
+      );
 
       await appendCrudAudit(
         client,
@@ -627,6 +644,20 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           "info",
           "P3-T11.6.2-ARRIVING-SOON"
         );
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "maintenance.work_order.closed",
+          {
+            resource_type: "maintenance.work_orders",
+            resource_id: params.data.id,
+            operating_company_id: companyId,
+            closed_at: updateRes.rows[0]?.closed_at ?? updateRes.rows[0]?.updated_at ?? new Date().toISOString(),
+            status: updateRes.rows[0]?.status ?? "complete",
+          },
+          "info",
+          "P5-D5-WO-TIME"
+        );
         return { row: updateRes.rows[0] };
       } catch (error) {
         const message = String((error as Error).message ?? "completion_failed");
@@ -682,6 +713,27 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         "info",
         "BT-3-MAINTENANCE-REBUILD"
       );
+      if (CLOSED_STATUSES.has(parsed.data.new_status)) {
+        const closedRes = await client.query(
+          `SELECT closed_at::text, updated_at::text, status FROM maintenance.work_orders WHERE id = $1 LIMIT 1`,
+          [params.data.id]
+        );
+        const closedRow = closedRes.rows[0] as { closed_at?: string | null; updated_at?: string | null; status?: string } | undefined;
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "maintenance.work_order.closed",
+          {
+            resource_type: "maintenance.work_orders",
+            resource_id: params.data.id,
+            operating_company_id: companyId,
+            closed_at: closedRow?.closed_at ?? closedRow?.updated_at ?? new Date().toISOString(),
+            status: closedRow?.status ?? parsed.data.new_status,
+          },
+          "info",
+          "P5-D5-WO-TIME"
+        );
+      }
       return { ok: true as const };
     });
 

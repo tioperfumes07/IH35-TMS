@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { createWorkOrder, type PaymentTiming, type WorkOrderType } from "../../../api/maintenance";
+import { createWorkOrder, suggestExpenseLoad, type PaymentTiming, type WorkOrderType } from "../../../api/maintenance";
+import { ApiError } from "../../../api/client";
 import { Button } from "../../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
@@ -26,6 +28,7 @@ export type CreateWOFormValues = {
   external_vendor_wo_number: string;
   external_vendor_invoice_number: string;
   load_id: string;
+  load_exemption_reason: string;
   description: string;
   payment_timing: PaymentTiming;
   bill_terms: string;
@@ -77,6 +80,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       external_vendor_wo_number: "",
       external_vendor_invoice_number: "",
       load_id: "",
+      load_exemption_reason: "",
       description: "",
       payment_timing: "vendor_invoice",
       bill_terms: "net_30",
@@ -95,11 +99,23 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       ...initialValues,
     });
     setLines([]);
+    setSuggestionPinned(false);
+    setBackendLoadError(null);
   }, [form, initialType, initialValues, open]);
 
   const selectedType = form.watch("wo_type");
   const sourceType = form.watch("source_type");
   const paymentTiming = form.watch("payment_timing");
+  const driverId = form.watch("driver_id");
+  const unitId = form.watch("unit_id");
+  const serviceDate = form.watch("service_date");
+  const selectedLoad = form.watch("load_id");
+  const [backendLoadError, setBackendLoadError] = useState<string | null>(null);
+  const [suggestionPinned, setSuggestionPinned] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    setSuggestionPinned(false);
+  }, [driverId, unitId, serviceDate, open]);
   const needsExternalVendor = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   const checks = [
     { label: "Unit active and class set", ok: Boolean(form.watch("unit_id")) },
@@ -151,6 +167,26 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const requiresLoadForG18 =
     paymentTiming === "paid_same_day" &&
     sectionALines.some((line) => G18_EXPENSE_REGEX.test(line.description));
+  const suggestionQuery = useQuery({
+    queryKey: ["maintenance", "suggest-load", operatingCompanyId, driverId, unitId, serviceDate],
+    queryFn: () =>
+      suggestExpenseLoad({
+        operating_company_id: operatingCompanyId,
+        driver_id: driverId || undefined,
+        unit_id: unitId || undefined,
+        transaction_date: serviceDate,
+      }),
+    enabled: Boolean(operatingCompanyId && serviceDate && (driverId || unitId)),
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    if (selectedLoad || suggestionPinned) return;
+    const suggested = suggestionQuery.data?.data;
+    if (!suggested?.load_id) return;
+    form.setValue("load_id", suggested.load_id, { shouldDirty: false });
+    setSuggestionPinned(true);
+  }, [form, open, selectedLoad, suggestionPinned, suggestionQuery.data]);
 
   const submit = async (mode: "full" | "wo_only") => {
     const values = form.getValues();
@@ -159,9 +195,12 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       return;
     }
     if (mode === "full" && requiresLoadForG18 && !values.load_id) {
-      pushToast("Diesel/over-the-road expenses must link to a load (G18 invariant)", "error");
-      return;
+      if (values.load_exemption_reason.trim().length < 20) {
+        pushToast("Diesel/over-the-road expenses need a load or exemption reason (>=20 chars)", "error");
+        return;
+      }
     }
+    setBackendLoadError(null);
     try {
       const response = await createWorkOrder({
         header: {
@@ -183,6 +222,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           bill_terms: values.bill_terms || undefined,
           bill_date: values.bill_date || undefined,
           due_date: values.due_date || undefined,
+          load_exemption_reason: values.load_exemption_reason?.trim() || undefined,
         },
         sectionA: sectionALines,
         sectionB: sectionBLines,
@@ -197,6 +237,15 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       onCreated();
       onClose();
     } catch (error) {
+      if (error instanceof ApiError) {
+        const payload = error.data as { error?: string; message?: string } | undefined;
+        if (payload?.error === "E_LOAD_FK_REQUIRED" || payload?.error === "E_DIESEL_REQUIRES_LOAD") {
+          const msg = payload.message || "Load is required for this expense category.";
+          setBackendLoadError(msg);
+          pushToast(msg, "error");
+          return;
+        }
+      }
       pushToast(`Failed to create work order: ${String((error as Error).message || error)}`, "error");
     }
   };
@@ -221,7 +270,20 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
           Work Order Details
         </div>
-        <CreateWOSectionIdentification register={form.register} watch={form.watch} requireLoadForExpense={requiresLoadForG18} />
+        <CreateWOSectionIdentification
+          register={form.register}
+          watch={form.watch}
+          requireLoadForExpense={requiresLoadForG18}
+          suggestedLoad={
+            suggestionQuery.data?.data
+              ? {
+                  load_number: suggestionQuery.data.data.load_number,
+                  confidence: suggestionQuery.data.data.confidence,
+                }
+              : null
+          }
+          backendLoadError={backendLoadError}
+        />
         <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} />
         <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
           Class auto-derive: <span className="font-semibold">{form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`}</span>
@@ -243,7 +305,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house"} onClick={() => void submit("wo_only")}>
               Save WO Only
             </Button>
-            <Button type="button" disabled={requiresLoadForG18 && !Boolean(form.watch("load_id"))} onClick={() => void submit("full")}>
+            <Button
+              type="button"
+              disabled={requiresLoadForG18 && !Boolean(form.watch("load_id")) && form.watch("load_exemption_reason").trim().length < 20}
+              onClick={() => void submit("full")}
+            >
               {paymentTiming === "vendor_invoice" ? "Save WO & Create Bill" : paymentTiming === "paid_same_day" ? "Save WO & Create Expense" : "Save WO"}
             </Button>
           </div>

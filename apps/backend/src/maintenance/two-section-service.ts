@@ -12,6 +12,7 @@ export type TwoSectionHeader = {
   unit_id: string;
   driver_id?: string | null;
   load_id?: string | null;
+  load_exemption_reason?: string | null;
   service_date?: string | null;
   repair_location: string;
   vendor_id?: string | null;
@@ -275,6 +276,19 @@ export async function createWorkOrderWithLines(
     "info",
     "P3-T11.17-TWO-SECTION-V5"
   );
+  await appendCrudAudit(
+    client as never,
+    userId,
+    "maintenance.work_order.opened",
+    {
+      resource_type: "maintenance.work_orders",
+      resource_id: wo.id,
+      opened_at: new Date().toISOString(),
+      status: header.status ?? "open",
+    },
+    "info",
+    "P5-D5-WO-TIME"
+  );
 
   return { woUuid: wo.id, display_id: wo.display_id, classHint };
 }
@@ -386,7 +400,8 @@ export async function autoCreateExpenseFromWO(
   client: DbClient,
   userId: string,
   woUuid: string,
-  paymentAccountUuid?: string | null
+  paymentAccountUuid?: string | null,
+  loadExemptionReason?: string | null
 ) {
   if (!(await relationExists(client, "accounting.expenses"))) return null;
   const woContext = await client.query<{
@@ -444,7 +459,8 @@ export async function autoCreateExpenseFromWO(
         `,
     [woUuid]
   );
-  if (expenseCategoryRequiresLoad.rows[0]?.requires_load && !wo.load_id) {
+  const exemptionReason = String(loadExemptionReason ?? "").trim();
+  if (expenseCategoryRequiresLoad.rows[0]?.requires_load && !wo.load_id && exemptionReason.length < 20) {
     throw new Error("E_DIESEL_REQUIRES_LOAD");
   }
 
@@ -486,6 +502,69 @@ export async function autoCreateExpenseFromWO(
   if (!expenseId) return null;
   if (await relationExists(client, "accounting.expense_lines")) {
     await copyToAccountingLines(client, woUuid, "accounting.expense_lines", "expense_id", expenseId);
+
+    const hasLoadId = await columnExists(client, "accounting.expense_lines", "load_id");
+    const hasLoadRequired = await columnExists(client, "accounting.expense_lines", "load_required");
+    const hasExemption = await columnExists(client, "accounting.expense_lines", "load_exemption_reason");
+    const hasLineCategory = await columnExists(client, "accounting.expense_lines", "line_category");
+    if (hasLoadId || hasLoadRequired || hasExemption || hasLineCategory) {
+      const updates: string[] = [];
+      const values: unknown[] = [];
+      if (hasLoadId) {
+        values.push(wo.load_id ?? null);
+        updates.push(`load_id = $${values.length}`);
+      }
+      if (hasLoadRequired) {
+        values.push(Boolean(expenseCategoryRequiresLoad.rows[0]?.requires_load));
+        updates.push(`load_required = $${values.length}`);
+      }
+      if (hasExemption) {
+        values.push(exemptionReason.length >= 20 ? exemptionReason : null);
+        updates.push(`load_exemption_reason = $${values.length}`);
+      }
+      if (hasLineCategory) {
+        updates.push(`
+          line_category = CASE
+            WHEN upper(COALESCE(description, '')) LIKE '%DIESEL%' OR upper(COALESCE(description, '')) LIKE '%FUEL%' THEN 'diesel'
+            WHEN upper(COALESCE(description, '')) LIKE '%TOLL%' THEN 'toll'
+            WHEN upper(COALESCE(description, '')) LIKE '%SCALE%' THEN 'scale'
+            WHEN upper(COALESCE(description, '')) LIKE '%LUMPER%' THEN 'lumper'
+            WHEN upper(COALESCE(description, '')) LIKE '%PARKING%' THEN 'parking'
+            WHEN upper(COALESCE(description, '')) LIKE '%ROADSIDE%' THEN 'roadside_repair'
+            ELSE line_category
+          END
+        `);
+      }
+      values.push(expenseId);
+      await client.query(
+        `
+          UPDATE accounting.expense_lines
+          SET ${updates.join(",\n              ")}
+          WHERE expense_id = $${values.length}
+        `,
+        values
+      );
+    }
+
+    if (wo.load_id) {
+      await appendCrudAudit(
+        client as never,
+        userId,
+        "accounting.expense_line.load_linked",
+        { work_order_id: woUuid, expense_id: expenseId, load_id: wo.load_id },
+        "info",
+        "P5-D5-LOAD-FK"
+      );
+    } else if (exemptionReason.length >= 20) {
+      await appendCrudAudit(
+        client as never,
+        userId,
+        "accounting.expense_line.load_exempted",
+        { work_order_id: woUuid, expense_id: expenseId, load_exemption_reason: exemptionReason },
+        "warning",
+        "P5-D5-LOAD-FK"
+      );
+    }
   }
   await appendCrudAudit(
     client as never,

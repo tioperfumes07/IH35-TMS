@@ -8,6 +8,25 @@ type Props = {
   onExternalVendorChange: (value: string) => void;
 };
 
+function formatDuration(seconds: number) {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  if (days > 0) return `${days}d ${hours}h`;
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${hours}h ${minutes}m`;
+}
+
+function renderDuration(row: WorkOrder) {
+  if (typeof row.duration_seconds === "number" && row.duration_seconds > 0) {
+    return `Closed in ${formatDuration(row.duration_seconds)}`;
+  }
+  if (row.opened_at) {
+    const openFor = Math.max(0, Math.floor((Date.now() - new Date(row.opened_at).getTime()) / 1000));
+    return `Open for ${formatDuration(openFor)}`;
+  }
+  return "—";
+}
+
 export function WorkOrdersTable({
   rows,
   sourceTypeFilter,
@@ -52,7 +71,7 @@ export function WorkOrdersTable({
               <th className="px-2 py-1">Vendor</th>
               <th className="px-2 py-1">Status</th>
               <th className="px-2 py-1">Cost</th>
-              <th className="px-2 py-1">Created</th>
+              <th className="px-2 py-1">Timing</th>
             </tr>
           </thead>
           <tbody>
@@ -65,7 +84,7 @@ export function WorkOrdersTable({
                 <td className="px-2 py-1">{row.external_vendor_id ?? "—"}</td>
                 <td className="px-2 py-1">{row.status}</td>
                 <td className="px-2 py-1">${Number((row as Record<string, unknown>).total_actual_cost ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1">{String(row.opened_at ?? "").slice(0, 10)}</td>
+                <td className="px-2 py-1">{renderDuration(row)}</td>
               </tr>
             ))}
             {rows.length === 0 ? (
