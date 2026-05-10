@@ -149,6 +149,7 @@ const EVENT_CLASSES = [
   "banking.transaction.matched",
   "banking.transaction.unmatched",
   "banking.transaction.qbo_synced",
+  "banking.qbo_sync.enqueued",
   "banking.reconciliation.started",
   "banking.reconciliation.completed",
   "banking.plaid.link_token_created",
@@ -170,6 +171,11 @@ const EVENT_CLASSES = [
   "integrations.qbo.token_refreshed",
   "integrations.qbo.revoked",
   "integrations.qbo.refresh_failed",
+  "integrations.qbo_sync.synced",
+  "integrations.qbo_sync.failed",
+  "integrations.qbo_sync.blocked",
+  "integrations.qbo_sync.retry_requested",
+  "integrations.qbo_sync.skipped",
 ];
 
 const WARNING_EVENTS = new Set([
@@ -203,6 +209,9 @@ const WARNING_EVENTS = new Set([
   "qbo_archive.import_failed",
   "integrations.qbo.revoked",
   "integrations.qbo.refresh_failed",
+  "integrations.qbo_sync.failed",
+  "integrations.qbo_sync.blocked",
+  "integrations.qbo_sync.skipped",
 ]);
 
 async function runWithBypass(client, fn) {

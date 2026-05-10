@@ -82,6 +82,28 @@ export type ReconciliationWorkspacePayload = {
   };
 };
 
+export type QboSyncQueueStats = {
+  pending: number;
+  in_flight: number;
+  synced: number;
+  failed: number;
+  blocked: number;
+  average_sync_ms: number;
+  last_successful_sync_at: string | null;
+};
+
+export type QboSyncQueueItem = {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  sync_status: "pending" | "in_flight" | "synced" | "failed" | "blocked";
+  attempt_count: number;
+  max_attempts: number;
+  error_message: string | null;
+  updated_at: string;
+  next_attempt_at: string;
+};
+
 function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
@@ -218,6 +240,34 @@ export function getReconciliationSessions(operatingCompanyId: string) {
   return apiRequest<{ open_sessions: ReconciliationSession[]; completed_sessions: ReconciliationSession[] }>(
     `/api/v1/banking/reconciliation/sessions?${q(operatingCompanyId)}`
   );
+}
+
+export function getQboSyncQueueStats(operatingCompanyId: string) {
+  return apiRequest<QboSyncQueueStats>(`/api/v1/integrations/qbo/sync-queue/stats?${q(operatingCompanyId)}`);
+}
+
+export function getQboSyncQueue(
+  operatingCompanyId: string,
+  options: { status?: "pending" | "in_flight" | "synced" | "failed" | "blocked"; limit?: number; offset?: number } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (options.status) params.set("status", options.status);
+  params.set("limit", String(options.limit ?? 100));
+  params.set("offset", String(options.offset ?? 0));
+  return apiRequest<{ items: QboSyncQueueItem[] }>(`/api/v1/integrations/qbo/sync-queue?${params.toString()}`);
+}
+
+export function retryQboSyncQueueItem(id: string, operatingCompanyId: string) {
+  return apiRequest<{ ok: true }>(`/api/v1/integrations/qbo/sync-queue/${id}/retry?${q(operatingCompanyId)}`, {
+    method: "POST",
+  });
+}
+
+export function skipQboSyncQueueItem(id: string, operatingCompanyId: string, reason: string) {
+  return apiRequest<{ ok: true }>(`/api/v1/integrations/qbo/sync-queue/${id}/skip`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, reason },
+  });
 }
 
 export function startReconciliationSession(payload: {

@@ -15,6 +15,7 @@ import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
 import { BankAccountDetailPage } from "./pages/banking/BankAccountDetail";
+import { QboSyncQueuePage } from "./pages/banking/QboSyncQueuePage";
 import { ReconciliationWorkspacePage } from "./pages/banking/ReconciliationWorkspace";
 import { SafetyLayout } from "./pages/safety/SafetyLayout";
 import {
@@ -256,6 +257,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ReconciliationWorkspacePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/qbo-sync-queue"
+          element={
+            <ProtectedRoute>
+              <QboSyncQueuePage />
             </ProtectedRoute>
           }
         />

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { computePayloadHashFromTxn, enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -623,7 +624,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       return reply.code(403).send({ error: "force_complete_requires_owner_or_admin" });
     }
 
-    await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const transactionsToSync = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       await client.query(
         `
           UPDATE banking.reconciliation_sessions
@@ -661,7 +662,54 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         "info",
         "P5-T2-RECON"
       );
+
+      const syncCandidatesRes = await client.query<{
+        id: string;
+        amount_cents: number;
+        transaction_date: string;
+        matched_load_id: string | null;
+        matched_bill_id: string | null;
+        matched_settlement_id: string | null;
+      }>(
+        `
+          SELECT
+            id,
+            amount_cents::int,
+            transaction_date::text,
+            matched_load_id,
+            matched_bill_id,
+            matched_settlement_id
+          FROM banking.bank_transactions
+          WHERE bank_account_id = $1
+            AND operating_company_id = $2
+            AND transaction_date BETWEEN $3 AND $4
+            AND (matched_load_id IS NOT NULL OR matched_bill_id IS NOT NULL OR matched_settlement_id IS NOT NULL)
+            AND qbo_synced_at IS NULL
+        `,
+        [session.bank_account_id, query.data.operating_company_id, session.period_start, session.period_end]
+      );
+      return syncCandidatesRes.rows;
     });
+
+    for (const txn of transactionsToSync) {
+      const payloadHash = computePayloadHashFromTxn(txn);
+      const queued = await enqueueSyncJob(query.data.operating_company_id, "bank_transaction", txn.id, payloadHash, user.uuid);
+      await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "banking.qbo_sync.enqueued",
+          {
+            resource_type: "banking.bank_transactions",
+            resource_id: txn.id,
+            queue_id: queued.id,
+            session_id: session.id,
+          },
+          "info",
+          "P5-T3-QBO-SYNC"
+        );
+      });
+    }
 
     return { ok: true, variance_cents: varianceCents };
   });
