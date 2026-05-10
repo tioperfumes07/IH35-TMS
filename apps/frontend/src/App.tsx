@@ -65,6 +65,7 @@ import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
 import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
 import { FactoringListPage } from "./pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
+import { VendorBalancesPage } from "./pages/accounting/VendorBalancesPage";
 import { InternalFineReasonsListPage } from "./pages/lists/safety/InternalFineReasonsListPage";
 import { CivilFineTypesListPage } from "./pages/lists/safety/CivilFineTypesListPage";
 import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViolationTypesListPage";
@@ -460,6 +461,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <FactoringDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/vendor-balances"
+          element={
+            <ProtectedRoute>
+              <VendorBalancesPage />
             </ProtectedRoute>
           }
         />

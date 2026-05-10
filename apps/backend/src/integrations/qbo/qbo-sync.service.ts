@@ -5,7 +5,7 @@ import { sendEmail } from "../../notifications/email.service.js";
 import { getValidAccessToken } from "./qbo-oauth.service.js";
 import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from "./qbo-mappers.js";
 
-type QueueEntityType = "bank_transaction" | "bill" | "expense" | "invoice" | "journal_entry" | "settlement" | "transfer";
+type QueueEntityType = "bank_transaction" | "bill" | "bill_payment" | "expense" | "invoice" | "journal_entry" | "settlement" | "transfer";
 type QueueStatus = "pending" | "in_flight" | "synced" | "failed" | "blocked";
 
 type QueueRow = {
@@ -192,6 +192,42 @@ async function syncTransferPreview(job: QueueRow) {
     );
     return { mode: "create_preview", qboId };
   });
+}
+
+async function syncBillPreview(job: QueueRow) {
+  const qboId = `preview-bill-${job.entity_id}`;
+  await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+    await client.query(
+      `
+        UPDATE accounting.bills
+        SET qbo_bill_id = $2,
+            updated_at = now()
+        WHERE id = $1
+          AND operating_company_id = $3
+      `,
+      [job.entity_id, qboId, job.operating_company_id]
+    );
+  });
+  return { qboId, mode: "preview" as const };
+}
+
+async function syncBillPaymentPreview(job: QueueRow) {
+  const qboId = `preview-bill-payment-${job.entity_id}`;
+  await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+    await client.query(
+      `
+        UPDATE accounting.bill_payments
+        SET qbo_bill_payment_id = $2,
+            updated_at = now()
+        WHERE id = $1
+          AND operating_company_id = $3
+      `,
+      [job.entity_id, qboId, job.operating_company_id]
+    );
+  });
+  return { qboId, mode: "preview" as const };
 }
 
 type QboSyncSuccess = { qboId: string; syncToken: string | null };
@@ -394,6 +430,56 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
           errorDetails: {
             mode: preview.mode,
             note: "Transfer sync is running in preview mode; QBO journal entry create/delete will be wired in later phase.",
+          },
+        });
+        synced += 1;
+        await appendSyncAudit(
+          "integrations.qbo_sync.synced",
+          {
+            queue_id: job.id,
+            operating_company_id: job.operating_company_id,
+            entity_id: job.entity_id,
+            mode: preview.mode,
+            qbo_id: preview.qboId,
+          },
+          "info",
+          null
+        );
+        continue;
+      }
+      if (job.entity_type === "bill") {
+        const preview = await syncBillPreview(job);
+        await markJobResult(job, "synced", {
+          qboId: preview.qboId,
+          errorMessage: null,
+          errorDetails: {
+            mode: preview.mode,
+            note: "Bill sync is running in preview mode; QBO Bill create will be wired in later phase.",
+          },
+        });
+        synced += 1;
+        await appendSyncAudit(
+          "integrations.qbo_sync.synced",
+          {
+            queue_id: job.id,
+            operating_company_id: job.operating_company_id,
+            entity_id: job.entity_id,
+            mode: preview.mode,
+            qbo_id: preview.qboId,
+          },
+          "info",
+          null
+        );
+        continue;
+      }
+      if (job.entity_type === "bill_payment") {
+        const preview = await syncBillPaymentPreview(job);
+        await markJobResult(job, "synced", {
+          qboId: preview.qboId,
+          errorMessage: null,
+          errorDetails: {
+            mode: preview.mode,
+            note: "Bill payment sync is running in preview mode; QBO Bill Payment create will be wired in later phase.",
           },
         });
         synced += 1;
