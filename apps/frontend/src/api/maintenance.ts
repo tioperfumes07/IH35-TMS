@@ -103,6 +103,33 @@ export type PartsInventoryRow = {
   updated_at: string;
 };
 
+export type SevereRepairEstimate = {
+  id: string;
+  unit_id: string;
+  unit_number: string | null;
+  trigger_wo_id: string | null;
+  damage_severity: "severe" | "out_of_service" | "total_loss";
+  estimate_status: "open" | "awaiting_approval" | "approved" | "rejected" | "completed";
+  estimate_location: string | null;
+  estimated_labor_cents: number;
+  estimated_parts_cents: number;
+  estimated_outside_service_cents: number;
+  estimated_total_cents: number;
+  description: string | null;
+  estimated_completion_date: string | null;
+  refreshed_at: string;
+  is_oos: boolean;
+  oos_since: string | null;
+  days_oos: number;
+};
+
+export type SevereRepairRollup = {
+  open_count: number;
+  total_cents: number;
+  avg_days_oos: number;
+  oldest_oos_days: number;
+};
+
 export type CreateWorkOrderLegacyPayload = {
   operating_company_id: string;
   wo_type: WorkOrderType;
@@ -199,6 +226,48 @@ export function getMaintenanceSevereAlerts(companyId: string) {
   return apiRequest<{ alerts: Array<Record<string, unknown>> }>(
     `/api/v1/maintenance/dashboard/severe-alerts?${query(companyId)}`
   );
+}
+
+export function listSevereRepairEstimates(companyId: string) {
+  return apiRequest<{ data: SevereRepairEstimate[] }>(
+    `/api/v1/maintenance/severe-repair-estimates?${query(companyId)}`
+  );
+}
+
+export function getSevereRepairRollup(companyId: string) {
+  return apiRequest<{ data: SevereRepairRollup }>(
+    `/api/v1/maintenance/severe-repair-estimates/total?${query(companyId)}`
+  );
+}
+
+export function refreshSevereRepairEstimate(id: string, operatingCompanyId: string) {
+  return apiRequest<{ data: { id: string; estimated_total_cents: number } }>(
+    `/api/v1/maintenance/severe-repair-estimates/${id}/refresh`,
+    {
+      method: "POST",
+      body: { operating_company_id: operatingCompanyId },
+    }
+  );
+}
+
+export function markUnitOos(
+  unitId: string,
+  payload: { operating_company_id: string; reason: string; oos_location?: string }
+) {
+  return apiRequest<{ data: { unit_id: string } }>(`/api/v1/maintenance/units/${unitId}/mark-oos`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function markUnitBackInService(
+  unitId: string,
+  payload: { operating_company_id: string; review_notes: string }
+) {
+  return apiRequest<{ data: { unit_id: string } }>(`/api/v1/maintenance/units/${unitId}/mark-back-in-service`, {
+    method: "POST",
+    body: payload,
+  });
 }
 
 export function getMaintenanceInTransitQueue(companyId: string) {
