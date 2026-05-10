@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import {
+  getDispatchAssignmentHistory,
   getDispatchDashboard,
   getDispatchDriverStatus,
   getDispatchLoadDetail,
   getDispatchPreferences,
+  listQuicksaveDrafts,
   listDispatchLoads,
   listUnitsWithoutLoad,
+  quickAssignDispatchLoad,
   type DispatchLoad,
   type DispatchStatus,
   updateDispatchPreferences,
@@ -23,6 +26,7 @@ import { LoadTable } from "./components/LoadTable";
 import { UnitsWithoutLoadTable } from "./components/UnitsWithoutLoadTable";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { QuickAssignModal } from "./components/QuickAssignModal";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
@@ -43,6 +47,9 @@ export function DispatchHomePage() {
   const [bookOpen, setBookOpen] = useState(false);
   const [selectedLoad, setSelectedLoad] = useState<string | null>(searchParams.get("load_id"));
   const [driverStatusLoad, setDriverStatusLoad] = useState<DispatchLoad | null>(null);
+  const [quickAssignLoad, setQuickAssignLoad] = useState<DispatchLoad | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; row: DispatchLoad } | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const prefQuery = useQuery({
     queryKey: ["dispatch", "prefs"],
@@ -98,6 +105,16 @@ export function DispatchHomePage() {
     queryFn: () => listUnitsWithoutLoad(companyId),
     enabled: Boolean(companyId),
   });
+  const draftsQuery = useQuery({
+    queryKey: ["dispatch", "v2", "quicksave-drafts", companyId],
+    queryFn: () => listQuicksaveDrafts(companyId),
+    enabled: Boolean(companyId),
+  });
+  const historyQuery = useQuery({
+    queryKey: ["dispatch", "v2", "assignment-history", companyId, selectedLoad],
+    queryFn: () => getDispatchAssignmentHistory(selectedLoad as string, companyId),
+    enabled: Boolean(companyId && selectedLoad && historyOpen),
+  });
 
   const driverStatusQuery = useQuery({
     queryKey: ["dispatch", "v2", "driver-status", companyId, driverStatusLoad?.id ?? "none"],
@@ -111,6 +128,19 @@ export function DispatchHomePage() {
       queryFn: () => getDispatchLoadDetail(id, companyId),
     });
   };
+  const loads = loadsQuery.data?.loads ?? [];
+  const unitsWithoutLoad = unitsQuery.data?.units ?? [];
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key.toLowerCase() === "a" && selectedLoad) {
+        const row = loads.find((item) => item.id === selectedLoad);
+        if (row) setQuickAssignLoad(row);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [loads, selectedLoad]);
 
   const setView = async (nextView: DispatchV2View) => {
     const next = new URLSearchParams(searchParams);
@@ -135,9 +165,6 @@ export function DispatchHomePage() {
     ],
     [kpiQuery.data]
   );
-
-  const loads = loadsQuery.data?.loads ?? [];
-  const unitsWithoutLoad = unitsQuery.data?.units ?? [];
 
   return (
     <div className="space-y-3">
@@ -176,6 +203,11 @@ export function DispatchHomePage() {
           </div>
         ))}
       </div>
+      {(draftsQuery.data?.drafts?.length ?? 0) > 0 ? (
+        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          {(draftsQuery.data?.drafts?.length ?? 0)} quicksave drafts pending completion
+        </div>
+      ) : null}
 
       {resolvedView === "home" ? (
         <>
@@ -192,6 +224,10 @@ export function DispatchHomePage() {
                 setSearchParams(next);
               }}
               onDriverStatusClick={(row) => setDriverStatusLoad(row)}
+              onRowContextMenu={(row, event) => {
+                event.preventDefault();
+                setContextMenu({ x: event.clientX, y: event.clientY, row });
+              }}
             />
           </section>
 
@@ -213,6 +249,10 @@ export function DispatchHomePage() {
               setSearchParams(next);
             }}
             onDriverStatusClick={(row) => setDriverStatusLoad(row)}
+            onRowContextMenu={(row, event) => {
+              event.preventDefault();
+              setContextMenu({ x: event.clientX, y: event.clientY, row });
+            }}
           />
         </section>
       )}
@@ -246,6 +286,78 @@ export function DispatchHomePage() {
           </pre>
         </div>
       </Modal>
+      <Modal open={historyOpen} onClose={() => setHistoryOpen(false)} title="Assignment History">
+        <pre className="max-h-[300px] overflow-auto rounded bg-gray-50 p-2 text-xs">
+          {JSON.stringify(historyQuery.data?.rows ?? [], null, 2)}
+        </pre>
+      </Modal>
+      <QuickAssignModal
+        open={Boolean(quickAssignLoad)}
+        loadNumber={quickAssignLoad?.load_number ?? "Load"}
+        hardWarnings={[]}
+        onClose={() => setQuickAssignLoad(null)}
+        onSubmit={async (payload) => {
+          if (!quickAssignLoad) return;
+          await quickAssignDispatchLoad(quickAssignLoad.id, {
+            operating_company_id: companyId,
+            driver_id: payload.driver_id,
+            unit_id: payload.unit_id,
+            trailer_id: payload.trailer_id,
+            assignment_method: "quicksave",
+            acknowledged_warnings: payload.acknowledged_warnings,
+          });
+          pushToast("Load quick-assigned", "success");
+          void queryClient.invalidateQueries({ queryKey: ["dispatch", "v2"] });
+        }}
+      />
+      {contextMenu ? (
+        <div
+          className="fixed z-50 min-w-[170px] rounded border border-gray-200 bg-white p-1 text-xs shadow-lg"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          <button
+            type="button"
+            className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100"
+            onClick={() => {
+              setQuickAssignLoad(contextMenu.row);
+              setContextMenu(null);
+            }}
+          >
+            Quick Assign
+          </button>
+          <button
+            type="button"
+            className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100"
+            onClick={() => {
+              setQuickAssignLoad(contextMenu.row);
+              setContextMenu(null);
+            }}
+          >
+            Re-Assign
+          </button>
+          <button
+            type="button"
+            className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100"
+            onClick={() => {
+              setSelectedLoad(contextMenu.row.id);
+              setContextMenu(null);
+            }}
+          >
+            Open Full Edit
+          </button>
+          <button
+            type="button"
+            className="block w-full rounded px-2 py-1 text-left hover:bg-gray-100"
+            onClick={() => {
+              setSelectedLoad(contextMenu.row.id);
+              setHistoryOpen(true);
+              setContextMenu(null);
+            }}
+          >
+            View History
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

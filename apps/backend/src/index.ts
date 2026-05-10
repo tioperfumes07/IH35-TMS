@@ -8,6 +8,7 @@ import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerIdentityRoutes } from "./identity/users.routes.js";
+import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
 import { registerCatalogsRoutes } from "./catalogs/index.js";
 import { registerCatalogRegistryRoutes } from "./catalogs/catalog-registry.routes.js";
@@ -21,6 +22,8 @@ import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors
 import { registerSafetyCatalogRoutes } from "./catalogs/safety/index.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
+import { registerDispatchQuicksaveRoutes } from "./dispatch/quicksave.routes.js";
+import { registerDispatchCancellationRoutes } from "./dispatch/cancellation.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
@@ -123,6 +126,7 @@ async function main() {
   await registerEmailAuthRoutes(app);
   await registerInviteAuthRoutes(app);
   await registerIdentityRoutes(app);
+  await registerUserPreferencesRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);
   await registerDriverProfileRoutes(app);
@@ -149,6 +153,8 @@ async function main() {
   await registerFileCategoriesRoutes(app);
   await registerDocsFilesRoutes(app);
   await registerDispatchLoadRoutes(app);
+  await registerDispatchQuicksaveRoutes(app);
+  await registerDispatchCancellationRoutes(app);
   await registerIntransitIssuesRoutes(app);
   await registerDriverRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);

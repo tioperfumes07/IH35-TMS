@@ -15,6 +15,7 @@ export type TwoSectionHeader = {
   load_exemption_reason?: string | null;
   service_date?: string | null;
   repair_location: string;
+  bucket?: "in_house" | "external" | "roadside";
   vendor_id?: string | null;
   vendor_invoice_number?: string | null;
   external_vendor_id?: string | null;
@@ -27,6 +28,11 @@ export type TwoSectionHeader = {
   bill_date?: string | null;
   due_date?: string | null;
   payment_account_uuid?: string | null;
+  roadside_callout_at?: string | null;
+  roadside_arrived_at?: string | null;
+  roadside_provider_vendor_id?: string | null;
+  roadside_location?: string | null;
+  roadside_breakdown_load_id?: string | null;
 };
 
 export type SectionALine = {
@@ -124,10 +130,11 @@ export async function createWorkOrderWithLines(
         operating_company_id, wo_type, source_type, status, unit_id, driver_id, load_id, opened_at,
         repair_location, assigned_vendor, vendor_invoice_number, description, severity,
         external_vendor_id, external_vendor_wo_number, external_vendor_invoice_number,
-        display_id, unit_sequence, total_estimated_cost, total_actual_cost
+        display_id, unit_sequence, total_estimated_cost, total_actual_cost,
+        bucket, roadside_callout_at, roadside_arrived_at, roadside_provider_vendor_id, roadside_location, roadside_breakdown_load_id
       ) VALUES (
         $1,$2,$3,COALESCE($4,'open'),$5,$6,$7,COALESCE($8::timestamptz, now()),
-        $9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$19
+        $9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$19,$20,$21,$22,$23,$24,$25
       )
       RETURNING id, display_id
     `,
@@ -151,6 +158,12 @@ export async function createWorkOrderWithLines(
       display?.display_id ?? null,
       Number(display?.sequence ?? 0) || null,
       totalCost,
+      header.bucket ?? "in_house",
+      header.roadside_callout_at ?? null,
+      header.roadside_arrived_at ?? null,
+      header.roadside_provider_vendor_id ?? null,
+      header.roadside_location ?? null,
+      header.roadside_breakdown_load_id ?? null,
     ]
   );
   const wo = woRes.rows[0];

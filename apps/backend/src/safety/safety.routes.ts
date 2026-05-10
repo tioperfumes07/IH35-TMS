@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { listSafetyEvents } from "./safety.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -10,6 +11,7 @@ const companyQuerySchema = z.object({
 
 const eventsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+  filter: z.enum(["active", "resolved", "all"]).default("active"),
   event_type: z.string().optional(),
   severity: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
@@ -127,34 +129,8 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const q = query.data;
 
-    const events = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
-      const values: unknown[] = [q.operating_company_id];
-      const filters = ["operating_company_id = $1"];
-      if (q.event_type) {
-        values.push(q.event_type);
-        filters.push(`event_type = $${values.length}`);
-      }
-      if (q.severity) {
-        values.push(q.severity);
-        filters.push(`severity = $${values.length}`);
-      }
-      values.push(q.limit, q.offset);
-      const res = await client
-        .query(
-          `
-            SELECT *
-            FROM views.safety_events_with_driver
-            WHERE ${filters.join(" AND ")}
-            ORDER BY event_at DESC
-            LIMIT $${values.length - 1}
-            OFFSET $${values.length}
-          `,
-          values
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return res.rows;
-    });
-    return { events };
+    const payload = await listSafetyEvents(user.uuid, q);
+    return payload;
   });
 
   app.get("/api/v1/safety/events/:id", async (req, reply) => {

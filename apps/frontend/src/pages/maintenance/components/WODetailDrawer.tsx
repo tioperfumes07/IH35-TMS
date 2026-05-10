@@ -30,6 +30,15 @@ export function WODetailDrawer({ open, workOrder, canRefreshDisplayId, onRefresh
   const status = String(workOrder.status ?? "open");
   const isExternal = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   const canMarkComplete = Boolean(workOrder.v5_suffix) && String(workOrder.v5_suffix) !== "PEND0";
+  const roadsideResponse = Number(workOrder.roadside_response_minutes ?? 0);
+  const roadsideTone =
+    roadsideResponse <= 0
+      ? "text-gray-700"
+      : roadsideResponse < 60
+        ? "text-emerald-700"
+        : roadsideResponse <= 120
+          ? "text-amber-700"
+          : "text-red-700";
 
   return (
     <>
@@ -46,6 +55,7 @@ export function WODetailDrawer({ open, workOrder, canRefreshDisplayId, onRefresh
           <div>Opened: {formatDateTime(workOrder.opened_at)}</div>
           <div>Closed: {formatDateTime(workOrder.closed_at)}</div>
           <div>Duration: {formatDuration(workOrder.duration_seconds)}</div>
+          <div className={roadsideTone}>Roadside response: {roadsideResponse > 0 ? `${roadsideResponse} min` : "—"}</div>
           <div>V5: {String(workOrder.v5_suffix ?? "—")}</div>
           <div>Legacy ID: {String(workOrder.legacy_display_id ?? "—")}</div>
           <div>Cost (total): {String(workOrder.total_actual_cost ?? "0")}</div>

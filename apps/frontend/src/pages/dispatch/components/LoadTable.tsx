@@ -1,4 +1,5 @@
 import type { DispatchLoad } from "../../../api/dispatch";
+import type { MouseEvent } from "react";
 import { DriverStatusCell } from "./DriverStatusCell";
 
 type Props = {
@@ -6,6 +7,7 @@ type Props = {
   selectedLoadId: string | null;
   onRowClick: (row: DispatchLoad) => void;
   onDriverStatusClick: (row: DispatchLoad) => void;
+  onRowContextMenu?: (row: DispatchLoad, event: MouseEvent<HTMLTableRowElement>) => void;
 };
 
 function statusPill(status: string) {
@@ -17,7 +19,7 @@ function statusPill(status: string) {
   return `${base} bg-amber-100 text-amber-700`;
 }
 
-export function LoadTable({ rows, selectedLoadId, onRowClick, onDriverStatusClick }: Props) {
+export function LoadTable({ rows, selectedLoadId, onRowClick, onDriverStatusClick, onRowContextMenu }: Props) {
   return (
     <div className="overflow-x-auto rounded border border-gray-200 bg-white">
       <table className="min-w-[1400px] w-full text-left text-[11px]">
@@ -35,9 +37,11 @@ export function LoadTable({ rows, selectedLoadId, onRowClick, onDriverStatusClic
             <tr
               key={row.id}
               onClick={() => onRowClick(row)}
+              onContextMenu={(event) => onRowContextMenu?.(row, event)}
+              draggable
               className={`cursor-pointer border-t border-gray-100 hover:bg-gray-50 ${selectedLoadId === row.id ? "bg-[#E6F1FB]" : ""}`}
             >
-              <td className="px-2 py-1 font-semibold text-blue-700">{row.load_number}</td>
+              <td className={`px-2 py-1 font-semibold text-blue-700 ${row.dispatch_status === "cancelled" ? "line-through opacity-70" : ""}`}>{row.load_number}</td>
               <td className="px-2 py-1">
                 <span className="inline-flex items-center gap-1">
                   {row.unit_number ?? "-"}

@@ -9,7 +9,30 @@ export function getSafetyKpis(companyId: string) {
 }
 
 export function getSafetyEvents(companyId: string) {
-  return apiRequest<{ events: Array<Record<string, unknown>> }>(`/api/v1/safety/events?${q(companyId)}`);
+  return apiRequest<{
+    events: Array<Record<string, unknown>>;
+    counters: { active_count: number; resolved_count: number; total_count: number };
+    filter: "active" | "resolved" | "all";
+  }>(`/api/v1/safety/events?${q(companyId)}&filter=active`);
+}
+
+export function getSafetyEventsFiltered(companyId: string, filter: "active" | "resolved" | "all") {
+  return apiRequest<{
+    events: Array<Record<string, unknown>>;
+    counters: { active_count: number; resolved_count: number; total_count: number };
+    filter: "active" | "resolved" | "all";
+  }>(`/api/v1/safety/events?${q(companyId)}&filter=${encodeURIComponent(filter)}`);
+}
+
+export function getUserPreferences() {
+  return apiRequest<{ preferences: Record<string, unknown> }>("/api/v1/user/preferences");
+}
+
+export function patchUserPreferences(preferences: Record<string, unknown>) {
+  return apiRequest<{ preferences: Record<string, unknown> }>("/api/v1/user/preferences", {
+    method: "PATCH",
+    body: { preferences },
+  });
 }
 
 export function getSafetyAccidents(companyId: string) {

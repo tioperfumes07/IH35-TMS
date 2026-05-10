@@ -17,6 +17,7 @@ import { CreateWOSectionValidation } from "./CreateWOSectionValidation";
 export type CreateWOFormValues = {
   wo_type: WorkOrderType;
   source_type: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
+  bucket: "in_house" | "external" | "roadside";
   service_date: string;
   unit_id: string;
   driver_id: string;
@@ -34,6 +35,11 @@ export type CreateWOFormValues = {
   bill_terms: string;
   bill_date: string;
   due_date: string;
+  roadside_callout_at: string;
+  roadside_arrived_at: string;
+  roadside_provider_vendor_id: string;
+  roadside_location: string;
+  roadside_breakdown_load_id: string;
   line_items: Array<{
     line_type: "parts" | "labor" | "other";
     description: string;
@@ -69,6 +75,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     defaultValues: {
       wo_type: initialType,
       source_type: initialType === "accident" ? "AC" : initialType === "tire" ? "IT" : "IS",
+      bucket: "in_house",
       service_date: new Date().toISOString().slice(0, 10),
       unit_id: "",
       driver_id: "",
@@ -86,6 +93,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       bill_terms: "net_30",
       bill_date: new Date().toISOString().slice(0, 10),
       due_date: "",
+      roadside_callout_at: "",
+      roadside_arrived_at: "",
+      roadside_provider_vendor_id: "",
+      roadside_location: "",
+      roadside_breakdown_load_id: "",
       line_items: [],
       ...initialValues,
     },
@@ -212,6 +224,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           load_id: values.load_id || undefined,
           service_date: values.service_date || undefined,
           repair_location: values.repair_location,
+          bucket: values.bucket,
           vendor_id: values.vendor_id || undefined,
           vendor_invoice_number: values.vendor_invoice_number || undefined,
           external_vendor_id: values.external_vendor_id || undefined,
@@ -223,6 +236,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           bill_date: values.bill_date || undefined,
           due_date: values.due_date || undefined,
           load_exemption_reason: values.load_exemption_reason?.trim() || undefined,
+          roadside_callout_at: values.roadside_callout_at ? new Date(values.roadside_callout_at).toISOString() : undefined,
+          roadside_arrived_at: values.roadside_arrived_at ? new Date(values.roadside_arrived_at).toISOString() : undefined,
+          roadside_provider_vendor_id: values.roadside_provider_vendor_id || undefined,
+          roadside_location: values.roadside_location || undefined,
+          roadside_breakdown_load_id: values.roadside_breakdown_load_id || undefined,
         },
         sectionA: sectionALines,
         sectionB: sectionBLines,

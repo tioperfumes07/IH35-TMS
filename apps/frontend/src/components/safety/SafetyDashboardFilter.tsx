@@ -1,4 +1,4 @@
-export type SafetyDriverFilter = "active-7-10" | "active-30" | "all";
+export type SafetyDriverFilter = "active" | "resolved" | "all";
 
 type Props = {
   value: SafetyDriverFilter;
@@ -8,16 +8,16 @@ type Props = {
 };
 
 const OPTIONS: Array<{ id: SafetyDriverFilter; label: string }> = [
-  { id: "active-7-10", label: "Active 7-10 days" },
-  { id: "active-30", label: "Active 30 days" },
-  { id: "all", label: "All drivers" },
+  { id: "active", label: "Active" },
+  { id: "resolved", label: "Resolved" },
+  { id: "all", label: "All" },
 ];
 
 export function SafetyDashboardFilter({ value, onChange, shown, total }: Props) {
   const hidden = Math.max(0, total - shown);
   return (
     <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-[22px] py-2 text-[11px]">
-      <span className="font-semibold text-slate-500">Show drivers:</span>
+      <span className="font-semibold text-slate-500">Safety Filter:</span>
       {OPTIONS.map((option) => {
         const active = option.id === value;
         return (
@@ -37,7 +37,7 @@ export function SafetyDashboardFilter({ value, onChange, shown, total }: Props) 
         );
       })}
       <span className="ml-auto text-slate-400">
-        {shown} of {total} drivers shown · {hidden} hidden (inactive &gt;15 days)
+        {shown} active · {hidden} resolved · {total} total
       </span>
     </div>
   );
