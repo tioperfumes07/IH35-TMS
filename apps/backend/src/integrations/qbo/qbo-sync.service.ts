@@ -5,7 +5,7 @@ import { sendEmail } from "../../notifications/email.service.js";
 import { getValidAccessToken } from "./qbo-oauth.service.js";
 import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from "./qbo-mappers.js";
 
-type QueueEntityType = "bank_transaction" | "bill" | "expense" | "invoice" | "journal_entry";
+type QueueEntityType = "bank_transaction" | "bill" | "expense" | "invoice" | "journal_entry" | "settlement";
 type QueueStatus = "pending" | "in_flight" | "synced" | "failed" | "blocked";
 
 type QueueRow = {
@@ -328,6 +328,20 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
   let blocked = 0;
   for (const job of jobs) {
     try {
+      if (job.entity_type === "settlement") {
+        await markJobResult(job, "synced", {
+          errorMessage: null,
+          errorDetails: { mode: "preview", note: "Settlement cleared intent queued for manual ACH and QBO follow-up." },
+        });
+        synced += 1;
+        await appendSyncAudit(
+          "integrations.qbo_sync.synced",
+          { queue_id: job.id, operating_company_id: job.operating_company_id, entity_id: job.entity_id, mode: "settlement_preview" },
+          "info",
+          null
+        );
+        continue;
+      }
       if (job.entity_type !== "bank_transaction") {
         throw new Error(`unsupported_entity_type_${job.entity_type}`);
       }

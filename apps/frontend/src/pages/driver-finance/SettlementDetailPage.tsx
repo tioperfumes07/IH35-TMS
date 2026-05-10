@@ -5,7 +5,13 @@ import {
   acknowledgeSettlement,
   finalizeSettlement,
   getEscrowTimeline,
+  getSettlementPaymentEvents,
   getSettlement,
+  markSettlementBounced,
+  markSettlementCleared,
+  markSettlementPaidManually,
+  markSettlementSent,
+  queueSettlementPayment,
 } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BackButton } from "../../components/shared/BackButton";
@@ -50,14 +56,34 @@ export function SettlementDetailPage() {
   const [ackChecked, setAckChecked] = useState(false);
   const [liabilityOpen, setLiabilityOpen] = useState(false);
   const [holdTarget, setHoldTarget] = useState<DeductionRow | null>(null);
+  const [bankReference, setBankReference] = useState("");
+  const [bounceReason, setBounceReason] = useState("");
+  const [manualPaymentMethod, setManualPaymentMethod] = useState("check");
+  const [manualReference, setManualReference] = useState("");
 
   const detailQuery = useQuery({
     queryKey: ["driver-finance", "settlement-detail", settlementId, companyId],
     queryFn: () => getSettlement(settlementId!, companyId),
     enabled: Boolean(settlementId && companyId),
   });
+  const paymentEventsQuery = useQuery({
+    queryKey: ["driver-finance", "settlement-payment-events", settlementId, companyId],
+    queryFn: () => getSettlementPaymentEvents(settlementId!, companyId),
+    enabled: Boolean(settlementId && companyId),
+  });
 
   const settlement = (detailQuery.data ?? {}) as Record<string, unknown>;
+  const paymentState = String(settlement.payment_state ?? "unpaid");
+  const isFinalSettlement = String(settlement.status ?? "") === "locked" || String(settlement.status ?? "") === "final";
+
+  async function refreshSettlementViews() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["driver-finance"] }),
+      queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-detail", settlementId, companyId] }),
+      queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-payment-events", settlementId, companyId] }),
+    ]);
+  }
+
   const driverId = settlement.driver_id ? String(settlement.driver_id) : null;
   const debt = useLiveDebt(driverId, companyId || null);
   const lines = (settlement.lines as Array<Record<string, unknown>> | undefined) ?? [];
@@ -174,11 +200,203 @@ export function SettlementDetailPage() {
               void finalizeSettlement(settlementId, companyId)
                 .then(() => {
                   pushToast("Settlement finalized", "success");
-                  void queryClient.invalidateQueries({ queryKey: ["driver-finance"] });
+                  void refreshSettlementViews();
                 })
                 .catch((error) => pushToast(`Finalize blocked: ${String((error as Error).message || error)}`, "error"));
             }}
           />
+          {isFinalSettlement ? (
+            <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</p>
+                <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{paymentState}</span>
+              </div>
+              <div className="space-y-2">
+                {paymentState === "unpaid" ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <input
+                        value={manualPaymentMethod}
+                        onChange={(event) => setManualPaymentMethod(event.target.value)}
+                        placeholder="Payment method (e.g. check)"
+                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                      />
+                      <input
+                        value={manualReference}
+                        onChange={(event) => setManualReference(event.target.value)}
+                        placeholder="Manual payment reference"
+                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="rounded bg-blue-600 px-2 py-1 text-xs text-white"
+                      onClick={() =>
+                        void queueSettlementPayment(settlementId)
+                          .then(() => {
+                            pushToast("Settlement payment queued", "success");
+                            void refreshSettlementViews();
+                          })
+                          .catch((error) => pushToast(String((error as Error).message || "Queue failed"), "error"))
+                      }
+                    >
+                      Queue Payment
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded border border-gray-300 px-2 py-1 text-xs"
+                      onClick={() =>
+                        void markSettlementPaidManually(settlementId, {
+                          payment_method: manualPaymentMethod,
+                          reference: manualReference || undefined,
+                        })
+                          .then(() => {
+                            pushToast("Marked paid manually", "success");
+                            void refreshSettlementViews();
+                          })
+                          .catch((error) => pushToast(String((error as Error).message || "Mark manual failed"), "error"))
+                      }
+                    >
+                      Mark Paid Manually
+                    </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {paymentState === "queued" ? (
+                  <div className="space-y-2">
+                    <input
+                      value={bankReference}
+                      onChange={(event) => setBankReference(event.target.value)}
+                      placeholder="Bank reference"
+                      className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                    />
+                    <button
+                      type="button"
+                      className="rounded bg-blue-600 px-2 py-1 text-xs text-white"
+                      onClick={() =>
+                        void markSettlementSent(settlementId, bankReference || "manual-bank-reference")
+                          .then(() => {
+                            pushToast("Marked sent to bank", "success");
+                            void refreshSettlementViews();
+                          })
+                          .catch((error) => pushToast(String((error as Error).message || "Mark sent failed"), "error"))
+                      }
+                    >
+                      Mark Sent to Bank
+                    </button>
+                  </div>
+                ) : null}
+
+                {paymentState === "sent_to_bank" ? (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="rounded bg-green-600 px-2 py-1 text-xs text-white"
+                        onClick={() =>
+                          void markSettlementCleared(settlementId)
+                            .then(() => {
+                              pushToast("Marked cleared", "success");
+                              void refreshSettlementViews();
+                            })
+                            .catch((error) => pushToast(String((error as Error).message || "Mark cleared failed"), "error"))
+                        }
+                      >
+                        Mark Cleared
+                      </button>
+                    </div>
+                    <input
+                      value={bounceReason}
+                      onChange={(event) => setBounceReason(event.target.value)}
+                      placeholder="Bounce reason"
+                      className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                    />
+                    <button
+                      type="button"
+                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-700"
+                      onClick={() =>
+                        void markSettlementBounced(settlementId, bounceReason || "Bank return")
+                          .then(() => {
+                            pushToast("Marked bounced", "success");
+                            void refreshSettlementViews();
+                          })
+                          .catch((error) => pushToast(String((error as Error).message || "Mark bounced failed"), "error"))
+                      }
+                    >
+                      Mark Bounced
+                    </button>
+                  </div>
+                ) : null}
+
+                {paymentState === "bounced" ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <input
+                        value={manualPaymentMethod}
+                        onChange={(event) => setManualPaymentMethod(event.target.value)}
+                        placeholder="Payment method (e.g. check)"
+                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                      />
+                      <input
+                        value={manualReference}
+                        onChange={(event) => setManualReference(event.target.value)}
+                        placeholder="Manual payment reference"
+                        className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="rounded bg-blue-600 px-2 py-1 text-xs text-white"
+                      onClick={() =>
+                        void queueSettlementPayment(settlementId)
+                          .then(() => {
+                            pushToast("Retry queued", "success");
+                            void refreshSettlementViews();
+                          })
+                          .catch((error) => pushToast(String((error as Error).message || "Retry failed"), "error"))
+                      }
+                    >
+                      Retry
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded border border-gray-300 px-2 py-1 text-xs"
+                      onClick={() =>
+                        void markSettlementPaidManually(settlementId, {
+                          payment_method: manualPaymentMethod,
+                          reference: manualReference || undefined,
+                        })
+                          .then(() => {
+                            pushToast("Marked paid manually", "success");
+                            void refreshSettlementViews();
+                          })
+                          .catch((error) => pushToast(String((error as Error).message || "Mark manual failed"), "error"))
+                      }
+                    >
+                      Mark Paid Manually
+                    </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="space-y-1 border-t border-gray-100 pt-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Events</p>
+                  {(paymentEventsQuery.data?.events ?? []).map((event) => (
+                    <div key={event.id} className="rounded border border-gray-100 px-2 py-1 text-xs">
+                      <p className="font-semibold text-gray-800">{event.event_type}</p>
+                      <p className="text-gray-500">{new Date(event.created_at).toLocaleString()}</p>
+                    </div>
+                  ))}
+                  {(paymentEventsQuery.data?.events ?? []).length === 0 ? (
+                    <p className="text-xs text-gray-500">No payment events yet.</p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 

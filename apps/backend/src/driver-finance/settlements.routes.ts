@@ -4,13 +4,16 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { queuePaymentOnFinalize } from "./settlement-payment.service.js";
 
 const settlementStatusSchema = z.enum(["draft", "presettle", "acked", "locked", "paid", "held", "cancelled"]);
+const paymentStateSchema = z.enum(["unpaid", "queued", "sent_to_bank", "cleared", "bounced", "manual_paid"]);
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   status: settlementStatusSchema.optional(),
+  payment_state: paymentStateSchema.optional(),
 });
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const createBodySchema = z.object({
@@ -81,13 +84,25 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       const where = ["s.operating_company_id = $1"];
       if (q.status) {
         values.push(q.status);
-        where.push(`status = $${values.length}`);
+        where.push(`s.status = $${values.length}`);
+      }
+      if (q.payment_state) {
+        values.push(q.payment_state);
+        where.push(`COALESCE(s.payment_state, 'unpaid') = $${values.length}`);
       }
       const countRes = await client.query(`SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements WHERE ${where.join(" AND ")}`, values);
       values.push(q.limit, q.offset);
       const rowsRes = await client.query(
         `
-          SELECT v.*
+          SELECT
+            v.*,
+            COALESCE(s.payment_state, 'unpaid') AS payment_state,
+            s.payment_queued_at,
+            s.payment_sent_at,
+            s.payment_cleared_at,
+            s.payment_bank_reference,
+            s.payment_bounced_reason,
+            s.payment_method
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
           WHERE ${where.join(" AND ")}
@@ -125,7 +140,15 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       if (!(await hasSettlementSchema(client))) return { unavailable: true as const };
       const res = await client.query(
         `
-          SELECT v.*
+          SELECT
+            v.*,
+            COALESCE(s.payment_state, 'unpaid') AS payment_state,
+            s.payment_queued_at,
+            s.payment_sent_at,
+            s.payment_cleared_at,
+            s.payment_bank_reference,
+            s.payment_bounced_reason,
+            s.payment_method
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
           WHERE v.id = $1 AND s.operating_company_id = $2
@@ -300,6 +323,10 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     if ("unavailable" in result) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "settlement_not_found" });
     if ("blocked" in result) return reply.code(409).send({ error: "finalize_blocked", reason: result.reason });
-    return result.row;
+    const queueResult = await queuePaymentOnFinalize(params.data.id, user.uuid).catch((error) => ({
+      queued: false as const,
+      reason: String((error as Error)?.message ?? "queue_payment_failed"),
+    }));
+    return { ...result.row, payment_auto_queue: queueResult };
   });
 }

@@ -30,6 +30,7 @@ import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
+import { registerSettlementPaymentRoutes } from "./driver-finance/settlement-payment.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
@@ -189,6 +190,7 @@ async function main() {
   await registerIntransitIssuesRoutes(app);
   await registerDriverRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
+  await registerSettlementPaymentRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
   await registerReportsRoutes(app);
