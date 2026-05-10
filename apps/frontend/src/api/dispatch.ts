@@ -102,6 +102,7 @@ export type DispatchBookLoadPayload = {
   assigned_unit_id?: string;
   assigned_primary_driver_id?: string;
   assigned_secondary_driver_id?: string;
+  team_id?: string;
   temp_fahrenheit?: number;
   charges: Array<{ code: string; amount_cents: number }>;
   stops: Array<{

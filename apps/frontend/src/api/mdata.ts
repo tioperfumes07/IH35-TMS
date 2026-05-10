@@ -13,6 +13,73 @@ export function listDrivers(params: { status?: string; search?: string; operatin
   return apiRequest<{ drivers: Driver[] }>(`/api/v1/mdata/drivers${qs ? `?${qs}` : ""}`);
 }
 
+export type DriverTeamSplitMethod = "50_50" | "60_40" | "70_30" | "mileage_prorated" | "hours_prorated" | "custom";
+
+export type DriverTeam = {
+  id: string;
+  operating_company_id: string;
+  team_name: string;
+  primary_driver_id: string;
+  secondary_driver_id: string;
+  primary_driver_name?: string | null;
+  co_driver_name?: string | null;
+  split_method: DriverTeamSplitMethod;
+  primary_share_pct: number;
+  co_share_pct: number;
+  is_active: boolean;
+  effective_from: string;
+  effective_to: string | null;
+  notes: string | null;
+  settlement_history?: Array<Record<string, unknown>>;
+};
+
+export function listDriverTeams(operatingCompanyId: string) {
+  return apiRequest<{ teams: DriverTeam[] }>(`/api/v1/driver-teams?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+}
+
+export function getDriverTeam(id: string, operatingCompanyId: string) {
+  return apiRequest<{ team: DriverTeam }>(`/api/v1/driver-teams/${id}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+}
+
+export function createDriverTeam(body: {
+  operating_company_id: string;
+  team_name: string;
+  primary_driver_id: string;
+  co_driver_id: string;
+  split_method: DriverTeamSplitMethod;
+  primary_share_pct?: number;
+  co_share_pct?: number;
+  effective_from?: string;
+  notes?: string;
+}) {
+  return apiRequest<{ data: DriverTeam }>("/api/v1/driver-teams", { method: "POST", body });
+}
+
+export function updateDriverTeam(
+  id: string,
+  body: {
+    operating_company_id: string;
+    split_method: DriverTeamSplitMethod;
+    primary_share_pct?: number;
+    co_share_pct?: number;
+    effective_from: string;
+    reactivate?: boolean;
+    notes?: string;
+  }
+) {
+  return apiRequest<{ data: DriverTeam }>(`/api/v1/driver-teams/${id}`, { method: "PATCH", body });
+}
+
+export function deactivateDriverTeam(id: string, body: { operating_company_id: string; reason: string }) {
+  return apiRequest<{ data: DriverTeam }>(`/api/v1/driver-teams/${id}/deactivate`, { method: "POST", body });
+}
+
+export function previewTeamSettlementSplit(loadId: string, operatingCompanyId: string) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/loads/${loadId}/team-settlement-split?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function getDriver(id: string) {
   return apiRequest<Driver>(`/api/v1/mdata/drivers/${id}`);
 }
