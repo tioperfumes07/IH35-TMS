@@ -155,11 +155,11 @@ try {
     fail("could not parse EXPECTED_EVENT_CLASSES from db-verify-phase1-audit-coverage.mjs");
   }
   const expectedCoverage = (classesMatch[1].match(/"[^"]+"/g) ?? []).length;
-  if (expectedCoverage !== 191) {
-    fail(`audit coverage expected list should be 191, got ${expectedCoverage}`);
+  if (expectedCoverage !== 195) {
+    fail(`audit coverage expected list should be 195, got ${expectedCoverage}`);
   }
 
-  console.log(`PASS: Phase 1 Gate verification complete. ${migrationFiles.length} migrations present, all tables present, all catalogs pre-populated, all RLS enabled, audit coverage at 191 events.`);
+  console.log(`PASS: Phase 1 Gate verification complete. ${migrationFiles.length} migrations present, all tables present, all catalogs pre-populated, all RLS enabled, audit coverage at 195 events.`);
 } catch (error) {
   fail(String(error?.message || error));
 } finally {

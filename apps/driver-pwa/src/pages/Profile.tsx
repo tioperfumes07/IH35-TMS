@@ -74,6 +74,9 @@ export function ProfilePage() {
             <Link to="/hos" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
               HOS
             </Link>
+            <Link to="/my-disputes" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
+              My Disputes
+            </Link>
             <Link to="/dvir/pre/load-1002" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
               Submit DVIR
             </Link>

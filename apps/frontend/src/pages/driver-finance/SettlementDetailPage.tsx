@@ -5,6 +5,7 @@ import {
   acknowledgeSettlement,
   finalizeSettlement,
   getEscrowTimeline,
+  openSettlementDispute,
   getSettlementPaymentEvents,
   getSettlement,
   markSettlementBounced,
@@ -12,12 +13,15 @@ import {
   markSettlementPaidManually,
   markSettlementSent,
   queueSettlementPayment,
+  type SettlementDisputeCategory,
 } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { Button } from "../../components/Button";
 import { BackButton } from "../../components/shared/BackButton";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useAuth } from "../../auth/useAuth";
 import { DebtBanner } from "./components/DebtBanner";
 import { DeductionsSection, type DeductionRow } from "./components/DeductionsSection";
 import { EarningsSection } from "./components/EarningsSection";
@@ -48,6 +52,7 @@ function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] 
 
 export function SettlementDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const auth = useAuth();
   const { pushToast } = useToast();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -60,6 +65,9 @@ export function SettlementDetailPage() {
   const [bounceReason, setBounceReason] = useState("");
   const [manualPaymentMethod, setManualPaymentMethod] = useState("check");
   const [manualReference, setManualReference] = useState("");
+  const [disputeCategory, setDisputeCategory] = useState("missing_pay");
+  const [disputeAmount, setDisputeAmount] = useState("");
+  const [disputeDescription, setDisputeDescription] = useState("");
 
   const detailQuery = useQuery({
     queryKey: ["driver-finance", "settlement-detail", settlementId, companyId],
@@ -75,6 +83,7 @@ export function SettlementDetailPage() {
   const settlement = (detailQuery.data ?? {}) as Record<string, unknown>;
   const paymentState = String(settlement.payment_state ?? "unpaid");
   const isFinalSettlement = String(settlement.status ?? "") === "locked" || String(settlement.status ?? "") === "final";
+  const canOpenDispute = auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Driver";
 
   async function refreshSettlementViews() {
     await Promise.all([
@@ -147,6 +156,69 @@ export function SettlementDetailPage() {
         computedAt={debt.computedAt}
         onRefresh={() => void debt.refresh()}
       />
+      {canOpenDispute ? (
+        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs">
+          <p className="mb-2 font-semibold text-amber-900">Open Dispute</p>
+          <div className="grid gap-2 md:grid-cols-3">
+            <select
+              value={disputeCategory}
+              onChange={(event) => setDisputeCategory(event.target.value)}
+              className="rounded border border-amber-300 bg-white px-2 py-1"
+            >
+              <option value="missing_pay">missing_pay</option>
+              <option value="wrong_deduction">wrong_deduction</option>
+              <option value="miscalculated_mileage">miscalculated_mileage</option>
+              <option value="wrong_rate">wrong_rate</option>
+              <option value="detention_not_paid">detention_not_paid</option>
+              <option value="cash_advance_dispute">cash_advance_dispute</option>
+              <option value="fine_dispute">fine_dispute</option>
+              <option value="escrow_dispute">escrow_dispute</option>
+              <option value="other">other</option>
+            </select>
+            <input
+              value={disputeAmount}
+              onChange={(event) => setDisputeAmount(event.target.value)}
+              className="rounded border border-amber-300 bg-white px-2 py-1"
+              placeholder="Disputed amount (USD, optional)"
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                if (!companyId || !settlement.driver_id) return;
+                const trimmed = disputeDescription.trim();
+                if (trimmed.length < 20) {
+                  pushToast("Dispute description must be at least 20 characters", "error");
+                  return;
+                }
+                void openSettlementDispute({
+                  operating_company_id: companyId,
+                  settlement_id: settlementId,
+                  driver_id: String(settlement.driver_id),
+                  dispute_category: disputeCategory as SettlementDisputeCategory,
+                  dispute_description: trimmed,
+                  disputed_amount_cents: disputeAmount.trim()
+                    ? Math.max(0, Math.round(Number(disputeAmount) * 100)) || undefined
+                    : undefined,
+                })
+                  .then(() => {
+                    pushToast("Dispute opened", "success");
+                    setDisputeDescription("");
+                    setDisputeAmount("");
+                  })
+                  .catch((error) => pushToast(String((error as Error).message || error), "error"));
+              }}
+            >
+              Open Dispute
+            </Button>
+          </div>
+          <textarea
+            value={disputeDescription}
+            onChange={(event) => setDisputeDescription(event.target.value)}
+            className="mt-2 min-h-[80px] w-full rounded border border-amber-300 bg-white px-2 py-1"
+            placeholder="Describe the settlement issue (minimum 20 characters)."
+          />
+        </div>
+      ) : null}
 
       <DebtBanner
         totalActiveDebt={debt.isStale ? "Refreshing..." : debt.debt?.total_active_debt ?? 0}

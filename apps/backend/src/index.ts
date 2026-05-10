@@ -19,21 +19,13 @@ import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellation-reasons.routes.js";
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerSafetyCatalogRoutes } from "./catalogs/safety/index.js";
-import { registerDispatchCatalogRoutes } from "./catalogs/dispatch/index.js";
-import { registerDriverCatalogRoutes } from "./catalogs/driver/index.js";
-import { registerMaintenanceCatalogRoutes } from "./catalogs/maintenance/index.js";
-import { registerFuelCatalogRoutes } from "./catalogs/fuel/index.js";
-import { registerAccountingCatalogRoutes } from "./catalogs/accounting/index.js";
-import { registerFleetCatalogRoutes } from "./catalogs/fleet/index.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
-import { registerSettlementPaymentRoutes } from "./driver-finance/settlement-payment.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
-import { registerEscrowDeductionPendingRoutes } from "./driver-finance/escrow-deduction-pending.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
@@ -48,10 +40,7 @@ import { registerSafetyComplaintsRoutes } from "./routes/safety/complaints.js";
 import { registerSafetyIntegrityRoutes } from "./routes/safety/integrity.js";
 import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
-import { registerCategorizationRulesRoutes } from "./banking/categorization-rules.routes.js";
-import { registerBankingReconciliationRoutes } from "./banking/reconciliation.routes.js";
 import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
-import { registerBankingTransfersRoutes } from "./banking/transfers.routes.js";
 import { registerBankingFactoringVirtualRoutes } from "./banking/factoring-virtual.routes.js";
 import { registerBankingEscrowVisualizerRoutes } from "./banking/escrow-visualizer.routes.js";
 import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
@@ -60,7 +49,6 @@ import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.ro
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
-import { registerMaintenanceSevereRepairEstimateRoutes } from "./maintenance/severe-repair-estimate.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
@@ -76,19 +64,7 @@ import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
-import { registerPlaidWebhookRoutes } from "./integrations/plaid/webhook.routes.js";
-import { registerPlaidAdminRoutes } from "./integrations/plaid/admin.routes.js";
-import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
-import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
-import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
-import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
-import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
-import { initializeScheduledReportsCron } from "./cron/scheduled-reports.js";
-import { initializePlaidDailySyncCron } from "./cron/plaid-daily-sync.js";
-import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
-import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh.js";
-import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -169,24 +145,6 @@ async function main() {
   // ─── Safety catalog routes (T11.21.2A) ───
   await registerSafetyCatalogRoutes(app);
   // ─── End Safety catalog routes ───
-  // ─── Dispatch catalog routes (T11.21.3A) ───
-  await registerDispatchCatalogRoutes(app);
-  // ─── End Dispatch catalog routes ───
-  // ─── Driver catalog routes (T11.21.4A) ───
-  await registerDriverCatalogRoutes(app);
-  // ─── End Driver catalog routes ───
-  // ─── Maintenance catalog routes (T11.21.5A) ───
-  await registerMaintenanceCatalogRoutes(app);
-  // ─── End Maintenance catalog routes ───
-  // ─── Fuel catalog routes (T11.21.6A) ───
-  await registerFuelCatalogRoutes(app);
-  // ─── End Fuel catalog routes ───
-  // ─── Accounting catalog routes (T11.21.7A) ───
-  await registerAccountingCatalogRoutes(app);
-  // ─── End Accounting catalog routes ───
-  // ─── Fleet catalog routes (T11.21.8A) ───
-  await registerFleetCatalogRoutes(app);
-  // ─── End Fleet catalog routes ───
   await registerCatalogsWorkflowRoutes(app);
   await registerFileCategoriesRoutes(app);
   await registerDocsFilesRoutes(app);
@@ -194,18 +152,9 @@ async function main() {
   await registerIntransitIssuesRoutes(app);
   await registerDriverRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
-  await registerSettlementPaymentRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
-  await registerEscrowDeductionPendingRoutes(app);
   await registerReportsRoutes(app);
-  await registerPlaidWebhookRoutes(app);
-  await registerPlaidAdminRoutes(app);
-  await registerPlaidLinkRoutes(app);
-  await registerQboForensicAdminRoutes(app);
-  await registerQboOAuthRoutes(app);
-  await registerQboSyncAdminRoutes(app);
-  await registerQboVendorLinkageRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);
@@ -220,10 +169,7 @@ async function main() {
   await registerLiabilitiesRoutes(app);
   await registerCashAdvancesRoutes(app);
   await registerBankingRoutes(app);
-  await registerCategorizationRulesRoutes(app);
-  await registerBankingReconciliationRoutes(app);
   await registerBankingManualJeRoutes(app);
-  await registerBankingTransfersRoutes(app);
   await registerBankingFactoringVirtualRoutes(app);
   await registerBankingEscrowVisualizerRoutes(app);
   await registerFactoringRoutes(app);
@@ -231,16 +177,10 @@ async function main() {
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);
-  await registerMaintenanceSevereRepairEstimateRoutes(app);
   await registerForm425CRoutes(app);
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);
   await registerCompanyRoutes(app);
-  initializeScheduledReportsCron(app.log);
-  initializePlaidDailySyncCron(app.log);
-  initializeQboHistoricalImportRunner(app.log);
-  initializeQboTokenRefreshCron(app.log);
-  initializeQboSyncQueueRunner(app.log);
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {

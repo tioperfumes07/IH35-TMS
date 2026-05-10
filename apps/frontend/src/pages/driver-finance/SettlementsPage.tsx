@@ -5,12 +5,14 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementDetailPage } from "./SettlementDetailPage";
+import { SettlementDisputesTab } from "./components/SettlementDisputesTab";
 import { SettlementsTable } from "./components/SettlementsTable";
 
 export function SettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const companyId = selectedCompanyId ?? "";
+  const activeTab = searchParams.get("tab") === "disputes" ? "disputes" : "settlements";
   const selectedSettlementId = searchParams.get("settlement_id");
   const selectedPaymentState = searchParams.get("payment_state") as
     | "unpaid"
@@ -44,7 +46,7 @@ export function SettlementsPage() {
     bounced: settlements.filter((s) => s.payment_state === "bounced").length,
   };
 
-  if (selectedSettlementId) {
+  if (selectedSettlementId && activeTab === "settlements") {
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -78,6 +80,35 @@ export function SettlementsPage() {
         </div>
       </div>
 
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant={activeTab === "settlements" ? "primary" : "secondary"}
+          onClick={() => {
+            const next = new URLSearchParams(searchParams);
+            next.delete("tab");
+            next.delete("settlement_id");
+            setSearchParams(next);
+          }}
+        >
+          Settlements
+        </Button>
+        <Button
+          size="sm"
+          variant={activeTab === "disputes" ? "primary" : "secondary"}
+          onClick={() => {
+            const next = new URLSearchParams(searchParams);
+            next.set("tab", "disputes");
+            next.delete("settlement_id");
+            setSearchParams(next);
+          }}
+        >
+          Settlement Disputes
+        </Button>
+      </div>
+
+      {activeTab === "settlements" ? (
+        <>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
         <KpiCard label="Total Unpaid" value={kpis.total_unpaid} />
         <KpiCard label="This Period" value={kpis.this_period} />
@@ -126,6 +157,10 @@ export function SettlementsPage() {
           setSearchParams(next);
         }}
       />
+        </>
+      ) : (
+        <SettlementDisputesTab companyId={companyId} />
+      )}
     </div>
   );
 }

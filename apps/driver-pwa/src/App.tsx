@@ -15,6 +15,7 @@ import { InviteRedeemPage } from "./pages/InviteRedeem";
 import { LoadDetailPage } from "./pages/LoadDetail";
 import { LoginPage } from "./pages/Login";
 import { MyDocumentsPage } from "./pages/MyDocuments";
+import { MyDisputesPage } from "./pages/MyDisputes";
 import { ProfilePage } from "./pages/Profile";
 import { StopActionPage } from "./pages/StopAction";
 import { TodayPage } from "./pages/Today";
@@ -72,6 +73,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-disputes"
+        element={
+          <ProtectedRoute>
+            <MyDisputesPage />
           </ProtectedRoute>
         }
       />
