@@ -184,7 +184,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
               SELECT count(*)::bigint
               FROM mdata.loads l
               WHERE l.operating_company_id = $1
-                AND COALESCE(l.status, '') NOT IN ('draft', 'delivered', 'invoiced', 'paid', 'closed', 'cancelled')
+                AND COALESCE(l.status::text, '') NOT IN ('draft', 'delivered', 'invoiced', 'paid', 'closed', 'cancelled')
             )
           END AS total
         `,
@@ -214,7 +214,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
               SELECT count(*)::bigint
               FROM safety.accidents a
               WHERE a.operating_company_id = $1
-                AND COALESCE(a.status, '') IN ('open', 'under-investigation')
+                AND COALESCE(a.status::text, '') IN ('open', 'under-investigation')
             )
           END AS total
         `,

@@ -41,11 +41,51 @@ function qboRevokeEndpoint() {
 }
 
 function redirectUriFromEnv() {
+  const webhookBase = (process.env.WEBHOOK_BASE_URL ?? "").trim();
+  if (webhookBase) return `${webhookBase.replace(/\/$/, "")}/api/v1/integrations/qbo/oauth-callback`;
   const explicit = (process.env.QBO_OAUTH_REDIRECT_URI ?? "").trim();
   if (explicit) return explicit;
-  const webhookBase = (process.env.WEBHOOK_BASE_URL ?? "").trim();
-  if (!webhookBase) throw new Error("QBO_OAUTH_REDIRECT_URI or WEBHOOK_BASE_URL is required");
-  return `${webhookBase.replace(/\/$/, "")}/api/v1/integrations/qbo/oauth-callback`;
+  throw new Error("WEBHOOK_BASE_URL or QBO_OAUTH_REDIRECT_URI is required");
+}
+
+function sanitizeTokenResponsePreview(bodyText: string) {
+  return bodyText
+    .replace(/"access_token"\s*:\s*"[^"]*"/g, '"access_token":"[REDACTED]"')
+    .replace(/"refresh_token"\s*:\s*"[^"]*"/g, '"refresh_token":"[REDACTED]"')
+    .slice(0, 500);
+}
+
+function clientIdPrefix() {
+  const clientId = requireEnv("QBO_CLIENT_ID");
+  return clientId.slice(0, 10);
+}
+
+function logOauthStep(level: "info" | "error", payload: Record<string, unknown>) {
+  if (level === "error") {
+    console.error("[QBO_OAUTH]", payload);
+    return;
+  }
+  console.info("[QBO_OAUTH]", payload);
+}
+
+function redactedFormMetadata(form: URLSearchParams) {
+  return {
+    grant_type: form.get("grant_type"),
+    has_code: Boolean(form.get("code")),
+    has_refresh_token: Boolean(form.get("refresh_token")),
+    has_redirect_uri: Boolean(form.get("redirect_uri")),
+    redirect_uri: form.get("redirect_uri"),
+  };
+}
+
+function ensureAuthorizationCodeRedirectUri(form: URLSearchParams) {
+  const grantType = form.get("grant_type");
+  if (grantType === "authorization_code") {
+    const redirectUri = redirectUriFromEnv();
+    form.set("redirect_uri", redirectUri);
+    return redirectUri;
+  }
+  return form.get("redirect_uri");
 }
 
 function encryptionKeyBytes() {
@@ -119,6 +159,12 @@ function expiryFromNow(seconds: number) {
 
 export function buildAuthorizationUrl(operatingCompanyId: string, redirectUri = redirectUriFromEnv()) {
   const clientId = requireEnv("QBO_CLIENT_ID");
+  logOauthStep("info", {
+    step: "oauth_start_url_built",
+    operating_company_id: operatingCompanyId,
+    redirect_uri: redirectUri,
+    clientIdPrefix: clientIdPrefix(),
+  });
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: "code",
@@ -130,6 +176,15 @@ export function buildAuthorizationUrl(operatingCompanyId: string, redirectUri = 
 }
 
 async function tokenExchangeRequest(form: URLSearchParams) {
+  const redirectUri = ensureAuthorizationCodeRedirectUri(form);
+  logOauthStep("info", {
+    step: "token_exchange_request",
+    token_endpoint: qboTokenEndpoint(),
+    clientIdPrefix: clientIdPrefix(),
+    redirectUri,
+    form: redactedFormMetadata(form),
+  });
+
   const response = await fetch(qboTokenEndpoint(), {
     method: "POST",
     headers: {
@@ -137,11 +192,28 @@ async function tokenExchangeRequest(form: URLSearchParams) {
       "Content-Type": "application/x-www-form-urlencoded",
       Accept: "application/json",
     },
-    body: form,
+    body: form.toString(),
   });
-  const payload = (await response.json()) as Partial<TokenExchangeResponse>;
+  const responseText = await response.text();
+  const responsePreview = sanitizeTokenResponsePreview(responseText);
+  logOauthStep("info", {
+    step: "token_exchange_response",
+    status: response.status,
+    statusText: response.statusText,
+    bodyPreview: responsePreview,
+  });
+
+  let payload: Partial<TokenExchangeResponse> = {};
+  try {
+    payload = JSON.parse(responseText) as Partial<TokenExchangeResponse>;
+  } catch {
+    payload = {};
+  }
   if (!response.ok || !payload.access_token || !payload.refresh_token) {
-    throw new Error(`QBO token exchange failed: status=${response.status}`);
+    const err = new Error(`QBO token exchange failed: status=${response.status}`);
+    (err as { intuitStatus?: number }).intuitStatus = response.status;
+    (err as { intuitResponse?: string }).intuitResponse = responsePreview;
+    throw err;
   }
   return payload as TokenExchangeResponse;
 }
