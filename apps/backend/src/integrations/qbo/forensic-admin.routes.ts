@@ -15,6 +15,10 @@ const batchParamsSchema = z.object({
   batchId: z.string().uuid(),
 });
 
+const batchQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
+});
+
 const anomalyParamsSchema = z.object({
   id: z.string().uuid(),
 });
@@ -30,6 +34,38 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
+  async function getBatchById(
+    req: FastifyRequest,
+    reply: FastifyReply,
+    paramsRaw: unknown,
+    queryRaw: unknown
+  ) {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
+
+    const params = batchParamsSchema.safeParse(paramsRaw ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const query = batchQuerySchema.safeParse(queryRaw ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+
+    const row = await withLuciaBypass(async (client) => {
+      const res = await client.query(
+        `
+          SELECT *
+          FROM qbo_archive.import_batches
+          WHERE id = $1
+            AND ($2::uuid IS NULL OR operating_company_id = $2)
+          LIMIT 1
+        `,
+        [params.data.batchId, query.data.operating_company_id ?? null]
+      );
+      return res.rows[0] ?? null;
+    });
+    if (!row) return reply.code(404).send({ error: "batch_not_found" });
+    return row;
+  }
+
   app.post("/api/v1/admin/qbo-forensic/start-import", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -51,27 +87,11 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/admin/qbo-forensic/batch/:batchId", async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
+    return getBatchById(req, reply, req.params, req.query);
+  });
 
-    const params = batchParamsSchema.safeParse(req.params ?? {});
-    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
-
-    const row = await withLuciaBypass(async (client) => {
-      const res = await client.query(
-        `
-          SELECT *
-          FROM qbo_archive.import_batches
-          WHERE id = $1
-          LIMIT 1
-        `,
-        [params.data.batchId]
-      );
-      return res.rows[0] ?? null;
-    });
-    if (!row) return reply.code(404).send({ error: "batch_not_found" });
-    return row;
+  app.get("/api/v1/admin/qbo-forensic/batches/:batchId", async (req, reply) => {
+    return getBatchById(req, reply, req.params, req.query);
   });
 
   app.get("/api/v1/admin/qbo-forensic/batches", async (req, reply) => {
@@ -79,14 +99,19 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
 
+    const query = batchQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+
     const rows = await withLuciaBypass(async (client) => {
       const res = await client.query(
         `
           SELECT *
           FROM qbo_archive.import_batches
+          WHERE ($1::uuid IS NULL OR operating_company_id = $1)
           ORDER BY started_at DESC
           LIMIT 200
-        `
+        `,
+        [query.data.operating_company_id ?? null]
       );
       return res.rows;
     });

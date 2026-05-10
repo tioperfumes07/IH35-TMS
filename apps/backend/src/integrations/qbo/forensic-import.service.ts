@@ -125,9 +125,9 @@ export async function startImportBatch(actorUserId: string, operatingCompanyId: 
   if (!auth.connected || !auth.realm_id) {
     throw new Error("QBO not authorized for this company. Please authorize via /admin/forensic-review.");
   }
-  const batchId = await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const res = await client.query<{ id: string }>(
+  const createdBatch = await withCurrentUser(actorUserId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [operatingCompanyId]);
+    const res = await client.query<{ id: string; operating_company_id: string; status: string; started_at: string }>(
       `
         INSERT INTO qbo_archive.import_batches (
           operating_company_id,
@@ -139,13 +139,28 @@ export async function startImportBatch(actorUserId: string, operatingCompanyId: 
           updated_at
         )
         VALUES ($1,$2,now(),now(),'in_progress',now(),now())
-        RETURNING id
+        RETURNING id, operating_company_id, status, started_at
       `,
       [operatingCompanyId, auth.realm_id]
     );
-    return res.rows[0]?.id ?? null;
+
+    console.info("[FORENSIC_BATCH_INSERT]", {
+      step: "batch_create_db_insert",
+      operatingCompanyId,
+      rowCount: res.rowCount ?? 0,
+      hasReturnedRow: res.rows.length > 0,
+      batchId: res.rows[0]?.id ?? null,
+    });
+
+    if (!res.rows.length) {
+      throw new Error(
+        `BATCH_CREATE_FAILED: 0 rows returned for operating_company_id=${operatingCompanyId}. Check RLS app.operating_company_id context.`
+      );
+    }
+    return res.rows[0];
   });
-  if (!batchId) throw new Error("failed_to_create_import_batch");
+
+  const batchId = createdBatch.id;
   await appendSystemAudit(actorUserId, "qbo_archive.import_started", {
     batch_id: batchId,
     operating_company_id: operatingCompanyId,
