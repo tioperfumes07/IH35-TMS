@@ -184,6 +184,8 @@ const EVENT_CLASSES = [
   "driver.qbo_vendor.unlinked",
   "asset.qbo_class.linked",
   "asset.qbo_class.unlinked",
+  "accounting.journal_entry.created",
+  "accounting.journal_entry.voided",
   "integrations.qbo.oauth_initiated",
   "integrations.qbo.oauth_callback",
   "integrations.qbo.authorized",

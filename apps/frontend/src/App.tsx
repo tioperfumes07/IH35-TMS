@@ -66,6 +66,7 @@ import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
 import { FactoringListPage } from "./pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
 import { VendorBalancesPage } from "./pages/accounting/VendorBalancesPage";
+import { ManualJEListPage } from "./pages/accounting/ManualJEListPage";
 import { InternalFineReasonsListPage } from "./pages/lists/safety/InternalFineReasonsListPage";
 import { CivilFineTypesListPage } from "./pages/lists/safety/CivilFineTypesListPage";
 import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViolationTypesListPage";
@@ -478,6 +479,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <VendorBalancesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/journal-entries"
+          element={
+            <ProtectedRoute>
+              <ManualJEListPage />
             </ProtectedRoute>
           }
         />
