@@ -5,6 +5,7 @@ import {
   getBankingKpis,
   getBankingRegister,
   getBankingTiles,
+  getCategorizationRulesStats,
   getPlaidBankAccounts,
   getQboSyncQueueStats,
   getReconciliationSessions,
@@ -87,6 +88,11 @@ export function BankingHomePage() {
     queryFn: () => getQboSyncQueueStats(companyId),
     enabled: Boolean(companyId && (auth.user?.role === "Owner" || auth.user?.role === "Administrator")),
   });
+  const categorizationStatsQuery = useQuery({
+    queryKey: ["banking", "categorization-rules-stats", companyId],
+    queryFn: () => getCategorizationRulesStats(companyId),
+    enabled: Boolean(companyId && (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant")),
+  });
   const tiles = tilesQuery.data?.tiles ?? [];
   const selectedId = selectedAccountId ?? tiles[0]?.id ?? null;
   const registerQuery = useQuery({
@@ -166,6 +172,29 @@ export function BankingHomePage() {
         </div>
         {auth.user?.role !== "Owner" && auth.user?.role !== "Administrator" ? (
           <p className="mt-2 text-xs text-gray-500">Connect Bank Account is visible only to Owner/Admin roles.</p>
+        ) : null}
+      </div>
+      <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Auto-Categorize</p>
+          <Link to="/banking/categorize-rules" className="text-xs font-medium text-blue-700 hover:underline">
+            Manage Rules
+          </Link>
+        </div>
+        {categorizationStatsQuery.isLoading ? <p className="text-sm text-gray-500">Loading auto-categorize stats...</p> : null}
+        {categorizationStatsQuery.isError ? <p className="text-sm text-red-600">Unable to load auto-categorize stats.</p> : null}
+        {!categorizationStatsQuery.isLoading && !categorizationStatsQuery.isError ? (
+          <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 sm:grid-cols-3">
+            <p>
+              Active rules: <span className="font-semibold">{Number(categorizationStatsQuery.data?.active_rules ?? 0)}</span>
+            </p>
+            <p>
+              Matched (7d): <span className="font-semibold text-green-700">{Number(categorizationStatsQuery.data?.matched_7d ?? 0)}</span>
+            </p>
+            <p>
+              Unmatched (7d): <span className="font-semibold text-amber-700">{Number(categorizationStatsQuery.data?.unmatched_7d ?? 0)}</span>
+            </p>
+          </div>
         ) : null}
       </div>
       <div className="rounded border border-gray-200 bg-white p-3">

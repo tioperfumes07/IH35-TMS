@@ -5,7 +5,14 @@ import { sendEmail } from "../../notifications/email.service.js";
 import type { BankTransaction, TransactionCategoryRule } from "../../banking/types.js";
 import { getPlaidClient, getPlaidEnvForAudit } from "./plaid-client.js";
 
-type SyncCounts = { added: number; modified: number; removed: number };
+type SyncCounts = {
+  added: number;
+  modified: number;
+  removed: number;
+  autoCategorizeTotal: number;
+  autoCategorizeMatched: number;
+  autoCategorizeUnmatched: number;
+};
 
 function toCents(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return 0;
@@ -52,6 +59,7 @@ async function lookupOwnerEmails() {
 
 async function loadCategoryRules(operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [operatingCompanyId]);
     const res = await client.query<TransactionCategoryRule>(
       `
         SELECT
@@ -72,6 +80,36 @@ async function loadCategoryRules(operatingCompanyId: string) {
     );
     return res.rows;
   });
+}
+
+function normalizeCategoryToken(input: string) {
+  return input
+    .trim()
+    .toUpperCase()
+    .replace(/[.\s/-]+/g, "_")
+    .replace(/[^A-Z0-9_*]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
+function compileWildcardPattern(pattern: string) {
+  const escaped = pattern
+    .split("*")
+    .map((segment) => segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join(".*");
+  return new RegExp(`^${escaped}$`, "i");
+}
+
+function matchesRule(patternRaw: string, categories: string[]) {
+  const normalizedPattern = normalizeCategoryToken(patternRaw);
+  if (!normalizedPattern) return false;
+  const normalizedCategories = categories.map((category) => normalizeCategoryToken(category)).filter(Boolean);
+  if (normalizedCategories.length === 0) return false;
+  if (normalizedPattern.includes("*")) {
+    const matcher = compileWildcardPattern(normalizedPattern);
+    return normalizedCategories.some((category) => matcher.test(category));
+  }
+  return normalizedCategories.some((category) => category === normalizedPattern || category.includes(normalizedPattern));
 }
 
 export async function createLinkToken(userId: string, operatingCompanyId: string) {
@@ -253,10 +291,11 @@ export async function autoCategorize(transaction: Pick<BankTransaction, "operati
   if (rules.length === 0) return null;
 
   const categories = transaction.plaid_category ?? [];
-  const matched = rules.find((rule) => categories.some((category) => category.toLowerCase().includes(rule.plaid_category_pattern.toLowerCase())));
+  const matched = rules.find((rule) => matchesRule(rule.plaid_category_pattern, categories));
   if (!matched) return null;
 
   await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [transaction.operating_company_id]);
     const hasCoaColumn = await client.query<{ exists: boolean }>(
       `
         SELECT EXISTS (
@@ -269,10 +308,21 @@ export async function autoCategorize(transaction: Pick<BankTransaction, "operati
       `
     );
     if (hasCoaColumn.rows[0]?.exists) {
-      await client.query(`UPDATE banking.bank_transactions SET coa_account_id = $2, updated_at = now() WHERE id = $1`, [
+      const updated = await client.query(
+        `UPDATE banking.bank_transactions SET coa_account_id = $2, updated_at = now() WHERE id = $1 AND operating_company_id = $3 AND coa_account_id IS NULL`,
+        [
         transaction.id,
         matched.coa_account_id,
+        transaction.operating_company_id,
       ]);
+      if ((updated.rowCount ?? 0) === 0) return;
+      console.info("[PLAID_CATEGORIZE_RULE_MATCH]", {
+        operatingCompanyId: transaction.operating_company_id,
+        transactionId: transaction.id,
+        ruleId: matched.id,
+        matchedPattern: matched.plaid_category_pattern,
+        coaAccountId: matched.coa_account_id,
+      });
     }
   });
 
@@ -299,7 +349,16 @@ export async function syncTransactions(itemId: string) {
     return res.rows;
   });
 
-  if (accountRows.length === 0) return { added: 0, modified: 0, removed: 0 } satisfies SyncCounts;
+  if (accountRows.length === 0) {
+    return {
+      added: 0,
+      modified: 0,
+      removed: 0,
+      autoCategorizeTotal: 0,
+      autoCategorizeMatched: 0,
+      autoCategorizeUnmatched: 0,
+    } satisfies SyncCounts;
+  }
   const accessToken = accountRows.find((row) => row.plaid_access_token)?.plaid_access_token;
   if (!accessToken) throw new Error("plaid_access_token_missing_for_item");
 
@@ -312,7 +371,14 @@ export async function syncTransactions(itemId: string) {
 
   let hasMore = true;
   let cursor: string | undefined;
-  const counts: SyncCounts = { added: 0, modified: 0, removed: 0 };
+  const counts: SyncCounts = {
+    added: 0,
+    modified: 0,
+    removed: 0,
+    autoCategorizeTotal: 0,
+    autoCategorizeMatched: 0,
+    autoCategorizeUnmatched: 0,
+  };
 
   while (hasMore) {
     const syncRes = await plaid.transactionsSync({
@@ -371,11 +437,14 @@ export async function syncTransactions(itemId: string) {
           counts.added += 1;
           const row = insert.rows[0] as { id: string; operating_company_id: string; plaid_category: string[] } | undefined;
           if (row) {
-            await autoCategorize({
+            counts.autoCategorizeTotal += 1;
+            const matched = await autoCategorize({
               id: row.id,
               operating_company_id: row.operating_company_id,
               plaid_category: row.plaid_category ?? [],
             });
+            if (matched) counts.autoCategorizeMatched += 1;
+            else counts.autoCategorizeUnmatched += 1;
           }
         }
       }
@@ -440,6 +509,12 @@ export async function syncTransactions(itemId: string) {
     },
     "info"
   );
+  console.info("[PLAID_AUTOCAT_BATCH]", {
+    plaidItemId: itemId,
+    total: counts.autoCategorizeTotal,
+    matched: counts.autoCategorizeMatched,
+    unmatched: counts.autoCategorizeUnmatched,
+  });
 
   return counts;
 }

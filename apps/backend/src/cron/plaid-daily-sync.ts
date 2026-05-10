@@ -73,7 +73,16 @@ export function initializePlaidDailySyncCron(logger: FastifyBaseLogger) {
 
       for (const account of uniqueItems.values()) {
         try {
-          await syncTransactions(account.plaid_item_id);
+          const result = await syncTransactions(account.plaid_item_id);
+          logger.info(
+            {
+              plaid_item_id: account.plaid_item_id,
+              total: result.autoCategorizeTotal,
+              matched: result.autoCategorizeMatched,
+              unmatched: result.autoCategorizeUnmatched,
+            },
+            "[PLAID_AUTOCAT_BATCH]"
+          );
         } catch (error) {
           const code =
             typeof error === "object" && error && "code" in error
