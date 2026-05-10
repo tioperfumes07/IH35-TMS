@@ -58,6 +58,13 @@ async function requestWithRetry(url: string, init: RequestInit, retries = 0): Pr
   return response;
 }
 
+function sanitizeBodyPreview(text: string) {
+  return text
+    .replace(/"access_token"\s*:\s*"[^"]*"/g, '"access_token":"[REDACTED]"')
+    .replace(/"refresh_token"\s*:\s*"[^"]*"/g, '"refresh_token":"[REDACTED]"')
+    .slice(0, 500);
+}
+
 export async function qboQuery<T = Record<string, unknown>>(ctx: QboApiContext, query: string) {
   const { accessToken, realmId } = await ensureAccessToken(ctx);
   const url = `${qboApiBase()}/${realmId}/query?query=${encodeURIComponent(query)}&minorversion=75`;
@@ -67,8 +74,13 @@ export async function qboQuery<T = Record<string, unknown>>(ctx: QboApiContext, 
   };
   console.info({ url, headers: redactHeaders(headers) }, "QBO query");
   const response = await requestWithRetry(url, { method: "GET", headers });
-  const payload = (await response.json()) as QueryResult<T>;
-  if (!response.ok) throw new Error(`QBO query failed: status=${response.status}`);
+  const responseText = await response.text();
+  if (!response.ok) {
+    const preview = sanitizeBodyPreview(responseText);
+    console.error({ url, status: response.status, bodyPreview: preview }, "QBO query failed");
+    throw new Error(`QBO query failed: status=${response.status}; body=${preview}`);
+  }
+  const payload = JSON.parse(responseText) as QueryResult<T>;
   return payload;
 }
 
@@ -93,8 +105,13 @@ export async function qboGetEntityById<T = Record<string, unknown>>(ctx: QboApiC
   };
   console.info({ url, headers: redactHeaders(headers) }, "QBO get by id");
   const response = await requestWithRetry(url, { method: "GET", headers });
-  const payload = (await response.json()) as T;
-  if (!response.ok) throw new Error(`QBO get entity failed: status=${response.status}`);
+  const responseText = await response.text();
+  if (!response.ok) {
+    const preview = sanitizeBodyPreview(responseText);
+    console.error({ url, status: response.status, bodyPreview: preview }, "QBO get by id failed");
+    throw new Error(`QBO get entity failed: status=${response.status}; body=${preview}`);
+  }
+  const payload = JSON.parse(responseText) as T;
   return payload;
 }
 
@@ -105,7 +122,11 @@ export async function qboDownloadAttachment(ctx: QboApiContext, downloadUrl: str
   };
   console.info({ downloadUrl, headers: redactHeaders(headers) }, "QBO attachment download");
   const response = await requestWithRetry(downloadUrl, { method: "GET", headers });
-  if (!response.ok) throw new Error(`QBO attachment download failed: status=${response.status}`);
+  if (!response.ok) {
+    const bodyPreview = sanitizeBodyPreview(await response.text());
+    console.error({ downloadUrl, status: response.status, bodyPreview }, "QBO attachment download failed");
+    throw new Error(`QBO attachment download failed: status=${response.status}; body=${bodyPreview}`);
+  }
   const contentType = response.headers.get("content-type");
   const arrayBuffer = await response.arrayBuffer();
   return { data: Buffer.from(arrayBuffer), contentType };
