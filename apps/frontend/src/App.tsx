@@ -18,6 +18,7 @@ import { BankAccountDetailPage } from "./pages/banking/BankAccountDetail";
 import { CategorizationRulesPage } from "./pages/banking/CategorizationRulesPage";
 import { QboSyncQueuePage } from "./pages/banking/QboSyncQueuePage";
 import { ReconciliationWorkspacePage } from "./pages/banking/ReconciliationWorkspace";
+import { TransfersListPage } from "./pages/banking/TransfersListPage";
 import { SafetyLayout } from "./pages/safety/SafetyLayout";
 import {
   AccidentsIncidentsTab,
@@ -266,6 +267,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CategorizationRulesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/transfers"
+          element={
+            <ProtectedRoute>
+              <TransfersListPage />
             </ProtectedRoute>
           }
         />

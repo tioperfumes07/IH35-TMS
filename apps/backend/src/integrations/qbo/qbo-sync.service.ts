@@ -5,7 +5,7 @@ import { sendEmail } from "../../notifications/email.service.js";
 import { getValidAccessToken } from "./qbo-oauth.service.js";
 import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from "./qbo-mappers.js";
 
-type QueueEntityType = "bank_transaction" | "bill" | "expense" | "invoice" | "journal_entry" | "settlement";
+type QueueEntityType = "bank_transaction" | "bill" | "expense" | "invoice" | "journal_entry" | "settlement" | "transfer";
 type QueueStatus = "pending" | "in_flight" | "synced" | "failed" | "blocked";
 
 type QueueRow = {
@@ -147,6 +147,50 @@ async function loadBankTxnContext(operatingCompanyId: string, entityId: string) 
       [operatingCompanyId, entityId]
     );
     return res.rows[0] ?? null;
+  });
+}
+
+async function syncTransferPreview(job: QueueRow) {
+  return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+    const transferRes = await client.query<{ revoked_at: string | null }>(
+      `
+        SELECT revoked_at
+        FROM banking.transfers
+        WHERE id = $1
+          AND operating_company_id = $2
+        LIMIT 1
+      `,
+      [job.entity_id, job.operating_company_id]
+    );
+    const transfer = transferRes.rows[0] ?? null;
+    if (!transfer) throw new Error("transfer_not_found_for_sync");
+    if (transfer.revoked_at) {
+      await client.query(
+        `
+          UPDATE banking.transfers
+          SET qbo_journal_entry_id = NULL,
+              updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $2
+        `,
+        [job.entity_id, job.operating_company_id]
+      );
+      return { mode: "revoke_preview", qboId: null as string | null };
+    }
+
+    const qboId = `preview-transfer-je-${job.entity_id}`;
+    await client.query(
+      `
+        UPDATE banking.transfers
+        SET qbo_journal_entry_id = $3,
+            updated_at = now()
+        WHERE id = $1
+          AND operating_company_id = $2
+      `,
+      [job.entity_id, job.operating_company_id, qboId]
+    );
+    return { mode: "create_preview", qboId };
   });
 }
 
@@ -337,6 +381,31 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
         await appendSyncAudit(
           "integrations.qbo_sync.synced",
           { queue_id: job.id, operating_company_id: job.operating_company_id, entity_id: job.entity_id, mode: "settlement_preview" },
+          "info",
+          null
+        );
+        continue;
+      }
+      if (job.entity_type === "transfer") {
+        const preview = await syncTransferPreview(job);
+        await markJobResult(job, "synced", {
+          qboId: preview.qboId,
+          errorMessage: null,
+          errorDetails: {
+            mode: preview.mode,
+            note: "Transfer sync is running in preview mode; QBO journal entry create/delete will be wired in later phase.",
+          },
+        });
+        synced += 1;
+        await appendSyncAudit(
+          "integrations.qbo_sync.synced",
+          {
+            queue_id: job.id,
+            operating_company_id: job.operating_company_id,
+            entity_id: job.entity_id,
+            mode: preview.mode,
+            qbo_id: preview.qboId,
+          },
           "info",
           null
         );

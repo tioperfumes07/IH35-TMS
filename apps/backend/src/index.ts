@@ -50,6 +50,7 @@ import { registerBankingRoutes } from "./banking/banking.routes.js";
 import { registerCategorizationRulesRoutes } from "./banking/categorization-rules.routes.js";
 import { registerBankingReconciliationRoutes } from "./banking/reconciliation.routes.js";
 import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
+import { registerBankingTransfersRoutes } from "./banking/transfers.routes.js";
 import { registerBankingFactoringVirtualRoutes } from "./banking/factoring-virtual.routes.js";
 import { registerBankingEscrowVisualizerRoutes } from "./banking/escrow-visualizer.routes.js";
 import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
@@ -217,6 +218,7 @@ async function main() {
   await registerCategorizationRulesRoutes(app);
   await registerBankingReconciliationRoutes(app);
   await registerBankingManualJeRoutes(app);
+  await registerBankingTransfersRoutes(app);
   await registerBankingFactoringVirtualRoutes(app);
   await registerBankingEscrowVisualizerRoutes(app);
   await registerFactoringRoutes(app);

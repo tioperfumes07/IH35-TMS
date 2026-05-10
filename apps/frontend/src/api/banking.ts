@@ -131,6 +131,32 @@ export type CategorizationPreviewTransaction = {
   account_name: string | null;
 };
 
+export type TransferType = "bank_to_bank" | "cc_payment" | "cash_deposit" | "owner_contribution" | "owner_distribution";
+export type TransferAccountKind = "bank" | "cc" | "coa";
+
+export type Transfer = {
+  id: string;
+  operating_company_id: string;
+  transfer_type: TransferType;
+  from_account_id: string;
+  from_account_kind: TransferAccountKind;
+  to_account_id: string;
+  to_account_kind: TransferAccountKind;
+  amount_cents: number;
+  transfer_date: string;
+  memo: string | null;
+  reference_number: string | null;
+  qbo_journal_entry_id: string | null;
+  revoked_at: string | null;
+  revoked_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  from_bank_name?: string | null;
+  to_bank_name?: string | null;
+  from_coa_name?: string | null;
+  to_coa_name?: string | null;
+};
+
 function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
@@ -335,6 +361,65 @@ export function getQboSyncQueue(
   params.set("limit", String(options.limit ?? 100));
   params.set("offset", String(options.offset ?? 0));
   return apiRequest<{ items: QboSyncQueueItem[] }>(`/api/v1/integrations/qbo/sync-queue?${params.toString()}`);
+}
+
+export function createTransfer(
+  operatingCompanyId: string,
+  payload: {
+    transfer_type: TransferType;
+    from_account_id: string;
+    from_account_kind: TransferAccountKind;
+    to_account_id: string;
+    to_account_kind: TransferAccountKind;
+    amount_cents: number;
+    transfer_date: string;
+    memo?: string;
+    reference_number?: string;
+  }
+) {
+  return apiRequest<{ transfer: Transfer }>(`/api/v1/banking/transfers`, {
+    method: "POST",
+    body: {
+      operating_company_id: operatingCompanyId,
+      ...payload,
+    },
+  });
+}
+
+export function listTransfers(
+  operatingCompanyId: string,
+  options: {
+    from?: string;
+    to?: string;
+    type?: TransferType;
+    accountId?: string;
+    status?: "active" | "revoked";
+    limit?: number;
+    offset?: number;
+  } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (options.from) params.set("from", options.from);
+  if (options.to) params.set("to", options.to);
+  if (options.type) params.set("type", options.type);
+  if (options.accountId) params.set("account_id", options.accountId);
+  if (options.status) params.set("status", options.status);
+  params.set("limit", String(options.limit ?? 50));
+  params.set("offset", String(options.offset ?? 0));
+  return apiRequest<{ transfers: Transfer[] }>(`/api/v1/banking/transfers?${params.toString()}`);
+}
+
+export function getTransfer(id: string, operatingCompanyId: string) {
+  return apiRequest<{ transfer: Transfer; audit_events: Array<Record<string, unknown>> }>(
+    `/api/v1/banking/transfers/${id}?${q(operatingCompanyId)}`
+  );
+}
+
+export function revokeTransfer(id: string, operatingCompanyId: string, reason: string) {
+  return apiRequest<{ transfer: Transfer }>(`/api/v1/banking/transfers/${id}/revoke?${q(operatingCompanyId)}`, {
+    method: "POST",
+    body: { reason },
+  });
 }
 
 export function retryQboSyncQueueItem(id: string, operatingCompanyId: string) {
