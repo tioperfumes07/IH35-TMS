@@ -126,6 +126,52 @@ export type PaymentApplication = {
   applied_at: string;
 };
 
+export type VendorBalance = {
+  operating_company_id: string;
+  vendor_id: string;
+  vendor_name: string;
+  balance_cents: number;
+  open_bill_count: number;
+  next_due_date: string | null;
+  last_bill_date: string | null;
+};
+
+export type BillStatus = "open" | "partial" | "paid" | "voided";
+export type BillPaymentMethod = "check" | "ach" | "wire" | "cash" | "credit_card";
+
+export type VendorBill = {
+  id: string;
+  operating_company_id: string;
+  vendor_id: string | null;
+  bill_number: string | null;
+  bill_date: string;
+  due_date: string | null;
+  amount_cents: number;
+  paid_cents: number;
+  status: BillStatus;
+  memo: string | null;
+  created_at: string;
+  updated_at: string;
+  revoked_at: string | null;
+};
+
+export type BillPayment = {
+  id: string;
+  operating_company_id: string;
+  bill_id: string;
+  vendor_id: string | null;
+  payment_date: string;
+  amount_cents: number;
+  payment_method: BillPaymentMethod;
+  from_bank_account_id: string | null;
+  check_number: string | null;
+  reference_number: string | null;
+  memo: string | null;
+  created_by_user_id: string | null;
+  created_at: string;
+  revoked_at: string | null;
+};
+
 function withCompany(path: string, operatingCompanyId: string) {
   const separator = path.includes("?") ? "&" : "?";
   return `${path}${separator}operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
@@ -264,6 +310,78 @@ export function listPayments(
   if (filters.offset !== undefined) query.set("offset", String(filters.offset));
   const qs = query.toString();
   return apiRequest<{ rows: Payment[]; total: number }>(withCompany(`/api/v1/accounting/payments${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
+export function listVendorBalances(
+  operatingCompanyId: string,
+  params: { all?: boolean; sort?: "balance_desc" | "balance_asc" | "vendor_asc" } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.all !== undefined) query.set("all", String(params.all));
+  if (params.sort) query.set("sort", params.sort);
+  const qs = query.toString();
+  return apiRequest<{ rows: VendorBalance[] }>(withCompany(`/api/v1/accounting/vendor-balances${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
+export function listVendorBills(
+  operatingCompanyId: string,
+  params: {
+    vendor_id: string;
+    status?: BillStatus;
+    date_from?: string;
+    date_to?: string;
+    limit?: number;
+    offset?: number;
+  }
+) {
+  const query = new URLSearchParams();
+  query.set("vendor_id", params.vendor_id);
+  if (params.status) query.set("status", params.status);
+  if (params.date_from) query.set("date_from", params.date_from);
+  if (params.date_to) query.set("date_to", params.date_to);
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiRequest<{ rows: VendorBill[] }>(withCompany(`/api/v1/accounting/bills?${qs}`, operatingCompanyId));
+}
+
+export function getVendorBill(id: string, operatingCompanyId: string) {
+  return apiRequest<{ bill: VendorBill; payments: BillPayment[]; audit_events: Array<Record<string, unknown>> }>(
+    withCompany(`/api/v1/accounting/bills/${id}`, operatingCompanyId)
+  );
+}
+
+export function payVendorBill(
+  id: string,
+  operatingCompanyId: string,
+  body: {
+    payment_date: string;
+    amount_cents: number;
+    payment_method: BillPaymentMethod;
+    from_bank_account_id?: string;
+    check_number?: string;
+    reference_number?: string;
+    memo?: string;
+  }
+) {
+  return apiRequest<{ payment: BillPayment }>(withCompany(`/api/v1/accounting/bills/${id}/pay`, operatingCompanyId), {
+    method: "POST",
+    body,
+  });
+}
+
+export function voidVendorBill(id: string, operatingCompanyId: string, reason: string) {
+  return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/bills/${id}/void`, operatingCompanyId), {
+    method: "POST",
+    body: { reason },
+  });
+}
+
+export function voidVendorBillPayment(id: string, operatingCompanyId: string, reason: string) {
+  return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/bill-payments/${id}/void`, operatingCompanyId), {
+    method: "POST",
+    body: { reason },
+  });
 }
 
 export function getPayment(id: string, operatingCompanyId: string) {

@@ -31,6 +31,7 @@ import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { Link, useNavigate } from "react-router-dom";
 import { RecordTransferModal } from "./RecordTransferModal";
 import type { TransferType } from "../../api/banking";
+import { listVendorBalances } from "../../api/accounting";
 
 function syncStatusClasses(status: string) {
   if (status === "active") return "bg-green-100 text-green-700";
@@ -95,6 +96,11 @@ export function BankingHomePage() {
   const categorizationStatsQuery = useQuery({
     queryKey: ["banking", "categorization-rules-stats", companyId],
     queryFn: () => getCategorizationRulesStats(companyId),
+    enabled: Boolean(companyId && (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant")),
+  });
+  const vendorBalancesQuery = useQuery({
+    queryKey: ["accounting", "vendor-balances", companyId, "banking-home"],
+    queryFn: () => listVendorBalances(companyId, { all: false, sort: "balance_desc" }),
     enabled: Boolean(companyId && (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant")),
   });
   const tiles = tilesQuery.data?.tiles ?? [];
@@ -216,6 +222,44 @@ export function BankingHomePage() {
               Unmatched (7d): <span className="font-semibold text-amber-700">{Number(categorizationStatsQuery.data?.unmatched_7d ?? 0)}</span>
             </p>
           </div>
+        ) : null}
+      </div>
+      <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor Balances</p>
+          <Link to="/accounting/vendor-balances" className="text-xs font-medium text-blue-700 hover:underline">
+            View All Vendor Balances
+          </Link>
+        </div>
+        {vendorBalancesQuery.isLoading ? <p className="text-sm text-gray-500">Loading vendor balances...</p> : null}
+        {vendorBalancesQuery.isError ? <p className="text-sm text-red-600">Unable to load vendor balances.</p> : null}
+        {!vendorBalancesQuery.isLoading && !vendorBalancesQuery.isError ? (
+          <>
+            <p className="text-sm text-gray-700">
+              Total outstanding:{" "}
+              <span className="font-semibold text-red-700">
+                {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+                  (vendorBalancesQuery.data?.rows ?? []).reduce((sum, row) => sum + Number(row.balance_cents ?? 0), 0) / 100
+                )}
+              </span>
+            </p>
+            <div className="mt-2 space-y-1">
+              {(vendorBalancesQuery.data?.rows ?? []).slice(0, 5).map((row) => (
+                <button
+                  key={row.vendor_id}
+                  type="button"
+                  className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                  onClick={() => navigate("/accounting/vendor-balances")}
+                >
+                  <span className="font-medium text-gray-800">{row.vendor_name}</span>
+                  <span className="float-right font-semibold text-red-700">
+                    {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(row.balance_cents ?? 0) || 0) / 100)}
+                  </span>
+                </button>
+              ))}
+              {(vendorBalancesQuery.data?.rows ?? []).length === 0 ? <p className="text-xs text-gray-500">No outstanding vendor balances.</p> : null}
+            </div>
+          </>
         ) : null}
       </div>
       <div className="rounded border border-gray-200 bg-white p-3">
