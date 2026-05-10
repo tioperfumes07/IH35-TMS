@@ -36,6 +36,8 @@ export type WorkOrder = {
   external_vendor_invoice_number?: string | null;
   severity?: string | null;
   opened_at?: string | null;
+  closed_at?: string | null;
+  duration_seconds?: number | null;
   updated_at?: string | null;
 };
 
@@ -139,6 +141,7 @@ export type CreateWorkOrderTwoSectionPayload = {
     unit_id: string;
     driver_id?: string;
     load_id?: string;
+    load_exemption_reason?: string;
     service_date?: string;
     repair_location: string;
     vendor_id?: string;
@@ -322,6 +325,29 @@ export function convertIssueToWo(
       body: payload,
     }
   );
+}
+
+export type ExpenseLoadSuggestion = {
+  load_id: string;
+  load_number: string;
+  confidence: "exact" | "fuzzy" | "none";
+};
+
+export function suggestExpenseLoad(params: {
+  operating_company_id: string;
+  transaction_date: string;
+  driver_id?: string;
+  unit_id?: string;
+  trailer_id?: string;
+}) {
+  const qs = new URLSearchParams({
+    operating_company_id: params.operating_company_id,
+    transaction_date: params.transaction_date,
+  });
+  if (params.driver_id) qs.set("driver_id", params.driver_id);
+  if (params.unit_id) qs.set("unit_id", params.unit_id);
+  if (params.trailer_id) qs.set("trailer_id", params.trailer_id);
+  return apiRequest<{ data: ExpenseLoadSuggestion | null }>(`/api/v1/expenses/suggest-load?${qs.toString()}`);
 }
 
 export function logArrivingSoonView(companyId: string) {

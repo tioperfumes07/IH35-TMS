@@ -5,6 +5,8 @@ type Props = {
   register: UseFormRegister<CreateWOFormValues>;
   watch: UseFormWatch<CreateWOFormValues>;
   requireLoadForExpense?: boolean;
+  suggestedLoad?: { load_number: string; confidence: "exact" | "fuzzy" | "none" } | null;
+  backendLoadError?: string | null;
 };
 
 function Field({ label, children }: { label: string; children: JSX.Element }) {
@@ -16,12 +18,20 @@ function Field({ label, children }: { label: string; children: JSX.Element }) {
   );
 }
 
-export function CreateWOSectionIdentification({ register, watch, requireLoadForExpense = false }: Props) {
+export function CreateWOSectionIdentification({
+  register,
+  watch,
+  requireLoadForExpense = false,
+  suggestedLoad = null,
+  backendLoadError = null,
+}: Props) {
   const type = watch("wo_type");
   const sourceType = watch("source_type");
+  const selectedLoadId = watch("load_id");
   const requireDriverAndLoad = type === "repair" || type === "tire" || type === "accident";
   const requireLoad = requireDriverAndLoad || requireLoadForExpense;
   const requireExternalFields = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
+  const showExemptionReason = requireLoadForExpense && !selectedLoadId;
   return (
     <section className="rounded border border-gray-200 bg-gray-50 p-3">
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-700">A. Identification & Where</h3>
@@ -94,6 +104,25 @@ export function CreateWOSectionIdentification({ register, watch, requireLoadForE
           </Field>
         </div>
       </div>
+      {suggestedLoad ? (
+        <div className="mt-2 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+          Suggested load: <span className="font-semibold">{suggestedLoad.load_number}</span>{" "}
+          <span className="rounded bg-emerald-100 px-1 py-0.5 uppercase">{suggestedLoad.confidence}</span>
+        </div>
+      ) : null}
+      {showExemptionReason ? (
+        <div className="mt-2">
+          <Field label="Load exemption reason (required when no load selected, min 20 chars)">
+            <textarea
+              {...register("load_exemption_reason")}
+              rows={2}
+              className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              placeholder="historical_pre_launch_data ... (min 20 chars)"
+            />
+          </Field>
+        </div>
+      ) : null}
+      {backendLoadError ? <div className="mt-2 text-xs font-semibold text-red-600">{backendLoadError}</div> : null}
     </section>
   );
 }

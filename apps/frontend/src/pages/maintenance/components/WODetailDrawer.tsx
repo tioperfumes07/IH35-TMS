@@ -9,6 +9,21 @@ type Props = {
   onClose: () => void;
 };
 
+function formatDateTime(value: unknown) {
+  if (!value) return "—";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString();
+}
+
+function formatDuration(secondsValue: unknown) {
+  const seconds = Number(secondsValue ?? 0);
+  if (!Number.isFinite(seconds) || seconds <= 0) return "—";
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${hours}h ${minutes}m`;
+}
+
 export function WODetailDrawer({ open, workOrder, canRefreshDisplayId, onRefreshDisplayId, onComplete, onClose }: Props) {
   if (!open || !workOrder) return null;
   const sourceType = String(workOrder.source_type ?? "—");
@@ -28,6 +43,9 @@ export function WODetailDrawer({ open, workOrder, canRefreshDisplayId, onRefresh
           <div>Display ID: {String(workOrder.display_id ?? "—")}</div>
           <div>Source Type: <span className="rounded bg-gray-200 px-1 py-0.5">{sourceType}</span></div>
           <div>Status: {status}</div>
+          <div>Opened: {formatDateTime(workOrder.opened_at)}</div>
+          <div>Closed: {formatDateTime(workOrder.closed_at)}</div>
+          <div>Duration: {formatDuration(workOrder.duration_seconds)}</div>
           <div>V5: {String(workOrder.v5_suffix ?? "—")}</div>
           <div>Legacy ID: {String(workOrder.legacy_display_id ?? "—")}</div>
           <div>Cost (total): {String(workOrder.total_actual_cost ?? "0")}</div>
