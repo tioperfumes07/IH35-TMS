@@ -85,6 +85,9 @@ export type Driver = {
   emergency_contact_phone_alternate: string | null;
   emergency_contact_address: string | null;
   emergency_contact_notes: string | null;
+  qbo_vendor_id: string | null;
+  qbo_vendor_linked_at: string | null;
+  qbo_vendor_linked_by_user_id: string | null;
   status: DriverStatus;
   notes: string | null;
   prior_driver_id: string | null;

@@ -80,6 +80,7 @@ import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
+import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { initializeScheduledReportsCron } from "./cron/scheduled-reports.js";
 import { initializePlaidDailySyncCron } from "./cron/plaid-daily-sync.js";
@@ -201,6 +202,7 @@ async function main() {
   await registerQboForensicAdminRoutes(app);
   await registerQboOAuthRoutes(app);
   await registerQboSyncAdminRoutes(app);
+  await registerQboVendorLinkageRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);

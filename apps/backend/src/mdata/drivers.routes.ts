@@ -228,12 +228,13 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT
-            id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
+            id, operating_company_id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
             cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
             visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+            qbo_vendor_id, qbo_vendor_linked_at, qbo_vendor_linked_by_user_id,
             status, notes, prior_driver_id, rehire_count, is_rehire,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers

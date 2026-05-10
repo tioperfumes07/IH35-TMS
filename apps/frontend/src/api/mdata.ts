@@ -929,3 +929,117 @@ export function listUnits(params: { status?: string; search?: string; operating_
   const qs = query.toString();
   return apiRequest<{ units: unknown[] }>(`/api/v1/mdata/units${qs ? `?${qs}` : ""}`);
 }
+
+export type QboVendorCandidate = {
+  qbo_vendor_id: string;
+  display_name: string;
+  company_name: string | null;
+  active: boolean;
+  score?: number;
+};
+
+export type DriverQboMappingStatus = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  qbo_vendor_id: string | null;
+  qbo_vendor_linked_at: string | null;
+  linked: boolean;
+};
+
+export function listQboVendors(operatingCompanyId: string, query = "", limit = 50) {
+  const params = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    query,
+    limit: String(limit),
+  });
+  return apiRequest<{ rows: QboVendorCandidate[] }>(`/api/v1/integrations/qbo/vendors?${params.toString()}`);
+}
+
+export function listQboVendorSuggestions(
+  operatingCompanyId: string,
+  entityType: "driver" | "unit" | "equipment" | "asset",
+  entityId: string
+) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ rows: QboVendorCandidate[] }>(
+    `/api/v1/integrations/qbo/vendor-suggestions/${entityType}/${entityId}?${params.toString()}`
+  );
+}
+
+export function linkDriverQboVendor(
+  driverId: string,
+  body: { operating_company_id: string; qbo_vendor_id: string; reason: string; force?: boolean }
+) {
+  return apiRequest<{ ok: true; idempotent: boolean }>(`/api/v1/master-data/drivers/${driverId}/link-qbo-vendor`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function linkUnitQboClass(
+  unitId: string,
+  body: { operating_company_id: string; qbo_class_id: string; reason: string; force?: boolean }
+) {
+  return apiRequest<{ ok: true; idempotent: boolean }>(`/api/v1/master-data/units/${unitId}/link-qbo-class`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function linkTrailerQboClass(
+  trailerId: string,
+  body: { operating_company_id: string; qbo_class_id: string; reason: string; force?: boolean }
+) {
+  return apiRequest<{ ok: true; idempotent: boolean }>(`/api/v1/master-data/trailers/${trailerId}/link-qbo-class`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function listDriverQboMappingStatus(operatingCompanyId: string) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ rows: DriverQboMappingStatus[] }>(`/api/v1/master-data/drivers/qbo-mapping-status?${params.toString()}`);
+}
+
+export function listQboVendorLinkageHistory(
+  operatingCompanyId: string,
+  entityType?: "driver" | "unit" | "equipment" | "asset",
+  entityId?: string
+) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (entityType) params.set("entity_type", entityType);
+  if (entityId) params.set("entity_id", entityId);
+  return apiRequest<{ rows: Array<Record<string, unknown>> }>(`/api/v1/integrations/qbo/vendor-linkage-history?${params.toString()}`);
+}
+
+export function unlinkQboVendor(
+  operatingCompanyId: string,
+  entityType: "driver" | "unit" | "equipment" | "asset",
+  entityId: string,
+  reason: string
+) {
+  return apiRequest<{ ok: true; idempotent: boolean }>(`/api/v1/integrations/qbo/vendor-link/${entityType}/${entityId}`, {
+    method: "DELETE",
+    body: {
+      operating_company_id: operatingCompanyId,
+      reason,
+    },
+  });
+}
+
+export function linkQboVendor(
+  body: {
+    operating_company_id: string;
+    entity_type: "driver" | "unit" | "equipment" | "asset";
+    entity_id: string;
+    qbo_vendor_id: string;
+    reason: string;
+    force?: boolean;
+  }
+) {
+  return apiRequest<{ ok: true; idempotent: boolean }>("/api/v1/integrations/qbo/vendor-link", {
+    method: "POST",
+    body,
+  });
+}

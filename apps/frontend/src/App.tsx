@@ -108,6 +108,7 @@ import { ItemsListPage } from "./pages/lists/accounting/ItemsListPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { PrivacyPolicy } from "./pages/legal/PrivacyPolicy";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
+import { QboVendorLinkagePage } from "./pages/admin/QboVendorLinkagePage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -284,6 +285,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <QboSyncQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/qbo-vendor-linkage"
+          element={
+            <ProtectedRoute>
+              <QboVendorLinkagePage />
             </ProtectedRoute>
           }
         />

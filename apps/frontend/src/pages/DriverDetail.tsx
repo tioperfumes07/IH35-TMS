@@ -22,6 +22,7 @@ import {
   getDriverQualificationRateHistory,
   listDriverCompanyAuthorizations,
   listDriverQualifications,
+  listQboVendorLinkageHistory,
   reactivateQualification,
   voidSafetyEvent,
   upsertDriverCompanyAuthorization,
@@ -38,8 +39,9 @@ import { Breadcrumb } from "../components/shared/Breadcrumb";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
+import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
 
-const tabs = ["Profile", "Earnings & Debt", "Equipment Assignments", "Safety File", "Documents", "Audit History"] as const;
+const tabs = ["Profile", "QBO Mapping", "Earnings & Debt", "Equipment Assignments", "Safety File", "Documents", "Audit History"] as const;
 type DriverTab = (typeof tabs)[number];
 
 const reasonOptions = [
@@ -131,6 +133,7 @@ export function DriverDetailPage() {
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState<Record<string, string>>({});
+  const [qboModalOpen, setQboModalOpen] = useState(false);
   const [newQualificationForm, setNewQualificationForm] = useState<Record<string, string>>({
     equipment_type_id: "",
     qualified_at: new Date().toISOString().slice(0, 10),
@@ -224,6 +227,11 @@ export function DriverDetailPage() {
     queryKey: ["driver-termination-reasons"],
     queryFn: () => listTerminationReasons(false).then((result) => result.reasons),
     enabled: canViewSafetyFile && isOwner && activeTab === "Safety File",
+  });
+  const qboLinkageHistoryQuery = useQuery({
+    queryKey: ["qbo-linkage-history", driver?.operating_company_id, id],
+    queryFn: () => listQboVendorLinkageHistory(String(driver?.operating_company_id ?? ""), "driver", id),
+    enabled: activeTab === "QBO Mapping" && Boolean(driver?.operating_company_id) && Boolean(id),
   });
 
   const hydratedForm = useMemo(() => {
@@ -752,6 +760,46 @@ export function DriverDetailPage() {
                   rows={2}
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "QBO Mapping" ? (
+        <div className="space-y-3 rounded border border-gray-200 bg-white p-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">QBO Vendor Linkage</h2>
+              <p className="text-xs text-gray-600">
+                Status:{" "}
+                <span className={driver.qbo_vendor_id ? "font-semibold text-emerald-700" : "font-semibold text-amber-700"}>
+                  {driver.qbo_vendor_id ? "Linked" : "Unlinked"}
+                </span>
+              </p>
+            </div>
+            {isOwner ? (
+              <Button variant="secondary" onClick={() => setQboModalOpen(true)}>
+                {driver.qbo_vendor_id ? "Edit Linkage" : "Link to existing"}
+              </Button>
+            ) : null}
+          </div>
+          <div className="rounded border border-gray-200 bg-gray-50 p-2 text-xs">
+            <div>Current Vendor ID: <span className="font-semibold text-gray-900">{driver.qbo_vendor_id ?? "-"}</span></div>
+            <div>Linked At: <span className="font-semibold text-gray-900">{driver.qbo_vendor_linked_at ? new Date(driver.qbo_vendor_linked_at).toLocaleString() : "-"}</span></div>
+          </div>
+          <div>
+            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Linkage History</h3>
+            <div className="max-h-56 overflow-auto rounded border border-gray-200">
+              {(qboLinkageHistoryQuery.data?.rows ?? []).map((row, idx) => (
+                <div key={String(row.id ?? idx)} className="border-b border-gray-100 px-2 py-1.5 text-xs">
+                  <div className="font-semibold text-gray-900">{String(row.action ?? "-")}</div>
+                  <div className="text-gray-600">{String(row.reason ?? "-")}</div>
+                  <div className="text-[11px] text-gray-500">{String(row.created_at ?? "")}</div>
+                </div>
+              ))}
+              {(qboLinkageHistoryQuery.data?.rows ?? []).length === 0 ? (
+                <div className="px-2 py-2 text-xs text-gray-500">No linkage events yet.</div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -1561,6 +1609,24 @@ export function DriverDetailPage() {
           </div>
         </div>
       </Modal>
+      {driver.operating_company_id ? (
+        <VendorLinkageModal
+          open={qboModalOpen}
+          operatingCompanyId={driver.operating_company_id}
+          entityType="driver"
+          entityId={driver.id}
+          entityName={`${driver.first_name} ${driver.last_name}`}
+          currentQboVendorId={driver.qbo_vendor_id}
+          canManage={isOwner}
+          onClose={() => setQboModalOpen(false)}
+          onSaved={() => {
+            setQboModalOpen(false);
+            void queryClient.invalidateQueries({ queryKey: ["driver", id] });
+            void queryClient.invalidateQueries({ queryKey: ["qbo-linkage-history", driver.operating_company_id, id] });
+            pushToast("QBO linkage updated", "success");
+          }}
+        />
+      ) : null}
     </div>
   );
 }
