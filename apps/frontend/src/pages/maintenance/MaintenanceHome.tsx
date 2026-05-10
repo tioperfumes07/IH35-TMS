@@ -7,7 +7,6 @@ import {
   getMaintenanceKpis,
   getMaintenanceRecentActivity,
   getMaintenanceRmStatus,
-  getMaintenanceSevereAlerts,
   listWorkOrdersFiltered,
 } from "../../api/maintenance";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -22,7 +21,7 @@ import { MaintKpiRows } from "./components/MaintKpiRows";
 import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { RecentActivityRow } from "./components/RecentActivityRow";
-import { SevereAlertsBand } from "./components/SevereAlertsBand";
+import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
 import { ArrivingSoonPage } from "./ArrivingSoonPage";
@@ -63,11 +62,6 @@ export function MaintenanceHomePage() {
   const rmStatusQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "rm-status", companyId],
     queryFn: () => getMaintenanceRmStatus(companyId),
-    enabled: Boolean(companyId),
-  });
-  const severeQuery = useQuery({
-    queryKey: ["maintenance", "dashboard", "severe", companyId],
-    queryFn: () => getMaintenanceSevereAlerts(companyId),
     enabled: Boolean(companyId),
   });
   const triageQuery = useQuery({
@@ -191,7 +185,7 @@ export function MaintenanceHomePage() {
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Damage reports queue is in active development.</div>
       ) : null}
 
-      {tab === "severe_repairs" ? <SevereAlertsBand alerts={severeQuery.data?.alerts ?? []} /> : null}
+      {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
 
       {tab === "parts_inventory" ? (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Parts inventory panel is available in the Parts Inventory module components.</div>
