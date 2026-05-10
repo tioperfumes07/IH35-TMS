@@ -4,6 +4,8 @@ import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 type EquipmentFormValues = BookLoadFormValues & {
   trailer_type: string;
   assigned_unit_id: string;
+  assignment_mode: "solo" | "team";
+  team_id: string;
   assigned_primary_driver_id: string;
   assigned_secondary_driver_id: string;
   temp_fahrenheit: number;
@@ -17,9 +19,20 @@ export function BookLoadEquipmentSection({ register }: Props) {
   return (
     <section className="rounded border border-blue-200 bg-blue-50 p-3">
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-800">B. Equipment · Driver · Trailer</h3>
+      <div className="mb-2 flex items-center gap-4 rounded border border-blue-100 bg-white px-2 py-2 text-xs">
+        <label className="inline-flex items-center gap-1">
+          <input type="radio" value="solo" {...register("assignment_mode")} />
+          Solo Driver
+        </label>
+        <label className="inline-flex items-center gap-1">
+          <input type="radio" value="team" {...register("assignment_mode")} />
+          Team
+        </label>
+      </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <Field label="Trailer Type" input={<input {...register("trailer_type")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <Field label="Truck Unit ID" input={<input {...register("assigned_unit_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
+        <Field label="Team ID (when Team mode)" input={<input {...register("team_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <Field label="Primary Driver ID" input={<input {...register("assigned_primary_driver_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <Field label="Team Driver ID (optional)" input={<input {...register("assigned_secondary_driver_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <Field label="Temp °F" input={<input type="number" {...register("temp_fahrenheit", { valueAsNumber: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />

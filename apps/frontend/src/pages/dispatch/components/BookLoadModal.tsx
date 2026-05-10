@@ -14,6 +14,8 @@ import { BookLoadValidationSection } from "./BookLoadValidationSection";
 type FormValues = BookLoadFormValues & {
   trailer_type: string;
   assigned_unit_id: string;
+  assignment_mode: "solo" | "team";
+  team_id: string;
   assigned_primary_driver_id: string;
   assigned_secondary_driver_id: string;
   temp_fahrenheit: number;
@@ -59,6 +61,8 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
       accessorial_cents: 0,
       trailer_type: "dry_van",
       assigned_unit_id: "",
+      assignment_mode: "solo",
+      team_id: "",
       assigned_primary_driver_id: "",
       assigned_secondary_driver_id: "",
       temp_fahrenheit: 0,
@@ -98,6 +102,10 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     setGateBanner(null);
     setSubmitErrorMessage(null);
+    if (values.assignment_mode === "team" && !values.team_id.trim()) {
+      pushToast("Team mode requires a team ID", "error");
+      return;
+    }
     const token = opts?.override ? overrideToken ?? crypto.randomUUID() : undefined;
     if (opts?.override && !overrideToken) setOverrideToken(token ?? null);
     try {
@@ -115,8 +123,9 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
           | "power_only_no_trailer"
           | "power_only_customer_trailer",
         assigned_unit_id: values.assigned_unit_id || undefined,
-        assigned_primary_driver_id: values.assigned_primary_driver_id || undefined,
-        assigned_secondary_driver_id: values.assigned_secondary_driver_id || undefined,
+        team_id: values.assignment_mode === "team" ? values.team_id || undefined : undefined,
+        assigned_primary_driver_id: values.assignment_mode === "solo" ? values.assigned_primary_driver_id || undefined : undefined,
+        assigned_secondary_driver_id: values.assignment_mode === "solo" ? values.assigned_secondary_driver_id || undefined : undefined,
         temp_fahrenheit: values.temp_fahrenheit || undefined,
         charges:
           saveMode === "draft"

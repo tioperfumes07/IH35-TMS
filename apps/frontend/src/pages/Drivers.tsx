@@ -4,7 +4,18 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
-import { checkReturningDriver, createDriver, listDrivers, type ReturningDetectionResult } from "../api/mdata";
+import {
+  checkReturningDriver,
+  createDriver,
+  createDriverTeam,
+  deactivateDriverTeam,
+  getDriverTeam,
+  listDriverTeams,
+  listDrivers,
+  type DriverTeamSplitMethod,
+  type ReturningDetectionResult,
+  updateDriverTeam,
+} from "../api/mdata";
 import { listMyCompanies } from "../api/org";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
@@ -19,6 +30,7 @@ import { ActionButton } from "../components/shared/ActionButton";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
+import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors } from "../design/tokens";
 
 const statusOptions = ["All", "Probation", "Active", "Inactive", "Terminated", "OnLeave"] as const;
@@ -93,9 +105,24 @@ export function DriversPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const { selectedCompanyId } = useCompanyContext();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>("All");
+  const [activeTab, setActiveTab] = useState<"drivers" | "teams">("drivers");
   const [addOpen, setAddOpen] = useState(false);
+  const [teamCreateOpen, setTeamCreateOpen] = useState(false);
+  const [teamDetailOpen, setTeamDetailOpen] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [teamForm, setTeamForm] = useState({
+    team_name: "",
+    primary_driver_id: "",
+    co_driver_id: "",
+    split_method: "50_50" as DriverTeamSplitMethod,
+    primary_share_pct: "50",
+    co_share_pct: "50",
+    notes: "",
+    effective_from: "",
+  });
   const [showMexicanIdentity, setShowMexicanIdentity] = useState(false);
   const [showVisaEmergency, setShowVisaEmergency] = useState(false);
   const [returningDetection, setReturningDetection] = useState<ReturningDetectionResult | null>(null);
@@ -253,6 +280,68 @@ export function DriversPage() {
       }).then((result) => result.drivers),
   });
 
+  const teamsQuery = useQuery({
+    queryKey: ["driver-teams", selectedCompanyId],
+    queryFn: () => listDriverTeams(selectedCompanyId!).then((result) => result.teams),
+    enabled: Boolean(selectedCompanyId),
+  });
+
+  const teamDetailQuery = useQuery({
+    queryKey: ["driver-team", selectedTeamId, selectedCompanyId],
+    queryFn: () => getDriverTeam(selectedTeamId!, selectedCompanyId!).then((result) => result.team),
+    enabled: Boolean(selectedTeamId && selectedCompanyId && teamDetailOpen),
+  });
+
+  const createTeamMutation = useMutation({
+    mutationFn: createDriverTeam,
+    onSuccess: async () => {
+      pushToast("Team created", "success");
+      setTeamCreateOpen(false);
+      setTeamForm({
+        team_name: "",
+        primary_driver_id: "",
+        co_driver_id: "",
+        split_method: "50_50",
+        primary_share_pct: "50",
+        co_share_pct: "50",
+        notes: "",
+        effective_from: "",
+      });
+      await queryClient.invalidateQueries({ queryKey: ["driver-teams"] });
+    },
+    onError: (error) => pushToast(String((error as Error).message || error), "error"),
+  });
+
+  const updateTeamMutation = useMutation({
+    mutationFn: (payload: {
+      id: string;
+      operating_company_id: string;
+      split_method: DriverTeamSplitMethod;
+      primary_share_pct?: number;
+      co_share_pct?: number;
+      effective_from: string;
+      reactivate?: boolean;
+      notes?: string;
+    }) => updateDriverTeam(payload.id, payload),
+    onSuccess: async () => {
+      pushToast("Team split updated", "success");
+      await queryClient.invalidateQueries({ queryKey: ["driver-teams"] });
+      await queryClient.invalidateQueries({ queryKey: ["driver-team"] });
+    },
+    onError: (error) => pushToast(String((error as Error).message || error), "error"),
+  });
+
+  const deactivateTeamMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      deactivateDriverTeam(id, { operating_company_id: selectedCompanyId!, reason }),
+    onSuccess: async () => {
+      pushToast("Team deactivated", "success");
+      await queryClient.invalidateQueries({ queryKey: ["driver-teams"] });
+      await queryClient.invalidateQueries({ queryKey: ["driver-team"] });
+    },
+    onError: (error) => pushToast(String((error as Error).message || error), "error"),
+  });
+
   const createMutation = useMutation({
     mutationFn: createDriver,
     onSuccess: (created) => {
@@ -328,6 +417,46 @@ export function DriversPage() {
         <KpiCard label="Escrow" number="—" accent={colors.fleet.strong} />
       </KpiStrip>
 
+      <div className="flex items-center gap-2">
+        <Button size="sm" variant={activeTab === "drivers" ? "primary" : "secondary"} onClick={() => setActiveTab("drivers")}>
+          Drivers
+        </Button>
+        <Button size="sm" variant={activeTab === "teams" ? "primary" : "secondary"} onClick={() => setActiveTab("teams")}>
+          Teams
+        </Button>
+      </div>
+
+      {activeTab === "teams" ? (
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => setTeamCreateOpen(true)}>+ Create Team</Button>
+          </div>
+          <DataTable
+            rows={teamsQuery.data ?? []}
+            loading={teamsQuery.isLoading}
+            rowKey={(row) => String(row.id)}
+            onRowClick={(row) => {
+              setSelectedTeamId(String(row.id));
+              setTeamDetailOpen(true);
+            }}
+            columns={[
+              { key: "team_name", label: "Team Name" },
+              { key: "primary_driver_name", label: "Primary", render: (row) => String(row.primary_driver_name ?? row.primary_driver_id ?? "—") },
+              { key: "co_driver_name", label: "Co", render: (row) => String(row.co_driver_name ?? row.secondary_driver_id ?? "—") },
+              {
+                key: "split_method",
+                label: "Split",
+                render: (row) =>
+                  `${String(row.split_method)} (${Number(row.primary_share_pct ?? 0)} / ${Number(row.co_share_pct ?? 0)})`,
+              },
+              { key: "is_active", label: "Status", render: (row) => <StatusBadge status={row.is_active ? "Active" : "Inactive"} /> },
+            ]}
+          />
+        </div>
+      ) : null}
+
+      {activeTab === "drivers" ? (
+        <>
       <div className="flex flex-wrap gap-2">
         <div className="w-full max-w-[220px]">
           <Combobox
@@ -396,6 +525,229 @@ export function DriversPage() {
           </DataPanel>
         ))}
       </div>
+        </>
+      ) : null}
+
+      <Modal open={teamCreateOpen} onClose={() => setTeamCreateOpen(false)} title="Create Team">
+        <form
+          className="grid grid-cols-1 gap-2 md:grid-cols-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!selectedCompanyId) {
+              pushToast("Select an operating company first", "error");
+              return;
+            }
+            if (!teamForm.primary_driver_id || !teamForm.co_driver_id || !teamForm.team_name.trim()) {
+              pushToast("Team name and both drivers are required", "error");
+              return;
+            }
+            void createTeamMutation.mutate({
+              operating_company_id: selectedCompanyId,
+              team_name: teamForm.team_name.trim(),
+              primary_driver_id: teamForm.primary_driver_id,
+              co_driver_id: teamForm.co_driver_id,
+              split_method: teamForm.split_method,
+              primary_share_pct: Number(teamForm.primary_share_pct),
+              co_share_pct: Number(teamForm.co_share_pct),
+              notes: teamForm.notes.trim() || undefined,
+              effective_from: teamForm.effective_from || undefined,
+            });
+          }}
+        >
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Team Name</label>
+            <input
+              value={teamForm.team_name}
+              onChange={(event) => setTeamForm((current) => ({ ...current, team_name: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Split Method</label>
+            <select
+              value={teamForm.split_method}
+              onChange={(event) =>
+                setTeamForm((current) => ({ ...current, split_method: event.target.value as DriverTeamSplitMethod }))
+              }
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            >
+              <option value="50_50">50_50</option>
+              <option value="60_40">60_40</option>
+              <option value="70_30">70_30</option>
+              <option value="mileage_prorated">mileage_prorated</option>
+              <option value="hours_prorated">hours_prorated</option>
+              <option value="custom">custom</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Primary Driver</label>
+            <select
+              value={teamForm.primary_driver_id}
+              onChange={(event) => setTeamForm((current) => ({ ...current, primary_driver_id: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            >
+              <option value="">Select driver</option>
+              {(driversQuery.data ?? []).map((driver) => (
+                <option key={driver.id} value={driver.id}>{driver.first_name} {driver.last_name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Co Driver</label>
+            <select
+              value={teamForm.co_driver_id}
+              onChange={(event) => setTeamForm((current) => ({ ...current, co_driver_id: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            >
+              <option value="">Select driver</option>
+              {(driversQuery.data ?? []).map((driver) => (
+                <option key={driver.id} value={driver.id}>{driver.first_name} {driver.last_name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Primary %</label>
+            <input
+              type="number"
+              value={teamForm.primary_share_pct}
+              onChange={(event) => setTeamForm((current) => ({ ...current, primary_share_pct: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Co %</label>
+            <input
+              type="number"
+              value={teamForm.co_share_pct}
+              onChange={(event) => setTeamForm((current) => ({ ...current, co_share_pct: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Effective From</label>
+            <input
+              type="date"
+              value={teamForm.effective_from}
+              onChange={(event) => setTeamForm((current) => ({ ...current, effective_from: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+            />
+          </div>
+          <div className="md:col-span-2 flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Notes</label>
+            <textarea
+              value={teamForm.notes}
+              onChange={(event) => setTeamForm((current) => ({ ...current, notes: event.target.value }))}
+              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              rows={3}
+            />
+          </div>
+          <div className="md:col-span-2 flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setTeamCreateOpen(false)}>Cancel</Button>
+            <Button type="submit" loading={createTeamMutation.isPending}>Create Team</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={teamDetailOpen} onClose={() => setTeamDetailOpen(false)} title="Team Detail">
+        {teamDetailQuery.data ? (
+          <div className="space-y-3">
+            <div className="rounded border border-gray-200 bg-gray-50 p-2 text-xs">
+              <p className="font-semibold">{String(teamDetailQuery.data.team_name)}</p>
+              <p>Primary: {String(teamDetailQuery.data.primary_driver_name ?? teamDetailQuery.data.primary_driver_id)}</p>
+              <p>Co: {String(teamDetailQuery.data.co_driver_name ?? teamDetailQuery.data.secondary_driver_id)}</p>
+              <p>Split: {String(teamDetailQuery.data.split_method)} ({Number(teamDetailQuery.data.primary_share_pct)} / {Number(teamDetailQuery.data.co_share_pct)})</p>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-2 text-xs">
+              <p className="mb-1 font-semibold">Settlement history per load</p>
+              {(teamDetailQuery.data.settlement_history ?? []).length === 0 ? (
+                <p className="text-gray-500">No split history yet.</p>
+              ) : (
+                (teamDetailQuery.data.settlement_history ?? []).slice(0, 20).map((row, index) => (
+                  <div key={`${index}-${String((row as Record<string, unknown>).id ?? "")}`} className="border-t border-gray-100 py-1">
+                    Load {String((row as Record<string, unknown>).load_id ?? "—")} · Driver {String((row as Record<string, unknown>).driver_id ?? "—")} ·
+                    Pay ${((Number((row as Record<string, unknown>).driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs">
+              <p className="mb-1 font-semibold">Update Split</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="date"
+                  value={teamForm.effective_from}
+                  onChange={(event) => setTeamForm((current) => ({ ...current, effective_from: event.target.value }))}
+                  className="rounded border border-gray-300 px-2 py-1"
+                />
+                <select
+                  value={teamForm.split_method}
+                  onChange={(event) =>
+                    setTeamForm((current) => ({ ...current, split_method: event.target.value as DriverTeamSplitMethod }))
+                  }
+                  className="rounded border border-gray-300 px-2 py-1"
+                >
+                  <option value="50_50">50_50</option>
+                  <option value="60_40">60_40</option>
+                  <option value="70_30">70_30</option>
+                  <option value="mileage_prorated">mileage_prorated</option>
+                  <option value="hours_prorated">hours_prorated</option>
+                  <option value="custom">custom</option>
+                </select>
+                <input
+                  type="number"
+                  value={teamForm.primary_share_pct}
+                  onChange={(event) => setTeamForm((current) => ({ ...current, primary_share_pct: event.target.value }))}
+                  className="rounded border border-gray-300 px-2 py-1"
+                  placeholder="Primary %"
+                />
+                <input
+                  type="number"
+                  value={teamForm.co_share_pct}
+                  onChange={(event) => setTeamForm((current) => ({ ...current, co_share_pct: event.target.value }))}
+                  className="rounded border border-gray-300 px-2 py-1"
+                  placeholder="Co %"
+                />
+              </div>
+              <div className="mt-2 flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!selectedCompanyId || !selectedTeamId || !teamForm.effective_from) {
+                      pushToast("effective_from is required", "error");
+                      return;
+                    }
+                    void updateTeamMutation.mutate({
+                      id: selectedTeamId,
+                      operating_company_id: selectedCompanyId,
+                      split_method: teamForm.split_method,
+                      primary_share_pct: Number(teamForm.primary_share_pct),
+                      co_share_pct: Number(teamForm.co_share_pct),
+                      effective_from: teamForm.effective_from,
+                      notes: teamForm.notes || undefined,
+                    });
+                  }}
+                >
+                  Save Split
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    if (!selectedTeamId) return;
+                    const reason = window.prompt("Reason for deactivation (min 10 chars):", "");
+                    if (!reason || reason.trim().length < 10) return;
+                    void deactivateTeamMutation.mutate({ id: selectedTeamId, reason: reason.trim() });
+                  }}
+                >
+                  Deactivate Team
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500">Loading team detail...</div>
+        )}
+      </Modal>
 
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Driver">
         <form

@@ -83,6 +83,7 @@ const createLoadBodySchema = z.object({
   assigned_unit_id: z.string().uuid().optional(),
   assigned_primary_driver_id: z.string().uuid().optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
+  team_id: z.string().uuid().optional(),
   notes: z.string().trim().max(5000).optional(),
   pickup: z.object({
     location_id: z.string().uuid().optional(),
@@ -111,6 +112,7 @@ const updateLoadBodySchema = z
     assigned_unit_id: z.string().uuid().nullable().optional(),
     assigned_primary_driver_id: z.string().uuid().nullable().optional(),
     assigned_secondary_driver_id: z.string().uuid().nullable().optional(),
+    team_id: z.string().uuid().nullable().optional(),
     notes: z.string().trim().max(5000).nullable().optional(),
     soft_deleted_at: isoDatetimeSchema.nullable().optional(),
   })
@@ -249,6 +251,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if ((b.pickup && !b.delivery) || (!b.pickup && b.delivery)) {
       return reply.code(400).send({ error: "pickup_and_delivery_required_together" });
     }
+    if (b.assigned_primary_driver_id && b.team_id) {
+      return reply.code(400).send({ error: "solo_or_team_assignment_required_not_both" });
+    }
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
@@ -276,14 +281,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               `
                 INSERT INTO mdata.loads (
                   operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-                  assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
+                  assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
                   dispatcher_user_id, notes
                 ) VALUES (
-                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12
                 )
                 RETURNING
                   id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-                  assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
+                  assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
                   dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
               `,
               [
@@ -296,6 +301,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                 b.assigned_unit_id ?? null,
                 b.assigned_primary_driver_id ?? null,
                 b.assigned_secondary_driver_id ?? null,
+                b.team_id ?? null,
                 authUser.uuid,
                 b.notes ?? null,
               ]
@@ -383,7 +389,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           );
         }
 
-        if (inserted.assigned_unit_id || inserted.assigned_primary_driver_id || inserted.assigned_secondary_driver_id) {
+        if (inserted.assigned_unit_id || inserted.assigned_primary_driver_id || inserted.assigned_secondary_driver_id || inserted.team_id) {
           await appendCrudAudit(
             client,
             authUser.uuid,
@@ -396,6 +402,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               assigned_unit_id: inserted.assigned_unit_id,
               assigned_primary_driver_id: inserted.assigned_primary_driver_id,
               assigned_secondary_driver_id: inserted.assigned_secondary_driver_id,
+              team_id: inserted.team_id,
             },
             "info",
             "BT-3-DISPATCH-BOARD"
@@ -534,7 +541,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         `
           SELECT
             l.id, l.operating_company_id, l.load_number, l.customer_id, l.status, l.rate_total_cents, l.currency_code,
-            l.assigned_unit_id, l.assigned_primary_driver_id, l.assigned_secondary_driver_id,
+            l.assigned_unit_id, l.assigned_primary_driver_id, l.assigned_secondary_driver_id, l.team_id,
             l.dispatcher_user_id, l.notes, l.created_at, l.updated_at, l.soft_deleted_at, l.deleted_by_user_id,
             c.customer_name AS customer_name,
             u.unit_number AS assigned_unit_number,
@@ -596,7 +603,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         `
           SELECT
             id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-            assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
+            assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
             dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
           FROM mdata.loads
           WHERE id = $1
@@ -693,7 +700,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           WHERE id = $1
           RETURNING
             id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-            assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
+            assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
             dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
         `,
         [parsedParams.data.id, newStatus]
@@ -780,6 +787,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     const parsedBody = updateLoadBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    if (b.assigned_primary_driver_id && b.team_id) {
+      return reply.code(400).send({ error: "solo_or_team_assignment_required_not_both" });
+    }
 
     const setParts: string[] = [];
     const values: unknown[] = [];
@@ -795,6 +805,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if ("assigned_unit_id" in b) add("assigned_unit_id", b.assigned_unit_id ?? null);
     if ("assigned_primary_driver_id" in b) add("assigned_primary_driver_id", b.assigned_primary_driver_id ?? null);
     if ("assigned_secondary_driver_id" in b) add("assigned_secondary_driver_id", b.assigned_secondary_driver_id ?? null);
+    if ("team_id" in b) add("team_id", b.team_id ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("soft_deleted_at" in b) {
       add("soft_deleted_at", b.soft_deleted_at ?? null);
@@ -814,7 +825,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           `
             SELECT
               id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-              assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
+              assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
               dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
             FROM mdata.loads
             WHERE id = $1
@@ -832,7 +843,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             WHERE id = $${idIdx}
             RETURNING
               id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-              assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
+              assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
               dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
           `,
           values
@@ -901,7 +912,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         if (
           oldRow.assigned_unit_id !== row.assigned_unit_id ||
           oldRow.assigned_primary_driver_id !== row.assigned_primary_driver_id ||
-          oldRow.assigned_secondary_driver_id !== row.assigned_secondary_driver_id
+          oldRow.assigned_secondary_driver_id !== row.assigned_secondary_driver_id ||
+          oldRow.team_id !== row.team_id
         ) {
           await appendCrudAudit(
             client,
@@ -913,6 +925,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               assigned_unit_id: row.assigned_unit_id,
               assigned_primary_driver_id: row.assigned_primary_driver_id,
               assigned_secondary_driver_id: row.assigned_secondary_driver_id,
+              team_id: row.team_id,
             },
             "info",
             "BT-3-LOADS-SCHEMA"

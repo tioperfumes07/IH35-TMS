@@ -22,6 +22,7 @@ import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
+import { previewTeamSettlementSplit } from "../../api/mdata";
 import { DebtBanner } from "./components/DebtBanner";
 import { DeductionsSection, type DeductionRow } from "./components/DeductionsSection";
 import { EarningsSection } from "./components/EarningsSection";
@@ -96,6 +97,17 @@ export function SettlementDetailPage() {
   const driverId = settlement.driver_id ? String(settlement.driver_id) : null;
   const debt = useLiveDebt(driverId, companyId || null);
   const lines = (settlement.lines as Array<Record<string, unknown>> | undefined) ?? [];
+  const settlementLoadId =
+    (typeof settlement.load_id === "string" ? settlement.load_id : null) ??
+    (typeof (lines[0] as Record<string, unknown> | undefined)?.load_id === "string"
+      ? String((lines[0] as Record<string, unknown>).load_id)
+      : null);
+
+  const teamSplitQuery = useQuery({
+    queryKey: ["driver-finance", "team-settlement-split", settlementLoadId, companyId],
+    queryFn: () => previewTeamSettlementSplit(settlementLoadId!, companyId),
+    enabled: Boolean(settlementLoadId && companyId),
+  });
 
   const earnings = lines.filter((line) => String(line.line_type) === "earnings").map((line) => ({
     id: String(line.id),
@@ -230,6 +242,20 @@ export function SettlementDetailPage() {
         onOpenEscrow={() => pushToast("Escrow timeline drawer stub; see side card action.", "info")}
       />
       <PendingAckNotice pendingAckCount={debt.debt?.pending_ack_count ?? 0} />
+      {teamSplitQuery.data && Array.isArray((teamSplitQuery.data as Record<string, unknown>).splits) ? (
+        <div className="rounded border border-indigo-200 bg-indigo-50 p-3 text-xs">
+          <p className="mb-1 font-semibold text-indigo-900">Team Split</p>
+          <div className="space-y-1">
+            {((teamSplitQuery.data as Record<string, unknown>).splits as Array<Record<string, unknown>>).map((split, index) => (
+              <div key={`${index}-${String(split.driver_id ?? "")}`} className="rounded border border-indigo-100 bg-white px-2 py-1">
+                Driver {String(split.driver_id ?? "—")} · Role {String(split.pay_role ?? "—")} ·
+                Share {Number(split.share_pct ?? 0)}% ·
+                Pay ${((Number(split.driver_pay_cents ?? 0) || 0) / 100).toFixed(2)}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.5fr_1fr]">
         <div className="space-y-2">

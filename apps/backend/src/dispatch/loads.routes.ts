@@ -68,6 +68,7 @@ const createDispatchLoadBodySchema = z.object({
   assigned_unit_id: z.string().uuid().optional(),
   assigned_primary_driver_id: z.string().uuid().optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
+  team_id: z.string().uuid().optional(),
   temp_fahrenheit: z.number().int().optional(),
   charges: z
     .array(
@@ -464,6 +465,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const body = createDispatchLoadBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
     const b = body.data;
+    if (b.assigned_primary_driver_id && b.team_id) {
+      return reply.code(400).send({ error: "solo_or_team_assignment_required_not_both" });
+    }
 
     try {
       const result = await withCompanyScope(authUser.uuid, b.operating_company_id, async (client) => {
@@ -682,10 +686,10 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           `
             INSERT INTO mdata.loads (
               operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-              assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id,
+              assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
               dispatcher_user_id, notes
             )
-            VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10)
+            VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11)
             RETURNING *
           `,
           [
@@ -695,8 +699,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             statusForInsert,
             b.charges.reduce((sum, item) => sum + item.amount_cents, 0),
             b.assigned_unit_id ?? null,
-            b.assigned_primary_driver_id ?? null,
-            b.assigned_secondary_driver_id ?? null,
+            b.team_id ? null : (b.assigned_primary_driver_id ?? null),
+            b.team_id ? null : (b.assigned_secondary_driver_id ?? null),
+            b.team_id ?? null,
             authUser.uuid,
             b.notes ?? null,
           ]
