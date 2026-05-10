@@ -114,6 +114,17 @@ async function appendSystemAudit(actorUserId: string, eventClass: string, payloa
   });
 }
 
+function logForensicHeap(batchId: string, entityType: string, pageStart: number, pageSize: number) {
+  console.log("[FORENSIC_HEAP]", {
+    batchId,
+    entityType,
+    pageStart,
+    pageSize,
+    heapUsedMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    rssMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
+  });
+}
+
 async function loadBatch(batchId: string) {
   return withLuciaBypass(async (client) => {
     const res = await client.query<BatchRow>(
@@ -274,11 +285,74 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
   let imported = 0;
   let errors = 0;
   await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
     for (const entityType of ENTITY_TYPES) {
-      let rows: QboEntity[] = [];
+      let pageStart = 1;
       try {
-        rows = await qboPaginateEntity<QboEntity>(qboContext, entityType);
+        for await (const page of qboPaginateEntity<QboEntity>(qboContext, entityType)) {
+          await client.query("BEGIN");
+          try {
+            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
+            for (const row of page) {
+              const entityId = String(row.Id ?? "");
+              if (!entityId) continue;
+              const active = row.Active === undefined ? true : Boolean(row.Active);
+              const insert = await client.query(
+                `
+                  INSERT INTO qbo_archive.entities_snapshot (
+                    operating_company_id,
+                    qbo_realm_id,
+                    qbo_entity_type,
+                    qbo_entity_id,
+                    qbo_active_at_snapshot,
+                    raw_snapshot,
+                    snapshot_taken_at,
+                    snapshot_batch_id,
+                    created_at
+                  )
+                  VALUES ($1,$2,$3,$4,$5,$6::jsonb,now(),$7,now())
+                  ON CONFLICT (qbo_realm_id, qbo_entity_type, qbo_entity_id, snapshot_batch_id) DO NOTHING
+                `,
+                [qboContext.operatingCompanyId, qboContext.realmId, entityType, entityId, active, JSON.stringify(row), batchId]
+              );
+              imported += insert.rowCount ?? 0;
+            }
+            await client.query(
+              `
+                UPDATE qbo_archive.import_batches
+                SET entities_imported = $2,
+                    errors_count = $3,
+                    updated_at = now()
+                WHERE id = $1
+              `,
+              [batchId, imported, errors]
+            );
+            await client.query("COMMIT");
+          } catch (error) {
+            await client.query("ROLLBACK");
+            errors += 1;
+            console.error("[FORENSIC_IMPORT]", {
+              step: "entity_page_process_failed",
+              batchId,
+              operatingCompanyId: qboContext.operatingCompanyId,
+              entityType,
+              pageStart,
+              pageSize: page.length,
+              error: String((error as Error)?.message ?? error),
+            });
+            await client.query(
+              `
+                UPDATE qbo_archive.import_batches
+                SET errors_count = $2,
+                    updated_at = now()
+                WHERE id = $1
+              `,
+              [batchId, errors]
+            );
+          } finally {
+            logForensicHeap(batchId, entityType, pageStart, page.length);
+            pageStart += page.length;
+          }
+        }
       } catch (error) {
         errors += 1;
         console.error("[FORENSIC_IMPORT]", {
@@ -288,36 +362,26 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
           entityType,
           error: String((error as Error)?.message ?? error),
         });
-        continue;
-      }
-      for (const row of rows) {
-        const entityId = String(row.Id ?? "");
-        if (!entityId) continue;
-        const active = row.Active === undefined ? true : Boolean(row.Active);
-        const insert = await client.query(
+        await client.query(
           `
-            INSERT INTO qbo_archive.entities_snapshot (
-              operating_company_id,
-              qbo_realm_id,
-              qbo_entity_type,
-              qbo_entity_id,
-              qbo_active_at_snapshot,
-              raw_snapshot,
-              snapshot_taken_at,
-              snapshot_batch_id,
-              created_at
-            )
-            VALUES ($1,$2,$3,$4,$5,$6::jsonb,now(),$7,now())
-            ON CONFLICT (qbo_realm_id, qbo_entity_type, qbo_entity_id, snapshot_batch_id) DO NOTHING
+            UPDATE qbo_archive.import_batches
+            SET errors_count = $2,
+                updated_at = now()
+            WHERE id = $1
           `,
-          [qboContext.operatingCompanyId, qboContext.realmId, entityType, entityId, active, JSON.stringify(row), batchId]
+          [batchId, errors]
         );
-        imported += insert.rowCount ?? 0;
       }
     }
     await client.query(
-      `UPDATE qbo_archive.import_batches SET entities_imported = $2, updated_at = now() WHERE id = $1`,
-      [batchId, imported]
+      `
+        UPDATE qbo_archive.import_batches
+        SET entities_imported = $2,
+            errors_count = $3,
+            updated_at = now()
+        WHERE id = $1
+      `,
+      [batchId, imported, errors]
     );
   });
   return { entitiesImported: imported, errors };
@@ -328,12 +392,124 @@ export async function importTransactions(actorUserId: string, batchId: string, q
   let errors = 0;
   const insertedSnapshotIds: string[] = [];
   await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [qboContext.operatingCompanyId]);
     for (const txnType of TXN_TYPES) {
       const where = `TxnDate >= '${sinceDate}'`;
-      let rows: QboTransaction[] = [];
+      let pageStart = 1;
       try {
-        rows = await qboPaginateEntity<QboTransaction>(qboContext, txnType, where);
+        for await (const page of qboPaginateEntity<QboTransaction>(qboContext, txnType, where)) {
+          await client.query("BEGIN");
+          try {
+            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
+            for (const row of page) {
+              const txnId = getTxId(row);
+              if (!txnId) continue;
+              const txnDate = getTxDate(row);
+              const totalCents = amountCents(row);
+              const insertRes = await client.query<{ id: string }>(
+                `
+                  INSERT INTO qbo_archive.transactions_snapshot (
+                    operating_company_id,
+                    qbo_realm_id,
+                    qbo_txn_type,
+                    qbo_txn_id,
+                    txn_date,
+                    total_cents,
+                    raw_snapshot,
+                    snapshot_taken_at,
+                    snapshot_batch_id,
+                    created_at
+                  )
+                  VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,now(),$8,now())
+                  ON CONFLICT (qbo_realm_id, qbo_txn_type, qbo_txn_id, snapshot_batch_id) DO NOTHING
+                  RETURNING id
+                `,
+                [qboContext.operatingCompanyId, qboContext.realmId, txnType, txnId, txnDate, totalCents, JSON.stringify(row), batchId]
+              );
+              console.info("[FORENSIC_TXN_INSERT]", {
+                step: "txn_insert",
+                operatingCompanyId: qboContext.operatingCompanyId,
+                batchId,
+                txnType,
+                txnId,
+                rowCount: insertRes.rowCount ?? 0,
+                hasReturnedRow: (insertRes.rows?.length ?? 0) > 0,
+              });
+              if ((insertRes.rowCount ?? 0) === 0) {
+                // ON CONFLICT DO NOTHING: no-op is expected for duplicates on re-runs.
+                continue;
+              }
+              const snapshotId = insertRes.rows[0]?.id;
+              if (!snapshotId) {
+                throw new Error(`txn_insert_missing_snapshot_id:${txnType}/${txnId}`);
+              }
+              insertedSnapshotIds.push(snapshotId);
+              const vendorName = ((row.VendorRef as { name?: string } | undefined)?.name ?? null) || null;
+              try {
+                await detectAnomalies(
+                  actorUserId,
+                  {
+                    batchId,
+                    operatingCompanyId: qboContext.operatingCompanyId,
+                    transactionSnapshotId: snapshotId,
+                    transactionType: txnType,
+                    transactionDate: txnDate,
+                    totalCents,
+                    vendorName,
+                    createdAt: getCreateTime(row),
+                    attachmentsCount: 0,
+                  },
+                  client
+                );
+              } catch (error) {
+                errors += 1;
+                console.error("[FORENSIC_IMPORT]", {
+                  step: "transaction_anomaly_detection_failed",
+                  batchId,
+                  operatingCompanyId: qboContext.operatingCompanyId,
+                  txnType,
+                  txnId,
+                  error: String((error as Error)?.message ?? error),
+                });
+              }
+              imported += 1;
+            }
+            await client.query(
+              `
+                UPDATE qbo_archive.import_batches
+                SET transactions_imported = $2,
+                    errors_count = $3,
+                    updated_at = now()
+                WHERE id = $1
+              `,
+              [batchId, imported, errors]
+            );
+            await client.query("COMMIT");
+          } catch (error) {
+            await client.query("ROLLBACK");
+            errors += 1;
+            console.error("[FORENSIC_IMPORT]", {
+              step: "transaction_page_process_failed",
+              batchId,
+              operatingCompanyId: qboContext.operatingCompanyId,
+              txnType,
+              pageStart,
+              pageSize: page.length,
+              error: String((error as Error)?.message ?? error),
+            });
+            await client.query(
+              `
+                UPDATE qbo_archive.import_batches
+                SET errors_count = $2,
+                    updated_at = now()
+                WHERE id = $1
+              `,
+              [batchId, errors]
+            );
+          } finally {
+            logForensicHeap(batchId, txnType, pageStart, page.length);
+            pageStart += page.length;
+          }
+        }
       } catch (error) {
         errors += 1;
         console.error("[FORENSIC_IMPORT]", {
@@ -343,81 +519,26 @@ export async function importTransactions(actorUserId: string, batchId: string, q
           txnType,
           error: String((error as Error)?.message ?? error),
         });
-        continue;
-      }
-      for (const row of rows) {
-        const txnId = getTxId(row);
-        if (!txnId) continue;
-        const txnDate = getTxDate(row);
-        const totalCents = amountCents(row);
-        const insertRes = await client.query<{ id: string }>(
+        await client.query(
           `
-            INSERT INTO qbo_archive.transactions_snapshot (
-              operating_company_id,
-              qbo_realm_id,
-              qbo_txn_type,
-              qbo_txn_id,
-              txn_date,
-              total_cents,
-              raw_snapshot,
-              snapshot_taken_at,
-              snapshot_batch_id,
-              created_at
-            )
-            VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,now(),$8,now())
-            ON CONFLICT (qbo_realm_id, qbo_txn_type, qbo_txn_id, snapshot_batch_id) DO NOTHING
-            RETURNING id
+            UPDATE qbo_archive.import_batches
+            SET errors_count = $2,
+                updated_at = now()
+            WHERE id = $1
           `,
-          [qboContext.operatingCompanyId, qboContext.realmId, txnType, txnId, txnDate, totalCents, JSON.stringify(row), batchId]
+          [batchId, errors]
         );
-        console.info("[FORENSIC_TXN_INSERT]", {
-          step: "txn_insert",
-          operatingCompanyId: qboContext.operatingCompanyId,
-          batchId,
-          txnType,
-          txnId,
-          rowCount: insertRes.rowCount ?? 0,
-          hasReturnedRow: (insertRes.rows?.length ?? 0) > 0,
-        });
-        if ((insertRes.rowCount ?? 0) === 0) {
-          // ON CONFLICT DO NOTHING: no-op is expected for duplicates on re-runs.
-          continue;
-        }
-        const snapshotId = insertRes.rows[0]?.id;
-        if (!snapshotId) {
-          throw new Error(`txn_insert_missing_snapshot_id:${txnType}/${txnId}`);
-        }
-        insertedSnapshotIds.push(snapshotId);
-        const vendorName = ((row.VendorRef as { name?: string } | undefined)?.name ?? null) || null;
-        try {
-          await detectAnomalies(actorUserId, {
-            batchId,
-            operatingCompanyId: qboContext.operatingCompanyId,
-            transactionSnapshotId: snapshotId,
-            transactionType: txnType,
-            transactionDate: txnDate,
-            totalCents,
-            vendorName,
-            createdAt: getCreateTime(row),
-            attachmentsCount: 0,
-          }, client);
-        } catch (error) {
-          errors += 1;
-          console.error("[FORENSIC_IMPORT]", {
-            step: "transaction_anomaly_detection_failed",
-            batchId,
-            operatingCompanyId: qboContext.operatingCompanyId,
-            txnType,
-            txnId,
-            error: String((error as Error)?.message ?? error),
-          });
-        }
-        imported += 1;
       }
     }
     await client.query(
-      `UPDATE qbo_archive.import_batches SET transactions_imported = $2, updated_at = now() WHERE id = $1`,
-      [batchId, imported]
+      `
+        UPDATE qbo_archive.import_batches
+        SET transactions_imported = $2,
+            errors_count = $3,
+            updated_at = now()
+        WHERE id = $1
+      `,
+      [batchId, imported, errors]
     );
   });
   return { transactionsImported: imported, insertedSnapshotIds, errors };
@@ -428,7 +549,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
   let imported = 0;
   let errors = 0;
   await withCurrentUser(actorUserId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [qboContext.operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
     const txRows = await client.query<{
       id: string;
       qbo_txn_id: string;
@@ -447,96 +568,159 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
     );
 
     for (const tx of txRows.rows) {
-      const attachables = await qboPaginateEntity<Record<string, unknown>>(
-        qboContext,
-        "Attachable",
-        `TxnDate >= '${sinceDate}' AND AttachableRef.EntityRef.value = '${tx.qbo_txn_id}'`
-      ).catch(() => []);
+      const whereClause = `TxnDate >= '${sinceDate}' AND AttachableRef.EntityRef.value = '${tx.qbo_txn_id}'`;
+      let pageStart = 1;
+      try {
+        for await (const page of qboPaginateEntity<Record<string, unknown>>(qboContext, "Attachable", whereClause)) {
+          await client.query("BEGIN");
+          try {
+            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
+            for (const attachment of page) {
+              const attachmentId = String(attachment.Id ?? "");
+              const fileName = String(attachment.FileName ?? `${attachmentId}.bin`);
+              const mimeType = String(attachment.ContentType ?? "application/octet-stream");
+              const downloadUri = String(attachment.TempDownloadUri ?? attachment.DownloadUri ?? "");
+              if (!attachmentId || !downloadUri) continue;
 
-      for (const attachment of attachables) {
-        const attachmentId = String(attachment.Id ?? "");
-        const fileName = String(attachment.FileName ?? `${attachmentId}.bin`);
-        const mimeType = String(attachment.ContentType ?? "application/octet-stream");
-        const downloadUri = String(attachment.TempDownloadUri ?? attachment.DownloadUri ?? "");
-        if (!attachmentId || !downloadUri) continue;
+              try {
+                const file = await qboDownloadAttachment(qboContext, downloadUri);
+                const checksum = crypto.createHash("sha256").update(file.data).digest("hex");
+                const objectKey = `qbo-archive/${qboContext.operatingCompanyId}/${batchId}/${tx.qbo_txn_id}/${fileName}`;
+                await r2.send(
+                  new PutObjectCommand({
+                    Bucket: bucket,
+                    Key: objectKey,
+                    Body: file.data,
+                    ContentType: file.contentType ?? mimeType,
+                  })
+                );
 
-        try {
-          const file = await qboDownloadAttachment(qboContext, downloadUri);
-          const checksum = crypto.createHash("sha256").update(file.data).digest("hex");
-          const objectKey = `qbo-archive/${qboContext.operatingCompanyId}/${batchId}/${tx.qbo_txn_id}/${fileName}`;
-          await r2.send(
-            new PutObjectCommand({
-              Bucket: bucket,
-              Key: objectKey,
-              Body: file.data,
-              ContentType: file.contentType ?? mimeType,
-            })
-          );
-
-          const insertRes = await client.query(
-            `
-              INSERT INTO qbo_archive.attachments_snapshot (
-                operating_company_id,
-                txn_snapshot_id,
-                qbo_attachment_id,
-                original_filename,
-                mime_type,
-                size_bytes,
-                r2_object_key,
-                checksum_sha256,
-                uploaded_at_qbo,
-                snapshot_taken_at,
-                snapshot_batch_id,
-                created_at
-              )
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),$10,now())
-              ON CONFLICT DO NOTHING
-            `,
-            [
-              qboContext.operatingCompanyId,
-              tx.id,
-              attachmentId,
-              fileName,
-              mimeType,
-              file.data.byteLength,
-              objectKey,
-              checksum,
-              null,
+                const insertRes = await client.query(
+                  `
+                    INSERT INTO qbo_archive.attachments_snapshot (
+                      operating_company_id,
+                      txn_snapshot_id,
+                      qbo_attachment_id,
+                      original_filename,
+                      mime_type,
+                      size_bytes,
+                      r2_object_key,
+                      checksum_sha256,
+                      uploaded_at_qbo,
+                      snapshot_taken_at,
+                      snapshot_batch_id,
+                      created_at
+                    )
+                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),$10,now())
+                    ON CONFLICT DO NOTHING
+                  `,
+                  [
+                    qboContext.operatingCompanyId,
+                    tx.id,
+                    attachmentId,
+                    fileName,
+                    mimeType,
+                    file.data.byteLength,
+                    objectKey,
+                    checksum,
+                    null,
+                    batchId,
+                  ]
+                );
+                console.info("[FORENSIC_ATTACH_INSERT]", {
+                  step: "attachment_insert",
+                  operatingCompanyId: qboContext.operatingCompanyId,
+                  batchId,
+                  txnId: tx.qbo_txn_id,
+                  attachmentId,
+                  rowCount: insertRes.rowCount ?? 0,
+                });
+                if ((insertRes.rowCount ?? 0) === 0) {
+                  // ON CONFLICT DO NOTHING: no-op only on duplicate attachment row.
+                  continue;
+                }
+                imported += 1;
+              } catch (error) {
+                errors += 1;
+                console.error("[FORENSIC_IMPORT]", {
+                  step: "attachment_import_failed",
+                  batchId,
+                  operatingCompanyId: qboContext.operatingCompanyId,
+                  txnId: tx.qbo_txn_id,
+                  attachmentId,
+                  error: String((error as Error)?.message ?? error),
+                });
+              }
+            }
+            await client.query(
+              `
+                UPDATE qbo_archive.import_batches
+                SET attachments_imported = $2,
+                    errors_count = $3,
+                    updated_at = now()
+                WHERE id = $1
+              `,
+              [batchId, imported, errors]
+            );
+            await client.query("COMMIT");
+          } catch (error) {
+            await client.query("ROLLBACK");
+            errors += 1;
+            console.error("[FORENSIC_IMPORT]", {
+              step: "attachment_page_process_failed",
               batchId,
-            ]
-          );
-          console.info("[FORENSIC_ATTACH_INSERT]", {
-            step: "attachment_insert",
-            operatingCompanyId: qboContext.operatingCompanyId,
-            batchId,
-            txnId: tx.qbo_txn_id,
-            attachmentId,
-            rowCount: insertRes.rowCount ?? 0,
-          });
-          if ((insertRes.rowCount ?? 0) === 0) {
-            // ON CONFLICT DO NOTHING: no-op only on duplicate attachment row.
-            continue;
+              operatingCompanyId: qboContext.operatingCompanyId,
+              txnId: tx.qbo_txn_id,
+              pageStart,
+              pageSize: page.length,
+              error: String((error as Error)?.message ?? error),
+            });
+            await client.query(
+              `
+                UPDATE qbo_archive.import_batches
+                SET errors_count = $2,
+                    updated_at = now()
+                WHERE id = $1
+              `,
+              [batchId, errors]
+            );
+          } finally {
+            logForensicHeap(batchId, "Attachable", pageStart, page.length);
+            pageStart += page.length;
           }
-          imported += 1;
-        } catch (error) {
-          errors += 1;
-          console.error("[FORENSIC_IMPORT]", {
-            step: "attachment_import_failed",
-            batchId,
-            operatingCompanyId: qboContext.operatingCompanyId,
-            txnId: tx.qbo_txn_id,
-            attachmentId,
-            error: String((error as Error)?.message ?? error),
-          });
         }
+      } catch (error) {
+        errors += 1;
+        console.error("[FORENSIC_IMPORT]", {
+          step: "attachment_query_failed",
+          batchId,
+          operatingCompanyId: qboContext.operatingCompanyId,
+          txnId: tx.qbo_txn_id,
+          error: String((error as Error)?.message ?? error),
+        });
+        await client.query(
+          `
+            UPDATE qbo_archive.import_batches
+            SET errors_count = $2,
+                updated_at = now()
+            WHERE id = $1
+          `,
+          [batchId, errors]
+        );
       }
 
       // transactions_snapshot is append-only by design; keep attachment counts in attachments_snapshot.
     }
 
     await client.query(
-      `UPDATE qbo_archive.import_batches SET attachments_imported = $2, updated_at = now() WHERE id = $1`,
-      [batchId, imported]
+      `
+        UPDATE qbo_archive.import_batches
+        SET attachments_imported = $2,
+            errors_count = $3,
+            updated_at = now()
+        WHERE id = $1
+      `,
+      [batchId, imported, errors]
     );
   });
   return { attachmentsImported: imported, errors };

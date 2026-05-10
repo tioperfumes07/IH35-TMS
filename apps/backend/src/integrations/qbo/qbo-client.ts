@@ -132,21 +132,20 @@ export async function qboDownloadAttachment(ctx: QboApiContext, downloadUrl: str
   return { data: Buffer.from(arrayBuffer), contentType };
 }
 
-export async function qboPaginateEntity<T = Record<string, unknown>>(
+export async function* qboPaginateEntity<T = Record<string, unknown>>(
   ctx: QboApiContext,
   entityName: string,
   whereClause = ""
-) {
-  const rows: T[] = [];
+): AsyncGenerator<T[], void, unknown> {
   let start = 1;
   while (true) {
     const payload = await qboListEntity<T>(ctx, entityName, whereClause, start, DEFAULT_PAGE_SIZE);
-    const list = (payload.QueryResponse?.[entityName] as T[] | undefined) ?? [];
-    rows.push(...list);
-    if (list.length < DEFAULT_PAGE_SIZE) break;
+    const page = (payload.QueryResponse?.[entityName] as T[] | undefined) ?? [];
+    if (page.length === 0) break;
+    yield page;
+    if (page.length < DEFAULT_PAGE_SIZE) break;
     start += DEFAULT_PAGE_SIZE;
   }
-  return rows;
 }
 
 export async function qboCompanyContext(operatingCompanyId: string): Promise<QboApiContext> {
