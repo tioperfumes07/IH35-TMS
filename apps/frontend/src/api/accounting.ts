@@ -531,3 +531,110 @@ export function voidFactoring(id: string, operatingCompanyId: string, reason?: s
     body: { reason },
   });
 }
+
+export type JournalEntrySource = "manual" | "auto";
+export type JournalEntryStatus = "posted" | "voided";
+export type JournalEntryPosting = {
+  id: string;
+  journal_entry_uuid: string;
+  line_sequence: number;
+  account_id: string;
+  account_number?: string | null;
+  account_name?: string | null;
+  class_id: string | null;
+  class_name?: string | null;
+  entity_uuid: string | null;
+  debit_or_credit: "debit" | "credit";
+  amount_cents: number;
+  description: string | null;
+};
+
+export type JournalEntry = {
+  id: string;
+  operating_company_id: string;
+  entry_date: string;
+  memo: string | null;
+  status: JournalEntryStatus;
+  source: JournalEntrySource;
+  created_by_user_id: string | null;
+  voided_at: string | null;
+  void_reason: string | null;
+  qbo_journal_entry_id: string | null;
+  qbo_sync_pending: boolean;
+  debit_total_cents?: number;
+  credit_total_cents?: number;
+  postings?: JournalEntryPosting[];
+  created_at: string;
+  updated_at: string;
+};
+
+export function listJournalEntries(
+  operatingCompanyId: string,
+  params: {
+    source?: JournalEntrySource;
+    status?: JournalEntryStatus;
+    account_id?: string;
+    from_date?: string;
+    to_date?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.source) query.set("source", params.source);
+  if (params.status) query.set("status", params.status);
+  if (params.account_id) query.set("account_id", params.account_id);
+  if (params.from_date) query.set("from_date", params.from_date);
+  if (params.to_date) query.set("to_date", params.to_date);
+  if (params.limit) query.set("limit", String(params.limit));
+  if (params.offset) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiRequest<{ journal_entries: JournalEntry[] }>(
+    withCompany(`/api/v1/accounting/journal-entries${qs ? `?${qs}` : ""}`, operatingCompanyId)
+  );
+}
+
+export function getJournalEntry(id: string, operatingCompanyId: string) {
+  return apiRequest<JournalEntry>(withCompany(`/api/v1/accounting/journal-entries/${id}`, operatingCompanyId));
+}
+
+export function createJournalEntry(
+  operatingCompanyId: string,
+  payload: {
+    entry_date: string;
+    memo?: string;
+    source?: JournalEntrySource;
+    postings: Array<{
+      account_id: string;
+      class_id?: string | null;
+      entity_uuid?: string | null;
+      debit_or_credit: "debit" | "credit";
+      amount_cents: number;
+      description?: string | null;
+    }>;
+  }
+) {
+  return apiRequest<JournalEntry>(withCompany("/api/v1/accounting/journal-entries", operatingCompanyId), {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export function voidJournalEntry(id: string, operatingCompanyId: string, reason: string) {
+  return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/journal-entries/${id}/void`, operatingCompanyId), {
+    method: "POST",
+    body: { reason },
+  });
+}
+
+export function listCoaAccountsForJe() {
+  return apiRequest<{ accounts: Array<{ id: string; account_number: string; account_name: string }> }>(
+    "/api/v1/catalogs/accounts?status=active&limit=300"
+  );
+}
+
+export function listClassesForJe() {
+  return apiRequest<{ classes: Array<{ id: string; class_name: string; class_code?: string | null }> }>(
+    "/api/v1/catalogs/classes?include_inactive=false&limit=300"
+  );
+}

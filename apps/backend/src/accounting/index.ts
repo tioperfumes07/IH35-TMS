@@ -5,6 +5,7 @@ import { registerPaymentsRoutes } from "./payments.routes.js";
 import { registerPaymentApplicationsRoutes } from "./payment-applications.routes.js";
 import { registerFactoringAdvancesRoutes } from "./factoring-advances.routes.js";
 import { registerBillsRoutes } from "./bills.routes.js";
+import { registerJournalEntryRoutes } from "./journal-entries.routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
@@ -13,4 +14,5 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerPaymentApplicationsRoutes(app);
   await registerFactoringAdvancesRoutes(app);
   await registerBillsRoutes(app);
+  await registerJournalEntryRoutes(app);
 }
