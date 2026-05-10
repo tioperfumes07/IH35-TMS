@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   disconnectQboConnection,
   generateForensicReport,
+  getQboAuthorizeStartUrl,
   getQboConnectionStatus,
   listForensicAnomalies,
   listForensicBatches,
@@ -153,7 +154,7 @@ export function ForensicReviewPage() {
                 <div className="flex items-center gap-3">
                   <ActionButton
                     onClick={() => {
-                      const url = `/api/v1/integrations/qbo/oauth-start?operating_company_id=${encodeURIComponent(company.id)}`;
+                      const url = getQboAuthorizeStartUrl(company.id);
                       window.location.assign(url);
                     }}
                   >

@@ -87,3 +87,18 @@ export function disconnectQboConnection(operatingCompanyId: string) {
   });
 }
 
+function getApiBaseUrl() {
+  const configured = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+  if (configured) return configured.replace(/\/$/, "");
+  if (typeof window === "undefined") return "";
+  const hostname = window.location.hostname;
+  if (hostname === "localhost" || hostname === "127.0.0.1") return "http://localhost:3000";
+  const apiHostname = hostname.replace(/^app\./, "api.");
+  return `${window.location.protocol}//${apiHostname}`;
+}
+
+export function getQboAuthorizeStartUrl(operatingCompanyId: string) {
+  const base = getApiBaseUrl();
+  return `${base}/api/v1/integrations/qbo/oauth-start?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
+}
+
