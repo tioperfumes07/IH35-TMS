@@ -73,7 +73,7 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
   const [overrideToken, setOverrideToken] = useState<string | null>(null);
   const [pendingCloseAfterAdvisory, setPendingCloseAfterAdvisory] = useState(false);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"customer" | "equipment" | "stops" | "v3">("customer");
+  const [activeTab, setActiveTab] = useState<"customer" | "equipment" | "stops" | "v3">("v3");
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const form = useForm<FormValues>({
     defaultValues: {
