@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { Button } from "../../../components/Button";
-import { PageHeader } from "../../../components/layout/PageHeader";
+import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingCatalogModal, type AccountingCatalogClient, type AccountingMetadataField } from "./AccountingCatalogModal";
@@ -64,9 +64,11 @@ export function AccountingCatalogListPage({
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <BackArrowHeader
+        backTo="/lists"
+        breadcrumb={breadcrumbPath.replace(/^Back · /, "").split(" · ")}
         title={displayName}
-        subtitle={`${breadcrumbPath} · ${total} entries`}
+        countBadge={total}
         actions={
           !readOnly ? (
             <Button

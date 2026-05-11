@@ -101,6 +101,12 @@ export type DispatchBookLoadPayload = {
   weight_lbs?: number;
   notes?: string;
   status?: DispatchStatus;
+  booking_mode?: "single_popup" | "legacy_form";
+  requires_tarps?: boolean;
+  tarp_type?: string;
+  lumper_amount_cents?: number;
+  customer_chargeback_requested?: boolean;
+  customer_chargeback_reason?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
   assigned_primary_driver_id?: string;
@@ -118,6 +124,15 @@ export type DispatchBookLoadPayload = {
     country?: string;
     address_line1?: string;
     scheduled_arrival_at?: string;
+    time_window_type?: "appointment" | "first_come_first_serve" | "drop_window";
+    appointment_start_at?: string;
+    appointment_end_at?: string;
+    lumper_required?: boolean;
+    lumper_paid_by?: "carrier" | "shipper" | "broker" | "receiver" | "unknown";
+    lumper_amount_cents?: number;
+    is_tarp_stop?: boolean;
+    tarp_count?: number;
+    stop_notes?: string;
   }>;
   save_mode: "draft" | "book_dispatch";
   override_token?: string;
@@ -252,6 +267,13 @@ export function cancelDispatchLoad(
     method: "POST",
     body,
   });
+}
+
+export function distributeLoadInstructions(loadId: string, operatingCompanyId: string) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/dispatch/loads/${loadId}/distribute-instructions?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST" }
+  );
 }
 
 export function listDispatchCancellationReasons() {

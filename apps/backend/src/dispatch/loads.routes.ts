@@ -1,8 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { bookLoad } from "./book-load.service.js";
+import { distributeLoadInstructions } from "./load-distribution.service.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 
 const dispatchStatusSchema = z.enum([
@@ -64,6 +65,12 @@ const createDispatchLoadBodySchema = z.object({
   commodity: z.string().trim().max(120).optional(),
   weight_lbs: z.number().int().min(0).optional(),
   notes: z.string().trim().max(5000).optional(),
+  booking_mode: z.enum(["single_popup", "legacy_form"]).default("single_popup"),
+  requires_tarps: z.boolean().default(false),
+  tarp_type: z.string().trim().max(60).optional(),
+  lumper_amount_cents: z.number().int().min(0).default(0),
+  customer_chargeback_requested: z.boolean().default(false),
+  customer_chargeback_reason: z.string().trim().max(1000).optional(),
   trailer_type: z.enum(["refrigerated_van", "dry_van", "flatbed", "power_only_no_trailer", "power_only_customer_trailer"]).optional(),
   assigned_unit_id: z.string().uuid().optional(),
   assigned_primary_driver_id: z.string().uuid().optional(),
@@ -90,6 +97,15 @@ const createDispatchLoadBodySchema = z.object({
         country: z.string().trim().max(120).optional(),
         address_line1: z.string().trim().max(300).optional(),
         scheduled_arrival_at: z.string().datetime({ offset: true }).optional(),
+        time_window_type: z.enum(["appointment", "first_come_first_serve", "drop_window"]).optional(),
+        appointment_start_at: z.string().datetime({ offset: true }).optional(),
+        appointment_end_at: z.string().datetime({ offset: true }).optional(),
+        lumper_required: z.boolean().optional(),
+        lumper_paid_by: z.enum(["carrier", "shipper", "broker", "receiver", "unknown"]).optional(),
+        lumper_amount_cents: z.number().int().min(0).optional(),
+        is_tarp_stop: z.boolean().optional(),
+        tarp_count: z.number().int().min(0).optional(),
+        stop_notes: z.string().trim().max(1000).optional(),
       })
     )
     .min(2),
@@ -150,14 +166,6 @@ function toMdataStatus(status: z.infer<typeof dispatchStatusSchema>): string {
   if (status === "driver_walkoff") return "driver_walkoff";
   if (status === "driver_no_show") return "driver_no_show";
   return "cancelled";
-}
-
-function canOverrideUnitBlock(role: string) {
-  return role === "Owner";
-}
-
-function canOverrideHos(role: string) {
-  return ["Owner", "Administrator", "Manager"].includes(role);
 }
 
 const allowedTransitions: Record<z.infer<typeof dispatchStatusSchema>, z.infer<typeof dispatchStatusSchema>[]> = {
@@ -387,6 +395,32 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return detail;
   });
 
+  app.post("/api/v1/dispatch/loads/:id/distribute-instructions", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    try {
+      const result = await distributeLoadInstructions({
+        operating_company_id: operatingCompanyId,
+        load_id: params.data.id,
+        requested_by_user_id: authUser.uuid,
+      });
+      return result;
+    } catch (error) {
+      if (String((error as Error)?.message ?? "").includes("E_LOAD_NOT_FOUND")) {
+        return reply.code(404).send({ error: "dispatch_load_not_found" });
+      }
+      throw error;
+    }
+  });
+
   app.get("/api/v1/dispatch/units/:unit_id/dispatch-status", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -464,328 +498,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
     const body = createDispatchLoadBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
-    const b = body.data;
-    if (b.assigned_primary_driver_id && b.team_id) {
-      return reply.code(400).send({ error: "solo_or_team_assignment_required_not_both" });
-    }
-
     try {
-      const result = await withCompanyScope(authUser.uuid, b.operating_company_id, async (client) => {
-        const wf044Warnings: Array<Record<string, unknown>> = [];
-
-        if (b.assigned_unit_id) {
-          const unitRes = await client
-            .query(
-              `
-                SELECT id, display_id, is_dispatch_blocked, dispatch_block_reason, has_open_pm_due_wo, open_wo_count
-                FROM views.units_with_dispatch_status
-                WHERE id = $1
-                  AND operating_company_id = $2
-                LIMIT 1
-              `,
-              [b.assigned_unit_id, b.operating_company_id]
-            )
-            .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-          const unit = unitRes.rows[0] ?? null;
-          if (unit?.has_open_pm_due_wo) {
-            wf044Warnings.push({
-              unit_id: unit.id,
-              unit_display_id: unit.display_id,
-              open_wo_count: Number(unit.open_wo_count ?? 0),
-              message: `Unit ${String(unit.display_id ?? "unit")} has open PM-due work order(s).`,
-            });
-          }
-
-          if (unit?.is_dispatch_blocked) {
-            if (!b.override_token) {
-              await appendCrudAudit(
-                client,
-                authUser.uuid,
-                "dispatch.book_load_blocked_by_unit",
-                {
-                  operating_company_id: b.operating_company_id,
-                  unit_id: unit.id,
-                  block_reason: unit.dispatch_block_reason ?? null,
-                  block_code: "E_UNIT_DISPATCH_BLOCKED",
-                },
-                "info",
-                "BT-3-DISPATCH-AUTH-GATES"
-              );
-              return {
-                kind: "error" as const,
-                status: 422,
-                payload: {
-                  error: "E_UNIT_DISPATCH_BLOCKED",
-                  message: `Unit ${String(unit.display_id ?? "")} is dispatch-blocked: ${String(unit.dispatch_block_reason ?? "major defect reported")}`,
-                  details: { unit_id: unit.id, unit_display_id: unit.display_id, block_reason: unit.dispatch_block_reason },
-                  wf_044_maintenance_warnings: wf044Warnings,
-                },
-              };
-            }
-            if (!canOverrideUnitBlock(authUser.role)) {
-              return {
-                kind: "error" as const,
-                status: 403,
-                payload: { error: "E_PERMISSION_DENIED", message: "Only Owner can override dispatch-blocked units." },
-              };
-            }
-            if (!b.override_reason || b.override_reason.trim().length < 10) {
-              return {
-                kind: "error" as const,
-                status: 400,
-                payload: { error: "E_OVERRIDE_REASON_REQUIRED", message: "Override reason must be at least 10 characters." },
-              };
-            }
-            await appendCrudAudit(
-              client,
-              authUser.uuid,
-              "dispatch.unit_block_overridden_by_owner",
-              {
-                operating_company_id: b.operating_company_id,
-                unit_id: unit.id,
-                unit_display_id: unit.display_id,
-                block_reason: unit.dispatch_block_reason ?? null,
-                override_token: b.override_token,
-                override_reason: b.override_reason,
-                role: authUser.role,
-                severity_label: "critical",
-              },
-              "warning",
-              "BT-3-DISPATCH-AUTH-GATES"
-            );
-            await client.query(
-              `
-                INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-                VALUES ($1,$2,$3,$4::jsonb)
-              `,
-              [
-                "dispatch.loads",
-                b.assigned_unit_id,
-                "dispatch.wf064.override_notice",
-                JSON.stringify({
-                  override_type: "unit_block",
-                  notify_channels: ["email", "sms"],
-                  operating_company_id: b.operating_company_id,
-                  override_reason: b.override_reason,
-                  override_by_user_id: authUser.uuid,
-                }),
-              ]
-            );
-          }
-        }
-
-        if (b.assigned_primary_driver_id) {
-          const hosRes = await client
-            .query(
-              `
-                SELECT id, display_id, full_name, hos_badge_color, is_in_violation, minutes_until_violation
-                FROM views.drivers_with_hos_status
-                WHERE id = $1
-                  AND operating_company_id = $2
-                LIMIT 1
-              `,
-              [b.assigned_primary_driver_id, b.operating_company_id]
-            )
-            .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-          const hos = hosRes.rows[0] ?? null;
-          if (hos?.is_in_violation) {
-            if (!b.override_token) {
-              await appendCrudAudit(
-                client,
-                authUser.uuid,
-                "dispatch.book_load_blocked_by_hos",
-                {
-                  operating_company_id: b.operating_company_id,
-                  driver_id: hos.id,
-                  block_code: "E_DRIVER_HOS_VIOLATION",
-                  minutes_until_violation: Number(hos.minutes_until_violation ?? 0),
-                },
-                "info",
-                "BT-3-DISPATCH-AUTH-GATES"
-              );
-              return {
-                kind: "error" as const,
-                status: 422,
-                payload: {
-                  error: "E_DRIVER_HOS_VIOLATION",
-                  message: `Driver ${String(hos.full_name ?? hos.display_id ?? "")} is in HOS violation.`,
-                  details: {
-                    driver_id: hos.id,
-                    minutes_until_violation: Number(hos.minutes_until_violation ?? 0),
-                    hos_badge_color: hos.hos_badge_color,
-                  },
-                  wf_044_maintenance_warnings: wf044Warnings,
-                },
-              };
-            }
-            if (!canOverrideHos(authUser.role)) {
-              return {
-                kind: "error" as const,
-                status: 403,
-                payload: { error: "E_PERMISSION_DENIED", message: "Only Manager/Admin/Owner can override HOS violations." },
-              };
-            }
-            if (!b.override_reason || b.override_reason.trim().length < 10) {
-              return {
-                kind: "error" as const,
-                status: 400,
-                payload: { error: "E_OVERRIDE_REASON_REQUIRED", message: "Override reason must be at least 10 characters." },
-              };
-            }
-            await appendCrudAudit(
-              client,
-              authUser.uuid,
-              "dispatch.hos_override_by_manager",
-              {
-                operating_company_id: b.operating_company_id,
-                driver_id: hos.id,
-                driver_display_id: hos.display_id,
-                minutes_until_violation: Number(hos.minutes_until_violation ?? 0),
-                override_token: b.override_token,
-                override_reason: b.override_reason,
-                role: authUser.role,
-              },
-              "warning",
-              "BT-3-DISPATCH-AUTH-GATES"
-            );
-            await client.query(
-              `
-                INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-                VALUES ($1,$2,$3,$4::jsonb)
-              `,
-              [
-                "dispatch.loads",
-                b.assigned_primary_driver_id,
-                "dispatch.wf064.override_notice",
-                JSON.stringify({
-                  override_type: "hos_violation",
-                  notify_channels: ["email"],
-                  operating_company_id: b.operating_company_id,
-                  override_reason: b.override_reason,
-                  override_by_user_id: authUser.uuid,
-                }),
-              ]
-            );
-          }
-        }
-
-        const loadNumberRes = await client.query<{ next_seq: number }>(
-          `
-            SELECT COALESCE(MAX(COALESCE(NULLIF(substring(load_number FROM '([0-9]{4})$'), ''), '0')::int), 0) + 1 AS next_seq
-            FROM mdata.loads
-            WHERE operating_company_id = $1
-              AND load_number LIKE $2
-          `,
-          [b.operating_company_id, `L-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-%`]
-        );
-        const nextSeq = Number(loadNumberRes.rows[0]?.next_seq ?? 1);
-        const loadNumber = `L-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(nextSeq).padStart(4, "0")}`;
-        const statusForInsert = b.save_mode === "draft" ? "draft" : toMdataStatus(b.status);
-
-        const loadRes = await client.query(
-          `
-            INSERT INTO mdata.loads (
-              operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
-              assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-              dispatcher_user_id, notes
-            )
-            VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11)
-            RETURNING *
-          `,
-          [
-            b.operating_company_id,
-            loadNumber,
-            b.customer_id,
-            statusForInsert,
-            b.charges.reduce((sum, item) => sum + item.amount_cents, 0),
-            b.assigned_unit_id ?? null,
-            b.team_id ? null : (b.assigned_primary_driver_id ?? null),
-            b.team_id ? null : (b.assigned_secondary_driver_id ?? null),
-            b.team_id ?? null,
-            authUser.uuid,
-            b.notes ?? null,
-          ]
-        );
-        const load = loadRes.rows[0];
-
-        for (const stop of b.stops) {
-          await client.query(
-            `
-              INSERT INTO mdata.load_stops (
-                load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status
-              )
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending')
-            `,
-            [
-              load.id,
-              stop.sequence_number,
-              stop.stop_type,
-              stop.location_id ?? null,
-              stop.address_line1 ?? null,
-              stop.city ?? null,
-              stop.state ?? null,
-              stop.country ?? null,
-              stop.scheduled_arrival_at ?? null,
-            ]
-          );
-        }
-
-        if (wf044Warnings.length > 0) {
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            "dispatch.assignment_with_maintenance_warning",
-            {
-              resource_id: load.id,
-              resource_type: "dispatch.loads",
-              operating_company_id: b.operating_company_id,
-              wf_044_maintenance_warnings: wf044Warnings,
-            },
-            "info",
-            "BT-3-DISPATCH-AUTH-GATES"
-          );
-        }
-
-        if (b.save_mode === "book_dispatch") {
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            "dispatch.load_created",
-            {
-              resource_id: load.id,
-              resource_type: "dispatch.loads",
-              entity_type: "load",
-              entity_id: load.id,
-              load_number: load.load_number,
-              operating_company_id: load.operating_company_id,
-              status: load.status,
-              save_mode: b.save_mode,
-              wf_044_maintenance_warnings: wf044Warnings,
-            },
-            "info",
-            "BT-3-DISPATCH-AUTH-GATES"
-          );
-
-          const outboxEvents = [
-            "dispatch.driver_sms",
-            "dispatch.qbo_invoice",
-            "dispatch.qbo_bill",
-            "dispatch.fuel_planner",
-            "dispatch.factoring_packet",
-            "dispatch.load_notification",
-          ];
-          for (const eventType of outboxEvents) {
-            await client.query(
-              `
-                INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
-                VALUES ($1,$2,$3,$4::jsonb)
-              `,
-              ["dispatch.loads", load.id, eventType, JSON.stringify({ load_id: load.id, operating_company_id: load.operating_company_id })]
-            );
-          }
-        }
-
-        return { kind: "ok" as const, row: { ...load, wf_044_maintenance_warnings: wf044Warnings } };
+      const result = await bookLoad({
+        ...body.data,
+        requestingUserUuid: authUser.uuid,
+        requestingUserRole: authUser.role,
       });
 
       if (result.kind === "error") {

@@ -11,6 +11,7 @@ import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCust
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
+import { BookLoadV3OptionsSection } from "./book-load-v3/BookLoadV3OptionsSection";
 
 type FormValues = BookLoadFormValues & {
   trailer_type: string;
@@ -20,6 +21,12 @@ type FormValues = BookLoadFormValues & {
   assigned_primary_driver_id: string;
   assigned_secondary_driver_id: string;
   temp_fahrenheit: number;
+  booking_mode: "single_popup" | "legacy_form";
+  requires_tarps: boolean;
+  tarp_type: string;
+  lumper_amount_cents: number;
+  customer_chargeback_requested: boolean;
+  customer_chargeback_reason: string;
   stops: Array<{
     stop_type: "pickup" | "delivery";
     sequence_number: number;
@@ -50,6 +57,7 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
   const [overrideToken, setOverrideToken] = useState<string | null>(null);
   const [pendingCloseAfterAdvisory, setPendingCloseAfterAdvisory] = useState(false);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"customer" | "equipment" | "stops" | "v3">("customer");
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const form = useForm<FormValues>({
     defaultValues: {
@@ -68,6 +76,12 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
       assigned_primary_driver_id: "",
       assigned_secondary_driver_id: "",
       temp_fahrenheit: 0,
+      booking_mode: "single_popup",
+      requires_tarps: false,
+      tarp_type: "",
+      lumper_amount_cents: 0,
+      customer_chargeback_requested: false,
+      customer_chargeback_reason: "",
       stops: [
         { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "" },
         { stop_type: "delivery", sequence_number: 2, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "" },
@@ -123,6 +137,12 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
         commodity: values.commodity || undefined,
         weight_lbs: values.weight_lbs || undefined,
         notes: values.notes || undefined,
+        booking_mode: values.booking_mode,
+        requires_tarps: values.requires_tarps,
+        tarp_type: values.tarp_type || undefined,
+        lumper_amount_cents: values.lumper_amount_cents || 0,
+        customer_chargeback_requested: values.customer_chargeback_requested,
+        customer_chargeback_reason: values.customer_chargeback_reason || undefined,
         trailer_type: values.trailer_type as
           | "refrigerated_van"
           | "dry_van"
@@ -300,9 +320,28 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
           </div>
         ) : null}
 
-        <BookLoadCustomerSection register={form.register} />
-        <BookLoadEquipmentSection register={form.register} />
-        <BookLoadStopsSection control={form.control as never} register={form.register as never} />
+        <div className="flex gap-2 rounded border border-gray-200 bg-gray-50 p-1 text-xs">
+          {[
+            { id: "customer", label: "Customer" },
+            { id: "equipment", label: "Equipment" },
+            { id: "stops", label: "Stops" },
+            { id: "v3", label: "V3 Options" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={`rounded px-2 py-1 ${activeTab === tab.id ? "bg-white font-semibold text-gray-900" : "text-gray-600"}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "customer" ? <BookLoadCustomerSection register={form.register} /> : null}
+        {activeTab === "equipment" ? <BookLoadEquipmentSection register={form.register} /> : null}
+        {activeTab === "stops" ? <BookLoadStopsSection control={form.control as never} register={form.register as never} /> : null}
+        {activeTab === "v3" ? <BookLoadV3OptionsSection register={form.register as never} /> : null}
         <BookLoadValidationSection issues={validationIssues} />
         <UploadZone
           operatingCompanyId={operatingCompanyId}

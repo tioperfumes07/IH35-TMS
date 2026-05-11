@@ -8,7 +8,7 @@ import type {
   DispatchCatalogUpdateBody,
 } from "../../../api/catalogs-dispatch";
 import { Button } from "../../../components/Button";
-import { PageHeader } from "../../../components/layout/PageHeader";
+import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CatalogEntryModal } from "./CatalogEntryModal";
 
@@ -100,13 +100,18 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
   const total = listQuery.data?.total ?? 0;
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
 
-  const subtitle = useMemo(() => `Back · Lists & Catalogs · Dispatch · ${title}`, [title]);
+  const breadcrumb = useMemo(
+    () => ["Lists & Catalogs", "Dispatch", title],
+    [title]
+  );
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <BackArrowHeader
+        backTo="/lists"
+        breadcrumb={breadcrumb}
         title={title}
-        subtitle={subtitle}
+        countBadge={total}
         actions={
           <Button
             onClick={() => {

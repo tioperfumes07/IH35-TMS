@@ -17,6 +17,7 @@ type FormState = {
   type_code: string;
   type_name: string;
   default_severity: number;
+  amount_cents: string;
   is_active: boolean;
 };
 
@@ -25,6 +26,7 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
     type_code: "",
     type_name: "",
     default_severity: 1,
+    amount_cents: "",
     is_active: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -37,6 +39,7 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
       type_code: row?.type_code ?? "",
       type_name: row?.type_name ?? "",
       default_severity: row?.default_severity ?? 1,
+      amount_cents: row?.amount_cents ? String(row.amount_cents) : "",
       is_active: row?.is_active ?? true,
     });
     setErrors({});
@@ -52,6 +55,12 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
     if (!Number.isInteger(form.default_severity) || form.default_severity < 1 || form.default_severity > 10) {
       next.default_severity = "Default Severity must be between 1 and 10.";
     }
+    if (form.amount_cents.trim()) {
+      const amount = Number(form.amount_cents);
+      if (!Number.isInteger(amount) || amount <= 0) {
+        next.amount_cents = "Amount must be a positive whole number in cents.";
+      }
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -65,6 +74,7 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
         type_code: form.type_code.trim(),
         type_name: form.type_name.trim(),
         default_severity: form.default_severity,
+        amount_cents: form.amount_cents.trim() ? Number(form.amount_cents) : null,
         is_active: form.is_active,
       };
       if (row) {
@@ -125,6 +135,20 @@ export function CompanyViolationTypeModal({ open, companyId, row, onClose, onSav
           Default Severity ({form.default_severity})
           <input type="range" min={1} max={10} step={1} value={form.default_severity} onChange={(event) => setForm((v) => ({ ...v, default_severity: Number(event.target.value || 1) }))} className="mt-2 w-full" />
           {errors.default_severity ? <div className="mt-1 text-[11px] text-red-700">{errors.default_severity}</div> : null}
+        </label>
+
+        <label className="block text-xs font-semibold text-gray-600">
+          Default Fine Amount (cents)
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={form.amount_cents}
+            onChange={(event) => setForm((v) => ({ ...v, amount_cents: event.target.value }))}
+            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm"
+            placeholder="e.g. 12500"
+          />
+          {errors.amount_cents ? <div className="mt-1 text-[11px] text-red-700">{errors.amount_cents}</div> : null}
         </label>
 
         <label className="flex items-center gap-2 text-xs text-gray-700">

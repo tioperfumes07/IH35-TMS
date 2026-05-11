@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { MaintenanceCatalogRow } from "../../../api/catalogs-maintenance";
 import { Button } from "../../../components/Button";
-import { PageHeader } from "../../../components/layout/PageHeader";
+import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { MaintenanceCatalogModal, type MaintenanceCatalogClient } from "./MaintenanceCatalogModal";
@@ -51,7 +51,23 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
 
   return (
     <div className="space-y-3">
-      <PageHeader title={displayName} subtitle={`${breadcrumbPath} · ${total} entries`} actions={<Button onClick={() => { setModalMode("create"); setSelectedRow(null); setModalOpen(true); }}>+ Create</Button>} />
+      <BackArrowHeader
+        backTo="/lists"
+        breadcrumb={breadcrumbPath.replace(/^Back · /, "").split(" · ")}
+        title={displayName}
+        countBadge={total}
+        actions={
+          <Button
+            onClick={() => {
+              setModalMode("create");
+              setSelectedRow(null);
+              setModalOpen(true);
+            }}
+          >
+            + Create
+          </Button>
+        }
+      />
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">

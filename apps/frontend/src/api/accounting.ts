@@ -29,6 +29,8 @@ export type Invoice = {
   display_id: string;
   status: InvoiceStatus;
   source_load_id: string | null;
+  source_load_chargeback_requested?: boolean;
+  source_load_chargeback_reason?: string | null;
   issue_date: string;
   due_date: string;
   sent_at: string | null;

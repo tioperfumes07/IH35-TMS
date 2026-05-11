@@ -138,6 +138,7 @@ export function InvoicesListPage() {
               <th className="px-3 py-2 font-semibold">Issue</th>
               <th className="px-3 py-2 font-semibold">Due</th>
               <th className="px-3 py-2 font-semibold">Status</th>
+              <th className="px-3 py-2 font-semibold">Chargeback flag</th>
               <th className="px-3 py-2 font-semibold">Total</th>
               <th className="px-3 py-2 font-semibold">Open</th>
             </tr>
@@ -145,14 +146,14 @@ export function InvoicesListPage() {
           <tbody>
             {query.isLoading ? (
               <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={7}>
+                <td className="px-3 py-3 text-gray-500" colSpan={8}>
                   Loading invoices...
                 </td>
               </tr>
             ) : null}
             {!query.isLoading && invoices.length === 0 ? (
               <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={7}>
+                <td className="px-3 py-3 text-gray-500" colSpan={8}>
                   No invoices found for the selected filters.
                 </td>
               </tr>
@@ -169,6 +170,15 @@ export function InvoicesListPage() {
                 <td className="px-3 py-2 text-gray-700">{invoice.issue_date}</td>
                 <td className="px-3 py-2 text-gray-700">{invoice.due_date}</td>
                 <td className="px-3 py-2 text-gray-700">{invoice.status}</td>
+                <td className="px-3 py-2 text-gray-700">
+                  {invoice.source_load_chargeback_requested ? (
+                    <span className="rounded border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                      flagged
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td className="px-3 py-2 text-gray-700">{money(invoice.total_cents)}</td>
                 <td className="px-3 py-2 text-gray-700">{money(invoice.amount_open_cents)}</td>
               </tr>

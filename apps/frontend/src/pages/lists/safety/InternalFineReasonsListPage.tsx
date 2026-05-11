@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listInternalFineReasons, type InternalFineReasonRow } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
-import { PageHeader } from "../../../components/layout/PageHeader";
+import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { InternalFineReasonModal } from "./InternalFineReasonModal";
@@ -33,7 +33,22 @@ export function InternalFineReasonsListPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Internal Fine Reasons" subtitle={`${total} entries`} actions={<Button onClick={() => { setSelectedRow(null); setModalOpen(true); }}>+ Create</Button>} />
+      <BackArrowHeader
+        backTo="/lists"
+        breadcrumb={["Lists & Catalogs", "Safety", "Internal fine reasons"]}
+        title="Internal Fine Reasons"
+        countBadge={total}
+        actions={
+          <Button
+            onClick={() => {
+              setSelectedRow(null);
+              setModalOpen(true);
+            }}
+          >
+            + Create
+          </Button>
+        }
+      />
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
