@@ -10,6 +10,12 @@ import {
   type QboApiContext,
 } from "./qbo-client.js";
 import { getQboConnectionStatus } from "./qbo-oauth.service.js";
+import { auditBatchEvent } from "./forensic-audit.service.js";
+import {
+  appendForensicProgressError,
+  clearForensicProgress,
+  updateForensicProgress,
+} from "./forensic-progress.store.js";
 
 type ImportCounts = {
   entitiesImported: number;
@@ -284,11 +290,31 @@ export async function detectAnomalies(
 export async function importEntities(actorUserId: string, batchId: string, qboContext: QboApiContext) {
   let imported = 0;
   let errors = 0;
+  await auditBatchEvent(batchId, qboContext.operatingCompanyId, "entities_phase_started");
+  updateForensicProgress(batchId, {
+    current_phase: "entities",
+    current_entity_type: null,
+    current_page: null,
+    current_total_pages: null,
+  });
   await withCurrentUser(actorUserId, async (client) => {
     for (const entityType of ENTITY_TYPES) {
       let pageStart = 1;
+      const startedAt = Date.now();
+      let importedBefore = imported;
+      await auditBatchEvent(batchId, qboContext.operatingCompanyId, "entity_type_started", { entity_type: entityType });
+      updateForensicProgress(batchId, {
+        current_phase: "entities",
+        current_entity_type: entityType,
+        current_page: Math.ceil(pageStart / 100),
+      });
       try {
         for await (const page of qboPaginateEntity<QboEntity>(qboContext, entityType)) {
+          await auditBatchEvent(batchId, qboContext.operatingCompanyId, "page_fetched", {
+            entity_type: entityType,
+            page_number: Math.ceil(pageStart / 100),
+            records_processed: page.length,
+          });
           await client.query("BEGIN");
           try {
             await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
@@ -321,6 +347,7 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
                 UPDATE qbo_archive.import_batches
                 SET entities_imported = $2,
                     errors_count = $3,
+                    last_heartbeat_at = now(),
                     updated_at = now()
                 WHERE id = $1
               `,
@@ -330,6 +357,7 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
           } catch (error) {
             await client.query("ROLLBACK");
             errors += 1;
+            appendForensicProgressError(batchId, `Entity ${entityType} page failed: ${String((error as Error)?.message ?? error)}`);
             console.error("[FORENSIC_IMPORT]", {
               step: "entity_page_process_failed",
               batchId,
@@ -343,6 +371,7 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
               `
                 UPDATE qbo_archive.import_batches
                 SET errors_count = $2,
+                    last_heartbeat_at = now(),
                     updated_at = now()
                 WHERE id = $1
               `,
@@ -351,10 +380,16 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
           } finally {
             logForensicHeap(batchId, entityType, pageStart, page.length);
             pageStart += page.length;
+            updateForensicProgress(batchId, {
+              current_phase: "entities",
+              current_entity_type: entityType,
+              current_page: Math.ceil(pageStart / 100),
+            });
           }
         }
       } catch (error) {
         errors += 1;
+        appendForensicProgressError(batchId, `Entity ${entityType} query failed: ${String((error as Error)?.message ?? error)}`);
         console.error("[FORENSIC_IMPORT]", {
           step: "entity_type_query_failed",
           batchId,
@@ -366,23 +401,34 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
           `
             UPDATE qbo_archive.import_batches
             SET errors_count = $2,
+                last_heartbeat_at = now(),
                 updated_at = now()
             WHERE id = $1
           `,
           [batchId, errors]
         );
       }
+      await auditBatchEvent(batchId, qboContext.operatingCompanyId, "entity_type_completed", {
+        entity_type: entityType,
+        records_processed: imported - importedBefore,
+        duration_ms: Date.now() - startedAt,
+      });
+      importedBefore = imported;
     }
     await client.query(
       `
         UPDATE qbo_archive.import_batches
         SET entities_imported = $2,
             errors_count = $3,
+            last_heartbeat_at = now(),
             updated_at = now()
         WHERE id = $1
       `,
       [batchId, imported, errors]
     );
+  });
+  await auditBatchEvent(batchId, qboContext.operatingCompanyId, "entities_phase_completed", {
+    records_processed: imported,
   });
   return { entitiesImported: imported, errors };
 }
@@ -391,12 +437,32 @@ export async function importTransactions(actorUserId: string, batchId: string, q
   let imported = 0;
   let errors = 0;
   const insertedSnapshotIds: string[] = [];
+  await auditBatchEvent(batchId, qboContext.operatingCompanyId, "transactions_phase_started");
+  updateForensicProgress(batchId, {
+    current_phase: "transactions",
+    current_entity_type: null,
+    current_page: null,
+    current_total_pages: null,
+  });
   await withCurrentUser(actorUserId, async (client) => {
     for (const txnType of TXN_TYPES) {
       const where = `TxnDate >= '${sinceDate}'`;
       let pageStart = 1;
+      const startedAt = Date.now();
+      const importedBefore = imported;
+      await auditBatchEvent(batchId, qboContext.operatingCompanyId, "txn_type_started", { entity_type: txnType });
+      updateForensicProgress(batchId, {
+        current_phase: "transactions",
+        current_entity_type: txnType,
+        current_page: Math.ceil(pageStart / 100),
+      });
       try {
         for await (const page of qboPaginateEntity<QboTransaction>(qboContext, txnType, where)) {
+          await auditBatchEvent(batchId, qboContext.operatingCompanyId, "page_fetched", {
+            entity_type: txnType,
+            page_number: Math.ceil(pageStart / 100),
+            records_processed: page.length,
+          });
           await client.query("BEGIN");
           try {
             await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
@@ -478,6 +544,7 @@ export async function importTransactions(actorUserId: string, batchId: string, q
                 UPDATE qbo_archive.import_batches
                 SET transactions_imported = $2,
                     errors_count = $3,
+                    last_heartbeat_at = now(),
                     updated_at = now()
                 WHERE id = $1
               `,
@@ -487,6 +554,7 @@ export async function importTransactions(actorUserId: string, batchId: string, q
           } catch (error) {
             await client.query("ROLLBACK");
             errors += 1;
+            appendForensicProgressError(batchId, `Transaction ${txnType} page failed: ${String((error as Error)?.message ?? error)}`);
             console.error("[FORENSIC_IMPORT]", {
               step: "transaction_page_process_failed",
               batchId,
@@ -500,6 +568,7 @@ export async function importTransactions(actorUserId: string, batchId: string, q
               `
                 UPDATE qbo_archive.import_batches
                 SET errors_count = $2,
+                    last_heartbeat_at = now(),
                     updated_at = now()
                 WHERE id = $1
               `,
@@ -508,10 +577,16 @@ export async function importTransactions(actorUserId: string, batchId: string, q
           } finally {
             logForensicHeap(batchId, txnType, pageStart, page.length);
             pageStart += page.length;
+            updateForensicProgress(batchId, {
+              current_phase: "transactions",
+              current_entity_type: txnType,
+              current_page: Math.ceil(pageStart / 100),
+            });
           }
         }
       } catch (error) {
         errors += 1;
+        appendForensicProgressError(batchId, `Transaction ${txnType} query failed: ${String((error as Error)?.message ?? error)}`);
         console.error("[FORENSIC_IMPORT]", {
           step: "transaction_type_query_failed",
           batchId,
@@ -523,23 +598,33 @@ export async function importTransactions(actorUserId: string, batchId: string, q
           `
             UPDATE qbo_archive.import_batches
             SET errors_count = $2,
+                last_heartbeat_at = now(),
                 updated_at = now()
             WHERE id = $1
           `,
           [batchId, errors]
         );
       }
+      await auditBatchEvent(batchId, qboContext.operatingCompanyId, "txn_type_completed", {
+        entity_type: txnType,
+        records_processed: imported - importedBefore,
+        duration_ms: Date.now() - startedAt,
+      });
     }
     await client.query(
       `
         UPDATE qbo_archive.import_batches
         SET transactions_imported = $2,
             errors_count = $3,
+            last_heartbeat_at = now(),
             updated_at = now()
         WHERE id = $1
       `,
       [batchId, imported, errors]
     );
+  });
+  await auditBatchEvent(batchId, qboContext.operatingCompanyId, "transactions_phase_completed", {
+    records_processed: imported,
   });
   return { transactionsImported: imported, insertedSnapshotIds, errors };
 }
@@ -548,6 +633,13 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
   const { client: r2, bucket } = r2Client();
   let imported = 0;
   let errors = 0;
+  await auditBatchEvent(batchId, qboContext.operatingCompanyId, "attachments_phase_started");
+  updateForensicProgress(batchId, {
+    current_phase: "attachments",
+    current_entity_type: "Attachable",
+    current_page: null,
+    current_total_pages: null,
+  });
   await withCurrentUser(actorUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
     const txRows = await client.query<{
@@ -572,6 +664,11 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
       let pageStart = 1;
       try {
         for await (const page of qboPaginateEntity<Record<string, unknown>>(qboContext, "Attachable", whereClause)) {
+          await auditBatchEvent(batchId, qboContext.operatingCompanyId, "page_fetched", {
+            entity_type: "Attachable",
+            page_number: Math.ceil(pageStart / 100),
+            records_processed: page.length,
+          });
           await client.query("BEGIN");
           try {
             await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
@@ -640,8 +737,14 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
                   continue;
                 }
                 imported += 1;
+                await auditBatchEvent(batchId, qboContext.operatingCompanyId, "attachment_downloaded", {
+                  entity_type: "Attachable",
+                  records_processed: 1,
+                  metadata: { txn_id: tx.qbo_txn_id, attachment_id: attachmentId },
+                });
               } catch (error) {
                 errors += 1;
+                appendForensicProgressError(batchId, `Attachment ${attachmentId} failed: ${String((error as Error)?.message ?? error)}`);
                 console.error("[FORENSIC_IMPORT]", {
                   step: "attachment_import_failed",
                   batchId,
@@ -657,6 +760,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
                 UPDATE qbo_archive.import_batches
                 SET attachments_imported = $2,
                     errors_count = $3,
+                    last_heartbeat_at = now(),
                     updated_at = now()
                 WHERE id = $1
               `,
@@ -666,6 +770,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
           } catch (error) {
             await client.query("ROLLBACK");
             errors += 1;
+            appendForensicProgressError(batchId, `Attachment page failed for txn ${tx.qbo_txn_id}: ${String((error as Error)?.message ?? error)}`);
             console.error("[FORENSIC_IMPORT]", {
               step: "attachment_page_process_failed",
               batchId,
@@ -679,6 +784,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
               `
                 UPDATE qbo_archive.import_batches
                 SET errors_count = $2,
+                    last_heartbeat_at = now(),
                     updated_at = now()
                 WHERE id = $1
               `,
@@ -687,10 +793,16 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
           } finally {
             logForensicHeap(batchId, "Attachable", pageStart, page.length);
             pageStart += page.length;
+            updateForensicProgress(batchId, {
+              current_phase: "attachments",
+              current_entity_type: "Attachable",
+              current_page: Math.ceil(pageStart / 100),
+            });
           }
         }
       } catch (error) {
         errors += 1;
+        appendForensicProgressError(batchId, `Attachment query failed for txn ${tx.qbo_txn_id}: ${String((error as Error)?.message ?? error)}`);
         console.error("[FORENSIC_IMPORT]", {
           step: "attachment_query_failed",
           batchId,
@@ -702,6 +814,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
           `
             UPDATE qbo_archive.import_batches
             SET errors_count = $2,
+                last_heartbeat_at = now(),
                 updated_at = now()
             WHERE id = $1
           `,
@@ -717,11 +830,15 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
         UPDATE qbo_archive.import_batches
         SET attachments_imported = $2,
             errors_count = $3,
+            last_heartbeat_at = now(),
             updated_at = now()
         WHERE id = $1
       `,
       [batchId, imported, errors]
     );
+  });
+  await auditBatchEvent(batchId, qboContext.operatingCompanyId, "attachments_phase_completed", {
+    records_processed: imported,
   });
   return { attachmentsImported: imported, errors };
 }
@@ -744,6 +861,7 @@ export async function completeImportBatch(actorUserId: string, batchId: string, 
           transactions_imported = COALESCE($4, transactions_imported),
           attachments_imported = COALESCE($5, attachments_imported),
           errors_count = COALESCE($6, errors_count),
+          last_heartbeat_at = now(),
           updated_at = now()
         WHERE id = $1
       `,
@@ -772,11 +890,6 @@ export async function runForensicImport(
 ) {
   const batch = await loadBatch(params.batchId);
   if (!batch) throw new Error("batch_not_found");
-  const auth = await getQboConnectionStatus(batch.operating_company_id);
-  if (!auth.connected || !auth.realm_id) {
-    throw new Error("QBO not authorized for this company. Please authorize via /admin/forensic-review.");
-  }
-  const qboContext = await qboCompanyContext(batch.operating_company_id);
   const sinceDate = params.sinceDate ?? "2015-01-01";
   const attachmentsSinceDate = params.attachmentsSinceDate ?? "2021-01-01";
 
@@ -784,8 +897,30 @@ export async function runForensicImport(
   let entityCount = 0;
   let transactionCount = 0;
   let attachmentCount = 0;
+  let finalStatus: "in_progress" | "completed" | "partial" | "failed" = "in_progress";
+  let lastErrorMessage: string | null = null;
+
+  const auth = await getQboConnectionStatus(batch.operating_company_id);
+  if (!auth.connected || !auth.realm_id) {
+    await auditBatchEvent(batch.id, batch.operating_company_id, "preflight_qbo_check_failed", {
+      error_message: "QBO not authorized for this company",
+    });
+    throw new Error("QBO not authorized for this company. Please authorize via /admin/forensic-review.");
+  }
+  await auditBatchEvent(batch.id, batch.operating_company_id, "preflight_qbo_check_passed");
+
+  const qboContext = await qboCompanyContext(batch.operating_company_id);
+  qboContext.onRetry = async ({ status, attempt, delay_ms, url }) => {
+    await auditBatchEvent(batch.id, batch.operating_company_id, "qbo_retry", {
+      status,
+      attempt,
+      delay_ms,
+      url,
+    });
+  };
 
   try {
+    await auditBatchEvent(batch.id, batch.operating_company_id, "batch_started");
     const entities = await importEntities(actorUserId, batch.id, qboContext);
     entityCount = entities.entitiesImported;
     errorsCount += entities.errors;
@@ -797,17 +932,6 @@ export async function runForensicImport(
         "warning"
       );
     }
-  } catch (error) {
-    errorsCount += 1;
-    await appendSystemAudit(
-      actorUserId,
-      "qbo_archive.import_failed",
-      { batch_id: batch.id, step: "entities", error: String((error as Error)?.message ?? error) },
-      "warning"
-    );
-  }
-
-  try {
     const tx = await importTransactions(actorUserId, batch.id, qboContext, sinceDate);
     transactionCount = tx.transactionsImported;
     errorsCount += tx.errors;
@@ -819,17 +943,6 @@ export async function runForensicImport(
         "warning"
       );
     }
-  } catch (error) {
-    errorsCount += 1;
-    await appendSystemAudit(
-      actorUserId,
-      "qbo_archive.import_failed",
-      { batch_id: batch.id, step: "transactions", error: String((error as Error)?.message ?? error) },
-      "warning"
-    );
-  }
-
-  try {
     const attachments = await importAttachments(actorUserId, batch.id, qboContext, attachmentsSinceDate);
     attachmentCount = attachments.attachmentsImported;
     errorsCount += attachments.errors;
@@ -843,19 +956,55 @@ export async function runForensicImport(
     }
   } catch (error) {
     errorsCount += 1;
+    lastErrorMessage = String((error as Error)?.message ?? error);
+    appendForensicProgressError(batch.id, lastErrorMessage);
     await appendSystemAudit(
       actorUserId,
       "qbo_archive.import_failed",
-      { batch_id: batch.id, step: "attachments", error: String((error as Error)?.message ?? error) },
+      { batch_id: batch.id, error: lastErrorMessage },
       "warning"
     );
-  }
+    await auditBatchEvent(batch.id, batch.operating_company_id, "error_encountered", {
+      error_message: lastErrorMessage,
+    });
+    finalStatus = errorsCount > 0 ? "partial" : "failed";
+  } finally {
+    if (finalStatus === "in_progress") {
+      finalStatus = errorsCount > 0 ? "partial" : "completed";
+    }
 
-  return completeImportBatch(actorUserId, batch.id, {
-    entitiesImported: entityCount,
-    transactionsImported: transactionCount,
-    attachmentsImported: attachmentCount,
-    errorsCount,
-  });
+    await withCurrentUser(actorUserId, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [batch.operating_company_id]);
+      await client.query(
+        `
+          UPDATE qbo_archive.import_batches
+          SET status = $1,
+              completed_at = now(),
+              entities_imported = $2,
+              transactions_imported = $3,
+              attachments_imported = $4,
+              errors_count = $5,
+              last_error_message = COALESCE($6, last_error_message),
+              last_heartbeat_at = now(),
+              updated_at = now()
+          WHERE id = $7
+            AND status = 'in_progress'
+        `,
+        [finalStatus, entityCount, transactionCount, attachmentCount, errorsCount, lastErrorMessage, batch.id]
+      );
+    });
+    await auditBatchEvent(
+      batch.id,
+      batch.operating_company_id,
+      finalStatus === "completed" || finalStatus === "partial" ? "batch_completed" : "batch_failed",
+      {
+        records_processed: entityCount + transactionCount + attachmentCount,
+        error_message: lastErrorMessage,
+        final_status: finalStatus,
+      }
+    );
+    clearForensicProgress(batch.id);
+  }
+  return { status: finalStatus };
 }
 

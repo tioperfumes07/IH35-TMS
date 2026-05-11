@@ -12,10 +12,12 @@ type QueryResult<T> = {
 export type QboApiContext = {
   operatingCompanyId: string;
   realmId: string;
+  onRetry?: (details: { status: number; attempt: number; delay_ms: number; url: string }) => void | Promise<void>;
 };
 
 const DEFAULT_PAGE_SIZE = 100;
 const MAX_RETRIES = 5;
+const RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000];
 
 function qboEnv(): QboEnv {
   const env = (process.env.QBO_ENV ?? "production").toLowerCase();
@@ -43,19 +45,23 @@ async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function requestWithRetry(url: string, init: RequestInit, retries = 0): Promise<Response> {
-  const response = await fetch(url, init);
-  if (response.status === 429 && retries < MAX_RETRIES) {
-    const waitMs = Math.min(30_000, 500 * 2 ** retries);
-    await sleep(waitMs);
-    return requestWithRetry(url, init, retries + 1);
+async function requestWithRetry(
+  url: string,
+  init: RequestInit,
+  onRetry?: (details: { status: number; attempt: number; delay_ms: number; url: string }) => void | Promise<void>
+): Promise<Response> {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    const response = await fetch(url, init);
+    const retryable = response.status === 429 || response.status === 503;
+    if (!retryable || attempt === MAX_RETRIES) return response;
+
+    const retryAfterSeconds = Number.parseInt(response.headers.get("retry-after") ?? "0", 10);
+    const delayMs = Math.max(Number.isFinite(retryAfterSeconds) ? retryAfterSeconds * 1000 : 0, RETRY_DELAYS_MS[attempt] ?? 16000);
+    await onRetry?.({ status: response.status, attempt: attempt + 1, delay_ms: delayMs, url });
+    await sleep(delayMs);
   }
-  if (response.status >= 500 && retries < MAX_RETRIES) {
-    const waitMs = Math.min(10_000, 300 * 2 ** retries);
-    await sleep(waitMs);
-    return requestWithRetry(url, init, retries + 1);
-  }
-  return response;
+
+  return fetch(url, init);
 }
 
 function sanitizeBodyPreview(text: string) {
@@ -73,7 +79,7 @@ export async function qboQuery<T = Record<string, unknown>>(ctx: QboApiContext, 
     Authorization: `Bearer ${accessToken}`,
   };
   console.info({ url, headers: redactHeaders(headers) }, "QBO query");
-  const response = await requestWithRetry(url, { method: "GET", headers });
+  const response = await requestWithRetry(url, { method: "GET", headers }, ctx.onRetry);
   const responseText = await response.text();
   if (!response.ok) {
     const preview = sanitizeBodyPreview(responseText);
@@ -104,7 +110,7 @@ export async function qboGetEntityById<T = Record<string, unknown>>(ctx: QboApiC
     Authorization: `Bearer ${accessToken}`,
   };
   console.info({ url, headers: redactHeaders(headers) }, "QBO get by id");
-  const response = await requestWithRetry(url, { method: "GET", headers });
+  const response = await requestWithRetry(url, { method: "GET", headers }, ctx.onRetry);
   const responseText = await response.text();
   if (!response.ok) {
     const preview = sanitizeBodyPreview(responseText);
@@ -121,7 +127,7 @@ export async function qboDownloadAttachment(ctx: QboApiContext, downloadUrl: str
     Authorization: `Bearer ${accessToken}`,
   };
   console.info({ downloadUrl, headers: redactHeaders(headers) }, "QBO attachment download");
-  const response = await requestWithRetry(downloadUrl, { method: "GET", headers });
+  const response = await requestWithRetry(downloadUrl, { method: "GET", headers }, ctx.onRetry);
   if (!response.ok) {
     const bodyPreview = sanitizeBodyPreview(await response.text());
     console.error({ downloadUrl, status: response.status, bodyPreview }, "QBO attachment download failed");

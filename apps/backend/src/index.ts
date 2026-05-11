@@ -75,6 +75,11 @@ import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
+import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
+import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
+import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
+import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
+import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -123,6 +128,9 @@ async function shutdown(signal: string) {
 }
 
 async function main() {
+  if (!app.hasDecorator("forensicRunnerStatus")) {
+    app.decorate("forensicRunnerStatus", "pending");
+  }
   await app.register(cors, {
     origin: (origin: string | undefined, cb: (err: Error | null, allow: CorsOriginValue) => void) => {
       if (!origin) return cb(null, true);
@@ -136,6 +144,8 @@ async function main() {
   await app.register(cookie);
   await app.register(multipart);
   await registerSessionMiddleware(app);
+  await registerRunnerStatusRoutes(app);
+  await registerForensicLiveRoutes(app);
   await registerAuthRoutes(app);
   await registerQboOAuthRoutes(app);
   await registerQboForensicAdminRoutes(app);
@@ -209,6 +219,29 @@ async function main() {
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);
   await registerCompanyRoutes(app);
+
+  try {
+    await initializeQboHistoricalImportRunner(app);
+    app.log.info("[STARTUP] qbo-forensic-runner initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-forensic-runner failed");
+    (app as unknown as { forensicRunnerStatus?: string }).forensicRunnerStatus = "failed";
+  }
+
+  try {
+    await initializeQboSyncQueueRunner(app);
+    app.log.info("[STARTUP] qbo-sync-runner initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-sync-runner failed");
+  }
+
+  try {
+    await initializeQboTokenRefreshCron(app);
+    app.log.info("[STARTUP] qbo-token-refresh-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-token-refresh-cron failed");
+  }
+
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {

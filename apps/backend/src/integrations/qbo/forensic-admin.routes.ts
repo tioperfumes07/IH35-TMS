@@ -5,6 +5,8 @@ import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { generateExcelReport } from "./forensic-report.service.js";
 import { startImportBatch } from "./forensic-import.service.js";
+import { auditBatchEvent } from "./forensic-audit.service.js";
+import { qboCompanyContext, qboQuery } from "./qbo-client.js";
 
 const startBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -26,6 +28,11 @@ const anomalyParamsSchema = z.object({
 const anomalyReviewSchema = z.object({
   review_status: z.enum(["pending", "cleared", "confirmed_issue", "requires_legal"]),
   review_notes: z.string().trim().max(2000).optional().default(""),
+});
+
+const auditLogQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).optional().default(100),
+  before: z.string().datetime().optional(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -74,14 +81,112 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     const body = startBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
+    const duplicateCheck = await withLuciaBypass(async (client) => {
+      const active = await client.query<{ id: string }>(
+        `
+          SELECT id
+          FROM qbo_archive.import_batches
+          WHERE operating_company_id = $1
+            AND status = 'in_progress'
+            AND last_heartbeat_at > now() - interval '15 minutes'
+          ORDER BY started_at DESC
+          LIMIT 1
+        `,
+        [body.data.operating_company_id]
+      );
+
+      const stale = await client.query<{ id: string }>(
+        `
+          SELECT id
+          FROM qbo_archive.import_batches
+          WHERE operating_company_id = $1
+            AND status = 'in_progress'
+            AND (last_heartbeat_at IS NULL OR last_heartbeat_at <= now() - interval '15 minutes')
+        `,
+        [body.data.operating_company_id]
+      );
+
+      return { activeId: active.rows[0]?.id ?? null, staleIds: stale.rows.map((row) => row.id) };
+    });
+
+    if (duplicateCheck.activeId) {
+      return reply.code(409).send({
+        error: "already_running",
+        message: "A forensic import is already running for this company. Wait for it to complete or fail before starting another.",
+        existing_batch_id: duplicateCheck.activeId,
+      });
+    }
+
+    if (duplicateCheck.staleIds.length > 0) {
+      await withLuciaBypass(async (client) => {
+        await client.query(
+          `
+            UPDATE qbo_archive.import_batches
+            SET status = 'failed',
+                completed_at = now(),
+                errors_count = errors_count + 1,
+                last_error_message = COALESCE(last_error_message, '') || ' [auto-failed on start-import: stale heartbeat > 15min]',
+                updated_at = now()
+            WHERE id = ANY($1::uuid[])
+          `,
+          [duplicateCheck.staleIds]
+        );
+      });
+      for (const staleId of duplicateCheck.staleIds) {
+        await auditBatchEvent(staleId, body.data.operating_company_id, "batch_auto_failed_stale", {
+          error_message: "auto-failed in start-import stale cleanup",
+        });
+      }
+    }
+
+    try {
+      const context = await qboCompanyContext(body.data.operating_company_id);
+      await qboQuery(context, "SELECT CompanyName FROM CompanyInfo MAXRESULTS 1");
+      await withLuciaBypass(async (client) => {
+        await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
+          "qbo_archive.batch.preflight_passed",
+          "info",
+          JSON.stringify({ operating_company_id: body.data.operating_company_id }),
+          user.uuid,
+          "P6-FOUNDATION-OPS",
+        ]);
+      });
+    } catch (error) {
+      const detail = String((error as Error)?.message ?? "qbo_preflight_failed").slice(0, 200);
+      await withLuciaBypass(async (client) => {
+        await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
+          "qbo_archive.batch.preflight_failed",
+          "warning",
+          JSON.stringify({ operating_company_id: body.data.operating_company_id, technical_detail: detail }),
+          user.uuid,
+          "P6-FOUNDATION-OPS",
+        ]);
+      });
+      return reply.code(503).send({
+        error: "qbo_unreachable",
+        message: "QBO connection failed for this company. Please re-authorize before starting an import.",
+        technical_detail: detail,
+      });
+    }
+
     try {
       const batch = await startImportBatch(user.uuid, body.data.operating_company_id, body.data.since_date);
+      await auditBatchEvent(batch.batchId, body.data.operating_company_id, "preflight_qbo_check_passed");
       return { batch_id: batch.batchId };
     } catch (error) {
       const message = String((error as Error)?.message ?? "unable_to_start_import");
       if (message.includes("QBO not authorized")) {
         return reply.code(400).send({ error: "qbo_not_authorized", message });
       }
+      await withLuciaBypass(async (client) => {
+        await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
+          "qbo_archive.batch.preflight_failed",
+          "warning",
+          JSON.stringify({ operating_company_id: body.data.operating_company_id, technical_detail: message.slice(0, 200) }),
+          user.uuid,
+          "P6-FOUNDATION-OPS",
+        ]);
+      });
       throw error;
     }
   });
@@ -194,6 +299,34 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
 
     if (!updated) return reply.code(404).send({ error: "anomaly_not_found" });
     return { ok: true, id: updated.id };
+  });
+
+  app.get("/api/v1/admin/qbo-forensic/batches/:batchId/audit-log", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
+
+    const params = batchParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const query = auditLogQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+
+    const rows = await withLuciaBypass(async (client) => {
+      const res = await client.query(
+        `
+          SELECT *
+          FROM qbo_archive.import_batch_audit_log
+          WHERE batch_id = $1
+            AND ($2::timestamptz IS NULL OR occurred_at < $2::timestamptz)
+          ORDER BY occurred_at DESC
+          LIMIT $3
+        `,
+        [params.data.batchId, query.data.before ?? null, query.data.limit]
+      );
+      return res.rows;
+    });
+
+    return { rows };
   });
 }
 

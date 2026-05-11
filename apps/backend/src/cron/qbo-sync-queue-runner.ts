@@ -1,18 +1,21 @@
 import cron from "node-cron";
-import type { FastifyBaseLogger } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { processSyncQueueBatch } from "../integrations/qbo/qbo-sync.service.js";
+import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
 
 let runnerStarted = false;
 
-export function initializeQboSyncQueueRunner(log: FastifyBaseLogger) {
+export async function initializeQboSyncQueueRunner(app: FastifyInstance) {
   if (runnerStarted) return;
   runnerStarted = true;
+  markRunnerInitialized("sync_queue_runner");
   cron.schedule(
     "* * * * *",
     async () => {
       try {
+        markRunnerTick("sync_queue_runner");
         const result = await processSyncQueueBatch(50);
-        log.info(
+        app.log.info(
           {
             step: "queue_batch_processed",
             processed: result.processed,
@@ -23,7 +26,8 @@ export function initializeQboSyncQueueRunner(log: FastifyBaseLogger) {
           "[QBO_SYNC_RUNNER]"
         );
       } catch (error) {
-        log.error({ err: error }, "[QBO_SYNC_RUNNER] Fatal error");
+        markRunnerFailed("sync_queue_runner", error);
+        app.log.error({ err: error }, "[QBO_SYNC_RUNNER] Fatal error");
       }
     },
     { timezone: "America/Chicago" }
