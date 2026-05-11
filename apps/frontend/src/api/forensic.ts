@@ -39,6 +39,49 @@ export type QboConnectionStatus = {
   connection_id: string | null;
 };
 
+export type RunnerHealth = {
+  initialized: boolean;
+  last_tick_at: string | null;
+  error: string | null;
+};
+
+export type ForensicRunnerStatus = {
+  forensic_runner: RunnerHealth;
+  sync_queue_runner: RunnerHealth;
+  token_refresh_cron: RunnerHealth;
+  server_uptime_seconds: number;
+  server_started_at: string;
+};
+
+export type ForensicLivePayload = {
+  batch_id: string;
+  status: ForensicBatch["status"] | string;
+  entities_imported: number;
+  transactions_imported: number;
+  attachments_imported: number;
+  errors_count: number;
+  last_heartbeat_at: string | null;
+  heartbeat_age_seconds: number | null;
+  current_phase: "entities" | "transactions" | "attachments" | null;
+  current_entity_type: string | null;
+  current_page: number | null;
+  current_total_pages: number | null;
+  recent_errors: Array<{ at: string; message: string }>;
+};
+
+export type ForensicAuditLogRow = {
+  id: string;
+  event_type: string;
+  entity_type: string | null;
+  page_number: number | null;
+  total_pages: number | null;
+  records_processed: number | null;
+  duration_ms: number | null;
+  error_message: string | null;
+  metadata: Record<string, unknown> | null;
+  occurred_at: string;
+};
+
 export function startForensicImport(operatingCompanyId: string, sinceDate = "2015-01-01") {
   return apiRequest<{ batch_id: string }>("/api/v1/admin/qbo-forensic/start-import", {
     method: "POST",
@@ -53,6 +96,10 @@ export function listForensicBatches() {
   return apiRequest<{ batches: ForensicBatch[] }>("/api/v1/admin/qbo-forensic/batches");
 }
 
+export function getRunnerStatus() {
+  return apiRequest<ForensicRunnerStatus>("/api/v1/admin/qbo-forensic/runner-status");
+}
+
 export function getForensicBatch(batchId: string) {
   return apiRequest<ForensicBatch>(`/api/v1/admin/qbo-forensic/batch/${batchId}`);
 }
@@ -65,6 +112,13 @@ export function generateForensicReport(batchId: string) {
 
 export function listForensicAnomalies() {
   return apiRequest<{ anomalies: ForensicAnomaly[] }>("/api/v1/admin/qbo-forensic/anomalies");
+}
+
+export function listForensicAuditLog(batchId: string, limit = 100, before?: string) {
+  const search = new URLSearchParams();
+  search.set("limit", String(limit));
+  if (before) search.set("before", before);
+  return apiRequest<{ rows: ForensicAuditLogRow[] }>(`/api/v1/admin/qbo-forensic/batches/${batchId}/audit-log?${search.toString()}`);
 }
 
 export function reviewForensicAnomaly(
@@ -95,6 +149,11 @@ function getApiBaseUrl() {
   if (hostname === "localhost" || hostname === "127.0.0.1") return "http://localhost:3000";
   const apiHostname = hostname.replace(/^app\./, "api.");
   return `${window.location.protocol}//${apiHostname}`;
+}
+
+export function getForensicLiveUrl(batchId: string) {
+  const base = getApiBaseUrl();
+  return `${base}/api/v1/admin/qbo-forensic/batches/${encodeURIComponent(batchId)}/live`;
 }
 
 export function getQboAuthorizeStartUrl(operatingCompanyId: string) {

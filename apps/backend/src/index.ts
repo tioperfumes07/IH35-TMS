@@ -7,6 +7,10 @@ import { registerEmailAuthRoutes } from "./auth/email-routes.js";
 import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
+import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
+import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
+import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
+import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
 import { registerIdentityRoutes } from "./identity/users.routes.js";
 import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
@@ -71,6 +75,11 @@ import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
+import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
+import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
+import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
+import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
+import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -93,6 +102,14 @@ app.get("/api/v1/_healthcheck", async () => {
   return { status: "ok" };
 });
 
+app.get("/api/v1/health", async () => {
+  return { status: "ok" };
+});
+
+app.get("/api/v1/me", async (_req, reply) => {
+  return reply.redirect("/api/v1/auth/me", 307);
+});
+
 async function shutdown(signal: string) {
   if (shuttingDown) return;
   shuttingDown = true;
@@ -111,6 +128,9 @@ async function shutdown(signal: string) {
 }
 
 async function main() {
+  if (!app.hasDecorator("forensicRunnerStatus")) {
+    app.decorate("forensicRunnerStatus", "pending");
+  }
   await app.register(cors, {
     origin: (origin: string | undefined, cb: (err: Error | null, allow: CorsOriginValue) => void) => {
       if (!origin) return cb(null, true);
@@ -124,7 +144,13 @@ async function main() {
   await app.register(cookie);
   await app.register(multipart);
   await registerSessionMiddleware(app);
+  await registerRunnerStatusRoutes(app);
+  await registerForensicLiveRoutes(app);
   await registerAuthRoutes(app);
+  await registerQboOAuthRoutes(app);
+  await registerQboForensicAdminRoutes(app);
+  await registerQboSyncAdminRoutes(app);
+  await registerQboVendorLinkageRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);
   await registerInviteAuthRoutes(app);
@@ -193,6 +219,29 @@ async function main() {
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);
   await registerCompanyRoutes(app);
+
+  try {
+    await initializeQboHistoricalImportRunner(app);
+    app.log.info("[STARTUP] qbo-forensic-runner initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-forensic-runner failed");
+    (app as unknown as { forensicRunnerStatus?: string }).forensicRunnerStatus = "failed";
+  }
+
+  try {
+    await initializeQboSyncQueueRunner(app);
+    app.log.info("[STARTUP] qbo-sync-runner initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-sync-runner failed");
+  }
+
+  try {
+    await initializeQboTokenRefreshCron(app);
+    app.log.info("[STARTUP] qbo-token-refresh-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-token-refresh-cron failed");
+  }
+
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {

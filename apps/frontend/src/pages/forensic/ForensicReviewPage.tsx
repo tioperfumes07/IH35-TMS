@@ -2,9 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   disconnectQboConnection,
+  type ForensicAuditLogRow,
+  type ForensicLivePayload,
   generateForensicReport,
+  getForensicLiveUrl,
+  getRunnerStatus,
   getQboAuthorizeStartUrl,
   getQboConnectionStatus,
+  listForensicAuditLog,
   listForensicAnomalies,
   listForensicBatches,
   reviewForensicAnomaly,
@@ -23,6 +28,23 @@ function severityClass(severity: string) {
   return "bg-gray-100 text-gray-700";
 }
 
+function heartbeatClass(ageSeconds: number | null) {
+  if (ageSeconds === null) return "bg-gray-100 text-gray-700";
+  if (ageSeconds < 60) return "bg-green-100 text-green-700";
+  if (ageSeconds <= 300) return "bg-amber-100 text-amber-700";
+  return "bg-red-100 text-red-700";
+}
+
+function runnerPillClass(initialized: boolean, error: string | null, lastTickAt: string | null) {
+  if (error) return "bg-red-100 text-red-700";
+  if (!initialized) return "bg-amber-100 text-amber-700";
+  if (!lastTickAt) return "bg-yellow-100 text-yellow-700";
+  const ageSec = Math.max(0, Math.floor((Date.now() - new Date(lastTickAt).getTime()) / 1000));
+  if (ageSec <= 180) return "bg-green-100 text-green-700";
+  if (ageSec <= 600) return "bg-amber-100 text-amber-700";
+  return "bg-red-100 text-red-700";
+}
+
 export function ForensicReviewPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -34,6 +56,8 @@ export function ForensicReviewPage() {
   const [selectedAnomalyId, setSelectedAnomalyId] = useState<string | null>(null);
   const [reviewStatus, setReviewStatus] = useState<"pending" | "cleared" | "confirmed_issue" | "requires_legal">("pending");
   const [disconnectingCompanyId, setDisconnectingCompanyId] = useState<string | null>(null);
+  const [liveByBatch, setLiveByBatch] = useState<Record<string, ForensicLivePayload>>({});
+  const [expandedAuditBatchId, setExpandedAuditBatchId] = useState<string | null>(null);
 
   const forensicCompanies = useMemo(() => {
     const byCode = companies.filter((company) => {
@@ -64,6 +88,16 @@ export function ForensicReviewPage() {
       }, {});
     },
   });
+  const runnerStatusQuery = useQuery({
+    queryKey: ["forensic", "runner-status"],
+    queryFn: getRunnerStatus,
+    refetchInterval: 30000,
+  });
+  const auditLogQuery = useQuery({
+    queryKey: ["forensic", "audit-log", expandedAuditBatchId],
+    queryFn: () => listForensicAuditLog(expandedAuditBatchId ?? "", 100),
+    enabled: Boolean(expandedAuditBatchId),
+  });
 
   const activeBatches = useMemo(
     () => (batchesQuery.data?.batches ?? []).filter((batch) => batch.status === "in_progress"),
@@ -86,6 +120,34 @@ export function ForensicReviewPage() {
       void queryClient.invalidateQueries({ queryKey: ["forensic", "qbo-status"] });
     }
   }, [companies, pushToast, queryClient]);
+
+  useEffect(() => {
+    const batches = batchesQuery.data?.batches ?? [];
+    const inProgress = batches.filter((batch) => batch.status === "in_progress");
+    const eventSources = inProgress.map((batch) => {
+      const source = new EventSource(getForensicLiveUrl(batch.id));
+      source.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data) as ForensicLivePayload;
+          setLiveByBatch((prev) => ({ ...prev, [batch.id]: payload }));
+          if (payload.status !== "in_progress") {
+            source.close();
+            void queryClient.invalidateQueries({ queryKey: ["forensic", "batches"] });
+          }
+        } catch {
+          // ignore invalid payloads
+        }
+      };
+      source.onerror = () => {
+        source.close();
+      };
+      return source;
+    });
+
+    return () => {
+      eventSources.forEach((source) => source.close());
+    };
+  }, [batchesQuery.data?.batches, queryClient]);
 
   if (auth.user?.role !== "Owner") {
     return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">Owner role required.</div>;
@@ -130,6 +192,26 @@ export function ForensicReviewPage() {
           }}
         />
       ) : null}
+
+      <div className="rounded border border-gray-200 bg-white p-3">
+        <p className="text-sm font-semibold text-gray-900">Runner Status</p>
+        {runnerStatusQuery.data ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className={`rounded px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.forensic_runner.initialized, runnerStatusQuery.data.forensic_runner.error, runnerStatusQuery.data.forensic_runner.last_tick_at)}`}>
+              Forensic runner
+            </span>
+            <span className={`rounded px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.sync_queue_runner.initialized, runnerStatusQuery.data.sync_queue_runner.error, runnerStatusQuery.data.sync_queue_runner.last_tick_at)}`}>
+              Sync queue
+            </span>
+            <span className={`rounded px-2 py-0.5 ${runnerPillClass(runnerStatusQuery.data.token_refresh_cron.initialized, runnerStatusQuery.data.token_refresh_cron.error, runnerStatusQuery.data.token_refresh_cron.last_tick_at)}`}>
+              Token refresh
+            </span>
+            <span className="text-gray-500">Uptime: {runnerStatusQuery.data.server_uptime_seconds}s</span>
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-gray-500">Loading runner status...</p>
+        )}
+      </div>
 
       <div className="rounded border border-gray-200 bg-white p-3">
         <p className="text-sm font-semibold text-gray-900">QBO Authorization</p>
@@ -190,6 +272,17 @@ export function ForensicReviewPage() {
           <div className="mt-2 space-y-2">
             {(batchesQuery.data?.batches ?? []).map((batch) => (
               <div key={batch.id} className="rounded border border-gray-100 p-2 text-xs">
+                {(() => {
+                  const live = liveByBatch[batch.id];
+                  const entities = live?.entities_imported ?? batch.entities_imported;
+                  const transactions = live?.transactions_imported ?? batch.transactions_imported;
+                  const attachments = live?.attachments_imported ?? batch.attachments_imported;
+                  const errors = live?.errors_count ?? batch.errors_count;
+                  const total = entities + transactions + attachments;
+                  const estimatedTotal = Math.max(total, batch.status === "in_progress" ? 1000 : total || 1);
+                  const pct = Math.min(100, Math.round((total / estimatedTotal) * 100));
+                  return (
+                    <>
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-gray-900">{batch.id}</span>
                   <span className={`rounded px-2 py-0.5 ${batch.status === "completed" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
@@ -197,11 +290,38 @@ export function ForensicReviewPage() {
                   </span>
                 </div>
                 <div className="mt-1 text-gray-600">
-                  Entities: {batch.entities_imported} | Txns: {batch.transactions_imported} | Attachments: {batch.attachments_imported}
+                  Entities: {entities} | Txns: {transactions} | Attachments: {attachments} | Errors: {errors}
                 </div>
+                {batch.status === "in_progress" ? (
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className={`rounded px-2 py-0.5 ${heartbeatClass(live?.heartbeat_age_seconds ?? null)}`}>
+                      Heartbeat:{" "}
+                      {live?.heartbeat_age_seconds === null || live?.heartbeat_age_seconds === undefined
+                        ? "n/a"
+                        : `${live.heartbeat_age_seconds}s ago`}
+                    </span>
+                    <span className="text-gray-500">
+                      Phase: {live?.current_phase ?? "pending"}{" "}
+                      {live?.current_entity_type ? `· ${live.current_entity_type}` : ""}{" "}
+                      {live?.current_page ? `page ${live.current_page}${live.current_total_pages ? `/${live.current_total_pages}` : ""}` : ""}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="mt-1 h-2 overflow-hidden rounded bg-gray-100">
-                  <div className="h-full bg-blue-500" style={{ width: batch.status === "completed" ? "100%" : batch.status === "in_progress" ? "55%" : "20%" }} />
+                  <div className="h-full bg-blue-500" style={{ width: batch.status === "in_progress" ? `${pct}%` : batch.status === "completed" ? "100%" : "20%" }} />
                 </div>
+                {batch.status === "in_progress" && live?.recent_errors?.length ? (
+                  <details className="mt-2 rounded border border-red-100 bg-red-50 p-2">
+                    <summary className="cursor-pointer text-[11px] font-semibold text-red-700">Recent errors ({live.recent_errors.length})</summary>
+                    <div className="mt-1 space-y-1">
+                      {live.recent_errors.map((item) => (
+                        <div key={`${item.at}-${item.message}`} className="text-[11px] text-red-700">
+                          {new Date(item.at).toLocaleTimeString()} - {item.message}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
                 <div className="mt-2 flex gap-2">
                   <ActionButton
                     disabled={reportLoadingBatchId === batch.id}
@@ -217,7 +337,31 @@ export function ForensicReviewPage() {
                   >
                     {reportLoadingBatchId === batch.id ? "Generating..." : "Generate Report"}
                   </ActionButton>
+                  <ActionButton
+                    onClick={() => setExpandedAuditBatchId((prev) => (prev === batch.id ? null : batch.id))}
+                  >
+                    {expandedAuditBatchId === batch.id ? "Hide Audit Trail" : "Audit Trail"}
+                  </ActionButton>
                 </div>
+                {expandedAuditBatchId === batch.id ? (
+                  <div className="mt-2 max-h-40 overflow-auto rounded border border-gray-100 bg-gray-50 p-2">
+                    {(auditLogQuery.data?.rows ?? []).length === 0 ? (
+                      <p className="text-[11px] text-gray-500">No audit rows yet.</p>
+                    ) : (
+                      (auditLogQuery.data?.rows ?? []).map((row: ForensicAuditLogRow) => (
+                        <div key={row.id} className="border-b border-gray-200 py-1 text-[11px] text-gray-700 last:border-b-0">
+                          <span className="font-semibold">{row.event_type}</span> · {new Date(row.occurred_at).toLocaleString()}
+                          {row.entity_type ? ` · ${row.entity_type}` : ""}
+                          {row.records_processed !== null ? ` · records ${row.records_processed}` : ""}
+                          {row.error_message ? ` · ${row.error_message}` : ""}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : null}
+                    </>
+                  );
+                })()}
               </div>
             ))}
           </div>
