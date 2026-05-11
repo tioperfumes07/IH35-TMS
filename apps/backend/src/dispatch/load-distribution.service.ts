@@ -289,7 +289,7 @@ export async function distributeLoadInstructions(input: DistributionInput) {
     await appendCrudAudit(
       client,
       input.requested_by_user_id,
-      "dispatch.driver_instructions.distributed",
+      "dispatch.load.instructions_generated",
       {
         resource_type: "mdata.loads",
         resource_id: input.load_id,
@@ -300,6 +300,20 @@ export async function distributeLoadInstructions(input: DistributionInput) {
         driver_pdf_sha256: driverPdf.sha256,
         customer_pdf_sha256: customerPdf.sha256,
         template_version: driverPdf.templateVersion,
+      },
+      "info",
+      "P6-D3"
+    );
+    await appendCrudAudit(
+      client,
+      input.requested_by_user_id,
+      "dispatch.load.instructions_distributed",
+      {
+        resource_type: "mdata.loads",
+        resource_id: input.load_id,
+        operating_company_id: input.operating_company_id,
+        channels,
+        file_id: fileId,
       },
       "info",
       "P6-D3"

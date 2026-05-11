@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 import { bookLoad } from "./book-load.service.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
 import { reserveNextLoadId } from "./load-id-reservation.service.js";
@@ -585,7 +586,23 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           body.data.operating_company_id,
         ]
       );
-      return res.rows[0] ?? null;
+      const row = res.rows[0] ?? null;
+      if (row && body.data.customer_chargeback_requested) {
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "dispatch.load.anticipated_chargeback_flagged",
+          {
+            load_uuid: row.id,
+            operating_company_id: body.data.operating_company_id,
+            customer_chargeback_requested: true,
+            customer_chargeback_reason: body.data.customer_chargeback_reason ?? null,
+          },
+          "info",
+          "P6-D2"
+        );
+      }
+      return row;
     });
 
     if (!updated) return reply.code(404).send({ error: "dispatch_load_not_found" });

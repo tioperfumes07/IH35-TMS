@@ -1,3 +1,5 @@
+import { appendCrudAudit } from "../audit/crud-audit.js";
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -56,6 +58,19 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput) {
     [input.operatingCompanyId, input.reservedByUserId]
   );
   if (existing.rows[0]?.reserved_load_number) {
+    await appendCrudAudit(
+      client,
+      input.reservedByUserId,
+      "dispatch.load.id_reservation_created",
+      {
+        operating_company_id: input.operatingCompanyId,
+        reservation_uuid: existing.rows[0].id,
+        load_number: existing.rows[0].reserved_load_number,
+        reused_existing: true,
+      },
+      "info",
+      "P6-D2"
+    );
     return { reservationId: existing.rows[0].id, loadNumber: existing.rows[0].reserved_load_number };
   }
 
@@ -93,15 +108,28 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput) {
     `,
     [input.operatingCompanyId, loadNumber, input.reservedByUserId]
   );
+  await appendCrudAudit(
+    client,
+    input.reservedByUserId,
+    "dispatch.load.id_reservation_created",
+    {
+      operating_company_id: input.operatingCompanyId,
+      reservation_uuid: insert.rows[0].id,
+      load_number: loadNumber,
+      reused_existing: false,
+    },
+    "info",
+    "P6-D2"
+  );
 
   return { reservationId: insert.rows[0].id, loadNumber };
 }
 
 export async function claimReservation(client: DbClient, input: ClaimInput) {
   await expireStaleLoadIdReservations(client, input.operatingCompanyId);
-  const claimed = await client.query<{ id: string; reserved_load_number: string }>(
+  const claimed = await client.query<{ id: string; reserved_load_number: string; reserved_by_user_id: string }>(
     `
-      SELECT id, reserved_load_number
+      SELECT id, reserved_load_number, reserved_by_user_id::text
       FROM dispatch.load_id_reservations
       WHERE id = $1
         AND operating_company_id = $2
@@ -111,6 +139,20 @@ export async function claimReservation(client: DbClient, input: ClaimInput) {
     `,
     [input.reservationId, input.operatingCompanyId]
   );
+  if (claimed.rows[0]) {
+    await appendCrudAudit(
+      client,
+      claimed.rows[0].reserved_by_user_id,
+      "dispatch.load.id_reservation_claimed",
+      {
+        operating_company_id: input.operatingCompanyId,
+        reservation_uuid: claimed.rows[0].id,
+        load_number: claimed.rows[0].reserved_load_number,
+      },
+      "info",
+      "P6-D2"
+    );
+  }
   return claimed.rows[0] ?? null;
 }
 
