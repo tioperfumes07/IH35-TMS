@@ -141,7 +141,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
 
     try {
       const context = await qboCompanyContext(body.data.operating_company_id);
-      await qboQuery(context, "SELECT CompanyName FROM CompanyInfo MAXRESULTS 1");
+      await qboQuery(context, "SELECT * FROM CompanyInfo");
       await withLuciaBypass(async (client) => {
         await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
           "qbo_archive.batch.preflight_passed",
