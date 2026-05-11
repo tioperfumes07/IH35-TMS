@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { colors, typography } from "../design/tokens";
+import { useModalEscape } from "../hooks/useModalEscape";
 
 type ModalProps = {
   open: boolean;
@@ -12,11 +13,11 @@ type ModalProps = {
 
 export function Modal({ open, onClose, title, children }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  useModalEscape(open, onClose);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
       if (event.key !== "Tab") return;
       const panel = panelRef.current;
       if (!panel) return;

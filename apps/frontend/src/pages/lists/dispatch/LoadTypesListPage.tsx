@@ -3,6 +3,11 @@ import { DispatchCatalogListPage } from "./DispatchCatalogListPage";
 
 export function LoadTypesListPage() {
   return (
-    <DispatchCatalogListPage client={loadTypesCatalogClient} displayName="Load Types" breadcrumbPath="Lists & Catalogs / Dispatch / Load Types" />
+    <DispatchCatalogListPage
+      catalogKey="load-types"
+      title="Load Types"
+      description="Manage the load type catalog used for dispatch planning and lane matching."
+      client={loadTypesCatalogClient}
+    />
   );
 }

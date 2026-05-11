@@ -14,7 +14,7 @@ import {
   Truck,
   Users,
 } from "lucide-react";
-import type { ComponentType } from "react";
+import { type ComponentType, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -22,6 +22,7 @@ import { getArrivingSoon } from "../api/maintenance";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
+import { SidebarFlyoutMenu } from "./SidebarFlyoutMenu";
 
 type SidebarItem = {
   key: string;
@@ -58,6 +59,7 @@ type SidebarProps = {
 export function Sidebar({ role }: SidebarProps) {
   const location = useLocation();
   const { selectedCompanyId } = useCompanyContext();
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
   const severeArrivingSoonQuery = useQuery({
     queryKey: ["sidebar", "maintenance-severe-badge", selectedCompanyId ?? ""],
     queryFn: () =>
@@ -74,6 +76,35 @@ export function Sidebar({ role }: SidebarProps) {
 
   const severeBadgeCount = Number(severeArrivingSoonQuery.data?.counts?.severe ?? 0);
   const visibleItems = ITEMS.filter((item) => !item.visibleRoles || item.visibleRoles.includes(role));
+  const flyoutLinksByKey: Record<string, Array<{ label: string; to: string }>> = {
+    ACCTG: [
+      { label: "Invoices", to: "/accounting/invoices" },
+      { label: "Payments", to: "/accounting/payments" },
+      { label: "Factoring", to: "/accounting/factoring" },
+    ],
+    PAYMENTS: [{ label: "Record Payment", to: "/accounting/payments" }],
+    MAINT: [
+      { label: "Dashboard", to: "/maintenance" },
+      { label: "Severe Repairs", to: "/maintenance?tab=severe" },
+    ],
+    BANK: [
+      { label: "Overview", to: "/banking" },
+      { label: "Transfers", to: "/banking/transfers" },
+    ],
+    FUEL: [{ label: "Fuel Planner", to: "/fuel" }],
+    SAFETY: [
+      { label: "Driver Files", to: "/safety/driver-files" },
+      { label: "DOT Inspections", to: "/safety/dot-inspections" },
+    ],
+    DRIVERS: [
+      { label: "Drivers", to: "/drivers" },
+      { label: "Settlements", to: "/driver-finance/settlements" },
+    ],
+    DISPATCH: [
+      { label: "Dispatch Home", to: "/dispatch" },
+      { label: "Loads", to: "/dispatch?view=loads" },
+    ],
+  };
 
   return (
     <aside
@@ -83,34 +114,43 @@ export function Sidebar({ role }: SidebarProps) {
       <div className="flex h-full flex-col items-center gap-1 py-2">
         {visibleItems.map(({ key, label, Icon, to }) => {
           const forceReportsActive = key === "REPORTS" && location.pathname.startsWith("/reports/");
+          const flyoutItems = flyoutLinksByKey[key] ?? [];
           return (
-            <NavLink
-              key={key}
-              to={to}
-              className={({ isActive }) =>
-                `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceReportsActive ? "bg-white/10" : ""}`
-              }
-              style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
-            >
-              {({ isActive }) => (
-                <>
-                  <div className="flex items-center justify-center">
-                    <Icon className="h-4 w-4" />
-                    {key === "MAINT" && severeBadgeCount > 0 ? (
-                      <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
-                        {severeBadgeCount}
-                      </span>
-                    ) : null}
-                  </div>
-                  <span
-                    className="mt-1 text-[10px] leading-none uppercase"
-                    style={{ color: "white", letterSpacing: "0.4px", fontWeight: isActive || forceReportsActive ? 600 : 400 }}
-                  >
-                    {label}
-                  </span>
-                </>
-              )}
-            </NavLink>
+            <div key={key} className="relative w-full" onMouseEnter={() => setHoverKey(key)} onMouseLeave={() => setHoverKey((current) => (current === key ? null : current))}>
+              <NavLink
+                to={to}
+                className={({ isActive }) =>
+                  `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceReportsActive ? "bg-white/10" : ""}`
+                }
+                style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className="flex items-center justify-center">
+                      <Icon className="h-4 w-4" />
+                      {key === "MAINT" && severeBadgeCount > 0 ? (
+                        <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
+                          {severeBadgeCount}
+                        </span>
+                      ) : null}
+                    </div>
+                    <span
+                      className="mt-1 text-[10px] leading-none uppercase"
+                      style={{ color: "white", letterSpacing: "0.4px", fontWeight: isActive || forceReportsActive ? 600 : 400 }}
+                    >
+                      {label}
+                    </span>
+                  </>
+                )}
+              </NavLink>
+              <SidebarFlyoutMenu
+                open={hoverKey === key}
+                title={label}
+                items={flyoutItems}
+                onOpen={() => setHoverKey(key)}
+                onClose={() => setHoverKey((current) => (current === key ? null : current))}
+              />
+            </div>
           );
         })}
       </div>

@@ -10,6 +10,7 @@ import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { UploadZone } from "../../../components/UploadZone";
 import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
 import { CreateWOSectionPaymentTiming } from "./CreateWOSectionPaymentTiming";
 import { CreateWOSectionValidation } from "./CreateWOSectionValidation";
@@ -124,10 +125,12 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const selectedLoad = form.watch("load_id");
   const [backendLoadError, setBackendLoadError] = useState<string | null>(null);
   const [suggestionPinned, setSuggestionPinned] = useState(false);
+  const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   useEffect(() => {
     if (!open) return;
     setSuggestionPinned(false);
-  }, [driverId, unitId, serviceDate, open]);
+    setDraftAttachmentEntityId(crypto.randomUUID());
+  }, [open]);
   const needsExternalVendor = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   const checks = [
     { label: "Unit active and class set", ok: Boolean(form.watch("unit_id")) },
@@ -314,6 +317,13 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         ) : null}
         <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="WO Total = A + B" />
         <CreateWOSectionValidation checks={checks} />
+        <UploadZone
+          operatingCompanyId={operatingCompanyId}
+          entityType="work_order"
+          entityId={draftAttachmentEntityId}
+          defaultCategory="vendor_ro"
+          title="Work Order Attachments"
+        />
 
         <div className="flex items-center justify-between">
           <Button type="button" variant="secondary" onClick={onClose}>

@@ -1,32 +1,12 @@
 import type { FastifyInstance } from "fastify";
-import { createCatalogRoutes } from "./factory.js";
+import { registerAdditionalChargesCatalogRoutes } from "./additional-charges.routes.js";
+import { registerDetentionReasonsCatalogRoutes } from "./detention-reasons.routes.js";
+import { registerLoadTypesCatalogRoutes } from "./load-types.routes.js";
+import { registerPickupTimeTypesCatalogRoutes } from "./pickup-time-types.routes.js";
 
 export async function registerDispatchCatalogRoutes(app: FastifyInstance) {
-  createCatalogRoutes(app, {
-    tableName: "load_types",
-    urlSegment: "load-types",
-    displayName: "Load Types",
-    codeRegex: /^[A-Z][A-Z0-9-]+$/,
-  });
-
-  createCatalogRoutes(app, {
-    tableName: "detention_reasons",
-    urlSegment: "detention-reasons",
-    displayName: "Detention Reasons",
-    codeRegex: /^[A-Z][A-Z0-9-]+$/,
-  });
-
-  createCatalogRoutes(app, {
-    tableName: "pickup_time_types",
-    urlSegment: "pickup-time-types",
-    displayName: "Pickup Time Types",
-    codeRegex: /^[A-Z][A-Z0-9-]+$/,
-  });
-
-  createCatalogRoutes(app, {
-    tableName: "additional_charges",
-    urlSegment: "additional-charges",
-    displayName: "Additional Charges",
-    codeRegex: /^[A-Z][A-Z0-9-]+$/,
-  });
+  await registerLoadTypesCatalogRoutes(app);
+  await registerDetentionReasonsCatalogRoutes(app);
+  await registerPickupTimeTypesCatalogRoutes(app);
+  await registerAdditionalChargesCatalogRoutes(app);
 }

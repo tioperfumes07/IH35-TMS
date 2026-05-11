@@ -3,6 +3,11 @@ import { DispatchCatalogListPage } from "./DispatchCatalogListPage";
 
 export function AdditionalChargesListPage() {
   return (
-    <DispatchCatalogListPage client={additionalChargesCatalogClient} displayName="Additional Charges" breadcrumbPath="Lists & Catalogs / Dispatch / Additional Charges" />
+    <DispatchCatalogListPage
+      catalogKey="additional-charges"
+      title="Additional Charges"
+      description="Manage additional charge codes used for dispatch and customer billing items."
+      client={additionalChargesCatalogClient}
+    />
   );
 }

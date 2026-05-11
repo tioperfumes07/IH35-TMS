@@ -172,7 +172,7 @@ export function DispatchHomePage() {
         title="Dispatch Home"
         subtitle="Approved May 2 list-table layout"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="sticky top-2 z-20 flex flex-wrap items-center gap-2 rounded bg-white/90 p-1 backdrop-blur">
             <Button type="button" variant={resolvedView === "home" ? "primary" : "secondary"} size="sm" onClick={() => void setView("home")}>
               Dispatch Home
             </Button>
@@ -195,7 +195,7 @@ export function DispatchHomePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
+      <div className="grid min-[1100px]:grid-cols-7 grid-cols-2 gap-2 md:grid-cols-4">
         {kpiCards.map((card) => (
           <div key={card.label} className={`rounded border border-gray-200 bg-white px-2 py-1 text-[11px] ${card.className ?? ""}`}>
             <div className="text-[10px] uppercase tracking-wide text-gray-500">{card.label}</div>

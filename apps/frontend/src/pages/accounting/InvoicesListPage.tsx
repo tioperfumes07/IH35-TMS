@@ -8,6 +8,11 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { CustomerAdjustmentModal } from "./modals/CustomerAdjustmentModal";
+import { DriverDamageInvoiceModal } from "./modals/DriverDamageInvoiceModal";
+import { DriverMiscInvoiceModal } from "./modals/DriverMiscInvoiceModal";
+import { ManualInvoiceModal } from "./modals/ManualInvoiceModal";
+import { VendorChargebackModal } from "./modals/VendorChargebackModal";
 
 const STATUS_OPTIONS: Array<{ value: "" | InvoiceStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -30,6 +35,8 @@ export function InvoicesListPage() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [createType, setCreateType] = useState<"driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual" | "from_load">("from_load");
+  const [openModalType, setOpenModalType] = useState<null | "driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual">(null);
 
   const query = useQuery({
     queryKey: ["accounting", "invoices", selectedCompanyId, status, search, fromDate, toDate],
@@ -57,7 +64,37 @@ export function InvoicesListPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Invoices" subtitle="Accounts receivable invoice list" actions={<Button onClick={() => navigate("/dispatch")}>+ Create From Load</Button>} />
+      <PageHeader
+        title="Invoices"
+        subtitle="Accounts receivable invoice list"
+        actions={
+          <div className="flex items-center gap-2">
+            <select
+              value={createType}
+              onChange={(event) => setCreateType(event.target.value as typeof createType)}
+              className="h-8 rounded border border-gray-300 bg-white px-2 text-[12px]"
+            >
+              <option value="from_load">From load</option>
+              <option value="driver_damage">Driver damage</option>
+              <option value="driver_misc">Driver misc</option>
+              <option value="vendor_chargeback">Vendor chargeback</option>
+              <option value="customer_adjustment">Customer adjustment</option>
+              <option value="manual">Manual</option>
+            </select>
+            <Button
+              onClick={() => {
+                if (createType === "from_load") {
+                  navigate("/dispatch");
+                  return;
+                }
+                setOpenModalType(createType);
+              }}
+            >
+              + Create
+            </Button>
+          </div>
+        }
+      />
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <DataPanel title="Filters">
@@ -139,6 +176,60 @@ export function InvoicesListPage() {
           </tbody>
         </table>
       </div>
+      {selectedCompanyId ? (
+        <>
+          <DriverDamageInvoiceModal
+            open={openModalType === "driver_damage"}
+            operatingCompanyId={selectedCompanyId}
+            onClose={() => setOpenModalType(null)}
+            onCreated={(invoiceId) => {
+              setOpenModalType(null);
+              void query.refetch();
+              navigate(`/accounting/invoices/${invoiceId}`);
+            }}
+          />
+          <DriverMiscInvoiceModal
+            open={openModalType === "driver_misc"}
+            operatingCompanyId={selectedCompanyId}
+            onClose={() => setOpenModalType(null)}
+            onCreated={(invoiceId) => {
+              setOpenModalType(null);
+              void query.refetch();
+              navigate(`/accounting/invoices/${invoiceId}`);
+            }}
+          />
+          <VendorChargebackModal
+            open={openModalType === "vendor_chargeback"}
+            operatingCompanyId={selectedCompanyId}
+            onClose={() => setOpenModalType(null)}
+            onCreated={(invoiceId) => {
+              setOpenModalType(null);
+              void query.refetch();
+              navigate(`/accounting/invoices/${invoiceId}`);
+            }}
+          />
+          <CustomerAdjustmentModal
+            open={openModalType === "customer_adjustment"}
+            operatingCompanyId={selectedCompanyId}
+            onClose={() => setOpenModalType(null)}
+            onCreated={(invoiceId) => {
+              setOpenModalType(null);
+              void query.refetch();
+              navigate(`/accounting/invoices/${invoiceId}`);
+            }}
+          />
+          <ManualInvoiceModal
+            open={openModalType === "manual"}
+            operatingCompanyId={selectedCompanyId}
+            onClose={() => setOpenModalType(null)}
+            onCreated={(invoiceId) => {
+              setOpenModalType(null);
+              void query.refetch();
+              navigate(`/accounting/invoices/${invoiceId}`);
+            }}
+          />
+        </>
+      ) : null}
     </div>
   );
 }
