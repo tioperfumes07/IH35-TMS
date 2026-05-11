@@ -199,15 +199,47 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                 <div className="rounded border border-indigo-200 bg-indigo-50 p-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-xs text-indigo-900">Driver Instructions PDF + Portal/SMS/WhatsApp distribution</div>
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        distributeMutation.mutate({ loadId: load.id, operatingCompanyId: load.operating_company_id })
-                      }
-                      loading={distributeMutation.isPending}
-                    >
-                      Distribute instructions
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={!load.driver_instructions_file_id}
+                        onClick={() => {
+                          if (!load.driver_instructions_file_id) return;
+                          window.open(
+                            `/api/v1/docs/files/${load.driver_instructions_file_id}/download-url`,
+                            "_blank",
+                            "noopener,noreferrer"
+                          );
+                        }}
+                      >
+                        Preview
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={!load.driver_instructions_file_id}
+                        onClick={() => {
+                          if (!load.driver_instructions_file_id) return;
+                          window.open(
+                            `/api/v1/docs/files/${load.driver_instructions_file_id}/download-url`,
+                            "_blank",
+                            "noopener,noreferrer"
+                          );
+                        }}
+                      >
+                        Download
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          distributeMutation.mutate({ loadId: load.id, operatingCompanyId: load.operating_company_id })
+                        }
+                        loading={distributeMutation.isPending}
+                      >
+                        Resend
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <DocumentsTab entityType="load" entityId={load.id} entityName={load.load_number} />

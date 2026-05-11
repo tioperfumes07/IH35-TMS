@@ -12,12 +12,33 @@ type ConsumeInput = {
   loadId: string;
 };
 
+type ClaimInput = {
+  operatingCompanyId: string;
+  reservationId: string;
+};
+
 function makeLoadNumber(seq: number, date = new Date()) {
   const ymd = date.toISOString().slice(0, 10).replace(/-/g, "");
   return `L-${ymd}-${String(seq).padStart(4, "0")}`;
 }
 
-export async function reserveNextLoadNumber(client: DbClient, input: ReserveInput) {
+export async function expireStaleLoadIdReservations(client: DbClient, operatingCompanyId: string) {
+  await client.query(
+    `
+      UPDATE dispatch.load_id_reservations
+      SET status = 'expired',
+          updated_at = now()
+      WHERE operating_company_id = $1
+        AND status = 'reserved'
+        AND expires_at <= now()
+    `,
+    [operatingCompanyId]
+  );
+}
+
+export async function reserveNextLoadId(client: DbClient, input: ReserveInput) {
+  await expireStaleLoadIdReservations(client, input.operatingCompanyId);
+
   const now = new Date();
   const prefix = `L-${now.toISOString().slice(0, 10).replace(/-/g, "")}-%`;
 
@@ -76,6 +97,23 @@ export async function reserveNextLoadNumber(client: DbClient, input: ReserveInpu
   return { reservationId: insert.rows[0].id, loadNumber };
 }
 
+export async function claimReservation(client: DbClient, input: ClaimInput) {
+  await expireStaleLoadIdReservations(client, input.operatingCompanyId);
+  const claimed = await client.query<{ id: string; reserved_load_number: string }>(
+    `
+      SELECT id, reserved_load_number
+      FROM dispatch.load_id_reservations
+      WHERE id = $1
+        AND operating_company_id = $2
+        AND status = 'reserved'
+        AND expires_at > now()
+      LIMIT 1
+    `,
+    [input.reservationId, input.operatingCompanyId]
+  );
+  return claimed.rows[0] ?? null;
+}
+
 export async function consumeLoadNumberReservation(client: DbClient, input: ConsumeInput) {
   await client.query(
     `
@@ -90,3 +128,6 @@ export async function consumeLoadNumberReservation(client: DbClient, input: Cons
     [input.reservationId, input.loadId]
   );
 }
+
+// Backwards-compatible export used in existing code.
+export const reserveNextLoadNumber = reserveNextLoadId;

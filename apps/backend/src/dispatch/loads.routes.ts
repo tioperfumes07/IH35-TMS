@@ -4,6 +4,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { bookLoad } from "./book-load.service.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
+import { reserveNextLoadId } from "./load-id-reservation.service.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 
 const dispatchStatusSchema = z.enum([
@@ -62,8 +63,11 @@ const createDispatchLoadBodySchema = z.object({
   customer_id: z.string().uuid(),
   status: dispatchStatusSchema.default("assigned_not_dispatched"),
   customer_wo_number: z.string().trim().max(120).optional(),
+  customer_po_number: z.string().trim().max(120).optional(),
   commodity: z.string().trim().max(120).optional(),
   weight_lbs: z.number().int().min(0).optional(),
+  hazmat: z.boolean().optional(),
+  driver_instructions_text: z.string().trim().max(5000).optional(),
   notes: z.string().trim().max(5000).optional(),
   booking_mode: z.enum(["single_popup", "legacy_form"]).default("single_popup"),
   requires_tarps: z.boolean().default(false),
@@ -71,6 +75,9 @@ const createDispatchLoadBodySchema = z.object({
   lumper_amount_cents: z.number().int().min(0).default(0),
   customer_chargeback_requested: z.boolean().default(false),
   customer_chargeback_reason: z.string().trim().max(1000).optional(),
+  live_load_number: z.string().trim().max(60).optional(),
+  addToOpenPresettlement: z.boolean().optional(),
+  reservation_uuid: z.string().uuid().optional(),
   trailer_type: z.enum(["refrigerated_van", "dry_van", "flatbed", "power_only_no_trailer", "power_only_customer_trailer"]).optional(),
   assigned_unit_id: z.string().uuid().optional(),
   assigned_primary_driver_id: z.string().uuid().optional(),
@@ -112,6 +119,16 @@ const createDispatchLoadBodySchema = z.object({
   save_mode: z.enum(["draft", "book_dispatch"]).default("book_dispatch"),
   override_token: z.string().uuid().optional(),
   override_reason: z.string().trim().min(10).max(1000).optional(),
+});
+
+const reserveLoadIdBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+});
+
+const anticipatedChargebackBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  customer_chargeback_requested: z.boolean(),
+  customer_chargeback_reason: z.string().trim().max(1000).nullable().optional(),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -182,6 +199,27 @@ const allowedTransitions: Record<z.infer<typeof dispatchStatusSchema>, z.infer<t
 };
 
 export async function registerDispatchLoadRoutes(app: FastifyInstance) {
+  app.post("/api/v1/dispatch/loads/reserve-id", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const body = reserveLoadIdBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const payload = await withCompanyScope(authUser.uuid, body.data.operating_company_id, async (client) => {
+      return reserveNextLoadId(client, {
+        operatingCompanyId: body.data.operating_company_id,
+        reservedByUserId: authUser.uuid,
+      });
+    });
+    return {
+      reservation_uuid: payload.reservationId,
+      load_number: payload.loadNumber,
+    };
+  });
+
   app.get("/api/v1/dispatch/preferences", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -515,6 +553,43 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
       throw error;
     }
+  });
+
+  app.patch("/api/v1/dispatch/loads/:id/anticipated-chargeback", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = anticipatedChargebackBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const updated = await withCompanyScope(authUser.uuid, body.data.operating_company_id, async (client) => {
+      const res = await client.query(
+        `
+          UPDATE mdata.loads
+          SET customer_chargeback_requested = $2,
+              customer_chargeback_reason = $3,
+              updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $4
+            AND soft_deleted_at IS NULL
+          RETURNING id, customer_chargeback_requested, customer_chargeback_reason
+        `,
+        [
+          params.data.id,
+          body.data.customer_chargeback_requested,
+          body.data.customer_chargeback_requested ? (body.data.customer_chargeback_reason ?? null) : null,
+          body.data.operating_company_id,
+        ]
+      );
+      return res.rows[0] ?? null;
+    });
+
+    if (!updated) return reply.code(404).send({ error: "dispatch_load_not_found" });
+    return updated;
   });
 
   app.patch("/api/v1/dispatch/loads/:id/transition", async (req, reply) => {

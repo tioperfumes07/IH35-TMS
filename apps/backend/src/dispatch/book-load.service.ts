@@ -1,6 +1,10 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
-import { consumeLoadNumberReservation, reserveNextLoadNumber } from "./load-id-reservation.service.js";
+import {
+  claimReservation,
+  consumeLoadNumberReservation,
+  reserveNextLoadId,
+} from "./load-id-reservation.service.js";
 
 type DispatchStatus =
   | "unassigned"
@@ -47,8 +51,11 @@ export type BookLoadInput = {
   customer_id: string;
   status: DispatchStatus;
   customer_wo_number?: string;
+  customer_po_number?: string;
   commodity?: string;
   weight_lbs?: number;
+  hazmat?: boolean;
+  driver_instructions_text?: string;
   notes?: string;
   booking_mode?: "single_popup" | "legacy_form";
   requires_tarps?: boolean;
@@ -56,6 +63,9 @@ export type BookLoadInput = {
   lumper_amount_cents?: number;
   customer_chargeback_requested?: boolean;
   customer_chargeback_reason?: string;
+  live_load_number?: string;
+  addToOpenPresettlement?: boolean;
+  reservation_uuid?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
   assigned_primary_driver_id?: string;
@@ -92,6 +102,120 @@ function toMdataStatus(status: DispatchStatus): string {
   if (status === "driver_walkoff") return "driver_walkoff";
   if (status === "driver_no_show") return "driver_no_show";
   return "cancelled";
+}
+
+async function relationExists(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  relationName: string
+) {
+  const res = await client.query<{ exists: boolean }>(
+    `SELECT to_regclass($1) IS NOT NULL AS exists`,
+    [relationName]
+  );
+  return Boolean(res.rows[0]?.exists);
+}
+
+async function createDriverBillArtifacts(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: BookLoadInput,
+  load: Record<string, unknown>,
+  loadNumber: string,
+  stops: BookLoadStop[]
+) {
+  const hasBills = await relationExists(client, "accounting.bills");
+  const hasBillLines = await relationExists(client, "accounting.bill_lines");
+  if (!hasBills || !hasBillLines || !input.assigned_primary_driver_id) return;
+
+  const extraPickupCount = stops.filter((s) => s.stop_type === "pickup").length > 1 ? stops.filter((s) => s.stop_type === "pickup").length - 1 : 0;
+  const extraDropCount = stops.filter((s) => s.stop_type === "delivery").length > 1 ? stops.filter((s) => s.stop_type === "delivery").length - 1 : 0;
+  const extraStopBonusCents = (extraPickupCount + extraDropCount) * 2500;
+  const tarpPayCents = input.requires_tarps ? 4000 : 0;
+  const driverLumperCents = stops.reduce((sum, stop) => {
+    if (!stop.lumper_required) return sum;
+    return stop.lumper_paid_by === "carrier" ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
+  }, 0);
+  const basePayCents = input.charges.reduce((sum, c) => sum + Number(c.amount_cents ?? 0), 0);
+  const totalBillCents = basePayCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
+
+  const billRes = await client.query<{ id: string }>(
+    `
+      INSERT INTO accounting.bills (
+        operating_company_id,
+        display_id,
+        bill_number,
+        bill_date,
+        amount_cents,
+        total_amount,
+        status,
+        memo,
+        created_by_user_id
+      )
+      VALUES ($1,$2,$2,current_date,$3,$4,'unpaid',$5,$6)
+      RETURNING id
+    `,
+    [
+      input.operating_company_id,
+      `B-${loadNumber}`,
+      totalBillCents,
+      (totalBillCents / 100).toFixed(2),
+      `Auto-created from load ${loadNumber}`,
+      input.requestingUserUuid,
+    ]
+  );
+  const billId = billRes.rows[0]?.id;
+  if (!billId) return;
+
+  const lineItems: Array<{ description: string; amountCents: number }> = [];
+  for (const charge of input.charges) {
+    lineItems.push({
+      description: `Load pay - ${charge.code}`,
+      amountCents: Number(charge.amount_cents ?? 0),
+    });
+  }
+  if (tarpPayCents > 0) lineItems.push({ description: "Tarp pay", amountCents: tarpPayCents });
+  if (extraPickupCount > 0) lineItems.push({ description: `Extra pickup bonus x${extraPickupCount}`, amountCents: extraPickupCount * 2500 });
+  if (extraDropCount > 0) lineItems.push({ description: `Extra drop bonus x${extraDropCount}`, amountCents: extraDropCount * 2500 });
+  if (driverLumperCents > 0) lineItems.push({ description: "Lumper advance to driver", amountCents: driverLumperCents });
+
+  let sequence = 1;
+  for (const line of lineItems.filter((line) => line.amountCents > 0)) {
+    await client.query(
+      `
+        INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description, section)
+        VALUES ($1,$2,$3,$4,'B')
+      `,
+      [billId, sequence++, (line.amountCents / 100).toFixed(2), line.description]
+    );
+  }
+
+  const customerLumperCents = stops.reduce((sum, stop) => {
+    if (!stop.lumper_required) return sum;
+    return ["shipper", "broker", "receiver"].includes(String(stop.lumper_paid_by ?? "")) ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
+  }, 0);
+  const companyLumperCents = stops.reduce((sum, stop) => {
+    if (!stop.lumper_required) return sum;
+    return stop.lumper_paid_by === "unknown" ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
+  }, 0);
+
+  await appendCrudAudit(
+    client,
+    input.requestingUserUuid,
+    "dispatch.load.driver_bill_created",
+    {
+      load_uuid: load.id,
+      load_number: loadNumber,
+      bill_id: billId,
+      bill_display_id: `B-${loadNumber}`,
+      extra_pickups_count: extraPickupCount,
+      extra_drops_count: extraDropCount,
+      tarp_pay_cents: tarpPayCents,
+      lumper_driver_advance_cents: driverLumperCents,
+      lumper_customer_passthrough_cents: customerLumperCents,
+      lumper_company_expense_cents: companyLumperCents,
+    },
+    "info",
+    "P6-D2"
+  );
 }
 
 export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
@@ -300,12 +424,36 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       }
     }
 
-    const reservation = await reserveNextLoadNumber(client, {
-      operatingCompanyId: input.operating_company_id,
-      reservedByUserId: input.requestingUserUuid,
-    });
-    const loadNumber = reservation.loadNumber;
+    let reservationId = "";
+    let loadNumber = "";
+    if (input.reservation_uuid) {
+      const claimed = await claimReservation(client, {
+        operatingCompanyId: input.operating_company_id,
+        reservationId: input.reservation_uuid,
+      });
+      if (!claimed) {
+        return {
+          kind: "error",
+          status: 409,
+          payload: { error: "E_RESERVATION_NOT_AVAILABLE", message: "Reservation expired or unavailable." },
+        };
+      }
+      reservationId = claimed.id;
+      loadNumber = claimed.reserved_load_number;
+    } else {
+      const reservation = await reserveNextLoadId(client, {
+        operatingCompanyId: input.operating_company_id,
+        reservedByUserId: input.requestingUserUuid,
+      });
+      reservationId = reservation.reservationId;
+      loadNumber = reservation.loadNumber;
+    }
     const statusForInsert = input.save_mode === "draft" ? "draft" : toMdataStatus(input.status);
+    const v3Metadata = {
+      customer_po_number: input.customer_po_number ?? null,
+      hazmat: Boolean(input.hazmat),
+      driver_instructions_text: input.driver_instructions_text ?? null,
+    };
 
     const loadRes = await client.query(
       `
@@ -313,9 +461,10 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
           assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
           dispatcher_user_id, notes, booking_mode, requires_tarps, tarp_type, lumper_amount_cents,
-          customer_chargeback_requested, customer_chargeback_reason, booked_by_user_id, updated_by_user_id
+          customer_chargeback_requested, customer_chargeback_reason, live_load_number,
+          quicksave_pending_fields, presettlement_link_id, booked_by_user_id, updated_by_user_id
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb,$19,$20,$21,$22)
         RETURNING *
       `,
       [
@@ -336,13 +485,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         input.lumper_amount_cents ?? 0,
         Boolean(input.customer_chargeback_requested),
         input.customer_chargeback_reason ?? null,
+        input.live_load_number ?? null,
+        JSON.stringify(v3Metadata),
+        null,
         input.requestingUserUuid,
         input.requestingUserUuid,
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;
     await consumeLoadNumberReservation(client, {
-      reservationId: reservation.reservationId,
+      reservationId,
       loadId: String(load.id),
     });
 
@@ -378,6 +530,26 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       );
     }
 
+    if (input.addToOpenPresettlement) {
+      // TODO P6-FOLLOWUP-PRESETTLEMENT-LINK: when presettlement query
+      //   service exists, look up driver's open presettlement here
+      //   and set presettlement_link_id = openPresettlement.uuid.
+      //   Until then, leave null. Frontend checkbox renders disabled
+      //   with explanatory tooltip.
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "dispatch.load.presettlement_link_deferred",
+        {
+          load_uuid: load.id,
+          requested: true,
+          reason: "presettlement_query_not_yet_implemented",
+        },
+        "info",
+        "P6-D2"
+      );
+    }
+
     if (wf044Warnings.length > 0) {
       await appendCrudAudit(
         client,
@@ -395,6 +567,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     }
 
     if (input.save_mode === "book_dispatch") {
+      await createDriverBillArtifacts(client, input, load, loadNumber, input.stops);
       await appendCrudAudit(
         client,
         input.requestingUserUuid,
@@ -437,7 +610,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           VALUES ($1,$2,$3,$4::jsonb)
         `,
         [
-          "dispatch.loads",
+          "dispatch.load",
           load.id,
           "dispatch.load.dispatched",
           JSON.stringify({

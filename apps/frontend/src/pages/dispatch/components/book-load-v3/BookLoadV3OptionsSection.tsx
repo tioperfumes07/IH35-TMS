@@ -7,6 +7,7 @@ type V3Fields = {
   lumper_amount_cents: number;
   customer_chargeback_requested: boolean;
   customer_chargeback_reason: string;
+  live_load_number: string;
 };
 
 type Props = {
@@ -36,6 +37,10 @@ export function BookLoadV3OptionsSection({ register }: Props) {
         <label className="text-[11px] font-semibold text-gray-700">
           Tarp type
           <input {...register("tarp_type")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm" placeholder="e.g. lumber tarp" />
+        </label>
+        <label className="text-[11px] font-semibold text-gray-700">
+          Live load #
+          <input {...register("live_load_number")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm" placeholder="Optional external load #" />
         </label>
         <label className="flex items-center gap-2 text-[11px] font-semibold text-gray-700 md:col-span-2">
           <input type="checkbox" {...register("customer_chargeback_requested")} />

@@ -97,8 +97,11 @@ export type DispatchBookLoadPayload = {
   operating_company_id: string;
   customer_id: string;
   customer_wo_number?: string;
+  customer_po_number?: string;
   commodity?: string;
   weight_lbs?: number;
+  hazmat?: boolean;
+  driver_instructions_text?: string;
   notes?: string;
   status?: DispatchStatus;
   booking_mode?: "single_popup" | "legacy_form";
@@ -107,6 +110,9 @@ export type DispatchBookLoadPayload = {
   lumper_amount_cents?: number;
   customer_chargeback_requested?: boolean;
   customer_chargeback_reason?: string;
+  live_load_number?: string;
+  addToOpenPresettlement?: boolean;
+  reservation_uuid?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
   assigned_primary_driver_id?: string;
@@ -138,6 +144,27 @@ export type DispatchBookLoadPayload = {
   override_token?: string;
   override_reason?: string;
 };
+
+export function reserveDispatchLoadId(operatingCompanyId: string) {
+  return apiRequest<{ reservation_uuid: string; load_number: string }>("/api/v1/dispatch/loads/reserve-id", {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+export function patchAnticipatedChargeback(
+  loadId: string,
+  body: {
+    operating_company_id: string;
+    customer_chargeback_requested: boolean;
+    customer_chargeback_reason?: string | null;
+  }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/loads/${loadId}/anticipated-chargeback`, {
+    method: "PATCH",
+    body,
+  });
+}
 
 export function getDispatchPreferences() {
   return apiRequest<{ dispatch_default_view: DispatchV2View }>("/api/v1/dispatch/preferences");
