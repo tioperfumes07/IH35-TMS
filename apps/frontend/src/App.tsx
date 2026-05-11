@@ -67,6 +67,7 @@ import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
 import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
 import { FactoringListPage } from "./pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
+import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { InternalFineReasonsListPage } from "./pages/lists/safety/InternalFineReasonsListPage";
 import { CivilFineTypesListPage } from "./pages/lists/safety/CivilFineTypesListPage";
 import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViolationTypesListPage";
@@ -87,6 +88,21 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   }
   if (!auth.user || auth.isUnauthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  return <Shell auth={auth.user}>{children}</Shell>;
+}
+
+function OwnerAdminRoute({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  if (auth.isLoading) {
+    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Checking session...</div>;
+  }
+  if (!auth.user || auth.isUnauthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  const role = String(auth.user.role ?? "");
+  if (role !== "Owner" && role !== "Administrator") {
+    return <Navigate to="/home" replace />;
   }
   return <Shell auth={auth.user}>{children}</Shell>;
 }
@@ -382,6 +398,14 @@ export default function App() {
             <ProtectedRoute>
               <ReportsHomePage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/forensic-review"
+          element={
+            <OwnerAdminRoute>
+              <ForensicReviewPage />
+            </OwnerAdminRoute>
           }
         />
         <Route
