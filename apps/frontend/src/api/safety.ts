@@ -126,6 +126,25 @@ export function completeCompanyViolationCorrectiveAction(id: string, companyId: 
   });
 }
 
+export function resolveCompanyViolation(
+  id: string,
+  companyId: string,
+  body: {
+    outcome: "warning" | "written_reprimand" | "monetary_fine" | "termination" | "dismissed";
+    resolutionNotes: string;
+    fineAmountCentsOverride?: number;
+  }
+) {
+  return apiRequest<{
+    violationUuid: string;
+    autoCreatedInternalFineUuid: string | null;
+    finalAmountCents: number | null;
+  }>(`/api/v1/safety/company-violations/${id}/resolve?${q(companyId)}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
 export function escalateCompanyViolation(id: string, companyId: string, reason: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/company-violations/${id}/escalate?${q(companyId)}`, {
     method: "POST",

@@ -140,6 +140,13 @@ export function InvoiceDetailPage() {
         }
       />
 
+      {invoice.source_load_chargeback_requested ? (
+        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <div className="font-semibold uppercase tracking-wide">Chargeback flag</div>
+          <div>{invoice.source_load_chargeback_reason || "This invoice is tied to a load marked for customer chargeback review."}</div>
+        </div>
+      ) : null}
+
       <div className="grid gap-3 md:grid-cols-3">
         <DataPanel title="Header">
           <DataPanelRow>

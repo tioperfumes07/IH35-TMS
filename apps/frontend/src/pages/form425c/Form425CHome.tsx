@@ -28,11 +28,11 @@ import { QBImportTab } from "./tabs/QBImportTab";
 type TabId = "profile" | "qb" | "form" | "merge" | "history";
 
 const TABS: Array<{ id: TabId; label: string }> = [
-  { id: "profile", label: "⚙ Profiles & Defaults" },
-  { id: "qb", label: "📥 QB Import" },
-  { id: "form", label: "📋 Form 425C" },
-  { id: "merge", label: "📁 Merge & Export" },
-  { id: "history", label: "📊 History" },
+  { id: "profile", label: "Profiles & Defaults" },
+  { id: "qb", label: "QB Import" },
+  { id: "form", label: "Form 425C" },
+  { id: "merge", label: "Merge & Export" },
+  { id: "history", label: "History" },
 ];
 
 function emptyForm(): CurrentFormState {

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { FleetCatalogRow } from "../../../api/catalogs-fleet";
 import { Button } from "../../../components/Button";
-import { PageHeader } from "../../../components/layout/PageHeader";
+import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { FleetCatalogModal, type FleetCatalogClient } from "./FleetCatalogModal";
@@ -52,9 +52,11 @@ export function FleetCatalogListPage({ client, displayName, breadcrumbPath, read
 
   return (
     <div className="space-y-3">
-      <PageHeader
+      <BackArrowHeader
+        backTo="/lists"
+        breadcrumb={breadcrumbPath.replace(/^Back · /, "").split(" · ")}
         title={displayName}
-        subtitle={`${breadcrumbPath} · ${total} entries`}
+        countBadge={total}
         actions={
           !readOnly ? (
             <Button

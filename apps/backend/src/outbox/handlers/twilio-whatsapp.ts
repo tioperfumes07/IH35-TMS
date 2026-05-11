@@ -27,6 +27,7 @@ function toWhatsAppAddress(value: string) {
 const TEMPLATE_REGISTRY: Record<string, string> = {
   driver_invite:
     "Hi {{driver_first_name}}! You've been invited to {{company_name}}'s driver app. Tap to set up: {{invite_url}} (expires in {{expires_hours}} hours)",
+  load_dispatched: "New load {{load_display_id}} dispatched. Pickup {{pickup_location}} at {{pickup_time}}. Driver Instructions PDF: {{pdf_url}}",
 };
 
 function renderTemplate(templateName: string, variables: Record<string, unknown>): string {

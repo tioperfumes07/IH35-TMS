@@ -52,6 +52,7 @@ export type DispatchLoadRow = {
   assigned_secondary_driver_id: string | null;
   dispatcher_user_id: string;
   notes: string | null;
+  driver_instructions_file_id?: string | null;
   first_pickup_city: string | null;
   first_delivery_city: string | null;
   flag_code: string;

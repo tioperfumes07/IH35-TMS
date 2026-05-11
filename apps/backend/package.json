@@ -6,6 +6,8 @@
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
+    "handlebars": "^4.7.9",
+    "puppeteer": "^24.43.1",
     "resend": "^6.12.3"
   }
 }

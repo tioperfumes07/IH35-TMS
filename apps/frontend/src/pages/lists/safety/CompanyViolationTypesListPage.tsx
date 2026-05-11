@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listCompanyViolationTypes, type CompanyViolationTypeRow } from "../../../api/catalogs-safety";
 import { Button } from "../../../components/Button";
-import { PageHeader } from "../../../components/layout/PageHeader";
+import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CompanyViolationTypeModal } from "./CompanyViolationTypeModal";
@@ -39,7 +39,22 @@ export function CompanyViolationTypesListPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Company Violation Types" subtitle={`${total} entries`} actions={<Button onClick={() => { setSelectedRow(null); setModalOpen(true); }}>+ Create</Button>} />
+      <BackArrowHeader
+        backTo="/lists"
+        breadcrumb={["Lists & Catalogs", "Safety", "Company violation types"]}
+        title="Company Violation Types"
+        countBadge={total}
+        actions={
+          <Button
+            onClick={() => {
+              setSelectedRow(null);
+              setModalOpen(true);
+            }}
+          >
+            + Create
+          </Button>
+        }
+      />
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
@@ -60,6 +75,7 @@ export function CompanyViolationTypesListPage() {
               <th className="px-3 py-2 text-left">Type Code</th>
               <th className="px-3 py-2 text-left">Type Name</th>
               <th className="px-3 py-2 text-left">Default Severity</th>
+              <th className="px-3 py-2 text-left">Default Fine</th>
               <th className="px-3 py-2 text-left">Status</th>
             </tr>
           </thead>
@@ -71,6 +87,7 @@ export function CompanyViolationTypesListPage() {
                 <td className="px-3 py-2">
                   <span className={severityBadgeClass(Number(row.default_severity ?? 1))}>{Number(row.default_severity ?? 1)}</span>
                 </td>
+                <td className="px-3 py-2">{row.amount_cents ? `$${(row.amount_cents / 100).toFixed(2)}` : "—"}</td>
                 <td className="px-3 py-2">
                   <span className={statusPillClass(row.is_active)}>{row.is_active ? "Active" : "Inactive"}</span>
                 </td>

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveCompanyViolation } from "./company-violations.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -53,6 +54,12 @@ const escalateBody = z.object({
   reason: z.string().optional(),
 });
 
+const resolveBodySchema = z.object({
+  outcome: z.enum(["warning", "written_reprimand", "monetary_fine", "termination", "dismissed"]),
+  resolutionNotes: z.string().trim().min(20),
+  fineAmountCentsOverride: z.coerce.number().int().positive().optional(),
+});
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -77,6 +84,10 @@ async function withCompanyScope<T>(
 
 function canMutate(role: string) {
   return ["Owner", "Administrator", "Safety"].includes(role);
+}
+
+function canResolve(role: string) {
+  return ["Owner", "Administrator", "Safety", "Manager"].includes(role);
 }
 
 export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance) {
@@ -362,5 +373,46 @@ export async function registerSafetyCompanyViolationsRoutes(app: FastifyInstance
     });
     if (!updated) return reply.code(404).send({ error: "company_violation_not_found" });
     return updated;
+  });
+
+  app.patch("/api/v1/safety/company-violations/:id/resolve", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canResolve(user.role)) return reply.code(403).send({ error: "E_PERMISSION_DENIED" });
+
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+    const body = resolveBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    try {
+      const result = await resolveCompanyViolation({
+        violationUuid: params.data.id,
+        operatingCompanyId: query.data.operating_company_id,
+        outcome: body.data.outcome,
+        resolutionNotes: body.data.resolutionNotes,
+        fineAmountCentsOverride: body.data.fineAmountCentsOverride,
+        resolvedByUserUuid: user.uuid,
+      });
+      return {
+        violationUuid: result.violationUuid,
+        autoCreatedInternalFineUuid: result.autoCreatedInternalFineUuid,
+        finalAmountCents: result.finalAmountCents,
+      };
+    } catch (error) {
+      const code = String((error as Error).message ?? "E_RESOLVE_FAILED");
+      if (code === "E_VIOLATION_AMOUNT_REQUIRED") {
+        return reply.code(422).send({ error: code });
+      }
+      if (code === "E_VIOLATION_ALREADY_RESOLVED") {
+        return reply.code(409).send({ error: code });
+      }
+      if (code === "E_VIOLATION_NOT_FOUND") {
+        return reply.code(404).send({ error: code });
+      }
+      throw error;
+    }
   });
 }

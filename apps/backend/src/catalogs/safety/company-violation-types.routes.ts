@@ -8,6 +8,7 @@ const createBodySchema = z.object({
   type_code: catalogCodeSchema,
   type_name: z.string().trim().min(1).max(140),
   default_severity: z.coerce.number().int().min(1).max(10),
+  amount_cents: z.coerce.number().int().positive().nullable().optional(),
   is_active: z.boolean().default(true),
 });
 
@@ -16,6 +17,7 @@ const updateBodySchema = z
     type_code: catalogCodeSchema.optional(),
     type_name: z.string().trim().min(1).max(140).optional(),
     default_severity: z.coerce.number().int().min(1).max(10).optional(),
+    amount_cents: z.coerce.number().int().positive().nullable().optional(),
     is_active: z.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
@@ -50,6 +52,7 @@ export async function registerCompanyViolationTypesRoutes(app: FastifyInstance) 
             v.type_code,
             v.type_name,
             v.default_severity,
+            v.amount_cents,
             v.is_active,
             NULL::timestamptz AS created_at,
             NULL::timestamptz AS updated_at
@@ -84,6 +87,7 @@ export async function registerCompanyViolationTypesRoutes(app: FastifyInstance) 
             type_code,
             type_name,
             default_severity,
+            amount_cents,
             is_active,
             NULL::timestamptz AS created_at,
             NULL::timestamptz AS updated_at
@@ -127,20 +131,21 @@ export async function registerCompanyViolationTypesRoutes(app: FastifyInstance) 
       const res = await client.query(
         `
           INSERT INTO catalogs.company_violation_types (
-            operating_company_id, type_code, type_name, default_severity, is_active
+            operating_company_id, type_code, type_name, default_severity, amount_cents, is_active
           )
-          VALUES ($1,$2,$3,$4,$5)
+          VALUES ($1,$2,$3,$4,$5,$6)
           RETURNING
             id,
             operating_company_id,
             type_code,
             type_name,
             default_severity,
+            amount_cents,
             is_active,
             NULL::timestamptz AS created_at,
             NULL::timestamptz AS updated_at
         `,
-        [parsedQuery.data.operating_company_id, b.type_code, b.type_name, b.default_severity, b.is_active]
+        [parsedQuery.data.operating_company_id, b.type_code, b.type_name, b.default_severity, b.amount_cents ?? null, b.is_active]
       );
       const row = res.rows[0];
       await appendCrudAudit(client, authUser.uuid, "catalogs.company_violation_types_created", {
@@ -192,6 +197,7 @@ export async function registerCompanyViolationTypesRoutes(app: FastifyInstance) 
       if ("type_code" in b) add("type_code", b.type_code);
       if ("type_name" in b) add("type_name", b.type_name);
       if ("default_severity" in b) add("default_severity", b.default_severity);
+      if ("amount_cents" in b) add("amount_cents", b.amount_cents);
       if ("is_active" in b) add("is_active", b.is_active);
       values.push(parsedParams.data.id, parsedQuery.data.operating_company_id);
 
@@ -207,6 +213,7 @@ export async function registerCompanyViolationTypesRoutes(app: FastifyInstance) 
             type_code,
             type_name,
             default_severity,
+            amount_cents,
             is_active,
             NULL::timestamptz AS created_at,
             NULL::timestamptz AS updated_at

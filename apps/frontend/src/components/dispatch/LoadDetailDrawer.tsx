@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { updateLoad, useCancelLoad, useLoad, useLoadAudit } from "../../api/loads";
 import { createInvoiceFromLoad } from "../../api/accounting";
-import { cancelDispatchLoad, getDispatchAssignmentHistory } from "../../api/dispatch";
+import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory } from "../../api/dispatch";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
 import { DocumentsTab } from "../documents/DocumentsTab";
@@ -36,6 +36,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
   const createInvoiceMutation = useMutation({
     mutationFn: ({ operatingCompanyId, loadId }: { operatingCompanyId: string; loadId: string }) =>
       createInvoiceFromLoad(operatingCompanyId, { load_id: loadId }),
+  });
+  const distributeMutation = useMutation({
+    mutationFn: ({ loadId, operatingCompanyId }: { loadId: string; operatingCompanyId: string }) =>
+      distributeLoadInstructions(loadId, operatingCompanyId),
+    onSuccess: () => pushToast("Driver instructions distributed", "success"),
   });
 
   const load = loadQuery.data;
@@ -189,7 +194,59 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
           ) : null}
 
           {activeTab === "Documents" ? (
-            load ? <DocumentsTab entityType="load" entityId={load.id} entityName={load.load_number} /> : <div className="text-sm text-gray-500">Loading...</div>
+            load ? (
+              <div className="space-y-2">
+                <div className="rounded border border-indigo-200 bg-indigo-50 p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs text-indigo-900">Driver Instructions PDF + Portal/SMS/WhatsApp distribution</div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={!load.driver_instructions_file_id}
+                        onClick={() => {
+                          if (!load.driver_instructions_file_id) return;
+                          window.open(
+                            `/api/v1/docs/files/${load.driver_instructions_file_id}/download-url`,
+                            "_blank",
+                            "noopener,noreferrer"
+                          );
+                        }}
+                      >
+                        Preview
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={!load.driver_instructions_file_id}
+                        onClick={() => {
+                          if (!load.driver_instructions_file_id) return;
+                          window.open(
+                            `/api/v1/docs/files/${load.driver_instructions_file_id}/download-url`,
+                            "_blank",
+                            "noopener,noreferrer"
+                          );
+                        }}
+                      >
+                        Download
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          distributeMutation.mutate({ loadId: load.id, operatingCompanyId: load.operating_company_id })
+                        }
+                        loading={distributeMutation.isPending}
+                      >
+                        Resend
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <DocumentsTab entityType="load" entityId={load.id} entityName={load.load_number} />
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">Loading...</div>
+            )
           ) : null}
 
           {activeTab === "Audit History" ? (

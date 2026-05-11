@@ -1,6 +1,7 @@
 import type { PoolClient } from "pg";
 import { TwilioSmsHandler } from "./twilio-sms.js";
 import { TwilioWhatsappHandler } from "./twilio-whatsapp.js";
+import { DispatchLoadDispatchedHandler } from "./dispatch-load-dispatched.handler.js";
 
 export type OutboxPayload = Record<string, unknown>;
 
@@ -68,6 +69,12 @@ class AuditPersistHandler implements OutboxEventHandler {
 }
 
 export function buildOutboxHandlerRegistry() {
-  const handlers: OutboxEventHandler[] = [new TwilioSmsHandler(), new TwilioWhatsappHandler(), new AuditPersistHandler(), new TestNoopHandler()];
+  const handlers: OutboxEventHandler[] = [
+    new TwilioSmsHandler(),
+    new TwilioWhatsappHandler(),
+    new DispatchLoadDispatchedHandler(),
+    new AuditPersistHandler(),
+    new TestNoopHandler(),
+  ];
   return new Map(handlers.map((handler) => [handler.eventType, handler]));
 }

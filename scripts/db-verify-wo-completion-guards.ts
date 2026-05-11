@@ -25,29 +25,21 @@ try {
     const ownerId = String(ownerRes.rows[0]?.id ?? "");
 
     const unitRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO mdata.units (unit_number, vin, make, model, year, status, owner_company_id, currently_leased_to_company_id)
-        VALUES ('WG-${to_char(now(),'HH24MISS')}', md5(random()::text), 'KW', 'T680', 2020, 'active', $1, $1)
-        RETURNING id
-      `,
+      `SELECT id FROM mdata.units WHERE owner_company_id = $1 OR currently_leased_to_company_id = $1 ORDER BY created_at LIMIT 1`,
       [companyId]
     );
-    const unitId = unitRes.rows[0].id;
+    const unitId = String(unitRes.rows[0]?.id ?? "");
+    if (!unitId) throw new Error("No unit found for selected company");
 
     const vendorRes = await client.query<{ id: string }>(
-      `
-        INSERT INTO mdata.vendors (vendor_name, vendor_code, vendor_type, operating_company_id)
-        VALUES ('Verify Vendor', md5(random()::text), 'maintenance', $1)
-        RETURNING id
-      `,
-      [companyId]
+      `SELECT id FROM mdata.vendors ORDER BY created_at LIMIT 1`
     );
-    const vendorId = vendorRes.rows[0].id;
+    const vendorId = String(vendorRes.rows[0]?.id ?? "");
+    if (!vendorId) throw new Error("No vendor found for completion guard verify");
 
-    const extNext = await client.query<{ display_id: string; sequence: number }>(
-      `SELECT display_id, sequence FROM maintenance.next_wo_display_id($1, 'ES', CURRENT_DATE, $2)`,
-      [unitId, companyId]
-    );
+    const year = new Date().getFullYear();
+    const extDisplayId = `WO-VERIFY-ES-01-01-${year}-9001-ABCDE`;
+    const extSequence = 9001;
     const extWoRes = await client.query<{ id: string }>(
       `
         INSERT INTO maintenance.work_orders (
@@ -56,34 +48,36 @@ try {
         ) VALUES ($1,$2,'ES',$3,'open','repair',$4,10000,$5,'WO-X','INV-X')
         RETURNING id
       `,
-      [companyId, unitId, extNext.rows[0].sequence, extNext.rows[0].display_id, vendorId]
+      [companyId, unitId, extSequence, extDisplayId, vendorId]
     );
     const extWoId = extWoRes.rows[0].id;
 
     let missingCostReconFailed = false;
+    await client.query("SAVEPOINT verify_missing_cost");
     try {
       await client.query(`UPDATE maintenance.work_orders SET status = 'completed' WHERE id = $1`, [extWoId]);
     } catch (error) {
       missingCostReconFailed = String((error as Error).message).includes("E_COST_RECONCILIATION_FAILED");
+      await client.query("ROLLBACK TO SAVEPOINT verify_missing_cost");
     }
     if (!missingCostReconFailed) throw new Error("Expected E_COST_RECONCILIATION_FAILED when invoice amount missing");
 
     let mismatchFailed = false;
     await client.query(`UPDATE maintenance.work_orders SET external_vendor_invoice_amount = 10050 WHERE id = $1`, [extWoId]);
+    await client.query("SAVEPOINT verify_mismatch_cost");
     try {
       await client.query(`UPDATE maintenance.work_orders SET status = 'completed' WHERE id = $1`, [extWoId]);
     } catch (error) {
       mismatchFailed = String((error as Error).message).includes("E_COST_RECONCILIATION_FAILED");
+      await client.query("ROLLBACK TO SAVEPOINT verify_mismatch_cost");
     }
     if (!mismatchFailed) throw new Error("Expected mismatch > $0.01 to fail");
 
     await client.query(`UPDATE maintenance.work_orders SET external_vendor_invoice_amount = 10000, v5_suffix = 'ABCDE' WHERE id = $1`, [extWoId]);
     await client.query(`UPDATE maintenance.work_orders SET status = 'completed' WHERE id = $1`, [extWoId]);
 
-    const intNext = await client.query<{ display_id: string; sequence: number }>(
-      `SELECT display_id, sequence FROM maintenance.next_wo_display_id($1, 'IS', CURRENT_DATE, $2)`,
-      [unitId, companyId]
-    );
+    const intDisplayId = `WO-VERIFY-IS-01-01-${year}-9002-ABCDE`;
+    const intSequence = 9002;
     const intWoRes = await client.query<{ id: string }>(
       `
         INSERT INTO maintenance.work_orders (
@@ -91,15 +85,17 @@ try {
         ) VALUES ($1,$2,'IS',$3,'open','repair',$4,5000,false)
         RETURNING id
       `,
-      [companyId, unitId, intNext.rows[0].sequence, intNext.rows[0].display_id]
+      [companyId, unitId, intSequence, intDisplayId]
     );
     const intWoId = intWoRes.rows[0].id;
 
     let partsRequiredFailed = false;
+    await client.query("SAVEPOINT verify_parts_required");
     try {
       await client.query(`UPDATE maintenance.work_orders SET v5_suffix = 'ABCDE', status = 'completed' WHERE id = $1`, [intWoId]);
     } catch (error) {
       partsRequiredFailed = String((error as Error).message).includes("E_PARTS_INVOICE_LINK_REQUIRED");
+      await client.query("ROLLBACK TO SAVEPOINT verify_parts_required");
     }
     if (!partsRequiredFailed) throw new Error("Expected parts links requirement to fail for IS WO");
 
@@ -107,9 +103,6 @@ try {
     await client.query(`UPDATE maintenance.work_orders SET status = 'completed' WHERE id = $1`, [intWoId]);
 
     await client.query(`DELETE FROM maintenance.work_orders WHERE id = ANY($1::uuid[])`, [[extWoId, intWoId]]);
-    await client.query(`DELETE FROM mdata.vendors WHERE id = $1`, [vendorId]);
-    await client.query(`DELETE FROM mdata.units WHERE id = $1`, [unitId]);
-
     await client.query("COMMIT");
     console.log("PASS: WO completion guards validated for ES and IS flow.");
   } finally {

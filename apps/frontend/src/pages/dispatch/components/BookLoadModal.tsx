@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { createDispatchLoad } from "../../../api/dispatch";
+import { createDispatchLoad, reserveDispatchLoadId } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
@@ -11,6 +11,7 @@ import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCust
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
+import { BookLoadV3OptionsSection } from "./book-load-v3/BookLoadV3OptionsSection";
 
 type FormValues = BookLoadFormValues & {
   trailer_type: string;
@@ -20,6 +21,19 @@ type FormValues = BookLoadFormValues & {
   assigned_primary_driver_id: string;
   assigned_secondary_driver_id: string;
   temp_fahrenheit: number;
+  customer_po_number: string;
+  hazmat: boolean;
+  driver_instructions_text: string;
+  addToOpenPresettlement: boolean;
+  reservation_uuid: string;
+  reserved_load_number: string;
+  live_load_number: string;
+  booking_mode: "single_popup" | "legacy_form";
+  requires_tarps: boolean;
+  tarp_type: string;
+  lumper_amount_cents: number;
+  customer_chargeback_requested: boolean;
+  customer_chargeback_reason: string;
   stops: Array<{
     stop_type: "pickup" | "delivery";
     sequence_number: number;
@@ -28,6 +42,15 @@ type FormValues = BookLoadFormValues & {
     country: string;
     address_line1: string;
     scheduled_arrival_at: string;
+    time_window_type?: "appointment" | "first_come_first_serve" | "drop_window";
+    appointment_start_at?: string;
+    appointment_end_at?: string;
+    lumper_required?: boolean;
+    lumper_paid_by?: "carrier" | "shipper" | "broker" | "receiver" | "unknown";
+    lumper_amount_cents?: number;
+    is_tarp_stop?: boolean;
+    tarp_count?: number;
+    stop_notes?: string;
   }>;
 };
 
@@ -50,6 +73,7 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
   const [overrideToken, setOverrideToken] = useState<string | null>(null);
   const [pendingCloseAfterAdvisory, setPendingCloseAfterAdvisory] = useState(false);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"customer" | "equipment" | "stops" | "v3">("v3");
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const form = useForm<FormValues>({
     defaultValues: {
@@ -68,6 +92,19 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
       assigned_primary_driver_id: "",
       assigned_secondary_driver_id: "",
       temp_fahrenheit: 0,
+      customer_po_number: "",
+      hazmat: false,
+      driver_instructions_text: "",
+      addToOpenPresettlement: false,
+      reservation_uuid: "",
+      reserved_load_number: "",
+      live_load_number: "",
+      booking_mode: "single_popup",
+      requires_tarps: false,
+      tarp_type: "",
+      lumper_amount_cents: 0,
+      customer_chargeback_requested: false,
+      customer_chargeback_reason: "",
       stops: [
         { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "" },
         { stop_type: "delivery", sequence_number: 2, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "" },
@@ -104,7 +141,16 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
   useEffect(() => {
     if (!open) return;
     setDraftAttachmentEntityId(crypto.randomUUID());
-  }, [open]);
+    void reserveDispatchLoadId(operatingCompanyId)
+      .then((reservation) => {
+        form.setValue("reservation_uuid", reservation.reservation_uuid, { shouldDirty: false });
+        form.setValue("reserved_load_number", reservation.load_number, { shouldDirty: false });
+      })
+      .catch(() => {
+        form.setValue("reservation_uuid", "", { shouldDirty: false });
+        form.setValue("reserved_load_number", "", { shouldDirty: false });
+      });
+  }, [form, open, operatingCompanyId]);
 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     setGateBanner(null);
@@ -120,9 +166,21 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
         operating_company_id: operatingCompanyId,
         customer_id: values.customer_id,
         customer_wo_number: values.customer_wo_number || undefined,
+        customer_po_number: values.customer_po_number || undefined,
         commodity: values.commodity || undefined,
         weight_lbs: values.weight_lbs || undefined,
+        hazmat: values.hazmat,
+        driver_instructions_text: values.driver_instructions_text || undefined,
         notes: values.notes || undefined,
+        booking_mode: values.booking_mode,
+        requires_tarps: values.requires_tarps,
+        tarp_type: values.tarp_type || undefined,
+        lumper_amount_cents: values.lumper_amount_cents || 0,
+        customer_chargeback_requested: values.customer_chargeback_requested,
+        customer_chargeback_reason: values.customer_chargeback_reason || undefined,
+        live_load_number: values.live_load_number || undefined,
+        addToOpenPresettlement: values.addToOpenPresettlement,
+        reservation_uuid: values.reservation_uuid || undefined,
         trailer_type: values.trailer_type as
           | "refrigerated_van"
           | "dry_van"
@@ -150,6 +208,15 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
           country: stop.country,
           address_line1: stop.address_line1,
           scheduled_arrival_at: stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toISOString() : undefined,
+          time_window_type: stop.time_window_type,
+          appointment_start_at: stop.appointment_start_at ? new Date(stop.appointment_start_at).toISOString() : undefined,
+          appointment_end_at: stop.appointment_end_at ? new Date(stop.appointment_end_at).toISOString() : undefined,
+          lumper_required: stop.lumper_required,
+          lumper_paid_by: stop.lumper_paid_by,
+          lumper_amount_cents: Number(stop.lumper_amount_cents || 0),
+          is_tarp_stop: stop.is_tarp_stop,
+          tarp_count: Number(stop.tarp_count || 0),
+          stop_notes: stop.stop_notes || undefined,
         })),
         save_mode: saveMode,
         override_token: token,
@@ -217,6 +284,9 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
         {submitErrorMessage ? (
           <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
         ) : null}
+        <div className="rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-900">
+          Live load number: <span className="font-semibold">{form.watch("reserved_load_number") || "Reserving..."}</span>
+        </div>
         {gateBanner ? (
           <div
             className={`rounded border px-3 py-2 text-xs ${
@@ -300,9 +370,37 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
           </div>
         ) : null}
 
-        <BookLoadCustomerSection register={form.register} />
-        <BookLoadEquipmentSection register={form.register} />
-        <BookLoadStopsSection control={form.control as never} register={form.register as never} />
+        <div className="flex gap-2 rounded border border-gray-200 bg-gray-50 p-1 text-xs">
+          {[
+            { id: "customer", label: "Customer" },
+            { id: "equipment", label: "Equipment" },
+            { id: "stops", label: "Stops" },
+            { id: "v3", label: "V3 Options" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={`rounded px-2 py-1 ${activeTab === tab.id ? "bg-white font-semibold text-gray-900" : "text-gray-600"}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "customer" ? <BookLoadCustomerSection register={form.register} /> : null}
+        {activeTab === "equipment" ? <BookLoadEquipmentSection register={form.register} /> : null}
+        {activeTab === "stops" ? <BookLoadStopsSection control={form.control as never} register={form.register as never} /> : null}
+        {activeTab === "v3" ? <BookLoadV3OptionsSection register={form.register as never} /> : null}
+        <div className="rounded border border-gray-200 bg-gray-50 p-2">
+          <label
+            className="flex cursor-not-allowed items-center gap-2 text-xs font-semibold text-gray-600"
+            title="Pending: presettlement linkage will activate when the lookup service ships in a follow-up block. Load will book normally without auto-linking."
+          >
+            <input type="checkbox" disabled />
+            Add to open presettlement (pending follow-up)
+          </label>
+        </div>
         <BookLoadValidationSection issues={validationIssues} />
         <UploadZone
           operatingCompanyId={operatingCompanyId}

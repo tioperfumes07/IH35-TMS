@@ -35,6 +35,7 @@ export type CompanyViolationTypeRow = {
   type_code: string;
   type_name: string;
   default_severity: number;
+  amount_cents: number | null;
   is_active: boolean;
   created_at: string | null;
   updated_at: string | null;
@@ -141,7 +142,7 @@ export function getCompanyViolationType(companyId: string, id: string) {
 
 export function createCompanyViolationType(
   companyId: string,
-  body: Pick<CompanyViolationTypeRow, "type_code" | "type_name" | "default_severity" | "is_active">
+  body: Pick<CompanyViolationTypeRow, "type_code" | "type_name" | "default_severity" | "amount_cents" | "is_active">
 ) {
   return apiRequest<CompanyViolationTypeRow>(withCompany("/api/v1/catalogs/safety/company-violation-types", companyId), {
     method: "POST",
@@ -152,7 +153,7 @@ export function createCompanyViolationType(
 export function updateCompanyViolationType(
   companyId: string,
   id: string,
-  body: Partial<Pick<CompanyViolationTypeRow, "type_code" | "type_name" | "default_severity" | "is_active">>
+  body: Partial<Pick<CompanyViolationTypeRow, "type_code" | "type_name" | "default_severity" | "amount_cents" | "is_active">>
 ) {
   return apiRequest<CompanyViolationTypeRow>(withCompany(`/api/v1/catalogs/safety/company-violation-types/${id}`, companyId), {
     method: "PATCH",

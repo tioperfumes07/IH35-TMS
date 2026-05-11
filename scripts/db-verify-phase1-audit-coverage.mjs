@@ -243,6 +243,14 @@ const EVENT_CLASSES = [
   "integrations.qbo_sync.blocked",
   "integrations.qbo_sync.retry_requested",
   "integrations.qbo_sync.skipped",
+  "safety.company_violation.resolved",
+  "safety.company_violation.auto_fine_created",
+  "dispatch.load.id_reservation_created",
+  "dispatch.load.id_reservation_claimed",
+  "dispatch.load.anticipated_chargeback_flagged",
+  "dispatch.load.instructions_generated",
+  "dispatch.load.instructions_distributed",
+  "dispatch.load.presettlement_link_deferred",
 ];
 
 const WARNING_EVENTS = new Set([

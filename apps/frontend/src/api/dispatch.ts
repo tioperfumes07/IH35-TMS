@@ -97,10 +97,22 @@ export type DispatchBookLoadPayload = {
   operating_company_id: string;
   customer_id: string;
   customer_wo_number?: string;
+  customer_po_number?: string;
   commodity?: string;
   weight_lbs?: number;
+  hazmat?: boolean;
+  driver_instructions_text?: string;
   notes?: string;
   status?: DispatchStatus;
+  booking_mode?: "single_popup" | "legacy_form";
+  requires_tarps?: boolean;
+  tarp_type?: string;
+  lumper_amount_cents?: number;
+  customer_chargeback_requested?: boolean;
+  customer_chargeback_reason?: string;
+  live_load_number?: string;
+  addToOpenPresettlement?: boolean;
+  reservation_uuid?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
   assigned_primary_driver_id?: string;
@@ -118,11 +130,41 @@ export type DispatchBookLoadPayload = {
     country?: string;
     address_line1?: string;
     scheduled_arrival_at?: string;
+    time_window_type?: "appointment" | "first_come_first_serve" | "drop_window";
+    appointment_start_at?: string;
+    appointment_end_at?: string;
+    lumper_required?: boolean;
+    lumper_paid_by?: "carrier" | "shipper" | "broker" | "receiver" | "unknown";
+    lumper_amount_cents?: number;
+    is_tarp_stop?: boolean;
+    tarp_count?: number;
+    stop_notes?: string;
   }>;
   save_mode: "draft" | "book_dispatch";
   override_token?: string;
   override_reason?: string;
 };
+
+export function reserveDispatchLoadId(operatingCompanyId: string) {
+  return apiRequest<{ reservation_uuid: string; load_number: string }>("/api/v1/dispatch/loads/reserve-id", {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+export function patchAnticipatedChargeback(
+  loadId: string,
+  body: {
+    operating_company_id: string;
+    customer_chargeback_requested: boolean;
+    customer_chargeback_reason?: string | null;
+  }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/loads/${loadId}/anticipated-chargeback`, {
+    method: "PATCH",
+    body,
+  });
+}
 
 export function getDispatchPreferences() {
   return apiRequest<{ dispatch_default_view: DispatchV2View }>("/api/v1/dispatch/preferences");
@@ -252,6 +294,13 @@ export function cancelDispatchLoad(
     method: "POST",
     body,
   });
+}
+
+export function distributeLoadInstructions(loadId: string, operatingCompanyId: string) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/dispatch/loads/${loadId}/distribute-instructions?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST" }
+  );
 }
 
 export function listDispatchCancellationReasons() {
