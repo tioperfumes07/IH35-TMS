@@ -3,6 +3,11 @@ import { DispatchCatalogListPage } from "./DispatchCatalogListPage";
 
 export function PickupTimeTypesListPage() {
   return (
-    <DispatchCatalogListPage client={pickupTimeTypesCatalogClient} displayName="Pickup Time Types" breadcrumbPath="Lists & Catalogs / Dispatch / Pickup Time Types" />
+    <DispatchCatalogListPage
+      catalogKey="pickup-time-types"
+      title="Pickup Time Types"
+      description="Manage pickup appointment type values used in load creation and scheduling."
+      client={pickupTimeTypesCatalogClient}
+    />
   );
 }

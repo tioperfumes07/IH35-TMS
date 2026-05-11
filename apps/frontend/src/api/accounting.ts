@@ -44,6 +44,9 @@ export type Invoice = {
   factoring_status?: "not_factored" | "submitted" | "advanced" | "reserve_held" | "collected" | "released" | "recourse_returned";
   payment_terms_label: string | null;
   payment_terms_days: number | null;
+  invoice_type?: "from_load" | "driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual";
+  bill_to_entity_type?: "customer" | "driver" | "vendor" | "other" | null;
+  bill_to_entity_id?: string | null;
   internal_notes: string | null;
   customer_notes: string | null;
   created_at: string;
@@ -175,6 +178,41 @@ export type BillPayment = {
 function withCompany(path: string, operatingCompanyId: string) {
   const separator = path.includes("?") ? "&" : "?";
   return `${path}${separator}operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
+}
+
+type ExpandedInvoiceBody = {
+  customer_id: string;
+  bill_to_entity_type: "customer" | "driver" | "vendor" | "other";
+  bill_to_entity_id?: string | null;
+  issue_date?: string;
+  due_date?: string;
+  internal_notes?: string;
+  customer_notes?: string;
+  auto_deduct_settlement?: boolean;
+};
+
+function createExpandedInvoice(path: string, operatingCompanyId: string, payload: ExpandedInvoiceBody) {
+  return apiRequest<Invoice>(withCompany(path, operatingCompanyId), { method: "POST", body: payload });
+}
+
+export function createDriverDamageInvoice(operatingCompanyId: string, payload: ExpandedInvoiceBody) {
+  return createExpandedInvoice("/api/v1/accounting/invoices/driver-damage", operatingCompanyId, payload);
+}
+
+export function createDriverMiscInvoice(operatingCompanyId: string, payload: ExpandedInvoiceBody) {
+  return createExpandedInvoice("/api/v1/accounting/invoices/driver-misc", operatingCompanyId, payload);
+}
+
+export function createVendorChargebackInvoice(operatingCompanyId: string, payload: ExpandedInvoiceBody) {
+  return createExpandedInvoice("/api/v1/accounting/invoices/vendor-chargeback", operatingCompanyId, payload);
+}
+
+export function createCustomerAdjustmentInvoice(operatingCompanyId: string, payload: ExpandedInvoiceBody) {
+  return createExpandedInvoice("/api/v1/accounting/invoices/customer-adjustment", operatingCompanyId, payload);
+}
+
+export function createManualInvoice(operatingCompanyId: string, payload: ExpandedInvoiceBody) {
+  return createExpandedInvoice("/api/v1/accounting/invoices/manual", operatingCompanyId, payload);
 }
 
 export function listInvoices(operatingCompanyId: string, params: { status?: string; search?: string; customer_id?: string; from_date?: string; to_date?: string } = {}) {

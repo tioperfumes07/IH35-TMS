@@ -21,6 +21,7 @@ import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellati
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerSafetyCatalogRoutes } from "./catalogs/safety/index.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
+import { registerAttachmentsRoutes } from "./documents/attachments.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerDispatchQuicksaveRoutes } from "./dispatch/quicksave.routes.js";
 import { registerDispatchCancellationRoutes } from "./dispatch/cancellation.routes.js";
@@ -67,6 +68,7 @@ import { registerMdataRoutes } from "./mdata/index.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
+import { registerOcrRoutes } from "./ocr/ocr.routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 
@@ -153,6 +155,7 @@ async function main() {
   await registerCatalogsWorkflowRoutes(app);
   await registerFileCategoriesRoutes(app);
   await registerDocsFilesRoutes(app);
+  await registerAttachmentsRoutes(app);
   await registerDispatchLoadRoutes(app);
   await registerDispatchQuicksaveRoutes(app);
   await registerDispatchCancellationRoutes(app);
@@ -181,6 +184,7 @@ async function main() {
   await registerBankingEscrowVisualizerRoutes(app);
   await registerFactoringRoutes(app);
   await registerDataInfrastructureRoutes(app);
+  await registerOcrRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);

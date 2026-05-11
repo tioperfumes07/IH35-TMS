@@ -3,16 +3,19 @@ import { Modal } from "../../../components/Modal";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { EXPENSE_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
+import { UploadZone } from "../../../components/UploadZone";
 
 type Props = {
   open: boolean;
+  operatingCompanyId: string;
   onClose: () => void;
 };
 
-export function CreateExpenseModal({ open, onClose }: Props) {
+export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props) {
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
   const [expenseType, setExpenseType] = useState("fuel");
+  const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const subtotal = lines.reduce((sum, line) => {
     if (line.section === "A") return sum + Number(line.amount || 0);
     const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
@@ -44,6 +47,13 @@ export function CreateExpenseModal({ open, onClose }: Props) {
 
         <TwoSectionLineEditor mode="expense" onChange={setLines} partsLaborMode="parts-and-labor" />
         <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Expense Total = A + B" />
+        <UploadZone
+          operatingCompanyId={operatingCompanyId}
+          entityType="expense"
+          entityId={draftAttachmentEntityId}
+          defaultCategory="receipt"
+          title="Expense Receipts"
+        />
       </div>
     </Modal>
   );

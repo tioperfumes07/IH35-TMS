@@ -5,6 +5,7 @@ import { listCustomers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
 import { Modal } from "../../components/Modal";
+import { UploadZone } from "../../components/UploadZone";
 
 type Props = {
   open: boolean;
@@ -59,6 +60,7 @@ export function RecordPaymentModal({
   const [notes, setNotes] = useState("");
   const [applyByInvoice, setApplyByInvoice] = useState<Record<string, number>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
 
   const customersQuery = useQuery({
     queryKey: ["record-payment", "customers", operatingCompanyId],
@@ -98,6 +100,7 @@ export function RecordPaymentModal({
     setNotes("");
     setErrorMessage(null);
     setApplyByInvoice({});
+    setDraftAttachmentEntityId(crypto.randomUUID());
   }, [open, prefillAmountCents, prefillCustomerId]);
 
   useEffect(() => {
@@ -284,6 +287,14 @@ export function RecordPaymentModal({
             })}
           </div>
         </div>
+
+        <UploadZone
+          operatingCompanyId={operatingCompanyId}
+          entityType="payment"
+          entityId={draftAttachmentEntityId}
+          defaultCategory={paymentMethod === "check" ? "check_image" : paymentMethod === "wire" ? "wire_confirmation" : "ach_confirmation"}
+          title="Payment Proof / Backup"
+        />
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>

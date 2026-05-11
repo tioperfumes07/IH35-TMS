@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { buildInvoiceFromLoad } from "./from-load.js";
+import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -28,6 +29,17 @@ const createBodySchema = z.object({
 
 const fromLoadBodySchema = z.object({
   load_id: z.string().uuid(),
+});
+
+const expandedInvoiceBodySchema = z.object({
+  customer_id: z.string().uuid(),
+  bill_to_entity_type: z.enum(["customer", "driver", "vendor", "other"]),
+  bill_to_entity_id: z.string().uuid().nullable().optional(),
+  issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  internal_notes: z.string().trim().max(5000).optional(),
+  customer_notes: z.string().trim().max(5000).optional(),
+  auto_deduct_settlement: z.boolean().optional(),
 });
 
 const patchBodySchema = z
@@ -271,6 +283,46 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       throw error;
     }
   });
+
+  const registerExpandedRoute = (path: string, invoiceType: "driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual") => {
+    app.post(path, async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const query = companyQuerySchema.safeParse(req.query ?? {});
+      if (!query.success) return validationError(reply, query.error);
+      const body = expandedInvoiceBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+
+      try {
+        const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+          const created = await createExpandedInvoice(client, {
+            operatingCompanyId: query.data.operating_company_id,
+            userId: user.uuid,
+            invoiceType,
+            customerId: body.data.customer_id,
+            billToEntityType: body.data.bill_to_entity_type,
+            billToEntityId: body.data.bill_to_entity_id ?? null,
+            issueDate: body.data.issue_date,
+            dueDate: body.data.due_date,
+            internalNotes: body.data.internal_notes,
+            customerNotes: body.data.customer_notes,
+            autoDeductSettlement: body.data.auto_deduct_settlement,
+          });
+          return enrichInvoice(client, created.id);
+        });
+        return reply.code(201).send(result);
+      } catch (error) {
+        if (String((error as Error).message ?? "") === "customer_not_found") return reply.code(404).send({ error: "customer_not_found" });
+        return reply.code(500).send({ error: "invoice_create_failed" });
+      }
+    });
+  };
+
+  registerExpandedRoute("/api/v1/accounting/invoices/driver-damage", "driver_damage");
+  registerExpandedRoute("/api/v1/accounting/invoices/driver-misc", "driver_misc");
+  registerExpandedRoute("/api/v1/accounting/invoices/vendor-chargeback", "vendor_chargeback");
+  registerExpandedRoute("/api/v1/accounting/invoices/customer-adjustment", "customer_adjustment");
+  registerExpandedRoute("/api/v1/accounting/invoices/manual", "manual");
 
   app.patch("/api/v1/accounting/invoices/:id", async (req, reply) => {
     const user = currentAuthUser(req, reply);

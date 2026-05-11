@@ -53,13 +53,13 @@ describe("TypeTabBar", () => {
   });
 
   it("CreateBillModal mounts with Repair Bill active", () => {
-    render(<CreateBillModal open linkedWoDisplayId="WO-T169-IS-01-01-2026-0001-12345" onClose={vi.fn()} />);
+    render(<CreateBillModal open operatingCompanyId="00000000-0000-0000-0000-000000000001" linkedWoDisplayId="WO-T169-IS-01-01-2026-0001-12345" onClose={vi.fn()} />);
     const btn = screen.getByRole("button", { name: "Repair Bill" }) as HTMLButtonElement;
     expect(btn.style.borderBottom).toContain("2px solid");
   });
 
   it("CreateExpenseModal mounts with Fuel Expense active", () => {
-    render(<CreateExpenseModal open onClose={vi.fn()} />);
+    render(<CreateExpenseModal open operatingCompanyId="00000000-0000-0000-0000-000000000001" onClose={vi.fn()} />);
     const btn = screen.getByRole("button", { name: "Fuel Expense" }) as HTMLButtonElement;
     expect(btn.style.borderBottom).toContain("2px solid");
   });

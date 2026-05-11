@@ -3,17 +3,20 @@ import { Modal } from "../../../components/Modal";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
+import { UploadZone } from "../../../components/UploadZone";
 
 type Props = {
   open: boolean;
+  operatingCompanyId: string;
   linkedWoDisplayId?: string;
   onClose: () => void;
 };
 
-export function CreateBillModal({ open, linkedWoDisplayId, onClose }: Props) {
+export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, onClose }: Props) {
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
   const [billType, setBillType] = useState("repair");
+  const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const subtotal = lines.reduce((sum, line) => {
     if (line.section === "A") return sum + Number(line.amount || 0);
     const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
@@ -21,7 +24,11 @@ export function CreateBillModal({ open, linkedWoDisplayId, onClose }: Props) {
   }, 0);
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Bill">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Create Bill"
+    >
       <div className="space-y-3">
         <TypeTabBar tabs={BILL_TYPE_TABS} activeId={billType} onChange={setBillType} />
 
@@ -39,6 +46,13 @@ export function CreateBillModal({ open, linkedWoDisplayId, onClose }: Props) {
 
         <TwoSectionLineEditor mode="bill" onChange={setLines} partsLaborMode="parts-and-labor" />
         <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Bill Total = A + B" />
+        <UploadZone
+          operatingCompanyId={operatingCompanyId}
+          entityType="bill"
+          entityId={draftAttachmentEntityId}
+          defaultCategory="vendor_invoice"
+          title="Bill Attachments"
+        />
       </div>
     </Modal>
   );

@@ -9,14 +9,14 @@ import { FleetSnapshotPanel } from "../components/home/FleetSnapshotPanel";
 import { useCompanyContext } from "../contexts/CompanyContext";
 
 const QUICK_JUMPS = [
-  { title: "Maintenance", subtitle: "Work orders, R&M, Severe Repair", count: 14 },
-  { title: "Accounting", subtitle: "Bills, Expenses, Bill payment", count: 38 },
-  { title: "Banking", subtitle: "Categorize, Reconcile, Transfer", count: 22 },
-  { title: "Fuel", subtitle: "Relay inbox, Settings, Planner", count: 19 },
-  { title: "Safety", subtitle: "HOS, Antidoping, Accidents, DOT", count: 6 },
-  { title: "Drivers", subtitle: "Profiles, Settlements, Permits", count: 3 },
-  { title: "Dispatch", subtitle: "Loads, Settlements, Geofencing", count: 27 },
-  { title: "Lists & Catalogs", subtitle: "Grouped by domain · 8 sets", count: null },
+  { title: "Maintenance", subtitle: "Work orders, R&M, Severe Repair", count: 14, to: "/maintenance" },
+  { title: "Accounting", subtitle: "Bills, Expenses, Bill payment", count: 38, to: "/accounting/invoices" },
+  { title: "Banking", subtitle: "Categorize, Reconcile, Transfer", count: 22, to: "/banking" },
+  { title: "Fuel", subtitle: "Relay inbox, Settings, Planner", count: 19, to: "/fuel" },
+  { title: "Safety", subtitle: "HOS, Antidoping, Accidents, DOT", count: 6, to: "/safety" },
+  { title: "Drivers", subtitle: "Profiles, Settlements, Permits", count: 3, to: "/drivers" },
+  { title: "Dispatch", subtitle: "Loads, Settlements, Geofencing", count: 27, to: "/dispatch" },
+  { title: "Lists & Catalogs", subtitle: "Grouped by domain · 8 sets", count: null, to: "/lists" },
 ];
 
 type Props = {
@@ -124,7 +124,7 @@ export function HomePage({ auth }: Props) {
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {QUICK_JUMPS.map((jump) => (
-          <SectionQuickJump key={jump.title} title={jump.title} subtitle={jump.subtitle} count={jump.count} />
+          <SectionQuickJump key={jump.title} title={jump.title} subtitle={jump.subtitle} count={jump.count} to={jump.to} />
         ))}
       </div>
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
@@ -6,6 +6,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { UploadZone } from "../../../components/UploadZone";
 import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
@@ -49,6 +50,7 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
   const [overrideToken, setOverrideToken] = useState<string | null>(null);
   const [pendingCloseAfterAdvisory, setPendingCloseAfterAdvisory] = useState(false);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
+  const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const form = useForm<FormValues>({
     defaultValues: {
       customer_id: "",
@@ -98,6 +100,11 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
 
   const canOverrideHardBlock = auth.user?.role === "Owner";
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
+
+  useEffect(() => {
+    if (!open) return;
+    setDraftAttachmentEntityId(crypto.randomUUID());
+  }, [open]);
 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     setGateBanner(null);
@@ -297,6 +304,30 @@ export function BookLoadModal({ open, operatingCompanyId, onClose, onCreated }: 
         <BookLoadEquipmentSection register={form.register} />
         <BookLoadStopsSection control={form.control as never} register={form.register as never} />
         <BookLoadValidationSection issues={validationIssues} />
+        <UploadZone
+          operatingCompanyId={operatingCompanyId}
+          entityType="manual"
+          entityId={draftAttachmentEntityId}
+          defaultCategory="rate_confirmation"
+          title="Rate Confirmations / Load Documents"
+          onOcrParsed={(parsed) => {
+            if (parsed.customer_id) form.setValue("customer_id", parsed.customer_id, { shouldDirty: true });
+            if (parsed.rate_cents > 0) form.setValue("linehaul_cents", parsed.rate_cents, { shouldDirty: true });
+            const currentStops = form.getValues("stops");
+            if (currentStops[0]) {
+              form.setValue("stops.0.city", parsed.origin_city, { shouldDirty: true });
+              form.setValue("stops.0.state", parsed.origin_state, { shouldDirty: true });
+            }
+            if (currentStops[1]) {
+              form.setValue("stops.1.city", parsed.destination_city, { shouldDirty: true });
+              form.setValue("stops.1.state", parsed.destination_state, { shouldDirty: true });
+            }
+            pushToast(
+              `Rate confirmation parsed (${Math.round(parsed.confidence_score * 100)}% confidence)`,
+              parsed.confidence_score >= 0.7 ? "success" : "info"
+            );
+          }}
+        />
 
         <div className="flex items-center justify-between rounded border border-gray-200 bg-white px-3 py-2">
           <div className="text-xs text-gray-600">
