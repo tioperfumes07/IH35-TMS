@@ -80,25 +80,22 @@ import { registerLegalTemplateRoutes } from "./legal/templates.routes.js";
 import { registerLegalContractRoutes } from "./legal/contracts.routes.js";
 import { registerLegalSignRoutes } from "./legal/sign.routes.js";
 import { registerLegalAttorneyReviewRoutes } from "./legal/attorney-review.routes.js";
+import { registerLegalMattersRoutes } from "./legal/matters.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
 import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
 import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
+import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
+import { getCorsAllowedOrigins } from "./config/cors-allowed-origins.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
 const app = Fastify({ logger: true });
 let shuttingDown = false;
-const ALLOWED_ORIGINS = (
-  process.env.CORS_ALLOWED_ORIGINS ??
-  "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174"
-)
-  .split(",")
-  .map((value) => value.trim())
-  .filter(Boolean);
+const ALLOWED_ORIGINS = getCorsAllowedOrigins();
 
 // Required for BT-1-AUTH-DRIVER phone auth:
 // - TWILIO_ACCOUNT_SID
@@ -232,6 +229,7 @@ async function main() {
   await registerLegalContractRoutes(app);
   await registerLegalSignRoutes(app);
   await registerLegalAttorneyReviewRoutes(app);
+  await registerLegalMattersRoutes(app);
 
   try {
     await initializeQboHistoricalImportRunner(app);
@@ -260,6 +258,13 @@ async function main() {
     app.log.info("[STARTUP] cash-advance-request-expiry-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] cash-advance-request-expiry-cron failed");
+  }
+
+  try {
+    initializeLegalMattersReminderCron(app);
+    app.log.info("[STARTUP] legal-matters-reminder-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] legal-matters-reminder-cron failed");
   }
 
   const port = Number(process.env.PORT || 3000);

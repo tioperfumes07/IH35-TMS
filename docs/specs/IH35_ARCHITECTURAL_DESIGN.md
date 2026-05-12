@@ -654,7 +654,7 @@ Days to Next Submission · Current Period Cash Receipts · Current Period Disbur
 ### Top action button
 **+ Create Contract**
 
-### Sub-nav tabs (4 — Phase 8A)
+### Sub-nav tabs (6 — Phase 8A + Phase 8C matters)
 
 | Tab | What it shows | Phase |
 |-----|---------------|-------|
@@ -662,6 +662,8 @@ Days to Next Submission · Current Period Cash Receipts · Current Period Disbur
 | **Templates** | Versioned legal template library with review status lifecycle | Phase 8A |
 | **Policies** | Policy acknowledgment templates and status rollups | Phase 8A |
 | **Attorney Review** | Submitted templates awaiting legal approval decision | Phase 8A |
+| **Matters** | Lawsuits / claims / deadlines tracker (privilege-aware documents) | Phase 8C |
+| **Reports** | Legal matters rollups (severity, exposure, settlements, deadlines) | Phase 8C |
 
 ### Template status lifecycle (LOCKED)
 `draft -> pending_review -> approved -> active -> retired`
