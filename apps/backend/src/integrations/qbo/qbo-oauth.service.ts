@@ -26,6 +26,18 @@ type QboConnectionRow = {
   updated_at: string;
 };
 
+export type RealmLinkSummary = {
+  operating_company_id: string;
+  company_code: string | null;
+  company_short_name: string | null;
+  connection_id: string;
+};
+
+export type ExchangeAuthCodeResult = {
+  connection: QboConnectionRow;
+  realmLinks: RealmLinkSummary[];
+};
+
 function requireEnv(name: string) {
   const value = (process.env[name] ?? "").trim();
   if (!value) throw new Error(`${name} is required`);
@@ -131,6 +143,7 @@ async function appendSystemAudit(eventClass: string, payload: Record<string, unk
 
 async function getActiveConnectionByCompany(operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const res = await client.query<QboConnectionRow>(
       `
         SELECT *
@@ -146,9 +159,57 @@ async function getActiveConnectionByCompany(operatingCompanyId: string) {
   });
 }
 
-async function getConnectionById(connectionId: string) {
+export async function findActiveRealmLinks(realmId: string): Promise<RealmLinkSummary[]> {
   return withLuciaBypass(async (client) => {
-    const res = await client.query<QboConnectionRow>(`SELECT * FROM integrations.qbo_connections WHERE id = $1 LIMIT 1`, [connectionId]);
+    const companiesRes = await client.query<{ id: string }>(
+      `SELECT id::text AS id FROM org.companies WHERE is_active = true ORDER BY id`
+    );
+
+    const links: RealmLinkSummary[] = [];
+    for (const company of companiesRes.rows) {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      const res = await client.query<RealmLinkSummary>(
+        `
+          SELECT
+            qc.operating_company_id::text AS operating_company_id,
+            c.code AS company_code,
+            c.short_name AS company_short_name,
+            qc.id::text AS connection_id
+          FROM integrations.qbo_connections qc
+          JOIN org.companies c ON c.id = qc.operating_company_id
+          WHERE qc.realm_id = $1
+            AND qc.revoked_at IS NULL
+          ORDER BY qc.updated_at DESC
+        `,
+        [realmId]
+      );
+      links.push(...res.rows);
+    }
+
+    const dedup = new Map<string, RealmLinkSummary>();
+    for (const row of links) {
+      const key = `${row.operating_company_id}:${row.connection_id}`;
+      dedup.set(key, row);
+    }
+    return Array.from(dedup.values());
+  });
+}
+
+async function getConnectionById(connectionId: string, operatingCompanyId?: string) {
+  return withLuciaBypass(async (client) => {
+    if (operatingCompanyId) {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    }
+    const res = await client.query<QboConnectionRow>(
+      `
+        SELECT *
+        FROM integrations.qbo_connections
+        WHERE id = $1
+          AND ($2::uuid IS NULL OR operating_company_id = $2::uuid)
+        LIMIT 1
+      `,
+      [connectionId, operatingCompanyId ?? null]
+    );
     return res.rows[0] ?? null;
   });
 }
@@ -224,7 +285,7 @@ export async function exchangeAuthCodeForTokens(
   operatingCompanyId: string,
   userId: string,
   redirectUri = redirectUriFromEnv()
-) {
+): Promise<ExchangeAuthCodeResult> {
   const payload = await tokenExchangeRequest(
     new URLSearchParams({
       grant_type: "authorization_code",
@@ -303,11 +364,27 @@ export async function exchangeAuthCodeForTokens(
       "P5-T6-HOTFIX-QBO-OAUTH"
     );
   });
-  return saved;
+
+  const realmLinks = await findActiveRealmLinks(realmId);
+  const linkedOtherCompanies = realmLinks.filter((row) => row.operating_company_id !== operatingCompanyId);
+  if (linkedOtherCompanies.length > 0) {
+    await appendSystemAudit(
+      "integrations.qbo.shared_realm_detected",
+      {
+        realm_id: realmId,
+        primary_operating_company_id: operatingCompanyId,
+        linked_company_ids: linkedOtherCompanies.map((row) => row.operating_company_id),
+        linked_company_codes: linkedOtherCompanies.map((row) => row.company_code).filter(Boolean),
+      },
+      "warning"
+    );
+  }
+
+  return { connection: saved, realmLinks };
 }
 
-export async function refreshAccessToken(connectionId: string, actorUserId?: string | null) {
-  const connection = await getConnectionById(connectionId);
+export async function refreshAccessToken(connectionId: string, operatingCompanyId: string, actorUserId?: string | null) {
+  const connection = await getConnectionById(connectionId, operatingCompanyId);
   if (!connection || connection.revoked_at) throw new Error("qbo_connection_not_found");
 
   const refreshToken = decryptToken(connection.refresh_token);
@@ -324,6 +401,7 @@ export async function refreshAccessToken(connectionId: string, actorUserId?: str
   const refreshTokenExpiresAt = expiryFromNow(Number(payload.x_refresh_token_expires_in ?? 8_640_000));
 
   await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     await client.query(
       `
         UPDATE integrations.qbo_connections
@@ -336,8 +414,9 @@ export async function refreshAccessToken(connectionId: string, actorUserId?: str
           last_used_at = now(),
           updated_at = now()
         WHERE id = $1
+          AND operating_company_id = $6
       `,
-      [connectionId, accessTokenEncrypted, refreshTokenEncrypted, accessTokenExpiresAt, refreshTokenExpiresAt]
+      [connectionId, accessTokenEncrypted, refreshTokenEncrypted, accessTokenExpiresAt, refreshTokenExpiresAt, operatingCompanyId]
     );
   });
 
@@ -360,7 +439,7 @@ export async function refreshAccessToken(connectionId: string, actorUserId?: str
     });
   }
 
-  const updated = await getConnectionById(connectionId);
+  const updated = await getConnectionById(connectionId, operatingCompanyId);
   if (!updated) throw new Error("qbo_connection_refresh_failed");
   return updated;
 }
@@ -373,11 +452,15 @@ export async function getValidAccessToken(operatingCompanyId: string) {
 
   const expiresAt = new Date(connection.access_token_expires_at).getTime();
   const needsRefresh = Number.isNaN(expiresAt) || expiresAt <= Date.now() + 5 * 60 * 1000;
-  const next = needsRefresh ? await refreshAccessToken(connection.id) : connection;
+  const next = needsRefresh ? await refreshAccessToken(connection.id, operatingCompanyId) : connection;
 
-  await withLuciaBypass((client) =>
-    client.query(`UPDATE integrations.qbo_connections SET last_used_at = now(), updated_at = now() WHERE id = $1`, [next.id])
-  );
+  await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(
+      `UPDATE integrations.qbo_connections SET last_used_at = now(), updated_at = now() WHERE id = $1 AND operating_company_id = $2`,
+      [next.id, operatingCompanyId]
+    );
+  });
   return {
     access_token: decryptToken(next.access_token),
     realm_id: next.realm_id,
@@ -388,8 +471,8 @@ export async function getValidAccessToken(operatingCompanyId: string) {
   };
 }
 
-export async function revokeConnection(connectionId: string, userId: string) {
-  const connection = await getConnectionById(connectionId);
+export async function revokeConnection(connectionId: string, operatingCompanyId: string, userId: string) {
+  const connection = await getConnectionById(connectionId, operatingCompanyId);
   if (!connection || connection.revoked_at) throw new Error("qbo_connection_not_found");
 
   const refreshToken = decryptToken(connection.refresh_token);
@@ -444,23 +527,39 @@ export async function getQboConnectionStatus(operatingCompanyId: string) {
 
 export async function getConnectionsExpiringWithin(secondsAhead: number) {
   return withLuciaBypass(async (client) => {
-    const res = await client.query<{
+    const companies = await client.query<{ id: string }>(
+      `SELECT id::text AS id FROM org.companies WHERE is_active = true ORDER BY id`
+    );
+
+    const out: Array<{
       id: string;
       operating_company_id: string;
       realm_id: string;
       refresh_token_expires_at: string;
       revoked_at: string | null;
-    }>(
-      `
-        SELECT id, operating_company_id, realm_id, refresh_token_expires_at, revoked_at
-        FROM integrations.qbo_connections
-        WHERE revoked_at IS NULL
-          AND refresh_token_expires_at <= now() + ($1::int * interval '1 second')
-        ORDER BY refresh_token_expires_at ASC
-      `,
-      [secondsAhead]
-    );
-    return res.rows;
+    }> = [];
+
+    for (const company of companies.rows) {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      const res = await client.query<{
+        id: string;
+        operating_company_id: string;
+        realm_id: string;
+        refresh_token_expires_at: string;
+        revoked_at: string | null;
+      }>(
+        `
+          SELECT id, operating_company_id, realm_id, refresh_token_expires_at, revoked_at
+          FROM integrations.qbo_connections
+          WHERE revoked_at IS NULL
+            AND refresh_token_expires_at <= now() + ($1::int * interval '1 second')
+          ORDER BY refresh_token_expires_at ASC
+        `,
+        [secondsAhead]
+      );
+      out.push(...res.rows);
+    }
+    return out;
   });
 }
 

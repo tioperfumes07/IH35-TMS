@@ -27,6 +27,7 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed:test-fixtures": "node scripts/db-seed-test-fixtures.mjs",
     "db:seed:test-fixtures:cleanup": "node scripts/db-seed-test-fixtures.mjs --cleanup",
+    "e2e:forensic-import": "node scripts/e2e-forensic-import-test.mjs",
     "db:verify:critical-runtime": "node scripts/db-verify-critical-runtime.mjs",
     "db:verify:audit-append-only": "node scripts/db-verify-audit-append-only.mjs",
     "outbox:worker": "node scripts/outbox-worker.mjs",

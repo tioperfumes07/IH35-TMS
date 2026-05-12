@@ -37,6 +37,7 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 
 async function loadConnectionId(operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
       `
         SELECT id
@@ -171,7 +172,8 @@ export async function registerQboOAuthRoutes(app: FastifyInstance) {
         { step: "token_exchange_start", realmId, operating_company_id: operatingCompanyId },
         "Exchanging auth code for tokens"
       );
-      const conn = await exchangeAuthCodeForTokens(code, realmId, operatingCompanyId, user.uuid);
+      const authResult = await exchangeAuthCodeForTokens(code, realmId, operatingCompanyId, user.uuid);
+      const conn = authResult.connection;
       req.log.info(
         {
           step: "token_exchange_success",
@@ -181,6 +183,10 @@ export async function registerQboOAuthRoutes(app: FastifyInstance) {
         },
         "OAuth tokens saved to DB successfully"
       );
+
+      const linkedOtherCompanies = authResult.realmLinks.filter((row) => row.operating_company_id !== operatingCompanyId);
+      const hasSharedRealmWarning = linkedOtherCompanies.length > 0;
+      const sharedCompanyCodes = linkedOtherCompanies.map((row) => row.company_code).filter(Boolean).join(",");
 
       await withCurrentUser(user.uuid, async (client) => {
         await appendCrudAudit(
@@ -193,9 +199,15 @@ export async function registerQboOAuthRoutes(app: FastifyInstance) {
         );
       });
 
-      const redirectUrl = `${frontendBaseUrl()}/admin/forensic-review?qbo_authorized=true&company_id=${encodeURIComponent(
-        operatingCompanyId
-      )}`;
+      const params = new URLSearchParams({
+        qbo_authorized: "true",
+        company_id: operatingCompanyId,
+      });
+      if (hasSharedRealmWarning) {
+        params.set("qbo_warning", "shared_realm_detected");
+        if (sharedCompanyCodes) params.set("shared_realm_company_codes", sharedCompanyCodes);
+      }
+      const redirectUrl = `${frontendBaseUrl()}/admin/forensic-review?${params.toString()}`;
       return reply.redirect(redirectUrl);
     } catch (error) {
       const message = String((error as Error)?.message ?? "token_exchange_failed");
@@ -225,7 +237,7 @@ export async function registerQboOAuthRoutes(app: FastifyInstance) {
     const connectionId = await loadConnectionId(params.data.operating_company_id);
     if (!connectionId) return reply.code(404).send({ error: "qbo_connection_not_found" });
 
-    await revokeConnection(connectionId, user.uuid);
+    await revokeConnection(connectionId, params.data.operating_company_id, user.uuid);
     return { ok: true };
   });
 
