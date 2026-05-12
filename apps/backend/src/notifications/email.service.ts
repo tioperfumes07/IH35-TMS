@@ -77,6 +77,24 @@ function senderAddress(sender: EmailSender) {
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<{ id: string }> {
+  const emailTestMode = process.env.EMAIL_TEST_MODE === "1";
+  if (emailTestMode) {
+    const fakeId = `test-email-${Date.now()}`;
+    await appendEmailAudit(
+      "email.sent",
+      {
+        event_class: params.eventClass,
+        sender: params.sender,
+        subject: params.subject,
+        to_count: Array.isArray(params.to) ? params.to.length : 1,
+        email_id: fakeId,
+        mode: "test_bypass",
+      },
+      params.actorUserId ?? null
+    );
+    return { id: fakeId };
+  }
+
   if (!resend) {
     const err = "RESEND_API_KEY is missing";
     await appendEmailAudit(

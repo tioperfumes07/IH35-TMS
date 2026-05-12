@@ -115,6 +115,24 @@ async function relationExists(
   return Boolean(res.rows[0]?.exists);
 }
 
+async function optionalQuery<T = Record<string, unknown>>(
+  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  sql: string,
+  values: unknown[]
+) {
+  const savepoint = `sp_optional_${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    await client.query(`SAVEPOINT ${savepoint}`);
+    const res = await client.query<T>(sql, values);
+    await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+    return res.rows;
+  } catch {
+    await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`).catch(() => undefined);
+    await client.query(`RELEASE SAVEPOINT ${savepoint}`).catch(() => undefined);
+    return [] as T[];
+  }
+}
+
 async function createDriverBillArtifacts(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: BookLoadInput,
@@ -229,19 +247,18 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     const wf044Warnings: Array<Record<string, unknown>> = [];
 
     if (input.assigned_unit_id) {
-      const unitRes = await client
-        .query(
-          `
-            SELECT id, display_id, is_dispatch_blocked, dispatch_block_reason, has_open_pm_due_wo, open_wo_count
-            FROM views.units_with_dispatch_status
-            WHERE id = $1
-              AND operating_company_id = $2
-            LIMIT 1
-          `,
-          [input.assigned_unit_id, input.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      const unit = unitRes.rows[0] ?? null;
+      const unitRows = await optionalQuery(
+        client,
+        `
+          SELECT id, display_id, is_dispatch_blocked, dispatch_block_reason, has_open_pm_due_wo, open_wo_count
+          FROM views.units_with_dispatch_status
+          WHERE id = $1
+            AND operating_company_id = $2
+          LIMIT 1
+        `,
+        [input.assigned_unit_id, input.operating_company_id]
+      );
+      const unit = unitRows[0] ?? null;
       if (unit?.has_open_pm_due_wo) {
         wf044Warnings.push({
           unit_id: unit.id,
@@ -330,19 +347,18 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     }
 
     if (input.assigned_primary_driver_id) {
-      const hosRes = await client
-        .query(
-          `
-            SELECT id, display_id, full_name, hos_badge_color, is_in_violation, minutes_until_violation
-            FROM views.drivers_with_hos_status
-            WHERE id = $1
-              AND operating_company_id = $2
-            LIMIT 1
-          `,
-          [input.assigned_primary_driver_id, input.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      const hos = hosRes.rows[0] ?? null;
+      const hosRows = await optionalQuery(
+        client,
+        `
+          SELECT id, display_id, full_name, hos_badge_color, is_in_violation, minutes_until_violation
+          FROM views.drivers_with_hos_status
+          WHERE id = $1
+            AND operating_company_id = $2
+          LIMIT 1
+        `,
+        [input.assigned_primary_driver_id, input.operating_company_id]
+      );
+      const hos = hosRows[0] ?? null;
       if (hos?.is_in_violation) {
         if (!input.override_token) {
           await appendCrudAudit(

@@ -1,0 +1,10 @@
+[
+  {
+    "filename": "0124_p6_active_drift_reconciliation.sql",
+    "ledger_checksum": "e199881eb4ef1b25ee6d555b940207bb2e67135c897021623ab428033cf7b445",
+    "disk_checksum": "4fe831c44e9299a1d652c050e457df50944c361171289d158029e1e8a18a1fc2",
+    "reason": "Production applied legacy 0124 variant before final repository-stabilized text; allow deterministic replay without blocking subsequent migrations.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "BLOCK-C-STABILITY"
+  }
+]

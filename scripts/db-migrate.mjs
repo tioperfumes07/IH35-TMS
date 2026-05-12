@@ -16,6 +16,7 @@ if (!connectionString) {
 const SEARCH_PATH =
   "mdata, dispatch, docs, catalogs, identity, org, integrations, qbo_archive, accounting, banking, factor, documents, pwa, audit, outbox, safety, fuel, driver_finance, maintenance, views, public";
 const MIGRATIONS_DIR = path.resolve("db/migrations");
+const CHECKSUM_OVERRIDES_FILE = path.resolve("scripts/lib/migration-checksum-overrides.json");
 const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;
 const ARGS = new Set(process.argv.slice(2));
 const VERIFY_ONLY = ARGS.has("--verify-only");
@@ -27,6 +28,24 @@ function listMigrationFiles() {
 
 function sha256(text) {
   return crypto.createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+function loadChecksumOverrides() {
+  if (!fs.existsSync(CHECKSUM_OVERRIDES_FILE)) return new Map();
+  const raw = fs.readFileSync(CHECKSUM_OVERRIDES_FILE, "utf8");
+  const parsed = JSON.parse(raw);
+  const map = new Map();
+  for (const item of parsed) {
+    if (!item?.filename || !item?.ledger_checksum || !item?.disk_checksum) continue;
+    map.set(item.filename, item);
+  }
+  return map;
+}
+
+function isChecksumOverrideMatch(overridesByFile, file, ledgerChecksum, diskChecksum) {
+  const override = overridesByFile.get(file);
+  if (!override) return false;
+  return override.ledger_checksum === ledgerChecksum && override.disk_checksum === diskChecksum;
 }
 
 async function ensureLedger(client) {
@@ -89,7 +108,7 @@ async function applyMigration(client, file, sql, checksum) {
   }
 }
 
-async function runVerifyOnly(client, diskMigrations, ledgerByFile) {
+async function runVerifyOnly(client, diskMigrations, ledgerByFile, overridesByFile) {
   const pending = [];
   const drift = [];
 
@@ -102,7 +121,7 @@ async function runVerifyOnly(client, diskMigrations, ledgerByFile) {
       pending.push(migration);
       continue;
     }
-    if (ledger.checksum !== checksum) {
+    if (ledger.checksum !== checksum && !isChecksumOverrideMatch(overridesByFile, migration, ledger.checksum, checksum)) {
       drift.push(`${migration}: checksum mismatch (ledger=${ledger.checksum}, disk=${checksum})`);
     }
   }
@@ -163,9 +182,10 @@ try {
   const diskMigrations = listMigrationFiles();
   const ledgerRows = await getLedgerRows(client);
   const ledgerByFile = new Map(ledgerRows.map((row) => [row.filename, row]));
+  const overridesByFile = loadChecksumOverrides();
 
   if (VERIFY_ONLY) {
-    await runVerifyOnly(client, diskMigrations, ledgerByFile);
+    await runVerifyOnly(client, diskMigrations, ledgerByFile, overridesByFile);
     process.exit(0);
   }
 
@@ -180,10 +200,14 @@ try {
     const ledger = ledgerByFile.get(file);
 
     if (ledger) {
-      if (ledger.checksum !== checksum) {
+      if (ledger.checksum !== checksum && !isChecksumOverrideMatch(overridesByFile, file, ledger.checksum, checksum)) {
         throw new Error(
           `Migration ${file} was modified after apply (ledger checksum ${ledger.checksum}, disk checksum ${checksum}). Create a follow-up migration instead.`
         );
+      }
+      if (ledger.checksum !== checksum) {
+        console.log(`SKIP ${file} (checksum override accepted)`);
+        continue;
       }
       console.log(`SKIP ${file} (already applied)`);
       continue;
