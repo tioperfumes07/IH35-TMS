@@ -8,6 +8,9 @@ import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
+import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
+import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
+import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -87,6 +90,7 @@ import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-impor
 import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
 import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
+import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
@@ -158,6 +162,9 @@ async function main() {
   await registerForensicLiveRoutes(app);
   await registerAuthRoutes(app);
   await registerQboOAuthRoutes(app);
+  await registerSamsaraWebhookRoutes(app);
+  await registerSamsaraConfigRoutes(app);
+  await registerSamsaraHealthRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -265,6 +272,13 @@ async function main() {
     app.log.info("[STARTUP] cash-advance-request-expiry-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] cash-advance-request-expiry-cron failed");
+  }
+
+  try {
+    initializeSamsaraHealthCheckCron(app);
+    app.log.info("[STARTUP] samsara-health-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] samsara-health-cron failed");
   }
 
   try {

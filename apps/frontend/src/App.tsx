@@ -54,6 +54,7 @@ import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
+import { SamsaraIntegrationPage } from "./pages/integrations/SamsaraIntegrationPage";
 import { DocumentsPage } from "./pages/Documents";
 import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
@@ -119,6 +120,20 @@ function OwnerAdminRoute({ children }: { children: ReactNode }) {
   }
   const role = String(auth.user.role ?? "");
   if (role !== "Owner" && role !== "Administrator") {
+    return <Navigate to="/home" replace />;
+  }
+  return <Shell auth={auth.user}>{children}</Shell>;
+}
+
+function OwnerOnlyRoute({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  if (auth.isLoading) {
+    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Checking session...</div>;
+  }
+  if (!auth.user || auth.isUnauthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (String(auth.user.role ?? "") !== "Owner") {
     return <Navigate to="/home" replace />;
   }
   return <Shell auth={auth.user}>{children}</Shell>;
@@ -421,6 +436,14 @@ export default function App() {
             <ProtectedRoute>
               <ComingSoonPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/integrations/samsara"
+          element={
+            <OwnerOnlyRoute>
+              <SamsaraIntegrationPage />
+            </OwnerOnlyRoute>
           }
         />
         <Route
