@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withLuciaBypass } from "./db.js";
 import { lucia } from "./lucia.js";
+import { setLuciaSessionCookie } from "./session-cookie-policy.js";
 
 const redeemInviteBodySchema = z.object({
   token: z.string().trim().min(1),
@@ -114,7 +115,7 @@ export async function registerInviteAuthRoutes(app: FastifyInstance) {
     }
 
     const sessionCookie = lucia.createSessionCookie(redemption.session.id);
-    reply.setCookie(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+    setLuciaSessionCookie(reply, sessionCookie);
     return reply.code(200).send({
       ok: true,
       user: {

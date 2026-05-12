@@ -2,7 +2,7 @@
 export function getCorsAllowedOrigins(): string[] {
   return (
     process.env.CORS_ALLOWED_ORIGINS ??
-    "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174"
+    "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,https://app.ih35dispatch.com,http://localhost:5173,http://localhost:5174"
   )
     .split(",")
     .map((value) => value.trim())

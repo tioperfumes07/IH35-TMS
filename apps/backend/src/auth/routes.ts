@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { generateState, generateCodeVerifier, OAuth2RequestError } from "arctic";
 import { lucia, google } from "./lucia.js";
 import { withLuciaBypass } from "./db.js";
+import { oauthPkceCookieOptions, setLuciaSessionCookie, clearSessionCookieOptions } from "./session-cookie-policy.js";
 
 const STATE_COOKIE = "ih35_oauth_state";
 const VERIFIER_COOKIE = "ih35_oauth_verifier";
@@ -9,7 +10,7 @@ const COOKIE_MAX_AGE = 60 * 10;
 const DEFAULT_FRONTEND_BASE_URL = "https://ih35-tms-web.onrender.com";
 const ALLOWED_RETURN_URLS = (
   process.env.CORS_ALLOWED_ORIGINS ??
-  "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174"
+  "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,https://app.ih35dispatch.com,http://localhost:5173,http://localhost:5174"
 )
   .split(",")
   .map((value) => value.trim().replace(/\/$/, ""))
@@ -58,21 +59,9 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     const packedState = encodeOAuthState({ state, returnTo });
     const codeVerifier = generateCodeVerifier();
     const url = await google.createAuthorizationURL(packedState, codeVerifier, ["openid", "email", "profile"]);
-    const secure = process.env.NODE_ENV === "production";
-    reply.setCookie(STATE_COOKIE, state, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax",
-      secure,
-      maxAge: COOKIE_MAX_AGE,
-    });
-    reply.setCookie(VERIFIER_COOKIE, codeVerifier, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax",
-      secure,
-      maxAge: COOKIE_MAX_AGE,
-    });
+    const pkce = oauthPkceCookieOptions(COOKIE_MAX_AGE);
+    reply.setCookie(STATE_COOKIE, state, pkce);
+    reply.setCookie(VERIFIER_COOKIE, codeVerifier, pkce);
     return reply.redirect(url.toString());
   });
 
@@ -104,7 +93,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       const userUuid = await findOrCreateUser(email, googleUserId);
       const session = await lucia.createSession(userUuid, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      reply.setCookie(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+      setLuciaSessionCookie(reply, sessionCookie);
       reply.clearCookie(STATE_COOKIE, { path: "/" });
       reply.clearCookie(VERIFIER_COOKIE, { path: "/" });
       return reply.redirect(`${returnTo}/home`);
@@ -133,7 +122,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     if (sessionId) {
       await lucia.invalidateSession(sessionId);
     }
-    reply.clearCookie("ih35_session", { path: "/" });
+    reply.clearCookie("ih35_session", clearSessionCookieOptions());
     const origin = String(req.headers.origin || "");
     const acceptsHtml = String(req.headers.accept || "").includes("text/html");
     const wantsRedirect = acceptsHtml || Boolean(query["returnTo"]) || origin === returnTo || query["redirect"] === "true";
