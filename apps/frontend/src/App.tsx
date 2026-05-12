@@ -12,6 +12,7 @@ import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
+import { CashAdvanceRequestsPage } from "./pages/driver-finance/CashAdvanceRequestsPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
 import { TransfersListPage } from "./pages/banking/TransfersListPage";
@@ -356,6 +357,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <SettlementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver-finance/cash-advance-requests"
+          element={
+            <ProtectedRoute>
+              <CashAdvanceRequestsPage />
             </ProtectedRoute>
           }
         />

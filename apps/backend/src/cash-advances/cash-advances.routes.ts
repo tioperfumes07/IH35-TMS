@@ -3,7 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { nextCashAdvanceDisplayId } from "./display-id.js";
+import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars } from "./cash-advance-create.js";
 
 const COMPANY_QUERY = z.object({
   operating_company_id: z.string().uuid(),
@@ -70,33 +70,6 @@ async function withCompanyScope<T>(
     await client.query(`SET LOCAL app.operating_company_id = '${operatingCompanyId}'`);
     return fn(client);
   });
-}
-
-async function resolveCompanyThreshold(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, companyId: string) {
-  const fallback = Number(process.env.CASH_ADVANCE_THRESHOLD ?? 500);
-  const hasColumnRes = await client.query(
-    `
-      SELECT EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'org'
-          AND table_name = 'companies'
-          AND column_name = 'cash_advance_threshold'
-      ) AS ok
-    `
-  );
-  const hasColumn = Boolean(hasColumnRes.rows[0]?.ok);
-  if (!hasColumn) return fallback;
-  const thresholdRes = await client.query(
-    `
-      SELECT cash_advance_threshold
-      FROM org.companies
-      WHERE id = $1
-      LIMIT 1
-    `,
-    [companyId]
-  );
-  return Number(thresholdRes.rows[0]?.cash_advance_threshold ?? fallback);
 }
 
 export async function registerCashAdvancesRoutes(app: FastifyInstance) {
@@ -256,20 +229,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const created = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const driverRes = await client.query(
-        `
-          SELECT id, status
-          FROM mdata.drivers
-          WHERE id = $1
-          LIMIT 1
-        `,
-        [body.data.driver_id]
-      );
-      const driver = driverRes.rows[0];
-      if (!driver) return { code: 404 as const, error: "driver_not_found" };
-      if (String(driver.status ?? "").toLowerCase() !== "active") return { code: 400 as const, error: "driver_not_active" };
-
-      const threshold = await resolveCompanyThreshold(client, companyId);
+      const threshold = await resolveCompanyCashAdvanceThresholdDollars(client, companyId);
       if (body.data.amount > threshold) {
         return {
           code: 403 as const,
@@ -277,127 +237,11 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
           message: "Owner approval required — feature available Phase 4",
         };
       }
-
-      let linkedBill: Record<string, unknown> | null = null;
-      if (body.data.linked_bill_id) {
-        const billRes = await client.query(
-          `
-            SELECT id, total_amount, status, vendor_id, display_id
-            FROM accounting.bills
-            WHERE id = $1
-              AND operating_company_id = $2
-            LIMIT 1
-          `,
-          [body.data.linked_bill_id, companyId]
-        );
-        linkedBill = billRes.rows[0] ?? null;
-        if (!linkedBill) return { code: 404 as const, error: "linked_bill_not_found" };
-        if (String(linkedBill.status ?? "").toLowerCase() !== "unpaid") {
-          return { code: 400 as const, error: "linked_bill_must_be_unpaid" };
-        }
+      const core = await createDriverCashAdvanceCore(client, user.uuid, companyId, body.data);
+      if (!core.ok) {
+        return { code: core.code as 400 | 404 | 500, error: core.error, message: core.message };
       }
-
-      const displayId = await nextCashAdvanceDisplayId(client, companyId);
-      const liabilityRes = await client.query(
-        `
-          INSERT INTO driver_finance.driver_liabilities (
-            operating_company_id,
-            driver_id,
-            type,
-            source_description,
-            original_amount,
-            current_balance,
-            paid_to_date,
-            requires_acknowledgment
-          ) VALUES ($1, $2, $3, $4, $5, $5, 0, false)
-          RETURNING id
-        `,
-        [companyId, body.data.driver_id, "advance", `Cash advance ${displayId}`, body.data.amount]
-      );
-      const liabilityId = String(liabilityRes.rows[0]?.id ?? "");
-      if (!liabilityId) return { code: 500 as const, error: "liability_create_failed" };
-
-      const schedule = body.data.repayment_schedule;
-      await client.query(
-        `
-          INSERT INTO driver_finance.deduction_schedule (
-            operating_company_id,
-            liability_id,
-            driver_id,
-            amount_per_period,
-            total_periods,
-            cadence,
-            starts_on
-          ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_DATE)
-        `,
-        [companyId, liabilityId, body.data.driver_id, schedule.weekly_installment_amount, schedule.total_periods, schedule.cadence]
-      );
-
-      const insertAmount = linkedBill ? Number(linkedBill.total_amount ?? body.data.amount) : body.data.amount;
-      const advanceRes = await client.query(
-        `
-          INSERT INTO driver_finance.driver_advances (
-            operating_company_id,
-            display_id,
-            driver_id,
-            liability_id,
-            amount,
-            purpose,
-            disbursement_method,
-            disbursement_status,
-            recipient_type,
-            recipient_name,
-            linked_bill_id,
-            requires_owner_approval,
-            created_by_user_id
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'approved', $8, $9, $10, false, $11)
-          RETURNING id
-        `,
-        [
-          companyId,
-          displayId,
-          body.data.driver_id,
-          liabilityId,
-          insertAmount,
-          body.data.purpose,
-          body.data.disbursement_method,
-          body.data.recipient_info.recipient_type,
-          body.data.recipient_info.recipient_name ?? null,
-          body.data.linked_bill_id ?? null,
-          user.uuid,
-        ]
-      );
-      const advanceId = String(advanceRes.rows[0]?.id ?? "");
-      if (!advanceId) return { code: 500 as const, error: "advance_create_failed" };
-
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "cash_advance.created",
-        {
-          resource_type: "driver_finance.driver_advances",
-          resource_id: advanceId,
-          operating_company_id: companyId,
-          liability_id: liabilityId,
-          linked_bill_id: body.data.linked_bill_id ?? null,
-          display_id: displayId,
-        },
-        "info",
-        "BT-3-CASH-ADVANCE-REBUILD"
-      );
-
-      const detailRes = await client
-        .query(
-          `
-            SELECT *
-            FROM views.cash_advances_with_context
-            WHERE id = $1
-            LIMIT 1
-          `,
-          [advanceId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return { code: 201 as const, data: detailRes.rows[0] ?? { id: advanceId, display_id: displayId } };
+      return { code: 201 as const, data: core.data };
     });
 
     if ("error" in created) {

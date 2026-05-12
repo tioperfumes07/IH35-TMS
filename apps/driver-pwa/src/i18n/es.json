@@ -22,6 +22,7 @@
     "unit": "Unidad 0234",
     "upload_document": "+ Subir documento",
     "my_documents": "Mis documentos",
+    "cash_advance": "Solicitud de anticipo",
     "hos_overview": "Resumen HOS",
     "hos_subtitle": "Datos de fase 1 — se sincroniza con Samsara en fase 4",
     "active_load": "Carga activa #2024-0058",
@@ -301,5 +302,31 @@
       "personal": "Personal",
       "wfh": "Trabajo desde casa"
     }
+  },
+  "cash_advance": {
+    "title": "Anticipos en efectivo",
+    "back_home": "Volver al inicio",
+    "back_list": "Volver a solicitudes",
+    "new_request": "Solicitar anticipo",
+    "new_title": "Nueva solicitud de anticipo",
+    "history": "Sus solicitudes",
+    "empty": "Aún no hay solicitudes.",
+    "load_error": "No se pudieron cargar las solicitudes",
+    "cancel": "Cancelar solicitud",
+    "cancelled_ok": "Solicitud cancelada",
+    "cancel_failed": "No se pudo cancelar",
+    "amount_title": "Monto solicitado",
+    "amount_usd_ph": "Monto (USD)",
+    "recovery_title": "Recuperación por liquidación (opcional)",
+    "recovery_hint": "Cuánto retener por liquidación en dólares. Déjelo en blanco para un calendario estándar.",
+    "recovery_ph": "Por liquidación (USD), opcional",
+    "reason_title": "Motivo",
+    "reason_ph": "Al menos 10 caracteres describiendo por qué necesita el anticipo",
+    "submit": "Enviar para revisión",
+    "submitted_ok": "Enviado para revisión de oficina",
+    "submit_failed": "No se pudo enviar",
+    "validation_error": "Revise el monto y el motivo",
+    "reason_min": "El motivo debe tener al menos 10 caracteres",
+    "above_policy_flag": "Sobre el límite habitual — requiere revisión del propietario"
   }
 }
