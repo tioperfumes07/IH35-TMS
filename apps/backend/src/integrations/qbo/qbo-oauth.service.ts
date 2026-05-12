@@ -168,22 +168,35 @@ export async function findActiveRealmLinks(realmId: string): Promise<RealmLinkSu
     const links: RealmLinkSummary[] = [];
     for (const company of companiesRes.rows) {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
-      const res = await client.query<RealmLinkSummary>(
+      const latestRes = await client.query<
+        RealmLinkSummary & {
+          realm_id: string;
+        }
+      >(
         `
           SELECT
             qc.operating_company_id::text AS operating_company_id,
             c.code AS company_code,
             c.short_name AS company_short_name,
-            qc.id::text AS connection_id
+            qc.id::text AS connection_id,
+            qc.realm_id
           FROM integrations.qbo_connections qc
           JOIN org.companies c ON c.id = qc.operating_company_id
-          WHERE qc.realm_id = $1
-            AND qc.revoked_at IS NULL
-          ORDER BY qc.updated_at DESC
+          WHERE qc.revoked_at IS NULL
+          ORDER BY qc.authorized_at DESC, qc.updated_at DESC
+          LIMIT 1
         `,
-        [realmId]
+        []
       );
-      links.push(...res.rows);
+      const latest = latestRes.rows[0];
+      if (latest && latest.realm_id === realmId) {
+        links.push({
+          operating_company_id: latest.operating_company_id,
+          company_code: latest.company_code,
+          company_short_name: latest.company_short_name,
+          connection_id: latest.connection_id,
+        });
+      }
     }
 
     const dedup = new Map<string, RealmLinkSummary>();
@@ -286,6 +299,27 @@ export async function exchangeAuthCodeForTokens(
   userId: string,
   redirectUri = redirectUriFromEnv()
 ): Promise<ExchangeAuthCodeResult> {
+  const existingRealmLinks = await findActiveRealmLinks(realmId);
+  const conflictingLinks = existingRealmLinks.filter((row) => row.operating_company_id !== operatingCompanyId);
+  if (conflictingLinks.length > 0) {
+    const linkedCodes = conflictingLinks.map((row) => row.company_code).filter(Boolean).join(", ");
+    await appendSystemAudit(
+      "integrations.qbo.shared_realm_blocked",
+      {
+        realm_id: realmId,
+        attempted_operating_company_id: operatingCompanyId,
+        linked_company_ids: conflictingLinks.map((row) => row.operating_company_id),
+        linked_company_codes: conflictingLinks.map((row) => row.company_code).filter(Boolean),
+      },
+      "warning"
+    );
+    throw new Error(
+      linkedCodes
+        ? `QuickBooks company already linked to ${linkedCodes}. Disconnect it there first to avoid cross-company imports.`
+        : "QuickBooks company already linked to another internal company. Disconnect it there first to avoid cross-company imports."
+    );
+  }
+
   const payload = await tokenExchangeRequest(
     new URLSearchParams({
       grant_type: "authorization_code",
@@ -351,7 +385,22 @@ export async function exchangeAuthCodeForTokens(
       (err as { code?: string }).code = "TOKEN_SAVE_FAILED";
       throw err;
     }
-    return upsert.rows[0];
+    const saved = upsert.rows[0];
+
+    // Enforce one active QBO connection per internal company.
+    await client.query(
+      `
+        UPDATE integrations.qbo_connections
+        SET revoked_at = now(),
+            updated_at = now()
+        WHERE operating_company_id = $1
+          AND id <> $2
+          AND revoked_at IS NULL
+      `,
+      [operatingCompanyId, saved.id]
+    );
+
+    return saved;
   });
 
   await withCurrentUser(userId, async (client) => {
@@ -552,12 +601,21 @@ export async function getConnectionsExpiringWithin(secondsAhead: number) {
           SELECT id, operating_company_id, realm_id, refresh_token_expires_at, revoked_at
           FROM integrations.qbo_connections
           WHERE revoked_at IS NULL
-            AND refresh_token_expires_at <= now() + ($1::int * interval '1 second')
-          ORDER BY refresh_token_expires_at ASC
-        `,
-        [secondsAhead]
+          ORDER BY authorized_at DESC, updated_at DESC
+          LIMIT 1
+        `
       );
-      out.push(...res.rows);
+      if (!res.rows.length) continue;
+      const latest = res.rows[0];
+      const isExpiringRes = await client.query<{ expiring: boolean }>(
+        `
+          SELECT ($1::timestamptz <= now() + ($2::int * interval '1 second')) AS expiring
+        `,
+        [latest.refresh_token_expires_at, secondsAhead]
+      );
+      if (isExpiringRes.rows[0]?.expiring) {
+        out.push(latest);
+      }
     }
     return out;
   });
