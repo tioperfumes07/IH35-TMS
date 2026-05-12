@@ -563,11 +563,11 @@ Variable schema (required):
 
 ---
 
-## 14. Phase 8C — Driver Scheduler / workforce planning (Block K PR1)
+## 14. Phase 8C — Driver Scheduler / workforce planning (Block K)
 
 Source: `docs/cursor-blocks/10_CURSOR_BLOCK_K_DRIVER_SCHEDULER.txt` — execution queue 2026-05-12  
-Status: LOCKED — PR1 foundation IMPLEMENTED (migration `0129`, office + driver APIs, Safety UI tabs)  
-Block: Block K (multi-PR; PR1 ships schema, RLS, audit append-only, leave request workflow skeleton, fleet grid read, temp cover assignment hooks)
+Status: LOCKED — PR1 + PR2 IMPLEMENTED (schema/API/office UI + driver PWA + documentation attach)  
+Block: Block K (multi-PR; crons, dispatch integration, E2E harness, lists admin — deferred)
 
 ### Scope (PR1)
 
@@ -577,7 +577,13 @@ Block: Block K (multi-PR; PR1 ships schema, RLS, audit append-only, leave reques
 - APIs: driver session routes under `/api/v1/driver/scheduler/*`; office routes under `/api/v1/safety/scheduler/*` (Owner / Administrator / Safety / Dispatcher; policy PATCH Owner+Admin only).
 - Safety module UI: Workforce Planning — Driver Scheduler grid, Leave Requests inbox/detail, Leave Balances (architectural design updated to 24 Safety tabs).
 
-Further PRs in Block K: driver PWA surfaces, crons, dispatch integration, documentation upload route, E2E harness — per instruction file.
+### Scope (PR2)
+
+- Driver PWA (`apps/driver-pwa`): routes `/scheduler`, `/scheduler/request` (multi-step submit), `/scheduler/requests` (history + cancel pending); 40-day horizontal calendar; bilingual strings (EN/ES); bottom nav item.
+- Driver session API ergonomics: `GET /api/v1/driver/scheduler/my-schedule`, `POST /api/v1/driver/scheduler/request`, and `PATCH .../cancel` derive `operating_company_id` from the authenticated driver (no client-supplied company query).
+- `POST /api/v1/driver/scheduler/request/:id/documentation` — body `{ documentation_attachment_id }` links an uploaded `documents.attachments` row to a pending request (audit: `leave_documentation_attached`).
+
+Further PRs in Block K: advance reminder / rollover / escalation crons; dispatch board badges + booking warnings; office grid virtualization; `POST .../documentation` multipart shortcut (if desired); Lists hub leave policy admin; `scripts/e2e-driver-scheduler-test.mjs` (10 scenarios).
 
 ---
 
