@@ -73,6 +73,7 @@ import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViola
 import { LegalTemplateDetailPage } from "./pages/legal/templates/LegalTemplateDetailPage";
 import { LegalTemplatesListPage } from "./pages/legal/templates/LegalTemplatesListPage";
 import { LegalSignPage } from "./pages/legal/sign/LegalSignPage";
+import { LegalAttorneyReviewPortalPage } from "./pages/legal/attorney-review/LegalAttorneyReviewPortalPage";
 import { LegalLandingPage } from "./pages/legal/LegalLandingPage";
 import { LegalContractInstancesPage } from "./pages/legal/contracts/LegalContractInstancesPage";
 import { LegalPoliciesPage } from "./pages/legal/LegalPoliciesPage";
@@ -133,6 +134,7 @@ export default function App() {
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/sign/:token" element={<LegalSignPage />} />
+        <Route path="/attorney-review/:token" element={<LegalAttorneyReviewPortalPage />} />
         <Route
           path="/home"
           element={

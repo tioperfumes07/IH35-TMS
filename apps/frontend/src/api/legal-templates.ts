@@ -118,9 +118,19 @@ export const legalTemplatesApi = {
   },
 
   submit(id: string, operatingCompanyId: string) {
-    return apiRequest<LegalTemplateSummary>(withCompany(`/api/v1/legal/templates/${id}/submit`, operatingCompanyId), {
-      method: "POST",
-    });
+    return apiRequest<LegalTemplateSummary & { attorney_review_url: string }>(
+      withCompany(`/api/v1/legal/templates/${id}/submit`, operatingCompanyId),
+      {
+        method: "POST",
+      }
+    );
+  },
+
+  remintAttorneyReviewLink(id: string, operatingCompanyId: string) {
+    return apiRequest<{ attorney_review_url: string }>(
+      withCompany(`/api/v1/legal/templates/${id}/attorney-review-link`, operatingCompanyId),
+      { method: "POST" }
+    );
   },
 
   approve(

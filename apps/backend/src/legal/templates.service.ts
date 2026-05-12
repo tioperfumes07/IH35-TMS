@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { z } from "zod";
 
 type QueryableClient = {
@@ -39,14 +40,33 @@ function assertStatus(status: unknown): z.infer<typeof templateStatusSchema> {
   return templateStatusSchema.parse(status);
 }
 
-async function appendContractAuditLog(
+export function hashAttorneyReviewToken(rawToken: string) {
+  return crypto.createHash("sha256").update(rawToken).digest("hex");
+}
+
+export function resolveAttorneyReviewUrl(rawToken: string) {
+  const base = (
+    process.env.SIGNER_APP_BASE_URL ||
+    process.env.FRONTEND_BASE_URL ||
+    "https://ih35-tms-web.onrender.com"
+  ).replace(/\/$/, "");
+  return `${base}/attorney-review/${rawToken}`;
+}
+
+const ATTORNEY_REVIEW_TOKEN_TTL_HOURS = 30 * 24;
+
+export async function appendContractAuditLog(
   client: QueryableClient,
   args: {
     operatingCompanyId: string;
     contractTemplateId?: string | null;
+    contractInstanceId?: string | null;
     eventType: string;
     eventPayload?: Record<string, unknown>;
     actorUserId?: string | null;
+    actorName?: string | null;
+    ipAddress?: string | null;
+    userAgent?: string | null;
   }
 ) {
   await client.query(
@@ -54,19 +74,111 @@ async function appendContractAuditLog(
       INSERT INTO legal.contract_audit_log (
         operating_company_id,
         contract_template_id,
+        contract_instance_id,
         event_type,
         event_payload,
-        actor_user_id
-      ) VALUES ($1, $2, $3, $4::jsonb, $5)
+        actor_user_id,
+        actor_name,
+        ip_address,
+        user_agent
+      ) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9)
     `,
     [
       args.operatingCompanyId,
       args.contractTemplateId ?? null,
+      args.contractInstanceId ?? null,
       args.eventType,
       JSON.stringify(args.eventPayload ?? {}),
       args.actorUserId ?? null,
+      args.actorName ?? null,
+      args.ipAddress ?? null,
+      args.userAgent ?? null,
     ]
   );
+}
+
+async function mintAttorneyReviewToken(
+  client: QueryableClient,
+  args: {
+    operatingCompanyId: string;
+    contractTemplateId: string;
+    actorUserId: string;
+  }
+) {
+  await client.query(
+    `
+      UPDATE legal.contract_attorney_review_tokens
+      SET consumed_at = now()
+      WHERE operating_company_id = $1
+        AND contract_template_id = $2
+        AND consumed_at IS NULL
+    `,
+    [args.operatingCompanyId, args.contractTemplateId]
+  );
+
+  const rawToken = crypto.randomBytes(24).toString("hex");
+  const tokenHash = hashAttorneyReviewToken(rawToken);
+
+  await client.query(
+    `
+      INSERT INTO legal.contract_attorney_review_tokens (
+        operating_company_id,
+        contract_template_id,
+        token_hash,
+        expires_at,
+        created_by_user_id
+      )
+      VALUES (
+        $1,
+        $2,
+        $3,
+        now() + ($4::text || ' hours')::interval,
+        $5
+      )
+    `,
+    [args.operatingCompanyId, args.contractTemplateId, tokenHash, String(ATTORNEY_REVIEW_TOKEN_TTL_HOURS), args.actorUserId]
+  );
+
+  return { rawToken, attorney_review_url: resolveAttorneyReviewUrl(rawToken) };
+}
+
+export async function remintAttorneyReviewLink(
+  client: QueryableClient,
+  args: {
+    operatingCompanyId: string;
+    actorUserId: string;
+    id: string;
+  }
+) {
+  const res = await client.query(
+    `
+      SELECT id, status
+      FROM legal.contract_templates
+      WHERE operating_company_id = $1
+        AND id = $2
+      LIMIT 1
+    `,
+    [args.operatingCompanyId, args.id]
+  );
+  const row = res.rows[0] ?? null;
+  if (!row) return null;
+  if (row.status !== "pending_review") return { error: "legal_template_remint_requires_pending_review" as const };
+
+  const minted = await mintAttorneyReviewToken(client, {
+    operatingCompanyId: args.operatingCompanyId,
+    contractTemplateId: String(row.id),
+    actorUserId: args.actorUserId,
+  });
+
+  await appendContractAuditLog(client, {
+    operatingCompanyId: args.operatingCompanyId,
+    contractTemplateId: String(row.id),
+    eventType: "attorney_review_token_reminted",
+    eventPayload: { ttl_hours: ATTORNEY_REVIEW_TOKEN_TTL_HOURS },
+    actorUserId: args.actorUserId,
+  });
+
+  return { attorney_review_url: minted.attorney_review_url };
 }
 
 export async function listTemplates(
@@ -478,7 +590,22 @@ export async function submitForAttorneyReview(
     eventPayload: { template_code: row.template_code, version: row.version },
     actorUserId: args.actorUserId,
   });
-  return row;
+
+  const minted = await mintAttorneyReviewToken(client, {
+    operatingCompanyId: args.operatingCompanyId,
+    contractTemplateId: String(row.id),
+    actorUserId: args.actorUserId,
+  });
+
+  await appendContractAuditLog(client, {
+    operatingCompanyId: args.operatingCompanyId,
+    contractTemplateId: String(row.id),
+    eventType: "attorney_review_token_minted",
+    eventPayload: { template_code: row.template_code, version: row.version, ttl_hours: ATTORNEY_REVIEW_TOKEN_TTL_HOURS },
+    actorUserId: args.actorUserId,
+  });
+
+  return { ...row, attorney_review_url: minted.attorney_review_url };
 }
 
 export async function approveTemplate(

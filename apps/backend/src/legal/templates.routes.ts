@@ -10,6 +10,7 @@ import {
   legalTemplateUpdateSchema,
   listTemplates,
   listVersions,
+  remintAttorneyReviewLink,
   retireTemplate,
   submitForAttorneyReview,
   activateTemplate,
@@ -209,6 +210,29 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     });
     if (!submitted) return reply.code(409).send({ error: "legal_template_submit_requires_draft_status" });
     return submitted;
+  });
+
+  app.post("/api/v1/legal/templates/:id/attorney-review-link", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
+
+    const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsedQuery.data.operating_company_id);
+      return remintAttorneyReviewLink(client, {
+        operatingCompanyId: parsedQuery.data.operating_company_id,
+        actorUserId: authUser.uuid,
+        id: parsedParams.data.id,
+      });
+    });
+    if (!result) return reply.code(404).send({ error: "legal_template_not_found" });
+    if ("error" in result) return reply.code(409).send({ error: result.error });
+    return result;
   });
 
   app.post("/api/v1/legal/templates/:id/approve", async (req, reply) => {

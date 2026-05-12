@@ -25,6 +25,7 @@ export function LegalTemplateDetailPage() {
   const operatingCompanyId = selectedCompanyId ?? "";
 
   const [submitError, setSubmitError] = useState("");
+  const [attorneyReviewUrl, setAttorneyReviewUrl] = useState("");
   const [attorneyName, setAttorneyName] = useState("");
   const [attorneyBarNumber, setAttorneyBarNumber] = useState("");
   const [attorneyNotes, setAttorneyNotes] = useState("");
@@ -50,6 +51,7 @@ export function LegalTemplateDetailPage() {
 
   useEffect(() => {
     if (!template) return;
+    if (template.status !== "pending_review") setAttorneyReviewUrl("");
     setEditable({
       display_name_en: template.display_name_en,
       display_name_es: template.display_name_es,
@@ -84,14 +86,27 @@ export function LegalTemplateDetailPage() {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      if (!template) return;
-      await legalTemplatesApi.submit(template.id, operatingCompanyId);
+      if (!template) return null;
+      return legalTemplatesApi.submit(template.id, operatingCompanyId);
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["legal", "template", id, operatingCompanyId] });
       await queryClient.invalidateQueries({ queryKey: ["legal", "templates"] });
+      if (data?.attorney_review_url) setAttorneyReviewUrl(data.attorney_review_url);
     },
     onError: (error) => setSubmitError(parseError(error, "Failed to submit template.")),
+  });
+
+  const remintReviewLinkMutation = useMutation({
+    mutationFn: async () => {
+      if (!template) return null;
+      return legalTemplatesApi.remintAttorneyReviewLink(template.id, operatingCompanyId);
+    },
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: ["legal", "template", id, operatingCompanyId] });
+      if (data?.attorney_review_url) setAttorneyReviewUrl(data.attorney_review_url);
+    },
+    onError: (error) => setSubmitError(parseError(error, "Failed to regenerate review link.")),
   });
 
   const approveMutation = useMutation({
@@ -221,6 +236,40 @@ export function LegalTemplateDetailPage() {
             <div><span className="font-semibold">Attorney approval:</span> {template.attorney_approved_by ?? "pending"}</div>
             <div><span className="font-semibold">Approved at:</span> {template.attorney_approved_at ?? "pending"}</div>
           </div>
+
+          {template.status === "pending_review" ? (
+            <div className="space-y-2 rounded border border-indigo-200 bg-indigo-50/80 p-2">
+              <div className="text-xs font-semibold text-indigo-900">Attorney review link</div>
+              <p className="text-xs text-indigo-800">
+                Share this URL with outside counsel. It is single-use and expires in 30 days. Regenerate invalidates prior links.
+              </p>
+              {attorneyReviewUrl ? (
+                <div className="break-all rounded border border-indigo-200 bg-white px-2 py-1 font-mono text-[11px] text-gray-800">
+                  {attorneyReviewUrl}
+                </div>
+              ) : (
+                <p className="text-xs text-indigo-700">Submit for review creates a link. If you lost it, regenerate below.</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={!attorneyReviewUrl}
+                  onClick={() => attorneyReviewUrl && void navigator.clipboard.writeText(attorneyReviewUrl)}
+                >
+                  Copy link
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={remintReviewLinkMutation.isPending}
+                  onClick={() => void remintReviewLinkMutation.mutate()}
+                >
+                  Regenerate link
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           <div className="space-y-2 rounded border border-gray-200 p-2">
             <div className="text-xs font-semibold uppercase text-gray-500">Attorney approval input</div>
