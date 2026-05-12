@@ -19,8 +19,15 @@ type RequestOptions = {
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
 
 function buildUrl(path: string): string {
-  if (!API_BASE_URL) return path;
-  return `${API_BASE_URL.replace(/\/$/, "")}${path}`;
+  if (/^https?:\/\//i.test(path)) return path;
+  if (API_BASE_URL) return `${API_BASE_URL.replace(/\/$/, "")}${path}`;
+
+  // In jsdom/unit tests, fetch requires an absolute URL.
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return new URL(path, window.location.origin).toString();
+  }
+
+  return `http://localhost${path}`;
 }
 
 export async function apiRequestFormData<T>(path: string, formData: FormData, method: "POST" | "PATCH" = "POST"): Promise<T> {
