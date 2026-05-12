@@ -79,10 +79,6 @@ import { LegalLandingPage } from "./pages/legal/LegalLandingPage";
 import { LegalContractInstancesPage } from "./pages/legal/contracts/LegalContractInstancesPage";
 import { LegalPoliciesPage } from "./pages/legal/LegalPoliciesPage";
 import { LegalAttorneyReviewPage } from "./pages/legal/LegalAttorneyReviewPage";
-import { LegalMattersListPage } from "./pages/legal/matters/LegalMattersListPage";
-import { LegalMatterNewPage } from "./pages/legal/matters/LegalMatterNewPage";
-import { LegalMatterDetailPage } from "./pages/legal/matters/LegalMatterDetailPage";
-import { LegalReportsLandingPage } from "./pages/legal/reports/LegalReportsLandingPage";
 import { DriverSchedulerGridPage } from "./pages/safety/driver-scheduler/DriverSchedulerGridPage";
 import { DriverSchedulerRequestInboxPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { DriverSchedulerRequestDetailPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage";
@@ -467,38 +463,6 @@ export default function App() {
             <OwnerAdminRoute>
               <LegalPoliciesPage />
             </OwnerAdminRoute>
-          }
-        />
-        <Route
-          path="/legal/matters"
-          element={
-            <ProtectedRoute>
-              <LegalMattersListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/legal/matters/new"
-          element={
-            <ProtectedRoute>
-              <LegalMatterNewPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/legal/matters/:id"
-          element={
-            <ProtectedRoute>
-              <LegalMatterDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/legal/reports"
-          element={
-            <ProtectedRoute>
-              <LegalReportsLandingPage />
-            </ProtectedRoute>
           }
         />
         <Route

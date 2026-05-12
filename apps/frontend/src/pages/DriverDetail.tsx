@@ -28,7 +28,6 @@ import {
   upsertDriverCompanyAuthorization,
   updateDriver,
 } from "../api/mdata";
-import { legalMattersApi } from "../api/legal-matters";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
@@ -42,7 +41,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
 
-const tabs = ["Profile", "QBO Mapping", "Earnings & Debt", "Equipment Assignments", "Safety File", "Documents", "Audit History", "Legal Matters"] as const;
+const tabs = ["Profile", "QBO Mapping", "Earnings & Debt", "Equipment Assignments", "Safety File", "Documents", "Audit History"] as const;
 type DriverTab = (typeof tabs)[number];
 
 const reasonOptions = [
@@ -204,7 +203,6 @@ export function DriverDetailPage() {
     user?.role === "Safety" ||
     (user?.role === "Driver" && user.uuid === driver?.identity_user_id);
   const isOwner = user?.role === "Owner";
-  const canViewLegalMatters = user?.role === "Owner" || user?.role === "Administrator";
   const canResendInvite = user?.role === "Owner" || user?.role === "Administrator";
   const canManageCompanyAuth =
     user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager" || user?.role === "Safety";
@@ -234,12 +232,6 @@ export function DriverDetailPage() {
     queryKey: ["qbo-linkage-history", driver?.operating_company_id, id],
     queryFn: () => listQboVendorLinkageHistory(String(driver?.operating_company_id ?? ""), "driver", id),
     enabled: activeTab === "QBO Mapping" && Boolean(driver?.operating_company_id) && Boolean(id),
-  });
-
-  const legalMattersForDriverQuery = useQuery({
-    queryKey: ["legal-matters", "driver", driver?.operating_company_id, id],
-    queryFn: () => legalMattersApi.list(String(driver?.operating_company_id ?? ""), { related_driver_id: id }),
-    enabled: activeTab === "Legal Matters" && Boolean(driver?.operating_company_id) && Boolean(id),
   });
 
   const hydratedForm = useMemo(() => {
@@ -529,10 +521,7 @@ export function DriverDetailPage() {
     .find((qualification) => qualification.id === selectedQualificationId)
     ?.current_rates.find((line) => line.line_item_template_id === selectedLineItemId);
   const visibleTabs = tabs.filter(
-    (tab) =>
-      (tab !== "Safety File" || canViewSafetyFile) &&
-      (tab !== "Documents" || canViewDocuments) &&
-      (tab !== "Legal Matters" || canViewLegalMatters)
+    (tab) => (tab !== "Safety File" || canViewSafetyFile) && (tab !== "Documents" || canViewDocuments)
   );
 
   const saveDriver = async () => {
@@ -1155,29 +1144,6 @@ export function DriverDetailPage() {
             You do not have permission to view documents for this driver.
           </div>
         )
-      ) : null}
-
-      {activeTab === "Legal Matters" ? (
-        <div className="space-y-2">
-          <p className="text-sm text-gray-600">Legal matters linked to this driver (Owner/Admin).</p>
-          {legalMattersForDriverQuery.isLoading ? (
-            <p className="text-sm text-gray-500">Loading…</p>
-          ) : (
-            <ul className="space-y-2">
-              {(legalMattersForDriverQuery.data?.matters ?? []).map((m) => (
-                <li key={String(m.id ?? "")} className="rounded border border-gray-200 bg-white px-3 py-2 text-sm">
-                  <Link className="font-semibold text-blue-600" to={`/legal/matters/${String(m.id ?? "")}`}>
-                    {String(m.matter_number ?? "")}
-                  </Link>
-                  <span className="ml-2 text-gray-600">{String(m.status ?? "")}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {(legalMattersForDriverQuery.data?.matters ?? []).length === 0 && !legalMattersForDriverQuery.isLoading ? (
-            <p className="text-sm text-gray-500">No linked matters.</p>
-          ) : null}
-        </div>
       ) : null}
 
       {activeTab === "Audit History" ? (
