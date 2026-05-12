@@ -1,0 +1,183 @@
+═══════════════════════════════════════════════════════════════════════
+CURSOR INSTRUCTION FILE 08
+BLOCK I · PHASE 8C · LEGAL MATTERS TRACKER (LAWSUITS + CLAIMS)
+═══════════════════════════════════════════════════════════════════════
+
+PASTE THIS TO CURSOR ONLY AFTER: Block H (Phase 8A) all PRs complete
+NEXT FILE: TBD — after this Jorge decides next priority
+
+═══════════════════════════════════════════════════════════════════════
+COPY EVERYTHING BELOW THIS LINE TO CURSOR
+═══════════════════════════════════════════════════════════════════════
+
+JORGE'S DIRECTIVE — BLOCK I · PHASE 8C · LEGAL MATTERS TRACKER
+
+Reference: PHASE_8_LEGAL_MODULE_BLUEPRINT.md — "Lawsuit / Legal Matter 
+Tracker" section + schema for legal.matters tables.
+
+Tracks: lawsuits (against us and we filed), claims, demand letters, 
+settlements, regulatory actions. Deadline reminders. Document management. 
+Privilege-aware document handling.
+
+Single-PR scope OR split into 2-3 PRs per your judgment.
+
+═══ ITEM 0 — DISCOVERY ═══
+
+Read blueprint sections:
+  - "Database Schema" → legal.matters, legal.matter_events, 
+    legal.matter_documents, legal.matter_deadlines
+  - "Lawsuit / Legal Matter Tracker" — dashboard + single matter view 
+    + notifications + privilege handling
+
+═══ ITEM 1 — MIGRATION 0121 ═══
+
+Create db/migrations/0121_p8c_legal_matters_schema.sql:
+  - legal.matters
+  - legal.matter_events
+  - legal.matter_documents
+  - legal.matter_deadlines
+  
+  Plus grants to ih35_app following the 0116 pattern.
+  Plus ALTER DEFAULT PRIVILEGES on legal schema (probably already 
+    set by Phase 8A, but include defensively).
+  
+  All idempotent · non-destructive.
+
+═══ ITEM 2 — BACKEND SERVICES ═══
+
+apps/backend/src/legal/matters.service.ts:
+  listMatters(filters: {status, severity, type, operating_company_id})
+  getMatter(id) — includes events + documents + deadlines + counts
+  createMatter(data)
+  updateMatter(id, changes)
+  closeMatter(id, outcome, closed_by_user_id)
+  
+  addEvent(matter_id, event)
+  addDocument(matter_id, document_metadata, file_buffer)
+  addDeadline(matter_id, deadline)
+  completeDeadline(deadline_id, completed_by_user_id)
+  
+  Privilege handling:
+    Documents with is_privileged=true only visible to Owner+Admin roles
+    Service-level filter in getMatter() response based on requester role
+
+═══ ITEM 3 — BACKEND ROUTES ═══
+
+apps/backend/src/legal/matters.routes.ts:
+  GET    /api/v1/legal/matters
+  GET    /api/v1/legal/matters/:id
+  POST   /api/v1/legal/matters
+  PATCH  /api/v1/legal/matters/:id
+  POST   /api/v1/legal/matters/:id/close
+  POST   /api/v1/legal/matters/:id/events
+  POST   /api/v1/legal/matters/:id/documents (multipart upload)
+  POST   /api/v1/legal/matters/:id/deadlines
+  PATCH  /api/v1/legal/matters/:id/deadlines/:deadline_id/complete
+  
+  Auth: 
+    Owner + Administrator can do everything
+    Other roles: read-only on matters they're directly involved in 
+      (related_user_id matches them)
+    Privileged documents: Owner + Admin only
+
+═══ ITEM 4 — DEADLINE REMINDER CRON ═══
+
+apps/backend/src/legal/matters-reminder.cron.ts:
+  Runs daily at 08:00 Central Time
+  Query: matter_deadlines where deadline_at within reminder_offset_days
+  For each match:
+    - Send email to reminder_recipients
+    - Send PWA notification
+    - Record send timestamp in reminder_sent_at array
+  
+  Special handling:
+    - statute_of_limitations: also notifies Owner directly regardless
+    - response deadlines: high-priority badge on UI
+
+═══ ITEM 5 — FRONTEND ROUTES ═══
+
+apps/frontend/src/pages/legal/matters/:
+  LegalMattersListPage.tsx 
+    /legal/matters
+    Filters: status, severity, type, operating_company
+    Sort: severity desc, next_hearing_date asc, statute_of_limitations 
+      asc
+    Urgent badge on deadlines < 14 days
+  
+  LegalMatterDetailPage.tsx
+    /legal/matters/:id
+    Tabs: Overview / Timeline (events) / Documents / Deadlines / Notes
+    Add event button (modal)
+    Upload document button (modal, with is_privileged checkbox — 
+      Owner+Admin only)
+    Add deadline button (modal)
+    Close matter button (only if status = 'settled' or 'dismissed' or 
+      'judgment')
+  
+  LegalMatterNewPage.tsx
+    /legal/matters/new
+    Full form: type, severity, opposing party, our_role, case_number, 
+      court, dates, financials, attorney info, description
+  
+  Privileged document UI:
+    Visible documents show file icon + title
+    Privileged documents show RED LOCK icon + "Privileged" label
+    Non-Owner/Admin sees: "Privileged — Owner access only" (cannot 
+      download)
+
+═══ ITEM 6 — REPORTING ═══
+
+apps/frontend/src/pages/legal/reports/:
+  LegalReportsLandingPage.tsx
+    Cards:
+      - Open matters by severity (counts)
+      - Total amount at risk (sum of amount_claimed/demanded against us)
+      - Total amount we seek (sum amount_claimed where our_role=plaintiff)
+      - Settlement history with average settled amount
+      - Deadlines in next 30 days
+      - Statute of limitations approaching (next 90 days)
+
+═══ ITEM 7 — INTEGRATION WITH OTHER MODULES ═══
+
+When a contract is voided due to legal action:
+  legal.contract_instances.voided_reason can reference a legal.matter
+  
+When a driver/employee is involved in a matter:
+  Their profile page shows a "Legal Matters" tab linking to involved 
+  matters (Owner+Admin only)
+
+═══ ITEM 8 — POST-MERGE EVIDENCE ═══
+
+Create test matter (mark TEST in matter_number):
+  - Add 3 events
+  - Upload 1 privileged + 1 non-privileged document
+  - Add 2 deadlines (one in 30 days, one in 5 days)
+  - Confirm deadline reminder cron sends notifications on time
+  - Confirm non-Admin user cannot see privileged document
+  - Close matter
+  - Delete test matter
+
+═══ ABSOLUTE RULES ═══
+
+  - Privileged documents NEVER appear in general document search
+  - Audit trail on matter changes (create/update/close events)
+  - Documents stored in R2 with retention metadata
+  - No destructive bulk operations
+  - Matter closure requires outcome documentation
+  - All DDL idempotent
+
+═══ AFTER PHASE 8C ═══
+
+Phase 8B (annual re-attestation campaigns, audit reports, bulk-send) 
+is the remaining piece. Jorge decides when to schedule.
+
+Other post-launch enhancements pending:
+  - Real data CSV import (BLOCK K when Jorge has CSVs)
+  - Project knowledge v3 refresh (BLOCK F — Claude generates)
+  - Driver PWA polish
+  - Office performance optimizations
+  - WhatsApp media attachments (P7-WAMEDIA deferred)
+
+═══════════════════════════════════════════════════════════════════════
+END OF BLOCK I (PHASE 8C)
+═══════════════════════════════════════════════════════════════════════

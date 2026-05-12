@@ -1,0 +1,401 @@
+═══════════════════════════════════════════════════════════════════════
+CURSOR INSTRUCTION FILE 09
+BLOCK J · DRIVER CASH ADVANCE REQUEST FEATURE
+═══════════════════════════════════════════════════════════════════════
+
+PASTE THIS TO CURSOR ONLY AFTER: Block C, D, E, G all complete AND 
+                                  MVP launch is past
+NEXT FILE TO USE AFTER THIS: 07 (Phase 8A contracts) OR future blocks
+
+REFERENCE DOCUMENT (in Jorge's project knowledge):
+  CASH_ADVANCE_FEATURE_BLUEPRINT.md — full architecture, schema, workflow
+
+═══════════════════════════════════════════════════════════════════════
+COPY EVERYTHING BELOW THIS LINE TO CURSOR
+═══════════════════════════════════════════════════════════════════════
+
+JORGE'S DIRECTIVE — BLOCK J · DRIVER CASH ADVANCE REQUEST FEATURE
+
+Reference: CASH_ADVANCE_FEATURE_BLUEPRINT.md in project knowledge.
+
+This is a multi-domain feature touching driver PWA, office UI, accounting, 
+QBO sync, and settlement integration. Execute as ONE coordinated block 
+per standing order. Pause at PR for Jorge's merge.
+
+═══ ITEM 0 — DISCOVERY ═══
+
+Critical pre-build investigation:
+
+1. Check if driver_finance.advances or similar already exists:
+   SELECT table_name, column_name 
+   FROM information_schema.columns 
+   WHERE table_schema = 'driver_finance' 
+     AND (table_name ILIKE '%advance%' OR column_name ILIKE '%advance%')
+   ORDER BY table_name, ordinal_position;
+
+   If existing table found:
+     - Read its schema completely
+     - Read any related service: rg "advances" apps/backend/src/driver-finance/
+     - Decide: extend existing OR build parallel new system
+     - Document decision rationale
+     - Paste back findings BEFORE proceeding
+
+2. Check accounting.bill_payments structure:
+   SELECT column_name, data_type
+   FROM information_schema.columns
+   WHERE table_schema = 'accounting' AND table_name = 'bill_payments'
+   ORDER BY ordinal_position;
+
+3. Check settlement generator path:
+   ls apps/backend/src/driver-finance/
+   rg "settlement" apps/backend/src/driver-finance/ | head -20
+
+4. Check outbox event types registered:
+   rg "qbo.*outbox|outbox.*event" apps/backend/src/outbox/ | head -10
+
+5. Check WhatsApp templates available:
+   rg "TEMPLATE_REGISTRY" apps/backend/src/integrations/twilio/ | head -10
+   (Need template for cash_advance_approved + cash_advance_denied)
+
+6. Check existing driver PWA structure:
+   ls apps/frontend/src/pages/driver/ 2>/dev/null
+   ls apps/frontend/src/driver-app/ 2>/dev/null
+   Locate driver app entry + route definitions
+
+7. Check existing documents.attachments wiring for receipt uploads:
+   rg "documents.attachments" apps/backend/src/ | head -10
+
+Paste back ALL discovery output before starting Item 1.
+
+═══ ITEM 1 — MIGRATION 0124 ═══
+
+Create db/migrations/0124_p8b_cash_advance_requests.sql per blueprint 
+"Database Schema" section.
+
+Contents:
+  - driver_finance.cash_advance_requests
+  - driver_finance.cash_advance_request_lines
+  - driver_finance.cash_advance_recoveries
+  - driver_finance.cash_advance_audit_log
+  - Trigger function: enforce_personal_advance_limit
+  - All indexes per blueprint
+  - Grants to ih35_app per 0116 pattern
+  - ALTER DEFAULT PRIVILEGES (likely already set for driver_finance schema)
+
+Idempotent · non-destructive · no DROP.
+
+═══ ITEM 2 — BACKEND SERVICES ═══
+
+Create apps/backend/src/driver-finance/cash-advances.service.ts:
+
+  Driver-facing operations:
+    createRequest({driver_id, lines, payment_method, urgency, notes, 
+                   related_load_id?, receipts?})
+      - Validates personal-per-load rule
+      - Validates weekly personal cap (config-driven)
+      - Validates sum-of-lines matches total
+      - Auto-suggests related_load_id from driver's active dispatches
+      - Generates request_number (CA-YYYY-NNNNNN)
+      - Creates audit event 'requested'
+      - Sends notifications: PWA push to office (accountants + dispatchers)
+      - Sends WhatsApp to driver (confirmation)
+    
+    getMyRequests(driver_id, filter)
+    cancelMyRequest(request_id, driver_id) — only if status=pending_review
+    
+  Office-facing operations:
+    listPendingReview(filters) — for accounting/dispatcher inbox
+    getRequest(id) — includes lines + recoveries + audit log
+    
+    reviewRequest(request_id, {
+      line_adjustments: [{line_id, approved_amount_cents}],
+      approval_notes,
+      paid_from_gl_account_id,
+      withdrawal_code,
+      withdrawal_code_provider,
+      action: 'approve' | 'partial_approve' | 'deny',
+      denied_reason?
+    })
+    
+      - Validates approver role (Owner, Administrator, Accountant, Dispatcher)
+      - For approval:
+        - Calculates approved_total_cents
+        - Determines accounting_treatment:
+          * If related_load_id is set AND load.status IN ('assigned', 
+            'in_transit', 'delivered') → 'bill_payment'
+          * Else → 'driver_advance_asset'
+        - Creates accounting records (see Item 3)
+        - Creates audit event 'approved' or 'partial_approved'
+        - Notifies driver: PWA + WhatsApp + Email
+        - Queues QBO sync via outbox event
+      - For denial:
+        - Records denied_reason
+        - Audit event 'denied'
+        - Notifies driver: PWA + WhatsApp + Email
+    
+    adjustApprovedAmount(request_id, adjustments) — pre-payout only
+    markPaidOut(request_id) — when payment actually executed
+    
+  Recovery operations:
+    listOpenAdvancesForDriver(driver_id)
+      - Returns all driver_advance_asset rows with status='approved' or 
+        'recovered_partial' AND fully_recovered_at IS NULL
+    
+    applyRecovery({request_id, source: 'driver_bill' | 'settlement' | 
+                   'manual', source_id, recovery_amount_cents, 
+                   recovered_by_user_id, notes})
+      - Validates recovery_amount <= (approved_total - recovered_total)
+      - Inserts recoveries row
+      - Updates request's recovered_total_cents
+      - If recovered_total == approved_total: sets fully_recovered_at
+      - Creates GL entries (Driver Pay Expense ← Driver Advances Asset)
+      - Audit event 'recovered_partial' or 'recovered_full'
+      - Queues QBO sync
+
+═══ ITEM 3 — ACCOUNTING INTEGRATION ═══
+
+Hook into existing accounting flows:
+
+A) On approve → create accounting records:
+   - If 'bill_payment': 
+     - Insert row in accounting.bill_payments referencing driver_bill for 
+       this load (find via mdata.loads → driver_finance.driver_bills)
+     - Sets payment_type='cash_advance_to_driver'
+     - Sets amount = approved_total_cents
+   
+   - If 'driver_advance_asset':
+     - Create GL journal entry:
+       Debit: catalogs.accounting_gl_accounts where code='DRIVER_ADVANCES_RCV'
+       Credit: paid_from_gl_account_id (Comdata Cash, etc.)
+     - Records driver_advance_asset_gl_entry_id
+
+B) Bill creation hook (existing accounting.bill creation flow):
+   - Add hook in apps/backend/src/accounting/bills.service.ts
+   - After bill created for a driver:
+     - Call listOpenAdvancesForDriver(driver_id)
+     - If any open advances exist: return them in bill creation response 
+       under field 'driver_open_advances' for frontend to show prompt
+   - Add new endpoint POST /api/v1/accounting/bills/:id/apply-advances 
+     that accepts list of {advance_request_id, amount_cents} and calls 
+     applyRecovery for each
+
+C) Settlement generator hook:
+   - In existing settlement preview generator:
+     - For each driver: call listOpenAdvancesForDriver
+     - Include all open advances as line items on settlement preview
+     - When settlement is approved: auto-call applyRecovery for each 
+       advance with source='settlement'
+
+D) QBO sync hook:
+   - Emit outbox event 'driver_finance.cash_advance.approved' on approval
+   - Emit outbox event 'driver_finance.cash_advance.recovered' on recovery
+   - Create QBO sync handlers:
+     - cash_advance.approved → create QBO Bill Payment OR Journal Entry
+     - cash_advance.recovered → create reclassification Journal Entry
+
+═══ ITEM 4 — BACKEND ROUTES ═══
+
+Create apps/backend/src/driver-finance/cash-advances.routes.ts:
+
+Driver routes (require driver role):
+  GET    /api/v1/driver/cash-advances              (my requests)
+  GET    /api/v1/driver/cash-advances/:id          (my request detail)
+  POST   /api/v1/driver/cash-advances              (create new)
+  PATCH  /api/v1/driver/cash-advances/:id/cancel   (cancel if pending)
+  POST   /api/v1/driver/cash-advances/:id/receipts (upload receipt)
+
+Office routes (require Owner / Administrator / Accountant / Dispatcher):
+  GET    /api/v1/accounting/cash-advances          (list with filters)
+  GET    /api/v1/accounting/cash-advances/pending  (pending review queue)
+  GET    /api/v1/accounting/cash-advances/:id      (full detail)
+  POST   /api/v1/accounting/cash-advances/:id/review (approve/deny)
+  POST   /api/v1/accounting/cash-advances/:id/mark-paid-out
+  POST   /api/v1/accounting/cash-advances/:id/cancel
+  POST   /api/v1/accounting/cash-advances/:id/adjust-approved
+  
+  GET    /api/v1/accounting/drivers/:driver_id/open-advances
+  POST   /api/v1/accounting/bills/:bill_id/apply-advances
+
+═══ ITEM 5 — FRONTEND OFFICE UI ═══
+
+apps/frontend/src/pages/accounting/cash-advances/:
+
+  CashAdvancesInboxPage.tsx
+    Route: /accounting/cash-advances
+    Table with filters: status, urgency, driver, operating_company, age
+    Quick stats cards: pending count, urgency breakdown, total outstanding
+    Sort default: urgency desc, age desc
+  
+  CashAdvanceDetailPage.tsx
+    Route: /accounting/cash-advances/:id
+    Sections:
+      - Header: request number, driver, status badge, amounts
+      - Driver info card (photo, phone, active load if any)
+      - Line items table (editable amounts when in review mode)
+      - Receipts gallery
+      - Driver notes
+      - Audit timeline
+      - Action panel (review controls when status=pending_review):
+        - Per-line approved amount input
+        - Payment account picker
+        - Withdrawal code input + provider dropdown
+        - Approval/denial buttons
+        - Approve modal: confirmation with totals
+        - Deny modal: required reason field
+
+apps/frontend/src/pages/accounting/bills/:
+  (modify existing) BillCreateModal.tsx OR BillDetailPage.tsx
+    When creating bill for driver with open advances:
+      Show banner: "Driver X has $Y in open advances"
+      Click → modal showing each open advance + checkbox to apply
+      Apply full / partial input
+
+═══ ITEM 6 — DRIVER PWA UI ═══
+
+apps/frontend/src/pages/driver/cash-advances/:
+
+  DriverCashAdvancesListPage.tsx
+    Route: /driver/cash-advances
+    Shows: my requests with status badges
+    Quick action: "+ New Cash Advance Request" button
+  
+  DriverCashAdvanceNewPage.tsx
+    Route: /driver/cash-advances/new
+    Multi-step form:
+      Step 1: How much do you need? (total amount + auto-suggest from load)
+      Step 2: What's it for? (line items with category dropdown + amount)
+        - Validates personal-per-load rule client-side
+        - Add receipt photo button per line
+      Step 3: How do you want it? (payment method + urgency)
+      Step 4: Review & submit
+    
+    Bilingual rendering throughout based on driver.preferred_language
+  
+  DriverCashAdvanceDetailPage.tsx
+    Route: /driver/cash-advances/:id
+    Shows: status, timeline, approved amount (if any), withdrawal code 
+      (if approved), receipts
+    Action: Cancel button if status=pending_review
+
+  Add to driver PWA home page:
+    Stats card: "Pending cash advance" badge + "Outstanding advances $X"
+    Quick action button: "+ Request Cash Advance"
+
+═══ ITEM 7 — WHATSAPP TEMPLATES ═══
+
+Add to apps/backend/src/integrations/twilio/twilio-whatsapp.ts 
+TEMPLATE_REGISTRY:
+
+  cash_advance_approved:
+    EN: "Hi {{driver_first_name}}, your cash advance for ${{amount}} has 
+        been approved. Code: {{withdrawal_code}}. Provider: {{provider}}. 
+        Tap for details: {{deep_link}}"
+    ES: "Hola {{driver_first_name}}, tu adelanto en efectivo de 
+        ${{amount}} ha sido aprobado. Código: {{withdrawal_code}}. 
+        Proveedor: {{provider}}. Toca para ver detalles: {{deep_link}}"
+  
+  cash_advance_denied:
+    EN: "Hi {{driver_first_name}}, your cash advance request for 
+        ${{amount}} was not approved. Reason: {{reason}}. Tap for details: 
+        {{deep_link}}"
+    ES: "Hola {{driver_first_name}}, tu solicitud de adelanto por 
+        ${{amount}} no fue aprobada. Razón: {{reason}}. Toca para ver 
+        detalles: {{deep_link}}"
+
+Submit templates to Meta for approval (post-launch task — for now use 
+plain message via session window).
+
+═══ ITEM 8 — END-TO-END TEST ═══
+
+Add scripts/e2e-cash-advance-test.mjs:
+
+Scenarios:
+  1. Driver requests $250 = $150 lumper + $50 reefer + $50 personal
+     - Status pending_review
+     - Audit event 'requested' recorded
+     - Office notification sent
+  
+  2. Office reviews and approves at $200 ($150 lumper + $50 reefer, 
+     denied personal)
+     - Status partial_approved
+     - Bill payment created (driver has active load TEST-001)
+     - QBO outbox event queued
+     - Driver notified
+  
+  3. Driver receives notification
+     - PWA shows approved status + withdrawal code
+  
+  4. Settlement run picks up the recovery
+     - Recovery row created
+     - request status → fully_recovered
+     - QBO sync triggered
+  
+  5. Personal advance limit enforcement
+     - Driver tries second personal advance on same load → blocked
+  
+  6. No-load advance flow
+     - Driver without active load requests $100 personal
+     - Approved → driver_advance_asset entry
+     - Later: office creates a bill for this driver → prompt to apply 
+       open advance → applied → recovery recorded → asset reclassified
+  
+  7. Denial + re-request
+     - Office denies → driver receives reason
+     - Driver re-requests with revised amount → new request created
+  
+  8. Cancellation
+     - Driver cancels while status=pending_review → cancellation recorded
+
+8 of 8 scenarios must pass before PR opens.
+
+═══ ITEM 9 — PR + PAUSE ═══
+
+Branch: feat/p8b-cash-advances
+Title: "P8B — Driver cash advance request feature with approval workflow + 
+        accounting integration + bilingual PWA + QBO sync"
+
+PR body:
+  - All 9 items with evidence
+  - Schema diff
+  - Migration 0124 contents
+  - E2E test results (8/8)
+  - Screenshots of office UI + driver PWA
+  - QBO sync verification
+
+PAUSE for Jorge's merge.
+
+═══ ITEM 10 — POST-MERGE SMOKE ═══
+
+After Jorge merges + Render Deploy Live:
+  1. End-to-end real request: Jorge requests test advance as Driver A
+  2. Office (Jorge as Owner) approves at adjusted amount
+  3. Verify QBO entries appear correctly
+  4. Verify driver notification received (PWA + email)
+  5. Verify settlement preview includes recovery line
+
+═══ ABSOLUTE RULES ═══
+
+  - All DDL idempotent
+  - No destructive ops
+  - Personal-per-load limit enforced at DB level (trigger) AND UI
+  - All QBO sync via outbox pattern (not direct API calls in request flow)
+  - Bilingual: never machine-translate; use the term mapping in blueprint
+  - PWA push notifications free; WhatsApp only for approval/denial
+  - Audit log immutable
+  - Cancellation only allowed in pending_review state
+  - GL accounts referenced by code, not hardcoded UUIDs
+
+═══ OPEN DECISIONS — VERIFY WITH JORGE DURING ITEM 0 ═══
+
+If discovery reveals these aren't already decided, ask Jorge:
+  - Default personal advance weekly cap when no active load? 
+    (Recommendation: $200)
+  - Receipt timeout for company expenses?
+    (Recommendation: 7 days flag, 14 days auto-reclassify to personal)
+  - WhatsApp scope?
+    (Recommendation: only approval with code + denial with reason; 
+     all other status via PWA push)
+
+═══════════════════════════════════════════════════════════════════════
+END OF BLOCK J
+═══════════════════════════════════════════════════════════════════════

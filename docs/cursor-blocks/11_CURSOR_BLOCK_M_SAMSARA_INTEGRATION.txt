@@ -1,0 +1,372 @@
+═══════════════════════════════════════════════════════════════════════
+CURSOR INSTRUCTION FILE 11
+BLOCK M · SAMSARA INTEGRATION
+═══════════════════════════════════════════════════════════════════════
+
+PASTE THIS TO CURSOR ONLY AFTER: Block C is complete (Block C is the 
+                                  unblocker for E2E testing)
+RECOMMENDED PARALLEL: Can be specced in parallel; build after Block C lands
+
+REFERENCE DOCUMENT (in Jorge's project knowledge):
+  SAMSARA_INTEGRATION_BLUEPRINT.md — full architecture
+
+JORGE WILL PROVIDE:
+  - Samsara API token (one per operating company if separate accounts)
+  - Default geofence radius confirmation
+  - PM interval schedule
+  - Confirmation on TRK + TRANSP Samsara account structure
+
+This is a LARGE module. Split into MULTIPLE PRs by phase:
+  PR 1: S1 + S2 — Foundation + Driver Import + QBO Matching
+  PR 2: S3 + S4 — Vehicle Import + Geofence/Trip Status (operational core)
+  PR 3: S5 — HOS for dispatch
+  PR 4: S6 — Mileage-based PM prediction
+  PR 5: S7 + S8 + S9 — Fuel + Webhooks + DVIR (post-MVP)
+
+After each PR merges + Item 8 smoke green, proceed to next PR.
+
+═══════════════════════════════════════════════════════════════════════
+COPY EVERYTHING BELOW THIS LINE TO CURSOR
+═══════════════════════════════════════════════════════════════════════
+
+JORGE'S DIRECTIVE — BLOCK M · SAMSARA INTEGRATION
+
+Reference: SAMSARA_INTEGRATION_BLUEPRINT.md in project knowledge for 
+full architecture, schema, workflows, and decisions.
+
+═══ ITEM 0 — DISCOVERY (CRITICAL BEFORE ANY WRITES) ═══
+
+Investigate existing Samsara stubs in the codebase:
+
+1. Find any existing Samsara references:
+   rg "samsara|Samsara" apps/backend/src --type=ts | head -50
+   rg "samsara|Samsara" apps/frontend/src --type=tsx | head -30
+   
+2. Find any existing geofence/HOS references that may already exist:
+   rg "geofence|hos|hours.of.service" apps/backend/src --type=ts | head -30
+   
+3. Check existing integrations schema:
+   SELECT table_name, column_name FROM information_schema.columns 
+   WHERE table_schema = 'integrations' 
+   ORDER BY table_name, ordinal_position;
+
+4. Check for any partial migrations:
+   ls db/migrations/ | grep -i samsara
+   ls db/migrations/ | grep -i geofence
+   ls db/migrations/ | grep -i hos
+
+5. Check existing Phase 4 G17 work (geofencing was planned):
+   rg "G17|geofencing|location_ingest|samsara_location" apps/backend/src --type=ts
+
+Paste ALL discovery output before Item 1. If any partial implementation 
+found: STOP and report — Jorge will decide extend-vs-replace.
+
+═══ ITEM 1 — VERIFY JORGE'S SAMSARA ACCESS ═══
+
+Before any DB work, confirm we can actually talk to Samsara:
+
+1. Request Jorge's API token (he'll paste in chat)
+2. Run a one-shot test with the token:
+   curl -H "Authorization: Bearer $TOKEN" https://api.samsara.com/me
+3. Paste response (with token redacted)
+
+If 401 / 403: STOP — token issue must be fixed before proceeding.
+
+═══ PR 1 OF BLOCK M — S1 + S2: FOUNDATION + DRIVER IMPORT ═══
+
+Branch: feat/p8d-samsara-foundation-drivers
+
+Migration 0125_p8d_samsara_foundation.sql:
+  - integrations.samsara_connections
+  - integrations.samsara_driver_mappings
+  - integrations.samsara_api_audit
+  Per blueprint "Database Schema" section.
+  All idempotent · non-destructive · grants to ih35_app.
+
+Backend services:
+  apps/backend/src/integrations/samsara/connection.service.ts
+    connect({operating_company_id, api_token, user_id})
+      - Encrypts token with AES-256 (SAMSARA_TOKEN_ENCRYPTION_KEY env var)
+      - Tests via GET /me
+      - Stores connection
+      - Returns org_id + account_name
+    
+    disconnect(connection_id, user_id)
+    getConnection(operating_company_id)
+    testConnection(operating_company_id) — calls /me, returns health
+  
+  apps/backend/src/integrations/samsara/api-client.service.ts
+    Reusable client:
+      - Loads decrypted token
+      - Adds Authorization header
+      - Retry with exponential backoff
+      - Honors X-RateLimit-Remaining header
+      - Audits every call to samsara_api_audit
+  
+  apps/backend/src/integrations/samsara/driver-sync.service.ts
+    initialBulkImport(operating_company_id)
+      - Pulls all drivers via GET /fleet/drivers (paginated)
+      - For each:
+        a) Try exact match in mdata.drivers (by name + license_number)
+        b) If no exact: fuzzy match (Levenshtein < 3 on name + license prefix)
+        c) If still no match: create new mdata.drivers row with 
+           status='pending_office_review'
+        d) Mark active=true if Samsara isDeactivated=false
+        e) Try to find QBO vendor:
+           - Exact match on display_name
+           - Fuzzy match on display_name
+           - Store qbo_vendor_id if found
+           - Queue for manual review if not
+      - Insert samsara_driver_mappings row for each
+      - Return summary: created, updated, manual_review_required
+    
+    pollDriverChanges(operating_company_id, since_timestamp)
+      - Daily cron: pull drivers modified since last sync
+      - Reconcile: active/deactivated changes
+      - Update existing mappings, create new if needed
+    
+    listMatchReviewQueue(operating_company_id)
+    resolveMatchReview(mapping_id, {ih35_driver_id, qbo_vendor_id, action})
+
+Backend routes:
+  POST   /api/v1/integrations/samsara/connect
+  POST   /api/v1/integrations/samsara/disconnect
+  GET    /api/v1/integrations/samsara/status
+  POST   /api/v1/integrations/samsara/test-connection
+  POST   /api/v1/integrations/samsara/initial-import (Owner+Admin only)
+  GET    /api/v1/integrations/samsara/drivers/match-review
+  POST   /api/v1/integrations/samsara/drivers/match-review/:id/resolve
+
+Frontend:
+  apps/frontend/src/pages/integrations/samsara/:
+    SamsaraConnectionPage.tsx
+      Route: /integrations/samsara
+      Shows current connection status
+      "Connect Samsara" button → opens modal
+      Modal: paste API token + select operating company
+      After connect: shows org_id + account_name + "Run Initial Import" button
+    
+    SamsaraDriverMatchReviewPage.tsx
+      Route: /integrations/samsara/driver-match-review
+      Table of all match_confidence='manual' or 'fuzzy_low' entries
+      Per row: dropdown to confirm IH35 driver, dropdown to pick QBO vendor
+      "Create new QBO vendor" button (queues for next QBO sync)
+      Bulk approve
+
+Item 6 — Verify + PR
+  Test: connect Samsara test account, run initial import, verify drivers 
+  in mdata.drivers, verify mappings created, verify match-review queue 
+  shows manual cases.
+  
+  PR title: "P8D-PR1 — Samsara foundation + driver import + QBO matching"
+  PAUSE for Jorge merge.
+
+═══ PR 2 OF BLOCK M — S3 + S4: VEHICLES + GEOFENCE/TRIP STATUS ═══
+
+Branch: feat/p8d-samsara-vehicles-geofences
+
+This is the OPERATIONAL CORE — geofence on every load with driver alerts. 
+Critical for daily operations.
+
+Migration 0126_p8d_samsara_vehicles_geofences.sql:
+  - integrations.samsara_vehicle_mappings
+  - integrations.samsara_vehicle_odometer_history
+  - integrations.samsara_vehicle_location_history
+  - integrations.samsara_load_geofences
+  - integrations.samsara_geofence_events
+
+Backend services:
+  vehicle-sync.service.ts (similar pattern to driver-sync)
+  
+  geofence-engine.service.ts
+    createGeofencesForLoad(load_id)
+      Called from existing book-load flow
+      For each load_stop:
+        Call Samsara POST /fleet/geofences with:
+          - circular shape, default 300m radius
+          - name: "Load L-NNNN [pickup/delivery] [city]"
+          - tags for traceability
+        Store in samsara_load_geofences
+    
+    deleteGeofencesForLoad(load_id)
+      Called when load.status changes to 'completed' or 'cancelled'
+      Calls Samsara DELETE /fleet/geofences/{id} for each
+      Marks deleted_at in DB
+    
+    handleGeofenceEntry(webhook_payload)
+      Webhook handler — verifies HMAC signature first
+      Looks up load_geofence by samsara_geofence_id
+      Identifies driver via current vehicle assignment
+      Inserts samsara_geofence_events row
+      Triggers driver PWA notification:
+        - Push notification with load context
+        - Status prompt opens when driver taps
+      Triggers office notification on dispatch board
+    
+    handleDriverStatusResponse(geofence_event_id, status, driver_user_id)
+      Records driver_response + driver_responded_at
+      Creates dispatch.load_events row
+      Updates load.status if applicable
+
+Hook into existing book-load flow:
+  In apps/backend/src/dispatch/book-load.service.ts:
+    After load + load_stops created successfully:
+      AWAIT geofenceEngine.createGeofencesForLoad(load.id)
+      If fails: log error but don't block load creation
+      (loads work without geofences; geofences are an enhancement)
+
+Hook into load-completion flow:
+  When load.status changes to 'completed' or 'cancelled':
+    AWAIT geofenceEngine.deleteGeofencesForLoad(load.id)
+
+Webhook endpoint:
+  POST /api/v1/integrations/samsara/webhook
+  Verifies signature (HMAC SHA-256 with shared secret)
+  Routes by event type to appropriate handler
+
+Frontend (Driver PWA):
+  apps/frontend/src/pages/driver/trip-status-prompt/:
+    DriverTripStatusModal.tsx
+      Triggered by geofence entry push notification
+      Shows:
+        - Load context (load number, customer, location)
+        - Status buttons (depending on stop_type):
+          * Pickup stop: Arrived / Loading / Loaded / Departed
+          * Delivery stop: Arrived / Unloading / Checked-in / Delivered / Departed
+      On select: POST /api/v1/driver/loads/:load_id/status
+      Bilingual EN/ES based on driver.preferred_language
+
+Frontend (Office):
+  Update LoadDetailPage.tsx:
+    Add "Geofence Timeline" tab showing:
+      - All geofence entry/exit events for this load
+      - Driver responses + timestamps
+      - Map view (when S4 GPS phase merged)
+
+PR title: "P8D-PR2 — Samsara vehicle sync + geofence-per-load + driver trip status workflow"
+PAUSE for Jorge merge.
+
+═══ PR 3 OF BLOCK M — S5: HOS FOR DISPATCH ═══
+
+Branch: feat/p8d-samsara-hos
+
+Migration 0127_p8d_samsara_hos.sql:
+  - integrations.samsara_driver_hos_snapshots
+
+Backend service:
+  hos-poller.service.ts
+    pollActiveDriverHOS()
+      Every 15 min for drivers with status != 'off_duty'
+      Calls Samsara GET /fleet/hos/daily-logs
+      Snapshots in samsara_driver_hos_snapshots
+      Caches latest in Redis: hos:driver:{ih35_driver_id} with 5min TTL
+    
+    getLatestHOS(ih35_driver_id)
+      Reads from Redis first; falls back to DB if miss
+
+Frontend changes:
+  Update Dispatch board:
+    For each driver in dispatch list:
+      Show HOS badge:
+        Green: 8+ hours drive remaining
+        Yellow: 2-8 hours
+        Red: <2 hours
+      Tooltip on hover: full HOS breakdown
+  
+  Update book-load flow:
+    When dispatcher picks driver for a load:
+      Calculate estimated_drive_hours = total_miles / 50
+      If driver.drive_remaining < estimated_drive_hours + 1:
+        Show warning banner: "Driver has X hours remaining; this load 
+        requires Y hours. Continue anyway?"
+      Require explicit override checkbox
+
+PR title: "P8D-PR3 — Samsara HOS integration + dispatch board badges"
+PAUSE for Jorge merge.
+
+═══ PR 4 OF BLOCK M — S6: MAINTENANCE PREDICTION ═══
+
+Branch: feat/p8d-samsara-pm-forecast
+
+Migration 0128_p8d_samsara_pm_forecast.sql:
+  - catalogs.maintenance_pm_schedules (if not exists)
+    Default rows per Jorge's confirmed PM intervals
+  - Add columns to mdata.units if needed:
+    last_odometer_miles bigint
+    last_odometer_at timestamptz
+    last_pm_at + last_pm_odometer
+
+Backend service:
+  pm-forecast.service.ts
+    refreshAllForecasts()
+      Daily cron at 02:00 CT
+      For each unit:
+        Pull latest odometer from Samsara
+        Update samsara_vehicle_mappings.samsara_avg_monthly_miles 
+          (calculated from last 90 days)
+        Update mdata.units.last_odometer_miles
+        For each PM schedule applicable to this unit:
+          Calculate next_pm_due_miles
+          Calculate days_to_pm based on avg monthly miles
+        Store forecast in maintenance.pm_forecasts table
+      Auto-create work orders for overdue PMs
+
+Frontend:
+  apps/frontend/src/pages/maintenance/pm-forecast/:
+    PMForecastPage.tsx
+      Route: /maintenance/pm-forecast
+      Grouped by urgency:
+        OVERDUE (red)
+        DUE IN 7 DAYS (yellow)
+        DUE IN 30 DAYS (green)
+      Per row: unit#, last_pm_date, last_pm_miles, current_miles, 
+               avg_miles_per_month, predicted_due_date
+      "Create Work Order" button per row
+
+PR title: "P8D-PR4 — Mileage-based PM forecast (using 12K mi/mo avg)"
+PAUSE for Jorge merge.
+
+═══ PR 5 OF BLOCK M — S7 + S8 + S9: FUEL + WEBHOOKS + DVIR ═══
+
+(Specifically post-MVP — only build after PR 1-4 land)
+
+Branch: feat/p8d-samsara-fuel-webhooks-dvir
+
+Includes:
+- Fuel telemetry polling + fuel planner integration
+- Real-time webhook subscriptions (replace polling for events)
+- DVIR pull + auto-create work orders for defects
+
+PR title: "P8D-PR5 — Fuel telemetry + webhooks + DVIR"
+
+═══ ABSOLUTE RULES (WHOLE BLOCK M) ═══
+
+  - All DDL idempotent · IF NOT EXISTS / ON CONFLICT
+  - No destructive ops
+  - API token AES-256 encrypted at rest
+  - Never log tokens · never expose to frontend
+  - Webhook signatures verified HMAC SHA-256
+  - All API calls audited to samsara_api_audit
+  - Geofence creation failure does NOT block load creation 
+    (loads can work without geofences; geofences are enhancement)
+  - Driver PWA notifications bilingual EN/ES
+  - Per-operating-company connection — TRK and TRANSP may have 
+    separate Samsara accounts
+  - QBO vendor auto-create requires Jorge approval per driver 
+    (queue for manual review by default)
+  - If existing Samsara stubs found in Item 0: STOP and report 
+    before building parallel system
+
+═══ JORGE INPUTS NEEDED BEFORE BUILD ═══
+
+  1. Samsara API token(s) — one per operating company
+  2. TRK + TRANSP Samsara account structure (1 account or 2?)
+  3. Default geofence radius (recommend 300m)
+  4. PM schedule(s) — oil change every X mi, tire rotation every Y mi, etc.
+  5. HOS warning threshold (recommend: estimated_drive + 1hr buffer)
+  6. Bulk import history scope (last 12 months? all-time?)
+  7. Auto-create QBO vendor for unmatched drivers? (recommend: no, queue for review)
+
+═══════════════════════════════════════════════════════════════════════
+END OF BLOCK M
+═══════════════════════════════════════════════════════════════════════

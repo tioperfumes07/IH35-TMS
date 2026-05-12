@@ -1,0 +1,356 @@
+═══════════════════════════════════════════════════════════════════════
+CURSOR INSTRUCTION FILE 10
+BLOCK K · DRIVER SCHEDULER · 40-DAY CALENDAR + LEAVE REQUEST WORKFLOW
+═══════════════════════════════════════════════════════════════════════
+
+PASTE THIS TO CURSOR ONLY AFTER: Block J (cash advance) is complete
+NEXT FILE: TBD after Jorge decides next priority
+
+REFERENCE DOCUMENT (in Jorge's project knowledge):
+  DRIVER_SCHEDULER_FEATURE_BLUEPRINT.md — full architecture
+
+═══════════════════════════════════════════════════════════════════════
+COPY EVERYTHING BELOW THIS LINE TO CURSOR
+═══════════════════════════════════════════════════════════════════════
+
+JORGE'S DIRECTIVE — BLOCK K · DRIVER SCHEDULER (RECOVERED FEATURE)
+
+This feature was originally designed and discussed in earlier project 
+work but was never captured in the formal blueprint. It is being 
+recovered now from original design artifacts. Reference document: 
+DRIVER_SCHEDULER_FEATURE_BLUEPRINT.md in project knowledge.
+
+Module placement: SAFETY → "Driver Scheduler" tab (a new tab in the 
+existing SAFETY tab group navigation)
+
+Execute as ONE coordinated block per standing order. This is a large 
+feature — Cursor may split into 2-3 PRs at own judgment.
+
+═══ ITEM 0 — DISCOVERY ═══
+
+Check current safety module structure:
+  cat apps/frontend/src/pages/safety/SAFETY_TABS_CONFIG.ts | head -80
+  ls apps/frontend/src/pages/safety/tabs/
+
+Identify any existing scheduler-related code that may have been started 
+but not completed:
+  rg "scheduler|schedule" apps/backend/src --type=ts | head -20
+  rg "vacation|leave_request|time_off" apps/backend/src --type=ts | head -20
+  rg "scheduler|vacation" apps/frontend/src --type=tsx | head -20
+
+Check for any existing safety.driver_* tables that might overlap:
+  SELECT table_name FROM information_schema.tables 
+  WHERE table_schema = 'safety' 
+  ORDER BY table_name;
+
+Confirm mdata.drivers structure includes manager linkage:
+  SELECT column_name, data_type FROM information_schema.columns 
+  WHERE table_schema = 'mdata' AND table_name = 'drivers' 
+    AND (column_name ILIKE '%manager%' OR column_name ILIKE '%team%')
+  ORDER BY ordinal_position;
+
+═══ ITEM 1 — MIGRATION 0125 ═══
+
+Create db/migrations/0125_p8c_driver_scheduler.sql per blueprint 
+"Database Schema" section.
+
+Tables:
+  - safety.driver_leave_requests
+  - safety.driver_leave_days
+  - safety.temp_unit_assignments
+  - safety.driver_leave_audit_log
+  - catalogs.leave_policies
+  - catalogs.driver_leave_balances
+
+Plus grants to ih35_app following 0116 pattern.
+
+Plus seed data for catalogs.leave_policies (one row per active operating 
+company with default values):
+  - vacation_days_per_year: 10
+  - sick_days_per_year: 5  
+  - personal_days_per_year: 5
+  - vacation_advance_notice_days: 14
+  - personal_advance_notice_days: 3
+  - sick_requires_doc_after_days: 1
+
+ON CONFLICT DO NOTHING for seed.
+
+Idempotent · non-destructive.
+
+═══ ITEM 2 — BACKEND SERVICES ═══
+
+apps/backend/src/safety/driver-scheduler.service.ts:
+
+Driver-facing operations:
+  listMyLeaveRequests(driver_id, filter)
+  createLeaveRequest({driver_id, leave_type, start_date, end_date, 
+                      reason, documentation_attachment_id?, 
+                      suggested_cover_driver_id?})
+    - Validates leave_type valid
+    - Validates dates valid (end >= start)
+    - Validates advance notice per leave policy
+    - Validates no overlap with existing approved leave
+    - Validates within annual balance (returns warning if approaching limit)
+    - Documentation required for sick > 1 day
+    - Auto-generates request_number
+    - Status = 'pending_review'
+    - Notifies office (PWA + email)
+  
+  cancelMyLeaveRequest(request_id) — only if status='pending_review'
+  
+  getMySchedule(driver_id, start_date, end_date)
+    Returns calendar data for this driver only
+
+Office-facing operations:
+  listPendingRequests(filters: operating_company, manager, urgency)
+  getLeaveRequest(id) — full detail with audit log
+  
+  reviewLeaveRequest(request_id, {
+    action: 'approve' | 'approve_modified' | 'deny' | 'defer',
+    approved_start_date?, approved_end_date?, modification_reason?,
+    denied_reason?
+  })
+    - For approve: creates rows in driver_leave_days table
+    - Updates driver_leave_balances (deduct from appropriate bucket)
+    - Notifies driver: PWA + WhatsApp + Email
+    - Audit event
+  
+  getFleetSchedule(operating_company_id, start_date, end_date, filters)
+    Returns full calendar grid data:
+      - All active drivers + their assigned units
+      - Per-day status for each driver
+      - Temp assignments
+      - Vacant units
+      - Pending requests visible as 'pending'
+    Optimized query — fetches in 1-2 SQL calls, formats in service
+  
+  assignTempCover({primary_driver_id, cover_driver_id, unit_id, 
+                   start_date, end_date, related_leave_request_id?})
+  
+  cancelTempCover(temp_assignment_id, reason)
+  
+  getLeaveBalance(driver_id, year)
+  getLeavePolicy(operating_company_id)
+  updateLeavePolicy(operating_company_id, updates) — Owner+Admin only
+
+═══ ITEM 3 — BACKEND ROUTES ═══
+
+Driver routes (driver role required):
+  GET    /api/v1/driver/scheduler/my-requests
+  GET    /api/v1/driver/scheduler/my-schedule
+  POST   /api/v1/driver/scheduler/request
+  PATCH  /api/v1/driver/scheduler/request/:id/cancel
+  POST   /api/v1/driver/scheduler/request/:id/documentation (upload)
+
+Office routes (Owner / Administrator / Safety / Dispatcher):
+  GET    /api/v1/safety/scheduler/grid                  (calendar grid)
+  GET    /api/v1/safety/scheduler/requests              (list all)
+  GET    /api/v1/safety/scheduler/requests/pending      (pending inbox)
+  GET    /api/v1/safety/scheduler/requests/:id          (detail)
+  POST   /api/v1/safety/scheduler/requests/:id/review   (approve/deny)
+  POST   /api/v1/safety/scheduler/requests/:id/assign-cover
+  GET    /api/v1/safety/scheduler/balance/:driver_id
+  GET    /api/v1/safety/scheduler/policy/:op_company_id
+  PATCH  /api/v1/safety/scheduler/policy/:op_company_id (Owner+Admin only)
+  GET    /api/v1/safety/scheduler/temp-assignments
+  POST   /api/v1/safety/scheduler/temp-assignments
+  POST   /api/v1/safety/scheduler/temp-assignments/:id/cancel
+
+═══ ITEM 4 — FRONTEND SAFETY TAB INTEGRATION ═══
+
+Update apps/frontend/src/pages/safety/SAFETY_TABS_CONFIG.ts:
+
+Add new group OR add to existing "Compliance Docs & Monitoring":
+  { 
+    id: 'driver-scheduler', 
+    label: 'Driver Scheduler', 
+    route: '/safety/driver-scheduler', 
+    badge: 'new' 
+  }
+
+OR create new group "Workforce Planning":
+  { id: 'workforce-planning', label: 'Workforce Planning', tabs: [
+    { id: 'driver-scheduler', label: 'Driver Scheduler', 
+      route: '/safety/driver-scheduler', badge: 'new' },
+    { id: 'leave-requests', label: 'Leave Requests', 
+      route: '/safety/leave-requests', badge: 'pending' },
+    { id: 'leave-balances', label: 'Leave Balances', 
+      route: '/safety/leave-balances' },
+  ]}
+
+(Recommend the new group approach for cleanliness.)
+
+═══ ITEM 5 — FRONTEND CALENDAR GRID UI ═══
+
+apps/frontend/src/pages/safety/driver-scheduler/:
+
+DriverSchedulerGridPage.tsx
+  Route: /safety/driver-scheduler
+  
+  Layout per blueprint "The View (Calendar Grid)" section:
+    - Top toolbar: date range picker (7/14/30/40 day views)
+      operating company filter, sort by, group by, "Jump to today"
+    - Calendar header: month label + day-of-week row + day-number row
+    - Body: one row per driver
+      - Columns: primary driver, temp assignment, unit, day cells, totals
+    - Cell rendering:
+      - Working: empty
+      - Vacation: green background + "Vac" or "Vacación" text
+      - Sick: yellow + "Enferm."
+      - Personal: orange + "Personal"  
+      - WFH: blue + "WFH"
+      - Holiday: gray + "Festivo"
+      - Pending: striped pattern, hover shows request detail
+    - Vacant rows: light gray background, "Vacante" in primary driver column
+    - Click cell to see leave request detail (if any)
+    - Right-click cell context menu: create leave request for driver (office initiates)
+  
+  Performance:
+    - Virtualized rows for fleets > 100 drivers
+    - Single API call fetches entire visible window
+    - Server-side aggregation of totals
+
+DriverSchedulerRequestInboxPage.tsx
+  Route: /safety/scheduler/pending-requests
+  Table of pending requests sorted by urgency / start date
+  Filters: driver, leave type, operating company
+
+DriverSchedulerRequestDetailPage.tsx
+  Route: /safety/scheduler/requests/:id
+  Full request detail with:
+    - Driver info card
+    - Leave details
+    - Calendar impact preview (mini calendar showing the window)
+    - Suggested cover drivers
+    - Review action panel (approve/deny/modify/defer)
+    - Audit timeline
+
+LeavePoliciesAdminPage.tsx (Owner+Admin only)
+  Route: /lists/safety/leave-policies
+  One card per operating company with editable policy fields
+
+═══ ITEM 6 — FRONTEND DRIVER PWA UI ═══
+
+apps/frontend/src/pages/driver/scheduler/:
+
+DriverMyScheduleePage.tsx
+  Route: /driver/scheduler
+  Personal 40-day forward calendar (own row only)
+  Color-coded as in office view
+  Pending requests visible
+  "Request Time Off" button prominent
+
+DriverLeaveRequestNewPage.tsx
+  Route: /driver/scheduler/request
+  Multi-step form (bilingual):
+    Step 1: Leave type
+    Step 2: Start + end dates (calendar picker)
+    Step 3: Reason + documentation (if required)
+    Step 4: Suggest cover driver (optional)
+    Step 5: Review + submit
+
+DriverLeaveRequestListPage.tsx
+  Route: /driver/scheduler/requests
+  My request history with status badges
+
+Bilingual rendering per driver.preferred_language throughout.
+
+═══ ITEM 7 — CRONS + NOTIFICATIONS ═══
+
+Cron 1: Advance reminder for upcoming leave
+  Daily at 08:00 CT
+  Find approved leave starting in 3, 7, or 14 days
+  Send PWA + email reminders to:
+    - Driver (their leave starts soon)
+    - Their manager (driver's leave starts soon, ensure coverage)
+    - Dispatch (plan loads around it)
+
+Cron 2: Year rollover
+  January 1 annually
+  For each driver: create new catalogs.driver_leave_balances row 
+    for new year with policy defaults
+  Apply carryover from prior year if policy allows
+  Notify drivers of new annual balance
+
+Cron 3: Pending request escalation
+  Daily at 09:00 CT
+  Find requests pending review > 5 days
+  Escalate to Owner + Administrator via PWA notification + email
+
+═══ ITEM 8 — INTEGRATION POINTS ═══
+
+A) Dispatch board awareness:
+   In existing dispatch board UI, mark drivers with active or upcoming 
+   leave with a small badge so dispatchers don't try to assign them
+   
+B) Driver availability for load assignment:
+   When booking a load, system warns if assigned driver has approved 
+   leave during the load's date window
+
+C) Settlement integration (later):
+   Vacation days could affect pay calculations if salary-based drivers 
+   exist (configurable per driver pay_basis)
+
+═══ ITEM 9 — END-TO-END TEST ═══
+
+scripts/e2e-driver-scheduler-test.mjs
+
+Scenarios:
+  1. Driver requests 7-day vacation 30 days out → approved → calendar updates
+  2. Driver requests sick leave for tomorrow → office reviews → approves → 
+     cover driver assigned
+  3. Driver attempts overlapping vacation request → blocked with error
+  4. Driver requests vacation 5 days out (policy requires 14) → blocked
+  5. Office modifies approved leave (shortens by 2 days) → driver notified
+  6. Office denies request → driver receives explanation → re-requests with 
+     different dates → approved
+  7. Personal leave: driver requests 6th personal day in year (cap is 5) → 
+     blocked with policy explanation
+  8. Temp cover assignment: leave approved, office assigns cover driver, 
+     cover driver receives notification
+  9. Year rollover cron: balances reset on Jan 1
+  10. Fleet view: 30-day grid with mixed vacation/sick/personal renders 
+      correctly with totals
+
+10 of 10 must pass before PR.
+
+═══ ITEM 10 — PR + PAUSE ═══
+
+Branch: feat/p8c-driver-scheduler
+Title: "P8C — Driver Scheduler (40-day calendar + leave request workflow + 
+       cover assignments + bilingual)"
+
+PR body:
+  - All 9 items with evidence
+  - Schema diff
+  - Screenshots: office calendar grid, request inbox, driver PWA
+  - E2E test results (10/10)
+  - Notes on recovered feature (see blueprint for context)
+
+PAUSE for Jorge merge.
+
+═══ ITEM 11 — POST-MERGE SMOKE ═══
+
+After Jorge merges + Render Deploy Live:
+  1. Jorge requests test vacation as Driver A from PWA
+  2. Jorge (as Owner) reviews + approves in office view
+  3. Verify calendar updates on both office and driver views
+  4. Test bilingual rendering by toggling Driver A's preferred_language
+  5. Verify QBO sync (no QBO impact expected — informational only)
+
+═══ ABSOLUTE RULES ═══
+
+  - All DDL idempotent
+  - No destructive ops
+  - Bilingual: never machine-translate; use term mapping in blueprint
+  - Documentation upload required for sick leave > 1 day
+  - Overlapping approved leave prevented at DB level (UNIQUE on 
+    driver_leave_days)
+  - Audit log immutable
+  - Cannot delete leave requests — cancel only
+  - Driver cannot self-approve
+  - Manager hierarchy respected for approval limits
+
+═══════════════════════════════════════════════════════════════════════
+END OF BLOCK K
+═══════════════════════════════════════════════════════════════════════
