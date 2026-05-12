@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { lucia } from "./lucia.js";
+import { clearSessionCookieOptions, setLuciaSessionCookie } from "./session-cookie-policy.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -22,10 +23,10 @@ export async function registerSessionMiddleware(app: FastifyInstance) {
     const result = await lucia.validateSession(sessionId);
     if (result.session && result.session.fresh) {
       const fresh = lucia.createSessionCookie(result.session.id);
-      reply.setCookie(fresh.name, fresh.value, fresh.attributes);
+      setLuciaSessionCookie(reply, fresh);
     }
     if (!result.session) {
-      reply.clearCookie("ih35_session", { path: "/" });
+      reply.clearCookie("ih35_session", clearSessionCookieOptions());
       req.user = null;
       req.session = null;
       return;

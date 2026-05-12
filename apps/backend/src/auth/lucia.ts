@@ -2,6 +2,7 @@ import { Lucia } from "lucia";
 import { NodePostgresAdapter } from "@lucia-auth/adapter-postgresql";
 import { Google } from "arctic";
 import { luciaPool } from "./db.js";
+import { luciaSessionCookieBaseAttributes } from "./session-cookie-policy.js";
 
 if (!process.env.OAUTH_GOOGLE_CLIENT_ID) {
   throw new Error("OAUTH_GOOGLE_CLIENT_ID is required");
@@ -22,11 +23,7 @@ export const lucia = new Lucia(adapter, {
   sessionCookie: {
     name: "ih35_session",
     expires: false,
-    attributes: {
-      secure: true,
-      sameSite: "none",
-      path: "/",
-    },
+    attributes: luciaSessionCookieBaseAttributes(),
   },
   getUserAttributes: (attrs) => {
     return {

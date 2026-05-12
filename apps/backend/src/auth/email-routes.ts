@@ -4,6 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withLuciaBypass } from "./db.js";
 import { lucia } from "./lucia.js";
+import { setLuciaSessionCookie } from "./session-cookie-policy.js";
 import { sendEmailCode } from "./email-send.js";
 
 const startBodySchema = z.object({
@@ -162,7 +163,7 @@ export async function registerEmailAuthRoutes(app: FastifyInstance) {
 
     const session = await lucia.createSession(verificationResult.user.id, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
-    reply.setCookie(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+    setLuciaSessionCookie(reply, sessionCookie);
     return reply.code(200).send({
       ok: true,
       user: {
