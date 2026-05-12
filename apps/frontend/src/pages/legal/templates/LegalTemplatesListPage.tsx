@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { LegalModuleTabs } from "../LegalModuleTabs";
 import { LegalTemplateNewModal } from "./LegalTemplateNewModal";
 
 const STATUS_OPTIONS = ["draft", "pending_review", "approved", "active", "retired"] as const;
@@ -74,6 +75,7 @@ export function LegalTemplatesListPage() {
       />
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
+      <LegalModuleTabs activeTabId="templates" />
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-4">
         <input

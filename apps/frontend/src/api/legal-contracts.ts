@@ -1,0 +1,109 @@
+import { apiRequest } from "./client";
+
+export type LegalContractStatus = "draft" | "sent" | "viewed" | "signed_electronically" | "voided" | "expired";
+export type LegalSignerType = "driver" | "employee" | "customer" | "vendor" | "other";
+export type LegalContractLanguage = "en" | "es" | "bilingual";
+export type LegalDeliveryChannel = "email" | "sms" | "whatsapp";
+export type LegalVerificationChannel = "none" | "sms" | "email";
+
+export type LegalContractSummary = {
+  id: string;
+  template_id: string | null;
+  template_code: string;
+  template_version: number;
+  signer_type: LegalSignerType;
+  signer_name: string;
+  signer_email: string | null;
+  signer_phone: string | null;
+  language: LegalContractLanguage;
+  status: LegalContractStatus;
+  sent_at: string | null;
+  viewed_at: string | null;
+  signed_at: string | null;
+  voided_at: string | null;
+  created_at: string;
+  updated_at: string;
+  display_name_en: string | null;
+  display_name_es: string | null;
+};
+
+export type LegalContractDetail = LegalContractSummary & {
+  signer_entity_id: string | null;
+  filled_variables: Record<string, unknown>;
+  signed_pdf_storage_url: string | null;
+  signed_pdf_sha256: string | null;
+  signed_pdf_attachment_id: string | null;
+  signatures: Array<{
+    id: string;
+    signed_by_name: string;
+    typed_signature: string;
+    signer_language: LegalContractLanguage;
+    signer_ip: string | null;
+    signed_at: string;
+  }>;
+  audit_log: Array<{
+    id: number;
+    event_type: string;
+    event_payload: Record<string, unknown>;
+    actor_user_id: string | null;
+    actor_name: string | null;
+    ip_address: string | null;
+    user_agent: string | null;
+    created_at: string;
+  }>;
+};
+
+export type CreateLegalContractInput = {
+  template_id?: string;
+  template_code?: string;
+  signer_type: LegalSignerType;
+  signer_entity_id?: string;
+  signer_name: string;
+  signer_email?: string;
+  signer_phone?: string;
+  language: LegalContractLanguage;
+  filled_variables?: Record<string, unknown>;
+};
+
+export type SendLegalContractInput = {
+  verification_channel: LegalVerificationChannel;
+  delivery_channel: LegalDeliveryChannel;
+  expires_in_hours?: number;
+  custom_message?: string;
+};
+
+function withCompany(path: string, operatingCompanyId: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
+}
+
+export const legalContractsApi = {
+  list(input: { operating_company_id: string; status?: LegalContractStatus; search?: string }) {
+    const params = new URLSearchParams();
+    params.set("operating_company_id", input.operating_company_id);
+    if (input.status) params.set("status", input.status);
+    if (input.search) params.set("search", input.search);
+    return apiRequest<{ contracts: LegalContractSummary[] }>(`/api/v1/legal/contracts?${params.toString()}`);
+  },
+
+  get(contractId: string, operatingCompanyId: string) {
+    return apiRequest<LegalContractDetail>(withCompany(`/api/v1/legal/contracts/${contractId}`, operatingCompanyId));
+  },
+
+  create(operatingCompanyId: string, payload: CreateLegalContractInput) {
+    return apiRequest<LegalContractDetail>(withCompany("/api/v1/legal/contracts", operatingCompanyId), {
+      method: "POST",
+      body: payload,
+    });
+  },
+
+  send(contractId: string, operatingCompanyId: string, payload: SendLegalContractInput) {
+    return apiRequest<{ sent: boolean; sent_at: string; signer_url: string }>(
+      withCompany(`/api/v1/legal/contracts/${contractId}/send`, operatingCompanyId),
+      {
+        method: "POST",
+        body: payload,
+      }
+    );
+  },
+};

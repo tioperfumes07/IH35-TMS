@@ -10,6 +10,7 @@ import {
   Home,
   ShieldCheck,
   ListChecks,
+  Scale,
   SquareStack,
   Truck,
   Users,
@@ -48,6 +49,7 @@ const ITEMS: SidebarItem[] = [
   { key: "DOCUMENTS", label: "DOCS", Icon: FileText, to: "/documents", visibleRoles: ["Owner", "Administrator"] },
   { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/lists" },
   { key: "REPORTS", label: "REPORTS", Icon: ClipboardList, to: "/reports" },
+  { key: "LEGAL", label: "LEGAL", Icon: Scale, to: "/legal", visibleRoles: ["Owner", "Administrator"] },
   { key: "425C", label: "425C", Icon: SquareStack, to: "/425c" },
   { key: "DRV_APP", label: "DRV APP", Icon: Activity, to: "/driver-app" },
 ];
@@ -103,6 +105,12 @@ export function Sidebar({ role }: SidebarProps) {
     DISPATCH: [
       { label: "Dispatch Home", to: "/dispatch" },
       { label: "Loads", to: "/dispatch?view=loads" },
+    ],
+    LEGAL: [
+      { label: "Contracts", to: "/legal/contracts" },
+      { label: "Templates", to: "/legal/templates" },
+      { label: "Policies", to: "/legal/policies" },
+      { label: "Attorney Review", to: "/legal/attorney-review" },
     ],
   };
 

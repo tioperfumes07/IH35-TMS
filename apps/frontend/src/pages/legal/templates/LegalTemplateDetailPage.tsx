@@ -6,6 +6,7 @@ import { legalTemplatesApi } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { LegalModuleTabs } from "../LegalModuleTabs";
 
 function parseError(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
@@ -171,6 +172,7 @@ export function LegalTemplateDetailPage() {
           </div>
         }
       />
+      <LegalModuleTabs activeTabId="templates" />
 
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="space-y-3 rounded border border-gray-200 bg-white p-3">
