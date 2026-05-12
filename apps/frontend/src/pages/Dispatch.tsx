@@ -12,7 +12,7 @@ import { DispatchKanban } from "../components/dispatch/DispatchKanban";
 import { DispatchList } from "../components/dispatch/DispatchList";
 import { FilterBar, type DispatchFilterState } from "../components/dispatch/FilterBar";
 import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
-import { NewLoadModal } from "../components/dispatch/NewLoadModal";
+import { BookLoadModal } from "./dispatch/components/BookLoadModal";
 
 type ViewMode = "list" | "kanban";
 
@@ -250,20 +250,14 @@ export function DispatchPage() {
         }}
       />
 
-      <NewLoadModal
+      <BookLoadModal
         open={newLoadOpen}
-        companies={companies.map((company) => ({ id: company.id, label: company.legal_name }))}
-        customers={customers.map((customer) => ({ id: customer.id, label: customer.label }))}
-        defaultCompanyId={defaultCompanyIds[0] ?? null}
+        operatingCompanyId={defaultCompanyIds[0] ?? ""}
         onClose={() => setNewLoadOpen(false)}
-        onCreated={(created) => {
-          pushToast(`Load ${created?.load_number ?? "created"} saved`, "success");
+        onCreated={() => {
+          pushToast("Load saved", "success");
           setNewLoadOpen(false);
-          if (created?.id) {
-            const next = new URLSearchParams(searchParams);
-            next.set("load_id", created.id);
-            setSearchParams(next);
-          }
+          void loadsQuery.refetch();
         }}
       />
     </div>
