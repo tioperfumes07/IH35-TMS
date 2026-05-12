@@ -9,7 +9,7 @@ if (!connectionString) {
   process.exit(1);
 }
 
-const REQUESTED_OPERATING_COMPANY_ID = "1121695a-87b0-4464-91a5-f907b348f4d6";
+const OPERATING_COMPANY_ID = "b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e";
 const TEST_CUSTOMER_CODE = "TEST-BROKER-001";
 const TEST_UNIT_NUMBERS = ["TEST-UNIT-001", "TEST-UNIT-002"];
 const TEST_DRIVER_EMAILS = ["test-driver-a@example.invalid", "test-driver-b@example.invalid"];
@@ -47,45 +47,10 @@ const UNIT_FIXTURES = [
 
 const cleanupMode = process.argv.includes("--cleanup");
 const client = new pg.Client({ connectionString });
-let operatingCompanyId = REQUESTED_OPERATING_COMPANY_ID;
 
 async function tableExists(schema, table) {
   const res = await client.query(`SELECT to_regclass($1) AS reg;`, [`${schema}.${table}`]);
   return Boolean(res.rows[0]?.reg);
-}
-
-async function resolveOperatingCompanyId() {
-  const byId = await client.query(
-    `
-      SELECT id
-      FROM org.companies
-      WHERE id = $1::uuid
-      LIMIT 1
-    `,
-    [REQUESTED_OPERATING_COMPANY_ID]
-  );
-  if (byId.rows[0]?.id) {
-    operatingCompanyId = byId.rows[0].id;
-    return;
-  }
-
-  const byName = await client.query(
-    `
-      SELECT id
-      FROM org.companies
-      WHERE short_name ILIKE '%IH 35 Trucking%'
-         OR legal_name ILIKE '%IH 35 Trucking%'
-      ORDER BY id
-      LIMIT 1
-    `
-  );
-  if (!byName.rows[0]?.id) {
-    throw new Error("Could not resolve IH 35 Trucking operating company id");
-  }
-  operatingCompanyId = byName.rows[0].id;
-  console.log(
-    `seed: requested company id ${REQUESTED_OPERATING_COMPANY_ID} not found, using resolved id ${operatingCompanyId}`
-  );
 }
 
 async function cleanup() {
@@ -97,7 +62,7 @@ async function cleanup() {
         AND operating_company_id = $2
       LIMIT 1
     `,
-    [TEST_CUSTOMER_CODE, operatingCompanyId]
+    [TEST_CUSTOMER_CODE, OPERATING_COMPANY_ID]
   );
   const customerId = customerRes.rows[0]?.id ?? null;
 
@@ -108,9 +73,21 @@ async function cleanup() {
       WHERE email = ANY($1::text[])
         AND operating_company_id = $2
     `,
-    [TEST_DRIVER_EMAILS, operatingCompanyId]
+    [TEST_DRIVER_EMAILS, OPERATING_COMPANY_ID]
   );
   const driverIds = driverRes.rows.map((row) => row.id);
+
+  const trailerUnitRes = await client.query(
+    `
+      SELECT id
+      FROM mdata.units
+      WHERE unit_number = $1
+        AND owner_company_id = $2
+      LIMIT 1
+    `,
+    [TEST_TRAILER_NUMBER, OPERATING_COMPANY_ID]
+  );
+  const trailerUnitId = trailerUnitRes.rows[0]?.id ?? null;
 
   const unitRes = await client.query(
     `
@@ -119,9 +96,10 @@ async function cleanup() {
       WHERE unit_number = ANY($1::text[])
         AND owner_company_id = $2
     `,
-    [TEST_UNIT_NUMBERS, operatingCompanyId]
+    [TEST_UNIT_NUMBERS, OPERATING_COMPANY_ID]
   );
   const unitIds = unitRes.rows.map((row) => row.id);
+  const allUnitIds = trailerUnitId ? [...unitIds, trailerUnitId] : unitIds;
 
   const loadDelete = await client.query(
     `
@@ -130,11 +108,11 @@ async function cleanup() {
         AND (
           ($2::uuid IS NOT NULL AND customer_id = $2::uuid)
           OR assigned_primary_driver_id = ANY($3::uuid[])
-          OR assigned_secondary_driver_id = ANY($3::uuid[])
+          OR assigned_secondary_driver_id = ANY($4::uuid[])
           OR assigned_unit_id = ANY($4::uuid[])
         )
     `,
-    [operatingCompanyId, customerId, driverIds, unitIds]
+    [OPERATING_COMPANY_ID, customerId, driverIds, allUnitIds]
   );
   console.log(`cleanup: deleted loads=${loadDelete.rowCount}`);
 
@@ -160,7 +138,7 @@ async function cleanup() {
         `DELETE FROM ${schema}.${table} WHERE load_id IN (
           SELECT id FROM mdata.loads WHERE operating_company_id = $1 AND customer_id = $2::uuid
         )`,
-        [operatingCompanyId, customerId]
+        [OPERATING_COMPANY_ID, customerId]
       );
       console.log(`cleanup: deleted ${schema}.${table} by load_id=${deleted.rowCount}`);
     } else if (cols.has("driver_id")) {
@@ -174,29 +152,25 @@ async function cleanup() {
     }
   }
 
-  if (await tableExists("mdata", "trailers")) {
-    const trailerDelete = await client.query(
-      `
-        DELETE FROM mdata.trailers
-        WHERE trailer_number = $1
-          AND operating_company_id = $2
-      `,
-      [TEST_TRAILER_NUMBER, operatingCompanyId]
-    );
-    console.log(`cleanup: deleted trailers=${trailerDelete.rowCount}`);
-  } else {
-    console.log("cleanup: skipped trailer delete (mdata.trailers does not exist)");
-  }
-
   const driverDelete = await client.query(
     `
       DELETE FROM mdata.drivers
       WHERE email = ANY($1::text[])
         AND operating_company_id = $2
     `,
-    [TEST_DRIVER_EMAILS, operatingCompanyId]
+    [TEST_DRIVER_EMAILS, OPERATING_COMPANY_ID]
   );
   console.log(`cleanup: deleted drivers=${driverDelete.rowCount}`);
+
+  const trailerUnitDelete = await client.query(
+    `
+      DELETE FROM mdata.units
+      WHERE unit_number = $1
+        AND owner_company_id = $2
+    `,
+    [TEST_TRAILER_NUMBER, OPERATING_COMPANY_ID]
+  );
+  console.log(`cleanup: deleted trailer_units=${trailerUnitDelete.rowCount}`);
 
   const unitDelete = await client.query(
     `
@@ -204,7 +178,7 @@ async function cleanup() {
       WHERE unit_number = ANY($1::text[])
         AND owner_company_id = $2
     `,
-    [TEST_UNIT_NUMBERS, operatingCompanyId]
+    [TEST_UNIT_NUMBERS, OPERATING_COMPANY_ID]
   );
   console.log(`cleanup: deleted units=${unitDelete.rowCount}`);
 
@@ -214,7 +188,7 @@ async function cleanup() {
       WHERE customer_code = $1
         AND operating_company_id = $2
     `,
-    [TEST_CUSTOMER_CODE, operatingCompanyId]
+    [TEST_CUSTOMER_CODE, OPERATING_COMPANY_ID]
   );
   console.log(`cleanup: deleted customers=${customerDelete.rowCount}`);
 }
@@ -266,7 +240,7 @@ async function seed() {
       false,
       "active",
       "AUTO SEEDED TEST FIXTURE: payment terms target = Net 30",
-      operatingCompanyId,
+      OPERATING_COMPANY_ID,
     ]
   );
   console.log(`seed: customer inserted=${customerInsert.rowCount}`);
@@ -307,7 +281,7 @@ async function seed() {
         )
         RETURNING id
       `,
-      [fixture.firstName, fixture.lastName, fixture.email, fixture.phone, fixture.cdlNumber, operatingCompanyId]
+      [fixture.firstName, fixture.lastName, fixture.email, fixture.phone, fixture.cdlNumber, OPERATING_COMPANY_ID]
     );
     console.log(`seed: driver ${fixture.email} inserted=${inserted.rowCount}`);
   }
@@ -332,37 +306,39 @@ async function seed() {
         ON CONFLICT (unit_number) DO NOTHING
         RETURNING id
       `,
-      [fixture.unitNumber, fixture.vin, fixture.plate, operatingCompanyId]
+      [fixture.unitNumber, fixture.vin, fixture.plate, OPERATING_COMPANY_ID]
     );
     console.log(`seed: unit ${fixture.unitNumber} inserted=${inserted.rowCount}`);
   }
 
-  if (await tableExists("mdata", "trailers")) {
-    const trailerInsert = await client.query(
-      `
-        INSERT INTO mdata.trailers (
-          trailer_number,
-          vin,
-          type,
-          operating_company_id
-        )
-        VALUES (
-          $1, $2, $3, $4
-        )
-        ON CONFLICT (trailer_number) DO NOTHING
-        RETURNING id
-      `,
-      [TEST_TRAILER_NUMBER, "1FUJBBCK5XLA00099", "Dry Van", operatingCompanyId]
-    );
-    console.log(`seed: trailer inserted=${trailerInsert.rowCount}`);
-  } else {
-    console.log("seed: skipped trailer seed (mdata.trailers does not exist)");
-  }
+  const trailerInsert = await client.query(
+    `
+      INSERT INTO mdata.units (
+        unit_number,
+        vin,
+        year,
+        make,
+        model,
+        license_plate,
+        license_state,
+        owner_company_id,
+        status,
+        notes
+      )
+      VALUES (
+        $1, $2, 2024, 'TEST', 'Test Trailer', 'TTR001', 'TX', $3, 'InService',
+        'AUTO SEEDED TRAILER FIXTURE (represented as unit in current schema)'
+      )
+      ON CONFLICT (unit_number) DO NOTHING
+      RETURNING id
+    `,
+    [TEST_TRAILER_NUMBER, "1FUJBBCK5XLT00099", OPERATING_COMPANY_ID]
+  );
+  console.log(`seed: trailer_unit inserted=${trailerInsert.rowCount}`);
 }
 
 try {
   await client.connect();
-  await resolveOperatingCompanyId();
   await client.query("BEGIN");
   if (cleanupMode) {
     console.log("mode=cleanup");
