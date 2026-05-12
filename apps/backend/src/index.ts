@@ -38,6 +38,7 @@ import { registerReportsRoutes } from "./reports/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
 import { registerSafetyRoutes } from "./safety/safety.routes.js";
+import { registerDriverSchedulerRoutes } from "./safety/driver-scheduler.routes.js";
 import { registerSafetyFinesRoutes } from "./safety/fines.routes.js";
 import { registerSafetyCompanyViolationsRoutes } from "./safety/company-violations.routes.js";
 import { registerSafetyV5Routes } from "./safety/safety-v5.routes.js";
@@ -198,6 +199,7 @@ async function main() {
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);
+  await registerDriverSchedulerRoutes(app);
   await registerSafetyFinesRoutes(app);
   await registerSafetyCompanyViolationsRoutes(app);
   await registerSafetyV5Routes(app);

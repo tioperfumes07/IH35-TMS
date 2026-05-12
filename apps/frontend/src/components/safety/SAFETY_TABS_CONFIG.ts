@@ -75,6 +75,15 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     ],
   },
   {
+    id: "workforce-planning",
+    label: "Workforce Planning",
+    tabs: [
+      { id: "driver-scheduler", label: "Driver Scheduler", route: "/safety/driver-scheduler", badge: "new" },
+      { id: "leave-requests", label: "Leave Requests", route: "/safety/scheduler/pending-requests", badge: "new" },
+      { id: "leave-balances", label: "Leave Balances", route: "/safety/leave-balances", badge: null },
+    ],
+  },
+  {
     id: "settings",
     label: "Settings",
     tabs: [{ id: "settings", label: "Settings", route: "/safety/settings", badge: null }],
@@ -103,6 +112,9 @@ export const TABS = [
   { id: "insurance" },
   { id: "permits" },
   { id: "integrity-reports" },
+  { id: "driver-scheduler" },
+  { id: "leave-requests" },
+  { id: "leave-balances" },
   { id: "settings" },
 ];
 
