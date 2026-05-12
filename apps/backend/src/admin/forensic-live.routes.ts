@@ -1,7 +1,17 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withLuciaBypass } from "../auth/db.js";
+import { getCorsAllowedOrigins } from "../config/cors-allowed-origins.js";
 import { getForensicProgress } from "../integrations/qbo/forensic-progress.store.js";
+
+/** Raw SSE writes bypass Fastify's normal reply path; mirror CORS on Node ServerResponse. */
+function applySseCorsHeaders(req: { headers: { origin?: string } }, reply: { raw: import("http").ServerResponse }) {
+  const origin = req.headers.origin;
+  if (!origin || !getCorsAllowedOrigins().includes(origin)) return;
+  reply.raw.setHeader("Access-Control-Allow-Origin", origin);
+  reply.raw.setHeader("Access-Control-Allow-Credentials", "true");
+  reply.raw.setHeader("Vary", "Origin");
+}
 
 export async function registerForensicLiveRoutes(app: FastifyInstance) {
   app.get("/api/v1/admin/qbo-forensic/batches/:id/live", async (req, reply) => {
@@ -13,6 +23,7 @@ export async function registerForensicLiveRoutes(app: FastifyInstance) {
     const batchId = params?.id;
     if (!batchId) return reply.code(400).send({ error: "validation_error", message: "batch id required" });
 
+    applySseCorsHeaders(req, reply);
     reply.raw.setHeader("Content-Type", "text/event-stream");
     reply.raw.setHeader("Cache-Control", "no-cache");
     reply.raw.setHeader("Connection", "keep-alive");
