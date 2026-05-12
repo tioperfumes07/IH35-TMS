@@ -9,7 +9,7 @@
 
 > Append-only. New additions get a date stamp + chat reference.
 
-Last updated: 2026-05-06 by Jorge + Claude (planning)
+Last updated: 2026-05-12 by Jorge + Claude (Block K PR1 additions)
 
 ---
 
@@ -27,6 +27,8 @@ Last updated: 2026-05-06 by Jorge + Claude (planning)
 10. Infrastructure — Anthropic API + Google Cloud + Gmail Push live in Render
 11. Compaction policy — Save-to-disk-first
 12. Communication preference — tioperfumes07@gmail.com pattern
+13. Phase 8A Legal module (Option C approval)
+14. Phase 8C — Driver Scheduler / workforce planning (Block K)
 
 ---
 
@@ -558,6 +560,24 @@ Variable schema (required):
 - Agent-1 owns migration `0125`; legal module starts at `0126+`.
 - Work executes in isolated worktree (`IH35-TMS-block-h`) only.
 - Render deploy is merge-driven; no manual deploy commands in block execution.
+
+---
+
+## 14. Phase 8C — Driver Scheduler / workforce planning (Block K PR1)
+
+Source: `docs/cursor-blocks/10_CURSOR_BLOCK_K_DRIVER_SCHEDULER.txt` — execution queue 2026-05-12  
+Status: LOCKED — PR1 foundation IMPLEMENTED (migration `0129`, office + driver APIs, Safety UI tabs)  
+Block: Block K (multi-PR; PR1 ships schema, RLS, audit append-only, leave request workflow skeleton, fleet grid read, temp cover assignment hooks)
+
+### Scope (PR1)
+
+- Catalog: `catalogs.leave_policies`, `catalogs.driver_leave_balances` (per driver, per plan year).
+- Safety: `safety.driver_leave_requests`, `safety.driver_leave_days`, `safety.temp_unit_assignments`, `safety.driver_leave_audit_log` (append-only enforcement).
+- Leave types include `wfh` (work from home): excluded from balance bucket checks and from balance consumption on approval.
+- APIs: driver session routes under `/api/v1/driver/scheduler/*`; office routes under `/api/v1/safety/scheduler/*` (Owner / Administrator / Safety / Dispatcher; policy PATCH Owner+Admin only).
+- Safety module UI: Workforce Planning — Driver Scheduler grid, Leave Requests inbox/detail, Leave Balances (architectural design updated to 24 Safety tabs).
+
+Further PRs in Block K: driver PWA surfaces, crons, dispatch integration, documentation upload route, E2E harness — per instruction file.
 
 ---
 

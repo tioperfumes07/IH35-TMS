@@ -78,6 +78,10 @@ import { LegalLandingPage } from "./pages/legal/LegalLandingPage";
 import { LegalContractInstancesPage } from "./pages/legal/contracts/LegalContractInstancesPage";
 import { LegalPoliciesPage } from "./pages/legal/LegalPoliciesPage";
 import { LegalAttorneyReviewPage } from "./pages/legal/LegalAttorneyReviewPage";
+import { DriverSchedulerGridPage } from "./pages/safety/driver-scheduler/DriverSchedulerGridPage";
+import { DriverSchedulerRequestInboxPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage";
+import { DriverSchedulerRequestDetailPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage";
+import { DriverLeaveBalancesPage } from "./pages/safety/driver-scheduler/DriverLeaveBalancesPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -300,6 +304,10 @@ export default function App() {
           <Route path="insurance" element={<InsuranceTab />} />
           <Route path="permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />
+          <Route path="driver-scheduler" element={<DriverSchedulerGridPage />} />
+          <Route path="scheduler/pending-requests" element={<DriverSchedulerRequestInboxPage />} />
+          <Route path="scheduler/requests/:id" element={<DriverSchedulerRequestDetailPage />} />
+          <Route path="leave-balances" element={<DriverLeaveBalancesPage />} />
           <Route path="settings" element={<SettingsTab />} />
           <Route path="vehicle-inspections" element={<Navigate to="/safety/idvr" replace />} />
         </Route>
