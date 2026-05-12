@@ -22,7 +22,7 @@ export async function initializeQboTokenRefreshCron(app: FastifyInstance) {
       const expiring = await getConnectionsExpiringWithin(12 * 3600);
       for (const conn of expiring) {
         try {
-          await refreshAccessToken(conn.id, process.env.SYSTEM_ACTOR_USER_ID || undefined);
+          await refreshAccessToken(conn.id, conn.operating_company_id, process.env.SYSTEM_ACTOR_USER_ID || undefined);
         } catch (error) {
           markRunnerFailed("token_refresh_cron", error);
           app.log.error({ err: error, connectionId: conn.id }, "QBO token refresh failed");
