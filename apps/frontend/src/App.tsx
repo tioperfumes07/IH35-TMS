@@ -72,6 +72,7 @@ import { CivilFineTypesListPage } from "./pages/lists/safety/CivilFineTypesListP
 import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViolationTypesListPage";
 import { LegalTemplateDetailPage } from "./pages/legal/templates/LegalTemplateDetailPage";
 import { LegalTemplatesListPage } from "./pages/legal/templates/LegalTemplatesListPage";
+import { LegalSignPage } from "./pages/legal/sign/LegalSignPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -127,6 +128,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/sign/:token" element={<LegalSignPage />} />
         <Route
           path="/home"
           element={
