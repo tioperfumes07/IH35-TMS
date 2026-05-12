@@ -490,6 +490,77 @@ When applicable, the BILLING email is set separately to accounting@ih35trucking.
 
 ---
 
+## 13. Phase 8A Legal module (Option C approval)
+
+Source: Jorge chat 2026-05-12 ("APPROVE BLOCK H NEW SPEC — FULL OPTION C")  
+Status: LOCKED — IMPLEMENTATION AUTHORIZED  
+Block: Block H (PR1-PR5)
+
+### Scope lock
+
+Phase 8A ships:
+- legal schema (`legal.contract_templates`, `legal.contract_instances`, `legal.signatures`, `legal.contract_audit_log`, `legal.contract_signing_tokens`)
+- template library CRUD + versioning + attorney workflow
+- tokenized e-sign flow with signer identity verification
+- EN/ES/bilingual contract PDF rendering
+- immutable legal audit trail (court-evidentiary quality target)
+- settlement bilingual rendering mode for B1 drivers
+- office legal module UI + signer-facing contract pages
+
+Deferred out-of-scope:
+- Lawsuits / legal matters tracker (Phase 8C)
+- Annual re-attestation campaigns (Phase 8B)
+- Bulk-send campaigns (Phase 8B)
+- Audit export packs (Phase 8B)
+
+### Legal template activation gates (LOCKED)
+
+1. All templates seed as `draft` (never auto-active).
+2. Contract instances can only be created from `active` templates.
+3. `attorney_approved_by` + `attorney_approved_at` remain null until attorney portal approval.
+4. Attorney approval remains a hard gate before activation.
+
+### Employee NDA seed source (LOCKED)
+
+Template code: `employee_nda`  
+Source artifact: `docs/specs/templates/IH35_Employee_NDA.docx`
+
+Mandatory clauses to preserve in seed + render flow:
+- DTSA whistleblower notice
+- Protected activity carve-outs (EEOC/NLRB/OSHA/FMCSA)
+- Texas §41.001 IP assignment carve-out
+- 12-month customer + employee non-solicitation
+- Blue-pencil clause (TX BCC §15.51)
+- Bilingual provision (English controlling)
+- E-sign compliance (TUETA + E-SIGN)
+- Three-entity coverage (TRK + TRANSP + USMCA)
+- Webb County (Laredo) venue
+
+Variable schema (required):
+- `effective_date` (date)
+- `employee_full_legal_name` (text)
+- `employee_address` (text)
+- `company_signer_name` (text)
+- `company_signer_title` (text)
+- `company_signed_date` (date)
+- `employee_signed_date` (date)
+- `company_phone` (text)
+
+### Security + audit invariants (LOCKED)
+
+- Signing tokens: single-use + 30-day expiry default.
+- Audit records capture IP + user-agent on every legal event.
+- `legal.contract_audit_log` is append-only (no UPDATE/DELETE).
+- Spanish legal content cannot be finalized by machine translation.
+
+### Coordination constraints (LOCKED)
+
+- Agent-1 owns migration `0125`; legal module starts at `0126+`.
+- Work executes in isolated worktree (`IH35-TMS-block-h`) only.
+- Render deploy is merge-driven; no manual deploy commands in block execution.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:

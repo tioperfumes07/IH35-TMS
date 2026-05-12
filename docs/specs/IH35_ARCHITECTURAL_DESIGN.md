@@ -643,6 +643,41 @@ Days to Next Submission · Current Period Cash Receipts · Current Period Disbur
 
 ---
 
+## MODULE 16 — LEGAL / CONTRACTS
+
+**Route:** `/legal`
+**Approved screen:** pending formal PNG pack (Phase 8A new-spec approval)
+**Phase 8A tasks:** PR1 schema + template library, PR2 e-sign + PDF rendering, PR3 settlement bilingual mode, PR4 office legal UI, PR5 attorney review portal
+**Purpose:** Attorney-reviewed contract template control, signer workflows, immutable legal evidence trail
+
+### Top action button
+**+ Create Contract**
+
+### Sub-nav tabs (4 — Phase 8A)
+
+| Tab | What it shows | Phase |
+|-----|---------------|-------|
+| **Contracts** | Contract instances by signer/status with send + tracking actions | Phase 8A |
+| **Templates** | Versioned legal template library with review status lifecycle | Phase 8A |
+| **Policies** | Policy acknowledgment templates and status rollups | Phase 8A |
+| **Attorney Review** | Submitted templates awaiting legal approval decision | Phase 8A |
+
+### Template status lifecycle (LOCKED)
+`draft -> pending_review -> approved -> active -> retired`
+
+Rules:
+- Templates seed as `draft` only.
+- Contracts cannot be created from non-`active` templates.
+- `attorney_approved_by` and `attorney_approved_at` remain null until attorney review completion.
+
+### E-sign + evidence invariants (Phase 8A)
+- Signing tokens are single-use and expire after 30 days by default.
+- Every legal event records IP + user-agent.
+- Audit trail is append-only and blocks UPDATE/DELETE mutations.
+- Spanish legal text is never machine-translated for final production legal use.
+
+---
+
 ## CROSS-CUTTING CONCERNS
 
 ### Permanent rules (LOCKED in `docs/specs/CURSOR-PERMANENT-RULES.md` at `66de8d4`)
@@ -675,6 +710,7 @@ Days to Next Submission · Current Period Cash Receipts · Current Period Disbur
 | Phase 5 | ⏸ | Banking schema deep · Faro reconciliation · CCG sweep · Settlements full · Customer credits · Invoice gen · QBO sync · Factor switching · Posting service |
 | Phase 6 | ⏸ | Reports + customer scoring + cancellation analysis + dispute reports + activity timeline + doc expiration alerts + e-signature + RMIS + Spanish office i18n + **P6-T-INTEGRITY alert engine (NEW from Jorge chat)** |
 | Phase 7 | ⏸ | Backup/DR · Always Track import · Production Twilio · QBO prod · Pen test · Load test · Training materials · Cutover · Launch · Post-launch monitoring |
+| Phase 8A | 🔄 IN PROGRESS | Legal/contracts module · template lifecycle · e-sign flow · bilingual legal rendering · attorney review portal |
 
 ---
 

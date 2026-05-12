@@ -70,6 +70,8 @@ import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { InternalFineReasonsListPage } from "./pages/lists/safety/InternalFineReasonsListPage";
 import { CivilFineTypesListPage } from "./pages/lists/safety/CivilFineTypesListPage";
 import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViolationTypesListPage";
+import { LegalTemplateDetailPage } from "./pages/legal/templates/LegalTemplateDetailPage";
+import { LegalTemplatesListPage } from "./pages/legal/templates/LegalTemplatesListPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -395,6 +397,30 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ReportsHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/legal"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/legal/templates" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/legal/templates"
+          element={
+            <ProtectedRoute>
+              <LegalTemplatesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/legal/templates/:id"
+          element={
+            <ProtectedRoute>
+              <LegalTemplateDetailPage />
             </ProtectedRoute>
           }
         />
