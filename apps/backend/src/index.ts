@@ -34,6 +34,7 @@ import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
+import { registerCashAdvanceRequestRoutes } from "./driver-finance/cash-advance-requests.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
@@ -83,6 +84,7 @@ import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
 import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
+import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 
@@ -195,6 +197,7 @@ async function main() {
   await registerDriverFinanceSettlementRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
+  await registerCashAdvanceRequestRoutes(app);
   await registerReportsRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
@@ -250,6 +253,13 @@ async function main() {
     app.log.info("[STARTUP] qbo-token-refresh-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] qbo-token-refresh-cron failed");
+  }
+
+  try {
+    initializeCashAdvanceRequestExpiryCron(app);
+    app.log.info("[STARTUP] cash-advance-request-expiry-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] cash-advance-request-expiry-cron failed");
   }
 
   const port = Number(process.env.PORT || 3000);

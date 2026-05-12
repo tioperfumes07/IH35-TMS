@@ -22,6 +22,7 @@
     "unit": "Unit 0234",
     "upload_document": "+ Upload Document",
     "my_documents": "My Documents",
+    "cash_advance": "Cash advance request",
     "hos_overview": "HOS Overview",
     "hos_subtitle": "Phase 1 placeholder data — will sync with Samsara in Phase 4",
     "active_load": "Active Load #2024-0058",
@@ -301,5 +302,31 @@
       "personal": "Personal",
       "wfh": "Work from home"
     }
+  },
+  "cash_advance": {
+    "title": "Cash advances",
+    "back_home": "Back to Home",
+    "back_list": "Back to requests",
+    "new_request": "Request cash advance",
+    "new_title": "New cash advance request",
+    "history": "Your requests",
+    "empty": "No requests yet.",
+    "load_error": "Could not load requests",
+    "cancel": "Cancel request",
+    "cancelled_ok": "Request cancelled",
+    "cancel_failed": "Could not cancel",
+    "amount_title": "Amount requested",
+    "amount_usd_ph": "Amount (USD)",
+    "recovery_title": "Recovery per settlement (optional)",
+    "recovery_hint": "How much to withhold per settlement in dollars. Leave blank for a standard schedule.",
+    "recovery_ph": "Per settlement (USD), optional",
+    "reason_title": "Reason",
+    "reason_ph": "At least 10 characters describing why you need the advance",
+    "submit": "Submit for review",
+    "submitted_ok": "Submitted for office review",
+    "submit_failed": "Could not submit",
+    "validation_error": "Check amount and reason",
+    "reason_min": "Reason must be at least 10 characters",
+    "above_policy_flag": "Above normal limit — needs owner review"
   }
 }

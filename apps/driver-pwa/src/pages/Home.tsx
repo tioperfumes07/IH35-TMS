@@ -88,6 +88,11 @@ export function HomePage() {
               </PwaButton>
             </Link>
           </div>
+          <Link to="/cash-advance" className="mt-3 block">
+            <PwaButton variant="secondary" className="w-full">
+              {t("home.cash_advance")}
+            </PwaButton>
+          </Link>
         </header>
         {pendingTransfer ? (
           <PwaCard title="Equipment Transfer Pending">

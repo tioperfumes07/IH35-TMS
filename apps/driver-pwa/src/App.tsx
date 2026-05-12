@@ -6,6 +6,8 @@ import { BottomNav } from "./components/BottomNav";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PendingSyncBar } from "./components/PendingSyncBar";
 import { AcceptancePage } from "./pages/Acceptance";
+import { CashAdvanceListPage } from "./pages/CashAdvanceListPage";
+import { CashAdvanceNewPage } from "./pages/CashAdvanceNewPage";
 import { DvirPage } from "./pages/DVIR";
 import { EarningsPage } from "./pages/Earnings";
 import { HomePage } from "./pages/Home";
@@ -198,6 +200,22 @@ export default function App() {
         element={
           <ProtectedRoute>
             <LeaveRequestNewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cash-advance"
+        element={
+          <ProtectedRoute>
+            <CashAdvanceListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cash-advance/new"
+        element={
+          <ProtectedRoute>
+            <CashAdvanceNewPage />
           </ProtectedRoute>
         }
       />
