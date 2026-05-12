@@ -75,6 +75,8 @@ import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
 import { registerLegalTemplateRoutes } from "./legal/templates.routes.js";
+import { registerLegalContractRoutes } from "./legal/contracts.routes.js";
+import { registerLegalSignRoutes } from "./legal/sign.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
 import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
@@ -221,6 +223,8 @@ async function main() {
   await registerAccountingRoutes(app);
   await registerCompanyRoutes(app);
   await registerLegalTemplateRoutes(app);
+  await registerLegalContractRoutes(app);
+  await registerLegalSignRoutes(app);
 
   try {
     await initializeQboHistoricalImportRunner(app);
