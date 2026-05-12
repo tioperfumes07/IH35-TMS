@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { cashAdvanceRequestsOfficeApi, type CashAdvanceRequestRow } from "../../api/cashAdvanceRequests";
+import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -12,11 +13,16 @@ function formatUsdFromCents(cents: unknown) {
 
 export function CashAdvanceRequestsPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const { user } = useAuth();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
   const [denyForId, setDenyForId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
   const [approveNotesById, setApproveNotesById] = useState<Record<string, string>>({});
+  const [ownerUrlById, setOwnerUrlById] = useState<Record<string, string>>({});
+
+  const role = String(user?.role ?? "");
+  const canEscalateToOwner = ["Owner", "Administrator", "Manager"].includes(role);
 
   const pendingQuery = useQuery({
     queryKey: ["driver-finance", "cash-advance-requests", "pending", companyId],
@@ -47,8 +53,22 @@ export function CashAdvanceRequestsPage() {
     },
   });
 
+  const escalateMut = useMutation({
+    mutationFn: async (row: CashAdvanceRequestRow) => {
+      const id = String(row.id ?? "");
+      return cashAdvanceRequestsOfficeApi.escalate(companyId, id);
+    },
+    onSuccess: (res, row) => {
+      const id = String(row.id ?? "");
+      if (res.owner_approval_url) setOwnerUrlById((prev) => ({ ...prev, [id]: res.owner_approval_url }));
+      void qc.invalidateQueries({ queryKey: ["driver-finance", "cash-advance-requests", companyId] });
+      void qc.invalidateQueries({ queryKey: ["home", "owner-cash-advance-pending", companyId] });
+    },
+  });
+
   const rows = pendingQuery.data?.requests ?? [];
   const busyId = approveMut.variables ? String((approveMut.variables as CashAdvanceRequestRow).id ?? "") : "";
+  const escalateBusyId = escalateMut.variables ? String((escalateMut.variables as CashAdvanceRequestRow).id ?? "") : "";
 
   const sorted = useMemo(
     () =>
@@ -91,14 +111,36 @@ export function CashAdvanceRequestsPage() {
               {sorted.map((row) => {
                 const id = String(row.id ?? "");
                 const above = Boolean(row.is_above_policy);
+                const waitingOwner =
+                  Boolean(row.owner_approval_required) && Boolean(row.owner_approval_token_expires_at);
+                const ownerUrl = ownerUrlById[id] ?? "";
                 return (
                   <tr key={id} className="border-t border-gray-100">
                     <td className="px-3 py-2 font-mono text-xs">{String(row.display_id ?? "")}</td>
                     <td className="px-3 py-2">{String(row.driver_name ?? "")}</td>
                     <td className="px-3 py-2">{formatUsdFromCents(row.requested_amount_cents)}</td>
                     <td className="px-3 py-2">
-                      {above ? (
-                        <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Above policy — Owner PR2</span>
+                      {waitingOwner ? (
+                        <div className="space-y-1">
+                          <span className="inline-flex rounded bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-900">
+                            Pending Owner Approval
+                          </span>
+                          {ownerUrl ? (
+                            <div>
+                              <div className="text-[10px] uppercase text-gray-500">Owner link (copy)</div>
+                              <input
+                                readOnly
+                                className="mt-0.5 w-full max-w-xs rounded border border-gray-200 px-1 py-0.5 font-mono text-[10px]"
+                                value={ownerUrl}
+                                onFocus={(e) => e.target.select()}
+                              />
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-gray-500">Link was emailed to Owners. Re-escalate to mint a fresh link.</p>
+                          )}
+                        </div>
+                      ) : above ? (
+                        <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Above policy</span>
                       ) : (
                         <span className="text-xs text-gray-500">Within policy</span>
                       )}
@@ -121,6 +163,17 @@ export function CashAdvanceRequestsPage() {
                       >
                         Approve
                       </Button>
+                      {above && canEscalateToOwner ? (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={escalateMut.isPending}
+                          onClick={() => escalateMut.mutate(row)}
+                          className={escalateBusyId === id ? "opacity-70" : ""}
+                        >
+                          {waitingOwner ? "Re-send Owner link" : "Escalate to Owner"}
+                        </Button>
+                      ) : null}
                       <Button size="sm" variant="secondary" onClick={() => setDenyForId(id)}>
                         Deny
                       </Button>
@@ -137,6 +190,7 @@ export function CashAdvanceRequestsPage() {
         <p className="text-sm text-red-600">Approve failed — check console or try again.</p>
       ) : null}
       {denyMut.isError ? <p className="text-sm text-red-600">Deny failed.</p> : null}
+      {escalateMut.isError ? <p className="text-sm text-red-600">Escalate failed.</p> : null}
 
       {denyForId ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">

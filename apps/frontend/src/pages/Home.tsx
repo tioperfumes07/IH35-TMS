@@ -1,5 +1,7 @@
 import type { AuthMeResponse } from "../types/api";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { cashAdvanceRequestsOfficeApi } from "../api/cashAdvanceRequests";
 import { getHomeAttentionList, getHomeFleetSnapshot, getKpiSummary } from "../api/reports";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Button } from "../components/Button";
@@ -42,6 +44,12 @@ export function HomePage({ auth }: Props) {
     queryFn: () => getHomeFleetSnapshot(selectedCompanyId!),
     enabled: Boolean(selectedCompanyId),
   });
+  const ownerCashPendingQuery = useQuery({
+    queryKey: ["home", "owner-cash-advance-pending", selectedCompanyId],
+    queryFn: () => cashAdvanceRequestsOfficeApi.listPendingOwnerApproval(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId) && auth.role === "Owner",
+  });
+  const ownerCashPending = ownerCashPendingQuery.data?.requests ?? [];
 
   const kpiItems = [
     { label: "Tracked Assets", number: String(kpiSummaryQuery.data?.tracked_assets ?? 0), meta: "company-scoped total assets" },
@@ -92,13 +100,54 @@ export function HomePage({ auth }: Props) {
           <Button
             variant="secondary"
             onClick={() => {
-              void Promise.all([kpiSummaryQuery.refetch(), attentionQuery.refetch(), fleetSnapshotQuery.refetch()]);
+              void Promise.all([
+                kpiSummaryQuery.refetch(),
+                attentionQuery.refetch(),
+                fleetSnapshotQuery.refetch(),
+                ownerCashPendingQuery.refetch(),
+              ]);
             }}
           >
             Refresh
           </Button>
         }
       />
+
+      {auth.role === "Owner" && selectedCompanyId ? (
+        <section className="rounded border border-violet-200 bg-violet-50/90 px-3 py-3 text-sm text-violet-950">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-violet-800">Pending Owner Approvals</div>
+              <div className="mt-1 font-semibold">
+                {ownerCashPendingQuery.isLoading
+                  ? "Loading…"
+                  : `${ownerCashPending.length} cash advance request${ownerCashPending.length === 1 ? "" : "s"} awaiting Owner action`}
+              </div>
+              <p className="mt-1 max-w-2xl text-xs text-violet-900/90">
+                Above-policy driver requests escalated from the office queue. Open the cash advance requests page to copy portal links
+                or use the email you received.
+              </p>
+            </div>
+            <Link
+              to="/driver-finance/cash-advance-requests"
+              className="shrink-0 rounded bg-violet-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-800"
+            >
+              Open queue
+            </Link>
+          </div>
+          {ownerCashPending.length > 0 ? (
+            <ul className="mt-2 space-y-1 border-t border-violet-200/80 pt-2 text-xs">
+              {ownerCashPending.slice(0, 5).map((r) => (
+                <li key={String(r.id ?? "")} className="flex flex-wrap justify-between gap-2">
+                  <span className="font-mono">{String(r.display_id ?? "")}</span>
+                  <span>{String(r.driver_name ?? "")}</span>
+                  <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">Above policy</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
 
       {/* TODO: wire dashboard snapshot values to backend in P3-T11.16.1 */}
       <div className="grid grid-cols-1 gap-2 xl:grid-cols-7">

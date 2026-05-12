@@ -13,6 +13,7 @@ import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { CashAdvanceRequestsPage } from "./pages/driver-finance/CashAdvanceRequestsPage";
+import { OwnerApprovalPortalPage } from "./pages/driver-finance/OwnerApprovalPortalPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
 import { TransfersListPage } from "./pages/banking/TransfersListPage";
@@ -144,6 +145,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/sign/:token" element={<LegalSignPage />} />
         <Route path="/attorney-review/:token" element={<LegalAttorneyReviewPortalPage />} />
+        <Route path="/owner-approval/:token" element={<OwnerApprovalPortalPage />} />
         <Route
           path="/home"
           element={

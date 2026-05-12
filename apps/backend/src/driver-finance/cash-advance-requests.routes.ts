@@ -16,6 +16,7 @@ import {
   officeApproveBodySchema,
   officeDenyBodySchema,
 } from "./cash-advance-requests.service.js";
+import { escalateCashAdvanceRequestToOwner, listPendingOwnerApprovalCashAdvanceRequests, sendOwnerEscalationEmails } from "./cash-advance-owner-approval.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -41,7 +42,11 @@ function currentUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 function canReviewCashAdvanceRequest(role: string): boolean {
-  return ["Owner", "Administrator", "Accountant", "Dispatcher"].includes(role);
+  return ["Owner", "Administrator", "Manager", "Accountant", "Dispatcher"].includes(role);
+}
+
+function canEscalateCashAdvanceToOwner(role: string): boolean {
+  return ["Owner", "Administrator", "Manager"].includes(role);
 }
 
 async function fetchDriverOperatingCompanyId(userUuid: string, driverId: string): Promise<string | null> {
@@ -133,6 +138,64 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
       });
     });
     return { requests: rows };
+  });
+
+  app.get("/api/v1/driver-finance/cash-advance-requests/pending-owner-approval", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (String(user.role ?? "") !== "Owner") {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const rows = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      return listPendingOwnerApprovalCashAdvanceRequests(client, parsed.data.operating_company_id);
+    });
+    return { requests: rows };
+  });
+
+  app.post("/api/v1/driver-finance/cash-advance-requests/:id/escalate", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!canEscalateCashAdvanceToOwner(String(user.role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const parsedParams = uuidParamsSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const esc = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SET LOCAL app.operating_company_id = '${parsedQuery.data.operating_company_id}'`);
+      return escalateCashAdvanceRequestToOwner(client, {
+        operatingCompanyId: parsedQuery.data.operating_company_id,
+        requestId: parsedParams.data.id,
+        actorUserId: user.uuid,
+      });
+    });
+
+    if ("error" in esc) {
+      const err = esc.error;
+      if (err === "not_found") return reply.code(404).send({ error: err });
+      return reply.code(409).send({ error: err });
+    }
+
+    const driverName = String(esc.request.driver_name ?? "");
+    const amt = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(
+      Number(esc.request.requested_amount_cents ?? 0) / 100
+    );
+    void sendOwnerEscalationEmails({
+      owner_approval_url: esc.owner_approval_url,
+      requestDisplayId: String(esc.request.display_id ?? ""),
+      requestedAmountDollars: amt,
+      driverName,
+    });
+
+    return {
+      owner_approval_url: esc.owner_approval_url,
+      request: esc.request,
+    };
   });
 
   app.get("/api/v1/driver-finance/cash-advance-requests/:id", async (req, reply) => {
