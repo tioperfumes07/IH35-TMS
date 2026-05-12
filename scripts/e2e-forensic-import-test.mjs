@@ -5,7 +5,8 @@ import pg from "pg";
 dotenv.config();
 
 const POLL_INTERVAL_MS = 15_000;
-const TIMEOUT_MS = 30 * 60 * 1000;
+const configuredTimeoutMs = Number(process.env.E2E_FORENSIC_TIMEOUT_MS ?? 0);
+const TIMEOUT_MS = Number.isFinite(configuredTimeoutMs) && configuredTimeoutMs > 0 ? configuredTimeoutMs : 0;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -27,6 +28,18 @@ function safeJsonParse(text, fallback = null) {
   } catch {
     return fallback;
   }
+}
+
+function parseLastJsonLineObject(text) {
+  const lines = String(text ?? "")
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const v = safeJsonParse(lines[i], null);
+    if (v && typeof v === "object") return v;
+  }
+  return null;
 }
 
 function assertOk(condition, message, context = {}) {
@@ -150,10 +163,11 @@ if (!process.env.DATABASE_URL && process.env.DATABASE_DIRECT_URL) process.env.DA
   const { runForensicImport } = await import("./apps/backend/src/integrations/qbo/forensic-import.service.ts");
   const actor = process.env.E2E_ACTOR_USER_ID;
   const batchId = process.env.E2E_BATCH_ID;
+  const operatingCompanyId = process.env.E2E_OPERATING_COMPANY_ID;
   const sinceDate = process.env.E2E_SINCE_DATE || "2015-01-01";
   const attachmentsSinceDate = process.env.E2E_ATTACHMENTS_SINCE_DATE || "2021-01-01";
   try {
-    const result = await runForensicImport(actor, { batchId, sinceDate, attachmentsSinceDate });
+    const result = await runForensicImport(actor, { batchId, operatingCompanyId, sinceDate, attachmentsSinceDate });
     console.log(JSON.stringify({ ok: true, result }));
   } catch (error) {
     console.error(JSON.stringify({ ok: false, error: String(error?.message || error) }));
@@ -303,7 +317,7 @@ async function main() {
       stderr: preflightStart.stderr,
     });
 
-    const startPayload = safeJsonParse(preflightStart.stdout.trim(), null);
+    const startPayload = parseLastJsonLineObject(preflightStart.stdout);
     assertOk(startPayload?.ok && startPayload?.batchId, "startImportBatch returned invalid payload", {
       stdout: preflightStart.stdout,
       stderr: preflightStart.stderr,
@@ -318,6 +332,7 @@ async function main() {
         ...process.env,
         E2E_ACTOR_USER_ID: resolved.actorUserId,
         E2E_BATCH_ID: startPayload.batchId,
+        E2E_OPERATING_COMPANY_ID: resolved.operatingCompanyId,
         E2E_SINCE_DATE: sinceDate,
         E2E_ATTACHMENTS_SINCE_DATE: process.env.E2E_ATTACHMENTS_SINCE_DATE || "2021-01-01",
       },
@@ -331,7 +346,7 @@ async function main() {
       runnerStderr += String(chunk);
     });
 
-    const timeoutAt = Date.now() + TIMEOUT_MS;
+    const timeoutAt = TIMEOUT_MS > 0 ? Date.now() + TIMEOUT_MS : Number.POSITIVE_INFINITY;
     let finalBatch = null;
     let timedOut = false;
 
