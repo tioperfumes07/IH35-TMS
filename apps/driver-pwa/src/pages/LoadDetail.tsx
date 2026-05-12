@@ -69,6 +69,10 @@ export function LoadDetailPage() {
 
         {tab === "overview" ? (
           <PwaCard>
+            <div className="mb-2 rounded border border-pwa-border px-2 py-1 text-[11px] text-pwa-text-secondary">
+              <div>Important legal notice: confirm pickup and delivery details before accepting any settlement or deduction item.</div>
+              <div className="opacity-80">Aviso legal importante: confirme los detalles de recoleccion y entrega antes de aceptar cualquier liquidacion o deduccion.</div>
+            </div>
             <div className="space-y-2 text-sm">
               <div><span className="text-pwa-text-secondary">{t("load.miles")}:</span> {load.miles}</div>
               <div><span className="text-pwa-text-secondary">{t("load.rate")}:</span> ${(load.rate_cents / 100).toFixed(2)}</div>

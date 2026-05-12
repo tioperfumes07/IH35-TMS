@@ -2,6 +2,8 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireDriverSession } from "./auth.js";
+import path from "node:path";
+import { readFile } from "node:fs/promises";
 
 type SettlementStatus = "draft" | "presettle" | "acked" | "locked" | "paid" | "held" | "cancelled";
 type EarningsLoad = {
@@ -15,6 +17,7 @@ type CycleEarnings = {
   cycle_id: string;
   period_start: string;
   period_end: string;
+  preferred_language: "en" | "es";
   loads_completed: number;
   miles_driven: number;
   gross_cents: number;
@@ -23,8 +26,35 @@ type CycleEarnings = {
   escrow_cents: number;
   net_preview_cents: number;
   final_settlement_cents: number | null;
+  settlement_terms: Record<string, { primary: string; secondary: string }>;
   loads: EarningsLoad[];
 };
+
+type SettlementTerms = Record<string, { en: string; es: string }>;
+let cachedTerms: SettlementTerms | null = null;
+
+async function loadSettlementTerms() {
+  if (cachedTerms) return cachedTerms;
+  const termsPath = path.resolve(process.cwd(), "apps/backend/src/i18n/legal_terms.json");
+  const source = await readFile(termsPath, "utf8");
+  const parsed = JSON.parse(source) as { settlement?: SettlementTerms };
+  cachedTerms = parsed.settlement ?? {};
+  return cachedTerms;
+}
+
+function toPrimarySecondary(
+  terms: SettlementTerms,
+  preferredLanguage: "en" | "es"
+): Record<string, { primary: string; secondary: string }> {
+  const out: Record<string, { primary: string; secondary: string }> = {};
+  for (const [key, pair] of Object.entries(terms)) {
+    out[key] =
+      preferredLanguage === "es"
+        ? { primary: pair.es, secondary: pair.en }
+        : { primary: pair.en, secondary: pair.es };
+  }
+  return out;
+}
 
 const cyclesQuerySchema = z.object({
   weeks: z.coerce.number().int().min(1).max(12).default(4),
@@ -60,7 +90,14 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
-async function buildCycle(client: { query: <R>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }, driverId: string, start: Date, end: Date): Promise<CycleEarnings> {
+async function buildCycle(
+  client: { query: <R>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  driverId: string,
+  preferredLanguage: "en" | "es",
+  terms: SettlementTerms,
+  start: Date,
+  end: Date
+): Promise<CycleEarnings> {
   const settlementRows = await client.query<{
     id: string;
     period_start: string;
@@ -116,6 +153,7 @@ async function buildCycle(client: { query: <R>(sql: string, values?: unknown[]) 
     cycle_id: `cycle-${start.toISOString().slice(0, 10)}`,
     period_start: start.toISOString(),
     period_end: end.toISOString(),
+    preferred_language: preferredLanguage,
     loads_completed: loads.length,
     miles_driven: 0,
     gross_cents: grossCents,
@@ -124,6 +162,7 @@ async function buildCycle(client: { query: <R>(sql: string, values?: unknown[]) 
     escrow_cents: 0,
     net_preview_cents: netPreviewCents,
     final_settlement_cents: latestSettlement?.status === "paid" ? netPreviewCents : null,
+    settlement_terms: toPrimarySecondary(terms, preferredLanguage),
     loads,
   };
 }
@@ -137,8 +176,11 @@ export async function registerDriverEarningsRoutes(app: FastifyInstance) {
     const now = new Date();
     const start = startOfWeekSunday(now);
     const end = endOfWeekSaturday(start);
+    const terms = await loadSettlementTerms();
 
-    const cycle = await withCurrentUser(req.user.uuid, async (client) => buildCycle(client, driver.id, start, end));
+    const cycle = await withCurrentUser(req.user.uuid, async (client) =>
+      buildCycle(client, driver.id, driver.preferred_language, terms, start, end)
+    );
     return cycle;
   });
 
@@ -149,6 +191,7 @@ export async function registerDriverEarningsRoutes(app: FastifyInstance) {
     const driver = req.driver;
     if (!driver || !req.user) return reply.code(403).send({ error: "forbidden" });
 
+    const terms = await loadSettlementTerms();
     const cycles = await withCurrentUser(req.user.uuid, async (client) => {
       const out: CycleEarnings[] = [];
       const now = new Date();
@@ -157,7 +200,7 @@ export async function registerDriverEarningsRoutes(app: FastifyInstance) {
         const start = new Date(currentStart);
         start.setDate(start.getDate() - idx * 7);
         const end = endOfWeekSaturday(start);
-        out.push(await buildCycle(client, driver.id, start, end));
+        out.push(await buildCycle(client, driver.id, driver.preferred_language, terms, start, end));
       }
       return out;
     });

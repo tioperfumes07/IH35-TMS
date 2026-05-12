@@ -1,9 +1,10 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { signOut } from "../api/identity";
+import { getDriverLanguagePreference, updateDriverLanguagePreference } from "../api/preferences";
 import { useAuth } from "../auth/useAuth";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
@@ -26,6 +27,28 @@ export function ProfilePage() {
   useEffect(() => {
     void getQueueSummary().then(setQueueSummary);
   }, []);
+
+  const languageQuery = useQuery({
+    queryKey: ["driver", "preferences", "language"],
+    queryFn: getDriverLanguagePreference,
+  });
+
+  const languageMutation = useMutation({
+    mutationFn: (preferredLanguage: "en" | "es") => updateDriverLanguagePreference(preferredLanguage),
+    onSuccess: (payload) => {
+      void i18n.changeLanguage(payload.preferred_language);
+      queryClient.setQueryData(["driver", "preferences", "language"], payload);
+    },
+    onError: () => pushToast(t("common.error"), "error"),
+  });
+
+  useEffect(() => {
+    const preferred = languageQuery.data?.preferred_language;
+    if (!preferred) return;
+    if (!i18n.language.startsWith(preferred)) {
+      void i18n.changeLanguage(preferred);
+    }
+  }, [languageQuery.data?.preferred_language, i18n]);
 
   async function handleClearFailed() {
     const count = await clearByStatus(["failed"]);
@@ -50,18 +73,26 @@ export function ProfilePage() {
               <button
                 type="button"
                 onClick={() => {
-                  void i18n.changeLanguage("en");
+                  languageMutation.mutate("en");
                 }}
-                className={`min-h-11 rounded border text-sm font-semibold ${i18n.language.startsWith("en") ? "border-white text-white" : "border-pwa-border text-pwa-text-secondary"}`}
+                className={`min-h-11 rounded border text-sm font-semibold ${
+                  (languageQuery.data?.preferred_language ?? i18n.language).startsWith("en")
+                    ? "border-white text-white"
+                    : "border-pwa-border text-pwa-text-secondary"
+                }`}
               >
                 {t("profile.language_en")}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  void i18n.changeLanguage("es");
+                  languageMutation.mutate("es");
                 }}
-                className={`min-h-11 rounded border text-sm font-semibold ${i18n.language.startsWith("es") ? "border-white text-white" : "border-pwa-border text-pwa-text-secondary"}`}
+                className={`min-h-11 rounded border text-sm font-semibold ${
+                  (languageQuery.data?.preferred_language ?? i18n.language).startsWith("es")
+                    ? "border-white text-white"
+                    : "border-pwa-border text-pwa-text-secondary"
+                }`}
               >
                 {t("profile.language_es")}
               </button>
