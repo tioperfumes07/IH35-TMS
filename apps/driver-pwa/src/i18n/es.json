@@ -2,11 +2,13 @@
   "nav": {
     "today": "Hoy",
     "loads": "Cargas",
+    "scheduler": "Ausencias",
     "earnings": "Ganancias",
     "profile": "Perfil"
   },
   "common": {
     "loading": "Cargando...",
+    "error": "Algo salió mal",
     "save": "Guardar",
     "cancel": "Cancelar",
     "retry": "Reintentar",
@@ -259,6 +261,45 @@
       "info": "Info",
       "warning": "Advertencia",
       "critical": "Crítico"
+    }
+  },
+  "scheduler": {
+    "title": "Ausencias y calendario",
+    "back_today": "Volver a Hoy",
+    "back_schedule": "Volver al calendario",
+    "next_40_days": "Próximos 40 días",
+    "swipe_hint": "Desplázate para ver todos los días. Rayado = pendiente de aprobación.",
+    "request_time_off": "Solicitar tiempo libre",
+    "my_requests": "Mis solicitudes",
+    "requests_title": "Mis solicitudes de ausencia",
+    "no_requests": "Aún no hay solicitudes.",
+    "cancel_request": "Cancelar",
+    "cancelled_ok": "Solicitud cancelada",
+    "cancel_failed": "No se pudo cancelar",
+    "load_error": "No se pudo cargar el calendario",
+    "request_flow_title": "Nueva solicitud de tiempo libre",
+    "step_n": "Paso {{n}} de {{max}}",
+    "step_type_hint": "Seleccione el tipo de tiempo libre.",
+    "next": "Continuar",
+    "start_date": "Fecha de inicio",
+    "end_date": "Fecha de fin",
+    "reason": "Motivo",
+    "sick_doc_label": "Suba nota médica (requerida para baja por enfermedad de más de un día)",
+    "suggest_cover": "ID de conductor suplente (opcional)",
+    "submit": "Enviar solicitud",
+    "submitted_ok": "Solicitud enviada para revisión",
+    "submit_failed": "No se pudo enviar",
+    "reason_required": "Ingrese un motivo",
+    "invalid_range": "La fecha final debe ser igual o posterior a la de inicio",
+    "pick_document": "Elija un documento",
+    "upload_failed": "Falló la subida",
+    "sick_doc_required": "Esta ausencia por enfermedad requiere documentación",
+    "notice_blocked": "No cumple el aviso previo del reglamento. Ajuste las fechas.",
+    "leave_type": {
+      "vacation": "Vacaciones",
+      "sick": "Enfermedad",
+      "personal": "Personal",
+      "wfh": "Trabajo desde casa"
     }
   }
 }

@@ -2,11 +2,13 @@
   "nav": {
     "today": "Today",
     "loads": "Loads",
+    "scheduler": "Time off",
     "earnings": "Earnings",
     "profile": "Profile"
   },
   "common": {
     "loading": "Loading...",
+    "error": "Something went wrong",
     "save": "Save",
     "cancel": "Cancel",
     "retry": "Retry",
@@ -259,6 +261,45 @@
       "info": "Info",
       "warning": "Warning",
       "critical": "Critical"
+    }
+  },
+  "scheduler": {
+    "title": "Time off & schedule",
+    "back_today": "Back to Today",
+    "back_schedule": "Back to schedule",
+    "next_40_days": "Next 40 days",
+    "swipe_hint": "Scroll sideways to see all days. Striped days are pending approval.",
+    "request_time_off": "Request time off",
+    "my_requests": "My requests",
+    "requests_title": "My leave requests",
+    "no_requests": "No requests yet.",
+    "cancel_request": "Cancel",
+    "cancelled_ok": "Request cancelled",
+    "cancel_failed": "Could not cancel request",
+    "load_error": "Could not load schedule",
+    "request_flow_title": "New time-off request",
+    "step_n": "Step {{n}} of {{max}}",
+    "step_type_hint": "Select the type of time off you need.",
+    "next": "Continue",
+    "start_date": "Start date",
+    "end_date": "End date",
+    "reason": "Reason",
+    "sick_doc_label": "Upload doctor or clinic note (required for sick leave longer than one day)",
+    "suggest_cover": "Suggested cover driver ID (optional)",
+    "submit": "Submit request",
+    "submitted_ok": "Request submitted for review",
+    "submit_failed": "Could not submit request",
+    "reason_required": "Please enter a reason",
+    "invalid_range": "End date must be on or after start date",
+    "pick_document": "Please choose a document to upload",
+    "upload_failed": "Upload failed",
+    "sick_doc_required": "Sick leave in this range requires documentation",
+    "notice_blocked": "This request does not meet advance notice rules. Adjust your dates.",
+    "leave_type": {
+      "vacation": "Vacation",
+      "sick": "Sick",
+      "personal": "Personal",
+      "wfh": "Work from home"
     }
   }
 }

@@ -6,6 +6,8 @@ import { requireDriverSession } from "../driver/auth.js";
 import {
   assignTempCover,
   assignTempCoverSchema,
+  attachLeaveRequestDocumentation,
+  attachLeaveDocumentationSchema,
   cancelDriverLeaveRequest,
   cancelTempCover,
   createDriverLeaveRequest,
@@ -30,6 +32,11 @@ const companyQuerySchema = z.object({
 });
 
 const dateRangeQuerySchema = companyQuerySchema.extend({
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+const driverDateRangeQuerySchema = z.object({
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
@@ -91,14 +98,11 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/driver/scheduler/my-schedule", async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
-    const parsed = dateRangeQuerySchema.safeParse(req.query ?? {});
+    const parsed = driverDateRangeQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const d = req.driver!;
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
-    if (oc !== parsed.data.operating_company_id) {
-      return reply.code(403).send({ error: "operating_company_mismatch" });
-    }
     const payload = await withCurrentUser(req.user!.uuid, async (client) => {
       await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
       return getMySchedule(client, {
@@ -115,14 +119,9 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     if (!(await requireDriverSession(req, reply))) return;
     const parsedBody = createLeaveRequestSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
-    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
-    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const d = req.driver!;
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
-    if (oc !== parsedQuery.data.operating_company_id) {
-      return reply.code(403).send({ error: "operating_company_mismatch" });
-    }
     const result = await withCurrentUser(req.user!.uuid, async (client) => {
       await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
       return createDriverLeaveRequest(client, {
@@ -142,14 +141,9 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     if (!(await requireDriverSession(req, reply))) return;
     const parsedParams = uuidParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
-    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
-    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const d = req.driver!;
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
-    if (oc !== parsedQuery.data.operating_company_id) {
-      return reply.code(403).send({ error: "operating_company_mismatch" });
-    }
     const row = await withCurrentUser(req.user!.uuid, async (client) => {
       await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
       return cancelDriverLeaveRequest(client, {
@@ -161,6 +155,29 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     });
     if (!row) return reply.code(409).send({ error: "leave_request_not_cancellable" });
     return row;
+  });
+
+  app.post("/api/v1/driver/scheduler/request/:id/documentation", async (req, reply) => {
+    if (!(await requireDriverSession(req, reply))) return;
+    const parsedParams = uuidParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedBody = attachLeaveDocumentationSchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const d = req.driver!;
+    const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
+    if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
+    const result = await withCurrentUser(req.user!.uuid, async (client) => {
+      await client.query(`SET LOCAL app.operating_company_id = '${oc}'`);
+      return attachLeaveRequestDocumentation(client, {
+        operatingCompanyId: oc,
+        driverId: d.id,
+        requestId: parsedParams.data.id,
+        attachmentId: parsedBody.data.documentation_attachment_id,
+        actorUserId: req.user!.uuid,
+      });
+    });
+    if ("error" in result) return reply.code(409).send(result);
+    return result.request;
   });
 
   app.get("/api/v1/safety/scheduler/grid", async (req, reply) => {

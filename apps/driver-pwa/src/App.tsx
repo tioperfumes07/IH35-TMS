@@ -12,11 +12,14 @@ import { HomePage } from "./pages/Home";
 import { HosPage } from "./pages/HOS";
 import { IncidentReportPage } from "./pages/IncidentReport";
 import { InviteRedeemPage } from "./pages/InviteRedeem";
+import { LeaveRequestListPage } from "./pages/LeaveRequestList";
+import { LeaveRequestNewPage } from "./pages/LeaveRequestNew";
 import { LoadDetailPage } from "./pages/LoadDetail";
 import { LoginPage } from "./pages/Login";
 import { MyDocumentsPage } from "./pages/MyDocuments";
 import { MyDisputesPage } from "./pages/MyDisputes";
 import { ProfilePage } from "./pages/Profile";
+import { SchedulerHomePage } from "./pages/SchedulerHome";
 import { StopActionPage } from "./pages/StopAction";
 import { TodayPage } from "./pages/Today";
 import { startSyncService, stopSyncService } from "./lib/upload-sync";
@@ -171,6 +174,30 @@ export default function App() {
         element={
           <ProtectedRoute>
             <IncidentReportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scheduler"
+        element={
+          <ProtectedRoute>
+            <SchedulerHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scheduler/requests"
+        element={
+          <ProtectedRoute>
+            <LeaveRequestListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scheduler/request"
+        element={
+          <ProtectedRoute>
+            <LeaveRequestNewPage />
           </ProtectedRoute>
         }
       />

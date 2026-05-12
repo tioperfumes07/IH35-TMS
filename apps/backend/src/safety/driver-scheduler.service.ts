@@ -16,6 +16,10 @@ export const createLeaveRequestSchema = z.object({
   suggested_cover_driver_id: z.string().uuid().optional(),
 });
 
+export const attachLeaveDocumentationSchema = z.object({
+  documentation_attachment_id: z.string().uuid(),
+});
+
 export const reviewLeaveRequestSchema = z.object({
   action: reviewActionSchema,
   approved_start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -454,6 +458,43 @@ export async function cancelDriverLeaveRequest(
     actorUserId: args.actorUserId,
   });
   return row;
+}
+
+export async function attachLeaveRequestDocumentation(
+  client: QueryableClient,
+  args: {
+    operatingCompanyId: string;
+    driverId: string;
+    requestId: string;
+    attachmentId: string;
+    actorUserId: string;
+  }
+) {
+  const res = await client.query(
+    `
+      UPDATE safety.driver_leave_requests
+      SET documentation_attachment_id = $4
+      WHERE operating_company_id = $1
+        AND id = $2
+        AND driver_id = $3
+        AND status = 'pending_review'
+        AND voided_at IS NULL
+      RETURNING *
+    `,
+    [args.operatingCompanyId, args.requestId, args.driverId, args.attachmentId]
+  );
+  const row = res.rows[0] ?? null;
+  if (!row) return { error: "leave_request_not_documentable" as const };
+
+  await appendLeaveAudit(client, {
+    operatingCompanyId: args.operatingCompanyId,
+    leaveRequestId: args.requestId,
+    eventType: "leave_documentation_attached",
+    payload: { documentation_attachment_id: args.attachmentId },
+    actorUserId: args.actorUserId,
+  });
+
+  return { request: row };
 }
 
 export async function listMyLeaveRequests(client: QueryableClient, operatingCompanyId: string, driverId: string) {
