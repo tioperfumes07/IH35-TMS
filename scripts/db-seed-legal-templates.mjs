@@ -12,7 +12,82 @@ if (!connectionString) {
 }
 
 const ndaDocxPath = path.resolve("docs/specs/templates/IH35_Employee_NDA.docx");
-const texasTemplatesPath = path.resolve("docs/specs/TEXAS_CONTRACT_TEMPLATES_FOR_ATTORNEY_REVIEW.md");
+const texasTemplatesPath = path.resolve("docs/specs/templates/TEXAS_CONTRACT_TEMPLATES_FOR_ATTORNEY_REVIEW.md");
+
+const NON_NDA_TEMPLATE_SPECS = [
+  {
+    sectionNumber: 1,
+    template_code: "driver_ica",
+    category: "driver",
+    requires_witness: true,
+    fallback_en: "INDEPENDENT CONTRACTOR AGREEMENT",
+    fallback_es: "ACUERDO DE CONTRATISTA INDEPENDIENTE",
+  },
+  {
+    sectionNumber: 2,
+    template_code: "driver_deduction_auth",
+    category: "driver",
+    requires_witness: true,
+    fallback_en: "DRIVER PAYROLL DEDUCTION AUTHORIZATION",
+    fallback_es: "AUTORIZACION DE DEDUCCIONES DE PAGO PARA CONDUCTOR",
+  },
+  {
+    sectionNumber: 3,
+    template_code: "driver_drug_alcohol_consent",
+    category: "driver",
+    requires_witness: false,
+    fallback_en: "DOT DRUG & ALCOHOL TESTING CONSENT AND NOTIFICATION",
+    fallback_es: "CONSENTIMIENTO Y NOTIFICACION DE PRUEBAS DE DROGAS Y ALCOHOL DEL DOT",
+  },
+  {
+    sectionNumber: 4,
+    template_code: "driver_equipment_use",
+    category: "driver",
+    requires_witness: false,
+    fallback_en: "COMPANY EQUIPMENT USE AND DAMAGE LIABILITY AGREEMENT",
+    fallback_es: "ACUERDO DE USO Y RESPONSABILIDAD POR DANOS A EQUIPO DE LA COMPANIA",
+  },
+  {
+    sectionNumber: 5,
+    template_code: "employee_noncompete",
+    category: "employment",
+    requires_witness: false,
+    fallback_en: "NON-COMPETE AND NON-SOLICITATION AGREEMENT",
+    fallback_es: "PACTO DE NO COMPETENCIA Y NO CAPTACION",
+  },
+  {
+    sectionNumber: 9,
+    template_code: "employee_handbook_ack",
+    category: "employment",
+    requires_witness: false,
+    fallback_en: "EMPLOYEE HANDBOOK ACKNOWLEDGMENT",
+    fallback_es: "RECONOCIMIENTO DEL MANUAL DEL EMPLEADO",
+  },
+  {
+    sectionNumber: 7,
+    template_code: "customer_master_broker_carrier",
+    category: "customer",
+    requires_witness: false,
+    fallback_en: "MASTER BROKER-CARRIER TRANSPORTATION AGREEMENT",
+    fallback_es: "ACUERDO MAESTRO DE TRANSPORTE ENTRE INTERMEDIARIO Y TRANSPORTISTA",
+  },
+  {
+    sectionNumber: 8,
+    template_code: "customer_mutual_nda",
+    category: "customer",
+    requires_witness: true,
+    fallback_en: "MUTUAL NDA (CUSTOMER/BROKER)",
+    fallback_es: "ACUERDO MUTUO DE CONFIDENCIALIDAD",
+  },
+  {
+    sectionNumber: 10,
+    template_code: "policy_drug_free_workplace",
+    category: "policy",
+    requires_witness: false,
+    fallback_en: "DOT SAFETY COMPLIANCE ACKNOWLEDGMENT",
+    fallback_es: "RECONOCIMIENTO DE CUMPLIMIENTO DE SEGURIDAD DEL DOT",
+  },
+];
 
 const ndaVariableSchema = {
   fields: {
@@ -62,6 +137,153 @@ function fallbackNdaHtml() {
 `;
 }
 
+function normalizeVariableName(raw) {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function inferVariableType(name) {
+  if (/_date$|^date_|_date_|_at$|^signed_date$/.test(name)) return "date";
+  if (/(_amount$|_rate$|_limit$|_days$|_months$|_threshold$|_pct$|_percent$)/.test(name)) return "number";
+  return "text";
+}
+
+function extractVariablesFromSection(markdownSection) {
+  const variables = new Set();
+  const regex = /\[VARIABLE:\s*([a-zA-Z0-9_]+)\]/g;
+  let match = regex.exec(markdownSection);
+  while (match) {
+    const name = normalizeVariableName(match[1]);
+    if (name) variables.add(name);
+    match = regex.exec(markdownSection);
+  }
+  return Array.from(variables);
+}
+
+function replaceVariableMarkers(markdownSection) {
+  return markdownSection.replace(/\[VARIABLE:\s*([a-zA-Z0-9_]+)\]/g, (_whole, rawName) => {
+    const name = normalizeVariableName(rawName);
+    return `{{${name}}}`;
+  });
+}
+
+function inlineMarkdownToHtml(text) {
+  let out = text;
+  out = out.replace(/`([^`]+)`/g, "<code>$1</code>");
+  out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  out = out.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  return out;
+}
+
+function markdownSectionToHtml(markdownSection) {
+  const lines = markdownSection.split(/\r?\n/);
+  const html = [];
+  let inUl = false;
+  let inOl = false;
+
+  const closeLists = () => {
+    if (inUl) {
+      html.push("</ul>");
+      inUl = false;
+    }
+    if (inOl) {
+      html.push("</ol>");
+      inOl = false;
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      closeLists();
+      continue;
+    }
+    if (line === "---") {
+      closeLists();
+      html.push("<hr />");
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    if (heading) {
+      closeLists();
+      const level = heading[1].length;
+      html.push(`<h${level}>${inlineMarkdownToHtml(heading[2])}</h${level}>`);
+      continue;
+    }
+
+    const olMatch = line.match(/^(\d+)\.\s+(.*)$/);
+    if (olMatch) {
+      if (inUl) {
+        html.push("</ul>");
+        inUl = false;
+      }
+      if (!inOl) {
+        html.push("<ol>");
+        inOl = true;
+      }
+      html.push(`<li>${inlineMarkdownToHtml(olMatch[2])}</li>`);
+      continue;
+    }
+
+    const ulMatch = line.match(/^-\s+(.*)$/);
+    if (ulMatch) {
+      if (inOl) {
+        html.push("</ol>");
+        inOl = false;
+      }
+      if (!inUl) {
+        html.push("<ul>");
+        inUl = true;
+      }
+      html.push(`<li>${inlineMarkdownToHtml(ulMatch[1])}</li>`);
+      continue;
+    }
+
+    closeLists();
+    html.push(`<p>${inlineMarkdownToHtml(line)}</p>`);
+  }
+
+  closeLists();
+  return html.join("\n");
+}
+
+function buildVariableSchemaFromVariables(variables) {
+  const fields = {};
+  for (const variableName of variables) {
+    fields[variableName] = {
+      type: inferVariableType(variableName),
+      required: true,
+    };
+  }
+  return { fields };
+}
+
+function extractSection(markdown, sectionNumber) {
+  const startRegex = new RegExp(`^##\\s+${sectionNumber}\\.\\s+`, "m");
+  const startMatch = startRegex.exec(markdown);
+  if (!startMatch) return null;
+  const startIdx = startMatch.index;
+
+  const remaining = markdown.slice(startIdx + 1);
+  const endRegex = /^##\s+\d+\.\s+/m;
+  const endMatch = endRegex.exec(remaining);
+  const endIdx = endMatch ? startIdx + 1 + endMatch.index : markdown.length;
+  return markdown.slice(startIdx, endIdx).trim();
+}
+
+function extractDisplayTitles(sectionMarkdown, fallbackEn, fallbackEs) {
+  const enMatch = sectionMarkdown.match(/\*\*EN\*\*:\s*(.+)/i);
+  const esMatch = sectionMarkdown.match(/\*\*ES\*\*:\s*(.+)/i);
+  return {
+    display_name_en: (enMatch?.[1] ?? fallbackEn).trim(),
+    display_name_es: (esMatch?.[1] ?? fallbackEs).trim(),
+  };
+}
+
 async function convertNdaDocxToHtml() {
   if (!fs.existsSync(ndaDocxPath)) {
     return {
@@ -93,53 +315,32 @@ async function convertNdaDocxToHtml() {
   };
 }
 
-function extractTemplateHeadingsFromMarkdown(markdown) {
-  const headings = markdown
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => /^##\s+/.test(line))
-    .map((line) => line.replace(/^##\s+/, "").trim())
-    .filter(Boolean);
-  return Array.from(new Set(headings));
-}
-
-function slugifyTemplateCode(input) {
-  return input.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 120);
-}
-
-function buildPlaceholderTemplatesFromSource() {
-  if (fs.existsSync(texasTemplatesPath)) {
-    const markdown = fs.readFileSync(texasTemplatesPath, "utf8");
-    const headings = extractTemplateHeadingsFromMarkdown(markdown);
-    const templates = [];
-    for (const heading of headings) {
-      const code = slugifyTemplateCode(heading);
-      if (!code || code === "employee_nda") continue;
-      templates.push({
-        template_code: code,
-        display_name_en: heading,
-        display_name_es: `${heading} (ES placeholder)`,
-      });
-      if (templates.length >= 9) break;
+function buildTemplatesFromTexasMarkdown(markdown) {
+  const templates = [];
+  for (const spec of NON_NDA_TEMPLATE_SPECS) {
+    const section = extractSection(markdown, spec.sectionNumber);
+    if (!section) {
+      throw new Error(`Missing section ${spec.sectionNumber} for template ${spec.template_code}`);
     }
-    return templates;
+
+    const replaced = replaceVariableMarkers(section);
+    const variables = extractVariablesFromSection(section);
+    const titles = extractDisplayTitles(section, spec.fallback_en, spec.fallback_es);
+    const contentHtml = markdownSectionToHtml(replaced);
+    const variableSchema = buildVariableSchemaFromVariables(variables);
+
+    templates.push({
+      template_code: spec.template_code,
+      display_name_en: titles.display_name_en,
+      display_name_es: titles.display_name_es,
+      category: spec.category,
+      content_html_en: contentHtml,
+      content_html_es: "<!-- Spanish legal translation pending certified attorney review -->",
+      variable_schema: variableSchema,
+      requires_witness: spec.requires_witness,
+    });
   }
-
-  return [
-    { template_code: "independent_contractor_agreement", display_name_en: "Independent Contractor Agreement", display_name_es: "Contrato de Contratista Independiente" },
-    { template_code: "driver_deduction_authorization", display_name_en: "Driver Deduction Authorization", display_name_es: "Autorizacion de Deducciones del Conductor" },
-    { template_code: "confidentiality_acknowledgment", display_name_en: "Confidentiality Acknowledgment", display_name_es: "Acuse de Confidencialidad" },
-    { template_code: "arbitration_agreement", display_name_en: "Arbitration Agreement", display_name_es: "Convenio de Arbitraje" },
-    { template_code: "employee_handbook_acknowledgment", display_name_en: "Employee Handbook Acknowledgment", display_name_es: "Acuse del Manual del Empleado" },
-    { template_code: "equipment_use_agreement", display_name_en: "Equipment Use Agreement", display_name_es: "Convenio de Uso de Equipo" },
-    { template_code: "safety_policy_acknowledgment", display_name_en: "Safety Policy Acknowledgment", display_name_es: "Acuse de Politicas de Seguridad" },
-    { template_code: "drug_alcohol_consent", display_name_en: "Drug and Alcohol Consent", display_name_es: "Consentimiento de Drogas y Alcohol" },
-    { template_code: "at_will_employment_acknowledgment", display_name_en: "At-Will Employment Acknowledgment", display_name_es: "Acuse de Empleo de Libre Terminacion" },
-  ];
-}
-
-function buildPlaceholderHtml(title) {
-  return `<h1>${title}</h1><p>Attorney placeholder draft for Phase 8A template library.</p><p>Signer: {{signer_full_name}}</p><p>Effective date: {{effective_date}}</p>`;
+  return templates;
 }
 
 const client = new pg.Client({ connectionString });
@@ -162,7 +363,12 @@ async function run() {
     }
 
     const nda = await convertNdaDocxToHtml();
-    const placeholders = buildPlaceholderTemplatesFromSource();
+    if (!fs.existsSync(texasTemplatesPath)) {
+      throw new Error(`Missing templates markdown source: ${texasTemplatesPath}`);
+    }
+    const texasMarkdown = fs.readFileSync(texasTemplatesPath, "utf8");
+    const nonNdaTemplates = buildTemplatesFromTexasMarkdown(texasMarkdown);
+
     const templates = [
       {
         template_code: "employee_nda",
@@ -174,17 +380,8 @@ async function run() {
         variable_schema: ndaVariableSchema,
         requires_witness: true,
       },
-      ...placeholders.map((item) => ({
-        template_code: item.template_code,
-        display_name_en: item.display_name_en,
-        display_name_es: item.display_name_es,
-        category: "general",
-        content_html_en: buildPlaceholderHtml(item.display_name_en),
-        content_html_es: "<!-- Spanish legal translation pending certified attorney review -->",
-        variable_schema: placeholderVariableSchema,
-        requires_witness: item.template_code.includes("independent_contractor") || item.template_code.includes("deduction") || item.template_code.includes("nda"),
-      })),
-    ].slice(0, 10);
+      ...nonNdaTemplates,
+    ];
 
     let inserted = 0;
     for (const operatingCompanyId of companyIds) {
