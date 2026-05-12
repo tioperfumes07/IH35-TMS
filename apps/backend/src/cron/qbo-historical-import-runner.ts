@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { runForensicImport } from "../integrations/qbo/forensic-import.service.js";
+import { runForensicImportDeduped } from "../integrations/qbo/forensic-import.service.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { sendForensicZombieAlert } from "../integrations/email/forensic-alerts.js";
 import { auditBatchEvent } from "../integrations/qbo/forensic-audit.service.js";
@@ -92,35 +92,27 @@ export async function initializeQboHistoricalImportRunner(app: FastifyInstance) 
       const batches = await withLuciaBypass(async (client) => {
         const res = await client.query<{ id: string; operating_company_id: string }>(
           `
-            SELECT id, operating_company_id
+            SELECT DISTINCT ON (operating_company_id) id, operating_company_id
             FROM qbo_archive.import_batches
             WHERE status = 'in_progress'
               AND last_heartbeat_at >= now() - interval '15 minutes'
-            ORDER BY started_at ASC
-            LIMIT 5
+            ORDER BY operating_company_id, started_at DESC
           `
         );
         return res.rows;
       });
 
+      const sinceDate = process.env.QBO_FORENSIC_SINCE_DATE ?? "2015-01-01";
+      const attachmentsSinceDate = process.env.QBO_FORENSIC_ATTACHMENTS_SINCE_DATE ?? "2021-01-01";
+
       for (const batch of batches) {
         try {
-          await auditBatchEvent(batch.id, batch.operating_company_id, "batch_started");
-          await withLuciaBypass((client) =>
-            client.query(
-              `
-                UPDATE qbo_archive.import_batches
-                SET last_heartbeat_at = now(), updated_at = now()
-                WHERE id = $1
-              `,
-              [batch.id]
-            )
-          );
           await appendSystemAudit("qbo_archive.import_resumed", { batch_id: batch.id, operating_company_id: batch.operating_company_id });
-          await runForensicImport(process.env.SYSTEM_ACTOR_USER_ID || "00000000-0000-0000-0000-000000000000", {
+          await runForensicImportDeduped(process.env.SYSTEM_ACTOR_USER_ID || "00000000-0000-0000-0000-000000000000", {
             batchId: batch.id,
-            sinceDate: "2015-01-01",
-            attachmentsSinceDate: "2021-01-01",
+            operatingCompanyId: batch.operating_company_id,
+            sinceDate,
+            attachmentsSinceDate,
           });
           await sendEmail({
             to: "tioperfumes07@gmail.com",

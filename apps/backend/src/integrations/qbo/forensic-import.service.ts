@@ -131,11 +131,20 @@ function logForensicHeap(batchId: string, entityType: string, pageStart: number,
   });
 }
 
-async function loadBatch(batchId: string) {
+async function loadBatch(batchId: string, operatingCompanyId?: string | null) {
   return withLuciaBypass(async (client) => {
+    if (operatingCompanyId) {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [operatingCompanyId]);
+    }
     const res = await client.query<BatchRow>(
-      `SELECT id, operating_company_id, qbo_realm_id, status FROM qbo_archive.import_batches WHERE id = $1 LIMIT 1`,
-      [batchId]
+      `
+        SELECT id, operating_company_id, qbo_realm_id, status
+        FROM qbo_archive.import_batches
+        WHERE id = $1::uuid
+          AND ($2::uuid IS NULL OR operating_company_id = $2::uuid)
+        LIMIT 1
+      `,
+      [batchId, operatingCompanyId ?? null]
     );
     return res.rows[0] ?? null;
   });
@@ -886,9 +895,9 @@ export async function completeImportBatch(actorUserId: string, batchId: string, 
 
 export async function runForensicImport(
   actorUserId: string,
-  params: { batchId: string; sinceDate?: string; attachmentsSinceDate?: string }
+  params: { batchId: string; operatingCompanyId?: string; sinceDate?: string; attachmentsSinceDate?: string }
 ) {
-  const batch = await loadBatch(params.batchId);
+  const batch = await loadBatch(params.batchId, params.operatingCompanyId ?? null);
   if (!batch) throw new Error("batch_not_found");
   const sinceDate = params.sinceDate ?? "2015-01-01";
   const attachmentsSinceDate = params.attachmentsSinceDate ?? "2021-01-01";
@@ -1008,3 +1017,22 @@ export async function runForensicImport(
   return { status: finalStatus };
 }
 
+const forensicImportInFlight = new Map<string, Promise<{ status: string }>>();
+
+/**
+ * One import per batchId per Node process (avoids API start + cron stacking).
+ * Concurrent callers await the same promise.
+ */
+export function runForensicImportDeduped(
+  actorUserId: string,
+  params: { batchId: string; operatingCompanyId?: string; sinceDate?: string; attachmentsSinceDate?: string }
+): Promise<{ status: string }> {
+  let pending = forensicImportInFlight.get(params.batchId);
+  if (!pending) {
+    pending = runForensicImport(actorUserId, params).finally(() => {
+      forensicImportInFlight.delete(params.batchId);
+    });
+    forensicImportInFlight.set(params.batchId, pending);
+  }
+  return pending;
+}

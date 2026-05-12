@@ -4,7 +4,7 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { generateExcelReport } from "./forensic-report.service.js";
-import { startImportBatch } from "./forensic-import.service.js";
+import { runForensicImportDeduped, startImportBatch } from "./forensic-import.service.js";
 import { auditBatchEvent } from "./forensic-audit.service.js";
 import { qboCompanyContext, qboQuery } from "./qbo-client.js";
 
@@ -172,6 +172,17 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     try {
       const batch = await startImportBatch(user.uuid, body.data.operating_company_id, body.data.since_date);
       await auditBatchEvent(batch.batchId, body.data.operating_company_id, "preflight_qbo_check_passed");
+
+      const attachmentsSinceDate = process.env.QBO_FORENSIC_ATTACHMENTS_SINCE_DATE ?? "2021-01-01";
+      void runForensicImportDeduped(user.uuid, {
+        batchId: batch.batchId,
+        operatingCompanyId: body.data.operating_company_id,
+        sinceDate: body.data.since_date,
+        attachmentsSinceDate,
+      }).catch((error) => {
+        app.log.error({ err: error, batchId: batch.batchId }, "forensic import failed after start-import");
+      });
+
       return { batch_id: batch.batchId };
     } catch (error) {
       const message = String((error as Error)?.message ?? "unable_to_start_import");
