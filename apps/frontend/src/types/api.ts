@@ -48,6 +48,7 @@ export type IdentityWorkflowRequest = {
 export type DriverStatus = "Active" | "Probation" | "Inactive" | "Terminated" | "OnLeave";
 export type CdlClass = "A" | "B" | "C";
 export type MilesBasis = "short_miles" | "practical_miles";
+export type PreferredLanguage = "en" | "es";
 export type CustomerType = "broker" | "direct_shipper";
 
 export type Driver = {
@@ -85,6 +86,7 @@ export type Driver = {
   emergency_contact_phone_alternate: string | null;
   emergency_contact_address: string | null;
   emergency_contact_notes: string | null;
+  preferred_language: PreferredLanguage;
   qbo_vendor_id: string | null;
   qbo_vendor_linked_at: string | null;
   qbo_vendor_linked_by_user_id: string | null;
@@ -134,6 +136,7 @@ export type CreateDriverInput = {
   emergency_contact_phone_alternate?: string;
   emergency_contact_address?: string;
   emergency_contact_notes?: string;
+  preferred_language?: PreferredLanguage;
   status?: DriverStatus;
   notes?: string;
   override_returning_warning?: boolean;
@@ -181,6 +184,7 @@ export type UpdateDriverInput = Partial<
     | "emergency_contact_phone_alternate"
     | "emergency_contact_address"
     | "emergency_contact_notes"
+    | "preferred_language"
     | "status"
     | "notes"
     | "deactivated_at"

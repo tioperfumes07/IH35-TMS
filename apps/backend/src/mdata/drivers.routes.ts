@@ -11,6 +11,7 @@ import { findReturningDriverMatches } from "./driver-returning-detection.routes.
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
 const cdlClassSchema = z.enum(["A", "B", "C"]);
 const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
+const preferredLanguageSchema = z.enum(["en", "es"]);
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const e164PhoneSchema = z.string().regex(/^\+\d{10,15}$/, "phone must be E.164 format (e.g., +19565550001)");
 const curpSchema = z
@@ -66,6 +67,7 @@ const createDriverBodySchema = z.object({
   emergency_contact_phone_alternate: z.string().trim().max(40).optional(),
   emergency_contact_address: z.string().trim().max(300).optional(),
   emergency_contact_notes: z.string().trim().max(2000).optional(),
+  preferred_language: preferredLanguageSchema.optional(),
   status: driverStatusSchema.default("Active"),
   notes: z.string().trim().max(2000).optional(),
   override_returning_warning: z.boolean().optional().default(false),
@@ -111,6 +113,7 @@ const updateDriverBodySchema = z
     emergency_contact_phone_alternate: z.string().trim().max(40).nullable().optional(),
     emergency_contact_address: z.string().trim().max(300).nullable().optional(),
     emergency_contact_notes: z.string().trim().max(2000).nullable().optional(),
+    preferred_language: preferredLanguageSchema.optional(),
     status: driverStatusSchema.optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: isoDateSchema.nullable().optional(),
@@ -234,6 +237,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+            COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
             qbo_vendor_id, qbo_vendor_linked_at, qbo_vendor_linked_by_user_id,
             status, notes, prior_driver_id, rehire_count, is_rehire,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
@@ -259,7 +263,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT
-            id, identity_user_id, first_name, last_name, phone, email, status, created_at, updated_at
+            id, identity_user_id, first_name, last_name, phone, email,
+            COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+            status, created_at, updated_at
           FROM mdata.drivers
           WHERE identity_user_id = $1
           LIMIT 1
@@ -464,10 +470,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                   role = 'Driver',
                   phone = $3,
                   email = COALESCE($4, email),
+                  preferred_language = COALESCE($5, preferred_language, 'en'),
                   deactivated_at = NULL
               WHERE id = $1
             `,
-            [identityUserId, resolvedOperatingCompanyId, b.phone, normalizedEmail]
+            [identityUserId, resolvedOperatingCompanyId, b.phone, normalizedEmail, b.preferred_language ?? null]
           );
 
           await client.query(
@@ -521,10 +528,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               SET role = 'Driver',
                   phone = $2,
                   email = COALESCE($3, email),
+                  preferred_language = COALESCE($4, preferred_language, 'en'),
                   deactivated_at = NULL
               WHERE id = $1
             `,
-            [identityUserId, b.phone, normalizedEmail]
+            [identityUserId, b.phone, normalizedEmail, b.preferred_language ?? null]
           );
         }
 
@@ -549,6 +557,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+              COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
               status, notes, prior_driver_id, rehire_count, is_rehire,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
@@ -795,6 +804,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+            COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
             status, notes, prior_driver_id, rehire_count, is_rehire,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
@@ -986,6 +996,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+              COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
               status, notes, prior_driver_id, rehire_count, is_rehire,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
             FROM mdata.drivers
@@ -1009,18 +1020,20 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+              COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
               status, notes, prior_driver_id, rehire_count, is_rehire,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           values
         );
-        const updatedRow = res.rows[0] ?? null;
+        let updatedRow = res.rows[0] ?? null;
         if (!updatedRow) return null;
 
         const oldStatus = String(oldRow.status ?? "");
         const newStatus = String(updatedRow.status ?? oldStatus);
         const identityUserId = (updatedRow.identity_user_id as string | null) ?? (oldRow.identity_user_id as string | null);
         const nextPhone = "phone" in b ? (b.phone ?? null) : undefined;
+        const nextPreferredLanguage = "preferred_language" in b ? (b.preferred_language ?? "en") : undefined;
         if (identityUserId && nextPhone !== undefined) {
           await client.query(
             `
@@ -1031,6 +1044,36 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             `,
             [identityUserId, nextPhone]
           );
+        }
+        if (identityUserId && nextPreferredLanguage !== undefined) {
+          await client.query(
+            `
+              UPDATE identity.users
+              SET preferred_language = $2
+              WHERE id = $1
+                AND preferred_language IS DISTINCT FROM $2
+            `,
+            [identityUserId, nextPreferredLanguage]
+          );
+          const refreshedRes = await client.query(
+            `
+              SELECT
+                id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
+                cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+                visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+                mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
+                emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
+                emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+                COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+                status, notes, prior_driver_id, rehire_count, is_rehire,
+                created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+              FROM mdata.drivers
+              WHERE id = $1
+              LIMIT 1
+            `,
+            [updatedRow.id]
+          );
+          updatedRow = refreshedRes.rows[0] ?? updatedRow;
         }
         if (identityUserId && !statusDisablesDriverLogin(oldStatus) && statusDisablesDriverLogin(newStatus)) {
           const identityDeactivateRes = await client.query<{ deactivated_at: string | null }>(

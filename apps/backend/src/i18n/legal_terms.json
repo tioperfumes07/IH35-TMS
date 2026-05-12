@@ -1,0 +1,24 @@
+{
+  "settlement": {
+    "title": { "en": "Settlement Statement", "es": "Estado de Liquidacion" },
+    "driver": { "en": "Driver", "es": "Conductor" },
+    "display_id": { "en": "Settlement ID", "es": "ID de Liquidacion" },
+    "period": { "en": "Period", "es": "Periodo" },
+    "status": { "en": "Status", "es": "Estado" },
+    "line_items": { "en": "Line Items", "es": "Partidas" },
+    "description": { "en": "Description", "es": "Descripcion" },
+    "amount": { "en": "Amount", "es": "Monto" },
+    "gross_pay": { "en": "Gross Pay", "es": "Pago Bruto" },
+    "deductions_total": { "en": "Deductions Total", "es": "Total de Deducciones" },
+    "reimbursements_total": { "en": "Reimbursements Total", "es": "Total de Reembolsos" },
+    "net_pay": { "en": "Net Pay", "es": "Pago Neto" },
+    "debt_alert": { "en": "Debt Alert", "es": "Alerta de Deuda" },
+    "fuel_card_charges": { "en": "Fuel Card Charges", "es": "Cargos de Tarjeta de Combustible" },
+    "cash_advance": { "en": "Cash Advance", "es": "Anticipo en Efectivo" },
+    "escrow_withholding": { "en": "Escrow Withholding", "es": "Retencion de Reserva" },
+    "language_disclaimer": {
+      "en": "English and Spanish are both shown for driver clarity. English controls for legal interpretation.",
+      "es": "Se muestran ingles y espanol para claridad del conductor. El ingles controla para interpretacion legal."
+    }
+  }
+}

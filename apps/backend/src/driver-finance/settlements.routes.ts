@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { queuePaymentOnFinalize } from "./settlement-payment.service.js";
+import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
 
 const settlementStatusSchema = z.enum(["draft", "presettle", "acked", "locked", "paid", "held", "cancelled"]);
 const paymentStateSchema = z.enum(["unpaid", "queued", "sent_to_bank", "cleared", "bounced", "manual_paid"]);
@@ -172,6 +173,32 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     if (detail && "unavailable" in detail) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
     if (!detail) return reply.code(404).send({ error: "settlement_not_found" });
     return detail;
+  });
+
+  app.get("/api/v1/driver-finance/settlements/:id/pdf", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    try {
+      const result = await withCompany(user.uuid, companyId, async (client) =>
+        renderSettlementStatementPdf(client, {
+          operatingCompanyId: companyId,
+          settlementId: params.data.id,
+        })
+      );
+      reply.header("Content-Type", result.mimeType);
+      reply.header("Content-Disposition", `inline; filename="${result.filename}"`);
+      reply.header("X-Settlement-Pdf-Sha256", result.sha256);
+      return reply.send(result.pdfBuffer);
+    } catch (error) {
+      const message = String((error as Error).message ?? "settlement_pdf_generation_failed");
+      if (message === "settlement_not_found") return reply.code(404).send({ error: message });
+      return reply.code(500).send({ error: "settlement_pdf_generation_failed" });
+    }
   });
 
   app.post("/api/v1/driver-finance/settlements", async (req, reply) => {

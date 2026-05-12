@@ -268,6 +268,7 @@ export function DriverDetailPage() {
       emergency_contact_phone_alternate: driver.emergency_contact_phone_alternate ?? "",
       emergency_contact_address: driver.emergency_contact_address ?? "",
       emergency_contact_notes: driver.emergency_contact_notes ?? "",
+      preferred_language: driver.preferred_language ?? "en",
       status: driver.status,
       notes: driver.notes ?? "",
     };
@@ -309,6 +310,7 @@ export function DriverDetailPage() {
         emergency_contact_phone_alternate: hydratedForm.emergency_contact_phone_alternate || null,
         emergency_contact_address: hydratedForm.emergency_contact_address || null,
         emergency_contact_notes: hydratedForm.emergency_contact_notes || null,
+        preferred_language: (hydratedForm.preferred_language as "en" | "es") || "en",
       }),
     onSuccess: (updated) => {
       queryClient.setQueryData(["driver", id], updated);
@@ -662,6 +664,19 @@ export function DriverDetailPage() {
               value={hydratedForm.pay_basis ?? "short_miles"}
               onChange={(nextValue) => setForm((current) => ({ ...current, pay_basis: nextValue ?? "short_miles" }))}
               placeholder="Select pay basis"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Preferred Language</label>
+            <Combobox
+              options={[
+                { value: "en", label: "English" },
+                { value: "es", label: "Spanish" },
+              ]}
+              disabled={!editMode}
+              value={hydratedForm.preferred_language ?? "en"}
+              onChange={(nextValue) => setForm((current) => ({ ...current, preferred_language: nextValue ?? "en" }))}
+              placeholder="Select language"
             />
           </div>
           <div className="flex flex-col gap-1">
