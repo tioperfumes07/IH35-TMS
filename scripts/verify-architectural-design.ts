@@ -51,6 +51,8 @@ const MODULE_DIR_MAP: Record<string, string> = {
   REPORTS: "reports",
   "425C": "form425c",
   "425C (CH.11 DIP UST REPORT)": "form425c",
+  LEGAL: "legal",
+  "LEGAL / CONTRACTS": "legal",
 };
 
 function normalizeModuleName(raw: string): string {
