@@ -47,4 +47,17 @@ export const cashAdvanceRequestsOfficeApi = {
       { method: "POST", body }
     );
   },
+
+  escalate(operatingCompanyId: string, id: string) {
+    return apiRequest<{ owner_approval_url: string; request: CashAdvanceRequestRow }>(
+      withCompanyQuery(`/api/v1/driver-finance/cash-advance-requests/${encodeURIComponent(id)}/escalate`, operatingCompanyId),
+      { method: "POST", body: {} }
+    );
+  },
+
+  listPendingOwnerApproval(operatingCompanyId: string) {
+    return apiRequest<{ requests: CashAdvanceRequestRow[] }>(
+      withCompanyQuery("/api/v1/driver-finance/cash-advance-requests/pending-owner-approval", operatingCompanyId)
+    );
+  },
 };

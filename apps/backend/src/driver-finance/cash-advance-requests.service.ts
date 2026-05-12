@@ -116,7 +116,7 @@ export async function nextCashAdvanceRequestDisplayId(client: QueryableClient, o
   return `CA-${y}-${String(n).padStart(4, "0")}`;
 }
 
-function repaymentScheduleFromRequest(row: Record<string, unknown>): {
+export function repaymentScheduleFromRequest(row: Record<string, unknown>): {
   weekly_installment_amount: number;
   total_periods: number;
   cadence: "weekly" | "biweekly";
@@ -508,7 +508,10 @@ export async function denyCashAdvanceRequest(
         reviewed_at = now(),
         reviewed_by_user_id = $3,
         denial_reason = $4,
-        approval_notes = NULL
+        approval_notes = NULL,
+        owner_approval_token = NULL,
+        owner_approval_token_expires_at = NULL,
+        owner_approval_required = false
       WHERE operating_company_id = $1 AND id = $2
       RETURNING *
     `,
@@ -550,7 +553,11 @@ export async function expireStaleCashAdvanceRequests(client: QueryableClient) {
   const res = await client.query(
     `
       UPDATE driver_finance.cash_advance_requests
-      SET status = 'expired'
+      SET
+        status = 'expired',
+        owner_approval_token = NULL,
+        owner_approval_token_expires_at = NULL,
+        owner_approval_required = false
       WHERE status IN ('pending', 'under_review')
         AND expires_at < now()
       RETURNING *
