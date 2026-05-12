@@ -73,6 +73,10 @@ import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViola
 import { LegalTemplateDetailPage } from "./pages/legal/templates/LegalTemplateDetailPage";
 import { LegalTemplatesListPage } from "./pages/legal/templates/LegalTemplatesListPage";
 import { LegalSignPage } from "./pages/legal/sign/LegalSignPage";
+import { LegalLandingPage } from "./pages/legal/LegalLandingPage";
+import { LegalContractInstancesPage } from "./pages/legal/contracts/LegalContractInstancesPage";
+import { LegalPoliciesPage } from "./pages/legal/LegalPoliciesPage";
+import { LegalAttorneyReviewPage } from "./pages/legal/LegalAttorneyReviewPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -405,25 +409,49 @@ export default function App() {
         <Route
           path="/legal"
           element={
-            <ProtectedRoute>
-              <Navigate to="/legal/templates" replace />
-            </ProtectedRoute>
+            <OwnerAdminRoute>
+              <LegalLandingPage />
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/legal/contracts"
+          element={
+            <OwnerAdminRoute>
+              <LegalContractInstancesPage />
+            </OwnerAdminRoute>
           }
         />
         <Route
           path="/legal/templates"
           element={
-            <ProtectedRoute>
+            <OwnerAdminRoute>
               <LegalTemplatesListPage />
-            </ProtectedRoute>
+            </OwnerAdminRoute>
           }
         />
         <Route
           path="/legal/templates/:id"
           element={
-            <ProtectedRoute>
+            <OwnerAdminRoute>
               <LegalTemplateDetailPage />
-            </ProtectedRoute>
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/legal/policies"
+          element={
+            <OwnerAdminRoute>
+              <LegalPoliciesPage />
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/legal/attorney-review"
+          element={
+            <OwnerAdminRoute>
+              <LegalAttorneyReviewPage />
+            </OwnerAdminRoute>
           }
         />
         <Route
