@@ -86,6 +86,7 @@ async function resolveCompanyAndActor() {
 
   assertOk(connRows.length > 0, "No active QBO connection row found. STOP: QBO not connected.");
 
+  const preflightFailures = [];
   for (const connRow of connRows) {
     let actorUserId = connRow.authorized_by_user_id ?? null;
     if (!actorUserId) {
@@ -126,9 +127,18 @@ if (!process.env.DATABASE_URL && process.env.DATABASE_DIRECT_URL) process.env.DA
         qboConnectionEvidence: connRow,
       };
     }
+    preflightFailures.push({
+      operating_company_id: connRow.operating_company_id,
+      realm_id: connRow.realm_id,
+      status: preflight.status,
+      stdout_tail: String(preflight.stdout ?? "").slice(-1000),
+      stderr_tail: String(preflight.stderr ?? "").slice(-2000),
+    });
   }
 
-  throw new Error("No active QBO connection passed CompanyInfo preflight. STOP: QBO not connected/authorized.");
+  const err = new Error("No active QBO connection passed CompanyInfo preflight. STOP: QBO not connected/authorized.");
+  err.context = { preflight_failures: preflightFailures };
+  throw err;
 }
 
 function buildRunnerScript() {
