@@ -1,0 +1,100 @@
+[
+  {
+    "object": "dispatch.load_abandonments",
+    "source_migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql",
+    "reason": "Seed table existence is runtime-critical, but row-count assertions are not. Empty state is valid.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "driver_finance.escrow_deductions_pending",
+    "source_migration": "0094_p5_e1_auto_deduct_escrow_load_abandonment.sql",
+    "reason": "Seed table existence is runtime-critical, but row-count assertions are not.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "maintenance.severe_repair_estimates",
+    "source_migration": "0095_p5_e5_severe_repair_oos_estimate.sql",
+    "reason": "Seed table existence is runtime-critical, but row-count assertions are not.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "safety.internal_fines",
+    "source_migration": "0050_safety_gaps_fill.sql",
+    "reason": "Seed table existence is runtime-critical, but row-count assertions are not.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "audit.allowed_event_classes",
+    "source_migration": "0051_arriving_soon_views.sql",
+    "reason": "Class B verifier-tuning safe: seed_rows expectation only; empty/transient runtime state is valid.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "public.catalogs",
+    "source_migration": "0062_p3_t11_21_0_catalog_seed_data.sql",
+    "reason": "Class B verifier-tuning safe: legacy seed_rows parser artifact referencing a non-runtime relation name.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "public.tmp_void_customers",
+    "source_migration": "0069_p3_t11_20_test_data_cleanup.sql",
+    "reason": "Class B verifier-tuning safe: one-time temporary cleanup table; not a persistent runtime object.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "public.tmp_deactivated_identity_users",
+    "source_migration": "0069_p3_t11_20_test_data_cleanup.sql",
+    "reason": "Class B verifier-tuning safe: one-time temporary cleanup table; not a persistent runtime object.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "public.tmp_void_drivers",
+    "source_migration": "0069_p3_t11_20_test_data_cleanup.sql",
+    "reason": "Class B verifier-tuning safe: one-time temporary cleanup table; not a persistent runtime object.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "public.tmp_void_internal_fines",
+    "source_migration": "0069_p3_t11_20_test_data_cleanup.sql",
+    "reason": "Class B verifier-tuning safe: one-time temporary cleanup table; not a persistent runtime object.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "public.tmp_void_loads",
+    "source_migration": "0069_p3_t11_20_test_data_cleanup.sql",
+    "reason": "Class B verifier-tuning safe: one-time temporary cleanup table; not a persistent runtime object.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "public.tmp_void_work_orders",
+    "source_migration": "0069_p3_t11_20_test_data_cleanup.sql",
+    "reason": "Class B verifier-tuning safe: one-time temporary cleanup table; not a persistent runtime object.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "public.tmp_driver_phone_reconciled",
+    "source_migration": "0071_p3_cleanup_6_driver_phone_reconciliation.sql",
+    "reason": "Class B verifier-tuning safe: one-time temporary reconciliation table; not a persistent runtime object.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  },
+  {
+    "object": "maintenance.severe_repair_estimates.trg_unit_back_in_service_check",
+    "source_migration": "0095_p5_e5_severe_repair_oos_estimate.sql",
+    "reason": "Class B verifier-tuning safe: intentional compatibility rewrite moved trigger to maintenance.work_orders.status path.",
+    "added_at": "2026-05-12",
+    "added_in_pr": "HOTFIX 0124"
+  }
+]

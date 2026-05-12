@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
 import pg from "pg";
+import path from "node:path";
+import { verifyMigrationContent } from "./lib/migration-content-verifier.mjs";
 
 dotenv.config();
 
@@ -84,6 +86,7 @@ function key(parts) {
 }
 
 const client = new pg.Client({ connectionString });
+const verifyContent = process.argv.includes("--verify-content");
 
 try {
   await client.connect();
@@ -185,6 +188,41 @@ try {
     process.exit(1);
   }
   console.log(`PASS: ih35_app table SELECT present (${REQUIRED_TABLE_SELECT_FOR_ROLE.length})`);
+
+  if (verifyContent) {
+    const contentReport = await verifyMigrationContent({
+      client,
+      migrationsDirectory: path.resolve("db/migrations"),
+      minNumber: 1,
+      maxNumber: Number.MAX_SAFE_INTEGER,
+    });
+
+    if (contentReport.totalMissing > 0) {
+      for (const migration of contentReport.report) {
+        for (const missing of migration.missing) {
+          const declaredObject =
+            missing.fqcn ||
+            missing.fqtn ||
+            missing.fqvn ||
+            missing.fqmvn ||
+            missing.fqin ||
+            missing.fqfn ||
+            missing.key ||
+            missing.fqtt ||
+            JSON.stringify(missing);
+          console.error(
+            `DRIFT: migration ${migration.filename} declares ${missing.kind}:${declaredObject} but object not present in schema`
+          );
+        }
+      }
+      console.error(`FAIL: db-verify-critical-runtime --verify-content (missing=${contentReport.totalMissing})`);
+      process.exit(1);
+    }
+
+    console.log(
+      `PASS: migration content verified (${contentReport.migrationCount} files, missing=${contentReport.totalMissing})`
+    );
+  }
 
   console.log("PASS: db-verify-critical-runtime");
 } catch (error) {
