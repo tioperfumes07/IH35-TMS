@@ -25,6 +25,7 @@
     "test:frontend:e2e": "cd apps/frontend && npm run test:e2e",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:migrate": "node scripts/db-migrate.mjs",
+    "db:verify:critical-runtime": "node scripts/db-verify-critical-runtime.mjs",
     "db:verify:audit-append-only": "node scripts/db-verify-audit-append-only.mjs",
     "outbox:worker": "node scripts/outbox-worker.mjs",
     "db:verify:outbox-drain": "node scripts/db-verify-outbox-drain.mjs",

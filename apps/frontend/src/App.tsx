@@ -11,7 +11,6 @@ import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
-import { DispatchHomePage } from "./pages/dispatch/DispatchHome";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
@@ -121,7 +120,6 @@ function ArrivingSoonRoute() {
 }
 
 export default function App() {
-  const dispatchV2Enabled = import.meta.env.VITE_DISPATCH_V2_ENABLED === "true";
   return (
     <CompanyProvider>
       <Routes>
@@ -203,7 +201,7 @@ export default function App() {
           path="/dispatch"
           element={
             <ProtectedRoute>
-              {dispatchV2Enabled ? <DispatchHomePage /> : <DispatchPage />}
+              <DispatchPage />
             </ProtectedRoute>
           }
         />
