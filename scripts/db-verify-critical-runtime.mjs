@@ -20,8 +20,11 @@ const REQUIRED_TABLES = [
   ["dispatch", "load_id_reservations"],
   ["catalogs", "company_violation_types"],
   ["docs", "files"],
+  ["documents", "attachments"],
   ["identity", "users"],
 ];
+
+const REQUIRED_VIEWS = [["maintenance", "v_arriving_soon"]];
 
 const REQUIRED_COLUMNS = [
   ["mdata", "loads", "team_id"],
@@ -65,6 +68,17 @@ const REQUIRED_COLUMNS = [
   ["identity", "users", "role"],
 ];
 
+const REQUIRED_SCHEMA_USAGE = ["integrations", "qbo_archive", "dispatch", "catalogs", "maintenance", "documents"];
+
+const REQUIRED_TABLE_SELECT_FOR_ROLE = [
+  ["dispatch", "load_id_reservations"],
+  ["catalogs", "company_violation_types"],
+  ["integrations", "qbo_connections"],
+  ["integrations", "qbo_sync_queue"],
+  ["qbo_archive", "import_batches"],
+  ["documents", "attachments"],
+];
+
 function key(parts) {
   return parts.join(".");
 }
@@ -89,6 +103,20 @@ try {
     process.exit(1);
   }
   console.log(`PASS: required tables present (${REQUIRED_TABLES.length})`);
+
+  const viewRows = await client.query(`
+    SELECT table_schema, table_name
+    FROM information_schema.views;
+  `);
+  const existingViews = new Set(viewRows.rows.map((row) => key([row.table_schema, row.table_name])));
+  const missingViews = REQUIRED_VIEWS.filter(([schema, view]) => !existingViews.has(key([schema, view])));
+  if (missingViews.length > 0) {
+    for (const [schema, view] of missingViews) {
+      console.error(`FAIL: missing view ${schema}.${view}`);
+    }
+    process.exit(1);
+  }
+  console.log(`PASS: required views present (${REQUIRED_VIEWS.length})`);
 
   const colRows = await client.query(`
     SELECT table_schema, table_name, column_name
@@ -117,6 +145,47 @@ try {
     process.exit(1);
   }
   console.log(`PASS: owner count is ${ownerCount}`);
+
+  const missingSchemaUsage = [];
+  for (const schema of REQUIRED_SCHEMA_USAGE) {
+    const usageRes = await client.query(
+      `
+        SELECT has_schema_privilege('ih35_app', $1, 'USAGE') AS has_usage;
+      `,
+      [schema]
+    );
+    if (!usageRes.rows[0]?.has_usage) {
+      missingSchemaUsage.push(schema);
+    }
+  }
+  if (missingSchemaUsage.length > 0) {
+    for (const schema of missingSchemaUsage) {
+      console.error(`FAIL: ih35_app missing USAGE on schema ${schema}`);
+    }
+    process.exit(1);
+  }
+  console.log(`PASS: ih35_app schema USAGE present (${REQUIRED_SCHEMA_USAGE.length})`);
+
+  const tableGrantRows = await client.query(
+    `
+      SELECT table_schema, table_name, privilege_type
+      FROM information_schema.role_table_grants
+      WHERE grantee = 'ih35_app'
+        AND privilege_type = 'SELECT';
+    `
+  );
+  const tableSelectGrants = new Set(tableGrantRows.rows.map((row) => key([row.table_schema, row.table_name])));
+  const missingTableSelect = REQUIRED_TABLE_SELECT_FOR_ROLE.filter(
+    ([schema, table]) => !tableSelectGrants.has(key([schema, table]))
+  );
+  if (missingTableSelect.length > 0) {
+    for (const [schema, table] of missingTableSelect) {
+      console.error(`FAIL: ih35_app missing SELECT on ${schema}.${table}`);
+    }
+    process.exit(1);
+  }
+  console.log(`PASS: ih35_app table SELECT present (${REQUIRED_TABLE_SELECT_FOR_ROLE.length})`);
+
   console.log("PASS: db-verify-critical-runtime");
 } catch (error) {
   console.error(`FAIL: db-verify-critical-runtime -> ${String(error.message || error)}`);
