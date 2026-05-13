@@ -13,6 +13,7 @@ import { DriverDamageInvoiceModal } from "./modals/DriverDamageInvoiceModal";
 import { DriverMiscInvoiceModal } from "./modals/DriverMiscInvoiceModal";
 import { ManualInvoiceModal } from "./modals/ManualInvoiceModal";
 import { VendorChargebackModal } from "./modals/VendorChargebackModal";
+import { AccountingSubNav } from "./AccountingSubNav";
 
 const STATUS_OPTIONS: Array<{ value: "" | InvoiceStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -64,6 +65,7 @@ export function InvoicesListPage() {
 
   return (
     <div className="space-y-3">
+      <AccountingSubNav />
       <PageHeader
         title="Invoices"
         subtitle="Accounts receivable invoice list"

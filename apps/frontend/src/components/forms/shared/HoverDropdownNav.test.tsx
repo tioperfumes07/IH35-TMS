@@ -41,7 +41,7 @@ describe("HoverDropdownNav primitive (invariant #20)", () => {
   it("opens on hover, highlights active child, nowrap + max-content (MUST 6.3.1.1)", () => {
     openBillsMenu();
     const menu = screen.getByTestId("bills-dropdown-menu");
-    expect(menu).toBeInTheDocument();
+    expect(menu).toBeTruthy();
     expect(window.getComputedStyle(menu).width).toBe("max-content");
     const links = within(menu).getAllByRole("menuitem");
     expect(links).toHaveLength(7);
@@ -60,12 +60,12 @@ describe("HoverDropdownNav primitive (invariant #20)", () => {
   it("closes after mouse leave with 150ms delay", () => {
     vi.useFakeTimers();
     const hoverTarget = openBillsMenu();
-    expect(screen.getByTestId("bills-dropdown-menu")).toBeInTheDocument();
+    expect(screen.getByTestId("bills-dropdown-menu")).toBeTruthy();
     fireEvent.mouseLeave(hoverTarget);
     act(() => {
       vi.advanceTimersByTime(149);
     });
-    expect(screen.getByTestId("bills-dropdown-menu")).toBeInTheDocument();
+    expect(screen.getByTestId("bills-dropdown-menu")).toBeTruthy();
     act(() => {
       vi.advanceTimersByTime(2);
     });
@@ -75,7 +75,7 @@ describe("HoverDropdownNav primitive (invariant #20)", () => {
   it("closes on Escape from document and restores focus to trigger", () => {
     openBillsMenu();
     const menu = screen.getByTestId("bills-dropdown-menu");
-    expect(menu).toBeInTheDocument();
+    expect(menu).toBeTruthy();
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByTestId("bills-dropdown-menu")).toBeNull();
     const billsBtn = screen.getByRole("menuitem", { name: /^Bills$/i });

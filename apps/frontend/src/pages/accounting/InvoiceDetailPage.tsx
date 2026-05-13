@@ -9,6 +9,7 @@ import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
+import { AccountingSubNav } from "./AccountingSubNav";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -103,6 +104,7 @@ export function InvoiceDetailPage() {
 
   return (
     <div className="space-y-3">
+      <AccountingSubNav />
       <BackButton />
       <PageHeader
         title={invoice.display_id}
