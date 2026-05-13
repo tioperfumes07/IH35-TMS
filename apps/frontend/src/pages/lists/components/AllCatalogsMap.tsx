@@ -39,7 +39,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
     ],
   },
   {
-    key: "driver",
+    key: "drivers",
     label: "Drivers",
     pillClass: "bg-green-50 text-green-700",
     catalogs: [
@@ -77,6 +77,11 @@ const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "MPG Bands", description: "Efficiency ranges for MPG monitoring", live: true, catalogKey: "mpg-bands" },
       { name: "Expensive States", description: "High-cost fuel states to avoid when possible", live: true, catalogKey: "expensive-states" },
       { name: "Fuel Tax Jurisdictions", description: "Fuel tax jurisdiction registry (US/CA)", live: true, catalogKey: "tax-jurisdictions" },
+      { name: "Fuel Brands", description: "Brand groupings for station and network planning", live: true, catalogKey: "brands" },
+      { name: "Fuel Station States", description: "US state codes used for fuel station taxonomy", live: true, catalogKey: "station-states" },
+      { name: "Fuel Pump Types", description: "Dispenser / island pump classifications", live: true, catalogKey: "pump-types" },
+      { name: "Fuel Grades", description: "Diesel / DEF / mid-grade product codes", live: true, catalogKey: "grades" },
+      { name: "Fuel Dispatch Routes", description: "Named lane strings for fuel planning", live: true, catalogKey: "dispatch-routes" },
     ],
   },
   {
@@ -90,6 +95,10 @@ const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Equipment Types", description: "Tractor/trailer equipment type taxonomy", live: true, catalogKey: "equipment-types" },
       { name: "Tire Positions", description: "Fixed tire positions for standard fleet setup", live: true, catalogKey: "tire-positions" },
       { name: "Ownership Types", description: "Owned/leased/rented categorization", live: true, catalogKey: "ownership-types" },
+      { name: "Trailer Types", description: "Trailer body / equipment family codes", live: true, catalogKey: "trailer-types" },
+      { name: "Lease Terms", description: "Finance and lease duration buckets", live: true, catalogKey: "lease-terms" },
+      { name: "Asset Statuses", description: "Fleet asset lifecycle outside tractor/trailer statuses", live: true, catalogKey: "asset-statuses" },
+      { name: "Asset Locations", description: "Yard, shop, and third-party location codes", live: true, catalogKey: "asset-locations" },
     ],
   },
   {
@@ -105,6 +114,11 @@ const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "QBO Categories", description: "QuickBooks category and mapping helper list", live: true, catalogKey: "qbo-categories" },
       { name: "Items", description: "Invoiceable services and products catalog", live: true, catalogKey: "items" },
       { name: "Account Role Bindings", description: "Role-to-account mapping controls (read-only v1)", live: true, catalogKey: "account-role-bindings" },
+      { name: "Chart of Accounts Seeds", description: "Per-company template rows for onboarding GL", live: true, catalogKey: "chart-of-accounts-seeds" },
+      { name: "Expense Categories", description: "AP / expense categorization for operations", live: true, catalogKey: "expense-categories" },
+      { name: "Payment Methods", description: "Cash application and disbursement rails", live: true, catalogKey: "payment-methods" },
+      { name: "Tax Codes", description: "Sales and use tax buckets (map to QBO as wired)", live: true, catalogKey: "tax-codes" },
+      { name: "Currency Codes", description: "ISO currency list for multi-currency hints", live: true, catalogKey: "currency-codes" },
     ],
   },
   {

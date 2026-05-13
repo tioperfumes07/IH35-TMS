@@ -78,12 +78,17 @@ import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
+import { ChartOfAccountsSeedsListPage } from "./pages/lists/accounting/ChartOfAccountsSeedsListPage";
 import { ClassesListPage } from "./pages/lists/accounting/ClassesListPage";
+import { CurrencyCodesListPage } from "./pages/lists/accounting/CurrencyCodesListPage";
+import { ExpenseCategoriesListPage } from "./pages/lists/accounting/ExpenseCategoriesListPage";
 import { ItemsListPage } from "./pages/lists/accounting/ItemsListPage";
 import { JournalEntryTypesListPage } from "./pages/lists/accounting/JournalEntryTypesListPage";
 import { PaymentTermsListPage } from "./pages/lists/accounting/PaymentTermsListPage";
+import { PaymentMethodsListPage } from "./pages/lists/accounting/PaymentMethodsListPage";
 import { PostingTemplatesListPage } from "./pages/lists/accounting/PostingTemplatesListPage";
 import { QboCategoriesListPage } from "./pages/lists/accounting/QboCategoriesListPage";
+import { TaxCodesListPage } from "./pages/lists/accounting/TaxCodesListPage";
 import { AdditionalChargesListPage } from "./pages/lists/dispatch/AdditionalChargesListPage";
 import { DetentionReasonsListPage } from "./pages/lists/dispatch/DetentionReasonsListPage";
 import { LoadTypesListPage } from "./pages/lists/dispatch/LoadTypesListPage";
@@ -93,17 +98,26 @@ import { DriverPayTypesListPage } from "./pages/lists/driver/DriverPayTypesListP
 import { EscrowTypesListPage } from "./pages/lists/driver/EscrowTypesListPage";
 import { PayRateTemplatesListPage } from "./pages/lists/driver/PayRateTemplatesListPage";
 import { ConditionCodesListPage } from "./pages/lists/fleet/ConditionCodesListPage";
+import { AssetLocationsListPage } from "./pages/lists/fleet/AssetLocationsListPage";
+import { AssetStatusesListPage } from "./pages/lists/fleet/AssetStatusesListPage";
 import { EquipmentTypesListPage } from "./pages/lists/fleet/EquipmentTypesListPage";
+import { LeaseTermsListPage } from "./pages/lists/fleet/LeaseTermsListPage";
 import { OwnershipTypesListPage } from "./pages/lists/fleet/OwnershipTypesListPage";
 import { TirePositionsListPage } from "./pages/lists/fleet/TirePositionsListPage";
 import { TractorStatusesListPage } from "./pages/lists/fleet/TractorStatusesListPage";
 import { TrailerStatusesListPage } from "./pages/lists/fleet/TrailerStatusesListPage";
+import { TrailerTypesListPage } from "./pages/lists/fleet/TrailerTypesListPage";
 import { ExpensiveStatesListPage } from "./pages/lists/fuel/ExpensiveStatesListPage";
+import { FuelBrandsListPage } from "./pages/lists/fuel/FuelBrandsListPage";
 import { FuelCardTypesListPage } from "./pages/lists/fuel/FuelCardTypesListPage";
 import { FuelExceptionTypesListPage } from "./pages/lists/fuel/FuelExceptionTypesListPage";
+import { FuelGradesListPage } from "./pages/lists/fuel/FuelGradesListPage";
 import { FuelStationBrandsListPage } from "./pages/lists/fuel/FuelStationBrandsListPage";
 import { FuelStopReasonCodesListPage } from "./pages/lists/fuel/FuelStopReasonCodesListPage";
 import { FuelTaxJurisdictionsListPage } from "./pages/lists/fuel/FuelTaxJurisdictionsListPage";
+import { FuelDispatchRoutesListPage } from "./pages/lists/fuel/FuelDispatchRoutesListPage";
+import { FuelPumpTypesListPage } from "./pages/lists/fuel/FuelPumpTypesListPage";
+import { FuelStationStatesListPage } from "./pages/lists/fuel/FuelStationStatesListPage";
 import { MpgBandsListPage } from "./pages/lists/fuel/MpgBandsListPage";
 import { MaintenanceFailureCodesListPage } from "./pages/lists/maintenance/MaintenanceFailureCodesListPage";
 import { MaintenanceLaborCodesListPage } from "./pages/lists/maintenance/MaintenanceLaborCodesListPage";
@@ -675,6 +689,46 @@ export default function App() {
           }
         />
         <Route
+          path="/lists/fuel/brands"
+          element={
+            <ProtectedRoute>
+              <FuelBrandsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/station-states"
+          element={
+            <ProtectedRoute>
+              <FuelStationStatesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/pump-types"
+          element={
+            <ProtectedRoute>
+              <FuelPumpTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/grades"
+          element={
+            <ProtectedRoute>
+              <FuelGradesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/dispatch-routes"
+          element={
+            <ProtectedRoute>
+              <FuelDispatchRoutesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/lists/fleet/tractor-statuses"
           element={
             <ProtectedRoute>
@@ -719,6 +773,38 @@ export default function App() {
           element={
             <ProtectedRoute>
               <OwnershipTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/trailer-types"
+          element={
+            <ProtectedRoute>
+              <TrailerTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/lease-terms"
+          element={
+            <ProtectedRoute>
+              <LeaseTermsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/asset-statuses"
+          element={
+            <ProtectedRoute>
+              <AssetStatusesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/asset-locations"
+          element={
+            <ProtectedRoute>
+              <AssetLocationsListPage />
             </ProtectedRoute>
           }
         />
@@ -783,6 +869,46 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AccountRoleBindingsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/chart-of-accounts-seeds"
+          element={
+            <ProtectedRoute>
+              <ChartOfAccountsSeedsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/expense-categories"
+          element={
+            <ProtectedRoute>
+              <ExpenseCategoriesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/payment-methods"
+          element={
+            <ProtectedRoute>
+              <PaymentMethodsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/tax-codes"
+          element={
+            <ProtectedRoute>
+              <TaxCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/currency-codes"
+          element={
+            <ProtectedRoute>
+              <CurrencyCodesListPage />
             </ProtectedRoute>
           }
         />

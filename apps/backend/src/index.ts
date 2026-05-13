@@ -17,6 +17,10 @@ import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-li
 import { registerIdentityRoutes } from "./identity/users.routes.js";
 import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
+import { registerAccountingCatalogRoutes } from "./catalogs/accounting/index.js";
+import { registerDriverCatalogRoutes } from "./catalogs/driver/index.js";
+import { registerFleetCatalogRoutes } from "./catalogs/fleet/index.js";
+import { registerFuelCatalogRoutes } from "./catalogs/fuel/index.js";
 import { registerCatalogsRoutes } from "./catalogs/index.js";
 import { registerCatalogRegistryRoutes } from "./catalogs/catalog-registry.routes.js";
 import { registerFileCategoriesRoutes } from "./catalogs/file-categories.routes.js";
@@ -198,6 +202,10 @@ async function main() {
   await registerCustomerDetailAliasRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerCatalogsRoutes(app);
+  await registerDriverCatalogRoutes(app);
+  await registerFuelCatalogRoutes(app);
+  await registerFleetCatalogRoutes(app);
+  await registerAccountingCatalogRoutes(app);
   await registerCatalogRegistryRoutes(app);
   await registerEquipmentTypeRoutes(app);
   await registerDriverLoadStatusRoutes(app);
