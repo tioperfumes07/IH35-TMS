@@ -15,6 +15,7 @@ import {
   queueSettlementPayment,
   type SettlementDisputeCategory,
 } from "../../api/driverFinance";
+import { resolveApiUrl } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { BackButton } from "../../components/shared/BackButton";
@@ -158,7 +159,27 @@ export function SettlementDetailPage() {
           { label: "Settlement Detail" },
         ]}
       />
-      <PageHeader title="Settlement Detail" subtitle="Debt-alert invariant enforced" />
+      <PageHeader
+        title="Settlement Detail"
+        subtitle="Debt-alert invariant enforced"
+        actions={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              window.open(
+                resolveApiUrl(
+                  `/api/v1/driver-finance/settlements/${encodeURIComponent(settlementId)}.html?operating_company_id=${encodeURIComponent(companyId)}`
+                ),
+                "_blank",
+                "noopener,noreferrer"
+              )
+            }
+          >
+            View settlement PDF
+          </Button>
+        }
+      />
       <SettlementHeader
         driverName={String(settlement.driver_full_name ?? "-")}
         driverDisplayId={String(settlement.driver_display_id ?? "-")}

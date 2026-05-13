@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>L-13518 · Three documents · Monochrome</title>
+<style>
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #1a1a1a;
+  background: #e8e8e6;
+  font-feature-settings: 'tnum';
+  -webkit-font-smoothing: antialiased;
+}
+.scene { padding: 20px 16px 40px; }
+
+.toc {
+  max-width: 800px;
+  margin: 0 auto 18px;
+  font-size: 9.5px;
+  color: #555;
+  text-align: center;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.doc-page {
+  width: 800px;
+  max-width: 100%;
+  margin: 18px auto;
+  background: #ffffff;
+  border: 1px solid #d0d0d0;
+  padding: 36px 44px 32px;
+  position: relative;
+}
+
+.doc-head {
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.brand-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.brand-sub {
+  font-size: 9.5px;
+  color: #555;
+  margin-top: 1px;
+}
+.brand-addr {
+  font-size: 9px;
+  color: #666;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.doc-meta {
+  text-align: right;
+}
+.doc-type {
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #555;
+  font-weight: 500;
+}
+.doc-num {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+.doc-issued {
+  font-size: 9px;
+  color: #555;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.doc-status {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #1a1a1a;
+  border-top: 1px solid #1a1a1a;
+  padding-top: 4px;
+}
+
+.sec-head {
+  margin: 14px 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #1a1a1a;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.sec-head .title {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.sec-head .right {
+  margin-left: auto;
+  font-size: 9px;
+  color: #555;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.lv-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px 18px;
+  padding: 2px 0 4px;
+}
+.lv-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.lv-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.lv { min-width: 0; }
+.lv .lbl {
+  font-size: 8.5px;
+  font-weight: 500;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 1px;
+}
+.lv .val {
+  font-size: 10.5px;
+  color: #1a1a1a;
+  font-weight: 500;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.lv .sub {
+  font-size: 9px;
+  color: #666;
+  margin-top: 1px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+.lv .val.mono,
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+}
+.lv .val.amt,
+.amt {
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: 'tnum';
+  font-weight: 500;
+}
+
+.stop-block {
+  border: 1px solid #d0d0d0;
+  padding: 8px 10px 10px;
+  margin-bottom: 8px;
+}
+.stop-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 10px;
+}
+.stop-header .seq {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.stop-header .ref {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  color: #555;
+}
+.stop-header .when {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  margin: 4px 0;
+}
+.data-table th,
+.data-table td {
+  padding: 5px 8px;
+  text-align: left;
+  border-bottom: 1px solid #e5e5e5;
+  vertical-align: top;
+}
+.data-table th {
+  font-weight: 600;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  border-bottom: 1px solid #1a1a1a;
+}
+.data-table td.num,
+.data-table th.num {
+  text-align: right;
+  font-feature-settings: 'tnum';
+  font-family: 'JetBrains Mono', monospace;
+}
+.data-table td.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+}
+.data-table tfoot td {
+  border-top: 1px solid #1a1a1a;
+  border-bottom: none;
+  font-weight: 600;
+  font-size: 10.5px;
+  padding: 6px 8px;
+}
+.data-table tr.subtotal td {
+  font-weight: 600;
+}
+
+.instruction-block {
+  margin: 6px 0 4px;
+  padding: 10px 12px;
+  border: 1px solid #1a1a1a;
+  font-size: 10px;
+  line-height: 1.55;
+}
+.instruction-block .ib-from {
+  font-size: 8.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.adj-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.adj-table th,
+.adj-table td {
+  padding: 4px 8px;
+  text-align: left;
+  border-bottom: 1px solid #e5e5e5;
+}
+.adj-table th {
+  font-weight: 600;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+}
+.adj-table td.num {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.signoff {
+  margin: 22px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #1a1a1a;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+}
+.sig-block .sig-label-top {
+  font-size: 8.5px;
+  text-transform: uppercase;
+  color: #555;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+}
+.sig-block .sig-line {
+  border-bottom: 1px solid #1a1a1a;
+  margin-top: 28px;
+}
+.sig-block .sig-name {
+  font-size: 9.5px;
+  margin-top: 3px;
+  color: #1a1a1a;
+}
+.sig-block .sig-note {
+  font-size: 8.5px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.total-line {
+  margin: 14px 0 6px;
+  padding-top: 8px;
+  border-top: 2px solid #1a1a1a;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 12px;
+}
+.total-line .lbl {
+  font-size: 9.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.total-line .sub {
+  font-size: 8.5px;
+  color: #666;
+  margin-top: 2px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 400;
+}
+.total-line .amt {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  font-feature-settings: 'tnum';
+}
+
+.doc-footer {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid #d0d0d0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  font-size: 8.5px;
+  color: #666;
+  line-height: 1.55;
+}
+.doc-footer .fl-label {
+  font-size: 8.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+.doc-footer p { margin: 0; }
+
+.muted { color: #666; }
+
+@media print {
+  body { background: white; }
+  .toc { display: none; }
+  .doc-page {
+    border: none;
+    margin: 0;
+    padding: 24px 28px;
+    page-break-after: always;
+  }
+  .doc-page:last-child { page-break-after: auto; }
+}
+</style>
+</head>
+<body>
+<div class="scene">
+
+<div class="toc">3 documents · all reference load L-13518 · Cmd P to save as PDF</div>
+
+<!-- ============================================================ -->
+<!-- DOCUMENT 1: DRIVER DISPATCH SHEET                            -->
+<!-- ============================================================ -->
+<div class="doc-page">
+  <div class="doc-head">
+    <div>
+      <div class="brand-name">IH 35 Trucking LLC</div>
+      <div class="brand-sub">DOT 4287135 · MC 1684226 · TRK</div>
+      <div class="brand-addr">123 Industrial Way, Laredo, TX 78045<br/>(956) 555-0184 · dispatch@ih35trucking.com</div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-type">Driver dispatch sheet</div>
+      <div class="doc-num">L-13518</div>
+      <div class="doc-issued">Issued Wed, May 13, 2026 · 8:51 AM CT<br/>by dispatcher Jorge Munoz</div>
+      <div class="doc-status">Assigned · awaiting driver confirm</div>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Driver assignment</span>
+    <span class="right">Driver acknowledges by signing below + tapping Accept in mobile app</span>
+  </div>
+  <div class="lv-grid">
+    <div class="lv"><div class="lbl">Driver</div><div class="val">R. Smith</div><div class="sub">CDL TX · exp 2027-08</div></div>
+    <div class="lv"><div class="lbl">HOS available</div><div class="val">8h 12m drive</div><div class="sub">12h 47m on-duty</div></div>
+    <div class="lv"><div class="lbl">Truck unit</div><div class="val">T120</div><div class="sub">2022 Volvo VNL · PM in 1,840 mi</div></div>
+    <div class="lv"><div class="lbl">Trailer unit</div><div class="val">RT-178</div><div class="sub">Reefer · last DOT Apr 28</div></div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Stops</span>
+    <span class="right">2 stops · 1 pickup · 1 delivery · 238 mi practical</span>
+  </div>
+
+  <div class="stop-block">
+    <div class="stop-header">
+      <span class="seq">Pickup &middot; 1</span>
+      <span class="ref">PU-883920</span>
+      <span class="when">Mon May 12 &middot; 06:00 AM CT</span>
+    </div>
+    <div class="lv-grid cols-2" style="margin-bottom: 6px;">
+      <div class="lv">
+        <div class="lbl">Facility</div>
+        <div class="val">Pilgrim&rsquo;s Pride</div>
+        <div class="sub">4845 Eisenhauer Rd, San Antonio TX 78218</div>
+      </div>
+      <div class="lv">
+        <div class="lbl">Time window</div>
+        <div class="val">Appointment (fixed time)</div>
+        <div class="sub">Free time 120 min · $65/hr detention after</div>
+      </div>
+    </div>
+    <div class="lv-grid">
+      <div class="lv"><div class="lbl">Site contact</div><div class="val">Receiving desk</div><div class="sub">(210) 555-2244</div></div>
+      <div class="lv"><div class="lbl">Gate / dock</div><div class="val">Gate 4-B</div><div class="sub">Rear dock</div></div>
+      <div class="lv"><div class="lbl">Reefer setpoint</div><div class="val">&minus;10&deg;F continuous</div></div>
+      <div class="lv"><div class="lbl">Lumper</div><div class="val">Broker-paid passthrough</div></div>
+    </div>
+  </div>
+
+  <div class="stop-block">
+    <div class="stop-header">
+      <span class="seq">Delivery &middot; 2</span>
+      <span class="ref">DEL-225601</span>
+      <span class="when">Tue May 13 &middot; 14:00 CT</span>
+    </div>
+    <div class="lv-grid cols-2" style="margin-bottom: 6px;">
+      <div class="lv">
+        <div class="lbl">Facility</div>
+        <div class="val">Continental Forwarding</div>
+        <div class="sub">1100 N 23rd St, McAllen TX 78501</div>
+      </div>
+      <div class="lv">
+        <div class="lbl">Time window</div>
+        <div class="val">Appointment (fixed time)</div>
+        <div class="sub">Free time 120 min · lumper customer-provided</div>
+      </div>
+    </div>
+    <div class="lv-grid">
+      <div class="lv"><div class="lbl">Site contact</div><div class="val">Outbound bay</div><div class="sub">(956) 555-7711</div></div>
+      <div class="lv"><div class="lbl">Gate / dock</div><div class="val">Dock 14</div><div class="sub">Cold storage</div></div>
+      <div class="lv"><div class="lbl">Reefer setpoint</div><div class="val">&minus;10&deg;F continuous</div></div>
+      <div class="lv"><div class="lbl">Lumper</div><div class="val">Customer-provided</div></div>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Commodity</span>
+    <span class="right">Customer WO# CHR-2026-77441</span>
+  </div>
+  <div class="lv-grid">
+    <div class="lv"><div class="lbl">Description</div><div class="val">Frozen poultry</div></div>
+    <div class="lv"><div class="lbl">Weight</div><div class="val">42,800 lbs</div></div>
+    <div class="lv"><div class="lbl">Pieces</div><div class="val">24 pallets</div></div>
+    <div class="lv"><div class="lbl">Equipment</div><div class="val">Reefer van</div><div class="sub">Locking jacks + pulp probe</div></div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Driver pay summary</span>
+    <span class="right">Auto-created bill <span class="mono">B-13518</span></span>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 48%;">Component</th>
+        <th class="num">Basis</th>
+        <th class="num">Rate</th>
+        <th class="num" style="width: 20%;">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Linehaul pay</td><td class="num">221 short mi</td><td class="num">$0.50 / mi</td><td class="num">$110.50</td></tr>
+      <tr><td>Fuel advance (already issued)</td><td class="num">EFS / Comcheck</td><td class="num">&mdash;</td><td class="num">$200.00</td></tr>
+      <tr><td>Cash advance</td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num">$0.00</td></tr>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3">Gross driver bill on completion · advances recovered at settlement</td><td class="num">$110.50</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="sec-head">
+    <span class="title">Driver instructions</span>
+    <span class="right">Visible to driver · mark read on receipt</span>
+  </div>
+  <div class="instruction-block">
+    <div class="ib-from">From dispatcher Jorge Munoz</div>
+    Call dispatcher on arrival at both stops. Detention starts after 2 free hours &mdash; text dispatch with timestamp + photo of in-gate stamp. Use gate 4-B entry at Pilgrim&rsquo;s. Rear dock only · do not back into front docks. Lumper paid via Comcheck &mdash; see attached. Confirm reefer at &minus;10&deg;F continuous on arrival to delivery. If late delivery looks possible, call dispatch at (956) 555-0184 immediately &mdash; do not wait until past appt.
+  </div>
+
+  <div class="signoff">
+    <div class="sig-block">
+      <div class="sig-label-top">Driver acceptance</div>
+      <div class="sig-line"></div>
+      <div class="sig-name">R. Smith · sign &amp; date</div>
+      <div class="sig-note">All terms above acknowledged · I will call dispatch on arrival</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-label-top">Dispatcher</div>
+      <div class="sig-line"></div>
+      <div class="sig-name">Jorge Munoz · IH 35 Trucking dispatch</div>
+      <div class="sig-note">Issued Wed, May 13, 2026 · 8:51 AM CT</div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div>
+      <div class="fl-label">Mobile app</div>
+      <p>Driver app shows this dispatch sheet automatically. Tap Accept to acknowledge. Decline routes back to dispatcher with reason.</p>
+    </div>
+    <div>
+      <div class="fl-label">If you can&rsquo;t reach dispatch</div>
+      <p>After-hours line (956) 555-0188 · email dispatch@ih35trucking.com · Owner Jorge Munoz (956) 555-0149</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DOCUMENT 2: CUSTOMER INVOICE                                 -->
+<!-- ============================================================ -->
+<div class="doc-page">
+  <div class="doc-head">
+    <div>
+      <div class="brand-name">IH 35 Trucking LLC</div>
+      <div class="brand-sub">DOT 4287135 · MC 1684226 · EIN 87-4196522</div>
+      <div class="brand-addr">123 Industrial Way, Laredo, TX 78045<br/>(956) 555-0184 · billing@ih35trucking.com</div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-type">Customer invoice</div>
+      <div class="doc-num">I-13518</div>
+      <div class="doc-issued">Issued Wed, May 13, 2026<br/>Due Wed, Jun 12, 2026 · Net 30</div>
+      <div class="doc-status">Unpaid · awaiting customer payment</div>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Bill to · pay via factor</span>
+  </div>
+  <div class="lv-grid cols-2">
+    <div class="lv">
+      <div class="lbl">Bill to (customer)</div>
+      <div class="val">C.H. Robinson Worldwide Inc</div>
+      <div class="sub">MC-281208 · DOT 1684205 · Net 30</div>
+      <div class="sub">14701 Charlson Rd, Eden Prairie, MN 55347</div>
+      <div class="sub">accounts.payable@chrobinson.com · (952) 937-8500</div>
+    </div>
+    <div class="lv">
+      <div class="lbl">Remit to (factor &mdash; auto-routed)</div>
+      <div class="val">Triumph Business Capital</div>
+      <div class="sub">Advances 87% · reserves 13%</div>
+      <div class="sub">PO Box 678423, Dallas, TX 75267-8423</div>
+      <div class="sub">Lockbox · ACH preferred · do NOT remit direct to carrier</div>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Load reference</span>
+    <span class="right">All line items below earned under load L-13518</span>
+  </div>
+  <div class="lv-grid">
+    <div class="lv"><div class="lbl">Load #</div><div class="val mono">L-13518</div></div>
+    <div class="lv"><div class="lbl">Customer WO #</div><div class="val mono">CHR-2026-77441</div></div>
+    <div class="lv"><div class="lbl">Pickup #</div><div class="val mono">PU-883920</div></div>
+    <div class="lv"><div class="lbl">POD reference</div><div class="val mono">DEL-225601</div></div>
+  </div>
+  <div class="lv-grid cols-2" style="margin-top: 6px;">
+    <div class="lv">
+      <div class="lbl">Pickup</div>
+      <div class="val">Pilgrim&rsquo;s Pride · San Antonio TX 78218</div>
+      <div class="sub">Mon May 12 · 06:00 AM CT · appointment kept on time</div>
+    </div>
+    <div class="lv">
+      <div class="lbl">Delivery</div>
+      <div class="val">Continental Forwarding · McAllen TX 78501</div>
+      <div class="sub">Tue May 13 · 14:00 CT · POD signed by J. Garza</div>
+    </div>
+  </div>
+  <div class="lv-grid" style="margin-top: 6px;">
+    <div class="lv"><div class="lbl">Commodity</div><div class="val">Frozen poultry</div></div>
+    <div class="lv"><div class="lbl">Weight</div><div class="val">42,800 lbs</div></div>
+    <div class="lv"><div class="lbl">Pieces</div><div class="val">24 pallets</div></div>
+    <div class="lv"><div class="lbl">Equipment</div><div class="val">Reefer &minus;10&deg;F continuous</div></div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Line items</span>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 52%;">Description</th>
+        <th class="num">Basis</th>
+        <th class="num">Rate</th>
+        <th class="num" style="width: 16%;">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Linehaul · TX-TX intrastate</td><td class="num">238 practical mi</td><td class="num">$9.45 / mi</td><td class="num">$2,250.00</td></tr>
+      <tr><td>Fuel surcharge · 8.4% of linehaul</td><td class="num">&mdash;</td><td class="num">8.4%</td><td class="num">$189.00</td></tr>
+      <tr><td>Lumper at pickup · broker-paid passthrough</td><td class="num">Comcheck</td><td class="num">&mdash;</td><td class="num">$0.00</td></tr>
+      <tr><td>Detention · none triggered</td><td class="num">0 hr</td><td class="num">$65 / hr</td><td class="num">$0.00</td></tr>
+      <tr class="subtotal"><td>Subtotal</td><td class="num"></td><td class="num"></td><td class="num">$2,439.00</td></tr>
+      <tr><td>Tax · intrastate freight exempt</td><td class="num"></td><td class="num"></td><td class="num">$0.00</td></tr>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="3">Total customer invoice</td><td class="num">$2,439.00</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="sec-head">
+    <span class="title">Expected adjustments flagged at booking</span>
+    <span class="right">Visible to A/R for review before invoice approval</span>
+  </div>
+  <div style="font-size: 9.5px; color: #555; margin: 4px 0 6px; line-height: 1.5;">
+    Dispatcher flagged at booking · none materialized this trip. No chargebacks recorded · no detention triggered · delivered on time inside appointment window. Original booking flags below for audit completeness.
+  </div>
+  <table class="adj-table">
+    <thead>
+      <tr>
+        <th>Flag</th>
+        <th class="num">Booking estimate</th>
+        <th class="num">Actual</th>
+        <th class="num">Net change</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Anticipated chargeback</td><td class="num">$0.00</td><td class="num">$0.00</td><td class="num">$0.00</td></tr>
+      <tr><td>Detention (expected)</td><td class="num">No</td><td class="num">0 hr · no detention</td><td class="num">&mdash;</td></tr>
+      <tr><td>Late delivery risk</td><td class="num">No</td><td class="num">On time</td><td class="num">&mdash;</td></tr>
+    </tbody>
+  </table>
+
+  <div class="total-line">
+    <div>
+      <div class="lbl">Total amount due</div>
+      <div class="sub">Pay to Triumph Business Capital lockbox · Net 30 from Wed, May 13, 2026</div>
+    </div>
+    <div class="amt">$2,439.00</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Payment instructions · ACH preferred</span>
+  </div>
+  <div style="font-size: 9.5px; line-height: 1.55; margin: 4px 0;">
+    <strong>Wire / ACH to Triumph Business Capital.</strong> Bank: TBK Bank · Routing: 111907192 · Account: 5301-44196 · Reference: <span class="mono">I-13518 / L-13518 / CHR-2026-77441</span>.<br/>
+    <strong>Mailed check:</strong> payable to &ldquo;Triumph Business Capital&rdquo; · PO Box 678423, Dallas, TX 75267-8423. Do NOT remit direct to IH 35 Trucking &mdash; invoice is factored and direct payment will not credit your account.
+  </div>
+
+  <div class="doc-footer">
+    <div>
+      <div class="fl-label">Disputes &amp; corrections</div>
+      <p>Email billing@ih35trucking.com within 15 days of invoice date with WO # and disputed line item. After 15 days, invoice is deemed accepted.</p>
+    </div>
+    <div>
+      <div class="fl-label">Late-pay terms</div>
+      <p>Invoices not paid by Net 30 due date may accrue 1.5% per month service charge. Factoring agreement supersedes &mdash; refer to MSA CHR-2024-Q3-IH35.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DOCUMENT 3: DRIVER SETTLEMENT                                -->
+<!-- ============================================================ -->
+<div class="doc-page">
+  <div class="doc-head">
+    <div>
+      <div class="brand-name">IH 35 Trucking LLC</div>
+      <div class="brand-sub">DOT 4287135 · MC 1684226 · TRK</div>
+      <div class="brand-addr">123 Industrial Way, Laredo, TX 78045<br/>(956) 555-0184 · payroll@ih35trucking.com</div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-type">Driver settlement statement</div>
+      <div class="doc-num">S-2026-W20-RSMITH</div>
+      <div class="doc-issued">Period Mon May 11 &mdash; Sun May 17, 2026<br/>Pay date Fri May 22, 2026 · ACH</div>
+      <div class="doc-status">Due Fri May 22 · ACH to BBVA acct **6224</div>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Driver</span>
+  </div>
+  <div class="lv-grid">
+    <div class="lv"><div class="lbl">Driver</div><div class="val">R. Smith</div><div class="sub">DRV-0042 · 1099 contractor</div></div>
+    <div class="lv"><div class="lbl">CDL</div><div class="val">TX · exp 2027-08</div><div class="sub">Medical card current</div></div>
+    <div class="lv"><div class="lbl">Pay type</div><div class="val">Per-mile · short mi basis</div><div class="sub">Standard rate $0.50/mi</div></div>
+    <div class="lv"><div class="lbl">Tax form</div><div class="val">1099-NEC YTD</div><div class="sub">$14,820.50 gross before this period</div></div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">Loads completed this period</span>
+    <span class="right">4 loads · 1,676 short mi · 1,891 practical mi</span>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 11%;">Load #</th>
+        <th>Lane</th>
+        <th class="num">Short mi</th>
+        <th class="num">Rate</th>
+        <th class="num">Linehaul</th>
+        <th class="num">Bonuses</th>
+        <th class="num" style="width: 12%;">Line total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">L-13494</td>
+        <td>Laredo TX &rarr; Houston TX · Mon May 11</td>
+        <td class="num">487</td>
+        <td class="num">$0.50</td>
+        <td class="num">$243.50</td>
+        <td class="num">$40.00 detention</td>
+        <td class="num">$283.50</td>
+      </tr>
+      <tr>
+        <td class="mono">L-13501</td>
+        <td>San Antonio TX &rarr; OK City OK · Tue May 12</td>
+        <td class="num">612</td>
+        <td class="num">$0.50</td>
+        <td class="num">$306.00</td>
+        <td class="num">$50.00 tarp pay</td>
+        <td class="num">$356.00</td>
+      </tr>
+      <tr>
+        <td class="mono">L-13518</td>
+        <td>San Antonio TX &rarr; McAllen TX · Tue May 13</td>
+        <td class="num">221</td>
+        <td class="num">$0.50</td>
+        <td class="num">$110.50</td>
+        <td class="num">&mdash;</td>
+        <td class="num">$110.50</td>
+      </tr>
+      <tr>
+        <td class="mono">L-13524</td>
+        <td>McAllen TX &rarr; Dallas TX · Sat May 17</td>
+        <td class="num">356</td>
+        <td class="num">$0.50</td>
+        <td class="num">$178.00</td>
+        <td class="num">&mdash;</td>
+        <td class="num">$178.00</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Gross loads + bonuses</td>
+        <td class="num">1,676</td>
+        <td class="num">&mdash;</td>
+        <td class="num">$838.00</td>
+        <td class="num">$90.00</td>
+        <td class="num">$928.00</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="sec-head">
+    <span class="title">Deductions &amp; recoveries</span>
+    <span class="right">Advance recoveries · escrow · damage co-pay</span>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Reference</th>
+        <th class="num" style="width: 14%;">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Fuel advance recovery</td><td>Issued Mon May 11 against L-13494 · EFS</td><td class="num">&minus;$150.00</td></tr>
+      <tr><td>Fuel advance recovery</td><td>Issued Tue May 13 against L-13518 · EFS</td><td class="num">&minus;$200.00</td></tr>
+      <tr><td>Cash advance recovery</td><td>Issued Wed May 14 · Comcheck #889341</td><td class="num">&minus;$50.00</td></tr>
+      <tr><td>Escrow contribution</td><td>Weekly · maintains driver escrow at $2,500 floor</td><td class="num">&minus;$25.00</td></tr>
+      <tr><td>Damage co-pay · mud flap L-13494</td><td>Repair invoice WO-44820 · 50% co-pay per contract</td><td class="num">&minus;$22.50</td></tr>
+    </tbody>
+    <tfoot>
+      <tr><td colspan="2">Total deductions</td><td class="num">&minus;$447.50</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="total-line">
+    <div>
+      <div class="lbl">Net settlement &middot; paid Fri May 22</div>
+      <div class="sub">ACH to BBVA Compass acct **6224 · routing 113010547 · email confirmation when wire posts</div>
+    </div>
+    <div class="amt">$480.50</div>
+  </div>
+
+  <div class="sec-head">
+    <span class="title">YTD totals · for 1099-NEC</span>
+  </div>
+  <div class="lv-grid">
+    <div class="lv"><div class="lbl">YTD gross</div><div class="val amt">$15,748.50</div></div>
+    <div class="lv"><div class="lbl">YTD deductions</div><div class="val amt">$2,883.25</div></div>
+    <div class="lv"><div class="lbl">YTD net</div><div class="val amt">$12,865.25</div></div>
+    <div class="lv"><div class="lbl">YTD miles</div><div class="val amt">28,514</div></div>
+  </div>
+
+  <div class="signoff">
+    <div class="sig-block">
+      <div class="sig-label-top">Driver acknowledgment</div>
+      <div class="sig-line"></div>
+      <div class="sig-name">R. Smith · sign &amp; date</div>
+      <div class="sig-note">Disputes must be raised within 7 days of pay date</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-label-top">Payroll · Owner</div>
+      <div class="sig-line"></div>
+      <div class="sig-name">Jorge Munoz · IH 35 Trucking</div>
+      <div class="sig-note">Generated Wed, May 13, 2026 · 8:51 AM CT</div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div>
+      <div class="fl-label">Disputes &amp; corrections</div>
+      <p>Email payroll@ih35trucking.com with settlement #, load #, and disputed line. 7-day dispute window from pay date. After 7 days, settlement is deemed accepted.</p>
+    </div>
+    <div>
+      <div class="fl-label">Escrow balance</div>
+      <p>Current driver escrow: $2,525.00 (target floor $2,500). Released at end of contract or 30 days after termination per signed agreement.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
