@@ -249,7 +249,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
         .query(
           `
             UPDATE driver_finance.deduction_schedule
-            SET held_until_period = current_date + interval '14 days',
+            SET hold_until_period = current_date + interval '14 days',
                 hold_reason = $2,
                 updated_at = now()
             WHERE liability_id = $1
@@ -291,7 +291,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
         .query(
           `
             UPDATE driver_finance.deduction_schedule
-            SET held_until_period = NULL,
+            SET hold_until_period = NULL,
                 hold_reason = NULL,
                 updated_at = now()
             WHERE liability_id = $1
