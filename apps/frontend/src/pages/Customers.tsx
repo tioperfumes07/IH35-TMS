@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { listUsStates } from "../api/catalogs";
-import { ApiError } from "../api/client";
 import { createCustomer, listCustomers, listPaymentTermOptions, listVendors, updateCustomer, type Customer, type VendorOption } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
@@ -14,6 +13,9 @@ import { ActionButton } from "../components/shared/ActionButton";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
+import { FieldError, fieldErrorClassname } from "../components/forms/FieldError";
+import { FormErrorBanner } from "../components/forms/FormErrorBanner";
+import { useFormValidation } from "../components/forms/useFormValidation";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -226,7 +228,6 @@ export function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [createForm, setCreateForm] = useState<CreateCustomerFormState>(emptyCreateForm());
   const [editForm, setEditForm] = useState<CustomerFormState>(emptyEditForm());
-  const [createErrors, setCreateErrors] = useState<Partial<Record<keyof CreateCustomerFormState, string>>>({});
   const [qualityFilter, setQualityFilter] = useState<"all" | Customer["quality_overall_flag"]>("all");
   const [showOnlyFmcsaVerified, setShowOnlyFmcsaVerified] = useState(false);
   const [sortByDisputes, setSortByDisputes] = useState(false);
@@ -256,10 +257,72 @@ export function CustomersPage() {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       setAddOpen(false);
       setCreateForm(emptyCreateForm());
-      setCreateErrors({});
       pushToast("Customer created", "success");
     },
   });
+
+  const {
+    fieldErrors: customerFieldErrors,
+    apiError: customerApiError,
+    submit: submitCustomerCreate,
+    clearFieldError: clearCustomerFieldError,
+    resetErrors: resetCustomerCreateErrors,
+  } = useFormValidation({
+    schema: createCustomerSchema,
+    onSubmit: async (parsed) => {
+      await createMutation.mutateAsync({
+        name: parsed.legal_name,
+        legal_name: parsed.legal_name,
+        dba: parsed.dba || undefined,
+        customer_code: parsed.code || undefined,
+        code: parsed.code || undefined,
+        website: parsed.website || undefined,
+        office_phone: parsed.office_phone || undefined,
+        fax_phone: parsed.fax_phone || undefined,
+        mc_number: parsed.mc_number || undefined,
+        dot_number: parsed.dot_number || undefined,
+        tax_id: showTaxId ? parsed.tax_id || undefined : undefined,
+        customer_type: parsed.customer_type === "direct" ? "direct_shipper" : "broker",
+        status: parsed.status,
+        credit_limit: parsed.credit_limit,
+        credit_limit_source: parsed.credit_limit_source || undefined,
+        payment_terms_id: parsed.payment_terms_id || undefined,
+        main_contact_name: parsed.main_contact_name || undefined,
+        main_contact_title: parsed.main_contact_title || undefined,
+        main_contact_email: parsed.main_contact_email || undefined,
+        main_contact_phone: parsed.main_contact_phone || undefined,
+        main_contact_mobile: parsed.main_contact_mobile || undefined,
+        ar_email: parsed.ar_email || undefined,
+        ar_phone: parsed.ar_phone || undefined,
+        ap_email: parsed.ap_email || undefined,
+        ap_phone: parsed.ap_phone || undefined,
+        billing_state: parsed.billing_state || undefined,
+        free_time_pickup_minutes: parsed.free_time_pickup_minutes,
+        free_time_delivery_minutes: parsed.free_time_delivery_minutes,
+        detention_rate_per_hour: parsed.detention_rate_per_hour,
+        layover_charge_per_day: typeof parsed.layover_charge_per_day === "number" ? parsed.layover_charge_per_day : undefined,
+        layover_currency: parsed.layover_currency ?? "USD",
+        layover_first_night_free: parsed.layover_first_night_free,
+        layover_max_days: typeof parsed.layover_max_days === "number" ? parsed.layover_max_days : undefined,
+        layover_notes: parsed.layover_notes || undefined,
+        factoring_eligible: parsed.factoring_eligible,
+        factoring_company_vendor_id: parsed.factoring_company_vendor_id || undefined,
+        factoring_advance_rate_override:
+          typeof parsed.factoring_advance_rate_override === "number" ? parsed.factoring_advance_rate_override : undefined,
+        factoring_reserve_pct_override:
+          typeof parsed.factoring_reserve_pct_override === "number" ? parsed.factoring_reserve_pct_override : undefined,
+        factoring_recourse_type:
+          parsed.factoring_recourse_type === "" ? undefined : (parsed.factoring_recourse_type as "recourse" | "non_recourse"),
+        factoring_notes: parsed.factoring_notes || undefined,
+        notes: parsed.notes || undefined,
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!addOpen) return;
+    resetCustomerCreateErrors();
+  }, [addOpen, resetCustomerCreateErrors]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof updateCustomer>[1] }) => updateCustomer(id, payload),
@@ -420,84 +483,17 @@ export function CustomersPage() {
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Customer">
         <form
           className="space-y-3"
-          onSubmit={async (event) => {
+          onSubmit={(event) => {
             event.preventDefault();
-            const parsed = createCustomerSchema.safeParse(createForm);
-            if (!parsed.success) {
-              const fieldErrors = parsed.error.flatten().fieldErrors;
-              setCreateErrors({
-                legal_name: fieldErrors.legal_name?.[0],
-                customer_type: fieldErrors.customer_type?.[0],
-                main_contact_email: fieldErrors.main_contact_email?.[0],
-                ar_email: fieldErrors.ar_email?.[0],
-                ap_email: fieldErrors.ap_email?.[0],
-              });
-              pushToast(parsed.error.issues[0]?.message ?? "Please complete required fields", "error");
-              return;
-            }
-            setCreateErrors({});
-            try {
-              await createMutation.mutateAsync({
-                name: parsed.data.legal_name,
-                legal_name: parsed.data.legal_name,
-                dba: parsed.data.dba || undefined,
-                customer_code: parsed.data.code || undefined,
-                code: parsed.data.code || undefined,
-                website: parsed.data.website || undefined,
-                office_phone: parsed.data.office_phone || undefined,
-                fax_phone: parsed.data.fax_phone || undefined,
-                mc_number: parsed.data.mc_number || undefined,
-                dot_number: parsed.data.dot_number || undefined,
-                tax_id: showTaxId ? parsed.data.tax_id || undefined : undefined,
-                customer_type: parsed.data.customer_type === "direct" ? "direct_shipper" : "broker",
-                status: parsed.data.status,
-                credit_limit: parsed.data.credit_limit,
-                credit_limit_source: parsed.data.credit_limit_source || undefined,
-                payment_terms_id: parsed.data.payment_terms_id || undefined,
-                main_contact_name: parsed.data.main_contact_name || undefined,
-                main_contact_title: parsed.data.main_contact_title || undefined,
-                main_contact_email: parsed.data.main_contact_email || undefined,
-                main_contact_phone: parsed.data.main_contact_phone || undefined,
-                main_contact_mobile: parsed.data.main_contact_mobile || undefined,
-                ar_email: parsed.data.ar_email || undefined,
-                ar_phone: parsed.data.ar_phone || undefined,
-                ap_email: parsed.data.ap_email || undefined,
-                ap_phone: parsed.data.ap_phone || undefined,
-                billing_state: parsed.data.billing_state || undefined,
-                free_time_pickup_minutes: parsed.data.free_time_pickup_minutes,
-                free_time_delivery_minutes: parsed.data.free_time_delivery_minutes,
-                detention_rate_per_hour: parsed.data.detention_rate_per_hour,
-                layover_charge_per_day: typeof parsed.data.layover_charge_per_day === "number" ? parsed.data.layover_charge_per_day : undefined,
-                layover_currency: parsed.data.layover_currency ?? "USD",
-                layover_first_night_free: parsed.data.layover_first_night_free,
-                layover_max_days: typeof parsed.data.layover_max_days === "number" ? parsed.data.layover_max_days : undefined,
-                layover_notes: parsed.data.layover_notes || undefined,
-                factoring_eligible: parsed.data.factoring_eligible,
-                factoring_company_vendor_id: parsed.data.factoring_company_vendor_id || undefined,
-                factoring_advance_rate_override:
-                  typeof parsed.data.factoring_advance_rate_override === "number" ? parsed.data.factoring_advance_rate_override : undefined,
-                factoring_reserve_pct_override:
-                  typeof parsed.data.factoring_reserve_pct_override === "number" ? parsed.data.factoring_reserve_pct_override : undefined,
-                factoring_recourse_type:
-                  parsed.data.factoring_recourse_type === ""
-                    ? undefined
-                    : (parsed.data.factoring_recourse_type as "recourse" | "non_recourse"),
-                factoring_notes: parsed.data.factoring_notes || undefined,
-                notes: parsed.data.notes || undefined,
-              });
-            } catch (error) {
-              if (error instanceof ApiError && error.status === 409) {
-                pushToast("Customer conflict: code/name/MC/DOT already exists", "error");
-                return;
-              }
-              pushToast("Failed to create customer", "error");
-            }
+            void submitCustomerCreate(createForm as unknown as z.infer<typeof createCustomerSchema>);
           }}
         >
+          <FormErrorBanner message={customerApiError} />
           <CreateCustomerFormFields
             form={createForm}
             setForm={setCreateForm}
-            errors={createErrors}
+            errors={customerFieldErrors}
+            onClearField={clearCustomerFieldError}
             showTaxId={showTaxId}
             paymentTermOptions={paymentTermsQuery.data ?? []}
             paymentTermsLoading={paymentTermsQuery.isLoading}
@@ -588,6 +584,7 @@ function CreateCustomerFormFields({
   form,
   setForm,
   errors,
+  onClearField,
   showTaxId,
   paymentTermOptions,
   paymentTermsLoading,
@@ -600,7 +597,8 @@ function CreateCustomerFormFields({
 }: {
   form: CreateCustomerFormState;
   setForm: Dispatch<SetStateAction<CreateCustomerFormState>>;
-  errors: Partial<Record<keyof CreateCustomerFormState, string>>;
+  errors: Record<string, string>;
+  onClearField: (field: string) => void;
   showTaxId: boolean;
   paymentTermOptions: Array<{ id: string; terms_name: string; days_until_due: number }>;
   paymentTermsLoading: boolean;
@@ -617,8 +615,7 @@ function CreateCustomerFormFields({
       {required ? <span className="ml-1 text-red-500">*</span> : null}
     </label>
   );
-  const ErrorText = ({ field }: { field: keyof CreateCustomerFormState }) =>
-    errors[field] ? <div className="text-[11px] text-red-600">{errors[field]}</div> : null;
+  const ef = (field: string) => errors[field];
   const factoringVendors = vendors.filter((vendor) => {
     const notes = (vendor.notes ?? "").toLowerCase();
     const name = vendor.name.toLowerCase();
@@ -632,43 +629,103 @@ function CreateCustomerFormFields({
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="flex flex-col gap-1">
             <FieldLabel text="Legal Name" required />
-            <input value={form.legal_name} onChange={(event) => setForm((current) => ({ ...current, legal_name: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
-            <ErrorText field="legal_name" />
+            <input
+              data-field="legal_name"
+              value={form.legal_name}
+              aria-describedby={ef("legal_name") ? "legal_name-error" : undefined}
+              onChange={(event) => {
+                onClearField("legal_name");
+                setForm((current) => ({ ...current, legal_name: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("legal_name")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="legal_name" message={ef("legal_name")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="DBA" />
-            <input value={form.dba} onChange={(event) => setForm((current) => ({ ...current, dba: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="dba"
+              value={form.dba}
+              aria-describedby={ef("dba") ? "dba-error" : undefined}
+              onChange={(event) => {
+                onClearField("dba");
+                setForm((current) => ({ ...current, dba: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("dba")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="dba" message={ef("dba")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Code" />
-            <input value={form.code} onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="code"
+              value={form.code}
+              aria-describedby={ef("code") ? "code-error" : undefined}
+              onChange={(event) => {
+                onClearField("code");
+                setForm((current) => ({ ...current, code: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("code")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="code" message={ef("code")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Customer Type" required />
             <Combobox
+              dataField="customer_type"
               options={CREATE_CUSTOMER_TYPE_OPTIONS}
               value={form.customer_type}
-              onChange={(nextValue) => setForm((current) => ({ ...current, customer_type: ((nextValue as "broker" | "direct") ?? "broker") }))}
+              onChange={(nextValue) => {
+                onClearField("customer_type");
+                setForm((current) => ({ ...current, customer_type: ((nextValue as "broker" | "direct") ?? "broker") }));
+              }}
               placeholder="Select customer type"
+              error={ef("customer_type")}
             />
-            <ErrorText field="customer_type" />
+            <FieldError id="customer_type" message={ef("customer_type")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Status" />
             <Combobox
+              dataField="status"
               options={CUSTOMER_STATUS_OPTIONS}
               value={form.status}
-              onChange={(nextValue) => setForm((current) => ({ ...current, status: nextValue ?? "active" }))}
+              onChange={(nextValue) => {
+                onClearField("status");
+                setForm((current) => ({ ...current, status: nextValue ?? "active" }));
+              }}
               placeholder="Select status"
+              error={ef("status")}
             />
+            <FieldError id="status" message={ef("status")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="DOT Number" />
-            <input value={form.dot_number} onChange={(event) => setForm((current) => ({ ...current, dot_number: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="dot_number"
+              value={form.dot_number}
+              aria-describedby={ef("dot_number") ? "dot_number-error" : undefined}
+              onChange={(event) => {
+                onClearField("dot_number");
+                setForm((current) => ({ ...current, dot_number: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("dot_number")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="dot_number" message={ef("dot_number")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="MC Number" />
-            <input value={form.mc_number} onChange={(event) => setForm((current) => ({ ...current, mc_number: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="mc_number"
+              value={form.mc_number}
+              aria-describedby={ef("mc_number") ? "mc_number-error" : undefined}
+              onChange={(event) => {
+                onClearField("mc_number");
+                setForm((current) => ({ ...current, mc_number: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("mc_number")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="mc_number" message={ef("mc_number")} />
           </div>
           <div className="flex items-end">
             <Button type="button" variant="secondary" onClick={onOpenFmcsaVerification}>
@@ -678,7 +735,17 @@ function CreateCustomerFormFields({
           {showTaxId ? (
             <div className="flex flex-col gap-1">
               <FieldLabel text="Tax ID" />
-              <input value={form.tax_id} onChange={(event) => setForm((current) => ({ ...current, tax_id: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+              <input
+                data-field="tax_id"
+                value={form.tax_id}
+                aria-describedby={ef("tax_id") ? "tax_id-error" : undefined}
+                onChange={(event) => {
+                  onClearField("tax_id");
+                  setForm((current) => ({ ...current, tax_id: event.target.value }));
+                }}
+                className={fieldErrorClassname(Boolean(ef("tax_id")), "rounded border px-2 py-2 text-sm")}
+              />
+              <FieldError id="tax_id" message={ef("tax_id")} />
             </div>
           ) : null}
         </div>
@@ -698,13 +765,32 @@ function CreateCustomerFormFields({
           ] as Array<[keyof CreateCustomerFormState, string]>).map(([field, label]) => (
             <div key={field} className="flex flex-col gap-1">
               <FieldLabel text={label} />
-              <input value={String(form[field] ?? "")} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+              <input
+                data-field={field}
+                value={String(form[field] ?? "")}
+                aria-describedby={ef(field) ? `${String(field)}-error` : undefined}
+                onChange={(event) => {
+                  onClearField(String(field));
+                  setForm((current) => ({ ...current, [field]: event.target.value }));
+                }}
+                className={fieldErrorClassname(Boolean(ef(field)), "rounded border px-2 py-2 text-sm")}
+              />
+              <FieldError id={String(field)} message={ef(field)} />
             </div>
           ))}
           <div className="flex flex-col gap-1">
             <FieldLabel text="Main Contact Email" />
-            <input value={form.main_contact_email} onChange={(event) => setForm((current) => ({ ...current, main_contact_email: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
-            <ErrorText field="main_contact_email" />
+            <input
+              data-field="main_contact_email"
+              value={form.main_contact_email}
+              aria-describedby={ef("main_contact_email") ? "main_contact_email-error" : undefined}
+              onChange={(event) => {
+                onClearField("main_contact_email");
+                setForm((current) => ({ ...current, main_contact_email: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("main_contact_email")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="main_contact_email" message={ef("main_contact_email")} />
           </div>
         </div>
       </details>
@@ -714,51 +800,109 @@ function CreateCustomerFormFields({
         <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="flex flex-col gap-1">
             <FieldLabel text="A/R Email" />
-            <input value={form.ar_email} onChange={(event) => setForm((current) => ({ ...current, ar_email: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
-            <ErrorText field="ar_email" />
+            <input
+              data-field="ar_email"
+              value={form.ar_email}
+              aria-describedby={ef("ar_email") ? "ar_email-error" : undefined}
+              onChange={(event) => {
+                onClearField("ar_email");
+                setForm((current) => ({ ...current, ar_email: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("ar_email")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="ar_email" message={ef("ar_email")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="A/R Phone" />
-            <input value={form.ar_phone} onChange={(event) => setForm((current) => ({ ...current, ar_phone: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="ar_phone"
+              value={form.ar_phone}
+              aria-describedby={ef("ar_phone") ? "ar_phone-error" : undefined}
+              onChange={(event) => {
+                onClearField("ar_phone");
+                setForm((current) => ({ ...current, ar_phone: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("ar_phone")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="ar_phone" message={ef("ar_phone")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="A/P Email" />
-            <input value={form.ap_email} onChange={(event) => setForm((current) => ({ ...current, ap_email: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
-            <ErrorText field="ap_email" />
+            <input
+              data-field="ap_email"
+              value={form.ap_email}
+              aria-describedby={ef("ap_email") ? "ap_email-error" : undefined}
+              onChange={(event) => {
+                onClearField("ap_email");
+                setForm((current) => ({ ...current, ap_email: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("ap_email")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="ap_email" message={ef("ap_email")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="A/P Phone" />
-            <input value={form.ap_phone} onChange={(event) => setForm((current) => ({ ...current, ap_phone: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="ap_phone"
+              value={form.ap_phone}
+              aria-describedby={ef("ap_phone") ? "ap_phone-error" : undefined}
+              onChange={(event) => {
+                onClearField("ap_phone");
+                setForm((current) => ({ ...current, ap_phone: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("ap_phone")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="ap_phone" message={ef("ap_phone")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Billing State" />
             <Combobox
+              dataField="billing_state"
               options={usStates.map((state) => ({
                 value: state.code,
                 label: `${state.code} - ${state.name}`,
                 sublabel: state.region,
               }))}
               value={form.billing_state || null}
-              onChange={(nextValue) => setForm((current) => ({ ...current, billing_state: nextValue ?? "" }))}
+              onChange={(nextValue) => {
+                onClearField("billing_state");
+                setForm((current) => ({ ...current, billing_state: nextValue ?? "" }));
+              }}
               loading={usStatesLoading}
               disabled={usStatesError}
               placeholder="Select state"
+              error={ef("billing_state")}
             />
+            <FieldError id="billing_state" message={ef("billing_state")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Credit Limit" />
-            <input value={form.credit_limit} onChange={(event) => setForm((current) => ({ ...current, credit_limit: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="credit_limit"
+              value={form.credit_limit}
+              aria-describedby={ef("credit_limit") ? "credit_limit-error" : undefined}
+              onChange={(event) => {
+                onClearField("credit_limit");
+                setForm((current) => ({ ...current, credit_limit: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("credit_limit")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="credit_limit" message={ef("credit_limit")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Credit Limit Source" />
             <Combobox
+              dataField="credit_limit_source"
               options={CREDIT_LIMIT_SOURCE_OPTIONS}
               value={form.credit_limit_source}
-              onChange={(nextValue) =>
-                setForm((current) => ({ ...current, credit_limit_source: ((nextValue ?? "") as "" | "factor" | "manual" | "rmis_future") }))
-              }
+              onChange={(nextValue) => {
+                onClearField("credit_limit_source");
+                setForm((current) => ({ ...current, credit_limit_source: ((nextValue ?? "") as "" | "factor" | "manual" | "rmis_future") }));
+              }}
               placeholder="Select credit limit source"
+              error={ef("credit_limit_source")}
             />
+            <FieldError id="credit_limit_source" message={ef("credit_limit_source")} />
             <div className="text-[11px] text-gray-500">
               If set by your factor (Faro/RTS), select Factor and let daily report sync update. Otherwise select Manual.
             </div>
@@ -766,6 +910,7 @@ function CreateCustomerFormFields({
           <div className="flex flex-col gap-1">
             <FieldLabel text="Payment Terms" />
             <Combobox
+              dataField="payment_terms_id"
               options={[
                 { value: "", label: "Default" },
                 ...paymentTermOptions.map((option) => ({
@@ -774,9 +919,13 @@ function CreateCustomerFormFields({
                 })),
               ]}
               value={form.payment_terms_id}
-              onChange={(nextValue) => setForm((current) => ({ ...current, payment_terms_id: nextValue ?? "" }))}
+              onChange={(nextValue) => {
+                onClearField("payment_terms_id");
+                setForm((current) => ({ ...current, payment_terms_id: nextValue ?? "" }));
+              }}
               placeholder="Select payment terms"
               loading={paymentTermsLoading}
+              error={ef("payment_terms_id")}
               allowAddNew={
                 canOwnerExtendCatalogs
                   ? {
@@ -786,18 +935,49 @@ function CreateCustomerFormFields({
                   : undefined
               }
             />
+            <FieldError id="payment_terms_id" message={ef("payment_terms_id")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Free Time Pickup (minutes)" />
-            <input value={form.free_time_pickup_minutes} onChange={(event) => setForm((current) => ({ ...current, free_time_pickup_minutes: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="free_time_pickup_minutes"
+              value={form.free_time_pickup_minutes}
+              aria-describedby={ef("free_time_pickup_minutes") ? "free_time_pickup_minutes-error" : undefined}
+              onChange={(event) => {
+                onClearField("free_time_pickup_minutes");
+                setForm((current) => ({ ...current, free_time_pickup_minutes: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("free_time_pickup_minutes")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="free_time_pickup_minutes" message={ef("free_time_pickup_minutes")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Free Time Delivery (minutes)" />
-            <input value={form.free_time_delivery_minutes} onChange={(event) => setForm((current) => ({ ...current, free_time_delivery_minutes: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="free_time_delivery_minutes"
+              value={form.free_time_delivery_minutes}
+              aria-describedby={ef("free_time_delivery_minutes") ? "free_time_delivery_minutes-error" : undefined}
+              onChange={(event) => {
+                onClearField("free_time_delivery_minutes");
+                setForm((current) => ({ ...current, free_time_delivery_minutes: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("free_time_delivery_minutes")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="free_time_delivery_minutes" message={ef("free_time_delivery_minutes")} />
           </div>
           <div className="flex flex-col gap-1">
             <FieldLabel text="Detention Rate / Hour" />
-            <input value={form.detention_rate_per_hour} onChange={(event) => setForm((current) => ({ ...current, detention_rate_per_hour: event.target.value }))} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <input
+              data-field="detention_rate_per_hour"
+              value={form.detention_rate_per_hour}
+              aria-describedby={ef("detention_rate_per_hour") ? "detention_rate_per_hour-error" : undefined}
+              onChange={(event) => {
+                onClearField("detention_rate_per_hour");
+                setForm((current) => ({ ...current, detention_rate_per_hour: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(ef("detention_rate_per_hour")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="detention_rate_per_hour" message={ef("detention_rate_per_hour")} />
           </div>
           <div className="md:col-span-2 mt-2 rounded border border-gray-200 p-3">
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-700">Layover Charges</div>
@@ -805,20 +985,32 @@ function CreateCustomerFormFields({
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Layover Charge per Day ($)" />
                 <input
+                  data-field="layover_charge_per_day"
                   value={form.layover_charge_per_day}
-                  onChange={(event) => setForm((current) => ({ ...current, layover_charge_per_day: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  aria-describedby={ef("layover_charge_per_day") ? "layover_charge_per_day-error" : undefined}
+                  onChange={(event) => {
+                    onClearField("layover_charge_per_day");
+                    setForm((current) => ({ ...current, layover_charge_per_day: event.target.value }));
+                  }}
+                  className={fieldErrorClassname(Boolean(ef("layover_charge_per_day")), "rounded border px-2 py-2 text-sm")}
                   placeholder="e.g. 300"
                 />
+                <FieldError id="layover_charge_per_day" message={ef("layover_charge_per_day")} />
               </div>
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Currency" />
                 <Combobox
+                  dataField="layover_currency"
                   options={LAYOVER_CURRENCY_OPTIONS}
                   value={form.layover_currency}
-                  onChange={(nextValue) => setForm((current) => ({ ...current, layover_currency: (nextValue as "USD" | "MXN" | "CAD") ?? "USD" }))}
+                  onChange={(nextValue) => {
+                    onClearField("layover_currency");
+                    setForm((current) => ({ ...current, layover_currency: (nextValue as "USD" | "MXN" | "CAD") ?? "USD" }));
+                  }}
                   placeholder="Select currency"
+                  error={ef("layover_currency")}
                 />
+                <FieldError id="layover_currency" message={ef("layover_currency")} />
               </div>
               <label className="md:col-span-2 flex items-center gap-2 text-xs text-gray-700">
                 <input
@@ -831,20 +1023,32 @@ function CreateCustomerFormFields({
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Max billable layover days" />
                 <input
+                  data-field="layover_max_days"
                   value={form.layover_max_days}
-                  onChange={(event) => setForm((current) => ({ ...current, layover_max_days: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  aria-describedby={ef("layover_max_days") ? "layover_max_days-error" : undefined}
+                  onChange={(event) => {
+                    onClearField("layover_max_days");
+                    setForm((current) => ({ ...current, layover_max_days: event.target.value }));
+                  }}
+                  className={fieldErrorClassname(Boolean(ef("layover_max_days")), "rounded border px-2 py-2 text-sm")}
                   placeholder="No cap"
                 />
+                <FieldError id="layover_max_days" message={ef("layover_max_days")} />
               </div>
               <div className="flex flex-col gap-1 md:col-span-2">
                 <FieldLabel text="Layover notes" />
                 <textarea
+                  data-field="layover_notes"
                   value={form.layover_notes}
-                  onChange={(event) => setForm((current) => ({ ...current, layover_notes: event.target.value }))}
+                  aria-describedby={ef("layover_notes") ? "layover_notes-error" : undefined}
+                  onChange={(event) => {
+                    onClearField("layover_notes");
+                    setForm((current) => ({ ...current, layover_notes: event.target.value }));
+                  }}
                   rows={2}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  className={fieldErrorClassname(Boolean(ef("layover_notes")), "rounded border px-2 py-2 text-sm")}
                 />
+                <FieldError id="layover_notes" message={ef("layover_notes")} />
               </div>
             </div>
             <div className="mt-2 text-[11px] text-gray-500">
@@ -853,7 +1057,18 @@ function CreateCustomerFormFields({
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
             <FieldLabel text="Notes" />
-            <textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} rows={2} className="rounded border border-gray-300 px-2 py-2 text-sm" />
+            <textarea
+              data-field="notes"
+              value={form.notes}
+              aria-describedby={ef("notes") ? "notes-error" : undefined}
+              onChange={(event) => {
+                onClearField("notes");
+                setForm((current) => ({ ...current, notes: event.target.value }));
+              }}
+              rows={2}
+              className={fieldErrorClassname(Boolean(ef("notes")), "rounded border px-2 py-2 text-sm")}
+            />
+            <FieldError id="notes" message={ef("notes")} />
           </div>
           <div className="md:col-span-2 mt-2 border-t border-gray-200 pt-3">
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-700">Factoring Configuration</div>
@@ -869,14 +1084,19 @@ function CreateCustomerFormFields({
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Factoring Company" />
                 <Combobox
+                  dataField="factoring_company_vendor_id"
                   options={[
                     { value: "", label: "(none)" },
                     ...factoringVendors.map((vendor) => ({ value: vendor.id, label: vendor.name })),
                   ]}
                   value={form.factoring_company_vendor_id}
-                  onChange={(nextValue) => setForm((current) => ({ ...current, factoring_company_vendor_id: nextValue ?? "" }))}
+                  onChange={(nextValue) => {
+                    onClearField("factoring_company_vendor_id");
+                    setForm((current) => ({ ...current, factoring_company_vendor_id: nextValue ?? "" }));
+                  }}
                   placeholder="Select factoring vendor"
                   allowClear
+                  error={ef("factoring_company_vendor_id")}
                   allowAddNew={
                     canOwnerExtendCatalogs
                       ? {
@@ -886,44 +1106,67 @@ function CreateCustomerFormFields({
                       : undefined
                   }
                 />
+                <FieldError id="factoring_company_vendor_id" message={ef("factoring_company_vendor_id")} />
               </div>
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Advance Rate Override (%)" />
                 <input
+                  data-field="factoring_advance_rate_override"
                   value={form.factoring_advance_rate_override}
                   placeholder="uses default"
-                  onChange={(event) => setForm((current) => ({ ...current, factoring_advance_rate_override: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  aria-describedby={ef("factoring_advance_rate_override") ? "factoring_advance_rate_override-error" : undefined}
+                  onChange={(event) => {
+                    onClearField("factoring_advance_rate_override");
+                    setForm((current) => ({ ...current, factoring_advance_rate_override: event.target.value }));
+                  }}
+                  className={fieldErrorClassname(Boolean(ef("factoring_advance_rate_override")), "rounded border px-2 py-2 text-sm")}
                 />
+                <FieldError id="factoring_advance_rate_override" message={ef("factoring_advance_rate_override")} />
               </div>
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Reserve Override (%)" />
                 <input
+                  data-field="factoring_reserve_pct_override"
                   value={form.factoring_reserve_pct_override}
                   placeholder="uses default"
-                  onChange={(event) => setForm((current) => ({ ...current, factoring_reserve_pct_override: event.target.value }))}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  aria-describedby={ef("factoring_reserve_pct_override") ? "factoring_reserve_pct_override-error" : undefined}
+                  onChange={(event) => {
+                    onClearField("factoring_reserve_pct_override");
+                    setForm((current) => ({ ...current, factoring_reserve_pct_override: event.target.value }));
+                  }}
+                  className={fieldErrorClassname(Boolean(ef("factoring_reserve_pct_override")), "rounded border px-2 py-2 text-sm")}
                 />
+                <FieldError id="factoring_reserve_pct_override" message={ef("factoring_reserve_pct_override")} />
               </div>
               <div className="flex flex-col gap-1">
                 <FieldLabel text="Recourse Type" />
                 <Combobox
+                  dataField="factoring_recourse_type"
                   options={RECOURSE_TYPE_OPTIONS}
                   value={form.factoring_recourse_type}
-                  onChange={(nextValue) =>
-                    setForm((current) => ({ ...current, factoring_recourse_type: ((nextValue ?? "") as "" | "recourse" | "non_recourse") }))
-                  }
+                  onChange={(nextValue) => {
+                    onClearField("factoring_recourse_type");
+                    setForm((current) => ({ ...current, factoring_recourse_type: ((nextValue ?? "") as "" | "recourse" | "non_recourse") }));
+                  }}
                   placeholder="Select recourse type"
+                  error={ef("factoring_recourse_type")}
                 />
+                <FieldError id="factoring_recourse_type" message={ef("factoring_recourse_type")} />
               </div>
               <div className="flex flex-col gap-1 md:col-span-2">
                 <FieldLabel text="Factoring Notes" />
                 <textarea
+                  data-field="factoring_notes"
                   value={form.factoring_notes}
-                  onChange={(event) => setForm((current) => ({ ...current, factoring_notes: event.target.value }))}
+                  aria-describedby={ef("factoring_notes") ? "factoring_notes-error" : undefined}
+                  onChange={(event) => {
+                    onClearField("factoring_notes");
+                    setForm((current) => ({ ...current, factoring_notes: event.target.value }));
+                  }}
                   rows={2}
-                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  className={fieldErrorClassname(Boolean(ef("factoring_notes")), "rounded border px-2 py-2 text-sm")}
                 />
+                <FieldError id="factoring_notes" message={ef("factoring_notes")} />
               </div>
             </div>
           </div>

@@ -1,10 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { listCustomers } from "../../../api/mdata";
 import { Combobox } from "../../../components/Combobox";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { UploadZone } from "../../../components/UploadZone";
+import { useToast } from "../../../components/Toast";
+import { FieldError, fieldErrorClassname } from "../../../components/forms/FieldError";
+import { FormErrorBanner } from "../../../components/forms/FormErrorBanner";
+import { useFormValidation } from "../../../components/forms/useFormValidation";
+
+const invoiceModalSchema = z.object({
+  customer_id: z.string().min(1, "Customer is required").uuid("Customer is required"),
+  issue_date: z.string(),
+  due_date: z.string(),
+  notes: z.string(),
+});
 
 type Props = {
   open: boolean;
@@ -25,17 +37,50 @@ type Props = {
 };
 
 export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEntityType, onClose, onCreated, createInvoice }: Props) {
+  const { pushToast } = useToast();
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
+
+  const formSnapshot = useMemo(
+    () => ({
+      customer_id: customerId ?? "",
+      issue_date: issueDate,
+      due_date: dueDate,
+      notes,
+    }),
+    [customerId, issueDate, dueDate, notes]
+  );
 
   const customersQuery = useQuery({
     queryKey: ["invoice-type-modal", "customers", operatingCompanyId],
     queryFn: () => listCustomers({ operating_company_id: operatingCompanyId }).then((res) => res.customers),
     enabled: open,
+  });
+
+  const {
+    fieldErrors: invoiceFieldErrors,
+    apiError: invoiceApiError,
+    submit: submitInvoiceCreate,
+    clearFieldError: clearInvoiceFieldError,
+    resetErrors: resetInvoiceErrors,
+  } = useFormValidation({
+    schema: invoiceModalSchema,
+    onSubmit: async (parsed) => {
+      const created = await createInvoice({
+        customer_id: parsed.customer_id,
+        bill_to_entity_type: billToEntityType,
+        bill_to_entity_id: parsed.customer_id,
+        issue_date: parsed.issue_date || undefined,
+        due_date: parsed.due_date || undefined,
+        internal_notes: parsed.notes || undefined,
+        customer_notes: parsed.notes || undefined,
+      });
+      onCreated(created.id);
+      pushToast("Invoice created", "success");
+    },
   });
 
   useEffect(() => {
@@ -44,59 +89,80 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     setNotes("");
     setIssueDate(new Date().toISOString().slice(0, 10));
     setDueDate("");
-    setError(null);
+    resetInvoiceErrors();
     setDraftAttachmentEntityId(crypto.randomUUID());
-  }, [open]);
+  }, [open, resetInvoiceErrors]);
 
   return (
     <Modal open={open} onClose={onClose} title={title}>
       <form
         className="space-y-3"
-        onSubmit={async (event) => {
+        onSubmit={(event) => {
           event.preventDefault();
-          if (!customerId) {
-            setError("Customer is required.");
-            return;
-          }
-          try {
-            const created = await createInvoice({
-              customer_id: customerId,
-              bill_to_entity_type: billToEntityType,
-              bill_to_entity_id: customerId,
-              issue_date: issueDate || undefined,
-              due_date: dueDate || undefined,
-              internal_notes: notes || undefined,
-              customer_notes: notes || undefined,
-            });
-            onCreated(created.id);
-          } catch (submitError) {
-            setError(String((submitError as Error).message ?? "Failed to create invoice"));
-          }
+          void submitInvoiceCreate(formSnapshot);
         }}
       >
-        {error ? <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">{error}</div> : null}
+        <FormErrorBanner message={invoiceApiError} />
         <div className="grid gap-2 md:grid-cols-2">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-600">Customer</label>
             <Combobox
+              dataField="customer_id"
               options={(customersQuery.data ?? []).map((row) => ({ value: row.id, label: row.name, sublabel: row.customer_code ?? undefined }))}
               value={customerId}
-              onChange={setCustomerId}
+              onChange={(next) => {
+                clearInvoiceFieldError("customer_id");
+                setCustomerId(next);
+              }}
               loading={customersQuery.isLoading}
               placeholder="Select customer"
+              error={invoiceFieldErrors.customer_id}
             />
+            <FieldError id="customer_id" message={invoiceFieldErrors.customer_id} />
           </div>
           <label className="text-xs font-semibold text-slate-600">
             Issue date
-            <input className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-sm" type="date" value={issueDate} onChange={(event) => setIssueDate(event.target.value)} />
+            <input
+              data-field="issue_date"
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.issue_date), "mt-1 h-9 w-full rounded border px-2 text-sm")}
+              type="date"
+              value={issueDate}
+              aria-describedby={invoiceFieldErrors.issue_date ? "issue_date-error" : undefined}
+              onChange={(event) => {
+                clearInvoiceFieldError("issue_date");
+                setIssueDate(event.target.value);
+              }}
+            />
+            <FieldError id="issue_date" message={invoiceFieldErrors.issue_date} />
           </label>
           <label className="text-xs font-semibold text-slate-600">
             Due date
-            <input className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-sm" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+            <input
+              data-field="due_date"
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.due_date), "mt-1 h-9 w-full rounded border px-2 text-sm")}
+              type="date"
+              value={dueDate}
+              aria-describedby={invoiceFieldErrors.due_date ? "due_date-error" : undefined}
+              onChange={(event) => {
+                clearInvoiceFieldError("due_date");
+                setDueDate(event.target.value);
+              }}
+            />
+            <FieldError id="due_date" message={invoiceFieldErrors.due_date} />
           </label>
           <label className="text-xs font-semibold text-slate-600 md:col-span-2">
             Notes
-            <textarea className="mt-1 min-h-24 w-full rounded border border-slate-300 px-2 py-1 text-sm" value={notes} onChange={(event) => setNotes(event.target.value)} />
+            <textarea
+              data-field="notes"
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.notes), "mt-1 min-h-24 w-full rounded border px-2 py-1 text-sm")}
+              value={notes}
+              aria-describedby={invoiceFieldErrors.notes ? "notes-error" : undefined}
+              onChange={(event) => {
+                clearInvoiceFieldError("notes");
+                setNotes(event.target.value);
+              }}
+            />
+            <FieldError id="notes" message={invoiceFieldErrors.notes} />
           </label>
         </div>
         <UploadZone

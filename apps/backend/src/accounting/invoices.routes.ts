@@ -321,7 +321,12 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         });
         return reply.code(201).send(result);
       } catch (error) {
-        if (String((error as Error).message ?? "") === "customer_not_found") return reply.code(404).send({ error: "customer_not_found" });
+        if (String((error as Error).message ?? "") === "customer_not_found")
+          return reply.code(404).send({
+            error: "customer_not_found",
+            message: "Customer not found",
+            fieldErrors: { customer_id: "Invalid or inaccessible customer" },
+          });
         return reply.code(500).send({ error: "invoice_create_failed" });
       }
     });

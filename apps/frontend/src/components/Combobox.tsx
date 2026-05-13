@@ -18,6 +18,8 @@ type ComboboxProps = {
   allowClear?: boolean;
   allowAddNew?: { label: string; onAdd: (query: string) => void };
   filterMode?: "contains" | "startsWith" | "fuzzy";
+  /** Focus target for form validation (`[data-field="…"]`). */
+  dataField?: string;
 };
 
 const MAX_VISIBLE_OPTIONS = 50;
@@ -59,6 +61,7 @@ export function Combobox({
   allowClear = false,
   allowAddNew,
   filterMode = "contains",
+  dataField,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -187,6 +190,7 @@ export function Combobox({
       >
         <input
           type="text"
+          data-field={dataField}
           value={displayValue}
           onChange={(event) => {
             setQuery(event.target.value);

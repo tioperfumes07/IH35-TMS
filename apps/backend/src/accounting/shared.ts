@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { sendZodValidation } from "../lib/zod-http-error.js";
 
 export const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -13,7 +14,7 @@ export function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export function validationError(reply: FastifyReply, error: z.ZodError) {
-  return reply.code(400).send({ error: "validation_error", details: error.flatten() });
+  return sendZodValidation(reply, error);
 }
 
 export async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: any) => Promise<T>) {

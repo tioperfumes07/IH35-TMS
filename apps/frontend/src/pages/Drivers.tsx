@@ -30,6 +30,9 @@ import { ActionButton } from "../components/shared/ActionButton";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
+import { FieldError, fieldErrorClassname } from "../components/forms/FieldError";
+import { FormErrorBanner } from "../components/forms/FormErrorBanner";
+import { useFormValidation } from "../components/forms/useFormValidation";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors } from "../design/tokens";
 
@@ -396,6 +399,88 @@ export function DriversPage() {
       setSelectedPriorDriverId(null);
     },
   });
+
+  const {
+    fieldErrors: driverFieldErrors,
+    apiError: driverApiError,
+    submit: submitDriverCreate,
+    clearFieldError: clearDriverFieldError,
+    resetErrors: resetDriverCreateErrors,
+  } = useFormValidation({
+    schema: createDriverSchema,
+    interceptApiError: (error) => {
+      if (error instanceof ApiError && error.status === 409) {
+        const detectionPayload = error.data as ReturningDetectionResult & { error?: string };
+        if (detectionPayload?.error === "returning_driver_detected") {
+          setReturningDetection({
+            returning_driver: true,
+            matched_events: detectionPayload.matched_events ?? [],
+            severity_summary: detectionPayload.severity_summary ?? { severe_count: 0, warning_count: 0, info_count: 0 },
+          });
+          setOverrideReturningWarning(false);
+          setRehireAction("rehire");
+          setSelectedPriorDriverId(null);
+          pushToast("Returning driver records found. Review and confirm override.", "error");
+          return true;
+        }
+      }
+      const errorPayload = error instanceof ApiError && error.data && typeof error.data === "object" ? (error.data as { error?: string }) : null;
+      if (error instanceof ApiError && error.status === 400 && errorPayload?.error === "operating_company_not_found") {
+        pushToast("Select an active operating company", "error");
+        return true;
+      }
+      return false;
+    },
+    onSubmit: async (parsed) => {
+      const normalizedPhone = `${parsed.country_code}${normalizePhoneDigits(parsed.phone_input)}`;
+      const shouldLinkRehire =
+        Boolean(returningDetection?.returning_driver) &&
+        overrideReturningWarning &&
+        rehireAction === "rehire" &&
+        Boolean(selectedPriorDriverId);
+      await createMutation.mutateAsync({
+        operating_company_id: parsed.operating_company_id,
+        first_name: parsed.first_name,
+        last_name: parsed.last_name,
+        phone: normalizedPhone,
+        email: parsed.email || undefined,
+        cdl_number: parsed.cdl_number || undefined,
+        cdl_state: parsed.cdl_state || undefined,
+        cdl_class: parsed.cdl_class,
+        cdl_expires_at: parsed.cdl_expires_at || undefined,
+        hire_date: parsed.hire_date || undefined,
+        pay_basis: parsed.pay_basis,
+        dot_medical_expires_at: parsed.dot_medical_expires_at || undefined,
+        visa_type: parsed.visa_type || undefined,
+        visa_number: parsed.visa_number || undefined,
+        visa_expires_at: parsed.visa_expires_at || undefined,
+        passport_number: parsed.passport_number || undefined,
+        passport_expires_at: parsed.passport_expires_at || undefined,
+        ine_number: parsed.ine_number || undefined,
+        curp: parsed.curp || undefined,
+        mx_address_line1: parsed.mx_address_line1 || undefined,
+        mx_address_line2: parsed.mx_address_line2 || undefined,
+        mx_city: parsed.mx_city || undefined,
+        mx_state: parsed.mx_state || undefined,
+        mx_postal_code: parsed.mx_postal_code || undefined,
+        emergency_contact_name: parsed.emergency_contact_name || undefined,
+        emergency_contact_relationship: parsed.emergency_contact_relationship || undefined,
+        emergency_contact_phone_primary: parsed.emergency_contact_phone_primary || undefined,
+        emergency_contact_phone_alternate: parsed.emergency_contact_phone_alternate || undefined,
+        emergency_contact_address: parsed.emergency_contact_address || undefined,
+        emergency_contact_notes: parsed.emergency_contact_notes || undefined,
+        status: parsed.status,
+        override_returning_warning: returningDetection?.returning_driver ? overrideReturningWarning : undefined,
+        is_rehire: shouldLinkRehire ? true : undefined,
+        prior_driver_id: shouldLinkRehire ? selectedPriorDriverId ?? undefined : undefined,
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!addOpen) return;
+    resetDriverCreateErrors();
+  }, [addOpen, resetDriverCreateErrors]);
 
   const drivers = useMemo(() => driversQuery.data ?? [], [driversQuery.data]);
 
@@ -795,100 +880,34 @@ export function DriversPage() {
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Driver">
         <form
           className="grid grid-cols-1 gap-3 md:grid-cols-2"
-          onSubmit={async (event) => {
+          onSubmit={(event) => {
             event.preventDefault();
-            const parsed = createDriverSchema.safeParse(form);
-            if (!parsed.success) {
-              pushToast("Please complete required fields", "error");
-              return;
-            }
-
-            try {
-              const normalizedPhone = `${parsed.data.country_code}${normalizePhoneDigits(parsed.data.phone_input)}`;
-              const shouldLinkRehire =
-                Boolean(returningDetection?.returning_driver) &&
-                overrideReturningWarning &&
-                rehireAction === "rehire" &&
-                Boolean(selectedPriorDriverId);
-              await createMutation.mutateAsync({
-                operating_company_id: parsed.data.operating_company_id,
-                first_name: parsed.data.first_name,
-                last_name: parsed.data.last_name,
-                phone: normalizedPhone,
-                email: parsed.data.email || undefined,
-                cdl_number: parsed.data.cdl_number || undefined,
-                cdl_state: parsed.data.cdl_state || undefined,
-                cdl_class: parsed.data.cdl_class,
-                cdl_expires_at: parsed.data.cdl_expires_at || undefined,
-                hire_date: parsed.data.hire_date || undefined,
-                pay_basis: parsed.data.pay_basis,
-                dot_medical_expires_at: parsed.data.dot_medical_expires_at || undefined,
-                visa_type: parsed.data.visa_type || undefined,
-                visa_number: parsed.data.visa_number || undefined,
-                visa_expires_at: parsed.data.visa_expires_at || undefined,
-                passport_number: parsed.data.passport_number || undefined,
-                passport_expires_at: parsed.data.passport_expires_at || undefined,
-                ine_number: parsed.data.ine_number || undefined,
-                curp: parsed.data.curp || undefined,
-                mx_address_line1: parsed.data.mx_address_line1 || undefined,
-                mx_address_line2: parsed.data.mx_address_line2 || undefined,
-                mx_city: parsed.data.mx_city || undefined,
-                mx_state: parsed.data.mx_state || undefined,
-                mx_postal_code: parsed.data.mx_postal_code || undefined,
-                emergency_contact_name: parsed.data.emergency_contact_name || undefined,
-                emergency_contact_relationship: parsed.data.emergency_contact_relationship || undefined,
-                emergency_contact_phone_primary: parsed.data.emergency_contact_phone_primary || undefined,
-                emergency_contact_phone_alternate: parsed.data.emergency_contact_phone_alternate || undefined,
-                emergency_contact_address: parsed.data.emergency_contact_address || undefined,
-                emergency_contact_notes: parsed.data.emergency_contact_notes || undefined,
-                status: parsed.data.status,
-                override_returning_warning: returningDetection?.returning_driver ? overrideReturningWarning : undefined,
-                is_rehire: shouldLinkRehire ? true : undefined,
-                prior_driver_id: shouldLinkRehire ? selectedPriorDriverId ?? undefined : undefined,
-              });
-            } catch (error) {
-              if (error instanceof ApiError && error.status === 409) {
-                const detectionPayload = error.data as ReturningDetectionResult & { error?: string };
-                if (detectionPayload?.error === "returning_driver_detected") {
-                  setReturningDetection({
-                    returning_driver: true,
-                    matched_events: detectionPayload.matched_events ?? [],
-                    severity_summary: detectionPayload.severity_summary ?? { severe_count: 0, warning_count: 0, info_count: 0 },
-                  });
-                  setOverrideReturningWarning(false);
-                  setRehireAction("rehire");
-                  setSelectedPriorDriverId(null);
-                  pushToast("Returning driver records found. Review and confirm override.", "error");
-                  return;
-                }
-              }
-              const errorPayload = error instanceof ApiError && error.data && typeof error.data === "object" ? error.data as { error?: string } : null;
-              if (error instanceof ApiError && error.status === 400 && errorPayload?.error === "operating_company_not_found") {
-                pushToast("Select an active operating company", "error");
-                return;
-              }
-              if (error instanceof ApiError && error.status === 409) {
-                pushToast("Driver with this CDL # already exists", "error");
-                return;
-              }
-              pushToast("Failed to create driver", "error");
-            }
+            void submitDriverCreate(form as z.infer<typeof createDriverSchema>);
           }}
         >
-          <div className="flex flex-col gap-1">
+          <div className="col-span-full">
+            <FormErrorBanner message={driverApiError} />
+          </div>
+          <div className="col-span-full flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Operating Company</label>
             <Combobox
+              dataField="operating_company_id"
               options={(companiesQuery.data ?? []).map((company) => ({
                 value: company.id,
                 label: `${company.code} - ${company.short_name || company.legal_name}`,
                 sublabel: company.legal_name,
               }))}
               value={form.operating_company_id || null}
-              onChange={(nextValue) => setForm((current) => ({ ...current, operating_company_id: nextValue ?? "" }))}
+              onChange={(nextValue) => {
+                clearDriverFieldError("operating_company_id");
+                setForm((current) => ({ ...current, operating_company_id: nextValue ?? "" }));
+              }}
               placeholder="Select operating company"
               loading={companiesQuery.isLoading}
               disabled={companiesQuery.isError}
+              error={driverFieldErrors.operating_company_id}
             />
+            <FieldError id="operating_company_id" message={driverFieldErrors.operating_company_id} />
           </div>
           {[
             ["first_name", "First Name"],
@@ -902,74 +921,116 @@ export function DriversPage() {
             <div key={key} className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">{label}</label>
               <input
+                data-field={key}
                 type={key.includes("date") || key.includes("expires") ? "date" : "text"}
                 value={form[key] ?? ""}
-                onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                className="rounded border border-gray-300 px-2 py-2 text-sm"
+                aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
+                onChange={(event) => {
+                  clearDriverFieldError(key);
+                  setForm((current) => ({ ...current, [key]: event.target.value }));
+                }}
+                className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border px-2 py-2 text-sm")}
               />
+              <FieldError id={key} message={driverFieldErrors[key]} />
             </div>
           ))}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">CDL State</label>
             <Combobox
+              dataField="cdl_state"
               options={(usStatesQuery.data ?? []).map((state) => ({
                 value: state.code,
                 label: `${state.code} - ${state.name}`,
                 sublabel: state.region,
               }))}
               value={form.cdl_state || null}
-              onChange={(nextValue) => setForm((current) => ({ ...current, cdl_state: nextValue ?? "" }))}
+              onChange={(nextValue) => {
+                clearDriverFieldError("cdl_state");
+                setForm((current) => ({ ...current, cdl_state: nextValue ?? "" }));
+              }}
               placeholder="Select US state"
               loading={usStatesQuery.isLoading}
               disabled={usStatesQuery.isError}
+              error={driverFieldErrors.cdl_state}
             />
+            <FieldError id="cdl_state" message={driverFieldErrors.cdl_state} />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Country</label>
             <select
+              data-field="country_code"
               value={form.country_code}
-              onChange={(event) => setForm((current) => ({ ...current, country_code: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              aria-describedby={driverFieldErrors.country_code ? "country_code-error" : undefined}
+              onChange={(event) => {
+                clearDriverFieldError("country_code");
+                setForm((current) => ({ ...current, country_code: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(driverFieldErrors.country_code), "rounded border px-2 py-2 text-sm")}
             >
               <option value="+1">US (+1)</option>
               <option value="+52">Mexico (+52)</option>
             </select>
+            <FieldError id="country_code" message={driverFieldErrors.country_code} />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Phone (10 digits)</label>
             <input
+              data-field="phone_input"
               value={form.phone_input}
-              onChange={(event) => setForm((current) => ({ ...current, phone_input: event.target.value }))}
-              className="rounded border border-gray-300 px-2 py-2 text-sm"
+              aria-describedby={driverFieldErrors.phone_input ? "phone_input-error" : undefined}
+              onChange={(event) => {
+                clearDriverFieldError("phone_input");
+                setForm((current) => ({ ...current, phone_input: event.target.value }));
+              }}
+              className={fieldErrorClassname(Boolean(driverFieldErrors.phone_input), "rounded border px-2 py-2 text-sm")}
               placeholder="(956) 555-0001"
             />
+            <FieldError id="phone_input" message={driverFieldErrors.phone_input} />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">CDL Class</label>
             <Combobox
+              dataField="cdl_class"
               options={cdlClassComboboxOptions}
               value={form.cdl_class || null}
-              onChange={(nextValue) => setForm((current) => ({ ...current, cdl_class: nextValue ?? "" }))}
+              onChange={(nextValue) => {
+                clearDriverFieldError("cdl_class");
+                setForm((current) => ({ ...current, cdl_class: nextValue ?? "" }));
+              }}
               placeholder="Select CDL class"
+              error={driverFieldErrors.cdl_class}
             />
+            <FieldError id="cdl_class" message={driverFieldErrors.cdl_class} />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Status</label>
             <Combobox
+              dataField="status"
               options={statusFieldComboboxOptions}
               value={form.status || null}
-              onChange={(nextValue) => setForm((current) => ({ ...current, status: nextValue ?? "" }))}
+              onChange={(nextValue) => {
+                clearDriverFieldError("status");
+                setForm((current) => ({ ...current, status: nextValue ?? "" }));
+              }}
               placeholder="Select status"
+              error={driverFieldErrors.status}
             />
+            <FieldError id="status" message={driverFieldErrors.status} />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Pay Basis</label>
             <Combobox
+              dataField="pay_basis"
               options={payBasisComboboxOptions}
               value={form.pay_basis || null}
-              onChange={(nextValue) => setForm((current) => ({ ...current, pay_basis: nextValue ?? "" }))}
+              onChange={(nextValue) => {
+                clearDriverFieldError("pay_basis");
+                setForm((current) => ({ ...current, pay_basis: nextValue ?? "" }));
+              }}
               placeholder="Select pay basis"
+              error={driverFieldErrors.pay_basis}
             />
+            <FieldError id="pay_basis" message={driverFieldErrors.pay_basis} />
           </div>
 
           <div className="col-span-full space-y-2 rounded-md border border-gray-200 p-3">
@@ -993,27 +1054,39 @@ export function DriversPage() {
                   <div key={key} className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-gray-600">{label}</label>
                     <input
+                      data-field={key}
                       type="text"
                       value={form[key] ?? ""}
-                      onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                      className="rounded border border-gray-300 px-2 py-2 text-sm"
+                      aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
+                      onChange={(event) => {
+                        clearDriverFieldError(key);
+                        setForm((current) => ({ ...current, [key]: event.target.value }));
+                      }}
+                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border px-2 py-2 text-sm")}
                     />
+                    <FieldError id={key} message={driverFieldErrors[key]} />
                   </div>
                 ))}
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-gray-600">MX State</label>
                   <Combobox
+                    dataField="mx_state"
                     options={(mexicoStatesQuery.data ?? []).map((state) => ({
                       value: state.code,
                       label: `${state.code} - ${state.name}`,
                       sublabel: state.region,
                     }))}
                     value={form.mx_state || null}
-                    onChange={(nextValue) => setForm((current) => ({ ...current, mx_state: nextValue ?? "" }))}
+                    onChange={(nextValue) => {
+                      clearDriverFieldError("mx_state");
+                      setForm((current) => ({ ...current, mx_state: nextValue ?? "" }));
+                    }}
                     placeholder="Select Mexico state"
                     loading={mexicoStatesQuery.isLoading}
                     disabled={mexicoStatesQuery.isError}
+                    error={driverFieldErrors.mx_state}
                   />
+                  <FieldError id="mx_state" message={driverFieldErrors.mx_state} />
                 </div>
               </div>
             ) : null}
@@ -1043,30 +1116,48 @@ export function DriversPage() {
                   <div key={key} className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-gray-600">{label}</label>
                     <input
+                      data-field={key}
                       type={key.includes("expires") ? "date" : "text"}
                       value={form[key] ?? ""}
-                      onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                      className="rounded border border-gray-300 px-2 py-2 text-sm"
+                      aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
+                      onChange={(event) => {
+                        clearDriverFieldError(key);
+                        setForm((current) => ({ ...current, [key]: event.target.value }));
+                      }}
+                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded border px-2 py-2 text-sm")}
                     />
+                    <FieldError id={key} message={driverFieldErrors[key]} />
                   </div>
                 ))}
                 <div className="md:col-span-2 flex flex-col gap-1">
                   <label className="text-xs font-semibold text-gray-600">Emergency Contact Address</label>
                   <textarea
+                    data-field="emergency_contact_address"
                     value={form.emergency_contact_address ?? ""}
-                    onChange={(event) => setForm((current) => ({ ...current, emergency_contact_address: event.target.value }))}
-                    className="rounded border border-gray-300 px-2 py-2 text-sm"
+                    aria-describedby={driverFieldErrors.emergency_contact_address ? "emergency_contact_address-error" : undefined}
+                    onChange={(event) => {
+                      clearDriverFieldError("emergency_contact_address");
+                      setForm((current) => ({ ...current, emergency_contact_address: event.target.value }));
+                    }}
+                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_address), "rounded border px-2 py-2 text-sm")}
                     rows={2}
                   />
+                  <FieldError id="emergency_contact_address" message={driverFieldErrors.emergency_contact_address} />
                 </div>
                 <div className="md:col-span-2 flex flex-col gap-1">
                   <label className="text-xs font-semibold text-gray-600">Emergency Contact Notes</label>
                   <textarea
+                    data-field="emergency_contact_notes"
                     value={form.emergency_contact_notes ?? ""}
-                    onChange={(event) => setForm((current) => ({ ...current, emergency_contact_notes: event.target.value }))}
-                    className="rounded border border-gray-300 px-2 py-2 text-sm"
+                    aria-describedby={driverFieldErrors.emergency_contact_notes ? "emergency_contact_notes-error" : undefined}
+                    onChange={(event) => {
+                      clearDriverFieldError("emergency_contact_notes");
+                      setForm((current) => ({ ...current, emergency_contact_notes: event.target.value }));
+                    }}
+                    className={fieldErrorClassname(Boolean(driverFieldErrors.emergency_contact_notes), "rounded border px-2 py-2 text-sm")}
                     rows={2}
                   />
+                  <FieldError id="emergency_contact_notes" message={driverFieldErrors.emergency_contact_notes} />
                 </div>
               </div>
             ) : null}

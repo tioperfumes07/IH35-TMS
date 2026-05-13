@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { verifyCustomerWithSafer } from "../integrations/fmcsa/safer.service.js";
 import { decrypt, encrypt } from "../lib/encryption.js";
+import { sendZodValidation } from "../lib/zod-http-error.js";
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -144,7 +145,7 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 function sendValidationError(reply: FastifyReply, error: z.ZodError) {
-  return reply.code(400).send({ error: "validation_error", details: error.flatten() });
+  return sendZodValidation(reply, error);
 }
 
 function isWriteRole(role: string): boolean {
@@ -353,7 +354,14 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       mc_number: b.mc_number ?? null,
       dot_number: b.dot_number ?? null,
     });
-    if (conflict) return reply.code(409).send({ error: `mdata_customer_${conflict}_conflict` });
+    if (conflict) {
+      const fieldKey = conflict === "name" ? "legal_name" : conflict;
+      return reply.code(409).send({
+        error: `mdata_customer_${conflict}_conflict`,
+        message: `Customer with this ${conflict} already exists`,
+        fieldErrors: { [fieldKey]: "Already in use" },
+      });
+    }
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
@@ -552,7 +560,14 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     }
     const patchName = b.legal_name ?? b.name ?? null;
     const conflict = await assertUniqueCustomerFields(authUser.uuid, { name: patchName, mc_number: b.mc_number ?? null, dot_number: b.dot_number ?? null }, parsedParams.data.id);
-    if (conflict) return reply.code(409).send({ error: `mdata_customer_${conflict}_conflict` });
+    if (conflict) {
+      const fieldKey = conflict === "name" ? "name" : conflict;
+      return reply.code(409).send({
+        error: `mdata_customer_${conflict}_conflict`,
+        message: `Customer with this ${conflict} already exists`,
+        fieldErrors: { [fieldKey]: "Already in use" },
+      });
+    }
     const existingRow = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(`SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
       return res.rows[0] ?? null;
