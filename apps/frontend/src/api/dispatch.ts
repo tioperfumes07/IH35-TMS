@@ -130,7 +130,7 @@ export type DispatchBookLoadPayload = {
     country?: string;
     address_line1?: string;
     scheduled_arrival_at?: string;
-    time_window_type?: "appointment" | "first_come_first_serve" | "drop_window";
+    time_window_type?: "appointment" | "open_window" | "select_hours" | "refused" | "first_come_first_serve" | "drop_window";
     appointment_start_at?: string;
     appointment_end_at?: string;
     lumper_required?: boolean;
@@ -139,17 +139,47 @@ export type DispatchBookLoadPayload = {
     is_tarp_stop?: boolean;
     tarp_count?: number;
     stop_notes?: string;
+    site_contact_name?: string;
+    site_contact_phone?: string;
+    gate_dock_text?: string;
   }>;
   save_mode: "draft" | "book_dispatch";
   override_token?: string;
   override_reason?: string;
+  anticipated_chargeback_cents?: number;
+  anticipated_chargeback_reason?: string;
+  detention_expected_y_n?: boolean;
+  detention_expected_hours?: number;
+  detention_bill_customer_per_hour_cents?: number;
+  detention_driver_pay_per_hour_cents?: number;
+  late_delivery_risk_y_n?: boolean;
+  late_delivery_est_deduction_cents?: number;
+  late_delivery_reason?: string;
+  ocr_source_pdf_r2_key?: string;
+  miles_practical?: number;
+  miles_shortest?: number;
+  miles_deadhead?: number;
+  pickup_number?: string;
+  border_routing?: string;
 };
 
 export function reserveDispatchLoadId(operatingCompanyId: string) {
-  return apiRequest<{ reservation_uuid: string; load_number: string }>("/api/v1/dispatch/loads/reserve-id", {
+  return apiRequest<{
+    reservation_uuid: string;
+    load_number: string;
+    reserved_until: string;
+    ttl_seconds: number;
+  }>("/api/v1/dispatch/loads/reserve-id", {
     method: "POST",
     body: { operating_company_id: operatingCompanyId },
   });
+}
+
+export function releaseDispatchLoadReservation(operatingCompanyId: string, reservationUuid: string) {
+  return apiRequest<{ released: boolean }>(
+    `/api/v1/dispatch/loads/reserve-id/${encodeURIComponent(reservationUuid)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "DELETE" }
+  );
 }
 
 export function patchAnticipatedChargeback(

@@ -14,9 +14,19 @@ type ConsumeInput = {
   loadId: string;
 };
 
-type ClaimInput = {
+export type ClaimInput = {
   operatingCompanyId: string;
   reservationId: string;
+  reservedByUserId: string;
+};
+
+export const LOAD_ID_RESERVATION_TTL_SECONDS = 60;
+
+export type ReserveNextLoadIdResult = {
+  reservationId: string;
+  loadNumber: string;
+  reservedUntilIso: string;
+  ttlSeconds: number;
 };
 
 function makeLoadNumber(seq: number, date = new Date()) {
@@ -38,15 +48,15 @@ export async function expireStaleLoadIdReservations(client: DbClient, operatingC
   );
 }
 
-export async function reserveNextLoadId(client: DbClient, input: ReserveInput) {
+export async function reserveNextLoadId(client: DbClient, input: ReserveInput): Promise<ReserveNextLoadIdResult> {
   await expireStaleLoadIdReservations(client, input.operatingCompanyId);
 
   const now = new Date();
   const prefix = `L-${now.toISOString().slice(0, 10).replace(/-/g, "")}-%`;
 
-  const existing = await client.query<{ id: string; reserved_load_number: string }>(
+  const existing = await client.query<{ id: string; reserved_load_number: string; expires_at: string }>(
     `
-      SELECT id, reserved_load_number
+      SELECT id, reserved_load_number, expires_at::text AS expires_at
       FROM dispatch.load_id_reservations
       WHERE operating_company_id = $1
         AND reserved_by_user_id = $2
@@ -58,20 +68,26 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput) {
     [input.operatingCompanyId, input.reservedByUserId]
   );
   if (existing.rows[0]?.reserved_load_number) {
+    const row = existing.rows[0];
     await appendCrudAudit(
       client,
       input.reservedByUserId,
       "dispatch.load.id_reservation_created",
       {
         operating_company_id: input.operatingCompanyId,
-        reservation_uuid: existing.rows[0].id,
-        load_number: existing.rows[0].reserved_load_number,
+        reservation_uuid: row.id,
+        load_number: row.reserved_load_number,
         reused_existing: true,
       },
       "info",
       "P6-D2"
     );
-    return { reservationId: existing.rows[0].id, loadNumber: existing.rows[0].reserved_load_number };
+    return {
+      reservationId: row.id,
+      loadNumber: row.reserved_load_number,
+      reservedUntilIso: new Date(row.expires_at).toISOString(),
+      ttlSeconds: LOAD_ID_RESERVATION_TTL_SECONDS,
+    };
   }
 
   const nextLoadSeq = await client.query<{ next_seq: number }>(
@@ -98,51 +114,65 @@ export async function reserveNextLoadId(client: DbClient, input: ReserveInput) {
   const seq = Math.max(Number(nextLoadSeq.rows[0]?.next_seq ?? 1), Number(nextReservedSeq.rows[0]?.next_seq ?? 1));
   const loadNumber = makeLoadNumber(seq, now);
 
-  const insert = await client.query<{ id: string }>(
+  const insert = await client.query<{ id: string; expires_at: string }>(
     `
       INSERT INTO dispatch.load_id_reservations (
         operating_company_id, reserved_load_number, reserved_by_user_id, status, reserved_at, expires_at
       )
-      VALUES ($1, $2, $3, 'reserved', now(), now() + interval '15 minutes')
-      RETURNING id
+      VALUES ($1, $2, $3, 'reserved', now(), now() + ($4 * interval '1 second'))
+      RETURNING id, expires_at::text AS expires_at
     `,
-    [input.operatingCompanyId, loadNumber, input.reservedByUserId]
+    [input.operatingCompanyId, loadNumber, input.reservedByUserId, LOAD_ID_RESERVATION_TTL_SECONDS]
   );
+  const exp = insert.rows[0]?.expires_at;
+  const resId = insert.rows[0]?.id;
+  if (!exp || !resId) {
+    throw new Error("load_id_reservation_insert_failed");
+  }
+
   await appendCrudAudit(
     client,
     input.reservedByUserId,
     "dispatch.load.id_reservation_created",
     {
       operating_company_id: input.operatingCompanyId,
-      reservation_uuid: insert.rows[0].id,
+      reservation_uuid: resId,
       load_number: loadNumber,
       reused_existing: false,
+      ttl_seconds: LOAD_ID_RESERVATION_TTL_SECONDS,
     },
     "info",
     "P6-D2"
   );
 
-  return { reservationId: insert.rows[0].id, loadNumber };
+  return {
+    reservationId: resId,
+    loadNumber,
+    reservedUntilIso: new Date(exp).toISOString(),
+    ttlSeconds: LOAD_ID_RESERVATION_TTL_SECONDS,
+  };
 }
 
 export async function claimReservation(client: DbClient, input: ClaimInput) {
   await expireStaleLoadIdReservations(client, input.operatingCompanyId);
   const claimed = await client.query<{ id: string; reserved_load_number: string; reserved_by_user_id: string }>(
     `
-      SELECT id, reserved_load_number, reserved_by_user_id::text
+      SELECT id, reserved_load_number, reserved_by_user_id::text AS reserved_by_user_id
       FROM dispatch.load_id_reservations
       WHERE id = $1
         AND operating_company_id = $2
+        AND reserved_by_user_id = $3
         AND status = 'reserved'
         AND expires_at > now()
+      FOR UPDATE
       LIMIT 1
     `,
-    [input.reservationId, input.operatingCompanyId]
+    [input.reservationId, input.operatingCompanyId, input.reservedByUserId]
   );
   if (claimed.rows[0]) {
     await appendCrudAudit(
       client,
-      claimed.rows[0].reserved_by_user_id,
+      input.reservedByUserId,
       "dispatch.load.id_reservation_claimed",
       {
         operating_company_id: input.operatingCompanyId,
@@ -154,6 +184,23 @@ export async function claimReservation(client: DbClient, input: ClaimInput) {
     );
   }
   return claimed.rows[0] ?? null;
+}
+
+export async function cancelLoadIdReservation(client: DbClient, input: ClaimInput) {
+  const res = await client.query<{ id: string }>(
+    `
+      UPDATE dispatch.load_id_reservations
+      SET status = 'cancelled',
+          updated_at = now()
+      WHERE id = $1
+        AND operating_company_id = $2
+        AND reserved_by_user_id = $3
+        AND status = 'reserved'
+      RETURNING id
+    `,
+    [input.reservationId, input.operatingCompanyId, input.reservedByUserId]
+  );
+  return Boolean(res.rows[0]?.id);
 }
 
 export async function consumeLoadNumberReservation(client: DbClient, input: ConsumeInput) {
