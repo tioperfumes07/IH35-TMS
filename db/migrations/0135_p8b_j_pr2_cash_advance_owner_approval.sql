@@ -9,7 +9,7 @@ ALTER TABLE driver_finance.cash_advance_requests
   ADD COLUMN IF NOT EXISTS owner_approval_required boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS owner_approval_token text NULL,
   ADD COLUMN IF NOT EXISTS owner_approval_token_expires_at timestamptz NULL,
-  ADD COLUMN IF NOT EXISTS owner_approved_by_user_id uuid NULL REFERENCES identity.users(uuid),
+  ADD COLUMN IF NOT EXISTS owner_approved_by_user_id uuid NULL REFERENCES identity.users(id),
   ADD COLUMN IF NOT EXISTS owner_approved_at timestamptz NULL,
   ADD COLUMN IF NOT EXISTS owner_decision text NULL,
   ADD COLUMN IF NOT EXISTS owner_notes text NULL,
