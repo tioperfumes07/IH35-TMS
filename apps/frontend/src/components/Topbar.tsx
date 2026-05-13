@@ -56,8 +56,9 @@ export function Topbar({ auth }: Props) {
 
       <div className="flex items-center justify-center gap-2">
         <div className="rounded-full px-2 py-0.5 text-[12px]" style={{ backgroundColor: "#151A24", color: colors.sidebarTextMuted }}>
-          <span style={{ color: colors.sidebarTextActive }}>QuickBooks</span> · <span style={{ color: colors.sidebarTextActive }}>Samsara</span> ·{" "}
-          <span style={{ color: colors.sidebarTextActive }}>Relay</span> connected
+          <span style={{ color: colors.sidebarTextActive }}>QuickBooks</span> ·{" "}
+          <span style={{ color: colors.sidebarTextActive }}>Telematics</span> ·{" "}
+          <span style={{ color: colors.sidebarTextActive }}>Relay</span>
         </div>
         <CompanySwitcher />
       </div>
