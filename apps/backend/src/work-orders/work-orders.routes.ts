@@ -34,6 +34,7 @@ const createWorkOrderBodySchema = z.object({
   unit_id: z.string().uuid().optional().nullable(),
   driver_id: z.string().uuid().optional().nullable(),
   vendor_id: z.string().uuid().optional().nullable(),
+  vendor_qbo_id: z.string().trim().max(120).optional().nullable(),
   shop_name: z.string().trim().max(200).optional().nullable(),
   shop_address: z.string().trim().max(400).optional().nullable(),
   shop_phone: z.string().trim().max(80).optional().nullable(),
@@ -370,6 +371,14 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const created = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
         if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };
 
+        if (body.vendor_id) {
+          const vr = await client.query(
+            `SELECT 1 FROM mdata.qbo_vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+            [body.vendor_id, body.operating_company_id]
+          );
+          if ((vr.rowCount ?? 0) === 0) return { kind: "bad_vendor" as const };
+        }
+
         await client.query("BEGIN");
         try {
           const displayId = await generateWorkOrderNumber(client, {
@@ -378,7 +387,6 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           });
           const operationalType = mapServiceClassToOperationalWoType(body.wo_service_class);
           const bucket = body.wo_billing_type === "internal" ? "in_house" : "external";
-          const vendorUuid = body.vendor_id ?? null;
           const { vendor_invoice_number, vendor_work_order_number } = resolveVendorReferences({
             wo_billing_type: body.wo_billing_type,
             wo_service_class: body.wo_service_class,
@@ -429,9 +437,11 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
                 shop_phone,
                 notes_internal,
                 notes_to_vendor,
-                linked_load_number
+                linked_load_number,
+                vendor_id,
+                vendor_qbo_id
               ) VALUES (
-                $1,$2,'IS','open',$3,$4,$5,now(),'in_house',$6,$7,$8,$9,$10,$11,$12,0,$13,NULL,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27
+                $1,$2,'IS','open',$3,$4,$5,now(),'in_house',NULL,$6,$7,NULL,$8,$9,$10,0,$11,NULL,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27
               )
               RETURNING *
             `,
@@ -441,10 +451,8 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
               body.unit_id ?? null,
               body.driver_id ?? null,
               body.linked_load_id ?? null,
-              vendorUuid,
               vendor_invoice_number || null,
               body.description,
-              vendorUuid,
               vendor_work_order_number || null,
               vendor_invoice_number || null,
               displayId,
@@ -463,6 +471,8 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
               body.notes_internal ?? null,
               body.notes_to_vendor ?? null,
               linkedLoadNumber,
+              body.vendor_id ?? null,
+              body.vendor_qbo_id ?? null,
             ]
           );
 
@@ -492,6 +502,12 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       });
 
       if ("kind" in created && created.kind === "unavailable") return reply.code(501).send({ error: "maintenance_schema_not_available" });
+      if ("kind" in created && created.kind === "bad_vendor") {
+        return reply.code(400).send({
+          error: "invalid_vendor_id",
+          message: "vendor_id must reference a synced QuickBooks vendor for this operating company",
+        });
+      }
       return reply.code(201).send({ work_order: created.wo });
     } catch (error) {
       const message = String((error as Error)?.message ?? "create_failed");
@@ -517,6 +533,14 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const prior = currentRes.rows[0];
       if (!prior || String(prior.operating_company_id) !== query.data.operating_company_id) return { kind: "missing" as const };
 
+      if (body.vendor_id) {
+        const vr = await client.query(
+          `SELECT 1 FROM mdata.qbo_vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+          [body.vendor_id, query.data.operating_company_id]
+        );
+        if ((vr.rowCount ?? 0) === 0) return { kind: "bad_vendor" as const };
+      }
+
       const mergedPatch = {
         wo_billing_type: body.wo_billing_type ?? undefined,
         wo_service_class: body.wo_service_class ?? undefined,
@@ -536,7 +560,10 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
           wo_service_class: prior.wo_service_class as z.infer<typeof woServiceClassSchema> | undefined,
           unit_id: prior.unit_id as string | null,
           driver_id: prior.driver_id as string | null,
-          vendor_id: (prior.assigned_vendor as string | null) ?? (prior.external_vendor_id as string | null),
+          vendor_id:
+            (prior.vendor_id as string | null) ??
+            (prior.assigned_vendor as string | null) ??
+            (prior.external_vendor_id as string | null),
           shop_name: prior.shop_name as string | null,
           vendor_invoice_number: prior.vendor_invoice_number as string | null,
           vendor_work_order_number: prior.vendor_work_order_number as string | null,
@@ -589,10 +616,8 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         push(`vendor_work_order_number = $IDX`, body.vendor_work_order_number);
         push(`external_vendor_wo_number = $IDX`, body.vendor_work_order_number);
       }
-      if (body.vendor_id !== undefined) {
-        push(`assigned_vendor = $IDX`, body.vendor_id);
-        push(`external_vendor_id = $IDX`, body.vendor_id);
-      }
+      if (body.vendor_id !== undefined) push(`vendor_id = $IDX`, body.vendor_id);
+      if (body.vendor_qbo_id !== undefined) push(`vendor_qbo_id = $IDX`, body.vendor_qbo_id);
       if (body.estimated_cost_cents !== undefined) {
         push(`estimated_cost_cents = $IDX`, body.estimated_cost_cents);
         push(`total_estimated_cost = $IDX`, Number(body.estimated_cost_cents) / 100);
@@ -730,7 +755,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       await appendCrudAudit(client, user.uuid, "maintenance.wo.completed", { resource_id: wo.id }, "info", "P6-T11179");
       await enqueueWorkOrderOutbox(client, "work_order.completed", { work_order_id: wo.id });
 
-      const vendorUuid = String(prior.external_vendor_id ?? prior.assigned_vendor ?? "").trim();
+      const vendorUuid = String(prior.vendor_id ?? prior.external_vendor_id ?? prior.assigned_vendor ?? "").trim();
       const { vendor_invoice_number } = resolveVendorReferences({
         wo_billing_type: String(prior.wo_billing_type ?? "external") as "internal" | "external",
         wo_service_class: String(prior.wo_service_class ?? "corrective") as z.infer<typeof woServiceClassSchema>,

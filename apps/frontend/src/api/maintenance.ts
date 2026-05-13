@@ -181,6 +181,10 @@ export type CreateWorkOrderTwoSectionPayload = {
     repair_location: string;
     bucket?: "in_house" | "external" | "roadside";
     vendor_id?: string;
+    vendor_qbo_id?: string;
+    shop_name?: string;
+    shop_address?: string;
+    shop_phone?: string;
     vendor_invoice_number?: string;
     external_vendor_id?: string;
     external_vendor_wo_number?: string;

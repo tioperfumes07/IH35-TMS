@@ -112,6 +112,10 @@ const createWorkOrderV5Schema = z.object({
     repair_location: z.string().default("in_house"),
     bucket: z.enum(["in_house", "external", "roadside"]).default("in_house"),
     vendor_id: z.string().uuid().optional(),
+    vendor_qbo_id: z.string().trim().max(120).optional(),
+    shop_name: z.string().trim().max(200).optional(),
+    shop_address: z.string().trim().max(400).optional(),
+    shop_phone: z.string().trim().max(80).optional(),
     vendor_invoice_number: z.string().trim().max(120).optional(),
     external_vendor_id: z.string().uuid().optional(),
     external_vendor_wo_number: z.string().trim().max(120).optional(),
@@ -362,6 +366,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       }
       try {
         const result = await withCompany(user.uuid, body.header.operating_company_id, async (client) => {
+          if (body.header.vendor_id) {
+            const vr = await client.query(
+              `SELECT 1 FROM mdata.qbo_vendors WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+              [body.header.vendor_id, body.header.operating_company_id]
+            );
+            if ((vr.rowCount ?? 0) === 0) {
+              return { kind: "bad_vendor" as const };
+            }
+          }
           await client.query("BEGIN");
           try {
             const created = await createWorkOrderWithLines(client as never, user.uuid, body.header, body.sectionA, body.sectionB);
@@ -406,6 +419,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             throw error;
           }
         });
+        if (result && typeof result === "object" && "kind" in result && (result as { kind?: string }).kind === "bad_vendor") {
+          return reply.code(400).send({
+            error: "invalid_vendor_id",
+            message: "vendor_id must reference a synced QuickBooks vendor for this operating company",
+          });
+        }
         return reply.code(201).send(result);
       } catch (error) {
         const message = String((error as Error)?.message ?? "");

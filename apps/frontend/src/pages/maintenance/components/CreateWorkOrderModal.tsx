@@ -25,6 +25,11 @@ export type CreateWOFormValues = {
   class_hint: string;
   repair_location: string;
   vendor_id: string;
+  vendor_qbo_id: string;
+  vendor_display_name: string;
+  shop_name: string;
+  shop_address: string;
+  shop_phone: string;
   vendor_invoice_number: string;
   external_vendor_id: string;
   external_vendor_wo_number: string;
@@ -83,6 +88,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       class_hint: "",
       repair_location: "in_house",
       vendor_id: "",
+      vendor_qbo_id: "",
+      vendor_display_name: "",
+      shop_name: "",
+      shop_address: "",
+      shop_phone: "",
       vendor_invoice_number: "",
       external_vendor_id: "",
       external_vendor_wo_number: "",
@@ -239,6 +249,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           repair_location: values.repair_location,
           bucket: values.bucket,
           vendor_id: values.vendor_id || undefined,
+          vendor_qbo_id: values.vendor_qbo_id || undefined,
+          shop_name: values.shop_name || undefined,
+          shop_address: values.shop_address || undefined,
+          shop_phone: values.shop_phone || undefined,
           vendor_invoice_number: values.vendor_invoice_number || undefined,
           external_vendor_id: values.external_vendor_id || undefined,
           external_vendor_wo_number: values.external_vendor_wo_number || undefined,

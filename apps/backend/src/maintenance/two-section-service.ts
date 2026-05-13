@@ -16,7 +16,12 @@ export type TwoSectionHeader = {
   service_date?: string | null;
   repair_location: string;
   bucket?: "in_house" | "external" | "roadside";
+  /** UUID row id from mdata.qbo_vendors (QuickBooks mirror). */
   vendor_id?: string | null;
+  vendor_qbo_id?: string | null;
+  shop_name?: string | null;
+  shop_address?: string | null;
+  shop_phone?: string | null;
   vendor_invoice_number?: string | null;
   external_vendor_id?: string | null;
   external_vendor_wo_number?: string | null;
@@ -131,10 +136,11 @@ export async function createWorkOrderWithLines(
         repair_location, assigned_vendor, vendor_invoice_number, description, severity,
         external_vendor_id, external_vendor_wo_number, external_vendor_invoice_number,
         display_id, unit_sequence, total_estimated_cost, total_actual_cost,
-        bucket, roadside_callout_at, roadside_arrived_at, roadside_provider_vendor_id, roadside_location, roadside_breakdown_load_id
+        bucket, roadside_callout_at, roadside_arrived_at, roadside_provider_vendor_id, roadside_location, roadside_breakdown_load_id,
+        shop_name, shop_address, shop_phone, vendor_id, vendor_qbo_id
       ) VALUES (
         $1,$2,$3,COALESCE($4,'open'),$5,$6,$7,COALESCE($8::timestamptz, now()),
-        $9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$19,$20,$21,$22,$23,$24,$25
+        $9,NULL,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
       )
       RETURNING id, display_id
     `,
@@ -148,7 +154,6 @@ export async function createWorkOrderWithLines(
       header.load_id ?? null,
       header.service_date ?? null,
       header.repair_location,
-      header.vendor_id ?? null,
       header.vendor_invoice_number ?? null,
       header.description,
       header.severity ?? null,
@@ -164,6 +169,11 @@ export async function createWorkOrderWithLines(
       header.roadside_provider_vendor_id ?? null,
       header.roadside_location ?? null,
       header.roadside_breakdown_load_id ?? null,
+      header.shop_name ?? null,
+      header.shop_address ?? null,
+      header.shop_phone ?? null,
+      header.vendor_id ?? null,
+      header.vendor_qbo_id ?? null,
     ]
   );
   const wo = woRes.rows[0];
@@ -385,7 +395,7 @@ export async function autoCreateBillFromWO(
       )
       SELECT
         w.operating_company_id,
-        COALESCE(w.external_vendor_id, w.assigned_vendor),
+        COALESCE(w.external_vendor_id, w.assigned_vendor, w.vendor_id),
         w.id,
         'draft',
         CURRENT_DATE,
@@ -439,7 +449,7 @@ export async function autoCreateExpenseFromWO(
     `
       SELECT
         w.operating_company_id,
-        COALESCE(w.external_vendor_id, w.assigned_vendor) AS vendor_uuid,
+        COALESCE(w.external_vendor_id, w.assigned_vendor, w.vendor_id) AS vendor_uuid,
         w.load_id,
         COALESCE(w.total_actual_cost, w.total_estimated_cost, 0) AS total_amount
       FROM maintenance.work_orders w
