@@ -8,6 +8,7 @@ import { registerFactoringAdvancesRoutes } from "./factoring-advances.routes.js"
 import { registerBillsRoutes } from "./bills.routes.js";
 import { registerJournalEntryRoutes } from "./journal-entries.routes.js";
 import { registerExpenseLoadLookupRoutes } from "./load-lookup.routes.js";
+import { registerExpenseRoutes } from "./expenses.routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
@@ -19,4 +20,5 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerBillsRoutes(app);
   await registerJournalEntryRoutes(app);
   await registerExpenseLoadLookupRoutes(app);
+  await registerExpenseRoutes(app);
 }

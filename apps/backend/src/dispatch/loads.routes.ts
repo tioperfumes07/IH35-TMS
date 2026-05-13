@@ -8,6 +8,7 @@ import { bookLoad } from "./book-load.service.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
 import { cancelLoadIdReservation, reserveNextLoadId } from "./load-id-reservation.service.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
+import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 
 const dispatchStatusSchema = z.enum([
@@ -744,6 +745,17 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           load_id: params.data.id,
           load_status: mdataStatus,
         });
+      }
+
+      try {
+        await pingSettlementOnLoadEvent(client, {
+          loadId: params.data.id,
+          operatingCompanyId,
+          dispatchTargetStatus: targetStatus,
+          actorUserId: authUser.uuid,
+        });
+      } catch (err) {
+        console.warn({ err }, "dispatch_load_settlement_ping_failed");
       }
       return { ok: true as const, status: targetStatus };
     });

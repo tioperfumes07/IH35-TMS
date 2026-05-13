@@ -7,7 +7,20 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { queuePaymentOnFinalize } from "./settlement-payment.service.js";
 import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
 
-const settlementStatusSchema = z.enum(["draft", "presettle", "acked", "locked", "paid", "held", "cancelled"]);
+const settlementStatusSchema = z.enum([
+  "draft",
+  "presettle",
+  "acked",
+  "locked",
+  "paid",
+  "held",
+  "cancelled",
+  "final",
+  "ready",
+  "approved",
+  "open",
+  "closed",
+]);
 const paymentStateSchema = z.enum(["unpaid", "queued", "sent_to_bank", "cleared", "bounced", "manual_paid"]);
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
