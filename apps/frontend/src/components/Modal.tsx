@@ -1,19 +1,58 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { colors, typography } from "../design/tokens";
-import { useModalEscape } from "../hooks/useModalEscape";
+import { useEscapeKey } from "../hooks/useEscapeKey";
+import { ConfirmDiscardDialog } from "./dialogs/ConfirmDiscardDialog";
 
 type ModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
+  /** When true, Escape / backdrop / Close attempt confirm before closing if `isDirty` */
+  confirmDiscardOnClose?: boolean;
+  isDirty?: boolean;
+  /** Set to the same confirm-aware close used for Escape (e.g. wire footer Cancel). */
+  onRegisterAttemptClose?: (attemptClose: () => void) => void;
 };
 
-export function Modal({ open, onClose, title, children }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  confirmDiscardOnClose = false,
+  isDirty = false,
+  onRegisterAttemptClose,
+}: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
-  useModalEscape(open, onClose);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  const finalizeClose = useCallback(() => {
+    setShowDiscardConfirm(false);
+    onClose();
+  }, [onClose]);
+
+  const attemptClose = useCallback(() => {
+    if (confirmDiscardOnClose && isDirty) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    onClose();
+  }, [confirmDiscardOnClose, isDirty, onClose]);
+
+  useEscapeKey(attemptClose, open);
+
+  useEffect(() => {
+    if (!onRegisterAttemptClose) return;
+    onRegisterAttemptClose(attemptClose);
+    return () => onRegisterAttemptClose(() => {});
+  }, [onRegisterAttemptClose, attemptClose]);
+
+  useEffect(() => {
+    if (!open) setShowDiscardConfirm(false);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -37,7 +76,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -49,25 +88,36 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onMouseDown={onClose}>
+    <>
       <div
-        ref={panelRef}
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl"
-        onMouseDown={(event) => event.stopPropagation()}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        onMouseDown={attemptClose}
       >
         <div
-          className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3"
+          ref={panelRef}
+          className="flex max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))] flex-col rounded-lg bg-white shadow-xl"
+          onMouseDown={(event) => event.stopPropagation()}
         >
-          <h2 className="uppercase" style={{ fontSize: typography.panelHeader, color: colors.bodyText, letterSpacing: typography.tightUpper }}>{title}</h2>
-          <button className="text-[11px] text-gray-500 hover:text-gray-700" onClick={onClose} type="button">
-            Close
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-4 py-3">
-          {children}
+          <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3">
+            <h2
+              className="uppercase"
+              style={{ fontSize: typography.panelHeader, color: colors.bodyText, letterSpacing: typography.tightUpper }}
+            >
+              {title}
+            </h2>
+            <button className="text-[11px] text-gray-500 hover:text-gray-700" onClick={attemptClose} type="button">
+              Close
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-3">{children}</div>
         </div>
       </div>
-    </div>,
+      <ConfirmDiscardDialog
+        open={showDiscardConfirm}
+        onCancel={() => setShowDiscardConfirm(false)}
+        onDiscard={finalizeClose}
+      />
+    </>,
     document.body
   );
 }

@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { getQboConnectionStatus } from "../api/forensic";
@@ -13,6 +13,7 @@ import { qboConnectionLabel, RELAY_NOT_CONFIGURED, resolveSamsaraVisualStatus } 
 
 type Props = {
   auth: AuthMeResponse["user"];
+  onOpenMobileNav?: () => void;
 };
 
 function formatNow(now: Date): string {
@@ -33,7 +34,7 @@ function topbarDotClass(dot: "gray" | "green" | "yellow" | "red"): string {
   return "bg-slate-500";
 }
 
-export function Topbar({ auth }: Props) {
+export function Topbar({ auth, onOpenMobileNav }: Props) {
   const [now, setNow] = useState(() => new Date());
   const [open, setOpen] = useState(false);
   const { pushToast } = useToast();
@@ -85,6 +86,17 @@ export function Topbar({ auth }: Props) {
       }}
     >
       <div className="flex items-center gap-2">
+        {onOpenMobileNav ? (
+          <button
+            type="button"
+            className="inline-flex h-8 w-8 items-center justify-center rounded border text-white hover:bg-white/10 md:hidden"
+            style={{ borderColor: colors.sidebarBorder }}
+            aria-label="Open navigation menu"
+            onClick={onOpenMobileNav}
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+        ) : null}
         <div className="flex items-center gap-2 font-medium uppercase" style={{ fontSize: 13, color: colors.sidebarTextActive }}>
           IH 35 Dispatch
           <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
