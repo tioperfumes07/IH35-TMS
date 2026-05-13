@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormGetValues, type UseFormSetValue } from "react-hook-form";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
@@ -494,7 +494,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                   operatingCompanyId={operatingCompanyId}
                   onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })}
                 />
-                <BookLoadCustomerSection register={form.register} />
+                <BookLoadCustomerSection
+                  register={form.register}
+                  operatingCompanyId={operatingCompanyId}
+                  setValue={form.setValue as unknown as UseFormSetValue<BookLoadFormValues>}
+                  getValues={form.getValues as unknown as UseFormGetValues<BookLoadFormValues>}
+                />
                 <div className="grid grid-cols-2 gap-2">
                   <label className="text-[10px] font-semibold text-gray-600">
                     Pickup #

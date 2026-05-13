@@ -141,16 +141,18 @@ export async function qboDownloadAttachment(ctx: QboApiContext, downloadUrl: str
 export async function* qboPaginateEntity<T = Record<string, unknown>>(
   ctx: QboApiContext,
   entityName: string,
-  whereClause = ""
+  whereClause = "",
+  opts?: { pageSize?: number }
 ): AsyncGenerator<T[], void, unknown> {
+  const pageSize = opts?.pageSize ?? DEFAULT_PAGE_SIZE;
   let start = 1;
   while (true) {
-    const payload = await qboListEntity<T>(ctx, entityName, whereClause, start, DEFAULT_PAGE_SIZE);
+    const payload = await qboListEntity<T>(ctx, entityName, whereClause, start, pageSize);
     const page = (payload.QueryResponse?.[entityName] as T[] | undefined) ?? [];
     if (page.length === 0) break;
     yield page;
-    if (page.length < DEFAULT_PAGE_SIZE) break;
-    start += DEFAULT_PAGE_SIZE;
+    if (page.length < pageSize) break;
+    start += pageSize;
   }
 }
 

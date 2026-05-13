@@ -78,6 +78,7 @@ import { registerCustomerBillingRoutes } from "./mdata/customer-billing.routes.j
 import { registerCustomerLanesRoutes } from "./mdata/customer-lanes.routes.js";
 import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
+import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
@@ -95,6 +96,8 @@ import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js"
 import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
 import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
+import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
+import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 
@@ -171,6 +174,7 @@ async function main() {
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
+  await registerMasterDataSyncRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);
   await registerInviteAuthRoutes(app);
@@ -178,6 +182,7 @@ async function main() {
   await registerUserPreferencesRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);
+  await registerQboAutocompleteRoutes(app);
   await registerDriverProfileRoutes(app);
   await registerDriverReturningDetectionRoutes(app);
   await registerDriverSafetyEventsRoutes(app);
@@ -292,6 +297,13 @@ async function main() {
     app.log.info("[STARTUP] legal-matters-reminder-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] legal-matters-reminder-cron failed");
+  }
+
+  try {
+    await initializeMasterDataSyncCron(app);
+    app.log.info("[STARTUP] qbo-master-data-sync-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-master-data-sync-cron failed");
   }
 
   const port = Number(process.env.PORT || 3000);

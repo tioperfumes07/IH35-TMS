@@ -71,6 +71,8 @@ import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
 import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
 import { FactoringListPage } from "./pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
+import { VendorBillCreatePage } from "./pages/accounting/VendorBillCreatePage";
+import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { InternalFineReasonsListPage } from "./pages/lists/safety/InternalFineReasonsListPage";
 import { CivilFineTypesListPage } from "./pages/lists/safety/CivilFineTypesListPage";
@@ -609,6 +611,22 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/accounting/bills/vendor"
+          element={
+            <ProtectedRoute>
+              <VendorBillCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/expenses"
+          element={
+            <ProtectedRoute>
+              <ExpenseCreatePage />
+            </ProtectedRoute>
+          }
+        />
         {[
           "/dispatch/loads",
           "/dispatch/geofencing",
@@ -629,7 +647,6 @@ export default function App() {
           "/drivers/settlements",
           "/drivers/permits",
           "/accounting/bills",
-          "/accounting/expenses",
           "/accounting/bill-payments",
           "/accounting/vendor-balances",
           "/accounting/journal-entries",

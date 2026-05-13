@@ -417,6 +417,24 @@ export function voidVendorBill(id: string, operatingCompanyId: string, reason: s
   });
 }
 
+export function createVendorBill(
+  operatingCompanyId: string,
+  body: {
+    vendor_id: string;
+    bill_number?: string;
+    bill_date: string;
+    due_date?: string;
+    amount_cents: number;
+    memo?: string;
+    coa_account_id?: string;
+  }
+) {
+  return apiRequest<{ bill: VendorBill }>(withCompany(`/api/v1/accounting/bills`, operatingCompanyId), {
+    method: "POST",
+    body,
+  });
+}
+
 export function voidVendorBillPayment(id: string, operatingCompanyId: string, reason: string) {
   return apiRequest<{ ok: true }>(withCompany(`/api/v1/accounting/bill-payments/${id}/void`, operatingCompanyId), {
     method: "POST",
