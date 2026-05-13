@@ -9,7 +9,7 @@ import {
   getMaintenanceRmStatus,
   listWorkOrdersFiltered,
 } from "../../api/maintenance";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { HoverDropdown } from "../../components/shared/HoverDropdown";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useToast } from "../../components/Toast";
@@ -106,7 +106,7 @@ export function MaintenanceHomePage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        title="Maintenance Home"
+        title="Maintenance"
         subtitle="Approved May 2 rebuild + Day 3 triage band"
         actions={
           <div className="flex items-center gap-2">
