@@ -20,6 +20,10 @@ vi.mock("../accounting/modals/ManualInvoiceModal", () => ({
   ManualInvoiceModal: (props: { open: boolean }) => (props.open ? <div data-testid="inv-modal-mock">inv-open</div> : null),
 }));
 
+vi.mock("../accounting/ExpenseCreateModal", () => ({
+  ExpenseCreateModal: (props: { open: boolean }) => (props.open ? <div data-testid="expense-modal-mock">expense-open</div> : null),
+}));
+
 function wrap(ui: ReactElement) {
   return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -31,6 +35,14 @@ function wrap(ui: ReactElement) {
 }
 
 describe("QuickActionsBar", () => {
+  it("opens Record Expense modal (not full-page navigate)", async () => {
+    const user = userEvent.setup();
+    render(wrap(<QuickActionsBar operatingCompanyId="00000000-0000-0000-0000-000000000001" />));
+
+    await user.click(screen.getByRole("button", { name: /\+ Record Expense/i }));
+    await waitFor(() => expect(screen.getByTestId("expense-modal-mock")).toBeInTheDocument());
+  });
+
   it("opens Book load, Create WO, and Create Invoice modals when company is selected", async () => {
     const user = userEvent.setup();
     render(wrap(<QuickActionsBar operatingCompanyId="00000000-0000-0000-0000-000000000001" />));
