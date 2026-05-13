@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Work order approved</title>
+  </head>
+  <body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: #1f2937;">
+    <p>A work order was approved in IH 35 TMS.</p>
+    <ul style="font-size:14px;line-height:1.5;">
+      <li><strong>WO:</strong> <%= it.workOrderLabel %></li>
+      <% if (it.shopName) { %>
+        <li><strong>Shop:</strong> <%= it.shopName %></li>
+      <% } %>
+      <% if (it.unitLabel) { %>
+        <li><strong>Unit:</strong> <%= it.unitLabel %></li>
+      <% } %>
+      <li><strong>Approved:</strong> <%= it.approvedAt %></li>
+    </ul>
+    <p style="font-size:13px;color:#6b7280;">This is an automated notification.</p>
+  </body>
+</html>

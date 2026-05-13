@@ -2,7 +2,8 @@ import crypto from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { withCurrentUser } from "../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
+import { enqueueEmail } from "../email/queue.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { queuePaymentOnFinalize } from "./settlement-payment.service.js";
 import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
@@ -363,6 +364,52 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     if ("unavailable" in result) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "settlement_not_found" });
     if ("blocked" in result) return reply.code(409).send({ error: "finalize_blocked", reason: result.reason });
+
+    void withLuciaBypass(async (client) => {
+      const rowRes = await client.query(
+        `
+          SELECT
+            s.id,
+            s.display_id,
+            s.operating_company_id,
+            s.period_start,
+            s.period_end,
+            s.net_pay,
+            d.email,
+            d.first_name,
+            d.last_name
+          FROM driver_finance.driver_settlements s
+          JOIN mdata.drivers d ON d.id = s.driver_id
+          WHERE s.id = $1
+          LIMIT 1
+        `,
+        [params.data.id]
+      );
+      const row = rowRes.rows[0] as Record<string, unknown> | undefined;
+      const email = row?.email ? String(row.email).trim() : "";
+      if (!email || !row?.operating_company_id) return;
+
+      const driverName =
+        `${String(row.first_name ?? "").trim()} ${String(row.last_name ?? "").trim()}`.trim() || "Driver";
+      const settlementLabel = `${String(row.display_id ?? row.id)} (${String(row.period_start ?? "").slice(0, 10)} → ${String(
+        row.period_end ?? ""
+      ).slice(0, 10)})`;
+      const amountLabel = row.net_pay != null ? `USD ${Number(row.net_pay).toFixed(2)}` : "";
+
+      await enqueueEmail({
+        operatingCompanyId: String(row.operating_company_id),
+        toAddresses: [email],
+        subject: `Settlement ready — ${String(row.display_id ?? "settlement")}`,
+        templateKey: "settlement-ready",
+        templateVars: {
+          driverName,
+          settlementLabel,
+          amountLabel,
+        },
+        queuedByUserId: user.uuid,
+      });
+    }).catch(() => undefined);
+
     const queueResult = await queuePaymentOnFinalize(params.data.id, user.uuid).catch((error) => ({
       queued: false as const,
       reason: String((error as Error)?.message ?? "queue_payment_failed"),

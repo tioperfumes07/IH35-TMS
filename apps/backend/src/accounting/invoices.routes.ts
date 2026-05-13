@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
+import { enqueueEmail } from "../email/queue.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { buildInvoiceFromLoad } from "./from-load.js";
 import { createExpandedInvoice } from "./invoices.service.js";
@@ -449,6 +450,44 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         "P3-T11.20.2-INVOICE-FLOW"
       );
       const detail = await enrichInvoice(client, params.data.id);
+      if (detail) {
+        const invoiceRow = detail as Record<string, unknown>;
+        const notifyRes = await client.query(
+          `
+            SELECT
+              COALESCE(
+                NULLIF(TRIM(c.ap_email), ''),
+                NULLIF(TRIM(c.billing_email), ''),
+                NULLIF(TRIM(c.ar_email), ''),
+                NULLIF(TRIM(i.ar_email_snapshot), '')
+              ) AS customer_email
+            FROM accounting.invoices i
+            JOIN mdata.customers c ON c.id = i.customer_id
+            WHERE i.id = $1
+            LIMIT 1
+          `,
+          [params.data.id]
+        );
+        const customerEmail = notifyRes.rows[0]?.customer_email ? String(notifyRes.rows[0].customer_email).trim() : "";
+        if (customerEmail) {
+          const total = (Number(invoiceRow.total_cents ?? 0) / 100).toFixed(2);
+          void enqueueEmail({
+            operatingCompanyId: query.data.operating_company_id,
+            toAddresses: [customerEmail],
+            subject: `Invoice ${invoiceRow.display_id} — IH 35 TMS`,
+            templateKey: "invoice-send",
+            templateVars: {
+              invoiceDisplayId: String(invoiceRow.display_id ?? ""),
+              customerName: String(invoiceRow.customer_name ?? "Customer"),
+              issueDate: String(invoiceRow.issue_date ?? ""),
+              currency: String(invoiceRow.currency_code ?? "USD"),
+              total,
+              memo: String(invoiceRow.customer_notes ?? invoiceRow.internal_notes ?? ""),
+            },
+            queuedByUserId: user.uuid,
+          }).catch(() => undefined);
+        }
+      }
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });

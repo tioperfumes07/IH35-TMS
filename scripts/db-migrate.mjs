@@ -14,7 +14,7 @@ if (!connectionString) {
 }
 
 const SEARCH_PATH =
-  "mdata, dispatch, docs, catalogs, identity, org, integrations, qbo_archive, accounting, banking, factor, documents, pwa, audit, outbox, safety, fuel, driver_finance, maintenance, views, public";
+  "mdata, dispatch, docs, catalogs, identity, org, integrations, qbo_archive, accounting, banking, factor, documents, pwa, audit, outbox, safety, fuel, driver_finance, maintenance, views, public, email";
 const MIGRATIONS_DIR = path.resolve("db/migrations");
 const CHECKSUM_OVERRIDES_FILE = path.resolve("scripts/lib/migration-checksum-overrides.json");
 const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;

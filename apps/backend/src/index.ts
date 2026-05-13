@@ -105,6 +105,8 @@ import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cro
 import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
 import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
+import { registerEmailRoutes } from "./email/email.routes.js";
+import { initializeEmailCron } from "./email/cron.js";
 import { registerQboSyncAlertsRoutes } from "./qbo/sync-alerts.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
@@ -184,6 +186,7 @@ async function main() {
   await registerQboVendorLinkageRoutes(app);
   await registerMasterDataSyncRoutes(app);
   await registerQboSyncAlertsRoutes(app);
+  await registerEmailRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);
   await registerInviteAuthRoutes(app);
@@ -326,6 +329,13 @@ async function main() {
     app.log.info("[STARTUP] qbo-sync-alerts-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] qbo-sync-alerts-cron failed");
+  }
+
+  try {
+    initializeEmailCron(app);
+    app.log.info("[STARTUP] email-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] email-cron failed");
   }
 
   const port = Number(process.env.PORT || 3000);

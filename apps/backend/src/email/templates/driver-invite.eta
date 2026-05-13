@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>IH 35 Dispatch — Driver invite</title>
+  </head>
+  <body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: #1f2937;">
+    <p>Hi <%= it.driverName %>,</p>
+    <p><%= it.ownerName %> invited you to IH 35 Dispatch.</p>
+    <p>
+      <a href="<%= it.loginUrl %>" style="color:#1d4ed8;">Open your driver login link</a>
+    </p>
+    <p>If the button/link above does not work, paste this URL into your browser:</p>
+    <p style="font-size:12px;word-break:break-all;"><%= it.loginUrl %></p>
+    <p style="font-size:13px;color:#6b7280;">Questions? Reply to <%= it.supportEmail %>.</p>
+  </body>
+</html>

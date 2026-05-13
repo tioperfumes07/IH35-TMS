@@ -84,7 +84,7 @@ export async function registerScheduledReportAdminRoutes(app: FastifyInstance) {
           report_id: reportId,
           operating_company_id: companyAndRoles.operatingCompanyId,
           status: result.status,
-          email_id: result.email_id,
+          queue_id: result.queue_id,
         }),
         user.uuid,
         "P3-T11.16.3-SCHEDULED-REPORTS",
