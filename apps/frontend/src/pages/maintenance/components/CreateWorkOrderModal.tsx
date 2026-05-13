@@ -134,7 +134,17 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const needsExternalVendor = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   const checks = [
     { label: "Unit active and class set", ok: Boolean(form.watch("unit_id")) },
-    { label: "Driver and load required for non-PM types", ok: selectedType === "pm" || (Boolean(form.watch("driver_id")) && Boolean(form.watch("load_id"))) },
+    {
+      label: "Driver and unit required for non-PM operational types",
+      ok: selectedType === "pm" || (Boolean(form.watch("driver_id")) && Boolean(form.watch("unit_id"))),
+    },
+    {
+      label: "Vendor invoice # or vendor WO # required",
+      ok:
+        Boolean(String(form.watch("vendor_invoice_number") ?? "").trim()) ||
+        Boolean(String(form.watch("external_vendor_invoice_number") ?? "").trim()) ||
+        Boolean(String(form.watch("external_vendor_wo_number") ?? "").trim()),
+    },
     { label: "Vendor required for non in-house location", ok: form.watch("repair_location") === "in_house" || Boolean(form.watch("vendor_id")) },
     {
       label: "External WO fields required for ES/AC/ET/RT/RS",

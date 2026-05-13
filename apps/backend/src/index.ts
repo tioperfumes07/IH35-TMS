@@ -63,6 +63,7 @@ import { registerBankingEscrowVisualizerRoutes } from "./banking/escrow-visualiz
 import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
+import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
@@ -246,6 +247,7 @@ async function main() {
   await registerDataInfrastructureRoutes(app);
   await registerOcrRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
+  await registerWorkOrdersV1Routes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);

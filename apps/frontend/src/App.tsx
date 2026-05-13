@@ -47,6 +47,8 @@ import {
 } from "./pages/safety/tabs";
 import { LiabilitiesHomePage } from "./pages/liabilities/LiabilitiesHome";
 import { MaintenanceHomePage } from "./pages/maintenance/MaintenanceHome";
+import { WorkOrdersConsoleDetailPage } from "./pages/work-orders/WorkOrdersConsoleDetailPage";
+import { WorkOrdersConsoleListPage } from "./pages/work-orders/WorkOrdersConsoleListPage";
 import { WorkOrderDetailPage } from "./pages/maintenance/WorkOrderDetailPage";
 import { ArrivingSoonPage } from "./pages/maintenance/ArrivingSoonPage";
 import { CashAdvancesHomePage } from "./pages/cash-advances/CashAdvancesHome";
@@ -456,6 +458,22 @@ export default function App() {
           }
         />
         <Route path="/form-425c" element={<Navigate to="/425c" replace />} />
+        <Route
+          path="/work-orders"
+          element={
+            <ProtectedRoute>
+              <WorkOrdersConsoleListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/work-orders/:id"
+          element={
+            <ProtectedRoute>
+              <WorkOrdersConsoleDetailPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/catalogs"
           element={

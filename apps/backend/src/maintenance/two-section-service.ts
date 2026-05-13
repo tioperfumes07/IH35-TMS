@@ -371,7 +371,12 @@ async function copyToAccountingLines(
   }
 }
 
-export async function autoCreateBillFromWO(client: DbClient, userId: string, woUuid: string) {
+export async function autoCreateBillFromWO(
+  client: DbClient,
+  userId: string,
+  woUuid: string,
+  opts?: { billNumber?: string | null; memo?: string | null }
+) {
   if (!(await relationExists(client, "accounting.bills"))) return null;
   const billRes = await client.query<{ id: string }>(
     `
@@ -394,7 +399,15 @@ export async function autoCreateBillFromWO(client: DbClient, userId: string, woU
     [woUuid]
   );
   const billId = String(billRes.rows[0]?.id ?? "");
+  const billNumber = String(opts?.billNumber ?? "").trim();
+  const memo = String(opts?.memo ?? "").trim();
   if (!billId) return null;
+  if (billNumber) {
+    await client.query(`UPDATE accounting.bills SET bill_number = $2, updated_at = now() WHERE id = $1`, [billId, billNumber]);
+  }
+  if (memo) {
+    await client.query(`UPDATE accounting.bills SET memo = $2, updated_at = now() WHERE id = $1`, [billId, memo]);
+  }
   if (await relationExists(client, "accounting.bill_lines")) {
     await copyToAccountingLines(client, woUuid, "accounting.bill_lines", "bill_id", billId);
   }
