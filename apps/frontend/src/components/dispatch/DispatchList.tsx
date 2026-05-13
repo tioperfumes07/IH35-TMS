@@ -1,4 +1,5 @@
 import type { DispatchLoadRow } from "../../api/loads";
+import "../../design/design-tokens.css";
 import { Button } from "../Button";
 import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents } from "./constants";
 
@@ -117,11 +118,19 @@ export function DispatchList({
                   >
                     <td className="px-3 py-2">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</td>
                     <td className="px-3 py-2 font-medium text-gray-800">{load.load_number}</td>
-                    <td className="px-3 py-2">{load.customer_name ?? "-"}</td>
+                    <td className="px-3 py-2 min-w-0 max-w-[240px]">
+                      <span title={load.customer_name ?? undefined} className="single-line-name">
+                        {load.customer_name ?? "-"}
+                      </span>
+                    </td>
                     <td className="px-3 py-2">{load.first_pickup_city ?? "-"}</td>
                     <td className="px-3 py-2">{load.first_delivery_city ?? "-"}</td>
                     <td className="px-3 py-2">{load.assigned_unit_number ?? "-"}</td>
-                    <td className="px-3 py-2">{load.assigned_primary_driver_name ?? "Unassigned"}</td>
+                    <td className="px-3 py-2 min-w-0 max-w-[240px]">
+                      <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
+                        {load.assigned_primary_driver_name ?? "Unassigned"}
+                      </span>
+                    </td>
                     <td className="px-3 py-2">
                       <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>{STATUS_LABEL[load.status]}</span>
                     </td>
@@ -147,12 +156,18 @@ export function DispatchList({
                 <div className="font-semibold">{load.load_number}</div>
                 <div>{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</div>
               </div>
-              <div className="mt-1 text-sm text-gray-700">{load.customer_name ?? "-"}</div>
+              <div className="mt-1 min-w-0 text-sm text-gray-700">
+                <span title={load.customer_name ?? undefined} className="single-line-name">
+                  {load.customer_name ?? "-"}
+                </span>
+              </div>
               <div className="mt-1 text-xs text-gray-500">
                 {load.first_pickup_city ?? "-"} {"->"} {load.first_delivery_city ?? "-"}
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs">
-                <span>{load.assigned_primary_driver_name ?? "Unassigned"}</span>
+              <div className="mt-2 flex min-w-0 items-center justify-between text-xs">
+                <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
+                  {load.assigned_primary_driver_name ?? "Unassigned"}
+                </span>
                 <span>{formatMoneyCents(load.rate_total_cents, load.currency_code)}</span>
               </div>
             </button>
