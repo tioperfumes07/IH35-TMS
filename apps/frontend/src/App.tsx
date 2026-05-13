@@ -55,6 +55,7 @@ import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { SamsaraIntegrationPage } from "./pages/integrations/SamsaraIntegrationPage";
+import { DriverAppLandingPage } from "./pages/DriverAppLandingPage";
 import { DocumentsPage } from "./pages/Documents";
 import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
@@ -636,11 +637,18 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/driver-app"
+          element={
+            <ProtectedRoute>
+              <DriverAppLandingPage />
+            </ProtectedRoute>
+          }
+        />
         {[
           // Keep only truly unshipped module redirects here.
           // Shipped modules (Factoring, 425C, Lists) must never be routed via /coming-soon.
           ["/accounting", "Accounting", "5", "Post-launch"],
-          ["/driver-app", "Driver App", "3", "T11.15 next week"],
         ].map(([path, feature, phase, eta]) => (
           <Route
             key={path}
