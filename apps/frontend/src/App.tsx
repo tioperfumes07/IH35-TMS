@@ -53,6 +53,7 @@ import { WorkOrderDetailPage } from "./pages/maintenance/WorkOrderDetailPage";
 import { ArrivingSoonPage } from "./pages/maintenance/ArrivingSoonPage";
 import { CashAdvancesHomePage } from "./pages/cash-advances/CashAdvancesHome";
 import { FactoringHomePage } from "./pages/factoring/FactoringHome";
+import { AssetProfilePage } from "./pages/fleet/AssetProfilePage";
 import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
@@ -75,6 +76,7 @@ import { FactoringListPage } from "./pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
 import { VendorBillCreatePage } from "./pages/accounting/VendorBillCreatePage";
 import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
+import { BillsPage } from "./pages/accounting/BillsPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
@@ -1113,6 +1115,14 @@ export default function App() {
           }
         />
         <Route
+          path="/accounting/bills"
+          element={
+            <ProtectedRoute>
+              <BillsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/bills/vendor"
           element={
             <ProtectedRoute>
@@ -1147,7 +1157,6 @@ export default function App() {
           "/safety/trailer-interchanges",
           "/drivers/settlements",
           "/drivers/permits",
-          "/accounting/bills",
           "/accounting/bill-payments",
           "/accounting/vendor-balances",
           "/accounting/journal-entries",
@@ -1269,6 +1278,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DriverDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fleet/units/:id"
+          element={
+            <ProtectedRoute>
+              <AssetProfilePage />
             </ProtectedRoute>
           }
         />

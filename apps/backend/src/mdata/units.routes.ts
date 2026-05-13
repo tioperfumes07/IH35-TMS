@@ -50,6 +50,8 @@ const updateUnitBodySchema = z
     disposed_date: isoDateSchema.nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: isoDateSchema.nullable().optional(),
+    qbo_vendor_id: z.string().trim().max(120).nullable().optional(),
+    qbo_class_id: z.string().trim().max(120).nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -144,6 +146,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           SELECT
             id, unit_number, vin, make, model, year, license_plate, license_state, status,
             assigned_driver_id, owner_company_id, currently_leased_to_company_id, acquired_date, disposed_date, notes,
+            qbo_vendor_id, qbo_class_id,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.units
           ${whereClause}
@@ -243,6 +246,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           SELECT
             id, unit_number, vin, make, model, year, license_plate, license_state, status,
             assigned_driver_id, owner_company_id, currently_leased_to_company_id, acquired_date, disposed_date, notes,
+            qbo_vendor_id, qbo_class_id,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.units
           WHERE id = $1
@@ -287,6 +291,8 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if ("acquired_date" in b) add("acquired_date", b.acquired_date ?? null);
     if ("disposed_date" in b) add("disposed_date", b.disposed_date ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
+    if ("qbo_vendor_id" in b) add("qbo_vendor_id", b.qbo_vendor_id ?? null);
+    if ("qbo_class_id" in b) add("qbo_class_id", b.qbo_class_id ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     add("updated_by_user_id", authUser.uuid);
 
@@ -299,6 +305,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             SELECT
               id, unit_number, vin, make, model, year, license_plate, license_state, status,
               assigned_driver_id, owner_company_id, currently_leased_to_company_id, acquired_date, disposed_date, notes,
+              qbo_vendor_id, qbo_class_id,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
             FROM mdata.units
             WHERE id = $1
@@ -317,6 +324,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             RETURNING
               id, unit_number, vin, make, model, year, license_plate, license_state, status,
               assigned_driver_id, acquired_date, disposed_date, notes,
+              qbo_vendor_id, qbo_class_id,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           values

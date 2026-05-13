@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { History, Pencil } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { getSafetyFines } from "../api/safety";
@@ -28,6 +28,7 @@ import {
   upsertDriverCompanyAuthorization,
   updateDriver,
 } from "../api/mdata";
+import { listClassesForJe } from "../api/accounting";
 import { legalMattersApi } from "../api/legal-matters";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
@@ -38,9 +39,19 @@ import { Modal } from "../components/Modal";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
+import { QboCombobox } from "../components/forms/QboCombobox";
 import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
 
-const tabs = ["Profile", "QBO Mapping", "Earnings & Debt", "Equipment Assignments", "Safety File", "Documents", "Audit History", "Legal Matters"] as const;
+const tabs = [
+  "Profile",
+  "QBO Mapping",
+  "Earnings & Debt",
+  "Equipment Assignments",
+  "Safety File",
+  "Documents",
+  "Audit History",
+  "Legal Matters",
+] as const;
 type DriverTab = (typeof tabs)[number];
 
 const reasonOptions = [
@@ -145,6 +156,9 @@ export function DriverDetailPage() {
     change_notes: "",
   });
   const [authorizationNotesByCompany, setAuthorizationNotesByCompany] = useState<Record<string, string>>({});
+  const [qboVendorPickId, setQboVendorPickId] = useState<string | null>(null);
+  const [qboVendorPickLabel, setQboVendorPickLabel] = useState("");
+  const [qboClassTmsId, setQboClassTmsId] = useState("");
 
   const driverQuery = useQuery({
     queryKey: ["driver", id],
@@ -191,6 +205,33 @@ export function DriverDetailPage() {
   });
 
   const driver = driverQuery.data;
+
+  const classesJeQuery = useQuery({
+    queryKey: ["list-classes-je"],
+    queryFn: listClassesForJe,
+    enabled: activeTab === "Profile" && Boolean(driver?.operating_company_id),
+  });
+
+  useEffect(() => {
+    if (!driver) return;
+    setQboVendorPickId(driver.qbo_vendor_id);
+    setQboVendorPickLabel("");
+    setQboClassTmsId(driver.qbo_class_id ?? "");
+  }, [driver?.id, driver?.qbo_vendor_id, driver?.qbo_class_id]);
+
+  const saveDriverQboMutation = useMutation({
+    mutationFn: () =>
+      updateDriver(id, {
+        qbo_vendor_id: qboVendorPickId || null,
+        qbo_class_id: qboClassTmsId || null,
+      }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["driver", id], updated);
+      pushToast("QBO fields updated", "success");
+    },
+    onError: () => pushToast("Failed to update QBO fields", "error"),
+  });
+
   const canManageRates = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager";
   const canViewSafetyFile =
     user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Manager" || user?.role === "Safety";
@@ -710,6 +751,48 @@ export function DriverDetailPage() {
           </div>
 
           <div className="col-span-full rounded-md border border-gray-200 p-3">
+            <div className="mb-2 text-xs font-semibold text-gray-600">QBO reporting (vendor & class)</div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-600">QBO vendor</label>
+                {driver?.operating_company_id ? (
+                  <QboCombobox
+                    entityType="vendor"
+                    operatingCompanyId={driver.operating_company_id}
+                    value={qboVendorPickId}
+                    displayValue={qboVendorPickLabel}
+                    onChange={(qboId, displayName) => {
+                      setQboVendorPickId(qboId);
+                      setQboVendorPickLabel(displayName);
+                    }}
+                  />
+                ) : null}
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-600">Class (TMS catalog)</label>
+                <select
+                  className="rounded border border-gray-300 px-2 py-2 text-sm"
+                  value={qboClassTmsId}
+                  onChange={(e) => setQboClassTmsId(e.target.value)}
+                >
+                  <option value="">None</option>
+                  {(classesJeQuery.data?.classes ?? []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.class_code ? `${c.class_code} — ` : ""}
+                      {c.class_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-2">
+              <Button size="sm" loading={saveDriverQboMutation.isPending} onClick={() => saveDriverQboMutation.mutate()}>
+                Save QBO fields
+              </Button>
+            </div>
+          </div>
+
+          <div className="col-span-full rounded-md border border-gray-200 p-3">
             <div className="mb-2 text-xs font-semibold text-gray-600">Visa & Passport</div>
             <div className="grid gap-3 md:grid-cols-2">
               {[
@@ -1160,7 +1243,7 @@ export function DriverDetailPage() {
             <p className="text-sm text-gray-500">Loading…</p>
           ) : (
             <ul className="space-y-2">
-              {(legalMattersForDriverQuery.data?.matters ?? []).map((m) => (
+              {(legalMattersForDriverQuery.data?.matters ?? []).map((m: Record<string, unknown>) => (
                 <li key={String(m.id ?? "")} className="rounded border border-gray-200 bg-white px-3 py-2 text-sm">
                   <Link className="font-semibold text-blue-600" to={`/legal/matters/${String(m.id ?? "")}`}>
                     {String(m.matter_number ?? "")}

@@ -386,6 +386,27 @@ export function createTransfer(
   });
 }
 
+export function recordCcPayment(
+  operatingCompanyId: string,
+  payload: {
+    cc_vendor_id: string;
+    cc_liability_coa_account_id: string;
+    from_bank_account_id: string;
+    payment_date: string;
+    amount_cents: number;
+    memo?: string;
+    statement_period?: string;
+  }
+) {
+  return apiRequest<{ transfer: Transfer }>(`/api/v1/banking/cc-payments`, {
+    method: "POST",
+    body: {
+      operating_company_id: operatingCompanyId,
+      ...payload,
+    },
+  });
+}
+
 export function listTransfers(
   operatingCompanyId: string,
   options: {

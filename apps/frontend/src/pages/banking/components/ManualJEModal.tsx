@@ -17,6 +17,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved }: Pr
   const [step, setStep] = useState<1 | 2>(1);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [memo, setMemo] = useState("");
+  const [referenceNumber, setReferenceNumber] = useState("");
   const [lines, setLines] = useState<
     Array<{ account_id: string; class_id: string; entity_uuid: string; debit: number; credit: number; description: string }>
   >([
@@ -51,6 +52,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved }: Pr
     setStep(1);
     setDate(new Date().toISOString().slice(0, 10));
     setMemo("");
+    setReferenceNumber("");
     setLines([
       { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
       { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
@@ -91,9 +93,13 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved }: Pr
         amount_cents: number;
         description?: string | null;
       }>;
+      const memoParts: string[] = [];
+      if (referenceNumber.trim()) memoParts.push(`Ref: ${referenceNumber.trim()}`);
+      if (memo.trim()) memoParts.push(memo.trim());
+      const combinedMemo = memoParts.length > 0 ? memoParts.join(" · ") : undefined;
       await createJournalEntry(operatingCompanyId, {
         entry_date: date,
-        memo: memo || undefined,
+        memo: combinedMemo,
         source: "manual",
         postings,
       });
@@ -120,19 +126,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved }: Pr
       <div className="space-y-2 text-xs">
         {step === 1 ? (
           <>
-            <label className="block">
-              Entry Date
-              <input
-                type="date"
-                className="mt-1 h-8 w-full rounded border border-gray-300 px-2"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </label>
-            <label className="block">
-              Memo
-              <input className="mt-1 h-8 w-full rounded border border-gray-300 px-2" value={memo} onChange={(e) => setMemo(e.target.value)} />
-            </label>
+            <p className="text-[11px] text-gray-600">Add debit/credit lines. Totals must match before you continue. Date, reference, and memo are set on the next step.</p>
             <div className="space-y-1">
               {lines.map((line, idx) => (
                 <div key={idx} className="grid grid-cols-6 gap-1 rounded border border-gray-200 p-1.5">
@@ -217,7 +211,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved }: Pr
               <Button size="sm" variant="secondary" onClick={() => { reset(); onClose(); }}>
                 Cancel
               </Button>
-              <Button size="sm" disabled={!canGoToConfirm || !date} onClick={() => setStep(2)}>
+              <Button size="sm" disabled={!canGoToConfirm} onClick={() => setStep(2)}>
                 Continue to Confirm
               </Button>
             </div>
@@ -228,21 +222,31 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved }: Pr
               ⚡ High-risk action. Posting this manual journal entry immediately affects financial reporting.
             </div>
             <div className="rounded border border-gray-200 p-2 text-xs">
-              <div><span className="font-semibold">Entry Date:</span> {date}</div>
-              <div><span className="font-semibold">Memo:</span> {memo || "-"}</div>
               <div><span className="font-semibold">Lines:</span> {lines.length}</div>
               <div><span className="font-semibold">Debits:</span> ${(totalDebitCents / 100).toFixed(2)}</div>
               <div><span className="font-semibold">Credits:</span> ${(totalCreditCents / 100).toFixed(2)}</div>
             </div>
+            <label className="block">
+              Journal date
+              <input type="date" className="mt-1 h-8 w-full rounded border border-gray-300 px-2" value={date} onChange={(e) => setDate(e.target.value)} />
+            </label>
+            <label className="block">
+              Reference number (optional)
+              <input className="mt-1 h-8 w-full rounded border border-gray-300 px-2" value={referenceNumber} onChange={(e) => setReferenceNumber(e.target.value)} />
+            </label>
+            <label className="block">
+              Memo
+              <textarea className="mt-1 min-h-16 w-full rounded border border-gray-300 px-2 py-1" value={memo} onChange={(e) => setMemo(e.target.value)} />
+            </label>
             <div className="flex gap-2">
               <Button size="sm" variant="secondary" onClick={() => setStep(1)}>
-                Back
+                Back to edit
               </Button>
               <Button size="sm" variant="secondary" onClick={() => { reset(); onClose(); }}>
                 Cancel
               </Button>
-              <Button size="sm" disabled={!canGoToConfirm} loading={loading} onClick={() => void save()}>
-                Post Journal Entry
+              <Button size="sm" disabled={!canGoToConfirm || !date} loading={loading} onClick={() => void save()}>
+                Post journal entry
               </Button>
             </div>
           </>
