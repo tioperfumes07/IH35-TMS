@@ -1,0 +1,33 @@
+@media print {
+  .sidebar,
+  .top-bar,
+  .quick-actions {
+    display: none !important;
+  }
+
+  .attention-list {
+    page-break-inside: avoid;
+  }
+
+  .kpi-grid {
+    page-break-after: avoid;
+  }
+
+  .chart-grid {
+    page-break-before: auto;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .home-page {
+    max-width: 100%;
+    padding: 20mm !important;
+  }
+
+  .home-recharts-print {
+    filter: grayscale(100%);
+  }
+}

@@ -46,7 +46,7 @@ describe("AttentionList", () => {
       items: [{ type: "x", severity: "info", title: "Quiet", count: 0, action_url: "/", action_label: "Home" }],
     });
     renderAttentionList("co-1");
-    await waitFor(() => expect(screen.getByText("No items requiring attention.")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("No attention items")).toBeInTheDocument());
   });
 
   it("shows error state when fetch fails", async () => {

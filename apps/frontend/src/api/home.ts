@@ -125,3 +125,177 @@ export async function fetchHomeFleetSnapshot(companyId: string): Promise<HomeFle
     throw e;
   }
 }
+
+/* —— T11.19 KPI + chart payloads (backend routes may ship incrementally). */
+
+export type HomeTodayRevenue = {
+  revenue_cents: number;
+  yesterday_revenue_cents?: number;
+  delta_pct_vs_yesterday?: number | null;
+};
+
+export type HomeOpenLoadsCount = {
+  total: number;
+  in_transit: number;
+  assigned: number;
+  unassigned: number;
+};
+
+export type HomeDriversOnDuty = {
+  active: number;
+  total_drivers: number;
+  on_break: number;
+};
+
+export type HomeWosOpenCount = {
+  open: number;
+  in_progress: number;
+};
+
+export type HomeCashPosition = {
+  balance_cents: number;
+  last_reconciled_at: string | null;
+};
+
+export type HomeFactoringBalance = {
+  outstanding_cents: number;
+  invoices_factored: number;
+};
+
+export type HomeWeeklyRevenuePoint = { date: string; revenue_cents: number };
+
+export type HomeWoStatusCount = {
+  status: "draft" | "approved" | "in_progress" | "completed" | "cancelled";
+  count: number;
+};
+
+export type HomeFleetUtilization = {
+  active_units: number;
+  total_units: number;
+  percentage: number;
+};
+
+function num(raw: unknown, fallback = 0): number {
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+export async function fetchHomeTodayRevenue(companyId: string): Promise<HomeTodayRevenue> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/today-revenue", companyId));
+  let delta: number | null | undefined;
+  if (raw.delta_pct_vs_yesterday === null) delta = null;
+  else if (raw.delta_pct_vs_yesterday === undefined) delta = undefined;
+  else {
+    const d = Number(raw.delta_pct_vs_yesterday);
+    delta = Number.isFinite(d) ? d : undefined;
+  }
+  return {
+    revenue_cents: num(raw.revenue_cents),
+    yesterday_revenue_cents: raw.yesterday_revenue_cents !== undefined ? num(raw.yesterday_revenue_cents) : undefined,
+    delta_pct_vs_yesterday: delta,
+  };
+}
+
+export async function fetchHomeOpenLoadsCount(companyId: string): Promise<HomeOpenLoadsCount> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/open-loads-count", companyId));
+  return {
+    total: num(raw.total),
+    in_transit: num(raw.in_transit),
+    assigned: num(raw.assigned),
+    unassigned: num(raw.unassigned),
+  };
+}
+
+export async function fetchHomeDriversOnDuty(companyId: string): Promise<HomeDriversOnDuty> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/drivers-on-duty", companyId));
+  return {
+    active: num(raw.active),
+    total_drivers: num(raw.total_drivers),
+    on_break: num(raw.on_break),
+  };
+}
+
+export async function fetchHomeWosOpenCount(companyId: string): Promise<HomeWosOpenCount> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/wos-open-count", companyId));
+  return {
+    open: num(raw.open),
+    in_progress: num(raw.in_progress),
+  };
+}
+
+export async function fetchHomeCashPosition(companyId: string): Promise<HomeCashPosition> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/cash-position", companyId));
+  return {
+    balance_cents: num(raw.balance_cents),
+    last_reconciled_at: typeof raw.last_reconciled_at === "string" ? raw.last_reconciled_at : null,
+  };
+}
+
+export async function fetchHomeFactoringBalance(companyId: string): Promise<HomeFactoringBalance> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/factoring-balance", companyId));
+  return {
+    outstanding_cents: num(raw.outstanding_cents),
+    invoices_factored: num(raw.invoices_factored),
+  };
+}
+
+function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenuePoint[] {
+  const list: unknown[] = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === "object" && Array.isArray((raw as { rows?: unknown }).rows)
+      ? ((raw as { rows: unknown[] }).rows ?? [])
+      : raw && typeof raw === "object" && Array.isArray((raw as { points?: unknown }).points)
+        ? ((raw as { points: unknown[] }).points ?? [])
+        : [];
+  return list
+    .map((row) => {
+      if (!row || typeof row !== "object") return null;
+      const o = row as Record<string, unknown>;
+      const date = typeof o.date === "string" ? o.date : "";
+      const revenue_cents = num(o.revenue_cents);
+      if (!date) return null;
+      return { date, revenue_cents };
+    })
+    .filter((x): x is HomeWeeklyRevenuePoint => x !== null);
+}
+
+export async function fetchHomeWeeklyRevenue(companyId: string, days = 7): Promise<HomeWeeklyRevenuePoint[]> {
+  const path = withCompany(`/api/v1/home/weekly-revenue?days=${encodeURIComponent(String(days))}`, companyId);
+  const raw = await apiRequest<unknown>(path);
+  return coerceWeeklyRevenue(raw);
+}
+
+const WO_STATUSES = ["draft", "approved", "in_progress", "completed", "cancelled"] as const;
+
+function coerceWoStatusCounts(raw: unknown): HomeWoStatusCount[] {
+  const list: unknown[] = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === "object" && Array.isArray((raw as { rows?: unknown }).rows)
+      ? ((raw as { rows: unknown[] }).rows ?? [])
+      : [];
+  const map = new Map<string, number>();
+  for (const row of list) {
+    if (!row || typeof row !== "object") continue;
+    const o = row as Record<string, unknown>;
+    const status = typeof o.status === "string" ? o.status.toLowerCase() : "";
+    map.set(status, num(o.count));
+  }
+  return WO_STATUSES.map((status) => ({
+    status,
+    count: map.get(status) ?? 0,
+  }));
+}
+
+export async function fetchHomeWoStatusCounts(companyId: string): Promise<HomeWoStatusCount[]> {
+  const raw = await apiRequest<unknown>(withCompany("/api/v1/home/wo-status-counts", companyId));
+  return coerceWoStatusCounts(raw);
+}
+
+export async function fetchHomeFleetUtilization(companyId: string): Promise<HomeFleetUtilization> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/fleet-utilization", companyId));
+  return {
+    active_units: num(raw.active_units),
+    total_units: num(raw.total_units),
+    percentage: num(raw.percentage),
+  };
+}
