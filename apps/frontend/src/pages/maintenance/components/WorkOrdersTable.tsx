@@ -1,4 +1,5 @@
 import type { WorkOrder } from "../../../api/maintenance";
+import { Link } from "react-router-dom";
 
 type Props = {
   rows: WorkOrder[];
@@ -77,7 +78,11 @@ export function WorkOrdersTable({
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-2 py-1 font-medium">{row.display_id ?? row.id.slice(0, 8)}</td>
+                <td className="px-2 py-1 font-medium">
+                  <Link to={`/maintenance/work-orders/${row.id}`} className="text-indigo-700 hover:underline">
+                    {row.display_id ?? row.id.slice(0, 8)}
+                  </Link>
+                </td>
                 <td className="px-2 py-1">{row.source_type ?? "—"}</td>
                 <td className="px-2 py-1">{row.unit_id}</td>
                 <td className="px-2 py-1">{row.driver_id ?? "—"}</td>

@@ -47,6 +47,7 @@ import {
 } from "./pages/safety/tabs";
 import { LiabilitiesHomePage } from "./pages/liabilities/LiabilitiesHome";
 import { MaintenanceHomePage } from "./pages/maintenance/MaintenanceHome";
+import { WorkOrderDetailPage } from "./pages/maintenance/WorkOrderDetailPage";
 import { ArrivingSoonPage } from "./pages/maintenance/ArrivingSoonPage";
 import { CashAdvancesHomePage } from "./pages/cash-advances/CashAdvancesHome";
 import { FactoringHomePage } from "./pages/factoring/FactoringHome";
@@ -340,6 +341,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <LiabilitiesHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/work-orders/:id"
+          element={
+            <ProtectedRoute>
+              <WorkOrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/work-orders"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/maintenance" replace />
             </ProtectedRoute>
           }
         />
