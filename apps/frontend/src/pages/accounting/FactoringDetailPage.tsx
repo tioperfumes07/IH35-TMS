@@ -12,10 +12,9 @@ import {
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
-import { BackButton } from "../../components/shared/BackButton";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNav } from "./AccountingSubNav";
 
@@ -111,9 +110,14 @@ export function FactoringDetailPage() {
   return (
     <div className="space-y-3">
       <AccountingSubNav />
-      <BackButton />
       <PageHeader
         title={detail.display_id}
+        backHref="/accounting/factoring"
+        breadcrumb={[
+          { label: "Accounting", href: "/accounting" },
+          { label: "Factoring", href: "/accounting/factoring" },
+          { label: detail.display_id },
+        ]}
         subtitle={`Factor: ${detail.factoring_company_name}`}
         actions={
           <div className="flex items-center gap-2">
