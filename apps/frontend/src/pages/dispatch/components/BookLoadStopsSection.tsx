@@ -42,7 +42,7 @@ export function BookLoadStopsSection({ control, register }: Props) {
               })
             }
           >
-            + Add pickup
+            + Create pickup
           </Button>
           <Button
             type="button"
@@ -69,7 +69,7 @@ export function BookLoadStopsSection({ control, register }: Props) {
               })
             }
           >
-            + Add delivery
+            + Create delivery
           </Button>
         </div>
       </div>

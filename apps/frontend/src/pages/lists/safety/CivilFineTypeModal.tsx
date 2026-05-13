@@ -110,7 +110,7 @@ export function CivilFineTypeModal({ open, companyId, row, onClose, onSaved }: P
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Civil Fine Type" : "New Civil Fine Type"}>
+    <Modal open={open} onClose={onClose} title={isEdit ? "Edit Civil Fine Type" : "Create Civil Fine Type"}>
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Code

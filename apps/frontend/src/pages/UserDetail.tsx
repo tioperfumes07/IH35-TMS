@@ -396,7 +396,7 @@ export function UserDetailPage() {
 
       {tab === "activity" ? <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">Audit history coming in Phase 6.</div> : null}
 
-      <Modal open={addEventOpen} onClose={() => setAddEventOpen(false)} title="Add Dispatcher Safety Event">
+      <Modal open={addEventOpen} onClose={() => setAddEventOpen(false)} title="Create Dispatcher Safety Event">
         <form
           className="space-y-3"
           onSubmit={async (event) => {

@@ -186,7 +186,7 @@ export function LegalMatterDetailPage() {
                     onChange={(e) => setEventBody(e.target.value)}
                   />
                   <Button size="sm" disabled={addEventMut.isPending} onClick={() => void addEventMut.mutate()}>
-                    Add event
+                    Create event
                   </Button>
                 </div>
               ) : null}
@@ -273,7 +273,7 @@ export function LegalMatterDetailPage() {
                     onChange={(e) => setDlEmails(e.target.value)}
                   />
                   <Button size="sm" disabled={addDlMut.isPending || !dlTitle || !dlAt} onClick={() => void addDlMut.mutate()}>
-                    Add deadline
+                    Create deadline
                   </Button>
                 </div>
               ) : null}
