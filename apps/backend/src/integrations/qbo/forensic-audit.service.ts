@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from "fastify";
 import { withLuciaBypass } from "../../auth/db.js";
 
 export type BatchAuditEventType =
@@ -43,7 +44,8 @@ export async function auditForensicImportError(
     step: string;
     entity_type?: string | null;
     last_qbo_entity_id?: string | null;
-  }
+  },
+  logger?: FastifyBaseLogger
 ) {
   const rawMessage = String((err as Error)?.message ?? err);
   const error_message = rawMessage.slice(0, FORENSIC_IMPORT_ERROR_MAX_LEN);
@@ -61,16 +63,21 @@ export async function auditForensicImportError(
       last_qbo_entity_id: ctx.last_qbo_entity_id ? String(ctx.last_qbo_entity_id) : null,
       step: ctx.step,
     },
-  });
+  }, { critical: true, logger });
 }
 
-export async function auditBatchEvent(
+export type AuditBatchEventOpts = {
+  critical?: boolean;
+  logger?: FastifyBaseLogger;
+};
+
+async function insertBatchAuditAndAppendEvent(
   batchId: string,
   operatingCompanyId: string,
   eventType: BatchAuditEventType,
-  metadata: Record<string, unknown> = {}
+  metadata: Record<string, unknown>
 ) {
-  void withLuciaBypass(async (client) => {
+  await withLuciaBypass(async (client) => {
     await client.query(
       `
         INSERT INTO qbo_archive.import_batch_audit_log (
@@ -107,7 +114,34 @@ export async function auditBatchEvent(
       JSON.stringify({ batch_id: batchId, operating_company_id: operatingCompanyId, event_type: eventType }),
       "P6-FOUNDATION-OPS",
     ]);
-  }).catch(() => {
+  });
+}
+
+export async function auditBatchEvent(
+  batchId: string,
+  operatingCompanyId: string,
+  eventType: BatchAuditEventType,
+  metadata: Record<string, unknown> = {},
+  opts: AuditBatchEventOpts = {}
+) {
+  if (opts.critical) {
+    try {
+      await insertBatchAuditAndAppendEvent(batchId, operatingCompanyId, eventType, metadata);
+    } catch (err) {
+      if (opts.logger) {
+        opts.logger.error({ batchId, eventType, err }, "forensic audit insert failed");
+      } else {
+        console.error("[forensic audit insert failed]", {
+          batchId,
+          eventType,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+    return;
+  }
+
+  void insertBatchAuditAndAppendEvent(batchId, operatingCompanyId, eventType, metadata).catch(() => {
     // Audit writes are best effort by design; never block import runner.
   });
 }

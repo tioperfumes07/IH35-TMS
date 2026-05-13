@@ -24,6 +24,7 @@
     "test:frontend": "cd apps/frontend && npm run test",
     "test:frontend:e2e": "cd apps/frontend && npm run test:e2e",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed:legal-templates": "node scripts/db-seed-legal-templates.mjs",
     "db:seed:test-fixtures": "node scripts/db-seed-test-fixtures.mjs",
@@ -119,6 +120,7 @@
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.5"
   }
 }
