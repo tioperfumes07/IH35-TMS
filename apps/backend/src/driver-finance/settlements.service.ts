@@ -123,3 +123,12 @@ export function driverBillRowsToSettlementLoads(rows: DriverBillSettlementRow[])
 export function settlementLoadRowsCoveringInvariant(loadNumber: string, billNumber: string): boolean {
   return driverBillNumberFromLoadNumber(loadNumber) === billNumber;
 }
+
+export {
+  aggregateSettlementTotals,
+  closeSettlementForFinalLoad,
+  getActiveSettlementForDriver,
+  openLoadBookendedSettlement,
+  pingSettlementOnLoadEvent,
+  settlementDisplayIdFromLoadNumber,
+} from "./settlements-load-bookended.service.js";

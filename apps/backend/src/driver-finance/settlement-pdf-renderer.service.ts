@@ -53,6 +53,11 @@ export async function renderSettlementStatementPdf(client: DbClient, input: Sett
     period_start: string;
     period_end: string;
     status: string;
+    settlement_model: string | null;
+    first_load_number: string | null;
+    last_load_number: string | null;
+    trip_started_at: string | null;
+    trip_closed_at: string | null;
     gross_pay: string | number | null;
     deductions_total: string | number | null;
     reimbursements_total: string | number | null;
@@ -68,6 +73,11 @@ export async function renderSettlementStatementPdf(client: DbClient, input: Sett
         s.period_start,
         s.period_end,
         s.status::text,
+        s.settlement_model::text,
+        s.first_load_number,
+        s.last_load_number,
+        s.trip_started_at::text,
+        s.trip_closed_at::text,
         s.gross_pay,
         s.deductions_total,
         s.reimbursements_total,
@@ -180,6 +190,27 @@ export async function renderSettlementStatementPdf(client: DbClient, input: Sett
           </td>
           <td>${settlement.status}</td>
         </tr>
+        ${
+          settlement.settlement_model === "load_bookended"
+            ? `
+        <tr>
+          <td><div class="label-primary">Settlement model</div></td>
+          <td>Load-bookended trip</td>
+        </tr>
+        <tr>
+          <td><div class="label-primary">First load</div></td>
+          <td>${settlement.first_load_number ?? "—"}</td>
+        </tr>
+        <tr>
+          <td><div class="label-primary">Last load</div></td>
+          <td>${settlement.last_load_number ?? "—"}</td>
+        </tr>
+        <tr>
+          <td><div class="label-primary">Trip window</div></td>
+          <td>${dateLabel(settlement.trip_started_at)} → ${dateLabel(settlement.trip_closed_at)}</td>
+        </tr>`
+            : ""
+        }
       </table>
 
       <h2 class="section-title">${lineItemsLabel.primary}</h2>

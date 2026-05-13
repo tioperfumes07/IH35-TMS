@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
+import { qboSyncWithRetry } from "../../qbo/sync-with-retry.js";
 import { getValidAccessToken } from "./qbo-oauth.service.js";
 
 type LinkableEntityType = "driver" | "unit" | "equipment" | "asset";
@@ -135,22 +136,36 @@ async function qboPostEntity(
   payload: Record<string, unknown>
 ): Promise<RetryableResult<Record<string, unknown>>> {
   try {
-    const token = await getValidAccessToken(operatingCompanyId);
-    const url = `${qboApiBase()}/${token.realm_id}/${path}?minorversion=75`;
-    const response = await requestWithRetry(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token.access_token}`,
-        Accept: "application/json",
-        "Content-Type": "application/json",
+    const value = await qboSyncWithRetry({
+      operatingCompanyId,
+      entityType: `qbo.${path}`,
+      operation: "create",
+      swallow_errors: false,
+      replayPayload: { replay_kind: "qbo_post", path, payload },
+      attempt: async () => {
+        const token = await getValidAccessToken(operatingCompanyId);
+        const url = `${qboApiBase()}/${token.realm_id}/${path}?minorversion=75`;
+        const response = await requestWithRetry(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token.access_token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        const text = await response.text();
+        if (!response.ok) {
+          const err = new Error(`qbo_post_failed_status_${response.status}:${text.slice(0, 240)}`);
+          (err as { status?: number }).status = response.status;
+          (err as { bodyPreview?: string }).bodyPreview = text.slice(0, 500);
+          throw err;
+        }
+        return ((JSON.parse(text) as Record<string, unknown>) ?? {}) as Record<string, unknown>;
       },
-      body: JSON.stringify(payload),
     });
-    const text = await response.text();
-    if (!response.ok) {
-      return { ok: false, error: `qbo_post_failed_status_${response.status}:${text.slice(0, 240)}` };
-    }
-    return { ok: true, value: (JSON.parse(text) as Record<string, unknown>) ?? {} };
+    if (!value) return { ok: false, error: "qbo_post_failed" };
+    return { ok: true, value };
   } catch (error) {
     return { ok: false, error: String((error as Error)?.message ?? "qbo_post_failed") };
   }
