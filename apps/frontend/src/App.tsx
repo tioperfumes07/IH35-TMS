@@ -72,9 +72,46 @@ import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
 import { FactoringListPage } from "./pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
-import { InternalFineReasonsListPage } from "./pages/lists/safety/InternalFineReasonsListPage";
+import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
+import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
+import { ClassesListPage } from "./pages/lists/accounting/ClassesListPage";
+import { ItemsListPage } from "./pages/lists/accounting/ItemsListPage";
+import { JournalEntryTypesListPage } from "./pages/lists/accounting/JournalEntryTypesListPage";
+import { PaymentTermsListPage } from "./pages/lists/accounting/PaymentTermsListPage";
+import { PostingTemplatesListPage } from "./pages/lists/accounting/PostingTemplatesListPage";
+import { QboCategoriesListPage } from "./pages/lists/accounting/QboCategoriesListPage";
+import { AdditionalChargesListPage } from "./pages/lists/dispatch/AdditionalChargesListPage";
+import { DetentionReasonsListPage } from "./pages/lists/dispatch/DetentionReasonsListPage";
+import { LoadTypesListPage } from "./pages/lists/dispatch/LoadTypesListPage";
+import { PickupTimeTypesListPage } from "./pages/lists/dispatch/PickupTimeTypesListPage";
+import { DriverDeductionTypesListPage } from "./pages/lists/driver/DriverDeductionTypesListPage";
+import { DriverPayTypesListPage } from "./pages/lists/driver/DriverPayTypesListPage";
+import { EscrowTypesListPage } from "./pages/lists/driver/EscrowTypesListPage";
+import { PayRateTemplatesListPage } from "./pages/lists/driver/PayRateTemplatesListPage";
+import { ConditionCodesListPage } from "./pages/lists/fleet/ConditionCodesListPage";
+import { EquipmentTypesListPage } from "./pages/lists/fleet/EquipmentTypesListPage";
+import { OwnershipTypesListPage } from "./pages/lists/fleet/OwnershipTypesListPage";
+import { TirePositionsListPage } from "./pages/lists/fleet/TirePositionsListPage";
+import { TractorStatusesListPage } from "./pages/lists/fleet/TractorStatusesListPage";
+import { TrailerStatusesListPage } from "./pages/lists/fleet/TrailerStatusesListPage";
+import { ExpensiveStatesListPage } from "./pages/lists/fuel/ExpensiveStatesListPage";
+import { FuelCardTypesListPage } from "./pages/lists/fuel/FuelCardTypesListPage";
+import { FuelExceptionTypesListPage } from "./pages/lists/fuel/FuelExceptionTypesListPage";
+import { FuelStationBrandsListPage } from "./pages/lists/fuel/FuelStationBrandsListPage";
+import { FuelStopReasonCodesListPage } from "./pages/lists/fuel/FuelStopReasonCodesListPage";
+import { FuelTaxJurisdictionsListPage } from "./pages/lists/fuel/FuelTaxJurisdictionsListPage";
+import { MpgBandsListPage } from "./pages/lists/fuel/MpgBandsListPage";
+import { MaintenanceFailureCodesListPage } from "./pages/lists/maintenance/MaintenanceFailureCodesListPage";
+import { MaintenanceLaborCodesListPage } from "./pages/lists/maintenance/MaintenanceLaborCodesListPage";
+import { MaintenancePartsListPage } from "./pages/lists/maintenance/MaintenancePartsListPage";
+import { MaintenancePriorityLevelsListPage } from "./pages/lists/maintenance/MaintenancePriorityLevelsListPage";
+import { MaintenanceServiceTasksListPage } from "./pages/lists/maintenance/MaintenanceServiceTasksListPage";
+import { MaintenanceShopLocationsListPage } from "./pages/lists/maintenance/MaintenanceShopLocationsListPage";
+import { MaintenanceVendorsListPage } from "./pages/lists/maintenance/MaintenanceVendorsListPage";
+import { WorkOrderStatusesListPage } from "./pages/lists/maintenance/WorkOrderStatusesListPage";
 import { CivilFineTypesListPage } from "./pages/lists/safety/CivilFineTypesListPage";
 import { CompanyViolationTypesListPage } from "./pages/lists/safety/CompanyViolationTypesListPage";
+import { InternalFineReasonsListPage } from "./pages/lists/safety/InternalFineReasonsListPage";
 import { LegalTemplateDetailPage } from "./pages/legal/templates/LegalTemplateDetailPage";
 import { LegalTemplatesListPage } from "./pages/legal/templates/LegalTemplatesListPage";
 import { LegalSignPage } from "./pages/legal/sign/LegalSignPage";
@@ -434,6 +471,326 @@ export default function App() {
           }
         />
         <Route
+          path="/lists/dispatch/load-types"
+          element={
+            <ProtectedRoute>
+              <LoadTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/dispatch/detention-reasons"
+          element={
+            <ProtectedRoute>
+              <DetentionReasonsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/dispatch/pickup-time-types"
+          element={
+            <ProtectedRoute>
+              <PickupTimeTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/dispatch/additional-charges"
+          element={
+            <ProtectedRoute>
+              <AdditionalChargesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/pay-rate-templates"
+          element={
+            <ProtectedRoute>
+              <PayRateTemplatesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/deduction-types"
+          element={
+            <ProtectedRoute>
+              <DriverDeductionTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/pay-types"
+          element={
+            <ProtectedRoute>
+              <DriverPayTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/escrow-types"
+          element={
+            <ProtectedRoute>
+              <EscrowTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/failure-codes"
+          element={
+            <ProtectedRoute>
+              <MaintenanceFailureCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/labor-codes"
+          element={
+            <ProtectedRoute>
+              <MaintenanceLaborCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/parts"
+          element={
+            <ProtectedRoute>
+              <MaintenancePartsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/priority-levels"
+          element={
+            <ProtectedRoute>
+              <MaintenancePriorityLevelsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/service-tasks"
+          element={
+            <ProtectedRoute>
+              <MaintenanceServiceTasksListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/shop-locations"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShopLocationsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/vendors"
+          element={
+            <ProtectedRoute>
+              <MaintenanceVendorsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/work-order-statuses"
+          element={
+            <ProtectedRoute>
+              <WorkOrderStatusesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/card-types"
+          element={
+            <ProtectedRoute>
+              <FuelCardTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/exception-types"
+          element={
+            <ProtectedRoute>
+              <FuelExceptionTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/station-brands"
+          element={
+            <ProtectedRoute>
+              <FuelStationBrandsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/stop-reason-codes"
+          element={
+            <ProtectedRoute>
+              <FuelStopReasonCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/mpg-bands"
+          element={
+            <ProtectedRoute>
+              <MpgBandsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/expensive-states"
+          element={
+            <ProtectedRoute>
+              <ExpensiveStatesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fuel/tax-jurisdictions"
+          element={
+            <ProtectedRoute>
+              <FuelTaxJurisdictionsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/tractor-statuses"
+          element={
+            <ProtectedRoute>
+              <TractorStatusesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/trailer-statuses"
+          element={
+            <ProtectedRoute>
+              <TrailerStatusesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/condition-codes"
+          element={
+            <ProtectedRoute>
+              <ConditionCodesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/equipment-types"
+          element={
+            <ProtectedRoute>
+              <EquipmentTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/tire-positions"
+          element={
+            <ProtectedRoute>
+              <TirePositionsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/fleet/ownership-types"
+          element={
+            <ProtectedRoute>
+              <OwnershipTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/chart-of-accounts"
+          element={
+            <ProtectedRoute>
+              <ChartOfAccountsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/classes"
+          element={
+            <ProtectedRoute>
+              <ClassesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/payment-terms"
+          element={
+            <ProtectedRoute>
+              <PaymentTermsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/posting-templates"
+          element={
+            <ProtectedRoute>
+              <PostingTemplatesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/journal-entry-types"
+          element={
+            <ProtectedRoute>
+              <JournalEntryTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/qbo-categories"
+          element={
+            <ProtectedRoute>
+              <QboCategoriesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/items"
+          element={
+            <ProtectedRoute>
+              <ItemsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/accounting/account-role-bindings"
+          element={
+            <ProtectedRoute>
+              <AccountRoleBindingsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/safety/internal-fine-reasons"
+          element={
+            <ProtectedRoute>
+              <InternalFineReasonsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/safety/civil-fine-types"
+          element={
+            <ProtectedRoute>
+              <CivilFineTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/safety/company-violation-types"
+          element={
+            <ProtectedRoute>
+              <CompanyViolationTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/lists/:domain"
           element={
             <ProtectedRoute>
@@ -754,32 +1111,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        {/* ─── Safety catalog routes (T11.21.2A) ─── */}
-        <Route
-          path="/lists/safety/internal-fine-reasons"
-          element={
-            <ProtectedRoute>
-              <InternalFineReasonsListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/lists/safety/civil-fine-types"
-          element={
-            <ProtectedRoute>
-              <CivilFineTypesListPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/lists/safety/company-violation-types"
-          element={
-            <ProtectedRoute>
-              <CompanyViolationTypesListPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* ─── End Safety catalog routes ─── */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </CompanyProvider>

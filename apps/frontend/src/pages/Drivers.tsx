@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
@@ -28,6 +28,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
+import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { FieldError, fieldErrorClassname } from "../components/forms/FieldError";
@@ -37,7 +38,6 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors } from "../design/tokens";
 
 const statusOptions = ["All", "Probation", "Active", "Inactive", "Terminated", "OnLeave"] as const;
-const statusFilterComboboxOptions = statusOptions.map((value) => ({ value, label: value === "All" ? "All statuses" : value }));
 const statusFieldComboboxOptions = statusOptions
   .filter((value) => value !== "All")
   .map((value) => ({ value, label: value }));
@@ -46,6 +46,23 @@ const payBasisComboboxOptions = [
   { value: "short_miles", label: "Short Miles" },
   { value: "practical_miles", label: "Practical Miles" },
 ];
+
+const DRIVER_LIST_STATUS_IDS = ["all", "active", "inactive", "on_leave", "terminated"] as const;
+type DriverListStatusId = (typeof DRIVER_LIST_STATUS_IDS)[number];
+
+function parseDriverListStatus(searchParams: URLSearchParams): DriverListStatusId {
+  const raw = (searchParams.get("status") ?? "all").toLowerCase();
+  return (DRIVER_LIST_STATUS_IDS as readonly string[]).includes(raw) ? (raw as DriverListStatusId) : "all";
+}
+
+function driverMatchesListSegment(status: string, segment: DriverListStatusId): boolean {
+  if (segment === "all") return true;
+  if (segment === "active") return status === "Active";
+  if (segment === "inactive") return status === "Inactive";
+  if (segment === "on_leave") return status === "OnLeave";
+  if (segment === "terminated") return status === "Terminated";
+  return true;
+}
 
 function normalizePhoneDigits(value: string) {
   return value.replace(/\D/g, "").slice(-10);
@@ -106,11 +123,12 @@ function getDetectionSeverityClass(detection: ReturningDetectionResult | null) {
 
 export function DriversPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>("All");
+  const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
   const [activeTab, setActiveTab] = useState<"drivers" | "teams">("drivers");
   const [addOpen, setAddOpen] = useState(false);
   const [teamCreateOpen, setTeamCreateOpen] = useState(false);
@@ -275,10 +293,10 @@ export function DriversPage() {
   }, [returningDetection, terminatedMatches]);
 
   const driversQuery = useQuery({
-    queryKey: ["drivers", { status: statusFilter, search }],
+    queryKey: ["drivers", { search, listScope: "all-statuses" }],
     queryFn: () =>
       listDrivers({
-        status: statusFilter,
+        status: "All",
         search,
       }).then((result) => result.drivers),
   });
@@ -482,21 +500,46 @@ export function DriversPage() {
     resetDriverCreateErrors();
   }, [addOpen, resetDriverCreateErrors]);
 
-  const drivers = useMemo(() => driversQuery.data ?? [], [driversQuery.data]);
+  const allDrivers = useMemo(() => driversQuery.data ?? [], [driversQuery.data]);
+  const driverListTabCounts = useMemo(() => {
+    return {
+      all: allDrivers.length,
+      active: allDrivers.filter((d) => d.status === "Active").length,
+      inactive: allDrivers.filter((d) => d.status === "Inactive").length,
+      on_leave: allDrivers.filter((d) => d.status === "OnLeave").length,
+      terminated: allDrivers.filter((d) => d.status === "Terminated").length,
+    };
+  }, [allDrivers]);
+  const driversRowsFiltered = useMemo(
+    () => allDrivers.filter((d) => driverMatchesListSegment(d.status, driverListStatus)),
+    [allDrivers, driverListStatus]
+  );
+
+  const setDriverListStatus = (next: DriverListStatusId) => {
+    setSearchParams(
+      (prev) => {
+        const nextParams = new URLSearchParams(prev);
+        if (next === "all") nextParams.delete("status");
+        else nextParams.set("status", next);
+        return nextParams;
+      },
+      { replace: false }
+    );
+  };
 
   return (
     <div className="space-y-3">
       <PageHeader
         title="Drivers"
-        subtitle={`${drivers.length} new in last 3 days`}
+        subtitle={`${driversRowsFiltered.length} records`}
         actions={<ActionButton onClick={() => setAddOpen(true)}>+ Create Driver</ActionButton>}
       />
 
       <KpiStrip>
-        <KpiCard label="Active" number={drivers.filter((d) => d.status === "Active").length} accent={colors.drivers.strong} />
+        <KpiCard label="Active" number={allDrivers.filter((d) => d.status === "Active").length} accent={colors.drivers.strong} />
         <KpiCard label="On Loads" number="—" accent={colors.dispatch.strong} />
         <KpiCard label="Available" number="—" accent={colors.info.strong} />
-        <KpiCard label="On Leave" number={drivers.filter((d) => d.status === "OnLeave").length} accent={colors.warn.strong} />
+        <KpiCard label="On Leave" number={allDrivers.filter((d) => d.status === "OnLeave").length} accent={colors.warn.strong} />
         <KpiCard label="Settle Due" number="—" accent={colors.accounting.strong} />
         <KpiCard label="Drivers Owe" number="—" accent={colors.crit.strong} />
         <KpiCard label="Escrow" number="—" accent={colors.fleet.strong} />
@@ -578,16 +621,21 @@ export function DriversPage() {
 
       {activeTab === "drivers" ? (
         <>
+      <SecondaryNavTabs
+        className="-mx-2"
+        activeId={driverListStatus}
+        onChange={(id) => {
+          if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriverListStatusId);
+        }}
+        tabs={[
+          { id: "all", label: `All (${driverListTabCounts.all})` },
+          { id: "active", label: `Active (${driverListTabCounts.active})` },
+          { id: "inactive", label: `Inactive (${driverListTabCounts.inactive})` },
+          { id: "on_leave", label: `On Leave (${driverListTabCounts.on_leave})` },
+          { id: "terminated", label: `Terminated (${driverListTabCounts.terminated})` },
+        ]}
+      />
       <div className="flex flex-wrap gap-2">
-        <div className="w-full max-w-[220px]">
-          <Combobox
-            options={statusFilterComboboxOptions}
-            value={statusFilter}
-            onChange={(value) => setStatusFilter((value as (typeof statusOptions)[number]) ?? "All")}
-            allowClear
-            placeholder="All statuses"
-          />
-        </div>
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -599,7 +647,7 @@ export function DriversPage() {
       {driversQuery.isError ? <ListErrorBanner onRetry={() => void driversQuery.refetch()} /> : null}
 
       <DataTable
-        rows={drivers}
+        rows={driversRowsFiltered}
         loading={driversQuery.isLoading}
         rowKey={(row) => row.id}
         onRowClick={(row) => navigate(`/drivers/${row.id}`)}

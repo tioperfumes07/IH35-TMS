@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { listUsStates } from "../api/catalogs";
 import { createCustomer, listCustomers, listPaymentTermOptions, listVendors, updateCustomer, type Customer, type VendorOption } from "../api/mdata";
@@ -11,6 +11,7 @@ import { DataTable } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
+import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { FieldError, fieldErrorClassname } from "../components/forms/FieldError";
@@ -171,13 +172,13 @@ function formatMoney(value: string | number | null) {
   return `$${Number(value).toFixed(2)}`;
 }
 
-const QUALITY_FILTER_OPTIONS: ComboboxOption[] = [
-  { value: "all", label: "All quality flags" },
-  { value: "preferred", label: "Preferred" },
-  { value: "standard", label: "Standard" },
-  { value: "caution", label: "Caution" },
-  { value: "avoid", label: "Avoid" },
-];
+const CUSTOMER_LIST_TAB_IDS = ["all", "preferred", "watch", "inactive", "factored"] as const;
+type CustomerListTabId = (typeof CUSTOMER_LIST_TAB_IDS)[number];
+
+function parseCustomerListTab(searchParams: URLSearchParams): CustomerListTabId {
+  const raw = (searchParams.get("tab") ?? "all").toLowerCase();
+  return (CUSTOMER_LIST_TAB_IDS as readonly string[]).includes(raw) ? (raw as CustomerListTabId) : "all";
+}
 
 const CREATE_CUSTOMER_TYPE_OPTIONS: ComboboxOption[] = [
   { value: "broker", label: "Broker" },
@@ -217,6 +218,7 @@ const EDIT_CUSTOMER_TYPE_OPTIONS: ComboboxOption[] = [
 
 export function CustomersPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const canManage = ["Owner", "Administrator", "Manager", "Accountant", "Dispatcher"].includes(user?.role ?? "");
   const canOwnerExtendCatalogs = user?.role === "Owner";
@@ -228,15 +230,28 @@ export function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [createForm, setCreateForm] = useState<CreateCustomerFormState>(emptyCreateForm());
   const [editForm, setEditForm] = useState<CustomerFormState>(emptyEditForm());
-  const [qualityFilter, setQualityFilter] = useState<"all" | Customer["quality_overall_flag"]>("all");
-  const [showOnlyFmcsaVerified, setShowOnlyFmcsaVerified] = useState(false);
-  const [sortByDisputes, setSortByDisputes] = useState(false);
   const [fmcsaModalOpen, setFmcsaModalOpen] = useState(false);
   const showTaxId = user?.role === "Owner";
 
+  const customerListTab = useMemo(() => parseCustomerListTab(searchParams), [searchParams]);
+
+  const setCustomerListTab = (next: CustomerListTabId) => {
+    setSearchParams(
+      (prev) => {
+        const nextParams = new URLSearchParams(prev);
+        if (next === "all") nextParams.delete("tab");
+        else nextParams.set("tab", next);
+        return nextParams;
+      },
+      { replace: false }
+    );
+  };
+  const [showOnlyFmcsaVerified, setShowOnlyFmcsaVerified] = useState(false);
+  const [sortByDisputes, setSortByDisputes] = useState(false);
+
   const customersQuery = useQuery({
-    queryKey: ["customers"],
-    queryFn: () => listCustomers({ status: "active" }).then((result) => result.customers),
+    queryKey: ["customers", "all-statuses"],
+    queryFn: () => listCustomers({}).then((result) => result.customers),
   });
   const paymentTermsQuery = useQuery({
     queryKey: ["catalogs", "payment-terms", "active"],
@@ -334,9 +349,36 @@ export function CustomersPage() {
     },
   });
 
+  const allCustomers = useMemo(() => customersQuery.data ?? [], [customersQuery.data]);
+  const customerTabCounts = useMemo(
+    () => ({
+      all: allCustomers.length,
+      preferred: allCustomers.filter((c) => c.quality_overall_flag === "preferred").length,
+      watch: allCustomers.filter((c) => c.quality_overall_flag === "caution").length,
+      inactive: allCustomers.filter((c) => c.status === "inactive").length,
+      factored: allCustomers.filter((c) => Boolean(c.factoring_company_vendor_id)).length,
+    }),
+    [allCustomers]
+  );
+
   const customers = useMemo(() => {
-    const base = [...(customersQuery.data ?? [])];
-    let filtered = qualityFilter === "all" ? base : base.filter((customer) => customer.quality_overall_flag === qualityFilter);
+    let filtered = [...allCustomers];
+    switch (customerListTab) {
+      case "preferred":
+        filtered = filtered.filter((c) => c.quality_overall_flag === "preferred");
+        break;
+      case "watch":
+        filtered = filtered.filter((c) => c.quality_overall_flag === "caution");
+        break;
+      case "inactive":
+        filtered = filtered.filter((c) => c.status === "inactive");
+        break;
+      case "factored":
+        filtered = filtered.filter((c) => Boolean(c.factoring_company_vendor_id));
+        break;
+      default:
+        break;
+    }
     if (showOnlyFmcsaVerified) {
       filtered = filtered.filter((customer) => Boolean(customer.fmcsa_verified_at));
     }
@@ -344,10 +386,10 @@ export function CustomersPage() {
       filtered = [...filtered].sort((a, b) => (b.quality_disputes_count ?? 0) - (a.quality_disputes_count ?? 0));
     }
     return filtered;
-  }, [customersQuery.data, qualityFilter, showOnlyFmcsaVerified, sortByDisputes]);
-  const activeCount = customers.filter((customer) => customer.status === "active").length;
-  const creditHoldCount = customers.filter((customer) => customer.status === "credit_hold").length;
-  const blacklistCount = customers.filter((customer) => customer.status === "blacklist").length;
+  }, [allCustomers, customerListTab, showOnlyFmcsaVerified, sortByDisputes]);
+  const activeCount = allCustomers.filter((customer) => customer.status === "active").length;
+  const creditHoldCount = allCustomers.filter((customer) => customer.status === "credit_hold").length;
+  const blacklistCount = allCustomers.filter((customer) => customer.status === "blacklist").length;
 
   return (
     <div className="space-y-3">
@@ -362,17 +404,21 @@ export function CustomersPage() {
         <KpiCard label="Credit Hold" number={creditHoldCount} accent={colors.warn.strong} />
         <KpiCard label="Blacklist" number={blacklistCount} accent={colors.crit.strong} />
       </KpiStrip>
+      <SecondaryNavTabs
+        className="-mx-2"
+        activeId={customerListTab}
+        onChange={(id) => {
+          if ((CUSTOMER_LIST_TAB_IDS as readonly string[]).includes(id)) setCustomerListTab(id as CustomerListTabId);
+        }}
+        tabs={[
+          { id: "all", label: `All (${customerTabCounts.all})` },
+          { id: "preferred", label: `Preferred (${customerTabCounts.preferred})` },
+          { id: "watch", label: `Watch (${customerTabCounts.watch})` },
+          { id: "inactive", label: `Inactive (${customerTabCounts.inactive})` },
+          { id: "factored", label: `Factored (${customerTabCounts.factored})` },
+        ]}
+      />
       <div className="flex flex-wrap items-center gap-2">
-        <label className="text-xs font-semibold text-gray-600">Quality</label>
-        <div className="w-full max-w-[240px]">
-          <Combobox
-            options={QUALITY_FILTER_OPTIONS}
-            value={qualityFilter}
-            onChange={(value) => setQualityFilter((value as "all" | Customer["quality_overall_flag"]) ?? "all")}
-            allowClear
-            placeholder="All quality flags"
-          />
-        </div>
         <label className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
           <input type="checkbox" checked={sortByDisputes} onChange={(event) => setSortByDisputes(event.target.checked)} />
           Sort by disputes
