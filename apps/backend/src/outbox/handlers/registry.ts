@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import { TwilioSmsHandler } from "./twilio-sms.js";
 import { TwilioWhatsappHandler } from "./twilio-whatsapp.js";
 import { DispatchLoadDispatchedHandler } from "./dispatch-load-dispatched.handler.js";
+import { QboMasterEntityPushHandler } from "./qbo-master-entity-push.handler.js";
 
 export type OutboxPayload = Record<string, unknown>;
 
@@ -73,6 +74,7 @@ export function buildOutboxHandlerRegistry() {
     new TwilioSmsHandler(),
     new TwilioWhatsappHandler(),
     new DispatchLoadDispatchedHandler(),
+    new QboMasterEntityPushHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),
   ];

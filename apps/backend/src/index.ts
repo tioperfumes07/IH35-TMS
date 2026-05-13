@@ -17,6 +17,10 @@ import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-li
 import { registerIdentityRoutes } from "./identity/users.routes.js";
 import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
+import { registerAccountingCatalogRoutes } from "./catalogs/accounting/index.js";
+import { registerDriverCatalogRoutes } from "./catalogs/driver/index.js";
+import { registerFleetCatalogRoutes } from "./catalogs/fleet/index.js";
+import { registerFuelCatalogRoutes } from "./catalogs/fuel/index.js";
 import { registerCatalogsRoutes } from "./catalogs/index.js";
 import { registerCatalogRegistryRoutes } from "./catalogs/catalog-registry.routes.js";
 import { registerFileCategoriesRoutes } from "./catalogs/file-categories.routes.js";
@@ -80,6 +84,7 @@ import { registerCustomerLanesRoutes } from "./mdata/customer-lanes.routes.js";
 import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.js";
+import { registerQboMasterWriteRoutes } from "./mdata/qbo-master-write.routes.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
@@ -187,6 +192,7 @@ async function main() {
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);
   await registerQboAutocompleteRoutes(app);
+  await registerQboMasterWriteRoutes(app);
   await registerDriverProfileRoutes(app);
   await registerDriverReturningDetectionRoutes(app);
   await registerDriverSafetyEventsRoutes(app);
@@ -198,6 +204,10 @@ async function main() {
   await registerCustomerDetailAliasRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerCatalogsRoutes(app);
+  await registerDriverCatalogRoutes(app);
+  await registerFuelCatalogRoutes(app);
+  await registerFleetCatalogRoutes(app);
+  await registerAccountingCatalogRoutes(app);
   await registerCatalogRegistryRoutes(app);
   await registerEquipmentTypeRoutes(app);
   await registerDriverLoadStatusRoutes(app);
