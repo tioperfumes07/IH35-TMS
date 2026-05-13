@@ -16,6 +16,7 @@ import {
   clearForensicProgress,
   updateForensicProgress,
 } from "./forensic-progress.store.js";
+import { withHeartbeat } from "./forensic-batch-heartbeat.js";
 
 type ImportCounts = {
   entitiesImported: number;
@@ -318,7 +319,8 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
         current_page: Math.ceil(pageStart / 100),
       });
       try {
-        for await (const page of qboPaginateEntity<QboEntity>(qboContext, entityType)) {
+        await withHeartbeat(batchId, { phase: `entities:${entityType}` }, async () => {
+          for await (const page of qboPaginateEntity<QboEntity>(qboContext, entityType)) {
           await auditBatchEvent(batchId, qboContext.operatingCompanyId, "page_fetched", {
             entity_type: entityType,
             page_number: Math.ceil(pageStart / 100),
@@ -401,6 +403,7 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
             });
           }
         }
+        });
       } catch (error) {
         errors += 1;
         appendForensicProgressError(batchId, `Entity ${entityType} query failed: ${String((error as Error)?.message ?? error)}`);
@@ -476,7 +479,8 @@ export async function importTransactions(actorUserId: string, batchId: string, q
         current_page: Math.ceil(pageStart / 100),
       });
       try {
-        for await (const page of qboPaginateEntity<QboTransaction>(qboContext, txnType, where)) {
+        await withHeartbeat(batchId, { phase: `transactions:${txnType}` }, async () => {
+          for await (const page of qboPaginateEntity<QboTransaction>(qboContext, txnType, where)) {
           await auditBatchEvent(batchId, qboContext.operatingCompanyId, "page_fetched", {
             entity_type: txnType,
             page_number: Math.ceil(pageStart / 100),
@@ -614,6 +618,7 @@ export async function importTransactions(actorUserId: string, batchId: string, q
             });
           }
         }
+        });
       } catch (error) {
         errors += 1;
         appendForensicProgressError(batchId, `Transaction ${txnType} query failed: ${String((error as Error)?.message ?? error)}`);
@@ -694,7 +699,8 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
       [batchId, qboContext.operatingCompanyId, sinceDate]
     );
 
-    for (const tx of txRows.rows) {
+    await withHeartbeat(batchId, { phase: "attachments:transactions" }, async () => {
+      for (const tx of txRows.rows) {
       const whereClause = `TxnDate >= '${sinceDate}' AND AttachableRef.EntityRef.value = '${tx.qbo_txn_id}'`;
       let pageStart = 1;
       try {
@@ -877,6 +883,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
 
       // transactions_snapshot is append-only by design; keep attachment counts in attachments_snapshot.
     }
+    });
 
     await client.query(
       `
