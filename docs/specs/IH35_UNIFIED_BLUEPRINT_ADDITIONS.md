@@ -585,6 +585,19 @@ Block: Block K (multi-PR; crons, dispatch integration, E2E harness, lists admin 
 
 Further PRs in Block K: advance reminder / rollover / escalation crons; dispatch board badges + booking warnings; office grid virtualization; `POST .../documentation` multipart shortcut (if desired); Lists hub leave policy admin; `scripts/e2e-driver-scheduler-test.mjs` (10 scenarios).
 
+### Block K — Canonical office UI routes (LOCKED; 2026-05-12)
+
+Driver Scheduler / workforce planning (**Block K**) **office** UI is nested under the **Safety** module (HOS clocks, workforce health, leave policy), matching `IH35_ARCHITECTURAL_DESIGN.md` Workforce Planning sub-nav and the Block K scope note above (“Safety module UI”).
+
+**Canonical frontend paths (do not use a top-level `/driver-scheduler`):**
+
+- `/safety/driver-scheduler` — Driver Scheduler grid
+- `/safety/scheduler/pending-requests` — Leave Requests inbox
+- `/safety/scheduler/requests/:id` — Leave request detail
+- `/safety/leave-balances` — Leave Balances
+
+**API split (unchanged):** office routes `/api/v1/safety/scheduler/*`; authenticated driver session routes `/api/v1/driver/scheduler/*` (driver PWA).
+
 ---
 
 ## END OF UNIFIED ADDITIONS
