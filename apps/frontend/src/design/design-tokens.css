@@ -1,0 +1,47 @@
+/**
+ * IH35 Master Blueprint Part 6.1 — design tokens exposed as CSS custom properties.
+ * Values MUST match `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` (MUST 6.1.x).
+ * Used by shell primitives (PageHeader, HoverDropdownNav); extend here as needed.
+ */
+:root {
+  /* Text (6.1.1.3) */
+  --color-text-primary: #1a1f36;
+  --color-text-secondary: #4a5170;
+  --color-text-muted: #8a92ab;
+
+  /* Surfaces (6.1.1.2) */
+  --color-bg-surface: #ffffff;
+  --color-bg-surface-alt: #f8f8f4;
+
+  /* Borders (6.1.1.4) */
+  --color-border-default: #e5e7eb;
+
+  /* Typography scale (6.1.2.2) */
+  --font-size-xs: 9px;
+  --font-size-sm: 11px;
+  --font-size-base: 12px;
+  --font-size-xl: 16px;
+
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --letter-spacing-wide: 0.05em;
+
+  /* Spacing (6.1.3) */
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 12px;
+  --space-6: 16px;
+  --space-7: 24px;
+
+  /* Radius (6.1.4) */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+
+  /* Shadow (6.1.5) */
+  --shadow-md: 0 2px 4px -1px rgba(15, 19, 32, 0.06), 0 4px 6px -1px rgba(15, 19, 32, 0.05);
+
+  /* Z-index (6.1.6) */
+  --z-dropdown: 50;
+}
