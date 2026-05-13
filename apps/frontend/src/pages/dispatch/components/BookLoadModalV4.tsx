@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useForm, type UseFormGetValues, type UseFormSetValue } from "react-hook-form";
+import { useForm, type UseFormGetValues, type UseFormSetValue, type UseFormWatch } from "react-hook-form";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
@@ -111,6 +111,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   const form = useForm<FormValues>({
     defaultValues: {
       customer_id: "",
+      customer_qbo_id: "",
+      customer_name: "",
       customer_wo_number: "",
       commodity: "",
       weight_lbs: 0,
@@ -523,9 +525,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                 />
                 <BookLoadCustomerSection
                   register={form.register}
+                  watch={form.watch as unknown as UseFormWatch<BookLoadFormValues>}
                   operatingCompanyId={operatingCompanyId}
                   setValue={form.setValue as unknown as UseFormSetValue<BookLoadFormValues>}
                   getValues={form.getValues as unknown as UseFormGetValues<BookLoadFormValues>}
+                  customerIdError={form.formState.errors.customer_id?.message}
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <label className="text-[10px] font-semibold text-gray-600">

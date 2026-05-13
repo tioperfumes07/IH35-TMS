@@ -3,12 +3,13 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { listCustomers } from "../../../api/mdata";
 import { ToastProvider } from "../../../components/Toast";
 import { InvoiceTypeModalBase } from "../../accounting/modals/InvoiceTypeModalBase";
 
-vi.mock("../../../api/mdata", () => ({
-  listCustomers: vi.fn(),
+const searchMock = vi.fn();
+
+vi.mock("../../../api/qbo-mdata", () => ({
+  searchQboMasterData: (...args: unknown[]) => searchMock(...args),
 }));
 
 function wrap(ui: ReactElement) {
@@ -23,7 +24,7 @@ function wrap(ui: ReactElement) {
 describe("InvoiceTypeModalBase validation", () => {
   it("requires customer before submit", async () => {
     const user = userEvent.setup();
-    vi.mocked(listCustomers).mockResolvedValue({ customers: [{ id: "c1", name: "C1", customer_code: "X", customer_type: "broker", status: "active", quality_overall_flag: "standard", quality_disputes_count: 0 }] } as never);
+    searchMock.mockResolvedValue({ results: [] });
     const createInvoice = vi.fn();
     wrap(
       <InvoiceTypeModalBase
@@ -41,5 +42,50 @@ describe("InvoiceTypeModalBase validation", () => {
       expect(document.getElementById("customer_id-error")).toBeTruthy();
     });
     expect(createInvoice).not.toHaveBeenCalled();
+  });
+
+  it("after QBO pick, Create sends customer_id UUID", async () => {
+    const user = userEvent.setup();
+    searchMock.mockResolvedValue({
+      results: [
+        {
+          id: "71111111-1111-4111-8111-111111111111",
+          qbo_id: "qb-99",
+          display_name: "Invoice Customer LLC",
+          active: true,
+        },
+      ],
+    });
+
+    const createInvoice = vi.fn().mockResolvedValue({ id: "inv-1" });
+    wrap(
+      <InvoiceTypeModalBase
+        open
+        operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+        title="Test invoice"
+        billToEntityType="customer"
+        onClose={vi.fn()}
+        onCreated={vi.fn()}
+        createInvoice={createInvoice}
+      />
+    );
+
+    const custInput = screen.getByPlaceholderText(/Select QBO customer/i);
+    await user.click(custInput);
+    await user.type(custInput, "Inv");
+    await waitFor(() => expect(searchMock).toHaveBeenCalled(), { timeout: 4000 });
+
+    const option = await screen.findByRole("button", { name: /Invoice Customer LLC/i });
+    await user.click(option);
+
+    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+
+    await waitFor(() => {
+      expect(createInvoice).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer_id: "71111111-1111-4111-8111-111111111111",
+        })
+      );
+    });
   });
 });

@@ -9,6 +9,8 @@ type Props = {
   value: string | null;
   displayValue: string;
   onChange: (qboId: string | null, displayName: string) => void;
+  /** User chose a row from the QBO mirror list (includes TMS FK `id`). */
+  onPick?: (row: QboAutocompleteRow) => void;
   operatingCompanyId: string;
   placeholder?: string;
   allowFreeText?: boolean;
@@ -37,6 +39,7 @@ export function QboCombobox({
   value,
   displayValue,
   onChange,
+  onPick,
   operatingCompanyId,
   placeholder,
   allowFreeText = true,
@@ -118,6 +121,7 @@ export function QboCombobox({
             const label = renderLabel(row, entityType);
             setDraft(label.replace(" [INACTIVE]", ""));
             onChange(row.qbo_id, row.display_name);
+            onPick?.(row);
             setOpen(false);
           }
         }}
@@ -150,6 +154,7 @@ export function QboCombobox({
                 onClick={() => {
                   setDraft(row.display_name);
                   onChange(row.qbo_id, row.display_name);
+                  onPick?.(row);
                   setOpen(false);
                 }}
               >

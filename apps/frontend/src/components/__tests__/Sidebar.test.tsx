@@ -22,20 +22,20 @@ describe("Sidebar", () => {
   it("renders width/background/border tokens", () => {
     const { container } = render(
       <MemoryRouter initialEntries={["/home"]}>
-        <Sidebar role="Owner" />
+        <Sidebar role="Owner" mobileOpen />
       </MemoryRouter>
     );
     const aside = container.querySelector("aside");
+    expect(aside?.className).toContain("w-20");
     const style = window.getComputedStyle(aside as HTMLElement);
-    expect(style.width).toBe("80px");
     expect(style.backgroundColor).toBe("rgb(27, 35, 51)");
     expect(style.borderRight).toContain("1px solid rgb(42, 50, 66)");
   });
 
-  it("renders all 19 nav labels in expected order for Owner role", () => {
+  it("renders all nav labels in expected order for Owner role", () => {
     render(
       <MemoryRouter initialEntries={["/home"]}>
-        <Sidebar role="Owner" />
+        <Sidebar role="Owner" mobileOpen />
       </MemoryRouter>
     );
     const expected = [
@@ -58,11 +58,12 @@ describe("Sidebar", () => {
       "LEGAL",
       "425C",
       "DRV APP",
+      "USERS",
     ];
     const rendered = screen.getAllByRole("link").map((el) => el.textContent?.replace(/\s+/g, " ").trim());
     expect(rendered).toEqual(expected);
     const iconCount = document.querySelectorAll("a svg").length;
-    expect(iconCount).toBe(19);
+    expect(iconCount).toBe(20);
   });
 
   it("uses uppercase 10px labels and active item weight 600", () => {
