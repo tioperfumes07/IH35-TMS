@@ -37,6 +37,7 @@ import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.route
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
 import { registerDriverFinanceSettlementHtmlRoutes } from "./driver-finance/settlement-render.routes.js";
+import { registerDriverFinanceDriverBillsRoutes } from "./driver-finance/driver-bills.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
 import { registerCashAdvanceRequestRoutes } from "./driver-finance/cash-advance-requests.routes.js";
@@ -209,6 +210,7 @@ async function main() {
   await registerDriverRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);
+  await registerDriverFinanceDriverBillsRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
   await registerOwnerApprovalPortalRoutes(app);

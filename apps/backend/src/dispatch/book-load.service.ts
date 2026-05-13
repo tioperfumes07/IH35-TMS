@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
 import {
   claimReservation,
   consumeLoadNumberReservation,
@@ -158,16 +159,15 @@ async function optionalQuery<T = Record<string, unknown>>(
   }
 }
 
-async function createDriverBillArtifacts(
+export async function createDriverBillArtifacts(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: BookLoadInput,
   load: Record<string, unknown>,
   loadNumber: string,
   stops: BookLoadStop[]
 ) {
-  const hasBills = await relationExists(client, "accounting.bills");
-  const hasBillLines = await relationExists(client, "accounting.bill_lines");
-  if (!hasBills || !hasBillLines || !input.assigned_primary_driver_id) return;
+  const hasDriverBills = await relationExists(client, "driver_finance.driver_bills");
+  if (!hasDriverBills || !input.assigned_primary_driver_id) return;
 
   const extraPickupCount = stops.filter((s) => s.stop_type === "pickup").length > 1 ? stops.filter((s) => s.stop_type === "pickup").length - 1 : 0;
   const extraDropCount = stops.filter((s) => s.stop_type === "delivery").length > 1 ? stops.filter((s) => s.stop_type === "delivery").length - 1 : 0;
@@ -180,56 +180,58 @@ async function createDriverBillArtifacts(
   const basePayCents = input.charges.reduce((sum, c) => sum + Number(c.amount_cents ?? 0), 0);
   const totalBillCents = basePayCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
 
+  const resolvedLoadNumber = String(load.load_number ?? loadNumber);
+  const billNumber = driverBillNumberFromLoadNumber(resolvedLoadNumber);
+  const milesShort = Number(load.miles_shortest ?? 0) || null;
+  const milesPrac = Number(load.miles_practical ?? 0) || null;
+  let milesBasis: number | null = null;
+  let milesBasisType: "short" | "practical" | null = null;
+  if (milesShort && milesShort > 0) {
+    milesBasis = milesShort;
+    milesBasisType = "short";
+  } else if (milesPrac && milesPrac > 0) {
+    milesBasis = milesPrac;
+    milesBasisType = "practical";
+  }
+  const ratePerMileCents = milesBasis && milesBasis > 0 ? Math.round(totalBillCents / milesBasis) : null;
+
   const billRes = await client.query<{ id: string }>(
     `
-      INSERT INTO accounting.bills (
+      INSERT INTO driver_finance.driver_bills (
         operating_company_id,
-        display_id,
+        load_id,
+        load_number,
         bill_number,
-        bill_date,
-        amount_cents,
-        total_amount,
+        driver_id,
+        team_driver_id,
+        gross_amount_cents,
+        miles_basis,
+        miles_basis_type,
+        rate_per_mile_cents,
         status,
-        memo,
+        notes,
         created_by_user_id
       )
-      VALUES ($1,$2,$2,current_date,$3,$4,'unpaid',$5,$6)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11,$12)
       RETURNING id
     `,
     [
       input.operating_company_id,
-      `B-${loadNumber}`,
+      load.id,
+      resolvedLoadNumber,
+      billNumber,
+      input.assigned_primary_driver_id,
+      input.team_id ? null : (input.assigned_secondary_driver_id ?? null),
       totalBillCents,
-      (totalBillCents / 100).toFixed(2),
-      `Auto-created from load ${loadNumber}`,
+      milesBasis,
+      milesBasisType,
+      ratePerMileCents,
+      `Auto-created from load ${resolvedLoadNumber}`,
       input.requestingUserUuid,
     ]
   );
   const billId = billRes.rows[0]?.id;
   if (!billId) return;
-
-  const lineItems: Array<{ description: string; amountCents: number }> = [];
-  for (const charge of input.charges) {
-    lineItems.push({
-      description: `Load pay - ${charge.code}`,
-      amountCents: Number(charge.amount_cents ?? 0),
-    });
-  }
-  if (tarpPayCents > 0) lineItems.push({ description: "Tarp pay", amountCents: tarpPayCents });
-  if (extraPickupCount > 0) lineItems.push({ description: `Extra pickup bonus x${extraPickupCount}`, amountCents: extraPickupCount * 2500 });
-  if (extraDropCount > 0) lineItems.push({ description: `Extra drop bonus x${extraDropCount}`, amountCents: extraDropCount * 2500 });
-  if (driverLumperCents > 0) lineItems.push({ description: "Lumper advance to driver", amountCents: driverLumperCents });
-
-  let sequence = 1;
-  for (const line of lineItems.filter((line) => line.amountCents > 0)) {
-    await client.query(
-      `
-        INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description, section)
-        VALUES ($1,$2,$3,$4,'B')
-      `,
-      [billId, sequence++, (line.amountCents / 100).toFixed(2), line.description]
-    );
-  }
 
   const customerLumperCents = stops.reduce((sum, stop) => {
     if (!stop.lumper_required) return sum;
@@ -246,9 +248,9 @@ async function createDriverBillArtifacts(
     "dispatch.load.driver_bill_created",
     {
       load_uuid: load.id,
-      load_number: loadNumber,
+      load_number: resolvedLoadNumber,
       bill_id: billId,
-      bill_display_id: `B-${loadNumber}`,
+      bill_display_id: billNumber,
       extra_pickups_count: extraPickupCount,
       extra_drops_count: extraDropCount,
       tarp_pay_cents: tarpPayCents,

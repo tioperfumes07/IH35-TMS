@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { formatDateTime, formatMoney, joinBrandAddrLines, wrapPdfDocument } from "../render/pdf-template.js";
 import { formatSettlementPeriodLines, renderSettlementBody, type SettlementDeductionRow, type SettlementHtmlModel, type SettlementLoadRow } from "../render/settlement.template.js";
+import { driverBillRowsToSettlementLoads, listDriverBillsForSettlementPeriod, type DriverBillSettlementRow } from "./settlements.service.js";
 
 const paramsSchema = z.object({ settlementId: z.string().uuid() });
 
@@ -13,6 +14,11 @@ function canViewSettlementHtml(role: string) {
 
 async function hasSettlementSchema(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok?: boolean }> }> }) {
   const res = await client.query(`SELECT to_regclass('driver_finance.driver_settlements') IS NOT NULL AS ok`);
+  return Boolean(res.rows[0]?.ok);
+}
+
+async function hasDriverBillsTable(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok?: boolean }> }> }) {
+  const res = await client.query(`SELECT to_regclass('driver_finance.driver_bills') IS NOT NULL AS ok`);
   return Boolean(res.rows[0]?.ok);
 }
 
@@ -93,8 +99,8 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
       );
       const company = companyRes.rows[0] ?? {};
 
-      const loadRows: SettlementLoadRow[] = [];
       const deductions: SettlementDeductionRow[] = [];
+      const lineDerivedLoads: SettlementLoadRow[] = [];
 
       for (const line of linesRes.rows as Array<Record<string, unknown>>) {
         const lineType = String(line.line_type ?? "");
@@ -106,7 +112,7 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
         }
 
         const loadMatch = description.match(/L-[A-Z0-9-]+/i);
-        loadRows.push({
+        lineDerivedLoads.push({
           loadNum: loadMatch?.[0]?.toUpperCase() ?? "—",
           lane: description,
           shortMi: "—",
@@ -116,6 +122,23 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
           lineTotalCents: Math.max(cents, 0),
         });
       }
+
+      let billRowsCache: Awaited<ReturnType<typeof listDriverBillsForSettlementPeriod>> | null = null;
+      if (await hasDriverBillsTable(client)) {
+        try {
+          billRowsCache = await listDriverBillsForSettlementPeriod(client, {
+            operatingCompanyId: query.data.operating_company_id,
+            driverId: String(settlement.driver_id),
+            periodStart: String(settlement.period_start),
+            periodEnd: String(settlement.period_end),
+          });
+        } catch {
+          billRowsCache = null;
+        }
+      }
+
+      let loadRows: SettlementLoadRow[] =
+        billRowsCache && billRowsCache.length > 0 ? driverBillRowsToSettlementLoads(billRowsCache) : lineDerivedLoads;
 
       if (loadRows.length === 0) {
         loadRows.push({
@@ -128,6 +151,9 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
           lineTotalCents: dollarsToCents(settlement.gross_pay),
         });
       }
+
+      const billMilesTotal =
+        billRowsCache?.reduce((sum: number, row: DriverBillSettlementRow) => sum + Number(row.miles_basis ?? 0), 0) ?? 0;
 
       const grossCents = dollarsToCents(settlement.gross_pay);
       const reimbCents = dollarsToCents(settlement.reimbursements_total);
@@ -181,7 +207,7 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
           grossCents: dollarsToCents(ytdRow.gross),
           deductionsCents: dollarsToCents(ytdRow.deductions),
           netCents: dollarsToCents(ytdRow.net),
-          milesDisplay: "—",
+          milesDisplay: billMilesTotal > 0 ? String(billMilesTotal) : "—",
         },
         sigDriverName: driverName,
         dispatcherSigLine: `${brandName} payroll`,
