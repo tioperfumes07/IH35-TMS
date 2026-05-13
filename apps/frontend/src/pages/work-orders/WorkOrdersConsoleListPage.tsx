@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { listWorkOrdersConsole } from "../../api/workOrdersConsole";
+import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
 
@@ -50,7 +52,7 @@ export function WorkOrdersConsoleListPage() {
 
   return (
     <div className="flex flex-col gap-3 px-3 py-3">
-      <PageHeader title="Work orders" subtitle="Operational console · vendor-ready PDFs · mandatory vendor references" />
+      <PageHeader title="Work orders" subtitle="Operational console for vendor-ready work order PDFs" />
 
       {!companyId ? <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Select a company.</div> : null}
 
@@ -111,33 +113,60 @@ export function WorkOrdersConsoleListPage() {
             </tr>
           </thead>
           <tbody>
-            {(listQuery.data?.work_orders ?? []).map((row) => {
-              const id = String(row.id ?? "");
-              const display = String(row.display_id ?? row.id ?? "");
-              const billingType = String(row.wo_billing_type ?? row.bucket ?? "");
-              const serviceClass = String(row.wo_service_class ?? row.wo_type ?? "");
-              const status = String(row.status ?? "");
-              const opened = String(row.opened_at ?? row.created_at ?? "").slice(0, 10);
-              const est = row.total_estimated_cost ?? "—";
-              const act = row.total_actual_cost ?? "—";
-              return (
-                <tr key={id} className="border-b border-gray-100 hover:bg-slate-50/60">
-                  <td className="px-2 py-2 font-mono text-xs">{display}</td>
-                  <td className="px-2 py-2 capitalize">{billingType}</td>
-                  <td className="px-2 py-2">{serviceClass}</td>
-                  <td className="px-2 py-2">{status}</td>
-                  <td className="px-2 py-2">
-                    {String(est)} / {String(act)}
-                  </td>
-                  <td className="px-2 py-2 text-xs text-slate-600">{opened}</td>
-                  <td className="px-2 py-2 text-right">
-                    <Link className="text-[#1f2a44] hover:underline" to={`/work-orders/${id}`}>
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
+            {listQuery.isError ? (
+              <tr>
+                <td colSpan={7} className="p-0">
+                  <ListErrorState
+                    title="Couldn't load work orders"
+                    {...formatQueryErrorDetail(listQuery.error)}
+                    onRetry={() => void listQuery.refetch()}
+                  />
+                </td>
+              </tr>
+            ) : null}
+            {!listQuery.isError && listQuery.isLoading && !listQuery.data ? (
+              <tr>
+                <td colSpan={7} className="px-2 py-3 text-xs text-slate-400">
+                  Loading…
+                </td>
+              </tr>
+            ) : null}
+            {!listQuery.isError && !listQuery.isLoading && (listQuery.data?.work_orders ?? []).length === 0 ? (
+              <tr>
+                <td className="px-2 py-4 text-sm text-slate-500" colSpan={7}>
+                  No work orders match the current filters.
+                </td>
+              </tr>
+            ) : null}
+            {!listQuery.isError
+              ? (listQuery.data?.work_orders ?? []).map((row) => {
+                  const id = String(row.id ?? "");
+                  const display = String(row.display_id ?? row.id ?? "");
+                  const billingType = String(row.wo_billing_type ?? row.bucket ?? "");
+                  const serviceClass = String(row.wo_service_class ?? row.wo_type ?? "");
+                  const status = String(row.status ?? "");
+                  const opened = String(row.opened_at ?? row.created_at ?? "").slice(0, 10);
+                  const est = row.total_estimated_cost ?? "—";
+                  const act = row.total_actual_cost ?? "—";
+                  return (
+                    <tr key={id} className="border-b border-gray-100 hover:bg-slate-50/60">
+                      <td className="code-cell px-2 py-2 font-mono text-xs">{display}</td>
+                      <td className="px-2 py-2 capitalize">{billingType}</td>
+                      <td className="px-2 py-2">{serviceClass}</td>
+                      <td className="px-2 py-2">{status}</td>
+                      <td className="px-2 py-2">
+                        {String(est)} / {String(act)}
+                      </td>
+                      <td className="px-2 py-2 text-xs text-slate-600">{opened}</td>
+                      <td className="px-2 py-2 text-right">
+                        <Link className="text-[#1f2a44] hover:underline" to={`/work-orders/${id}`}>
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
+              : null}
           </tbody>
         </table>
       </div>

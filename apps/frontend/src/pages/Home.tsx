@@ -1,14 +1,15 @@
 import type { AuthMeResponse } from "../types/api";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { cashAdvanceRequestsOfficeApi } from "../api/cashAdvanceRequests";
-import { getHomeAttentionList, getHomeFleetSnapshot, getKpiSummary } from "../api/reports";
+import { fetchHomeFleetSnapshot } from "../api/home";
+import { getKpiSummary } from "../api/reports";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Button } from "../components/Button";
 import { SectionQuickJump } from "../components/home/SectionQuickJump";
-import { AttentionListRow } from "../components/home/AttentionListRow";
 import { FleetSnapshotPanel } from "../components/home/FleetSnapshotPanel";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { AttentionList } from "./home/AttentionList";
 
 const QUICK_JUMPS = [
   { title: "Maintenance", subtitle: "Work orders, R&M, Severe Repair", count: 14, to: "/maintenance" },
@@ -18,7 +19,7 @@ const QUICK_JUMPS = [
   { title: "Safety", subtitle: "HOS, Antidoping, Accidents, DOT", count: 6, to: "/safety" },
   { title: "Drivers", subtitle: "Profiles, Settlements, Permits", count: 3, to: "/drivers" },
   { title: "Dispatch", subtitle: "Loads, Settlements, Geofencing", count: 27, to: "/dispatch" },
-  { title: "Lists & Catalogs", subtitle: "Grouped by domain · 8 sets", count: null, to: "/lists" },
+  { title: "Lists & Catalogs", subtitle: "Eight catalog sets grouped by domain", count: null, to: "/lists" },
 ];
 
 type Props = {
@@ -28,20 +29,16 @@ type Props = {
 export function HomePage({ auth }: Props) {
   const displayName = auth.email ?? "Driver";
   const { selectedCompanyId } = useCompanyContext();
+  const queryClient = useQueryClient();
 
   const kpiSummaryQuery = useQuery({
     queryKey: ["reports", "kpi-summary", selectedCompanyId],
     queryFn: () => getKpiSummary(selectedCompanyId!),
     enabled: Boolean(selectedCompanyId),
   });
-  const attentionQuery = useQuery({
-    queryKey: ["reports", "home-attention-list", selectedCompanyId],
-    queryFn: () => getHomeAttentionList(selectedCompanyId!),
-    enabled: Boolean(selectedCompanyId),
-  });
   const fleetSnapshotQuery = useQuery({
-    queryKey: ["reports", "home-fleet-snapshot", selectedCompanyId],
-    queryFn: () => getHomeFleetSnapshot(selectedCompanyId!),
+    queryKey: ["home", "fleet-snapshot", selectedCompanyId],
+    queryFn: () => fetchHomeFleetSnapshot(selectedCompanyId!),
     enabled: Boolean(selectedCompanyId),
   });
   const ownerCashPendingQuery = useQuery({
@@ -61,27 +58,6 @@ export function HomePage({ auth }: Props) {
     { label: "Pending QBO Sync", number: String(kpiSummaryQuery.data?.pending_qbo_sync ?? 0), meta: "outbox events pending", alert: "warn" as const },
   ];
 
-  const attentionItems = (attentionQuery.data?.items ?? [])
-    .filter((item) => item.count > 0)
-    .map((item) => ({
-      severity: item.severity === "critical" ? ("CRIT" as const) : item.severity === "warning" ? ("WARN" as const) : ("INFO" as const),
-      text: `${item.count} ${item.message}`,
-      module:
-        item.link === "/maintenance"
-          ? "Maintenance"
-          : item.link === "/accounting"
-            ? "Accounting"
-            : item.link === "/safety"
-              ? "Safety"
-              : item.link === "/dispatch"
-                ? "Dispatch"
-                : item.link === "/fuel"
-                  ? "Fuel"
-                  : item.link === "/drivers"
-                    ? "Drivers"
-                    : "Home",
-    }));
-
   const fleetRows = [
     { leftLabel: "Trucks", leftValue: String(fleetSnapshotQuery.data?.trucks ?? 0), rightLabel: "Refrigerated", rightValue: String(fleetSnapshotQuery.data?.refrigerated ?? 0) },
     { leftLabel: "Flatbeds", leftValue: String(fleetSnapshotQuery.data?.flatbeds ?? 0), rightLabel: "Dry vans", rightValue: String(fleetSnapshotQuery.data?.dry_vans ?? 0) },
@@ -95,14 +71,14 @@ export function HomePage({ auth }: Props) {
     <div className="space-y-4">
       <PageHeader
         title="Home"
-        subtitle={`Workspace snapshot · last 3 days · ${displayName}`}
+        subtitle={`Workspace snapshot for the last three days (${displayName})`}
         actions={
           <Button
             variant="secondary"
             onClick={() => {
               void Promise.all([
                 kpiSummaryQuery.refetch(),
-                attentionQuery.refetch(),
+                queryClient.invalidateQueries({ queryKey: ["home", "attention-list", selectedCompanyId] }),
                 fleetSnapshotQuery.refetch(),
                 ownerCashPendingQuery.refetch(),
               ]);
@@ -188,29 +164,7 @@ export function HomePage({ auth }: Props) {
         <section className="rounded border border-slate-200 bg-white">
           <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Today&apos;s Attention List</div>
           <div className="px-3 py-1">
-            {attentionQuery.isLoading ? (
-              <div className="space-y-2 py-2">
-                <div className="h-5 animate-pulse rounded bg-slate-100" />
-                <div className="h-5 animate-pulse rounded bg-slate-100" />
-                <div className="h-5 animate-pulse rounded bg-slate-100" />
-              </div>
-            ) : attentionQuery.isError ? (
-              <div className="my-2 flex items-center justify-between rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-                <span>Failed to load attention list. Try refreshing.</span>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    void attentionQuery.refetch();
-                  }}
-                >
-                  Refresh
-                </Button>
-              </div>
-            ) : attentionItems.length === 0 ? (
-              <div className="py-3 text-sm text-slate-500">No items requiring attention.</div>
-            ) : (
-              attentionItems.map((item) => <AttentionListRow key={item.text} severity={item.severity} text={item.text} moduleLabel={item.module} />)
-            )}
+            <AttentionList operatingCompanyId={selectedCompanyId} />
           </div>
         </section>
         {fleetSnapshotQuery.isLoading ? (

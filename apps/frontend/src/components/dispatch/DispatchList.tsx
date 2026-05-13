@@ -1,6 +1,8 @@
 import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
+import type { DataTableErrorState } from "../../lib/tableError";
 import { Button } from "../Button";
+import { ListErrorState } from "../ListErrorState";
 import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents } from "./constants";
 
 type SortField = "created_at" | "load_number" | "status" | "rate_total_cents";
@@ -18,6 +20,7 @@ type Props = {
   onPageChange: (nextOffset: number) => void;
   onRowClick: (loadId: string) => void;
   onExportCsv: () => void;
+  listError?: DataTableErrorState;
 };
 
 function statusVariant(status: DispatchLoadRow["status"]) {
@@ -40,6 +43,7 @@ export function DispatchList({
   onPageChange,
   onRowClick,
   onExportCsv,
+  listError,
 }: Props) {
   const from = totalCount === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, totalCount);
@@ -53,6 +57,19 @@ export function DispatchList({
     }
     onSortChange(field, sortDirection === "asc" ? "desc" : "asc");
   };
+
+  if (listError) {
+    return (
+      <section className="space-y-2">
+        <ListErrorState
+          title="Couldn't load dispatch list"
+          status={listError.status}
+          message={listError.message}
+          onRetry={listError.onRetry}
+        />
+      </section>
+    );
+  }
 
   if (!loading && loads.length === 0) {
     return (
@@ -107,7 +124,9 @@ export function DispatchList({
             {loading
               ? Array.from({ length: Math.max(4, limit / 10) }).map((_, idx) => (
                   <tr key={idx} className="border-b border-gray-100">
-                    <td colSpan={10} className="px-3 py-3 text-gray-400">Loading loads...</td>
+                    <td colSpan={10} className="px-3 py-3 text-gray-400">
+                      Loading loads...
+                    </td>
                   </tr>
                 ))
               : loads.map((load) => (
@@ -117,22 +136,24 @@ export function DispatchList({
                     className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
                   >
                     <td className="px-3 py-2">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</td>
-                    <td className="px-3 py-2 font-medium text-gray-800">{load.load_number}</td>
-                    <td className="px-3 py-2 min-w-0 max-w-[240px]">
+                    <td className="code-cell px-3 py-2 font-medium text-gray-800">{load.load_number}</td>
+                    <td className="min-w-0 max-w-[240px] px-3 py-2">
                       <span title={load.customer_name ?? undefined} className="single-line-name">
                         {load.customer_name ?? "-"}
                       </span>
                     </td>
                     <td className="px-3 py-2">{load.first_pickup_city ?? "-"}</td>
                     <td className="px-3 py-2">{load.first_delivery_city ?? "-"}</td>
-                    <td className="px-3 py-2">{load.assigned_unit_number ?? "-"}</td>
-                    <td className="px-3 py-2 min-w-0 max-w-[240px]">
+                    <td className="code-cell px-3 py-2">{load.assigned_unit_number ?? "-"}</td>
+                    <td className="min-w-0 max-w-[240px] px-3 py-2">
                       <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
                         {load.assigned_primary_driver_name ?? "Unassigned"}
                       </span>
                     </td>
                     <td className="px-3 py-2">
-                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>{STATUS_LABEL[load.status]}</span>
+                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
+                        {STATUS_LABEL[load.status]}
+                      </span>
                     </td>
                     <td className="px-3 py-2">{formatMoneyCents(load.rate_total_cents, load.currency_code)}</td>
                     <td className="px-3 py-2">{new Date(load.created_at).toLocaleDateString()}</td>
@@ -153,7 +174,7 @@ export function DispatchList({
               className="w-full rounded border border-gray-200 bg-white p-3 text-left"
             >
               <div className="flex items-center justify-between">
-                <div className="font-semibold">{load.load_number}</div>
+                <div className="code-cell font-semibold">{load.load_number}</div>
                 <div>{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</div>
               </div>
               <div className="mt-1 min-w-0 text-sm text-gray-700">
@@ -178,7 +199,9 @@ export function DispatchList({
         <Button type="button" variant="secondary" size="sm" disabled={!hasPrev} onClick={() => onPageChange(Math.max(0, offset - limit))}>
           Previous
         </Button>
-        <span className="text-gray-600">Showing {from}-{to} of {totalCount}</span>
+        <span className="text-gray-600">
+          Showing {from}-{to} of {totalCount}
+        </span>
         <Button type="button" variant="secondary" size="sm" disabled={!hasNext} onClick={() => onPageChange(offset + limit)}>
           Next
         </Button>

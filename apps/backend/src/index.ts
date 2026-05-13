@@ -46,6 +46,7 @@ import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
 import { registerCashAdvanceRequestRoutes } from "./driver-finance/cash-advance-requests.routes.js";
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
+import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
@@ -237,6 +238,7 @@ async function main() {
   await registerDriverFinanceDeductionRoutes(app);
   await registerOwnerApprovalPortalRoutes(app);
   await registerCashAdvanceRequestRoutes(app);
+  await registerHomeRoutes(app);
   await registerReportsRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);

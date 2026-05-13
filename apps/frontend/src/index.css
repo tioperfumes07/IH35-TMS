@@ -14,3 +14,7 @@ body {
   color: #1f2937;
   background: #f7f8fa;
 }
+
+.code-cell {
+  white-space: nowrap;
+}

@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { colors, spacing, typography } from "../design/tokens";
+import type { DataTableErrorState } from "../lib/tableError";
+import { ListErrorState } from "./ListErrorState";
+
+export type { DataTableErrorState };
 
 type Column<T> = {
   key: keyof T | string;
@@ -8,6 +12,7 @@ type Column<T> = {
   sortable?: boolean;
   render?: (row: T) => ReactNode;
   className?: string;
+  cellClass?: string;
 };
 
 type DataTableProps<T> = {
@@ -17,6 +22,7 @@ type DataTableProps<T> = {
   loading?: boolean;
   pageSize?: number;
   onRowClick?: (row: T) => void;
+  errorState?: DataTableErrorState;
 };
 
 export function DataTable<T>({
@@ -26,6 +32,7 @@ export function DataTable<T>({
   loading = false,
   pageSize = 15,
   onRowClick,
+  errorState,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -47,6 +54,8 @@ export function DataTable<T>({
   const safePage = Math.min(page, pageCount);
   const offset = (safePage - 1) * pageSize;
   const pageRows = sortedRows.slice(offset, offset + pageSize);
+  const inError = Boolean(errorState);
+  const footerRowsLength = inError ? 0 : sortedRows.length;
 
   return (
     <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
@@ -57,7 +66,12 @@ export function DataTable<T>({
               <th
                 key={String(column.key)}
                 className={`font-semibold uppercase text-gray-600 ${column.className ?? ""}`}
-                style={{ paddingLeft: spacing.tableCellPaddingX, paddingRight: spacing.tableCellPaddingX, fontSize: typography.kpiLabel, letterSpacing: typography.tightUpper }}
+                style={{
+                  paddingLeft: spacing.tableCellPaddingX,
+                  paddingRight: spacing.tableCellPaddingX,
+                  fontSize: typography.kpiLabel,
+                  letterSpacing: typography.tightUpper,
+                }}
               >
                 {column.sortable ? (
                   <button
@@ -84,7 +98,18 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
-          {loading ? (
+          {inError && errorState ? (
+            <tr>
+              <td colSpan={columns.length} className="p-0">
+                <ListErrorState
+                  title="Couldn't load list"
+                  status={errorState.status}
+                  message={errorState.message}
+                  onRetry={errorState.onRetry}
+                />
+              </td>
+            </tr>
+          ) : loading ? (
             <tr>
                   <td colSpan={columns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
                 Loading...
@@ -107,7 +132,7 @@ export function DataTable<T>({
                 {columns.map((column) => (
                   <td
                     key={String(column.key)}
-                    className={`py-1 text-gray-800 ${column.className ?? ""}`}
+                    className={`py-1 text-gray-800 ${column.cellClass ?? column.className ?? ""}`}
                     style={{ paddingLeft: spacing.tableCellPaddingX, paddingRight: spacing.tableCellPaddingX }}
                   >
                     {column.render ? column.render(row) : String((row as Record<string, unknown>)[String(column.key)] ?? "")}
@@ -120,14 +145,18 @@ export function DataTable<T>({
       </table>
       <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600" style={{ color: colors.mutedText }}>
         <span>
-          {sortedRows.length === 0 ? 0 : offset + 1}-{Math.min(offset + pageSize, sortedRows.length)} of {sortedRows.length}
+          {inError
+            ? "—"
+            : footerRowsLength === 0
+              ? `0 of ${footerRowsLength}`
+              : `${offset + 1}-${Math.min(offset + pageSize, footerRowsLength)} of ${footerRowsLength}`}
         </span>
         <div className="flex items-center gap-2">
           <button
             type="button"
             className="h-7 rounded border border-gray-300 px-2 disabled:opacity-40"
             onClick={() => setPage((current) => Math.max(1, current - 1))}
-            disabled={safePage <= 1}
+            disabled={inError || safePage <= 1}
           >
             Prev
           </button>
@@ -138,7 +167,7 @@ export function DataTable<T>({
             type="button"
             className="h-7 rounded border border-gray-300 px-2 disabled:opacity-40"
             onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
-            disabled={safePage >= pageCount}
+            disabled={inError || safePage >= pageCount}
           >
             Next
           </button>

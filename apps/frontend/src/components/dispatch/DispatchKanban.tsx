@@ -1,6 +1,8 @@
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
 import type { DispatchLoadRow, LoadStatus } from "../../api/loads";
+import type { DataTableErrorState } from "../../lib/tableError";
+import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
 import { DISPATCH_STATUS_GROUPS, normalizeStatusToColumnKey } from "./constants";
 import { KanbanColumn } from "./KanbanColumn";
@@ -10,6 +12,7 @@ type Props = {
   loading: boolean;
   onLoadClick: (loadId: string) => void;
   onStatusDrop: (loadId: string, nextStatus: LoadStatus) => Promise<void>;
+  listError?: DataTableErrorState;
 };
 
 function groupLoadsByColumn(loads: DispatchLoadRow[]) {
@@ -22,7 +25,7 @@ function groupLoadsByColumn(loads: DispatchLoadRow[]) {
   return grouped;
 }
 
-export function DispatchKanban({ loads, loading, onLoadClick, onStatusDrop }: Props) {
+export function DispatchKanban({ loads, loading, onLoadClick, onStatusDrop, listError }: Props) {
   const [optimisticLoads, setOptimisticLoads] = useState<DispatchLoadRow[]>(loads);
   const { pushToast } = useToast();
 
@@ -56,6 +59,17 @@ export function DispatchKanban({ loads, loading, onLoadClick, onStatusDrop }: Pr
       pushToast("Status change rejected by server. Reverted.", "error");
     }
   };
+
+  if (listError) {
+    return (
+      <ListErrorState
+        title="Couldn't load dispatch board"
+        status={listError.status}
+        message={listError.message}
+        onRetry={listError.onRetry}
+      />
+    );
+  }
 
   if (loading) {
     return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading dispatch board...</div>;

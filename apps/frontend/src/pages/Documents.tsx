@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ApiError } from "../api/client";
 import { getDownloadUrl, listFileCategories, listFiles, type DocsFile } from "../api/docs";
 import { listUsers } from "../api/identity";
 import { useAuth } from "../auth/useAuth";
@@ -9,8 +8,8 @@ import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { PreviewModal } from "../components/documents/PreviewModal";
 import { PageHeader } from "../components/layout/PageHeader";
-import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
+import { dataTableErrorState } from "../lib/tableError";
 
 const ENTITY_TYPE_OPTIONS = [
   { value: "all", label: "All" },
@@ -102,13 +101,6 @@ export function DocumentsPage() {
     return <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Only Owner/Administrator can access company-wide documents.</div>;
   }
 
-  const documentsError =
-    filesQuery.error instanceof ApiError && filesQuery.error.status === 403
-      ? "You do not have permission to view all documents."
-      : filesQuery.isError
-      ? "Unable to load documents."
-      : null;
-
   return (
     <div className="space-y-3">
       <PageHeader title="All Documents" subtitle="Company-wide documents library" />
@@ -195,12 +187,11 @@ export function DocumentsPage() {
         ) : null}
       </div>
 
-      {documentsError ? <ListErrorBanner message={documentsError} onRetry={() => void filesQuery.refetch()} /> : null}
-
       <DataTable
         rows={filteredFiles}
         rowKey={(row) => row.id}
         loading={filesQuery.isLoading}
+        errorState={dataTableErrorState(filesQuery.error, () => void filesQuery.refetch())}
         pageSize={50}
         onRowClick={(row) => setSelectedPreviewFile(row)}
         columns={[
@@ -210,7 +201,7 @@ export function DocumentsPage() {
           { key: "uploader_email", label: "Uploader", render: (row) => row.uploader_email ?? row.uploader_user_id },
           { key: "document_date", label: "Doc Date", render: (row) => (row.document_date ? row.document_date.slice(0, 10) : "-") },
           { key: "expiration_date", label: "Expires", render: (row) => (row.expiration_date ? row.expiration_date.slice(0, 10) : "-") },
-          { key: "version_number", label: "Version", render: (row) => `v${row.version_number}` },
+          { key: "version_number", label: "Version", cellClass: "code-cell", render: (row) => `v${row.version_number}` },
           {
             key: "actions",
             label: "Actions",
