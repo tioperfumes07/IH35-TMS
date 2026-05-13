@@ -82,3 +82,7 @@ export const conditionCodesCatalogClient = createFleetCatalogClient("condition-c
 export const equipmentTypesFleetCatalogClient = createFleetCatalogClient("equipment-types");
 export const tirePositionsCatalogClient = createFleetCatalogClient("tire-positions");
 export const ownershipTypesCatalogClient = createFleetCatalogClient("ownership-types");
+export const trailerTypesCatalogClient = createFleetCatalogClient("trailer-types");
+export const leaseTermsCatalogClient = createFleetCatalogClient("lease-terms");
+export const assetStatusesCatalogClient = createFleetCatalogClient("asset-statuses");
+export const assetLocationsCatalogClient = createFleetCatalogClient("asset-locations");

@@ -38,9 +38,15 @@ export function ListsHubPage() {
     onError: (error) => pushToast(String((error as Error).message || "Failed to start force sync"), "error"),
   });
 
+  function normalizeListsDomain(domain: string) {
+    if (domain === "drivers") return "driver";
+    return domain;
+  }
+
   function openCatalog(domain: string, catalogKey: string) {
+    const routeDomain = normalizeListsDomain(domain);
     if (catalogKey === "_create") {
-      navigate(`/lists/${domain}`);
+      navigate(`/lists/${routeDomain}`);
       return;
     }
     if (domain === "dispatch") {
@@ -60,7 +66,7 @@ export function ListsHubPage() {
         return;
       }
     }
-    navigate(`/lists/${domain}/${catalogKey}`);
+    navigate(`/lists/${routeDomain}/${catalogKey}`);
   }
 
   const inventory = inventoryQuery.data?.inventory ?? [];

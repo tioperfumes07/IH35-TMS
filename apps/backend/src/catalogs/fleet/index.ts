@@ -50,4 +50,36 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     displayName: "Unit Ownership Types",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
   });
+
+  createCatalogRoutes(app, {
+    tableName: "trailer_types",
+    urlSegment: "trailer-types",
+    routePrefix: "/api/v1/catalogs/fleet",
+    displayName: "Trailer Types",
+    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+  });
+
+  createCatalogRoutes(app, {
+    tableName: "lease_terms",
+    urlSegment: "lease-terms",
+    routePrefix: "/api/v1/catalogs/fleet",
+    displayName: "Lease Terms",
+    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+  });
+
+  createCatalogRoutes(app, {
+    tableName: "asset_statuses",
+    urlSegment: "asset-statuses",
+    routePrefix: "/api/v1/catalogs/fleet",
+    displayName: "Asset Statuses",
+    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+  });
+
+  createCatalogRoutes(app, {
+    tableName: "asset_locations",
+    urlSegment: "asset-locations",
+    routePrefix: "/api/v1/catalogs/fleet",
+    displayName: "Asset Locations",
+    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+  });
 }

@@ -1,9 +1,13 @@
 import type { FastifyInstance } from "fastify";
+import { createCatalogRoutes as createCompanyScopedCatalogRoutes } from "../fuel/factory.js";
 import {
   registerJournalEntryTypesReadOnlyRoutes,
   registerLegacyAccountingCatalogRoutes,
   registerQboCategoriesCatalogRoutes,
 } from "./factory.js";
+
+const accountingCodeRegex = /^[A-Z][A-Z0-9-]+$/;
+const chartSeedCodeRegex = /^[A-Z0-9][A-Z0-9._-]*$/;
 
 export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
   registerLegacyAccountingCatalogRoutes(app, {
@@ -188,4 +192,44 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
 
   registerQboCategoriesCatalogRoutes(app);
   registerJournalEntryTypesReadOnlyRoutes(app);
+
+  createCompanyScopedCatalogRoutes(app, {
+    tableName: "chart_of_accounts_seeds",
+    urlSegment: "chart-of-accounts-seeds",
+    routePrefix: "/api/v1/catalogs/accounting",
+    displayName: "Chart of Accounts Seeds",
+    codeRegex: chartSeedCodeRegex,
+  });
+
+  createCompanyScopedCatalogRoutes(app, {
+    tableName: "expense_categories",
+    urlSegment: "expense-categories",
+    routePrefix: "/api/v1/catalogs/accounting",
+    displayName: "Expense Categories",
+    codeRegex: accountingCodeRegex,
+  });
+
+  createCompanyScopedCatalogRoutes(app, {
+    tableName: "payment_methods",
+    urlSegment: "payment-methods",
+    routePrefix: "/api/v1/catalogs/accounting",
+    displayName: "Payment Methods",
+    codeRegex: accountingCodeRegex,
+  });
+
+  createCompanyScopedCatalogRoutes(app, {
+    tableName: "tax_codes",
+    urlSegment: "tax-codes",
+    routePrefix: "/api/v1/catalogs/accounting",
+    displayName: "Tax Codes",
+    codeRegex: accountingCodeRegex,
+  });
+
+  createCompanyScopedCatalogRoutes(app, {
+    tableName: "currency_codes",
+    urlSegment: "currency-codes",
+    routePrefix: "/api/v1/catalogs/accounting",
+    displayName: "Currency Codes",
+    codeRegex: accountingCodeRegex,
+  });
 }

@@ -57,4 +57,44 @@ export async function registerFuelCatalogRoutes(app: FastifyInstance) {
     displayName: "Fuel Tax Jurisdictions",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
   });
+
+  createCatalogRoutes(app, {
+    tableName: "fuel_brands",
+    urlSegment: "brands",
+    routePrefix: "/api/v1/catalogs/fuel",
+    displayName: "Fuel Brands",
+    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+  });
+
+  createCatalogRoutes(app, {
+    tableName: "fuel_station_states",
+    urlSegment: "station-states",
+    routePrefix: "/api/v1/catalogs/fuel",
+    displayName: "Fuel Station States",
+    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+  });
+
+  createCatalogRoutes(app, {
+    tableName: "fuel_pump_types",
+    urlSegment: "pump-types",
+    routePrefix: "/api/v1/catalogs/fuel",
+    displayName: "Fuel Pump Types",
+    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+  });
+
+  createCatalogRoutes(app, {
+    tableName: "fuel_grades",
+    urlSegment: "grades",
+    routePrefix: "/api/v1/catalogs/fuel",
+    displayName: "Fuel Grades",
+    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+  });
+
+  createCatalogRoutes(app, {
+    tableName: "fuel_dispatch_routes",
+    urlSegment: "dispatch-routes",
+    routePrefix: "/api/v1/catalogs/fuel",
+    displayName: "Fuel Dispatch Routes",
+    codeRegex: /^[A-Z][A-Z0-9-]+$/,
+  });
 }
