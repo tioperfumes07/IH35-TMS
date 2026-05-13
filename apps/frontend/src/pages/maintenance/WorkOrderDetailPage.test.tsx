@@ -15,7 +15,7 @@ vi.mock("../../contexts/CompanyContext", () => ({
   }),
 }));
 
-const getWorkOrder = vi.fn(() =>
+const getWorkOrder = vi.fn((_id: string, _operatingCompanyId: string) =>
   Promise.resolve({
     id: "wo-pilot-id",
     display_id: "WO-PILOT-TEST",
@@ -26,7 +26,7 @@ const getWorkOrder = vi.fn(() =>
 );
 
 vi.mock("../../api/maintenance", () => ({
-  getWorkOrder: (...args: unknown[]) => getWorkOrder(...args),
+  getWorkOrder: (id: string, operatingCompanyId: string) => getWorkOrder(id, operatingCompanyId),
 }));
 
 function renderPage() {
