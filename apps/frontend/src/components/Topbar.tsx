@@ -1,11 +1,15 @@
 import { ChevronDown } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { getQboConnectionStatus } from "../api/forensic";
+import { getSamsaraHealth } from "../api/samsara";
 import { signOut } from "../api/identity";
 import { colors, spacing, typography } from "../design/tokens";
 import type { AuthMeResponse } from "../types/api";
 import { CompanySwitcher } from "./CompanySwitcher";
 import { useToast } from "./Toast";
+import { useCompanyContext } from "../contexts/CompanyContext";
+import { qboConnectionLabel, RELAY_NOT_CONFIGURED, resolveSamsaraVisualStatus } from "../lib/integration-telematics-status";
 
 type Props = {
   auth: AuthMeResponse["user"];
@@ -22,12 +26,45 @@ function formatNow(now: Date): string {
   });
 }
 
+function topbarDotClass(dot: "gray" | "green" | "yellow" | "red"): string {
+  if (dot === "green") return "bg-emerald-500";
+  if (dot === "yellow") return "bg-amber-400";
+  if (dot === "red") return "bg-red-500";
+  return "bg-slate-500";
+}
+
 export function Topbar({ auth }: Props) {
   const [now, setNow] = useState(() => new Date());
   const [open, setOpen] = useState(false);
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const emailLabel = auth.email ?? "Phone login";
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
+  const office = auth.role !== "Driver";
+
+  const samsaraQuery = useQuery({
+    queryKey: ["integrations", "samsara", "health", companyId],
+    queryFn: () => getSamsaraHealth(companyId),
+    enabled: Boolean(companyId) && office,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  const qboQuery = useQuery({
+    queryKey: ["integrations", "qbo", "status", companyId],
+    queryFn: () => getQboConnectionStatus(companyId),
+    enabled: Boolean(companyId) && office,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  const samsaraVis = resolveSamsaraVisualStatus(samsaraQuery.data);
+  const qboVis = qboConnectionLabel(qboQuery.data?.connected);
+  const relayVis = RELAY_NOT_CONFIGURED;
+
+  const muted = colors.sidebarTextMuted;
+  const active = colors.sidebarTextActive;
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -55,10 +92,24 @@ export function Topbar({ auth }: Props) {
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <div className="rounded-full px-2 py-0.5 text-[12px]" style={{ backgroundColor: "#151A24", color: colors.sidebarTextMuted }}>
-          <span style={{ color: colors.sidebarTextActive }}>QuickBooks</span> ·{" "}
-          <span style={{ color: colors.sidebarTextActive }}>Telematics</span> ·{" "}
-          <span style={{ color: colors.sidebarTextActive }}>Relay</span>
+        <div
+          className="flex max-w-[min(560px,92vw)] flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full px-2 py-0.5 text-[12px]"
+          style={{ backgroundColor: "#151A24", color: muted }}
+        >
+          <span className="inline-flex items-center gap-1" style={{ color: active }}>
+            <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboVis.dot)}`} />
+            {qboVis.label}
+          </span>
+          <span style={{ color: muted }}>·</span>
+          <span className="inline-flex items-center gap-1" style={{ color: active }} title={samsaraVis.title}>
+            <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(samsaraVis.dot)}`} />
+            {samsaraVis.label}
+          </span>
+          <span style={{ color: muted }}>·</span>
+          <span className="inline-flex items-center gap-1" style={{ color: active }}>
+            <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(relayVis.dot)}`} />
+            {relayVis.label}
+          </span>
         </div>
         <CompanySwitcher />
       </div>
