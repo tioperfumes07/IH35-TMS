@@ -32,6 +32,11 @@ If upstream filenames omit dashes (e.g. `1HOME_PAGE.png`), **rename only** to ma
 
 - **Updates** to any file in this directory require **explicit Jorge approval** per Cursor R2.
 - **CI:** `npm run verify:arch-design` validates module/tab structure; future visual diff gates may reference these assets once all eleven binaries are present.
+- **Checksums:** `MANIFEST.txt` includes per-file SHA256 rows (`shasum -a 256`) for tamper detection once binaries are present.
+
+## Canonical copies
+
+Eleven binaries live in this folder with the filenames in the table above. Provenance: the same bytes were first stored under `docs/design/approved-screens/` with sequential filenames; this directory is the Cursor R2 canonical path and names only (no pixel edits on copy).
 
 ## Repository status
 
