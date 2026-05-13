@@ -95,6 +95,29 @@ describe("DispatchList single-line names (invariant #23)", () => {
     }
   });
 
+  it("shows list error surface when listError is set", () => {
+    const onRetry = vi.fn();
+    render(
+      <DispatchList
+        loads={[]}
+        totalCount={0}
+        limit={50}
+        offset={0}
+        loading={false}
+        listError={{ status: 502, message: "bad gateway", onRetry }}
+        sortField="created_at"
+        sortDirection="desc"
+        onSortChange={vi.fn()}
+        onPageChange={vi.fn()}
+        onRowClick={vi.fn()}
+        onExportCsv={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Couldn't load dispatch list")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^Retry$/i }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
   it("row click still navigates", () => {
     const onRowClick = vi.fn();
     render(

@@ -6,8 +6,8 @@ import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
 import { PageHeader } from "../components/layout/PageHeader";
-import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { useToast } from "../components/Toast";
+import { dataTableErrorState } from "../lib/tableError";
 import { DispatchKanban } from "../components/dispatch/DispatchKanban";
 import { DispatchList } from "../components/dispatch/DispatchList";
 import { FilterBar, type DispatchFilterState } from "../components/dispatch/FilterBar";
@@ -195,13 +195,12 @@ export function DispatchPage() {
           })
         }
       />
-      {loadsQuery.isError ? <ListErrorBanner onRetry={() => void loadsQuery.refetch()} /> : null}
-
       {view === "list" ? (
         <DispatchList
           loads={loads}
           totalCount={totalCount}
           loading={loadsQuery.isLoading}
+          listError={dataTableErrorState(loadsQuery.error, () => void loadsQuery.refetch())}
           limit={limit}
           offset={offset}
           sortField={sortField}
@@ -228,6 +227,7 @@ export function DispatchPage() {
         <DispatchKanban
           loads={loads}
           loading={loadsQuery.isLoading}
+          listError={dataTableErrorState(loadsQuery.error, () => void loadsQuery.refetch())}
           onLoadClick={(id) => {
             const next = new URLSearchParams(searchParams);
             next.set("load_id", id);

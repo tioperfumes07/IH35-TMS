@@ -50,7 +50,7 @@ export function DriverSchedulerGridPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Driver Scheduler" subtitle={`${range.start} — ${range.end} · fleet leave grid`} />
+      <PageHeader title="Driver Scheduler" subtitle={`${range.start} through ${range.end} — fleet leave grid`} />
 
       <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2 text-xs">
         <span className="font-semibold text-gray-600">Range</span>

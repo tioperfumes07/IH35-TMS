@@ -10,7 +10,6 @@ import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
-import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
@@ -19,6 +18,7 @@ import { FormErrorBanner } from "../components/forms/FormErrorBanner";
 import { useFormValidation } from "../components/forms/useFormValidation";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
+import { dataTableErrorState } from "../lib/tableError";
 import { PageHeader } from "../components/layout/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
 import { colors } from "../design/tokens";
@@ -429,17 +429,14 @@ export function CustomersPage() {
         </label>
       </div>
 
-      {customersQuery.isError ? <ListErrorBanner onRetry={() => void customersQuery.refetch()} /> : null}
-
-      {customersQuery.isLoading ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading customers...</div>
-      ) : (
-        <div className="space-y-3">
-          <DataTable
-            rows={customers}
-            rowKey={(row) => row.id}
-            onRowClick={(row) => navigate(`/customers/${row.id}`)}
-            columns={[
+      <div className="space-y-3">
+        <DataTable
+          rows={customers}
+          rowKey={(row) => row.id}
+          loading={customersQuery.isLoading}
+          errorState={dataTableErrorState(customersQuery.error, () => void customersQuery.refetch())}
+          onRowClick={(row) => navigate(`/customers/${row.id}`)}
+          columns={[
               {
                 key: "name",
                 label: "Customer",
@@ -453,7 +450,7 @@ export function CustomersPage() {
                   );
                 },
               },
-              { key: "customer_code", label: "Code", render: (row) => row.customer_code ?? "-" },
+              { key: "customer_code", label: "Code", cellClass: "code-cell", render: (row) => row.customer_code ?? "-" },
               { key: "type", label: "Type", render: (row) => customerTypeLabel(row.customer_type) },
               {
                 key: "status",
@@ -522,9 +519,7 @@ export function CustomersPage() {
               },
             ]}
           />
-          {customers.length === 0 ? <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No customers found.</div> : null}
-        </div>
-      )}
+      </div>
 
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Customer">
         <form

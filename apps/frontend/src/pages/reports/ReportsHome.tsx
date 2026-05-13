@@ -76,7 +76,7 @@ export function ReportsHomePage() {
       <ReportsSubNav />
       <PageHeader
         title="Reports"
-        subtitle="hover any domain · click report to run"
+        subtitle="Hover a domain category, then open a report to run"
         actions={
           <div className="flex items-center gap-2">
             <Button>+ Custom report</Button>

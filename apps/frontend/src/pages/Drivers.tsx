@@ -25,9 +25,9 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
+import { dataTableErrorState } from "../lib/tableError";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
-import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -603,6 +603,7 @@ export function DriversPage() {
           <DataTable
             rows={teamsQuery.data ?? []}
             loading={teamsQuery.isLoading}
+            errorState={dataTableErrorState(teamsQuery.error, () => void teamsQuery.refetch())}
             rowKey={(row) => String(row.id)}
             onRowClick={(row) => {
               setSelectedTeamId(String(row.id));
@@ -685,11 +686,10 @@ export function DriversPage() {
         />
       </div>
 
-      {driversQuery.isError ? <ListErrorBanner onRetry={() => void driversQuery.refetch()} /> : null}
-
       <DataTable
         rows={driversRowsFiltered}
         loading={driversQuery.isLoading}
+        errorState={dataTableErrorState(driversQuery.error, () => void driversQuery.refetch())}
         rowKey={(row) => row.id}
         onRowClick={(row) => navigate(`/drivers/${row.id}`)}
         columns={[
@@ -708,7 +708,7 @@ export function DriversPage() {
             },
           },
           { key: "phone", label: "Phone" },
-          { key: "cdl_number", label: "CDL #" },
+          { key: "cdl_number", label: "CDL #", cellClass: "code-cell" },
           {
             key: "cdl_expires_at",
             label: "CDL Expires",

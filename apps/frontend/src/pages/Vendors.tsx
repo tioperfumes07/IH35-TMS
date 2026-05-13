@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { listVendors } from "../api/mdata";
 import { DataTable } from "../components/DataTable";
 import { PageHeader } from "../components/layout/PageHeader";
-import { ListErrorBanner } from "../components/shared/ListErrorBanner";
+import { dataTableErrorState } from "../lib/tableError";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 
 const VENDOR_LIST_TAB_IDS = ["all", "active", "inactive", "by-category"] as const;
@@ -123,11 +123,11 @@ export function VendorsPage() {
           </select>
         </div>
       ) : null}
-      {vendorsQuery.isError ? <ListErrorBanner onRetry={() => void vendorsQuery.refetch()} /> : null}
       <DataTable
         rows={rowsFiltered}
         rowKey={(row) => row.id}
         loading={vendorsQuery.isLoading}
+        errorState={dataTableErrorState(vendorsQuery.error, () => void vendorsQuery.refetch())}
         onRowClick={(row) => navigate(`/vendors/${row.id}`)}
         columns={[
           {
@@ -140,6 +140,7 @@ export function VendorsPage() {
               </span>
             ),
           },
+          { key: "vendor_code", label: "Code", cellClass: "code-cell", render: (row) => row.vendor_code ?? "—" },
           { key: "vendor_type", label: "Type" },
           {
             key: "status",

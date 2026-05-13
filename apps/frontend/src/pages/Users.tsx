@@ -25,6 +25,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { SaveDropdown } from "../components/forms/SaveDropdown";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
+import { dataTableErrorState } from "../lib/tableError";
 import { colors } from "../design/tokens";
 import type { IdentityUser, UserRole } from "../types/api";
 
@@ -292,6 +293,7 @@ export function UsersPage() {
       <DataTable
         rows={filteredUsers}
         loading={usersQuery.isLoading}
+        errorState={dataTableErrorState(usersQuery.error, () => void usersQuery.refetch())}
         rowKey={(row) => row.id}
         onRowClick={(row) => navigate(`/users/${row.id}`)}
         columns={[

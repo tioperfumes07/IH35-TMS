@@ -6,7 +6,8 @@ import { listInvoices, type InvoiceStatus } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { ListErrorState } from "../../components/ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CustomerAdjustmentModal } from "./modals/CustomerAdjustmentModal";
 import { DriverDamageInvoiceModal } from "./modals/DriverDamageInvoiceModal";
@@ -97,8 +98,6 @@ export function InvoicesListPage() {
           </div>
         }
       />
-      {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
-
       <DataPanel title="Filters">
         <div className="grid gap-2 md:grid-cols-5">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -146,6 +145,17 @@ export function InvoicesListPage() {
             </tr>
           </thead>
           <tbody>
+            {query.isError ? (
+              <tr>
+                <td colSpan={8} className="p-0">
+                  <ListErrorState
+                    title="Couldn't load invoices"
+                    {...formatQueryErrorDetail(query.error)}
+                    onRetry={() => void query.refetch()}
+                  />
+                </td>
+              </tr>
+            ) : null}
             {query.isLoading ? (
               <tr>
                 <td className="px-3 py-3 text-gray-500" colSpan={8}>
@@ -153,16 +163,17 @@ export function InvoicesListPage() {
                 </td>
               </tr>
             ) : null}
-            {!query.isLoading && invoices.length === 0 ? (
+            {!query.isError && !query.isLoading && invoices.length === 0 ? (
               <tr>
                 <td className="px-3 py-3 text-gray-500" colSpan={8}>
                   No invoices found for the selected filters.
                 </td>
               </tr>
             ) : null}
-            {invoices.map((invoice) => (
+            {!query.isError
+              ? invoices.map((invoice) => (
               <tr key={invoice.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
-                <td className="px-3 py-2 text-gray-900">
+                <td className="code-cell px-3 py-2 text-gray-900">
                   <span className="inline-flex items-center gap-1">
                     {invoice.display_id}
                     {invoice.factoring_advance_id ? <ArrowRightCircle className="h-3.5 w-3.5 text-amber-600" /> : null}
@@ -193,7 +204,8 @@ export function InvoicesListPage() {
                 <td className="px-3 py-2 text-gray-700">{money(invoice.total_cents)}</td>
                 <td className="px-3 py-2 text-gray-700">{money(invoice.amount_open_cents)}</td>
               </tr>
-            ))}
+            ))
+              : null}
           </tbody>
         </table>
       </div>
