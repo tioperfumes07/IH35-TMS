@@ -23,5 +23,8 @@
   },
   "include": [
     "apps/backend/src/**/*.ts"
+  ],
+  "exclude": [
+    "apps/backend/src/**/*.integration.test.ts"
   ]
 }

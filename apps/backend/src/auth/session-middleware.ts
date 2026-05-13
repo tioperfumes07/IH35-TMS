@@ -14,6 +14,27 @@ export async function registerSessionMiddleware(app: FastifyInstance) {
   app.decorateRequest("session", null);
 
   app.addHook("preHandler", async (req: FastifyRequest, reply: FastifyReply) => {
+    // CI/Vitest integration only — never enable IH35_TEST_AUTH_BYPASS in production runtimes.
+    if (process.env.IH35_TEST_AUTH_BYPASS === "1") {
+      const raw = req.headers["x-test-auth"];
+      if (typeof raw === "string" && raw.trim().length > 0) {
+        try {
+          const decoded = Buffer.from(raw, "base64url").toString("utf8");
+          const parsed = JSON.parse(decoded) as { id?: unknown; role?: unknown; email?: unknown };
+          const id = typeof parsed.id === "string" ? parsed.id : "";
+          const role = typeof parsed.role === "string" ? parsed.role : "Owner";
+          const email = typeof parsed.email === "string" ? parsed.email : null;
+          if (/^[0-9a-f-]{36}$/i.test(id)) {
+            req.user = { uuid: id, email, role };
+            req.session = { id: "test-session" };
+            return;
+          }
+        } catch {
+          // fall through to normal cookie auth
+        }
+      }
+    }
+
     const sessionId = req.cookies["ih35_session"];
     if (!sessionId) {
       req.user = null;
