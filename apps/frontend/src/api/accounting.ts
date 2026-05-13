@@ -148,11 +148,13 @@ export type VendorBill = {
   id: string;
   operating_company_id: string;
   vendor_id: string | null;
+  vendor_name?: string | null;
   bill_number: string | null;
   bill_date: string;
   due_date: string | null;
   amount_cents: number;
   paid_cents: number;
+  balance_cents?: number;
   status: BillStatus;
   memo: string | null;
   created_at: string;
@@ -367,7 +369,8 @@ export function listVendorBills(
   operatingCompanyId: string,
   params: {
     vendor_id: string;
-    status?: BillStatus;
+    status?: BillStatus | "unpaid";
+    include_balance?: boolean;
     date_from?: string;
     date_to?: string;
     limit?: number;
@@ -377,12 +380,42 @@ export function listVendorBills(
   const query = new URLSearchParams();
   query.set("vendor_id", params.vendor_id);
   if (params.status) query.set("status", params.status);
+  if (params.include_balance !== undefined) query.set("include_balance", String(params.include_balance));
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
   return apiRequest<{ rows: VendorBill[] }>(withCompany(`/api/v1/accounting/bills?${qs}`, operatingCompanyId));
+}
+
+/** All vendors when `vendor_id` omitted; supports balance columns from list API. */
+export function listBills(
+  operatingCompanyId: string,
+  params: {
+    vendor_id?: string;
+    status?: BillStatus | "unpaid";
+    include_balance?: boolean;
+    date_from?: string;
+    date_to?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.vendor_id) query.set("vendor_id", params.vendor_id);
+  if (params.status) query.set("status", params.status);
+  if (params.include_balance !== undefined) query.set("include_balance", String(params.include_balance));
+  if (params.date_from) query.set("date_from", params.date_from);
+  if (params.date_to) query.set("date_to", params.date_to);
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiRequest<{ rows: VendorBill[] }>(withCompany(`/api/v1/accounting/bills?${qs}`, operatingCompanyId));
+}
+
+export function listPaymentsForBill(billId: string, operatingCompanyId: string) {
+  return apiRequest<{ payments: BillPayment[] }>(withCompany(`/api/v1/accounting/bills/${billId}/payments`, operatingCompanyId));
 }
 
 export function getVendorBill(id: string, operatingCompanyId: string) {

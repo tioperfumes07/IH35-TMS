@@ -4,6 +4,7 @@ import {
   createBill,
   getBillDetail,
   listBillPayments,
+  listBillPaymentsForBill,
   listBills,
   listVendorBalances,
   payBill,
@@ -23,7 +24,8 @@ const listVendorBalancesQuerySchema = companyQuerySchema.extend({
 
 const listBillsQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().trim().min(1).optional(),
-  status: z.enum(["open", "partial", "paid", "voided"]).optional(),
+  include_balance: z.coerce.boolean().optional(),
+  status: z.enum(["open", "partial", "paid", "voided", "unpaid"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
@@ -91,13 +93,27 @@ export async function registerBillsRoutes(app: FastifyInstance) {
 
     const rows = await listBills(String(user.uuid), query.data.operating_company_id, {
       vendorId: query.data.vendor_id,
-      status: query.data.status,
+      status: query.data.status === "unpaid" ? "open" : query.data.status,
       fromDate: query.data.date_from,
       toDate: query.data.date_to,
       limit: query.data.limit,
       offset: query.data.offset,
     });
     return { rows };
+  });
+
+  app.get("/api/v1/accounting/bills/:id/payments", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const payments = await listBillPaymentsForBill(String(user.uuid), query.data.operating_company_id, params.data.id);
+    if (payments === null) return reply.code(404).send({ error: "bill_not_found" });
+    return { payments };
   });
 
   app.get("/api/v1/accounting/bills/:id", async (req, reply) => {

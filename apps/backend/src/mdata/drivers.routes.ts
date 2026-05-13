@@ -117,6 +117,8 @@ const updateDriverBodySchema = z
     status: driverStatusSchema.optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: isoDateSchema.nullable().optional(),
+    qbo_vendor_id: z.string().trim().max(120).nullable().optional(),
+    qbo_class_id: z.string().trim().max(120).nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -230,6 +232,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
             COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
             qbo_vendor_id, qbo_vendor_linked_at, qbo_vendor_linked_by_user_id,
+            qbo_class_id,
             status, notes, prior_driver_id, rehire_count, is_rehire,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
@@ -802,6 +805,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
             COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
             status, notes, prior_driver_id, rehire_count, is_rehire,
+            qbo_vendor_id, qbo_class_id,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
           WHERE id = $1
@@ -980,6 +984,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("status" in b) add("status", b.status);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
+    if ("qbo_vendor_id" in b) add("qbo_vendor_id", b.qbo_vendor_id ?? null);
+    if ("qbo_class_id" in b) add("qbo_class_id", b.qbo_class_id ?? null);
     add("updated_by_user_id", authUser.uuid);
 
     values.push(parsedParams.data.id);
@@ -997,6 +1003,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
               status, notes, prior_driver_id, rehire_count, is_rehire,
+              qbo_vendor_id, qbo_class_id,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
             FROM mdata.drivers
             WHERE id = $1
@@ -1021,6 +1028,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
               status, notes, prior_driver_id, rehire_count, is_rehire,
+              qbo_vendor_id, qbo_class_id,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           values
@@ -1065,6 +1073,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                 emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
                 COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
                 status, notes, prior_driver_id, rehire_count, is_rehire,
+                qbo_vendor_id, qbo_class_id,
                 created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
               FROM mdata.drivers
               WHERE id = $1

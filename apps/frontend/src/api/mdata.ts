@@ -1110,3 +1110,18 @@ export function linkQboVendor(
     body,
   });
 }
+
+export type MdataUnit = Record<string, unknown> & {
+  id: string;
+  unit_number?: string;
+  qbo_vendor_id?: string | null;
+  qbo_class_id?: string | null;
+};
+
+export function getUnit(id: string) {
+  return apiRequest<MdataUnit>(`/api/v1/mdata/units/${id}`);
+}
+
+export function patchUnit(id: string, body: Record<string, unknown>) {
+  return apiRequest<MdataUnit>(`/api/v1/mdata/units/${id}`, { method: "PATCH", body });
+}

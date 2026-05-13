@@ -275,6 +275,88 @@ export async function listBillsByVendor(
   return rows;
 }
 
+export async function listAllBillsForCompany(
+  userId: string,
+  operatingCompanyId: string,
+  options: ListBillsOptions
+) {
+  const rows = await withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const where: string[] = ["b.operating_company_id = $1"];
+    const values: unknown[] = [operatingCompanyId];
+    if (options.fromDate) {
+      values.push(options.fromDate);
+      where.push(`b.bill_date >= $${values.length}::date`);
+    }
+    if (options.toDate) {
+      values.push(options.toDate);
+      where.push(`b.bill_date <= $${values.length}::date`);
+    }
+    if (options.status) {
+      if (options.status === "open") where.push("b.status IN ('open','unpaid')");
+      if (options.status === "partial") where.push("b.status IN ('partial','partially_paid')");
+      if (options.status === "paid") where.push("b.status = 'paid'");
+      if (options.status === "voided") where.push("(b.status IN ('void','voided') OR b.revoked_at IS NOT NULL)");
+      if (options.status !== "voided") where.push("b.revoked_at IS NULL");
+    } else {
+      where.push("b.revoked_at IS NULL");
+    }
+    values.push(options.limit, options.offset);
+    const res = await client.query<BillRow>(
+      `
+        SELECT *
+        FROM accounting.bills b
+        WHERE ${where.join(" AND ")}
+        ORDER BY b.bill_date DESC, b.created_at DESC
+        LIMIT $${values.length - 1}
+        OFFSET $${values.length}
+      `,
+      values
+    );
+    return res.rows.map(normalizeBill);
+  });
+
+  const vendorIds = [...new Set(rows.map((r) => r.vendor_id).filter((v): v is string => Boolean(v)))];
+  const vendorNames = await resolveVendorDisplayMap(operatingCompanyId, vendorIds);
+  return rows.map((r) => ({
+    ...r,
+    vendor_name: r.vendor_id ? vendorNames[r.vendor_id] ?? r.vendor_id : null,
+    balance_cents: Math.max(0, r.amount_cents - r.paid_cents),
+  }));
+}
+
+export async function listBillPaymentsForBill(userId: string, operatingCompanyId: string, billId: string) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const billRes = await client.query<{ id: string }>(
+      `
+        SELECT id
+        FROM accounting.bills
+        WHERE id = $1
+          AND operating_company_id = $2
+        LIMIT 1
+      `,
+      [billId, operatingCompanyId]
+    );
+    if (!billRes.rows[0]) return null;
+    const res = await client.query<BillPaymentRow>(
+      `
+        SELECT *
+        FROM accounting.bill_payments bp
+        WHERE bp.bill_id = $1
+          AND bp.operating_company_id = $2
+          AND bp.revoked_at IS NULL
+        ORDER BY bp.payment_date DESC, bp.created_at DESC
+      `,
+      [billId, operatingCompanyId]
+    );
+    return res.rows.map((row) => ({
+      ...row,
+      amount_cents: Number(row.amount_cents ?? Math.round(Number(row.amount ?? 0) * 100)),
+    }));
+  });
+}
+
 export async function listBills(
   userId: string,
   operatingCompanyId: string,
@@ -287,8 +369,16 @@ export async function listBills(
     offset: number;
   }
 ) {
-  if (!options.vendorId) return [];
-  return listBillsByVendor(userId, operatingCompanyId, options.vendorId, options);
+  if (!options.vendorId) {
+    return listAllBillsForCompany(userId, operatingCompanyId, options);
+  }
+  const rows = await listBillsByVendor(userId, operatingCompanyId, options.vendorId, options);
+  const vendorNames = await resolveVendorDisplayMap(operatingCompanyId, [options.vendorId]);
+  return rows.map((r) => ({
+    ...r,
+    vendor_name: r.vendor_id ? vendorNames[r.vendor_id] ?? r.vendor_id : null,
+    balance_cents: Math.max(0, r.amount_cents - r.paid_cents),
+  }));
 }
 
 export async function listBillPayments(

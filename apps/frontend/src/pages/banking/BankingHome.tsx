@@ -24,13 +24,13 @@ import { AccountTilesRow } from "./components/AccountTilesRow";
 import { BankingKpiRow } from "./components/BankingKpiRow";
 import { CategorizeDrawer } from "./components/CategorizeDrawer";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
-import { ManualJEModal } from "./components/ManualJEModal";
+import { ManualJEModal } from "../accounting/ManualJEModal";
 import { RegisterTable } from "./components/RegisterTable";
 import { RegisterToolbar } from "./components/RegisterToolbar";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { Link, useNavigate } from "react-router-dom";
-import { RecordTransferModal } from "./RecordTransferModal";
-import type { TransferType } from "../../api/banking";
+import { TransferModal } from "./TransferModal";
+import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 import { listVendorBalances } from "../../api/accounting";
 
 function syncStatusClasses(status: string) {
@@ -55,7 +55,7 @@ export function BankingHomePage() {
   const [manageOpen, setManageOpen] = useState(false);
   const [manualJeOpen, setManualJeOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
-  const [transferModalType, setTransferModalType] = useState<TransferType>("bank_to_bank");
+  const [ccPaymentModalOpen, setCcPaymentModalOpen] = useState(false);
   const [startReconOpen, setStartReconOpen] = useState(false);
   const [reconAccountId, setReconAccountId] = useState("");
   const [reconPeriodStart, setReconPeriodStart] = useState("");
@@ -141,22 +141,8 @@ export function BankingHomePage() {
               + Reconcile
             </ActionButton>
             <ActionButton onClick={() => setManualJeOpen(true)}>+ Manual JE</ActionButton>
-            <ActionButton
-              onClick={() => {
-                setTransferModalType("bank_to_bank");
-                setTransferModalOpen(true);
-              }}
-            >
-              + Record Transfer
-            </ActionButton>
-            <ActionButton
-              onClick={() => {
-                setTransferModalType("cc_payment");
-                setTransferModalOpen(true);
-              }}
-            >
-              + Pay Credit Card
-            </ActionButton>
+            <ActionButton onClick={() => setTransferModalOpen(true)}>+ Record Transfer</ActionButton>
+            <ActionButton onClick={() => setCcPaymentModalOpen(true)}>+ Pay Credit Card</ActionButton>
             <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
           </div>
         }
@@ -392,11 +378,18 @@ export function BankingHomePage() {
           void queryClient.invalidateQueries({ queryKey: ["banking"] });
         }}
       />
-      <RecordTransferModal
+      <TransferModal
         open={transferModalOpen}
         operatingCompanyId={companyId}
-        defaultTransferType={transferModalType}
         onClose={() => setTransferModalOpen(false)}
+        onSaved={() => {
+          void queryClient.invalidateQueries({ queryKey: ["banking"] });
+        }}
+      />
+      <RecordCCPaymentModal
+        open={ccPaymentModalOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setCcPaymentModalOpen(false)}
         onSaved={() => {
           void queryClient.invalidateQueries({ queryKey: ["banking"] });
         }}
