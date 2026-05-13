@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { listCustomers } from "../../../api/mdata";
-import { Combobox } from "../../../components/Combobox";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { UploadZone } from "../../../components/UploadZone";
@@ -10,7 +7,6 @@ import { useToast } from "../../../components/Toast";
 import { FieldError, fieldErrorClassname } from "../../../components/forms/FieldError";
 import { FormErrorBanner } from "../../../components/forms/FormErrorBanner";
 import { useFormValidation } from "../../../components/forms/useFormValidation";
-
 import { QboCombobox } from "../../../components/forms/QboCombobox";
 
 const invoiceModalSchema = z.object({
@@ -41,6 +37,8 @@ type Props = {
 export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEntityType, onClose, onCreated, createInvoice }: Props) {
   const { pushToast } = useToast();
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerQboId, setCustomerQboId] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
   const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
@@ -55,12 +53,6 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     }),
     [customerId, issueDate, dueDate, notes]
   );
-
-  const customersQuery = useQuery({
-    queryKey: ["invoice-type-modal", "customers", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId }).then((res) => res.customers),
-    enabled: open,
-  });
 
   const {
     fieldErrors: invoiceFieldErrors,
@@ -88,6 +80,8 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   useEffect(() => {
     if (!open) return;
     setCustomerId(null);
+    setCustomerQboId(null);
+    setCustomerName("");
     setNotes("");
     setIssueDate(new Date().toISOString().slice(0, 10));
     setDueDate("");
@@ -107,18 +101,37 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
         <FormErrorBanner message={invoiceApiError} />
         <div className="grid gap-2 md:grid-cols-2">
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-600">Customer</label>
-            <Combobox
-              dataField="customer_id"
-              options={(customersQuery.data ?? []).map((row) => ({ value: row.id, label: row.name, sublabel: row.customer_code ?? undefined }))}
-              value={customerId}
-              onChange={(next) => {
+            <label className="text-xs font-semibold text-slate-600">Customer *</label>
+            <QboCombobox
+              entityType="customer"
+              operatingCompanyId={operatingCompanyId}
+              value={customerQboId}
+              displayValue={customerName}
+              allowFreeText={false}
+              placeholder="Select QBO customer (type to search)…"
+              onChange={(qboId, name) => {
                 clearInvoiceFieldError("customer_id");
-                setCustomerId(next);
+                if (qboId) {
+                  setCustomerQboId(qboId);
+                  setCustomerName(name);
+                  return;
+                }
+                setCustomerName(name);
               }}
-              loading={customersQuery.isLoading}
-              placeholder="Select customer"
-              error={invoiceFieldErrors.customer_id}
+              onPick={(row) => {
+                clearInvoiceFieldError("customer_id");
+                setCustomerId(row.id);
+                setCustomerQboId(row.qbo_id);
+                setCustomerName(row.display_name);
+                setNotes((prev) => {
+                  if (prev.trim()) return prev;
+                  const parts: string[] = [`Bill-to: ${row.display_name}`];
+                  if (row.company_name) parts.push(String(row.company_name));
+                  if (row.primary_email) parts.push(`Email: ${row.primary_email}`);
+                  if (row.primary_phone) parts.push(`Phone: ${row.primary_phone}`);
+                  return parts.join("\n");
+                });
+              }}
             />
             <FieldError id="customer_id" message={invoiceFieldErrors.customer_id} />
           </div>

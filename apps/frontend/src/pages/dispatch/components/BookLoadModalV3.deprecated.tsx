@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormGetValues, type UseFormSetValue, type UseFormWatch } from "react-hook-form";
 import { createDispatchLoad, reserveDispatchLoadId } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
@@ -84,6 +84,8 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
   const form = useForm<FormValues>({
     defaultValues: {
       customer_id: "",
+      customer_qbo_id: "",
+      customer_name: "",
       customer_wo_number: "",
       commodity: "",
       weight_lbs: 0,
@@ -394,7 +396,16 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
           ))}
         </div>
 
-        {activeTab === "customer" ? <BookLoadCustomerSection register={form.register} /> : null}
+        {activeTab === "customer" ? (
+          <BookLoadCustomerSection
+            register={form.register}
+            watch={form.watch as unknown as UseFormWatch<BookLoadFormValues>}
+            operatingCompanyId={operatingCompanyId}
+            setValue={form.setValue as unknown as UseFormSetValue<BookLoadFormValues>}
+            getValues={form.getValues as unknown as UseFormGetValues<BookLoadFormValues>}
+            customerIdError={form.formState.errors.customer_id?.message}
+          />
+        ) : null}
         {activeTab === "equipment" ? <BookLoadEquipmentSection register={form.register} /> : null}
         {activeTab === "stops" ? <BookLoadStopsSection control={form.control as never} register={form.register as never} /> : null}
         {activeTab === "v3" ? <BookLoadV3OptionsSection register={form.register as never} /> : null}
