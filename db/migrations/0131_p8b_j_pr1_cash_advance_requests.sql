@@ -29,12 +29,12 @@ CREATE TABLE IF NOT EXISTS driver_finance.cash_advance_requests (
   status text NOT NULL DEFAULT 'pending' CHECK (
     status IN ('pending', 'under_review', 'approved', 'denied', 'expired', 'cancelled_by_driver')
   ),
-  reviewed_by_user_id uuid NULL REFERENCES identity.users(uuid),
+  reviewed_by_user_id uuid NULL REFERENCES identity.users(id),
   reviewed_at timestamptz NULL,
   approval_notes text NULL,
   denial_reason text NULL,
   expires_at timestamptz NOT NULL DEFAULT (now() + interval '7 days'),
-  linked_advance_id uuid NULL REFERENCES driver_finance.driver_advances(id),
+  linked_advance_id uuid NULL, -- P6-RECONCILE-3: FK deferred until driver_finance.driver_advances exists on all environments
   is_above_policy boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS driver_finance.cash_advance_request_audit (
   request_id uuid NOT NULL REFERENCES driver_finance.cash_advance_requests(id) ON DELETE RESTRICT,
   event_type text NOT NULL,
   event_payload jsonb NOT NULL DEFAULT '{}'::jsonb,
-  actor_user_id uuid REFERENCES identity.users(uuid),
+  actor_user_id uuid REFERENCES identity.users(id),
   actor_name text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
