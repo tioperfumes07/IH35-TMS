@@ -6,6 +6,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AllCatalogsMap } from "./components/AllCatalogsMap";
 import { DomainRibbon } from "./components/DomainRibbon";
+import { ListsSubNav } from "./ListsSubNav";
 import { QboSyncHealthCard } from "./components/QboSyncHealthCard";
 import { RecentActivityCard } from "./components/RecentActivityCard";
 
@@ -68,6 +69,7 @@ export function ListsHubPage() {
 
   return (
     <div className="space-y-4">
+      <ListsSubNav />
       <PageHeader title="Lists & Catalogs" subtitle="Catalog inventory hub + QBO bidirectional sync health" />
 
       {inventoryQuery.isLoading ? <div className="rounded border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading lists inventory...</div> : null}

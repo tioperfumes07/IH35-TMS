@@ -6,6 +6,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { InternalFineReasonModal } from "./InternalFineReasonModal";
+import { ListsSubNav } from "../ListsSubNav";
 import { moneyFromCents, STATUS_OPTIONS, statusPillClass, type StatusFilter } from "./shared";
 
 export function InternalFineReasonsListPage() {
@@ -33,6 +34,7 @@ export function InternalFineReasonsListPage() {
 
   return (
     <div className="space-y-3">
+      <ListsSubNav />
       <BackArrowHeader
         backTo="/lists"
         breadcrumb={["Lists & Catalogs", "Safety", "Internal fine reasons"]}

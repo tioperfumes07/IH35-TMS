@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ReportsSubNav } from "./ReportsSubNav";
 import { apiRequest } from "../../api/client";
 import { getReportLibrary } from "../../api/reports";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -124,6 +125,7 @@ export function ReportsRunnerPage() {
   if (!reportMeta) {
     return (
       <div className="space-y-3">
+        <ReportsSubNav />
         <PageHeader title="Report Runner" subtitle="Loading report metadata..." />
       </div>
     );
@@ -132,6 +134,7 @@ export function ReportsRunnerPage() {
   if (reportMeta.status === "real" && !config) {
     return (
       <div className="space-y-3">
+        <ReportsSubNav />
         <PageHeader title={`Reports / ${reportMeta.name}`} />
         <div className="rounded border border-slate-200 bg-white px-3 py-4 text-sm text-slate-600">Runner configuration is not available yet for this report.</div>
       </div>
@@ -141,6 +144,7 @@ export function ReportsRunnerPage() {
   if (reportMeta.status === "stub") {
     return (
       <div className="space-y-3">
+        <ReportsSubNav />
         <PageHeader title={`Reports / ${reportMeta.name}`} actions={<button type="button" className="rounded border px-3 py-1.5 text-sm" onClick={() => navigate("/reports")}>Back</button>} />
         <section className="rounded border border-amber-200 bg-amber-50 p-4">
           <h2 className="text-lg font-semibold text-amber-900">Coming soon</h2>
@@ -154,6 +158,7 @@ export function ReportsRunnerPage() {
 
   return (
     <div className="space-y-3">
+      <ReportsSubNav />
       <PageHeader
         title={`← Reports / ${reportMeta.name}`}
         actions={
