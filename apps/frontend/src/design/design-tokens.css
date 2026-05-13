@@ -45,3 +45,13 @@
   /* Z-index (6.1.6) */
   --z-dropdown: 50;
 }
+
+/* Utility classes — invariant #23 single-line names (visual ellipsis; full text in DOM + title) */
+.single-line-name {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
