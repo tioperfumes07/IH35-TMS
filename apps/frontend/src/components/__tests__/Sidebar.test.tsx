@@ -32,7 +32,7 @@ describe("Sidebar", () => {
     expect(style.borderRight).toContain("1px solid rgb(42, 50, 66)");
   });
 
-  it("renders all 18 nav labels in expected order for Owner role", () => {
+  it("renders all 19 nav labels in expected order for Owner role", () => {
     render(
       <MemoryRouter initialEntries={["/home"]}>
         <Sidebar role="Owner" />
@@ -54,6 +54,7 @@ describe("Sidebar", () => {
       "DOCS",
       "LISTS",
       "REPORTS",
+      "ELD",
       "LEGAL",
       "425C",
       "DRV APP",
@@ -61,7 +62,7 @@ describe("Sidebar", () => {
     const rendered = screen.getAllByRole("link").map((el) => el.textContent?.replace(/\s+/g, " ").trim());
     expect(rendered).toEqual(expected);
     const iconCount = document.querySelectorAll("a svg").length;
-    expect(iconCount).toBe(18);
+    expect(iconCount).toBe(19);
   });
 
   it("uses uppercase 10px labels and active item weight 600", () => {
