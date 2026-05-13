@@ -41,7 +41,7 @@ describe("HoverDropdownNav primitive (invariant #20)", () => {
   it("opens on hover, highlights active child, nowrap + max-content (MUST 6.3.1.1)", () => {
     openBillsMenu();
     const menu = screen.getByTestId("bills-dropdown-menu");
-    expect(menu).toBeTruthy();
+    expect(menu).toBeInTheDocument();
     expect(window.getComputedStyle(menu).width).toBe("max-content");
     const links = within(menu).getAllByRole("menuitem");
     expect(links).toHaveLength(7);
@@ -49,8 +49,7 @@ describe("HoverDropdownNav primitive (invariant #20)", () => {
       expect(window.getComputedStyle(a).whiteSpace).toBe("nowrap");
     }
     const maintenance = links.find((el) => el.textContent === "Maintenance bill");
-    expect(maintenance).toBeTruthy();
-    expect(maintenance?.className.split(/\s+/).includes("active")).toBe(true);
+    expect(maintenance).toHaveClass("active");
 
     const longest =
       accountingDemo[0].children?.reduce((m, c) => (c.label.length > m.length ? c.label : m), "") ?? "";
@@ -60,12 +59,12 @@ describe("HoverDropdownNav primitive (invariant #20)", () => {
   it("closes after mouse leave with 150ms delay", () => {
     vi.useFakeTimers();
     const hoverTarget = openBillsMenu();
-    expect(screen.getByTestId("bills-dropdown-menu")).toBeTruthy();
+    expect(screen.getByTestId("bills-dropdown-menu")).toBeInTheDocument();
     fireEvent.mouseLeave(hoverTarget);
     act(() => {
       vi.advanceTimersByTime(149);
     });
-    expect(screen.getByTestId("bills-dropdown-menu")).toBeTruthy();
+    expect(screen.getByTestId("bills-dropdown-menu")).toBeInTheDocument();
     act(() => {
       vi.advanceTimersByTime(2);
     });
@@ -75,9 +74,9 @@ describe("HoverDropdownNav primitive (invariant #20)", () => {
   it("closes on Escape from document and restores focus to trigger", () => {
     openBillsMenu();
     const menu = screen.getByTestId("bills-dropdown-menu");
-    expect(menu).toBeTruthy();
+    expect(menu).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByTestId("bills-dropdown-menu")).toBeNull();
+    expect(screen.queryByTestId("bills-dropdown-menu")).not.toBeInTheDocument();
     const billsBtn = screen.getByRole("menuitem", { name: /^Bills$/i });
     expect(document.activeElement).toBe(billsBtn);
   });
