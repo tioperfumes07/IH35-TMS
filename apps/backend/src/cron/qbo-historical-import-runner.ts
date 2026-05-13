@@ -64,7 +64,8 @@ async function autoFailStaleBatches(app: FastifyInstance) {
       row.id,
       row.operating_company_id,
       new Error(`batch_auto_failed_stale: heartbeat stale ~${row.minutes_stale} minutes`),
-      { phase: "runner", step: "auto_fail_stale_batch" }
+      { phase: "runner", step: "auto_fail_stale_batch" },
+      app.log
     );
     try {
       await sendForensicZombieAlert({
@@ -149,7 +150,7 @@ export async function initializeQboHistoricalImportRunner(app: FastifyInstance) 
           await auditForensicImportError(batch.id, batch.operating_company_id, error, {
             phase: "runner",
             step: "cron_import_failed",
-          });
+          }, app.log);
           await auditBatchEvent(batch.id, batch.operating_company_id, "batch_failed", {
             error_message: String((error as Error)?.message ?? error),
           });

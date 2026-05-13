@@ -136,10 +136,16 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
         await auditBatchEvent(staleId, body.data.operating_company_id, "batch_auto_failed_stale", {
           error_message: "auto-failed in start-import stale cleanup",
         });
-        await auditForensicImportError(staleId, body.data.operating_company_id, new Error("auto-failed in start-import stale cleanup (>15m heartbeat)"), {
-          phase: "admin",
-          step: "start_import_stale_cleanup",
-        });
+        await auditForensicImportError(
+          staleId,
+          body.data.operating_company_id,
+          new Error("auto-failed in start-import stale cleanup (>15m heartbeat)"),
+          {
+            phase: "admin",
+            step: "start_import_stale_cleanup",
+          },
+          req.log
+        );
       }
     }
 
