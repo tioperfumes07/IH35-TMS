@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import "./HoverDropdownNav.css";
 
 export type NavChild = { label: string; href: string };
-export type NavItem = { label: string; href?: string; children?: NavChild[] };
+export type NavItem = { label: string; href?: string; children?: readonly NavChild[] };
 
 export type HoverDropdownNavProps = {
   items: NavItem[];
