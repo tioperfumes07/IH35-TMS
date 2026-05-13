@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --green: #1a7a3c;
+}
+
 html,
 body,
 #root {

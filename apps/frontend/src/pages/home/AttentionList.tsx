@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, AlertTriangle, Info, ShieldAlert } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchHomeAttentionList, type HomeAttentionListItem, type HomeAttentionSeverity } from "../../api/home";
+import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
@@ -12,13 +14,37 @@ const SEVERITY_ICON: Record<HomeAttentionSeverity, { Icon: typeof Info; classNam
   critical: { Icon: ShieldAlert, className: "text-red-600" },
 };
 
+function subscribeMinLg(callback: () => void) {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return () => {};
+  }
+  const mq = window.matchMedia("(min-width: 1024px)");
+  mq.addEventListener("change", callback);
+  return () => mq.removeEventListener("change", callback);
+}
+
+function getMinLg() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return true;
+  }
+  return window.matchMedia("(min-width: 1024px)").matches;
+}
+
 type Props = {
   operatingCompanyId: string | null | undefined;
+  /** On viewports below `lg`, show at most this many rows until expanded. Omit to always show all. */
+  maxVisibleWhenCollapsed?: number | null;
 };
 
-export function AttentionList({ operatingCompanyId }: Props) {
+export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = null }: Props) {
   const navigate = useNavigate();
   const companyId = operatingCompanyId ?? "";
+  const [expanded, setExpanded] = useState(false);
+  const isLg = useSyncExternalStore(subscribeMinLg, getMinLg, () => true);
+
+  useEffect(() => {
+    if (isLg) setExpanded(false);
+  }, [isLg]);
 
   const query = useQuery({
     queryKey: ["home", "attention-list", companyId],
@@ -56,32 +82,53 @@ export function AttentionList({ operatingCompanyId }: Props) {
   const visible = (query.data?.items ?? []).filter((item) => item.count > 0);
 
   if (visible.length === 0) {
-    return <div className="py-3 text-sm text-slate-500">No items requiring attention.</div>;
+    return <div className="py-3 text-sm text-slate-500">No attention items</div>;
   }
 
+  const shouldCollapse = maxVisibleWhenCollapsed != null && !isLg && !expanded;
+  const limit = shouldCollapse ? maxVisibleWhenCollapsed! : visible.length;
+  const shown = visible.slice(0, limit);
+  const collapsedCount = visible.length - shown.length;
+
   return (
-    <ul className="divide-y divide-slate-100">
-      {visible.map((item: HomeAttentionListItem) => {
-        const { Icon, className } = SEVERITY_ICON[item.severity] ?? SEVERITY_ICON.info;
-        return (
-          <li key={`${item.type}-${item.title}-${item.action_url}`}>
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-slate-50/80"
-              onClick={() => navigate(item.action_url)}
-            >
-              <Icon className={`h-5 w-5 shrink-0 ${className}`} aria-hidden />
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-slate-900">{item.title}</div>
-                <div className="mt-0.5 text-xs text-slate-600">
-                  Count {item.count}
-                  {item.action_label ? <span className="text-slate-500"> — {item.action_label}</span> : null}
+    <>
+      <ul className="divide-y divide-slate-100">
+        {shown.map((item: HomeAttentionListItem) => {
+          const { Icon, className } = SEVERITY_ICON[item.severity] ?? SEVERITY_ICON.info;
+          return (
+            <li key={`${item.type}-${item.title}-${item.action_url}`}>
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-slate-50/80"
+                onClick={() => navigate(item.action_url)}
+              >
+                <Icon className={`h-5 w-5 shrink-0 ${className}`} aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-slate-900">{item.title}</div>
+                  <div className="mt-0.5 text-xs text-slate-600">
+                    Count {item.count}
+                    {item.action_label ? <span className="text-slate-500"> — {item.action_label}</span> : null}
+                  </div>
                 </div>
-              </div>
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {maxVisibleWhenCollapsed != null && !isLg && collapsedCount > 0 && !expanded ? (
+        <div className="border-t border-slate-100 px-3 py-2">
+          <Button type="button" variant="secondary" size="sm" className="w-full" onClick={() => setExpanded(true)}>
+            Show {collapsedCount} more
+          </Button>
+        </div>
+      ) : null}
+      {maxVisibleWhenCollapsed != null && !isLg && expanded && visible.length > maxVisibleWhenCollapsed ? (
+        <div className="border-t border-slate-100 px-3 py-2">
+          <Button type="button" variant="tertiary" size="sm" className="w-full" onClick={() => setExpanded(false)}>
+            Show fewer
+          </Button>
+        </div>
+      ) : null}
+    </>
   );
 }

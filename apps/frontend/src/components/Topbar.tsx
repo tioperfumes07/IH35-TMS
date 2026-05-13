@@ -76,7 +76,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
 
   return (
     <header
-      className="grid items-center border-b"
+      className="top-bar grid items-center border-b"
       style={{
         gridTemplateColumns: "1fr auto 1fr",
         height: spacing.topbarHeight,
