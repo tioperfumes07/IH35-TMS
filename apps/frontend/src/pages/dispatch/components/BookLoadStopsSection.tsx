@@ -1,5 +1,6 @@
 import { useFieldArray, type Control, type UseFormRegister } from "react-hook-form";
 import { Button } from "../../../components/Button";
+import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
 
 type Props = {
   control: Control<any>;
@@ -39,6 +40,9 @@ export function BookLoadStopsSection({ control, register }: Props) {
                 stop_notes: "",
                 is_tarp_stop: false,
                 tarp_count: 0,
+                site_contact_name: "",
+                site_contact_phone: "",
+                gate_dock_text: "",
               })
             }
           >
@@ -66,6 +70,9 @@ export function BookLoadStopsSection({ control, register }: Props) {
                 stop_notes: "",
                 is_tarp_stop: false,
                 tarp_count: 0,
+                site_contact_name: "",
+                site_contact_phone: "",
+                gate_dock_text: "",
               })
             }
           >
@@ -101,15 +108,12 @@ export function BookLoadStopsSection({ control, register }: Props) {
               <Field label="Appt" input={<input type="datetime-local" {...register(`stops.${index}.scheduled_arrival_at`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
               <Field
                 label="Time window"
-                input={
-                  <select {...register(`stops.${index}.time_window_type`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
-                    <option value="appointment">Appointment</option>
-                    <option value="first_come_first_serve">First come first serve</option>
-                    <option value="drop_window">Drop window</option>
-                  </select>
-                }
+                input={<TimeWindowDropdown register={register} name={`stops.${index}.time_window_type`} />}
               />
               <Field label="Window start" input={<input type="datetime-local" {...register(`stops.${index}.appointment_start_at`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
+              <Field label="Site contact" input={<input {...register(`stops.${index}.site_contact_name`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
+              <Field label="Site phone" input={<input {...register(`stops.${index}.site_contact_phone`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
+              <Field label="Gate / dock" input={<input {...register(`stops.${index}.gate_dock_text`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
               <Field label="Window end" input={<input type="datetime-local" {...register(`stops.${index}.appointment_end_at`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
               <label className="flex items-center gap-2 text-[11px] font-semibold text-gray-700">
                 <input type="checkbox" {...register(`stops.${index}.lumper_required`)} />

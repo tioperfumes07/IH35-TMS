@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1320, initial-scale=1">
+<title>Book Load v2 · Blueprint + 5 gaps · IH35-TMS</title>
+<style>
+:root {
+  --navy: #1A1F36;
+  --navy-dk: #0F1320;
+  --navy-sidebar: #212747;
+  --bg-page: #FAFAF7;
+  --bg-surface: #FFFFFF;
+  --bg-surface-alt: #F8F8F4;
+  --bg-section-header: #F1EFE8;
+  --bg-overlay: rgba(15, 19, 32, 0.6);
+  --text-primary: #1A1F36;
+  --text-secondary: #4A5170;
+  --text-muted: #8A92AB;
+  --text-disabled: #C5C9D6;
+  --text-inverse: #FFFFFF;
+  --text-link: #2563EB;
+  --border-default: #E5E7EB;
+  --border-subtle: #F0F1F4;
+  --border-strong: #C5C9D6;
+  --border-focus: #2563EB;
+  --band-roadside-bg: #FEF3C7;
+  --band-roadside-border: #FCD34D;
+  --band-roadside-text: #78350F;
+  --band-severe-bg: #FEE2E2;
+  --band-severe-border: #FCA5A5;
+  --band-severe-text: #7F1D1D;
+  --band-factoring-bg: #DBEAFE;
+  --band-factoring-border: #93C5FD;
+  --band-factoring-text: #1E3A8A;
+  --band-escrow-bg: #D1FAE5;
+  --band-escrow-border: #6EE7B7;
+  --band-escrow-text: #064E3B;
+  --green: #1A7A3C;
+  --gold: #B07D00;
+  --red: #C5221F;
+  --blue: #1557A0;
+  --section-bg: #F0F0E8;
+  --selected: #E6F1FB;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--bg-overlay);
+  font-feature-settings: 'tnum';
+}
+.scene {
+  min-height: 100vh;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 24px 16px;
+}
+.modal {
+  width: 1260px; max-width: 100%;
+  background: var(--bg-surface);
+  border-radius: 6px;
+  box-shadow: 0 25px 50px -12px rgba(15, 19, 32, 0.25);
+  border: 1px solid var(--border-default);
+  overflow: hidden;
+}
+
+/* HEADER */
+.modal-head {
+  background: var(--navy);
+  color: var(--text-inverse);
+  padding: 10px 18px 11px;
+  display: flex; align-items: center; gap: 16px;
+  border-bottom: 1px solid var(--navy-dk);
+}
+.modal-head .title {
+  font-size: 13px; font-weight: 600; letter-spacing: 0.3px;
+}
+.modal-head .breadcrumb {
+  font-size: 10px; color: #A8B0C7; letter-spacing: 0.2px;
+}
+.modal-head .breadcrumb a { color: #A8B0C7; text-decoration: none; }
+.modal-head .breadcrumb a:hover { color: white; text-decoration: underline; }
+
+/* LIVE LOAD NUMBER BAR */
+.load-id-bar {
+  background: var(--navy-dk);
+  color: white;
+  padding: 7px 18px;
+  display: flex; align-items: center; gap: 18px;
+  font-size: 10px; letter-spacing: 0.4px; text-transform: uppercase;
+}
+.load-id-bar .pill-id {
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: none;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 3px;
+  padding: 3px 9px;
+  color: white;
+}
+.load-id-bar .reserved-tag {
+  color: var(--band-escrow-border);
+  text-transform: uppercase;
+  font-size: 9px; font-weight: 600; letter-spacing: 0.5px;
+}
+.load-id-bar .spacer { flex: 1; }
+.load-id-bar .meta { color: #A8B0C7; }
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.grid > section {
+  border-right: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
+}
+.grid > section:nth-child(2n) { border-right: none; }
+.grid > section.full { grid-column: 1 / -1; border-right: none; }
+
+/* BANDED SECTION HEADERS */
+.band {
+  height: 22px;
+  padding: 0 14px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600;
+}
+.band.A { background: var(--band-roadside-bg); color: var(--band-roadside-text); border-bottom: 1px solid var(--band-roadside-border); }
+.band.B { background: var(--band-factoring-bg); color: var(--band-factoring-text); border-bottom: 1px solid var(--band-factoring-border); }
+.band.C { background: var(--band-escrow-bg); color: var(--band-escrow-text); border-bottom: 1px solid var(--band-escrow-border); }
+.band.D { background: var(--bg-section-header); color: var(--text-secondary); border-bottom: 1px solid var(--border-default); }
+
+.band .ic { font-size: 11px; }
+.band .right { margin-left: auto; font-weight: 500; letter-spacing: 0.2px; }
+
+/* SECTION BODY */
+.section-body { padding: 12px 14px 14px; }
+.row { display: flex; gap: 10px; margin-bottom: 8px; }
+.field { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.field.flex-2 { flex: 2; }
+.field.flex-3 { flex: 3; }
+.field-label { font-size: 9px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+.field-input,
+.field-select,
+.field-textarea {
+  height: 24px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  background: var(--bg-surface);
+  font: 12px Inter, system-ui;
+  color: var(--text-primary);
+}
+.field-textarea { height: auto; min-height: 54px; resize: vertical; padding: 6px 8px; line-height: 1.5; }
+.field-input.with-icon { padding-right: 24px; }
+.field-input:focus, .field-select:focus, .field-textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--border-focus);
+  border-color: var(--border-focus);
+}
+.field-hint { font-size: 9px; color: var(--text-muted); }
+.quality-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+.quality-dot.green { background: var(--green); }
+
+/* TOGGLES (broker/direct, appt/fcfs) */
+.toggle { display: inline-flex; border: 1px solid var(--border-default); border-radius: 2px; overflow: hidden; height: 24px; }
+.toggle button { background: var(--bg-surface); border: none; padding: 0 10px; font: 10px Inter; color: var(--text-secondary); cursor: pointer; }
+.toggle button.active { background: var(--navy); color: white; }
+.toggle button + button { border-left: 1px solid var(--border-default); }
+
+/* CHARGES TABLE */
+.charges {
+  width: 100%; border-collapse: collapse;
+  font-size: 11px;
+}
+.charges th, .charges td { padding: 5px 8px; border-bottom: 0.5px solid var(--border-subtle); text-align: left; }
+.charges th { font-weight: 600; font-size: 9px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.4px; background: var(--bg-surface-alt); }
+.charges td.num { text-align: right; font-feature-settings: 'tnum'; }
+.charges tfoot td { font-weight: 600; border-top: 1px solid var(--border-default); background: var(--bg-surface-alt); }
+.charges .add-row td { text-align: center; }
+.btn-link { background: none; border: none; color: var(--text-link); cursor: pointer; font: inherit; padding: 0; }
+
+/* PILLS */
+.pill { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 2px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; gap: 3px; }
+.pill.pickup { background: var(--band-factoring-bg); color: var(--band-factoring-text); }
+.pill.delivery { background: var(--band-escrow-bg); color: var(--band-escrow-text); }
+.pill.warn { background: var(--band-roadside-bg); color: var(--band-roadside-text); }
+.pill.crit { background: var(--band-severe-bg); color: var(--band-severe-text); }
+.pill.info { background: var(--band-factoring-bg); color: var(--band-factoring-text); }
+.pill.ok { background: var(--band-escrow-bg); color: var(--band-escrow-text); }
+.pill.muted { background: var(--bg-surface-alt); color: var(--text-muted); }
+.pill.visible-driver { background: var(--band-roadside-bg); color: var(--band-roadside-text); border: 0.5px solid var(--band-roadside-border); }
+
+/* STOPS */
+.stop-card {
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.stop-card .stop-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; margin-bottom: 6px;
+}
+.stop-card .stop-head .num { font-weight: 600; color: var(--text-secondary); }
+.stop-card .stop-head .addr { flex: 1; font-weight: 500; }
+.stop-card .stop-head .time { font-size: 10px; color: var(--text-muted); }
+.stop-card .stop-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; margin-top: 4px; }
+
+/* MILES STRIP */
+.miles-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--bg-section-header);
+  border: 1px solid var(--border-default);
+  border-radius: 2px;
+  margin-top: 4px;
+}
+.miles-strip > div { padding: 5px 8px; text-align: center; border-right: 1px solid var(--border-default); }
+.miles-strip > div:last-child { border-right: none; }
+.miles-strip > div.pay-basis { background: var(--band-roadside-bg); border-color: var(--band-roadside-border); }
+.miles-strip > div.pay-basis .lbl { color: var(--band-roadside-text); font-weight: 600; }
+.miles-strip .lbl { font-size: 8px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.4px; line-height: 1.3; }
+.miles-strip .val { font-size: 12px; font-weight: 600; font-feature-settings: 'tnum'; margin-top: 2px; }
+
+/* VALIDATION */
+.validation-list { list-style: none; padding: 0; margin: 0; }
+.validation-list li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; font-size: 11px;
+  border-bottom: 0.5px solid var(--border-subtle);
+}
+.validation-list li:last-child { border-bottom: none; }
+.validation-list .check { font-size: 12px; color: var(--green); width: 14px; text-align: center; }
+.validation-list .warn { color: var(--gold); }
+.validation-list .crit { color: var(--red); }
+.validation-list .lbl { flex: 1; }
+.validation-list .src { font-size: 9px; color: var(--text-muted); }
+
+.auto-actions {
+  margin-top: 10px;
+  background: var(--bg-section-header);
+  border: 1px solid var(--border-default);
+  border-radius: 3px;
+  padding: 10px 12px;
+}
+.auto-actions .heading { font-size: 9px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.4px; margin-bottom: 6px; }
+.auto-actions ul { list-style: none; padding: 0; margin: 0; font-size: 10px; line-height: 1.7; }
+.auto-actions ul li .ar { color: var(--text-muted); margin: 0 6px; }
+.auto-actions code { background: white; padding: 1px 4px; border-radius: 2px; border: 1px solid var(--border-default); font: 10px 'JetBrains Mono', monospace; color: var(--blue); }
+
+/* OCR DROP ZONE (GAP 3 - NEW) */
+.ocr-drop {
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 3px;
+  padding: 14px;
+  text-align: center;
+  background: var(--bg-surface-alt);
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ocr-drop:hover { background: var(--band-roadside-bg); border-color: var(--band-roadside-border); }
+.ocr-drop.dragging { background: var(--band-factoring-bg); border-color: var(--band-factoring-border); }
+.ocr-drop .ocr-icon { font-size: 22px; color: var(--text-secondary); line-height: 1; margin-bottom: 4px; }
+.ocr-drop .ocr-title { font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.ocr-drop .ocr-sub { font-size: 10px; color: var(--text-secondary); }
+
+/* EXPECTED ADJUSTMENTS CALLOUT (GAP 4 - extends chargeback callout) */
+.adjustments-callout {
+  background: #FFF7E6;
+  border: 1px solid #FCD34D;
+  border-radius: 3px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+.adjustments-callout .adj-head {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--band-roadside-text);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.adjustments-callout .adj-head .icon { font-size: 14px; color: var(--gold); }
+.adjustments-callout .adj-sub {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.adjustments-callout .adj-row {
+  padding: 8px 0;
+  border-top: 0.5px dashed var(--band-roadside-border);
+}
+.adjustments-callout .adj-row:first-of-type { border-top: none; padding-top: 0; }
+.adjustments-callout .adj-row-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--band-roadside-text);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.adjustments-callout .row { margin-bottom: 0; }
+
+.new-tag {
+  background: var(--green);
+  color: white;
+  font-size: 7px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  margin-left: 6px;
+  text-transform: uppercase;
+}
+
+/* FOOTER */
+.modal-foot {
+  background: var(--bg-section-header);
+  border-top: 1px solid var(--border-default);
+  padding: 12px 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.bill-preview {
+  flex: 1;
+  display: flex; align-items: baseline; gap: 12px;
+}
+.bill-preview .lbl { font-size: 9px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+.bill-preview .val { font-size: 16px; font-weight: 600; font-feature-settings: 'tnum'; color: var(--text-primary); }
+.bill-preview .calc { font-size: 10px; color: var(--text-muted); }
+.bill-preview .bill-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  background: white;
+  border: 1px solid var(--border-default);
+  padding: 2px 6px; border-radius: 2px;
+  color: var(--blue);
+}
+
+.btn {
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  background: white;
+  color: var(--text-primary);
+  font: 12px Inter; font-weight: 500;
+  border-radius: 2px; cursor: pointer;
+}
+.btn:hover { background: var(--bg-surface-alt); }
+.btn.primary { background: var(--green); color: white; border-color: var(--green); }
+.btn.primary:hover { background: #166434; }
+.btn.secondary { background: var(--bg-surface); }
+
+.kbd-hint {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* CALLOUT BOX BELOW MODAL — what changed */
+.changelog {
+  width: 1260px; max-width: 100%;
+  margin: 18px auto 0;
+  background: white;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  padding: 14px 18px;
+  color: var(--text-primary);
+}
+.changelog h3 { font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.4px; margin: 0 0 8px; }
+.changelog ul { margin: 0; padding-left: 18px; font-size: 11px; line-height: 1.7; }
+.changelog ul li strong { color: var(--green); }
+.changelog ul li.fix strong { color: var(--gold); }
+.changelog ul li.new strong { color: var(--green); }
+.changelog ul li.gap strong { color: var(--blue); }
+</style>
+</head>
+<body>
+<div class="scene">
+<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+
+<!-- MODAL -->
+<div class="modal" role="dialog" aria-labelledby="modal-title">
+
+  <!-- HEADER -->
+  <div class="modal-head">
+    <div>
+      <div class="breadcrumb"><a>Dispatch</a> › Book load</div>
+      <div class="title" id="modal-title">Book load</div>
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="font-size: 10px; color: #A8B0C7;">Wed, May 13 · 8:51 AM CT · Jorge Munoz</div>
+    <div style="color: #A8B0C7; font-size: 14px; cursor: pointer; margin-left: 8px;">✕</div>
+  </div>
+
+  <!-- LIVE LOAD ID BAR -->
+  <div class="load-id-bar">
+    <span>Load #</span>
+    <span class="pill-id">L-13518</span>
+    <span class="reserved-tag">● Reserved · 58s</span>
+    <span class="spacer"></span>
+    <span class="meta">Will create Driver Bill <span class="pill-id" style="background: rgba(99, 165, 253, 0.18); border-color: rgba(99, 165, 253, 0.30);">B-13518</span> on Save</span>
+  </div>
+
+  <!-- 4-SECTION GRID -->
+  <div class="grid">
+
+    <!-- SECTION A — CUSTOMER · INVOICE · CHARGES -->
+    <section>
+      <div class="band A">
+        <span>A · Customer · Invoice · Charges</span>
+        <span class="right">Section total: <strong>$2,439.00</strong></span>
+      </div>
+      <div class="section-body">
+
+        <!-- GAP 3: OCR DROP ZONE -->
+        <div class="ocr-drop" id="ocr-drop">
+          <div class="ocr-icon">⬆</div>
+          <div class="ocr-title">Drop rate confirmation PDF here<span class="new-tag">New</span></div>
+          <div class="ocr-sub">Auto-fills customer, origin, destination, dates, rate · or click to browse</div>
+        </div>
+
+        <div class="row">
+          <div class="field flex-2">
+            <label class="field-label">Customer</label>
+            <input class="field-input" value="C.H. Robinson · MC-281208" />
+            <span class="field-hint"><span class="quality-dot green"></span>Preferred · DSO 32d · FMCSA verified</span>
+          </div>
+          <div class="field">
+            <label class="field-label">Customer WO #</label>
+            <input class="field-input" value="CHR-2026-77441" />
+          </div>
+          <div class="field">
+            <label class="field-label">Pickup #</label>
+            <input class="field-input" value="PU-883920" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Type</label>
+            <div class="toggle">
+              <button class="active">Broker</button>
+              <button>Direct</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Commodity</label>
+            <input class="field-input" value="Frozen poultry" />
+          </div>
+          <div class="field">
+            <label class="field-label">Weight</label>
+            <input class="field-input" value="42,800 lbs" />
+          </div>
+          <div class="field">
+            <label class="field-label">Pieces</label>
+            <input class="field-input" value="24 pallets" />
+          </div>
+        </div>
+
+        <table class="charges">
+          <thead><tr><th style="width: 50%;">Charge</th><th class="num">Amount</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Linehaul</td><td class="num">$2,250.00</td><td></td></tr>
+            <tr><td>Fuel surcharge (8.4%)</td><td class="num">$189.00</td><td></td></tr>
+            <tr><td>Lumper (broker-paid)</td><td class="num">$0.00</td><td><span class="pill muted">passthrough</span></td></tr>
+            <tr class="add-row"><td colspan="3"><button class="btn-link">+ Add charge · detention · layover · accessorial</button></td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td>Total customer invoice</td><td class="num">$2,439.00</td><td></td></tr>
+          </tfoot>
+        </table>
+
+        <!-- GAP 4: EXPECTED ADJUSTMENTS (extends original chargeback callout) -->
+        <div class="adjustments-callout">
+          <div class="adj-head"><span class="icon">⚠</span>Expected adjustments<span class="new-tag">Expanded</span></div>
+          <div class="adj-sub">Dispatcher flags expected customer deductions + driver pay risks up-front. Accounting sees these inline before customer pays. Audit trail per change.</div>
+
+          <div class="adj-row">
+            <div class="adj-row-label">Anticipated chargeback / retention</div>
+            <div class="row">
+              <div class="field">
+                <label class="field-label">Expected deduction</label>
+                <input class="field-input" value="$0.00" placeholder="$0.00" />
+              </div>
+              <div class="field flex-2">
+                <label class="field-label">Reason (free text)</label>
+                <input class="field-input" placeholder="e.g. ETA slipping past appt window · expect $150 late fee" />
+              </div>
+            </div>
+          </div>
+
+          <div class="adj-row">
+            <div class="adj-row-label">Detention expected<span class="new-tag">New</span></div>
+            <div class="row">
+              <div class="field">
+                <label class="field-label">Y / N</label>
+                <select class="field-select"><option>No</option><option>Yes</option></select>
+              </div>
+              <div class="field">
+                <label class="field-label">Expected hours</label>
+                <input class="field-input" placeholder="0" />
+              </div>
+              <div class="field">
+                <label class="field-label">Bill customer / hr</label>
+                <input class="field-input" value="$65.00" />
+              </div>
+              <div class="field">
+                <label class="field-label">Driver detention pay</label>
+                <input class="field-input" value="$20/hr after 2h free" />
+              </div>
+            </div>
+          </div>
+
+          <div class="adj-row">
+            <div class="adj-row-label">Late delivery risk<span class="new-tag">New</span></div>
+            <div class="row">
+              <div class="field">
+                <label class="field-label">Y / N</label>
+                <select class="field-select"><option>No</option><option>Yes</option></select>
+              </div>
+              <div class="field">
+                <label class="field-label">Est. customer deduction</label>
+                <input class="field-input" placeholder="$0.00" />
+              </div>
+              <div class="field flex-2">
+                <label class="field-label">Reason</label>
+                <select class="field-select">
+                  <option>Weather</option>
+                  <option>Mechanical · breakdown</option>
+                  <option>Traffic</option>
+                  <option>HOS / driver</option>
+                  <option>Customer-caused (origin late)</option>
+                  <option>Border delay</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top: 10px;">
+          <div class="field">
+            <label class="field-label">Cash advance</label>
+            <input class="field-input" value="$0" />
+          </div>
+          <div class="field">
+            <label class="field-label">Fuel advance</label>
+            <input class="field-input" value="$200" />
+          </div>
+          <div class="field flex-2">
+            <label class="field-label">Factoring company (auto from customer)</label>
+            <input class="field-input" value="Triumph · advances 87% · reserves 13%" disabled />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION B — EQUIPMENT · DRIVER · TRAILER -->
+    <section>
+      <div class="band B">
+        <span>B · Equipment · Driver · Trailer</span>
+        <span class="right">Class: <strong>T120-SMITH</strong> (auto)</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <div class="field flex-2">
+            <label class="field-label">Trailer type (defines load category)</label>
+            <select class="field-select">
+              <option>Refrigerated van</option>
+              <option>Dry van</option>
+              <option>Flatbed</option>
+              <option>Power-only · no trailer</option>
+              <option>Power-only · customer trailer</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Truck unit</label>
+            <input class="field-input" value="T120 · 2022 Volvo VNL" />
+            <span class="field-hint">⚡ PM due in 1,840 mi — consider bundling</span>
+          </div>
+          <div class="field">
+            <label class="field-label">Trailer unit</label>
+            <input class="field-input" value="RT-178 · last inspected Apr 28" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field flex-2">
+            <label class="field-label">Driver</label>
+            <input class="field-input" value="R. Smith · CDL TX exp 2027-08 · HOS 8h 12m" />
+            <span class="field-hint pill ok" style="display: inline-block; margin-top: 2px;">no active debt</span>
+          </div>
+          <div class="field flex-2">
+            <label class="field-label">Team driver (optional · 50/50 split)</label>
+            <input class="field-input" placeholder="Solo load · click to add team driver" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field flex-3">
+            <label class="field-label">Equipment toggles (filtered by trailer type)</label>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px;">
+              <span class="pill info">Locking jacks ✓</span>
+              <span class="pill info">Reefer fuel ✓</span>
+              <span class="pill info">Pulp probe ✓</span>
+              <span class="pill muted">Load locks</span>
+              <span class="pill muted">+ 4 more</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Driver pay rate (per mile)</label>
+            <input class="field-input" value="$0.50 (short mi)" />
+          </div>
+          <div class="field">
+            <label class="field-label">Reefer setpoint</label>
+            <input class="field-input" value="-10°F continuous" />
+          </div>
+        </div>
+
+        <!-- GAP 2: DRIVER INSTRUCTIONS TEXTAREA -->
+        <div class="row" style="margin-bottom: 0;">
+          <div class="field flex-3">
+            <label class="field-label">
+              Driver instructions
+              <span class="pill visible-driver" style="margin-left: 6px;">Visible to driver</span>
+              <span class="new-tag">New</span>
+            </label>
+            <textarea class="field-textarea" rows="3" placeholder="Call dispatcher on arrival. Detention starts after 2 free hours. Use gate 4-B entry. Lumper paid via Comcheck — see attached PDF. Rear dock only, do not back into front docks."></textarea>
+            <span class="field-hint">Prints on driver dispatch sheet · shows in driver mobile app · driver marks "read" on receipt · all edits audit-logged</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION C — STOPS · PC*MILER -->
+    <section class="full">
+      <div class="band C">
+        <span>C · Stops · PC*MILER routing</span>
+        <span class="right">2 stops · 1 pickup · 1 delivery</span>
+      </div>
+      <div class="section-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div>
+
+          <!-- STOP 1: PICKUP (GAP 1 - 4-option time-window dropdown replaces Appt/FCFS toggle) -->
+          <div class="stop-card">
+            <div class="stop-head">
+              <span class="pill pickup">Pickup · 1</span>
+              <span class="num">PU-883920</span>
+              <span class="addr">Pilgrim's Pride · 4845 Eisenhauer Rd, San Antonio TX 78218</span>
+              <span class="time">Mon May 12 · 06:00 AM CT</span>
+            </div>
+            <div class="stop-controls">
+              <div class="field">
+                <label class="field-label">Time window type<span class="new-tag">Updated</span></label>
+                <select class="field-select">
+                  <option>Appointment (fixed time)</option>
+                  <option>Open window (any time during business hours)</option>
+                  <option>Select hours (custom window)</option>
+                  <option>Refused (customer denied · needs reschedule)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Free time · detention</label>
+                <input class="field-input" value="120 min · $65/hr after" />
+              </div>
+            </div>
+          </div>
+
+          <!-- STOP 2: DELIVERY -->
+          <div class="stop-card">
+            <div class="stop-head">
+              <span class="pill delivery">Delivery · 2</span>
+              <span class="num">DEL-225601</span>
+              <span class="addr">Continental Forwarding · 1100 N 23rd St, McAllen TX 78501</span>
+              <span class="time">Tue May 13 · 14:00 CT</span>
+            </div>
+            <div class="stop-controls">
+              <div class="field">
+                <label class="field-label">Time window type<span class="new-tag">Updated</span></label>
+                <select class="field-select">
+                  <option>Appointment (fixed time)</option>
+                  <option>Open window (any time during business hours)</option>
+                  <option>Select hours (custom window)</option>
+                  <option>Refused (customer denied · needs reschedule)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">Free time · lumper</label>
+                <input class="field-input" value="120 min · customer-provided" />
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-link" style="font-size: 11px;">+ Add stop · multi-leg</button>
+        </div>
+
+        <div>
+          <div class="field">
+            <label class="field-label">PC*MILER results</label>
+            <div class="miles-strip">
+              <div><div class="lbl">Practical<br/>(fuel + ETA)</div><div class="val">238 mi</div></div>
+              <div class="pay-basis"><div class="lbl">Shortest<br/>(driver pay)</div><div class="val">221 mi</div></div>
+              <div><div class="lbl">Deadhead</div><div class="val">42 mi</div></div>
+              <div><div class="lbl">RPM</div><div class="val">$9.45</div></div>
+            </div>
+            <span class="field-hint" style="margin-top: 4px;">Shortest miles (yellow) used for driver pay. Practical used for fuel planning + ETA. Both shown for transparency.</span>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <label class="field-label">Border routing</label>
+            <select class="field-select">
+              <option>No border crossing</option>
+              <option>Routed via Laredo</option>
+              <option>Routed via Pharr</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION D — PRE-DISPATCH VALIDATION -->
+    <section class="full">
+      <div class="band D">
+        <span>D · Pre-dispatch validation</span>
+        <span class="right pill ok">5 of 5 checks pass · ready to book</span>
+      </div>
+      <div class="section-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
+        <ul class="validation-list">
+          <li><span class="check">✓</span><span class="lbl">Unit T120 PM up-to-date · dispatch_eligible=true</span><span class="src">WF-044</span></li>
+          <li><span class="check">✓</span><span class="lbl">Driver CDL valid · medical card valid · no active debt</span><span class="src">WF-050 + WF-011</span></li>
+          <li><span class="check">✓</span><span class="lbl">Trailer RT-178 last DOT inspection 13 days ago</span><span class="src">WF-044</span></li>
+          <li><span class="check">✓</span><span class="lbl">Customer C.H. Robinson · Preferred · FMCSA verified</span><span class="src">customers.fmcsa_authority_cached_at</span></li>
+          <li><span class="check warn">⚡</span><span class="lbl">PM due in 1,840 mi · advisory · 238 mi practical fits comfortably</span><span class="src">WF-044 advisory</span></li>
+        </ul>
+        <div class="auto-actions">
+          <div class="heading">On save · book + dispatch</div>
+          <ul>
+            <li><span class="ar">→</span>Insert into <code>dispatch.loads</code> with id <code>L-13518</code> · status <code>assigned_not_dispatched</code></li>
+            <li><span class="ar">→</span>Auto-create driver bill <code>B-13518</code> · lockstep INSERT · 1 line @ 221 short mi × $0.50 = $110.50</li>
+            <li><span class="ar">→</span>Queue QBO outbox · Invoice (customer) + Bill (driver-vendor)</li>
+            <li><span class="ar">→</span>Audit event <code>dispatch.load.created</code></li>
+            <li><span class="ar">→</span>SMS driver R. Smith · "Load L-13518 assigned · PU Mon 6am SA"</li>
+            <li><span class="ar">→</span>Fuel planner pre-routes Loves stops on practical route</li>
+            <li><span class="ar">→</span>Factoring packet template prepared (Triumph)</li>
+            <li><span class="ar">→</span>Driver instructions pushed to driver mobile app + dispatch sheet PDF</li>
+            <li><span class="ar">→</span>Expected adjustments (chargeback + detention + late) flagged on customer invoice review banner</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="modal-foot">
+    <div class="bill-preview">
+      <span class="lbl">Driver bill preview</span>
+      <span class="bill-num">B-13518</span>
+      <span class="val">$110.50</span>
+      <span class="calc">221 short mi × $0.50/mi · recalcs on field changes</span>
+    </div>
+    <button class="btn">Cancel</button>
+    <button class="btn secondary">Save draft</button>
+    <button class="btn primary">Book + dispatch</button>
+  </div>
+  <div style="background: var(--bg-section-header); padding: 0 18px 8px;">
+    <div class="kbd-hint">Esc closes · ⌘ S saves draft · ⌘ Enter books + dispatches</div>
+  </div>
+</div>
+
+<!-- CHANGELOG BELOW MODAL -->
+<div class="changelog">
+  <h3>What's different from your prior Blueprint upload — 5 gaps added inline</h3>
+  <ul>
+    <li class="gap"><strong>GAP 1 · Time window dropdown:</strong> Section C stop cards · each stop's <code>Appt/FCFS</code> toggle replaced with 4-option select: Appointment / Open window / Select hours / Refused (customer denied · needs reschedule). Tag "Updated" on the label.</li>
+    <li class="gap"><strong>GAP 2 · Driver instructions textarea:</strong> Section B (bottom row) · 3-row textarea with amber "Visible to driver" pill + "New" tag. Hint explains it prints on dispatch sheet, shows in mobile app, driver marks "read", all edits audit-logged. Added to auto-actions list at save.</li>
+    <li class="gap"><strong>GAP 3 · OCR drop zone:</strong> Section A (top, before customer field) · dashed-border drop zone with upload icon · auto-fills customer, origin, destination, dates, rate. Hover state amber · drag state blue.</li>
+    <li class="gap"><strong>GAP 4 · Expected adjustments callout:</strong> Section A · renamed "Anticipated chargeback" callout to "Expected adjustments". Original chargeback row preserved as first of 3 rows. Added detention row (Y/N + hours + bill customer/hr + driver detention pay). Added late delivery risk row (Y/N + est customer deduction + reason dropdown). Original chargeback row preserved unchanged.</li>
+    <li class="gap"><strong>GAP 5 · Practical + Shortest miles clarity:</strong> Section C miles-strip · added "(fuel + ETA)" sublabel to Practical, "(driver pay)" sublabel to Shortest. Yellow background highlight on Shortest column so pay basis is unambiguous at-a-glance. Hint below strip explicitly states which is used for what.</li>
+  </ul>
+  <h3 style="margin-top: 14px;">Preserved exactly from your Blueprint upload</h3>
+  <ul>
+    <li><strong>EXISTING:</strong> 1260px wide popup · 4 banded sections all visible simultaneously</li>
+    <li><strong>EXISTING:</strong> Live load number <code>L-13518</code> at top bar · reserved with 58s TTL · creates matched driver bill <code>B-13518</code> on save (Invariant #7)</li>
+    <li><strong>EXISTING:</strong> Section A yellow · B blue · C green · D cream banded headers per Part 6 design tokens</li>
+    <li><strong>EXISTING:</strong> Customer / Customer WO# / Pickup# / Broker-Direct toggle / Commodity / Weight / Pieces · all original fields preserved</li>
+    <li><strong>EXISTING:</strong> Charges table with linehaul + FSC + lumper-passthrough + add-charge link · total customer invoice row unchanged</li>
+    <li><strong>EXISTING:</strong> Cash advance + Fuel advance + Factoring auto-fill (Triumph 87/13) preserved</li>
+    <li><strong>EXISTING:</strong> Trailer type select + Truck unit + Trailer unit + Driver + Team driver + Equipment toggles + Pay rate + Reefer setpoint · all preserved</li>
+    <li><strong>EXISTING:</strong> Section C stop cards with pickup/delivery pills + addresses + times + Add stop link + Border routing select</li>
+    <li><strong>EXISTING:</strong> Section D 5/5 validation checklist with WF-044 + WF-050 + WF-011 + FMCSA cache check</li>
+    <li><strong>EXISTING:</strong> Auto-actions list with all 7 original entries · 2 new entries appended for driver instructions push + expected-adjustments invoice flag</li>
+    <li><strong>EXISTING:</strong> Footer driver bill preview with live recalc on field changes · Cancel/Save draft/Book + dispatch buttons</li>
+  </ul>
+  <h3 style="margin-top: 14px;">INVARIANT #24 compliance</h3>
+  <ul>
+    <li>Zero fields removed · zero validation checks removed · zero auto-actions removed</li>
+    <li>One rename: "Anticipated chargeback callout" → "Expected adjustments callout" — category-widening only · chargeback row preserved as first sub-row inside</li>
+    <li>All additions are purely additive · existing structure and tokens preserved 100%</li>
+  </ul>
+</div>
+
+</div>
+</div>
+
+<script>
+(function() {
+  var ocr = document.getElementById('ocr-drop');
+  if (ocr) {
+    ocr.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      ocr.classList.add('dragging');
+    });
+    ocr.addEventListener('dragleave', function() {
+      ocr.classList.remove('dragging');
+    });
+    ocr.addEventListener('drop', function(e) {
+      e.preventDefault();
+      ocr.classList.remove('dragging');
+      ocr.querySelector('.ocr-title').textContent = 'PDF dropped — would parse here (mockup)';
+    });
+  }
+  document.querySelectorAll('.toggle button').forEach(function(b) {
+    b.addEventListener('click', function() {
+      b.parentElement.querySelectorAll('button').forEach(function(x) {
+        x.classList.remove('active');
+      });
+      b.classList.add('active');
+    });
+  });
+})();
+</script>
+</body>
+</html>

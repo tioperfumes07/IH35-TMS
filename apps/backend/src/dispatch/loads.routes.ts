@@ -1,12 +1,14 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { randomUUID } from "crypto";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { bookLoad } from "./book-load.service.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
-import { reserveNextLoadId } from "./load-id-reservation.service.js";
+import { cancelLoadIdReservation, reserveNextLoadId } from "./load-id-reservation.service.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
+import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 
 const dispatchStatusSchema = z.enum([
   "unassigned",
@@ -59,6 +61,19 @@ const transitionBodySchema = z.object({
   cancellation_reason_code: z.string().trim().max(80).optional(),
 });
 
+const dispatchLoadReservationParamsSchema = z.object({
+  reservation_uuid: z.string().uuid(),
+});
+
+const stopTimeWindowSchema = z.preprocess(
+  (value) => {
+    if (value === "first_come_first_serve") return "open_window";
+    if (value === "drop_window") return "select_hours";
+    return value;
+  },
+  z.enum(["appointment", "open_window", "select_hours", "refused"]).optional()
+);
+
 const createDispatchLoadBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   customer_id: z.string().uuid(),
@@ -79,6 +94,21 @@ const createDispatchLoadBodySchema = z.object({
   live_load_number: z.string().trim().max(60).optional(),
   addToOpenPresettlement: z.boolean().optional(),
   reservation_uuid: z.string().uuid().optional(),
+  anticipated_chargeback_cents: z.number().int().min(0).optional(),
+  anticipated_chargeback_reason: z.string().trim().max(1000).optional(),
+  detention_expected_y_n: z.boolean().optional(),
+  detention_expected_hours: z.number().min(0).max(999.99).optional(),
+  detention_bill_customer_per_hour_cents: z.number().int().min(0).optional(),
+  detention_driver_pay_per_hour_cents: z.number().int().min(0).optional(),
+  late_delivery_risk_y_n: z.boolean().optional(),
+  late_delivery_est_deduction_cents: z.number().int().min(0).optional(),
+  late_delivery_reason: z.string().trim().max(1000).optional(),
+  ocr_source_pdf_r2_key: z.string().trim().max(512).optional(),
+  miles_practical: z.number().int().min(0).optional(),
+  miles_shortest: z.number().int().min(0).optional(),
+  miles_deadhead: z.number().int().min(0).optional(),
+  pickup_number: z.string().trim().max(120).optional(),
+  border_routing: z.string().trim().max(120).optional(),
   trailer_type: z.enum(["refrigerated_van", "dry_van", "flatbed", "power_only_no_trailer", "power_only_customer_trailer"]).optional(),
   assigned_unit_id: z.string().uuid().optional(),
   assigned_primary_driver_id: z.string().uuid().optional(),
@@ -105,7 +135,7 @@ const createDispatchLoadBodySchema = z.object({
         country: z.string().trim().max(120).optional(),
         address_line1: z.string().trim().max(300).optional(),
         scheduled_arrival_at: z.string().datetime({ offset: true }).optional(),
-        time_window_type: z.enum(["appointment", "first_come_first_serve", "drop_window"]).optional(),
+        time_window_type: stopTimeWindowSchema,
         appointment_start_at: z.string().datetime({ offset: true }).optional(),
         appointment_end_at: z.string().datetime({ offset: true }).optional(),
         lumper_required: z.boolean().optional(),
@@ -114,6 +144,9 @@ const createDispatchLoadBodySchema = z.object({
         is_tarp_stop: z.boolean().optional(),
         tarp_count: z.number().int().min(0).optional(),
         stop_notes: z.string().trim().max(1000).optional(),
+        site_contact_name: z.string().trim().max(200).optional(),
+        site_contact_phone: z.string().trim().max(40).optional(),
+        gate_dock_text: z.string().trim().max(200).optional(),
       })
     )
     .min(2),
@@ -218,7 +251,68 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return {
       reservation_uuid: payload.reservationId,
       load_number: payload.loadNumber,
+      reserved_until: payload.reservedUntilIso,
+      ttl_seconds: payload.ttlSeconds,
     };
+  });
+
+  app.delete("/api/v1/dispatch/loads/reserve-id/:reservation_uuid", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const params = dispatchLoadReservationParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!q.success) return sendValidationError(reply, q.error);
+
+    const released = await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) =>
+      cancelLoadIdReservation(client, {
+        operatingCompanyId: q.data.operating_company_id,
+        reservationId: params.data.reservation_uuid,
+        reservedByUserId: authUser.uuid,
+      })
+    );
+    return { released };
+  });
+
+  app.post("/api/v1/dispatch/loads/ocr-upload", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    if (!isR2Configured()) {
+      return reply.code(503).send({ error: "r2_not_configured" });
+    }
+    let operatingCompanyId = "";
+    let buffer: Buffer | null = null;
+    let contentType = "application/pdf";
+    const parts = req.parts();
+    for await (const part of parts) {
+      if (part.type === "file") {
+        buffer = await part.toBuffer();
+        contentType = part.mimetype || contentType;
+      } else if (part.type === "field" && part.fieldname === "operating_company_id") {
+        operatingCompanyId = String(part.value ?? "").trim();
+      }
+    }
+    const ocParsed = z.string().uuid().safeParse(operatingCompanyId);
+    if (!ocParsed.success) return reply.code(400).send({ error: "operating_company_id_required" });
+    if (!buffer || buffer.length < 1) return reply.code(400).send({ error: "file_required" });
+
+    const r2Key = `dispatch/ocr/${ocParsed.data}/${randomUUID()}.pdf`;
+    try {
+      await withCompanyScope(authUser.uuid, ocParsed.data, async () => {
+        await putObjectBytes(r2Key, buffer!, contentType);
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("r2_not_configured")) return reply.code(503).send({ error: "r2_not_configured" });
+      throw err;
+    }
+    return reply.code(201).send({ ocr_source_pdf_r2_key: r2Key });
   });
 
   app.get("/api/v1/dispatch/preferences", async (req, reply) => {

@@ -28,7 +28,7 @@ type BookLoadStop = {
   country?: string;
   address_line1?: string;
   scheduled_arrival_at?: string;
-  time_window_type?: "appointment" | "first_come_first_serve" | "drop_window";
+  time_window_type?: "appointment" | "open_window" | "select_hours" | "refused" | "first_come_first_serve" | "drop_window";
   appointment_start_at?: string;
   appointment_end_at?: string;
   lumper_required?: boolean;
@@ -37,6 +37,9 @@ type BookLoadStop = {
   is_tarp_stop?: boolean;
   tarp_count?: number;
   stop_notes?: string;
+  site_contact_name?: string;
+  site_contact_phone?: string;
+  gate_dock_text?: string;
 };
 
 type BookLoadCharge = {
@@ -66,6 +69,21 @@ export type BookLoadInput = {
   live_load_number?: string;
   addToOpenPresettlement?: boolean;
   reservation_uuid?: string;
+  anticipated_chargeback_cents?: number;
+  anticipated_chargeback_reason?: string;
+  detention_expected_y_n?: boolean;
+  detention_expected_hours?: number;
+  detention_bill_customer_per_hour_cents?: number;
+  detention_driver_pay_per_hour_cents?: number;
+  late_delivery_risk_y_n?: boolean;
+  late_delivery_est_deduction_cents?: number;
+  late_delivery_reason?: string;
+  ocr_source_pdf_r2_key?: string;
+  miles_practical?: number;
+  miles_shortest?: number;
+  miles_deadhead?: number;
+  pickup_number?: string;
+  border_routing?: string;
   trailer_type?: "refrigerated_van" | "dry_van" | "flatbed" | "power_only_no_trailer" | "power_only_customer_trailer";
   assigned_unit_id?: string;
   assigned_primary_driver_id?: string;
@@ -82,6 +100,13 @@ export type BookLoadInput = {
 export type BookLoadResult =
   | { kind: "ok"; row: Record<string, unknown> }
   | { kind: "error"; status: number; payload: Record<string, unknown> };
+
+function normalizeStopTimeWindow(raw?: string): "appointment" | "open_window" | "select_hours" | "refused" {
+  if (raw === "first_come_first_serve") return "open_window";
+  if (raw === "drop_window") return "select_hours";
+  if (raw === "open_window" || raw === "select_hours" || raw === "refused" || raw === "appointment") return raw;
+  return "appointment";
+}
 
 function canOverrideUnitBlock(role: string) {
   return role === "Owner";
@@ -446,6 +471,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       const claimed = await claimReservation(client, {
         operatingCompanyId: input.operating_company_id,
         reservationId: input.reservation_uuid,
+        reservedByUserId: input.requestingUserUuid,
       });
       if (!claimed) {
         return {
@@ -468,7 +494,6 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     const v3Metadata = {
       customer_po_number: input.customer_po_number ?? null,
       hazmat: Boolean(input.hazmat),
-      driver_instructions_text: input.driver_instructions_text ?? null,
     };
 
     const loadRes = await client.query(
@@ -478,9 +503,16 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
           dispatcher_user_id, notes, booking_mode, requires_tarps, tarp_type, lumper_amount_cents,
           customer_chargeback_requested, customer_chargeback_reason, live_load_number,
-          quicksave_pending_fields, presettlement_link_id, booked_by_user_id, updated_by_user_id
+          quicksave_pending_fields, presettlement_link_id, booked_by_user_id, updated_by_user_id,
+          driver_instructions_text,
+          anticipated_chargeback_cents, anticipated_chargeback_reason,
+          detention_expected_y_n, detention_expected_hours,
+          detention_bill_customer_per_hour_cents, detention_driver_pay_per_hour_cents,
+          late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
+          ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
+          customer_wo_number, pickup_number, border_routing
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb,$19,$20,$21,$22)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40)
         RETURNING *
       `,
       [
@@ -506,6 +538,23 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         null,
         input.requestingUserUuid,
         input.requestingUserUuid,
+        input.driver_instructions_text ?? null,
+        input.anticipated_chargeback_cents ?? null,
+        input.anticipated_chargeback_reason ?? null,
+        Boolean(input.detention_expected_y_n),
+        input.detention_expected_hours ?? null,
+        input.detention_bill_customer_per_hour_cents ?? null,
+        input.detention_driver_pay_per_hour_cents ?? null,
+        Boolean(input.late_delivery_risk_y_n),
+        input.late_delivery_est_deduction_cents ?? null,
+        input.late_delivery_reason ?? null,
+        input.ocr_source_pdf_r2_key ?? null,
+        input.miles_practical ?? null,
+        input.miles_shortest ?? null,
+        input.miles_deadhead ?? null,
+        input.customer_wo_number ?? null,
+        input.pickup_number ?? null,
+        input.border_routing ?? null,
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;
@@ -515,13 +564,15 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     });
 
     for (const stop of input.stops) {
+      const tw = normalizeStopTimeWindow(stop.time_window_type);
       await client.query(
         `
           INSERT INTO mdata.load_stops (
             load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status,
-            time_window_type, appointment_start_at, appointment_end_at, lumper_required, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes
+            time_window_type, appointment_start_at, appointment_end_at, lumper_required, lumper_paid_by, lumper_amount_cents, is_tarp_stop, tarp_count, stop_notes,
+            site_contact_name, site_contact_phone, gate_dock_text
           )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
         `,
         [
           load.id,
@@ -533,7 +584,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           stop.state ?? null,
           stop.country ?? null,
           stop.scheduled_arrival_at ?? null,
-          stop.time_window_type ?? "appointment",
+          tw,
           stop.appointment_start_at ?? null,
           stop.appointment_end_at ?? null,
           Boolean(stop.lumper_required),
@@ -542,7 +593,50 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           Boolean(stop.is_tarp_stop),
           stop.tarp_count ?? 0,
           stop.stop_notes ?? null,
+          stop.site_contact_name ?? null,
+          stop.site_contact_phone ?? null,
+          stop.gate_dock_text ?? null,
         ]
+      );
+    }
+
+    if (input.driver_instructions_text?.trim()) {
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "dispatch.load.driver_instructions_changed",
+        {
+          load_uuid: load.id,
+          operating_company_id: input.operating_company_id,
+          driver_instructions_text: input.driver_instructions_text,
+        },
+        "info",
+        "P6-T11171"
+      );
+    }
+
+    if (
+      (input.anticipated_chargeback_cents ?? 0) > 0 ||
+      input.detention_expected_y_n ||
+      input.late_delivery_risk_y_n
+    ) {
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "dispatch.load.expected_adjustments_captured",
+        {
+          load_uuid: load.id,
+          operating_company_id: input.operating_company_id,
+          anticipated_chargeback_cents: input.anticipated_chargeback_cents ?? null,
+          anticipated_chargeback_reason: input.anticipated_chargeback_reason ?? null,
+          detention_expected_y_n: Boolean(input.detention_expected_y_n),
+          detention_expected_hours: input.detention_expected_hours ?? null,
+          late_delivery_risk_y_n: Boolean(input.late_delivery_risk_y_n),
+          late_delivery_est_deduction_cents: input.late_delivery_est_deduction_cents ?? null,
+          late_delivery_reason: input.late_delivery_reason ?? null,
+        },
+        "info",
+        "P6-T11171"
       );
     }
 
@@ -604,6 +698,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       );
 
       const outboxEvents = [
+        "dispatch.load.created",
         "dispatch.driver_sms",
         "dispatch.qbo_invoice",
         "dispatch.qbo_bill",
@@ -617,7 +712,23 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
             INSERT INTO outbox.outbox_queue (aggregate_type, aggregate_id, event_type, payload)
             VALUES ($1,$2,$3,$4::jsonb)
           `,
-          ["dispatch.loads", load.id, eventType, JSON.stringify({ load_id: load.id, operating_company_id: load.operating_company_id })]
+          [
+            "dispatch.loads",
+            load.id,
+            eventType,
+            JSON.stringify(
+              eventType === "dispatch.load.created"
+                ? {
+                    load,
+                    stops: input.stops,
+                    operating_company_id: load.operating_company_id,
+                    actor_user_id: input.requestingUserUuid,
+                    save_mode: input.save_mode,
+                    load_number: loadNumber,
+                  }
+                : { load_id: load.id, operating_company_id: load.operating_company_id }
+            ),
+          ]
         );
       }
       await client.query(

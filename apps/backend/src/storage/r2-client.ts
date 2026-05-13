@@ -126,3 +126,15 @@ export async function getObjectMetadata(r2Key: string): Promise<ObjectMetadata |
     return null;
   }
 }
+
+export async function putObjectBytes(r2Key: string, body: Buffer, contentType: string) {
+  const { client, bucket } = ensureConfigured();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: r2Key,
+      Body: body,
+      ContentType: contentType || "application/octet-stream",
+    })
+  );
+}
