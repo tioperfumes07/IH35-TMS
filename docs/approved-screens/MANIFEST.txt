@@ -9,3 +9,17 @@
 9-Lists_and_catalogs.png
 10-Reports.png
 11-Form_425-Design.png
+
+## SHA256 manifest
+
+f1dd7499b77721269eef0d25f890733d00398e65dda78355dc33206be79ee0ac  docs/approved-screens/1-HOME_PAGE.png
+ca50eb5bd2ba3edf7f650711ce4ef86633cb22db2e190175534a2cdc7ff44c56  docs/approved-screens/10-Reports.png
+8783a5a77acc69170df940ec7e0859ee77df7c7b1e0e272ba480f23b377acc48  docs/approved-screens/11-Form_425-Design.png
+dd75260dc55db1e081d59eeff289353689c1ba369a6c9fd323cc3f1e6e4b1557  docs/approved-screens/2-Maintenance.png
+47b63c215162eb28cfce134993267ad18760b6ac846483b97e596cfc76498fbd  docs/approved-screens/3-Accounting-Dropdown.png
+2ca79ae7b3318cdd6caf4dbcd9d8ebdb1ac8bbf1377a19aa58016e0dcfd0d68b  docs/approved-screens/4-Banking_Homepage.png
+081692c53f82ce34046e3d152b081518c82ed59daa1a01210beba6183a7bec08  docs/approved-screens/5-Fuel_Planner.png
+c9b5f274ce3a397f2b9cb1581c42a7e7d19fb5fd867b6d47d66ae7795cc2250f  docs/approved-screens/6-Safety.png
+5161391a547623d98587fc43ee4a477d84449d48fb3a72b00a0a29e669a0a5a9  docs/approved-screens/7-Drivers.png
+6caf1548155884cadbd8d429f23c6e2f67658f3652635ad529a5371cbd169539  docs/approved-screens/8-Dispatch-Home.png
+110bf91a290bc4054911f475e0bd5cb487617869abe8e7fb522a0504277c44fb  docs/approved-screens/9-Lists_and_catalogs.png
