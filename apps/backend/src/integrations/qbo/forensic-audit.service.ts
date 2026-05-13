@@ -70,9 +70,10 @@ export async function auditBatchEvent(
   eventType: BatchAuditEventType,
   metadata: Record<string, unknown> = {}
 ) {
-  void withLuciaBypass(async (client) => {
-    await client.query(
-      `
+  try {
+    await withLuciaBypass(async (client) => {
+      await client.query(
+        `
         INSERT INTO qbo_archive.import_batch_audit_log (
           batch_id,
           operating_company_id,
@@ -88,26 +89,42 @@ export async function auditBatchEvent(
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, now())
       `,
-      [
-        batchId,
-        operatingCompanyId,
-        eventType,
-        typeof metadata.entity_type === "string" ? metadata.entity_type : null,
-        typeof metadata.page_number === "number" ? metadata.page_number : null,
-        typeof metadata.total_pages === "number" ? metadata.total_pages : null,
-        typeof metadata.records_processed === "number" ? metadata.records_processed : null,
-        typeof metadata.duration_ms === "number" ? metadata.duration_ms : null,
-        typeof metadata.error_message === "string" ? metadata.error_message : null,
-        JSON.stringify(metadata),
-      ]
-    );
-    await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
-      "qbo_archive.batch_audit_logged",
-      "info",
-      JSON.stringify({ batch_id: batchId, operating_company_id: operatingCompanyId, event_type: eventType }),
-      "P6-FOUNDATION-OPS",
-    ]);
-  }).catch(() => {
-    // Audit writes are best effort by design; never block import runner.
-  });
+        [
+          batchId,
+          operatingCompanyId,
+          eventType,
+          typeof metadata.entity_type === "string" ? metadata.entity_type : null,
+          typeof metadata.page_number === "number" ? metadata.page_number : null,
+          typeof metadata.total_pages === "number" ? metadata.total_pages : null,
+          typeof metadata.records_processed === "number" ? metadata.records_processed : null,
+          typeof metadata.duration_ms === "number" ? metadata.duration_ms : null,
+          typeof metadata.error_message === "string" ? metadata.error_message : null,
+          JSON.stringify(metadata),
+        ]
+      );
+
+      try {
+        await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
+          "qbo_archive.batch_audit_logged",
+          "info",
+          JSON.stringify({ batch_id: batchId, operating_company_id: operatingCompanyId, event_type: eventType }),
+          "P6-FOUNDATION-OPS",
+        ]);
+      } catch (appendErr) {
+        console.error("[FORENSIC_AUDIT] audit.append_event failed after import_batch_audit_log insert", {
+          batchId,
+          operatingCompanyId,
+          eventType,
+          error: String((appendErr as Error)?.message ?? appendErr),
+        });
+      }
+    });
+  } catch (error) {
+    console.error("[FORENSIC_AUDIT] import_batch_audit_log insert failed", {
+      batchId,
+      operatingCompanyId,
+      eventType,
+      error: String((error as Error)?.message ?? error),
+    });
+  }
 }
