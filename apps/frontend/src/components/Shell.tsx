@@ -1,5 +1,6 @@
 import type { AuthMeResponse } from "../types/api";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { colors, spacing, typography } from "../design/tokens";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -10,12 +11,14 @@ type Props = {
 };
 
 export function Shell({ auth, children }: Props) {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   return (
     <div className="flex min-h-screen flex-col" style={{ backgroundColor: colors.bodyBg, fontFamily: typography.fontSans }}>
-      <Topbar auth={auth} />
-      <div className="flex min-h-[calc(100vh-48px)]">
-        <Sidebar role={auth.role} />
-        <main className="flex-1" style={{ backgroundColor: colors.bodyBg, padding: spacing.pageContentPadding }}>
+      <Topbar auth={auth} onOpenMobileNav={() => setMobileNavOpen(true)} />
+      <div className="relative flex min-h-[calc(100vh-48px)] flex-1">
+        <Sidebar role={auth.role} mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />
+        <main className="min-w-0 flex-1 overflow-x-auto" style={{ backgroundColor: colors.bodyBg, padding: spacing.pageContentPadding }}>
           {children}
         </main>
       </div>

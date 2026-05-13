@@ -5,7 +5,8 @@ import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
-import { useModalEscape } from "../../../hooks/useModalEscape";
+import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
@@ -94,7 +95,6 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   const auth = useAuth();
   const { pushToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
-  useModalEscape(open, onClose);
 
   const [gateBanner, setGateBanner] = useState<{
     type: "advisory" | "hard_block" | "hos_block";
@@ -105,6 +105,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   const [overrideToken, setOverrideToken] = useState<string | null>(null);
   const [pendingCloseAfterAdvisory, setPendingCloseAfterAdvisory] = useState(false);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
 
   const form = useForm<FormValues>({
@@ -158,6 +159,24 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
       ],
     },
   });
+
+  const { isDirty } = form.formState;
+
+  const finalizeBookLoadClose = useCallback(() => {
+    setShowDiscardConfirm(false);
+    onClose();
+  }, [onClose]);
+
+  const attemptBookLoadClose = useCallback(() => {
+    const needsConfirm = isDirty || overrideReason.trim().length > 0;
+    if (needsConfirm) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    finalizeBookLoadClose();
+  }, [finalizeBookLoadClose, isDirty, overrideReason]);
+
+  useEscapeKey(attemptBookLoadClose, open);
 
   const onReservationUpdate = useCallback(
     (r: LiveReservation | null) => {
@@ -214,10 +233,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setShowDiscardConfirm(false);
+      return;
+    }
+    form.reset();
     setGateBanner(null);
     setSubmitErrorMessage(null);
-  }, [open]);
+    setOverrideReason("");
+    setOverrideToken(null);
+    setPendingCloseAfterAdvisory(false);
+  }, [open, form]);
 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
     setGateBanner(null);
@@ -361,14 +387,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   if (!open) return null;
 
   return createPortal(
+    <>
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-6"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 py-6"
       style={{ background: "rgba(15, 19, 32, 0.6)" }}
-      onMouseDown={onClose}
+      onMouseDown={attemptBookLoadClose}
     >
       <div
         ref={panelRef}
-        className="flex max-h-[95vh] w-full max-w-[1260px] flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
+        className="flex max-h-[min(95vh,calc(100dvh-2rem))] w-full max-w-[min(1260px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
         style={{ width: "100%" }}
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -380,7 +407,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
           <div className="ml-auto text-[10px]" style={{ color: "#A8B0C7" }}>
             {headerTime}
           </div>
-          <button type="button" className="text-[11px] text-gray-300 hover:text-white" onClick={onClose}>
+          <button type="button" className="text-[11px] text-gray-300 hover:text-white" onClick={attemptBookLoadClose}>
             ✕
           </button>
         </header>
@@ -470,7 +497,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                       pushToast("Load booked with maintenance advisory", "success");
                       onCreated();
                       setPendingCloseAfterAdvisory(false);
-                      onClose();
+                      finalizeBookLoadClose();
                     }}
                   >
                     Continue
@@ -571,7 +598,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
               Driver bill preview: <span className="font-semibold">{money.format((driverBillPreview || 0) / 100)}</span>
             </div>
             <div className="flex gap-2">
-              <Button type="button" variant="secondary" onClick={onClose}>
+              <Button type="button" variant="secondary" onClick={attemptBookLoadClose}>
                 Cancel
               </Button>
               <Button
@@ -589,7 +616,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
           <div className="border-t border-gray-100 px-3 py-1 text-[9px] text-gray-500">⌘S save draft · Esc close</div>
         </form>
       </div>
-    </div>,
+    </div>
+    <ConfirmDiscardDialog
+      open={showDiscardConfirm}
+      onCancel={() => setShowDiscardConfirm(false)}
+      onDiscard={finalizeBookLoadClose}
+    />
+    </>,
     document.body
   );
 }
