@@ -326,6 +326,7 @@ export default function App() {
           <Route path="insurance" element={<InsuranceTab />} />
           <Route path="permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />
+          {/* Block K (Driver Scheduler): canonical paths under /safety/* — see IH35_UNIFIED_BLUEPRINT_ADDITIONS.md §14 */}
           <Route path="driver-scheduler" element={<DriverSchedulerGridPage />} />
           <Route path="scheduler/pending-requests" element={<DriverSchedulerRequestInboxPage />} />
           <Route path="scheduler/requests/:id" element={<DriverSchedulerRequestDetailPage />} />
