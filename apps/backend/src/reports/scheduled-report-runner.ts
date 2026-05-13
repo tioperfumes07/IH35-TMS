@@ -1,5 +1,5 @@
 import { withLuciaBypass } from "../auth/db.js";
-import { sendEmail } from "../notifications/email.service.js";
+import { enqueueEmail } from "../email/queue.service.js";
 import { cashArDailyHtml, cashArDailyText } from "../notifications/templates/reports/cash-ar-daily.js";
 import { dispatchBoardDailyHtml, dispatchBoardDailyText } from "../notifications/templates/reports/dispatch-board-daily.js";
 import { driverSettlementsWeeklyHtml, driverSettlementsWeeklyText } from "../notifications/templates/reports/driver-settlements-weekly.js";
@@ -29,7 +29,7 @@ type RunnerResult = {
   report_id: ScheduledReportId;
   operating_company_id: string;
   sent_to: string[];
-  email_id: string | null;
+  queue_id: string | null;
   report_data_summary: string;
 };
 
@@ -192,7 +192,7 @@ export async function runScheduledReport(ctx: RunnerContext): Promise<RunnerResu
         report_id: ctx.reportId,
         operating_company_id: ctx.operatingCompanyId,
         sent_to: [],
-        email_id: null,
+        queue_id: null,
         report_data_summary: "No recipients",
       };
     }
@@ -214,7 +214,7 @@ export async function runScheduledReport(ctx: RunnerContext): Promise<RunnerResu
         report_id: ctx.reportId,
         operating_company_id: ctx.operatingCompanyId,
         sent_to: recipients,
-        email_id: null,
+        queue_id: null,
         report_data_summary: "Already sent today",
       };
     }
@@ -239,23 +239,22 @@ export async function runScheduledReport(ctx: RunnerContext): Promise<RunnerResu
         report_id: ctx.reportId,
         operating_company_id: ctx.operatingCompanyId,
         sent_to: recipients,
-        email_id: null,
+        queue_id: null,
         report_data_summary: reportOutput.envelope.summary,
       };
     }
 
-    const sent = await sendEmail({
-      to: recipients,
+    const queued = await enqueueEmail({
+      operatingCompanyId: ctx.operatingCompanyId,
+      toAddresses: recipients,
       subject: reportOutput.subject,
-      sender: "noreply",
-      html: reportOutput.html,
-      text: reportOutput.text,
-      tags: [
-        { name: "type", value: "scheduled_report" },
-        { name: "report", value: ctx.reportId },
-      ],
-      eventClass: `reports.scheduled.${ctx.reportId}`,
-      actorUserId: ctx.actorUserId ?? null,
+      templateKey: "report-cadence",
+      templateVars: {
+        subject: reportOutput.subject,
+        htmlBody: reportOutput.html,
+        textBody: reportOutput.text,
+      },
+      queuedByUserId: ctx.actorUserId ?? null,
     });
 
     await appendAuditEvent(
@@ -267,7 +266,7 @@ export async function runScheduledReport(ctx: RunnerContext): Promise<RunnerResu
         run_date_ct: ctDateStamp(),
         row_count: reportOutput.envelope.rowCount,
         summary: reportOutput.envelope.summary,
-        email_id: sent.id,
+        queue_id: queued.queueId,
         trigger: ctx.trigger,
         generated_at: reportOutput.envelope.generatedAt,
       },
@@ -279,7 +278,7 @@ export async function runScheduledReport(ctx: RunnerContext): Promise<RunnerResu
       report_id: ctx.reportId,
       operating_company_id: ctx.operatingCompanyId,
       sent_to: recipients,
-      email_id: sent.id,
+      queue_id: queued.queueId,
       report_data_summary: reportOutput.envelope.summary,
     };
   } catch (error) {

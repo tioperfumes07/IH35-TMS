@@ -12,8 +12,8 @@
     "node": "22.x"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "build:backend": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/copy-email-templates.mjs",
+    "build:backend": "tsc -p tsconfig.json && node scripts/copy-email-templates.mjs",
     "build:driver-pwa": "cd apps/driver-pwa && npm run build",
     "build:frontend": "cd apps/frontend && npm run build",
     "start": "node dist/index.js",
@@ -89,6 +89,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
+    "@aws-sdk/client-ses": "^3.862.0",
     "@aws-sdk/s3-request-presigner": "^3.1042.0",
     "@dnd-kit/core": "^6.3.1",
     "@fastify/cookie": "^11.0.2",
@@ -99,6 +100,7 @@
     "bullmq": "^5.76.5",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
+    "eta": "^4.6.0",
     "fastify": "^5.0.0",
     "handlebars": "^4.7.9",
     "ioredis": "^5.10.1",

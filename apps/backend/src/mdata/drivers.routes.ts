@@ -5,8 +5,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
-import { sendEmail } from "../notifications/email.service.js";
-import { driverInviteHtml, driverInviteText } from "../notifications/templates/driver-invite.js";
+import { enqueueEmail } from "../email/queue.service.js";
 import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
 
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
@@ -180,32 +179,23 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     loginUrl: string;
     actorUserId: string | null;
     recipientUserUuid?: string | null;
-    operatingCompanyId?: string | null;
-  }) =>
-    sendEmail({
-      to: params.to,
+    operatingCompanyId: string;
+  }) => {
+    const { queueId } = await enqueueEmail({
+      operatingCompanyId: params.operatingCompanyId,
+      toAddresses: [params.to],
       subject: "Welcome to IH 35 Dispatch — your driver app login",
-      sender: "dispatch",
-      html: driverInviteHtml({
+      templateKey: "driver-invite",
+      templateVars: {
         driverName: params.driverName,
         loginUrl: params.loginUrl,
         ownerName: "Jorge",
         supportEmail,
-      }),
-      text: driverInviteText({
-        driverName: params.driverName,
-        loginUrl: params.loginUrl,
-        ownerName: "Jorge",
-        supportEmail,
-      }),
-      tags: [
-        { name: "type", value: "driver_invite" },
-        { name: "company", value: params.operatingCompanyId ?? "unknown" },
-      ],
-      eventClass: "identity.driver_invite.created",
-      actorUserId: params.actorUserId,
-      recipientUserUuid: params.recipientUserUuid ?? null,
+      },
+      queuedByUserId: params.actorUserId,
     });
+    return { id: queueId };
+  };
 
   app.get("/api/v1/mdata/drivers", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -769,14 +759,14 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         if (created.error === "override_required_for_rehire") return reply.code(400).send({ error: "override_required_for_rehire" });
       }
 
-      if (created?.invite_url && created?.email) {
+      if (created?.invite_url && created?.email && created.invite_operating_company_id) {
         void sendDriverInvite({
           to: created.email,
           driverName: `${created.first_name ?? ""} ${created.last_name ?? ""}`.trim() || "Driver",
           loginUrl: created.invite_url,
           actorUserId: authUser.uuid,
           recipientUserUuid: created.identity_user_id ?? null,
-          operatingCompanyId: created.invite_operating_company_id ?? null,
+          operatingCompanyId: created.invite_operating_company_id,
         }).catch(() => undefined);
       }
 
@@ -923,16 +913,19 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     }
 
     const recipientEmail = result.row.email as string;
+    const operatingCompanyId = result.row.operating_company_id ? String(result.row.operating_company_id) : "";
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_missing" });
+
     const emailResult = await sendDriverInvite({
       to: recipientEmail,
       driverName: `${result.row.first_name} ${result.row.last_name}`.trim() || "Driver",
       loginUrl: result.inviteUrl,
       actorUserId: authUser.uuid,
       recipientUserUuid: result.row.identity_user_id,
-      operatingCompanyId: result.row.operating_company_id,
+      operatingCompanyId,
     });
 
-    return reply.code(200).send({ sent_to: recipientEmail, email_id: emailResult.id });
+    return reply.code(200).send({ sent_to: recipientEmail, queue_id: emailResult.id });
   });
 
   app.patch("/api/v1/mdata/drivers/:id", async (req, reply) => {
