@@ -98,6 +98,8 @@ import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js"
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
+import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
+import { registerQboSyncAlertsRoutes } from "./qbo/sync-alerts.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 
@@ -175,6 +177,7 @@ async function main() {
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
   await registerMasterDataSyncRoutes(app);
+  await registerQboSyncAlertsRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);
   await registerInviteAuthRoutes(app);
@@ -304,6 +307,13 @@ async function main() {
     app.log.info("[STARTUP] qbo-master-data-sync-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] qbo-master-data-sync-cron failed");
+  }
+
+  try {
+    initializeQboSyncAlertsCron(app);
+    app.log.info("[STARTUP] qbo-sync-alerts-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-sync-alerts-cron failed");
   }
 
   const port = Number(process.env.PORT || 3000);

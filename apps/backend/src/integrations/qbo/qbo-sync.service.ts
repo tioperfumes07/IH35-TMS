@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
+import { qboSyncWithRetry } from "../../qbo/sync-with-retry.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import { getValidAccessToken } from "./qbo-oauth.service.js";
 import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from "./qbo-mappers.js";
@@ -373,29 +374,46 @@ export async function syncBankTransaction(txn: BankTxnContext, realmId: string, 
     classQboId: classId,
   });
 
-  const url = `${qboApiBase()}/${realmId}/purchase?minorversion=75`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
+  const result = await qboSyncWithRetry({
+    operatingCompanyId: txn.operating_company_id,
+    entityType: "bank_transaction",
+    entityId: txn.id,
+    operation: "create",
+    swallow_errors: false,
+    replayPayload: {
+      replay_kind: "qbo_purchase",
+      bank_transaction_id: txn.id,
+      realm_id: realmId,
     },
-    body: JSON.stringify(payload),
+    attempt: async () => {
+      const url = `${qboApiBase()}/${realmId}/purchase?minorversion=75`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const responseText = await response.text();
+      if (!response.ok) {
+        const err = new Error(`qbo_purchase_sync_failed_status_${response.status}`);
+        (err as { status?: number }).status = response.status;
+        (err as { bodyPreview?: string }).bodyPreview = redactErrorPreview(responseText);
+        throw err;
+      }
+      const parsed = JSON.parse(responseText) as { Purchase?: { Id?: string; SyncToken?: string } };
+      const qboId = parsed.Purchase?.Id ?? null;
+      if (!qboId) {
+        throw new Error("qbo_purchase_missing_id");
+      }
+      return { qboId, syncToken: parsed.Purchase?.SyncToken ?? null };
+    },
   });
-  const responseText = await response.text();
-  if (!response.ok) {
-    const err = new Error(`qbo_purchase_sync_failed_status_${response.status}`);
-    (err as { status?: number }).status = response.status;
-    (err as { bodyPreview?: string }).bodyPreview = redactErrorPreview(responseText);
-    throw err;
-  }
-  const parsed = JSON.parse(responseText) as { Purchase?: { Id?: string; SyncToken?: string } };
-  const qboId = parsed.Purchase?.Id ?? null;
-  if (!qboId) {
-    throw new Error("qbo_purchase_missing_id");
-  }
-  return { qboId, syncToken: parsed.Purchase?.SyncToken ?? null };
+
+  if (!result) throw new Error("qbo_purchase_sync_failed");
+  return result;
 }
 
 export async function enqueueSyncJob(
