@@ -54,6 +54,9 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
   ],
 };
 
+/** Shared with ReportsSubNav (invariant #20) so top-row runner links match category flyouts. */
+export const REPORT_CATEGORY_FLYOUT_ITEMS = FLYOUT_ITEMS;
+
 type Props = {
   activeCategory: ReportCategory;
   onCategoryChange: (category: ReportCategory) => void;

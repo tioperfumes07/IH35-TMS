@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { useNavigate } from "react-router-dom";
+import { ReportsSubNav } from "./ReportsSubNav";
 
 type ReportsKpi = {
   label: string;
@@ -72,6 +73,7 @@ export function ReportsHomePage() {
 
   return (
     <div className="space-y-3">
+      <ReportsSubNav />
       <PageHeader
         title="Reports"
         subtitle="hover any domain · click report to run"

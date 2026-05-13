@@ -6,6 +6,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CompanyViolationTypeModal } from "./CompanyViolationTypeModal";
+import { ListsSubNav } from "../ListsSubNav";
 import { STATUS_OPTIONS, statusPillClass, type StatusFilter } from "./shared";
 
 function severityBadgeClass(severity: number) {
@@ -39,6 +40,7 @@ export function CompanyViolationTypesListPage() {
 
   return (
     <div className="space-y-3">
+      <ListsSubNav />
       <BackArrowHeader
         backTo="/lists"
         breadcrumb={["Lists & Catalogs", "Safety", "Company violation types"]}

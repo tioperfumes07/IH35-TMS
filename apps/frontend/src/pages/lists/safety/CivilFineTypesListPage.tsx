@@ -6,6 +6,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CivilFineTypeModal } from "./CivilFineTypeModal";
+import { ListsSubNav } from "../ListsSubNav";
 import { STATUS_OPTIONS, statusPillClass, type StatusFilter } from "./shared";
 
 export function CivilFineTypesListPage() {
@@ -33,6 +34,7 @@ export function CivilFineTypesListPage() {
 
   return (
     <div className="space-y-3">
+      <ListsSubNav />
       <BackArrowHeader
         backTo="/lists"
         breadcrumb={["Lists & Catalogs", "Safety", "Civil fine types"]}
