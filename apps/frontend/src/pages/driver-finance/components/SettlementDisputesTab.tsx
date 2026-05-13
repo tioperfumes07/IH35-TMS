@@ -137,7 +137,16 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-3 py-2">{row.driver_name ?? row.driver_id}</td>
+                <td className="min-w-0 max-w-[240px] px-3 py-2">
+                  {(() => {
+                    const dn = row.driver_name ?? row.driver_id ?? "—";
+                    return (
+                      <span title={dn !== "—" ? String(dn) : undefined} className="single-line-name">
+                        {String(dn)}
+                      </span>
+                    );
+                  })()}
+                </td>
                 <td className="px-3 py-2">{row.period_start ?? "-"} to {row.period_end ?? "-"}</td>
                 <td className="px-3 py-2">{row.dispute_category}</td>
                 <td className="max-w-[240px] truncate px-3 py-2" title={row.dispute_description}>
@@ -172,7 +181,17 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
             <div>
               <p className="text-sm font-semibold">Dispute Detail</p>
               <p className="text-xs text-gray-500">
-                {detail.settlement_display_id ?? detail.settlement_id} · {detail.driver_name ?? detail.driver_id}
+                {detail.settlement_display_id ?? detail.settlement_id} ·{" "}
+                <span
+                  title={
+                    detail.driver_name || detail.driver_id
+                      ? String(detail.driver_name ?? detail.driver_id)
+                      : undefined
+                  }
+                  className="single-line-name"
+                >
+                  {detail.driver_name ?? detail.driver_id}
+                </span>
               </p>
             </div>
             <Button

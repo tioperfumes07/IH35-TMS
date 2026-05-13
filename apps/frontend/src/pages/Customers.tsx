@@ -335,7 +335,14 @@ export function CustomersPage() {
                 key: "name",
                 label: "Customer",
                 className: "max-w-[240px] whitespace-nowrap",
-                render: (row) => <span className="block truncate">{row.name}</span>,
+                render: (row) => {
+                  const name = row.name;
+                  return (
+                    <span title={name} className="single-line-name">
+                      {name}
+                    </span>
+                  );
+                },
               },
               { key: "customer_code", label: "Code", render: (row) => row.customer_code ?? "-" },
               { key: "type", label: "Type", render: (row) => customerTypeLabel(row.customer_type) },
@@ -359,7 +366,19 @@ export function CustomersPage() {
                   </StatusBadge>
                 ),
               },
-              { key: "contact", label: "Main Contact", render: (row) => row.main_contact_name ?? "-" },
+              {
+                key: "contact",
+                label: "Main Contact",
+                className: "min-w-0 max-w-[240px] whitespace-nowrap",
+                render: (row) => {
+                  const v = row.main_contact_name ?? "-";
+                  return (
+                    <span title={v !== "-" ? v : undefined} className="single-line-name">
+                      {v}
+                    </span>
+                  );
+                },
+              },
               { key: "ar_email", label: "A/R Email", render: (row) => row.ar_email ?? "-" },
               { key: "detention", label: "Detention", render: (row) => `${formatMoney(row.detention_rate_per_hour)}/hr` },
               {

@@ -440,9 +440,45 @@ export function DriversPage() {
               setTeamDetailOpen(true);
             }}
             columns={[
-              { key: "team_name", label: "Team Name" },
-              { key: "primary_driver_name", label: "Primary", render: (row) => String(row.primary_driver_name ?? row.primary_driver_id ?? "—") },
-              { key: "co_driver_name", label: "Co", render: (row) => String(row.co_driver_name ?? row.secondary_driver_id ?? "—") },
+              {
+                key: "team_name",
+                label: "Team Name",
+                className: "min-w-0 max-w-[240px] whitespace-nowrap",
+                render: (row) => {
+                  const v = String(row.team_name ?? "—");
+                  return (
+                    <span title={v !== "—" ? v : undefined} className="single-line-name">
+                      {v}
+                    </span>
+                  );
+                },
+              },
+              {
+                key: "primary_driver_name",
+                label: "Primary",
+                className: "min-w-0 max-w-[240px] whitespace-nowrap",
+                render: (row) => {
+                  const v = String(row.primary_driver_name ?? row.primary_driver_id ?? "—");
+                  return (
+                    <span title={v !== "—" ? v : undefined} className="single-line-name">
+                      {v}
+                    </span>
+                  );
+                },
+              },
+              {
+                key: "co_driver_name",
+                label: "Co",
+                className: "min-w-0 max-w-[240px] whitespace-nowrap",
+                render: (row) => {
+                  const v = String(row.co_driver_name ?? row.secondary_driver_id ?? "—");
+                  return (
+                    <span title={v !== "—" ? v : undefined} className="single-line-name">
+                      {v}
+                    </span>
+                  );
+                },
+              },
               {
                 key: "split_method",
                 label: "Split",
@@ -488,7 +524,14 @@ export function DriversPage() {
             label: "Name",
             sortable: true,
             className: "max-w-[220px] whitespace-nowrap",
-            render: (row) => <span className="block truncate">{`${row.first_name} ${row.last_name}`}</span>,
+            render: (row) => {
+              const v = `${row.first_name} ${row.last_name}`;
+              return (
+                <span title={v} className="single-line-name">
+                  {v}
+                </span>
+              );
+            },
           },
           { key: "phone", label: "Phone" },
           { key: "cdl_number", label: "CDL #" },

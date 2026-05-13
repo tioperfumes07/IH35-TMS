@@ -138,9 +138,16 @@ export function HomePage({ auth }: Props) {
           {ownerCashPending.length > 0 ? (
             <ul className="mt-2 space-y-1 border-t border-violet-200/80 pt-2 text-xs">
               {ownerCashPending.slice(0, 5).map((r) => (
-                <li key={String(r.id ?? "")} className="flex flex-wrap justify-between gap-2">
+                <li key={String(r.id ?? "")} className="flex min-w-0 flex-wrap justify-between gap-2">
                   <span className="font-mono">{String(r.display_id ?? "")}</span>
-                  <span>{String(r.driver_name ?? "")}</span>
+                  <span className="min-w-0 max-w-[240px]">
+                    <span
+                      title={r.driver_name && String(r.driver_name).trim() ? String(r.driver_name) : undefined}
+                      className="single-line-name"
+                    >
+                      {String(r.driver_name ?? "")}
+                    </span>
+                  </span>
                   <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">Above policy</span>
                 </li>
               ))}
