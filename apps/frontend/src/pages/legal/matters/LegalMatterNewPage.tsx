@@ -57,7 +57,7 @@ export function LegalMatterNewPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="New legal matter" subtitle="Create a matter record" />
+      <PageHeader title="Create legal matter" subtitle="Create a matter record" />
       <LegalModuleTabs activeTabId="matters" />
       {!companyId ? (
         <p className="text-sm text-gray-600">Select an operating company.</p>

@@ -1263,7 +1263,7 @@ export function DriverDetailPage() {
         Last updated by {driver.updated_by_user_id} on {new Date(driver.updated_at).toLocaleString()}
       </div>
 
-      <Modal open={addQualificationOpen} onClose={() => setAddQualificationOpen(false)} title="Add Equipment Qualification">
+      <Modal open={addQualificationOpen} onClose={() => setAddQualificationOpen(false)} title="Create Equipment Qualification">
         <form
           className="space-y-3"
           onSubmit={(event) => {
@@ -1320,7 +1320,7 @@ export function DriverDetailPage() {
         </form>
       </Modal>
 
-      <Modal open={addSafetyEventOpen} onClose={() => setAddSafetyEventOpen(false)} title="Add Safety Event">
+      <Modal open={addSafetyEventOpen} onClose={() => setAddSafetyEventOpen(false)} title="Create Safety Event">
         <form
           className="space-y-3"
           onSubmit={(event) => {

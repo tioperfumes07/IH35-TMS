@@ -67,7 +67,7 @@ export function LegalTemplateNewModal({ open, onClose, onCreate }: Props) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="New Legal Template">
+    <Modal open={open} onClose={onClose} title="Create Legal Template">
       <div className="space-y-3">
         <label className="block text-xs font-semibold text-gray-600">
           Template code

@@ -647,7 +647,7 @@ export function EquipmentTypesPage() {
         </form>
       </Modal>
 
-      <Modal open={lineItemTargetType !== null} onClose={() => setLineItemTargetType(null)} title="Add Line Item Template">
+      <Modal open={lineItemTargetType !== null} onClose={() => setLineItemTargetType(null)} title="Create Line Item Template">
         <form
           className="space-y-3"
           onSubmit={async (event) => {

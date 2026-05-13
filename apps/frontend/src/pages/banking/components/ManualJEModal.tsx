@@ -207,7 +207,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved }: Pr
                 setLines((prev) => [...prev, { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" }])
               }
             >
-              + Add line
+              + Create line
             </button>
             <div className={balanced ? "rounded border border-green-200 bg-green-50 px-2 py-1 text-green-700" : "rounded border border-red-200 bg-red-50 px-2 py-1 text-red-700"}>
               Debits ${(totalDebitCents / 100).toFixed(2)} / Credits ${(totalCreditCents / 100).toFixed(2)}{" "}
