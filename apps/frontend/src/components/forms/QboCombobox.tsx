@@ -9,7 +9,7 @@ type Props = {
   value: string | null;
   displayValue: string;
   onChange: (qboId: string | null, displayName: string) => void;
-  /** User chose a row from the QBO mirror list (includes TMS FK `id`). */
+  /** Fires when the user commits a concrete suggestion row (Enter / click). Includes TMS mirror PK `id`. */
   onPick?: (row: QboAutocompleteRow) => void;
   operatingCompanyId: string;
   placeholder?: string;

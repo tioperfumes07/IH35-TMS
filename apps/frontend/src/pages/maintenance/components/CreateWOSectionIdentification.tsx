@@ -35,6 +35,7 @@ export function CreateWOSectionIdentification({
   const type = watch("wo_type");
   const sourceType = watch("source_type");
   const bucket = watch("bucket");
+  const repairLocation = watch("repair_location");
   const selectedLoadId = watch("load_id");
   const requireDriverAndLoad = type === "repair" || type === "tire" || type === "accident";
   const requireLoad = requireDriverAndLoad || requireLoadForExpense;
@@ -89,13 +90,60 @@ export function CreateWOSectionIdentification({
             <option value="mobile_roadside">Mobile Roadside</option>
           </select>
         </Field>
-        <Field label="Vendor">
-          <input {...register("vendor_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+        <Field label={repairLocation !== "in_house" ? "Vendor *" : "Vendor"}>
+          {operatingCompanyId && setValue && getValues ? (
+            <>
+              <input type="hidden" {...register("vendor_id")} />
+              <input type="hidden" {...register("vendor_qbo_id")} />
+              <input type="hidden" {...register("vendor_display_name")} />
+              <QboCombobox
+                entityType="vendor"
+                operatingCompanyId={operatingCompanyId}
+                value={watch("vendor_qbo_id") ? watch("vendor_qbo_id") : null}
+                displayValue={watch("vendor_display_name") ?? ""}
+                allowFreeText={false}
+                placeholder="Search QuickBooks vendors…"
+                onChange={(qboId, displayName) => {
+                  setValue("vendor_qbo_id", qboId ?? "", { shouldDirty: true });
+                  setValue("vendor_display_name", displayName, { shouldDirty: true });
+                  if (!qboId) setValue("vendor_id", "", { shouldDirty: true });
+                }}
+                onPick={(row) => {
+                  setValue("vendor_id", row.id, { shouldDirty: true });
+                  setValue("vendor_qbo_id", row.qbo_id, { shouldDirty: true });
+                  setValue("vendor_display_name", row.display_name || row.company_name || "", { shouldDirty: true });
+                  const shopNameNow = String(getValues("shop_name") ?? "").trim();
+                  if (!shopNameNow) {
+                    setValue("shop_name", row.display_name || row.company_name || "", { shouldDirty: true });
+                  }
+                  const shopPhoneNow = String(getValues("shop_phone") ?? "").trim();
+                  if (!shopPhoneNow && row.primary_phone) {
+                    setValue("shop_phone", row.primary_phone, { shouldDirty: true });
+                  }
+                }}
+              />
+            </>
+          ) : (
+            <input {...register("vendor_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          )}
         </Field>
         <Field label="Vendor RO/Invoice #">
           <input {...register("vendor_invoice_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
       </div>
+      {operatingCompanyId && setValue && getValues && (bucket === "external" || repairLocation === "external_shop") ? (
+        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+          <Field label="Shop name">
+            <input {...register("shop_name")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          </Field>
+          <Field label="Shop phone">
+            <input {...register("shop_phone")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          </Field>
+          <Field label="Shop address">
+            <input {...register("shop_address")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          </Field>
+        </div>
+      ) : null}
       {operatingCompanyId && setValue && getValues ? (
         <div className="mt-2">
           <Field label="QBO vendor lookup (appends to Description)">
