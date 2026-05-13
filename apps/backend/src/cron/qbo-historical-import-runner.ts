@@ -4,7 +4,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { runForensicImportDeduped } from "../integrations/qbo/forensic-import.service.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { sendForensicZombieAlert } from "../integrations/email/forensic-alerts.js";
-import { auditBatchEvent } from "../integrations/qbo/forensic-audit.service.js";
+import { auditBatchEvent, auditForensicImportError } from "../integrations/qbo/forensic-audit.service.js";
 import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
 
 let initialized = false;
@@ -60,6 +60,12 @@ async function autoFailStaleBatches(app: FastifyInstance) {
       error_message: "heartbeat stale > 15 minutes",
       minutes_stale: row.minutes_stale,
     });
+    await auditForensicImportError(
+      row.id,
+      row.operating_company_id,
+      new Error(`batch_auto_failed_stale: heartbeat stale ~${row.minutes_stale} minutes`),
+      { phase: "runner", step: "auto_fail_stale_batch" }
+    );
     try {
       await sendForensicZombieAlert({
         batch_id: row.id,
@@ -140,6 +146,10 @@ export async function initializeQboHistoricalImportRunner(app: FastifyInstance) 
             )
           );
           await appendSystemAudit("qbo_archive.import_failed", { batch_id: batch.id }, "warning");
+          await auditForensicImportError(batch.id, batch.operating_company_id, error, {
+            phase: "runner",
+            step: "cron_import_failed",
+          });
           await auditBatchEvent(batch.id, batch.operating_company_id, "batch_failed", {
             error_message: String((error as Error)?.message ?? error),
           });

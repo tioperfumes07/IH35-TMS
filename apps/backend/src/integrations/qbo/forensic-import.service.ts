@@ -10,7 +10,7 @@ import {
   type QboApiContext,
 } from "./qbo-client.js";
 import { getQboConnectionStatus } from "./qbo-oauth.service.js";
-import { auditBatchEvent } from "./forensic-audit.service.js";
+import { auditBatchEvent, auditForensicImportError } from "./forensic-audit.service.js";
 import {
   appendForensicProgressError,
   clearForensicProgress,
@@ -376,6 +376,11 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
               pageSize: page.length,
               error: String((error as Error)?.message ?? error),
             });
+            await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
+              phase: "entities",
+              step: "entity_page_process_failed",
+              entity_type: entityType,
+            });
             await client.query(
               `
                 UPDATE qbo_archive.import_batches
@@ -405,6 +410,11 @@ export async function importEntities(actorUserId: string, batchId: string, qboCo
           operatingCompanyId: qboContext.operatingCompanyId,
           entityType,
           error: String((error as Error)?.message ?? error),
+        });
+        await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
+          phase: "entities",
+          step: "entity_type_query_failed",
+          entity_type: entityType,
         });
         await client.query(
           `
@@ -545,6 +555,12 @@ export async function importTransactions(actorUserId: string, batchId: string, q
                   txnId,
                   error: String((error as Error)?.message ?? error),
                 });
+                await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
+                  phase: "transactions",
+                  step: "transaction_anomaly_detection_failed",
+                  entity_type: txnType,
+                  last_qbo_entity_id: txnId,
+                });
               }
               imported += 1;
             }
@@ -572,6 +588,11 @@ export async function importTransactions(actorUserId: string, batchId: string, q
               pageStart,
               pageSize: page.length,
               error: String((error as Error)?.message ?? error),
+            });
+            await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
+              phase: "transactions",
+              step: "transaction_page_process_failed",
+              entity_type: txnType,
             });
             await client.query(
               `
@@ -602,6 +623,11 @@ export async function importTransactions(actorUserId: string, batchId: string, q
           operatingCompanyId: qboContext.operatingCompanyId,
           txnType,
           error: String((error as Error)?.message ?? error),
+        });
+        await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
+          phase: "transactions",
+          step: "transaction_type_query_failed",
+          entity_type: txnType,
         });
         await client.query(
           `
@@ -762,6 +788,12 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
                   attachmentId,
                   error: String((error as Error)?.message ?? error),
                 });
+                await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
+                  phase: "attachments",
+                  step: "attachment_import_failed",
+                  entity_type: "Attachable",
+                  last_qbo_entity_id: attachmentId || tx.qbo_txn_id,
+                });
               }
             }
             await client.query(
@@ -788,6 +820,12 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
               pageStart,
               pageSize: page.length,
               error: String((error as Error)?.message ?? error),
+            });
+            await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
+              phase: "attachments",
+              step: "attachment_page_process_failed",
+              entity_type: "Attachable",
+              last_qbo_entity_id: tx.qbo_txn_id,
             });
             await client.query(
               `
@@ -818,6 +856,12 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
           operatingCompanyId: qboContext.operatingCompanyId,
           txnId: tx.qbo_txn_id,
           error: String((error as Error)?.message ?? error),
+        });
+        await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
+          phase: "attachments",
+          step: "attachment_query_failed",
+          entity_type: "Attachable",
+          last_qbo_entity_id: tx.qbo_txn_id,
         });
         await client.query(
           `
@@ -967,6 +1011,10 @@ export async function runForensicImport(
     errorsCount += 1;
     lastErrorMessage = String((error as Error)?.message ?? error);
     appendForensicProgressError(batch.id, lastErrorMessage);
+    await auditForensicImportError(batch.id, batch.operating_company_id, error, {
+      phase: "runner",
+      step: "runForensicImport_fatal",
+    });
     await appendSystemAudit(
       actorUserId,
       "qbo_archive.import_failed",
