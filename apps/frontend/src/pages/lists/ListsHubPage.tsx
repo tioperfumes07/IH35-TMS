@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AllCatalogsMap } from "./components/AllCatalogsMap";
 import { DomainRibbon } from "./components/DomainRibbon";
 import { ListsSubNav } from "./ListsSubNav";
+import { PAGE_SHELL_CLASS } from "../../components/layout/pageShellClasses";
 import { QboSyncHealthCard } from "./components/QboSyncHealthCard";
 import { RecentActivityCard } from "./components/RecentActivityCard";
 
@@ -68,7 +69,7 @@ export function ListsHubPage() {
   const health = qboHealthQuery.data?.health ?? [];
 
   return (
-    <div className="space-y-4">
+    <div className={`${PAGE_SHELL_CLASS} space-y-4`}>
       <ListsSubNav />
       <PageHeader title="Lists & Catalogs" subtitle="Catalog inventory hub + QBO bidirectional sync health" />
 
@@ -77,7 +78,7 @@ export function ListsHubPage() {
 
       <AllCatalogsMap onCatalogClick={openCatalog} />
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
         <RecentActivityCard rows={activity} />
         <QboSyncHealthCard rows={health} onForceSync={() => forceSyncMutation.mutate()} syncing={forceSyncMutation.isPending} />
       </div>

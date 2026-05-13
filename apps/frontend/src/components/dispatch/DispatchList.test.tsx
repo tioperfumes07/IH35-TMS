@@ -33,7 +33,7 @@ function mockLoad(overrides: Partial<DispatchLoadRow> = {}): DispatchLoadRow {
 }
 
 describe("DispatchList single-line names (invariant #23)", () => {
-  it("applies single-line-name + title on customer and driver (table + mobile)", () => {
+  it("applies single-line-name + title on customer and driver (table row)", () => {
     const { container } = render(
       <DispatchList
         loads={[mockLoad()]}
@@ -51,13 +51,13 @@ describe("DispatchList single-line names (invariant #23)", () => {
     );
 
     const marks = container.querySelectorAll(".single-line-name");
-    expect(marks.length).toBe(4);
+    expect(marks.length).toBe(2);
 
     const withCustomerTitle = [...marks].filter((el) => el.getAttribute("title") === "ACME TRANSPORTATION SERVICES LLC");
-    expect(withCustomerTitle.length).toBe(2);
+    expect(withCustomerTitle.length).toBe(1);
 
     const withDriverTitle = [...marks].filter((el) => el.getAttribute("title") === "ANTONIO RAMIREZ-MARTINEZ JR.");
-    expect(withDriverTitle.length).toBe(2);
+    expect(withDriverTitle.length).toBe(1);
   });
 
   it("omits title when customer or driver name is null (placeholder text only)", () => {
@@ -84,12 +84,12 @@ describe("DispatchList single-line names (invariant #23)", () => {
 
     const marks = [...container.querySelectorAll(".single-line-name")];
     const dash = marks.filter((el) => el.textContent === "-");
-    expect(dash.length).toBe(2);
+    expect(dash.length).toBe(1);
     for (const el of dash) {
       expect(el.getAttribute("title")).toBeNull();
     }
     const unassigned = marks.filter((el) => el.textContent === "Unassigned");
-    expect(unassigned.length).toBe(2);
+    expect(unassigned.length).toBe(1);
     for (const el of unassigned) {
       expect(el.getAttribute("title")).toBeNull();
     }

@@ -66,7 +66,7 @@ export function FilterBar({ value, onChange, companies, customers, drivers, onCl
 
   return (
     <section className="space-y-2 rounded border border-gray-200 bg-white p-3">
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Operating Company</label>
           <Combobox

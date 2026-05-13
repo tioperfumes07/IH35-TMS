@@ -4,6 +4,7 @@ import { ConfirmDiscardDialog } from "../../components/dialogs/ConfirmDiscardDia
 import { QboCombobox } from "../../components/forms/QboCombobox";
 import { SaveDropdown } from "../../components/forms/SaveDropdown";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { PAGE_SHELL_CLASS } from "../../components/layout/pageShellClasses";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useEscapeKey } from "../../hooks/useEscapeKey";
@@ -141,7 +142,7 @@ export function VendorBillCreatePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-4 p-4 sm:p-6">
+    <div className={`${PAGE_SHELL_CLASS} space-y-4`}>
       <PageHeader title="Create vendor bill" subtitle="Type-ahead picks mirror QuickBooks vendors, items, and accounts (Phase 1)." />
       {!companyId ? <div className="text-sm text-red-600">Select an operating company in the shell header.</div> : null}
       <form
@@ -150,8 +151,8 @@ export function VendorBillCreatePage() {
           e.preventDefault();
         }}
       >
-        <div className="grid gap-3 md:grid-cols-2">
-          <label className="text-xs font-semibold text-gray-700 md:col-span-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="text-xs font-semibold text-gray-700 sm:col-span-2">
             Vendor (QuickBooks mirror + free text fallback)
             <div className="mt-1">
               <QboCombobox
@@ -167,7 +168,7 @@ export function VendorBillCreatePage() {
             </div>
           </label>
 
-          <label className="text-xs font-semibold text-gray-700 md:col-span-2">
+          <label className="text-xs font-semibold text-gray-700 sm:col-span-2">
             Item (reference only — saved into memo)
             <div className="mt-1">
               <QboCombobox
@@ -180,7 +181,7 @@ export function VendorBillCreatePage() {
             </div>
           </label>
 
-          <label className="text-xs font-semibold text-gray-700 md:col-span-2">
+          <label className="text-xs font-semibold text-gray-700 sm:col-span-2">
             Account (reference only — COA UUID field not used for QBO numeric ids)
             <div className="mt-1">
               <QboCombobox

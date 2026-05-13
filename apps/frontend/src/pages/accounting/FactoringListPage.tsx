@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SubmitFactoringModal } from "./SubmitFactoringModal";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { PAGE_SHELL_CLASS } from "../../components/layout/pageShellClasses";
 
 const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
   { value: "all", label: "All" },
@@ -58,7 +59,7 @@ export function FactoringListPage() {
   const rows = query.data ?? [];
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <AccountingSubNav />
       <PageHeader title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>} />
 

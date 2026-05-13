@@ -7,6 +7,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CompanyViolationTypeModal } from "./CompanyViolationTypeModal";
 import { ListsSubNav } from "../ListsSubNav";
+import { PAGE_SHELL_CLASS } from "../../../components/layout/pageShellClasses";
 import { STATUS_OPTIONS, statusPillClass, type StatusFilter } from "./shared";
 
 function severityBadgeClass(severity: number) {
@@ -39,7 +40,7 @@ export function CompanyViolationTypesListPage() {
   }, [query.isLoading, rows.length]);
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <ListsSubNav />
       <BackArrowHeader
         backTo="/lists"
@@ -59,8 +60,8 @@ export function CompanyViolationTypesListPage() {
       />
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by type code or type name" className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
+      <div className="grid grid-cols-1 gap-2 rounded border border-gray-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-3">
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by type code or type name" className="h-9 rounded border border-gray-300 px-2 text-sm sm:col-span-2 lg:col-span-2" />
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-sm">
           {STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>

@@ -1,4 +1,5 @@
 import { Modal } from "../../../components/Modal";
+import { MODAL_PANEL_WIDE_CLASS } from "../../../components/layout/pageShellClasses";
 
 type Liability = {
   id: string;
@@ -21,8 +22,9 @@ export function LiabilityBreakdownModal({ open, liabilities, onClose }: Props) {
   const total = liabilities.reduce((sum, item) => sum + item.balance, 0);
   const excludingPending = liabilities.reduce((sum, item) => sum + (item.pending_ack ? 0 : item.balance), 0);
   return (
-    <Modal open={open} onClose={onClose} title="Liability Breakdown">
-      <table className="w-full text-left text-xs">
+    <Modal open={open} onClose={onClose} title="Liability Breakdown" panelMaxClassName={MODAL_PANEL_WIDE_CLASS}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-left text-xs">
         <thead className="text-[10px] uppercase text-gray-600">
           <tr><th>Type</th><th>Source</th><th>Original</th><th>Paid</th><th>Balance</th><th>Schedule</th></tr>
         </thead>
@@ -38,7 +40,8 @@ export function LiabilityBreakdownModal({ open, liabilities, onClose }: Props) {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
       <div className="mt-2 rounded border border-gray-200 bg-gray-50 p-2 text-xs">
         <div>TOTAL ACTIVE: <span className="font-semibold">${total.toFixed(2)}</span></div>
         <div>EXCLUDING PENDING ACK: <span className="font-semibold">${excludingPending.toFixed(2)}</span></div>

@@ -13,7 +13,7 @@ type Props = {
 export function SecondaryNavTabs({ tabs, activeId, onChange, className = "" }: Props) {
   return (
     <div className={`overflow-x-auto border-b border-gray-200 bg-white px-2 py-1 ${className}`.trim()}>
-      <div className="flex min-w-max gap-4">
+      <div className="flex flex-wrap gap-x-4 gap-y-2">
         {tabs.map((tab) => {
           const active = tab.id === activeId;
           return (

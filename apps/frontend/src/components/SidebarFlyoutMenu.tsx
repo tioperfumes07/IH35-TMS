@@ -12,9 +12,10 @@ type Props = {
   items: FlyoutLink[];
   onOpen: () => void;
   onClose: () => void;
+  onNavigate?: () => void;
 };
 
-export function SidebarFlyoutMenu({ open, title, items, onOpen, onClose }: Props) {
+export function SidebarFlyoutMenu({ open, title, items, onOpen, onClose, onNavigate }: Props) {
   const [visible, setVisible] = useState(open);
   useEffect(() => {
     if (open) {
@@ -40,7 +41,13 @@ export function SidebarFlyoutMenu({ open, title, items, onOpen, onClose }: Props
       <div className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</div>
       <div className="space-y-1">
         {safeItems.map((item) => (
-          <Link key={item.to} to={item.to} role="menuitem" className="block rounded px-2 py-1 text-xs text-slate-700 hover:bg-slate-100">
+          <Link
+            key={item.to}
+            to={item.to}
+            role="menuitem"
+            className="block rounded px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+            onClick={() => onNavigate?.()}
+          >
             {item.label}
           </Link>
         ))}

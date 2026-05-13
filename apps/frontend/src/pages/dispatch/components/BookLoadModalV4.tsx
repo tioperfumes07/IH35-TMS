@@ -7,6 +7,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
+import { useResizableModal } from "../../../hooks/useResizableModal";
 import { useToast } from "../../../components/Toast";
 import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
@@ -95,6 +96,14 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   const auth = useAuth();
   const { pushToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
+  const resize = useResizableModal({
+    enabled: open,
+    modalKey: "book-load-v4",
+    minWidth: 520,
+    minHeight: 480,
+    defaultWidth: 1100,
+    defaultHeight: typeof window !== "undefined" ? Math.min(800, Math.round(window.innerHeight * 0.9)) : 720,
+  });
 
   const [gateBanner, setGateBanner] = useState<{
     type: "advisory" | "hard_block" | "hos_block";
@@ -395,8 +404,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
     >
       <div
         ref={panelRef}
-        className="flex max-h-[min(95vh,calc(100dvh-2rem))] w-full max-w-[min(1260px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
-        style={{ width: "100%" }}
+        className="relative flex w-full max-w-[min(1260px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-2xl"
+        style={{
+          width: resize.size.w,
+          height: resize.size.h,
+          maxWidth: "min(1260px, calc(100vw - 2rem))",
+          maxHeight: "min(95vh, calc(100dvh - 2rem))",
+        }}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header className="flex flex-shrink-0 items-center gap-4 border-b px-4 py-2.5 text-white" style={{ background: "#1A1F36" }}>
@@ -569,7 +583,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                 <span className="ml-2">Stops · PC*MILER</span>
               </div>
               <div className="space-y-2 p-3">
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <label className="text-[10px] font-semibold text-gray-600">
                     Practical mi
                     <input type="number" {...form.register("miles_practical", { valueAsNumber: true })} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
@@ -615,6 +629,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
           </div>
           <div className="border-t border-gray-100 px-3 py-1 text-[9px] text-gray-500">⌘S save draft · Esc close</div>
         </form>
+        <button
+          type="button"
+          className="absolute bottom-1 right-1 z-10 h-3.5 w-3.5 cursor-se-resize touch-none rounded border border-gray-400 bg-white/95 shadow"
+          aria-label="Resize book load dialog"
+          onMouseDown={resize.resizeHandleProps.onMouseDown}
+        />
       </div>
     </div>
     <ConfirmDiscardDialog

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { holdDeduction } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { MODAL_PANEL_NARROW_CLASS } from "../../../components/layout/pageShellClasses";
 import { useToast } from "../../../components/Toast";
 import type { DeductionRow } from "./DeductionsSection";
 
@@ -42,7 +43,7 @@ export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClos
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Hold Deduction">
+    <Modal open={open} onClose={onClose} title="Hold Deduction" panelMaxClassName={MODAL_PANEL_NARROW_CLASS}>
       {!deduction ? null : (
         <div className="space-y-2 text-xs">
           <div className="rounded border border-gray-200 bg-gray-50 p-2">

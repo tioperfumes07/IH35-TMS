@@ -181,6 +181,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                 items={flyoutItems}
                 onOpen={() => setHoverKey(key)}
                 onClose={() => setHoverKey((current) => (current === key ? null : current))}
+                onNavigate={onMobileClose}
               />
             </div>
           );

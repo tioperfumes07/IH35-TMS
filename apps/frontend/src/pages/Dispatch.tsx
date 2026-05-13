@@ -13,6 +13,7 @@ import { DispatchList } from "../components/dispatch/DispatchList";
 import { FilterBar, type DispatchFilterState } from "../components/dispatch/FilterBar";
 import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
 import { BookLoadModal } from "./dispatch/components/BookLoadModal";
+import { PAGE_SHELL_CLASS } from "../components/layout/pageShellClasses";
 
 type ViewMode = "list" | "kanban";
 
@@ -139,12 +140,12 @@ export function DispatchPage() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <PageHeader
         title="Dispatch Board"
         subtitle="List + Kanban multi-view"
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               variant={view === "kanban" ? "primary" : "secondary"}

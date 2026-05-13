@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { listVendors } from "../api/mdata";
 import { DataTable } from "../components/DataTable";
 import { PageHeader } from "../components/layout/PageHeader";
+import { PAGE_SHELL_CLASS } from "../components/layout/pageShellClasses";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 
@@ -88,7 +89,7 @@ export function VendorsPage() {
   }, [allVendors, vendorListTab, categoryFilter]);
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <PageHeader title="Vendors" subtitle={`${rowsFiltered.length} records`} />
       <SecondaryNavTabs
         className="-mx-2"

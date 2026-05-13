@@ -63,7 +63,7 @@ export function DispatchKanban({ loads, loading, onLoadClick, onStatusDrop }: Pr
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex w-full min-w-0 gap-3 overflow-x-auto pb-2">
         {DISPATCH_STATUS_GROUPS.map((group) => (
           <KanbanColumn
             key={group.key}

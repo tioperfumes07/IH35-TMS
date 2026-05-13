@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../components/Toast";
 import { BookLoadModalV4 } from "./BookLoadModalV4";
@@ -38,13 +39,15 @@ function wrap(ui: ReactElement) {
 
 describe("BookLoadModalV4", () => {
   it("renders four banded sections, miles strip hint, and reserved load bar", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
     render(
       wrap(
         <ToastProvider>
           <BookLoadModalV4
             open
             operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
-            onClose={vi.fn()}
+            onClose={onClose}
             onCreated={vi.fn()}
           />
         </ToastProvider>
@@ -62,5 +65,9 @@ describe("BookLoadModalV4", () => {
       expect(screen.getByText(/L-20991231-0001/)).toBeTruthy();
     });
     expect(screen.getByText(/● Reserved/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /resize book load dialog/i })).toBeTruthy();
+
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

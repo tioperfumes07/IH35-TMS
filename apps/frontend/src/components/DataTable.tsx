@@ -50,6 +50,7 @@ export function DataTable<T>({
 
   return (
     <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
+      <div className="overflow-x-auto">
       <table className="min-w-full text-left" style={{ fontSize: typography.tableRow }}>
         <thead className="bg-gray-50">
           <tr style={{ height: spacing.tableHeaderHeight }}>
@@ -118,7 +119,8 @@ export function DataTable<T>({
           )}
         </tbody>
       </table>
-      <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600" style={{ color: colors.mutedText }}>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600" style={{ color: colors.mutedText }}>
         <span>
           {sortedRows.length === 0 ? 0 : offset + 1}-{Math.min(offset + pageSize, sortedRows.length)} of {sortedRows.length}
         </span>

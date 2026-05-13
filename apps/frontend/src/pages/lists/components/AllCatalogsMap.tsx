@@ -138,7 +138,7 @@ export function AllCatalogsMap({ onCatalogClick }: Props) {
                 <span className={`rounded px-2 py-0.5 font-semibold ${domain.pillClass}`}>{domain.label}</span>
                 <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{domain.catalogs.length}</span>
               </div>
-              <div className="grid gap-1.5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
                 {domain.catalogs.map((catalog) => (
                   <div key={`${domain.key}-${catalog.name}`} className="rounded border border-slate-100 px-2 py-1.5">
                     {catalog.live && catalog.catalogKey ? (

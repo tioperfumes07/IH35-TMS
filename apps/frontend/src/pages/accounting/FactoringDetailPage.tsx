@@ -17,6 +17,7 @@ import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { PAGE_SHELL_CLASS } from "../../components/layout/pageShellClasses";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -108,7 +109,7 @@ export function FactoringDetailPage() {
   if (!detail) return <div className="text-sm text-red-600">Factoring batch not found.</div>;
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <AccountingSubNav />
       <PageHeader
         title={detail.display_id}

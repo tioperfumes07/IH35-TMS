@@ -10,6 +10,7 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { PAGE_SHELL_CLASS } from "../../components/layout/pageShellClasses";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -103,7 +104,7 @@ export function InvoiceDetailPage() {
   if (!invoice) return <div className="text-sm text-red-600">Invoice not found.</div>;
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <AccountingSubNav />
       <PageHeader
         title={invoice.display_id}
@@ -115,7 +116,7 @@ export function InvoiceDetailPage() {
         ]}
         subtitle={invoice.customer_name ?? "Invoice detail"}
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {canRecordPayment ? (
               <Button variant="secondary" onClick={() => setRecordPaymentOpen(true)}>
                 Record Payment

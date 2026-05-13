@@ -4,6 +4,7 @@ import { ConfirmDiscardDialog } from "../../components/dialogs/ConfirmDiscardDia
 import { QboCombobox } from "../../components/forms/QboCombobox";
 import { SaveDropdown } from "../../components/forms/SaveDropdown";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { PAGE_SHELL_CLASS } from "../../components/layout/pageShellClasses";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useEscapeKey } from "../../hooks/useEscapeKey";
@@ -118,7 +119,7 @@ export function ExpenseCreatePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-4 p-4 sm:p-6">
+    <div className={`${PAGE_SHELL_CLASS} space-y-4`}>
       <PageHeader title="Create expense" subtitle="Uses vendor bills API today with QuickBooks vendor + account reference fields." />
       {!companyId ? <div className="text-sm text-red-600">Select an operating company in the shell header.</div> : null}
       <form

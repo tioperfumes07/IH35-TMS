@@ -8,6 +8,7 @@
 
 .hover-dropdown-nav ul[role="menubar"] {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
   list-style: none;
   margin: 0;
@@ -75,4 +76,10 @@
 .nav-dropdown li a.active {
   color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 640px) {
+  .hover-dropdown-nav {
+    padding: 0 var(--space-4);
+  }
 }

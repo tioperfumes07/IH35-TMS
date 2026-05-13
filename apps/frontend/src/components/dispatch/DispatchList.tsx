@@ -67,14 +67,14 @@ export function DispatchList({
 
   return (
     <section className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm text-gray-600">Showing {from}-{to} of {totalCount}</div>
         <Button type="button" variant="secondary" size="sm" onClick={onExportCsv}>
           Export CSV
         </Button>
       </div>
 
-      <div className="hidden overflow-x-auto rounded border border-gray-200 bg-white md:block">
+      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
@@ -142,39 +142,7 @@ export function DispatchList({
         </table>
       </div>
 
-      <div className="space-y-2 md:hidden">
-        {loading ? <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">Loading loads...</div> : null}
-        {!loading &&
-          loads.map((load) => (
-            <button
-              key={load.id}
-              type="button"
-              onClick={() => onRowClick(load.id)}
-              className="w-full rounded border border-gray-200 bg-white p-3 text-left"
-            >
-              <div className="flex items-center justify-between">
-                <div className="font-semibold">{load.load_number}</div>
-                <div>{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</div>
-              </div>
-              <div className="mt-1 min-w-0 text-sm text-gray-700">
-                <span title={load.customer_name ?? undefined} className="single-line-name">
-                  {load.customer_name ?? "-"}
-                </span>
-              </div>
-              <div className="mt-1 text-xs text-gray-500">
-                {load.first_pickup_city ?? "-"} {"->"} {load.first_delivery_city ?? "-"}
-              </div>
-              <div className="mt-2 flex min-w-0 items-center justify-between text-xs">
-                <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
-                  {load.assigned_primary_driver_name ?? "Unassigned"}
-                </span>
-                <span>{formatMoneyCents(load.rate_total_cents, load.currency_code)}</span>
-              </div>
-            </button>
-          ))}
-      </div>
-
-      <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 pt-2 text-sm">
         <Button type="button" variant="secondary" size="sm" disabled={!hasPrev} onClick={() => onPageChange(Math.max(0, offset - limit))}>
           Previous
         </Button>

@@ -14,6 +14,7 @@ import { DriverMiscInvoiceModal } from "./modals/DriverMiscInvoiceModal";
 import { ManualInvoiceModal } from "./modals/ManualInvoiceModal";
 import { VendorChargebackModal } from "./modals/VendorChargebackModal";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { PAGE_SHELL_CLASS } from "../../components/layout/pageShellClasses";
 
 const STATUS_OPTIONS: Array<{ value: "" | InvoiceStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -64,13 +65,13 @@ export function InvoicesListPage() {
   }, [invoices]);
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <AccountingSubNav />
       <PageHeader
         title="Invoices"
         subtitle="Accounts receivable invoice list"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <select
               value={createType}
               onChange={(event) => setCreateType(event.target.value as typeof createType)}
@@ -100,7 +101,7 @@ export function InvoicesListPage() {
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
       <DataPanel title="Filters">
-        <div className="grid gap-2 md:grid-cols-5">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
             <select value={status} onChange={(event) => setStatus(event.target.value as "" | InvoiceStatus)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
@@ -111,7 +112,7 @@ export function InvoicesListPage() {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 sm:col-span-2 lg:col-span-2">
             Search
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="INV-2026-00001 or customer" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
           </label>

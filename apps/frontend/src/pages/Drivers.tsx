@@ -25,6 +25,7 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
+import { PAGE_SHELL_CLASS } from "../components/layout/pageShellClasses";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
@@ -569,7 +570,7 @@ export function DriversPage() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <PageHeader
         title="Drivers"
         subtitle={`${driversRowsFiltered.length} records`}
@@ -586,7 +587,7 @@ export function DriversPage() {
         <KpiCard label="Escrow" number="—" accent={colors.fleet.strong} />
       </KpiStrip>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant={activeTab === "drivers" ? "primary" : "secondary"} onClick={() => setActiveTab("drivers")}>
           Drivers
         </Button>
@@ -597,7 +598,7 @@ export function DriversPage() {
 
       {activeTab === "teams" ? (
         <div className="space-y-3">
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button size="sm" onClick={() => setTeamCreateOpen(true)}>+ Create Team</Button>
           </div>
           <DataTable

@@ -12,6 +12,7 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { MODAL_PANEL_WIDE_CLASS, PAGE_SHELL_CLASS } from "../../components/layout/pageShellClasses";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function formatMoney(cents: number) {
@@ -103,7 +104,7 @@ export function EscrowDeductionsPendingTab() {
   }, [selected]);
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <PageHeader title="Escrow Deductions Pending Review" subtitle="Auto-proposed abandonment deductions requiring Owner decision." />
 
       {!isOwner ? (
@@ -190,9 +191,10 @@ export function EscrowDeductionsPendingTab() {
           setReviewNotes("");
         }}
         title="Review Escrow Deduction"
+        panelMaxClassName={MODAL_PANEL_WIDE_CLASS}
       >
         {selected ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2 rounded border border-gray-200 bg-gray-50 p-3 text-sm">
               <div><span className="font-semibold">Driver:</span> {selected.driver_name ?? "—"}</div>
               <div><span className="font-semibold">Load:</span> {selected.load_number ?? selected.load_id ?? "—"}</div>

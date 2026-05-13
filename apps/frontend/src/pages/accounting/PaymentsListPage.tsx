@@ -9,6 +9,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { PAGE_SHELL_CLASS } from "../../components/layout/pageShellClasses";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -90,7 +91,7 @@ export function PaymentsListPage() {
   }, [rows]);
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <AccountingSubNav />
       <PageHeader
         title="Payments"

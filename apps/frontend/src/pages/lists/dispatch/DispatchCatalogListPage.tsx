@@ -11,6 +11,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CatalogEntryModal } from "./CatalogEntryModal";
+import { PAGE_SHELL_CLASS } from "../../../components/layout/pageShellClasses";
 
 type StatusFilter = "active" | "inactive" | "all";
 
@@ -106,7 +107,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
   );
 
   return (
-    <div className="space-y-3">
+    <div className={`${PAGE_SHELL_CLASS} space-y-3`}>
       <BackArrowHeader
         backTo="/lists"
         breadcrumb={breadcrumb}
@@ -127,7 +128,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
 
       <div className="rounded border border-slate-200 bg-white p-3 text-sm text-slate-600">{description}</div>
 
-      <div className="grid gap-2 rounded border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
+      <div className="grid grid-cols-1 gap-2 rounded border border-slate-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search code or display name" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />

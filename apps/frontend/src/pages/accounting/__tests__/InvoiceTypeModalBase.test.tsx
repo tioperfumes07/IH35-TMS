@@ -36,7 +36,7 @@ describe("InvoiceTypeModalBase validation", () => {
         createInvoice={createInvoice}
       />
     );
-    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await user.click(screen.getByRole("button", { name: /^Save$/i }));
     await waitFor(() => {
       expect(document.getElementById("customer_id-error")).toBeTruthy();
     });
