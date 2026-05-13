@@ -20,7 +20,49 @@ export type BatchAuditEventType =
   | "error_encountered"
   | "batch_completed"
   | "batch_failed"
-  | "batch_auto_failed_stale";
+  | "batch_auto_failed_stale"
+  | "forensic_import_error";
+
+const FORENSIC_IMPORT_ERROR_MAX_LEN = 2000;
+
+/** Best-effort parse of HTTP status from QBO client Error strings (`status=401`). */
+export function extractQboHttpStatus(err: unknown): number | null {
+  const msg = String((err as Error)?.message ?? err);
+  const match = msg.match(/\bstatus=(\d{3})\b/);
+  if (!match) return null;
+  const n = Number(match[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+export async function auditForensicImportError(
+  batchId: string,
+  operatingCompanyId: string,
+  err: unknown,
+  ctx: {
+    phase: "entities" | "transactions" | "attachments" | "runner" | "admin";
+    step: string;
+    entity_type?: string | null;
+    last_qbo_entity_id?: string | null;
+  }
+) {
+  const rawMessage = String((err as Error)?.message ?? err);
+  const error_message = rawMessage.slice(0, FORENSIC_IMPORT_ERROR_MAX_LEN);
+  const last_qbo_response_status = extractQboHttpStatus(err);
+  const entity_type = ctx.entity_type ? String(ctx.entity_type) : null;
+  await auditBatchEvent(batchId, operatingCompanyId, "forensic_import_error", {
+    error_message,
+    entity_type: entity_type ?? undefined,
+    severity: "error",
+    event_class: "forensic_import_error",
+    context_json: {
+      phase: ctx.phase,
+      entity_type: entity_type,
+      last_qbo_response_status,
+      last_qbo_entity_id: ctx.last_qbo_entity_id ? String(ctx.last_qbo_entity_id) : null,
+      step: ctx.step,
+    },
+  });
+}
 
 export async function auditBatchEvent(
   batchId: string,

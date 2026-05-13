@@ -5,7 +5,7 @@ import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { generateExcelReport } from "./forensic-report.service.js";
 import { runForensicImportDeduped, startImportBatch } from "./forensic-import.service.js";
-import { auditBatchEvent } from "./forensic-audit.service.js";
+import { auditBatchEvent, auditForensicImportError } from "./forensic-audit.service.js";
 import { qboCompanyContext, qboQuery } from "./qbo-client.js";
 
 const startBodySchema = z.object({
@@ -135,6 +135,10 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
       for (const staleId of duplicateCheck.staleIds) {
         await auditBatchEvent(staleId, body.data.operating_company_id, "batch_auto_failed_stale", {
           error_message: "auto-failed in start-import stale cleanup",
+        });
+        await auditForensicImportError(staleId, body.data.operating_company_id, new Error("auto-failed in start-import stale cleanup (>15m heartbeat)"), {
+          phase: "admin",
+          step: "start_import_stale_cleanup",
         });
       }
     }
