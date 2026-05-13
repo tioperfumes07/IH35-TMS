@@ -117,7 +117,16 @@ export function CashAdvanceRequestsPage() {
                 return (
                   <tr key={id} className="border-t border-gray-100">
                     <td className="px-3 py-2 font-mono text-xs">{String(row.display_id ?? "")}</td>
-                    <td className="px-3 py-2">{String(row.driver_name ?? "")}</td>
+                    <td className="min-w-0 max-w-[240px] px-3 py-2">
+                      {(() => {
+                        const v = String(row.driver_name ?? "");
+                        return (
+                          <span title={v.trim() ? v : undefined} className="single-line-name">
+                            {v}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td className="px-3 py-2">{formatUsdFromCents(row.requested_amount_cents)}</td>
                     <td className="px-3 py-2">
                       {waitingOwner ? (

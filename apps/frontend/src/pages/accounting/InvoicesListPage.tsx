@@ -168,7 +168,16 @@ export function InvoicesListPage() {
                     {invoice.factoring_advance_id ? <ArrowRightCircle className="h-3.5 w-3.5 text-amber-600" /> : null}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-gray-700">{invoice.customer_name ?? "-"}</td>
+                <td className="min-w-0 max-w-[240px] px-3 py-2 text-gray-700">
+                  {(() => {
+                    const v = invoice.customer_name ?? "-";
+                    return (
+                      <span title={v !== "-" ? v : undefined} className="single-line-name">
+                        {v}
+                      </span>
+                    );
+                  })()}
+                </td>
                 <td className="px-3 py-2 text-gray-700">{invoice.issue_date}</td>
                 <td className="px-3 py-2 text-gray-700">{invoice.due_date}</td>
                 <td className="px-3 py-2 text-gray-700">{invoice.status}</td>

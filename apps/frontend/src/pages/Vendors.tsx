@@ -26,7 +26,11 @@ export function VendorsPage() {
             key: "name",
             label: "Name",
             className: "max-w-[240px] whitespace-nowrap",
-            render: (row) => <span className="block truncate">{row.name}</span>,
+            render: (row) => (
+              <span title={row.name} className="single-line-name">
+                {row.name}
+              </span>
+            ),
           },
           { key: "vendor_type", label: "Type" },
           {

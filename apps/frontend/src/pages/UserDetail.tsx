@@ -273,8 +273,11 @@ export function UserDetailPage() {
             {(userDetailQuery.data?.accessible_companies ?? []).map((company) => (
               <div key={company.id} className="rounded border border-gray-200 px-2 py-1.5">
                 <div className="font-medium">{company.short_name ?? company.code}</div>
-                <div className="text-xs text-gray-500">
-                  {company.legal_name} ({company.id === targetUser.default_company_id ? "default" : "accessible"})
+                <div className="min-w-0 max-w-full text-xs text-gray-500">
+                  <span title={company.legal_name} className="single-line-name">
+                    {company.legal_name}
+                  </span>{" "}
+                  ({company.id === targetUser.default_company_id ? "default" : "accessible"})
                 </div>
               </div>
             ))}
