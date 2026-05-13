@@ -127,7 +127,12 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
         </label>
         <label className="block">
           Pay from bank account
-          <select className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={fromBankId} onChange={(e) => setFromBankId(e.target.value)}>
+          <select
+            aria-label="Pay from bank account"
+            className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+            value={fromBankId}
+            onChange={(e) => setFromBankId(e.target.value)}
+          >
             <option value="">Select account</option>
             {bankAccounts.map((option) => (
               <option key={option.id} value={option.id}>
@@ -143,7 +148,15 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
           </label>
           <label className="block">
             Amount (USD)
-            <input type="number" min="0" step="0.01" className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <input
+              aria-label="Amount (USD)"
+              type="number"
+              min="0"
+              step="0.01"
+              className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
           </label>
         </div>
         <label className="block">

@@ -97,7 +97,12 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved }: Pr
       <div className="space-y-3 text-sm">
         <label className="block">
           From bank account
-          <select className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={fromAccountId} onChange={(e) => setFromAccountId(e.target.value)}>
+          <select
+            aria-label="From bank account"
+            className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+            value={fromAccountId}
+            onChange={(e) => setFromAccountId(e.target.value)}
+          >
             <option value="">Select account</option>
             {bankAccounts.map((option) => (
               <option key={option.id} value={option.id}>
@@ -108,7 +113,12 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved }: Pr
         </label>
         <label className="block">
           To bank account
-          <select className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={toAccountId} onChange={(e) => setToAccountId(e.target.value)}>
+          <select
+            aria-label="To bank account"
+            className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+            value={toAccountId}
+            onChange={(e) => setToAccountId(e.target.value)}
+          >
             <option value="">Select account</option>
             {bankAccounts
               .filter((a) => a.id !== fromAccountId)
@@ -122,7 +132,15 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved }: Pr
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
             Amount (USD)
-            <input type="number" min="0" step="0.01" className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <input
+              aria-label="Amount (USD)"
+              type="number"
+              min="0"
+              step="0.01"
+              className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
           </label>
           <label className="block">
             Date
