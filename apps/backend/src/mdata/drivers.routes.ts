@@ -4,6 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { sendZodValidation } from "../lib/zod-http-error.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { driverInviteHtml, driverInviteText } from "../notifications/templates/driver-invite.js";
 import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
@@ -126,7 +127,7 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 function sendValidationError(reply: FastifyReply, error: z.ZodError) {
-  return reply.code(400).send({ error: "validation_error", details: error.flatten() });
+  return sendZodValidation(reply, error);
 }
 
 function isWriteRole(role: string): boolean {
@@ -782,7 +783,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       return reply.code(201).send(created);
     } catch (err) {
       const code = (err as { code?: string }).code;
-      if (code === "23505") return reply.code(409).send({ error: "mdata_driver_conflict" });
+      if (code === "23505")
+        return reply.code(409).send({
+          error: "mdata_driver_conflict",
+          message: "Driver with this CDL already exists",
+          fieldErrors: { cdl_number: "Already in use", cdl_state: "Already in use" },
+        });
       if (code === "23503") return reply.code(400).send({ error: "invalid_identity_user_id" });
       throw err;
     }
@@ -1120,7 +1126,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       return updated;
     } catch (err) {
       const code = (err as { code?: string }).code;
-      if (code === "23505") return reply.code(409).send({ error: "mdata_driver_conflict" });
+      if (code === "23505")
+        return reply.code(409).send({
+          error: "mdata_driver_conflict",
+          message: "Driver with this CDL already exists",
+          fieldErrors: { cdl_number: "Already in use", cdl_state: "Already in use" },
+        });
       if (code === "23503") return reply.code(400).send({ error: "invalid_identity_user_id" });
       throw err;
     }
