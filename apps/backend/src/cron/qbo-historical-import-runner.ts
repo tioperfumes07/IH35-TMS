@@ -5,10 +5,31 @@ import { runForensicImportDeduped } from "../integrations/qbo/forensic-import.se
 import { sendEmail } from "../notifications/email.service.js";
 import { sendForensicZombieAlert } from "../integrations/email/forensic-alerts.js";
 import { auditBatchEvent, auditForensicImportError } from "../integrations/qbo/forensic-audit.service.js";
+import { getValidAccessToken } from "../integrations/qbo/qbo-oauth.service.js";
 import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
 
 let initialized = false;
-const RUN_EVERY_MINUTE = "*/1 * * * *";
+
+/** Cron expression — default every minute. Override with QBO_FORENSIC_CRON (5-field, America/Chicago). */
+function forensicCronExpression() {
+  const raw = (process.env.QBO_FORENSIC_CRON ?? "").trim();
+  return raw || "*/1 * * * *";
+}
+
+/**
+ * Auto-fail zombie batches after N minutes without heartbeat updates.
+ * Only runs when QBO_FORENSIC_AUTO_FAIL_STALE=true (opt-in).
+ * When enabled, default window is 10080 minutes (7 days) — not 15 minutes.
+ */
+function staleHeartbeatMinutesForAutoFail(): number {
+  const n = Number(process.env.QBO_FORENSIC_STALE_AFTER_MINUTES ?? "10080");
+  return Number.isFinite(n) && n > 0 ? n : 10080;
+}
+
+/** Opt-in: set QBO_FORENSIC_AUTO_FAIL_STALE=true to auto-fail very stale in_progress batches. */
+function autoFailStaleEnabled() {
+  return (process.env.QBO_FORENSIC_AUTO_FAIL_STALE ?? "false").toLowerCase() === "true";
+}
 
 async function appendSystemAudit(eventClass: string, payload: Record<string, unknown>, severity: "info" | "warning" = "info") {
   await withLuciaBypass(async (client) => {
@@ -22,6 +43,9 @@ async function appendSystemAudit(eventClass: string, payload: Record<string, unk
 }
 
 async function autoFailStaleBatches(app: FastifyInstance) {
+  if (!autoFailStaleEnabled()) return;
+
+  const staleMinutes = staleHeartbeatMinutesForAutoFail();
   const stale = await withLuciaBypass(async (client) => {
     const res = await client.query<{
       id: string;
@@ -37,15 +61,16 @@ async function autoFailStaleBatches(app: FastifyInstance) {
             completed_at = now(),
             errors_count = b.errors_count + 1,
             last_error_message = COALESCE(b.last_error_message, '')
-              || ' [auto-failed: heartbeat stale > 15min]',
+              || format(' [auto-failed: heartbeat stale > %s minutes]', $1::text),
             updated_at = now()
         FROM org.companies c
         WHERE b.status = 'in_progress'
-          AND b.last_heartbeat_at < now() - interval '15 minutes'
+          AND b.last_heartbeat_at < now() - ($1::int * interval '1 minute')
           AND c.id = b.operating_company_id
         RETURNING b.id, b.operating_company_id, b.started_at::text, b.last_heartbeat_at::text, c.legal_name AS company_name,
-          GREATEST(16, FLOOR(EXTRACT(EPOCH FROM (now() - b.last_heartbeat_at))/60))::int AS minutes_stale
-      `
+          GREATEST($1::int + 1, FLOOR(EXTRACT(EPOCH FROM (now() - b.last_heartbeat_at))/60))::int AS minutes_stale
+      `,
+      [staleMinutes]
     );
     return res.rows;
   });
@@ -53,11 +78,11 @@ async function autoFailStaleBatches(app: FastifyInstance) {
   for (const row of stale) {
     await appendSystemAudit(
       "qbo_archive.batch.auto_failed",
-      { batch_id: row.id, operating_company_id: row.operating_company_id, reason: "stale_heartbeat_over_15m" },
+      { batch_id: row.id, operating_company_id: row.operating_company_id, reason: "stale_heartbeat_auto_fail", stale_after_minutes: staleHeartbeatMinutesForAutoFail() },
       "warning"
     );
     await auditBatchEvent(row.id, row.operating_company_id, "batch_auto_failed_stale", {
-      error_message: "heartbeat stale > 15 minutes",
+      error_message: `heartbeat stale > ${staleHeartbeatMinutesForAutoFail()} minutes`,
       minutes_stale: row.minutes_stale,
     });
     await auditForensicImportError(
@@ -91,8 +116,20 @@ export async function initializeQboHistoricalImportRunner(app: FastifyInstance) 
     return;
   }
 
+  const cronExpr = forensicCronExpression();
+  app.log.info(
+    {
+      cron: cronExpr,
+      timezone: "America/Chicago",
+      autoFailStale: autoFailStaleEnabled(),
+      staleAfterMinutes: staleHeartbeatMinutesForAutoFail(),
+      resumePolicy: "furthest_progress_per_company_no_heartbeat_gate",
+    },
+    "QBO forensic runner initialized — resumes stalled imports; OAuth tokens refresh automatically before API calls (getValidAccessToken)"
+  );
+
   cron.schedule(
-    RUN_EVERY_MINUTE,
+    cronExpr,
     async () => {
       markRunnerTick("forensic_runner");
       await autoFailStaleBatches(app);
@@ -102,8 +139,10 @@ export async function initializeQboHistoricalImportRunner(app: FastifyInstance) 
             SELECT DISTINCT ON (operating_company_id) id, operating_company_id
             FROM qbo_archive.import_batches
             WHERE status = 'in_progress'
-              AND last_heartbeat_at >= now() - interval '15 minutes'
-            ORDER BY operating_company_id, started_at DESC
+            ORDER BY
+              operating_company_id,
+              (COALESCE(transactions_imported, 0) + COALESCE(entities_imported, 0) + COALESCE(attachments_imported, 0)) DESC,
+              started_at DESC NULLS LAST
           `
         );
         return res.rows;
@@ -115,6 +154,23 @@ export async function initializeQboHistoricalImportRunner(app: FastifyInstance) 
       for (const batch of batches) {
         try {
           await appendSystemAudit("qbo_archive.import_resumed", { batch_id: batch.id, operating_company_id: batch.operating_company_id });
+          await withLuciaBypass(async (client) => {
+            await client.query(
+              `
+                UPDATE qbo_archive.import_batches
+                SET last_heartbeat_at = now(),
+                    updated_at = now()
+                WHERE id = $1::uuid
+                  AND status = 'in_progress'
+              `,
+              [batch.id]
+            );
+          });
+          try {
+            await getValidAccessToken(batch.operating_company_id);
+          } catch (err) {
+            app.log.warn({ err, operatingCompanyId: batch.operating_company_id, batchId: batch.id }, "QBO token warmup failed before forensic resume");
+          }
           await runForensicImportDeduped(process.env.SYSTEM_ACTOR_USER_ID || "00000000-0000-0000-0000-000000000000", {
             batchId: batch.id,
             operatingCompanyId: batch.operating_company_id,
@@ -159,6 +215,5 @@ export async function initializeQboHistoricalImportRunner(app: FastifyInstance) 
     },
     { timezone: "America/Chicago" }
   );
-  app.log.info("QBO historical import runner initialized (every minute, resumable)");
 }
 
