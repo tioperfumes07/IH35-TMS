@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   acknowledgeSettlement,
   finalizeSettlement,
@@ -56,6 +56,7 @@ export function SettlementDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const { pushToast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
@@ -315,13 +316,24 @@ export function SettlementDetailPage() {
             }}
             onSaveDraft={() => pushToast("Draft saved", "success")}
             onFinalize={() => {
-              if (!companyId) return;
-              void finalizeSettlement(settlementId, companyId)
+              if (!companyId) {
+                pushToast("Select an operating company to finalize.", "error");
+                return Promise.reject(new Error("Missing company"));
+              }
+              return finalizeSettlement(settlementId, companyId)
                 .then(() => {
                   pushToast("Settlement finalized", "success");
                   void refreshSettlementViews();
                 })
-                .catch((error) => pushToast(`Finalize blocked: ${String((error as Error).message || error)}`, "error"));
+                .catch((error) => {
+                  pushToast(`Finalize blocked: ${String((error as Error).message || error)}`, "error");
+                  throw error;
+                });
+            }}
+            onFinalizeFollowUp={(kind) => {
+              if (kind === "print") window.print();
+              if (kind === "pdf") pushToast("PDF export from settlement detail is a follow-up integration.", "info");
+              if (kind === "list") navigate("/driver-finance/settlements");
             }}
           />
           {isFinalSettlement ? (

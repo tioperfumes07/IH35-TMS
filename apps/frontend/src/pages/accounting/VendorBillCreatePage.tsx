@@ -1,17 +1,32 @@
-import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createVendorBill } from "../../api/accounting";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { Button } from "../../components/Button";
+import { ConfirmDiscardDialog } from "../../components/dialogs/ConfirmDiscardDialog";
 import { QboCombobox } from "../../components/forms/QboCombobox";
+import { SaveDropdown } from "../../components/forms/SaveDropdown";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useEscapeKey } from "../../hooks/useEscapeKey";
+import { useUnsavedChanges } from "../../hooks/useUnsavedChanges";
 
 function dollarsToCents(value: string) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
   return Math.round(n * 100);
 }
+
+type BillFormSnap = {
+  vendorId: string | null;
+  vendorDisplay: string;
+  itemHint: { qboId: string | null; name: string };
+  accountHint: { qboId: string | null; name: string };
+  billDate: string;
+  dueDate: string;
+  amount: string;
+  billNumber: string;
+};
+
+const emptyHints = { qboId: null as string | null, name: "" };
 
 export function VendorBillCreatePage() {
   const { pushToast } = useToast();
@@ -20,13 +35,16 @@ export function VendorBillCreatePage() {
 
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [vendorDisplay, setVendorDisplay] = useState("");
-  const [itemHint, setItemHint] = useState<{ qboId: string | null; name: string }>({ qboId: null, name: "" });
-  const [accountHint, setAccountHint] = useState<{ qboId: string | null; name: string }>({ qboId: null, name: "" });
+  const [itemHint, setItemHint] = useState(emptyHints);
+  const [accountHint, setAccountHint] = useState(emptyHints);
   const [billDate, setBillDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
   const [amount, setAmount] = useState("");
   const [billNumber, setBillNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showDiscard, setShowDiscard] = useState(false);
+  const [baseline, setBaseline] = useState<BillFormSnap | null>(null);
+  const saveFollowRef = useRef<"default" | "add_another" | "print">("default");
 
   const memo = useMemo(() => {
     const parts: string[] = [];
@@ -35,8 +53,62 @@ export function VendorBillCreatePage() {
     return parts.length ? parts.join(" · ") : undefined;
   }, [accountHint, itemHint]);
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
+  const formSnap = useMemo(
+    (): BillFormSnap => ({
+      vendorId,
+      vendorDisplay,
+      itemHint,
+      accountHint,
+      billDate,
+      dueDate,
+      amount,
+      billNumber,
+    }),
+    [accountHint, amount, billDate, billNumber, dueDate, itemHint, vendorDisplay, vendorId]
+  );
+  const { isDirty: formDirty } = useUnsavedChanges(formSnap, baseline ?? formSnap);
+
+  useEffect(() => {
+    const snap: BillFormSnap = {
+      vendorId: null,
+      vendorDisplay: "",
+      itemHint: emptyHints,
+      accountHint: emptyHints,
+      billDate: new Date().toISOString().slice(0, 10),
+      dueDate: "",
+      amount: "",
+      billNumber: "",
+    };
+    setBaseline(snap);
+  }, []);
+
+  const clearForm = useCallback(() => {
+    setVendorId(null);
+    setVendorDisplay("");
+    setItemHint(emptyHints);
+    setAccountHint(emptyHints);
+    setBillDate(new Date().toISOString().slice(0, 10));
+    setDueDate("");
+    setAmount("");
+    setBillNumber("");
+    setBaseline({
+      vendorId: null,
+      vendorDisplay: "",
+      itemHint: emptyHints,
+      accountHint: emptyHints,
+      billDate: new Date().toISOString().slice(0, 10),
+      dueDate: "",
+      amount: "",
+      billNumber: "",
+    });
+  }, []);
+
+  useEscapeKey(() => {
+    if (!formDirty) return;
+    setShowDiscard(true);
+  }, formDirty);
+
+  async function saveBill() {
     if (!companyId) return pushToast("Select operating company first", "error");
     const vendorKey = (vendorId ?? vendorDisplay).trim();
     if (!vendorKey) return pushToast("Vendor is required", "error");
@@ -54,12 +126,13 @@ export function VendorBillCreatePage() {
         memo,
       });
       pushToast("Vendor bill created", "success");
-      setAmount("");
-      setBillNumber("");
-      setVendorId(null);
-      setVendorDisplay("");
-      setItemHint({ qboId: null, name: "" });
-      setAccountHint({ qboId: null, name: "" });
+      const follow = saveFollowRef.current;
+      if (follow === "add_another") {
+        clearForm();
+      } else {
+        clearForm();
+        if (follow === "print") window.print();
+      }
     } catch (error) {
       pushToast(String((error as Error).message || "Failed to create bill"), "error");
     } finally {
@@ -68,10 +141,15 @@ export function VendorBillCreatePage() {
   }
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-4 p-4 sm:p-6">
       <PageHeader title="Create vendor bill" subtitle="Type-ahead picks mirror QuickBooks vendors, items, and accounts (Phase 1)." />
       {!companyId ? <div className="text-sm text-red-600">Select an operating company in the shell header.</div> : null}
-      <form className="mx-auto max-w-3xl space-y-3 rounded border border-gray-200 bg-white p-4" onSubmit={onSubmit}>
+      <form
+        className="mx-auto max-w-3xl space-y-3 rounded border border-gray-200 bg-white p-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+      >
         <div className="grid gap-3 md:grid-cols-2">
           <label className="text-xs font-semibold text-gray-700 md:col-span-2">
             Vendor (QuickBooks mirror + free text fallback)
@@ -145,12 +223,39 @@ export function VendorBillCreatePage() {
           </div>
         ) : null}
 
-        <div className="flex justify-end gap-2">
-          <Button type="submit" disabled={submitting || !companyId}>
-            {submitting ? "Saving…" : "Create bill"}
-          </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <SaveDropdown
+            storageKey="vendor-bill-create"
+            primaryLabel="Save"
+            disabled={!companyId}
+            loading={submitting}
+            onSave={() => {
+              saveFollowRef.current = "default";
+              void saveBill();
+            }}
+            onSaveAndClose={() => {
+              saveFollowRef.current = "default";
+              void saveBill();
+            }}
+            onSaveAndAddAnother={() => {
+              saveFollowRef.current = "add_another";
+              void saveBill();
+            }}
+            onSaveAndPrint={() => {
+              saveFollowRef.current = "print";
+              void saveBill();
+            }}
+          />
         </div>
       </form>
+      <ConfirmDiscardDialog
+        open={showDiscard}
+        onCancel={() => setShowDiscard(false)}
+        onDiscard={() => {
+          setShowDiscard(false);
+          clearForm();
+        }}
+      />
     </div>
   );
 }

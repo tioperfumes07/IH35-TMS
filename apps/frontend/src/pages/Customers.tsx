@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { listUsStates } from "../api/catalogs";
@@ -16,7 +16,9 @@ import { useToast } from "../components/Toast";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { FieldError, fieldErrorClassname } from "../components/forms/FieldError";
 import { FormErrorBanner } from "../components/forms/FormErrorBanner";
+import { SaveDropdown } from "../components/forms/SaveDropdown";
 import { useFormValidation } from "../components/forms/useFormValidation";
+import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -233,6 +235,15 @@ export function CustomersPage() {
   const [fmcsaModalOpen, setFmcsaModalOpen] = useState(false);
   const showTaxId = user?.role === "Owner";
 
+  const customerCreateAttemptCloseRef = useRef<(() => void) | null>(null);
+  const customerSaveModeRef = useRef<"default" | "add_another" | "view_list">("default");
+  const [customerCreateBaseline, setCustomerCreateBaseline] = useState<CreateCustomerFormState | null>(null);
+  const customerCreateSnapshot = useMemo(() => ({ ...createForm }), [createForm]);
+  const { isDirty: isCustomerCreateDirty } = useUnsavedChanges(
+    customerCreateSnapshot,
+    customerCreateBaseline ?? customerCreateSnapshot
+  );
+
   const customerListTab = useMemo(() => parseCustomerListTab(searchParams), [searchParams]);
 
   const setCustomerListTab = (next: CustomerListTabId) => {
@@ -270,9 +281,21 @@ export function CustomersPage() {
     mutationFn: createCustomer,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
+      const mode = customerSaveModeRef.current;
+      pushToast("Customer created", "success");
+      if (mode === "add_another") {
+        setCreateForm(emptyCreateForm());
+        setCustomerCreateBaseline(null);
+        return;
+      }
+      if (mode === "view_list") {
+        setAddOpen(false);
+        setCreateForm(emptyCreateForm());
+        navigate("/customers");
+        return;
+      }
       setAddOpen(false);
       setCreateForm(emptyCreateForm());
-      pushToast("Customer created", "success");
     },
   });
 
@@ -339,6 +362,30 @@ export function CustomersPage() {
     resetCustomerCreateErrors();
   }, [addOpen, resetCustomerCreateErrors]);
 
+  useEffect(() => {
+    if (addOpen) return;
+    setCustomerCreateBaseline(null);
+  }, [addOpen]);
+
+  useEffect(() => {
+    if (!addOpen || customerCreateBaseline !== null) return;
+    setCustomerCreateBaseline({ ...createForm });
+  }, [addOpen, customerCreateBaseline, createForm]);
+
+  const openCreateCustomer = useCallback(() => {
+    setCreateForm(emptyCreateForm());
+    setCustomerCreateBaseline(null);
+    setAddOpen(true);
+  }, []);
+
+  const runCustomerCreateSave = useCallback(
+    (mode: "default" | "add_another" | "view_list") => {
+      customerSaveModeRef.current = mode;
+      void submitCustomerCreate(createForm as unknown as z.infer<typeof createCustomerSchema>);
+    },
+    [createForm, submitCustomerCreate]
+  );
+
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Parameters<typeof updateCustomer>[1] }) => updateCustomer(id, payload),
     onSuccess: () => {
@@ -392,11 +439,11 @@ export function CustomersPage() {
   const blacklistCount = allCustomers.filter((customer) => customer.status === "blacklist").length;
 
   return (
-    <div className="space-y-3">
+    <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-3 px-4 sm:px-6">
       <PageHeader
         title="Customers"
         subtitle={`${customers.length} records`}
-        actions={canManage ? <ActionButton onClick={() => setAddOpen(true)}>+ Create Customer</ActionButton> : null}
+        actions={canManage ? <ActionButton onClick={openCreateCustomer}>+ Create Customer</ActionButton> : null}
       />
 
       <KpiStrip>
@@ -435,6 +482,7 @@ export function CustomersPage() {
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading customers...</div>
       ) : (
         <div className="space-y-3">
+        <div className="overflow-x-auto">
           <DataTable
             rows={customers}
             rowKey={(row) => row.id}
@@ -522,16 +570,25 @@ export function CustomersPage() {
               },
             ]}
           />
+        </div>
           {customers.length === 0 ? <div className="rounded border border-gray-200 bg-white p-3 text-[13px] text-gray-500">No customers found.</div> : null}
         </div>
       )}
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Customer">
+      <Modal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Create Customer"
+        confirmDiscardOnClose
+        isDirty={isCustomerCreateDirty}
+        onRegisterAttemptClose={(fn) => {
+          customerCreateAttemptCloseRef.current = fn;
+        }}
+      >
         <form
           className="space-y-3"
           onSubmit={(event) => {
             event.preventDefault();
-            void submitCustomerCreate(createForm as unknown as z.infer<typeof createCustomerSchema>);
           }}
         >
           <FormErrorBanner message={customerApiError} />
@@ -551,12 +608,18 @@ export function CustomersPage() {
             onOpenFmcsaVerification={() => setFmcsaModalOpen(true)}
           />
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setAddOpen(false)}>
+            <Button type="button" variant="secondary" onClick={() => customerCreateAttemptCloseRef.current?.()}>
               Cancel
             </Button>
-            <Button type="submit" loading={createMutation.isPending}>
-              Save
-            </Button>
+            <SaveDropdown
+              storageKey="customer-create"
+              primaryLabel="Save"
+              loading={createMutation.isPending}
+              onSave={() => void runCustomerCreateSave("default")}
+              onSaveAndClose={() => void runCustomerCreateSave("default")}
+              onSaveAndAddAnother={() => void runCustomerCreateSave("add_another")}
+              onSaveAndViewList={() => void runCustomerCreateSave("view_list")}
+            />
           </div>
         </form>
       </Modal>

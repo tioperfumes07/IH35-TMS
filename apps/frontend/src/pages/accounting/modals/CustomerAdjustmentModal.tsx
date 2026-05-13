@@ -1,11 +1,11 @@
 import { createCustomerAdjustmentInvoice } from "../../../api/accounting";
-import { InvoiceTypeModalBase } from "./InvoiceTypeModalBase";
+import { InvoiceTypeModalBase, type InvoiceCreatedFollowUp } from "./InvoiceTypeModalBase";
 
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
-  onCreated: (invoiceId: string) => void;
+  onCreated: (invoiceId: string, followUp?: InvoiceCreatedFollowUp) => void;
 };
 
 export function CustomerAdjustmentModal({ open, operatingCompanyId, onClose, onCreated }: Props) {

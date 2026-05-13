@@ -203,9 +203,14 @@ export function InvoicesListPage() {
             open={openModalType === "driver_damage"}
             operatingCompanyId={selectedCompanyId}
             onClose={() => setOpenModalType(null)}
-            onCreated={(invoiceId) => {
-              setOpenModalType(null);
+            onCreated={(invoiceId, followUp) => {
               void query.refetch();
+              if (followUp === "stay_open") return;
+              setOpenModalType(null);
+              if (followUp === "view_list") {
+                navigate("/accounting/invoices");
+                return;
+              }
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
           />
@@ -213,9 +218,14 @@ export function InvoicesListPage() {
             open={openModalType === "driver_misc"}
             operatingCompanyId={selectedCompanyId}
             onClose={() => setOpenModalType(null)}
-            onCreated={(invoiceId) => {
-              setOpenModalType(null);
+            onCreated={(invoiceId, followUp) => {
               void query.refetch();
+              if (followUp === "stay_open") return;
+              setOpenModalType(null);
+              if (followUp === "view_list") {
+                navigate("/accounting/invoices");
+                return;
+              }
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
           />
@@ -223,9 +233,14 @@ export function InvoicesListPage() {
             open={openModalType === "vendor_chargeback"}
             operatingCompanyId={selectedCompanyId}
             onClose={() => setOpenModalType(null)}
-            onCreated={(invoiceId) => {
-              setOpenModalType(null);
+            onCreated={(invoiceId, followUp) => {
               void query.refetch();
+              if (followUp === "stay_open") return;
+              setOpenModalType(null);
+              if (followUp === "view_list") {
+                navigate("/accounting/invoices");
+                return;
+              }
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
           />
@@ -233,9 +248,14 @@ export function InvoicesListPage() {
             open={openModalType === "customer_adjustment"}
             operatingCompanyId={selectedCompanyId}
             onClose={() => setOpenModalType(null)}
-            onCreated={(invoiceId) => {
-              setOpenModalType(null);
+            onCreated={(invoiceId, followUp) => {
               void query.refetch();
+              if (followUp === "stay_open") return;
+              setOpenModalType(null);
+              if (followUp === "view_list") {
+                navigate("/accounting/invoices");
+                return;
+              }
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
           />
@@ -243,9 +263,14 @@ export function InvoicesListPage() {
             open={openModalType === "manual"}
             operatingCompanyId={selectedCompanyId}
             onClose={() => setOpenModalType(null)}
-            onCreated={(invoiceId) => {
-              setOpenModalType(null);
+            onCreated={(invoiceId, followUp) => {
               void query.refetch();
+              if (followUp === "stay_open") return;
+              setOpenModalType(null);
+              if (followUp === "view_list") {
+                navigate("/accounting/invoices");
+                return;
+              }
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
           />

@@ -5,12 +5,25 @@ type Props = {
   open: boolean;
   onCancel: () => void;
   onDiscard: () => void;
+  /** Override default title (e.g. settlement close draft). */
+  title?: string;
+  /** Override default body copy. */
+  message?: string;
+  /** Label for the confirm button (default: Discard). */
+  discardButtonLabel?: string;
 };
 
 /**
  * Blocking confirm over an open modal. Renders at z-index above `Modal` (z-50).
  */
-export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
+export function ConfirmDiscardDialog({
+  open,
+  onCancel,
+  onDiscard,
+  title = "Discard unsaved changes?",
+  message = "Your edits will be lost.",
+  discardButtonLabel = "Discard",
+}: Props) {
   if (!open) return null;
 
   return createPortal(
@@ -27,15 +40,15 @@ export function ConfirmDiscardDialog({ open, onCancel, onDiscard }: Props) {
         aria-labelledby="confirm-discard-title"
       >
         <h3 id="confirm-discard-title" className="text-sm font-semibold text-gray-900">
-          Discard unsaved changes?
+          {title}
         </h3>
-        <p className="mt-2 text-xs text-gray-600">Your edits will be lost.</p>
+        <p className="mt-2 text-xs text-gray-600">{message}</p>
         <div className="mt-4 flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onCancel}>
             Cancel
           </Button>
           <Button type="button" onClick={onDiscard}>
-            Discard
+            {discardButtonLabel}
           </Button>
         </div>
       </div>

@@ -1,14 +1,14 @@
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { createWorkOrder, suggestExpenseLoad, type PaymentTiming, type WorkOrderType } from "../../../api/maintenance";
 import { ApiError } from "../../../api/client";
 import { Button } from "../../../components/Button";
+import { Modal } from "../../../components/Modal";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
-import { Modal } from "../../../components/Modal";
+import { SaveDropdown } from "../../../components/forms/SaveDropdown";
 import { useToast } from "../../../components/Toast";
 import { UploadZone } from "../../../components/UploadZone";
 import { CreateWOSectionIdentification } from "./CreateWOSectionIdentification";
@@ -72,6 +72,8 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const { pushToast } = useToast();
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
+  const woAttemptCloseRef = useRef<(() => void) | null>(null);
+  const woSaveModeRef = useRef<"default" | "print" | "add_another">("default");
   const form = useForm<CreateWOFormValues>({
     defaultValues: {
       wo_type: initialType,
@@ -103,6 +105,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       ...initialValues,
     },
   });
+
+  const { isDirty: rhfDirty } = form.formState;
+  const woIsDirty = rhfDirty || lines.length > 0 || taxRate !== 8.25;
 
   useEffect(() => {
     if (!open) return;
@@ -255,6 +260,51 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       } else {
         pushToast("Work order created", "success");
       }
+      if (mode === "full") {
+        const follow = woSaveModeRef.current;
+        if (follow === "add_another") {
+          form.reset({
+            wo_type: initialType,
+            source_type: initialType === "accident" ? "AC" : initialType === "tire" ? "IT" : "IS",
+            bucket: "in_house",
+            service_date: new Date().toISOString().slice(0, 10),
+            unit_id: "",
+            driver_id: "",
+            class_hint: "",
+            repair_location: "in_house",
+            vendor_id: "",
+            vendor_invoice_number: "",
+            external_vendor_id: "",
+            external_vendor_wo_number: "",
+            external_vendor_invoice_number: "",
+            load_id: "",
+            load_exemption_reason: "",
+            description: "",
+            payment_timing: "vendor_invoice",
+            bill_terms: "net_30",
+            bill_date: new Date().toISOString().slice(0, 10),
+            due_date: "",
+            roadside_callout_at: "",
+            roadside_arrived_at: "",
+            roadside_provider_vendor_id: "",
+            roadside_location: "",
+            roadside_breakdown_load_id: "",
+            line_items: [],
+            ...initialValues,
+          });
+          setLines([]);
+          setTaxRate(8.25);
+          setSuggestionPinned(false);
+          setBackendLoadError(null);
+          setDraftAttachmentEntityId(crypto.randomUUID());
+          woSaveModeRef.current = "default";
+          return;
+        }
+        if (follow === "print") {
+          window.print();
+        }
+        woSaveModeRef.current = "default";
+      }
       onCreated();
       onClose();
     } catch (error) {
@@ -272,7 +322,19 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Work Order">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Create Work Order"
+      confirmDiscardOnClose
+      isDirty={woIsDirty}
+      onRegisterAttemptClose={(fn) => {
+        woAttemptCloseRef.current = fn;
+      }}
+      resizable
+      resizableStorageKey="create-work-order"
+      panelMaxClassName="max-w-[min(56rem,calc(100vw-2rem))]"
+    >
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
           <TypeTabBar
@@ -328,21 +390,35 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           title="Work Order Attachments"
         />
 
-        <div className="flex items-center justify-between">
-          <Button type="button" variant="secondary" onClick={onClose}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Button type="button" variant="secondary" onClick={() => woAttemptCloseRef.current?.()}>
             Cancel
           </Button>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="secondary" disabled={paymentTiming !== "in_house"} onClick={() => void submit("wo_only")}>
               Save WO Only
             </Button>
-            <Button
-              type="button"
+            <SaveDropdown
+              storageKey="work-order-create"
+              primaryLabel={paymentTiming === "vendor_invoice" ? "Save + bill" : paymentTiming === "paid_same_day" ? "Save + expense" : "Save"}
               disabled={requiresLoadForG18 && !Boolean(form.watch("load_id")) && form.watch("load_exemption_reason").trim().length < 20}
-              onClick={() => void submit("full")}
-            >
-              {paymentTiming === "vendor_invoice" ? "Save WO & Create Bill" : paymentTiming === "paid_same_day" ? "Save WO & Create Expense" : "Save WO"}
-            </Button>
+              onSave={() => {
+                woSaveModeRef.current = "default";
+                void submit("full");
+              }}
+              onSaveAndClose={() => {
+                woSaveModeRef.current = "default";
+                void submit("full");
+              }}
+              onSaveAndPrint={() => {
+                woSaveModeRef.current = "print";
+                void submit("full");
+              }}
+              onSaveAndAddAnother={() => {
+                woSaveModeRef.current = "add_another";
+                void submit("full");
+              }}
+            />
           </div>
         </div>
         <div className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-900">
