@@ -3,10 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment } from "../../api/accounting";
 import { Button } from "../../components/Button";
-import { BackButton } from "../../components/shared/BackButton";
-import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { Modal } from "../../components/Modal";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -100,36 +99,33 @@ export function PaymentDetailPage() {
   return (
     <div className="space-y-3">
       <AccountingSubNav />
-      <BackButton label="Payments" />
-      <Breadcrumb
-        items={[
+      <PageHeader
+        title={payment.display_id}
+        backHref="/accounting/payments"
+        breadcrumb={[
           { label: "Accounting", href: "/accounting" },
           { label: "Payments", href: "/accounting/payments" },
           { label: payment.display_id },
         ]}
+        actions={
+          <div className="flex items-center gap-2">
+            {isVoided ? <StatusBadge variant="neutral">voided</StatusBadge> : null}
+            {!isVoided ? (
+              <Button
+                variant="danger"
+                onClick={() => {
+                  const reason = window.prompt("Void reason");
+                  if (!reason) return;
+                  voidMutation.mutate(reason);
+                }}
+                loading={voidMutation.isPending}
+              >
+                Void
+              </Button>
+            ) : null}
+          </div>
+        }
       />
-
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold text-gray-900">{payment.display_id}</h1>
-          {isVoided ? <StatusBadge variant="neutral">voided</StatusBadge> : null}
-        </div>
-        <div className="flex gap-2">
-          {!isVoided ? (
-            <Button
-              variant="danger"
-              onClick={() => {
-                const reason = window.prompt("Void reason");
-                if (!reason) return;
-                voidMutation.mutate(reason);
-              }}
-              loading={voidMutation.isPending}
-            >
-              Void
-            </Button>
-          ) : null}
-        </div>
-      </div>
 
       <DataPanel title="Header">
         <DataPanelRow>

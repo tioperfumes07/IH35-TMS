@@ -7,9 +7,7 @@ import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { Button } from "../components/Button";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
-import { PageHeader } from "../components/layout/PageHeader";
-import { BackButton } from "../components/shared/BackButton";
-import { Breadcrumb } from "../components/shared/Breadcrumb";
+import { PageHeader } from "../components/forms/shared/PageHeader";
 
 const tabs = ["Profile", "Documents", "Audit History"] as const;
 type VendorTab = (typeof tabs)[number];
@@ -52,15 +50,13 @@ export function VendorDetailPage() {
 
   return (
     <div className="space-y-3">
-      <BackButton label="Vendors" />
-      <Breadcrumb
-        items={[
+      <PageHeader
+        title={vendor.name}
+        backHref="/vendors"
+        breadcrumb={[
           { label: "Vendors", href: "/vendors" },
           { label: vendor.name },
         ]}
-      />
-      <PageHeader
-        title={vendor.name}
         subtitle={vendor.vendor_type}
         actions={
           <span className={`rounded px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-emerald-100 text-emerald-700"}`}>

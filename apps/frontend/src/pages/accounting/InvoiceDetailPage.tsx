@@ -3,10 +3,9 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice } from "../../api/accounting";
 import { Button } from "../../components/Button";
-import { BackButton } from "../../components/shared/BackButton";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNav } from "./AccountingSubNav";
@@ -105,9 +104,14 @@ export function InvoiceDetailPage() {
   return (
     <div className="space-y-3">
       <AccountingSubNav />
-      <BackButton />
       <PageHeader
         title={invoice.display_id}
+        backHref="/accounting/invoices"
+        breadcrumb={[
+          { label: "Accounting", href: "/accounting" },
+          { label: "Invoices", href: "/accounting/invoices" },
+          { label: invoice.display_id },
+        ]}
         subtitle={invoice.customer_name ?? "Invoice detail"}
         actions={
           <div className="flex gap-2">

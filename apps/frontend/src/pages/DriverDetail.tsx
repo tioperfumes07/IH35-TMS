@@ -33,10 +33,8 @@ import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { PageHeader } from "../components/layout/PageHeader";
+import { PageHeader } from "../components/forms/shared/PageHeader";
 import { Modal } from "../components/Modal";
-import { BackButton } from "../components/shared/BackButton";
-import { Breadcrumb } from "../components/shared/Breadcrumb";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -554,15 +552,13 @@ export function DriverDetailPage() {
 
   return (
     <div className="space-y-3">
-      <BackButton />
-      <Breadcrumb
-        items={[
+      <PageHeader
+        title={`${driver.first_name} ${driver.last_name}`}
+        backHref="/drivers"
+        breadcrumb={[
           { label: "Drivers", href: "/drivers" },
           { label: `${driver.first_name} ${driver.last_name}` },
         ]}
-      />
-      <PageHeader
-        title={`${driver.first_name} ${driver.last_name}`}
         subtitle={driver.status}
         actions={
           <div className="flex items-center gap-2">

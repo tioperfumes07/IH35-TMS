@@ -40,13 +40,11 @@ import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificatio
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
-import { BackButton } from "../components/shared/BackButton";
-import { Breadcrumb } from "../components/shared/Breadcrumb";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
-import { PageHeader } from "../components/layout/PageHeader";
+import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents"] as const;
@@ -607,15 +605,13 @@ export function CustomerDetailPage() {
 
   return (
     <div className="space-y-3">
-      <BackButton />
-      <Breadcrumb
-        items={[
+      <PageHeader
+        title={customer.name}
+        backHref="/customers"
+        breadcrumb={[
           { label: "Customers", href: "/customers" },
           { label: customer.name },
         ]}
-      />
-      <PageHeader
-        title={customer.name}
         subtitle={customer.customer_code ?? "No code"}
         actions={
           !editMode ? (
