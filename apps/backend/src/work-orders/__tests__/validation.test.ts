@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { validateCreateWorkOrder } from "../validation.service.js";
 
 describe("work order validation", () => {
@@ -58,6 +58,26 @@ describe("work order validation", () => {
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.errors.shop_name).toBeTruthy();
+  });
+
+  it("External with vendor_id satisfies rule 3", () => {
+    const result = validateCreateWorkOrder({
+      ...base,
+      wo_billing_type: "external",
+      vendor_id: "22222222-2222-4222-8222-222222222222",
+      shop_name: null,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("External rule 3 treats nonexistent UUID string as present (DB validation is separate)", () => {
+    const result = validateCreateWorkOrder({
+      ...base,
+      wo_billing_type: "external",
+      vendor_id: "aaaaaaaa-bbbb-4ccc-dddd-eeeeeeeeeeee",
+      shop_name: null,
+    });
+    expect(result.ok).toBe(true);
   });
 
   it("Allows legacy external vendor invoice fields to satisfy Rule 1", () => {
