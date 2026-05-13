@@ -86,8 +86,10 @@ import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.js";
 import { registerQboMasterWriteRoutes } from "./mdata/qbo-master-write.routes.js";
+import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.routes.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
+import { registerAccountingSettlementDisputesP6Routes } from "./accounting/disputes.routes.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
@@ -207,6 +209,7 @@ async function main() {
   await registerCustomerLanesRoutes(app);
   await registerCustomerDetailAliasRoutes(app);
   await registerMdataWorkflowRoutes(app);
+  await registerDriverTeamsAliasRoutes(app);
   await registerCatalogsRoutes(app);
   await registerDriverCatalogRoutes(app);
   await registerFuelCatalogRoutes(app);
@@ -269,6 +272,7 @@ async function main() {
   await registerForm425CRoutes(app);
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);
+  await registerAccountingSettlementDisputesP6Routes(app);
   await registerCompanyRoutes(app);
   await registerLegalTemplateRoutes(app);
   await registerLegalContractRoutes(app);

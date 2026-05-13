@@ -93,7 +93,7 @@ async function pickCorrectionAccounts(client: any, operatingCompanyId: string) {
   return { debitAccountId: res.rows[0].id, creditAccountId: res.rows[1].id };
 }
 
-async function createCorrectiveJournalEntry(params: {
+export async function createCorrectiveJournalEntry(params: {
   actorUserId: string;
   actorRole: string;
   operatingCompanyId: string;

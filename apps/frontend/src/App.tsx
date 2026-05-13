@@ -59,6 +59,7 @@ import { LoginPage } from "./pages/Login";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { SamsaraIntegrationPage } from "./pages/integrations/SamsaraIntegrationPage";
 import { DriverAppLandingPage } from "./pages/DriverAppLandingPage";
+import { DisputesPage } from "./pages/driver/DisputesPage";
 import { DocumentsPage } from "./pages/Documents";
 import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
@@ -68,6 +69,7 @@ import { Form425CHome } from "./pages/form425c/Form425CHome";
 import { ReportsHomePage } from "./pages/reports/ReportsHome";
 import { ReportsRunnerPage } from "./pages/reports/ReportsRunner";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
+import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
 import { InvoiceDetailPage } from "./pages/accounting/InvoiceDetailPage";
 import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
 import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
@@ -95,6 +97,7 @@ import { LoadTypesListPage } from "./pages/lists/dispatch/LoadTypesListPage";
 import { PickupTimeTypesListPage } from "./pages/lists/dispatch/PickupTimeTypesListPage";
 import { DriverDeductionTypesListPage } from "./pages/lists/driver/DriverDeductionTypesListPage";
 import { DriverPayTypesListPage } from "./pages/lists/driver/DriverPayTypesListPage";
+import { DriverTeamsPage } from "./pages/lists/driver/DriverTeamsPage";
 import { EscrowTypesListPage } from "./pages/lists/driver/EscrowTypesListPage";
 import { PayRateTemplatesListPage } from "./pages/lists/driver/PayRateTemplatesListPage";
 import { ConditionCodesListPage } from "./pages/lists/fleet/ConditionCodesListPage";
@@ -541,6 +544,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <PayRateTemplatesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/teams"
+          element={
+            <ProtectedRoute>
+              <DriverTeamsPage />
             </ProtectedRoute>
           }
         />
@@ -1073,6 +1084,14 @@ export default function App() {
           }
         />
         <Route
+          path="/accounting/dispute-queue"
+          element={
+            <ProtectedRoute>
+              <DisputeQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/invoices/:id"
           element={
             <ProtectedRoute>
@@ -1178,6 +1197,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DriverAppLandingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver/disputes"
+          element={
+            <ProtectedRoute>
+              <DisputesPage />
             </ProtectedRoute>
           }
         />
