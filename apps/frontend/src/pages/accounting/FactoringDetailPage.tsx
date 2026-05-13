@@ -17,6 +17,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { AccountingSubNav } from "./AccountingSubNav";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -109,6 +110,7 @@ export function FactoringDetailPage() {
 
   return (
     <div className="space-y-3">
+      <AccountingSubNav />
       <BackButton />
       <PageHeader
         title={detail.display_id}

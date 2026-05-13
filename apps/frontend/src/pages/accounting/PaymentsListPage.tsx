@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
+import { AccountingSubNav } from "./AccountingSubNav";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -90,6 +91,7 @@ export function PaymentsListPage() {
 
   return (
     <div className="space-y-3">
+      <AccountingSubNav />
       <PageHeader
         title="Payments"
         subtitle="Customer payment recording and application"

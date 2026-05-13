@@ -10,6 +10,7 @@ import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { Modal } from "../../components/Modal";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { AccountingSubNav } from "./AccountingSubNav";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -98,6 +99,7 @@ export function PaymentDetailPage() {
 
   return (
     <div className="space-y-3">
+      <AccountingSubNav />
       <BackButton label="Payments" />
       <Breadcrumb
         items={[

@@ -7,6 +7,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SubmitFactoringModal } from "./SubmitFactoringModal";
+import { AccountingSubNav } from "./AccountingSubNav";
 
 const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
   { value: "all", label: "All" },
@@ -58,6 +59,7 @@ export function FactoringListPage() {
 
   return (
     <div className="space-y-3">
+      <AccountingSubNav />
       <PageHeader title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>} />
 
       <DataPanel title="Filters">
