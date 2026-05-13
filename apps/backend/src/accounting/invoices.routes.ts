@@ -60,7 +60,7 @@ const voidBodySchema = z.object({
   reason: z.string().trim().min(3).max(500).optional(),
 });
 
-async function enrichInvoice(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, invoiceId: string) {
+export async function enrichInvoice(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, invoiceId: string) {
   const invoiceRes = await client.query(
     `
       SELECT

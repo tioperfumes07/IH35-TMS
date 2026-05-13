@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { registerInvoiceRoutes } from "./invoices.routes.js";
+import { registerAccountingInvoiceHtmlRoutes } from "./invoice-render.routes.js";
 import { registerInvoiceLineRoutes } from "./invoice-lines.routes.js";
 import { registerPaymentsRoutes } from "./payments.routes.js";
 import { registerPaymentApplicationsRoutes } from "./payment-applications.routes.js";
@@ -10,6 +11,7 @@ import { registerExpenseLoadLookupRoutes } from "./load-lookup.routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
+  await registerAccountingInvoiceHtmlRoutes(app);
   await registerInvoiceLineRoutes(app);
   await registerPaymentsRoutes(app);
   await registerPaymentApplicationsRoutes(app);

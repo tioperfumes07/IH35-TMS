@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { updateLoad, useCancelLoad, useLoad, useLoadAudit } from "../../api/loads";
 import { createInvoiceFromLoad } from "../../api/accounting";
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory } from "../../api/dispatch";
+import { resolveApiUrl } from "../../api/client";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
 import { DocumentsTab } from "../documents/DocumentsTab";
@@ -98,6 +99,29 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                   <Field label="Rate" value={formatMoneyCents(load.rate_total_cents, load.currency_code)} />
                   <Field label="Created" value={new Date(load.created_at).toLocaleString()} />
                 </div>
+
+                {load.operating_company_id ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        window.open(
+                          resolveApiUrl(
+                            `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/dispatch-sheet.html?operating_company_id=${encodeURIComponent(
+                              load.operating_company_id
+                            )}`
+                          ),
+                          "_blank",
+                          "noopener,noreferrer"
+                        )
+                      }
+                    >
+                      View dispatch sheet
+                    </Button>
+                  </div>
+                ) : null}
 
                 {editing ? (
                   <div className="space-y-2 rounded border border-gray-200 p-3">

@@ -30,6 +30,10 @@ function buildUrl(path: string): string {
   return `http://localhost${path}`;
 }
 
+export function resolveApiUrl(path: string): string {
+  return buildUrl(path);
+}
+
 export async function apiRequestFormData<T>(path: string, formData: FormData, method: "POST" | "PATCH" = "POST"): Promise<T> {
   const response = await fetch(buildUrl(path), {
     method,

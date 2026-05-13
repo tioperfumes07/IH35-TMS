@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice } from "../../api/accounting";
+import { resolveApiUrl } from "../../api/client";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -122,6 +123,20 @@ export function InvoiceDetailPage() {
             ) : null}
             <Button variant="secondary" onClick={() => window.print()}>
               Print
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                window.open(
+                  resolveApiUrl(
+                    `/api/v1/accounting/invoices/${encodeURIComponent(id)}.html?operating_company_id=${encodeURIComponent(selectedCompanyId!)}`
+                  ),
+                  "_blank",
+                  "noopener,noreferrer"
+                )
+              }
+            >
+              View invoice PDF
             </Button>
             <Button
               onClick={() => sendMutation.mutate()}
