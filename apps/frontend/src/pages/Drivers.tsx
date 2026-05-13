@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../api/catalogs";
@@ -33,7 +33,9 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { FieldError, fieldErrorClassname } from "../components/forms/FieldError";
 import { FormErrorBanner } from "../components/forms/FormErrorBanner";
+import { SaveDropdown } from "../components/forms/SaveDropdown";
 import { useFormValidation } from "../components/forms/useFormValidation";
+import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors } from "../design/tokens";
 
@@ -107,6 +109,50 @@ const createDriverSchema = z.object({
   status: z.enum(["Probation", "Active", "Inactive", "Terminated", "OnLeave"]).default("Probation"),
 });
 
+const DRIVER_CREATE_FORM_INITIAL: Record<string, string> = {
+  operating_company_id: "",
+  first_name: "",
+  last_name: "",
+  phone_input: "",
+  country_code: "+1",
+  email: "",
+  cdl_number: "",
+  cdl_state: "",
+  cdl_class: "A",
+  cdl_expires_at: "",
+  hire_date: "",
+  pay_basis: "short_miles",
+  dot_medical_expires_at: "",
+  visa_type: "",
+  visa_number: "",
+  visa_expires_at: "",
+  passport_number: "",
+  passport_expires_at: "",
+  ine_number: "",
+  curp: "",
+  mx_address_line1: "",
+  mx_address_line2: "",
+  mx_city: "",
+  mx_state: "",
+  mx_postal_code: "",
+  emergency_contact_name: "",
+  emergency_contact_relationship: "",
+  emergency_contact_phone_primary: "",
+  emergency_contact_phone_alternate: "",
+  emergency_contact_address: "",
+  emergency_contact_notes: "",
+  status: "Probation",
+};
+
+type DriverCreateModalSnapshot = {
+  form: Record<string, string>;
+  showMexicanIdentity: boolean;
+  showVisaEmergency: boolean;
+  overrideReturningWarning: boolean;
+  rehireAction: "rehire" | "new";
+  selectedPriorDriverId: string | null;
+};
+
 function formatDate(value: string | null) {
   if (!value) return "—";
   const date = new Date(value);
@@ -157,40 +203,24 @@ export function DriversPage() {
     invite_url: string;
     linked_user_event_type: "existing_user" | "new_user_created";
   } | null>(null);
-  const [form, setForm] = useState<Record<string, string>>({
-    operating_company_id: "",
-    first_name: "",
-    last_name: "",
-    phone_input: "",
-    country_code: "+1",
-    email: "",
-    cdl_number: "",
-    cdl_state: "",
-    cdl_class: "A",
-    cdl_expires_at: "",
-    hire_date: "",
-    pay_basis: "short_miles",
-    dot_medical_expires_at: "",
-    visa_type: "",
-    visa_number: "",
-    visa_expires_at: "",
-    passport_number: "",
-    passport_expires_at: "",
-    ine_number: "",
-    curp: "",
-    mx_address_line1: "",
-    mx_address_line2: "",
-    mx_city: "",
-    mx_state: "",
-    mx_postal_code: "",
-    emergency_contact_name: "",
-    emergency_contact_relationship: "",
-    emergency_contact_phone_primary: "",
-    emergency_contact_phone_alternate: "",
-    emergency_contact_address: "",
-    emergency_contact_notes: "",
-    status: "Probation",
-  });
+  const [form, setForm] = useState<Record<string, string>>(() => ({ ...DRIVER_CREATE_FORM_INITIAL }));
+
+  const driverCreateAttemptCloseRef = useRef<(() => void) | null>(null);
+  const saveModeRef = useRef<"default" | "add_another">("default");
+  const [driverCreateBaseline, setDriverCreateBaseline] = useState<DriverCreateModalSnapshot | null>(null);
+
+  const driverCreateSnapshot = useMemo(
+    (): DriverCreateModalSnapshot => ({
+      form: { ...form },
+      showMexicanIdentity,
+      showVisaEmergency,
+      overrideReturningWarning,
+      rehireAction,
+      selectedPriorDriverId,
+    }),
+    [form, showMexicanIdentity, showVisaEmergency, overrideReturningWarning, rehireAction, selectedPriorDriverId]
+  );
+  const { isDirty: isDriverCreateDirty } = useUnsavedChanges(driverCreateSnapshot, driverCreateBaseline ?? driverCreateSnapshot);
 
   useEffect(() => {
     if (!addOpen) return;
@@ -253,6 +283,18 @@ export function DriversPage() {
     if (!defaultCompany) return;
     setForm((current) => ({ ...current, operating_company_id: defaultCompany.id }));
   }, [addOpen, companiesQuery.data, form.operating_company_id]);
+
+  useEffect(() => {
+    if (!addOpen || driverCreateBaseline !== null) return;
+    const hasCompanies = (companiesQuery.data?.length ?? 0) > 0;
+    if (hasCompanies && !form.operating_company_id) return;
+    setDriverCreateBaseline(driverCreateSnapshot);
+  }, [addOpen, driverCreateBaseline, form.operating_company_id, companiesQuery.data, driverCreateSnapshot]);
+
+  useEffect(() => {
+    if (addOpen) return;
+    setDriverCreateBaseline(null);
+  }, [addOpen]);
 
   const terminatedMatches = useMemo(() => {
     const deduped = new Map<
@@ -367,6 +409,18 @@ export function DriversPage() {
     mutationFn: createDriver,
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      if (saveModeRef.current === "add_another") {
+        pushToast("Driver created and invite sent", "success");
+        setForm({ ...DRIVER_CREATE_FORM_INITIAL });
+        setShowMexicanIdentity(false);
+        setShowVisaEmergency(false);
+        setReturningDetection(null);
+        setOverrideReturningWarning(false);
+        setRehireAction("rehire");
+        setSelectedPriorDriverId(null);
+        setDriverCreateBaseline(null);
+        return;
+      }
       setAddOpen(false);
       setCreateSummary({
         driver_id: created.id,
@@ -375,40 +429,7 @@ export function DriversPage() {
         linked_user_event_type: created.linked_user_event_type,
       });
       pushToast("Driver created and invite sent", "success");
-      setForm({
-        operating_company_id: "",
-        first_name: "",
-        last_name: "",
-        phone_input: "",
-        country_code: "+1",
-        email: "",
-        cdl_number: "",
-        cdl_state: "",
-        cdl_class: "A",
-        cdl_expires_at: "",
-        hire_date: "",
-        pay_basis: "short_miles",
-        dot_medical_expires_at: "",
-        visa_type: "",
-        visa_number: "",
-        visa_expires_at: "",
-        passport_number: "",
-        passport_expires_at: "",
-        ine_number: "",
-        curp: "",
-        mx_address_line1: "",
-        mx_address_line2: "",
-        mx_city: "",
-        mx_state: "",
-        mx_postal_code: "",
-        emergency_contact_name: "",
-        emergency_contact_relationship: "",
-        emergency_contact_phone_primary: "",
-        emergency_contact_phone_alternate: "",
-        emergency_contact_address: "",
-        emergency_contact_notes: "",
-        status: "Probation",
-      });
+      setForm({ ...DRIVER_CREATE_FORM_INITIAL });
       setShowMexicanIdentity(false);
       setShowVisaEmergency(false);
       setReturningDetection(null);
@@ -495,6 +516,26 @@ export function DriversPage() {
     },
   });
 
+  const runDriverCreateSave = useCallback(
+    (mode: "default" | "add_another") => {
+      saveModeRef.current = mode;
+      void submitDriverCreate(form as z.infer<typeof createDriverSchema>);
+    },
+    [form, submitDriverCreate]
+  );
+
+  const openDriverCreate = useCallback(() => {
+    setForm({ ...DRIVER_CREATE_FORM_INITIAL });
+    setShowMexicanIdentity(false);
+    setShowVisaEmergency(false);
+    setReturningDetection(null);
+    setOverrideReturningWarning(false);
+    setRehireAction("rehire");
+    setSelectedPriorDriverId(null);
+    setDriverCreateBaseline(null);
+    setAddOpen(true);
+  }, []);
+
   useEffect(() => {
     if (!addOpen) return;
     resetDriverCreateErrors();
@@ -532,7 +573,7 @@ export function DriversPage() {
       <PageHeader
         title="Drivers"
         subtitle={`${driversRowsFiltered.length} records`}
-        actions={<ActionButton onClick={() => setAddOpen(true)}>+ Create Driver</ActionButton>}
+        actions={<ActionButton onClick={openDriverCreate}>+ Create Driver</ActionButton>}
       />
 
       <KpiStrip>
@@ -925,12 +966,20 @@ export function DriversPage() {
         )}
       </Modal>
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Driver">
+      <Modal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Create Driver"
+        confirmDiscardOnClose
+        isDirty={isDriverCreateDirty}
+        onRegisterAttemptClose={(fn) => {
+          driverCreateAttemptCloseRef.current = fn;
+        }}
+      >
         <form
           className="grid grid-cols-1 gap-3 md:grid-cols-2"
           onSubmit={(event) => {
             event.preventDefault();
-            void submitDriverCreate(form as z.infer<typeof createDriverSchema>);
           }}
         >
           <div className="col-span-full">
@@ -1273,21 +1322,25 @@ export function DriversPage() {
           ) : null}
 
           <div className="col-span-full flex justify-end gap-2">
-            <Button variant="secondary" type="button" onClick={() => setAddOpen(false)}>
+            <Button variant="secondary" type="button" onClick={() => driverCreateAttemptCloseRef.current?.()}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              loading={createMutation.isPending}
+            <SaveDropdown
+              storageKey="driver-create"
+              primaryLabel="Save"
               disabled={
                 !form.operating_company_id ||
                 (returningDetection?.returning_driver && !overrideReturningWarning) ||
-                (overrideReturningWarning && rehireAction === "rehire" && terminatedMatches.length > 0 && !selectedPriorDriverId) ||
+                (overrideReturningWarning &&
+                  rehireAction === "rehire" &&
+                  terminatedMatches.length > 0 &&
+                  !selectedPriorDriverId) ||
                 returningCheckLoading
               }
-            >
-              {createMutation.isPending ? "Creating driver and sending invite..." : "Save"}
-            </Button>
+              loading={createMutation.isPending}
+              onSave={() => void runDriverCreateSave("default")}
+              onSaveAndAddAnother={() => void runDriverCreateSave("add_another")}
+            />
           </div>
         </form>
       </Modal>

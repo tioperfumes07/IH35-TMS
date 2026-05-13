@@ -14,6 +14,7 @@ import {
   Scale,
   SquareStack,
   Truck,
+  UserCog,
   Users,
 } from "lucide-react";
 import { type ComponentType, useState } from "react";
@@ -54,13 +55,22 @@ const ITEMS: SidebarItem[] = [
   { key: "LEGAL", label: "LEGAL", Icon: Scale, to: "/legal", visibleRoles: ["Owner", "Administrator"] },
   { key: "425C", label: "425C", Icon: SquareStack, to: "/425c" },
   { key: "DRV_APP", label: "DRV APP", Icon: Activity, to: "/driver-app" },
+  {
+    key: "USR_MGMT",
+    label: "USERS",
+    Icon: UserCog,
+    to: "/users",
+    visibleRoles: ["Owner", "Administrator"],
+  },
 ];
 
 type SidebarProps = {
   role: UserRole;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 };
 
-export function Sidebar({ role }: SidebarProps) {
+export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProps) {
   const location = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   const [hoverKey, setHoverKey] = useState<string | null>(null);
@@ -117,10 +127,21 @@ export function Sidebar({ role }: SidebarProps) {
   };
 
   return (
-    <aside
-      className="shrink-0 text-white"
-      style={{ width: 80, background: "rgb(27, 35, 51)", borderRight: "1px solid rgb(42, 50, 66)" }}
-    >
+    <>
+      {mobileOpen ? (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-40 bg-black/45 md:hidden"
+          onMouseDown={() => onMobileClose?.()}
+        />
+      ) : null}
+      <aside
+        className={`z-50 shrink-0 flex-col text-white md:z-auto md:flex ${
+          mobileOpen ? "fixed inset-y-0 left-0 flex w-20 md:relative md:inset-auto" : "hidden md:flex"
+        }`}
+        style={{ background: "rgb(27, 35, 51)", borderRight: "1px solid rgb(42, 50, 66)" }}
+      >
       <div className="flex h-full flex-col items-center gap-1 py-2">
         {visibleItems.map(({ key, label, Icon, to }) => {
           const forceReportsActive = key === "REPORTS" && location.pathname.startsWith("/reports/");
@@ -129,6 +150,7 @@ export function Sidebar({ role }: SidebarProps) {
             <div key={key} className="relative w-full" onMouseEnter={() => setHoverKey(key)} onMouseLeave={() => setHoverKey((current) => (current === key ? null : current))}>
               <NavLink
                 to={to}
+                onClick={() => onMobileClose?.()}
                 className={({ isActive }) =>
                   `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceReportsActive ? "bg-white/10" : ""}`
                 }
@@ -165,5 +187,6 @@ export function Sidebar({ role }: SidebarProps) {
         })}
       </div>
     </aside>
+    </>
   );
 }
