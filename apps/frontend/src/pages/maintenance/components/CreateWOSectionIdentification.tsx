@@ -1,5 +1,6 @@
-import type { UseFormRegister, UseFormWatch } from "react-hook-form";
+import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
+import { QboCombobox } from "../../../components/forms/QboCombobox";
 
 type Props = {
   register: UseFormRegister<CreateWOFormValues>;
@@ -7,6 +8,9 @@ type Props = {
   requireLoadForExpense?: boolean;
   suggestedLoad?: { load_number: string; confidence: "exact" | "fuzzy" | "none" } | null;
   backendLoadError?: string | null;
+  operatingCompanyId?: string;
+  setValue?: UseFormSetValue<CreateWOFormValues>;
+  getValues?: UseFormGetValues<CreateWOFormValues>;
 };
 
 function Field({ label, children }: { label: string; children: JSX.Element }) {
@@ -24,6 +28,9 @@ export function CreateWOSectionIdentification({
   requireLoadForExpense = false,
   suggestedLoad = null,
   backendLoadError = null,
+  operatingCompanyId,
+  setValue,
+  getValues,
 }: Props) {
   const type = watch("wo_type");
   const sourceType = watch("source_type");
@@ -89,6 +96,25 @@ export function CreateWOSectionIdentification({
           <input {...register("vendor_invoice_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
       </div>
+      {operatingCompanyId && setValue && getValues ? (
+        <div className="mt-2">
+          <Field label="QBO vendor lookup (appends to Description)">
+            <QboCombobox
+              entityType="vendor"
+              operatingCompanyId={operatingCompanyId}
+              value={null}
+              displayValue=""
+              allowFreeText={false}
+              onChange={(qboId, displayName) => {
+                if (!qboId) return;
+                const prev = String(getValues("description") ?? "");
+                const line = `QBO vendor: ${displayName} (${qboId})`;
+                setValue("description", prev ? `${prev}\n${line}` : line, { shouldDirty: true });
+              }}
+            />
+          </Field>
+        </div>
+      ) : null}
       {bucket === "roadside" ? (
         <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
           <Field label="Roadside Callout At *">

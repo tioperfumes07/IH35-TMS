@@ -1,4 +1,5 @@
-import type { UseFormRegister } from "react-hook-form";
+import type { UseFormGetValues, UseFormRegister, UseFormSetValue } from "react-hook-form";
+import { QboCombobox } from "../../../components/forms/QboCombobox";
 
 export type BookLoadFormValues = {
   customer_id: string;
@@ -16,9 +17,12 @@ export type BookLoadFormValues = {
 
 type Props = {
   register: UseFormRegister<BookLoadFormValues>;
+  operatingCompanyId?: string;
+  setValue?: UseFormSetValue<BookLoadFormValues>;
+  getValues?: UseFormGetValues<BookLoadFormValues>;
 };
 
-export function BookLoadCustomerSection({ register }: Props) {
+export function BookLoadCustomerSection({ register, operatingCompanyId, setValue, getValues }: Props) {
   const dollarsToCents = (value: unknown) => {
     if (value === null || value === undefined || value === "") return 0;
     const numeric = Number(value);
@@ -33,6 +37,26 @@ export function BookLoadCustomerSection({ register }: Props) {
         <Field label="Customer ID" input={<input {...register("customer_id", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <Field label="Customer WO# / PU#" input={<input {...register("customer_wo_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <Field label="Customer PO#" input={<input {...register("customer_po_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
+        {operatingCompanyId && setValue && getValues ? (
+          <div className="md:col-span-2">
+            <label className="text-[11px] font-semibold text-gray-600">QBO customer lookup (appends to Special notes)</label>
+            <div className="mt-1">
+              <QboCombobox
+                entityType="customer"
+                operatingCompanyId={operatingCompanyId}
+                value={null}
+                displayValue=""
+                allowFreeText={false}
+                onChange={(qboId, displayName) => {
+                  if (!qboId) return;
+                  const prev = String(getValues("notes") ?? "");
+                  const line = `QBO customer: ${displayName} (${qboId})`;
+                  setValue("notes", prev ? `${prev}\n${line}` : line, { shouldDirty: true });
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
         <Field label="Commodity" input={<input {...register("commodity")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <Field label="Weight (lbs)" input={<input type="number" {...register("weight_lbs", { valueAsNumber: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
         <label className="flex items-center gap-2 text-[11px] font-semibold text-gray-700">

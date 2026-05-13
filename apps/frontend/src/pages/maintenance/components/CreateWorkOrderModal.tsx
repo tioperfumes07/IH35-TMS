@@ -294,6 +294,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
         <CreateWOSectionIdentification
           register={form.register}
           watch={form.watch}
+          operatingCompanyId={operatingCompanyId}
+          setValue={form.setValue}
+          getValues={form.getValues}
           requireLoadForExpense={requiresLoadForG18}
           suggestedLoad={
             suggestionQuery.data?.data

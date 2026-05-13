@@ -11,6 +11,8 @@ import { FieldError, fieldErrorClassname } from "../../../components/forms/Field
 import { FormErrorBanner } from "../../../components/forms/FormErrorBanner";
 import { useFormValidation } from "../../../components/forms/useFormValidation";
 
+import { QboCombobox } from "../../../components/forms/QboCombobox";
+
 const invoiceModalSchema = z.object({
   customer_id: z.string().min(1, "Customer is required").uuid("Customer is required"),
   issue_date: z.string(),
@@ -119,6 +121,21 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
               error={invoiceFieldErrors.customer_id}
             />
             <FieldError id="customer_id" message={invoiceFieldErrors.customer_id} />
+          </div>
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-xs font-semibold text-slate-600">QBO customer reference (appends to Notes)</label>
+            <QboCombobox
+              entityType="customer"
+              operatingCompanyId={operatingCompanyId}
+              value={null}
+              displayValue=""
+              allowFreeText={false}
+              onChange={(qboId, displayName) => {
+                if (!qboId) return;
+                const line = `QBO customer: ${displayName} (${qboId})`;
+                setNotes((prev) => (prev ? `${prev}\n${line}` : line));
+              }}
+            />
           </div>
           <label className="text-xs font-semibold text-slate-600">
             Issue date
