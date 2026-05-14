@@ -173,12 +173,10 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
               <span style={{ color: muted }}>·</span>
               <button
                 type="button"
-                className={`inline-flex items-center gap-1 ${qboSyncPill.status === "error" ? "cursor-pointer underline-offset-2 hover:underline" : ""}`}
+                className="inline-flex cursor-pointer items-center gap-1 underline-offset-2 hover:underline"
                 style={{ color: active }}
-                title={qboSyncPill.status === "error" ? "Open QBO sync queue" : undefined}
-                onClick={() => {
-                  if (qboSyncPill.status === "error") navigate("/banking/qbo-sync-queue");
-                }}
+                title="Open QBO sync dashboard"
+                onClick={() => navigate("/qbo/sync-dashboard")}
               >
                 <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboSyncPill.dot)}`} />
                 {qboSyncPill.label}

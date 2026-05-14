@@ -81,6 +81,10 @@ import { CashFlowOverviewPage } from "./pages/reports/CashFlowOverviewPage";
 import { SettlementSummaryPage } from "./pages/reports/SettlementSummaryPage";
 import { CustomerProfitabilityPage } from "./pages/reports/CustomerProfitabilityPage";
 import { ProfitPerTruckPage } from "./pages/reports/ProfitPerTruckPage";
+import { FuelReconciliationPage } from "./pages/reports/FuelReconciliationPage";
+import { MaintenanceCostPerUnitPage } from "./pages/reports/MaintenanceCostPerUnitPage";
+import { ScheduledReportsPage } from "./pages/reports/ScheduledReportsPage";
+import { QBOSyncStatusDashboardPage } from "./pages/qbo/QBOSyncStatusDashboardPage";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
 import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
 import { AbandonmentQueuePage } from "./pages/accounting/AbandonmentQueuePage";
@@ -1065,6 +1069,38 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ProfitPerTruckPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/qbo/sync-dashboard"
+          element={
+            <ProtectedRoute>
+              <QBOSyncStatusDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/fuel-reconciliation"
+          element={
+            <ProtectedRoute>
+              <FuelReconciliationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/maintenance-cost-per-unit"
+          element={
+            <ProtectedRoute>
+              <MaintenanceCostPerUnitPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/scheduled"
+          element={
+            <ProtectedRoute>
+              <ScheduledReportsPage />
             </ProtectedRoute>
           }
         />

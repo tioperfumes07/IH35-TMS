@@ -8,11 +8,35 @@ import { ScheduledReportsPanel } from "../../components/reports/ScheduledReports
 import { IftaPreparerCard } from "../../components/reports/IftaPreparerCard";
 import { CustomReportBuilderCard } from "../../components/reports/CustomReportBuilderCard";
 import { getFrequentlyRun, getIftaStatus, getKpiSummary, getScheduledReports, type FrequentlyRunReport, type ReportCategory } from "../../api/reports";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { useNavigate } from "react-router-dom";
 import { ReportsSubNav } from "./ReportsSubNav";
+
+const BLOCK_W_FREQUENT_ROWS: FrequentlyRunReport[] = [
+  {
+    id: "fuel-reconciliation",
+    name: "Fuel reconciliation",
+    filters: "Last 30d · card vs WO",
+    runs: 0,
+    status: "real",
+  },
+  {
+    id: "maintenance-cost-per-unit",
+    name: "Maintenance cost per unit",
+    filters: "Current quarter",
+    runs: 0,
+    status: "real",
+  },
+  {
+    id: "scheduled-reports",
+    name: "Scheduled reports",
+    filters: "Automation · email queue",
+    runs: 0,
+    status: "real",
+  },
+];
 
 type ReportsKpi = {
   label: string;
@@ -47,6 +71,13 @@ export function ReportsHomePage() {
     queryFn: () => getKpiSummary(companyId),
     enabled: Boolean(companyId),
   });
+
+  const frequentRows = useMemo(() => {
+    const apiRows = frequentQuery.data ?? [];
+    const seen = new Set(apiRows.map((r) => r.id));
+    const extra = BLOCK_W_FREQUENT_ROWS.filter((r) => !seen.has(r.id));
+    return [...apiRows, ...extra];
+  }, [frequentQuery.data]);
 
   const quarter = kpiQuery.data?.ifta_status.quarter ?? "Q2";
   const dueAt = kpiQuery.data?.ifta_status.dueAt ?? "TBD";
@@ -90,7 +121,9 @@ export function ReportsHomePage() {
         actions={
           <div className="flex items-center gap-2">
             <Button>+ Custom report</Button>
-            <Button variant="secondary">Schedule</Button>
+            <Button variant="secondary" onClick={() => navigate("/reports/scheduled")}>
+              Schedule
+            </Button>
           </div>
         }
       />
@@ -121,6 +154,9 @@ export function ReportsHomePage() {
                   ["settlement-summary", "Settlement summary"],
                   ["customer-profitability", "Customer profitability"],
                   ["profit-per-truck", "Profit per truck"],
+                  ["fuel-reconciliation", "Fuel reconciliation"],
+                  ["maintenance-cost-per-unit", "Maintenance cost per unit"],
+                  ["scheduled-reports", "Scheduled reports"],
                 ] as const
               ).map(([id, label]) => (
                 <button
@@ -134,7 +170,7 @@ export function ReportsHomePage() {
               ))}
             </div>
           </section>
-          <FrequentlyRunTable rows={frequentQuery.data ?? []} onRun={handleRunReport} />
+          <FrequentlyRunTable rows={frequentRows} onRun={handleRunReport} />
         </div>
         <ScheduledReportsPanel rows={scheduledQuery.data ?? []} />
       </div>
