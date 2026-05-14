@@ -1,0 +1,5 @@
+company_code,plaid_account_id,institution_name,account_name,account_type,account_mask,current_balance_cents,available_balance_cents,currency_code,plaid_item_id,sync_status
+TRK,plaid-acc-trk-checking-001,P6 Seed Bank TRK,Operating Checking,checking,1001,25488342,25100000,USD,plaid-item-trk-001,active
+TRK,plaid-acc-trk-savings-002,P6 Seed Bank TRK,Reserve Savings,savings,2002,908821100,908821100,USD,plaid-item-trk-001,active
+TRANSP,plaid-acc-transp-main-001,P6 Seed Bank TRANSP,Primary Operating,checking,3003,18293455,18001122,USD,plaid-item-transp-001,active
+TRANSP,plaid-acc-transp-payroll-002,P6 Seed Bank TRANSP,Payroll Outbound,checking,4004,6220450,6100000,USD,plaid-item-transp-001,pending
