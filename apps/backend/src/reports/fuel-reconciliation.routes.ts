@@ -104,8 +104,8 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
           WHERE bt.operating_company_id = $1
             AND l.soft_deleted_at IS NULL
             AND l.assigned_unit_id IS NOT NULL
+            AND l.operating_company_id = $1
             AND ${btFuel}
-            AND u.operating_company_id = $1
             AND u.deactivated_at IS NULL
           GROUP BY u.id, u.unit_number
         `,
