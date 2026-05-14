@@ -18,6 +18,7 @@ import type { LiveReservation } from "./book-load-v4/LiveLoadIdBar";
 import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
+import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
 
 type FormValues = BookLoadFormValues & {
   trailer_type: string;
@@ -522,6 +523,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                 <OcrDropZone
                   operatingCompanyId={operatingCompanyId}
                   onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })}
+                />
+                <LoadTemplatePicker
+                  operatingCompanyId={operatingCompanyId}
+                  onSelectTemplate={(row) => {
+                    applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, row.template_json as Record<string, unknown>);
+                    pushToast("Template applied", "success");
+                  }}
                 />
                 <BookLoadCustomerSection
                   register={form.register}

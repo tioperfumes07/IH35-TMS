@@ -4,11 +4,12 @@ import type { DataTableErrorState } from "../../lib/tableError";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents } from "./constants";
+import { InTransitEtaChip } from "./InTransitEtaChip";
 
 type SortField = "created_at" | "load_number" | "status" | "rate_total_cents";
 type SortDirection = "asc" | "desc";
 
-type Props = {
+export type DispatchListProps = {
   loads: DispatchLoadRow[];
   totalCount: number;
   limit: number;
@@ -21,6 +22,8 @@ type Props = {
   onRowClick: (loadId: string) => void;
   onExportCsv: () => void;
   listError?: DataTableErrorState;
+  /** P6-T11191: poll backend ETA for in_transit rows */
+  showEtaColumn?: boolean;
 };
 
 function statusVariant(status: DispatchLoadRow["status"]) {
@@ -44,7 +47,8 @@ export function DispatchList({
   onRowClick,
   onExportCsv,
   listError,
-}: Props) {
+  showEtaColumn = false,
+}: DispatchListProps) {
   const from = totalCount === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, totalCount);
   const hasPrev = offset > 0;
@@ -104,6 +108,7 @@ export function DispatchList({
                 ["unit", "Unit"],
                 ["driver", "Driver"],
                 ["status", "Status"],
+                ...(showEtaColumn ? [["eta", "ETA"] as const] : []),
                 ["rate_total_cents", "Rate"],
                 ["created_at", "Created"],
               ].map(([key, label]) => (
@@ -124,7 +129,7 @@ export function DispatchList({
             {loading
               ? Array.from({ length: Math.max(4, limit / 10) }).map((_, idx) => (
                   <tr key={idx} className="border-b border-gray-100">
-                    <td colSpan={10} className="px-3 py-3 text-gray-400">
+                    <td colSpan={showEtaColumn ? 11 : 10} className="px-3 py-3 text-gray-400">
                       Loading loads...
                     </td>
                   </tr>
@@ -155,6 +160,15 @@ export function DispatchList({
                         {STATUS_LABEL[load.status]}
                       </span>
                     </td>
+                    {showEtaColumn ? (
+                      <td className="px-3 py-2 align-middle">
+                        {load.status === "in_transit" ? (
+                          <InTransitEtaChip loadId={load.id} operatingCompanyId={load.operating_company_id} />
+                        ) : (
+                          <span className="text-[11px] text-gray-300">—</span>
+                        )}
+                      </td>
+                    ) : null}
                     <td className="px-3 py-2">{formatMoneyCents(load.rate_total_cents, load.currency_code)}</td>
                     <td className="px-3 py-2">{new Date(load.created_at).toLocaleDateString()}</td>
                   </tr>
@@ -191,6 +205,11 @@ export function DispatchList({
                 </span>
                 <span>{formatMoneyCents(load.rate_total_cents, load.currency_code)}</span>
               </div>
+              {showEtaColumn && load.status === "in_transit" ? (
+                <div className="mt-2">
+                  <InTransitEtaChip loadId={load.id} operatingCompanyId={load.operating_company_id} />
+                </div>
+              ) : null}
             </button>
           ))}
       </div>

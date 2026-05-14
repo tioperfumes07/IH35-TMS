@@ -37,6 +37,7 @@ import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerDispatchSheetHtmlRoutes } from "./dispatch/dispatch-sheet.routes.js";
 import { registerDispatchQuicksaveRoutes } from "./dispatch/quicksave.routes.js";
 import { registerDispatchCancellationRoutes } from "./dispatch/cancellation.routes.js";
+import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinements.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
@@ -233,6 +234,7 @@ async function main() {
   await registerDispatchSheetHtmlRoutes(app);
   await registerDispatchQuicksaveRoutes(app);
   await registerDispatchCancellationRoutes(app);
+  await registerDispatchRefinementsRoutes(app);
   await registerIntransitIssuesRoutes(app);
   await registerDriverRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);

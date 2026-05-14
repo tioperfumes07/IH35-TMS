@@ -9,7 +9,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { DispatchKanban } from "../components/dispatch/DispatchKanban";
-import { DispatchList } from "../components/dispatch/DispatchList";
+import { DispatchBoard } from "./dispatch/DispatchBoard";
 import { FilterBar, type DispatchFilterState } from "../components/dispatch/FilterBar";
 import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
 import { BookLoadModal } from "./dispatch/components/BookLoadModal";
@@ -196,7 +196,7 @@ export function DispatchPage() {
         }
       />
       {view === "list" ? (
-        <DispatchList
+        <DispatchBoard
           loads={loads}
           totalCount={totalCount}
           loading={loadsQuery.isLoading}
