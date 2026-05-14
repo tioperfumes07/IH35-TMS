@@ -4,6 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueEmail } from "../email/queue.service.js";
+import { dispatchNotification } from "../notifications/dispatcher.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { queuePaymentOnFinalize } from "./settlement-payment.service.js";
 import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
@@ -394,7 +395,9 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.net_pay,
             d.email,
             d.first_name,
-            d.last_name
+            d.last_name,
+            d.identity_user_id,
+            d.phone
           FROM driver_finance.driver_settlements s
           JOIN mdata.drivers d ON d.id = s.driver_id
           WHERE s.id = $1
@@ -403,8 +406,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         [params.data.id]
       );
       const row = rowRes.rows[0] as Record<string, unknown> | undefined;
-      const email = row?.email ? String(row.email).trim() : "";
-      if (!email || !row?.operating_company_id) return;
+      if (!row?.operating_company_id) return;
 
       const driverName =
         `${String(row.first_name ?? "").trim()} ${String(row.last_name ?? "").trim()}`.trim() || "Driver";
@@ -412,9 +414,40 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         row.period_end ?? ""
       ).slice(0, 10)})`;
       const amountLabel = row.net_pay != null ? `USD ${Number(row.net_pay).toFixed(2)}` : "";
+      const settlementNo = String(row.display_id ?? row.id);
+      const net = row.net_pay != null ? Number(row.net_pay).toFixed(2) : "";
+      const oc = String(row.operating_company_id);
+      const baseUrl = process.env.FRONTEND_BASE_URL?.replace(/\/$/, "") ?? "";
+      const driverLink = baseUrl ? `${baseUrl}/driver` : "";
+
+      const identityUserId = row.identity_user_id ? String(row.identity_user_id) : "";
+      const phone = row.phone ? String(row.phone).trim() : "";
+
+      if (identityUserId) {
+        await dispatchNotification({
+          user_id: identityUserId,
+          event_type: "settlement_ready",
+          actor_user_id: user.uuid,
+          payload: {
+            operating_company_id: oc,
+            driverName,
+            settlementLabel,
+            amountLabel,
+            settlement_no: settlementNo,
+            net,
+            link: driverLink,
+            sms_to: phone,
+            whatsapp_to: phone,
+          },
+        });
+        return;
+      }
+
+      const email = row.email ? String(row.email).trim() : "";
+      if (!email) return;
 
       await enqueueEmail({
-        operatingCompanyId: String(row.operating_company_id),
+        operatingCompanyId: oc,
         toAddresses: [email],
         subject: `Settlement ready — ${String(row.display_id ?? "settlement")}`,
         templateKey: "settlement-ready",

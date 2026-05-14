@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= it.title %></title>
+  </head>
+  <body style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: #1f2937;">
+    <p style="font-size: 18px; font-weight: 600;"><%= it.title %></p>
+    <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.5;"><%= it.bodyText %></div>
+  </body>
+</html>

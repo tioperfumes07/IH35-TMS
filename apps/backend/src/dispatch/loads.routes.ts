@@ -9,6 +9,7 @@ import { distributeLoadInstructions } from "./load-distribution.service.js";
 import { cancelLoadIdReservation, reserveNextLoadId } from "./load-id-reservation.service.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
+import { notifyAbandonedLoadStakeholders } from "../notifications/dispatcher.js";
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 
 const dispatchStatusSchema = z.enum([
@@ -763,6 +764,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     if ("error" in result) {
       if (result.error === "not_found") return reply.code(404).send({ error: "dispatch_load_not_found" });
       return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
+    }
+    if (result.ok && body.data.new_status === "abandoned") {
+      void notifyAbandonedLoadStakeholders({
+        operatingCompanyId,
+        loadId: params.data.id,
+        actorUserId: authUser.uuid,
+      }).catch(() => undefined);
     }
     return result;
   });

@@ -17,6 +17,7 @@ import {
   officeDenyBodySchema,
 } from "./cash-advance-requests.service.js";
 import { escalateCashAdvanceRequestToOwner, listPendingOwnerApprovalCashAdvanceRequests, sendOwnerEscalationEmails } from "./cash-advance-owner-approval.service.js";
+import { notifyOwnersCashAdvanceSubmitted } from "../notifications/dispatcher.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -85,6 +86,11 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
         body: parsed.data,
       });
     });
+    void notifyOwnersCashAdvanceSubmitted({
+      operatingCompanyId: oc,
+      request: result.request as Record<string, unknown>,
+      actorUserId: req.user!.uuid,
+    }).catch(() => undefined);
     return reply.code(201).send(result);
   });
 
