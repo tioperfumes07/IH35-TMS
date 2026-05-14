@@ -255,6 +255,8 @@ async function main() {
   await registerQboVendorLinkageRoutes(app);
   await registerMasterDataSyncRoutes(app);
   await registerQboSyncAlertsRoutes(app);
+  await registerQboSyncRunsListRoutes(app);
+  await registerQboSyncActionsRoutes(app);
   await registerQboUnlinkedEntitiesRoutes(app);
   await registerQboBulkLinkRoutes(app);
   await registerQboSyncHealthRoutes(app);
