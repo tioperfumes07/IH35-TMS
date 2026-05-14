@@ -8,6 +8,7 @@ import { registerEquipmentRoutes } from "./equipment.routes.js";
 import { registerEquipmentTransferRoutes } from "./equipment-transfer.routes.js";
 import { registerLocationRoutes } from "./locations.routes.js";
 import { registerLoadRoutes } from "./loads.routes.js";
+import { registerLoadAbandonmentRoutes } from "./load-abandonment.routes.js";
 import { registerUnitsRoutes } from "./units.routes.js";
 import { registerVendorRoutes } from "./vendors.routes.js";
 
@@ -20,6 +21,7 @@ export async function registerMdataRoutes(app: FastifyInstance) {
   await registerVendorRoutes(app);
   await registerLocationRoutes(app);
   await registerLoadRoutes(app);
+  await registerLoadAbandonmentRoutes(app);
   await registerEquipmentRoutes(app);
   await registerEquipmentLogRoutes(app);
   await registerEquipmentTransferRoutes(app);

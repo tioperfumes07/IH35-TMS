@@ -10,7 +10,7 @@ export async function listWorkOrdersConsole(params: {
   unit_id?: string;
   driver_id?: string;
   search?: string;
-  sort?: "created_desc" | "cost_desc" | "wo_number_asc";
+  sort?: "created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc";
   limit?: number;
   offset?: number;
 }) {

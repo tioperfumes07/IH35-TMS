@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { applyApprovedAbandonmentChargebacksToSettlement } from "./abandonment.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
 
 type DbClient = {
@@ -173,7 +174,7 @@ export async function aggregateSettlementTotals(
     `
       SELECT
         COALESCE(SUM(CASE WHEN line_type IN ('earnings', 'extra_pay', 'team_split_primary', 'team_split_secondary') THEN amount ELSE 0 END), 0) AS earnings,
-        COALESCE(SUM(CASE WHEN line_type = 'deduction' THEN amount ELSE 0 END), 0) AS deductions,
+        COALESCE(SUM(CASE WHEN line_type IN ('deduction', 'abandonment_chargeback') THEN amount ELSE 0 END), 0) AS deductions,
         COALESCE(SUM(CASE WHEN line_type = 'reimbursement' THEN amount ELSE 0 END), 0) AS reimbursements
       FROM driver_finance.settlement_lines
       WHERE settlement_id = $1
@@ -290,6 +291,12 @@ async function closeLoadBookendedSettlementForDriver(
     loadId: opts.load.id,
     teamId: opts.team?.teamId ?? null,
     lineType,
+  });
+
+  await applyApprovedAbandonmentChargebacksToSettlement(client, {
+    settlementId,
+    driverId: opts.driverId,
+    operatingCompanyId: opts.operatingCompanyId,
   });
 
   const totals = await aggregateSettlementTotals(client, settlementId);

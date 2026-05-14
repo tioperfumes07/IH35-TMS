@@ -11,7 +11,7 @@ export const DISPATCH_STATUS_GROUPS: Array<{
   { key: "in_transit", title: "In Transit", statuses: ["at_pickup", "in_transit", "at_delivery"] },
   { key: "delivered", title: "Delivered", statuses: ["delivered"] },
   { key: "completed", title: "Completed", statuses: ["invoiced", "paid", "closed"] },
-  { key: "cancelled", title: "Cancelled", statuses: ["cancelled"], collapsedByDefault: true },
+  { key: "cancelled", title: "Cancelled", statuses: ["cancelled", "abandoned"], collapsedByDefault: true },
 ];
 
 export const STATUS_LABEL: Record<LoadStatus, string> = {
@@ -28,6 +28,7 @@ export const STATUS_LABEL: Record<LoadStatus, string> = {
   paid: "Paid",
   closed: "Closed",
   cancelled: "Cancelled",
+  abandoned: "Abandoned",
 };
 
 export const FLAG_EMOJI_BY_CODE: Record<string, string> = {

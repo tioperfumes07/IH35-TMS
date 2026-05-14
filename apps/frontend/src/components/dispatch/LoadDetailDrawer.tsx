@@ -13,6 +13,7 @@ import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "./constants";
 import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
 import { MultiStopEditor } from "../../pages/dispatch/MultiStopEditor";
 import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail } from "../../pages/dispatch/LoadTemplateLibrary";
+import { AbandonmentReportModal } from "../../pages/loads/AbandonmentReportModal";
 
 type Props = {
   loadId: string | null;
@@ -33,6 +34,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
   const [reassignOpen, setReassignOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [templateLibraryOpen, setTemplateLibraryOpen] = useState(false);
+  const [abandonmentOpen, setAbandonmentOpen] = useState(false);
   const { pushToast } = useToast();
 
   const loadQuery = useLoad(loadId);
@@ -140,7 +142,22 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                     >
                       View dispatch sheet
                     </Button>
+                    {canEdit ? (
+                      <Button type="button" variant="secondary" size="sm" onClick={() => setAbandonmentOpen(true)}>
+                        Report abandonment
+                      </Button>
+                    ) : null}
                   </div>
+                ) : null}
+
+                {abandonmentOpen && load.operating_company_id ? (
+                  <AbandonmentReportModal
+                    loadId={loadId}
+                    operatingCompanyId={load.operating_company_id}
+                    defaultDriverId={load.assigned_primary_driver_id ?? load.assigned_secondary_driver_id}
+                    onClose={() => setAbandonmentOpen(false)}
+                    onRecorded={() => void loadQuery.refetch()}
+                  />
                 ) : null}
 
                 {editing ? (

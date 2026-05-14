@@ -47,6 +47,7 @@ import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
 import { registerCashAdvanceRequestRoutes } from "./driver-finance/cash-advance-requests.routes.js";
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
+import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
@@ -74,6 +75,7 @@ import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js"
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
+import { registerWoTimeEntriesRoutes } from "./maintenance/time-entries.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
@@ -244,6 +246,7 @@ async function main() {
   await registerDriverFinanceDeductionRoutes(app);
   await registerOwnerApprovalPortalRoutes(app);
   await registerCashAdvanceRequestRoutes(app);
+  await registerAbandonmentRoutes(app);
   await registerHomeRoutes(app);
   await registerReportsRoutes(app);
   await registerFuelPlannerRoutes(app);
@@ -270,6 +273,7 @@ async function main() {
   await registerOcrRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
   await registerWorkOrdersV1Routes(app);
+  await registerWoTimeEntriesRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);

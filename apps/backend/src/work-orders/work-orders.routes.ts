@@ -62,7 +62,7 @@ const listQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   search: z.string().trim().max(160).optional(),
-  sort: z.enum(["created_desc", "cost_desc", "wo_number_asc"]).default("created_desc"),
+  sort: z.enum(["created_desc", "cost_desc", "wo_number_asc", "labor_cost_desc"]).default("created_desc"),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -90,6 +90,11 @@ function officeWoRoles(role: string) {
 
 async function maintenanceReady(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok?: boolean }> }> }) {
   const res = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
+  return Boolean(res.rows[0]?.ok);
+}
+
+async function woTimeEntriesReady(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok?: boolean }> }> }) {
+  const res = await client.query(`SELECT to_regclass('maintenance.wo_time_entries') IS NOT NULL AS ok`);
   return Boolean(res.rows[0]?.ok);
 }
 
@@ -266,12 +271,27 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
                 ? ` AND w.status = 'complete'`
                 : ` AND w.status = 'cancelled'`;
 
+      const timeReady = await woTimeEntriesReady(client);
+      const laborJoin = timeReady
+        ? `
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(SUM(computed_labor_cost_cents), 0)::bigint AS labor_cost_cents
+          FROM maintenance.wo_time_entries te
+          WHERE te.work_order_id = w.id
+            AND te.deleted_at IS NULL
+            AND te.computed_labor_cost_cents IS NOT NULL
+        ) te_agg ON TRUE`
+        : "";
+      const laborSelect = timeReady ? `, COALESCE(te_agg.labor_cost_cents, 0)::bigint AS labor_cost_cents` : `, 0::bigint AS labor_cost_cents`;
+
       const orderBy =
         q.sort === "cost_desc"
           ? "ORDER BY COALESCE(w.total_actual_cost, w.total_estimated_cost, 0) DESC NULLS LAST, w.created_at DESC"
           : q.sort === "wo_number_asc"
             ? "ORDER BY w.display_id ASC NULLS LAST, w.created_at DESC"
-            : "ORDER BY w.created_at DESC";
+            : q.sort === "labor_cost_desc" && timeReady
+              ? "ORDER BY COALESCE(te_agg.labor_cost_cents, 0) DESC NULLS LAST, w.created_at DESC"
+              : "ORDER BY w.created_at DESC";
 
       const countSql = `
         SELECT
@@ -291,8 +311,9 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const offsetIdx = values.length;
       const rowsRes = await client.query(
         `
-          SELECT w.*
+          SELECT w.*${laborSelect}
           FROM maintenance.work_orders w
+          ${laborJoin}
           WHERE ${where.join(" AND ")}${segmentClause}
           ${orderBy}
           LIMIT $${limitIdx} OFFSET $${offsetIdx}
@@ -333,13 +354,30 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       ]);
       const wo = woRes.rows[0];
       if (!wo) return { kind: "missing" as const };
+      let laborCostCents = 0;
+      if (await woTimeEntriesReady(client)) {
+        const laborRes = await client.query(
+          `
+            SELECT COALESCE(SUM(computed_labor_cost_cents), 0)::bigint AS cents
+            FROM maintenance.wo_time_entries
+            WHERE work_order_id = $1
+              AND operating_company_id = $2
+              AND deleted_at IS NULL
+          `,
+          [params.data.id, query.data.operating_company_id]
+        );
+        laborCostCents = Number(laborRes.rows[0]?.cents ?? 0);
+      }
+
+      const woOut = { ...(wo as Record<string, unknown>), labor_cost_cents: laborCostCents };
+
       const lines = await client.query(`SELECT * FROM maintenance.work_order_lines WHERE work_order_id = $1 ORDER BY created_at ASC`, [
         params.data.id,
       ]);
       const history = await client.query(`SELECT * FROM maintenance.wo_status_history WHERE work_order_id = $1 ORDER BY created_at ASC`, [
         params.data.id,
       ]);
-      return { kind: "ok" as const, wo, lines: lines.rows, history: history.rows };
+      return { kind: "ok" as const, wo: woOut, lines: lines.rows, history: history.rows };
     });
 
     if ("kind" in payload && payload.kind === "unavailable") return reply.code(501).send({ error: "maintenance_schema_not_available" });

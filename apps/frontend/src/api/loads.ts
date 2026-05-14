@@ -14,7 +14,8 @@ export type LoadStatus =
   | "invoiced"
   | "paid"
   | "closed"
-  | "cancelled";
+  | "cancelled"
+  | "abandoned";
 
 export type LoadStop = {
   id: string;
