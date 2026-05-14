@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   ListChecks,
   Radio,
+  Rocket,
   Scale,
   SquareStack,
   Truck,
@@ -37,6 +38,13 @@ type SidebarItem = {
 };
 
 const ITEMS: SidebarItem[] = [
+  {
+    key: "LAUNCH",
+    label: "LAUNCH",
+    Icon: Rocket,
+    to: "/admin/launch-readiness",
+    visibleRoles: ["Owner", "Administrator"],
+  },
   { key: "HOME", label: "HOME", Icon: Home, to: "/home" },
   { key: "MAINT", label: "MAINT", Icon: CarFront, to: "/maintenance" },
   { key: "ACCTG", label: "ACCTG", Icon: Calculator, to: "/accounting/invoices" },

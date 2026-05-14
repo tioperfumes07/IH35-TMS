@@ -13,6 +13,8 @@
 
 This guide targets drivers using the **production** Driver PWA at **https://driver.ih35dispatch.com**. If your fleet uses a branded URL, substitute it everywhere below.
 
+<a id="pwa-home"></a>
+
 ---
 
 ## 1. Install the app (optional but recommended)
@@ -36,6 +38,8 @@ The Driver PWA runs in the browser, but **Add to Home Screen** gives you a full-
 
 ---
 
+<a id="login-email"></a>
+
 ## 2. Sign in with email
 
 IH35 uses **email-based login** with a short verification code—there is **no driver password** to rotate.
@@ -55,6 +59,8 @@ IH35 uses **email-based login** with a short verification code—there is **no d
 - **Code expired:** Request a new code; codes are time-boxed for security.
 
 ---
+
+<a id="today-loads"></a>
 
 ## 3. Today — your active loads
 
@@ -76,11 +82,15 @@ Tap a card to open **load detail**.
 
 ---
 
+<a id="load-detail"></a>
+
 ## 4. Load detail and accepting work
 
 Inside a load you’ll see **stops** in order: pickup → … → delivery (and occasionally fuel/rest if modeled).
 
 ![Placeholder: Load detail](./screenshots/driver/04-load-detail.png)
+
+<a id="accept-offer"></a>
 
 When dispatch releases a load for confirmation you may see **Accept** (or similar).
 
@@ -91,6 +101,8 @@ When dispatch releases a load for confirmation you may see **Accept** (or simila
 3. If something is wrong, **do not accept**—call dispatch; they may need to correct the plan first.
 
 ---
+
+<a id="stops-pod"></a>
 
 ## 5. Running stops (arrive, POD, depart)
 
@@ -121,11 +133,15 @@ Open **Stops** from load detail. Typical happy path:
 
 ---
 
+<a id="settlements"></a>
+
 ## 6. Settlements and disputes
 
 Navigate to **Profile** (or menu) → **Settlements** / finance section (labels vary slightly by build). You’ll see **posted** or **pending** settlements with line hints.
 
 ![Placeholder: Settlements](./screenshots/driver/07-settlements.png)
+
+<a id="disputes"></a>
 
 If totals disagree with your BOL:
 
@@ -137,6 +153,16 @@ If totals disagree with your BOL:
 Keep photos and on-device notes until the dispute resolves.
 
 ---
+
+<a id="hos"></a>
+
+## HOS tab (hours snapshot)
+
+Use the **HOS** tab for **read-only awareness** of hours-of-service snapshots when your fleet enables those integrations. Dispatch and Safety still own corrective actions—drivers use this view to **self-check** before accepting long deadheads.
+
+---
+
+<a id="settings"></a>
 
 ## 7. Notifications (optional)
 

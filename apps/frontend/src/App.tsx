@@ -99,6 +99,7 @@ import { VendorBillCreatePage } from "./pages/accounting/VendorBillCreatePage";
 import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { BillsPage } from "./pages/accounting/BillsPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
+import { LaunchReadinessPage } from "./pages/admin/LaunchReadinessPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
 import { ChartOfAccountsSeedsListPage } from "./pages/lists/accounting/ChartOfAccountsSeedsListPage";
@@ -1199,6 +1200,14 @@ export default function App() {
           element={
             <OwnerAdminRoute>
               <LegalAttorneyReviewPage />
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/launch-readiness"
+          element={
+            <OwnerAdminRoute>
+              <LaunchReadinessPage />
             </OwnerAdminRoute>
           }
         />
