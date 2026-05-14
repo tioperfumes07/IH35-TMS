@@ -1,0 +1,4 @@
+operating_company_code,report_id,frequency,cron_expression,run_time,run_day_of_week,run_day_of_month,timezone,recipients_to,recipients_cc,subject_template,format,status,created_by_email,report_params_json
+# SAMPLE — recipients_to is a comma-separated inbox list in this template; UI stores text[] ; created_by_email must resolve to a user uuid in real tooling
+# TRK,cash-position-summary,daily,,06:30:00,,,America/Chicago,finance@example.com,,IH35 Daily Cash {date},pdf,active,jorge@ih35dispatch.com,{}
+# TRANSP,profit-per-truck,weekly,,07:00:00,1,,America/Chicago,owners@example.com,cfo@example.com,IH35 Weekly Trucks {week},xlsx,active,jorge@ih35dispatch.com,{\"fleet\":\"dry-van\"}

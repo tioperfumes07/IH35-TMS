@@ -1,0 +1,4 @@
+operating_company_code,institution_name,account_name,account_type,account_mask,plaid_item_id,plaid_account_id,sync_status,notes
+# SAMPLE — never store live access tokens in CSV; Plaid IDs belong in secrets after swap
+# TRK,Chase **1234,Operating Checking,Checking,1234,,,active,Primary ops payroll
+# TRANSP,BoA **5678,AR Sweep,Checking,5678,,,pending,Connect after prod Plaid

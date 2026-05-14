@@ -1,0 +1,4 @@
+bank_account_mask,transaction_date,posted_date,amount_cents,description,merchant_name,pending,is_credit,matched_load_number,notes
+# SAMPLE — confirm sign convention with engineering before bulk insert; plaid_transaction_id omitted here
+# 1234,2026-05-01,2026-05-02,-12500,SHELL OIL 5742XXXX,,false,false,,Fuel
+# 5678,2026-05-03,,50000,WIRE IN ACME AR,,false,true,,Customer payment

@@ -1,0 +1,4 @@
+code,legal_name,short_name,company_type,tax_id,address_line1,city,state,postal_code,country,phone,email,is_active
+# Lines starting with # are samples — remove before any automated import.
+# TRK,IH 35 Trucking LLC,IH35 Trucking,operating_carrier,..redacted..,123 Main St,Austin,TX,78701,US,512-555-0100,ops@example.com,true
+# TRANSP,IH 35 Transportation LLC,IH35 Transp,operating_carrier,..redacted..,456 Dock Rd,Dallas,TX,75201,US,214-555-0200,ops2@example.com,true

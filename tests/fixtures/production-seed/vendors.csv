@@ -1,0 +1,4 @@
+vendor_code,vendor_name,vendor_type,phone,email,tax_id,address_line1,city,state,postal_code,notes
+# SAMPLE — vendor_type ∈ Fuel|Repair|Tires|Towing|Insurance|Permit|Toll|Other
+# PILOT01,Pilot Flying J #1200,Fuel,555-3333,,,1 Frontage Rd,Waco,TX,76706,Fuel card weekly
+# FACT01,FactCo Fast Pay,Insurance,555-4444,,,500 Finance Pkwy,Houston,TX,77002,Factoring

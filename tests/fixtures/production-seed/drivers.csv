@@ -1,0 +1,5 @@
+first_name,last_name,email,phone,cdl_number,cdl_state,cdl_class,cdl_expires_at,hire_date,status
+# SAMPLE — remove # lines; run per company file (e.g. trk_drivers.csv) via npm run seed:from-csv
+# status ∈ Active | Probation | Inactive | Terminated | OnLeave (exact case)
+# Alex,Driver,alex.driver@example.com,555-0101,CDL1234567,TX,A,2030-12-31,2019-05-01,Active
+# Jordan,Transport,jordan.transport@example.com,555-0102,CDL7654321,TX,A,2031-06-15,2021-08-12,Active

@@ -1,0 +1,4 @@
+operating_company_code,load_number,customer_code,status,rate_total_cents,currency_code,assigned_unit_number,primary_driver_cdl,dispatcher_email,notes
+# SAMPLE — high-FK row; load_stops are separate; confirm dispatcher_email exists in identity.users
+# TRK,LOAD-2026-0001,ACME01,dispatched,350000,USD,101,CDL1234567,dispatch.lead@ih35dispatch.com,Border docs
+# TRANSP,LOAD-2026-0002,BIG02,in_transit,410000,USD,T-201,CDL7654321,dispatch.lead@ih35dispatch.com,Reefer -10F
