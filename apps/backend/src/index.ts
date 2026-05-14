@@ -117,6 +117,8 @@ import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
 import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
 import { registerEmailRoutes } from "./email/email.routes.js";
 import { initializeEmailCron } from "./email/cron.js";
+import { initializeQboOutboxDispatcher, stopQboOutboxDispatcher } from "./integrations/qbo/outbox-dispatcher.js";
+import { initializeQboSyncWorker, stopQboSyncWorker } from "./integrations/qbo/qbo-sync-worker.js";
 import { registerQboSyncAlertsRoutes } from "./qbo/sync-alerts.routes.js";
 import { registerQboUnlinkedEntitiesRoutes } from "./qbo/unlinked-entities.routes.js";
 import { registerQboBulkLinkRoutes } from "./qbo/bulk-link.routes.js";
@@ -170,6 +172,12 @@ async function shutdown(signal: string) {
     await stopOutboxProcessor();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop outbox processor cleanly");
+  }
+  try {
+    stopQboSyncWorker();
+    stopQboOutboxDispatcher();
+  } catch (error) {
+    app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
   }
   try {
     await app.close();
@@ -393,6 +401,20 @@ async function main() {
     app.log.info("[STARTUP] email-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] email-cron failed");
+  }
+
+  try {
+    initializeQboSyncWorker(app);
+    app.log.info("[STARTUP] qbo-sync-run-worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-sync-run-worker failed");
+  }
+
+  try {
+    initializeQboOutboxDispatcher(app);
+    app.log.info("[STARTUP] qbo-outbox-dispatcher initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-outbox-dispatcher failed");
   }
 
   const port = Number(process.env.PORT || 3000);

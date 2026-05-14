@@ -9,7 +9,14 @@ const eta = new Eta({
   cache: process.env.NODE_ENV === "production",
 });
 
-const allowedKeys = new Set(["driver-invite", "report-cadence", "invoice-send", "settlement-ready", "wo-approved"]);
+const allowedKeys = new Set([
+  "driver-invite",
+  "report-cadence",
+  "invoice-send",
+  "settlement-ready",
+  "wo-approved",
+  "qbo-sync-alert",
+]);
 
 export function assertAllowedTemplateKey(templateKey: string): string {
   if (!allowedKeys.has(templateKey)) {
