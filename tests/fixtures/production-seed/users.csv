@@ -1,0 +1,7 @@
+email,role,preferred_language,google_user_id
+# SAMPLE rows — strip lines starting with # before tooling import.
+# role ∈ Owner | Administrator | Manager | Accountant | Dispatcher | Safety | Driver | Mechanic
+# preferred_language must be en or es (NOT NULL in current schema).
+# jorge@ih35dispatch.com,Owner,en,
+# dispatch.lead@ih35dispatch.com,Dispatcher,en,
+# accounting@ih35dispatch.com,Accountant,en,

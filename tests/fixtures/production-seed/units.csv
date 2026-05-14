@@ -1,0 +1,4 @@
+asset_kind,unit_number,vin,year,make,model,equipment_type,license_plate,license_state,notes
+# SAMPLE — remove # lines; use Truck|Trailer rows; Trailer requires equipment_type ∈ DryVan|Reefer|Flatbed|Tanker|Container|Chassis|StepDeck|Lowboy
+# Truck,101,1HGBH41JXMN109186,2022,FREIGHTLINER,Cascadia,,TEX101,TX,Day cab
+# Trailer,T-201,53FTDV0000TEST01,2023,GREAT_DANE,,DryVan,TRL201,TN,Food grade
