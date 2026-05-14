@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { getUnit, patchUnit } from "../../api/mdata";
 import { listClassesForJe } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -12,6 +12,7 @@ import { useToast } from "../../components/Toast";
 
 export function AssetProfilePage() {
   const { id = "" } = useParams();
+  const [searchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -42,6 +43,11 @@ export function AssetProfilePage() {
     setQboClassTmsId(String(unit.qbo_class_id ?? ""));
   }, [unit?.id, unit?.qbo_vendor_id, unit?.qbo_class_id]);
 
+  useEffect(() => {
+    if (searchParams.get("tab") !== "financial") return;
+    queueMicrotask(() => document.getElementById("asset-financial")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, [searchParams, unitQuery.isSuccess]);
+
   const saveMutation = useMutation({
     mutationFn: () =>
       patchUnit(id, {
@@ -61,7 +67,7 @@ export function AssetProfilePage() {
       {unitQuery.isError ? <ListErrorBanner onRetry={() => void unitQuery.refetch()} /> : null}
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      <div className="max-w-2xl space-y-3 rounded border border-gray-200 bg-white p-4">
+      <div id="asset-financial" className="max-w-2xl space-y-3 rounded border border-gray-200 bg-white p-4">
         <div className="text-xs font-semibold text-gray-600">QBO mapping</div>
         <label className="block text-xs text-gray-600">
           QBO vendor (ownership / lease entity)

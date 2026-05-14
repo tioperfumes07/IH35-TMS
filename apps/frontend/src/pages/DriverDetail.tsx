@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { getSafetyFines } from "../api/safety";
 import { useAuth } from "../auth/useAuth";
@@ -111,12 +111,19 @@ function formatReasonLabel(reason: string) {
 export function DriverDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { pushToast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const [editMode, setEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState<DriverTab>("Profile");
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t === "settlements" || t === "earnings") {
+      setActiveTab("Earnings & Debt");
+    }
+  }, [searchParams]);
   const [enableModalOpen, setEnableModalOpen] = useState(false);
   const [addQualificationOpen, setAddQualificationOpen] = useState(false);
   const [rateModalOpen, setRateModalOpen] = useState(false);

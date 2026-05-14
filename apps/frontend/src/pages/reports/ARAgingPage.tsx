@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { getArAgingReport, type ARAgingRow } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -14,6 +14,7 @@ type SortKey = keyof ARAgingRow | "bucket_0_30";
 
 export function ARAgingPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
@@ -28,6 +29,14 @@ export function ARAgingPage() {
     queryFn: () => getArAgingReport(companyId, asOf),
     enabled: Boolean(companyId),
   });
+
+  const focusCustomerId = searchParams.get("customer_id");
+
+  useEffect(() => {
+    if (!focusCustomerId || !query.data) return;
+    const row = query.data.rows.find((r) => r.customer_id === focusCustomerId);
+    if (row) setSearch(row.customer_name);
+  }, [focusCustomerId, query.data]);
 
   const rows = query.data?.rows ?? [];
 
