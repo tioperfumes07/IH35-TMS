@@ -19,7 +19,7 @@ export function WorkOrdersConsoleListPage() {
     "all" | "pm" | "corrective" | "accident" | "inspection_dot" | "inspection_state" | "warranty" | "other"
   >("all");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"created_desc" | "cost_desc" | "wo_number_asc">("created_desc");
+  const [sort, setSort] = useState<"created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc">("created_desc");
 
   const listQuery = useQuery({
     queryKey: ["work-orders-console", companyId, segment, billing, svc, search, sort],
@@ -89,6 +89,7 @@ export function WorkOrdersConsoleListPage() {
         >
           <option value="created_desc">Sort: Newest</option>
           <option value="cost_desc">Sort: Cost</option>
+          <option value="labor_cost_desc">Sort: Labor cost</option>
           <option value="wo_number_asc">Sort: WO #</option>
         </select>
         <input
@@ -108,6 +109,7 @@ export function WorkOrdersConsoleListPage() {
               <th className="border-b border-gray-200 px-2 py-2">Class</th>
               <th className="border-b border-gray-200 px-2 py-2">Status</th>
               <th className="border-b border-gray-200 px-2 py-2">Est / Act</th>
+              <th className="border-b border-gray-200 px-2 py-2 text-right">Labor ¢</th>
               <th className="border-b border-gray-200 px-2 py-2">Opened</th>
               <th className="border-b border-gray-200 px-2 py-2 text-right">Actions</th>
             </tr>
@@ -115,7 +117,7 @@ export function WorkOrdersConsoleListPage() {
           <tbody>
             {listQuery.isError ? (
               <tr>
-                <td colSpan={7} className="p-0">
+                <td colSpan={8} className="p-0">
                   <ListErrorState
                     title="Couldn't load work orders"
                     {...formatQueryErrorDetail(listQuery.error)}
@@ -126,14 +128,14 @@ export function WorkOrdersConsoleListPage() {
             ) : null}
             {!listQuery.isError && listQuery.isLoading && !listQuery.data ? (
               <tr>
-                <td colSpan={7} className="px-2 py-3 text-xs text-slate-400">
+                <td colSpan={8} className="px-2 py-3 text-xs text-slate-400">
                   Loading…
                 </td>
               </tr>
             ) : null}
             {!listQuery.isError && !listQuery.isLoading && (listQuery.data?.work_orders ?? []).length === 0 ? (
               <tr>
-                <td className="px-2 py-4 text-sm text-slate-500" colSpan={7}>
+                <td className="px-2 py-4 text-sm text-slate-500" colSpan={8}>
                   No work orders match the current filters.
                 </td>
               </tr>
@@ -148,6 +150,7 @@ export function WorkOrdersConsoleListPage() {
                   const opened = String(row.opened_at ?? row.created_at ?? "").slice(0, 10);
                   const est = row.total_estimated_cost ?? "—";
                   const act = row.total_actual_cost ?? "—";
+                  const labor = row.labor_cost_cents != null ? String(row.labor_cost_cents) : "0";
                   return (
                     <tr key={id} className="border-b border-gray-100 hover:bg-slate-50/60">
                       <td className="code-cell px-2 py-2 font-mono text-xs">{display}</td>
@@ -157,6 +160,7 @@ export function WorkOrdersConsoleListPage() {
                       <td className="px-2 py-2">
                         {String(est)} / {String(act)}
                       </td>
+                      <td className="px-2 py-2 text-right font-mono text-[11px] text-slate-700">{labor}</td>
                       <td className="px-2 py-2 text-xs text-slate-600">{opened}</td>
                       <td className="px-2 py-2 text-right">
                         <Link className="text-[#1f2a44] hover:underline" to={`/work-orders/${id}`}>

@@ -71,6 +71,7 @@ import { ReportsHomePage } from "./pages/reports/ReportsHome";
 import { ReportsRunnerPage } from "./pages/reports/ReportsRunner";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
 import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
+import { AbandonmentQueuePage } from "./pages/accounting/AbandonmentQueuePage";
 import { InvoiceDetailPage } from "./pages/accounting/InvoiceDetailPage";
 import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
 import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
@@ -93,6 +94,7 @@ import { PaymentMethodsListPage } from "./pages/lists/accounting/PaymentMethodsL
 import { PostingTemplatesListPage } from "./pages/lists/accounting/PostingTemplatesListPage";
 import { QboCategoriesListPage } from "./pages/lists/accounting/QboCategoriesListPage";
 import { TaxCodesListPage } from "./pages/lists/accounting/TaxCodesListPage";
+import { AbandonmentDefaultsPage } from "./pages/lists/accounting/AbandonmentDefaultsPage";
 import { AdditionalChargesListPage } from "./pages/lists/dispatch/AdditionalChargesListPage";
 import { DetentionReasonsListPage } from "./pages/lists/dispatch/DetentionReasonsListPage";
 import { LoadTypesListPage } from "./pages/lists/dispatch/LoadTypesListPage";
@@ -918,6 +920,14 @@ export default function App() {
           }
         />
         <Route
+          path="/lists/accounting/abandonment-defaults"
+          element={
+            <OwnerAdminRoute>
+              <AbandonmentDefaultsPage />
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
           path="/lists/accounting/currency-codes"
           element={
             <ProtectedRoute>
@@ -1090,6 +1100,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DisputeQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/abandonment-queue"
+          element={
+            <ProtectedRoute>
+              <AbandonmentQueuePage />
             </ProtectedRoute>
           }
         />
