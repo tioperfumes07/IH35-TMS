@@ -63,6 +63,7 @@ import { registerSafetyCsaScoresRoutes } from "./routes/safety/csa-scores.js";
 import { registerSafetyComplaintsRoutes } from "./routes/safety/complaints.js";
 import { registerSafetyIntegrityRoutes } from "./routes/safety/integrity.js";
 import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
+import { registerBankTxCategorizationRoutes } from "./banking/categorization.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
 import { registerAccountBalanceRoutes } from "./banking/account-balance.routes.js";
 import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
@@ -322,6 +323,7 @@ async function main() {
   await registerSafetyIntegrityRoutes(app);
   await registerLiabilitiesRoutes(app);
   await registerCashAdvancesRoutes(app);
+  await registerBankTxCategorizationRoutes(app);
   await registerBankingRoutes(app);
   await registerAccountBalanceRoutes(app);
   await registerPlaidLinkRoutes(app);
