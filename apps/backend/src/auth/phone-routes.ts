@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { issueDriverTokenPair } from "../driver/driver-jwt.js";
 import { enforceAuthPhoneStartLimits, enforceAuthPhoneVerifyLimits } from "../middleware/rate-limit.js";
 import { withLuciaBypass } from "./db.js";
 import { lucia } from "./lucia.js";
@@ -212,10 +213,12 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
     const session = await lucia.createSession(user.id, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
     setLuciaSessionCookie(reply, sessionCookie);
+    const driverAuth = user.role === "Driver" ? issueDriverTokenPair(String(user.id), "Driver") : null;
     return reply.code(200).send({
       ok: true,
       user: { id: user.id, email: user.email, role: user.role },
       session: { id: session.id },
+      driver_auth: driverAuth,
     });
   });
 }

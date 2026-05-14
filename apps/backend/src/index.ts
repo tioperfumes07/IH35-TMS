@@ -75,6 +75,7 @@ import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js"
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
+import { registerMaintenanceDriverReportsRoutes } from "./maintenance/driver-reports.routes.js";
 import { registerWoTimeEntriesRoutes } from "./maintenance/time-entries.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
@@ -305,6 +306,7 @@ async function main() {
   await registerMaintenanceWorkOrderRoutes(app);
   await registerWorkOrdersV1Routes(app);
   await registerWoTimeEntriesRoutes(app);
+  await registerMaintenanceDriverReportsRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);

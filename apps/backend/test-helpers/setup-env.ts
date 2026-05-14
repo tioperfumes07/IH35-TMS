@@ -10,3 +10,4 @@ process.env.OAUTH_REDIRECT_URI ??= "http://localhost:5173/api/v1/auth/google/cal
 process.env.NODE_ENV ??= "test";
 process.env.IH35_TEST_AUTH_BYPASS = "1";
 process.env.ENABLE_OUTBOX_PROCESSOR ??= "false";
+process.env.DRIVER_JWT_SECRET ??= "vitest-driver-jwt-secret";

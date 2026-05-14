@@ -5,6 +5,9 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { ToastProvider } from "./components/Toast";
 import "./index.css";
+import i18n from "./i18n";
+
+void i18n;
 
 const queryClient = new QueryClient();
 

@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { notifyLoadAssigned } from "../services/push-notification.service.js";
 
 type QuickAssignInput = {
   operating_company_id: string;
@@ -16,13 +17,17 @@ function isOwner(role: string) {
 }
 
 export async function quickAssignLoad(userId: string, role: string, input: QuickAssignInput) {
-  return withCurrentUser(userId, async (client) => {
+  const notifyBox: {
+    v: { operatingCompanyId: string; driverId: string; loadId: string; loadLabel: string | null } | null;
+  } = { v: null };
+
+  const result = await withCurrentUser(userId, async (client) => {
     await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
     await client.query("BEGIN");
     try {
       const loadRes = await client.query(
         `
-          SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id
+          SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number
           FROM mdata.loads
           WHERE id = $1
             AND operating_company_id = $2
@@ -161,12 +166,32 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
       );
 
       await client.query("COMMIT");
+      const prevDriver = (load as { assigned_primary_driver_id?: string | null }).assigned_primary_driver_id ?? null;
+      if (input.driver_id !== prevDriver) {
+        notifyBox.v = {
+          operatingCompanyId: input.operating_company_id,
+          driverId: input.driver_id,
+          loadId: input.load_id,
+          loadLabel: (load as { load_number?: string | null }).load_number ?? null,
+        };
+      }
       return { load_id: input.load_id, warnings, pending_fields: pendingFields };
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
     }
   });
+
+  if (notifyBox.v) {
+    void notifyLoadAssigned({
+      operatingCompanyId: notifyBox.v.operatingCompanyId,
+      driverId: notifyBox.v.driverId,
+      loadId: notifyBox.v.loadId,
+      loadLabel: notifyBox.v.loadLabel,
+    }).catch(() => undefined);
+  }
+
+  return result;
 }
 
 export async function completeQuicksaveDraft(

@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { tryAttachDriverJwt } from "./auth-middleware.js";
 
 export type DriverSession = {
   id: string;
@@ -20,6 +21,9 @@ function isDriverRole(role: string): boolean {
 }
 
 export async function requireDriverSession(req: FastifyRequest, reply: FastifyReply): Promise<boolean> {
+  if (!req.user) {
+    tryAttachDriverJwt(req);
+  }
   if (!requireAuth(req, reply)) return false;
   if (!req.user) return false;
   if (!isDriverRole(req.user.role)) {

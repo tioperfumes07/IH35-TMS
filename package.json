@@ -100,6 +100,7 @@
     "@lucia-auth/adapter-postgresql": "^3.1.2",
     "@sentry/node": "^10.53.1",
     "@sentry/profiling-node": "^10.53.1",
+    "@types/web-push": "^3.6.4",
     "arctic": "^2.3.4",
     "bullmq": "^5.76.5",
     "dotenv": "^17.4.2",
@@ -119,6 +120,7 @@
     "rate-limiter-flexible": "^11.1.0",
     "resend": "^6.12.3",
     "twilio": "^6.0.0",
+    "web-push": "^3.6.7",
     "xlsx": "^0.18.5",
     "zod": "^4.4.2"
   },

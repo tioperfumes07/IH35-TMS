@@ -7,6 +7,7 @@ import { enqueueEmail } from "../email/queue.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { queuePaymentOnFinalize } from "./settlement-payment.service.js";
 import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.js";
+import { notifySettlementAvailable } from "../services/push-notification.service.js";
 
 const settlementStatusSchema = z.enum([
   "draft",
@@ -275,6 +276,14 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     });
 
     if ("unavailable" in created) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
+
+    void notifySettlementAvailable({
+      operatingCompanyId: body.operating_company_id,
+      driverId: body.driver_id,
+      settlementId: String((created as { id: string }).id),
+      displayId: (created as { display_id?: string | null }).display_id ?? null,
+    }).catch(() => undefined);
+
     return reply.code(201).send(created);
   });
 

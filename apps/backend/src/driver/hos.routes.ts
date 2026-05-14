@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { withCurrentUser } from "../auth/db.js";
+import { maybeNotifyHosShiftWarning } from "../services/push-notification.service.js";
 import { requireDriverSession } from "./auth.js";
 
 type DutyStatus = "driving" | "on_duty_not_driving" | "off_duty" | "sleeper_berth";
@@ -94,6 +95,13 @@ export async function registerDriverHosRoutes(app: FastifyInstance) {
           minutes_until_violation: minutesUntilViolation,
         },
       };
+      const shiftRemaining =
+        payload.clocks.find((clock) => clock.key === "shift")?.remaining_minutes ?? 14 * 60;
+      maybeNotifyHosShiftWarning({
+        operatingCompanyId,
+        driverId: driver.id,
+        shiftRemainingMinutes: shiftRemaining,
+      });
       return payload;
     });
 
