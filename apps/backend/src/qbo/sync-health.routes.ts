@@ -111,16 +111,70 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
         lastSuccessfulSyncAt = fallback.rows[0]?.t ?? lastSuccessfulSyncAt;
       }
 
+      const connTbl = await client.query(`SELECT to_regclass('integrations.qbo_connections') IS NOT NULL AS ok`);
+      let refreshTokenExpiresAt: string | null = null;
+
+      if (connTbl.rows[0]?.ok) {
+        const connRes = await client.query<{ exp: string | null }>(
+          `
+            SELECT MIN(refresh_token_expires_at) FILTER (WHERE revoked_at IS NULL)::text AS exp
+            FROM integrations.qbo_connections
+            WHERE operating_company_id = $1::uuid
+          `,
+          [parsed.data.operating_company_id]
+        );
+        refreshTokenExpiresAt = connRes.rows[0]?.exp ?? null;
+      }
+
+      let tokenAlertCount = 0;
+      if (alertsExist.rows[0]?.ok) {
+        const tokRes = await client.query<{ c: string }>(
+          `
+            SELECT COUNT(*)::text AS c
+            FROM qbo.sync_alerts
+            WHERE operating_company_id = $1::uuid
+              AND resolved_at IS NULL
+              AND (
+                lower(coalesce(error_code, '')) LIKE '%token%'
+                OR lower(coalesce(error_message, '')) LIKE '%refresh%'
+                OR lower(coalesce(error_message, '')) LIKE '%oauth%'
+              )
+          `,
+          [parsed.data.operating_company_id]
+        );
+        tokenAlertCount = Number(tokRes.rows[0]?.c ?? 0);
+      }
+
       const now = Date.now();
       const lastOkMs =
         lastSuccessfulSyncAt && !Number.isNaN(new Date(lastSuccessfulSyncAt).getTime())
           ? now - new Date(lastSuccessfulSyncAt).getTime()
           : null;
 
+      const refreshExpired =
+        Boolean(refreshTokenExpiresAt) && !Number.isNaN(Date.parse(String(refreshTokenExpiresAt)))
+          ? now >= Date.parse(String(refreshTokenExpiresAt))
+          : false;
+
+      const needsReconnect = refreshExpired || tokenAlertCount > 0;
+      let reconnectReason: string | null = null;
+      if (refreshExpired) reconnectReason = "quickbooks_refresh_token_expired";
+      else if (tokenAlertCount > 0) reconnectReason = "quickbooks_token_alert";
+
+      const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
+      const neverSucceededWithFailures =
+        !lastSuccessfulSyncAt && Boolean(lastFailedSyncAt) && !Number.isNaN(new Date(String(lastFailedSyncAt)).getTime());
+
       let status: "healthy" | "syncing" | "stale" | "error";
-      if (errorCount > 0) {
+      if (needsReconnect) {
         status = "error";
-      } else if (lastOkMs === null || lastOkMs > 30 * 60 * 1000) {
+      } else if (errorCount > 0) {
+        status = "error";
+      } else if (neverSucceededWithFailures) {
+        status = "error";
+      } else if (lastOkMs === null) {
+        status = "healthy";
+      } else if (lastOkMs > STALE_AFTER_MS) {
         status = "stale";
       } else if (pendingCount > 0 && lastOkMs < 5 * 60 * 1000) {
         status = "syncing";
@@ -141,6 +195,10 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
         pending_count: pendingCount,
         error_count: errorCount,
         worker_uptime_seconds: workerUptimeSeconds,
+        needs_reconnect: needsReconnect,
+        reconnect_reason: reconnectReason,
+        refresh_token_expires_at: refreshTokenExpiresAt,
+        token_alert_count: tokenAlertCount,
       };
     });
 

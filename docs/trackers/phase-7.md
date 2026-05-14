@@ -14,3 +14,14 @@ Tickets filed from **P6-T11205** (pre-MVP hardening verification, 2026-05-14).
 | **P7-FIX-DRIVER-SMOKE-ENV** | Document & automate env provisioning for `DRIVER_SMOKE_EMAIL` + bypass secret in CI or runbook | optional ops |
 
 _No backend regressions requiring immediate hotfix were identified during P6-T11205 verification._
+
+## Block C — MVP cleanup (2026-05-14)
+
+| ID | Title | Notes |
+| --- | --- | --- |
+| **P7-PROD-SMOKE-001** | Run Block X production health (`npm run smoke:block-x`) vs `api.ih35dispatch.com` | Artifact: `tests/results/prod-smoke-2026-05-14.md` — authenticated checks **SKIPPED** until `BLOCK_X_PROD_COOKIE` + `BLOCK_X_PROD_OPERATING_COMPANY_ID` are set locally |
+| **P7-FIX-STALE-QBO-001** | “Stale IH 35 Transportation” QBO sync pill | Backend health uses **24h** staleness, token-expiry + unresolved token-ish `qbo.sync_alerts` → `needs_reconnect`; Topbar **Reconnect QuickBooks** uses OAuth start URL |
+| **P7-FIX-LINT-ROUTES-001** | CI: duplicate literal Fastify route registrations | `npm run lint:fastify-routes` (`scripts/lint-fastify-routes.mjs`), chained in `verify:arch-design` |
+| **P7-FIX-LINT-DEPS-001** | CI: missing / stray workspace dependencies | `npm run lint:deps` (`scripts/lint-deps.mjs`), chained in `verify:arch-design` |
+
+**P7-FIX-N (prod smoke, do not fix in Block C PR):** none — no non-2xx endpoints observed (auth-gated checks were not executed).

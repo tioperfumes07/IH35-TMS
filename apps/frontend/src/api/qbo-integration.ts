@@ -5,6 +5,10 @@ export type QboSyncHealthResponse = {
   last_successful_sync_at: string | null;
   pending_count: number;
   error_count: number;
+  needs_reconnect?: boolean;
+  reconnect_reason?: string | null;
+  refresh_token_expires_at?: string | null;
+  token_alert_count?: number;
 };
 
 export function getQboSyncHealth(operatingCompanyId: string) {
