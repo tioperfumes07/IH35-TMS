@@ -1,5 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { registerReportsLibraryRoutes } from "./library.routes.js";
+import { registerCashFlowOverviewRoutes } from "./cash-flow-overview.routes.js";
+import { registerSettlementSummaryRoutes } from "./settlement-summary.routes.js";
+import { registerCustomerProfitabilityRoutes } from "./customer-profitability.routes.js";
 import { registerProfitPerTruckRoutes } from "./profit-per-truck.routes.js";
 import { registerDriverSettlementSummaryRoutes } from "./driver-settlement-summary.routes.js";
 import { registerDriverPayHistoryRoutes } from "./driver-pay-history.routes.js";
@@ -14,6 +17,9 @@ import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.rou
 
 export async function registerReportsRoutes(app: FastifyInstance) {
   await registerReportsLibraryRoutes(app);
+  await registerCashFlowOverviewRoutes(app);
+  await registerSettlementSummaryRoutes(app);
+  await registerCustomerProfitabilityRoutes(app);
   await registerProfitPerTruckRoutes(app);
   await registerDriverSettlementSummaryRoutes(app);
   await registerDriverPayHistoryRoutes(app);

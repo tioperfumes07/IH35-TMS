@@ -17,10 +17,34 @@ export type ReportLibraryRow = {
 
 export const REPORT_LIBRARY: ReportLibraryRow[] = [
   {
+    id: "cash-flow-overview",
+    name: "Cash flow overview",
+    category: "financial",
+    description:
+      "Operating liquidity snapshot with bank buckets, factoring reserves/advances, 30-day AR/AP/settlement projection, and recent banking cadence.",
+    status: "real",
+  },
+  {
+    id: "settlement-summary",
+    name: "Settlement summary · deductions",
+    category: "financial",
+    description:
+      "Driver settlement rollup with gross/net totals, categorized deductions/chargebacks, and deduction-type aggregates.",
+    status: "real",
+  },
+  {
+    id: "customer-profitability",
+    name: "Customer profitability",
+    category: "financial",
+    description: "Load revenue versus attributed driver-bill cost per customer with A/R aging context and margin flags.",
+    status: "real",
+  },
+  {
     id: "profit-per-truck",
     name: "Profit per truck · MTD",
     category: "financial",
-    description: "Revenue minus maintenance work-order costs by unit (v1).",
+    description:
+      "Month view compares revenue to WO maintenance costs; date-range mode subtracts driver pay, fuel (transactions), and maintenance for net truck profit.",
     status: "real",
   },
   {
