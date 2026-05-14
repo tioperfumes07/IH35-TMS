@@ -44,9 +44,12 @@ export function AssetProfilePage() {
   }, [unit?.id, unit?.qbo_vendor_id, unit?.qbo_class_id]);
 
   useEffect(() => {
-    if (searchParams.get("tab") !== "financial") return;
-    queueMicrotask(() => document.getElementById("asset-financial")?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  }, [searchParams, unitQuery.isSuccess]);
+    if (!unit) return;
+    const tab = searchParams.get("tab");
+    const anchor = tab === "maintenance" ? "asset-maintenance" : tab === "financial" ? "asset-financial" : null;
+    if (!anchor) return;
+    queueMicrotask(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }, [searchParams, unit?.id]);
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -67,7 +70,7 @@ export function AssetProfilePage() {
       {unitQuery.isError ? <ListErrorBanner onRetry={() => void unitQuery.refetch()} /> : null}
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
-      <div id="asset-financial" className="max-w-2xl space-y-3 rounded border border-gray-200 bg-white p-4">
+      <div id="asset-financial" className="max-w-2xl scroll-mt-4 space-y-3 rounded border border-gray-200 bg-white p-4">
         <div className="text-xs font-semibold text-gray-600">QBO mapping</div>
         <label className="block text-xs text-gray-600">
           QBO vendor (ownership / lease entity)
@@ -99,6 +102,9 @@ export function AssetProfilePage() {
         <Button size="sm" disabled={!id || !companyId} loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
           Save
         </Button>
+      </div>
+      <div id="asset-maintenance" className="scroll-mt-4 rounded border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+        Maintenance history and WO drill-down continue to live in the maintenance console; this anchor supports deep links from Block W reports.
       </div>
     </div>
   );

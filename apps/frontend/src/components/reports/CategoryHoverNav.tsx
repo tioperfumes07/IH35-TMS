@@ -13,6 +13,7 @@ const CATEGORY_LABELS: Array<{ id: ReportCategory; label: string }> = [
   { id: "fuel", label: "Fuel" },
   { id: "safety", label: "Safety" },
   { id: "compliance", label: "Compliance" },
+  { id: "automation", label: "Automation" },
   { id: "saved", label: "Saved" },
 ];
 
@@ -22,6 +23,9 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
     { id: "settlement-summary", label: "Settlement summary", hint: "Driver pay + deductions" },
     { id: "customer-profitability", label: "Customer profitability", hint: "Revenue, cost, margin" },
     { id: "profit-per-truck", label: "Profit per truck", hint: "Unit economics" },
+    { id: "fuel-reconciliation", label: "Fuel reconciliation", hint: "Card vs WO (Block V)" },
+    { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
+    { id: "scheduled-reports", label: "Scheduled reports", hint: "Email automation" },
     { id: "profit-truck-mtd", label: "Profit per truck · MTD", hint: "Margin by unit" },
     { id: "driver-settlement", label: "Driver settlement summary", hint: "Current cycle" },
     { id: "ar-aging", label: "A/R aging", hint: "Current / 30 / 60 / 90+" },
@@ -31,6 +35,8 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
     { id: "profit-per-truck", label: "Profit per truck", hint: "Revenue & cost by unit" },
     { id: "dispatch-board", label: "Dispatch board health", hint: "Live load movement" },
     { id: "detention-claims", label: "Detention claims", hint: "Billed vs collected" },
+    { id: "fuel-reconciliation", label: "Fuel reconciliation", hint: "Card vs WO" },
+    { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit", hint: "WO spend by unit" },
   ],
   financial: [
     { id: "cash-flow-overview", label: "Cash flow overview", hint: "Operating + DIP + payroll buckets" },
@@ -46,10 +52,11 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
     { id: "driver-settlement", label: "Driver settlement summary" },
   ],
   fleet: [
-    { id: "maint-cost-unit", label: "Maintenance cost per unit" },
+    { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
     { id: "fleet-utilization", label: "Fleet utilization", hint: "Idle vs loaded time" },
   ],
   fuel: [
+    { id: "fuel-reconciliation", label: "Fuel reconciliation", hint: "Card vs WO" },
     { id: "fuel-savings", label: "Fuel savings · rec vs actual" },
     { id: "fuel-price-variance", label: "Fuel price variance" },
   ],
@@ -61,6 +68,7 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
     { id: "ifta-quarterly", label: "IFTA quarterly prep" },
     { id: "dot-audit-pack", label: "DOT audit packet" },
   ],
+  automation: [{ id: "scheduled-reports", label: "Scheduled reports", hint: "Cron + email queue" }],
   saved: [
     { id: "saved-owner-pack", label: "Owner weekly pack" },
     { id: "saved-quarter-close", label: "Quarter close package" },

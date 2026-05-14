@@ -1,6 +1,16 @@
-import { apiRequest } from "./client";
+import { ApiError, apiRequest } from "./client";
 
-export type ReportCategory = "all" | "operations" | "financial" | "drivers" | "fleet" | "fuel" | "safety" | "compliance" | "saved";
+export type ReportCategory =
+  | "all"
+  | "operations"
+  | "financial"
+  | "drivers"
+  | "fleet"
+  | "fuel"
+  | "safety"
+  | "compliance"
+  | "automation"
+  | "saved";
 
 export type FrequentlyRunReport = {
   id: string;
@@ -586,4 +596,120 @@ export async function getProfitPerTruck(params: {
   return apiRequest<ProfitPerTruckResponse>(
     withCompany(`/api/v1/reports/profit-per-truck?${q.toString()}`, params.operating_company_id),
   );
+}
+
+// —— Block V / W (P6-T11199 / P6-T11200): fuel reconciliation + maintenance cost per unit
+
+export type FuelReconciliationFlag = "over_reported" | "under_reported" | "unmatched";
+
+export type FuelReconciliationTruckRow = {
+  unit_id: string;
+  unit_number: string;
+  card_amount_cents: number;
+  wo_amount_cents: number;
+  delta_cents: number;
+  matched_pct: number;
+  flags: FuelReconciliationFlag[];
+};
+
+export type FuelReconciliationUnmatchedCard = {
+  id: string;
+  txn_date: string;
+  amount_cents: number;
+  merchant: string;
+};
+
+export type FuelReconciliationUnmatchedWo = {
+  wo_id: string;
+  wo_number: string;
+  wo_date: string;
+  amount_cents: number;
+  unit_number: string;
+};
+
+export type FuelReconciliationResponse = {
+  period: { start: string; end: string };
+  totals: {
+    card_amount_cents: number;
+    wo_amount_cents: number;
+    delta_cents: number;
+    match_rate_pct: number;
+    unmatched_count: number;
+  };
+  by_truck: FuelReconciliationTruckRow[];
+  unmatched_card_transactions: FuelReconciliationUnmatchedCard[];
+  unmatched_wo_entries: FuelReconciliationUnmatchedWo[];
+};
+
+export async function getFuelReconciliation(params: {
+  operating_company_id: string;
+  period_start: string;
+  period_end: string;
+}): Promise<FuelReconciliationResponse> {
+  const q = new URLSearchParams({
+    period_start: params.period_start,
+    period_end: params.period_end,
+  });
+  return apiRequest<FuelReconciliationResponse>(
+    withCompany(`/api/v1/reports/fuel-reconciliation?${q.toString()}`, params.operating_company_id),
+  );
+}
+
+export type MaintenanceCostFlag = "high_cost" | "low_cost" | "inspection_due" | "reliable";
+
+export type MaintenanceCostCategorySlice = { category: string; amount_cents: number };
+
+export type MaintenanceCostUnitRow = {
+  unit_id: string;
+  unit_number: string;
+  wo_count: number;
+  parts_cents: number;
+  labor_cents: number;
+  outsourced_cents: number;
+  total_cents: number;
+  miles: number;
+  cost_per_mile_cents: number;
+  flags: MaintenanceCostFlag[];
+};
+
+export type MaintenanceCostPerUnitResponse = {
+  period: { start: string; end: string };
+  totals: {
+    wo_count: number;
+    parts_cents: number;
+    labor_cents: number;
+    outsourced_cents: number;
+    grand_total_cents: number;
+    truck_count: number;
+  };
+  by_truck: MaintenanceCostUnitRow[];
+  by_category: MaintenanceCostCategorySlice[];
+};
+
+/** Prefers Block V date-range API; falls back to legacy `period=YYYY-MM` when newer contract is not deployed. */
+export async function getMaintenanceCostPerUnit(params: {
+  operating_company_id: string;
+  period_start: string;
+  period_end: string;
+}): Promise<MaintenanceCostPerUnitResponse> {
+  const q = new URLSearchParams({
+    period_start: params.period_start,
+    period_end: params.period_end,
+  });
+  try {
+    return await apiRequest<MaintenanceCostPerUnitResponse>(
+      withCompany(`/api/v1/reports/maintenance-cost-per-unit?${q.toString()}`, params.operating_company_id),
+    );
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 400)) {
+      const month = params.period_start.slice(0, 7);
+      return apiRequest<MaintenanceCostPerUnitResponse>(
+        withCompany(
+          `/api/v1/reports/maintenance-cost-per-unit?period=${encodeURIComponent(month)}`,
+          params.operating_company_id,
+        ),
+      );
+    }
+    throw e;
+  }
 }

@@ -4,14 +4,17 @@ import { REPORT_CATEGORY_FLYOUT_ITEMS } from "../../components/reports/CategoryH
 import { phase6ReportHref } from "../../components/reports/phase6ReportLinks";
 import { HoverDropdownNav, type NavChild, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
 
-const CATEGORY_ORDER: ReportCategory[] = ["all", "operations", "financial", "drivers", "fleet", "fuel", "safety", "compliance", "saved"];
+const CATEGORY_ORDER: ReportCategory[] = ["all", "operations", "financial", "drivers", "fleet", "fuel", "safety", "compliance", "automation", "saved"];
 
-/** Phase 6 report ids — hrefs from phase6ReportLinks (Block U, P6-T11198). */
+/** Phase 6 report ids — hrefs from phase6ReportLinks (Block U + W). */
 const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
   { id: "cash-flow-overview", label: "Cash flow overview" },
   { id: "settlement-summary", label: "Settlement summary" },
   { id: "customer-profitability", label: "Customer profitability" },
   { id: "profit-per-truck", label: "Profit per truck" },
+  { id: "fuel-reconciliation", label: "Fuel reconciliation" },
+  { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
+  { id: "scheduled-reports", label: "Scheduled reports" },
 ];
 
 function flattenReportRunLinks(): NavChild[] {
@@ -52,7 +55,10 @@ export function reportsSubNavActiveHref(pathname: string): string {
     pathname === "/reports/cash-flow-overview" ||
     pathname === "/reports/settlement-summary" ||
     pathname === "/reports/customer-profitability" ||
-    pathname === "/reports/profit-per-truck"
+    pathname === "/reports/profit-per-truck" ||
+    pathname === "/reports/fuel-reconciliation" ||
+    pathname === "/reports/maintenance-cost-per-unit" ||
+    pathname === "/reports/scheduled"
   ) {
     return pathname;
   }
