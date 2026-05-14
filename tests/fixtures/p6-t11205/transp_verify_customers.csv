@@ -1,0 +1,2 @@
+customer_code,customer_name,billing_email,billing_phone,mc_number,dot_number,billing_address_line1,billing_city,billing_state,billing_postal_code
+P6CUSTTP1,P6 Verify Customer Gamma,p6cust-g@example.invalid,555-P6-2003,,,300 Test Ln,Houston,TX,77002

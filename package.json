@@ -32,6 +32,7 @@
     "db:seed:test-fixtures": "node scripts/db-seed-test-fixtures.mjs",
     "db:seed:test-fixtures:cleanup": "node scripts/db-seed-test-fixtures.mjs --cleanup",
     "seed:from-csv": "tsx apps/backend/scripts/seed-from-csv.ts",
+    "seed:real-data": "tsx scripts/seed-real-data.ts",
     "e2e:load-lifecycle": "node scripts/e2e-load-lifecycle-test.mjs",
     "e2e:forensic-import": "node scripts/e2e-forensic-import-test.mjs",
     "cutover:smoke-test": "node scripts/cutover-smoke-test.mjs",

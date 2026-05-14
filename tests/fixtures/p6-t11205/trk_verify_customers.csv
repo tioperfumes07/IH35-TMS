@@ -1,0 +1,3 @@
+customer_code,customer_name,billing_email,billing_phone,mc_number,dot_number,billing_address_line1,billing_city,billing_state,billing_postal_code
+P6CUSTTK1,P6 Verify Customer Alpha,p6cust-a@example.invalid,555-P6-2001,,,100 Test Ln,Austin,TX,78701
+P6CUSTTK2,P6 Verify Customer Beta,p6cust-b@example.invalid,555-P6-2002,,,200 Test Ln,Dallas,TX,75201

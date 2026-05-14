@@ -1,0 +1,3 @@
+asset_kind,unit_number,vin,year,make,model,equipment_type,license_plate,license_state,notes
+Truck,P6-TRSP-T1,P6TRSP1VIN0TEST0001,2023,VOLVO,VNL,,P6TPT1,OK,P6-T11205 transp truck
+Trailer,P6-TRSP-TR1,P6TRSP2VIN0TEST0001,2022,WABASH,DryVan,DryVan,P6TTPL1,AR,P6-T11205 transp van
