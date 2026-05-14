@@ -2,7 +2,7 @@ import { ChevronDown, Menu } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getQboConnectionStatus } from "../api/forensic";
+import { getQboConnectionStatus, getQboAuthorizeStartUrl } from "../api/forensic";
 import { getQboSyncHealth } from "../api/qbo-integration";
 import { getSamsaraHealth } from "../api/samsara";
 import { signOut } from "../api/identity";
@@ -43,8 +43,9 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const emailLabel = auth.email ?? "Phone login";
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const companyLabel = selectedCompany?.short_name?.trim() || selectedCompany?.legal_name?.trim() || "";
   const office = auth.role !== "Driver";
   const prevQboSyncStatus = useRef<string | null>(null);
 
@@ -92,23 +93,24 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     const row = qboSyncHealthQuery.data;
     if (!row) return null;
     const status = row.status;
+    const companySuffix = companyLabel ? ` · ${companyLabel}` : "";
     let dot: "gray" | "green" | "yellow" | "red" = "gray";
-    let label = "QBO sync";
+    let label = `QBO sync${companySuffix}`;
     if (status === "healthy") {
       dot = "green";
-      label = `QBO sync · OK${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
+      label = `QBO sync · OK${companySuffix}${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
     } else if (status === "syncing") {
       dot = "yellow";
-      label = `QBO sync · Running${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
+      label = `QBO sync · Running${companySuffix}${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
     } else if (status === "stale") {
       dot = "yellow";
-      label = "QBO sync · Stale";
+      label = `QBO sync · Stale${companySuffix}`;
     } else if (status === "error") {
       dot = "red";
-      label = `QBO sync · Error${row.error_count ? ` (${row.error_count})` : ""}`;
+      label = `QBO sync · Error${companySuffix}${row.error_count ? ` (${row.error_count})` : ""}`;
     }
-    return { dot, label, status };
-  }, [qboSyncHealthQuery.data, qboSyncHealthQuery.isError]);
+    return { dot, label, status, needsReconnect: Boolean(row.needs_reconnect), reconnectReason: row.reconnect_reason ?? null };
+  }, [qboSyncHealthQuery.data, qboSyncHealthQuery.isError, companyLabel]);
 
   const muted = colors.sidebarTextMuted;
   const active = colors.sidebarTextActive;
@@ -181,6 +183,17 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                 <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboSyncPill.dot)}`} />
                 {qboSyncPill.label}
               </button>
+              {qboSyncPill.needsReconnect && companyId ? (
+                <button
+                  type="button"
+                  className="ml-1 rounded-full border border-amber-400/60 px-2 py-0.5 text-[11px] font-semibold text-amber-100 hover:bg-amber-400/10"
+                  onClick={() => {
+                    window.location.href = getQboAuthorizeStartUrl(companyId);
+                  }}
+                >
+                  Reconnect QuickBooks
+                </button>
+              ) : null}
             </>
           ) : null}
         </div>
