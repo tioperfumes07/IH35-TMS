@@ -414,19 +414,19 @@ try {
 
   const userIds = await runWithBypass(client, async () => {
     const owner = await client.query(
-      `INSERT INTO identity.users (email, google_user_id, role) VALUES ($1, $2, 'Owner') RETURNING id`,
+      `INSERT INTO identity.users (email, google_user_id, role, preferred_language) VALUES ($1, $2, 'Owner', 'en') RETURNING id`,
       [`mdata-owner-${suffix}@example.com`, `mdata-owner-${suffix}`]
     );
     const manager = await client.query(
-      `INSERT INTO identity.users (email, google_user_id, role) VALUES ($1, $2, 'Manager') RETURNING id`,
+      `INSERT INTO identity.users (email, google_user_id, role, preferred_language) VALUES ($1, $2, 'Manager', 'en') RETURNING id`,
       [`mdata-manager-${suffix}@example.com`, `mdata-manager-${suffix}`]
     );
     const dispatcher = await client.query(
-      `INSERT INTO identity.users (email, google_user_id, role) VALUES ($1, $2, 'Dispatcher') RETURNING id`,
+      `INSERT INTO identity.users (email, google_user_id, role, preferred_language) VALUES ($1, $2, 'Dispatcher', 'en') RETURNING id`,
       [`mdata-dispatcher-${suffix}@example.com`, `mdata-dispatcher-${suffix}`]
     );
     const driver = await client.query(
-      `INSERT INTO identity.users (email, google_user_id, role) VALUES ($1, $2, 'Driver') RETURNING id`,
+      `INSERT INTO identity.users (email, google_user_id, role, preferred_language) VALUES ($1, $2, 'Driver', 'en') RETURNING id`,
       [`mdata-driver-${suffix}@example.com`, `mdata-driver-${suffix}`]
     );
     return {

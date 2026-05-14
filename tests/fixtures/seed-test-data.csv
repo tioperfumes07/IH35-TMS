@@ -4,6 +4,6 @@ driver,4,tests/fixtures/p6-t11205/trk_verify_drivers.csv|tests/fixtures/p6-t1120
 customer,3,tests/fixtures/p6-t11205/trk_verify_customers.csv|tests/fixtures/p6-t11205/transp_verify_customers.csv,seed_from_csv,Two TRK + one TRANSP customer codes (P6CUST*).
 vendor,3,tests/fixtures/p6-t11205/trk_verify_vendors.csv|tests/fixtures/p6-t11205/transp_verify_vendors.csv,seed_from_csv,Two TRK + one TRANSP vendors (P6VN*).
 unit,5,tests/fixtures/p6-t11205/trk_verify_assets.csv|tests/fixtures/p6-t11205/transp_verify_assets.csv,seed_from_csv,Trucks insert into mdata.units; trailers into mdata.equipment (see loader).
-load,10,,not_implemented,No CSV loader for loads in current tree — file P7-FIX-SEED-001.
-bank_account,4,,not_implemented,No CSV loader for bank accounts — file P7-FIX-SEED-002.
-bank_transaction,50,,not_implemented,No CSV loader for Plaid/bank transactions — file P7-FIX-SEED-003.
+load,10,tests/fixtures/p6-t11205/loads.csv,seed_from_csv,P7-FIX-SEED-LOADER-001 — mixed TRK/TRANSP loads + pickup/delivery stops when timestamps/cities are present.
+bank_account,4,tests/fixtures/p6-t11205/bank-accounts.csv,seed_from_csv,P7-FIX-SEED-LOADER-001 — Plaid-style ids + balances for reconciliation drills.
+bank_transaction,50,tests/fixtures/p6-t11205/bank-transactions.csv,seed_from_csv,P7-FIX-SEED-LOADER-001 — pending_categorization rows tied to sample accounts and optional load matches.
