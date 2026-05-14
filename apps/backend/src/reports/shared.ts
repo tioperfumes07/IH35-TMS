@@ -76,10 +76,19 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     status: "real",
   },
   {
+    id: "fuel-reconciliation",
+    name: "Fuel reconciliation · cards vs work orders",
+    category: "fuel",
+    description:
+      "Bank fuel-card totals versus work-order fuel costs by truck with variance flags and unmatched receipts.",
+    status: "real",
+  },
+  {
     id: "maint-cost-unit",
     name: "Maintenance cost per unit",
     category: "fleet",
-    description: "Work-order costs grouped by unit over period.",
+    description:
+      "Work-order maintenance totals by truck over a date range with parts/labor/outsourced splits, per-mile cost, category rollup, and fleet reliability flags.",
     status: "real",
   },
   {

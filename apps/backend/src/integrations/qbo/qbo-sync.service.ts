@@ -8,7 +8,15 @@ import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from
 import { pushJournalEntryToQuickBooksFromQueue } from "../../accounting/journal-entry-qbo-push.service.js";
 import { pushBillPaymentToQuickBooksFromQueue } from "../../qbo/bill-payment-mapper.service.js";
 
-type QueueEntityType = "bank_transaction" | "bill" | "bill_payment" | "expense" | "invoice" | "journal_entry" | "settlement" | "transfer";
+export type QueueEntityType =
+  | "bank_transaction"
+  | "bill"
+  | "bill_payment"
+  | "expense"
+  | "invoice"
+  | "journal_entry"
+  | "settlement"
+  | "transfer";
 type QueueStatus = "pending" | "in_flight" | "synced" | "failed" | "blocked";
 
 type QueueRow = {
