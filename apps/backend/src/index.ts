@@ -50,6 +50,8 @@ import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approv
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
+import { registerScheduledReportsRoutes } from "./scheduled-reports/scheduled-reports.routes.js";
+import { initializeScheduledReportsWorker, stopScheduledReportsWorker } from "./scheduled-reports/scheduled-reports-worker.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
 import { registerSafetyRoutes } from "./safety/safety.routes.js";
@@ -121,6 +123,8 @@ import { initializeEmailCron } from "./email/cron.js";
 import { initializeQboOutboxDispatcher, stopQboOutboxDispatcher } from "./integrations/qbo/outbox-dispatcher.js";
 import { initializeQboSyncWorker, stopQboSyncWorker } from "./integrations/qbo/qbo-sync-worker.js";
 import { registerQboSyncAlertsRoutes } from "./qbo/sync-alerts.routes.js";
+import { registerQboSyncActionsRoutes } from "./qbo/sync-actions.routes.js";
+import { registerQboSyncRunsListRoutes } from "./qbo/sync-runs-list.routes.js";
 import { registerQboUnlinkedEntitiesRoutes } from "./qbo/unlinked-entities.routes.js";
 import { registerQboBulkLinkRoutes } from "./qbo/bulk-link.routes.js";
 import { registerQboSyncHealthRoutes } from "./qbo/sync-health.routes.js";
@@ -175,6 +179,7 @@ async function shutdown(signal: string) {
     app.log.error({ err: error }, "Failed to stop outbox processor cleanly");
   }
   try {
+    stopScheduledReportsWorker();
     stopQboSyncWorker();
     stopQboOutboxDispatcher();
   } catch (error) {
@@ -309,6 +314,7 @@ async function main() {
   await registerAbandonmentRoutes(app);
   await registerHomeRoutes(app);
   await registerReportsRoutes(app);
+  await registerScheduledReportsRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);
@@ -414,6 +420,13 @@ async function main() {
     app.log.info("[STARTUP] email-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] email-cron failed");
+  }
+
+  try {
+    initializeScheduledReportsWorker(app);
+    app.log.info("[STARTUP] scheduled-reports-worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] scheduled-reports-worker failed");
   }
 
   try {

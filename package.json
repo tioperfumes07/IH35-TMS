@@ -103,6 +103,7 @@
     "@types/web-push": "^3.6.4",
     "arctic": "^2.3.4",
     "bullmq": "^5.76.5",
+    "cron-parser": "^5.5.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "eta": "^4.6.0",
@@ -111,6 +112,7 @@
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "lucia": "^3.2.2",
+    "luxon": "^3.7.2",
     "mammoth": "^1.12.0",
     "node-cron": "^4.2.1",
     "oslo": "^1.2.1",
@@ -126,6 +128,7 @@
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/luxon": "^3.7.1",
     "@types/node": "^22.0.0",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.2.0",
