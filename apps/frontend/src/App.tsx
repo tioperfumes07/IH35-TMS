@@ -16,7 +16,6 @@ import { CashAdvanceRequestsPage } from "./pages/driver-finance/CashAdvanceReque
 import { OwnerApprovalPortalPage } from "./pages/driver-finance/OwnerApprovalPortalPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
-import { BankTxCategorizationPage } from "./pages/banking/BankTxCategorizationPage";
 import { TransfersListPage } from "./pages/banking/TransfersListPage";
 import { ReconciliationWorkspacePage } from "./pages/banking/ReconciliationWorkspace";
 import { CategorizationRulesPage } from "./pages/banking/CategorizationRulesPage";
@@ -99,7 +98,7 @@ import { VendorBillCreatePage } from "./pages/accounting/VendorBillCreatePage";
 import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { BillsPage } from "./pages/accounting/BillsPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
-import { LaunchReadinessPage } from "./pages/admin/LaunchReadinessPage";
+import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
 import { ChartOfAccountsSeedsListPage } from "./pages/lists/accounting/ChartOfAccountsSeedsListPage";
@@ -204,6 +203,21 @@ function OwnerAdminRoute({ children }: { children: ReactNode }) {
   }
   const role = String(auth.user.role ?? "");
   if (role !== "Owner" && role !== "Administrator") {
+    return <Navigate to="/home" replace />;
+  }
+  return <Shell auth={auth.user}>{children}</Shell>;
+}
+
+function OwnerSuperAdminRoute({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  if (auth.isLoading) {
+    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Checking session...</div>;
+  }
+  if (!auth.user || auth.isUnauthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  const role = String(auth.user.role ?? "");
+  if (role !== "Owner" && role !== "SuperAdmin") {
     return <Navigate to="/home" replace />;
   }
   return <Shell auth={auth.user}>{children}</Shell>;
@@ -338,14 +352,6 @@ export default function App() {
           element={
             <ProtectedRoute>
               <BankingHomePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/banking/categorize"
-          element={
-            <ProtectedRoute>
-              <BankTxCategorizationPage />
             </ProtectedRoute>
           }
         />
@@ -1204,19 +1210,19 @@ export default function App() {
           }
         />
         <Route
-          path="/admin/launch-readiness"
-          element={
-            <OwnerAdminRoute>
-              <LaunchReadinessPage />
-            </OwnerAdminRoute>
-          }
-        />
-        <Route
           path="/admin/forensic-review"
           element={
             <OwnerAdminRoute>
               <ForensicReviewPage />
             </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/activity"
+          element={
+            <OwnerSuperAdminRoute>
+              <ActivityLogPage />
+            </OwnerSuperAdminRoute>
           }
         />
         <Route

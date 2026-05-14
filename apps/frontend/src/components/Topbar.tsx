@@ -105,7 +105,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       label = `QBO sync · Running${companySuffix}${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
     } else if (status === "stale") {
       dot = "yellow";
-      label = `QBO sync · Stale${companySuffix}`;
+      label = `QBO sync · Stale${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
     } else if (status === "error") {
       dot = "red";
       label = `QBO sync · Error${companySuffix}${row.error_count ? ` (${row.error_count})` : ""}`;
