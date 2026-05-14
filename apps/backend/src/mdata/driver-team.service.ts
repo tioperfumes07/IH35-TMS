@@ -35,7 +35,7 @@ function roundMoneyCents(value: number): number {
   return Math.max(0, Math.round(value));
 }
 
-function normalizeShares(splitMethod: TeamSplitMethod, primaryPct?: number, coPct?: number) {
+export function normalizeShares(splitMethod: TeamSplitMethod, primaryPct?: number, coPct?: number) {
   if (splitMethod === "50_50") return { primary: 50, co: 50 };
   if (splitMethod === "60_40") return { primary: 60, co: 40 };
   if (splitMethod === "70_30") return { primary: 70, co: 30 };

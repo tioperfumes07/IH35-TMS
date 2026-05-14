@@ -98,6 +98,10 @@ export function SettlementDetailPage() {
   const driverId = settlement.driver_id ? String(settlement.driver_id) : null;
   const debt = useLiveDebt(driverId, companyId || null);
   const lines = (settlement.lines as Array<Record<string, unknown>> | undefined) ?? [];
+  const hasEngineTeamSplitLines = useMemo(
+    () => lines.some((line) => ["team_split_primary", "team_split_secondary"].includes(String(line.line_type))),
+    [lines]
+  );
   const settlementLoadId =
     (typeof settlement.load_id === "string" ? settlement.load_id : null) ??
     (typeof (lines[0] as Record<string, unknown> | undefined)?.load_id === "string"
@@ -180,6 +184,11 @@ export function SettlementDetailPage() {
           </Button>
         }
       />
+      {hasEngineTeamSplitLines ? (
+        <div className="mb-3 inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-900 ring-1 ring-indigo-100">
+          Team split lines detected (primary/co-driver)
+        </div>
+      ) : null}
       <SettlementHeader
         driverName={String(settlement.driver_full_name ?? "-")}
         driverDisplayId={String(settlement.driver_display_id ?? "-")}

@@ -1,0 +1,9 @@
+<p>Hi <%= it.driverName %>,</p>
+<p>
+  Your settlement dispute for <strong><%= it.settlementLabel %></strong> was
+  <strong><%= it.decision %></strong>.
+</p>
+<p><%= it.resolutionText %></p>
+<p style="margin-top:16px;color:#6b7280;font-size:12px;line-height:1.4;">
+  This message was sent automatically by IH35 payroll workflows. If you believe this is an error, reply to your dispatcher.
+</p>

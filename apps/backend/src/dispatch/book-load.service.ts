@@ -1,6 +1,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
+import { effectiveTeamPercentsFromRow, splitTotalCents } from "../driver-finance/settlement-engine.js";
 import {
   claimReservation,
   consumeLoadNumberReservation,
@@ -167,7 +168,7 @@ export async function createDriverBillArtifacts(
   stops: BookLoadStop[]
 ) {
   const hasDriverBills = await relationExists(client, "driver_finance.driver_bills");
-  if (!hasDriverBills || !input.assigned_primary_driver_id) return;
+  if (!hasDriverBills) return;
 
   const extraPickupCount = stops.filter((s) => s.stop_type === "pickup").length > 1 ? stops.filter((s) => s.stop_type === "pickup").length - 1 : 0;
   const extraDropCount = stops.filter((s) => s.stop_type === "delivery").length > 1 ? stops.filter((s) => s.stop_type === "delivery").length - 1 : 0;
@@ -193,6 +194,120 @@ export async function createDriverBillArtifacts(
     milesBasis = milesPrac;
     milesBasisType = "practical";
   }
+
+  const customerLumperCents = stops.reduce((sum, stop) => {
+    if (!stop.lumper_required) return sum;
+    return ["shipper", "broker", "receiver"].includes(String(stop.lumper_paid_by ?? "")) ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
+  }, 0);
+  const companyLumperCents = stops.reduce((sum, stop) => {
+    if (!stop.lumper_required) return sum;
+    return stop.lumper_paid_by === "unknown" ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
+  }, 0);
+
+  if (input.team_id) {
+    const teamRes = await client.query<{
+      primary_driver_id: string;
+      secondary_driver_id: string;
+      split_method: string;
+      primary_share_pct: string | number | null;
+      co_share_pct: string | number | null;
+      is_active: boolean;
+    }>(
+      `
+        SELECT primary_driver_id, secondary_driver_id, split_method::text, primary_share_pct, co_share_pct, is_active
+        FROM mdata.driver_teams
+        WHERE id = $1
+          AND operating_company_id = $2
+        LIMIT 1
+      `,
+      [input.team_id, input.operating_company_id]
+    );
+    const teamRow = teamRes.rows[0];
+    if (!teamRow || teamRow.is_active === false) return;
+
+    const pcts = effectiveTeamPercentsFromRow(teamRow);
+    const split = splitTotalCents(totalBillCents, pcts.primaryPct, pcts.secondaryPct);
+
+    const primaryDriverId = String(teamRow.primary_driver_id);
+    const secondaryDriverId = String(teamRow.secondary_driver_id);
+
+    let firstBillId: string | null = null;
+
+    const inserts: Array<{ driverId: string; partnerId: string; cents: number; suffix: string }> = [
+      { driverId: primaryDriverId, partnerId: secondaryDriverId, cents: split.primaryCents, suffix: "-P" },
+      { driverId: secondaryDriverId, partnerId: primaryDriverId, cents: split.secondaryCents, suffix: "-S" },
+    ];
+
+    for (const row of inserts) {
+      if (row.cents <= 0) continue;
+      const ratePerMileCents = milesBasis && milesBasis > 0 ? Math.round(row.cents / milesBasis) : null;
+      const billRes = await client.query<{ id: string }>(
+        `
+          INSERT INTO driver_finance.driver_bills (
+            operating_company_id,
+            load_id,
+            load_number,
+            bill_number,
+            driver_id,
+            team_driver_id,
+            gross_amount_cents,
+            miles_basis,
+            miles_basis_type,
+            rate_per_mile_cents,
+            status,
+            notes,
+            created_by_user_id
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11,$12)
+          RETURNING id
+        `,
+        [
+          input.operating_company_id,
+          load.id,
+          resolvedLoadNumber,
+          `${billNumber}${row.suffix}`,
+          row.driverId,
+          row.partnerId,
+          row.cents,
+          milesBasis,
+          milesBasisType,
+          ratePerMileCents,
+          `Auto-created from load ${resolvedLoadNumber} (team split ${row.suffix})`,
+          input.requestingUserUuid,
+        ]
+      );
+      const billId = billRes.rows[0]?.id ? String(billRes.rows[0].id) : "";
+      if (billId && !firstBillId) firstBillId = billId;
+    }
+
+    if (!firstBillId) return;
+
+    await appendCrudAudit(
+      client,
+      input.requestingUserUuid,
+      "dispatch.load.driver_bill_created",
+      {
+        load_uuid: load.id,
+        load_number: resolvedLoadNumber,
+        bill_id: firstBillId,
+        bill_display_id: billNumber,
+        team_id: input.team_id,
+        split: { primary_cents: split.primaryCents, secondary_cents: split.secondaryCents },
+        extra_pickups_count: extraPickupCount,
+        extra_drops_count: extraDropCount,
+        tarp_pay_cents: tarpPayCents,
+        lumper_driver_advance_cents: driverLumperCents,
+        lumper_customer_passthrough_cents: customerLumperCents,
+        lumper_company_expense_cents: companyLumperCents,
+      },
+      "info",
+      "P6-D2"
+    );
+    return;
+  }
+
+  if (!input.assigned_primary_driver_id) return;
+
   const ratePerMileCents = milesBasis && milesBasis > 0 ? Math.round(totalBillCents / milesBasis) : null;
 
   const billRes = await client.query<{ id: string }>(
@@ -221,7 +336,7 @@ export async function createDriverBillArtifacts(
       resolvedLoadNumber,
       billNumber,
       input.assigned_primary_driver_id,
-      input.team_id ? null : (input.assigned_secondary_driver_id ?? null),
+      input.assigned_secondary_driver_id ?? null,
       totalBillCents,
       milesBasis,
       milesBasisType,
@@ -232,15 +347,6 @@ export async function createDriverBillArtifacts(
   );
   const billId = billRes.rows[0]?.id;
   if (!billId) return;
-
-  const customerLumperCents = stops.reduce((sum, stop) => {
-    if (!stop.lumper_required) return sum;
-    return ["shipper", "broker", "receiver"].includes(String(stop.lumper_paid_by ?? "")) ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
-  }, 0);
-  const companyLumperCents = stops.reduce((sum, stop) => {
-    if (!stop.lumper_required) return sum;
-    return stop.lumper_paid_by === "unknown" ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
-  }, 0);
 
   await appendCrudAudit(
     client,
