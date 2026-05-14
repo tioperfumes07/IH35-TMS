@@ -336,3 +336,123 @@ export function distributeLoadInstructions(loadId: string, operatingCompanyId: s
 export function listDispatchCancellationReasons() {
   return apiRequest<{ reasons: Array<Record<string, unknown>> }>("/api/v1/dispatch/cancellation-reasons");
 }
+
+// --- P6-T11191 dispatch refinements ---
+
+export type AvailableDriverRow = {
+  driver_id: string;
+  display_name: string;
+  display_id: string | null;
+  hours_remaining_today: number;
+  hours_remaining_week: number;
+  distance_to_pickup_miles: number;
+  hos_safe: boolean;
+  is_in_violation: boolean;
+};
+
+export function getDispatchAvailableDrivers(params: {
+  operating_company_id: string;
+  load_id: string;
+  for_pickup_at?: string;
+}) {
+  const u = new URLSearchParams();
+  u.set("operating_company_id", params.operating_company_id);
+  u.set("load_id", params.load_id);
+  if (params.for_pickup_at) u.set("for_pickup_at", params.for_pickup_at);
+  return apiRequest<{ drivers: AvailableDriverRow[] }>(`/api/v1/dispatch/available-drivers?${u.toString()}`);
+}
+
+export type RefinedLoadStop = {
+  id: string;
+  load_id: string;
+  sequence_number: number;
+  stop_type: string;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  address_line1: string | null;
+  scheduled_arrival_at: string | null;
+  appointment_start_at: string | null;
+  appointment_end_at: string | null;
+  notes: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  signature_required: boolean;
+  photo_required: boolean;
+};
+
+export function getLoadStopsForDispatch(loadId: string, operatingCompanyId: string) {
+  return apiRequest<{ stops: RefinedLoadStop[] }>(
+    `/api/v1/loads/${encodeURIComponent(loadId)}/stops?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function replaceLoadStopsDispatch(
+  loadId: string,
+  body: {
+    operating_company_id: string;
+    stops: Array<{
+      sequence_number: number;
+      stop_type: string;
+      location_address?: string | null;
+      city?: string | null;
+      state?: string | null;
+      country?: string | null;
+      address_line1?: string | null;
+      latitude?: number | null;
+      longitude?: number | null;
+      window_start?: string | null;
+      window_end?: string | null;
+      notes?: string | null;
+      signature_required?: boolean;
+      photo_required?: boolean;
+    }>;
+  }
+) {
+  return apiRequest<{ ok: true; load_id: string }>(`/api/v1/loads/${encodeURIComponent(loadId)}/stops`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function postLoadReassign(
+  loadId: string,
+  body: { operating_company_id: string; new_driver_id: string; reason_code: string; notes?: string }
+) {
+  return apiRequest<{ ok: true; load_id: string }>(`/api/v1/loads/${encodeURIComponent(loadId)}/reassign`, {
+    method: "POST",
+    body,
+  });
+}
+
+export type DispatchLoadEta = {
+  driver_lat: number | null;
+  driver_lng: number | null;
+  distance_remaining_miles: number | null;
+  eta_at: string;
+  source: "samsara" | "manual" | "fallback";
+};
+
+export function getDispatchLoadEta(loadId: string, operatingCompanyId: string) {
+  return apiRequest<DispatchLoadEta>(
+    `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/eta?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export type LoadTemplateRow = {
+  id: string;
+  name: string;
+  template_json: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export function listLoadTemplates(operatingCompanyId: string) {
+  return apiRequest<{ templates: LoadTemplateRow[] }>(
+    `/api/v1/load-templates?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function createLoadTemplate(body: { operating_company_id: string; name: string; template_json: Record<string, unknown> }) {
+  return apiRequest<{ template: LoadTemplateRow }>(`/api/v1/load-templates`, { method: "POST", body });
+}

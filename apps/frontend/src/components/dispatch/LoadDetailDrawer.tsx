@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { updateLoad, useCancelLoad, useLoad, useLoadAudit } from "../../api/loads";
 import { createInvoiceFromLoad } from "../../api/accounting";
@@ -10,6 +10,9 @@ import { Button } from "../Button";
 import { DocumentsTab } from "../documents/DocumentsTab";
 import { CancelLoadModal } from "./CancelLoadModal";
 import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "./constants";
+import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
+import { MultiStopEditor } from "../../pages/dispatch/MultiStopEditor";
+import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail } from "../../pages/dispatch/LoadTemplateLibrary";
 import { AbandonmentReportModal } from "../../pages/loads/AbandonmentReportModal";
 
 type Props = {
@@ -24,9 +27,13 @@ type DrawerTab = (typeof tabs)[number];
 
 export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<DrawerTab>("Overview");
   const [editing, setEditing] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const [templateLibraryOpen, setTemplateLibraryOpen] = useState(false);
   const [abandonmentOpen, setAbandonmentOpen] = useState(false);
   const { pushToast } = useToast();
 
@@ -104,6 +111,19 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
 
                 {load.operating_company_id ? (
                   <div className="flex flex-wrap gap-2">
+                    {canEdit ? (
+                      <>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => setReassignOpen(true)}>
+                          Reassign driver
+                        </Button>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => setSaveTemplateOpen(true)}>
+                          Save as template
+                        </Button>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => setTemplateLibraryOpen(true)}>
+                          Template library
+                        </Button>
+                      </>
+                    ) : null}
                     <Button
                       type="button"
                       variant="secondary"
@@ -220,18 +240,30 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
           ) : null}
 
           {activeTab === "Stops" ? (
-            <div className="space-y-2">
-              {load?.stops?.map((stop) => (
-                <div key={stop.id} className="rounded border border-gray-200 p-3 text-sm">
-                  <div className="font-semibold text-gray-800">
-                    #{stop.sequence_number} · {stop.stop_type}
-                  </div>
-                  <div className="text-gray-600">{stop.city ?? "-"}, {stop.state ?? "-"} ({stop.country ?? "-"})</div>
-                  <div className="text-xs text-gray-500">Scheduled: {stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toLocaleString() : "-"}</div>
+            load ? (
+              canEdit ? (
+                <MultiStopEditor loadId={load.id} operatingCompanyId={load.operating_company_id} />
+              ) : (
+                <div className="space-y-2">
+                  {load?.stops?.map((stop) => (
+                    <div key={stop.id} className="rounded border border-gray-200 p-3 text-sm">
+                      <div className="font-semibold text-gray-800">
+                        #{stop.sequence_number} · {stop.stop_type}
+                      </div>
+                      <div className="text-gray-600">
+                        {stop.city ?? "-"}, {stop.state ?? "-"} ({stop.country ?? "-"})
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Scheduled: {stop.scheduled_arrival_at ? new Date(stop.scheduled_arrival_at).toLocaleString() : "-"}
+                      </div>
+                    </div>
+                  ))}
+                  {load && load.stops.length === 0 ? <div className="text-sm text-gray-500">No stops found.</div> : null}
                 </div>
-              ))}
-              {load && load.stops.length === 0 ? <div className="text-sm text-gray-500">No stops found.</div> : null}
-            </div>
+              )
+            ) : (
+              <div className="text-sm text-gray-500">Loading stops…</div>
+            )
           ) : null}
 
           {activeTab === "Documents" ? (
@@ -306,10 +338,33 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
             </div>
           ) : null}
           {activeTab === "Assignment History" ? (
-            <div className="space-y-2">
-              <pre className="overflow-x-auto rounded bg-gray-50 p-2 text-xs text-gray-700">
-                {JSON.stringify(assignmentHistoryQuery.data?.rows ?? [], null, 2)}
-              </pre>
+            <div className="space-y-3">
+              {assignmentHistoryQuery.isLoading ? <div className="text-sm text-gray-500">Loading assignment history…</div> : null}
+              {(assignmentHistoryQuery.data?.rows ?? []).map((row) => {
+                const r = row as Record<string, unknown>;
+                const id = String(r.id ?? "");
+                const at = r.assigned_at ? new Date(String(r.assigned_at)).toLocaleString() : "";
+                const method = String(r.assignment_method ?? "");
+                const reason = r.reason_code != null ? String(r.reason_code) : "";
+                const notes = r.notes != null ? String(r.notes) : "";
+                const prev = r.previous_driver_id != null ? String(r.previous_driver_id).slice(0, 8) : "—";
+                const next = r.new_driver_id != null ? String(r.new_driver_id).slice(0, 8) : "—";
+                return (
+                  <div key={id || at + method} className="relative border-l-2 border-blue-200 pl-3">
+                    <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-blue-500" />
+                    <div className="text-xs text-gray-500">{at}</div>
+                    <div className="text-sm font-semibold text-gray-800">{method.replace(/_/g, " ")}</div>
+                    <div className="text-xs text-gray-600">
+                      Driver {prev} → {next}
+                    </div>
+                    {reason ? <div className="mt-1 text-xs text-gray-700">Reason: {reason}</div> : null}
+                    {notes ? <div className="mt-1 text-xs text-gray-600">Notes: {notes}</div> : null}
+                  </div>
+                );
+              })}
+              {!assignmentHistoryQuery.isLoading && (assignmentHistoryQuery.data?.rows ?? []).length === 0 ? (
+                <div className="text-sm text-gray-500">No assignment events yet.</div>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -340,6 +395,47 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
           </div>
         </footer>
       </aside>
+
+      {load ? (
+        <LoadReassignModal
+          open={reassignOpen}
+          onClose={() => {
+            setReassignOpen(false);
+            void loadQuery.refetch();
+            void assignmentHistoryQuery.refetch();
+          }}
+          loadId={load.id}
+          operatingCompanyId={load.operating_company_id}
+          loadNumber={load.load_number}
+        />
+      ) : null}
+
+      {load ? (
+        <SaveLoadTemplateModal
+          open={saveTemplateOpen}
+          onClose={() => setSaveTemplateOpen(false)}
+          operatingCompanyId={load.operating_company_id}
+          initialJson={templateJsonFromLoadDetail({
+            customer_id: load.customer_id,
+            customer_name: load.customer_name,
+            rate_total_cents: load.rate_total_cents,
+            notes: load.notes,
+            stops: load.stops,
+          })}
+          onSaved={() => {
+            pushToast("Template saved", "success");
+            void queryClient.invalidateQueries({ queryKey: ["load-templates", load.operating_company_id] });
+          }}
+        />
+      ) : null}
+
+      {load ? (
+        <LoadTemplateLibrary
+          open={templateLibraryOpen}
+          onClose={() => setTemplateLibraryOpen(false)}
+          operatingCompanyId={load.operating_company_id}
+        />
+      ) : null}
 
       {load ? (
         <CancelLoadModal
