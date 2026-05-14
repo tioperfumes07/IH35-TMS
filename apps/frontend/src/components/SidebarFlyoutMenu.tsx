@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-type FlyoutLink = {
+export type FlyoutLink = {
   label: string;
   to: string;
+  badgeCount?: number;
 };
 
 type Props = {
@@ -40,8 +41,16 @@ export function SidebarFlyoutMenu({ open, title, items, onOpen, onClose }: Props
       <div className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{title}</div>
       <div className="space-y-1">
         {safeItems.map((item) => (
-          <Link key={item.to} to={item.to} role="menuitem" className="block rounded px-2 py-1 text-xs text-slate-700 hover:bg-slate-100">
-            {item.label}
+          <Link
+            key={item.to}
+            to={item.to}
+            role="menuitem"
+            className="flex items-center justify-between gap-2 rounded px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+          >
+            <span>{item.label}</span>
+            {item.badgeCount != null && item.badgeCount > 0 ? (
+              <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">{item.badgeCount}</span>
+            ) : null}
           </Link>
         ))}
       </div>

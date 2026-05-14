@@ -17,10 +17,11 @@ import {
   UserCog,
   Users,
 } from "lucide-react";
-import { type ComponentType, useState } from "react";
+import { type ComponentType, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { getBankingKpis } from "../api/banking";
 import { getArrivingSoon } from "../api/maintenance";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { spacing } from "../design/tokens";
@@ -88,43 +89,56 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
     refetchInterval: 60_000,
   });
 
+  const bankingKpiQuery = useQuery({
+    queryKey: ["sidebar", "banking-kpis-uncategorized-badge", selectedCompanyId ?? ""],
+    queryFn: () => getBankingKpis(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+    refetchInterval: 60_000,
+  });
+
+  const uncategorizedBankCount = Number(bankingKpiQuery.data?.total_uncategorized ?? 0);
   const severeBadgeCount = Number(severeArrivingSoonQuery.data?.counts?.severe ?? 0);
   const visibleItems = ITEMS.filter((item) => !item.visibleRoles || item.visibleRoles.includes(role));
-  const flyoutLinksByKey: Record<string, Array<{ label: string; to: string }>> = {
-    ACCTG: [
-      { label: "Invoices", to: "/accounting/invoices" },
-      { label: "Payments", to: "/accounting/payments" },
-      { label: "Factoring", to: "/accounting/factoring" },
-    ],
-    PAYMENTS: [{ label: "Record Payment", to: "/accounting/payments" }],
-    MAINT: [
-      { label: "Dashboard", to: "/maintenance" },
-      { label: "Severe Repairs", to: "/maintenance?tab=severe" },
-    ],
-    BANK: [
-      { label: "Overview", to: "/banking" },
-      { label: "Transfers", to: "/banking/transfers" },
-    ],
-    FUEL: [{ label: "Fuel Planner", to: "/fuel" }],
-    SAFETY: [
-      { label: "Driver Files", to: "/safety/driver-files" },
-      { label: "DOT Inspections", to: "/safety/dot-inspections" },
-    ],
-    DRIVERS: [
-      { label: "Drivers", to: "/drivers" },
-      { label: "Settlements", to: "/driver-finance/settlements" },
-    ],
-    DISPATCH: [
-      { label: "Dispatch Home", to: "/dispatch" },
-      { label: "Loads", to: "/dispatch?view=loads" },
-    ],
-    LEGAL: [
-      { label: "Contracts", to: "/legal/contracts" },
-      { label: "Templates", to: "/legal/templates" },
-      { label: "Policies", to: "/legal/policies" },
-      { label: "Attorney Review", to: "/legal/attorney-review" },
-    ],
-  };
+  const flyoutLinksByKey = useMemo(
+    () =>
+      ({
+        ACCTG: [
+          { label: "Invoices", to: "/accounting/invoices" },
+          { label: "Payments", to: "/accounting/payments" },
+          { label: "Factoring", to: "/accounting/factoring" },
+        ],
+        PAYMENTS: [{ label: "Record Payment", to: "/accounting/payments" }],
+        MAINT: [
+          { label: "Dashboard", to: "/maintenance" },
+          { label: "Severe Repairs", to: "/maintenance?tab=severe" },
+        ],
+        BANK: [
+          { label: "Overview", to: "/banking" },
+          { label: "Categorize Transactions", to: "/banking/categorize", badgeCount: uncategorizedBankCount },
+          { label: "Transfers", to: "/banking/transfers" },
+        ],
+        FUEL: [{ label: "Fuel Planner", to: "/fuel" }],
+        SAFETY: [
+          { label: "Driver Files", to: "/safety/driver-files" },
+          { label: "DOT Inspections", to: "/safety/dot-inspections" },
+        ],
+        DRIVERS: [
+          { label: "Drivers", to: "/drivers" },
+          { label: "Settlements", to: "/driver-finance/settlements" },
+        ],
+        DISPATCH: [
+          { label: "Dispatch Home", to: "/dispatch" },
+          { label: "Loads", to: "/dispatch?view=loads" },
+        ],
+        LEGAL: [
+          { label: "Contracts", to: "/legal/contracts" },
+          { label: "Templates", to: "/legal/templates" },
+          { label: "Policies", to: "/legal/policies" },
+          { label: "Attorney Review", to: "/legal/attorney-review" },
+        ],
+      }) as Record<string, Array<{ label: string; to: string; badgeCount?: number }>>,
+    [uncategorizedBankCount]
+  );
 
   return (
     <>
@@ -163,6 +177,11 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                       {key === "MAINT" && severeBadgeCount > 0 ? (
                         <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
                           {severeBadgeCount}
+                        </span>
+                      ) : null}
+                      {key === "BANK" && uncategorizedBankCount > 0 ? (
+                        <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
+                          {uncategorizedBankCount}
                         </span>
                       ) : null}
                     </div>

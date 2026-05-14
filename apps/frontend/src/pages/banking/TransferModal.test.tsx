@@ -13,6 +13,7 @@ vi.mock("../../api/banking", async (importOriginal) => {
     ...actual,
     getPlaidBankAccounts: vi.fn(),
     createTransfer: vi.fn(),
+    markBankTransactionTransfer: vi.fn().mockResolvedValue({ ok: true }),
   };
 });
 

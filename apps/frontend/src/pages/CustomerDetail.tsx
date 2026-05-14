@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { z } from "zod";
-import { listInvoices } from "../api/accounting";
+import { listInvoices, type Invoice } from "../api/accounting";
+import { listCustomerPayments, recordCustomerPayment, unapplyCustomerPayment, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
 import { listFmcsaLookups } from "../api/fmcsa";
@@ -230,6 +231,15 @@ export function CustomerDetailPage() {
     days_late: "",
   });
   const [voidReason, setVoidReason] = useState("");
+  const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
+  const [payDate, setPayDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [payAmount, setPayAmount] = useState("");
+  const [payMethod, setPayMethod] = useState("ach");
+  const [payRef, setPayRef] = useState("");
+  const [payMemo, setPayMemo] = useState("");
+  const [payAutoApply, setPayAutoApply] = useState(true);
+  const [payInvoiceInclude, setPayInvoiceInclude] = useState<Record<string, boolean>>({});
+  const [payInvoiceAmount, setPayInvoiceAmount] = useState<Record<string, string>>({});
 
   const detailQuery = useQuery({
     queryKey: ["customer-detail", id],
@@ -260,6 +270,17 @@ export function CustomerDetailPage() {
         (res.invoices ?? []).slice(0, 10)
       ),
     enabled: Boolean(id && operatingCompanyId),
+  });
+  const paymentInvoicesQuery = useQuery({
+    queryKey: ["customer-open-invoices-payment", id, operatingCompanyId],
+    queryFn: () => listInvoices(operatingCompanyId!, { customer_id: id }).then((res) => res.invoices ?? []),
+    enabled: Boolean(id && operatingCompanyId && activeTab === "Billing & Receivables"),
+  });
+  const customerPaymentsQuery = useQuery({
+    queryKey: ["customer-payments", id],
+    queryFn: () => listCustomerPayments(id, { limit: 50 }),
+    enabled: Boolean(id && activeTab === "Billing & Receivables"),
+    retry: false,
   });
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "active", detailQuery.data?.operating_company_id ?? "none"],
@@ -307,6 +328,7 @@ export function CustomerDetailPage() {
   const canEditCreditLimit = user?.role === "Owner" || user?.role === "Administrator";
   const canViewDocuments = ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant"].includes(user?.role ?? "");
   const canVerifyFmcsa = user?.role === "Owner" || user?.role === "Administrator";
+  const canUnapplyCustomerPayment = user?.role === "Owner" || user?.role === "Administrator";
 
   const hydratedForm = useMemo(() => {
     if (!customer) return form;
@@ -558,6 +580,93 @@ export function CustomerDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["customer-lanes", id] });
       pushToast("Lane deactivated", "info");
     },
+  });
+
+  const openInvoicesForPayment = useMemo(
+    () =>
+      (paymentInvoicesQuery.data ?? [])
+        .filter((inv: Invoice) => inv.status !== "void" && inv.status !== "paid" && Number(inv.amount_open_cents ?? 0) > 0)
+        .sort((a: Invoice, b: Invoice) => a.issue_date.localeCompare(b.issue_date)),
+    [paymentInvoicesQuery.data]
+  );
+
+  const paymentCents = Math.round(Number(payAmount) * 100) || 0;
+
+  const paymentApplicationBreakdown = useMemo(() => {
+    if (payAutoApply) {
+      let remaining = paymentCents;
+      const apps: Array<{ invoice_id: string; amount_cents: number }> = [];
+      for (const inv of openInvoicesForPayment) {
+        if (remaining <= 0) break;
+        const open = Number(inv.amount_open_cents ?? 0);
+        const apply = Math.min(open, remaining);
+        if (apply > 0) {
+          apps.push({ invoice_id: inv.id, amount_cents: apply });
+          remaining -= apply;
+        }
+      }
+      const appliedSum = paymentCents - remaining;
+      return { applications: apps, appliedSum, creditBalanceCents: remaining };
+    }
+    let total = 0;
+    const apps: Array<{ invoice_id: string; amount_cents: number }> = [];
+    for (const inv of openInvoicesForPayment) {
+      if (!payInvoiceInclude[inv.id]) continue;
+      const cents = Math.round(Number(payInvoiceAmount[inv.id] || 0) * 100);
+      if (cents > 0) {
+        apps.push({ invoice_id: inv.id, amount_cents: cents });
+        total += cents;
+      }
+    }
+    return { applications: apps, appliedSum: total, creditBalanceCents: Math.max(0, paymentCents - total) };
+  }, [payAutoApply, paymentCents, openInvoicesForPayment, payInvoiceInclude, payInvoiceAmount]);
+
+  const payManualInvalid = !payAutoApply && paymentApplicationBreakdown.appliedSum > paymentCents;
+
+  const paymentsBackendPending =
+    customerPaymentsQuery.isError &&
+    customerPaymentsQuery.error instanceof ApiError &&
+    (customerPaymentsQuery.error.status === 404 ||
+      customerPaymentsQuery.error.status === 500 ||
+      customerPaymentsQuery.error.status === 501);
+
+  const recordCustomerPaymentMutation = useMutation({
+    mutationFn: () =>
+      recordCustomerPayment(id, {
+        date: payDate,
+        amount_cents: paymentCents,
+        method: payMethod,
+        reference: payRef.trim() || undefined,
+        memo: payMemo.trim() || undefined,
+        applications: paymentApplicationBreakdown.applications,
+        remaining_to_credit_balance_cents: paymentApplicationBreakdown.creditBalanceCents,
+      }),
+    onSuccess: () => {
+      const n = paymentApplicationBreakdown.applications.length;
+      pushToast(`Payment of ${formatCurrencyCents(paymentCents)} recorded, applied to ${n} invoice(s)`, "success");
+      void queryClient.invalidateQueries({ queryKey: ["customer-recent-invoices", id] });
+      void queryClient.invalidateQueries({ queryKey: ["customer-open-invoices-payment", id] });
+      void queryClient.invalidateQueries({ queryKey: ["customer-billing-summary", id] });
+      void queryClient.invalidateQueries({ queryKey: ["customer-payments", id] });
+      setRecordPaymentOpen(false);
+      setPayAmount("");
+      setPayRef("");
+      setPayMemo("");
+      setPayDate(new Date().toISOString().slice(0, 10));
+    },
+    onError: (e) => pushToast(String((e as Error).message ?? "Failed"), "error"),
+  });
+
+  const unapplyCustomerPaymentMutation = useMutation({
+    mutationFn: (paymentId: string) => unapplyCustomerPayment(id, paymentId),
+    onSuccess: () => {
+      pushToast("Payment unapplied", "success");
+      void queryClient.invalidateQueries({ queryKey: ["customer-payments", id] });
+      void queryClient.invalidateQueries({ queryKey: ["customer-recent-invoices", id] });
+      void queryClient.invalidateQueries({ queryKey: ["customer-open-invoices-payment", id] });
+      void queryClient.invalidateQueries({ queryKey: ["customer-billing-summary", id] });
+    },
+    onError: (e) => pushToast(String((e as Error).message ?? "Failed"), "error"),
   });
 
   const qualityEvents = qualityEventsQuery.data ?? [];
@@ -1218,9 +1327,211 @@ export function CustomerDetailPage() {
             <div className="space-y-1 text-sm text-gray-700">
               <div>Detention/hr: {billingSummary?.default_detention_rate ?? "-"}</div>
               <div>Free time hrs: {billingSummary?.default_free_time_hours ?? "-"}</div>
-              <div>Layover/day: {billingSummary?.layover_config.layover_charge_per_day ?? "-"}</div>
+              <div>Layover/day: {billingSummary?.layover_config?.layover_charge_per_day ?? "-"}</div>
             </div>
           </DataPanel>
+          <div className="md:col-span-3 rounded border border-gray-200 bg-white">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50"
+              onClick={() => setRecordPaymentOpen((o: boolean) => !o)}
+            >
+              <span>Record Payment</span>
+              <span className="text-xs font-normal text-gray-500">{recordPaymentOpen ? "Hide" : "Show"}</span>
+            </button>
+            {recordPaymentOpen ? (
+              <div className="space-y-3 border-t border-gray-100 p-3 text-xs">
+                {paymentsBackendPending ? (
+                  <div className="rounded border border-amber-200 bg-amber-50 p-2 text-amber-950">
+                    Backend pending — file <strong>P6-T11204</strong> for customer payment APIs.{" "}
+                    <button type="button" className="font-semibold text-blue-700 underline" onClick={() => void customerPaymentsQuery.refetch()}>
+                      Retry
+                    </button>
+                  </div>
+                ) : null}
+                <div className="grid gap-2 md:grid-cols-2">
+                  <label className="block">
+                    Payment date
+                    <input type="date" className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payDate} onChange={(e) => setPayDate(e.target.value)} />
+                  </label>
+                  <label className="block">
+                    Amount (USD)
+                    <input
+                      className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1"
+                      inputMode="decimal"
+                      value={payAmount}
+                      onChange={(e) => setPayAmount(e.target.value)}
+                    />
+                  </label>
+                  <label className="block">
+                    Method
+                    <select className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
+                      <option value="ach">ACH</option>
+                      <option value="check">Check</option>
+                      <option value="wire">Wire</option>
+                      <option value="credit_card">Credit Card</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    Reference
+                    <input className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payRef} onChange={(e) => setPayRef(e.target.value)} />
+                  </label>
+                </div>
+                <label className="block">
+                  Memo
+                  <textarea className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" rows={2} value={payMemo} onChange={(e) => setPayMemo(e.target.value)} />
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={payAutoApply}
+                    onChange={(e) => {
+                      const on = e.target.checked;
+                      if (!on) {
+                        let remaining = paymentCents;
+                        const snapInclude: Record<string, boolean> = {};
+                        const snapAmt: Record<string, string> = {};
+                        for (const inv of openInvoicesForPayment) {
+                          if (remaining <= 0) break;
+                          const openAmt = Number(inv.amount_open_cents ?? 0);
+                          const apply = Math.min(openAmt, remaining);
+                          if (apply > 0) {
+                            snapInclude[inv.id] = true;
+                            snapAmt[inv.id] = (apply / 100).toFixed(2);
+                            remaining -= apply;
+                          }
+                        }
+                        setPayInvoiceInclude(snapInclude);
+                        setPayInvoiceAmount(snapAmt);
+                      }
+                      setPayAutoApply(on);
+                    }}
+                  />
+                  Auto-match oldest open invoices first
+                </label>
+                <div className="rounded border border-gray-100 bg-gray-50 p-2">
+                  <div className="font-semibold text-gray-800">Apply to invoices</div>
+                  <p className="mt-1 text-gray-600">
+                    Applying {formatCurrencyCents(paymentApplicationBreakdown.appliedSum)} of {formatCurrencyCents(paymentCents)} payment
+                    {paymentApplicationBreakdown.creditBalanceCents > 0 ? (
+                      <span className="text-amber-800"> · {formatCurrencyCents(paymentApplicationBreakdown.creditBalanceCents)} to customer credit</span>
+                    ) : null}
+                  </p>
+                  {payManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
+                  <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+                    {openInvoicesForPayment.length === 0 ? <p className="text-gray-500">No open invoices.</p> : null}
+                    {openInvoicesForPayment.map((inv: Invoice) => (
+                      <div key={inv.id} className="flex flex-wrap items-center gap-2 border-b border-gray-100 py-1">
+                        {!payAutoApply ? (
+                          <input
+                            type="checkbox"
+                            checked={Boolean(payInvoiceInclude[inv.id])}
+                            onChange={(e) => setPayInvoiceInclude((p) => ({ ...p, [inv.id]: e.target.checked }))}
+                          />
+                        ) : null}
+                        <span className="font-medium text-gray-800">{inv.display_id}</span>
+                        <span className="text-gray-600">Open {formatCurrencyCents(inv.amount_open_cents)}</span>
+                        {!payAutoApply ? (
+                          <input
+                            type="number"
+                            step="0.01"
+                            className="w-24 rounded border border-gray-300 px-1 py-0.5"
+                            placeholder="Apply"
+                            value={payInvoiceAmount[inv.id] ?? ""}
+                            onChange={(e) => setPayInvoiceAmount((p) => ({ ...p, [inv.id]: e.target.value }))}
+                          />
+                        ) : (
+                          <span className="text-gray-700">
+                            {(() => {
+                              const row = paymentApplicationBreakdown.applications.find((a) => a.invoice_id === inv.id);
+                              return row ? formatCurrencyCents(row.amount_cents) : "—";
+                            })()}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    disabled={paymentCents <= 0 || payManualInvalid || recordCustomerPaymentMutation.isPending}
+                    loading={recordCustomerPaymentMutation.isPending}
+                    onClick={() => void recordCustomerPaymentMutation.mutateAsync()}
+                  >
+                    Record payment
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => setRecordPaymentOpen(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <div className="md:col-span-3 rounded border border-gray-200 bg-white p-3">
+            <div className="mb-2 text-sm font-semibold text-gray-900">Payment history</div>
+            {paymentsBackendPending ? (
+              <p className="text-sm text-amber-800">
+                Backend pending — payment history unavailable until backend ships (P6-T11204).
+              </p>
+            ) : customerPaymentsQuery.isLoading ? (
+              <p className="text-sm text-gray-500">Loading payments…</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-200 text-gray-600">
+                      <th className="px-2 py-1.5 font-semibold">Date</th>
+                      <th className="px-2 py-1.5 font-semibold">Amount</th>
+                      <th className="px-2 py-1.5 font-semibold">Method</th>
+                      <th className="px-2 py-1.5 font-semibold">Applied</th>
+                      <th className="px-2 py-1.5 font-semibold">Reference</th>
+                      <th className="px-2 py-1.5 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(customerPaymentsQuery.data?.payments ?? []).map((p: CustomerPaymentListRow) => {
+                      const jeId = p.journal_entry_id ?? p.qbo_journal_entry_id;
+                      const applied = p.amount_applied_cents ?? p.applied_total_cents;
+                      return (
+                        <tr key={p.id} className="border-b border-gray-100">
+                          <td className="px-2 py-1.5">{p.payment_date}</td>
+                          <td className="px-2 py-1.5">{formatCurrencyCents(p.amount_cents)}</td>
+                          <td className="px-2 py-1.5">{p.payment_method ?? p.method ?? "—"}</td>
+                          <td className="px-2 py-1.5">{applied != null ? formatCurrencyCents(applied) : "—"}</td>
+                          <td className="px-2 py-1.5">{p.reference ?? "—"}</td>
+                          <td className="px-2 py-1.5">
+                            {jeId ? (
+                              <button type="button" className="mr-2 text-blue-700 underline" onClick={() => navigate(`/accounting/journal-entries/${jeId}`)}>
+                                View JE
+                              </button>
+                            ) : null}
+                            {canUnapplyCustomerPayment ? (
+                              <button
+                                type="button"
+                                className="text-red-700 underline"
+                                onClick={() => void unapplyCustomerPaymentMutation.mutateAsync(p.id)}
+                              >
+                                Unapply
+                              </button>
+                            ) : null}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {(customerPaymentsQuery.data?.payments ?? []).length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-2 py-3 text-gray-500">
+                          No payments recorded.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
           <div className="md:col-span-3 rounded border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Receivables Aging</div>
             {!hasOpenInvoices ? (
