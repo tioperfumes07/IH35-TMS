@@ -5,6 +5,8 @@ import { qboSyncWithRetry } from "../../qbo/sync-with-retry.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import { getValidAccessToken } from "./qbo-oauth.service.js";
 import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from "./qbo-mappers.js";
+import { pushJournalEntryToQuickBooksFromQueue } from "../../accounting/journal-entry-qbo-push.service.js";
+import { pushBillPaymentToQuickBooksFromQueue } from "../../qbo/bill-payment-mapper.service.js";
 
 type QueueEntityType = "bank_transaction" | "bill" | "bill_payment" | "expense" | "invoice" | "journal_entry" | "settlement" | "transfer";
 type QueueStatus = "pending" | "in_flight" | "synced" | "failed" | "blocked";
@@ -211,149 +213,6 @@ async function syncBillPreview(job: QueueRow) {
     );
   });
   return { qboId, mode: "preview" as const };
-}
-
-async function syncBillPaymentPreview(job: QueueRow) {
-  const qboId = `preview-bill-payment-${job.entity_id}`;
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
-    await client.query(
-      `
-        UPDATE accounting.bill_payments
-        SET qbo_bill_payment_id = $2,
-            updated_at = now()
-        WHERE id = $1
-          AND operating_company_id = $3
-      `,
-      [job.entity_id, qboId, job.operating_company_id]
-    );
-  });
-  return { qboId, mode: "preview" as const };
-}
-
-type JournalEntrySyncHeader = {
-  id: string;
-  entry_date: string;
-  memo: string | null;
-  status: "posted" | "voided";
-};
-
-type JournalEntrySyncLine = {
-  line_sequence: number;
-  debit_or_credit: "debit" | "credit";
-  amount_cents: number;
-  description: string | null;
-  qbo_account_id: string | null;
-  qbo_class_id: string | null;
-  entity_uuid: string | null;
-  driver_qbo_vendor_id: string | null;
-};
-
-async function loadJournalEntryForSync(operatingCompanyId: string, journalEntryId: string) {
-  return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    const headerRes = await client.query<JournalEntrySyncHeader>(
-      `
-        SELECT id, entry_date::text, memo, status
-        FROM accounting.journal_entries
-        WHERE id = $1
-          AND operating_company_id = $2
-        LIMIT 1
-      `,
-      [journalEntryId, operatingCompanyId]
-    );
-    const header = headerRes.rows[0] ?? null;
-    if (!header) return null;
-    const linesRes = await client.query<JournalEntrySyncLine>(
-      `
-        SELECT
-          p.line_sequence,
-          p.debit_or_credit,
-          p.amount_cents::int,
-          p.description,
-          a.qbo_account_id,
-          c.qbo_class_id,
-          p.entity_uuid::text,
-          d.qbo_vendor_id AS driver_qbo_vendor_id
-        FROM accounting.journal_entry_postings p
-        LEFT JOIN catalogs.accounts a ON a.id = p.account_id
-        LEFT JOIN catalogs.classes c ON c.id = p.class_id
-        LEFT JOIN mdata.drivers d ON d.id = p.entity_uuid
-        WHERE p.journal_entry_uuid = $1
-          AND p.operating_company_id = $2
-        ORDER BY p.line_sequence ASC
-      `,
-      [journalEntryId, operatingCompanyId]
-    );
-    return { header, lines: linesRes.rows };
-  });
-}
-
-function mapJournalEntryToQboPayload(context: { header: JournalEntrySyncHeader; lines: JournalEntrySyncLine[] }) {
-  return {
-    TxnDate: context.header.entry_date.slice(0, 10),
-    PrivateNote: context.header.memo ?? "",
-    Line: context.lines.map((line) => {
-      const detail: Record<string, unknown> = {
-        PostingType: line.debit_or_credit === "debit" ? "Debit" : "Credit",
-      };
-      if (line.qbo_account_id) detail.AccountRef = { value: line.qbo_account_id };
-      if (line.qbo_class_id) detail.ClassRef = { value: line.qbo_class_id };
-      if (line.driver_qbo_vendor_id) {
-        detail.Entity = {
-          Type: "Vendor",
-          EntityRef: { value: line.driver_qbo_vendor_id },
-        };
-      }
-      return {
-        Amount: Math.abs(Number(line.amount_cents || 0)) / 100,
-        Description: line.description ?? `Line ${line.line_sequence}`,
-        DetailType: "JournalEntryLineDetail",
-        JournalEntryLineDetail: detail,
-      };
-    }),
-  };
-}
-
-async function syncJournalEntryPreview(job: QueueRow) {
-  const context = await loadJournalEntryForSync(job.operating_company_id, job.entity_id);
-  if (!context) throw new Error("journal_entry_not_found_for_sync");
-
-  if (context.header.status === "voided") {
-    await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
-      await client.query(
-        `
-          UPDATE accounting.journal_entries
-          SET qbo_journal_entry_id = NULL,
-              qbo_sync_pending = false,
-              updated_at = now()
-          WHERE id = $1
-            AND operating_company_id = $2
-        `,
-        [job.entity_id, job.operating_company_id]
-      );
-    });
-    return { qboId: null as string | null, mode: "void_preview" as const, payload: null };
-  }
-
-  const payload = mapJournalEntryToQboPayload(context);
-  const qboId = `preview-journal-entry-${job.entity_id}`;
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
-    await client.query(
-      `
-        UPDATE accounting.journal_entries
-        SET qbo_journal_entry_id = $2,
-            qbo_sync_pending = false,
-            updated_at = now()
-        WHERE id = $1
-          AND operating_company_id = $3
-      `,
-      [job.entity_id, qboId, job.operating_company_id]
-    );
-  });
-  return { qboId, mode: "preview" as const, payload };
 }
 
 type QboSyncSuccess = { qboId: string; syncToken: string | null };
@@ -616,14 +475,15 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
         continue;
       }
       if (job.entity_type === "bill_payment") {
-        const preview = await syncBillPaymentPreview(job);
+        const push = await pushBillPaymentToQuickBooksFromQueue({
+          operating_company_id: job.operating_company_id,
+          entity_id: job.entity_id,
+        });
         await markJobResult(job, "synced", {
-          qboId: preview.qboId,
+          qboId: push.qboId,
+          syncToken: null,
           errorMessage: null,
-          errorDetails: {
-            mode: preview.mode,
-            note: "Bill payment sync is running in preview mode; QBO Bill Payment create will be wired in later phase.",
-          },
+          errorDetails: { mode: "live", entity: "bill_payment" },
         });
         synced += 1;
         await appendSyncAudit(
@@ -632,8 +492,8 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
             queue_id: job.id,
             operating_company_id: job.operating_company_id,
             entity_id: job.entity_id,
-            mode: preview.mode,
-            qbo_id: preview.qboId,
+            mode: "live",
+            qbo_id: push.qboId,
           },
           "info",
           null
@@ -641,15 +501,15 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
         continue;
       }
       if (job.entity_type === "journal_entry") {
-        const preview = await syncJournalEntryPreview(job);
+        const push = await pushJournalEntryToQuickBooksFromQueue({
+          operating_company_id: job.operating_company_id,
+          entity_id: job.entity_id,
+        });
         await markJobResult(job, "synced", {
-          qboId: preview.qboId ?? undefined,
+          qboId: push.qboId ?? undefined,
+          syncToken: null,
           errorMessage: null,
-          errorDetails: {
-            mode: preview.mode,
-            payload_preview: preview.payload,
-            note: "Journal entry sync is running in preview mode; real QBO push is deferred.",
-          },
+          errorDetails: { mode: push.qboId ? "live" : "void_cleanup", entity: "journal_entry" },
         });
         synced += 1;
         await appendSyncAudit(
@@ -658,8 +518,8 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
             queue_id: job.id,
             operating_company_id: job.operating_company_id,
             entity_id: job.entity_id,
-            mode: preview.mode,
-            qbo_id: preview.qboId,
+            mode: push.qboId ? "live" : "void_cleanup",
+            qbo_id: push.qboId,
           },
           "info",
           null

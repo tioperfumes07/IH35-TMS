@@ -1,7 +1,9 @@
 import { ChevronDown, Menu } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getQboConnectionStatus } from "../api/forensic";
+import { getQboSyncHealth } from "../api/qbo-integration";
 import { getSamsaraHealth } from "../api/samsara";
 import { signOut } from "../api/identity";
 import { colors, spacing, typography } from "../design/tokens";
@@ -35,6 +37,7 @@ function topbarDotClass(dot: "gray" | "green" | "yellow" | "red"): string {
 }
 
 export function Topbar({ auth, onOpenMobileNav }: Props) {
+  const navigate = useNavigate();
   const [now, setNow] = useState(() => new Date());
   const [open, setOpen] = useState(false);
   const { pushToast } = useToast();
@@ -43,6 +46,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const office = auth.role !== "Driver";
+  const prevQboSyncStatus = useRef<string | null>(null);
 
   const samsaraQuery = useQuery({
     queryKey: ["integrations", "samsara", "health", companyId],
@@ -60,9 +64,51 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     refetchInterval: 60_000,
   });
 
+  const qboSyncHealthQuery = useQuery({
+    queryKey: ["qbo", "sync-health", companyId],
+    queryFn: () => getQboSyncHealth(companyId),
+    enabled: Boolean(companyId) && office,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    retry: false,
+  });
+
+  useEffect(() => {
+    const next = qboSyncHealthQuery.data?.status;
+    if (next === undefined) return;
+    const prev = prevQboSyncStatus.current;
+    if (prev !== null && prev !== next) {
+      console.log("[qbo-sync-health]", `${prev} -> ${next}`);
+    }
+    prevQboSyncStatus.current = next;
+  }, [qboSyncHealthQuery.data?.status]);
+
   const samsaraVis = resolveSamsaraVisualStatus(samsaraQuery.data);
   const qboVis = qboConnectionLabel(qboQuery.data?.connected);
   const relayVis = RELAY_NOT_CONFIGURED;
+
+  const qboSyncPill = useMemo(() => {
+    if (qboSyncHealthQuery.isError) return null;
+    const row = qboSyncHealthQuery.data;
+    if (!row) return null;
+    const status = row.status;
+    let dot: "gray" | "green" | "yellow" | "red" = "gray";
+    let label = "QBO sync";
+    if (status === "healthy") {
+      dot = "green";
+      label = `QBO sync · OK${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
+    } else if (status === "syncing") {
+      dot = "yellow";
+      label = `QBO sync · Running${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
+    } else if (status === "stale") {
+      dot = "yellow";
+      label = "QBO sync · Stale";
+    } else if (status === "error") {
+      dot = "red";
+      label = `QBO sync · Error${row.error_count ? ` (${row.error_count})` : ""}`;
+    }
+    return { dot, label, status };
+  }, [qboSyncHealthQuery.data, qboSyncHealthQuery.isError]);
 
   const muted = colors.sidebarTextMuted;
   const active = colors.sidebarTextActive;
@@ -122,6 +168,23 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(relayVis.dot)}`} />
             {relayVis.label}
           </span>
+          {qboSyncPill ? (
+            <>
+              <span style={{ color: muted }}>·</span>
+              <button
+                type="button"
+                className={`inline-flex items-center gap-1 ${qboSyncPill.status === "error" ? "cursor-pointer underline-offset-2 hover:underline" : ""}`}
+                style={{ color: active }}
+                title={qboSyncPill.status === "error" ? "Open QBO sync queue" : undefined}
+                onClick={() => {
+                  if (qboSyncPill.status === "error") navigate("/banking/qbo-sync-queue");
+                }}
+              >
+                <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboSyncPill.dot)}`} />
+                {qboSyncPill.label}
+              </button>
+            </>
+          ) : null}
         </div>
         <CompanySwitcher />
       </div>
