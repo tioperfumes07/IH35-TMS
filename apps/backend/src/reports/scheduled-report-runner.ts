@@ -297,6 +297,10 @@ export async function runScheduledReport(ctx: RunnerContext): Promise<RunnerResu
   }
 }
 
+export async function renderLegacyScheduledReportForDelivery(reportId: ScheduledReportId, operatingCompanyId: string) {
+  return executeReport(reportId, operatingCompanyId);
+}
+
 export async function loadEnabledSchedules(reportId: ScheduledReportId) {
   return withLuciaBypass(async (client) => {
     const res = await client.query(

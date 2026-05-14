@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
+import { withLuciaBypass } from "../auth/db.js";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -41,6 +42,18 @@ function decodeCursor(raw: string | undefined): { created_at: string; id: string
 function encodeCursor(row: { created_at: string | Date; id: string }) {
   const payload = JSON.stringify({ created_at: new Date(row.created_at).toISOString(), id: row.id });
   return Buffer.from(payload, "utf8").toString("base64url");
+}
+
+async function appendSyncAlertAcknowledgedAudit(payload: Record<string, unknown>, actorUserId: string) {
+  await withLuciaBypass(async (client) => {
+    await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
+      "qbo.sync_alert_acknowledged",
+      "info",
+      JSON.stringify(payload),
+      actorUserId,
+      "P6-T11202-QBO-SYNC-ACTIONS",
+    ]);
+  });
 }
 
 export async function registerQboSyncAlertsRoutes(app: FastifyInstance) {
@@ -132,6 +145,15 @@ export async function registerQboSyncAlertsRoutes(app: FastifyInstance) {
     });
 
     if (!updated) return reply.code(404).send({ error: "alert_not_found" });
+
+    await appendSyncAlertAcknowledgedAudit(
+      {
+        alert_id: params.data.alertId,
+        operating_company_id: body.data.operating_company_id,
+      },
+      user.uuid
+    );
+
     return { ok: true as const, id: updated };
   });
 
