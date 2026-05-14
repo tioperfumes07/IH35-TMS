@@ -42,7 +42,15 @@ const createBodySchema = z.object({
   net_pay: z.number().default(0),
   lines: z.array(
     z.object({
-      line_type: z.enum(["earnings", "extra_pay", "reimbursement", "deduction"]),
+      line_type: z.enum([
+        "earnings",
+        "extra_pay",
+        "reimbursement",
+        "deduction",
+        "abandonment_chargeback",
+        "team_split_primary",
+        "team_split_secondary",
+      ]),
       description: z.string().trim().max(500),
       amount: z.number(),
     })

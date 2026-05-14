@@ -16,6 +16,7 @@ import { Button } from "../../components/Button";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { WOTimeTrackingPanel } from "./WOTimeTrackingPanel";
 
 export function WorkOrdersConsoleDetailPage() {
   const { id } = useParams();
@@ -149,6 +150,8 @@ export function WorkOrdersConsoleDetailPage() {
             <div className="font-mono text-xs">{String(wo?.vendor_invoice_number ?? wo?.external_vendor_invoice_number ?? "—")}</div>
             <div className="text-slate-500">Vendor WO #</div>
             <div className="font-mono text-xs">{String(wo?.vendor_work_order_number ?? wo?.external_vendor_wo_number ?? "—")}</div>
+            <div className="text-slate-500">Labor cost (tracked)</div>
+            <div>{String(wo?.labor_cost_cents ?? "0")} ¢</div>
           </div>
         </div>
 
@@ -170,6 +173,8 @@ export function WorkOrdersConsoleDetailPage() {
           </div>
         </div>
       </div>
+
+      {id && companyId ? <WOTimeTrackingPanel workOrderId={String(id)} operatingCompanyId={companyId} /> : null}
 
       <div className="rounded border border-gray-200 bg-white p-3 text-sm">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Line items</div>
