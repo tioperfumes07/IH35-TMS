@@ -24,7 +24,7 @@ function qboEnv(): QboEnv {
   return env === "sandbox" ? "sandbox" : "production";
 }
 
-function qboApiBase() {
+export function qboApiBase() {
   return qboEnv() === "sandbox"
     ? "https://sandbox-quickbooks.api.intuit.com/v3/company"
     : "https://quickbooks.api.intuit.com/v3/company";

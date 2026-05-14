@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
+import { pushJournalEntryToQuickBooksImmediateBestEffort } from "./journal-entry-qbo-push.service.js";
 
 type JournalEntrySource = "manual" | "auto";
 type JournalEntryStatus = "posted" | "voided";
@@ -171,6 +172,11 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
     }),
     actor.userId
   );
+
+  void pushJournalEntryToQuickBooksImmediateBestEffort({
+    operatingCompanyId: input.operating_company_id,
+    journalEntryId: created.id,
+  });
 
   return created;
 }
