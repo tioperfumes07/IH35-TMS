@@ -150,16 +150,6 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                   </div>
                 ) : null}
 
-                {abandonmentOpen && load.operating_company_id ? (
-                  <AbandonmentReportModal
-                    loadId={loadId}
-                    operatingCompanyId={load.operating_company_id}
-                    defaultDriverId={load.assigned_primary_driver_id ?? load.assigned_secondary_driver_id}
-                    onClose={() => setAbandonmentOpen(false)}
-                    onRecorded={() => void loadQuery.refetch()}
-                  />
-                ) : null}
-
                 {editing ? (
                   <div className="space-y-2 rounded border border-gray-200 p-3">
                     <div className="space-y-1">
@@ -434,6 +424,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
           open={templateLibraryOpen}
           onClose={() => setTemplateLibraryOpen(false)}
           operatingCompanyId={load.operating_company_id}
+        />
+      ) : null}
+
+      {abandonmentOpen && load && load.operating_company_id ? (
+        <AbandonmentReportModal
+          loadId={loadId}
+          operatingCompanyId={load.operating_company_id}
+          defaultDriverId={load.assigned_primary_driver_id ?? load.assigned_secondary_driver_id}
+          onClose={() => setAbandonmentOpen(false)}
+          onRecorded={() => void loadQuery.refetch()}
         />
       ) : null}
 
