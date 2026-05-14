@@ -1,0 +1,4 @@
+asset_kind,unit_number,vin,year,make,model,equipment_type,license_plate,license_state,notes
+Truck,P6-TRK-T1,P6TRK1VIN0TEST00001,2022,FREIGHTLINER,Cascadia,,P6PLT1,TX,P6-T11205 tractor 1
+Truck,P6-TRK-T2,P6TRK2VIN0TEST00002,2021,KENWORTH,T680,,P6PLT2,TX,P6-T11205 tractor 2
+Trailer,P6-TRK-TR1,P6TRL1VIN0TEST00001,2023,GREAT_DANE,DryVan,DryVan,P6TRL1,TN,P6-T11205 van

@@ -1,0 +1,3 @@
+first_name,last_name,email,phone,cdl_number,cdl_state,cdl_class,cdl_expires_at,hire_date,status
+Verify,TruckOne,p6-trk-d1@example.invalid,555-P6-1101,P6T11205TRK01,TX,A,2030-12-31,2024-01-15,Active
+Verify,TruckTwo,p6-trk-d2@example.invalid,555-P6-1102,P6T11205TRK02,TX,A,2030-12-31,2024-02-20,Active

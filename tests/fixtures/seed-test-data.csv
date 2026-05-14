@@ -1,0 +1,9 @@
+entity,target_count,fixture_paths,loader_support,notes
+operating_company,2,,pre_seeded,TRK and TRANSP rows must already exist in org.companies (standard migrations).
+driver,4,tests/fixtures/p6-t11205/trk_verify_drivers.csv|tests/fixtures/p6-t11205/transp_verify_drivers.csv,seed_from_csv,Two drivers per company; filenames imply --company for apps/backend/scripts/seed-from-csv.ts.
+customer,3,tests/fixtures/p6-t11205/trk_verify_customers.csv|tests/fixtures/p6-t11205/transp_verify_customers.csv,seed_from_csv,Two TRK + one TRANSP customer codes (P6CUST*).
+vendor,3,tests/fixtures/p6-t11205/trk_verify_vendors.csv|tests/fixtures/p6-t11205/transp_verify_vendors.csv,seed_from_csv,Two TRK + one TRANSP vendors (P6VN*).
+unit,5,tests/fixtures/p6-t11205/trk_verify_assets.csv|tests/fixtures/p6-t11205/transp_verify_assets.csv,seed_from_csv,Trucks insert into mdata.units; trailers into mdata.equipment (see loader).
+load,10,,not_implemented,No CSV loader for loads in current tree — file P7-FIX-SEED-001.
+bank_account,4,,not_implemented,No CSV loader for bank accounts — file P7-FIX-SEED-002.
+bank_transaction,50,,not_implemented,No CSV loader for Plaid/bank transactions — file P7-FIX-SEED-003.
