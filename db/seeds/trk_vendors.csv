@@ -1,0 +1,8 @@
+vendor_code,vendor_name,vendor_type,phone,email,tax_id,address_line1,city,state,postal_code,notes
+TRK-VENDOR-TOW-A,Metro Tow Fleet Inc,Towing,555-3001,fleetdesk@example.invalid,XX111111121,901 Tow Lot Rd,Austin,TX,78703,Heavy duty hook
+TRK-VENDOR-PART-A,Parts Supply Hut,Repair,555-3002,parts@example.invalid,XX111111122,15 Mechanic Alley,Austin,TX,78707,Warranty core returns
+TRK-VENDOR-RPR-A,Wrench Works Garage,Repair,555-3003,repair@example.invalid,XX111111123,442 Toolchain Dr,Houston,TX,77001,Scheduled PM
+TRK-VENDOR-TIRE-A,Tread Matters,Tires,555-3004,sales@example.invalid,XX111111124,88 Rubber Ave,San Antonio,TX,78201,Commercial accounts
+TRK-VENDOR-TOW-B,County Road Rescue,Towing,555-3005,dispatch@example.invalid,XX111111125,221 Route 35 Frontage,Austin,TX,78753,Police rotation
+TRK-VENDOR-RPR-B,Diesel Diagnostics LLC,Repair,555-3006,desk@example.invalid,XX111111126,909 Fleet Dr,Dallas,TX,75241,Injector service
+TRK-VENDOR-RPR-C,Climate Cool HVAC Truck,Repair,555-3007,acct@example.invalid,XX111111127,505 Coolant Cir,Fort Worth,TX,76110,Refer unit

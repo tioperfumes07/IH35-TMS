@@ -1,0 +1,6 @@
+vendor_code,vendor_name,vendor_type,phone,email,tax_id,address_line1,city,state,postal_code,notes
+TS-VENDOR-TOW-1,FleetLift Towing TRANSP,Towing,555-4001,intake@example.invalid,YY222222291,410 Commerce Way,Dallas,TX,75206,Regional coverage
+TS-VENDOR-PART-1,CrossDock Parts Express,Repair,555-4002,oem@example.invalid,YY222222292,909 Beltline Rd,Dallas,TX,75218,OE preferred
+TS-VENDOR-RPR-1,Alliance Truck Repair TRANSP,Repair,555-4003,warranty@example.invalid,YY222222293,50 Axle Ct,Irving,TX,75038,Vendor managed inventory
+TS-VENDOR-TIRE-2,Regional Tire Network,Tires,555-4004,pos@example.invalid,YY222222294,707 Tread Blvd,Richardson,TX,75080,Commercial pricing
+TS-VENDOR-RPR-2,SystemCool Reefer Specialists,Repair,555-4005,reservations@example.invalid,YY222222295,909 Cold Chain Ln,Farmers Branch,TX,75234,Carrier Transicold affiliated

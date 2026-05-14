@@ -1,0 +1,21 @@
+customer_code,customer_name,billing_email,billing_phone,mc_number,dot_number,billing_address_line1,billing_city,billing_state,billing_postal_code
+TRANS-CUST-001,TRANSP Logistics Partner A,mail-1@example.invalid,556-1501,MCT-00001,88880001,1 Industrial Way,Dallas,TX,75201
+TRANS-CUST-002,TRANSP Logistics Partner B,mail-2@example.invalid,556-1502,MCT-00002,88880002,2 Industrial Way,Dallas,TX,75201
+TRANS-CUST-003,TRANSP Logistics Partner C,mail-3@example.invalid,556-1503,MCT-00003,88880003,3 Industrial Way,Dallas,TX,75201
+TRANS-CUST-004,TRANSP Logistics Partner D,mail-4@example.invalid,556-1504,MCT-00004,88880004,4 Industrial Way,Dallas,TX,75201
+TRANS-CUST-005,TRANSP Logistics Partner E,mail-5@example.invalid,556-1505,MCT-00005,88880005,5 Industrial Way,Dallas,TX,75201
+TRANS-CUST-006,TRANSP Logistics Partner F,mail-6@example.invalid,556-1506,MCT-00006,88880006,6 Industrial Way,Dallas,TX,75201
+TRANS-CUST-007,TRANSP Logistics Partner G,mail-7@example.invalid,556-1507,MCT-00007,88880007,7 Industrial Way,Dallas,TX,75201
+TRANS-CUST-008,TRANSP Logistics Partner H,mail-8@example.invalid,556-1508,MCT-00008,88880008,8 Industrial Way,Dallas,TX,75201
+TRANS-CUST-009,TRANSP Logistics Partner I,mail-9@example.invalid,556-1509,MCT-00009,88880009,9 Industrial Way,Dallas,TX,75201
+TRANS-CUST-010,TRANSP Logistics Partner J,mail-10@example.invalid,556-1510,MCT-00010,88880010,10 Industrial Way,Dallas,TX,75201
+TRANS-CUST-011,TRANSP Logistics Partner K,mail-11@example.invalid,556-1511,MCT-00011,88880011,11 Industrial Way,Dallas,TX,75201
+TRANS-CUST-012,TRANSP Logistics Partner L,mail-12@example.invalid,556-1512,MCT-00012,88880012,12 Industrial Way,Dallas,TX,75201
+TRANS-CUST-013,TRANSP Logistics Partner M,mail-13@example.invalid,556-1513,MCT-00013,88880013,13 Industrial Way,Dallas,TX,75201
+TRANS-CUST-014,TRANSP Logistics Partner N,mail-14@example.invalid,556-1514,MCT-00014,88880014,14 Industrial Way,Dallas,TX,75201
+TRANS-CUST-015,TRANSP Logistics Partner O,mail-15@example.invalid,556-1515,MCT-00015,88880015,15 Industrial Way,Dallas,TX,75201
+TRANS-CUST-016,TRANSP Logistics Partner P,mail-16@example.invalid,556-1516,MCT-00016,88880016,16 Industrial Way,Dallas,TX,75201
+TRANS-CUST-017,TRANSP Logistics Partner Q,mail-17@example.invalid,556-1517,MCT-00017,88880017,17 Industrial Way,Dallas,TX,75201
+TRANS-CUST-018,TRANSP Logistics Partner R,mail-18@example.invalid,556-1518,MCT-00018,88880018,18 Industrial Way,Dallas,TX,75201
+TRANS-CUST-019,TRANSP Logistics Partner S,mail-19@example.invalid,556-1519,MCT-00019,88880019,19 Industrial Way,Dallas,TX,75201
+TRANS-CUST-020,TRANSP Logistics Partner T,mail-20@example.invalid,556-1520,MCT-00020,88880020,20 Industrial Way,Dallas,TX,75201
