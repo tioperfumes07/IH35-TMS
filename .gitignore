@@ -4,10 +4,13 @@ dist
 .DS_Store
 *\ 2.*
 
-.tmp_guide_shots/
-
 # Local design references and historical specs (kept local only)
 docs/design/approved-screens/
+
+# Local DB dumps created via npm run db:backup
+/backups/
+
+.tmp_guide_shots/
 
 # Production CSV overrides (never commit real PII)
 db/seeds/local/

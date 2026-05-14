@@ -47,6 +47,26 @@ Neon retains restore points per plan. **Do not overwrite prod branch without a n
 
 > If PITR is unavailable, restore from the latest logical backup (Neon export / `pg_dump` cadence — record the real backup job in `DEPLOYMENT_NOTES.md`).
 
+### 4.1 Logical backups (`pg_dump`) — local CLI helpers
+
+These scripts run **from your laptop** (or an ops bastion). They require `pg_dump`/`psql` on `PATH` and `DATABASE_DIRECT_URL` exported in the shell env.
+
+Create a plain SQL backup under `backups/<timestamp>.sql` at the repo root:
+
+```bash
+export DATABASE_DIRECT_URL='postgresql://...'
+npm run db:backup
+```
+
+Validate a backup file by creating a **temporary** database on the same Postgres instance, restoring with `psql`, then dropping it. This **does not modify production data**, but it **does require database privileges to create/drop databases** (often unavailable on Neon — use a local Postgres restore-check environment in that case):
+
+```bash
+export DATABASE_DIRECT_URL='postgresql://...'
+npm run db:restore-check -- backups/<your-backup>.sql
+```
+
+Optional: if your admin/maintenance database is not `postgres`, set `PGMAINTENANCE_DB` (for example `template1`).
+
 ## 5. Render — rollback application
 
 1. Render dashboard → **API service** → **Events** / **Deploys**.

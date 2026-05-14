@@ -12,11 +12,11 @@ const eta = new Eta({
 const allowedKeys = new Set([
   "driver-invite",
   "report-cadence",
-  "scheduled-report-file",
   "invoice-send",
   "settlement-ready",
   "wo-approved",
   "qbo-sync-alert",
+  "notification-dispatch",
 ]);
 
 export function assertAllowedTemplateKey(templateKey: string): string {

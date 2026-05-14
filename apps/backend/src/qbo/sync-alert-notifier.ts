@@ -1,5 +1,6 @@
 import { withLuciaBypass } from "../auth/db.js";
 import { enqueueEmail } from "../email/queue.service.js";
+import { dispatchNotification, listCompanyUserIdsByRoles } from "../notifications/dispatcher.js";
 
 const DEFAULT_ALERT_EMAIL = "tioperfumes07@gmail.com";
 
@@ -61,6 +62,25 @@ export async function notifyQboSyncDeadLetter(input: DeadLetterNotifyInput): Pro
     } catch {
       return { sent: false, reason: "enqueue_failed" };
     }
+
+    const admins = await listCompanyUserIdsByRoles(input.operatingCompanyId, ["Owner", "Administrator"]);
+    await Promise.all(
+      admins.map((userId) =>
+        dispatchNotification({
+          user_id: userId,
+          event_type: "qbo_sync_error",
+          actor_user_id: null,
+          payload: {
+            operating_company_id: input.operatingCompanyId,
+            headline: subject,
+            bodyText: lines.join("\n"),
+            kind: input.kind,
+            sms_body_short: `QBO sync error (${input.kind}).`,
+            whatsapp_skip: true,
+          },
+        }).catch(() => undefined)
+      )
+    );
 
     await client.query(
       `

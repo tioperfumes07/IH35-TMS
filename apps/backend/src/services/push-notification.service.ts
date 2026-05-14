@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { withLuciaBypass } from "../auth/db.js";
+import { dispatchNotification } from "../notifications/dispatcher.js";
 
 let vapidReady = false;
 
@@ -81,7 +82,7 @@ export async function notifyLoadAssigned(input: {
   loadLabel?: string | null;
 }) {
   const label = input.loadLabel ? String(input.loadLabel) : input.loadId.slice(0, 8);
-  return notifyDriverWebPush({
+  const pushResult = await notifyDriverWebPush({
     operatingCompanyId: input.operatingCompanyId,
     driverId: input.driverId,
     title: "New load assigned",
@@ -89,6 +90,51 @@ export async function notifyLoadAssigned(input: {
     tag: `load-assign-${input.loadId}`,
     data: { kind: "load_assigned", load_id: input.loadId },
   });
+
+  void withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    const res = await client.query<{
+      identity_user_id: string | null;
+      phone: string | null;
+      first_name: string | null;
+      last_name: string | null;
+    }>(
+      `
+        SELECT identity_user_id, phone, first_name, last_name
+        FROM mdata.drivers
+        WHERE id = $1
+        LIMIT 1
+      `,
+      [input.driverId]
+    );
+    const row = res.rows[0];
+    if (!row?.identity_user_id) return;
+
+    const driverName =
+      `${String(row.first_name ?? "").trim()} ${String(row.last_name ?? "").trim()}`.trim() || "Driver";
+    const phone = String(row.phone ?? "").trim();
+    const baseUrl = process.env.FRONTEND_BASE_URL?.replace(/\/$/, "") ?? "";
+
+    await dispatchNotification({
+      user_id: String(row.identity_user_id),
+      event_type: "load_assignment",
+      actor_user_id: null,
+      payload: {
+        operating_company_id: input.operatingCompanyId,
+        load_id: input.loadId,
+        load_label: label,
+        driver_name: driverName,
+        sms_to: phone,
+        whatsapp_to: phone,
+        origin: "",
+        dest: "",
+        rate: "",
+        link: baseUrl ? `${baseUrl}/driver` : "",
+      },
+    });
+  }).catch(() => undefined);
+
+  return pushResult;
 }
 
 export async function notifyLoadReassignedAway(input: {
