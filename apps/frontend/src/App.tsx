@@ -75,6 +75,8 @@ import { VendorDetailPage } from "./pages/VendorDetail";
 import { Form425CHome } from "./pages/form425c/Form425CHome";
 import { ReportsHomePage } from "./pages/reports/ReportsHome";
 import { ReportsRunnerPage } from "./pages/reports/ReportsRunner";
+import { ARAgingPage } from "./pages/reports/ARAgingPage";
+import { APAgingPage } from "./pages/reports/APAgingPage";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
 import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
 import { AbandonmentQueuePage } from "./pages/accounting/AbandonmentQueuePage";
@@ -98,6 +100,7 @@ import { JournalEntryTypesListPage } from "./pages/lists/accounting/JournalEntry
 import { PaymentTermsListPage } from "./pages/lists/accounting/PaymentTermsListPage";
 import { PaymentMethodsListPage } from "./pages/lists/accounting/PaymentMethodsListPage";
 import { PostingTemplatesListPage } from "./pages/lists/accounting/PostingTemplatesListPage";
+import { QBOBulkLinkPage } from "./pages/lists/accounting/QBOBulkLinkPage";
 import { QboCategoriesListPage } from "./pages/lists/accounting/QboCategoriesListPage";
 import { TaxCodesListPage } from "./pages/lists/accounting/TaxCodesListPage";
 import { AbandonmentDefaultsPage } from "./pages/lists/accounting/AbandonmentDefaultsPage";
@@ -870,6 +873,14 @@ export default function App() {
           }
         />
         <Route
+          path="/lists/accounting/qbo-bulk-link"
+          element={
+            <ProtectedRoute>
+              <QBOBulkLinkPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/lists/accounting/qbo-categories"
           element={
             <ProtectedRoute>
@@ -1002,6 +1013,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ReportsHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/ar-aging"
+          element={
+            <ProtectedRoute>
+              <ARAgingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/ap-aging"
+          element={
+            <ProtectedRoute>
+              <APAgingPage />
             </ProtectedRoute>
           }
         />

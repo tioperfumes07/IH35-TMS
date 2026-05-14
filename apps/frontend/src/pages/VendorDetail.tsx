@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { listVendorBills } from "../api/accounting";
 import { getVendor } from "../api/mdata";
 import { useAuth } from "../auth/useAuth";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
@@ -8,20 +9,36 @@ import { Button } from "../components/Button";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
+import { useCompanyContext } from "../contexts/CompanyContext";
 
-const tabs = ["Profile", "Documents", "Audit History"] as const;
+const tabs = ["Profile", "A/P", "Documents", "Audit History"] as const;
 type VendorTab = (typeof tabs)[number];
+
+const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 export function VendorDetailPage() {
   const { id = "" } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
   const [activeTab, setActiveTab] = useState<VendorTab>("Profile");
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "ap") setActiveTab("A/P");
+  }, [searchParams]);
 
   const vendorQuery = useQuery({
     queryKey: ["vendor", id],
     queryFn: () => getVendor(id),
     enabled: Boolean(id),
+  });
+
+  const billsQuery = useQuery({
+    queryKey: ["vendor-ap-bills", companyId, id],
+    queryFn: () => listVendorBills(companyId, { vendor_id: id, include_balance: true, limit: 200 }),
+    enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
   });
 
   const canViewDocuments = useMemo(
@@ -109,6 +126,49 @@ export function VendorDetailPage() {
             <span className="text-sm text-gray-900">{vendor.notes ?? "-"}</span>
           </DataPanelRow>
         </DataPanel>
+      ) : null}
+
+      {activeTab === "A/P" ? (
+        <div className="space-y-2">
+          {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+          {billsQuery.isLoading ? <p className="text-sm text-gray-500">Loading bills…</p> : null}
+          {billsQuery.isError ? <p className="text-sm text-red-600">Could not load bills.</p> : null}
+          {billsQuery.isSuccess ? (
+            <div className="overflow-auto rounded border border-gray-200 bg-white">
+              <table className="min-w-full text-left text-xs">
+                <thead className="border-b border-gray-100 bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
+                  <tr>
+                    <th className="px-3 py-2">Bill #</th>
+                    <th className="px-3 py-2">Date</th>
+                    <th className="px-3 py-2">Due</th>
+                    <th className="px-3 py-2 text-right">Amount</th>
+                    <th className="px-3 py-2 text-right">Balance</th>
+                    <th className="px-3 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {billsQuery.data.rows.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-3 py-4 text-gray-500">
+                        No bills for this vendor.
+                      </td>
+                    </tr>
+                  ) : null}
+                  {billsQuery.data.rows.map((b) => (
+                    <tr key={b.id} className="border-b border-gray-50">
+                      <td className="px-3 py-2 font-medium">{b.bill_number ?? b.id.slice(0, 8)}</td>
+                      <td className="px-3 py-2">{b.bill_date}</td>
+                      <td className="px-3 py-2">{b.due_date ?? "—"}</td>
+                      <td className="px-3 py-2 text-right">{money.format(b.amount_cents / 100)}</td>
+                      <td className="px-3 py-2 text-right">{money.format((b.balance_cents ?? b.amount_cents - b.paid_cents) / 100)}</td>
+                      <td className="px-3 py-2">{b.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {activeTab === "Documents" && canViewDocuments ? (

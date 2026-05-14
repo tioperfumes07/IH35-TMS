@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { listInvoices } from "../api/accounting";
 import { listUsStates } from "../api/catalogs";
@@ -191,11 +191,17 @@ function formatDateShort(value: string | null | undefined) {
 export function CustomerDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<CustomerTab>("Profile");
+  useEffect(() => {
+    if (searchParams.get("tab") === "billing") {
+      setActiveTab("Billing & Receivables");
+    }
+  }, [searchParams]);
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
   const [contactModalOpen, setContactModalOpen] = useState(false);
