@@ -21,6 +21,7 @@ import { TransfersListPage } from "./pages/banking/TransfersListPage";
 import { ReconciliationWorkspacePage } from "./pages/banking/ReconciliationWorkspace";
 import { CategorizationRulesPage } from "./pages/banking/CategorizationRulesPage";
 import { QboSyncQueuePage } from "./pages/banking/QboSyncQueuePage";
+import { EmailQueuePage } from "./pages/banking/EmailQueuePage";
 import { BankAccountDetailPage } from "./pages/banking/BankAccountDetail";
 import { SafetyLayout } from "./pages/safety/SafetyLayout";
 import {
@@ -376,6 +377,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <QboSyncQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/email-queue"
+          element={
+            <ProtectedRoute>
+              <EmailQueuePage />
             </ProtectedRoute>
           }
         />

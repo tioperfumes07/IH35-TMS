@@ -1,15 +1,24 @@
 /**
- * Block X — scheduled reports black-box E2E smoke (P7-VERIFY-1).
+ * Block X — scheduled reports black-box E2E smoke (P7-VERIFY-1 / P7-SCHEDULED-REPORT-E2E-001).
  *
- * Prerequisites (running API server):
- * - IH35_TEST_AUTH_BYPASS=1 (local/staging only)
+ * Local prerequisites (running API server):
+ * - IH35_TEST_AUTH_BYPASS=1 (local/staging only — ignored when production cookie auth is used)
  * - ENABLE_SCHEDULED_REPORTS_WORKER=true (not "false")
  * - SCHEDULED_REPORTS_WORKER_INTERVAL_MS=5000 recommended (faster pickup)
  * - R2 + email configured so deliverScheduledReportToEmail succeeds
  *
+ * Production prerequisites:
+ * - BLOCK_X_PROD_COOKIE (full Cookie header value or raw ih35_session token)
+ * - BLOCK_X_PROD_OPERATING_COMPANY_ID (recommended; falls back to BLOCK_X_SMOKE_OPERATING_COMPANY_ID)
+ * - BLOCK_X_PROD_BASE_URL optional (defaults https://api.ih35dispatch.com)
+ *
  * Env:
- * - BLOCK_X_SMOKE_BASE_URL (default http://localhost:3000)
+ * - BLOCK_X_SMOKE_BASE_URL (default http://localhost:3000 for local mode)
  * - BLOCK_X_SMOKE_OPERATING_COMPANY_ID (optional if DATABASE_* can resolve TRANSP)
+ * - BLOCK_X_SMOKE_POLL_MS (poll cadence; prod defaults tighter)
+ * - BLOCK_X_PROD_E2E_RUN_TIMEOUT_MS (default 90000 prod run wait)
+ * - BLOCK_X_SMOKE_TIMEOUT_MS (default 150000 local run wait)
+ * - BLOCK_X_SMOKE_EMAIL_WAIT_MS (extra window after run success to observe email_queue row; default 45000)
  */
 import pg from "pg";
 
@@ -18,11 +27,31 @@ if (process.env.BLOCK_X_SMOKE_SKIP === "1") {
   process.exit(0);
 }
 
-const BASE_URL = (process.env.BLOCK_X_SMOKE_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-const POLL_MS = Number(process.env.BLOCK_X_SMOKE_POLL_MS ?? "3000");
-const TIMEOUT_MS = Number(process.env.BLOCK_X_SMOKE_TIMEOUT_MS ?? "150000");
+const PROD_COOKIE_RAW = process.env.BLOCK_X_PROD_COOKIE?.trim();
+const USE_PROD_AUTH = Boolean(PROD_COOKIE_RAW);
+
+function smokeBaseUrl(): string {
+  if (USE_PROD_AUTH) {
+    return (process.env.BLOCK_X_PROD_BASE_URL ?? "https://api.ih35dispatch.com").replace(/\/$/, "");
+  }
+  return (process.env.BLOCK_X_SMOKE_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+}
+
+const BASE_URL = smokeBaseUrl();
+const POLL_MS = Number(process.env.BLOCK_X_SMOKE_POLL_MS ?? (USE_PROD_AUTH ? "2000" : "3000"));
+const RUN_WAIT_MS = USE_PROD_AUTH
+  ? Number(process.env.BLOCK_X_PROD_E2E_RUN_TIMEOUT_MS ?? "90000")
+  : Number(process.env.BLOCK_X_SMOKE_TIMEOUT_MS ?? "150000");
+const EMAIL_WAIT_MS = Number(process.env.BLOCK_X_SMOKE_EMAIL_WAIT_MS ?? "45000");
 
 const TEST_OWNER_USER_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+
+const SMOKE_PREFIX = "smoke-e2e-DELETEME-";
+
+function prodCookieHeader(): string {
+  const raw = PROD_COOKIE_RAW!;
+  return raw.toLowerCase().startsWith("ih35_session=") ? raw : `ih35_session=${raw}`;
+}
 
 function testAuthHeaders(userId: string = TEST_OWNER_USER_ID, role = "Owner") {
   const payload = Buffer.from(JSON.stringify({ id: userId, role, email: "block-x-smoke@test.invalid" }), "utf8").toString(
@@ -34,17 +63,43 @@ function testAuthHeaders(userId: string = TEST_OWNER_USER_ID, role = "Owner") {
   };
 }
 
+function authHeaders(): Record<string, string> {
+  if (USE_PROD_AUTH) {
+    return {
+      cookie: prodCookieHeader(),
+      accept: "application/json",
+      "content-type": "application/json",
+    };
+  }
+  return testAuthHeaders();
+}
+
+function mergeHeaders(extra?: HeadersInit): Record<string, string> {
+  const base = authHeaders();
+  if (!extra) return base;
+  const out = { ...base };
+  const maybe = extra as Record<string, string>;
+  for (const [k, v] of Object.entries(maybe)) {
+    if (typeof v === "string") out[k] = v;
+  }
+  return out;
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function resolveOperatingCompanyId(): Promise<string> {
-  const fromEnv = process.env.BLOCK_X_SMOKE_OPERATING_COMPANY_ID?.trim();
-  if (fromEnv) return fromEnv;
+  const prodOc = process.env.BLOCK_X_PROD_OPERATING_COMPANY_ID?.trim();
+  const smokeOc = process.env.BLOCK_X_SMOKE_OPERATING_COMPANY_ID?.trim();
+  if (prodOc) return prodOc;
+  if (smokeOc) return smokeOc;
 
   const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
   if (!cs) {
-    throw new Error("Set BLOCK_X_SMOKE_OPERATING_COMPANY_ID or DATABASE_URL / DATABASE_DIRECT_URL to resolve TRANSP company.");
+    throw new Error(
+      "Set BLOCK_X_PROD_OPERATING_COMPANY_ID / BLOCK_X_SMOKE_OPERATING_COMPANY_ID or DATABASE_URL / DATABASE_DIRECT_URL to resolve TRANSP company."
+    );
   }
 
   const client = new pg.Client({ connectionString: cs, ssl: cs.includes("localhost") ? undefined : { rejectUnauthorized: false } });
@@ -71,14 +126,61 @@ type DetailResponse = {
   runs?: Array<Record<string, unknown>>;
 };
 
+async function assertNoStaleSmokeSchedules(operatingCompanyId: string) {
+  const listUrl = `${BASE_URL}/api/v1/scheduled-reports?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
+  const listRes = await fetch(listUrl, { headers: mergeHeaders() });
+  if (!listRes.ok) {
+    const body = await listRes.text();
+    throw new Error(`Stale-schedule preflight failed: HTTP ${listRes.status} ${body}`);
+  }
+  const payload = (await listRes.json()) as { rows?: Array<{ id?: string; name?: string }> };
+  const rows = Array.isArray(payload.rows) ? payload.rows : [];
+  const fiveMs = 5 * 60 * 1000;
+  for (const row of rows) {
+    const name = String(row.name ?? "");
+    const match = name.match(/^smoke-e2e-DELETEME-(\d+)$/);
+    if (!match) continue;
+    const ts = Number(match[1]);
+    if (!Number.isFinite(ts)) continue;
+    if (Date.now() - ts > fiveMs) {
+      throw new Error(
+        `Stale smoke schedule detected from a crashed prior run (>5m old): schedule_id=${String(row.id ?? "")} name=${name}. Delete it manually in prod/local DB/UI and retry.`
+      );
+    }
+  }
+}
+
+async function pollEmailQueueUntilSent(operatingCompanyId: string, emailQueueId: string): Promise<void> {
+  const deadline = Date.now() + EMAIL_WAIT_MS;
+  const url = `${BASE_URL}/api/v1/email/queue?operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=100`;
+
+  while (Date.now() < deadline) {
+    const res = await fetch(url, { headers: mergeHeaders() });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Email queue poll failed: HTTP ${res.status} ${body}`);
+    }
+    const payload = (await res.json()) as { items?: Array<{ id?: string; status?: string }> };
+    const hit = (payload.items ?? []).find((item) => String(item.id ?? "") === emailQueueId && String(item.status ?? "") === "sent");
+    if (hit) return;
+    await sleep(POLL_MS);
+  }
+
+  throw new Error(`Timed out after ${EMAIL_WAIT_MS}ms waiting for email_queue id=${emailQueueId} to reach status=sent.`);
+}
+
 async function main() {
   console.log(`\n[block-x scheduled-reports e2e] BASE_URL=${BASE_URL}`);
-  console.log("[block-x scheduled-reports e2e] Expect IH35_TEST_AUTH_BYPASS=1 on server for x-test-auth.");
+  if (USE_PROD_AUTH) {
+    console.log("[block-x scheduled-reports e2e] PRODUCTION MODE — authenticating with BLOCK_X_PROD_COOKIE.");
+  } else {
+    console.log("[block-x scheduled-reports e2e] LOCAL MODE — expect IH35_TEST_AUTH_BYPASS=1 on server for x-test-auth.");
+  }
 
   const ping = await fetch(`${BASE_URL}/api/v1/_healthcheck`).catch(() => null);
   if (!ping || !ping.ok) {
     console.error(
-      `[block-x scheduled-reports e2e] FAIL: backend not reachable at ${BASE_URL}. Start the API (PORT defaults to 3000) with IH35_TEST_AUTH_BYPASS=1, ENABLE_SCHEDULED_REPORTS_WORKER=true, R2 configured, and SCHEDULED_REPORTS_WORKER_INTERVAL_MS=5000 recommended.`
+      `[block-x scheduled-reports e2e] FAIL: backend not reachable at ${BASE_URL}. Start the API with worker settings enabled (ENABLE_SCHEDULED_REPORTS_WORKER=true, R2 + email configured).`
     );
     process.exit(1);
   }
@@ -91,21 +193,27 @@ async function main() {
     operatingCompanyId = await resolveOperatingCompanyId();
     console.log(`[block-x scheduled-reports e2e] operating_company_id=${operatingCompanyId}`);
 
+    await assertNoStaleSmokeSchedules(operatingCompanyId);
+
+    const suffix = Date.now();
+    const smokeName = `${SMOKE_PREFIX}${suffix}`;
+    const recipients = USE_PROD_AUTH ? ["test@ih35dispatch.com"] : ["block-x-smoke@test.invalid"];
+
     const createPayload = {
       operating_company_id: operatingCompanyId,
       report_id: "profit-per-truck",
-      name: "block-x-e2e-smoke",
-      parameters: { smoke: "block-x-e2e" },
+      name: smokeName,
+      parameters: { smoke: smokeName },
       frequency: { kind: "cron", time_local: "06:00", cron: "*/1 * * * *" },
-      recipients: ["block-x-smoke@test.invalid"],
+      recipients,
       format: "pdf",
-      subject_template: "Block X smoke {report_name} ({period})",
+      subject_template: `Smoke E2E ${smokeName} ({period})`,
       timezone: "America/Chicago",
     };
 
     const createRes = await fetch(`${BASE_URL}/api/v1/scheduled-reports`, {
       method: "POST",
-      headers: testAuthHeaders(),
+      headers: mergeHeaders(),
       body: JSON.stringify(createPayload),
     });
 
@@ -118,15 +226,15 @@ async function main() {
     scheduleId = created.id ?? null;
     if (!scheduleId) throw new Error("Create schedule response missing id.");
 
-    console.log(`[block-x scheduled-reports e2e] Created schedule id=${scheduleId}`);
+    console.log(`[block-x scheduled-reports e2e] Created schedule id=${scheduleId} name=${smokeName}`);
 
-    const deadline = Date.now() + TIMEOUT_MS;
+    const runDeadline = Date.now() + RUN_WAIT_MS;
     let successRun: Record<string, unknown> | null = null;
 
-    while (Date.now() < deadline) {
+    while (Date.now() < runDeadline) {
       const detailRes = await fetch(
         `${BASE_URL}/api/v1/scheduled-reports/${scheduleId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
-        { headers: testAuthHeaders() }
+        { headers: mergeHeaders() }
       );
       if (!detailRes.ok) {
         const body = await detailRes.text();
@@ -147,6 +255,9 @@ async function main() {
         if (!r2.trim()) throw new Error("Run succeeded but generated_file_r2_path is empty.");
         if (!emailId.trim()) throw new Error("Run succeeded but email_queue_id is empty.");
 
+        console.log("\n[block-x scheduled-reports e2e] Run SUCCESS — verifying email_queue delivery row…");
+        await pollEmailQueueUntilSent(operatingCompanyId, emailId);
+
         console.log("\n[block-x scheduled-reports e2e] PASS");
         console.log(`  schedule_id=${scheduleId}`);
         console.log(`  last_run_at=${lastRunAt}`);
@@ -158,7 +269,7 @@ async function main() {
       await sleep(POLL_MS);
     }
 
-    throw new Error(`Timed out after ${TIMEOUT_MS}ms waiting for a successful worker run.`);
+    throw new Error(`Timed out after ${RUN_WAIT_MS}ms waiting for a successful worker run.`);
   } catch (err) {
     failed = true;
     console.error("\n[block-x scheduled-reports e2e] FAIL");
@@ -168,7 +279,7 @@ async function main() {
       try {
         const del = await fetch(
           `${BASE_URL}/api/v1/scheduled-reports/${scheduleId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
-          { method: "DELETE", headers: testAuthHeaders() }
+          { method: "DELETE", headers: mergeHeaders() }
         );
         if (!del.ok) {
           console.error(`[block-x scheduled-reports e2e] Cleanup DELETE failed: HTTP ${del.status}`);
