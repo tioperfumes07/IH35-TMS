@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { enforceAuthPhoneStartLimits, enforceAuthPhoneVerifyLimits } from "../middleware/rate-limit.js";
 import { withLuciaBypass } from "./db.js";
 import { lucia } from "./lucia.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
@@ -144,6 +145,9 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 
     const { phone, code } = parsed.data;
+
+    if (!(await enforceAuthPhoneVerifyLimits(req, reply, phone, code))) return;
+
     try {
       const checkResult = await checkVerification(phone, code);
       if (!checkResult.valid) {

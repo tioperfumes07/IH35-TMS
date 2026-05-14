@@ -14,6 +14,11 @@ export async function registerSessionMiddleware(app: FastifyInstance) {
   app.decorateRequest("session", null);
 
   app.addHook("preHandler", async (req: FastifyRequest, reply: FastifyReply) => {
+    const url = req.raw.url ?? "";
+    if (url.startsWith("/api/v1/healthz")) {
+      return;
+    }
+
     // CI/Vitest integration only — never enable IH35_TEST_AUTH_BYPASS in production runtimes.
     if (process.env.IH35_TEST_AUTH_BYPASS === "1") {
       const raw = req.headers["x-test-auth"];

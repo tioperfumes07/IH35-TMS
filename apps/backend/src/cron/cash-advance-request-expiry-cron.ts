@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { expireStaleCashAdvanceRequests } from "../driver-finance/cash-advance-requests.service.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 let initialized = false;
 
@@ -19,14 +20,16 @@ export function initializeCashAdvanceRequestExpiryCron(app: FastifyInstance) {
   cron.schedule(
     "15 6 * * *",
     async () => {
-      try {
-        const expired = await withLuciaBypass(async (client) => expireStaleCashAdvanceRequests(client));
-        if (expired.length > 0) {
-          app.log.info({ count: expired.length }, "cash_advance_requests expired by cron");
-        }
-      } catch (err) {
-        app.log.error({ err }, "cash_advance_request expiry cron failed");
-      }
+      await wrapBackgroundJobTick(
+        "cash_advance.expiry_cron",
+        async () => {
+          const expired = await withLuciaBypass(async (client) => expireStaleCashAdvanceRequests(client));
+          if (expired.length > 0) {
+            app.log.info({ count: expired.length }, "cash_advance_requests expired by cron");
+          }
+        },
+        app.log
+      );
     },
     { timezone: "America/Chicago" }
   );

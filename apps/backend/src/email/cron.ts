@@ -2,6 +2,7 @@ import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import type pg from "pg";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { createEmailProviderFromEnv } from "./factory.js";
 import type { EmailAttachment } from "./provider.js";
 import { computeNextRetryAt } from "./queue.service.js";
@@ -225,11 +226,13 @@ export function initializeEmailCron(app: FastifyInstance) {
   }
 
   cron.schedule("* * * * *", async () => {
-    try {
-      await processEmailQueueTick(app.log);
-    } catch (error) {
-      app.log.error({ err: error }, "[email-cron] tick failed");
-    }
+    await wrapBackgroundJobTick(
+      "email.queue_processor",
+      async () => {
+        await processEmailQueueTick(app.log);
+      },
+      app.log
+    );
   });
 
   app.log.info("[email-cron] scheduled (every 60 seconds; processes up to 50 queued rows per tick)");

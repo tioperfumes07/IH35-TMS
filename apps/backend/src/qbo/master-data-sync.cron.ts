@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { runScheduledMasterDataSync } from "./master-data-sync.service.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 let initialized = false;
 
@@ -16,12 +17,14 @@ export async function initializeMasterDataSyncCron(app: FastifyInstance) {
   cron.schedule(
     "0 2 * * *",
     async () => {
-      app.log.info("QBO master-data FULL sync cron tick (America/Chicago)");
-      try {
-        await runScheduledMasterDataSync("full");
-      } catch (error) {
-        app.log.error({ err: error }, "QBO master-data full sync cron failed");
-      }
+      await wrapBackgroundJobTick(
+        "qbo.master_data_sync.full",
+        async () => {
+          app.log.info("QBO master-data FULL sync cron tick (America/Chicago)");
+          await runScheduledMasterDataSync("full");
+        },
+        app.log
+      );
     },
     { timezone: "America/Chicago" }
   );
@@ -29,11 +32,13 @@ export async function initializeMasterDataSyncCron(app: FastifyInstance) {
   cron.schedule(
     "*/15 * * * *",
     async () => {
-      try {
-        await runScheduledMasterDataSync("delta");
-      } catch (error) {
-        app.log.error({ err: error }, "QBO master-data delta sync cron failed");
-      }
+      await wrapBackgroundJobTick(
+        "qbo.master_data_sync.delta",
+        async () => {
+          await runScheduledMasterDataSync("delta");
+        },
+        app.log
+      );
     },
     { timezone: "America/Chicago" }
   );
