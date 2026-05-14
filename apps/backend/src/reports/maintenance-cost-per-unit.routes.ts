@@ -162,7 +162,15 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
               wo.id AS wo_id,
               wo.bucket::text AS bucket,
               wo.wo_type::text AS wo_type,
-              ROUND(COALESCE(wo.total_actual_cost, wo.total_cost, 0)::numeric * 100)::bigint AS grand_cents,
+              COALESCE(
+                wo.actual_cost_cents::bigint,
+                CASE
+                  WHEN wo.total_actual_cost IS NOT NULL THEN ROUND(wo.total_actual_cost::numeric * 100)::bigint
+                END,
+                wo.estimated_cost_cents::bigint,
+                NULLIF(COALESCE(lt.parts_cents, 0) + COALESCE(lt.labor_cents, 0) + COALESCE(lt.other_cents, 0), 0),
+                0::bigint
+              ) AS grand_cents,
               COALESCE(lt.parts_cents, 0) AS parts_cents,
               COALESCE(lt.labor_cents, 0) AS labor_cents,
               COALESCE(lt.other_cents, 0) AS other_cents
@@ -197,11 +205,30 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
               AND wo.unit_id IS NOT NULL
               AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
           ),
+          line_totals AS (
+            SELECT
+              wl.work_order_uuid,
+              SUM(CASE WHEN wl.line_type IN ('part', 'parts') THEN ROUND(wl.total_cost::numeric * 100) ELSE 0 END)::bigint AS parts_cents,
+              SUM(CASE WHEN wl.line_type = 'labor' THEN ROUND(wl.total_cost::numeric * 100) ELSE 0 END)::bigint AS labor_cents,
+              SUM(CASE WHEN wl.line_type NOT IN ('part', 'parts', 'labor') THEN ROUND(wl.total_cost::numeric * 100) ELSE 0 END)::bigint AS other_cents
+            FROM maintenance.work_order_lines wl
+            INNER JOIN wo_scope wo ON wo.id = wl.work_order_uuid
+            GROUP BY wl.work_order_uuid
+          ),
           wo_enriched AS (
             SELECT
-              ROUND(COALESCE(wo.total_actual_cost, wo.total_cost, 0)::numeric * 100)::bigint AS grand_cents,
+              COALESCE(
+                wo.actual_cost_cents::bigint,
+                CASE
+                  WHEN wo.total_actual_cost IS NOT NULL THEN ROUND(wo.total_actual_cost::numeric * 100)::bigint
+                END,
+                wo.estimated_cost_cents::bigint,
+                NULLIF(COALESCE(lt.parts_cents, 0) + COALESCE(lt.labor_cents, 0) + COALESCE(lt.other_cents, 0), 0),
+                0::bigint
+              ) AS grand_cents,
               wo.wo_type::text AS wo_type
             FROM wo_scope wo
+            LEFT JOIN line_totals lt ON lt.work_order_uuid = wo.id
           )
           SELECT
             COALESCE(we.wo_type, 'unknown') AS category,
