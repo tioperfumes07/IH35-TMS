@@ -33,7 +33,7 @@ export async function profitPerTruckWeeklyQuery(context: QueryContext): Promise<
             SUM(
               CASE
                 WHEN COALESCE(wo.updated_at, wo.opened_at) >= now() - interval '7 days'
-                THEN ROUND(COALESCE(wo.total_actual_cost, wo.total_cost, 0)::numeric * 100)
+                THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
                 ELSE 0
               END
             ),
@@ -66,7 +66,7 @@ export async function profitPerTruckWeeklyQuery(context: QueryContext): Promise<
             SUM(
               CASE
                 WHEN COALESCE(wo.updated_at, wo.opened_at) >= now() - interval '7 days'
-                THEN ROUND(COALESCE(wo.total_actual_cost, wo.total_cost, 0)::numeric * 100)
+                THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
                 ELSE 0
               END
             ),
@@ -88,7 +88,7 @@ export async function profitPerTruckWeeklyQuery(context: QueryContext): Promise<
             SUM(
               CASE
                 WHEN COALESCE(wo.updated_at, wo.opened_at) >= now() - interval '7 days'
-                THEN ROUND(COALESCE(wo.total_actual_cost, wo.total_cost, 0)::numeric * 100)
+                THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
                 ELSE 0
               END
             ),
