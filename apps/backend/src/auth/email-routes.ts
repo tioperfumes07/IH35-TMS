@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { randomInt } from "crypto";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -24,6 +24,12 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+function readSingleHeader(req: FastifyRequest, headerName: string): string {
+  const raw = req.headers[headerName];
+  if (Array.isArray(raw)) return raw[0]?.trim() ?? "";
+  return typeof raw === "string" ? raw.trim() : "";
 }
 
 function generateCode() {
@@ -92,7 +98,58 @@ export async function registerEmailAuthRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const email = normalizeEmail(parsed.data.email);
 
+    const bypassSecret = process.env.AUTH_EMAIL_TEST_BYPASS_SECRET?.trim() ?? "";
+    const bypassHeader = readSingleHeader(req, "x-ih35-auth-test-bypass");
+    const bypassCodeExpected = process.env.AUTH_EMAIL_TEST_BYPASS_CODE?.trim() ?? "000000";
+    const bypassActive =
+      bypassSecret.length > 0 && bypassHeader === bypassSecret && parsed.data.code === bypassCodeExpected;
+
     const verificationResult = await withLuciaBypass(async (client) => {
+      if (bypassActive) {
+        const userRes = await client.query<{ id: string; email: string | null; role: string; deactivated_at: string | null }>(
+          `
+          SELECT id, email, role, deactivated_at
+          FROM identity.users
+          WHERE lower(email) = $1
+          LIMIT 1
+        `,
+          [email]
+        );
+        const user = userRes.rows[0] ?? null;
+        if (!user) return { error: "invalid_code" as const };
+        if (user.deactivated_at) return { error: "user_deactivated" as const };
+
+        const driverRes = await client.query<{ id: string }>(
+          `
+          SELECT id
+          FROM mdata.drivers
+          WHERE identity_user_id = $1
+            AND deactivated_at IS NULL
+          LIMIT 1
+        `,
+          [user.id]
+        );
+        const driver = driverRes.rows[0] ?? null;
+        if (!driver) return { error: "drivers_only" as const };
+
+        await appendCrudAudit(
+          client,
+          user.id,
+          "auth.email.verified_smoke_bypass",
+          {
+            email,
+            user_id: user.id,
+            role: user.role,
+            driver_id: driver.id,
+            bypass_header_present: true,
+          },
+          "info",
+          "BT-1-AUTH-DRIVER"
+        );
+
+        return { user };
+      }
+
       const verificationRes = await client.query<{ id: string }>(
         `
           SELECT id

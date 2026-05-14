@@ -1,0 +1,5 @@
+first_name,last_name,email,phone,cdl_number,cdl_state,cdl_class,cdl_expires_at,hire_date,status
+Driver,X,driver-transp-x@example.invalid,555-0101,CDL-PLACEHOLDER-X01,TX,A,2030-06-06,2020-06-06,Active
+Driver,Y,driver-transp-y@example.invalid,555-0102,CDL-PLACEHOLDER-Y02,TX,A,2032-06-06,2021-06-06,Active
+Driver,Z,driver-transp-z@example.invalid,555-0103,CDL-PLACEHOLDER-Z03,TX,A,2033-06-06,2022-06-06,Active
+Driver,AA,driver-transp-aa@example.invalid,555-0104,CDL-PLACEHOLDER-AA04,TX,A,2035-06-06,2023-06-06,Probation

@@ -1,0 +1,9 @@
+asset_kind,unit_number,vin,year,make,model,equipment_type,license_plate,license_state,notes
+Truck,TRK-UNIT-301,5NPE34AB2JH000301,2022,FREIGHTLINER,Cascadia,,PTK301A,TX,Power unit tractor
+Truck,TRK-UNIT-302,5NPE34AB2JH000302,2021,KENWORTH,T680,,PTK302B,TX,Lease return candidate
+Truck,TRK-UNIT-303,5NPE34AB2JH000303,2023,VOLVO,VNL,,PTK303C,TX,Odometer escrow unit
+Truck,TRK-UNIT-304,5NPE34AB2JH000304,2020,PETERBILT,579,,PTK304D,TX,Hazmat-ready
+Trailer,TRK-TRL-701,53TRK701ABCD000702,2024,GREAT_DANE,DryVan,DryVan,TRL701,TN,Paper BOL pouch both sides
+Trailer,TRK-TRL-702,53TRK702ABCD000703,2023,WABASH,DryVan,DryVan,TRL702,AR,Fleet GPS pending
+Trailer,TRK-TRL-703,53TRK703ABCD000704,2022,HYUNDAI,Reefer,Reefer,TRL703,OK,Produce lane pool
+Trailer,TRK-TRL-704,53TRK704ABCD000705,2025,FONTAINE,Flatbed,Flatbed,TRL704,TX,Steel dunnage racks

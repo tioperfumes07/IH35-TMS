@@ -7,8 +7,5 @@ dist
 # Local design references and historical specs (kept local only)
 docs/design/approved-screens/
 
-# Local design references and historical specs (kept local only)
-docs/design/approved-screens/
-
-# Local design references and historical specs (kept local only)
-docs/design/approved-screens/
+# Production CSV overrides (never commit real PII)
+db/seeds/local/

@@ -22,7 +22,8 @@
     ]
   },
   "include": [
-    "apps/backend/src/**/*.ts"
+    "apps/backend/src/**/*.ts",
+    "apps/backend/src/**/*.d.ts"
   ],
   "exclude": [
     "apps/backend/src/**/*.test.ts",

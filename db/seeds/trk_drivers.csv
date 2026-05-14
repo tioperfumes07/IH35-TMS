@@ -1,0 +1,15 @@
+first_name,last_name,email,phone,cdl_number,cdl_state,cdl_class,cdl_expires_at,hire_date,status
+Driver,A,driver-trk-a@example.invalid,555-0001,CDL-PLACEHOLDER-001,TX,A,2030-12-31,2020-01-15,Active
+Driver,B,driver-trk-b@example.invalid,555-0002,CDL-PLACEHOLDER-002,TX,A,2030-12-31,2021-03-01,Active
+Driver,C,driver-trk-c@example.invalid,555-0003,CDL-PLACEHOLDER-003,TX,A,2031-06-01,2022-07-22,Probation
+Driver,D,driver-trk-d@example.invalid,555-0004,CDL-PLACEHOLDER-004,TX,A,2031-01-10,2019-11-03,Active
+Driver,E,driver-trk-e@example.invalid,555-0005,CDL-PLACEHOLDER-005,TX,A,2032-03-05,2023-09-09,Inactive
+Driver,F,driver-trk-f@example.invalid,555-0006,CDL-PLACEHOLDER-006,TX,A,2030-05-21,2021-06-01,Active
+Driver,G,driver-trk-g@example.invalid,555-0007,CDL-PLACEHOLDER-007,TX,A,2034-07-07,2024-02-02,Active
+Driver,H,driver-trk-h@example.invalid,555-0008,CDL-PLACEHOLDER-008,TX,A,2035-09-09,2020-03-03,Active
+Driver,I,driver-trk-i@example.invalid,555-0009,CDL-PLACEHOLDER-009,TX,B,2032-08-08,2022-08-08,Active
+Driver,J,driver-trk-j@example.invalid,555-0010,CDL-PLACEHOLDER-010,TX,A,2033-10-01,2023-12-31,Active
+Driver,K,driver-trk-k@example.invalid,555-0011,CDL-PLACEHOLDER-011,TX,A,2031-11-22,2020-06-06,Terminated
+Driver,L,driver-trk-l@example.invalid,555-0012,CDL-PLACEHOLDER-012,TX,A,2030-04-04,2021-07-07,Active
+Driver,M,driver-trk-m@example.invalid,555-0013,CDL-PLACEHOLDER-013,TX,A,2036-06-06,2024-06-06,Active
+Driver,N,driver-trk-n@example.invalid,555-0014,CDL-PLACEHOLDER-014,TX,A,2037-07-07,2022-07-07,Active

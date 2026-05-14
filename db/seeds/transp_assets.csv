@@ -1,0 +1,9 @@
+asset_kind,unit_number,vin,year,make,model,equipment_type,license_plate,license_state,notes
+Truck,TS-UNIT-101,TS34AB9100000101,2022,INTERNATIONAL,LT,,PTX101TX,TX,Brokered capacity unit
+Truck,TS-UNIT-102,TS34AB9100000102,2021,FREIGHTLINER,Coronado,,PTX102TX,TX,Fuel surcharge sensitive
+Truck,TS-UNIT-103,TS34AB9100000103,2023,MACK,Anthem,,PTX103TX,TX,Regional linehaul
+Truck,TS-UNIT-104,TS34AB9100000104,2020,KENWORTH,W990,,PTX104TX,TX,OOS reserve spare
+Trailer,TS-TRL-501,TSTR501ABCD090501,2023,STOUGHTON,ZPlate,DryVan,TS501,TX,Seal policy enforced
+Trailer,TS-TRL-502,TSTR502ABCD090502,2022,VANGUARD,VXP,DryVan,TS502,TN,Hanging garment capable
+Trailer,TS-TRL-503,TSTR503ABCD090503,2024,UTILITI,Everest,DryVan,TS503,KS,Heavy duty landing gear
+Trailer,TS-TRL-504,TSTR504ABCD090504,2021,SCHMITZ,CargoBull,DryVan,TS504,MN,Hazmat placard mounts
