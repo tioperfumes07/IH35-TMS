@@ -107,7 +107,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                 COALESCE(SUM(ls.rate_total_cents), 0)::bigint AS revenue_cents,
                 COALESCE(SUM(ls.trip_miles), 0)::bigint AS miles_driven,
                 COUNT(*)::int AS load_count,
-                MODE() WITHIN GROUP (ORDER BY ls.trailer_type::text) AS truck_type
+                MAX(ls.trailer_type::text) AS truck_type
               FROM load_scope ls
               GROUP BY ls.assigned_unit_id
             ),
@@ -165,90 +165,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
             WHERE u.deactivated_at IS NULL
           `,
           [companyId, pStart, pEnd]
-        ).catch(async () => {
-          const fallback = await client.query(
-            `
-              WITH load_scope AS (
-                SELECT
-                  l.id,
-                  l.assigned_unit_id,
-                  l.assigned_primary_driver_id,
-                  l.rate_total_cents,
-                  l.trailer_type,
-                  COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles
-                FROM mdata.loads l
-                WHERE l.operating_company_id = $1
-                  AND l.soft_deleted_at IS NULL
-                  AND l.assigned_unit_id IS NOT NULL
-                  AND l.created_at::date BETWEEN $2::date AND $3::date
-              ),
-              agg AS (
-                SELECT
-                  ls.assigned_unit_id AS unit_id,
-                  COALESCE(SUM(ls.rate_total_cents), 0)::bigint AS revenue_cents,
-                  COALESCE(SUM(ls.trip_miles), 0)::bigint AS miles_driven,
-                  COUNT(*)::int AS load_count,
-                  MAX(ls.trailer_type::text) AS truck_type
-                FROM load_scope ls
-                GROUP BY ls.assigned_unit_id
-              ),
-              pay AS (
-                SELECT l.assigned_unit_id AS unit_id, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
-                FROM driver_finance.driver_bills db
-                JOIN load_scope l ON l.id = db.load_id
-                GROUP BY l.assigned_unit_id
-              ),
-              maint AS (
-                SELECT
-                  wo.unit_id AS unit_id,
-                  COALESCE(
-                    SUM(
-                      CASE
-                        WHEN COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
-                        THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
-                        ELSE 0
-                      END
-                    ),
-                    0
-                  )::bigint AS maintenance_cents
-                FROM maintenance.work_orders wo
-                WHERE wo.operating_company_id = $1
-                GROUP BY wo.unit_id
-              ),
-              drivers AS (
-                SELECT ls.assigned_unit_id AS unit_id, ls.assigned_primary_driver_id AS driver_id, COUNT(*)::int AS c
-                FROM load_scope ls
-                WHERE ls.assigned_primary_driver_id IS NOT NULL
-                GROUP BY ls.assigned_unit_id, ls.assigned_primary_driver_id
-              ),
-              primary_pick AS (
-                SELECT DISTINCT ON (unit_id)
-                  unit_id,
-                  driver_id
-                FROM drivers
-                ORDER BY unit_id, c DESC, driver_id ASC
-              )
-              SELECT
-                u.id::text AS unit_id,
-                u.unit_number,
-                COALESCE(agg.revenue_cents, 0)::text AS revenue_cents,
-                COALESCE(agg.miles_driven, 0)::text AS miles_driven,
-                COALESCE(agg.load_count, 0)::text AS load_count,
-                COALESCE(agg.truck_type::text, 'unknown') AS truck_type,
-                COALESCE(pay.driver_pay_cents, 0)::text AS driver_pay_cents,
-                COALESCE(maint.maintenance_cents, 0)::text AS maintenance_cents,
-                pp.driver_id::text AS primary_driver_id
-              FROM mdata.units u
-              JOIN agg ON agg.unit_id = u.id
-              LEFT JOIN pay ON pay.unit_id = u.id
-              LEFT JOIN maint ON maint.unit_id = u.id
-              LEFT JOIN primary_pick pp ON pp.unit_id = u.id
-              WHERE u.deactivated_at IS NULL
-            `,
-            [companyId, pStart, pEnd]
-          );
-          return fallback;
-        });
+        );
 
         const fuelRes = await client
           .query(
@@ -440,7 +357,13 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
             ON wo.unit_id = u.id
             AND wo.operating_company_id = $1
           WHERE u.deactivated_at IS NULL
-            AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
+            AND EXISTS (
+              SELECT 1
+              FROM mdata.loads l_scope
+              WHERE l_scope.assigned_unit_id = u.id
+                AND l_scope.operating_company_id = $1
+                AND l_scope.soft_deleted_at IS NULL
+            )
             ${unitFilter}
           GROUP BY u.id, u.unit_number
           ORDER BY (
