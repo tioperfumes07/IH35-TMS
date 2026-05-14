@@ -173,8 +173,84 @@ export function getBankingRegister(accountId: string, companyId: string) {
   return apiRequest<{ register_rows: Array<Record<string, unknown>> }>(`/api/v1/banking/accounts/${accountId}/register?${q(companyId)}`);
 }
 
-export function getBankingUncategorized(companyId: string) {
-  return apiRequest<{ transactions: Array<Record<string, unknown>> }>(`/api/v1/banking/transactions/uncategorized?${q(companyId)}`);
+export type UncategorizedBankTransactionsMeta = {
+  uncategorized_count?: number;
+  total_uncategorized_amount_cents?: number;
+  processed_this_week_count?: number;
+  auto_categorize_hit_rate_pct?: number | null;
+};
+
+export type UncategorizedBankTransactionsResponse = {
+  transactions: Array<Record<string, unknown>>;
+  meta?: UncategorizedBankTransactionsMeta;
+};
+
+export type UncategorizedBankTransactionsQuery = {
+  account_id?: string;
+  from?: string;
+  to?: string;
+  amount_min_cents?: number;
+  amount_max_cents?: number;
+  search?: string;
+  limit?: number;
+};
+
+function uncategorizedQs(companyId: string, filters: UncategorizedBankTransactionsQuery = {}) {
+  const query = new URLSearchParams();
+  query.set("operating_company_id", companyId);
+  if (filters.account_id) query.set("account_id", filters.account_id);
+  if (filters.from) query.set("from", filters.from);
+  if (filters.to) query.set("to", filters.to);
+  if (filters.amount_min_cents != null) query.set("amount_min_cents", String(filters.amount_min_cents));
+  if (filters.amount_max_cents != null) query.set("amount_max_cents", String(filters.amount_max_cents));
+  if (filters.search) query.set("search", filters.search);
+  if (filters.limit != null) query.set("limit", String(filters.limit));
+  return query.toString();
+}
+
+/** Uncategorized Plaid / banking transactions (filters sent to backend; P6-T11204). */
+export function getBankingUncategorized(companyId: string, filters: UncategorizedBankTransactionsQuery = {}) {
+  return apiRequest<UncategorizedBankTransactionsResponse>(`/api/v1/banking/transactions/uncategorized?${uncategorizedQs(companyId, filters)}`);
+}
+
+export function categorizeBankTransactionToAccount(
+  transactionId: string,
+  companyId: string,
+  body: { account_id: string; memo?: string }
+) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/categorize?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function bulkCategorizeBankTransactions(
+  companyId: string,
+  body: { transaction_ids: string[]; account_id: string }
+) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/bulk-categorize?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function markBankTransactionTransfer(
+  transactionId: string,
+  companyId: string,
+  body: { from_account_id: string; to_account_id: string }
+) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/mark-transfer?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+/** Skip / investigate flag + note (P6-T11204). */
+export function skipBankTransactionInvestigation(transactionId: string, companyId: string, body: { note: string }) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/skip-investigate?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
 }
 
 export function getBankingSuggestions(transactionId: string, companyId: string) {

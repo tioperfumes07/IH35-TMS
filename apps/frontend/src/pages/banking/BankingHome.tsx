@@ -189,6 +189,29 @@ export function BankingHomePage() {
       </div>
       <div className="rounded border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Uncategorized</p>
+          <Link to="/banking/categorize" className="text-xs font-medium text-blue-700 hover:underline">
+            Categorize
+          </Link>
+        </div>
+        <p className="text-sm text-gray-700">
+          <span className="font-semibold text-amber-700">{Number(kpiQuery.data?.total_uncategorized ?? 0)}</span> uncleared
+          {kpiQuery.data?.uncategorized_total_amount_cents != null ? (
+            <>
+              {" "}
+              ·{" "}
+              <span className="font-semibold">
+                {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+                  Number(kpiQuery.data.uncategorized_total_amount_cents ?? 0) / 100
+                )}
+              </span>
+            </>
+          ) : null}
+        </p>
+        <p className="mt-1 text-xs text-gray-500">Open the categorization workspace to clear Plaid items.</p>
+      </div>
+      <div className="rounded border border-gray-200 bg-white p-3">
+        <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Auto-Categorize</p>
           <Link to="/banking/categorize-rules" className="text-xs font-medium text-blue-700 hover:underline">
             Manage Rules

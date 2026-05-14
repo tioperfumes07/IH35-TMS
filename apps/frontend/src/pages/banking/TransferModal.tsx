@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createTransfer, getPlaidBankAccounts, type TransferAccountKind } from "../../api/banking";
+import { createTransfer, getPlaidBankAccounts, markBankTransactionTransfer, type TransferAccountKind } from "../../api/banking";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
@@ -10,6 +10,14 @@ type Props = {
   operatingCompanyId: string;
   onClose: () => void;
   onSaved: () => void;
+  prefill?: {
+    from_account_id?: string;
+    to_account_id?: string;
+    amount_cents?: number;
+    transfer_date?: string;
+    memo?: string;
+  } | null;
+  linkBankTransactionId?: string | null;
 };
 
 function todayIsoDate() {
@@ -28,7 +36,7 @@ function centsFromAmount(value: string) {
   return Math.round(parsed * 100);
 }
 
-export function TransferModal({ open, operatingCompanyId, onClose, onSaved }: Props) {
+export function TransferModal({ open, operatingCompanyId, onClose, onSaved, prefill = null, linkBankTransactionId = null }: Props) {
   const { pushToast } = useToast();
   const [fromAccountId, setFromAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
@@ -41,12 +49,20 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved }: Pr
 
   useEffect(() => {
     if (!open) return;
-    setFromAccountId("");
-    setToAccountId("");
-    setAmount("");
-    setTransferDate(todayIsoDate());
-    setMemo("");
-  }, [open]);
+    if (prefill) {
+      setFromAccountId(prefill.from_account_id ?? "");
+      setToAccountId(prefill.to_account_id ?? "");
+      setAmount(prefill.amount_cents != null && prefill.amount_cents > 0 ? (prefill.amount_cents / 100).toFixed(2) : "");
+      setTransferDate(prefill.transfer_date ?? todayIsoDate());
+      setMemo(prefill.memo ?? "");
+    } else {
+      setFromAccountId("");
+      setToAccountId("");
+      setAmount("");
+      setTransferDate(todayIsoDate());
+      setMemo("");
+    }
+  }, [open, prefill]);
 
   const bankAccountsQuery = useQuery({
     queryKey: ["banking", "plaid-accounts", operatingCompanyId, "transfer-modal"],
@@ -82,6 +98,16 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved }: Pr
         transfer_date: transferDate,
         memo: memo.trim() || undefined,
       });
+      if (linkBankTransactionId) {
+        try {
+          await markBankTransactionTransfer(linkBankTransactionId, operatingCompanyId, {
+            from_account_id: fromAccountId,
+            to_account_id: toAccountId,
+          });
+        } catch {
+          /* optional until P6-T11204 */
+        }
+      }
       pushToast("Transfer recorded", "success");
       onSaved();
       onClose();

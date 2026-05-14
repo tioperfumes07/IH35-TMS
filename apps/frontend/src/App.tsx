@@ -16,6 +16,7 @@ import { CashAdvanceRequestsPage } from "./pages/driver-finance/CashAdvanceReque
 import { OwnerApprovalPortalPage } from "./pages/driver-finance/OwnerApprovalPortalPage";
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
+import { BankTxCategorizationPage } from "./pages/banking/BankTxCategorizationPage";
 import { TransfersListPage } from "./pages/banking/TransfersListPage";
 import { ReconciliationWorkspacePage } from "./pages/banking/ReconciliationWorkspace";
 import { CategorizationRulesPage } from "./pages/banking/CategorizationRulesPage";
@@ -335,6 +336,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <BankingHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/categorize"
+          element={
+            <ProtectedRoute>
+              <BankTxCategorizationPage />
             </ProtectedRoute>
           }
         />

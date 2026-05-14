@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createJournalEntry, listClassesForJe, listCoaAccountsForJe } from "../../../api/accounting";
 import { Button } from "../../../components/Button";
@@ -10,9 +10,10 @@ type Props = {
   operatingCompanyId: string;
   onClose: () => void;
   onSaved: () => void;
+  prefill?: { date?: string; memo?: string } | null;
 };
 
-export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved }: Props) {
+export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, prefill = null }: Props) {
   const { pushToast } = useToast();
   const [step, setStep] = useState<1 | 2>(1);
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -58,6 +59,14 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved }: Pr
       { account_id: "", class_id: "", entity_uuid: "", debit: 0, credit: 0, description: "" },
     ]);
   };
+
+  useEffect(() => {
+    if (!open) return;
+    reset();
+    if (prefill?.date) setDate(prefill.date);
+    if (prefill?.memo) setMemo(prefill.memo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset + optional prefill when opening
+  }, [open, prefill?.date, prefill?.memo]);
 
   const save = async () => {
     setLoading(true);
