@@ -22,27 +22,6 @@ const transactionIdParamsSchema = z.object({
   id: z.string().uuid(),
 });
 
-const categorizeBodySchema = z.object({
-  action_type: z.enum([
-    "create_expense",
-    "apply_bill",
-    "bill_payment",
-    "transfer",
-    "driver_settlement",
-    "split_transaction",
-    "factoring_advance",
-    "manual_je",
-  ]),
-  linked_entity_id: z.string().uuid().optional(),
-  payload: z.record(z.string(), z.unknown()).default({}),
-});
-
-const bulkCategorizeBodySchema = z.object({
-  operating_company_id: z.string().uuid(),
-  transaction_ids: z.array(z.string().uuid()).min(1).max(200),
-  action_type: categorizeBodySchema.shape.action_type,
-});
-
 const splitBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   lines: z
@@ -307,12 +286,12 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           `
             SELECT
               bt.*,
-              CASE WHEN bt.amount >= 0 THEN bt.amount ELSE 0 END AS deposits,
-              CASE WHEN bt.amount < 0 THEN abs(bt.amount) ELSE 0 END AS withdrawals
+              CASE WHEN bt.amount_cents >= 0 THEN bt.amount_cents::numeric / 100 ELSE 0 END AS deposits,
+              CASE WHEN bt.amount_cents < 0 THEN abs(bt.amount_cents)::numeric / 100 ELSE 0 END AS withdrawals
             FROM banking.bank_transactions bt
             WHERE bt.operating_company_id = $1
-              AND bt.account_id = $2
-            ORDER BY bt.txn_date DESC, bt.created_at DESC
+              AND bt.bank_account_id = $2
+            ORDER BY bt.transaction_date DESC, bt.created_at DESC
             LIMIT $3 OFFSET $4
           `,
           [q.operating_company_id, params.data.id, q.limit, q.offset]
@@ -321,32 +300,6 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       return res.rows;
     });
     return { register_rows: rows };
-  });
-
-  app.get("/api/v1/banking/transactions/uncategorized", async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return sendValidationError(reply, query.error);
-    const companyId = query.data.operating_company_id;
-
-    const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const res = await client
-        .query(
-          `
-            SELECT *
-            FROM banking.bank_transactions
-            WHERE operating_company_id = $1
-              AND status = 'uncategorized'
-            ORDER BY txn_date DESC, created_at DESC
-            LIMIT 500
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return res.rows;
-    });
-    return { transactions: rows };
   });
 
   app.get("/api/v1/banking/transactions/:id/suggestions", async (req, reply) => {
@@ -360,9 +313,9 @@ export async function registerBankingRoutes(app: FastifyInstance) {
 
     const suggestions = await withCompanyScope(user.uuid, companyId, async (client) => {
       const targetRes = await client
-        .query<{ description: string; amount: number }>(
+        .query<{ description: string | null; amount_cents: number }>(
           `
-            SELECT description, amount
+            SELECT description, amount_cents
             FROM banking.bank_transactions
             WHERE id = $1
               AND operating_company_id = $2
@@ -370,7 +323,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           `,
           [params.data.id, companyId]
         )
-        .catch(() => ({ rows: [] as { description: string; amount: number }[] }));
+        .catch(() => ({ rows: [] as { description: string | null; amount_cents: number }[] }));
       const target = targetRes.rows[0];
       if (!target) return [];
       const res = await client
@@ -378,129 +331,25 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           `
             SELECT
               id,
-              txn_date,
+              transaction_date AS txn_date,
               description,
-              amount,
+              amount_cents AS amount,
               category,
               status
             FROM banking.bank_transactions
             WHERE operating_company_id = $1
-              AND status <> 'uncategorized'
-              AND abs(amount - $2) <= 5
+              AND NOT (status IN ('pending_categorization','uncategorized'))
+              AND abs(amount_cents - $2) <= 500
               AND description ILIKE $3
-            ORDER BY txn_date DESC
+            ORDER BY transaction_date DESC
             LIMIT 3
           `,
-          [companyId, Number(target.amount ?? 0), `%${String(target.description ?? "").slice(0, 18)}%`]
+          [companyId, Number(target.amount_cents ?? 0), `%${String(target.description ?? "").slice(0, 18)}%`]
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
       return res.rows;
     });
     return { suggestions };
-  });
-
-  app.post("/api/v1/banking/transactions/:id/categorize", async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    const params = transactionIdParamsSchema.safeParse(req.params ?? {});
-    if (!params.success) return sendValidationError(reply, params.error);
-    const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return sendValidationError(reply, query.error);
-    const body = categorizeBodySchema.safeParse(req.body ?? {});
-    if (!body.success) return sendValidationError(reply, body.error);
-    const companyId = query.data.operating_company_id;
-
-    const result = await withCompanyScope(user.uuid, companyId, async (client) => {
-      const txnRes = await client.query<{ id: string; status: string; amount: number; description: string }>(
-        `
-          SELECT id, status, amount, description
-          FROM banking.bank_transactions
-          WHERE id = $1
-            AND operating_company_id = $2
-          LIMIT 1
-        `,
-        [params.data.id, companyId]
-      ).catch(() => ({ rows: [] as { id: string; status: string; amount: number; description: string }[] }));
-      const txn = txnRes.rows[0];
-      if (!txn) return { error: "not_found" as const };
-      if (txn.status !== "uncategorized") return { error: "already_categorized" as const };
-
-      // Single-link guard (WF-012): one action at a time per transaction.
-      await client.query(
-        `
-          UPDATE banking.bank_transactions
-          SET category = $2,
-              status = 'categorized',
-              linked_entity_id = $3,
-              updated_at = now()
-          WHERE id = $1
-        `,
-        [params.data.id, body.data.action_type, body.data.linked_entity_id ?? null]
-      ).catch(async () => {
-        await client.query(
-          `
-            UPDATE banking.bank_transactions
-            SET category = $2,
-                status = 'categorized',
-                updated_at = now()
-            WHERE id = $1
-          `,
-          [params.data.id, body.data.action_type]
-        );
-      });
-
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "banking.transaction.categorized",
-        {
-          resource_type: "banking.bank_transactions",
-          resource_id: params.data.id,
-          operating_company_id: companyId,
-          action_type: body.data.action_type,
-          linked_entity_uuid: body.data.linked_entity_id ?? null,
-          payload: body.data.payload,
-        },
-        "info",
-        "BT-3-BANKING-REBUILD"
-      );
-      return { ok: true as const };
-    });
-
-    if ("error" in result) {
-      if (result.error === "not_found") return reply.code(404).send({ error: "transaction_not_found" });
-      return reply.code(409).send({ error: "transaction_already_categorized" });
-    }
-    return result;
-  });
-
-  app.post("/api/v1/banking/transactions/bulk-categorize", async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-    const body = bulkCategorizeBodySchema.safeParse(req.body ?? {});
-    if (!body.success) return sendValidationError(reply, body.error);
-    const b = body.data;
-
-    const updatedCount = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
-      let count = 0;
-      for (const id of b.transaction_ids) {
-        const res = await client.query(
-          `
-            UPDATE banking.bank_transactions
-            SET category = $2,
-                status = 'categorized',
-                updated_at = now()
-            WHERE id = $1
-              AND operating_company_id = $3
-              AND status = 'uncategorized'
-          `,
-          [id, b.action_type, b.operating_company_id]
-        ).catch(() => ({ rowCount: 0 }));
-        count += Number(res.rowCount ?? 0);
-      }
-      return count;
-    });
-    return { updated_count: updatedCount };
   });
 
   app.post("/api/v1/banking/transactions/:id/split", async (req, reply) => {
@@ -513,20 +362,22 @@ export async function registerBankingRoutes(app: FastifyInstance) {
 
     const total = body.data.lines.reduce((sum, line) => sum + Number(line.amount), 0);
     const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-      const txnRes = await client.query<{ amount: number; status: string }>(
+      const txnRes = await client.query<{ amount_cents: number; status: string }>(
         `
-          SELECT amount, status
+          SELECT amount_cents, status
           FROM banking.bank_transactions
           WHERE id = $1
             AND operating_company_id = $2
           LIMIT 1
         `,
         [params.data.id, body.data.operating_company_id]
-      ).catch(() => ({ rows: [] as { amount: number; status: string }[] }));
+      ).catch(() => ({ rows: [] as { amount_cents: number; status: string }[] }));
       const txn = txnRes.rows[0];
       if (!txn) return { error: "not_found" as const };
-      if (txn.status !== "uncategorized") return { error: "already_categorized" as const };
-      if (Math.abs(Number(txn.amount) - total) > 0.01) return { error: "split_mismatch" as const };
+      const pending = txn.status === "pending_categorization" || txn.status === "uncategorized";
+      if (!pending) return { error: "already_categorized" as const };
+      const txnDollars = Number(txn.amount_cents) / 100;
+      if (Math.abs(txnDollars - total) > 0.01) return { error: "split_mismatch" as const };
 
       await client.query(
         `
@@ -561,10 +412,25 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           UPDATE banking.bank_transactions
-          SET status = 'uncategorized',
-              category = NULL,
-              linked_entity_id = NULL,
-              updated_at = now()
+          SET
+            status = 'pending_categorization',
+            category = NULL,
+            category_kind = NULL,
+            linked_entity_id = NULL,
+            categorization_customer_id = NULL,
+            categorization_vendor_id = NULL,
+            categorization_gl_account_id = NULL,
+            categorization_project_id = NULL,
+            categorization_memo = NULL,
+            suggested_match_invoice_id = NULL,
+            suggested_match_bill_id = NULL,
+            destination_bank_account_id = NULL,
+            transfer_kind = NULL,
+            paired_transaction_id = NULL,
+            skip_reason = NULL,
+            investigate_note = NULL,
+            categorized_at = NULL,
+            updated_at = now()
           WHERE id = $1
             AND operating_company_id = $2
           RETURNING id
