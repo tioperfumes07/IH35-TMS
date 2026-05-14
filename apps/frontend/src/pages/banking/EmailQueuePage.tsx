@@ -52,7 +52,11 @@ export function EmailQueuePage() {
       <PageHeader title="Email Queue" subtitle="Retry failed deliveries without SQL" />
       {queueQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
       <div className="rounded border border-gray-200 bg-white p-3 text-xs text-gray-700">
-        Failed sends can be re-queued here (maps to <span className="font-mono text-[11px]">POST /api/v1/admin/email-queue/:id/retry</span>).
+        <p>
+          Queue listings load from <span className="font-mono text-[11px]">GET /api/v1/email/queue</span> (pass{" "}
+          <span className="font-mono text-[11px]">operating_company_id</span>). Failed sends can be re-queued via{" "}
+          <span className="font-mono text-[11px]">POST /api/v1/admin/email-queue/:id/retry</span>.
+        </p>
       </div>
       <div className="rounded border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between">

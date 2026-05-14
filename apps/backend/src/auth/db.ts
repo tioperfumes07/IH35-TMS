@@ -81,7 +81,7 @@ export async function withCurrentUser<T>(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(`SET LOCAL app.current_user_id = '${userUuid}'`);
+    await client.query(`SELECT set_config('app.current_user_id', $1::text, true)`, [userUuid]);
     const result = await fn(client);
     await client.query("COMMIT");
     return result;
