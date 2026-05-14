@@ -189,29 +189,6 @@ export function BankingHomePage() {
       </div>
       <div className="rounded border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Uncategorized</p>
-          <Link to="/banking/categorize" className="text-xs font-medium text-blue-700 hover:underline">
-            Categorize
-          </Link>
-        </div>
-        <p className="text-sm text-gray-700">
-          <span className="font-semibold text-amber-700">{Number(kpiQuery.data?.total_uncategorized ?? 0)}</span> uncleared
-          {kpiQuery.data?.uncategorized_total_amount_cents != null ? (
-            <>
-              {" "}
-              ·{" "}
-              <span className="font-semibold">
-                {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-                  Number(kpiQuery.data.uncategorized_total_amount_cents ?? 0) / 100
-                )}
-              </span>
-            </>
-          ) : null}
-        </p>
-        <p className="mt-1 text-xs text-gray-500">Open the categorization workspace to clear Plaid items.</p>
-      </div>
-      <div className="rounded border border-gray-200 bg-white p-3">
-        <div className="mb-2 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Auto-Categorize</p>
           <Link to="/banking/categorize-rules" className="text-xs font-medium text-blue-700 hover:underline">
             Manage Rules
@@ -272,11 +249,16 @@ export function BankingHomePage() {
         ) : null}
       </div>
       <div className="rounded border border-gray-200 bg-white p-3">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">QBO Sync Status</p>
-          <Link to="/admin/qbo-sync-queue" className="text-xs font-medium text-blue-700 hover:underline">
-            Manage Queue
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link to="/banking/email-queue" className="text-xs font-medium text-blue-700 hover:underline">
+              Email Queue
+            </Link>
+            <Link to="/banking/qbo-sync-queue" className="text-xs font-medium text-blue-700 hover:underline">
+              Manage Queue
+            </Link>
+          </div>
         </div>
         {qboSyncStatsQuery.isLoading ? <p className="text-sm text-gray-500">Loading sync status...</p> : null}
         {qboSyncStatsQuery.isError ? <p className="text-sm text-red-600">Unable to load QBO sync status.</p> : null}

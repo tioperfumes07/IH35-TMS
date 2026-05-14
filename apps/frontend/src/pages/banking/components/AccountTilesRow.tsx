@@ -10,7 +10,7 @@ type Props = {
 
 export function AccountTilesRow({ tiles, selectedId, onSelect, onManageAccounts }: Props) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
+    <div className="flex items-center gap-2 overflow-x-auto pb-1">
       {tiles.map((tile) => (
         <AccountTile
           key={tile.id}
@@ -19,13 +19,8 @@ export function AccountTilesRow({ tiles, selectedId, onSelect, onManageAccounts 
           onSelect={() => onSelect(tile.id)}
         />
       ))}
-      <button
-        type="button"
-        onClick={onManageAccounts}
-        className="h-[104px] w-[200px] flex-shrink-0 rounded border border-dashed border-gray-300 bg-gray-50 px-3 py-2 text-left text-xs text-gray-700"
-      >
-        <div className="font-semibold">+ Create Account</div>
-        <div className="mt-1">Open Manage Accounts modal</div>
+      <button type="button" onClick={onManageAccounts} className="flex-shrink-0 text-sm text-blue-700 hover:underline">
+        + Create Account
       </button>
     </div>
   );

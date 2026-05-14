@@ -27,6 +27,7 @@
     "smoke:iphone-auth": "cd apps/frontend && npx playwright test --config=playwright.iphone-smoke.config.ts test-smoke/iphone-office-auth-smoke.spec.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "smoke:block-x": "tsx scripts/smoke-tests/block-x-scheduled-reports-e2e.ts && tsx scripts/smoke-tests/block-x-production-health.ts",
+    "smoke:email-queue": "tsx scripts/smoke-tests/email-queue-e2e.ts",
     "test": "vitest run --config apps/backend/vitest.config.ts",
     "test:coverage": "vitest run --config apps/backend/vitest.config.ts --coverage",
     "db:migrate": "node scripts/db-migrate.mjs",
@@ -131,6 +132,7 @@
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/luxon": "^3.7.1",
     "@types/node": "^22.0.0",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.2.0",
