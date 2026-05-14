@@ -11,6 +11,8 @@
 
 Audience: **Dispatchers**, **fleet managers**, and **ops leads** using the office app at **https://app.ih35dispatch.com**.
 
+<a id="sign-in-and-company-context"></a>
+
 ![Placeholder: Dispatch board overview](./screenshots/dispatcher/01-dispatch-board.png)
 
 ---
@@ -31,6 +33,8 @@ Audience: **Dispatchers**, **fleet managers**, and **ops leads** using the offic
 - **Read-only everywhere:** Role may be `Driver` on accident—owner must correct role and re-login.
 
 ---
+
+<a id="dispatch-board-mental-model"></a>
 
 ## 2. Dispatch board mental model
 
@@ -53,6 +57,8 @@ The **dispatch board** is your air-traffic screen: cards or rows represent **loa
 
 ---
 
+<a id="load-detail"></a>
+
 ## 3. Load detail — the source of truth
 
 Click any load to open **detail**. You should see:
@@ -70,6 +76,8 @@ Click any load to open **detail**. You should see:
 - If the unit swap affects **IFTA** or **permit book**, note it in **load notes** for accounting.
 
 ---
+
+<a id="booking-loads"></a>
 
 ## 4. Booking a new load (happy path)
 
@@ -90,6 +98,8 @@ Exact clicks vary by template features, but the archetype is:
 
 ---
 
+<a id="assigning-driver-unit"></a>
+
 ## 5. Assigning driver + unit
 
 From load detail → **Assignments** (wording may be **Dispatch** or **Fleet**):
@@ -103,6 +113,8 @@ From load detail → **Assignments** (wording may be **Dispatch** or **Fleet**):
 Communicate **macro context**—drivers should never discover hazmat level or seal instructions for the first time *after* accepting.
 
 ---
+
+<a id="customer-lookup-ar-sensitive"></a>
 
 ## 6. Customer lookup (AR-sensitive)
 
@@ -142,6 +154,24 @@ Only **Accountant / Owner** should categorize transactions or trigger QBO pushes
 
 ---
 
+<a id="invoices"></a>
+
+### 8a. Invoices & receivables (read-mostly)
+
+Most dispatchers only need **Accounting → Invoices** to confirm billing status or PDF attachments—not to edit GL. If your role is read-only, use this area to **verify invoice exists** after delivery, then let accounting own corrections.
+
+---
+
+<a id="maintenance"></a>
+
+### 8b. Maintenance coordination (read-mostly)
+
+Use **MAINT** when dispatch decisions depend on unit availability: severe repairs, **OOS** flags, or arriving-soon work orders. You rarely complete WOs here, but you **must not dispatch equipment** the shop has grounded.
+
+---
+
+<a id="reports-hub"></a>
+
 ## 9. Reports hub
 
 The **Reports** area aggregates operational KPIs (exact tiles depend on entitlements).
@@ -168,6 +198,8 @@ If your morning PDF is missing:
 - Confirm **recipients_to** includes your work email, not a personal alias you do not monitor.
 
 ---
+
+<a id="troubleshooting-playbook"></a>
 
 ## Troubleshooting playbook
 

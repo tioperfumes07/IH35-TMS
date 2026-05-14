@@ -5,6 +5,7 @@ import i18n from "../../i18n";
 import { clearDriverAuth, hasDriverAccessToken } from "../../lib/auth-token";
 import { initDriverBackgroundSessionRefresh, registerDriverServiceWorker } from "../../lib/service-worker-registration";
 import { InstallPWAPrompt } from "./InstallPWAPrompt";
+import { FooterFaqLink, PageHelpLink } from "../../components/PageHelpLink";
 
 function applyDriverLanguageDefault() {
   const stored = localStorage.getItem("ih35_driver_i18n_lang");
@@ -49,6 +50,7 @@ export function DriverShell() {
         <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
           <span className="text-sm font-semibold">{t("driver.app_title")}</span>
           <div className="flex items-center gap-2 text-xs">
+            <PageHelpLink className="h-7 w-7 border-slate-300 text-slate-600 hover:bg-slate-100" />
             <button
               type="button"
               className="rounded border border-slate-300 px-2 py-0.5"
@@ -94,6 +96,9 @@ export function DriverShell() {
       </header>
       <main className="mx-auto w-full max-w-lg flex-1 p-3">
         <Outlet />
+        <footer className="mt-8 flex justify-end pb-6">
+          <FooterFaqLink className="text-slate-500 hover:text-slate-800" />
+        </footer>
       </main>
     </div>
   );

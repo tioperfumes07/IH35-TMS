@@ -129,6 +129,7 @@ import { registerQboBulkLinkRoutes } from "./qbo/bulk-link.routes.js";
 import { registerQboSyncHealthRoutes } from "./qbo/sync-health.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
+import { registerLaunchReadinessRoutes } from "./admin/launch-readiness.routes.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { attachSentryRequestScope, initBackendSentry, registerSentryFastifyErrorHandler } from "./lib/sentry.js";
@@ -243,6 +244,7 @@ async function main() {
   });
   await registerRunnerStatusRoutes(app);
   await registerForensicLiveRoutes(app);
+  await registerLaunchReadinessRoutes(app);
   await registerAuthRoutes(app);
   await registerQboOAuthRoutes(app);
   await registerSamsaraWebhookRoutes(app);
