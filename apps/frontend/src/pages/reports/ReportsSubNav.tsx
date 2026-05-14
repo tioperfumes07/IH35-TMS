@@ -12,7 +12,9 @@ function flattenReportRunLinks(): NavChild[] {
     for (const item of REPORT_CATEGORY_FLYOUT_ITEMS[cat]) {
       if (seen.has(item.id)) continue;
       seen.add(item.id);
-      out.push({ label: item.label, href: `/reports/run/${encodeURIComponent(item.id)}` });
+      const href =
+        item.id === "ar-aging" ? "/reports/ar-aging" : item.id === "ap-aging" ? "/reports/ap-aging" : `/reports/run/${encodeURIComponent(item.id)}`;
+      out.push({ label: item.label, href });
     }
   }
   return out;
@@ -26,6 +28,7 @@ export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [
 
 export function reportsSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/reports/run/")) return pathname;
+  if (pathname === "/reports/ar-aging" || pathname === "/reports/ap-aging") return pathname;
   return "/reports";
 }
 

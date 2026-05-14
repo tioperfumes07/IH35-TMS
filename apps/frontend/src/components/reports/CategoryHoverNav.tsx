@@ -1,6 +1,7 @@
 import { HoverDropdown } from "../shared/HoverDropdown";
 import type { ReportCategory } from "../../api/reports";
 import { ReportFlyoutPanel } from "./ReportFlyoutPanel";
+import { useNavigate } from "react-router-dom";
 
 const CATEGORY_LABELS: Array<{ id: ReportCategory; label: string }> = [
   { id: "all", label: "All" },
@@ -19,6 +20,7 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
     { id: "profit-truck-mtd", label: "Profit per truck · MTD", hint: "Margin by unit" },
     { id: "driver-settlement", label: "Driver settlement summary", hint: "Current cycle" },
     { id: "ar-aging", label: "A/R aging", hint: "Current / 30 / 60 / 90+" },
+    { id: "ap-aging", label: "A/P aging", hint: "Open bills by vendor" },
   ],
   operations: [
     { id: "dispatch-board", label: "Dispatch board health", hint: "Live load movement" },
@@ -27,6 +29,8 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
   financial: [
     { id: "cash-position", label: "Cash position + AR", hint: "Daily liquidity" },
     { id: "profit-truck-mtd", label: "Profit per truck · MTD" },
+    { id: "ar-aging", label: "A/R aging", hint: "Current / 30 / 60 / 90+" },
+    { id: "ap-aging", label: "A/P aging", hint: "Open bills by vendor" },
   ],
   drivers: [
     { id: "driver-pay-history", label: "Driver pay history" },
@@ -63,6 +67,7 @@ type Props = {
 };
 
 export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
+  const navigate = useNavigate();
   return (
     <div className="overflow-x-auto border-b border-slate-200 bg-white px-2 py-1">
       <div className="flex min-w-max gap-3">
@@ -84,7 +89,18 @@ export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
               <ReportFlyoutPanel
                 title={`${category.label} reports`}
                 items={FLYOUT_ITEMS[category.id]}
-                onSelect={() => onCategoryChange(category.id)}
+                onSelect={(itemId) => {
+                  onCategoryChange(category.id);
+                  if (itemId === "ar-aging") {
+                    navigate("/reports/ar-aging");
+                    return;
+                  }
+                  if (itemId === "ap-aging") {
+                    navigate("/reports/ap-aging");
+                    return;
+                  }
+                  navigate(`/reports/run/${encodeURIComponent(itemId)}`);
+                }}
                 footer="Click any report to run"
               />
             </HoverDropdown>

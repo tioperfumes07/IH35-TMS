@@ -58,11 +58,15 @@ export function ReportsHomePage() {
   ];
 
   function handleRunReport(row: FrequentlyRunReport) {
+    if (row.id === "ar-aging") {
+      navigate("/reports/ar-aging");
+      return;
+    }
+    if (row.id === "ap-aging") {
+      navigate("/reports/ap-aging");
+      return;
+    }
     if (row.status === "stub") {
-      if (row.id === "ar-aging") {
-        pushToast("A/R aging ships with accounting in Phase 5.", "info");
-        return;
-      }
       if (row.id === "detention-claims") {
         pushToast("Detention billing report ships in Phase 4.", "info");
         return;

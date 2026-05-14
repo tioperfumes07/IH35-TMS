@@ -38,6 +38,13 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     status: "real",
   },
   {
+    id: "ap-aging",
+    name: "A/P aging",
+    category: "financial",
+    description: "Vendor aging buckets sourced from open bills.",
+    status: "real",
+  },
+  {
     id: "fuel-savings",
     name: "Fuel savings · rec vs actual",
     category: "fuel",

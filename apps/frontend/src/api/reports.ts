@@ -90,14 +90,36 @@ export type ARAgingRow = {
   bucket_61_90_cents: number;
   bucket_91_plus_cents: number;
   total_open_cents: number;
+  last_payment_date?: string | null;
 };
 
 export type ARAgingResponse = {
   status: "real";
   generated_at: string;
+  as_of_date?: string;
   total_open_cents: number;
   total_open_invoices: number;
   rows: ARAgingRow[];
+};
+
+export type APAgingRow = {
+  vendor_id: string;
+  vendor_name: string;
+  open_bill_count: number;
+  current_cents: number;
+  bucket_1_30_cents: number;
+  bucket_31_60_cents: number;
+  bucket_61_90_cents: number;
+  bucket_91_plus_cents: number;
+  total_open_cents: number;
+  last_payment_date?: string | null;
+};
+
+export type APAgingResponse = {
+  status: "real";
+  generated_at: string;
+  as_of_date?: string;
+  rows: APAgingRow[];
 };
 
 type ReportRunLogBody = {
@@ -116,6 +138,100 @@ function withCompany(path: string, companyId: string) {
 
 async function postRunLog(body: ReportRunLogBody) {
   await apiRequest<{ ok: boolean }>("/api/v1/reports/run-log", { method: "POST", body });
+}
+
+type ArAgingApiPayload = {
+  as_of_date: string;
+  totals: {
+    total_outstanding_cents: number;
+    bucket_0_30_cents: number;
+    bucket_31_60_cents: number;
+    bucket_61_90_cents: number;
+    bucket_91_plus_cents: number;
+  };
+  rows: Array<{
+    customer_id: string;
+    customer_name: string;
+    total_cents: number;
+    bucket_0_30_cents: number;
+    bucket_31_60_cents: number;
+    bucket_61_90_cents: number;
+    bucket_91_plus_cents: number;
+    last_payment_date: string | null;
+    invoice_count: number;
+  }>;
+};
+
+type ApAgingApiPayload = {
+  as_of_date: string;
+  totals: {
+    total_outstanding_cents: number;
+    bucket_0_30_cents: number;
+    bucket_31_60_cents: number;
+    bucket_61_90_cents: number;
+    bucket_91_plus_cents: number;
+  };
+  rows: Array<{
+    vendor_id: string;
+    vendor_name: string;
+    total_cents: number;
+    bucket_0_30_cents: number;
+    bucket_31_60_cents: number;
+    bucket_61_90_cents: number;
+    bucket_91_plus_cents: number;
+    last_payment_date: string | null;
+    bill_count: number;
+  }>;
+};
+
+export async function getArAgingReport(companyId: string, asOfDate: string): Promise<ARAgingResponse> {
+  const raw = await apiRequest<ArAgingApiPayload>(
+    withCompany(`/api/v1/reports/ar-aging?as_of_date=${encodeURIComponent(asOfDate)}`, companyId)
+  );
+  const rows: ARAgingRow[] = raw.rows.map((r) => ({
+    customer_id: r.customer_id,
+    customer_name: r.customer_name,
+    open_invoice_count: r.invoice_count,
+    current_cents: 0,
+    bucket_1_30_cents: r.bucket_0_30_cents,
+    bucket_31_60_cents: r.bucket_31_60_cents,
+    bucket_61_90_cents: r.bucket_61_90_cents,
+    bucket_91_plus_cents: r.bucket_91_plus_cents,
+    total_open_cents: r.total_cents,
+    last_payment_date: r.last_payment_date,
+  }));
+  return {
+    status: "real",
+    generated_at: new Date().toISOString(),
+    as_of_date: raw.as_of_date,
+    total_open_cents: raw.totals.total_outstanding_cents,
+    total_open_invoices: rows.reduce((s, row) => s + row.open_invoice_count, 0),
+    rows,
+  };
+}
+
+export async function getApAgingReport(companyId: string, asOfDate: string): Promise<APAgingResponse> {
+  const raw = await apiRequest<ApAgingApiPayload>(
+    withCompany(`/api/v1/reports/ap-aging?as_of_date=${encodeURIComponent(asOfDate)}`, companyId)
+  );
+  const rows: APAgingRow[] = raw.rows.map((r) => ({
+    vendor_id: r.vendor_id,
+    vendor_name: r.vendor_name,
+    open_bill_count: r.bill_count,
+    current_cents: 0,
+    bucket_1_30_cents: r.bucket_0_30_cents,
+    bucket_31_60_cents: r.bucket_31_60_cents,
+    bucket_61_90_cents: r.bucket_61_90_cents,
+    bucket_91_plus_cents: r.bucket_91_plus_cents,
+    total_open_cents: r.total_cents,
+    last_payment_date: r.last_payment_date,
+  }));
+  return {
+    status: "real",
+    generated_at: new Date().toISOString(),
+    as_of_date: raw.as_of_date,
+    rows,
+  };
 }
 
 export async function getReportLibrary(companyId: string): Promise<ReportLibraryItem[]> {
@@ -203,7 +319,7 @@ export async function runDriverSettlementSummary(companyId: string, cycleStart?:
 
 export async function runArAging(companyId: string) {
   const startedAt = Date.now();
-  const result = await apiRequest<ARAgingResponse>(withCompany("/api/v1/reports/ar-aging", companyId));
+  const result = await getArAgingReport(companyId, new Date().toISOString().slice(0, 10));
   await postRunLog({
     operating_company_id: companyId,
     report_id: "ar-aging",
