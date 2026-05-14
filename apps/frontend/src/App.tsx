@@ -77,6 +77,10 @@ import { ReportsHomePage } from "./pages/reports/ReportsHome";
 import { ReportsRunnerPage } from "./pages/reports/ReportsRunner";
 import { ARAgingPage } from "./pages/reports/ARAgingPage";
 import { APAgingPage } from "./pages/reports/APAgingPage";
+import { CashFlowOverviewPage } from "./pages/reports/CashFlowOverviewPage";
+import { SettlementSummaryPage } from "./pages/reports/SettlementSummaryPage";
+import { CustomerProfitabilityPage } from "./pages/reports/CustomerProfitabilityPage";
+import { ProfitPerTruckPage } from "./pages/reports/ProfitPerTruckPage";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
 import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
 import { AbandonmentQueuePage } from "./pages/accounting/AbandonmentQueuePage";
@@ -1029,6 +1033,38 @@ export default function App() {
           element={
             <ProtectedRoute>
               <APAgingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/cash-flow-overview"
+          element={
+            <ProtectedRoute>
+              <CashFlowOverviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/settlement-summary"
+          element={
+            <ProtectedRoute>
+              <SettlementSummaryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/customer-profitability"
+          element={
+            <ProtectedRoute>
+              <CustomerProfitabilityPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/profit-per-truck"
+          element={
+            <ProtectedRoute>
+              <ProfitPerTruckPage />
             </ProtectedRoute>
           }
         />

@@ -406,3 +406,184 @@ export async function runCsaFleetScore(companyId: string) {
   });
   return result;
 }
+
+// —— Block T / U (P6-T11197 / P6-T11198): Phase 6 financial reports — shapes match backend route payloads.
+
+export type CashFlowOverviewResponse = {
+  as_of_date: string;
+  current_state: {
+    operating_balance_cents: number;
+    dip_balance_cents: number;
+    payroll_balance_cents: number;
+    factoring_reserves_held_cents: number;
+    factoring_advances_funded_mtd_cents: number;
+    uncategorized_transactions_count: number;
+    chargebacks_open_cents: number;
+  };
+  next_30_days: {
+    expected_ar_collections_cents: number;
+    expected_ap_outflows_cents: number;
+    expected_settlement_outflows_cents: number;
+    net_projected_change_cents: number;
+  };
+  historical: {
+    last_7_days_inflows_cents: number;
+    last_7_days_outflows_cents: number;
+    last_30_days_avg_daily_inflow_cents: number;
+    last_30_days_avg_daily_outflow_cents: number;
+  };
+};
+
+export type SettlementDeductionBreakdown = {
+  fuel_advance: number;
+  tire_damage: number;
+  escrow_contribution: number;
+  abandonment_chargeback: number;
+  other: number;
+};
+
+export type SettlementSummaryDriverRow = {
+  driver_id: string;
+  driver_name: string;
+  gross_pay_cents: number;
+  deduction_cents: number;
+  chargeback_cents: number;
+  net_pay_cents: number;
+  load_count: number;
+  settlement_count: number;
+  avg_per_load_cents: number;
+  deductions_breakdown: SettlementDeductionBreakdown;
+};
+
+export type SettlementSummaryResponse = {
+  period: { start: string; end: string };
+  totals: {
+    gross_pay_cents: number;
+    deduction_total_cents: number;
+    chargeback_total_cents: number;
+    net_pay_cents: number;
+    settlement_count: number;
+    driver_count: number;
+  };
+  by_driver: SettlementSummaryDriverRow[];
+  by_deduction_type: Record<string, number>;
+};
+
+export type CustomerProfitFlag = "high_margin" | "low_margin" | "past_due" | "declining_revenue";
+
+export type CustomerProfitabilityRow = {
+  customer_id: string;
+  customer_name: string;
+  revenue_cents: number;
+  direct_cost_cents: number;
+  gross_margin_cents: number;
+  gross_margin_pct: number;
+  load_count: number;
+  avg_revenue_per_load_cents: number;
+  ar_aging_balance_cents: number;
+  days_since_last_load: number | null;
+  flags: CustomerProfitFlag[];
+};
+
+export type CustomerProfitabilityResponse = {
+  period: { start: string; end: string };
+  totals: {
+    revenue_cents: number;
+    direct_cost_cents: number;
+    gross_margin_cents: number;
+    gross_margin_pct: number;
+    customer_count: number;
+  };
+  by_customer: CustomerProfitabilityRow[];
+};
+
+export type ProfitPerTruckFlag = "most_profitable" | "least_profitable" | "high_maintenance" | "underutilized";
+
+export type ProfitPerTruckRow = {
+  unit_id: string;
+  unit_number: string;
+  truck_type: string;
+  revenue_cents: number;
+  driver_pay_cents: number;
+  fuel_cents: number;
+  maintenance_cents: number;
+  depreciation_cents: number;
+  other_cents: number;
+  net_profit_cents: number;
+  margin_pct: number;
+  load_count: number;
+  miles_driven: number;
+  revenue_per_mile_cents: number;
+  cost_per_mile_cents: number;
+  profit_per_mile_cents: number;
+  primary_driver_id: string | null;
+  primary_driver_name: string | null;
+  flags: ProfitPerTruckFlag[];
+};
+
+export type ProfitPerTruckResponse = {
+  period: { start: string; end: string };
+  totals: {
+    revenue_cents: number;
+    driver_pay_cents: number;
+    fuel_cost_cents: number;
+    maintenance_cost_cents: number;
+    depreciation_cents: number;
+    other_direct_cost_cents: number;
+    net_profit_cents: number;
+    truck_count: number;
+  };
+  by_truck: ProfitPerTruckRow[];
+};
+
+export async function getCashFlowOverview(params: { operating_company_id: string; as_of_date?: string }): Promise<CashFlowOverviewResponse> {
+  const { operating_company_id: companyId, as_of_date: asOf } = params;
+  const qs = asOf ? `?as_of_date=${encodeURIComponent(asOf)}` : "";
+  return apiRequest<CashFlowOverviewResponse>(withCompany(`/api/v1/reports/cash-flow-overview${qs}`, companyId));
+}
+
+export async function getSettlementSummary(params: {
+  operating_company_id: string;
+  period_start: string;
+  period_end: string;
+  driver_id?: string;
+}): Promise<SettlementSummaryResponse> {
+  const q = new URLSearchParams({
+    period_start: params.period_start,
+    period_end: params.period_end,
+  });
+  if (params.driver_id) q.set("driver_id", params.driver_id);
+  return apiRequest<SettlementSummaryResponse>(
+    withCompany(`/api/v1/reports/settlement-summary?${q.toString()}`, params.operating_company_id),
+  );
+}
+
+export async function getCustomerProfitability(params: {
+  operating_company_id: string;
+  period_start: string;
+  period_end: string;
+  min_revenue_cents?: number;
+}): Promise<CustomerProfitabilityResponse> {
+  const q = new URLSearchParams({
+    period_start: params.period_start,
+    period_end: params.period_end,
+  });
+  if (params.min_revenue_cents !== undefined) q.set("min_revenue_cents", String(params.min_revenue_cents));
+  return apiRequest<CustomerProfitabilityResponse>(
+    withCompany(`/api/v1/reports/customer-profitability?${q.toString()}`, params.operating_company_id),
+  );
+}
+
+export async function getProfitPerTruck(params: {
+  operating_company_id: string;
+  period_start: string;
+  period_end: string;
+}): Promise<ProfitPerTruckResponse> {
+  const q = new URLSearchParams({
+    period_start: params.period_start,
+    period_end: params.period_end,
+  });
+  return apiRequest<ProfitPerTruckResponse>(
+    withCompany(`/api/v1/reports/profit-per-truck?${q.toString()}`, params.operating_company_id),
+  );
+}

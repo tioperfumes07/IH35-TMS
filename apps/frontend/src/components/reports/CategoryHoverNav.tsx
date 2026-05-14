@@ -2,6 +2,7 @@ import { HoverDropdown } from "../shared/HoverDropdown";
 import type { ReportCategory } from "../../api/reports";
 import { ReportFlyoutPanel } from "./ReportFlyoutPanel";
 import { useNavigate } from "react-router-dom";
+import { phase6ReportHref } from "./phase6ReportLinks";
 
 const CATEGORY_LABELS: Array<{ id: ReportCategory; label: string }> = [
   { id: "all", label: "All" },
@@ -17,16 +18,24 @@ const CATEGORY_LABELS: Array<{ id: ReportCategory; label: string }> = [
 
 const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hint?: string }>> = {
   all: [
+    { id: "cash-flow-overview", label: "Cash flow overview", hint: "Liquidity + 30-day projection" },
+    { id: "settlement-summary", label: "Settlement summary", hint: "Driver pay + deductions" },
+    { id: "customer-profitability", label: "Customer profitability", hint: "Revenue, cost, margin" },
+    { id: "profit-per-truck", label: "Profit per truck", hint: "Unit economics" },
     { id: "profit-truck-mtd", label: "Profit per truck · MTD", hint: "Margin by unit" },
     { id: "driver-settlement", label: "Driver settlement summary", hint: "Current cycle" },
     { id: "ar-aging", label: "A/R aging", hint: "Current / 30 / 60 / 90+" },
     { id: "ap-aging", label: "A/P aging", hint: "Open bills by vendor" },
   ],
   operations: [
+    { id: "profit-per-truck", label: "Profit per truck", hint: "Revenue & cost by unit" },
     { id: "dispatch-board", label: "Dispatch board health", hint: "Live load movement" },
     { id: "detention-claims", label: "Detention claims", hint: "Billed vs collected" },
   ],
   financial: [
+    { id: "cash-flow-overview", label: "Cash flow overview", hint: "Operating + DIP + payroll buckets" },
+    { id: "settlement-summary", label: "Settlement summary", hint: "Driver pay breakdown" },
+    { id: "customer-profitability", label: "Customer profitability", hint: "Margin by customer" },
     { id: "cash-position", label: "Cash position + AR", hint: "Daily liquidity" },
     { id: "profit-truck-mtd", label: "Profit per truck · MTD" },
     { id: "ar-aging", label: "A/R aging", hint: "Current / 30 / 60 / 90+" },
@@ -91,6 +100,11 @@ export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
                 items={FLYOUT_ITEMS[category.id]}
                 onSelect={(itemId) => {
                   onCategoryChange(category.id);
+                  const phase6 = phase6ReportHref(itemId);
+                  if (phase6) {
+                    navigate(phase6);
+                    return;
+                  }
                   if (itemId === "ar-aging") {
                     navigate("/reports/ar-aging");
                     return;
