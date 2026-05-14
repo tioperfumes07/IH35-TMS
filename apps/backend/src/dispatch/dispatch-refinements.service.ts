@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { notifyLoadAssigned, notifyLoadReassignedAway } from "../services/push-notification.service.js";
 
 export type ReassignBody = {
   operating_company_id: string;
@@ -35,13 +36,20 @@ export type LoadStopInput = {
 };
 
 export async function manualReassignLoad(userId: string, input: ReassignBody) {
-  return withCurrentUser(userId, async (client) => {
+  const loserBox: {
+    v: { operatingCompanyId: string; driverId: string; loadId: string; loadLabel: string | null } | null;
+  } = { v: null };
+  const winnerBox: {
+    v: { operatingCompanyId: string; driverId: string; loadId: string; loadLabel: string | null } | null;
+  } = { v: null };
+
+  const result = await withCurrentUser(userId, async (client) => {
     await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
     await client.query("BEGIN");
     try {
       const loadRes = await client.query(
         `
-          SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id
+          SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number
           FROM mdata.loads
           WHERE id = $1
             AND operating_company_id = $2
@@ -57,6 +65,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
             assigned_primary_driver_id: string | null;
             assigned_unit_id: string | null;
             assigned_secondary_driver_id: string | null;
+            load_number: string | null;
           }
         | undefined;
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
@@ -129,12 +138,48 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
       );
 
       await client.query("COMMIT");
+      const previousPrimary = load.assigned_primary_driver_id;
+      if (previousPrimary && previousPrimary !== input.new_driver_id) {
+        loserBox.v = {
+          operatingCompanyId: input.operating_company_id,
+          driverId: previousPrimary,
+          loadId: input.load_id,
+          loadLabel: load.load_number ?? null,
+        };
+      }
+      if (input.new_driver_id !== previousPrimary) {
+        winnerBox.v = {
+          operatingCompanyId: input.operating_company_id,
+          driverId: input.new_driver_id,
+          loadId: input.load_id,
+          loadLabel: load.load_number ?? null,
+        };
+      }
       return { ok: true as const, load_id: input.load_id };
     } catch (e) {
       await client.query("ROLLBACK");
       throw e;
     }
   });
+
+  if (loserBox.v) {
+    void notifyLoadReassignedAway({
+      operatingCompanyId: loserBox.v.operatingCompanyId,
+      driverId: loserBox.v.driverId,
+      loadId: loserBox.v.loadId,
+      loadLabel: loserBox.v.loadLabel,
+    }).catch(() => undefined);
+  }
+  if (winnerBox.v) {
+    void notifyLoadAssigned({
+      operatingCompanyId: winnerBox.v.operatingCompanyId,
+      driverId: winnerBox.v.driverId,
+      loadId: winnerBox.v.loadId,
+      loadLabel: winnerBox.v.loadLabel,
+    }).catch(() => undefined);
+  }
+
+  return result;
 }
 
 export async function listLoadStopsRefined(userId: string, operatingCompanyId: string, loadId: string) {

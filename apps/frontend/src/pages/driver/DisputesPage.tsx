@@ -1,17 +1,19 @@
-import { PageHeader } from "../../components/layout/PageHeader";
+import { useTranslation } from "react-i18next";
+import { getOperatingCompanyId } from "../../lib/auth-token";
 
 export function DisputesPage() {
+  const { t } = useTranslation();
+  const companyId = getOperatingCompanyId();
+
   return (
-    <div className="mx-auto max-w-3xl space-y-3">
-      <PageHeader title="Driver disputes (P6)" subtitle="Uses /api/v1/driver/settlements/:id/dispute endpoints" />
-      <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
-        <p className="mb-2">
-          Submit disputes from your settlement detail screen in TMS or integrate this page with your driver session wiring.
+    <div className="space-y-2">
+      <h2 className="text-base font-semibold">{t("driver.disputes_title")}</h2>
+      <p className="text-sm text-slate-700">{t("driver.disputes_blurb")}</p>
+      {companyId ? (
+        <p className="text-[11px] text-slate-500">
+          Company scope: <span className="font-mono">{companyId}</span>
         </p>
-        <p className="text-xs text-gray-500">
-          Backend routes live under <span className="font-mono">/api/v1/driver/settlements/…</span> (mobile/PWA session required).
-        </p>
-      </div>
+      ) : null}
     </div>
   );
 }

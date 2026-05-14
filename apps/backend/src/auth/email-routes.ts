@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { randomInt } from "crypto";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { enforceAuthEmailStartLimits, enforceAuthEmailVerifyLimits } from "../middleware/rate-limit.js";
 import { withLuciaBypass } from "./db.js";
 import { lucia } from "./lucia.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
@@ -41,6 +42,8 @@ export async function registerEmailAuthRoutes(app: FastifyInstance) {
     const parsed = startBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const email = normalizeEmail(parsed.data.email);
+
+    if (!(await enforceAuthEmailStartLimits(req, reply, email))) return;
 
     const user = await withLuciaBypass(async (client) => {
       const res = await client.query<{ id: string; deactivated_at: string | null }>(
@@ -103,6 +106,10 @@ export async function registerEmailAuthRoutes(app: FastifyInstance) {
     const bypassCodeExpected = process.env.AUTH_EMAIL_TEST_BYPASS_CODE?.trim() ?? "000000";
     const bypassActive =
       bypassSecret.length > 0 && bypassHeader === bypassSecret && parsed.data.code === bypassCodeExpected;
+
+    if (!bypassActive) {
+      if (!(await enforceAuthEmailVerifyLimits(req, reply, email, parsed.data.code))) return;
+    }
 
     const verificationResult = await withLuciaBypass(async (client) => {
       if (bypassActive) {

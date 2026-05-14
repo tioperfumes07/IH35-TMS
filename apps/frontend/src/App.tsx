@@ -61,6 +61,12 @@ import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { SamsaraIntegrationPage } from "./pages/integrations/SamsaraIntegrationPage";
 import { DriverAppLandingPage } from "./pages/DriverAppLandingPage";
 import { DisputesPage } from "./pages/driver/DisputesPage";
+import { DriverShell } from "./pages/driver/DriverShell";
+import { DriverLoginPage } from "./pages/driver/DriverLoginPage";
+import { DriverLoadsPage } from "./pages/driver/DriverLoadsPage";
+import { DriverLoadDetailPage } from "./pages/driver/DriverLoadDetailPage";
+import { DriverHosPage } from "./pages/driver/DriverHosPage";
+import { DriverSettingsPage } from "./pages/driver/DriverSettingsPage";
 import { DocumentsPage } from "./pages/Documents";
 import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
@@ -1227,14 +1233,15 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/driver/disputes"
-          element={
-            <ProtectedRoute>
-              <DisputesPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/driver/login" element={<DriverLoginPage />} />
+        <Route path="/driver" element={<DriverShell />}>
+          <Route index element={<Navigate to="loads" replace />} />
+          <Route path="loads" element={<DriverLoadsPage />} />
+          <Route path="loads/:id" element={<DriverLoadDetailPage />} />
+          <Route path="hos" element={<DriverHosPage />} />
+          <Route path="disputes" element={<DisputesPage />} />
+          <Route path="settings" element={<DriverSettingsPage />} />
+        </Route>
         {[
           // Keep only truly unshipped module redirects here.
           // Shipped modules (Factoring, 425C, Lists) must never be routed via /coming-soon.

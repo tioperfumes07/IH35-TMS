@@ -7,6 +7,7 @@ import { sendForensicZombieAlert } from "../integrations/email/forensic-alerts.j
 import { auditBatchEvent, auditForensicImportError } from "../integrations/qbo/forensic-audit.service.js";
 import { getValidAccessToken } from "../integrations/qbo/qbo-oauth.service.js";
 import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 let initialized = false;
 
@@ -107,30 +108,7 @@ async function autoFailStaleBatches(app: FastifyInstance) {
   }
 }
 
-export async function initializeQboHistoricalImportRunner(app: FastifyInstance) {
-  if (initialized) return;
-  initialized = true;
-  markRunnerInitialized("forensic_runner");
-  if (process.env.ENABLE_QBO_FORENSIC_RUNNER === "false") {
-    app.log.info("QBO forensic runner disabled via ENABLE_QBO_FORENSIC_RUNNER=false");
-    return;
-  }
-
-  const cronExpr = forensicCronExpression();
-  app.log.info(
-    {
-      cron: cronExpr,
-      timezone: "America/Chicago",
-      autoFailStale: autoFailStaleEnabled(),
-      staleAfterMinutes: staleHeartbeatMinutesForAutoFail(),
-      resumePolicy: "furthest_progress_per_company_no_heartbeat_gate",
-    },
-    "QBO forensic runner initialized — resumes stalled imports; OAuth tokens refresh automatically before API calls (getValidAccessToken)"
-  );
-
-  cron.schedule(
-    cronExpr,
-    async () => {
+async function runForensicRunnerCronTick(app: FastifyInstance): Promise<void> {
       markRunnerTick("forensic_runner");
       await autoFailStaleBatches(app);
       const batches = await withLuciaBypass(async (client) => {
@@ -212,6 +190,42 @@ export async function initializeQboHistoricalImportRunner(app: FastifyInstance) 
           });
         }
       }
+}
+
+export async function initializeQboHistoricalImportRunner(app: FastifyInstance) {
+  if (initialized) return;
+  initialized = true;
+  markRunnerInitialized("forensic_runner");
+  if (process.env.ENABLE_QBO_FORENSIC_RUNNER === "false") {
+    app.log.info("QBO forensic runner disabled via ENABLE_QBO_FORENSIC_RUNNER=false");
+    return;
+  }
+
+  const cronExpr = forensicCronExpression();
+  app.log.info(
+    {
+      cron: cronExpr,
+      timezone: "America/Chicago",
+      autoFailStale: autoFailStaleEnabled(),
+      staleAfterMinutes: staleHeartbeatMinutesForAutoFail(),
+      resumePolicy: "furthest_progress_per_company_no_heartbeat_gate",
+    },
+    "QBO forensic runner initialized — resumes stalled imports; OAuth tokens refresh automatically before API calls (getValidAccessToken)"
+  );
+
+  cron.schedule(
+    cronExpr,
+    async () => {
+      await wrapBackgroundJobTick(
+        "qbo.forensic_import_runner",
+        async () => {
+          await runForensicRunnerCronTick(app);
+        },
+        app.log,
+        {
+          onError: (error) => markRunnerFailed("forensic_runner", error),
+        }
+      );
     },
     { timezone: "America/Chicago" }
   );

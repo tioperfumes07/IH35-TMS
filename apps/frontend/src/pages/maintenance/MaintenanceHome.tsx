@@ -25,6 +25,7 @@ import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
 import { ArrivingSoonPage } from "./ArrivingSoonPage";
+import { DriverReportsQueuePage } from "./DriverReportsQueuePage";
 
 const SUBNAV = [
   { id: "active_wos", label: "Active WOs" },
@@ -186,9 +187,7 @@ export function MaintenanceHomePage() {
         <InTransitTriageBand issues={triageQuery.data?.issues ?? []} onTriage={(issue) => setTriageIssue(issue)} />
       ) : null}
 
-      {tab === "damage_reports" ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">Damage reports queue is in active development.</div>
-      ) : null}
+      {tab === "damage_reports" ? <DriverReportsQueuePage /> : null}
 
       {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
 

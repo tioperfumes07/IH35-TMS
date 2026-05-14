@@ -484,3 +484,45 @@ export function recordPartsPurchase(
     }
   );
 }
+
+export type DriverReportRow = {
+  id: string;
+  operating_company_id: string;
+  driver_id: string;
+  driver_name: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  report_type: string;
+  description: string;
+  photo_r2_paths: string[] | null;
+  voice_memo_r2_path: string | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
+  reported_at: string;
+  status: "submitted" | "under_review" | "resolved" | "dismissed";
+  reviewed_by_user_id: string | null;
+  reviewed_at: string | null;
+  resolution_notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function listDriverReports(params: { operating_company_id: string; status?: string }) {
+  const qs = new URLSearchParams({ operating_company_id: params.operating_company_id });
+  if (params.status) qs.set("status", params.status);
+  return apiRequest<{ rows: DriverReportRow[] }>(`/api/v1/maintenance/driver-reports?${qs.toString()}`);
+}
+
+export async function updateDriverReportStatus(
+  id: string,
+  body: {
+    operating_company_id: string;
+    status: "under_review" | "resolved" | "dismissed";
+    resolution_notes?: string;
+  }
+) {
+  return apiRequest<DriverReportRow>(`/api/v1/maintenance/driver-reports/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body,
+  });
+}

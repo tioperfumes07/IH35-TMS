@@ -9,6 +9,7 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "paths": {
       "@ih35/shared-types": ["../../packages/shared-types/src/index.ts"],
       "@ih35/shared-types/*": ["../../packages/shared-types/src/*"]

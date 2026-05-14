@@ -75,6 +75,7 @@ import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js"
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
+import { registerMaintenanceDriverReportsRoutes } from "./maintenance/driver-reports.routes.js";
 import { registerWoTimeEntriesRoutes } from "./maintenance/time-entries.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
@@ -117,8 +118,17 @@ import { initializeEmailCron } from "./email/cron.js";
 import { registerQboSyncAlertsRoutes } from "./qbo/sync-alerts.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { attachSentryRequestScope, initBackendSentry, registerSentryFastifyErrorHandler } from "./lib/sentry.js";
+import { runStartupEnvironmentChecks } from "./lib/env-validation.js";
+import { verifyMigrationsOnStartup } from "./lib/migration-verification.js";
+import { registerHealthRoutes } from "./health/health.routes.js";
+import { setAppReady } from "./lib/startup-ready.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 const app = Fastify({ logger: true });
 let shuttingDown = false;
@@ -165,9 +175,24 @@ async function shutdown(signal: string) {
 }
 
 async function main() {
+  initBackendSentry();
+  await runStartupEnvironmentChecks();
+
   if (!app.hasDecorator("forensicRunnerStatus")) {
     app.decorate("forensicRunnerStatus", "pending");
   }
+
+  registerSentryFastifyErrorHandler(app);
+  await registerHealthRoutes(app);
+
+  try {
+    await verifyMigrationsOnStartup(repoRoot);
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] migration verification failed");
+    throw error;
+  }
+  setAppReady(true);
+
   await app.register(cors, {
     origin: (origin: string | undefined, cb: (err: Error | null, allow: CorsOriginValue) => void) => {
       if (!origin) return cb(null, true);
@@ -181,6 +206,13 @@ async function main() {
   await app.register(cookie);
   await app.register(multipart);
   await registerSessionMiddleware(app);
+  app.addHook("preHandler", async (req, _reply) => {
+    const url = req.raw.url ?? "";
+    if (url.startsWith("/api/v1/healthz")) {
+      return;
+    }
+    attachSentryRequestScope(req);
+  });
   await registerRunnerStatusRoutes(app);
   await registerForensicLiveRoutes(app);
   await registerAuthRoutes(app);
@@ -274,6 +306,7 @@ async function main() {
   await registerMaintenanceWorkOrderRoutes(app);
   await registerWorkOrdersV1Routes(app);
   await registerWoTimeEntriesRoutes(app);
+  await registerMaintenanceDriverReportsRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);

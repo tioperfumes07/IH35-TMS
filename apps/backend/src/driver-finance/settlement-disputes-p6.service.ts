@@ -1,6 +1,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueEmail } from "../email/queue.service.js";
+import { notifySettlementDisputeDecided } from "../services/push-notification.service.js";
 import { createCorrectiveJournalEntry } from "./settlement-dispute.service.js";
 
 type DbClient = {
@@ -300,7 +301,7 @@ export async function decideSettlementDisputeP6(
 ) {
   if (!input.resolution_text || input.resolution_text.trim().length < 10) throw new Error("E_RESOLUTION_TEXT_REQUIRED");
 
-  return withCurrentUser(userId, async (client) => {
+  const result = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
 
     const disputeRes = await client.query<{
@@ -435,6 +436,29 @@ export async function decideSettlementDisputeP6(
       });
     }).catch(() => undefined);
 
-    return { id: input.dispute_id, status: nextStatus, adjustment_journal_id: journalId };
+    const displayRes = await client.query<{ display_id: string | null }>(
+      `SELECT display_id FROM driver_finance.driver_settlements WHERE id = $1 LIMIT 1`,
+      [dispute.settlement_id]
+    );
+
+    return {
+      id: input.dispute_id,
+      status: nextStatus,
+      adjustment_journal_id: journalId,
+      settlement_id: dispute.settlement_id,
+      driver_id: dispute.driver_id,
+      settlement_display_id: displayRes.rows[0]?.display_id ?? null,
+    };
   });
+
+  void notifySettlementDisputeDecided({
+    operatingCompanyId: input.operating_company_id,
+    driverId: result.driver_id,
+    settlementId: String(result.settlement_id),
+    disputeId: input.dispute_id,
+    decision: input.decision,
+    displayId: result.settlement_display_id,
+  }).catch(() => undefined);
+
+  return { id: result.id, status: result.status, adjustment_journal_id: result.adjustment_journal_id };
 }
