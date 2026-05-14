@@ -124,14 +124,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                   SUM(
                     CASE
                       WHEN COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
-                      THEN COALESCE(
-                        wo.actual_cost_cents::bigint,
-                        CASE
-                          WHEN wo.total_actual_cost IS NOT NULL THEN ROUND(wo.total_actual_cost::numeric * 100)::bigint
-                        END,
-                        wo.estimated_cost_cents::bigint,
-                        0::bigint
-                      )
+                      THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
                       ELSE 0
                     END
                   ),
@@ -212,14 +205,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                     SUM(
                       CASE
                         WHEN COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
-                        THEN COALESCE(
-                          wo.actual_cost_cents::bigint,
-                          CASE
-                            WHEN wo.total_actual_cost IS NOT NULL THEN ROUND(wo.total_actual_cost::numeric * 100)::bigint
-                          END,
-                          wo.estimated_cost_cents::bigint,
-                          0::bigint
-                        )
+                        THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
                         ELSE 0
                       END
                     ),
@@ -439,14 +425,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                 CASE
                   WHEN COALESCE(wo.updated_at, wo.opened_at) >= $2::timestamptz
                    AND COALESCE(wo.updated_at, wo.opened_at) < $3::timestamptz
-                  THEN COALESCE(
-                    wo.actual_cost_cents::bigint,
-                    CASE
-                      WHEN wo.total_actual_cost IS NOT NULL THEN ROUND(wo.total_actual_cost::numeric * 100)::bigint
-                    END,
-                    wo.estimated_cost_cents::bigint,
-                    0::bigint
-                  )
+                  THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
                   ELSE 0
                 END
               ),
@@ -472,14 +451,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                 CASE
                   WHEN COALESCE(wo.updated_at, wo.opened_at) >= $2::timestamptz
                    AND COALESCE(wo.updated_at, wo.opened_at) < $3::timestamptz
-                  THEN COALESCE(
-                    wo.actual_cost_cents::bigint,
-                    CASE
-                      WHEN wo.total_actual_cost IS NOT NULL THEN ROUND(wo.total_actual_cost::numeric * 100)::bigint
-                    END,
-                    wo.estimated_cost_cents::bigint,
-                    0::bigint
-                  )
+                  THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
                   ELSE 0
                 END
               ),
