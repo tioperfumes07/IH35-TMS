@@ -76,6 +76,8 @@ import { registerBankingTransfersRoutes } from "./banking/transfers.routes.js";
 import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
 import { registerBankingFactoringVirtualRoutes } from "./banking/factoring-virtual.routes.js";
 import { registerBankingEscrowVisualizerRoutes } from "./banking/escrow-visualizer.routes.js";
+import { registerBankingReconciliationRoutes } from "./banking/reconciliation.routes.js";
+import { registerBankingObligationReconcileRoutes } from "./banking/obligation-reconcile.routes.js";
 import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
@@ -373,6 +375,8 @@ async function main() {
   await registerBankingManualJeRoutes(app);
   await registerBankingFactoringVirtualRoutes(app);
   await registerBankingEscrowVisualizerRoutes(app);
+  await registerBankingReconciliationRoutes(app);
+  await registerBankingObligationReconcileRoutes(app);
   await registerFactoringRoutes(app);
   await registerDataInfrastructureRoutes(app);
   await registerOcrRoutes(app);

@@ -108,6 +108,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
       ],
       BANK: [
         { label: "Overview", to: "/banking" },
+        { label: "Reconcile", to: "/banking/reconcile" },
         { label: "Transfers", to: "/banking/transfers" },
       ],
       FUEL: [{ label: "Fuel Planner", to: "/fuel" }],

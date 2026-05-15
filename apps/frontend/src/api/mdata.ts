@@ -780,6 +780,24 @@ export function getCustomerDetail(id: string) {
   return apiRequest<{ customer: CustomerDetailFull }>(`/api/v1/mdata/customers/${id}/detail`);
 }
 
+export type CustomerFinancialSummary = {
+  revenue_by_month: Array<{ month: string; total_cents: number }>;
+  ar_aging_buckets: Array<{ bucket: string; open_cents: number }>;
+  recent_loads: Array<{
+    id: string;
+    load_number: string | null;
+    status: string | null;
+    rate_total_cents: number | null;
+    created_at: string;
+  }>;
+  documents: Array<Record<string, unknown>>;
+};
+
+export function getCustomerFinancialSummary(customerId: string, operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<CustomerFinancialSummary>(`/api/v1/mdata/customers/${customerId}/financial-summary?${q}`);
+}
+
 export function verifyCustomerFmcsa(id: string) {
   return apiRequest<{ customer: Customer }>(`/api/v1/mdata/customers/${id}/verify-fmcsa`, { method: "POST" });
 }
