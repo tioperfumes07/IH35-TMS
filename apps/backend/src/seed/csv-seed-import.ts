@@ -6,8 +6,8 @@ import pg from "pg";
 
 dotenv.config();
 
-export type SeedType = "drivers" | "customers" | "vendors" | "assets" | "loads" | "bank_accounts" | "bank_transactions";
-export type CompanyCode = "TRK" | "TRANSP";
+type SeedType = "drivers" | "customers" | "vendors" | "assets" | "loads" | "bank_accounts" | "bank_transactions";
+type CompanyCode = "TRK" | "TRANSP";
 
 const DRIVER_HEADERS = ["first_name", "last_name", "email", "phone", "cdl_number", "cdl_state", "cdl_class", "cdl_expires_at", "hire_date", "status"];
 const CUSTOMER_HEADERS = ["customer_code", "customer_name", "billing_email", "billing_phone", "mc_number", "dot_number", "billing_address_line1", "billing_city", "billing_state", "billing_postal_code"];
@@ -443,39 +443,6 @@ type RowReport = {
 function finalizeSeedTxn(client: pg.Client, dryRun: boolean, abortOnAnyError: boolean, errorCount: number) {
   const rollback = dryRun || (!dryRun && abortOnAnyError && errorCount > 0);
   return client.query(rollback ? "ROLLBACK" : "COMMIT");
-}
-
-type TxnMode = "isolated" | "participant";
-
-export class CsvImportRowErrors extends Error {
-  readonly errors: Array<{ row: number; message: string }>;
-  constructor(errors: Array<{ row: number; message: string }>) {
-    super("One or more rows failed.");
-    this.name = "CsvImportRowErrors";
-    this.errors = errors;
-  }
-}
-
-async function beginSeedTxn(client: pg.Client, txnMode: TxnMode): Promise<void> {
-  if (txnMode === "isolated") {
-    await client.query("BEGIN");
-  }
-}
-
-async function endSeedTxn(
-  client: pg.Client,
-  txnMode: TxnMode,
-  dryRun: boolean,
-  abortOnAnyError: boolean,
-  counters: RowReport
-): Promise<void> {
-  if (txnMode === "participant") {
-    if (abortOnAnyError && counters.errors.length > 0) {
-      throw new CsvImportRowErrors(counters.errors);
-    }
-    return;
-  }
-  await finalizeSeedTxn(client, dryRun, abortOnAnyError, counters.errors.length);
 }
 
 async function upsertDrivers(
