@@ -9,6 +9,7 @@ export type BankAccount = {
   institution_name: string | null;
   account_name: string | null;
   account_type: string | null;
+  account_class?: string | null;
   account_mask: string | null;
   current_balance_cents: number;
   available_balance_cents: number;
@@ -34,6 +35,9 @@ export type BankTransaction = {
   plaid_category: string[];
   pending: boolean;
   is_credit: boolean;
+  source?: string | null;
+  source_ref?: string | null;
+  normalized_description?: string | null;
   matched_load_id: string | null;
   matched_bill_id: string | null;
   matched_settlement_id: string | null;

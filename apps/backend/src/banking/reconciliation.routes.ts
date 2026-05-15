@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { computePayloadHashFromTxn, enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
+import { insertCsvStatementBankTransaction } from "./transaction-ingestion.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -670,21 +671,24 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         matched_load_id: string | null;
         matched_bill_id: string | null;
         matched_settlement_id: string | null;
+        account_class: string | null;
       }>(
         `
           SELECT
-            id,
-            amount_cents::int,
-            transaction_date::text,
-            matched_load_id,
-            matched_bill_id,
-            matched_settlement_id
-          FROM banking.bank_transactions
-          WHERE bank_account_id = $1
-            AND operating_company_id = $2
-            AND transaction_date BETWEEN $3 AND $4
-            AND (matched_load_id IS NOT NULL OR matched_bill_id IS NOT NULL OR matched_settlement_id IS NOT NULL)
-            AND qbo_synced_at IS NULL
+            bt.id,
+            bt.amount_cents::int,
+            bt.transaction_date::text,
+            bt.matched_load_id,
+            bt.matched_bill_id,
+            bt.matched_settlement_id,
+            ba.account_class::text AS account_class
+          FROM banking.bank_transactions bt
+          JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
+          WHERE bt.bank_account_id = $1
+            AND bt.operating_company_id = $2
+            AND bt.transaction_date BETWEEN $3 AND $4
+            AND (bt.matched_load_id IS NOT NULL OR bt.matched_bill_id IS NOT NULL OR bt.matched_settlement_id IS NOT NULL)
+            AND bt.qbo_synced_at IS NULL
         `,
         [session.bank_account_id, query.data.operating_company_id, session.period_start, session.period_end]
       );
@@ -767,37 +771,19 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           errors.push({ line: i + 1, reason: "invalid_date_description_or_amount" });
           continue;
         }
-        await client.query(
-          `
-            INSERT INTO banking.bank_transactions (
-              bank_account_id,
-              operating_company_id,
-              transaction_date,
-              posted_date,
-              amount_cents,
-              description,
-              merchant_name,
-              plaid_category,
-              pending,
-              is_credit,
-              notes,
-              created_at,
-              updated_at
-            )
-            VALUES ($1,$2,$3,$4,$5,$6,NULL,'{}',false,$7,$8,now(),now())
-          `,
-          [
-            body.data.bank_account_id,
-            accountContext.operating_company_id,
-            rawDate,
-            rawDate,
-            Math.abs(cents),
-            rawDesc,
-            cents < 0,
-            "source:manual_upload",
-          ]
-        );
-        added += 1;
+        const inserted = await insertCsvStatementBankTransaction(client, {
+          bank_account_id: body.data.bank_account_id,
+          operating_company_id: accountContext.operating_company_id,
+          transaction_date: rawDate,
+          posted_date: rawDate,
+          amount_cents: Math.abs(cents),
+          description: rawDesc,
+          is_credit: cents < 0,
+          notes: "source:manual_upload",
+        });
+        if ((inserted.rows?.length ?? 0) > 0) {
+          added += 1;
+        }
       }
 
       await appendCrudAudit(

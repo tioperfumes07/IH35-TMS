@@ -21,6 +21,7 @@ export type PlaidBankAccount = {
   institution_name: string | null;
   account_name: string | null;
   account_type: string | null;
+  account_class?: string | null;
   account_mask: string | null;
   current_balance_cents: number;
   available_balance_cents: number;
@@ -31,6 +32,8 @@ export type PlaidBankAccount = {
   created_at?: string;
   updated_at?: string;
 };
+
+export type PlaidLinkAccountType = "bank" | "credit_card" | "all";
 
 export type PlaidBankTransaction = {
   id: string;
@@ -311,11 +314,14 @@ export function createManualJe(
   });
 }
 
-export function createPlaidLinkToken(operatingCompanyId: string) {
-  return apiRequest<{ link_token: string; expiration: string }>(`/api/v1/banking/plaid/create-link-token`, {
-    method: "POST",
-    body: { operating_company_id: operatingCompanyId },
-  });
+export function createPlaidLinkToken(operatingCompanyId: string, accountType: PlaidLinkAccountType = "bank") {
+  return apiRequest<{ link_token: string; expiration: string; accountType?: PlaidLinkAccountType }>(
+    `/api/v1/banking/plaid/create-link-token`,
+    {
+      method: "POST",
+      body: { operating_company_id: operatingCompanyId, accountType },
+    }
+  );
 }
 
 export function exchangePlaidPublicToken(publicToken: string, operatingCompanyId: string) {
