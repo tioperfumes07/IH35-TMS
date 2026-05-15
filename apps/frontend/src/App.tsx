@@ -101,6 +101,8 @@ import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { BillsPage } from "./pages/accounting/BillsPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
+import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
+import { ErrorMonitorPage } from "./pages/admin/ErrorMonitor";
 import { DataImportPage } from "./pages/admin/DataImportPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
@@ -1254,6 +1256,22 @@ export default function App() {
             <OwnerSuperAdminRoute>
               <ActivityLogPage />
             </OwnerSuperAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/migration-status"
+          element={
+            <OwnerOnlyRoute>
+              <MigrationStatusPage />
+            </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/admin/error-monitor"
+          element={
+            <OwnerOnlyRoute>
+              <ErrorMonitorPage />
+            </OwnerOnlyRoute>
           }
         />
         <Route
