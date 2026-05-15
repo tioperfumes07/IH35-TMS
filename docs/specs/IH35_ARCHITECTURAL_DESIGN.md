@@ -717,6 +717,26 @@ Rules:
 
 ---
 
+## ADDENDUM — P7 Wave 2 v3 (bidirectional QBO + banking review) — 2026-05
+
+**Schema note:** Operational bank movements live in `banking.bank_transactions` (not `banking.transactions`). Wave 2 review columns and reconciliation linkage attach there.
+
+**Outbound sync:** `integrations.qbo_sync_queue` remains the single outbound writer queue (extended with `idempotency_key`, `payload_jsonb`, `triggered_by`, and `dead_letter` status). The cron runner delegates to `processOutboundSyncWorkerTick` → `processSyncQueueBatch` with exponential backoff `min(30s×2^(n−1), 1h)`.
+
+**Inbound sync:** `integrations.qbo_inbound_events` stores verified webhook payloads (HMAC-SHA256 of raw body vs `intuit-signature`, verifier `QBO_WEBHOOK_VERIFIER`). Realm → company resolves via `integrations.qbo_connections.realm_id`. The inbound worker marks rows fetched/applied, creates short-lived `qbo_archive.import_batches` rows, and inserts forensic `qbo_archive.entities_snapshot` rows before TMS-side conflict merging is expanded.
+
+**Conflicts:** `integrations.qbo_sync_conflicts` holds TMS vs QBO snapshots; finance roles resolve via REST; `tms_wins` re-enqueues affected entities on the outbound queue.
+
+**Bank review:** `accounting.banking_rules` drives tier‑1 suggestions; tiers 2–4 (vendor/history/PFC) are wired incrementally in `banking/suggestion-engine.ts`.
+
+**Reconciliation:** Canonical sessions remain `banking.reconciliation_sessions` (extended statuses include `finalized` / `reopened`). Parallel REST paths live under `/api/v1/banking/reconciliation-sessions/*` alongside legacy `/api/v1/banking/reconciliation/*`.
+
+**Period close:** `accounting.periods` plus triggers raising `IH35_CLOSED_PERIOD …` enforce locked fiscal periods (HTTP **423** when surfaced through API mappers).
+
+**Roles / RLS:** New integrations tables follow `ih35_app` grants + office-role SELECT patterns mirroring `integrations.integration_sync_log` (7175).
+
+---
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
