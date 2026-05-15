@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 /**
- * Workspace-aware dependency sanity checks:
- * - Each app/package scans its own `src/` (plus repo `scripts/` for the root manifest).
- * - FAIL if a scanned file imports an npm package missing from that workspace's package.json.
- * - FAIL if the root `dependencies` entry is never imported from `apps/backend/src` or `scripts/`
- *   (catches backend-only accidents like PR #62 missing `cron-parser`).
+ * Workspace-aware dependency sanity checks (lint-deps v2):
+ * - `apps/backend/src` imports must exist in `apps/backend/package.json` OR repo root `package.json`.
+ * - Certain TS-only peer typings must exist in `apps/backend/package.json` (ex: `@types/luxon`).
+ * - `scripts/` imports must exist in repo root `package.json`.
+ * - `apps/frontend` + `apps/driver-pwa` imports must exist in each app's own package.json.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { builtinModules } from "node:module";
-
-const ROOT = process.cwd();
+import { fileURLToPath } from "node:url";
 
 const BUILTINS = new Set(
   builtinModules.flatMap((m) => [m, m.startsWith("node:") ? m : `node:${m}`])
@@ -25,6 +24,9 @@ const EXT_OK = new Set([".ts", ".mts", ".cts", ".tsx", ".js", ".mjs", ".cjs"]);
 
 /** Root runtime deps allowed without a static import (CLI/transitive / migration tooling). */
 const IGNORE_UNUSED_ROOT_RUNTIME = new Set(["drizzle-orm", "oslo"]);
+
+/** Backend peer typings that must be declared in `apps/backend/package.json` for isolated installs. */
+const BACKEND_PEER_TYPE_PACKAGES = new Map([["luxon", "@types/luxon"]]);
 
 function readPkg(file) {
   return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -98,81 +100,122 @@ function reportMissing(label, missing) {
   return true;
 }
 
-const rootPkg = readPkg(path.join(ROOT, "package.json"));
-const rootDeclared = declaredKeys(rootPkg);
-const frontendPkg = readPkg(path.join(ROOT, "apps/frontend/package.json"));
-const frontendDeclared = declaredKeys(frontendPkg);
-const driverPkg = readPkg(path.join(ROOT, "apps/driver-pwa/package.json"));
-const driverDeclared = declaredKeys(driverPkg);
+export async function runLintDeps(root = process.cwd()) {
+  const ROOT = root;
 
-const backendScriptsImported = collectImportedPackages([
-  path.join(ROOT, "apps/backend/src"),
-  path.join(ROOT, "scripts"),
-]);
+  const rootPkgPath = path.join(ROOT, "package.json");
+  if (!fs.existsSync(rootPkgPath)) {
+    console.error(`[lint-deps] Missing root package.json at ${rootPkgPath}`);
+    return false;
+  }
 
-const frontendImported = collectImportedPackages([path.join(ROOT, "apps/frontend/src")]);
-const driverImported = collectImportedPackages([path.join(ROOT, "apps/driver-pwa/src")]);
+  const rootPkg = readPkg(rootPkgPath);
+  const rootDeclared = declaredKeys(rootPkg);
 
-let failed = false;
+  const frontendPkgPath = path.join(ROOT, "apps/frontend/package.json");
+  const driverPkgPath = path.join(ROOT, "apps/driver-pwa/package.json");
+  const backendPkgPath = path.join(ROOT, "apps/backend/package.json");
 
-failed |= reportMissing(
-  "repo root (apps/backend/src + scripts)",
-  [...backendScriptsImported].filter((name) => !rootDeclared.has(name)).sort()
-);
+  const frontendPkg = fs.existsSync(frontendPkgPath) ? readPkg(frontendPkgPath) : { dependencies: {}, devDependencies: {} };
+  const driverPkg = fs.existsSync(driverPkgPath) ? readPkg(driverPkgPath) : { dependencies: {}, devDependencies: {} };
+  const backendPkg = fs.existsSync(backendPkgPath) ? readPkg(backendPkgPath) : { dependencies: {}, devDependencies: {} };
 
-failed |= reportMissing(
-  "apps/frontend",
-  [...frontendImported].filter((name) => !frontendDeclared.has(name)).sort()
-);
+  const frontendDeclared = declaredKeys(frontendPkg);
+  const driverDeclared = declaredKeys(driverPkg);
+  const backendDeclared = declaredKeys(backendPkg);
 
-failed |= reportMissing(
-  "apps/driver-pwa",
-  [...driverImported].filter((name) => !driverDeclared.has(name)).sort()
-);
+  const backendImported = collectImportedPackages([path.join(ROOT, "apps/backend/src")]);
+  const scriptsImported = collectImportedPackages([path.join(ROOT, "scripts")]);
 
-const unusedRootRuntime = Object.keys(rootPkg.dependencies ?? {})
-  .filter((name) => !name.startsWith("@types/"))
-  .filter((name) => !IGNORE_UNUSED_ROOT_RUNTIME.has(name))
-  .filter((name) => !backendScriptsImported.has(name))
-  .sort();
+  const frontendImported = collectImportedPackages([path.join(ROOT, "apps/frontend/src")]);
+  const driverImported = collectImportedPackages([path.join(ROOT, "apps/driver-pwa/src")]);
 
-if (unusedRootRuntime.length > 0) {
-  console.error(
-    "\n[lint-deps] Root runtime dependencies not referenced under apps/backend/src or scripts/:\n"
+  let failed = false;
+
+  const backendAllowed = new Set([...backendDeclared, ...rootDeclared]);
+  failed |= reportMissing(
+    "apps/backend/src (must be declared in apps/backend/package.json OR repo root package.json)",
+    [...backendImported].filter((name) => !backendAllowed.has(name)).sort()
   );
-  unusedRootRuntime.forEach((name) => console.error(`  - ${name}`));
-  console.error(
-    "\nMove UI-only deps into apps/*/package.json or remove dead entries from the root manifest.\n"
+
+  const backendPeerTypeIssues = [];
+  for (const [pkg, typesPkg] of BACKEND_PEER_TYPE_PACKAGES.entries()) {
+    if (backendImported.has(pkg) && !backendDeclared.has(typesPkg)) {
+      backendPeerTypeIssues.push(`${typesPkg} (peer typings for imported "${pkg}" must be listed in apps/backend/package.json)`);
+    }
+  }
+  failed |= reportMissing("apps/backend TypeScript peer typings", backendPeerTypeIssues.sort());
+
+  failed |= reportMissing(
+    "scripts/ (must be declared in repo root package.json)",
+    [...scriptsImported].filter((name) => !rootDeclared.has(name)).sort()
   );
-  failed = true;
+
+  failed |= reportMissing(
+    "apps/frontend",
+    [...frontendImported].filter((name) => !frontendDeclared.has(name)).sort()
+  );
+
+  failed |= reportMissing(
+    "apps/driver-pwa",
+    [...driverImported].filter((name) => !driverDeclared.has(name)).sort()
+  );
+
+  const rootUsageImported = new Set([...backendImported, ...scriptsImported]);
+
+  const unusedRootRuntime = Object.keys(rootPkg.dependencies ?? {})
+    .filter((name) => !name.startsWith("@types/"))
+    .filter((name) => !IGNORE_UNUSED_ROOT_RUNTIME.has(name))
+    .filter((name) => !rootUsageImported.has(name))
+    .sort();
+
+  if (unusedRootRuntime.length > 0) {
+    console.error(
+      "\n[lint-deps] Root runtime dependencies not referenced under apps/backend/src or scripts/:\n"
+    );
+    unusedRootRuntime.forEach((name) => console.error(`  - ${name}`));
+    console.error(
+      "\nMove UI-only deps into apps/*/package.json or remove dead entries from the root manifest.\n"
+    );
+    failed = true;
+  }
+
+  const unusedFrontendRuntime = Object.keys(frontendPkg.dependencies ?? {})
+    .filter((name) => !frontendImported.has(name))
+    .sort();
+
+  if (unusedFrontendRuntime.length > 0) {
+    console.error("\n[lint-deps] Frontend runtime dependencies not referenced under apps/frontend/src:\n");
+    unusedFrontendRuntime.forEach((name) => console.error(`  - ${name}`));
+    console.error("");
+    failed = true;
+  }
+
+  const unusedDriverRuntime = Object.keys(driverPkg.dependencies ?? {})
+    .filter((name) => !driverImported.has(name))
+    .sort();
+
+  if (unusedDriverRuntime.length > 0) {
+    console.error("\n[lint-deps] Driver PWA runtime dependencies not referenced under apps/driver-pwa/src:\n");
+    unusedDriverRuntime.forEach((name) => console.error(`  - ${name}`));
+    console.error("");
+    failed = true;
+  }
+
+  if (!failed) {
+    console.log(
+      `[lint-deps] OK — backend=${backendImported.size}, scripts=${scriptsImported.size}, frontend=${frontendImported.size}, driver=${driverImported.size}.`
+    );
+  }
+
+  return !failed;
 }
 
-const unusedFrontendRuntime = Object.keys(frontendPkg.dependencies ?? {})
-  .filter((name) => !frontendImported.has(name))
-  .sort();
+const here = path.resolve(fileURLToPath(import.meta.url));
+const invoked = process.argv[1] ? path.resolve(process.argv[1]) : "";
+const isMain = invoked && here === invoked;
 
-if (unusedFrontendRuntime.length > 0) {
-  console.error("\n[lint-deps] Frontend runtime dependencies not referenced under apps/frontend/src:\n");
-  unusedFrontendRuntime.forEach((name) => console.error(`  - ${name}`));
-  console.error("");
-  failed = true;
+if (isMain) {
+  const ok = await runLintDeps(process.cwd());
+  process.exit(ok ? 0 : 1);
 }
-
-const unusedDriverRuntime = Object.keys(driverPkg.dependencies ?? {})
-  .filter((name) => !driverImported.has(name))
-  .sort();
-
-if (unusedDriverRuntime.length > 0) {
-  console.error("\n[lint-deps] Driver PWA runtime dependencies not referenced under apps/driver-pwa/src:\n");
-  unusedDriverRuntime.forEach((name) => console.error(`  - ${name}`));
-  console.error("");
-  failed = true;
-}
-
-if (failed) {
-  process.exit(1);
-}
-
-console.log(
-  `[lint-deps] OK — root imports=${backendScriptsImported.size}, frontend=${frontendImported.size}, driver=${driverImported.size}.`
-);

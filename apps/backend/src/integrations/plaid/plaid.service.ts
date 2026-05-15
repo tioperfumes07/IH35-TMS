@@ -1,6 +1,7 @@
 import { CountryCode, Products } from "plaid";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
+import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import type { BankTransaction, TransactionCategoryRule } from "../../banking/types.js";
 import { getPlaidClient, getPlaidEnvForAudit } from "./plaid-client.js";
@@ -114,10 +115,8 @@ function matchesRule(patternRaw: string, categories: string[]) {
 
 export async function createLinkToken(userId: string, operatingCompanyId: string) {
   const plaid = getPlaidClient();
-  const webhookBaseUrl = (process.env.WEBHOOK_BASE_URL ?? "").trim();
-  if (!webhookBaseUrl) {
-    throw new Error("WEBHOOK_BASE_URL is required for Plaid link token creation");
-  }
+  const webhookUrl =
+    process.env.PLAID_WEBHOOK_URL?.trim() || "https://api.ih35dispatch.com/api/v1/banking/plaid/webhook";
 
   const response = await plaid.linkTokenCreate({
     user: { client_user_id: userId },
@@ -125,7 +124,7 @@ export async function createLinkToken(userId: string, operatingCompanyId: string
     products: [Products.Transactions, Products.Auth],
     country_codes: [CountryCode.Us],
     language: "en",
-    webhook: `${webhookBaseUrl}/api/v1/webhooks/plaid`,
+    webhook: webhookUrl,
   });
 
   await withCurrentUser(userId, async (client) => {
@@ -575,6 +574,59 @@ export async function getAccountBalance(bankAccountId: string) {
   );
 
   return updated;
+}
+
+export async function handlePlaidItemLoginRequiredWebhook(itemId: string) {
+  const affected = await withLuciaBypass(async (client) => {
+    const res = await client.query<{ id: string; operating_company_id: string; institution_name: string | null }>(
+      `
+        UPDATE banking.bank_accounts
+        SET
+          sync_status = 'needs_reauth',
+          updated_at = now()
+        WHERE plaid_item_id = $1
+          AND is_active = true
+        RETURNING id, operating_company_id, institution_name
+      `,
+      [itemId]
+    );
+    return res.rows;
+  });
+
+  const operatingCompanies = new Map<string, string>();
+  for (const row of affected) {
+    operatingCompanies.set(row.operating_company_id, row.institution_name ?? "Connected bank");
+  }
+
+  for (const [operatingCompanyId, institutionLabel] of operatingCompanies.entries()) {
+    const owners = await listCompanyUserIdsByRoles(operatingCompanyId, ["Owner"]);
+    await Promise.all(
+      owners.map((userId) =>
+        dispatchNotification({
+          user_id: userId,
+          event_type: "plaid_item_login_required",
+          actor_user_id: null,
+          payload: {
+            operating_company_id: operatingCompanyId,
+            headline: "Plaid bank connection needs re-authentication",
+            bodyText: `${institutionLabel} requires a fresh login in IH35 (Plaid item ${itemId}).`,
+            sms_body: `Plaid: ${institutionLabel} needs re-auth.`,
+            whatsapp_skip: true,
+          },
+        }).catch(() => undefined)
+      )
+    );
+  }
+
+  await appendSystemAudit(
+    "banking.plaid.item_login_required",
+    {
+      plaid_item_id: itemId,
+      affected_accounts: affected.length,
+      operating_companies: [...operatingCompanies.keys()],
+    },
+    "warning"
+  );
 }
 
 export async function handleItemError(itemId: string, errorCode: string) {

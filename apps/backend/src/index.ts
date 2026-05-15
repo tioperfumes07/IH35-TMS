@@ -67,6 +67,8 @@ import { registerBankTxCategorizationRoutes } from "./banking/categorization.rou
 import { registerBankingRoutes } from "./banking/banking.routes.js";
 import { registerAccountBalanceRoutes } from "./banking/account-balance.routes.js";
 import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
+import { registerPlaidWebhookRoutes } from "./integrations/plaid/webhook.routes.js";
+import { registerBankingPlaidWebhookRoutes } from "./banking/plaid/webhook.routes.js";
 import { registerBankingTransfersRoutes } from "./banking/transfers.routes.js";
 import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
 import { registerBankingFactoringVirtualRoutes } from "./banking/factoring-virtual.routes.js";
@@ -264,6 +266,8 @@ async function main() {
   await registerEmailQueueAdminRoutes(app);
   await registerAdminClientErrorRoutes(app);
   await registerAdminActivityRoutes(app);
+  await registerAdminClientErrorRoutes(app);
+  await registerAdminActivityRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);
   await registerInviteAuthRoutes(app);
@@ -337,6 +341,8 @@ async function main() {
   await registerBankingRoutes(app);
   await registerAccountBalanceRoutes(app);
   await registerPlaidLinkRoutes(app);
+  await registerPlaidWebhookRoutes(app);
+  await registerBankingPlaidWebhookRoutes(app);
   await registerBankingTransfersRoutes(app);
   await registerBankingManualJeRoutes(app);
   await registerBankingFactoringVirtualRoutes(app);

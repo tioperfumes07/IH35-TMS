@@ -9,7 +9,8 @@ export type NotificationEventType =
   | "settlement_ready"
   | "cash_advance_request"
   | "qbo_sync_error"
-  | "abandoned_load";
+  | "abandoned_load"
+  | "plaid_item_login_required";
 
 type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: unknown[] }>;
@@ -116,6 +117,16 @@ function buildEmailPlan(eventType: NotificationEventType, payload: Record<string
     };
   }
 
+  if (eventType === "plaid_item_login_required") {
+    const title = stringPayload(payload, "headline") || "Plaid bank connection needs attention";
+    const bodyText = stringPayload(payload, "bodyText") || "";
+    return {
+      templateKey: "notification-dispatch",
+      subject: title,
+      templateVars: { title, bodyText },
+    };
+  }
+
   if (eventType === "qbo_sync_error") {
     const headline = stringPayload(payload, "headline") || "QuickBooks sync issue";
     const bodyText = stringPayload(payload, "bodyText") || "";
@@ -195,6 +206,9 @@ function buildSmsBody(eventType: NotificationEventType, payload: Record<string, 
   }
   if (eventType === "cash_advance_request") {
     return stringPayload(payload, "headline") || "Cash advance request submitted.";
+  }
+  if (eventType === "plaid_item_login_required") {
+    return stringPayload(payload, "sms_body") || "Plaid bank connection needs re-authentication.";
   }
   if (eventType === "qbo_sync_error") {
     return stringPayload(payload, "sms_body_short") || `QBO sync error: ${stringPayload(payload, "kind") || "failure"}`;
