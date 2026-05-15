@@ -25,6 +25,7 @@ export async function initializeQboSyncQueueRunner(app: FastifyInstance) {
               synced: result.synced,
               failed: result.failed,
               deadLettered: result.dead_lettered,
+              blocked: result.blocked,
             },
             "[QBO_SYNC_RUNNER]"
           );

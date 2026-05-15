@@ -6,8 +6,7 @@ import { computeOutboundBackoffMs } from "./sync-backoff.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import { getValidAccessToken } from "./qbo-oauth.service.js";
 import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from "./qbo-mappers.js";
-import { pushJournalEntryToQuickBooksFromQueue } from "../../accounting/journal-entry-qbo-push.service.js";
-import { pushBillPaymentToQuickBooksFromQueue } from "../../qbo/bill-payment-mapper.service.js";
+import { syncEntityToQbo } from "./sync-outbound-accounting.js";
 
 export type QueueEntityType =
   | "bank_transaction"
@@ -16,6 +15,9 @@ export type QueueEntityType =
   | "expense"
   | "invoice"
   | "journal_entry"
+  | "payment"
+  | "credit_memo"
+  | "factoring_advance"
   | "settlement"
   | "transfer";
 export type QueueStatus = "pending" | "in_flight" | "synced" | "failed" | "blocked" | "dead_letter";
@@ -54,6 +56,7 @@ type QueueProcessResult = {
   synced: number;
   failed: number;
   dead_lettered: number;
+  blocked: number;
 };
 
 function qboApiBase() {
@@ -209,24 +212,6 @@ async function syncTransferPreview(job: QueueRow) {
   });
 }
 
-async function syncBillPreview(job: QueueRow) {
-  const qboId = `preview-bill-${job.entity_id}`;
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
-    await client.query(
-      `
-        UPDATE accounting.bills
-        SET qbo_bill_id = $2,
-            updated_at = now()
-        WHERE id = $1
-          AND operating_company_id = $3
-      `,
-      [job.entity_id, qboId, job.operating_company_id]
-    );
-  });
-  return { qboId, mode: "preview" as const };
-}
-
 type QboSyncSuccess = { qboId: string; syncToken: string | null };
 
 export async function syncBankTransaction(txn: BankTxnContext, realmId: string, accessToken: string): Promise<QboSyncSuccess> {
@@ -292,14 +277,15 @@ export async function enqueueSyncJob(
   entityType: QueueEntityType,
   entityId: string,
   payloadHash: string,
-  actorUserId?: string
+  actorUserId?: string,
+  extras?: { triggered_by?: string | null; payload_jsonb?: unknown | null }
 ) {
   const token = await getValidAccessToken(operatingCompanyId);
   const upsertQueue = async (client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(
       `
-        INSERT INTO integrations.qbo_sync_queue (
+        INSERT INTO integrations.qbo_sync_queue AS q (
           operating_company_id,
           entity_type,
           entity_id,
@@ -309,22 +295,36 @@ export async function enqueueSyncJob(
           attempt_count,
           max_attempts,
           next_attempt_at,
+          triggered_by,
+          payload_jsonb,
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$3,$4,$5,'pending',0,8,now(),now(),now())
+        VALUES ($1,$2,$3,$4,$5,'pending',0,8,now(),$6,$7::jsonb,now(),now())
         ON CONFLICT (operating_company_id, entity_type, entity_id) WHERE sync_status IN ('pending','in_flight','failed')
         DO UPDATE SET
           qbo_realm_id = EXCLUDED.qbo_realm_id,
           payload_hash = EXCLUDED.payload_hash,
           sync_status = 'pending',
           next_attempt_at = now(),
+          triggered_by = COALESCE(EXCLUDED.triggered_by, q.triggered_by),
+          payload_jsonb = COALESCE(EXCLUDED.payload_jsonb, q.payload_jsonb),
           error_message = NULL,
           error_details = NULL,
           updated_at = now()
         RETURNING id
       `,
-      [operatingCompanyId, entityType, entityId, token.realm_id, payloadHash]
+      [
+        operatingCompanyId,
+        entityType,
+        entityId,
+        token.realm_id,
+        payloadHash,
+        extras?.triggered_by ?? null,
+        extras?.payload_jsonb === undefined || extras?.payload_jsonb === null
+          ? null
+          : JSON.stringify(extras.payload_jsonb),
+      ]
     );
     return res.rows[0] ?? null;
   };
@@ -416,6 +416,7 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
   let synced = 0;
   let failed = 0;
   let deadLettered = 0;
+  let blockedConflict = 0;
   for (const job of jobs) {
     try {
       if (job.entity_type === "settlement") {
@@ -457,94 +458,26 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
         );
         continue;
       }
-      if (job.entity_type === "bill") {
-        const preview = await syncBillPreview(job);
-        await markJobResult(job, "synced", {
-          qboId: preview.qboId,
-          errorMessage: null,
-          errorDetails: {
-            mode: preview.mode,
-            note: "Bill sync is running in preview mode; QBO Bill create will be wired in later phase.",
-          },
-        });
-        synced += 1;
-        await appendSyncAudit(
-          "integrations.qbo_sync.synced",
-          {
-            queue_id: job.id,
-            operating_company_id: job.operating_company_id,
-            entity_id: job.entity_id,
-            mode: preview.mode,
-            qbo_id: preview.qboId,
-          },
-          "info",
-          null
-        );
-        continue;
-      }
-      if (job.entity_type === "bill_payment") {
-        const push = await pushBillPaymentToQuickBooksFromQueue({
-          operating_company_id: job.operating_company_id,
+      const accountingOutbound = new Set<QueueEntityType>([
+        "invoice",
+        "bill",
+        "bill_payment",
+        "journal_entry",
+        "payment",
+        "credit_memo",
+        "factoring_advance",
+        "expense",
+      ]);
+      if (accountingOutbound.has(job.entity_type)) {
+        const result = await syncEntityToQbo({
+          entity_type: job.entity_type,
           entity_id: job.entity_id,
-        });
-        await markJobResult(job, "synced", {
-          qboId: push.qboId,
-          syncToken: null,
-          errorMessage: null,
-          errorDetails: { mode: "live", entity: "bill_payment" },
-        });
-        synced += 1;
-        await appendSyncAudit(
-          "integrations.qbo_sync.synced",
-          {
-            queue_id: job.id,
-            operating_company_id: job.operating_company_id,
-            entity_id: job.entity_id,
-            mode: "live",
-            qbo_id: push.qboId,
-          },
-          "info",
-          null
-        );
-        await appendSyncAudit(
-          "sync.outbound_succeeded",
-          {
-            queue_id: job.id,
-            operating_company_id: job.operating_company_id,
-            entity_type: job.entity_type,
-            entity_id: job.entity_id,
-            qbo_id: push.qboId,
-          },
-          "info",
-          null
-        );
-        continue;
-      }
-      if (job.entity_type === "journal_entry") {
-        const push = await pushJournalEntryToQuickBooksFromQueue({
           operating_company_id: job.operating_company_id,
-          entity_id: job.entity_id,
+          queue_row_id: job.id,
+          triggered_by: job.triggered_by ?? "tms_system",
         });
-        await markJobResult(job, "synced", {
-          qboId: push.qboId ?? undefined,
-          syncToken: null,
-          errorMessage: null,
-          errorDetails: { mode: push.qboId ? "live" : "void_cleanup", entity: "journal_entry" },
-        });
-        synced += 1;
-        await appendSyncAudit(
-          "integrations.qbo_sync.synced",
-          {
-            queue_id: job.id,
-            operating_company_id: job.operating_company_id,
-            entity_id: job.entity_id,
-            mode: push.qboId ? "live" : "void_cleanup",
-            qbo_id: push.qboId,
-          },
-          "info",
-          null
-        );
-        if (push.qboId) {
+        if (result.outcome === "synced") {
+          synced += 1;
           await appendSyncAudit(
             "sync.outbound_succeeded",
             {
@@ -552,11 +485,27 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
               operating_company_id: job.operating_company_id,
               entity_type: job.entity_type,
               entity_id: job.entity_id,
-              qbo_id: push.qboId,
+              qbo_id: result.qbo_id,
             },
             "info",
             null
           );
+        } else if (result.outcome === "blocked_conflict") {
+          blockedConflict += 1;
+        } else if (result.outcome === "failed_dead_letter") {
+          deadLettered += 1;
+          await sendEmail({
+            to: "tioperfumes07@gmail.com",
+            subject: `[IH 35 TMS] QBO sync dead-lettered: ${job.entity_type} ${job.entity_id}`,
+            sender: "noreply",
+            html: `<p>QBO sync queue item ${job.id} moved to dead-letter.</p>`,
+            text: `QBO sync queue item ${job.id} moved to dead-letter.`,
+            eventClass: "integrations.qbo_sync.blocked",
+            tags: [{ name: "type", value: "qbo_sync_alert" }],
+            actorUserId: null,
+          }).catch(() => undefined);
+        } else {
+          failed += 1;
         }
         continue;
       }
@@ -674,7 +623,7 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
       }
     }
   }
-  return { processed: jobs.length, synced, failed, dead_lettered: deadLettered };
+  return { processed: jobs.length, synced, failed, dead_lettered: deadLettered, blocked: blockedConflict };
 }
 
 export async function listSyncQueue(params: {
