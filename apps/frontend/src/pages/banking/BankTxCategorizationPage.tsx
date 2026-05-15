@@ -196,7 +196,7 @@ export function BankTxCategorizationPage() {
 
   const bulkMut = useMutation({
     mutationFn: async ({ ids, accountId }: { ids: string[]; accountId: string }) => {
-      await bulkCategorizeBankTransactions(companyId, { transaction_ids: ids, account_id: accountId });
+      await bulkCategorizeBankTransactions(companyId, { transaction_ids: ids, category_kind: "bank_expense", gl_account_id: accountId });
     },
     onSuccess: (_data, vars) => {
       pushToast(`Categorized ${vars.ids.length} transaction(s)`, "success");

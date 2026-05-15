@@ -143,6 +143,11 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "accounting":
       return [
         { label: "Hub", to: "/accounting" },
+        { label: "Period close", to: "/accounting/period-close" },
+        { label: "Reports", to: "/accounting/reports" },
+        { label: "Sync conflicts", to: "/accounting/sync-conflicts" },
+        { label: "Sales tax", to: "/accounting/sales-tax" },
+        { label: "1099", to: "/accounting/1099" },
         { label: "Invoices", to: "/accounting/invoices" },
         { label: "Payments", to: "/accounting/payments" },
         { label: "Factoring", to: "/accounting/factoring" },
@@ -157,7 +162,11 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "bank":
       return [
         { label: "Overview", to: "/banking" },
-        { label: "Reconcile", to: "/banking/reconcile" },
+        { label: "Transactions", to: "/banking/transactions" },
+        { label: "Rules", to: "/banking/rules" },
+        { label: "Reconcile", to: "/banking/reconciliation" },
+        { label: "Legacy workspace", to: "/banking/reconciliation/workspace" },
+        { label: "Obligation reconcile", to: "/banking/reconcile" },
         { label: "Transfers", to: "/banking/transfers" },
         { label: "Fuel Planner", to: "/fuel" },
       ];
@@ -187,6 +196,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         rows.push(
           { label: "Migration Status", to: "/admin/migration-status" },
           { label: "Integrity checks", to: "/admin/integrity" },
+          { label: "Sync health", to: "/admin/sync" },
           { label: "Error monitor", to: "/admin/error-monitor" }
         );
       }

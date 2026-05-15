@@ -34,19 +34,19 @@ describe("banking tx categorization API client", () => {
 
   it("bulkCategorizeBankTransactions POSTs ids + account", async () => {
     const spy = vi.spyOn(client, "apiRequest").mockResolvedValue({ ok: true } as never);
-    await bulkCategorizeBankTransactions("co-1", { transaction_ids: ["a", "b"], account_id: "acc-1" });
-    expect(spy).toHaveBeenCalledWith("/api/v1/banking/transactions/bulk-categorize?operating_company_id=co-1", {
+    await bulkCategorizeBankTransactions("co-1", { transaction_ids: ["a", "b"], category_kind: "bank_expense", gl_account_id: "acc-1" });
+    expect(spy).toHaveBeenCalledWith("/api/v1/banking/transactions/categorize-bulk?operating_company_id=co-1", {
       method: "POST",
-      body: { transaction_ids: ["a", "b"], account_id: "acc-1" },
+      body: { operating_company_id: "co-1", transaction_ids: ["a", "b"], category_kind: "bank_expense", gl_account_id: "acc-1" },
     });
   });
 
-  it("markBankTransactionTransfer POSTs accounts", async () => {
+  it("markBankTransactionTransfer POSTs destination + kind", async () => {
     const spy = vi.spyOn(client, "apiRequest").mockResolvedValue({ ok: true } as never);
-    await markBankTransactionTransfer("tx-9", "co-1", { from_account_id: "b1", to_account_id: "b2" });
-    expect(spy).toHaveBeenCalledWith("/api/v1/banking/transactions/tx-9/mark-transfer?operating_company_id=co-1", {
+    await markBankTransactionTransfer("tx-9", "co-1", { destination_bank_account_id: "b2", transfer_kind: "out" });
+    expect(spy).toHaveBeenCalledWith("/api/v1/banking/transactions/tx-9/transfer?operating_company_id=co-1", {
       method: "POST",
-      body: { from_account_id: "b1", to_account_id: "b2" },
+      body: { destination_bank_account_id: "b2", transfer_kind: "out" },
     });
   });
 });

@@ -272,20 +272,20 @@ export function categorizeBankTransactionToAccount(
 
 export function bulkCategorizeBankTransactions(
   companyId: string,
-  body: { transaction_ids: string[]; account_id: string }
+  body: { transaction_ids: string[]; category_kind: string; gl_account_id?: string }
 ) {
-  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/bulk-categorize?${q(companyId)}`, {
+  return apiRequest<{ categorized_count?: number; errors?: unknown[] }>(`/api/v1/banking/transactions/categorize-bulk?${q(companyId)}`, {
     method: "POST",
-    body,
+    body: { operating_company_id: companyId, ...body },
   });
 }
 
 export function markBankTransactionTransfer(
   transactionId: string,
   companyId: string,
-  body: { from_account_id: string; to_account_id: string }
+  body: { destination_bank_account_id: string; transfer_kind: "in" | "out"; paired_transaction_id?: string }
 ) {
-  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/mark-transfer?${q(companyId)}`, {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${encodeURIComponent(transactionId)}/transfer?${q(companyId)}`, {
     method: "POST",
     body,
   });
@@ -294,6 +294,14 @@ export function markBankTransactionTransfer(
 /** Skip / investigate flag + note (P6-T11204). */
 export function skipBankTransactionInvestigation(transactionId: string, companyId: string, body: { note: string }) {
   return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/skip-investigate?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+/** Mark transaction excluded / skipped with a reason (banking categorization flow). */
+export function skipBankTransaction(transactionId: string, companyId: string, body: { reason: string }) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${encodeURIComponent(transactionId)}/skip?${q(companyId)}`, {
     method: "POST",
     body,
   });

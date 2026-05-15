@@ -101,11 +101,11 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
       if (linkBankTransactionId) {
         try {
           await markBankTransactionTransfer(linkBankTransactionId, operatingCompanyId, {
-            from_account_id: fromAccountId,
-            to_account_id: toAccountId,
+            destination_bank_account_id: toAccountId,
+            transfer_kind: "out",
           });
         } catch {
-          /* optional until P6-T11204 */
+          /* optional link step */
         }
       }
       pushToast("Transfer recorded", "success");

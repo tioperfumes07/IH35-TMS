@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "./auth/useAuth";
 import { Shell } from "./components/Shell";
@@ -24,6 +24,9 @@ import { CategorizationRulesPage } from "./pages/banking/CategorizationRulesPage
 import { QboSyncQueuePage } from "./pages/banking/QboSyncQueuePage";
 import { EmailQueuePage } from "./pages/banking/EmailQueuePage";
 import { BankAccountDetailPage } from "./pages/banking/BankAccountDetail";
+import { BankingRulesPage } from "./pages/banking/BankingRulesPage";
+import { BankingReconciliationListPage, BankingReconciliationSessionPage } from "./pages/banking/BankingReconciliationWave2Page";
+import { BankingTransactionsListPage } from "./pages/banking/BankingTransactionsListPage";
 import { SafetyLayout } from "./pages/safety/SafetyLayout";
 import {
   AccidentsIncidentsTab,
@@ -97,6 +100,10 @@ import { ScheduledReportsPage } from "./pages/reports/ScheduledReportsPage";
 import { QBOSyncStatusDashboardPage } from "./pages/qbo/QBOSyncStatusDashboardPage";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
 import { AccountingHubPage } from "./pages/accounting/AccountingHubPage";
+import { PeriodClosePage } from "./pages/accounting/PeriodClosePage";
+import { AccountingReportsWave2Page } from "./pages/accounting/AccountingReportsWave2Page";
+import { AccountingSyncConflictsPage, AccountingSyncConflictDetailPage } from "./pages/accounting/AccountingSyncConflictsPage";
+import { AccountingSalesTaxPage, Accounting1099Page } from "./pages/accounting/AccountingTaxPages";
 import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
 import { AbandonmentQueuePage } from "./pages/accounting/AbandonmentQueuePage";
 import { InvoiceDetailPage } from "./pages/accounting/InvoiceDetailPage";
@@ -112,6 +119,7 @@ import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
 import { ErrorMonitorPage } from "./pages/admin/ErrorMonitor";
 import { IntegrityAdminPage } from "./pages/admin/IntegrityAdminPage";
+import { AdminSyncHealthPage } from "./pages/admin/AdminSyncHealthPage";
 import { DataImportPage } from "./pages/admin/DataImportPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
@@ -188,6 +196,16 @@ import { DriverSchedulerGridPage } from "./pages/safety/driver-scheduler/DriverS
 import { DriverSchedulerRequestInboxPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { DriverSchedulerRequestDetailPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage";
 import { DriverLeaveBalancesPage } from "./pages/safety/driver-scheduler/DriverLeaveBalancesPage";
+
+function BankingReconciliationSessionRoute() {
+  const { sessionId = "" } = useParams<{ sessionId: string }>();
+  return <BankingReconciliationSessionPage sessionId={sessionId} />;
+}
+
+function AccountingSyncConflictRoute() {
+  const { conflictId = "" } = useParams<{ conflictId: string }>();
+  return <AccountingSyncConflictDetailPage conflictId={conflictId} />;
+}
 
 function RootRedirect() {
   const auth = useAuth();
@@ -419,7 +437,39 @@ export default function App() {
           path="/banking/reconciliation"
           element={
             <ProtectedRoute>
+              <BankingReconciliationListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/reconciliation/sessions/:sessionId"
+          element={
+            <ProtectedRoute>
+              <BankingReconciliationSessionRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/reconciliation/workspace"
+          element={
+            <ProtectedRoute>
               <ReconciliationWorkspacePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/rules"
+          element={
+            <ProtectedRoute>
+              <BankingRulesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/transactions"
+          element={
+            <ProtectedRoute>
+              <BankingTransactionsListPage />
             </ProtectedRoute>
           }
         />
@@ -1326,6 +1376,14 @@ export default function App() {
           }
         />
         <Route
+          path="/admin/sync"
+          element={
+            <OwnerOnlyRoute>
+              <AdminSyncHealthPage />
+            </OwnerOnlyRoute>
+          }
+        />
+        <Route
           path="/accounting"
           element={
             <ProtectedRoute>
@@ -1418,6 +1476,54 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ExpenseCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/period-close"
+          element={
+            <ProtectedRoute>
+              <PeriodClosePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/reports"
+          element={
+            <ProtectedRoute>
+              <AccountingReportsWave2Page />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/sync-conflicts"
+          element={
+            <ProtectedRoute>
+              <AccountingSyncConflictsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/sync-conflicts/:conflictId"
+          element={
+            <ProtectedRoute>
+              <AccountingSyncConflictRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/sales-tax"
+          element={
+            <ProtectedRoute>
+              <AccountingSalesTaxPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/1099"
+          element={
+            <ProtectedRoute>
+              <Accounting1099Page />
             </ProtectedRoute>
           }
         />
