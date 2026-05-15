@@ -57,6 +57,9 @@ jobs:
       - name: Static checks — data-dependent RAISE in DO $$ blocks (informational)
         run: npm run db:verify:empty-db-safe
 
+      - name: Static checks — DDL idempotency hints (informational)
+        run: npm run db:verify:idempotency
+
       - name: Migrate database (integration tests)
         run: npm run db:migrate
 

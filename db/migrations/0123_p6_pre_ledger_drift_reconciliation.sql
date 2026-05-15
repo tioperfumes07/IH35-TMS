@@ -3093,8 +3093,9 @@ ALTER TABLE maintenance.work_orders
   ADD COLUMN IF NOT EXISTS roadside_provider_vendor_id uuid REFERENCES mdata.vendors(id),
   ADD COLUMN IF NOT EXISTS roadside_location text,
   ADD COLUMN IF NOT EXISTS roadside_breakdown_load_id uuid REFERENCES mdata.loads(id);
+-- Self-heal: drift replay duplicates 0098_p5_f1_roadservice_bucket.sql; generated column must use IF NOT EXISTS so CI replay is idempotent.
 ALTER TABLE maintenance.work_orders
-  ADD COLUMN roadside_response_minutes int GENERATED ALWAYS AS (
+  ADD COLUMN IF NOT EXISTS roadside_response_minutes int GENERATED ALWAYS AS (
     CASE
       WHEN roadside_arrived_at IS NOT NULL AND roadside_callout_at IS NOT NULL
         THEN (EXTRACT(EPOCH FROM (roadside_arrived_at - roadside_callout_at)) / 60)::int
