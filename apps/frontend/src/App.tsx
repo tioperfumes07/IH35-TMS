@@ -7,6 +7,7 @@ import { useCompanyContext } from "./contexts/CompanyContext";
 import {
   AccountingCustomerDetailPage,
   AccountingVendorDetailPage,
+  BankingTransactionsPage,
   CustomersListPage,
   SuspenseShell,
   VendorsListPage,
@@ -31,7 +32,6 @@ import { EmailQueuePage } from "./pages/banking/EmailQueuePage";
 import { BankAccountDetailPage } from "./pages/banking/BankAccountDetail";
 import { BankingRulesPage } from "./pages/banking/BankingRulesPage";
 import { BankingReconciliationListPage, BankingReconciliationSessionPage } from "./pages/banking/BankingReconciliationWave2Page";
-import { BankingTransactionsListPage } from "./pages/banking/BankingTransactionsListPage";
 import { SafetyLayout } from "./pages/safety/SafetyLayout";
 import {
   AccidentsIncidentsTab,
@@ -480,7 +480,9 @@ export default function App() {
           path="/banking/transactions"
           element={
             <ProtectedRoute>
-              <BankingTransactionsListPage />
+              <SuspenseShell>
+                <BankingTransactionsPage />
+              </SuspenseShell>
             </ProtectedRoute>
           }
         />

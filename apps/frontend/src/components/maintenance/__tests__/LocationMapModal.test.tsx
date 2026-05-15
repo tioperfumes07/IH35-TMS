@@ -1,12 +1,19 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { LocationMapModal } from "../LocationMapModal";
 import { POS_DICT } from "../../../lib/positions";
+import { LocationMapModal } from "../LocationMapModal";
+
+function withQuery(ui: ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+}
 
 describe("LocationMapModal", () => {
   it("opens when open=true and closes via cancel", () => {
     const onClose = vi.fn();
-    render(<LocationMapModal open selectedCodes={[]} onClose={onClose} onApply={vi.fn()} />);
+    render(withQuery(<LocationMapModal open selectedCodes={[]} onClose={onClose} onApply={vi.fn()} />));
     expect(screen.getByText("Location map")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -14,13 +21,13 @@ describe("LocationMapModal", () => {
 
   it("closes on escape key", () => {
     const onClose = vi.fn();
-    render(<LocationMapModal open selectedCodes={[]} onClose={onClose} onApply={vi.fn()} />);
+    render(withQuery(<LocationMapModal open selectedCodes={[]} onClose={onClose} onApply={vi.fn()} />));
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("shows axle-group zones and map nodes", () => {
-    render(<LocationMapModal open selectedCodes={[]} onClose={vi.fn()} onApply={vi.fn()} />);
+    render(withQuery(<LocationMapModal open selectedCodes={[]} onClose={vi.fn()} onApply={vi.fn()} />));
     expect(screen.getAllByText("Steer Axle").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Drive Tandem").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Trailer Tandem").length).toBeGreaterThan(0);
@@ -29,7 +36,7 @@ describe("LocationMapModal", () => {
   });
 
   it("updates info panel on hover", () => {
-    render(<LocationMapModal open selectedCodes={[]} onClose={vi.fn()} onApply={vi.fn()} />);
+    render(withQuery(<LocationMapModal open selectedCodes={[]} onClose={vi.fn()} onApply={vi.fn()} />));
     const target = document.querySelector('[data-loc="STEER-R"]') as Element;
     fireEvent.mouseEnter(target);
     expect(screen.getAllByText("STEER-R").length).toBeGreaterThan(0);
@@ -37,7 +44,7 @@ describe("LocationMapModal", () => {
   });
 
   it("supports multi-select and toggling selected codes", () => {
-    render(<LocationMapModal open selectedCodes={[]} onClose={vi.fn()} onApply={vi.fn()} />);
+    render(withQuery(<LocationMapModal open selectedCodes={[]} onClose={vi.fn()} onApply={vi.fn()} />));
     const steerL = document.querySelector('[data-loc="STEER-L"]') as Element;
     const steerR = document.querySelector('[data-loc="STEER-R"]') as Element;
 
@@ -52,7 +59,7 @@ describe("LocationMapModal", () => {
 
   it("applies selected codes via onApply callback", () => {
     const onApply = vi.fn();
-    render(<LocationMapModal open selectedCodes={[]} onClose={vi.fn()} onApply={onApply} />);
+    render(withQuery(<LocationMapModal open selectedCodes={[]} onClose={vi.fn()} onApply={onApply} />));
     fireEvent.click(document.querySelector('[data-loc="STEER-L"]') as Element);
     fireEvent.click(document.querySelector('[data-loc="STEER-R"]') as Element);
     fireEvent.click(screen.getByRole("button", { name: /Apply selection/ }));

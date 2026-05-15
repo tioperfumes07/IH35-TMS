@@ -23,3 +23,6 @@ export const VendorsListPage = lazy(() => import("./pages/accounting/VendorsList
 export const AccountingVendorDetailPage = lazy(() =>
   import("./pages/accounting/VendorDetailPage").then((m) => ({ default: m.VendorDetailPage }))
 );
+export const BankingTransactionsPage = lazy(() =>
+  import("./pages/banking/BankingTransactionsPage").then((m) => ({ default: m.BankingTransactionsPage }))
+);

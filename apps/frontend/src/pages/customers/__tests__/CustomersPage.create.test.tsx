@@ -48,7 +48,7 @@ describe("CustomersPage create validation", () => {
     const user = userEvent.setup();
     vi.mocked(createCustomer).mockResolvedValue({ ok: true } as never);
     render(wrap(<CustomersPage />));
-    await user.click(screen.getByRole("button", { name: /\+ Create Customer/i }));
+    await user.click(screen.getByRole("button", { name: /\+ Customer/i }));
     await screen.findByRole("heading", { name: /create customer/i });
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
     await waitFor(() => {
@@ -65,7 +65,7 @@ describe("CustomersPage create validation", () => {
       })
     );
     render(wrap(<CustomersPage />));
-    await user.click(screen.getByRole("button", { name: /\+ Create Customer/i }));
+    await user.click(screen.getByRole("button", { name: /\+ Customer/i }));
     await screen.findByRole("heading", { name: /create customer/i });
     await user.type(document.querySelector('[data-field="legal_name"]')!, "Acme Logistics");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));

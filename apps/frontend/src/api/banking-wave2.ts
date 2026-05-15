@@ -1,4 +1,5 @@
-import { apiRequest } from "./client";
+import { skipBankTransaction } from "./banking";
+import { ApiError, apiRequest } from "./client";
 
 export type BankingReviewState = "for_review" | "categorized" | "excluded" | "matched" | "transfer";
 
@@ -32,6 +33,35 @@ export function getBankingTransactionsReview(
   if (params.date_start) q.set("date_start", params.date_start);
   if (params.date_end) q.set("date_end", params.date_end);
   return apiRequest<{ items: Array<Record<string, unknown>>; next_cursor: number }>(`/api/v1/banking/transactions/review?${q}`);
+}
+
+/** Full banking feed (`GET /banking/transactions`). Wave 2 backend; UI treats 404 as pending deploy. */
+export function getBankingTransactionsList(
+  companyId: string,
+  params: {
+    account_id?: string;
+    review_state?: BankingReviewState | "";
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+    cursor?: number;
+    limit?: number;
+  } = {}
+) {
+  const q = new URLSearchParams();
+  q.set("operating_company_id", companyId);
+  if (params.account_id) q.set("account_id", params.account_id);
+  if (params.review_state) q.set("review_state", params.review_state);
+  if (params.date_from) q.set("date_from", params.date_from);
+  if (params.date_to) q.set("date_to", params.date_to);
+  if (params.search?.trim()) q.set("search", params.search.trim());
+  if (params.cursor != null) q.set("cursor", String(params.cursor));
+  if (params.limit != null) q.set("limit", String(params.limit));
+  return apiRequest<{
+    items: Array<Record<string, unknown>>;
+    next_cursor?: number;
+    total?: number;
+  }>(`/api/v1/banking/transactions?${q}`);
 }
 
 export function getBankingRules(companyId: string) {
@@ -158,4 +188,18 @@ export async function postBankingRulesFromTransaction(transactionId: string, com
     method: "POST",
     body: { operating_company_id: companyId, generalization },
   });
+}
+
+export async function postBankTransactionExclude(transactionId: string, companyId: string, body: { reason: string }) {
+  try {
+    return await apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${encodeURIComponent(transactionId)}/exclude`, {
+      method: "POST",
+      body: { operating_company_id: companyId, reason: body.reason },
+    });
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 501)) {
+      return skipBankTransaction(transactionId, companyId, body);
+    }
+    throw e;
+  }
 }
