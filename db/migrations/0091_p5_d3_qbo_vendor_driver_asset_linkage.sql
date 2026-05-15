@@ -5,7 +5,8 @@ CREATE SCHEMA IF NOT EXISTS integrations;
 ALTER TABLE mdata.drivers
   ADD COLUMN IF NOT EXISTS qbo_vendor_id text,
   ADD COLUMN IF NOT EXISTS qbo_vendor_linked_at timestamptz,
-  ADD COLUMN IF NOT EXISTS qbo_vendor_linked_by_user_id uuid REFERENCES identity.users(id);
+  ADD COLUMN IF NOT EXISTS qbo_vendor_linked_by_user_id uuid REFERENCES identity.users(id),
+  ADD COLUMN IF NOT EXISTS operating_company_id uuid REFERENCES org.companies(id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mdata_drivers_company_qbo_vendor_unique
   ON mdata.drivers (operating_company_id, qbo_vendor_id)
