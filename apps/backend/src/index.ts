@@ -122,6 +122,8 @@ import { registerEmailRoutes } from "./email/email.routes.js";
 import { registerEmailQueueAdminRoutes } from "./admin/email-queue-admin.routes.js";
 import { registerAdminActivityRoutes } from "./admin/activity.routes.js";
 import { registerAdminClientErrorRoutes } from "./admin/client-errors.routes.js";
+import { registerLaunchReadinessRoutes } from "./admin/launch-readiness.routes.js";
+import { registerDataImportAdminRoutes } from "./admin/data-import.routes.js";
 import { initializeEmailCron } from "./email/cron.js";
 import { initializeQboOutboxDispatcher, stopQboOutboxDispatcher } from "./integrations/qbo/outbox-dispatcher.js";
 import { initializeQboSyncWorker, stopQboSyncWorker } from "./integrations/qbo/qbo-sync-worker.js";
@@ -266,8 +268,8 @@ async function main() {
   await registerEmailQueueAdminRoutes(app);
   await registerAdminClientErrorRoutes(app);
   await registerAdminActivityRoutes(app);
-  await registerAdminClientErrorRoutes(app);
-  await registerAdminActivityRoutes(app);
+  await registerLaunchReadinessRoutes(app);
+  await registerDataImportAdminRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);
   await registerInviteAuthRoutes(app);
@@ -449,6 +451,15 @@ async function main() {
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {
+    const seen = new Set<string>();
+    for (const r of app.printRoutes({ commonPrefix: false }).split("\n")) {
+      const key = r.trim();
+      if (key && seen.has(key)) {
+        throw new Error(`[boot] duplicate route detected: ${key}`);
+      }
+      seen.add(key);
+    }
+
     await app.listen({ port, host });
     if (process.env.ENABLE_OUTBOX_PROCESSOR !== "false") {
       startOutboxProcessor();

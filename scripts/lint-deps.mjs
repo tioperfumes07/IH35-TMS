@@ -56,6 +56,7 @@ function toPackageName(spec) {
   if (spec.startsWith("@/")) return null;
   if (spec.startsWith(".") || spec.startsWith("/")) return null;
   if (spec.startsWith("@ih35/")) return null;
+  if (spec.startsWith("@legal/")) return null;
 
   if (spec.startsWith("@")) {
     const parts = spec.split("/");

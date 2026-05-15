@@ -127,6 +127,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
       ],
       USR_MGMT: [
         { label: "Users", to: "/users" },
+        ...(role === "Owner" || role === "Administrator" ? [{ label: "Data import", to: "/admin/data-import" }] : []),
         ...(role === "Owner" || role === "SuperAdmin" ? [{ label: "Activity log", to: "/admin/activity" }] : []),
       ],
     }),
