@@ -68,6 +68,7 @@ let memoLoginIp: RateLimiterRedis | null | undefined;
 let memoOtpPhoneStart: RateLimiterRedis | null | undefined;
 let memoOtpEmailStart: RateLimiterRedis | null | undefined;
 let memoPasswordResetEmail: RateLimiterRedis | null | undefined;
+let memoPasswordResetRequestByEmail: RateLimiterRedis | null | undefined;
 let memoOtpVerify: RateLimiterRedis | null | undefined;
 let memoDriverPhoneVerify: RateLimiterRedis | null | undefined;
 
@@ -93,6 +94,16 @@ function passwordResetEmailLimiter(): RateLimiterRedis | null {
   if (memoPasswordResetEmail !== undefined) return memoPasswordResetEmail;
   memoPasswordResetEmail = buildLimiter({ keyPrefix: "rl_auth_password_reset_email", points: 3, durationSec: 60 * 60 });
   return memoPasswordResetEmail;
+}
+
+function passwordResetRequestByEmailLimiter(): RateLimiterRedis | null {
+  if (memoPasswordResetRequestByEmail !== undefined) return memoPasswordResetRequestByEmail;
+  memoPasswordResetRequestByEmail = buildLimiter({
+    keyPrefix: "rl_office_password_reset_request_email",
+    points: 1,
+    durationSec: 5 * 60,
+  });
+  return memoPasswordResetRequestByEmail;
 }
 
 function otpVerifyLimiter(): RateLimiterRedis | null {
@@ -220,6 +231,36 @@ export async function enforceAuthPhoneVerifyLimits(
     route_key: "auth.phone.verify≈auth/otp/verify",
     limiter: "otp_verify_code",
     phone,
+    ip,
+  });
+}
+
+export async function enforceOfficePasswordResetRequestLimits(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  email: string
+): Promise<boolean> {
+  const ip = clientIp(req);
+  const okIp = await consumeOr429(reply, loginIpLimiter(), ip, {
+    route_key: "identity/password-reset/request",
+    limiter: "login_ip",
+    email,
+    ip,
+  });
+  if (!okIp) return false;
+  return consumeOr429(reply, passwordResetRequestByEmailLimiter(), email.toLowerCase(), {
+    route_key: "identity/password-reset/request",
+    limiter: "password_reset_request_email_5m",
+    email,
+    ip,
+  });
+}
+
+export async function enforceOfficePasswordLoginIpLimits(req: FastifyRequest, reply: FastifyReply): Promise<boolean> {
+  const ip = clientIp(req);
+  return consumeOr429(reply, loginIpLimiter(), ip, {
+    route_key: "auth/office/email-login",
+    limiter: "login_ip",
     ip,
   });
 }
