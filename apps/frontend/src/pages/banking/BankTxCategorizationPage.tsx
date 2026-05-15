@@ -120,9 +120,9 @@ export function BankTxCategorizationPage() {
     const amountMinCents = amountMin.trim() ? Math.round(Number(amountMin) * 100) : undefined;
     const amountMaxCents = amountMax.trim() ? Math.round(Number(amountMax) * 100) : undefined;
     return {
-      account_id: accountPick.length ? accountPick.join(",") : undefined,
-      from: dateFrom || undefined,
-      to: dateTo || undefined,
+      bank_account_id: accountPick.length === 1 ? accountPick[0] : undefined,
+      date_from: dateFrom || undefined,
+      date_to: dateTo || undefined,
       amount_min_cents: amountMinCents != null && Number.isFinite(amountMinCents) ? amountMinCents : undefined,
       amount_max_cents: amountMaxCents != null && Number.isFinite(amountMaxCents) ? amountMaxCents : undefined,
       search: search.trim() || undefined,

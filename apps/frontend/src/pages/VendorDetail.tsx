@@ -5,6 +5,7 @@ import { listVendorBills } from "../api/accounting";
 import { ApiError } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
 import { getVendor } from "../api/mdata";
+import { patchVendorAccountingCategory } from "../api/vendorCategory";
 import { useAuth } from "../auth/useAuth";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { Button } from "../components/Button";
@@ -12,7 +13,9 @@ import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
+import { VendorCategoryChip } from "../components/vendors/VendorCategoryChip";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
 
 const tabs = ["Profile", "A/P", "Documents", "Audit History"] as const;
 type VendorTab = (typeof tabs)[number];
@@ -43,6 +46,9 @@ export function VendorDetailPage() {
   const [billPayAuto, setBillPayAuto] = useState(true);
   const [billPayInclude, setBillPayInclude] = useState<Record<string, boolean>>({});
   const [billPayAmt, setBillPayAmt] = useState<Record<string, string>>({});
+
+  const [categoryDraft, setCategoryDraft] = useState<VendorCategoryValue>("other");
+  const [lockCategory, setLockCategory] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("tab") === "ap") setActiveTab("A/P");
@@ -140,6 +146,32 @@ export function VendorDetailPage() {
     onError: (e) => pushToast(String((e as Error).message ?? "Failed"), "error"),
   });
 
+  const patchCategoryMutation = useMutation({
+    mutationFn: () =>
+      patchVendorAccountingCategory(id, {
+        operating_company_id: companyId,
+        category: categoryDraft,
+        lock: lockCategory,
+      }),
+    onSuccess: async () => {
+      pushToast("Category updated", "success");
+      await queryClient.invalidateQueries({ queryKey: ["vendor", id] });
+    },
+    onError: (e) => pushToast(e instanceof ApiError ? e.message : "Update failed", "error"),
+  });
+
+  useEffect(() => {
+    const v = vendorQuery.data;
+    if (!v) return;
+    const c = v.vendor_category;
+    if (c && (VENDOR_CATEGORY_VALUES as readonly string[]).includes(c)) {
+      setCategoryDraft(c as VendorCategoryValue);
+    } else {
+      setCategoryDraft("other");
+    }
+    setLockCategory(Boolean(v.vendor_category_locked_at));
+  }, [vendorQuery.data]);
+
   const canViewDocuments = useMemo(
     () =>
       user?.role === "Owner" ||
@@ -207,6 +239,41 @@ export function VendorDetailPage() {
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor Type</span>
             <span className="text-sm text-gray-900">{vendor.vendor_type}</span>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Accounting category</span>
+            <div className="flex flex-col gap-2 text-sm text-gray-900">
+              <VendorCategoryChip code={vendor.vendor_category} />
+              {!companyId ? (
+                <span className="text-xs text-amber-700">Select operating company to edit.</span>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    className="h-8 rounded border border-gray-300 px-2 text-xs"
+                    value={categoryDraft}
+                    onChange={(e) => setCategoryDraft(e.target.value as VendorCategoryValue)}
+                  >
+                    {VENDOR_CATEGORY_VALUES.map((c) => (
+                      <option key={c} value={c}>
+                        {c.replace(/_/g, " ")}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-1 text-xs">
+                    <input type="checkbox" checked={lockCategory} onChange={(e) => setLockCategory(e.target.checked)} />
+                    Lock
+                  </label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    loading={patchCategoryMutation.isPending}
+                    onClick={() => patchCategoryMutation.mutate()}
+                  >
+                    Save category
+                  </Button>
+                </div>
+              )}
+            </div>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Phone</span>

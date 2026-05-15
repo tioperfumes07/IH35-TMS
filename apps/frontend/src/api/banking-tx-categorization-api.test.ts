@@ -12,14 +12,14 @@ describe("banking tx categorization API client", () => {
 
   it("getBankingUncategorized GETs with filters", async () => {
     const spy = vi.spyOn(client, "apiRequest").mockResolvedValue({ transactions: [] } as never);
-    await getBankingUncategorized("co-1", { account_id: "a,b", from: "2026-01-01", limit: 10 });
+    await getBankingUncategorized("co-1", { bank_account_id: "acct-1", date_from: "2026-01-01", limit: 10 });
     expect(spy).toHaveBeenCalledWith(
       expect.stringContaining("/api/v1/banking/transactions/uncategorized?")
     );
     const url = String(spy.mock.calls[0]?.[0]);
     expect(url).toContain("operating_company_id=co-1");
-    expect(url).toContain("account_id=a%2Cb");
-    expect(url).toContain("from=2026-01-01");
+    expect(url).toContain("bank_account_id=acct-1");
+    expect(url).toContain("date_from=2026-01-01");
     expect(url).toContain("limit=10");
   });
 

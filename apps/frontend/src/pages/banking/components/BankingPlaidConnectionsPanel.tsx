@@ -15,6 +15,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { PlaidReconnectButton, plaidItemBadgeClasses, plaidItemBadgeLabel } from "./PlaidReconnectButton";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
+import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
 import { Link } from "react-router-dom";
 
 type ItemGroup = { itemId: string; accounts: PlaidBankAccount[] };
@@ -68,13 +69,23 @@ export function BankingPlaidConnectionsPanel({
   const { pushToast } = useToast();
   const [syncingItemId, setSyncingItemId] = useState<string | null>(null);
   const [reconnectHighlightItemId, setReconnectHighlightItemId] = useState<string | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
   const plaidQuery = useQuery({
     queryKey: ["banking", "plaid-accounts", companyId],
     queryFn: () => getPlaidBankAccounts(companyId),
     enabled: Boolean(companyId),
   });
 
-  const groups = useMemo(() => groupByPlaidItem(plaidQuery.data?.accounts ?? []), [plaidQuery.data?.accounts]);
+  const filteredSource = useMemo(
+    () => filterPlaidBankAccountsForCompany(plaidQuery.data?.accounts ?? [], companyId),
+    [plaidQuery.data?.accounts, companyId]
+  );
+
+  const groups = useMemo(() => groupByPlaidItem(filteredSource), [filteredSource]);
+  const visibleGroups = useMemo(() => {
+    if (showInactive) return groups;
+    return groups.filter((g) => g.accounts.some((a) => a.is_active));
+  }, [groups, showInactive]);
 
   const canConnect = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const canDisconnect = auth.user?.role === "Owner";
@@ -119,14 +130,18 @@ export function BankingPlaidConnectionsPanel({
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Plaid connections</div>
       {plaidQuery.isError ? <ListErrorBanner onRetry={() => void plaidQuery.refetch()} /> : null}
       {plaidQuery.isLoading ? <p className="text-sm text-gray-600">Loading connections…</p> : null}
+      {!plaidQuery.isLoading && groups.length > 0 && visibleGroups.length === 0 ? (
+        <p className="text-sm text-gray-600">No active Plaid connections for this company filter. Enable history below.</p>
+      ) : null}
       {!plaidQuery.isLoading && groups.length === 0 ? (
         <p className="text-sm text-gray-600">No bank accounts connected yet. Use <span className="font-medium">Connect Bank</span> above.</p>
       ) : null}
       <div className="space-y-3">
-        {groups.map((g) => {
+        {visibleGroups.map((g) => {
           const lead = g.accounts[0]!;
           const institution = lead.institution_name || "Institution";
           const itemId = g.itemId.startsWith("noid:") ? null : g.itemId;
+          const needsReauth = g.accounts.some((a) => a.sync_status === "needs_reauth");
           const lastSync = g.accounts
             .map((a) => (a.last_synced_at ? new Date(a.last_synced_at).getTime() : 0))
             .reduce((a, b) => Math.max(a, b), 0);
@@ -160,21 +175,26 @@ export function BankingPlaidConnectionsPanel({
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${badgeClass}`}>{badgeLabel}</span>
                   {canConnect && itemId ? (
                     <div className="flex flex-wrap justify-end gap-2">
-                      <div
-                        className={
-                          reconnectHighlightItemId === itemId
-                            ? "rounded-md p-0.5 ring-2 ring-amber-400 ring-offset-1"
-                            : ""
-                        }
-                      >
-                        <PlaidReconnectButton
-                          operatingCompanyId={companyId}
-                          plaidItemId={itemId}
-                          onComplete={() => {
-                            setReconnectHighlightItemId(null);
-                            void queryClient.invalidateQueries({ queryKey: ["banking"] });
-                          }}
-                        />
+                      <div className="flex flex-col items-end gap-1">
+                        {needsReauth ? (
+                          <span className="text-[10px] font-semibold uppercase text-amber-800">Reconnect required</span>
+                        ) : null}
+                        <div
+                          className={
+                            reconnectHighlightItemId === itemId
+                              ? "rounded-md p-0.5 ring-2 ring-amber-400 ring-offset-1"
+                              : ""
+                          }
+                        >
+                          <PlaidReconnectButton
+                            operatingCompanyId={companyId}
+                            plaidItemId={itemId}
+                            onComplete={() => {
+                              setReconnectHighlightItemId(null);
+                              void queryClient.invalidateQueries({ queryKey: ["banking"] });
+                            }}
+                          />
+                        </div>
                       </div>
                       <ActionButton
                         type="button"
@@ -209,6 +229,10 @@ export function BankingPlaidConnectionsPanel({
           );
         })}
       </div>
+      <label className="mt-3 flex cursor-pointer items-center gap-2 text-xs text-gray-600">
+        <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
+        Show disconnected history (include inactive)
+      </label>
       {!canConnect ? <p className="mt-2 text-xs text-gray-500">Connect and reconnect actions are limited to Owner/Admin.</p> : null}
     </div>
   );
@@ -237,7 +261,10 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
     enabled: Boolean(companyId),
   });
 
-  const accounts = accountsQuery.data?.accounts ?? [];
+  const accounts = useMemo(
+    () => filterPlaidBankAccountsForCompany(accountsQuery.data?.accounts ?? [], companyId),
+    [accountsQuery.data?.accounts, companyId]
+  );
   const rows = txQuery.data?.transactions ?? [];
 
   if (!companyId) return null;

@@ -1,72 +1,18 @@
-import {
-  Activity,
-  Banknote,
-  Building2,
-  Calculator,
-  CarFront,
-  CircleHelp,
-  ClipboardList,
-  FileText,
-  Fuel,
-  Home,
-  ShieldCheck,
-  ListChecks,
-  Radio,
-  Scale,
-  SquareStack,
-  Truck,
-  UserCog,
-  Users,
-} from "lucide-react";
-import { type ComponentType, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { NavLink } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { NavLink, useLocation } from "react-router-dom";
 import { getArrivingSoon } from "../api/maintenance";
+import { getUserPreferences, patchUserPreferences } from "../api/safety";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
+import {
+  getSidebarFlyoutItems,
+  resolveSidebarOrder,
+  SIDEBAR_ITEM_META,
+  type SidebarItemId,
+} from "./layout/sidebar-config";
 import { SidebarFlyoutMenu } from "./SidebarFlyoutMenu";
-
-type SidebarItem = {
-  key: string;
-  label: string;
-  Icon: ComponentType<{ className?: string }>;
-  to: string;
-  visibleRoles?: UserRole[];
-  dataTour?: string;
-};
-
-const ITEMS: SidebarItem[] = [
-  { key: "HOME", label: "HOME", Icon: Home, to: "/home", dataTour: "tour-nav-home" },
-  { key: "MAINT", label: "MAINT", Icon: CarFront, to: "/maintenance" },
-  { key: "ACCTG", label: "ACCTG", Icon: Calculator, to: "/accounting/invoices" },
-  { key: "PAYMENTS", label: "PAY", Icon: Calculator, to: "/accounting/payments" },
-  { key: "FACTORING", label: "FACT", Icon: Calculator, to: "/accounting/factoring" },
-  { key: "BANK", label: "BANK", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
-  { key: "FUEL", label: "FUEL", Icon: Fuel, to: "/fuel" },
-  { key: "SAFETY", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
-  { key: "DRIVERS", label: "DRIVERS", Icon: Users, to: "/drivers", dataTour: "tour-nav-drivers" },
-  { key: "CUSTOMERS", label: "CUSTOMERS", Icon: Building2, to: "/customers", dataTour: "tour-nav-customers" },
-  { key: "DISPATCH", label: "DISPATCH", Icon: Truck, to: "/dispatch", dataTour: "tour-nav-dispatch" },
-  { key: "VENDORS", label: "VENDORS", Icon: Building2, to: "/vendors" },
-  { key: "DOCUMENTS", label: "DOCS", Icon: FileText, to: "/documents", visibleRoles: ["Owner", "Administrator"] },
-  { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/lists" },
-  { key: "REPORTS", label: "REPORTS", Icon: ClipboardList, to: "/reports" },
-  { key: "HELP", label: "HELP", Icon: CircleHelp, to: "/help" },
-  { key: "SAMSARA", label: "ELD", Icon: Radio, to: "/integrations/samsara", visibleRoles: ["Owner"] },
-  { key: "LEGAL", label: "LEGAL", Icon: Scale, to: "/legal", visibleRoles: ["Owner", "Administrator"] },
-  { key: "425C", label: "425C", Icon: SquareStack, to: "/425c" },
-  { key: "DRV_APP", label: "DRV APP", Icon: Activity, to: "/driver-app" },
-  {
-    key: "USR_MGMT",
-    label: "USERS",
-    Icon: UserCog,
-    to: "/users",
-    visibleRoles: ["Owner", "Administrator", "SuperAdmin"],
-    dataTour: "tour-nav-admin",
-  },
-];
 
 type SidebarProps = {
   role: UserRole;
@@ -76,8 +22,26 @@ type SidebarProps = {
 
 export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProps) {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
-  const [hoverKey, setHoverKey] = useState<string | null>(null);
+  const [hoverId, setHoverId] = useState<SidebarItemId | null>(null);
+
+  const prefsQuery = useQuery({
+    queryKey: ["user", "preferences"],
+    queryFn: getUserPreferences,
+    staleTime: 60_000,
+  });
+
+  const resetOrderMutation = useMutation({
+    mutationFn: () => patchUserPreferences({ sidebar_order: null }),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["user", "preferences"] }),
+  });
+
+  const prefsRecord = prefsQuery.data?.preferences as Record<string, unknown> | undefined;
+  const hasSidebarOverride = Array.isArray(prefsRecord?.sidebar_order);
+
+  const order = useMemo(() => resolveSidebarOrder(role, prefsRecord), [role, prefsRecord]);
+
   const severeArrivingSoonQuery = useQuery({
     queryKey: ["sidebar", "maintenance-severe-badge", selectedCompanyId ?? ""],
     queryFn: () =>
@@ -93,55 +57,13 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
   });
 
   const severeBadgeCount = Number(severeArrivingSoonQuery.data?.counts?.severe ?? 0);
-  const visibleItems = ITEMS.filter((item) => !item.visibleRoles || item.visibleRoles.includes(role));
-  const flyoutLinksByKey: Record<string, Array<{ label: string; to: string }>> = useMemo(
-    () => ({
-      ACCTG: [
-        { label: "Invoices", to: "/accounting/invoices" },
-        { label: "Payments", to: "/accounting/payments" },
-        { label: "Factoring", to: "/accounting/factoring" },
-      ],
-      PAYMENTS: [{ label: "Record Payment", to: "/accounting/payments" }],
-      MAINT: [
-        { label: "Dashboard", to: "/maintenance" },
-        { label: "Severe Repairs", to: "/maintenance?tab=severe" },
-      ],
-      BANK: [
-        { label: "Overview", to: "/banking" },
-        { label: "Reconcile", to: "/banking/reconcile" },
-        { label: "Transfers", to: "/banking/transfers" },
-      ],
-      FUEL: [{ label: "Fuel Planner", to: "/fuel" }],
-      SAFETY: [
-        { label: "Driver Files", to: "/safety/driver-files" },
-        { label: "DOT Inspections", to: "/safety/dot-inspections" },
-      ],
-      DRIVERS: [
-        { label: "Drivers", to: "/drivers" },
-        { label: "Settlements", to: "/driver-finance/settlements" },
-      ],
-      DISPATCH: [
-        { label: "Dispatch Home", to: "/dispatch" },
-        { label: "Loads", to: "/dispatch?view=loads" },
-      ],
-      LEGAL: [
-        { label: "Contracts", to: "/legal/contracts" },
-        { label: "Templates", to: "/legal/templates" },
-        { label: "Policies", to: "/legal/policies" },
-        { label: "Attorney Review", to: "/legal/attorney-review" },
-      ],
-      USR_MGMT: [
-        { label: "Users", to: "/users" },
-        ...(role === "Owner"
-          ? [
-              { label: "Migration Status", to: "/admin/migration-status" },
-              { label: "Error monitor", to: "/admin/error-monitor" },
-            ]
-          : []),
-        ...(role === "Owner" || role === "SuperAdmin" ? [{ label: "Activity log", to: "/admin/activity" }] : []),
-      ],
-    }),
-    [role]
+
+  const visibleMetas = useMemo(
+    () =>
+      order
+        .map((id) => SIDEBAR_ITEM_META[id])
+        .filter((meta) => !meta.visibleRoles || meta.visibleRoles.includes(role)),
+    [order, role]
   );
 
   return (
@@ -160,52 +82,74 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
         }`}
         style={{ background: "rgb(27, 35, 51)", borderRight: "1px solid rgb(42, 50, 66)" }}
       >
-      <div className="flex h-full flex-col items-center gap-1 py-2">
-        {visibleItems.map(({ key, label, Icon, to, dataTour }) => {
-          const forceReportsActive = key === "REPORTS" && location.pathname.startsWith("/reports/");
-          const flyoutItems = flyoutLinksByKey[key] ?? [];
-          return (
-            <div key={key} className="relative w-full" onMouseEnter={() => setHoverKey(key)} onMouseLeave={() => setHoverKey((current) => (current === key ? null : current))}>
-              <NavLink
-                to={to}
-                data-tour={dataTour}
-                onClick={() => onMobileClose?.()}
-                className={({ isActive }) =>
-                  `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceReportsActive ? "bg-white/10" : ""}`
-                }
-                style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
+        <div className="flex h-full flex-col items-center gap-1 py-2">
+          {visibleMetas.map((meta) => {
+            const forceReportsActive = meta.id === "reports" && location.pathname.startsWith("/reports/");
+            const forceAccountingActive = meta.id === "accounting" && location.pathname.startsWith("/accounting");
+            const forceActive = forceReportsActive || forceAccountingActive;
+            const flyoutItems = getSidebarFlyoutItems(meta.id, role);
+            const showMaintBadge = meta.badgeKey === "maintenance_severe" && severeBadgeCount > 0;
+            return (
+              <div
+                key={meta.id}
+                className="relative w-full"
+                onMouseEnter={() => setHoverId(meta.id)}
+                onMouseLeave={() => setHoverId((current) => (current === meta.id ? null : current))}
               >
-                {({ isActive }) => (
-                  <>
-                    <div className="flex items-center justify-center">
-                      <Icon className="h-4 w-4" />
-                      {key === "MAINT" && severeBadgeCount > 0 ? (
-                        <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
-                          {severeBadgeCount}
-                        </span>
-                      ) : null}
-                    </div>
-                    <span
-                      className="mt-1 text-[10px] leading-none uppercase"
-                      style={{ color: "white", letterSpacing: "0.4px", fontWeight: isActive || forceReportsActive ? 600 : 400 }}
-                    >
-                      {label}
-                    </span>
-                  </>
-                )}
-              </NavLink>
-              <SidebarFlyoutMenu
-                open={hoverKey === key}
-                title={label}
-                items={flyoutItems}
-                onOpen={() => setHoverKey(key)}
-                onClose={() => setHoverKey((current) => (current === key ? null : current))}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </aside>
+                <NavLink
+                  to={meta.to}
+                  data-tour={meta.dataTour}
+                  onClick={() => onMobileClose?.()}
+                  className={({ isActive }) =>
+                    `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceActive ? "bg-white/10" : ""}`
+                  }
+                  style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <div className="flex items-center justify-center">
+                        <meta.Icon className="h-4 w-4" />
+                        {showMaintBadge ? (
+                          <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white">
+                            {severeBadgeCount}
+                          </span>
+                        ) : null}
+                      </div>
+                      <span
+                        className="mt-1 text-[10px] leading-none uppercase"
+                        style={{
+                          color: "white",
+                          letterSpacing: "0.4px",
+                          fontWeight: isActive || forceActive ? 600 : 400,
+                        }}
+                      >
+                        {meta.label}
+                      </span>
+                    </>
+                  )}
+                </NavLink>
+                <SidebarFlyoutMenu
+                  open={hoverId === meta.id}
+                  title={meta.label}
+                  items={flyoutItems}
+                  onOpen={() => setHoverId(meta.id)}
+                  onClose={() => setHoverId((current) => (current === meta.id ? null : current))}
+                />
+              </div>
+            );
+          })}
+          {hasSidebarOverride ? (
+            <button
+              type="button"
+              className="mt-1 px-1 text-center text-[9px] font-medium uppercase leading-tight text-white/70 underline decoration-white/30 hover:text-white"
+              disabled={resetOrderMutation.isPending}
+              onClick={() => void resetOrderMutation.mutateAsync()}
+            >
+              Reset nav order
+            </button>
+          ) : null}
+        </div>
+      </aside>
     </>
   );
 }

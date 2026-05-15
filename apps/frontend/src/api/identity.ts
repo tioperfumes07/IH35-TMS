@@ -211,3 +211,20 @@ export function listDispatcherErrorReasons(eventType?: DispatcherErrorReason["ev
   const query = eventType ? `?event_type=${encodeURIComponent(eventType)}` : "";
   return apiRequest<{ reasons: DispatcherErrorReason[] }>(`/api/v1/catalogs/dispatcher-error-reasons${query}`);
 }
+
+/** Wave 1 Phase 8 — server truth for workspace company + switch targets. */
+export type IdentityCurrentCompanyPayload = {
+  operating_company_id: string | null;
+  company_name: string | null;
+  company_legal_name: string | null;
+  user_role: string;
+  available_companies: Array<{ id: string; name: string; role: string }>;
+};
+
+export function getIdentityCurrentCompany() {
+  return apiRequest<IdentityCurrentCompanyPayload>("/api/v1/identity/me/current-company");
+}
+
+export function switchIdentityCompany(body: { target_company_id: string; confirm: boolean }) {
+  return apiRequest<IdentityCurrentCompanyPayload>("/api/v1/identity/me/switch-company", { method: "POST", body });
+}

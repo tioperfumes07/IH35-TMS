@@ -11,6 +11,7 @@ import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
+import { DispatchAlertsPage } from "./pages/dispatch/DispatchAlertsPage";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { CashAdvanceRequestsPage } from "./pages/driver-finance/CashAdvanceRequestsPage";
 import { OwnerApprovalPortalPage } from "./pages/driver-finance/OwnerApprovalPortalPage";
@@ -95,6 +96,7 @@ import { MaintenanceCostPerUnitPage } from "./pages/reports/MaintenanceCostPerUn
 import { ScheduledReportsPage } from "./pages/reports/ScheduledReportsPage";
 import { QBOSyncStatusDashboardPage } from "./pages/qbo/QBOSyncStatusDashboardPage";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
+import { AccountingHubPage } from "./pages/accounting/AccountingHubPage";
 import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
 import { AbandonmentQueuePage } from "./pages/accounting/AbandonmentQueuePage";
 import { InvoiceDetailPage } from "./pages/accounting/InvoiceDetailPage";
@@ -109,6 +111,7 @@ import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
 import { ErrorMonitorPage } from "./pages/admin/ErrorMonitor";
+import { IntegrityAdminPage } from "./pages/admin/IntegrityAdminPage";
 import { DataImportPage } from "./pages/admin/DataImportPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
@@ -361,6 +364,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DocumentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/alerts"
+          element={
+            <ProtectedRoute>
+              <DispatchAlertsPage />
             </ProtectedRoute>
           }
         />
@@ -1304,6 +1315,22 @@ export default function App() {
             <OwnerOnlyRoute>
               <ErrorMonitorPage />
             </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/admin/integrity"
+          element={
+            <OwnerOnlyRoute>
+              <IntegrityAdminPage />
+            </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/accounting"
+          element={
+            <ProtectedRoute>
+              <AccountingHubPage />
+            </ProtectedRoute>
           }
         />
         <Route
