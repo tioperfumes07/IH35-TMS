@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
 import { registerEmailAuthRoutes } from "./auth/email-routes.js";
+import { registerOfficeLoginRoutes } from "./auth/office-login.routes.js";
 import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
@@ -15,6 +16,7 @@ import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admi
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
 import { registerIdentityRoutes } from "./identity/users.routes.js";
+import { registerPasswordResetRoutes } from "./identity/password-reset.routes.js";
 import { registerNotificationPreferenceRoutes } from "./identity/notification-prefs.routes.js";
 import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
@@ -288,8 +290,10 @@ async function main() {
   await registerDataImportAdminRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);
+  await registerOfficeLoginRoutes(app);
   await registerInviteAuthRoutes(app);
   await registerIdentityRoutes(app);
+  await registerPasswordResetRoutes(app);
   await registerNotificationPreferenceRoutes(app);
   await registerUserPreferencesRoutes(app);
   await registerWorkflowRoutes(app);

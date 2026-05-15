@@ -58,6 +58,8 @@ import { AssetProfilePage } from "./pages/fleet/AssetProfilePage";
 import { EquipmentTypesPage } from "./pages/EquipmentTypesPage";
 import { HomePage } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
+import { LoginResetRequestPage } from "./pages/LoginResetRequestPage";
+import { LoginResetConfirmPage } from "./pages/LoginResetConfirmPage";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { SamsaraIntegrationPage } from "./pages/integrations/SamsaraIntegrationPage";
 import { DriverAppLandingPage } from "./pages/DriverAppLandingPage";
@@ -76,6 +78,8 @@ import { UsersPage } from "./pages/Users";
 import { VendorsPage } from "./pages/Vendors";
 import { VendorDetailPage } from "./pages/VendorDetail";
 import { Form425CHome } from "./pages/form425c/Form425CHome";
+import { HelpCenterPage } from "./pages/help/HelpCenterPage";
+import { HelpArticlePage } from "./pages/help/HelpArticlePage";
 import { ReportsHomePage } from "./pages/reports/ReportsHome";
 import { ReportsRunnerPage } from "./pages/reports/ReportsRunner";
 import { ARAgingPage } from "./pages/reports/ARAgingPage";
@@ -263,6 +267,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/login/reset" element={<LoginResetRequestPage />} />
+        <Route path="/login/reset/confirm" element={<LoginResetConfirmPage />} />
         <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/legal/terms" element={<TermsOfServicePage />} />
         <Route path="/sign/:token" element={<LegalSignPage />} />
@@ -1064,6 +1070,22 @@ export default function App() {
             <OwnerOnlyRoute>
               <SamsaraIntegrationPage />
             </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/help"
+          element={
+            <ProtectedRoute>
+              <HelpCenterPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/help/:slug"
+          element={
+            <ProtectedRoute>
+              <HelpArticlePage />
+            </ProtectedRoute>
           }
         />
         <Route

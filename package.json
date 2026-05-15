@@ -31,6 +31,7 @@
     "plaid:backfill-webhook": "tsx scripts/plaid-backfill-webhook-url.ts",
     "smoke:email-queue": "tsx scripts/smoke-tests/email-queue-e2e.ts",
     "test": "vitest run --config apps/backend/vitest.config.ts && cd apps/frontend && npx vitest run src/components/ErrorBoundary.test.tsx && cd ../.. && node scripts/lint-deps.test.mjs",
+    "test:a11y": "axe https://app.ih35dispatch.com/dashboard https://app.ih35dispatch.com/loads https://app.ih35dispatch.com/settlements https://app.ih35dispatch.com/banking https://app.ih35dispatch.com/drivers https://app.ih35dispatch.com/customers --tags wcag2a,wcag2aa --exit",
     "test:coverage": "vitest run --config apps/backend/vitest.config.ts --coverage",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed:legal-templates": "node scripts/db-seed-legal-templates.mjs",
@@ -136,6 +137,8 @@
     "zod": "^4.4.2"
   },
   "devDependencies": {
+    "@axe-core/cli": "^4.10.2",
+    "@types/luxon": "^3.7.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/luxon": "^3.7.1",
     "@types/node": "^22.0.0",

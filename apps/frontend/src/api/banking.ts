@@ -23,6 +23,7 @@ export type PlaidBankAccount = {
   account_type: string | null;
   account_class?: string | null;
   account_mask: string | null;
+  plaid_item_id?: string | null;
   current_balance_cents: number;
   available_balance_cents: number;
   currency_code: string;
@@ -37,6 +38,7 @@ export type PlaidLinkAccountType = "bank" | "credit_card" | "all";
 
 export type PlaidBankTransaction = {
   id: string;
+  bank_account_id?: string;
   transaction_date: string;
   posted_date: string | null;
   amount_cents: number;
@@ -48,6 +50,10 @@ export type PlaidBankTransaction = {
   matched_load_id: string | null;
   matched_bill_id: string | null;
   matched_settlement_id: string | null;
+  institution_name?: string | null;
+  account_name?: string | null;
+  account_mask?: string | null;
+  matched_kind?: string | null;
   notes: string | null;
   created_at: string;
 };
@@ -325,7 +331,7 @@ export function createPlaidLinkToken(operatingCompanyId: string, accountType: Pl
 }
 
 export function exchangePlaidPublicToken(publicToken: string, operatingCompanyId: string) {
-  return apiRequest<{ accounts: PlaidBankAccount[] }>(`/api/v1/banking/plaid/exchange-public-token`, {
+  return apiRequest<{ accounts: PlaidBankAccount[]; plaid_item_id?: string }>(`/api/v1/banking/plaid/exchange-public-token`, {
     method: "POST",
     body: {
       public_token: publicToken,
@@ -369,6 +375,41 @@ export function disconnectPlaidBankAccount(id: string, operatingCompanyId: strin
     method: "POST",
     body: { operating_company_id: operatingCompanyId },
   });
+}
+
+export function createPlaidUpdateLinkToken(operatingCompanyId: string, plaidItemId: string) {
+  return apiRequest<{ link_token: string; expiration: string }>(`/api/v1/banking/plaid/create-update-link-token`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, plaid_item_id: plaidItemId },
+  });
+}
+
+export function disconnectPlaidItem(operatingCompanyId: string, plaidItemId: string) {
+  return apiRequest<{ ok: boolean; deactivated_accounts: number }>(`/api/v1/banking/plaid/items/disconnect`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, plaid_item_id: plaidItemId },
+  });
+}
+
+export type CompanyTransactionsSort = "date_desc" | "date_asc" | "amount_desc" | "amount_asc";
+
+export function getPlaidCompanyTransactions(
+  operatingCompanyId: string,
+  options: {
+    limit?: number;
+    offset?: number;
+    q?: string;
+    bank_account_id?: string;
+    sort?: CompanyTransactionsSort;
+  } = {}
+) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (options.limit != null) params.set("limit", String(options.limit));
+  if (options.offset != null) params.set("offset", String(options.offset));
+  if (options.q?.trim()) params.set("q", options.q.trim());
+  if (options.bank_account_id) params.set("bank_account_id", options.bank_account_id);
+  if (options.sort) params.set("sort", options.sort);
+  return apiRequest<{ transactions: PlaidBankTransaction[] }>(`/api/v1/banking/plaid/company-transactions?${params.toString()}`);
 }
 
 export function getReconciliationSessions(operatingCompanyId: string) {
