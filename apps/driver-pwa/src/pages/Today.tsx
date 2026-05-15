@@ -1,9 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { getMyLoadsToday } from "../api/loads";
 import { LifecyclePill } from "../components/LifecyclePill";
 import { PwaCard } from "../components/PwaCard";
+import { useRealtimeChannel } from "../hooks/useRealtimeChannel";
 
 function relativeTime(iso: string) {
   const deltaMs = new Date(iso).getTime() - Date.now();
@@ -16,9 +17,17 @@ function relativeTime(iso: string) {
 export function TodayPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const loadsQuery = useQuery({
     queryKey: ["pwa", "loads", "today"],
     queryFn: getMyLoadsToday,
+  });
+
+  useRealtimeChannel({
+    topics: [],
+    onMessage: () => {
+      void queryClient.invalidateQueries({ queryKey: ["pwa", "loads", "today"] });
+    },
   });
 
   return (

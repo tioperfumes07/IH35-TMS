@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
+import websocket from "@fastify/websocket";
 import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
 import { registerEmailAuthRoutes } from "./auth/email-routes.js";
 import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
@@ -153,6 +154,13 @@ import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js
 import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
 import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
 import { initializeErrorDigestCron } from "./cron/error-digest.cron.js";
+import { registerVendorComplianceRoutes } from "./mdata/vendor-compliance.routes.js";
+import { registerHrTimeOffAdminRoutes } from "./hr/time-off-admin.routes.js";
+import { registerCustomerPortalRoutes } from "./customer-portal/portal.routes.js";
+import { registerInAppNotificationRoutes } from "./notifications/in-app.routes.js";
+import { registerUserSavedViewsRoutes } from "./identity/saved-views.routes.js";
+import { registerRealtimeWsRoutes } from "./realtime/ws.routes.js";
+import { initializeVendorCoiWarningCron } from "./cron/vendor-coi-warnings.cron.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -163,7 +171,7 @@ attachHttpErrorMonitor(app);
 let shuttingDown = false;
 const ALLOWED_ORIGINS = (
   process.env.CORS_ALLOWED_ORIGINS ??
-  "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174"
+  "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,https://portal.ih35dispatch.com,http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176"
 )
   .split(",")
   .map((value) => value.trim())
@@ -251,6 +259,7 @@ async function main() {
   });
   await app.register(cookie);
   await app.register(multipart);
+  await app.register(websocket);
   await registerSessionMiddleware(app);
   app.addHook("preHandler", async (req, _reply) => {
     const url = req.raw.url ?? "";
@@ -262,6 +271,7 @@ async function main() {
   await registerRunnerStatusRoutes(app);
   await registerForensicLiveRoutes(app);
   await registerAuthRoutes(app);
+  await registerCustomerPortalRoutes(app);
   await registerQboOAuthRoutes(app);
   await registerSamsaraWebhookRoutes(app);
   await registerSamsaraConfigRoutes(app);
@@ -285,13 +295,18 @@ async function main() {
   await registerHealthDeepRoutes(app);
   await registerMigrationStatusRoutes(app);
   await registerDataImportAdminRoutes(app);
+  await registerRealtimeWsRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);
   await registerInviteAuthRoutes(app);
   await registerIdentityRoutes(app);
   await registerUserPreferencesRoutes(app);
+  await registerUserSavedViewsRoutes(app);
+  await registerInAppNotificationRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);
+  await registerVendorComplianceRoutes(app);
+  await registerHrTimeOffAdminRoutes(app);
   await registerQboAutocompleteRoutes(app);
   await registerQboMasterWriteRoutes(app);
   await registerDriverProfileRoutes(app);
@@ -450,6 +465,13 @@ async function main() {
     app.log.info("[STARTUP] email-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] email-cron failed");
+  }
+
+  try {
+    initializeVendorCoiWarningCron(app);
+    app.log.info("[STARTUP] vendor-coi-warning-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] vendor-coi-warning-cron failed");
   }
 
   try {

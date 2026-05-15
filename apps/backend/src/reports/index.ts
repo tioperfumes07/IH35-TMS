@@ -15,6 +15,7 @@ import { registerArAgingRoutes } from "./ar-aging.routes.js";
 import { registerDetentionClaimsRoutes } from "./detention-claims.routes.js";
 import { registerIftaStatusRoutes } from "./ifta-status.routes.js";
 import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.routes.js";
+import { registerReportExportAndScheduleRoutes } from "./report-export-schedule.routes.js";
 
 export async function registerReportsRoutes(app: FastifyInstance) {
   await registerReportsLibraryRoutes(app);
@@ -33,4 +34,5 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerDetentionClaimsRoutes(app);
   await registerIftaStatusRoutes(app);
   await registerScheduledReportAdminRoutes(app);
+  await registerReportExportAndScheduleRoutes(app);
 }

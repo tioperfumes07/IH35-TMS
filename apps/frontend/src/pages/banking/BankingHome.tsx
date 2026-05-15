@@ -20,6 +20,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useRealtimeChannel } from "../../hooks/useRealtimeChannel";
 import { AccountTilesRow } from "./components/AccountTilesRow";
 import { BankingKpiRow } from "./components/BankingKpiRow";
 import { CategorizeDrawer } from "./components/CategorizeDrawer";
@@ -50,6 +51,14 @@ export function BankingHomePage() {
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  useRealtimeChannel({
+    enabled: Boolean(companyId),
+    topics: [`company:${companyId}:reconcile`],
+    onMessage: () => {
+      void queryClient.invalidateQueries({ queryKey: ["banking"] });
+    },
+  });
   const [selectedTransaction, setSelectedTransaction] = useState<Record<string, unknown> | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);

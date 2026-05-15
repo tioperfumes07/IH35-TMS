@@ -5,6 +5,14 @@ import { listVendorBills } from "../api/accounting";
 import { ApiError } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
 import { getVendor } from "../api/mdata";
+import {
+  getVendorApSummary,
+  getVendorCoi,
+  getVendorW9,
+  postVendorCoiUpload,
+  postVendorPaymentTerms,
+  postVendorW9Upload,
+} from "../api/vendor-compliance";
 import { useAuth } from "../auth/useAuth";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { Button } from "../components/Button";
@@ -14,7 +22,7 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../contexts/CompanyContext";
 
-const tabs = ["Profile", "A/P", "Documents", "Audit History"] as const;
+const tabs = ["Profile", "A/P", "1099 & W-9", "COI", "Payment terms", "History", "Documents", "Audit History"] as const;
 type VendorTab = (typeof tabs)[number];
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -43,6 +51,12 @@ export function VendorDetailPage() {
   const [billPayAuto, setBillPayAuto] = useState(true);
   const [billPayInclude, setBillPayInclude] = useState<Record<string, boolean>>({});
   const [billPayAmt, setBillPayAmt] = useState<Record<string, string>>({});
+  const [w9File, setW9File] = useState<File | null>(null);
+  const [w9TaxId, setW9TaxId] = useState("");
+  const [coiFile, setCoiFile] = useState<File | null>(null);
+  const [coiExp, setCoiExp] = useState("");
+  const [netTermsDays, setNetTermsDays] = useState("");
+  const [defaultPayMethod, setDefaultPayMethod] = useState("ach");
 
   useEffect(() => {
     if (searchParams.get("tab") === "ap") setActiveTab("A/P");
@@ -57,15 +71,40 @@ export function VendorDetailPage() {
   const billsQuery = useQuery({
     queryKey: ["vendor-ap-bills", companyId, id],
     queryFn: () => listVendorBills(companyId, { vendor_id: id, include_balance: true, limit: 200 }),
-    enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
+    enabled: Boolean(companyId) && Boolean(id) && (activeTab === "A/P" || activeTab === "History"),
   });
 
   const vendorPaymentsQuery = useQuery({
     queryKey: ["vendor-bill-payments", id, companyId],
     queryFn: () => listVendorBillPayments(id, { operating_company_id: companyId, limit: 50 }),
-    enabled: Boolean(companyId && id && activeTab === "A/P"),
+    enabled: Boolean(companyId && id && (activeTab === "A/P" || activeTab === "History")),
     retry: false,
   });
+
+  const coiQuery = useQuery({
+    queryKey: ["vendor-coi", id],
+    queryFn: () => getVendorCoi(id),
+    enabled: Boolean(id) && (activeTab === "COI" || activeTab === "Payment terms"),
+  });
+
+  const w9Query = useQuery({
+    queryKey: ["vendor-w9", id],
+    queryFn: () => getVendorW9(id),
+    enabled: Boolean(id) && activeTab === "1099 & W-9",
+  });
+
+  const apSummaryQuery = useQuery({
+    queryKey: ["vendor-ap-summary", id, companyId],
+    queryFn: () => getVendorApSummary(id, companyId),
+    enabled: Boolean(id && companyId && activeTab === "History"),
+  });
+
+  useEffect(() => {
+    const d = coiQuery.data;
+    if (!d) return;
+    if (d.net_terms_days != null) setNetTermsDays(String(d.net_terms_days));
+    if (d.default_payment_method) setDefaultPayMethod(d.default_payment_method);
+  }, [coiQuery.data]);
 
   const openBillsForPay = useMemo(
     () =>
@@ -131,6 +170,7 @@ export function VendorDetailPage() {
       pushToast(`Bill payment of ${money.format(billPayCents / 100)} recorded`, "success");
       void queryClient.invalidateQueries({ queryKey: ["vendor-ap-bills", companyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["vendor-bill-payments", id, companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["vendor-ap-summary", id, companyId] });
       setBillPayOpen(false);
       setBillPayAmount("");
       setBillPayRef("");
@@ -138,6 +178,46 @@ export function VendorDetailPage() {
       setBillPayDate(new Date().toISOString().slice(0, 10));
     },
     onError: (e) => pushToast(String((e as Error).message ?? "Failed"), "error"),
+  });
+
+  const w9UploadMutation = useMutation({
+    mutationFn: async () => {
+      if (!w9File) throw new Error("file_required");
+      return postVendorW9Upload(id, w9File, w9TaxId.trim() || undefined);
+    },
+    onSuccess: () => {
+      pushToast("W-9 uploaded", "success");
+      setW9File(null);
+      void queryClient.invalidateQueries({ queryKey: ["vendor-w9", id] });
+    },
+    onError: (e) => pushToast(String((e as Error).message ?? "Upload failed"), "error"),
+  });
+
+  const coiUploadMutation = useMutation({
+    mutationFn: async () => {
+      if (!coiFile || !/^\d{4}-\d{2}-\d{2}$/.test(coiExp)) throw new Error("file_and_date");
+      return postVendorCoiUpload(id, coiFile, coiExp);
+    },
+    onSuccess: () => {
+      pushToast("COI uploaded", "success");
+      setCoiFile(null);
+      void queryClient.invalidateQueries({ queryKey: ["vendor-coi", id] });
+    },
+    onError: (e) => pushToast(String((e as Error).message ?? "Upload failed"), "error"),
+  });
+
+  const paymentTermsMutation = useMutation({
+    mutationFn: () =>
+      postVendorPaymentTerms(id, {
+        operating_company_id: companyId,
+        net_terms_days: Math.max(0, Math.min(120, Number(netTermsDays) || 0)),
+        default_payment_method: defaultPayMethod,
+      }),
+    onSuccess: () => {
+      pushToast("Payment terms saved", "success");
+      void queryClient.invalidateQueries({ queryKey: ["vendor-coi", id] });
+    },
+    onError: () => pushToast("Could not save terms", "error"),
   });
 
   const canViewDocuments = useMemo(
@@ -433,6 +513,163 @@ export function VendorDetailPage() {
                       <td className="px-3 py-2">{b.bill_date}</td>
                       <td className="px-3 py-2">{b.due_date ?? "—"}</td>
                       <td className="px-3 py-2 text-right">{money.format(b.amount_cents / 100)}</td>
+                      <td className="px-3 py-2 text-right">{money.format((b.balance_cents ?? b.amount_cents - b.paid_cents) / 100)}</td>
+                      <td className="px-3 py-2">{b.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {activeTab === "1099 & W-9" ? (
+        <div className="space-y-3 rounded border border-gray-200 bg-white p-3 text-sm">
+          {w9Query.isLoading ? <p className="text-gray-500">Loading…</p> : null}
+          {w9Query.data ? (
+            <DataPanel title="W-9 / Tax ID (masked)">
+              <DataPanelRow>
+                <span className="text-xs font-semibold text-gray-600">PDF on file</span>
+                <span className="text-sm text-gray-900">{w9Query.data.w9_pdf_r2_key ? "Yes" : "No"}</span>
+              </DataPanelRow>
+              <DataPanelRow>
+                <span className="text-xs font-semibold text-gray-600">EIN / SSN (decrypted)</span>
+                <span className="text-sm text-gray-900">{w9Query.data.tax_id ? `${String(w9Query.data.tax_id).slice(0, 4)}…` : "—"}</span>
+              </DataPanelRow>
+            </DataPanel>
+          ) : null}
+          <div className="space-y-2 text-xs">
+            <p className="text-gray-600">Upload a replacement W-9 PDF. Tax ID is encrypted at rest when configured.</p>
+            <input type="file" accept="application/pdf" onChange={(e) => setW9File(e.target.files?.[0] ?? null)} />
+            <label className="block">
+              EIN / SSN (optional on upload)
+              <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1" value={w9TaxId} onChange={(e) => setW9TaxId(e.target.value)} />
+            </label>
+            <Button size="sm" loading={w9UploadMutation.isPending} onClick={() => void w9UploadMutation.mutateAsync()}>
+              Upload W-9
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "COI" ? (
+        <div className="space-y-3 rounded border border-gray-200 bg-white p-3 text-sm">
+          {coiQuery.isLoading ? <p className="text-gray-500">Loading…</p> : null}
+          {coiQuery.data ? (
+            <DataPanel title="Certificate of insurance">
+              <DataPanelRow>
+                <span className="text-xs font-semibold text-gray-600">PDF on file</span>
+                <span className="text-sm text-gray-900">{coiQuery.data.coi_pdf_r2_key ? "Yes" : "No"}</span>
+              </DataPanelRow>
+              <DataPanelRow>
+                <span className="text-xs font-semibold text-gray-600">Expires</span>
+                <span className="text-sm text-gray-900">{coiQuery.data.coi_expires_on ?? "—"}</span>
+              </DataPanelRow>
+            </DataPanel>
+          ) : null}
+          <div className="space-y-2 text-xs">
+            <input type="file" accept="application/pdf" onChange={(e) => setCoiFile(e.target.files?.[0] ?? null)} />
+            <label className="block">
+              Expiry date
+              <input type="date" className="mt-1 w-full rounded border border-gray-300 px-2 py-1" value={coiExp} onChange={(e) => setCoiExp(e.target.value)} />
+            </label>
+            <Button size="sm" loading={coiUploadMutation.isPending} onClick={() => void coiUploadMutation.mutateAsync()}>
+              Upload COI
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "Payment terms" ? (
+        <div className="space-y-3 rounded border border-gray-200 bg-white p-3 text-sm">
+          {!companyId ? <p className="text-red-600">Select an operating company.</p> : null}
+          <label className="block text-xs">
+            Net terms (days)
+            <input
+              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              value={netTermsDays}
+              onChange={(e) => setNetTermsDays(e.target.value)}
+            />
+          </label>
+          <label className="block text-xs">
+            Default payment method
+            <input
+              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              value={defaultPayMethod}
+              onChange={(e) => setDefaultPayMethod(e.target.value)}
+              placeholder="ach, check, wire…"
+            />
+          </label>
+          <Button size="sm" loading={paymentTermsMutation.isPending} disabled={!companyId} onClick={() => void paymentTermsMutation.mutateAsync()}>
+            Save payment terms
+          </Button>
+        </div>
+      ) : null}
+
+      {activeTab === "History" ? (
+        <div className="space-y-3 text-sm">
+          {!companyId ? <p className="text-red-600">Select an operating company.</p> : null}
+          {apSummaryQuery.isLoading ? <p className="text-gray-500">Loading summary…</p> : null}
+          {apSummaryQuery.data ? (
+            <div className="grid gap-2 md:grid-cols-3">
+              <div className="rounded border border-gray-200 bg-white p-3">
+                <div className="text-xs font-semibold text-gray-600">A/P open</div>
+                <div className="text-lg font-bold text-gray-900">{money.format(apSummaryQuery.data.ap_open_cents / 100)}</div>
+              </div>
+              <div className="rounded border border-gray-200 bg-white p-3">
+                <div className="text-xs font-semibold text-gray-600">Bills paid (count)</div>
+                <div className="text-lg font-bold text-gray-900">{apSummaryQuery.data.bills_paid_count}</div>
+              </div>
+              <div className="rounded border border-gray-200 bg-white p-3">
+                <div className="text-xs font-semibold text-gray-600">Last payment</div>
+                <div className="text-lg font-bold text-gray-900">{apSummaryQuery.data.last_payment_date ?? "—"}</div>
+              </div>
+            </div>
+          ) : null}
+          <p className="text-xs text-gray-600">Recent bill payments and open bills are listed below (same as A/P tab).</p>
+          {vendorPaymentBackendPending ? (
+            <p className="text-sm text-amber-800">Payment history API pending in some environments.</p>
+          ) : (
+            <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+              <table className="min-w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200 text-gray-600">
+                    <th className="px-2 py-1.5 font-semibold">Date</th>
+                    <th className="px-2 py-1.5 font-semibold">Amount</th>
+                    <th className="px-2 py-1.5 font-semibold">Method</th>
+                    <th className="px-2 py-1.5 font-semibold">Reference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(vendorPaymentsQuery.data?.payments ?? []).slice(0, 15).map((p: VendorBillPaymentListRow) => (
+                    <tr key={p.id} className="border-b border-gray-100">
+                      <td className="px-2 py-1.5">{p.payment_date}</td>
+                      <td className="px-2 py-1.5">{money.format(p.amount_cents / 100)}</td>
+                      <td className="px-2 py-1.5">{p.payment_method ?? p.method ?? "—"}</td>
+                      <td className="px-2 py-1.5">{p.reference ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {billsQuery.isSuccess ? (
+            <div className="overflow-auto rounded border border-gray-200 bg-white">
+              <table className="min-w-full text-left text-xs">
+                <thead className="border-b border-gray-100 bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
+                  <tr>
+                    <th className="px-3 py-2">Bill #</th>
+                    <th className="px-3 py-2">Date</th>
+                    <th className="px-3 py-2 text-right">Balance</th>
+                    <th className="px-3 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(billsQuery.data.rows ?? []).slice(0, 25).map((b) => (
+                    <tr key={b.id} className="border-b border-gray-50">
+                      <td className="px-3 py-2 font-medium">{b.bill_number ?? b.id.slice(0, 8)}</td>
+                      <td className="px-3 py-2">{b.bill_date}</td>
                       <td className="px-3 py-2 text-right">{money.format((b.balance_cents ?? b.amount_cents - b.paid_cents) / 100)}</td>
                       <td className="px-3 py-2">{b.status}</td>
                     </tr>

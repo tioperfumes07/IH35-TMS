@@ -1,17 +1,19 @@
-import { ChevronDown, Menu } from "lucide-react";
+import { Bell, ChevronDown, Menu } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getQboConnectionStatus, getQboAuthorizeStartUrl } from "../api/forensic";
 import { getQboSyncHealth } from "../api/qbo-integration";
 import { getSamsaraHealth } from "../api/samsara";
 import { signOut } from "../api/identity";
+import { listNotifications, markAllNotificationsRead, markNotificationRead } from "../api/notifications";
 import { colors, spacing, typography } from "../design/tokens";
 import type { AuthMeResponse } from "../types/api";
 import { CompanySwitcher } from "./CompanySwitcher";
 import { PageHelpLink } from "./PageHelpLink";
 import { useToast } from "./Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { useRealtimeChannel } from "../hooks/useRealtimeChannel";
 import { qboConnectionLabel, RELAY_NOT_CONFIGURED, resolveSamsaraVisualStatus } from "../lib/integration-telematics-status";
 
 type Props = {
@@ -41,6 +43,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   const navigate = useNavigate();
   const [now, setNow] = useState(() => new Date());
   const [open, setOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const emailLabel = auth.email ?? "Phone login";
@@ -73,6 +76,22 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     staleTime: 15_000,
     refetchInterval: 30_000,
     retry: false,
+  });
+
+  const notifDropdownQuery = useQuery({
+    queryKey: ["notifications", "dropdown", companyId],
+    queryFn: () => listNotifications(companyId, { limit: 10 }),
+    enabled: Boolean(companyId) && office,
+    staleTime: 15_000,
+    refetchInterval: 45_000,
+  });
+
+  useRealtimeChannel({
+    enabled: Boolean(companyId) && office,
+    topics: [`company:${companyId}:notifications`],
+    onMessage: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 
   useEffect(() => {
@@ -202,6 +221,76 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       </div>
 
       <div className="relative flex items-center justify-end gap-2 text-sm text-gray-700">
+        {office && companyId ? (
+          <div className="relative">
+            <button
+              type="button"
+              className="relative flex h-8 w-8 items-center justify-center rounded border hover:bg-white/10"
+              style={{ borderColor: colors.sidebarBorder, color: colors.sidebarTextActive }}
+              aria-label="Notifications"
+              onClick={() => setNotifOpen((o) => !o)}
+            >
+              <Bell className="h-4 w-4" />
+              {(notifDropdownQuery.data?.unread_count ?? 0) > 0 ? (
+                <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-red-500" />
+              ) : null}
+            </button>
+            {notifOpen ? (
+              <div className="absolute right-0 top-9 z-40 max-h-96 w-80 overflow-y-auto rounded border border-gray-200 bg-white p-2 text-left text-xs shadow">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="font-semibold text-gray-800">Notifications</span>
+                  <button
+                    type="button"
+                    className="text-[11px] text-sky-700 underline"
+                    onClick={() => {
+                      void (async () => {
+                        await markAllNotificationsRead(companyId);
+                        void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+                      })();
+                    }}
+                  >
+                    Mark all read
+                  </button>
+                </div>
+                {(notifDropdownQuery.data?.notifications ?? []).length === 0 ? (
+                  <p className="py-2 text-gray-500">No notifications.</p>
+                ) : (
+                  (notifDropdownQuery.data?.notifications ?? []).map((n) => (
+                    <div key={n.id} className={`border-b border-gray-100 py-2 last:border-0 ${n.read_at ? "" : "bg-sky-50/60"}`}>
+                      <div className="font-medium text-gray-900">{n.title}</div>
+                      <div className="text-gray-600">{n.body}</div>
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {n.href ? (
+                          <Link
+                            to={n.href}
+                            className="text-sky-700 underline"
+                            onClick={() => {
+                              setNotifOpen(false);
+                              if (!n.read_at) {
+                                void markNotificationRead(n.id, companyId).then(() =>
+                                  queryClient.invalidateQueries({ queryKey: ["notifications"] })
+                                );
+                              }
+                            }}
+                          >
+                            Open
+                          </Link>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))
+                )}
+                <Link
+                  className="mt-2 block text-center text-[11px] font-semibold text-sky-700 underline"
+                  to="/notifications"
+                  onClick={() => setNotifOpen(false)}
+                >
+                  See all
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {office ? <PageHelpLink /> : null}
         <span style={{ fontSize: typography.pageSubtitle, color: colors.sidebarTextMuted }}>{dateLabel}</span>
         <button

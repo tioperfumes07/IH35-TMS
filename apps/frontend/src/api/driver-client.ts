@@ -8,6 +8,27 @@ type DriverRequestOptions = {
   headers?: Record<string, string>;
 };
 
+export async function driverApiRequestFormData<T>(path: string, formData: FormData): Promise<T> {
+  const headers: Record<string, string> = {};
+  const token = await getValidDriverAccessToken();
+  if (token) headers["x-driver-token"] = token;
+
+  const response = await fetch(resolveApiUrl(path), {
+    method: "POST",
+    credentials: "include",
+    headers,
+    body: formData,
+  });
+
+  const isJson = response.headers.get("content-type")?.includes("application/json");
+  const payload = isJson ? await response.json() : await response.text();
+  if (!response.ok) {
+    if (response.status === 401) clearDriverAuth();
+    throw new ApiError(response.status, payload);
+  }
+  return payload as T;
+}
+
 export async function driverApiRequest<T>(path: string, options: DriverRequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = { ...(options.headers ?? {}) };
   const token = await getValidDriverAccessToken();

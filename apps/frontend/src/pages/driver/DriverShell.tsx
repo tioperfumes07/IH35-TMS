@@ -73,9 +73,18 @@ export function DriverShell() {
             </button>
           </div>
         </div>
-        <nav className="mx-auto mt-2 flex max-w-lg justify-between gap-1 text-xs">
+        <nav className="mx-auto mt-2 flex max-w-lg flex-wrap justify-between gap-1 text-xs">
           <Link className={tabClass("/driver/loads")} to="/driver/loads">
             Loads
+          </Link>
+          <Link className={tabClass("/driver/loads/assigned")} to="/driver/loads/assigned">
+            Assigned
+          </Link>
+          <Link className={tabClass("/driver/time-off")} to="/driver/time-off">
+            Time off
+          </Link>
+          <Link className={tabClass("/driver/fuel-receipt")} to="/driver/fuel-receipt">
+            Fuel
           </Link>
           <Link className={tabClass("/driver/hos")} to="/driver/hos">
             HOS

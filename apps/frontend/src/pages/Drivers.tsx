@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
+import { useAuth } from "../auth/useAuth";
 import {
   checkReturningDriver,
   createDriver,
@@ -16,6 +17,7 @@ import {
   type ReturningDetectionResult,
   updateDriverTeam,
 } from "../api/mdata";
+import { listHrTimeOffRequests, decideTimeOffRequest } from "../api/hr";
 import { listMyCompanies } from "../api/org";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
@@ -173,6 +175,9 @@ export function DriversPage() {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
+  const { user } = useAuth();
+  const companyId = selectedCompanyId ?? "";
+  const canHrTimeOff = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const [search, setSearch] = useState("");
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
   const [activeTab, setActiveTab] = useState<"drivers" | "teams">("drivers");
@@ -347,6 +352,22 @@ export function DriversPage() {
     queryKey: ["driver-teams", selectedCompanyId],
     queryFn: () => listDriverTeams(selectedCompanyId!).then((result) => result.teams),
     enabled: Boolean(selectedCompanyId),
+  });
+
+  const pendingTimeOffQuery = useQuery({
+    queryKey: ["hr", "time-off", companyId, "pending"],
+    queryFn: () => listHrTimeOffRequests(companyId, "pending"),
+    enabled: Boolean(companyId) && canHrTimeOff && activeTab === "drivers",
+  });
+
+  const timeOffDecideMu = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "approved" | "denied" }) =>
+      decideTimeOffRequest(id, { operating_company_id: companyId, status }),
+    onSuccess: () => {
+      pushToast("Time-off request updated", "success");
+      void queryClient.invalidateQueries({ queryKey: ["hr", "time-off"] });
+    },
+    onError: () => pushToast("Could not update request", "error"),
   });
 
   const teamDetailQuery = useQuery({
@@ -677,6 +698,46 @@ export function DriversPage() {
           { id: "terminated", label: `Terminated (${driverListTabCounts.terminated})` },
         ]}
       />
+      {canHrTimeOff && companyId ? (
+        <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+          <div className="font-semibold">Pending driver time-off</div>
+          {pendingTimeOffQuery.isLoading ? <p className="mt-1 text-amber-900/80">Loading…</p> : null}
+          {(pendingTimeOffQuery.data?.requests ?? []).length === 0 && !pendingTimeOffQuery.isLoading ? (
+            <p className="mt-1 text-amber-900/80">No pending requests.</p>
+          ) : null}
+          <div className="mt-2 space-y-2">
+            {(pendingTimeOffQuery.data?.requests ?? []).map((r) => (
+              <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded border border-amber-300/60 bg-white px-2 py-1.5">
+                <div>
+                  <span className="font-medium text-gray-900">{r.driver_name}</span>
+                  <span className="text-gray-600">
+                    {" "}
+                    · {r.start_date} → {r.end_date} · {r.type}
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    loading={timeOffDecideMu.isPending}
+                    onClick={() => void timeOffDecideMu.mutateAsync({ id: r.id, status: "approved" })}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    loading={timeOffDecideMu.isPending}
+                    onClick={() => void timeOffDecideMu.mutateAsync({ id: r.id, status: "denied" })}
+                  >
+                    Deny
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <input
           value={search}

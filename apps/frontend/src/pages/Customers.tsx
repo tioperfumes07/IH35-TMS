@@ -21,6 +21,7 @@ import { KpiStrip } from "../components/layout/KpiStrip";
 import { dataTableErrorState } from "../lib/tableError";
 import { PageHeader } from "../components/layout/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
+import { SavedViewsBar } from "../components/saved-views/SavedViewsBar";
 import { colors } from "../design/tokens";
 
 const createCustomerSchema = z.object({
@@ -404,6 +405,22 @@ export function CustomersPage() {
         <KpiCard label="Credit Hold" number={creditHoldCount} accent={colors.warn.strong} />
         <KpiCard label="Blacklist" number={blacklistCount} accent={colors.crit.strong} />
       </KpiStrip>
+      <SavedViewsBar
+        tableName="customers"
+        currentView={{
+          tab: customerListTab,
+          showOnlyFmcsaVerified,
+          sortByDisputes,
+        }}
+        onApply={(v) => {
+          const tab = v.tab;
+          if (typeof tab === "string" && (CUSTOMER_LIST_TAB_IDS as readonly string[]).includes(tab)) {
+            setCustomerListTab(tab as CustomerListTabId);
+          }
+          if (typeof v.showOnlyFmcsaVerified === "boolean") setShowOnlyFmcsaVerified(v.showOnlyFmcsaVerified);
+          if (typeof v.sortByDisputes === "boolean") setSortByDisputes(v.sortByDisputes);
+        }}
+      />
       <SecondaryNavTabs
         className="-mx-2"
         activeId={customerListTab}

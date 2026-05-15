@@ -1,4 +1,4 @@
-import { ApiError, apiRequest } from "./client";
+import { ApiError, apiRequest, resolveApiUrl } from "./client";
 
 export type ReportCategory =
   | "all"
@@ -712,4 +712,33 @@ export async function getMaintenanceCostPerUnit(params: {
     }
     throw e;
   }
+}
+
+export async function downloadReportExport(reportName: string, operatingCompanyId: string, format: "csv" | "pdf" = "csv") {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, format });
+  const res = await fetch(resolveApiUrl(`/api/v1/reports/${encodeURIComponent(reportName)}/export?${q}`), { credentials: "include" });
+  if (!res.ok) throw new ApiError(res.status, await res.text());
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${reportName}.${format === "pdf" ? "pdf" : "csv"}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function scheduleReportExport(
+  reportName: string,
+  body: {
+    operating_company_id: string;
+    frequency: "daily" | "weekly" | "monthly";
+    time_local: string;
+    day_of_week?: number;
+    day_of_month?: number;
+    recipients: string[];
+    format: "pdf" | "csv";
+    subject?: string;
+  }
+) {
+  return apiRequest<{ id: string }>(`/api/v1/reports/${encodeURIComponent(reportName)}/schedule`, { method: "POST", body });
 }

@@ -8,12 +8,18 @@ import { registerDriverEarningsRoutes } from "./earnings.routes.js";
 import { registerDriverPreferencesRoutes } from "./preferences.routes.js";
 import { registerDriverPushSubscriptionRoutes } from "./push-subscriptions.routes.js";
 import { registerDriverReportsRoutes } from "./reports.routes.js";
+import { registerDriverLoadAssignmentRoutes } from "./load-assignment.routes.js";
+import { registerDriverTimeOffRoutes } from "./time-off.routes.js";
+import { registerDriverFuelReceiptRoutes } from "./fuel-receipt.routes.js";
 
 export async function registerDriverRoutes(app: FastifyInstance) {
   app.decorateRequest("driver", null);
   await registerDriverAuthTokenRoutes(app);
   await registerDriverSettlementDisputesP6Routes(app);
   await registerDriverLoadsRoutes(app);
+  await registerDriverLoadAssignmentRoutes(app);
+  await registerDriverTimeOffRoutes(app);
+  await registerDriverFuelReceiptRoutes(app);
   await registerDriverDvirRoutes(app);
   await registerDriverHosRoutes(app);
   await registerDriverEarningsRoutes(app);

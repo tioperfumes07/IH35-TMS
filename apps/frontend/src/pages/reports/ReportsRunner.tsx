@@ -1,16 +1,15 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { ReportsSubNav } from "./ReportsSubNav";
-import { apiRequest } from "../../api/client";
-import { getReportLibrary } from "../../api/reports";
+import { ApiError, apiRequest } from "../../api/client";
+import { getReportLibrary, downloadReportExport, scheduleReportExport } from "../../api/reports";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RunnerFilters, defaultFilterValues } from "./runners/RunnerFilters";
 import { RUNNER_CONFIGS, toMonth } from "./runners/runner-config";
 import { RunnerTable } from "./runners/RunnerTable";
 import { downloadCSV } from "./runners/csv-export";
 import { CsaFleetScoreCard } from "./runners/CsaFleetScoreCard";
+import { useToast } from "../../components/Toast";
 
 type RunState = {
   startedAt: number;
@@ -62,6 +61,7 @@ const STUB_PHASE: Record<string, string> = {
 export function ReportsRunnerPage() {
   const { reportId = "" } = useParams<{ reportId: string }>();
   const navigate = useNavigate();
+  const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +69,13 @@ export function ReportsRunnerPage() {
   const config = RUNNER_CONFIGS[reportId];
   const [filters, setFilters] = useState<Record<string, unknown>>(defaultFilterValues(config?.filters ?? []));
   const [runState, setRunState] = useState<RunState | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleFreq, setScheduleFreq] = useState<"daily" | "weekly" | "monthly">("weekly");
+  const [scheduleDow, setScheduleDow] = useState(1);
+  const [scheduleDom, setScheduleDom] = useState(1);
+  const [scheduleEmails, setScheduleEmails] = useState("");
+  const [scheduleFmt, setScheduleFmt] = useState<"pdf" | "csv">("csv");
+  const [scheduleTime, setScheduleTime] = useState("07:00");
 
   const libraryQuery = useQuery({
     queryKey: ["reports", "library", companyId],
@@ -162,14 +169,55 @@ export function ReportsRunnerPage() {
       <PageHeader
         title={`← Reports / ${reportMeta.name}`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700"
               onClick={() => downloadCSV(config.csvFilename(filters), config.columns, resultRows)}
               disabled={resultRows.length === 0}
             >
+              Table CSV
+            </button>
+            <button
+              type="button"
+              className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700"
+              disabled={!companyId}
+              onClick={() => {
+                void (async () => {
+                  try {
+                    await downloadReportExport(reportId, companyId, "csv");
+                  } catch {
+                    pushToast("Server CSV export failed", "error");
+                  }
+                })();
+              }}
+            >
               Download CSV
+            </button>
+            <button
+              type="button"
+              className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700"
+              disabled={!companyId}
+              onClick={() => {
+                void (async () => {
+                  try {
+                    await downloadReportExport(reportId, companyId, "pdf");
+                  } catch (e) {
+                    if (e instanceof ApiError && e.status === 501) pushToast("PDF export is not implemented on the server yet.", "info");
+                    else pushToast("PDF export failed", "error");
+                  }
+                })();
+              }}
+            >
+              Download PDF
+            </button>
+            <button
+              type="button"
+              className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700"
+              disabled={!companyId}
+              onClick={() => setScheduleOpen(true)}
+            >
+              Schedule email
             </button>
             <button type="button" className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700" disabled>
               Save
@@ -199,6 +247,106 @@ export function ReportsRunnerPage() {
           {config.id === "csa-fleet" ? <CsaFleetScoreCard value={runState?.csaValue ?? {}} /> : <RunnerTable columns={config.columns} rows={resultRows} />}
         </section>
       )}
+
+      <Modal open={scheduleOpen} onClose={() => setScheduleOpen(false)} title="Schedule emailed report">
+        <div className="space-y-3 text-sm">
+          <label className="block">
+            Frequency
+            <select
+              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              value={scheduleFreq}
+              onChange={(e) => setScheduleFreq(e.target.value as "daily" | "weekly" | "monthly")}
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </label>
+          {scheduleFreq === "weekly" ? (
+            <label className="block">
+              Day of week (0=Sun … 6=Sat)
+              <input
+                type="number"
+                min={0}
+                max={6}
+                className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                value={scheduleDow}
+                onChange={(e) => setScheduleDow(Number(e.target.value))}
+              />
+            </label>
+          ) : null}
+          {scheduleFreq === "monthly" ? (
+            <label className="block">
+              Day of month (1–31)
+              <input
+                type="number"
+                min={1}
+                max={31}
+                className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+                value={scheduleDom}
+                onChange={(e) => setScheduleDom(Number(e.target.value))}
+              />
+            </label>
+          ) : null}
+          <label className="block">
+            Send time (local HH:MM)
+            <input
+              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              value={scheduleTime}
+              onChange={(e) => setScheduleTime(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            Recipients (comma-separated emails)
+            <input
+              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              value={scheduleEmails}
+              onChange={(e) => setScheduleEmails(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            Format
+            <select
+              className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
+              value={scheduleFmt}
+              onChange={(e) => setScheduleFmt(e.target.value as "pdf" | "csv")}
+            >
+              <option value="csv">CSV</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            className="rounded bg-slate-900 px-3 py-2 text-white"
+            onClick={() => {
+              const recipients = scheduleEmails
+                .split(/[,;\s]+/)
+                .map((s) => s.trim())
+                .filter(Boolean);
+              void (async () => {
+                try {
+                  await scheduleReportExport(reportId, {
+                    operating_company_id: companyId,
+                    frequency: scheduleFreq,
+                    time_local: scheduleTime,
+                    day_of_week: scheduleFreq === "weekly" ? scheduleDow : undefined,
+                    day_of_month: scheduleFreq === "monthly" ? scheduleDom : undefined,
+                    recipients,
+                    format: scheduleFmt,
+                    subject: `${reportMeta.name} (${scheduleFmt.toUpperCase()})`,
+                  });
+                  pushToast("Schedule saved", "success");
+                  setScheduleOpen(false);
+                } catch {
+                  pushToast("Could not save schedule", "error");
+                }
+              })();
+            }}
+          >
+            Save schedule
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

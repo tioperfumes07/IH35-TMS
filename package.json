@@ -6,7 +6,8 @@
   "workspaces": [
     "packages/shared-types",
     "apps/frontend",
-    "apps/driver-pwa"
+    "apps/driver-pwa",
+    "apps/customer-portal"
   ],
   "engines": {
     "node": "22.x"
@@ -14,7 +15,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-email-templates.mjs",
     "build:backend": "tsc -p tsconfig.json && node scripts/copy-email-templates.mjs",
-    "build:driver-pwa": "cd apps/driver-pwa && npm run build",
+    "build:customer-portal": "cd apps/customer-portal && npm run build",
     "build:frontend": "cd apps/frontend && npm run build",
     "start": "node dist/index.js",
     "dev": "tsx watch apps/backend/src/index.ts",
@@ -132,6 +133,7 @@
     "resend": "^6.12.3",
     "twilio": "^6.0.0",
     "web-push": "^3.6.7",
+    "ws": "^8.18.0",
     "xlsx": "^0.18.5",
     "zod": "^4.4.2"
   },

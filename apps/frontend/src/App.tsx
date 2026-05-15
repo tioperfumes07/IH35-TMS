@@ -68,6 +68,9 @@ import { DriverLoadsPage } from "./pages/driver/DriverLoadsPage";
 import { DriverLoadDetailPage } from "./pages/driver/DriverLoadDetailPage";
 import { DriverHosPage } from "./pages/driver/DriverHosPage";
 import { DriverSettingsPage } from "./pages/driver/DriverSettingsPage";
+import { DriverAssignedLoadsPage } from "./pages/driver/DriverAssignedLoadsPage";
+import { DriverTimeOffPage } from "./pages/driver/DriverTimeOffPage";
+import { FuelReceiptPage } from "./pages/driver/FuelReceiptPage";
 import { DocumentsPage } from "./pages/Documents";
 import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
@@ -177,6 +180,7 @@ import { DriverSchedulerGridPage } from "./pages/safety/driver-scheduler/DriverS
 import { DriverSchedulerRequestInboxPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { DriverSchedulerRequestDetailPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage";
 import { DriverLeaveBalancesPage } from "./pages/safety/driver-scheduler/DriverLeaveBalancesPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -335,6 +339,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DocumentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
             </ProtectedRoute>
           }
         />
@@ -1400,10 +1412,19 @@ export default function App() {
         <Route path="/driver" element={<DriverShell />}>
           <Route index element={<Navigate to="loads" replace />} />
           <Route path="loads" element={<DriverLoadsPage />} />
+          <Route path="loads/assigned" element={<DriverAssignedLoadsPage />} />
           <Route path="loads/:id" element={<DriverLoadDetailPage />} />
           <Route path="hos" element={<DriverHosPage />} />
           <Route path="disputes" element={<DisputesPage />} />
+          <Route path="time-off" element={<DriverTimeOffPage />} />
+          <Route path="fuel-receipt" element={<FuelReceiptPage />} />
           <Route path="settings" element={<DriverSettingsPage />} />
+        </Route>
+        <Route path="/pwa" element={<DriverShell />}>
+          <Route index element={<Navigate to="loads/assigned" replace />} />
+          <Route path="loads/assigned" element={<DriverAssignedLoadsPage />} />
+          <Route path="time-off" element={<DriverTimeOffPage />} />
+          <Route path="fuel-receipt" element={<FuelReceiptPage />} />
         </Route>
         {[
           // Keep only truly unshipped module redirects here.

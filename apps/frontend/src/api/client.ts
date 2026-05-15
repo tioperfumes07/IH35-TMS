@@ -34,6 +34,13 @@ export function resolveApiUrl(path: string): string {
   return buildUrl(path);
 }
 
+export function resolveRealtimeWsUrl(): string {
+  const url = buildUrl("/api/v1/realtime/ws");
+  if (url.startsWith("https://")) return `wss://${url.slice("https://".length)}`;
+  if (url.startsWith("http://")) return `ws://${url.slice("http://".length)}`;
+  return url;
+}
+
 export async function apiRequestFormData<T>(path: string, formData: FormData, method: "POST" | "PATCH" = "POST"): Promise<T> {
   const response = await fetch(buildUrl(path), {
     method,

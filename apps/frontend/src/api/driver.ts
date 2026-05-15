@@ -55,3 +55,56 @@ export async function getDriverHos() {
 export async function submitDriverReport(body: Record<string, unknown>) {
   return driverApiRequest<{ id: string }>("/api/v1/driver/reports", { method: "POST", body });
 }
+
+export type AssignedLoadRow = {
+  id: string;
+  load_number: string | null;
+  status: string;
+  operating_company_id: string;
+  rate_total_cents: unknown;
+};
+
+export async function listDriverAssignedLoads() {
+  return driverApiRequest<{ loads: AssignedLoadRow[] }>("/api/v1/driver/loads/assigned");
+}
+
+export async function acceptDriverOffer(loadId: string) {
+  return driverApiRequest<{ ok: true }>(`/api/v1/driver/loads/${encodeURIComponent(loadId)}/accept-offer`, {
+    method: "POST",
+    body: { confirm: true as const },
+  });
+}
+
+export async function declineDriverOffer(loadId: string, reason?: string) {
+  return driverApiRequest<{ ok: true }>(`/api/v1/driver/loads/${encodeURIComponent(loadId)}/decline-offer`, {
+    method: "POST",
+    body: { reason },
+  });
+}
+
+export async function postDriverLoadStatus(
+  loadId: string,
+  body: { status: "at_pickup" | "in_transit" | "at_delivery" | "delivered"; location: { lat: number; lng: number }; timestamp: string; notes?: string }
+) {
+  return driverApiRequest<{ ok: true }>(`/api/v1/driver/loads/${encodeURIComponent(loadId)}/status`, { method: "POST", body });
+}
+
+export type TimeOffDriverRow = {
+  id: string;
+  start_date: string;
+  end_date: string;
+  type: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  decided_at: string | null;
+  decision_notes: string | null;
+};
+
+export async function listDriverTimeOffRequests() {
+  return driverApiRequest<{ requests: TimeOffDriverRow[] }>("/api/v1/driver/time-off-requests");
+}
+
+export async function createDriverTimeOffRequest(body: { start_date: string; end_date: string; type: "vacation" | "sick" | "personal"; notes?: string }) {
+  return driverApiRequest<TimeOffDriverRow>(`/api/v1/driver/time-off-requests`, { method: "POST", body });
+}

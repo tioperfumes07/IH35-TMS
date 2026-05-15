@@ -5,6 +5,7 @@ import { updateLoad, useCancelLoad, useLoad, useLoadAudit } from "../../api/load
 import { createInvoiceFromLoad } from "../../api/accounting";
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory } from "../../api/dispatch";
 import { resolveApiUrl } from "../../api/client";
+import { useRealtimeChannel } from "../../hooks/useRealtimeChannel";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
 import { DocumentsTab } from "../documents/DocumentsTab";
@@ -39,6 +40,17 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
 
   const loadQuery = useLoad(loadId);
   const auditQuery = useLoadAudit(loadId);
+
+  useRealtimeChannel({
+    enabled: Boolean(loadId),
+    topics: loadId ? [`load:${loadId}`] : [],
+    onMessage: () => {
+      if (!loadId) return;
+      void queryClient.invalidateQueries({ queryKey: ["loads", "detail", loadId] });
+      void queryClient.invalidateQueries({ queryKey: ["loads", "list"] });
+    },
+  });
+
   const cancelMutation = useCancelLoad();
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => updateLoad(id, body),
