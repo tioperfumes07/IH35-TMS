@@ -87,6 +87,8 @@ import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.rout
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
 import { registerMaintenanceDriverReportsRoutes } from "./maintenance/driver-reports.routes.js";
+import { registerMaintenancePartsInventoryRoutes } from "./maintenance/parts-inventory.routes.js";
+import { registerWoCostContextRoutes } from "./maintenance/wo-cost-context.routes.js";
 import { registerWoTimeEntriesRoutes } from "./maintenance/time-entries.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
@@ -386,6 +388,8 @@ async function main() {
   await registerDataInfrastructureRoutes(app);
   await registerOcrRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
+  await registerMaintenancePartsInventoryRoutes(app);
+  await registerWoCostContextRoutes(app);
   await registerWorkOrdersV1Routes(app);
   await registerWoTimeEntriesRoutes(app);
   await registerMaintenanceDriverReportsRoutes(app);
