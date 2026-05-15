@@ -55,7 +55,7 @@ describe("dispatchNotification", () => {
   it("enqueues settlement-ready email using dispatcher defaults", async () => {
     const result = await dispatchNotification({
       user_id: "11111111-1111-1111-1111-111111111111",
-      event_type: "settlement_ready",
+      event_type: "settlement.created",
       actor_user_id: "22222222-2222-2222-2222-222222222222",
       payload: {
         operating_company_id: "33333333-3333-3333-3333-333333333333",
@@ -81,5 +81,53 @@ describe("dispatchNotification", () => {
     expect(appendCalls.length).toBe(1);
     const params = appendCalls[0]![1] as unknown[];
     expect(params[0]).toBe("notification.sent");
+  });
+
+  it("skips email when preferences disable email for the event", async () => {
+    mocks.queryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("to_regclass('identity.user_notification_preferences')")) {
+        return { rows: [{ r: "identity.user_notification_preferences" }] };
+      }
+      if (sql.includes("FROM identity.user_notification_preferences")) {
+        return {
+          rows: [
+            {
+              channels: { email: false, sms: false, whatsapp: false, in_app: true },
+              event_overrides: {},
+              quiet_hours_start: null,
+              quiet_hours_end: null,
+              timezone: null,
+              email_enabled: true,
+              sms_enabled: false,
+              whatsapp_enabled: false,
+            },
+          ],
+        };
+      }
+      if (sql.includes("FROM identity.users")) {
+        return { rows: [{ email: "driver@example.com" }] };
+      }
+      if (sql.includes("audit.append_event")) {
+        return { rows: [] };
+      }
+      if (sql.includes("set_config('app.operating_company_id'")) {
+        return { rows: [] };
+      }
+      return { rows: [] };
+    });
+
+    const result = await dispatchNotification({
+      user_id: "11111111-1111-1111-1111-111111111111",
+      event_type: "settlement.created",
+      actor_user_id: "22222222-2222-2222-2222-222222222222",
+      payload: {
+        operating_company_id: "33333333-3333-3333-3333-333333333333",
+        settlement_no: "ST-1",
+        net: "12.34",
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(mocks.enqueueEmail).not.toHaveBeenCalled();
   });
 });

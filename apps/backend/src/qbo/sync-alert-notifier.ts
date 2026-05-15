@@ -68,7 +68,7 @@ export async function notifyQboSyncDeadLetter(input: DeadLetterNotifyInput): Pro
       admins.map((userId) =>
         dispatchNotification({
           user_id: userId,
-          event_type: "qbo_sync_error",
+          event_type: "qbo.sync.failed",
           actor_user_id: null,
           payload: {
             operating_company_id: input.operatingCompanyId,

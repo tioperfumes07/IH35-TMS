@@ -426,7 +426,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       if (identityUserId) {
         await dispatchNotification({
           user_id: identityUserId,
-          event_type: "settlement_ready",
+          event_type: "settlement.created",
           actor_user_id: user.uuid,
           payload: {
             operating_company_id: oc,

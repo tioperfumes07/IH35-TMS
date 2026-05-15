@@ -688,7 +688,7 @@ export async function handlePlaidItemLoginRequiredWebhook(itemId: string) {
       owners.map((userId) =>
         dispatchNotification({
           user_id: userId,
-          event_type: "plaid_item_login_required",
+          event_type: "banking.plaid.login-required",
           actor_user_id: null,
           payload: {
             operating_company_id: operatingCompanyId,

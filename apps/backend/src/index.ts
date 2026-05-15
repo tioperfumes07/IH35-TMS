@@ -15,6 +15,7 @@ import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admi
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
 import { registerIdentityRoutes } from "./identity/users.routes.js";
+import { registerNotificationPreferenceRoutes } from "./identity/notification-prefs.routes.js";
 import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
 import { registerAccountingCatalogRoutes } from "./catalogs/accounting/index.js";
@@ -277,6 +278,7 @@ async function main() {
   await registerEmailAuthRoutes(app);
   await registerInviteAuthRoutes(app);
   await registerIdentityRoutes(app);
+  await registerNotificationPreferenceRoutes(app);
   await registerUserPreferencesRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);

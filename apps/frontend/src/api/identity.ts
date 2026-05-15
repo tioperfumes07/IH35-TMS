@@ -83,6 +83,14 @@ export function getMe() {
   return apiRequest<AuthMeResponse>("/api/v1/auth/me");
 }
 
+export function getIdentityProfile() {
+  return apiRequest<IdentityUser>("/api/v1/identity/me");
+}
+
+export function patchIdentityOnboarding(body: { complete: boolean }) {
+  return apiRequest<IdentityUser>("/api/v1/identity/me/onboarding", { method: "PATCH", body });
+}
+
 export function signOut(returnTo?: string) {
   const query = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : "";
   return apiRequest<{ ok: boolean }>(`/api/v1/auth/logout${query}`, { method: "POST" });

@@ -220,7 +220,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
               className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-gray-100"
               onClick={() => {
                 setOpen(false);
-                pushToast("Profile page coming next phase");
+                navigate("/settings");
               }}
             >
               Profile
