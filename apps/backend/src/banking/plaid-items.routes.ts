@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { getPlaidClient } from "../integrations/plaid/plaid-client.js";
+import { syncTransactions } from "../integrations/plaid/plaid.service.js";
 
 function officeRole(role: string) {
   return role !== "Driver";
@@ -19,6 +20,19 @@ function mapSyncStatus(raw: string): "healthy" | "login_required" | "error" {
   if (s === "needs_reauth" || s === "disconnected") return "login_required";
   if (s === "error" || s === "pending") return "error";
   return "healthy";
+}
+
+function extractPlaidApiError(err: unknown): { code?: string; message?: string } | null {
+  if (!err || typeof err !== "object") return null;
+  const e = err as Record<string, unknown>;
+  const resp = e.response as Record<string, unknown> | undefined;
+  const data = resp?.data as Record<string, unknown> | undefined;
+  const code = typeof data?.error_code === "string" ? data.error_code : undefined;
+  const message =
+    (typeof data?.error_message === "string" ? data.error_message : undefined) ??
+    (typeof e.message === "string" ? e.message : undefined);
+  if (!code && !message) return null;
+  return { code, message };
 }
 
 export async function registerPlaidBankingItemsRoutes(app: FastifyInstance) {
@@ -151,6 +165,82 @@ export async function registerPlaidBankingItemsRoutes(app: FastifyInstance) {
     } catch (error) {
       req.log.error({ err: error }, "plaid_item_disconnect_failed");
       return reply.code(500).send({ error: "plaid_item_disconnect_failed" });
+    }
+  });
+
+  app.post("/api/v1/banking/plaid/items/:itemId/sync", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
+
+    const params = z.object({ itemId: z.string().min(4).max(120) }).safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+
+    const bodyOc = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.body ?? {});
+    const queryOc = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
+    const operatingCompanyId = (bodyOc.success ? bodyOc.data.operating_company_id : undefined) ?? (queryOc.success ? queryOc.data.operating_company_id : undefined);
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id required" });
+
+    const exists = await withCompanyScope(user.uuid, operatingCompanyId, async (client) => {
+      const rel = await client.query(`SELECT to_regclass('banking.bank_accounts') IS NOT NULL AS ok`);
+      if (!rel.rows[0]?.ok) return false;
+
+      const hit = await client.query(
+        `
+          SELECT 1 AS ok
+          FROM banking.bank_accounts
+          WHERE operating_company_id = $1::uuid
+            AND plaid_item_id = $2
+            AND deactivated_at IS NULL
+            AND is_active = true
+            AND sync_status::text <> 'disconnected'
+            AND plaid_access_token IS NOT NULL
+          LIMIT 1
+        `,
+        [operatingCompanyId, params.data.itemId]
+      );
+      return hit.rows.length > 0;
+    });
+
+    if (!exists) return reply.code(404).send({ error: "plaid_item_not_found" });
+
+    try {
+      const result = await syncTransactions(params.data.itemId);
+      await withCompanyScope(user.uuid, operatingCompanyId, async (client) => {
+        await appendCrudAudit(client, user.uuid, "banking.plaid.item_manual_sync", {
+          operating_company_id: operatingCompanyId,
+          item_id: params.data.itemId,
+          added: result.added,
+          modified: result.modified,
+          removed: result.removed,
+        });
+      });
+
+      return reply.code(200).send({
+        ok: true,
+        item_id: params.data.itemId,
+        added: result.added,
+        modified: result.modified,
+        removed: result.removed,
+        has_more: false,
+      });
+    } catch (error) {
+      req.log.error({ err: error }, "plaid_item_sync_failed");
+      const plaidErr = extractPlaidApiError(error);
+      if (plaidErr?.code === "ITEM_LOGIN_REQUIRED") {
+        return reply.code(409).send({ error: "item_login_required", reconnect_required: true });
+      }
+      if (plaidErr?.code) {
+        return reply.code(502).send({
+          error: "plaid_error",
+          code: plaidErr.code,
+          message: plaidErr.message ?? "plaid_error",
+        });
+      }
+      if (error instanceof Error && error.message === "plaid_access_token_missing_for_item") {
+        return reply.code(404).send({ error: "plaid_item_not_found" });
+      }
+      return reply.code(500).send({ error: "internal_error" });
     }
   });
 }

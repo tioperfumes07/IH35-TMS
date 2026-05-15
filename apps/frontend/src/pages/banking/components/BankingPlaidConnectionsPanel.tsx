@@ -4,10 +4,12 @@ import {
   disconnectPlaidItem,
   getPlaidBankAccounts,
   getPlaidCompanyTransactions,
+  syncPlaidItem,
   type CompanyTransactionsSort,
   type PlaidBankAccount,
   type PlaidBankTransaction,
 } from "../../../api/banking";
+import { ApiError } from "../../../api/client";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useAuth } from "../../../auth/useAuth";
 import { PlaidReconnectButton, plaidItemBadgeClasses, plaidItemBadgeLabel } from "./PlaidReconnectButton";
@@ -46,6 +48,16 @@ function matchedLabel(t: PlaidBankTransaction) {
   return "Unmatched";
 }
 
+function extractApiErrorMessage(err: ApiError): string {
+  const d = err.data;
+  if (d && typeof d === "object") {
+    const o = d as Record<string, unknown>;
+    if (typeof o.message === "string") return o.message;
+    if (typeof o.error === "string") return o.error;
+  }
+  return err.message;
+}
+
 export function BankingPlaidConnectionsPanel({
   companyId,
 }: {
@@ -54,6 +66,8 @@ export function BankingPlaidConnectionsPanel({
   const queryClient = useQueryClient();
   const auth = useAuth();
   const { pushToast } = useToast();
+  const [syncingItemId, setSyncingItemId] = useState<string | null>(null);
+  const [reconnectHighlightItemId, setReconnectHighlightItemId] = useState<string | null>(null);
   const plaidQuery = useQuery({
     queryKey: ["banking", "plaid-accounts", companyId],
     queryFn: () => getPlaidBankAccounts(companyId),
@@ -64,6 +78,39 @@ export function BankingPlaidConnectionsPanel({
 
   const canConnect = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const canDisconnect = auth.user?.role === "Owner";
+
+  async function handleManualPlaidSync(plaidItemId: string, institutionLabel: string) {
+    setSyncingItemId(plaidItemId);
+    try {
+      let added = 0;
+      let modified = 0;
+      let removed = 0;
+      for (let i = 0; i < 10; i++) {
+        const res = await syncPlaidItem(companyId, plaidItemId);
+        added += res.added;
+        modified += res.modified;
+        removed += res.removed;
+        if (!res.has_more) break;
+      }
+
+      setReconnectHighlightItemId(null);
+      pushToast(`Synced ${institutionLabel}: +${added} new, ~${modified} changed, -${removed} removed`, "success");
+      await queryClient.invalidateQueries({ queryKey: ["banking"] });
+    } catch (e: unknown) {
+      if (e instanceof ApiError) {
+        if (e.status === 409) {
+          pushToast(`Reconnect required for ${institutionLabel}`, "info");
+          setReconnectHighlightItemId(plaidItemId);
+        } else {
+          pushToast(extractApiErrorMessage(e), "error");
+        }
+      } else {
+        pushToast(String((e as Error).message || "Sync failed"), "error");
+      }
+    } finally {
+      setSyncingItemId(null);
+    }
+  }
 
   if (!companyId) return null;
 
@@ -113,13 +160,30 @@ export function BankingPlaidConnectionsPanel({
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${badgeClass}`}>{badgeLabel}</span>
                   {canConnect && itemId ? (
                     <div className="flex flex-wrap justify-end gap-2">
-                      <PlaidReconnectButton
-                        operatingCompanyId={companyId}
-                        plaidItemId={itemId}
-                        onComplete={() => {
-                          void queryClient.invalidateQueries({ queryKey: ["banking"] });
-                        }}
-                      />
+                      <div
+                        className={
+                          reconnectHighlightItemId === itemId
+                            ? "rounded-md p-0.5 ring-2 ring-amber-400 ring-offset-1"
+                            : ""
+                        }
+                      >
+                        <PlaidReconnectButton
+                          operatingCompanyId={companyId}
+                          plaidItemId={itemId}
+                          onComplete={() => {
+                            setReconnectHighlightItemId(null);
+                            void queryClient.invalidateQueries({ queryKey: ["banking"] });
+                          }}
+                        />
+                      </div>
+                      <ActionButton
+                        type="button"
+                        className="border border-blue-200 bg-blue-50 text-blue-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                        disabled={syncingItemId === itemId}
+                        onClick={() => void handleManualPlaidSync(itemId, institution)}
+                      >
+                        {syncingItemId === itemId ? "Syncing…" : "Sync now"}
+                      </ActionButton>
                       {canDisconnect ? (
                         <ActionButton
                           type="button"
