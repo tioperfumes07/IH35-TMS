@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { qboSyncWithRetry } from "../../qbo/sync-with-retry.js";
+import { computeOutboundBackoffMs } from "./sync-backoff.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import { getValidAccessToken } from "./qbo-oauth.service.js";
 import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from "./qbo-mappers.js";
@@ -11,15 +12,15 @@ export type QueueEntityType =
   | "bank_transaction"
   | "bill"
   | "bill_payment"
-  | "credit_memo"
   | "expense"
-  | "factoring_advance"
   | "invoice"
   | "journal_entry"
   | "payment"
+  | "credit_memo"
+  | "factoring_advance"
   | "settlement"
   | "transfer";
-type QueueStatus = "pending" | "in_flight" | "synced" | "failed" | "blocked" | "dead_letter";
+export type QueueStatus = "pending" | "in_flight" | "synced" | "failed" | "blocked" | "dead_letter";
 
 type QueueRow = {
   id: string;
@@ -31,6 +32,8 @@ type QueueRow = {
   attempt_count: number;
   max_attempts: number;
   next_attempt_at: string;
+  idempotency_key?: string | null;
+  payload_jsonb?: unknown;
   triggered_by?: string | null;
 };
 
@@ -209,24 +212,6 @@ async function syncTransferPreview(job: QueueRow) {
   });
 }
 
-async function syncBillPreview(job: QueueRow) {
-  const qboId = `preview-bill-${job.entity_id}`;
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
-    await client.query(
-      `
-        UPDATE accounting.bills
-        SET qbo_bill_id = $2,
-            updated_at = now()
-        WHERE id = $1
-          AND operating_company_id = $3
-      `,
-      [job.entity_id, qboId, job.operating_company_id]
-    );
-  });
-  return { qboId, mode: "preview" as const };
-}
-
 type QboSyncSuccess = { qboId: string; syncToken: string | null };
 
 export async function syncBankTransaction(txn: BankTxnContext, realmId: string, accessToken: string): Promise<QboSyncSuccess> {
@@ -400,10 +385,6 @@ function shouldRetry(status: number | undefined) {
   return status >= 500;
 }
 
-function backoffMinutes(attemptCount: number) {
-  return Math.min(60, 2 ** Math.max(1, attemptCount));
-}
-
 export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcessResult> {
   const jobs = await withLuciaBypass(async (client) => {
     const res = await client.query<QueueRow>(
@@ -436,7 +417,6 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
   let failed = 0;
   let deadLettered = 0;
   let blockedConflict = 0;
-
   for (const job of jobs) {
     try {
       if (job.entity_type === "settlement") {
@@ -488,9 +468,9 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
         "factoring_advance",
         "expense",
       ]);
-      if (accountingOutbound.has(job.entity_type as QueueEntityType)) {
+      if (accountingOutbound.has(job.entity_type)) {
         const result = await syncEntityToQbo({
-          entity_type: job.entity_type as never,
+          entity_type: job.entity_type,
           entity_id: job.entity_id,
           operating_company_id: job.operating_company_id,
           queue_row_id: job.id,
@@ -556,6 +536,18 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
         "info",
         null
       );
+      await appendSyncAudit(
+        "sync.outbound_succeeded",
+        {
+          queue_id: job.id,
+          operating_company_id: job.operating_company_id,
+          entity_type: job.entity_type,
+          entity_id: job.entity_id,
+          qbo_id: syncResult.qboId,
+        },
+        "info",
+        null
+      );
     } catch (error) {
       const status = (error as { status?: number }).status;
       const attempt = job.attempt_count;
@@ -566,8 +558,8 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
       };
       const retryable = shouldRetry(status) && attempt < job.max_attempts;
       if (retryable) {
-        const minutes = backoffMinutes(attempt);
-        const nextAttemptAt = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+        const backoffMs = computeOutboundBackoffMs(attempt);
+        const nextAttemptAt = new Date(Date.now() + backoffMs).toISOString();
         await markJobResult(job, "failed", {
           errorMessage: message,
           errorDetails: details,
@@ -577,6 +569,19 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
         await appendSyncAudit(
           "integrations.qbo_sync.failed",
           { queue_id: job.id, operating_company_id: job.operating_company_id, entity_id: job.entity_id, attempt, next_attempt_at: nextAttemptAt, error: message },
+          "warning",
+          null
+        );
+        await appendSyncAudit(
+          "sync.outbound_failed",
+          {
+            queue_id: job.id,
+            operating_company_id: job.operating_company_id,
+            entity_id: job.entity_id,
+            attempt,
+            next_attempt_at: nextAttemptAt,
+            error: message,
+          },
           "warning",
           null
         );
@@ -590,6 +595,18 @@ export async function processSyncQueueBatch(maxItems = 50): Promise<QueueProcess
         await appendSyncAudit(
           "integrations.qbo_sync.blocked",
           { queue_id: job.id, operating_company_id: job.operating_company_id, entity_id: job.entity_id, attempt, error: message },
+          "warning",
+          null
+        );
+        await appendSyncAudit(
+          "sync.outbound_dead_lettered",
+          {
+            queue_id: job.id,
+            operating_company_id: job.operating_company_id,
+            entity_id: job.entity_id,
+            attempt,
+            error: message,
+          },
           "warning",
           null
         );
@@ -696,14 +713,37 @@ export async function skipSyncQueueItem(
   return { ok: true, id: queueId };
 }
 
-/** Same behavior as skipSyncQueueItem; naming matches admin dismiss-outbound route. */
 export async function dismissOutboundSyncQueueItem(
   queueId: string,
   actorUserId: string,
   operatingCompanyId: string,
-  note?: string | null
+  note: string
 ) {
-  return skipSyncQueueItem(queueId, actorUserId, operatingCompanyId, note ?? "dismissed");
+  const updated = await withCurrentUser(actorUserId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const res = await client.query<{ id: string }>(
+      `
+        UPDATE integrations.qbo_sync_queue
+        SET
+          sync_status = 'dead_letter',
+          error_message = $3,
+          updated_at = now()
+        WHERE id = $1
+          AND operating_company_id = $2
+        RETURNING id
+      `,
+      [queueId, operatingCompanyId, note.slice(0, 2000)]
+    );
+    return res.rows[0] ?? null;
+  });
+  if (!updated) throw new Error("qbo_sync_queue_item_not_found");
+  await appendSyncAudit(
+    "sync.outbound_dead_lettered",
+    { queue_id: queueId, operating_company_id: operatingCompanyId, note, manual_dismiss: true },
+    "warning",
+    actorUserId
+  );
+  return { ok: true, id: queueId };
 }
 
 export async function getSyncQueueStats(operatingCompanyId: string) {
