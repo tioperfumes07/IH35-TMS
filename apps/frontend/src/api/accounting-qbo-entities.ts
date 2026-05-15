@@ -102,7 +102,7 @@ export async function getAccountingCustomer(id: string, operatingCompanyId: stri
     shipping_same_as_billing: raw.shipping_same_as_billing != null ? Boolean(raw.shipping_same_as_billing) : undefined,
     notes: raw.notes != null ? String(raw.notes) : null,
     overdue_balance_cents: raw.overdue_balance_cents != null ? Number(raw.overdue_balance_cents) : null,
-  } satisfies AccountingCustomerDetail;
+  };
 }
 
 export async function listAccountingVendors(

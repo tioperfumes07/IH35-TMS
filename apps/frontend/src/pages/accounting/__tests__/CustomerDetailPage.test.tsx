@@ -37,7 +37,7 @@ describe("CustomerDetailPage", () => {
       email: "beta@example.com",
       open_balance_cents: 100,
       overdue_balance_cents: 0,
-    });
+    } as never);
     vi.spyOn(qbo, "listAccountingCustomers").mockResolvedValue({
       items: [{ id: "cust-1", display_name: "Beta LLC", open_balance_cents: 100 }],
       next_cursor: null,
@@ -52,7 +52,7 @@ describe("CustomerDetailPage", () => {
     vi.spyOn(qbo, "getAccountingCustomer").mockResolvedValue({
       id: "cust-1",
       display_name: "Beta LLC",
-    });
+    } as never);
     vi.spyOn(qbo, "listAccountingCustomers").mockResolvedValue({ items: [], next_cursor: null });
     vi.spyOn(acct, "listInvoices").mockResolvedValue({ invoices: [] });
     const user = userEvent.setup();
@@ -68,7 +68,7 @@ describe("CustomerDetailPage", () => {
     vi.spyOn(qbo, "getAccountingCustomer").mockResolvedValue({
       id: "cust-1",
       display_name: "Beta LLC",
-    });
+    } as never);
     vi.spyOn(qbo, "listAccountingCustomers").mockResolvedValue({ items: [], next_cursor: null });
     vi.spyOn(acct, "listInvoices").mockResolvedValue({ invoices: [] });
     const user = userEvent.setup();
@@ -84,7 +84,7 @@ describe("CustomerDetailPage", () => {
     vi.spyOn(qbo, "getAccountingCustomer").mockResolvedValue({
       id: "cust-1",
       display_name: "Beta LLC",
-    });
+    } as never);
     vi.spyOn(qbo, "listAccountingCustomers").mockResolvedValue({ items: [], next_cursor: null });
     vi.spyOn(acct, "listInvoices").mockResolvedValue({
       invoices: [
@@ -121,9 +121,10 @@ describe("CustomerDetailPage", () => {
     const badge = voidCells.find((el) => el.tagName.toLowerCase() === "span");
     expect(badge?.className ?? "").toContain("line-through");
   });
-
+  
   it("error case: detail 404 leaves graceful empty name", async () => {
-    vi.spyOn(qbo, "getAccountingCustomer").mockResolvedValue(null);
+    const { ApiError } = await import("../../../api/client");
+    vi.spyOn(qbo, "getAccountingCustomer").mockRejectedValueOnce(new ApiError(404, {}));
     vi.spyOn(qbo, "listAccountingCustomers").mockResolvedValue({ items: [], next_cursor: null });
     vi.spyOn(acct, "listInvoices").mockResolvedValue({ invoices: [] });
     render(wrap(<CustomerDetailPage />));

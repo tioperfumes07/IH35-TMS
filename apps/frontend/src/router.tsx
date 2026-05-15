@@ -19,3 +19,7 @@ export const CustomersListPage = lazy(() =>
 export const AccountingCustomerDetailPage = lazy(() =>
   import("./pages/accounting/CustomerDetailPage").then((m) => ({ default: m.CustomerDetailPage }))
 );
+export const VendorsListPage = lazy(() => import("./pages/accounting/VendorsListPage").then((m) => ({ default: m.VendorsListPage })));
+export const AccountingVendorDetailPage = lazy(() =>
+  import("./pages/accounting/VendorDetailPage").then((m) => ({ default: m.VendorDetailPage }))
+);

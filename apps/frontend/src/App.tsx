@@ -4,7 +4,13 @@ import { useAuth } from "./auth/useAuth";
 import { Shell } from "./components/Shell";
 import { CompanyProvider } from "./contexts/CompanyContext";
 import { useCompanyContext } from "./contexts/CompanyContext";
-import { AccountingCustomerDetailPage, CustomersListPage, SuspenseShell } from "./router";
+import {
+  AccountingCustomerDetailPage,
+  AccountingVendorDetailPage,
+  CustomersListPage,
+  SuspenseShell,
+  VendorsListPage,
+} from "./router";
 import { ListsHubPage } from "./pages/lists/ListsHubPage";
 import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
@@ -80,8 +86,6 @@ import { UserProfileSettingsPage } from "./pages/settings/UserProfileSettingsPag
 import { DocumentsPage } from "./pages/Documents";
 import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
-import { VendorsPage } from "./pages/Vendors";
-import { VendorDetailPage } from "./pages/VendorDetail";
 import { Form425CHome } from "./pages/form425c/Form425CHome";
 import { HelpCenterPage } from "./pages/help/HelpCenterPage";
 import { HelpArticlePage } from "./pages/help/HelpArticlePage";
@@ -368,7 +372,9 @@ export default function App() {
           path="/vendors"
           element={
             <ProtectedRoute>
-              <VendorsPage />
+              <SuspenseShell>
+                <VendorsListPage />
+              </SuspenseShell>
             </ProtectedRoute>
           }
         />
@@ -376,7 +382,9 @@ export default function App() {
           path="/vendors/:id"
           element={
             <ProtectedRoute>
-              <VendorDetailPage />
+              <SuspenseShell>
+                <AccountingVendorDetailPage />
+              </SuspenseShell>
             </ProtectedRoute>
           }
         />
