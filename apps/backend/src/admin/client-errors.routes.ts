@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError } from "../accounting/shared.js";
 import { withLuciaBypass } from "../auth/db.js";
+import { pushBufferedClientError } from "../lib/error-monitor-buffer.js";
 
 const bodySchema = z.object({
   message: z.string().trim().min(1).max(5000),
@@ -27,6 +28,8 @@ export async function registerAdminClientErrorRoutes(app: FastifyInstance) {
       user_agent: parsed.data.user_agent ?? null,
       role: user.role ?? null,
     };
+
+    pushBufferedClientError(envelope);
 
     const id = await withLuciaBypass(async (client) => {
       const res = await client.query<{ id: string | null }>(
