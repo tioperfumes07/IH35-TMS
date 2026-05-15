@@ -11,6 +11,7 @@ import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
+import { DispatchAlertsPage } from "./pages/dispatch/DispatchAlertsPage";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { CashAdvanceRequestsPage } from "./pages/driver-finance/CashAdvanceRequestsPage";
 import { OwnerApprovalPortalPage } from "./pages/driver-finance/OwnerApprovalPortalPage";
@@ -369,6 +370,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DispatchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/alerts"
+          element={
+            <ProtectedRoute>
+              <DispatchAlertsPage />
             </ProtectedRoute>
           }
         />
