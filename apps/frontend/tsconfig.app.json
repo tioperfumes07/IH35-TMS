@@ -6,13 +6,16 @@
     "module": "esnext",
     "types": ["vite/client"],
     "skipLibCheck": true,
+    "ignoreDeprecations": "6.0",
 
     /* Bundler mode */
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
+    "baseUrl": ".",
     "paths": {
       "@ih35/shared-types": ["../../packages/shared-types/src/index.ts"],
-      "@ih35/shared-types/*": ["../../packages/shared-types/src/*"]
+      "@ih35/shared-types/*": ["../../packages/shared-types/src/*"],
+      "@legal/*": ["../../docs/legal/*"]
     },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,

@@ -10,6 +10,7 @@ export type HelpLinkRule = { prefix: string; docRel: string };
 
 /** More-specific routes first within each prefix length bucket (sorted below). */
 export const HELP_LINK_RULES: HelpLinkRule[] = [
+  { prefix: "/admin/data-import", docRel: "docs/seed-real-data-guide.md" },
   { prefix: "/admin/launch-readiness", docRel: "docs/user-guides/owner-admin-quickstart.md#launch-readiness" },
   { prefix: "/reports/scheduled", docRel: "docs/user-guides/owner-admin-quickstart.md#scheduled-reports" },
   { prefix: "/driver-finance/settlements", docRel: "docs/user-guides/owner-admin-quickstart.md#settlements" },

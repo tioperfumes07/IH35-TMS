@@ -1,13 +1,7 @@
-import dotenv from "dotenv";
-import fs from "node:fs/promises";
-import path from "node:path";
-import process from "node:process";
 import pg from "pg";
 
-dotenv.config();
-
-type SeedType = "drivers" | "customers" | "vendors" | "assets" | "loads" | "bank_accounts" | "bank_transactions";
-type CompanyCode = "TRK" | "TRANSP";
+export type SeedType = "drivers" | "customers" | "vendors" | "assets" | "loads" | "bank_accounts" | "bank_transactions";
+export type CompanyCode = "TRK" | "TRANSP";
 
 const DRIVER_HEADERS = ["first_name", "last_name", "email", "phone", "cdl_number", "cdl_state", "cdl_class", "cdl_expires_at", "hire_date", "status"];
 const CUSTOMER_HEADERS = ["customer_code", "customer_name", "billing_email", "billing_phone", "mc_number", "dot_number", "billing_address_line1", "billing_city", "billing_state", "billing_postal_code"];
@@ -61,37 +55,6 @@ const BANK_TRANSACTION_HEADERS = [
   "matched_load_number",
 ];
 
-function parseArgv(argv: string[]) {
-  const args: Record<string, string[] | boolean> = {};
-  let i = 0;
-  while (i < argv.length) {
-    const token = argv[i];
-    if (!token.startsWith("--")) throw new Error(`Unexpected positional argument "${token}".`);
-    const name = token.slice(2);
-    const next = argv[i + 1];
-
-    const booleanFlags = new Set(["dry-run", "help", "h"]);
-    if (booleanFlags.has(name)) {
-      args[name] = true;
-      i += 1;
-      continue;
-    }
-
-    if (!next || next.startsWith("--")) throw new Error(`Missing value after --${name}`);
-    if (!args[name]) args[name] = [];
-    (args[name] as string[]).push(next);
-    i += 2;
-  }
-
-  return {
-    dryRun: Boolean(args["dry-run"]),
-    company: (args.company as string[] | undefined) ?? undefined,
-    type: (args.type as string[] | undefined) ?? undefined,
-    file: (args.file as string[] | undefined) ?? undefined,
-    help: Boolean(args.help || args.h),
-  };
-}
-
 function csvSplitLines(contents: string): string[][] {
   const lines = contents.split(/\r?\n/).filter((line) => line.trim().length > 0);
   return lines.map((line) =>
@@ -138,22 +101,6 @@ function deriveCodeSlug(prefix: string, source: string) {
     .replace(/-+/g, "-")
     .slice(0, 40);
   return slug.length ? `${prefix}-${slug}` : `${prefix}-unnamed`;
-}
-
-function inferSeedMeta(fileBasename: string): { company?: CompanyCode; type?: SeedType } {
-  const lower = fileBasename.toLowerCase();
-  let company: CompanyCode | undefined;
-  if (lower.startsWith("trk_")) company = "TRK";
-  if (lower.startsWith("transp_")) company = "TRANSP";
-  let seedType: SeedType | undefined;
-  if (lower.includes("_drivers")) seedType = "drivers";
-  if (lower.includes("_customers")) seedType = "customers";
-  if (lower.includes("_vendors")) seedType = "vendors";
-  if (lower.includes("_assets")) seedType = "assets";
-  if (lower === "loads" || lower.endsWith("_loads")) seedType = "loads";
-  if (lower === "bank-accounts" || lower.includes("bank_accounts") || lower.includes("bank-accounts")) seedType = "bank_accounts";
-  if (lower === "bank-transactions" || lower.includes("bank_transactions") || lower.includes("bank-transactions")) seedType = "bank_transactions";
-  return { company, type: seedType };
 }
 
 function parseCompany(value: string): CompanyCode {
@@ -445,16 +392,50 @@ function finalizeSeedTxn(client: pg.Client, dryRun: boolean, abortOnAnyError: bo
   return client.query(rollback ? "ROLLBACK" : "COMMIT");
 }
 
+type TxnMode = "isolated" | "participant";
+
+export class CsvImportRowErrors extends Error {
+  readonly errors: Array<{ row: number; message: string }>;
+  constructor(errors: Array<{ row: number; message: string }>) {
+    super("One or more rows failed.");
+    this.name = "CsvImportRowErrors";
+    this.errors = errors;
+  }
+}
+
+async function beginSeedTxn(client: pg.Client, txnMode: TxnMode): Promise<void> {
+  if (txnMode === "isolated") {
+    await client.query("BEGIN");
+  }
+}
+
+async function endSeedTxn(
+  client: pg.Client,
+  txnMode: TxnMode,
+  dryRun: boolean,
+  abortOnAnyError: boolean,
+  counters: RowReport
+): Promise<void> {
+  if (txnMode === "participant") {
+    if (abortOnAnyError && counters.errors.length > 0) {
+      throw new CsvImportRowErrors(counters.errors);
+    }
+    return;
+  }
+  await finalizeSeedTxn(client, dryRun, abortOnAnyError, counters.errors.length);
+}
+
 async function upsertDrivers(
   client: pg.Client,
   companyId: string,
   parsedRows: Record<string, string>[],
   dryRun: boolean,
-  abortOnAnyError = false
+  abortOnAnyError = false,
+  txnMode: TxnMode = "isolated"
 ): Promise<RowReport> {
   const counters: RowReport = { inserted: 0, skipped: 0, errors: [] };
 
-  await client.query("BEGIN");
+  await beginSeedTxn(client, txnMode);
 
   try {
     for (let idx = 0; idx < parsedRows.length; idx += 1) {
@@ -526,7 +507,7 @@ async function upsertDrivers(
       }
     }
 
-    await finalizeSeedTxn(client, dryRun, abortOnAnyError, counters.errors.length);
+    await endSeedTxn(client, txnMode, dryRun, abortOnAnyError, counters);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;
@@ -541,10 +522,11 @@ async function upsertCustomers(
   companyPrefix: string,
   parsedRows: Record<string, string>[],
   dryRun: boolean,
-  abortOnAnyError = false
+  abortOnAnyError = false,
+  txnMode: TxnMode = "isolated"
 ): Promise<RowReport> {
   const counters: RowReport = { inserted: 0, skipped: 0, errors: [] };
-  await client.query("BEGIN");
+  await beginSeedTxn(client, txnMode);
   try {
     for (let idx = 0; idx < parsedRows.length; idx += 1) {
       const rowNumber = idx + 2;
@@ -613,7 +595,7 @@ async function upsertCustomers(
         counters.errors.push({ row: rowNumber, message: (err as Error).message ?? String(err) });
       }
     }
-    await finalizeSeedTxn(client, dryRun, abortOnAnyError, counters.errors.length);
+    await endSeedTxn(client, txnMode, dryRun, abortOnAnyError, counters);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;
@@ -627,11 +609,12 @@ async function upsertVendors(
   companyPrefix: string,
   parsedRows: Record<string, string>[],
   dryRun: boolean,
-  abortOnAnyError = false
+  abortOnAnyError = false,
+  txnMode: TxnMode = "isolated"
 ): Promise<RowReport> {
   const allowedTypes = ["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"];
   const counters: RowReport = { inserted: 0, skipped: 0, errors: [] };
-  await client.query("BEGIN");
+  await beginSeedTxn(client, txnMode);
   try {
     for (let idx = 0; idx < parsedRows.length; idx += 1) {
       const rowNumber = idx + 2;
@@ -703,7 +686,7 @@ async function upsertVendors(
         counters.errors.push({ row: rowNumber, message: (err as Error).message ?? String(err) });
       }
     }
-    await finalizeSeedTxn(client, dryRun, abortOnAnyError, counters.errors.length);
+    await endSeedTxn(client, txnMode, dryRun, abortOnAnyError, counters);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;
@@ -718,10 +701,11 @@ async function upsertAssets(
   companyId: string,
   parsedRows: Record<string, string>[],
   dryRun: boolean,
-  abortOnAnyError = false
+  abortOnAnyError = false,
+  txnMode: TxnMode = "isolated"
 ): Promise<RowReport> {
   const counters: RowReport = { inserted: 0, skipped: 0, errors: [] };
-  await client.query("BEGIN");
+  await beginSeedTxn(client, txnMode);
 
   try {
     for (let idx = 0; idx < parsedRows.length; idx += 1) {
@@ -836,7 +820,7 @@ async function upsertAssets(
         counters.errors.push({ row: rowNumber, message: (err as Error).message ?? String(err) });
       }
     }
-    await finalizeSeedTxn(client, dryRun, abortOnAnyError, counters.errors.length);
+    await endSeedTxn(client, txnMode, dryRun, abortOnAnyError, counters);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;
@@ -850,10 +834,11 @@ async function upsertLoads(
   operatingCompanyId: string,
   parsedRows: Record<string, string>[],
   dryRun: boolean,
-  abortOnAnyError = false
+  abortOnAnyError = false,
+  txnMode: TxnMode = "isolated"
 ): Promise<RowReport> {
   const counters: RowReport = { inserted: 0, skipped: 0, errors: [] };
-  await client.query("BEGIN");
+  await beginSeedTxn(client, txnMode);
   try {
     for (let idx = 0; idx < parsedRows.length; idx += 1) {
       const rowNumber = idx + 2;
@@ -1026,7 +1011,7 @@ async function upsertLoads(
         counters.errors.push({ row: rowNumber, message: (err as Error).message ?? String(err) });
       }
     }
-    await finalizeSeedTxn(client, dryRun, abortOnAnyError, counters.errors.length);
+    await endSeedTxn(client, txnMode, dryRun, abortOnAnyError, counters);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;
@@ -1040,11 +1025,12 @@ async function upsertBankAccounts(
   operatingCompanyId: string,
   parsedRows: Record<string, string>[],
   dryRun: boolean,
-  abortOnAnyError = false
+  abortOnAnyError = false,
+  txnMode: TxnMode = "isolated"
 ): Promise<RowReport> {
   const allowedSync = new Set(["pending", "active", "disconnected", "needs_reauth", "error"]);
   const counters: RowReport = { inserted: 0, skipped: 0, errors: [] };
-  await client.query("BEGIN");
+  await beginSeedTxn(client, txnMode);
   try {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     for (let idx = 0; idx < parsedRows.length; idx += 1) {
@@ -1122,7 +1108,7 @@ async function upsertBankAccounts(
         counters.errors.push({ row: rowNumber, message: (err as Error).message ?? String(err) });
       }
     }
-    await finalizeSeedTxn(client, dryRun, abortOnAnyError, counters.errors.length);
+    await endSeedTxn(client, txnMode, dryRun, abortOnAnyError, counters);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;
@@ -1136,10 +1122,11 @@ async function upsertBankTransactions(
   operatingCompanyId: string,
   parsedRows: Record<string, string>[],
   dryRun: boolean,
-  abortOnAnyError = false
+  abortOnAnyError = false,
+  txnMode: TxnMode = "isolated"
 ): Promise<RowReport> {
   const counters: RowReport = { inserted: 0, skipped: 0, errors: [] };
-  await client.query("BEGIN");
+  await beginSeedTxn(client, txnMode);
   try {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     for (let idx = 0; idx < parsedRows.length; idx += 1) {
@@ -1231,7 +1218,7 @@ async function upsertBankTransactions(
         counters.errors.push({ row: rowNumber, message: (err as Error).message ?? String(err) });
       }
     }
-    await finalizeSeedTxn(client, dryRun, abortOnAnyError, counters.errors.length);
+    await endSeedTxn(client, txnMode, dryRun, abortOnAnyError, counters);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw err;
@@ -1240,62 +1227,46 @@ async function upsertBankTransactions(
   return counters;
 }
 
-async function main() {
-  const argvTokens = parseArgv(process.argv.slice(2));
-  if (argvTokens.help) {
-    console.info(
-      [
-        "Usage:",
-        "  npm run seed:from-csv -- --company TRK --type drivers --file db/seeds/trk_drivers.csv",
-        "  npm run seed:from-csv -- --dry-run --file db/seeds/transp_assets.csv # infers TRANSP/assets",
-        "  npm run seed:from-csv -- --dry-run --file tests/fixtures/p6-t11205/loads.csv # infers loads (company_code per row)",
-        "  npm run seed:from-csv -- --dry-run --file tests/fixtures/p6-t11205/bank-accounts.csv",
-      ].join("\n")
-    );
-    return;
-  }
+export type AdminImportEntitySlug =
+  | "drivers"
+  | "units"
+  | "customers"
+  | "vendors"
+  | "bank-accounts"
+  | "loads"
+  | "bank-transactions";
 
-  if (!argvTokens.file || argvTokens.file.length !== 1) {
-    throw new Error("Specify exactly one --file argument.");
-  }
-  const resolvedFileRaw = argvTokens.file?.[0];
-  if (!resolvedFileRaw) throw new Error("--file path is required");
+export const ADMIN_IMPORT_ENTITY_SLUGS: AdminImportEntitySlug[] = [
+  "drivers",
+  "units",
+  "customers",
+  "vendors",
+  "bank-accounts",
+  "loads",
+  "bank-transactions",
+];
 
-  let resolvedInput = resolvedFileRaw;
-  const localOverrideCandidates = [];
-  localOverrideCandidates.push(path.join(process.cwd(), "db", "seeds", "local", path.basename(resolvedInput)));
-  for (const candidate of localOverrideCandidates) {
-    try {
-      await fs.access(candidate);
-      resolvedInput = candidate;
-      console.info(`[seed] Using local CSV override → ${candidate}`);
-      break;
-    } catch {
-      // noop
-    }
-  }
+export function mapAdminImportEntityToSeedType(slug: string): SeedType {
+  const t = slug.trim().toLowerCase();
+  if (t === "units") return "assets";
+  return parseType(t);
+}
 
-  const absolutePath = path.isAbsolute(resolvedInput) ? resolvedInput : path.join(process.cwd(), resolvedInput);
+export type AdminImportPreviewResult = {
+  valid_rows: number;
+  invalid_rows: number;
+  errors: Array<{ row: number; message: string }>;
+  sample_valid: Record<string, string>[];
+  all_invalid: Array<{ row: number; row_data: Record<string, string>; errors: string[] }>;
+};
 
-  let companyCodeArg = argvTokens.company?.[0];
-  let typeArg = argvTokens.type?.[0];
-  const basename = path.basename(absolutePath, path.extname(absolutePath));
-  const inferred = inferSeedMeta(basename);
-  if (!companyCodeArg && inferred.company) companyCodeArg = inferred.company;
-  if (!typeArg && inferred.type) typeArg = inferred.type;
+export type AdminImportCommitResult = {
+  inserted_rows: number;
+  skipped_rows: number;
+  errors: Array<{ row: number; message: string }>;
+};
 
-  if (!typeArg) {
-    throw new Error('Unable to infer --type from filename. Provide explicitly (e.g. --type loads).');
-  }
-
-  const seedKind = parseType(typeArg);
-
-  const csvContents = await fs.readFile(absolutePath, "utf8");
-  const csvRowsRaw = csvSplitLines(csvContents);
-  if (!csvRowsRaw.length) throw new Error("CSV is empty.");
-
-  const headerRow = csvRowsRaw[0] ?? [];
-
+function adminAssertHeaders(seedKind: SeedType, headerRow: string[]) {
   switch (seedKind) {
     case "drivers":
       assertHeaders(headerRow, DRIVER_HEADERS, "drivers");
@@ -1319,35 +1290,89 @@ async function main() {
       assertHeaders(headerRow, BANK_TRANSACTION_HEADERS, "bank_transactions");
       break;
     default:
-      throw new Error("Unsupported loader type");
+      throw new Error("Unsupported seed type for admin import");
   }
+}
 
-  const serializedRows = csvRowsRaw.slice(1).map((row) => {
-    const record: Record<string, string> = {};
-    headerRow.forEach((header, idx) => {
-      record[header.trim()] = row[idx] ?? "";
+function adminSerializeRows(csvRowsRaw: string[][], headerRow: string[]): Record<string, string>[] {
+  return csvRowsRaw
+    .slice(1)
+    .filter((row) => row.length && row[0] && !String(row[0]).trim().startsWith("#"))
+    .map((row) => {
+      const record: Record<string, string> = {};
+      headerRow.forEach((header, idx) => {
+        record[header] = row[idx] ?? "";
+      });
+      return record;
     });
-    return record;
-  });
+}
 
-  const optionalCompanyFilter = parseCompanyMaybe(companyCodeArg);
+function adminGroupRowsByCompany(
+  rows: Record<string, string>[],
+  codeField: "company_code"
+): Map<CompanyCode, Record<string, string>[]> {
+  const map = new Map<CompanyCode, Record<string, string>[]>();
+  for (const row of rows) {
+    const code = parseCompany(nonempty(row[codeField]));
+    const bucket = map.get(code) ?? [];
+    bucket.push(row);
+    map.set(code, bucket);
+  }
+  return map;
+}
 
-  if (!ROW_SCOPED_TYPES.has(seedKind)) {
-    if (!optionalCompanyFilter) {
-      throw new Error("Unable to infer --company from filename. Provide explicitly.");
-    }
+function formatAdminPreview(merged: RowReport, serializedRows: Record<string, string>[]): AdminImportPreviewResult {
+  const errByRow = new Map<number, string[]>();
+  for (const e of merged.errors) {
+    const list = errByRow.get(e.row) ?? [];
+    list.push(e.message);
+    errByRow.set(e.row, list);
+  }
+  const all_invalid = [...errByRow.entries()]
+    .map(([row, errs]) => ({
+      row,
+      row_data: serializedRows[row - 2] ?? {},
+      errors: errs,
+    }))
+    .sort((a, b) => a.row - b.row);
+  const validFull = serializedRows.filter((_, i) => !errByRow.has(i + 2));
+  const sample_valid = validFull.slice(0, 5);
+  return {
+    valid_rows: validFull.length,
+    invalid_rows: errByRow.size,
+    errors: merged.errors,
+    sample_valid,
+    all_invalid,
+  };
+}
+
+export async function runAdminCsvImport(
+  client: pg.Client,
+  options: {
+    csvText: string;
+    seedKind: SeedType;
+    companyCode?: CompanyCode;
+    preview: boolean;
+  }
+): Promise<AdminImportPreviewResult | AdminImportCommitResult> {
+  const { csvText, seedKind, preview } = options;
+  const optionalCompanyFilter = options.companyCode;
+
+  const companyRequired = new Set<SeedType>(["drivers", "customers", "vendors", "assets"]);
+  if (companyRequired.has(seedKind) && !optionalCompanyFilter) {
+    throw new Error("company_code is required for this entity type");
   }
 
-  function groupRowsByCompany(rows: Record<string, string>[]): Map<CompanyCode, Record<string, string>[]> {
-    const map = new Map<CompanyCode, Record<string, string>[]>();
-    for (const row of rows) {
-      const code = parseCompany(nonempty(row.company_code));
-      const bucket = map.get(code) ?? [];
-      bucket.push(row);
-      map.set(code, bucket);
-    }
-    return map;
+  if (!ROW_SCOPED_TYPES.has(seedKind) && !optionalCompanyFilter) {
+    throw new Error("company_code is required for this entity type");
   }
+
+  const csvRowsRaw = csvSplitLines(csvText);
+  if (!csvRowsRaw.length) throw new Error("CSV is empty.");
+  const headerRow = (csvRowsRaw[0] ?? []).map((h) => h.trim());
+  adminAssertHeaders(seedKind, headerRow);
+
+  const serializedRows = adminSerializeRows(csvRowsRaw, headerRow);
 
   let targets: Map<CompanyCode, Record<string, string>[]>;
   if (ROW_SCOPED_TYPES.has(seedKind)) {
@@ -1355,111 +1380,62 @@ async function main() {
       ? serializedRows.filter((row) => parseCompany(nonempty(row.company_code)) === optionalCompanyFilter)
       : serializedRows;
     if (filtered.length === 0) {
-      throw new Error("No rows remain after applying --company filter (check row company_code values).");
+      throw new Error("No rows remain after applying company filter.");
     }
-    targets = groupRowsByCompany(filtered);
+    targets = adminGroupRowsByCompany(filtered, "company_code");
   } else {
     targets = new Map([[optionalCompanyFilter!, serializedRows]]);
   }
 
-  console.info(
-    `[seed] Loaded ${serializedRows.length} data rows (${seedKind}, companies=${[...targets.keys()].join(",")}) from ${path.relative(process.cwd(), absolutePath)}`
-  );
-
-  const dryRun = Boolean(argvTokens.dryRun);
-  const connectionString = process.env.DATABASE_URL ?? process.env.DATABASE_DIRECT_URL;
-
-  if (!connectionString) {
-    serializedRows.slice(0, 3).forEach((preview, previewIdx) => {
-      console.info(`[seed] Preview row ${previewIdx + 1}: ${JSON.stringify(preview)}`);
-    });
-    console.info("\nREPORT (schema validation — no database connection)");
-    console.info(
-      JSON.stringify(
-        {
-          file: resolvedInput,
-          companies: [...targets.keys()],
-          type: seedKind,
-          validatedRows: serializedRows.length,
-          dryRun,
-        },
-        null,
-        2
-      )
-    );
-    if (!dryRun) {
-      console.error("[seed] DATABASE_URL/DATABASE_DIRECT_URL missing — cannot apply seeds without credentials.");
-    }
-    process.exit(dryRun ? 0 : 1);
-    return;
-  }
-
-  const client = new pg.Client({ connectionString });
-  await client.connect();
-  try {
+  async function executeMerge(dryRun: boolean, txnMode: TxnMode): Promise<RowReport> {
     const mergedReport: RowReport = { inserted: 0, skipped: 0, errors: [] };
-
+    const abortOnAnyError = txnMode === "participant";
     for (const [companyCode, rows] of targets.entries()) {
       const operatingCompanyId = await resolveCompanyId(client, companyCode);
       const companySlug = companyCode === "TRK" ? "TRK" : "TRANSP";
       let report: RowReport;
       switch (seedKind) {
         case "drivers":
-          report = await upsertDrivers(client, operatingCompanyId, rows, dryRun);
+          report = await upsertDrivers(client, operatingCompanyId, rows, dryRun, abortOnAnyError, txnMode);
           break;
         case "customers":
-          report = await upsertCustomers(client, operatingCompanyId, companySlug, rows, dryRun);
+          report = await upsertCustomers(client, operatingCompanyId, companySlug, rows, dryRun, abortOnAnyError, txnMode);
           break;
         case "vendors":
-          report = await upsertVendors(client, operatingCompanyId, companySlug, rows, dryRun);
+          report = await upsertVendors(client, operatingCompanyId, companySlug, rows, dryRun, abortOnAnyError, txnMode);
           break;
         case "assets":
-          report = await upsertAssets(client, operatingCompanyId, rows, dryRun);
+          report = await upsertAssets(client, operatingCompanyId, rows, dryRun, abortOnAnyError, txnMode);
           break;
         case "loads":
-          report = await upsertLoads(client, operatingCompanyId, rows, dryRun);
+          report = await upsertLoads(client, operatingCompanyId, rows, dryRun, abortOnAnyError, txnMode);
           break;
         case "bank_accounts":
-          report = await upsertBankAccounts(client, operatingCompanyId, rows, dryRun);
+          report = await upsertBankAccounts(client, operatingCompanyId, rows, dryRun, abortOnAnyError, txnMode);
           break;
         case "bank_transactions":
-          report = await upsertBankTransactions(client, operatingCompanyId, rows, dryRun);
+          report = await upsertBankTransactions(client, operatingCompanyId, rows, dryRun, abortOnAnyError, txnMode);
           break;
         default:
           throw new Error("Unsupported seed type.");
       }
-
       mergedReport.inserted += report.inserted;
       mergedReport.skipped += report.skipped;
       mergedReport.errors.push(...report.errors.map((err) => ({ row: err.row, message: `[${companyCode}] ${err.message}` })));
     }
-
-    console.info("\nREPORT");
-    console.info(
-      JSON.stringify(
-        {
-          file: resolvedInput,
-          companies: [...targets.keys()],
-          type: seedKind,
-          inserted: mergedReport.inserted,
-          skipped: mergedReport.skipped,
-          errors: mergedReport.errors,
-          dryRun,
-        },
-        null,
-        2
-      )
-    );
-
-    if (mergedReport.errors.length > 0) {
-      process.exitCode = 1;
-    }
-  } finally {
-    await client.end().catch(() => undefined);
+    return mergedReport;
   }
+
+  if (preview) {
+    const merged = await executeMerge(true, "isolated");
+    return formatAdminPreview(merged, serializedRows);
+  }
+
+  const merged = await executeMerge(false, "participant");
+  return {
+    inserted_rows: merged.inserted,
+    skipped_rows: merged.skipped,
+    errors: merged.errors,
+  };
 }
 
-main().catch((err) => {
-  console.error("Seed script failed:", (err as Error).message ?? err);
-  process.exit(1);
-});

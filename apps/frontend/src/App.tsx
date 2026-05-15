@@ -99,6 +99,7 @@ import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { BillsPage } from "./pages/accounting/BillsPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
+import { DataImportPage } from "./pages/admin/DataImportPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
 import { ChartOfAccountsSeedsListPage } from "./pages/lists/accounting/ChartOfAccountsSeedsListPage";
@@ -163,6 +164,8 @@ import { LegalAttorneyReviewPortalPage } from "./pages/legal/attorney-review/Leg
 import { LegalLandingPage } from "./pages/legal/LegalLandingPage";
 import { LegalContractInstancesPage } from "./pages/legal/contracts/LegalContractInstancesPage";
 import { LegalPoliciesPage } from "./pages/legal/LegalPoliciesPage";
+import { PrivacyPolicyPage } from "./pages/legal/PrivacyPolicyPage";
+import { TermsOfServicePage } from "./pages/legal/TermsOfServicePage";
 import { LegalAttorneyReviewPage } from "./pages/legal/LegalAttorneyReviewPage";
 import { LegalMattersListPage } from "./pages/legal/matters/LegalMattersListPage";
 import { LegalMatterNewPage } from "./pages/legal/matters/LegalMatterNewPage";
@@ -256,6 +259,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/legal/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/legal/terms" element={<TermsOfServicePage />} />
         <Route path="/sign/:token" element={<LegalSignPage />} />
         <Route path="/attorney-review/:token" element={<LegalAttorneyReviewPortalPage />} />
         <Route path="/owner-approval/:token" element={<OwnerApprovalPortalPage />} />
@@ -1206,6 +1211,14 @@ export default function App() {
           element={
             <OwnerAdminRoute>
               <LegalAttorneyReviewPage />
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/data-import"
+          element={
+            <OwnerAdminRoute>
+              <DataImportPage />
             </OwnerAdminRoute>
           }
         />

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { FastifyInstance } from "fastify";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { testAuthHeaders } from "../../test-helpers/auth-fixture.js";
@@ -29,5 +31,13 @@ describe("launch-readiness.routes (auth gates)", () => {
       headers: testAuthHeaders(undefined, "Dispatcher"),
     });
     expect(res.statusCode).toBe(403);
+  });
+});
+
+describe("launch-readiness production wiring", () => {
+  it("registers launch readiness in apps/backend/src/index.ts (Block E regression guard)", () => {
+    const indexSrc = readFileSync(fileURLToPath(new URL("../index.ts", import.meta.url)), "utf8");
+    expect(indexSrc).toContain("registerLaunchReadinessRoutes");
+    expect(indexSrc).toContain("await registerLaunchReadinessRoutes(app)");
   });
 });
