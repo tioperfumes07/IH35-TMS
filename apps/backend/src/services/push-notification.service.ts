@@ -117,7 +117,7 @@ export async function notifyLoadAssigned(input: {
 
     await dispatchNotification({
       user_id: String(row.identity_user_id),
-      event_type: "load_assignment",
+      event_type: "load.assigned",
       actor_user_id: null,
       payload: {
         operating_company_id: input.operatingCompanyId,

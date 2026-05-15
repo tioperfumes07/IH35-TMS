@@ -3,18 +3,43 @@ import { enqueueEmail } from "../email/queue.service.js";
 import { sendSms } from "../sms/sender.js";
 import { sendWhatsAppMessage } from "../whatsapp/sender.js";
 import { whatsappTemplateRegistry } from "../whatsapp/templates/index.js";
+import type { NotificationDispatchEventType } from "./event-types.js";
+import {
+  channelEnabledForDispatch,
+  isQuietHoursNow,
+  mergeNotificationPreferencesRow,
+  type MergedNotificationPreferences,
+} from "../identity/notification-prefs.service.js";
 
-export type NotificationEventType =
-  | "load_assignment"
-  | "settlement_ready"
-  | "settlement_approved"
-  | "cash_advance_request"
-  | "qbo_sync_error"
-  | "abandoned_load"
-  | "plaid_item_login_required";
+export type NotificationEventType = NotificationDispatchEventType;
+
+function isLoadAssignedEvent(t: NotificationDispatchEventType): boolean {
+  return t === "load.assigned" || t === "load_assignment";
+}
+
+function isSettlementDispatchEvent(t: NotificationDispatchEventType): boolean {
+  return (
+    t === "settlement.created" ||
+    t === "settlement.approved" ||
+    t === "settlement_ready" ||
+    t === "settlement_approved"
+  );
+}
+
+function isSettlementApprovedEvent(t: NotificationDispatchEventType): boolean {
+  return t === "settlement.approved" || t === "settlement_approved";
+}
+
+function isPlaidLoginEvent(t: NotificationDispatchEventType): boolean {
+  return t === "banking.plaid.login-required" || t === "plaid_item_login_required";
+}
+
+function isQboSyncFailedEvent(t: NotificationDispatchEventType): boolean {
+  return t === "qbo.sync.failed" || t === "qbo_sync_error";
+}
 
 type QueryableClient = {
-  query: (query: string, values?: unknown[]) => Promise<{ rows: unknown[] }>;
+  query: <T = unknown>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
 type ChannelSnapshot = { attempted?: boolean; ok?: boolean; error?: string };
@@ -32,45 +57,38 @@ export type DispatchNotificationResult = {
   error?: string;
 };
 
-function readBool(value: unknown, fallback: boolean): boolean {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "string") {
-    const v = value.trim().toLowerCase();
-    if (v === "true") return true;
-    if (v === "false") return false;
-  }
-  return fallback;
-}
-
-async function loadPrefs(client: QueryableClient, userId: string) {
-  const defaults = { email: true, sms: false, whatsapp: false };
+async function loadMergedNotificationPreferences(
+  client: QueryableClient,
+  userId: string
+): Promise<MergedNotificationPreferences> {
   try {
     const reg = await client.query(`SELECT to_regclass('identity.user_notification_preferences') AS r`);
-    const exists = Boolean((reg.rows[0] as { r?: unknown } | undefined)?.r);
-    if (!exists) return defaults;
-
-    let rowRes: { rows: Record<string, unknown>[] };
-    try {
-      rowRes = (await client.query(`SELECT * FROM identity.user_notification_preferences WHERE user_uuid = $1::uuid LIMIT 1`, [
-        userId,
-      ])) as { rows: Record<string, unknown>[] };
-    } catch {
-      rowRes = (await client.query(`SELECT * FROM identity.user_notification_preferences WHERE user_id = $1::uuid LIMIT 1`, [
-        userId,
-      ])) as { rows: Record<string, unknown>[] };
+    if (!(reg.rows[0] as { r?: unknown } | undefined)?.r) {
+      return mergeNotificationPreferencesRow(null);
     }
-
-    const row = rowRes.rows[0];
-    if (!row) return defaults;
-
-    return {
-      email: readBool(row.email_enabled ?? row.notify_email ?? row.email, true),
-      sms: readBool(row.sms_enabled ?? row.notify_sms ?? row.sms, false),
-      whatsapp: readBool(row.whatsapp_enabled ?? row.notify_whatsapp ?? row.whatsapp, false),
-    };
+    const res = await client.query<{
+      channels: unknown;
+      event_overrides: unknown;
+      quiet_hours_start: string | null;
+      quiet_hours_end: string | null;
+      timezone: string | null;
+      email_enabled?: unknown;
+      sms_enabled?: unknown;
+      whatsapp_enabled?: unknown;
+    }>(
+      `
+        SELECT channels, event_overrides, quiet_hours_start::text, quiet_hours_end::text, timezone,
+               email_enabled, sms_enabled, whatsapp_enabled
+        FROM identity.user_notification_preferences
+        WHERE user_uuid = $1::uuid
+        LIMIT 1
+      `,
+      [userId]
+    );
+    return mergeNotificationPreferencesRow(res.rows[0] ?? null);
   } catch (error) {
     console.warn("[notifications] preference_lookup_failed", String((error as Error)?.message ?? error));
-    return defaults;
+    return mergeNotificationPreferencesRow(null);
   }
 }
 
@@ -103,9 +121,9 @@ function stringPayload(payload: Record<string, unknown>, key: string): string {
   return String(value).trim();
 }
 
-function buildEmailPlan(eventType: NotificationEventType, payload: Record<string, unknown>) {
-  if (eventType === "settlement_ready" || eventType === "settlement_approved") {
-    const prefix = eventType === "settlement_approved" ? "Settlement approved" : "Settlement ready";
+function buildEmailPlan(eventType: NotificationDispatchEventType, payload: Record<string, unknown>) {
+  if (isSettlementDispatchEvent(eventType)) {
+    const prefix = isSettlementApprovedEvent(eventType) ? "Settlement approved" : "Settlement ready";
     return {
       templateKey: "settlement-ready",
       subject:
@@ -119,7 +137,7 @@ function buildEmailPlan(eventType: NotificationEventType, payload: Record<string
     };
   }
 
-  if (eventType === "plaid_item_login_required") {
+  if (isPlaidLoginEvent(eventType)) {
     const title = stringPayload(payload, "headline") || "Plaid bank connection needs attention";
     const bodyText = stringPayload(payload, "bodyText") || "";
     return {
@@ -129,7 +147,7 @@ function buildEmailPlan(eventType: NotificationEventType, payload: Record<string
     };
   }
 
-  if (eventType === "qbo_sync_error") {
+  if (isQboSyncFailedEvent(eventType)) {
     const headline = stringPayload(payload, "headline") || "QuickBooks sync issue";
     const bodyText = stringPayload(payload, "bodyText") || "";
     return {
@@ -149,14 +167,14 @@ function buildEmailPlan(eventType: NotificationEventType, payload: Record<string
 }
 
 function resolveWhatsAppPlan(
-  eventType: NotificationEventType,
+  eventType: NotificationDispatchEventType,
   payload: Record<string, unknown>
 ): { to: string; template_name: string; variables: Record<string, string> } | null {
   if (payload.whatsapp_skip === true) return null;
   const to = stringPayload(payload, "whatsapp_to") || stringPayload(payload, "sms_to");
   if (!to) return null;
 
-  if (eventType === "load_assignment") {
+  if (isLoadAssignedEvent(eventType)) {
     return {
       to,
       template_name: "ih35_load_assignment_v1",
@@ -169,7 +187,7 @@ function resolveWhatsAppPlan(
       },
     };
   }
-  if (eventType === "settlement_ready" || eventType === "settlement_approved") {
+  if (isSettlementDispatchEvent(eventType)) {
     return {
       to,
       template_name: "ih35_settlement_ready_v1",
@@ -197,23 +215,23 @@ function templateExists(templateName: string) {
   return whatsappTemplateRegistry.some((entry) => entry.name === templateName);
 }
 
-function buildSmsBody(eventType: NotificationEventType, payload: Record<string, unknown>): string {
+function buildSmsBody(eventType: NotificationDispatchEventType, payload: Record<string, unknown>): string {
   const explicit = stringPayload(payload, "sms_body");
   if (explicit) return explicit.slice(0, 480);
-  if (eventType === "load_assignment") {
+  if (isLoadAssignedEvent(eventType)) {
     return `New load assigned: ${stringPayload(payload, "load_label") || stringPayload(payload, "load_id")}.`;
   }
-  if (eventType === "settlement_ready" || eventType === "settlement_approved") {
-    const verb = eventType === "settlement_approved" ? "approved" : "ready";
+  if (isSettlementDispatchEvent(eventType)) {
+    const verb = isSettlementApprovedEvent(eventType) ? "approved" : "ready";
     return `Settlement ${stringPayload(payload, "settlement_no")} is ${verb} (${stringPayload(payload, "net")}).`;
   }
-  if (eventType === "cash_advance_request") {
+  if (eventType === "advance.created" || eventType === "cash_advance_request") {
     return stringPayload(payload, "headline") || "Cash advance request submitted.";
   }
-  if (eventType === "plaid_item_login_required") {
+  if (isPlaidLoginEvent(eventType)) {
     return stringPayload(payload, "sms_body") || "Plaid bank connection needs re-authentication.";
   }
-  if (eventType === "qbo_sync_error") {
+  if (isQboSyncFailedEvent(eventType)) {
     return stringPayload(payload, "sms_body_short") || `QBO sync error: ${stringPayload(payload, "kind") || "failure"}`;
   }
   if (eventType === "abandoned_load") {
@@ -241,17 +259,29 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
     await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-      const prefs = await loadPrefs(client as QueryableClient, input.user_id);
+      const merged = await loadMergedNotificationPreferences(client as QueryableClient, input.user_id);
+      const quiet = isQuietHoursNow(merged.timezone, merged.quiet_hours_start, merged.quiet_hours_end);
 
       const userRes = await client.query<{ email: string | null }>(
-        `SELECT email FROM identity.users WHERE uuid = $1::uuid LIMIT 1`,
+        `SELECT email FROM identity.users WHERE id = $1::uuid LIMIT 1`,
         [input.user_id]
       );
       const email = String(userRes.rows[0]?.email ?? "").trim();
 
       const skipEmail = payload.skip_email === true;
 
-      if (prefs.email && email && !skipEmail) {
+      if (channelEnabledForDispatch({ merged, event: input.event_type, channel: "in_app" })) {
+        channels.in_app = { attempted: false, ok: true };
+      }
+
+      const allowEmail =
+        channelEnabledForDispatch({ merged, event: input.event_type, channel: "email" }) && !quiet;
+      const allowSms =
+        channelEnabledForDispatch({ merged, event: input.event_type, channel: "sms" }) && !quiet;
+      const allowWhatsapp =
+        channelEnabledForDispatch({ merged, event: input.event_type, channel: "whatsapp" }) && !quiet;
+
+      if (allowEmail && email && !skipEmail) {
         channels.email = { attempted: true };
         try {
           const plan = buildEmailPlan(input.event_type, payload);
@@ -272,7 +302,7 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
       }
 
       const smsTo = stringPayload(payload, "sms_to");
-      if (prefs.sms && smsTo) {
+      if (allowSms && smsTo) {
         channels.sms = { attempted: true };
         const body = buildSmsBody(input.event_type, payload);
         let smsQueueId: string | null = null;
@@ -303,7 +333,7 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
 
       const waPlan = resolveWhatsAppPlan(input.event_type, payload);
       const waVerified = process.env.WHATSAPP_BUSINESS_VERIFIED === "true";
-      if (prefs.whatsapp && waPlan) {
+      if (allowWhatsapp && waPlan) {
         channels.whatsapp = { attempted: true };
         let waQueueId: string | null = null;
         const waQueueEnabled = await regclassExists(client as QueryableClient, "whatsapp.queue");
@@ -408,7 +438,7 @@ export async function notifyOwnersCashAdvanceSubmitted(input: {
     owners.map((userId) =>
       dispatchNotification({
         user_id: userId,
-        event_type: "cash_advance_request",
+        event_type: "advance.created",
         actor_user_id: input.actorUserId,
         payload: {
           operating_company_id: input.operatingCompanyId,

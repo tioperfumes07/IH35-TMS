@@ -5,6 +5,7 @@ import i18n from "../../i18n";
 import { clearDriverAuth, hasDriverAccessToken } from "../../lib/auth-token";
 import { initDriverBackgroundSessionRefresh, registerDriverServiceWorker } from "../../lib/service-worker-registration";
 import { InstallPWAPrompt } from "./InstallPWAPrompt";
+import { DriverOnboardingTour } from "./DriverOnboardingTour";
 import { FooterFaqLink, PageHelpLink } from "../../components/PageHelpLink";
 
 function applyDriverLanguageDefault() {
@@ -46,6 +47,7 @@ export function DriverShell() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
+      <DriverOnboardingTour />
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-3 py-2">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
           <span className="text-sm font-semibold">{t("driver.app_title")}</span>
@@ -74,16 +76,16 @@ export function DriverShell() {
           </div>
         </div>
         <nav className="mx-auto mt-2 flex max-w-lg justify-between gap-1 text-xs">
-          <Link className={tabClass("/driver/loads")} to="/driver/loads">
+          <Link className={tabClass("/driver/loads")} to="/driver/loads" data-tour="driver-nav-loads">
             Loads
           </Link>
-          <Link className={tabClass("/driver/hos")} to="/driver/hos">
+          <Link className={tabClass("/driver/hos")} to="/driver/hos" data-tour="driver-nav-hos">
             HOS
           </Link>
-          <Link className={tabClass("/driver/disputes")} to="/driver/disputes">
+          <Link className={tabClass("/driver/disputes")} to="/driver/disputes" data-tour="driver-nav-disputes">
             Disputes
           </Link>
-          <Link className={tabClass("/driver/settings")} to="/driver/settings">
+          <Link className={tabClass("/driver/settings")} to="/driver/settings" data-tour="driver-nav-settings">
             Settings
           </Link>
           <button type="button" className="text-red-700" onClick={logout}>

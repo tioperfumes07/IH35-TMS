@@ -22,10 +22,12 @@ export async function registerDriverAuthTokenRoutes(app: FastifyInstance) {
     const row = await withCurrentUser(user.uuid, async (client) => {
       const res = await client.query<{
         operating_company_id: string | null;
+        onboarding_completed_at: string | null;
       }>(
         `
-          SELECT d.operating_company_id
+          SELECT d.operating_company_id, u.onboarding_completed_at::text AS onboarding_completed_at
           FROM mdata.drivers d
+          JOIN identity.users u ON u.id = d.identity_user_id
           WHERE d.id = $1
           LIMIT 1
         `,
@@ -47,7 +49,32 @@ export async function registerDriverAuthTokenRoutes(app: FastifyInstance) {
       },
       operating_company_id: row.operating_company_id,
       identity_user_id: user.uuid,
+      onboarding_completed_at: row.onboarding_completed_at ?? null,
     };
+  });
+
+  app.patch("/api/v1/driver/me/onboarding", async (req, reply) => {
+    if (!(await requireDriverSession(req, reply))) return;
+    const user = req.user;
+    const driver = req.driver;
+    if (!user || !driver) return reply.code(403).send({ error: "forbidden" });
+
+    const parsed = z
+      .object({ complete: z.boolean() })
+      .strict()
+      .safeParse(req.body ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+
+    await withCurrentUser(user.uuid, async (client) => {
+      await client.query(
+        parsed.data.complete
+          ? `UPDATE identity.users SET onboarding_completed_at = now() WHERE id = $1`
+          : `UPDATE identity.users SET onboarding_completed_at = NULL WHERE id = $1`,
+        [user.uuid]
+      );
+    });
+
+    return { ok: true, onboarding_completed_at: parsed.data.complete ? new Date().toISOString() : null };
   });
 
   app.post("/api/v1/driver/auth/refresh", async (req, reply) => {

@@ -68,6 +68,8 @@ import { DriverLoadsPage } from "./pages/driver/DriverLoadsPage";
 import { DriverLoadDetailPage } from "./pages/driver/DriverLoadDetailPage";
 import { DriverHosPage } from "./pages/driver/DriverHosPage";
 import { DriverSettingsPage } from "./pages/driver/DriverSettingsPage";
+import { NotificationPreferencesPage } from "./pages/settings/NotificationPreferencesPage";
+import { UserProfileSettingsPage } from "./pages/settings/UserProfileSettingsPage";
 import { DocumentsPage } from "./pages/Documents";
 import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
@@ -271,6 +273,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <HomeRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationPreferencesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <UserProfileSettingsPage />
             </ProtectedRoute>
           }
         />
