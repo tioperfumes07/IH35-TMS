@@ -29,7 +29,7 @@
     "smoke:block-x": "tsx scripts/smoke-tests/block-x-scheduled-reports-e2e.ts && tsx scripts/smoke-tests/block-x-production-health.ts",
     "smoke:perf": "tsx scripts/smoke-tests/perf-baseline.ts",
     "smoke:email-queue": "tsx scripts/smoke-tests/email-queue-e2e.ts",
-    "test": "vitest run --config apps/backend/vitest.config.ts && cd apps/frontend && npx vitest run src/components/ErrorBoundary.test.tsx",
+    "test": "vitest run --config apps/backend/vitest.config.ts && cd apps/frontend && npx vitest run src/components/ErrorBoundary.test.tsx && cd ../.. && node scripts/lint-deps.test.mjs",
     "test:coverage": "vitest run --config apps/backend/vitest.config.ts --coverage",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed:legal-templates": "node scripts/db-seed-legal-templates.mjs",
@@ -134,6 +134,7 @@
     "zod": "^4.4.2"
   },
   "devDependencies": {
+    "@types/luxon": "^3.7.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.0.0",
     "@types/pg": "^8.20.0",
