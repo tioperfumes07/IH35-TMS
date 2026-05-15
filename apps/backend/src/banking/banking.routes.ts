@@ -8,6 +8,10 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const accountsAllQuerySchema = companyQuerySchema.extend({
+  include_inactive: z.coerce.boolean().optional().default(false),
+});
+
 const accountIdParamsSchema = z.object({
   id: z.string().uuid(),
 });
@@ -94,10 +98,28 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
       const kpiRes = await client.query(
         `
-          SELECT *
-          FROM views.banking_dashboard_kpis
-          WHERE operating_company_id = $1
-          LIMIT 1
+          WITH tiles AS (
+            SELECT t.*
+            FROM views.banking_account_tiles t
+            WHERE t.operating_company_id = $1
+              AND (
+                t.tile_kind <> 'real'
+                OR EXISTS (
+                  SELECT 1 FROM banking.bank_accounts b
+                  WHERE b.id = t.id AND b.is_active = true
+                )
+              )
+          )
+          SELECT
+            $1::uuid AS operating_company_id,
+            COALESCE(SUM(CASE WHEN tile_kind = 'real' THEN current_balance ELSE 0 END), 0) AS total_cash,
+            COALESCE(SUM(CASE WHEN tag IN ('DIP Operating','DIP Payroll','DIP Other') THEN current_balance ELSE 0 END), 0) AS total_dip_cash,
+            COALESCE(SUM(CASE WHEN tag = 'DIP Operating' THEN current_balance ELSE 0 END), 0) AS dip_operating,
+            COALESCE(SUM(CASE WHEN tag = 'DIP Payroll' THEN current_balance ELSE 0 END), 0) AS dip_payroll,
+            COALESCE(SUM(CASE WHEN tag = 'Factoring' THEN current_balance ELSE 0 END), 0) AS factoring_reserve,
+            COALESCE(SUM(CASE WHEN tag = 'Escrow' THEN current_balance ELSE 0 END), 0) AS driver_escrow,
+            COALESCE(SUM(uncategorized_count), 0) AS total_uncategorized
+          FROM tiles
         `,
         [companyId]
       );
@@ -139,10 +161,17 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const tiles = await withCompanyScope(user.uuid, companyId, async (client) => {
       const res = await client.query(
         `
-          SELECT *
-          FROM views.banking_account_tiles
-          WHERE operating_company_id = $1
-          ORDER BY display_order, account_type, display_name
+          SELECT t.*
+          FROM views.banking_account_tiles t
+          WHERE t.operating_company_id = $1
+            AND (
+              t.tile_kind <> 'real'
+              OR EXISTS (
+                SELECT 1 FROM banking.bank_accounts b
+                WHERE b.id = t.id AND b.is_active = true
+              )
+            )
+          ORDER BY t.display_order, t.account_type, t.display_name
         `,
         [companyId]
       );
@@ -154,17 +183,20 @@ export async function registerBankingRoutes(app: FastifyInstance) {
   app.get("/api/v1/banking/accounts/all", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = accountsAllQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
+    const includeInactive = query.data.include_inactive;
 
     const accounts = await withCompanyScope(user.uuid, companyId, async (client) => {
       if (!(await hasRelation(client, "banking.bank_accounts"))) return [];
+      const activeClause = includeInactive ? "" : " AND is_active = true";
       const res = await client.query(
         `
           SELECT *
           FROM banking.bank_accounts
           WHERE operating_company_id = $1
+          ${activeClause}
           ORDER BY display_order, display_name
         `,
         [companyId]
