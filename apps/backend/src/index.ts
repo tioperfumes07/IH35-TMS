@@ -142,6 +142,7 @@ import { runStartupEnvironmentChecks } from "./lib/env-validation.js";
 import { verifyMigrationsOnStartup } from "./lib/migration-verification.js";
 import { registerHealthRoutes } from "./health/health.routes.js";
 import { setAppReady } from "./lib/startup-ready.js";
+import { assertNoDuplicateFastifyRoutes } from "./lib/fastify-route-duplicates.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -451,14 +452,7 @@ async function main() {
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {
-    const seen = new Set<string>();
-    for (const r of app.printRoutes({ commonPrefix: false }).split("\n")) {
-      const key = r.trim();
-      if (key && seen.has(key)) {
-        throw new Error(`[boot] duplicate route detected: ${key}`);
-      }
-      seen.add(key);
-    }
+    assertNoDuplicateFastifyRoutes(app);
 
     await app.listen({ port, host });
     if (process.env.ENABLE_OUTBOX_PROCESSOR !== "false") {
