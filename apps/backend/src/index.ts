@@ -17,6 +17,7 @@ import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.ro
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
 import { registerIdentityRoutes } from "./identity/users.routes.js";
 import { registerPasswordResetRoutes } from "./identity/password-reset.routes.js";
+import { registerNotificationPreferenceRoutes } from "./identity/notification-prefs.routes.js";
 import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
 import { registerWorkflowRoutes } from "./identity/workflow-routes.js";
 import { registerAccountingCatalogRoutes } from "./catalogs/accounting/index.js";
@@ -146,12 +147,22 @@ import { verifyMigrationsOnStartup } from "./lib/migration-verification.js";
 import { registerHealthRoutes } from "./health/health.routes.js";
 import { setAppReady } from "./lib/startup-ready.js";
 import { assertNoDuplicateFastifyRoutes } from "./lib/fastify-route-duplicates.js";
+import { assertMigrationDriftBootGuard } from "./lib/migration-status.js";
+import { attachHttpErrorMonitor } from "./lib/error-monitor-hooks.js";
+import { pool } from "./auth/db.js";
+import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
+import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
+import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js";
+import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
+import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
+import { initializeErrorDigestCron } from "./cron/error-digest.cron.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 const app = Fastify({ logger: true });
+attachHttpErrorMonitor(app);
 let shuttingDown = false;
 const ALLOWED_ORIGINS = (
   process.env.CORS_ALLOWED_ORIGINS ??
@@ -271,9 +282,11 @@ async function main() {
   await registerEmailRoutes(app);
   await registerEmailQueueAdminRoutes(app);
   await registerAdminClientErrorRoutes(app);
+  await registerErrorMonitorRoutes(app);
   await registerAdminActivityRoutes(app);
   await registerLaunchReadinessRoutes(app);
   await registerHealthDeepRoutes(app);
+  await registerMigrationStatusRoutes(app);
   await registerDataImportAdminRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);
@@ -281,6 +294,7 @@ async function main() {
   await registerInviteAuthRoutes(app);
   await registerIdentityRoutes(app);
   await registerPasswordResetRoutes(app);
+  await registerNotificationPreferenceRoutes(app);
   await registerUserPreferencesRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);
@@ -323,6 +337,7 @@ async function main() {
   await registerIntransitIssuesRoutes(app);
   await registerDriverRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
+  await registerWeeklyCloseRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);
   await registerDriverFinanceDriverBillsRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
@@ -331,6 +346,7 @@ async function main() {
   await registerCashAdvanceRequestRoutes(app);
   await registerAbandonmentRoutes(app);
   await registerHomeRoutes(app);
+  await registerHomeWidgetRoutes(app);
   await registerReportsRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
@@ -348,6 +364,7 @@ async function main() {
   await registerCashAdvancesRoutes(app);
   await registerBankTxCategorizationRoutes(app);
   await registerBankingRoutes(app);
+  await registerPlaidBankingItemsRoutes(app);
   await registerAccountBalanceRoutes(app);
   await registerPlaidLinkRoutes(app);
   await registerPlaidWebhookRoutes(app);
@@ -442,6 +459,13 @@ async function main() {
   }
 
   try {
+    initializeErrorDigestCron(app);
+    app.log.info("[STARTUP] error-digest scheduler initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] error-digest scheduler failed");
+  }
+
+  try {
     initializeQboSyncWorker(app);
     app.log.info("[STARTUP] qbo-sync-run-worker initialized");
   } catch (error) {
@@ -458,6 +482,19 @@ async function main() {
   const port = Number(process.env.PORT || 3000);
   const host = "0.0.0.0";
   try {
+    await app.ready();
+
+    const conn = await pool.connect();
+    try {
+      await assertMigrationDriftBootGuard({
+        repoRoot,
+        client: conn,
+        logError: (obj, msg) => app.log.error(obj, msg),
+      });
+    } finally {
+      conn.release();
+    }
+
     assertNoDuplicateFastifyRoutes(app);
 
     await app.listen({ port, host });

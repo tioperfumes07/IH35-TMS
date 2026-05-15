@@ -28,6 +28,10 @@ const homeFleetSnapshotQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const HOME_REPORT_CACHE_MS = 30_000;
+const homeAttentionReportCache = new Map<string, { exp: number; body: unknown }>();
+const homeFleetReportCache = new Map<string, { exp: number; body: unknown }>();
+
 export async function registerReportsLibraryRoutes(app: FastifyInstance) {
   async function relationExists(client: any, qualifiedName: string) {
     const res = await client.query(`SELECT to_regclass($1) AS rel`, [qualifiedName]);
@@ -145,6 +149,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
+    try {
     const data = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const scheduledRes = await client.query(
         `SELECT count(*)::text AS cnt FROM reports.scheduled_reports WHERE operating_company_id = $1 AND enabled = true`,
@@ -268,6 +273,21 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       pending_qbo_sync: data.pending_qbo_sync,
       ifta_status: getCurrentQuarterInfo(),
     };
+    } catch (error) {
+      req.log.error({ err: error }, "/api/v1/reports/kpi-summary failed");
+      return {
+        available_reports: REPORT_LIBRARY.length,
+        scheduled: 0,
+        run_last_7d: 0,
+        outstanding_ar_cents: 0,
+        tracked_assets: 0,
+        assigned_working: 0,
+        maint_past_due: 0,
+        open_damage: 0,
+        pending_qbo_sync: 0,
+        ifta_status: getCurrentQuarterInfo(),
+      };
+    }
   });
 
   app.get("/api/v1/reports/home-attention-list", async (req, reply) => {
@@ -276,10 +296,16 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
     const query = homeAttentionListQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const items = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const companyId = query.data.operating_company_id;
+    const cacheKey = query.data.operating_company_id;
+    const cached = homeAttentionReportCache.get(cacheKey);
+    if (cached && cached.exp > Date.now()) return cached.body;
 
-      let maintenancePastDue = 0;
+    try {
+      const items = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        await client.query(`SET LOCAL statement_timeout = '5000ms'`);
+        const companyId = query.data.operating_company_id;
+
+        let maintenancePastDue = 0;
       if (await relationExists(client, "maintenance.work_orders")) {
         const res = await client.query(
           `
@@ -423,9 +449,15 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           count: permitRefreshDue30d,
         },
       ];
-    });
+      });
 
-    return { items };
+      const body = { items };
+      homeAttentionReportCache.set(cacheKey, { exp: Date.now() + HOME_REPORT_CACHE_MS, body });
+      return body;
+    } catch (error) {
+      req.log.error({ err: error }, "/api/v1/reports/home-attention-list failed");
+      return reply.code(503).send({ error: "timeout — please retry" });
+    }
   });
 
   app.get("/api/v1/reports/home-fleet-snapshot", async (req, reply) => {
@@ -434,8 +466,14 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
     const query = homeFleetSnapshotQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const snapshot = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const companyId = query.data.operating_company_id;
+    const cacheKey = query.data.operating_company_id;
+    const cached = homeFleetReportCache.get(cacheKey);
+    if (cached && cached.exp > Date.now()) return cached.body;
+
+    try {
+      const snapshot = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        await client.query(`SET LOCAL statement_timeout = '5000ms'`);
+        const companyId = query.data.operating_company_id;
 
       let trucks = 0;
       let flatbeds = 0;
@@ -552,9 +590,14 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         no_signal_6h: noSignal6h,
         roadside,
       };
-    });
+      });
 
-    return snapshot;
+      homeFleetReportCache.set(cacheKey, { exp: Date.now() + HOME_REPORT_CACHE_MS, body: snapshot });
+      return snapshot;
+    } catch (error) {
+      req.log.error({ err: error }, "/api/v1/reports/home-fleet-snapshot failed");
+      return reply.code(503).send({ error: "timeout — please retry" });
+    }
   });
 
   app.post("/api/v1/reports/run-log", async (req, reply) => {

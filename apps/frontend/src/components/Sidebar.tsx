@@ -34,20 +34,21 @@ type SidebarItem = {
   Icon: ComponentType<{ className?: string }>;
   to: string;
   visibleRoles?: UserRole[];
+  dataTour?: string;
 };
 
 const ITEMS: SidebarItem[] = [
-  { key: "HOME", label: "HOME", Icon: Home, to: "/home" },
+  { key: "HOME", label: "HOME", Icon: Home, to: "/home", dataTour: "tour-nav-home" },
   { key: "MAINT", label: "MAINT", Icon: CarFront, to: "/maintenance" },
   { key: "ACCTG", label: "ACCTG", Icon: Calculator, to: "/accounting/invoices" },
   { key: "PAYMENTS", label: "PAY", Icon: Calculator, to: "/accounting/payments" },
   { key: "FACTORING", label: "FACT", Icon: Calculator, to: "/accounting/factoring" },
-  { key: "BANK", label: "BANK", Icon: Banknote, to: "/banking" },
+  { key: "BANK", label: "BANK", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
   { key: "FUEL", label: "FUEL", Icon: Fuel, to: "/fuel" },
   { key: "SAFETY", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
-  { key: "DRIVERS", label: "DRIVERS", Icon: Users, to: "/drivers" },
-  { key: "CUSTOMERS", label: "CUSTOMERS", Icon: Building2, to: "/customers" },
-  { key: "DISPATCH", label: "DISPATCH", Icon: Truck, to: "/dispatch" },
+  { key: "DRIVERS", label: "DRIVERS", Icon: Users, to: "/drivers", dataTour: "tour-nav-drivers" },
+  { key: "CUSTOMERS", label: "CUSTOMERS", Icon: Building2, to: "/customers", dataTour: "tour-nav-customers" },
+  { key: "DISPATCH", label: "DISPATCH", Icon: Truck, to: "/dispatch", dataTour: "tour-nav-dispatch" },
   { key: "VENDORS", label: "VENDORS", Icon: Building2, to: "/vendors" },
   { key: "DOCUMENTS", label: "DOCS", Icon: FileText, to: "/documents", visibleRoles: ["Owner", "Administrator"] },
   { key: "LISTS", label: "LISTS", Icon: ListChecks, to: "/lists" },
@@ -63,6 +64,7 @@ const ITEMS: SidebarItem[] = [
     Icon: UserCog,
     to: "/users",
     visibleRoles: ["Owner", "Administrator", "SuperAdmin"],
+    dataTour: "tour-nav-admin",
   },
 ];
 
@@ -129,7 +131,12 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
       ],
       USR_MGMT: [
         { label: "Users", to: "/users" },
-        ...(role === "Owner" || role === "Administrator" ? [{ label: "Data import", to: "/admin/data-import" }] : []),
+        ...(role === "Owner"
+          ? [
+              { label: "Migration Status", to: "/admin/migration-status" },
+              { label: "Error monitor", to: "/admin/error-monitor" },
+            ]
+          : []),
         ...(role === "Owner" || role === "SuperAdmin" ? [{ label: "Activity log", to: "/admin/activity" }] : []),
       ],
     }),
@@ -153,13 +160,14 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
         style={{ background: "rgb(27, 35, 51)", borderRight: "1px solid rgb(42, 50, 66)" }}
       >
       <div className="flex h-full flex-col items-center gap-1 py-2">
-        {visibleItems.map(({ key, label, Icon, to }) => {
+        {visibleItems.map(({ key, label, Icon, to, dataTour }) => {
           const forceReportsActive = key === "REPORTS" && location.pathname.startsWith("/reports/");
           const flyoutItems = flyoutLinksByKey[key] ?? [];
           return (
             <div key={key} className="relative w-full" onMouseEnter={() => setHoverKey(key)} onMouseLeave={() => setHoverKey((current) => (current === key ? null : current))}>
               <NavLink
                 to={to}
+                data-tour={dataTour}
                 onClick={() => onMobileClose?.()}
                 className={({ isActive }) =>
                   `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceReportsActive ? "bg-white/10" : ""}`

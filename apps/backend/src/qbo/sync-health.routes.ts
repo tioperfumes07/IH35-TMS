@@ -34,7 +34,9 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
     const cached = cache.get(key);
     if (cached) return cached;
 
-    const payload = await withLuciaBypass(async (client) => {
+    let payload: Record<string, unknown>;
+    try {
+      payload = await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
 
       const alertsExist = await client.query(`SELECT to_regclass('qbo.sync_alerts') IS NOT NULL AS ok`);
@@ -201,8 +203,33 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
         token_alert_count: tokenAlertCount,
       };
     });
+    } catch (error) {
+      req.log.error({ err: error }, "qbo_sync_health_failed");
+      payload = {
+        status: "error",
+        last_successful_sync_at: null,
+        last_failed_sync_at: null,
+        pending_count: 0,
+        error_count: 0,
+        worker_uptime_seconds: 0,
+        needs_reconnect: true,
+        reconnect_reason: "qbo_sync_health_query_failed",
+        refresh_token_expires_at: null,
+        token_alert_count: 0,
+      };
+    }
 
-    cache.set(key, payload, CACHE_MS);
-    return payload;
+    const enriched: Record<string, unknown> = {
+      ...payload,
+      healthy: payload.status === "healthy",
+      lastRunAt: payload.last_successful_sync_at ?? payload.last_failed_sync_at ?? null,
+      lastSuccessAt: payload.last_successful_sync_at ?? null,
+      queueDepth: payload.pending_count ?? 0,
+      retryDepth: payload.error_count ?? 0,
+      failingItems: [],
+    };
+
+    cache.set(key, enriched, CACHE_MS);
+    return enriched;
   });
 }

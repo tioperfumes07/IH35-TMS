@@ -31,6 +31,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.75.0",
     "react-i18next": "^17.0.7",
+    "react-joyride": "^2.9.3",
     "react-markdown": "^9.1.0",
     "react-plaid-link": "^4.1.1",
     "react-router-dom": "^6.30.1",

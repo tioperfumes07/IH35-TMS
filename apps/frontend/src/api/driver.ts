@@ -9,6 +9,7 @@ export type DriverMeResponse = {
   };
   operating_company_id: string;
   identity_user_id: string;
+  onboarding_completed_at: string | null;
 };
 
 export type DriverLoad = {
@@ -38,6 +39,13 @@ export type HosSnapshot = {
 
 export async function getDriverMe() {
   return driverApiRequest<DriverMeResponse>("/api/v1/driver/me");
+}
+
+export async function patchDriverOnboarding(body: { complete: boolean }) {
+  return driverApiRequest<{ ok: boolean; onboarding_completed_at: string | null }>("/api/v1/driver/me/onboarding", {
+    method: "PATCH",
+    body,
+  });
 }
 
 export async function listDriverLoads() {

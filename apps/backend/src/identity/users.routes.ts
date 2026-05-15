@@ -33,6 +33,13 @@ const patchUserBodySchema = z.object({
   role: roleSchema,
 });
 
+const onboardingPatchSchema = z
+  .object({
+    /** When true, stamp completion; when false, clear so the tour runs again. */
+    complete: z.boolean(),
+  })
+  .strict();
+
 const createUserBodySchema = z.object({
   email: z.string().email().transform((email) => email.toLowerCase()),
   role: roleSchema,
@@ -46,6 +53,7 @@ type IdentityUserRow = {
   default_company_id: string | null;
   created_at: string;
   deactivated_at: string | null;
+  onboarding_completed_at?: string | null;
 };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -74,6 +82,7 @@ function mapIdentityUser(row: IdentityUserRow) {
     default_company_id: row.default_company_id ?? null,
     created_at: row.created_at,
     deactivated_at: row.deactivated_at,
+    onboarding_completed_at: row.onboarding_completed_at ?? null,
   };
 }
 
@@ -86,7 +95,8 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query<IdentityUserRow>(
         `
-          SELECT id, email, role, default_company_id, created_at, deactivated_at
+          SELECT id, email, role, default_company_id, created_at, deactivated_at,
+            onboarding_completed_at::text AS onboarding_completed_at
           FROM identity.users
           WHERE id = $1
           LIMIT 1
@@ -100,6 +110,36 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: "identity_user_not_found" });
     }
 
+    return mapIdentityUser(row);
+  });
+
+  app.patch("/api/v1/identity/me/onboarding", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const parsed = onboardingPatchSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+
+    const row = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(
+        parsed.data.complete
+          ? `UPDATE identity.users SET onboarding_completed_at = now() WHERE id = $1`
+          : `UPDATE identity.users SET onboarding_completed_at = NULL WHERE id = $1`,
+        [authUser.uuid]
+      );
+      const res = await client.query<IdentityUserRow>(
+        `
+          SELECT id, email, role, default_company_id, created_at, deactivated_at,
+            onboarding_completed_at::text AS onboarding_completed_at
+          FROM identity.users
+          WHERE id = $1
+          LIMIT 1
+        `,
+        [authUser.uuid]
+      );
+      return res.rows[0] ?? null;
+    });
+
+    if (!row) return reply.code(404).send({ error: "identity_user_not_found" });
     return mapIdentityUser(row);
   });
 

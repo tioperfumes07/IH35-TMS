@@ -16,6 +16,7 @@ export type IdentityUser = {
   default_company_id?: string | null;
   created_at: string;
   deactivated_at: string | null;
+  onboarding_completed_at?: string | null;
 };
 
 export type AuthMeResponse = {

@@ -70,6 +70,8 @@ import { DriverLoadsPage } from "./pages/driver/DriverLoadsPage";
 import { DriverLoadDetailPage } from "./pages/driver/DriverLoadDetailPage";
 import { DriverHosPage } from "./pages/driver/DriverHosPage";
 import { DriverSettingsPage } from "./pages/driver/DriverSettingsPage";
+import { NotificationPreferencesPage } from "./pages/settings/NotificationPreferencesPage";
+import { UserProfileSettingsPage } from "./pages/settings/UserProfileSettingsPage";
 import { DocumentsPage } from "./pages/Documents";
 import { UserDetailPage } from "./pages/UserDetail";
 import { UsersPage } from "./pages/Users";
@@ -103,6 +105,8 @@ import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { BillsPage } from "./pages/accounting/BillsPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
+import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
+import { ErrorMonitorPage } from "./pages/admin/ErrorMonitor";
 import { DataImportPage } from "./pages/admin/DataImportPage";
 import { AccountRoleBindingsListPage } from "./pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "./pages/lists/accounting/ChartOfAccountsListPage";
@@ -275,6 +279,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <HomeRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationPreferencesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <UserProfileSettingsPage />
             </ProtectedRoute>
           }
         />
@@ -1258,6 +1278,22 @@ export default function App() {
             <OwnerSuperAdminRoute>
               <ActivityLogPage />
             </OwnerSuperAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/migration-status"
+          element={
+            <OwnerOnlyRoute>
+              <MigrationStatusPage />
+            </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/admin/error-monitor"
+          element={
+            <OwnerOnlyRoute>
+              <ErrorMonitorPage />
+            </OwnerOnlyRoute>
           }
         />
         <Route
