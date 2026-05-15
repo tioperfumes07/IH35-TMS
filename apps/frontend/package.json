@@ -38,6 +38,10 @@
     "recharts": "^2.15.4",
     "zod": "^4.4.2"
   },
+  "optionalDependencies": {
+    "@rolldown/binding-linux-arm64-gnu": "1.0.0-rc.17",
+    "@rolldown/binding-linux-x64-gnu": "1.0.0-rc.17"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.59.1",
