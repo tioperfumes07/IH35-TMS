@@ -45,7 +45,7 @@ Every page renders inside a 3-zone shell:
 | Zone | Contents | Always Visible |
 |------|----------|----------------|
 | **Top bar** | "IH 35 DISPATCH" wordmark · Integration status pills (QuickBooks · Samsara · Relay) · Operating Company switcher (IH 35 Trucking LLC / IH 35 Transportation LLC / USMCA Freight Solutions) · Live date+time CT · User dropdown (login email · settings · logout) | Yes |
-| **Left sidebar** | 15 module icons + labels: HOME · MAINT · ACCTG · BANK · FUEL · SAFETY · DRIVERS · CUSTOMERS · DISPATCH · VENDORS · DOCS · LISTS · REPORTS · 425C · DRV APP | Yes (collapsed icons on narrow viewport) |
+| **Left sidebar** | 19 module icons + labels (locked order in `apps/frontend/src/components/layout/sidebar-config.ts`): HOME · MAINT · DISPATCH · SAFETY · ACCTG · BANK · FACT · PAY · CUSTOMERS · VENDORS · LISTS · REPORTS · LEGAL · DOCS · ELD · 425C · DRV APP · USERS · HELP — FUEL and DRIVERS live under BANK / DISPATCH flyouts, not top-level | Yes (collapsed icons on narrow viewport) |
 | **Main work area** | Module-specific header (page title + subtitle + primary action button) → sub-nav tabs → KPI row → main content (table / kanban / drawer / cards) | Yes |
 
 **Operating company switcher** — every module respects RLS scoped to selected operating company. Default = IH 35 Transportation LLC (the active Ch.11 DIP carrier).
