@@ -80,14 +80,40 @@ async function probePostgresSelect1(): Promise<void> {
   });
 }
 
-async function probeRedisPing(): Promise<void> {
-  const url = process.env.REDIS_URL?.trim();
-  if (!url) throw new Error("missing_redis_url");
+async function probeRedisPingWithUrl(url: string): Promise<void> {
   const redis = new Redis(url, { maxRetriesPerRequest: 1, enableOfflineQueue: false });
   try {
     await redis.ping();
   } finally {
     redis.disconnect();
+  }
+}
+
+async function probeRedisCheck(): Promise<AdminDeepHealthCheck> {
+  const started = Date.now();
+  const url = process.env.REDIS_URL?.trim();
+  if (!url) {
+    return {
+      name: "redis.ping",
+      ok: true,
+      tier: "non_critical",
+      duration_ms: Date.now() - started,
+      skipped: true,
+      error: "skipped_missing_redis_url",
+    };
+  }
+
+  try {
+    await promiseTimeout(probeRedisPingWithUrl(url), 1000);
+    return { name: "redis.ping", ok: true, tier: "non_critical", duration_ms: Date.now() - started };
+  } catch (error) {
+    return {
+      name: "redis.ping",
+      ok: false,
+      tier: "non_critical",
+      duration_ms: Date.now() - started,
+      error: String((error as Error)?.message ?? error),
+    };
   }
 }
 
@@ -147,6 +173,18 @@ async function probeQboCompanyInfo(): Promise<void> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    let needsReconnect = false;
+    try {
+      const j = JSON.parse(text) as Record<string, unknown>;
+      if (j.needs_reconnect === true || j.needsReconnect === true) needsReconnect = true;
+      const fault = j.Fault as { Error?: Array<{ Message?: string; Detail?: string }> } | undefined;
+      const msg = `${fault?.Error?.[0]?.Message ?? ""} ${fault?.Error?.[0]?.Detail ?? ""}`.toLowerCase();
+      if (msg.includes("reconnect")) needsReconnect = true;
+    } catch {
+      if (text.toLowerCase().includes("needs_reconnect")) needsReconnect = true;
+    }
+    if (needsReconnect) throw new Error("qbo_needs_reconnect");
+
     throw new Error(`qbo_companyinfo_http_${res.status}:${text.slice(0, 240)}`);
   }
 }
@@ -170,14 +208,14 @@ async function probeQboCompanyInfoCheck(): Promise<AdminDeepHealthCheck> {
     return { name: "qbo.companyinfo", ok: true, tier: "non_critical", duration_ms: Date.now() - started };
   } catch (error) {
     const msg = String((error as Error)?.message ?? error);
-    if (msg.includes("qbo_token_expired_or_invalid")) {
+    if (msg.includes("qbo_token_expired_or_invalid") || msg.includes("qbo_needs_reconnect")) {
       return {
         name: "qbo.companyinfo",
         ok: true,
         tier: "non_critical",
         duration_ms: Date.now() - started,
         skipped: true,
-        error: "skipped_expired_or_invalid_token",
+        error: msg.includes("qbo_needs_reconnect") ? "skipped_needs_reconnect" : "skipped_expired_or_invalid_token",
       };
     }
     return {
@@ -197,7 +235,7 @@ export async function runAdminDeepHealthProbe(): Promise<{ checks: AdminDeepHeal
 
   const [postgres, redis, r2, plaid, qbo] = await Promise.all([
     timedProbe("postgres.select1", "critical", 2000, probePostgresSelect1),
-    timedProbe("redis.ping", "critical", 1000, probeRedisPing),
+    probeRedisCheck(),
     timedProbe("r2.head_bucket", "non_critical", 3000, probeR2HeadBucket),
     plaidCreds
       ? timedProbe("plaid.sandbox.public_token.create", "non_critical", 5000, probePlaidSandboxPublicToken)
