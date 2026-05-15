@@ -54,6 +54,9 @@ jobs:
       - name: Static checks — backend SQL hints vs migration CREATE TABLE (informational)
         run: npm run db:verify:backend-contract
 
+      - name: Static checks — data-dependent RAISE in DO $$ blocks (informational)
+        run: npm run db:verify:empty-db-safe
+
       - name: Migrate database (integration tests)
         run: npm run db:migrate
 
