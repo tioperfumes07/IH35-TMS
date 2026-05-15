@@ -29,40 +29,50 @@ ALTER TABLE mdata.loads
     OR (assigned_primary_driver_id IS NULL AND team_id IS NULL)
   );
 
-CREATE TABLE IF NOT EXISTS driver_finance.team_settlement_splits (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id uuid NOT NULL REFERENCES org.companies(id),
-  load_id uuid NOT NULL REFERENCES mdata.loads(id),
-  team_id uuid NOT NULL REFERENCES mdata.driver_teams(id),
-  driver_id uuid NOT NULL REFERENCES mdata.drivers(id),
-  pay_role text NOT NULL CHECK (pay_role IN ('primary', 'co')),
-  split_method text NOT NULL,
-  share_pct numeric(5,2) NOT NULL,
-  total_load_pay_cents bigint NOT NULL,
-  driver_pay_cents bigint NOT NULL,
-  applied_to_settlement_id uuid REFERENCES driver_finance.driver_settlements(id),
-  computed_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (load_id, driver_id)
-);
+-- Self-heal forward-dep: driver_finance.driver_settlements introduced in migration 0124, guarded here for fresh-DB compatibility.
 
-ALTER TABLE driver_finance.team_settlement_splits ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF to_regclass('driver_finance.driver_settlements') IS NULL THEN
+    RAISE NOTICE 'Skipping driver_finance.team_settlement_splits: driver_finance.driver_settlements missing';
+  ELSE
+    CREATE TABLE IF NOT EXISTS driver_finance.team_settlement_splits (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      operating_company_id uuid NOT NULL REFERENCES org.companies(id),
+      load_id uuid NOT NULL REFERENCES mdata.loads(id),
+      team_id uuid NOT NULL REFERENCES mdata.driver_teams(id),
+      driver_id uuid NOT NULL REFERENCES mdata.drivers(id),
+      pay_role text NOT NULL CHECK (pay_role IN ('primary', 'co')),
+      split_method text NOT NULL,
+      share_pct numeric(5,2) NOT NULL,
+      total_load_pay_cents bigint NOT NULL,
+      driver_pay_cents bigint NOT NULL,
+      applied_to_settlement_id uuid REFERENCES driver_finance.driver_settlements(id),
+      computed_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (load_id, driver_id)
+    );
 
-DROP POLICY IF EXISTS rls_team_splits_isolation ON driver_finance.team_settlement_splits;
-CREATE POLICY rls_team_splits_isolation
-  ON driver_finance.team_settlement_splits
-  FOR ALL TO ih35_app
-  USING (
-    operating_company_id::text = current_setting('app.operating_company_id', true)
-    OR current_setting('app.bypass_rls', true) = 'lucia'
-  )
-  WITH CHECK (
-    operating_company_id::text = current_setting('app.operating_company_id', true)
-    OR current_setting('app.bypass_rls', true) = 'lucia'
-  );
+    ALTER TABLE driver_finance.team_settlement_splits ENABLE ROW LEVEL SECURITY;
 
-CREATE INDEX IF NOT EXISTS idx_team_splits_driver
-  ON driver_finance.team_settlement_splits (driver_id, computed_at DESC);
-CREATE INDEX IF NOT EXISTS idx_team_splits_load
-  ON driver_finance.team_settlement_splits (load_id);
+    DROP POLICY IF EXISTS rls_team_splits_isolation ON driver_finance.team_settlement_splits;
+    CREATE POLICY rls_team_splits_isolation
+      ON driver_finance.team_settlement_splits
+      FOR ALL TO ih35_app
+      USING (
+        operating_company_id::text = current_setting('app.operating_company_id', true)
+        OR current_setting('app.bypass_rls', true) = 'lucia'
+      )
+      WITH CHECK (
+        operating_company_id::text = current_setting('app.operating_company_id', true)
+        OR current_setting('app.bypass_rls', true) = 'lucia'
+      );
+
+    CREATE INDEX IF NOT EXISTS idx_team_splits_driver
+      ON driver_finance.team_settlement_splits (driver_id, computed_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_team_splits_load
+      ON driver_finance.team_settlement_splits (load_id);
+  END IF;
+END
+$$;
 
 COMMIT;
