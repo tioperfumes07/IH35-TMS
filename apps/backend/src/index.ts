@@ -105,6 +105,7 @@ import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.route
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
 import { registerQboMasterReadRoutes } from "./accounting/qbo-master-read.routes.js";
+import { registerVendorCategoryRoutes } from "./accounting/vendor-category.routes.js";
 import { registerAccountingSettlementDisputesP6Routes } from "./accounting/disputes.routes.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
@@ -392,6 +393,7 @@ async function main() {
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);
   await registerQboMasterReadRoutes(app);
+  await registerVendorCategoryRoutes(app);
   await registerAccountingSettlementDisputesP6Routes(app);
   await registerCompanyRoutes(app);
   await registerLegalTemplateRoutes(app);
