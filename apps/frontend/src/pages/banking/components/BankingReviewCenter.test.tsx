@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as banking from "../../../api/banking";
 import * as wave2 from "../../../api/banking-wave2";
@@ -19,14 +20,23 @@ vi.mock("../../../api/banking", async (importOriginal) => {
 
 vi.mock("../../../api/banking-wave2", () => ({
   getBankingTransactionsReview: vi.fn().mockResolvedValue({ items: [], next_cursor: 0 }),
-  postBankTransactionAccept: vi.fn().mockRejectedValue(new Error("no accept")),
-  postBankTransactionMatch: vi.fn(),
-  postBankTransactionsBatchAccept: vi.fn(),
-  postBankingRulesFromTransaction: vi.fn(),
+  postBankTransactionExclude: vi.fn().mockResolvedValue({ ok: true }),
+  postBankTransactionCategorizeExtended: vi.fn().mockResolvedValue({ ok: true }),
+  getBankTransactionMatchCandidates: vi.fn().mockResolvedValue({ candidates: [] }),
 }));
 
 vi.mock("../../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
+}));
+
+vi.mock("../../../components/forms/QboCombobox", () => ({
+  QboCombobox: ({ placeholder, "aria-label": ariaLabel }: { placeholder?: string; "aria-label"?: string }) => (
+    <input aria-label={ariaLabel ?? placeholder ?? "combobox"} placeholder={placeholder} />
+  ),
+}));
+
+vi.mock("../../../components/maintenance/LocationMapModal", () => ({
+  LocationMapModal: () => null,
 }));
 
 function wrap(ui: ReactElement) {
@@ -65,5 +75,30 @@ describe("BankingReviewCenter", () => {
     );
     expect(await screen.findByText(/Review API unavailable/)).toBeInTheDocument();
     expect(vi.mocked(banking.getBankingUncategorized)).toHaveBeenCalled();
+  });
+
+  it("Edit opens categorize modal", async () => {
+    const user = userEvent.setup();
+    vi.mocked(wave2.getBankingTransactionsReview).mockResolvedValue({
+      items: [
+        {
+          id: "rev-1",
+          transaction_date: "2026-05-01",
+          description: "Test row",
+          amount_cents: -100,
+        },
+      ],
+      next_cursor: 0,
+    });
+    render(
+      wrap(
+        <BankingReviewCenter
+          companyId="00000000-0000-4000-8000-000000000001"
+          categorizedSection={<div>Categorized placeholder</div>}
+        />
+      )
+    );
+    await user.click(await screen.findByRole("button", { name: "Edit in categorize modal" }));
+    expect(await screen.findByRole("dialog", { name: "Categorize transaction" })).toBeInTheDocument();
   });
 });

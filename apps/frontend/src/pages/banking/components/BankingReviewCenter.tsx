@@ -1,25 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ApiError } from "../../../api/client";
-import {
-  categorizeBankTransaction,
-  getBankingUncategorized,
-  getCoaAccounts,
-  skipBankTransaction,
-} from "../../../api/banking";
-import {
-  getBankingTransactionsReview,
-  postBankTransactionAccept,
-  postBankTransactionMatch,
-  postBankTransactionsBatchAccept,
-  postBankingRulesFromTransaction,
-  type BankingReviewState,
-} from "../../../api/banking-wave2";
+import { getBankingUncategorized } from "../../../api/banking";
+import { getBankingTransactionsReview, postBankTransactionExclude, type BankingReviewState } from "../../../api/banking-wave2";
 import { ActionButton } from "../../../components/shared/ActionButton";
-import { useToast } from "../../../components/Toast";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { useToast } from "../../../components/Toast";
 import { formatCurrencyCents, formatDate } from "../../../lib/format";
-import { BankingReviewMatchModal } from "./BankingReviewMatchModal";
+import { CategorizeTransactionModal, type CategorizeModalMode } from "./CategorizeTransactionModal";
 
 type TabId = "review" | "categorized" | "excluded";
 
@@ -41,6 +29,34 @@ function readSuggestion(tx: Record<string, unknown>) {
   return { vendorId, accountId, classId, confidence, source, vendorName, accountName };
 }
 
+function normalizeSourceLabel(raw: string | null): string {
+  if (!raw) return "";
+  const s = String(raw).trim().toLowerCase();
+  const map: Record<string, string> = {
+    rule: "rule",
+    vendor_history: "vendor_history",
+    description_history: "description_history",
+    plaid_pfc: "plaid_pfc",
+  };
+  return map[s] ?? s.replace(/\s+/g, "_");
+}
+
+function SuggestionSourcePill({ source }: { source: string | null }) {
+  const bases = ["rule", "vendor_history", "description_history", "plaid_pfc"] as const;
+  const n = normalizeSourceLabel(source);
+  return (
+    <div className="mt-1 text-[10px] text-gray-500">
+      <span className="text-gray-600">Source </span>
+      {bases.map((b, i) => (
+        <span key={b}>
+          {i > 0 ? " | " : null}
+          <span className={n === b ? "font-semibold text-gray-800" : undefined}>{b}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function txAmount(tx: Record<string, unknown>): number {
   if (tx.amount_cents != null && tx.amount_cents !== "") return Number(tx.amount_cents);
   return 0;
@@ -57,13 +73,22 @@ export function BankingReviewCenter({ companyId, categorizedSection }: Props) {
   const [tab, setTab] = useState<TabId>("review");
   const [cursor, setCursor] = useState(0);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [matchFor, setMatchFor] = useState<{ id: string; amount: number } | null>(null);
-  const [drafts, setDrafts] = useState<
-    Record<string, { vendor_id: string; account_id: string; class_id: string; memo: string }>
-  >({});
+  const [categorizeModal, setCategorizeModal] = useState<{
+    ids: string[];
+    mode: CategorizeModalMode;
+    preview: Record<string, unknown>;
+  } | null>(null);
 
   const reviewState = tabToState(tab);
+
+  const openModal = (tx: Record<string, unknown>, mode: CategorizeModalMode) => {
+    const id = String(tx.id ?? "");
+    setCategorizeModal({
+      ids: [id],
+      mode,
+      preview: { ...tx },
+    });
+  };
 
   const listQuery = useQuery({
     queryKey: ["banking", "transactions-review", companyId, reviewState, cursor],
@@ -85,110 +110,15 @@ export function BankingReviewCenter({ companyId, categorizedSection }: Props) {
     enabled: Boolean(companyId) && tab !== "categorized",
   });
 
-  const coaQuery = useQuery({
-    queryKey: ["catalogs", "coa-accounts", "banking-review"],
-    queryFn: () => getCoaAccounts(),
-    enabled: Boolean(companyId),
-    staleTime: 120_000,
-  });
-
-  const coaOptions = coaQuery.data?.accounts ?? [];
-  const rows = listQuery.data?.items ?? [];
-
-  const getDraft = useCallback(
-    (id: string, tx: Record<string, unknown>) => {
-      const sug = readSuggestion(tx);
-      return (
-        drafts[id] ?? {
-          vendor_id: sug.vendorId ?? "",
-          account_id: sug.accountId ?? "",
-          class_id: sug.classId ?? "",
-          memo: "",
-        }
-      );
-    },
-    [drafts]
-  );
-
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ["banking"] });
     void listQuery.refetch();
   };
 
-  const acceptOne = async (tx: Record<string, unknown>) => {
-    const id = String(tx.id ?? "");
-    const d = getDraft(id, tx);
-    const sug = readSuggestion(tx);
-    const vendorId = d.vendor_id.trim() || sug.vendorId || null;
-    const accountId = d.account_id.trim() || sug.accountId || null;
-    try {
-      await postBankTransactionAccept(id, companyId, {
-        vendor_id: vendorId,
-        account_id: accountId,
-        class_id: d.class_id.trim() || sug.classId || null,
-        memo: d.memo.trim() || null,
-      });
-    } catch (e) {
-      if (e instanceof ApiError && (e.status === 404 || e.status === 400 || e.status === 501)) {
-        await categorizeBankTransaction(id, companyId, {
-          category_kind: "bank_expense",
-          vendor_id: vendorId ?? undefined,
-          gl_account_id: accountId ?? undefined,
-          memo: d.memo.trim() || undefined,
-        });
-        return;
-      }
-      throw e;
-    }
-  };
-
-  const acceptMut = useMutation({
-    mutationFn: acceptOne,
-    onSuccess: () => {
-      pushToast("Transaction accepted", "success");
-      invalidate();
-    },
-    onError: (e) => pushToast(String((e as Error).message ?? "Accept failed"), "error"),
-  });
-
-  const batchAcceptMut = useMutation({
-    mutationFn: async (ids: string[]) => {
-      try {
-        await postBankTransactionsBatchAccept(companyId, { transaction_ids: ids });
-      } catch (e) {
-        if (e instanceof ApiError && (e.status === 404 || e.status === 501)) {
-          for (const id of ids) {
-            const tx = rows.find((r) => String(r.id) === id);
-            if (tx) await acceptOne(tx);
-          }
-          return;
-        }
-        throw e;
-      }
-    },
-    onSuccess: () => {
-      pushToast("Bulk accept applied", "success");
-      setSelected({});
-      invalidate();
-    },
-    onError: (e) => pushToast(String((e as Error).message ?? "Bulk accept failed"), "error"),
-  });
-
-  const excludeMut = useMutation({
-    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-      await skipBankTransaction(id, companyId, { reason });
-    },
-    onSuccess: () => {
-      pushToast("Transaction excluded", "success");
-      invalidate();
-    },
-    onError: (e) => pushToast(String((e as Error).message ?? "Exclude failed"), "error"),
-  });
-
   const bulkExcludeMut = useMutation({
     mutationFn: async ({ ids, reason }: { ids: string[]; reason: string }) => {
       for (const id of ids) {
-        await skipBankTransaction(id, companyId, { reason });
+        await postBankTransactionExclude(id, companyId, { reason });
       }
     },
     onSuccess: () => {
@@ -199,27 +129,8 @@ export function BankingReviewCenter({ companyId, categorizedSection }: Props) {
     onError: (e) => pushToast(String((e as Error).message ?? "Bulk exclude failed"), "error"),
   });
 
-  const matchMut = useMutation({
-    mutationFn: ({ transactionId, kind, target_id }: { transactionId: string; kind: string; target_id: string }) =>
-      postBankTransactionMatch(transactionId, companyId, { kind, target_id }),
-    onSuccess: () => {
-      pushToast("Match recorded", "success");
-      setMatchFor(null);
-      invalidate();
-    },
-    onError: (e) => pushToast(String((e as Error).message ?? "Match failed — try categorize or accept."), "error"),
-  });
-
-  const ruleFromTxMut = useMutation({
-    mutationFn: ({ id, gen }: { id: string; gen: string }) => postBankingRulesFromTransaction(id, companyId, gen),
-    onSuccess: () => {
-      pushToast("Rule created from transaction.", "success");
-      void queryClient.invalidateQueries({ queryKey: ["banking", "rules"] });
-    },
-    onError: () => pushToast("Rule-from-transaction endpoint not available yet.", "info"),
-  });
-
   const selectedIds = useMemo(() => Object.keys(selected).filter((k) => selected[k]), [selected]);
+  const rows = listQuery.data?.items ?? [];
 
   const tabClass = (id: TabId) =>
     `rounded-t border border-b-0 px-3 py-2 text-xs font-semibold uppercase tracking-wide ${
@@ -241,13 +152,13 @@ export function BankingReviewCenter({ companyId, categorizedSection }: Props) {
     <div className="rounded border border-gray-200 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-2 pt-2">
         <div className="flex flex-wrap gap-1">
-          <button type="button" className={tabClass("review")} onClick={() => { setTab("review"); setCursor(0); }}>
+          <button type="button" className={tabClass("review")} onClick={() => { setTab("review"); setCursor(0); }} aria-label="For review tab">
             For review
           </button>
-          <button type="button" className={tabClass("categorized")} onClick={() => setTab("categorized")}>
+          <button type="button" className={tabClass("categorized")} onClick={() => setTab("categorized")} aria-label="Categorized tab">
             Categorized
           </button>
-          <button type="button" className={tabClass("excluded")} onClick={() => { setTab("excluded"); setCursor(0); }}>
+          <button type="button" className={tabClass("excluded")} onClick={() => { setTab("excluded"); setCursor(0); }} aria-label="Excluded tab">
             Excluded
           </button>
         </div>
@@ -257,11 +168,18 @@ export function BankingReviewCenter({ companyId, categorizedSection }: Props) {
             <ActionButton
               type="button"
               className="border border-emerald-200 bg-emerald-50 text-emerald-900"
-              aria-label="Bulk accept selected transactions"
-              disabled={batchAcceptMut.isPending}
-              onClick={() => void batchAcceptMut.mutateAsync(selectedIds)}
+              aria-label="Bulk categorize selected transactions"
+              onClick={() => {
+                const first = rows.find((r) => selectedIds.includes(String(r.id ?? "")));
+                if (!first) return;
+                setCategorizeModal({
+                  ids: selectedIds,
+                  mode: "categorize",
+                  preview: { ...first },
+                });
+              }}
             >
-              Bulk accept
+              Categorize…
             </ActionButton>
             <ActionButton
               type="button"
@@ -291,8 +209,6 @@ export function BankingReviewCenter({ companyId, categorizedSection }: Props) {
               {rows.map((tx) => {
                 const id = String(tx.id ?? "");
                 const sug = readSuggestion(tx);
-                const draft = getDraft(id, tx);
-                const expanded = expandedId === id;
                 const amt = txAmount(tx);
                 const showSuggestionRow =
                   tab === "review" && (Boolean(sug.vendorId || sug.accountId) || Boolean(tx.suggestion));
@@ -334,9 +250,7 @@ export function BankingReviewCenter({ companyId, categorizedSection }: Props) {
                                   confidence: {String(sug.confidence)}
                                 </span>
                               ) : null}
-                              {sug.source ? (
-                                <span className="ml-2 text-gray-500">source: {String(sug.source)}</span>
-                              ) : null}
+                              <SuggestionSourcePill source={sug.source} />
                             </div>
                           ) : null}
                         </div>
@@ -346,100 +260,38 @@ export function BankingReviewCenter({ companyId, categorizedSection }: Props) {
                           <ActionButton
                             type="button"
                             className="border border-emerald-300 bg-emerald-50 text-emerald-900"
-                            aria-label="Accept suggestion for transaction"
-                            disabled={acceptMut.isPending}
-                            onClick={() => void acceptMut.mutateAsync(tx)}
+                            aria-label="Accept suggestion in categorize modal"
+                            onClick={() => openModal(tx, "categorize")}
                           >
                             Accept
                           </ActionButton>
                           <ActionButton
                             type="button"
                             className="border border-gray-200 bg-white text-gray-800"
-                            aria-label="Open match candidates"
-                            onClick={() => setMatchFor({ id, amount: amt })}
+                            aria-label="Open match mode"
+                            onClick={() => openModal(tx, "match")}
                           >
                             Match
                           </ActionButton>
                           <ActionButton
                             type="button"
                             className="border border-gray-200 bg-white text-gray-800"
-                            aria-label="Edit categorization fields"
-                            onClick={() => setExpandedId((c) => (c === id ? null : id))}
+                            aria-label="Edit in categorize modal"
+                            onClick={() => openModal(tx, "categorize")}
                           >
                             Edit
                           </ActionButton>
                           <ActionButton
                             type="button"
                             className="border border-gray-200 bg-white text-gray-800"
-                            aria-label="Exclude transaction"
-                            disabled={excludeMut.isPending}
-                            onClick={() => {
-                              const reason = window.prompt("Exclude this transaction — reason?");
-                              if (!reason?.trim()) return;
-                              void excludeMut.mutateAsync({ id, reason: reason.trim() });
-                            }}
+                            aria-label="Exclude via categorize modal"
+                            onClick={() => openModal(tx, "categorize")}
                           >
                             Exclude
-                          </ActionButton>
-                          <ActionButton
-                            type="button"
-                            className="border border-blue-100 bg-blue-50 text-blue-900"
-                            aria-label="Create rule from this transaction"
-                            disabled={ruleFromTxMut.isPending}
-                            onClick={() => void ruleFromTxMut.mutateAsync({ id, gen: "description_contains" })}
-                          >
-                            Create rule
                           </ActionButton>
                         </div>
                       ) : null}
                     </div>
-                    {expanded ? (
-                      <div className="space-y-2 border-t border-gray-100 bg-white px-3 py-2">
-                        <label className="block text-[11px] font-medium text-gray-600">
-                          Vendor id (UUID)
-                          <input
-                            className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-                            value={draft.vendor_id}
-                            onChange={(e) => setDrafts((d) => ({ ...d, [id]: { ...draft, vendor_id: e.target.value } }))}
-                          />
-                        </label>
-                        <label className="block text-[11px] font-medium text-gray-600">
-                          GL account
-                          <select
-                            className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-                            value={draft.account_id}
-                            onChange={(e) => setDrafts((d) => ({ ...d, [id]: { ...draft, account_id: e.target.value } }))}
-                          >
-                            <option value="">—</option>
-                            {coaOptions.map((a) => (
-                              <option key={a.id} value={a.id}>
-                                {a.account_number ? `${a.account_number} · ` : ""}
-                                {a.account_name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="block text-[11px] font-medium text-gray-600">
-                          Class id
-                          <input
-                            className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-                            value={draft.class_id}
-                            onChange={(e) => setDrafts((d) => ({ ...d, [id]: { ...draft, class_id: e.target.value } }))}
-                          />
-                        </label>
-                        <label className="block text-[11px] font-medium text-gray-600">
-                          Memo
-                          <input
-                            className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-                            value={draft.memo}
-                            onChange={(e) => setDrafts((d) => ({ ...d, [id]: { ...draft, memo: e.target.value } }))}
-                          />
-                        </label>
-                        <p className="text-[10px] text-gray-500">
-                          Split lines (1→N) ship as a follow-up when the split endpoint is wired to this editor.
-                        </p>
-                      </div>
-                    ) : null}
                   </div>
                 );
               })}
@@ -465,18 +317,21 @@ export function BankingReviewCenter({ companyId, categorizedSection }: Props) {
         {tab === "categorized" ? <div>{categorizedSection}</div> : null}
       </div>
 
-      <BankingReviewMatchModal
-        open={Boolean(matchFor)}
-        transactionId={matchFor?.id ?? null}
-        companyId={companyId}
-        amountCents={matchFor?.amount ?? 0}
-        onClose={() => setMatchFor(null)}
-        onMatched={() => {
-          setMatchFor(null);
-          invalidate();
-        }}
-        matchMutation={{ mutateAsync: (a) => matchMut.mutateAsync(a), isPending: matchMut.isPending }}
-      />
+      {categorizeModal ? (
+        <CategorizeTransactionModal
+          operatingCompanyId={companyId}
+          transactionIds={categorizeModal.ids}
+          open
+          initialMode={categorizeModal.mode}
+          transactionPreview={categorizeModal.preview}
+          onClose={() => setCategorizeModal(null)}
+          onSaved={() => {
+            setCategorizeModal(null);
+            setSelected({});
+            invalidate();
+          }}
+        />
+      ) : null}
     </div>
   );
 }
