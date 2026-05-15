@@ -85,6 +85,8 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
         <div className="flex h-full flex-col items-center gap-1 py-2">
           {visibleMetas.map((meta) => {
             const forceReportsActive = meta.id === "reports" && location.pathname.startsWith("/reports/");
+            const forceAccountingActive = meta.id === "accounting" && location.pathname.startsWith("/accounting");
+            const forceActive = forceReportsActive || forceAccountingActive;
             const flyoutItems = getSidebarFlyoutItems(meta.id, role);
             const showMaintBadge = meta.badgeKey === "maintenance_severe" && severeBadgeCount > 0;
             return (
@@ -99,7 +101,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                   data-tour={meta.dataTour}
                   onClick={() => onMobileClose?.()}
                   className={({ isActive }) =>
-                    `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceReportsActive ? "bg-white/10" : ""}`
+                    `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive || forceActive ? "bg-white/10" : ""}`
                   }
                   style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
                 >
@@ -118,7 +120,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
                         style={{
                           color: "white",
                           letterSpacing: "0.4px",
-                          fontWeight: isActive || forceReportsActive ? 600 : 400,
+                          fontWeight: isActive || forceActive ? 600 : 400,
                         }}
                       >
                         {meta.label}

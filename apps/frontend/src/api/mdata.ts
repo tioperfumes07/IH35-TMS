@@ -549,6 +549,8 @@ export type VendorOption = {
   id: string;
   name: string;
   vendor_type: string;
+  vendor_category?: string | null;
+  vendor_category_locked_at?: string | null;
   vendor_code?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -997,6 +999,22 @@ export function listVendors(params: CompanyScopedListParams = {}) {
 
 export function getVendor(id: string) {
   return apiRequest<VendorOption>(`/api/v1/mdata/vendors/${id}`);
+}
+
+export type CreateVendorInput = {
+  name: string;
+  vendor_type: "Fuel" | "Repair" | "Tires" | "Towing" | "Insurance" | "Permit" | "Toll" | "Other";
+  vendor_code?: string;
+  phone?: string;
+  email?: string;
+  operating_company_id?: string;
+  address?: string;
+  tax_id?: string;
+  notes?: string;
+};
+
+export function createVendor(body: CreateVendorInput) {
+  return apiRequest<VendorOption>("/api/v1/mdata/vendors", { method: "POST", body });
 }
 
 export function listLocations(params: CompanyScopedListParams = {}) {

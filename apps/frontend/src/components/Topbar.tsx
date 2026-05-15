@@ -5,8 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { getQboConnectionStatus, getQboAuthorizeStartUrl } from "../api/forensic";
 import { getQboSyncHealth } from "../api/qbo-integration";
 import { getSamsaraHealth } from "../api/samsara";
-import { signOut } from "../api/identity";
+import { getIdentityCurrentCompany, signOut } from "../api/identity";
 import { colors, spacing, typography } from "../design/tokens";
+import { companyOperatingChipClasses } from "../lib/company-branding";
 import type { AuthMeResponse } from "../types/api";
 import { CompanySwitcher } from "./CompanySwitcher";
 import { PageHelpLink } from "./PageHelpLink";
@@ -66,6 +67,13 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     refetchInterval: 60_000,
   });
 
+  const identityCompanyQuery = useQuery({
+    queryKey: ["identity", "me", "current-company"],
+    queryFn: getIdentityCurrentCompany,
+    enabled: office,
+    staleTime: 60_000,
+  });
+
   const qboSyncHealthQuery = useQuery({
     queryKey: ["qbo", "sync-health", companyId],
     queryFn: () => getQboSyncHealth(companyId),
@@ -123,6 +131,17 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
 
   const dateLabel = useMemo(() => formatNow(now), [now]);
 
+  const legalNameChip =
+    identityCompanyQuery.data?.company_legal_name?.trim() ||
+    selectedCompany?.legal_name?.trim() ||
+    companyLabel ||
+    "";
+
+  const chipClass = companyOperatingChipClasses(
+    identityCompanyQuery.data?.company_legal_name ?? selectedCompany?.legal_name ?? null,
+    selectedCompany?.code ?? null
+  );
+
   return (
     <header
       className="top-bar grid items-center border-b"
@@ -146,15 +165,23 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             <Menu className="h-4 w-4" />
           </button>
         ) : null}
-        <div className="flex items-center gap-2 font-medium uppercase" style={{ fontSize: 13, color: colors.sidebarTextActive }}>
+        <div className="flex min-w-0 flex-wrap items-center gap-2 font-medium uppercase" style={{ fontSize: 13, color: colors.sidebarTextActive }}>
           IH 35 Dispatch
           <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+          {office && legalNameChip ? (
+            <span
+              className={`max-w-[min(280px,42vw)] truncate rounded px-2 py-0.5 text-[10px] font-semibold normal-case leading-tight ${chipClass}`}
+              title={legalNameChip}
+            >
+              {legalNameChip}
+            </span>
+          ) : null}
         </div>
       </div>
 
       <div className="flex items-center justify-center gap-2">
         <div
-          className="flex max-w-[min(560px,92vw)] flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full px-2 py-0.5 text-[12px]"
+          className="flex max-w-[min(560px,92vw)] flex-wrap items-center justify-center gap-x-2 gap-y-1.5 rounded-full px-2 py-1 text-[12px] leading-snug"
           style={{ backgroundColor: "#151A24", color: muted }}
         >
           <span className="inline-flex items-center gap-1" style={{ color: active }}>

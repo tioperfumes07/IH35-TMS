@@ -15,6 +15,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { PlaidReconnectButton, plaidItemBadgeClasses, plaidItemBadgeLabel } from "./PlaidReconnectButton";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
+import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
 import { Link } from "react-router-dom";
 
 type ItemGroup = { itemId: string; accounts: PlaidBankAccount[] };
@@ -75,7 +76,12 @@ export function BankingPlaidConnectionsPanel({
     enabled: Boolean(companyId),
   });
 
-  const groups = useMemo(() => groupByPlaidItem(plaidQuery.data?.accounts ?? []), [plaidQuery.data?.accounts]);
+  const filteredSource = useMemo(
+    () => filterPlaidBankAccountsForCompany(plaidQuery.data?.accounts ?? [], companyId),
+    [plaidQuery.data?.accounts, companyId]
+  );
+
+  const groups = useMemo(() => groupByPlaidItem(filteredSource), [filteredSource]);
   const visibleGroups = useMemo(() => {
     if (showInactive) return groups;
     return groups.filter((g) => g.accounts.some((a) => a.is_active));
@@ -125,7 +131,7 @@ export function BankingPlaidConnectionsPanel({
       {plaidQuery.isError ? <ListErrorBanner onRetry={() => void plaidQuery.refetch()} /> : null}
       {plaidQuery.isLoading ? <p className="text-sm text-gray-600">Loading connections…</p> : null}
       {!plaidQuery.isLoading && groups.length > 0 && visibleGroups.length === 0 ? (
-        <p className="text-sm text-gray-600">No active Plaid connections. Enable history below to see inactive items.</p>
+        <p className="text-sm text-gray-600">No active Plaid connections for this company filter. Enable history below.</p>
       ) : null}
       {!plaidQuery.isLoading && groups.length === 0 ? (
         <p className="text-sm text-gray-600">No bank accounts connected yet. Use <span className="font-medium">Connect Bank</span> above.</p>
@@ -255,7 +261,10 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
     enabled: Boolean(companyId),
   });
 
-  const accounts = accountsQuery.data?.accounts ?? [];
+  const accounts = useMemo(
+    () => filterPlaidBankAccountsForCompany(accountsQuery.data?.accounts ?? [], companyId),
+    [accountsQuery.data?.accounts, companyId]
+  );
   const rows = txQuery.data?.transactions ?? [];
 
   if (!companyId) return null;

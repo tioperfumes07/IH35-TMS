@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getAllAccounts,
@@ -33,6 +33,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { TransferModal } from "./TransferModal";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 import { listVendorBalances } from "../../api/accounting";
+import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
+import { BankingReviewCenter } from "./components/BankingReviewCenter";
 
 export function BankingHomePage() {
   const auth = useAuth();
@@ -54,6 +56,7 @@ export function BankingHomePage() {
   const [reconPeriodEnd, setReconPeriodEnd] = useState("");
   const [reconStatementBalance, setReconStatementBalance] = useState("");
   const [startingRecon, setStartingRecon] = useState(false);
+  const [showDisconnectedBankAccounts, setShowDisconnectedBankAccounts] = useState(false);
 
   const kpiQuery = useQuery({
     queryKey: ["banking", "kpis", companyId],
@@ -66,8 +69,8 @@ export function BankingHomePage() {
     enabled: Boolean(companyId),
   });
   const allAccountsQuery = useQuery({
-    queryKey: ["banking", "all-accounts", companyId],
-    queryFn: () => getAllAccounts(companyId),
+    queryKey: ["banking", "all-accounts", companyId, showDisconnectedBankAccounts],
+    queryFn: () => getAllAccounts(companyId, { include_inactive: showDisconnectedBankAccounts }),
     enabled: Boolean(companyId),
   });
   const plaidAccountsQuery = useQuery({
@@ -95,7 +98,12 @@ export function BankingHomePage() {
     queryFn: () => listVendorBalances(companyId, { all: false, sort: "balance_desc" }),
     enabled: Boolean(companyId && (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant")),
   });
-  const tiles = tilesQuery.data?.tiles ?? [];
+  const tiles = useMemo(() => filterBankingTilesForCompany(tilesQuery.data?.tiles ?? [], companyId), [tilesQuery.data?.tiles, companyId]);
+
+  useEffect(() => {
+    if (!selectedAccountId) return;
+    if (!tiles.some((t) => t.id === selectedAccountId)) setSelectedAccountId(null);
+  }, [tiles, selectedAccountId]);
   const selectedId = selectedAccountId ?? tiles[0]?.id ?? null;
   const registerQuery = useQuery({
     queryKey: ["banking", "register", companyId, selectedId ?? ""],
@@ -172,6 +180,10 @@ export function BankingHomePage() {
         onSelect={(id) => setSelectedAccountId(id)}
         onManageAccounts={() => setManageOpen(true)}
       />
+      <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-600">
+        <input type="checkbox" checked={showDisconnectedBankAccounts} onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)} />
+        Show disconnected history (bank accounts list)
+      </label>
       <BankingPlaidConnectionsPanel companyId={companyId} />
       <BankingCompanyTransactionsPanel companyId={companyId} />
       <div className="rounded border border-gray-200 bg-white p-3">
@@ -316,23 +328,31 @@ export function BankingHomePage() {
         </div>
       </div>
 
-      <RegisterToolbar rowCount={registerRows.length} onRefresh={() => void registerQuery.refetch()} />
-      <RegisterTable
-        rows={registerRows}
-        selectedTransactionId={selectedTransaction ? String(selectedTransaction.id) : null}
-        onSelect={(row) => setSelectedTransaction(row)}
-        onCategorize={(row) => {
-          setSelectedTransaction(row);
-          setDrawerOpen(true);
-        }}
-        onUndo={(row) => {
-          void undoCategorization(String(row.id), companyId)
-            .then(() => {
-              pushToast("Transaction reclassified", "success");
-              void queryClient.invalidateQueries({ queryKey: ["banking"] });
-            })
-            .catch((error) => pushToast(String((error as Error).message || "Reclassify failed"), "error"));
-        }}
+      <BankingReviewCenter
+        companyId={companyId}
+        dataSource="uncategorized"
+        categorizedSection={
+          <>
+            <RegisterToolbar rowCount={registerRows.length} onRefresh={() => void registerQuery.refetch()} />
+            <RegisterTable
+              rows={registerRows}
+              selectedTransactionId={selectedTransaction ? String(selectedTransaction.id) : null}
+              onSelect={(row) => setSelectedTransaction(row)}
+              onCategorize={(row) => {
+                setSelectedTransaction(row);
+                setDrawerOpen(true);
+              }}
+              onUndo={(row) => {
+                void undoCategorization(String(row.id), companyId)
+                  .then(() => {
+                    pushToast("Transaction reclassified", "success");
+                    void queryClient.invalidateQueries({ queryKey: ["banking"] });
+                  })
+                  .catch((error) => pushToast(String((error as Error).message || "Reclassify failed"), "error"));
+              }}
+            />
+          </>
+        }
       />
 
       <CategorizeDrawer

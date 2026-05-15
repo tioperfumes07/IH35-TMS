@@ -23,7 +23,7 @@ const REQUIRE_RE = /\brequire\(\s*["']([^"']+)["']\s*\)/g;
 const EXT_OK = new Set([".ts", ".mts", ".cts", ".tsx", ".js", ".mjs", ".cjs"]);
 
 /** Root runtime deps allowed without a static import (CLI/transitive / migration tooling). */
-const IGNORE_UNUSED_ROOT_RUNTIME = new Set(["drizzle-orm", "oslo"]);
+const IGNORE_UNUSED_ROOT_RUNTIME = new Set(["drizzle-orm", "oslo", "@fastify/websocket"]);
 
 /** Backend peer typings that must be declared in `apps/backend/package.json` for isolated installs. */
 const BACKEND_PEER_TYPE_PACKAGES = new Map([["luxon", "@types/luxon"]]);

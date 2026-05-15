@@ -526,3 +526,20 @@ export async function updateDriverReportStatus(
     body,
   });
 }
+
+export type WoCostContextPayload = {
+  expense_categories: Array<Record<string, unknown>>;
+  items: Array<Record<string, unknown>>;
+  parts: Array<Record<string, unknown>>;
+  labor_rates: Array<Record<string, unknown>>;
+};
+
+export function getWoCostContext(operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<WoCostContextPayload>(`/api/v1/maintenance/wo-cost-context?${q.toString()}`);
+}
+
+export function getIntransitTriageQueue(operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ issues: Array<Record<string, unknown>> }>(`/api/v1/maintenance/dashboard/intransit-triage-queue?${q.toString()}`);
+}

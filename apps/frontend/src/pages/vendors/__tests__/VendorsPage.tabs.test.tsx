@@ -4,12 +4,24 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { VendorOption } from "../../../api/mdata";
+import { ToastProvider } from "../../../components/Toast";
 import { VendorsPage } from "../../Vendors";
 
 const listVendorsMock = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
   listVendors: (...args: unknown[]) => listVendorsMock(...args),
+}));
+
+vi.mock("../../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({
+    selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+    companies: [],
+    selectedCompany: null,
+    isLoading: false,
+    setSelectedCompany: vi.fn(),
+    setDefaultCompanyForUser: vi.fn(async () => undefined),
+  }),
 }));
 
 function vendor(p: Partial<VendorOption> & Pick<VendorOption, "id" | "name" | "vendor_type">): VendorOption {
@@ -36,7 +48,9 @@ function renderVendorsAt(path: string) {
         path: "/vendors",
         element: (
           <QueryClientProvider client={queryClient}>
-            <VendorsPage />
+            <ToastProvider>
+              <VendorsPage />
+            </ToastProvider>
           </QueryClientProvider>
         ),
       },

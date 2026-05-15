@@ -134,7 +134,7 @@ export function QboCombobox({
           {resultsQuery.isError ? (
             <div className="px-2 py-2 text-xs text-red-600">Could not load suggestions.</div>
           ) : null}
-          {!resultsQuery.isLoading && trimmedQuery.length === 0 ? (
+          {!resultsQuery.isLoading && draft.trim().length === 0 ? (
             <div className="px-2 py-2 text-xs text-gray-600">Keep typing to search (250ms debounce).</div>
           ) : null}
           {!resultsQuery.isLoading && trimmedQuery.length > 0 && rows.length === 0 ? (

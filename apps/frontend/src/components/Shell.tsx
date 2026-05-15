@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { colors, spacing, typography } from "../design/tokens";
 import { FooterFaqLink } from "./PageHelpLink";
+import { PostReloadToastHost } from "./PostReloadToastHost";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { OnboardingTourHost } from "./onboarding/OnboardingTourHost";
@@ -17,6 +18,7 @@ export function Shell({ auth, children }: Props) {
 
   return (
     <div className="flex min-h-screen flex-col" style={{ backgroundColor: colors.bodyBg, fontFamily: typography.fontSans }}>
+      <PostReloadToastHost />
       <Topbar auth={auth} onOpenMobileNav={() => setMobileNavOpen(true)} />
       <div className="relative flex min-h-[calc(100vh-48px)] flex-1">
         <Sidebar role={auth.role} mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />

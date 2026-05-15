@@ -396,7 +396,7 @@ export function CustomersPage() {
       <PageHeader
         title="Customers"
         subtitle={`${customers.length} records`}
-        actions={canManage ? <ActionButton onClick={() => setAddOpen(true)}>+ Create Customer</ActionButton> : null}
+        actions={canManage ? <ActionButton onClick={() => setAddOpen(true)}>+ Customer</ActionButton> : null}
       />
 
       <KpiStrip>
@@ -521,7 +521,14 @@ export function CustomersPage() {
           />
       </div>
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Create Customer">
+      <Modal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Create Customer"
+        modalKind="customers-create"
+        sizePreset="lg"
+        resizable
+      >
         <form
           className="space-y-3"
           onSubmit={(event) => {
@@ -556,7 +563,14 @@ export function CustomersPage() {
         </form>
       </Modal>
 
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title={`Edit Customer${selectedCustomer ? `: ${selectedCustomer.name}` : ""}`}>
+      <Modal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title={`Edit Customer${selectedCustomer ? `: ${selectedCustomer.name}` : ""}`}
+        modalKind="customers-edit"
+        sizePreset="lg"
+        resizable
+      >
         <form
           className="space-y-3"
           onSubmit={async (event) => {

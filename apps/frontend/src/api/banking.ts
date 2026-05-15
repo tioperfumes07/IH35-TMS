@@ -190,36 +190,73 @@ export type UncategorizedBankTransactionsMeta = {
 };
 
 export type UncategorizedBankTransactionsResponse = {
-  transactions: Array<Record<string, unknown>>;
+  rows?: Array<Record<string, unknown>>;
+  /** Legacy client alias; server returns `rows`. */
+  transactions?: Array<Record<string, unknown>>;
+  total_count?: number;
+  total_uncategorized_cents?: number;
   meta?: UncategorizedBankTransactionsMeta;
 };
 
 export type UncategorizedBankTransactionsQuery = {
-  account_id?: string;
-  from?: string;
-  to?: string;
+  bank_account_id?: string;
+  date_from?: string;
+  date_to?: string;
   amount_min_cents?: number;
   amount_max_cents?: number;
   search?: string;
   limit?: number;
+  offset?: number;
 };
 
 function uncategorizedQs(companyId: string, filters: UncategorizedBankTransactionsQuery = {}) {
   const query = new URLSearchParams();
   query.set("operating_company_id", companyId);
-  if (filters.account_id) query.set("account_id", filters.account_id);
-  if (filters.from) query.set("from", filters.from);
-  if (filters.to) query.set("to", filters.to);
+  if (filters.bank_account_id) query.set("bank_account_id", filters.bank_account_id);
+  if (filters.date_from) query.set("date_from", filters.date_from);
+  if (filters.date_to) query.set("date_to", filters.date_to);
   if (filters.amount_min_cents != null) query.set("amount_min_cents", String(filters.amount_min_cents));
   if (filters.amount_max_cents != null) query.set("amount_max_cents", String(filters.amount_max_cents));
   if (filters.search) query.set("search", filters.search);
   if (filters.limit != null) query.set("limit", String(filters.limit));
+  if (filters.offset != null) query.set("offset", String(filters.offset));
   return query.toString();
 }
 
-/** Uncategorized Plaid / banking transactions (filters sent to backend; P6-T11204). */
-export function getBankingUncategorized(companyId: string, filters: UncategorizedBankTransactionsQuery = {}) {
-  return apiRequest<UncategorizedBankTransactionsResponse>(`/api/v1/banking/transactions/uncategorized?${uncategorizedQs(companyId, filters)}`);
+/** Normalized uncategorized / for-review transactions (`GET /banking/transactions/uncategorized`). */
+export async function getBankingUncategorized(
+  companyId: string,
+  filters: UncategorizedBankTransactionsQuery = {}
+): Promise<{ transactions: Array<Record<string, unknown>>; meta?: UncategorizedBankTransactionsMeta }> {
+  const raw = await apiRequest<UncategorizedBankTransactionsResponse>(
+    `/api/v1/banking/transactions/uncategorized?${uncategorizedQs(companyId, filters)}`
+  );
+  const transactions = raw.rows ?? raw.transactions ?? [];
+  return {
+    transactions,
+    meta: {
+      ...raw.meta,
+      uncategorized_count: raw.meta?.uncategorized_count ?? raw.total_count,
+      total_uncategorized_amount_cents: raw.meta?.total_uncategorized_amount_cents ?? raw.total_uncategorized_cents,
+    },
+  };
+}
+
+export function categorizeBankTransaction(
+  transactionId: string,
+  companyId: string,
+  body: {
+    category_kind: string;
+    gl_account_id?: string;
+    vendor_id?: string;
+    customer_id?: string;
+    memo?: string;
+  }
+) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/categorize?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
 }
 
 export function categorizeBankTransactionToAccount(
@@ -296,8 +333,11 @@ export function splitTransaction(
   });
 }
 
-export function getAllAccounts(companyId: string) {
-  return apiRequest<{ accounts: Array<Record<string, unknown>> }>(`/api/v1/banking/accounts/all?${q(companyId)}`);
+export function getAllAccounts(companyId: string, options?: { include_inactive?: boolean }) {
+  const params = new URLSearchParams();
+  params.set("operating_company_id", companyId);
+  if (options?.include_inactive) params.set("include_inactive", "true");
+  return apiRequest<{ accounts: Array<Record<string, unknown>> }>(`/api/v1/banking/accounts/all?${params.toString()}`);
 }
 
 export function saveAccountVisibility(

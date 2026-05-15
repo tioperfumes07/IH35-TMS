@@ -46,7 +46,14 @@ export function ManageAccountsModal({ open, operatingCompanyId, accounts, onClos
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Manage Accounts">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Manage Accounts"
+      modalKind="banking-manage-accounts"
+      sizePreset="lg"
+      resizable
+    >
       <DndContext onDragEnd={onDragEnd}>
         <div className="space-y-2 text-xs">
           {rows.map((row, idx) => (

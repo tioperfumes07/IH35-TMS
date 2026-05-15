@@ -72,7 +72,7 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   },
   dispatch: { id: "dispatch", label: "DISPATCH", Icon: Truck, to: "/dispatch", dataTour: "tour-nav-dispatch" },
   safety: { id: "safety", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
-  accounting: { id: "accounting", label: "ACCTG", Icon: Calculator, to: "/accounting/invoices" },
+  accounting: { id: "accounting", label: "ACCTG", Icon: Calculator, to: "/accounting" },
   bank: { id: "bank", label: "BANK", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
   factoring: { id: "factoring", label: "FACT", Icon: Calculator, to: "/accounting/factoring" },
   pay: { id: "pay", label: "PAY", Icon: Calculator, to: "/accounting/payments" },
@@ -142,6 +142,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
   switch (id) {
     case "accounting":
       return [
+        { label: "Hub", to: "/accounting" },
         { label: "Invoices", to: "/accounting/invoices" },
         { label: "Payments", to: "/accounting/payments" },
         { label: "Factoring", to: "/accounting/factoring" },
@@ -185,6 +186,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       if (role === "Owner") {
         rows.push(
           { label: "Migration Status", to: "/admin/migration-status" },
+          { label: "Integrity checks", to: "/admin/integrity" },
           { label: "Error monitor", to: "/admin/error-monitor" }
         );
       }
