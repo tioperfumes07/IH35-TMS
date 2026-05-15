@@ -7,6 +7,7 @@ import { whatsappTemplateRegistry } from "../whatsapp/templates/index.js";
 export type NotificationEventType =
   | "load_assignment"
   | "settlement_ready"
+  | "settlement_approved"
   | "cash_advance_request"
   | "qbo_sync_error"
   | "abandoned_load"
@@ -103,12 +104,13 @@ function stringPayload(payload: Record<string, unknown>, key: string): string {
 }
 
 function buildEmailPlan(eventType: NotificationEventType, payload: Record<string, unknown>) {
-  if (eventType === "settlement_ready") {
+  if (eventType === "settlement_ready" || eventType === "settlement_approved") {
+    const prefix = eventType === "settlement_approved" ? "Settlement approved" : "Settlement ready";
     return {
       templateKey: "settlement-ready",
       subject:
         stringPayload(payload, "email_subject") ||
-        `Settlement ready — ${stringPayload(payload, "settlement_no") || "settlement"}`,
+        `${prefix} — ${stringPayload(payload, "settlement_no") || "settlement"}`,
       templateVars: {
         driverName: stringPayload(payload, "driverName"),
         settlementLabel: stringPayload(payload, "settlementLabel"),
@@ -167,7 +169,7 @@ function resolveWhatsAppPlan(
       },
     };
   }
-  if (eventType === "settlement_ready") {
+  if (eventType === "settlement_ready" || eventType === "settlement_approved") {
     return {
       to,
       template_name: "ih35_settlement_ready_v1",
@@ -201,8 +203,9 @@ function buildSmsBody(eventType: NotificationEventType, payload: Record<string, 
   if (eventType === "load_assignment") {
     return `New load assigned: ${stringPayload(payload, "load_label") || stringPayload(payload, "load_id")}.`;
   }
-  if (eventType === "settlement_ready") {
-    return `Settlement ${stringPayload(payload, "settlement_no")} is ready (${stringPayload(payload, "net")}).`;
+  if (eventType === "settlement_ready" || eventType === "settlement_approved") {
+    const verb = eventType === "settlement_approved" ? "approved" : "ready";
+    return `Settlement ${stringPayload(payload, "settlement_no")} is ${verb} (${stringPayload(payload, "net")}).`;
   }
   if (eventType === "cash_advance_request") {
     return stringPayload(payload, "headline") || "Cash advance request submitted.";
@@ -217,6 +220,12 @@ function buildSmsBody(eventType: NotificationEventType, payload: Record<string, 
     return `Load ${stringPayload(payload, "load_no")} marked abandoned (${stringPayload(payload, "driver_name")}).`;
   }
   return "IH35 notification";
+}
+
+async function regclassExists(client: QueryableClient, fqName: string): Promise<boolean> {
+  const res = await client.query(`SELECT to_regclass($1::text) IS NOT NULL AS ok`, [fqName]);
+  const row = res.rows[0] as { ok?: boolean } | undefined;
+  return Boolean(row?.ok);
 }
 
 export async function dispatchNotification(input: DispatchNotificationInput): Promise<DispatchNotificationResult> {
@@ -266,17 +275,68 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
       if (prefs.sms && smsTo) {
         channels.sms = { attempted: true };
         const body = buildSmsBody(input.event_type, payload);
+        let smsQueueId: string | null = null;
+        const smsQueueEnabled = await regclassExists(client as QueryableClient, "sms.queue");
+        if (smsQueueEnabled) {
+          const ins = await client.query<{ id: string }>(
+            `
+              INSERT INTO sms.queue (operating_company_id, to_phone, body, provider_status)
+              VALUES ($1::uuid, $2, $3, 'queued')
+              RETURNING id
+            `,
+            [operatingCompanyId, smsTo, body]
+          );
+          smsQueueId = String(ins.rows[0]?.id ?? "");
+        }
+
         const smsResult = await sendSms({ to: smsTo, body });
         channels.sms.ok = smsResult.success;
         if (!smsResult.success) channels.sms.error = smsResult.error;
+
+        if (smsQueueId) {
+          await client.query(
+            `UPDATE sms.queue SET provider_status = $2, provider_error = $3 WHERE id = $1::uuid`,
+            [smsQueueId, smsResult.success ? "sent" : "failed", smsResult.error ?? null]
+          );
+        }
       }
 
       const waPlan = resolveWhatsAppPlan(input.event_type, payload);
+      const waVerified = process.env.WHATSAPP_BUSINESS_VERIFIED === "true";
       if (prefs.whatsapp && waPlan) {
         channels.whatsapp = { attempted: true };
-        if (!templateExists(waPlan.template_name)) {
+        let waQueueId: string | null = null;
+        const waQueueEnabled = await regclassExists(client as QueryableClient, "whatsapp.queue");
+        if (waQueueEnabled) {
+          const initialStatus = waVerified ? "queued" : "skipped";
+          const ins = await client.query<{ id: string }>(
+            `
+              INSERT INTO whatsapp.queue (
+                operating_company_id,
+                to_phone,
+                template_name,
+                variables,
+                provider_status
+              )
+              VALUES ($1::uuid, $2, $3, $4::jsonb, $5)
+              RETURNING id
+            `,
+            [operatingCompanyId, waPlan.to, waPlan.template_name, JSON.stringify(waPlan.variables), initialStatus]
+          );
+          waQueueId = String(ins.rows[0]?.id ?? "");
+        }
+
+        if (!waVerified) {
+          channels.whatsapp.ok = true;
+        } else if (!templateExists(waPlan.template_name)) {
           channels.whatsapp.ok = false;
           channels.whatsapp.error = "unknown_whatsapp_template";
+          if (waQueueId) {
+            await client.query(
+              `UPDATE whatsapp.queue SET provider_status = 'failed', provider_error = $2 WHERE id = $1::uuid`,
+              [waQueueId, "unknown_whatsapp_template"]
+            );
+          }
         } else {
           const result = await sendWhatsAppMessage({
             to: waPlan.to,
@@ -285,6 +345,12 @@ export async function dispatchNotification(input: DispatchNotificationInput): Pr
           });
           channels.whatsapp.ok = result.success;
           if (!result.success) channels.whatsapp.error = result.error;
+          if (waQueueId) {
+            await client.query(
+              `UPDATE whatsapp.queue SET provider_status = $2, provider_error = $3 WHERE id = $1::uuid`,
+              [waQueueId, result.success ? "sent" : "failed", result.error ?? null]
+            );
+          }
         }
       }
 

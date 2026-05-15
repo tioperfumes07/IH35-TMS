@@ -1,16 +1,151 @@
-# Perf baseline — 2026-05-14
+# Performance baseline — 2026-05-14
 
-**Ticket:** `P7-PERF-RUN-001` — baseline numbers were not captured in the agent environment (local API not exercised here).
+- Generated at (UTC): 2026-05-15T01:10:48.352Z
+- Base URL: https://api.ih35dispatch.com
+- Runs per endpoint: 10 (sequential)
+- Slow threshold (documentation): p95 > 500ms
+- Hard fail threshold (non-record mode): p95 > 2000ms
+- Auth: legacy PERF_TEST_AUTH header (likely insufficient for prod)
 
-Run locally with the API up:
+| Endpoint | p50 (ms) | p95 (ms) | p99 (ms) | max (ms) |
+|---|---:|---:|---:|---:|
+| GET /api/v1/dispatch/loads | 95.3 | 274.1 | 274.1 | 274.1 |
+| GET /api/v1/mdata/drivers | 96.8 | 98.9 | 98.9 | 98.9 |
+| GET /api/v1/mdata/customers | 96.6 | 117.6 | 117.6 | 117.6 |
+| GET /api/v1/mdata/vendors | 97.6 | 124.8 | 124.8 | 124.8 |
+| GET /api/v1/driver-finance/settlements | 97.9 | 111.1 | 111.1 | 111.1 |
+| GET /api/v1/banking/dashboard/kpis (banking summary) | 99.6 | 104.4 | 104.4 | 104.4 |
+| GET /api/v1/qbo/sync/health | 96.9 | 123.6 | 123.6 | 123.6 |
+| GET /api/v1/scheduled-reports | 92.4 | 98.9 | 98.9 | 98.9 |
+| GET /api/v1/admin/activity | 93.3 | 100.9 | 100.9 | 100.9 |
+| GET /api/v1/admin/launch-readiness | 95.7 | 103.8 | 103.8 | 103.8 |
+| POST /api/v1/banking/plaid/webhook (empty JSON) | 95.1 | 99.2 | 99.2 | 99.2 |
+| GET /api/v1/email/queue | 96.2 | 105.8 | 105.8 | 105.8 |
 
-```bash
-export PERF_OPERATING_COMPANY_ID='<uuid>'
-npm run smoke:perf
-```
+## Endpoints exceeding 500ms p95
 
-After the run, paste measured outputs into the table below and commit.
+- None observed.
 
-| Scenario | p50 | p95 | Notes |
-| --- | --- | --- | --- |
-|  |  |  |  |
+## Failures / non-2xx
+
+- GET /api/v1/dispatch/loads: HTTP 401 (203.6ms)
+- GET /api/v1/dispatch/loads: HTTP 401 (274.1ms)
+- GET /api/v1/dispatch/loads: HTTP 401 (96.2ms)
+- GET /api/v1/dispatch/loads: HTTP 401 (95.3ms)
+- GET /api/v1/dispatch/loads: HTTP 401 (90.1ms)
+- GET /api/v1/dispatch/loads: HTTP 401 (103.0ms)
+- GET /api/v1/dispatch/loads: HTTP 401 (89.8ms)
+- GET /api/v1/dispatch/loads: HTTP 401 (93.5ms)
+- GET /api/v1/dispatch/loads: HTTP 401 (91.6ms)
+- GET /api/v1/dispatch/loads: HTTP 401 (96.0ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (97.6ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (92.6ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (86.0ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (98.9ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (96.8ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (94.5ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (98.0ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (98.2ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (98.5ms)
+- GET /api/v1/mdata/drivers: HTTP 401 (96.5ms)
+- GET /api/v1/mdata/customers: HTTP 401 (86.7ms)
+- GET /api/v1/mdata/customers: HTTP 401 (102.9ms)
+- GET /api/v1/mdata/customers: HTTP 401 (105.5ms)
+- GET /api/v1/mdata/customers: HTTP 401 (103.7ms)
+- GET /api/v1/mdata/customers: HTTP 401 (93.2ms)
+- GET /api/v1/mdata/customers: HTTP 401 (117.6ms)
+- GET /api/v1/mdata/customers: HTTP 401 (91.8ms)
+- GET /api/v1/mdata/customers: HTTP 401 (96.3ms)
+- GET /api/v1/mdata/customers: HTTP 401 (103.0ms)
+- GET /api/v1/mdata/customers: HTTP 401 (96.6ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (98.6ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (103.9ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (96.8ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (101.5ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (105.3ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (124.8ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (87.4ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (97.6ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (90.6ms)
+- GET /api/v1/mdata/vendors: HTTP 401 (95.4ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (97.3ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (97.9ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (102.2ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (100.5ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (111.1ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (96.2ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (89.9ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (106.3ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (101.1ms)
+- GET /api/v1/driver-finance/settlements: HTTP 401 (92.3ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (102.6ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (99.6ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (93.1ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (100.1ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (104.4ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (104.2ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (98.3ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (94.7ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (98.7ms)
+- GET /api/v1/banking/dashboard/kpis (banking summary): HTTP 401 (100.2ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (123.6ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (96.1ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (87.0ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (96.1ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (98.0ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (98.2ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (98.9ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (96.9ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (97.4ms)
+- GET /api/v1/qbo/sync/health: HTTP 401 (94.5ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (95.2ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (97.3ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (90.0ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (98.9ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (92.4ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (96.7ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (90.4ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (90.3ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (97.8ms)
+- GET /api/v1/scheduled-reports: HTTP 404 (92.2ms)
+- GET /api/v1/admin/activity: HTTP 401 (100.9ms)
+- GET /api/v1/admin/activity: HTTP 401 (99.7ms)
+- GET /api/v1/admin/activity: HTTP 401 (93.3ms)
+- GET /api/v1/admin/activity: HTTP 401 (96.7ms)
+- GET /api/v1/admin/activity: HTTP 401 (92.5ms)
+- GET /api/v1/admin/activity: HTTP 401 (97.2ms)
+- GET /api/v1/admin/activity: HTTP 401 (95.5ms)
+- GET /api/v1/admin/activity: HTTP 401 (92.1ms)
+- GET /api/v1/admin/activity: HTTP 401 (91.8ms)
+- GET /api/v1/admin/activity: HTTP 401 (91.6ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (97.7ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (93.5ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (89.6ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (95.7ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (98.1ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (103.8ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (96.3ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (89.9ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (91.6ms)
+- GET /api/v1/admin/launch-readiness: HTTP 404 (98.8ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (97.8ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (99.2ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (92.5ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (95.8ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (95.4ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (92.5ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (94.3ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (95.1ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (96.4ms)
+- POST /api/v1/banking/plaid/webhook (empty JSON): HTTP 404 (94.4ms)
+- GET /api/v1/email/queue: HTTP 401 (91.5ms)
+- GET /api/v1/email/queue: HTTP 401 (97.4ms)
+- GET /api/v1/email/queue: HTTP 401 (105.8ms)
+- GET /api/v1/email/queue: HTTP 401 (100.5ms)
+- GET /api/v1/email/queue: HTTP 401 (93.8ms)
+- GET /api/v1/email/queue: HTTP 401 (98.0ms)
+- GET /api/v1/email/queue: HTTP 401 (93.0ms)
+- GET /api/v1/email/queue: HTTP 401 (98.1ms)
+- GET /api/v1/email/queue: HTTP 401 (96.2ms)
+- GET /api/v1/email/queue: HTTP 401 (91.2ms)
+

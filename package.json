@@ -28,6 +28,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "smoke:block-x": "tsx scripts/smoke-tests/block-x-scheduled-reports-e2e.ts && tsx scripts/smoke-tests/block-x-production-health.ts",
     "smoke:perf": "tsx scripts/smoke-tests/perf-baseline.ts",
+    "plaid:backfill-webhook": "tsx scripts/plaid-backfill-webhook-url.ts",
     "smoke:email-queue": "tsx scripts/smoke-tests/email-queue-e2e.ts",
     "test": "vitest run --config apps/backend/vitest.config.ts && cd apps/frontend && npx vitest run src/components/ErrorBoundary.test.tsx && cd ../.. && node scripts/lint-deps.test.mjs",
     "test:coverage": "vitest run --config apps/backend/vitest.config.ts --coverage",
