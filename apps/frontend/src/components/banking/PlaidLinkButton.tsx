@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
-import { createPlaidLinkToken, exchangePlaidPublicToken, type PlaidBankAccount } from "../../api/banking";
+import { createPlaidLinkToken, exchangePlaidPublicToken, type PlaidBankAccount, type PlaidLinkAccountType } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { ActionButton } from "../shared/ActionButton";
 import { useToast } from "../Toast";
@@ -8,11 +8,13 @@ import { useToast } from "../Toast";
 type Props = {
   operatingCompanyId: string;
   onSuccess: (accounts: PlaidBankAccount[]) => void;
+  accountType?: PlaidLinkAccountType;
+  label: string;
 };
 
 const ALLOWED_ROLES = new Set(["Owner", "Administrator"]);
 
-export function PlaidLinkButton({ operatingCompanyId, onSuccess }: Props) {
+export function PlaidLinkButton({ operatingCompanyId, onSuccess, accountType = "bank", label }: Props) {
   const auth = useAuth();
   const { pushToast } = useToast();
   const [linkToken, setLinkToken] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export function PlaidLinkButton({ operatingCompanyId, onSuccess }: Props) {
     }
     let cancelled = false;
     setLoadingToken(true);
-    void createPlaidLinkToken(operatingCompanyId)
+    void createPlaidLinkToken(operatingCompanyId, accountType)
       .then((res) => {
         if (!cancelled) {
           setLinkToken(res.link_token);
@@ -47,7 +49,7 @@ export function PlaidLinkButton({ operatingCompanyId, onSuccess }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [isAllowed, hasCompany, operatingCompanyId, pushToast]);
+  }, [isAllowed, hasCompany, operatingCompanyId, accountType, pushToast]);
 
   const plaidConfig = useMemo(
     () => ({
@@ -84,7 +86,7 @@ export function PlaidLinkButton({ operatingCompanyId, onSuccess }: Props) {
       }}
       disabled={disabled}
     >
-      {loadingToken || exchanging ? "Connecting..." : "Connect Bank Account"}
+      {loadingToken || exchanging ? "Connecting..." : label}
     </ActionButton>
   );
 }

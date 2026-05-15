@@ -128,6 +128,24 @@ export function BankingHomePage() {
             <ActionButton onClick={() => setManageOpen(true)}>+ Manage Accounts</ActionButton>
             <PlaidLinkButton
               operatingCompanyId={companyId}
+              accountType="bank"
+              label="+ Connect Bank Account"
+              onSuccess={() => {
+                void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
+              }}
+            />
+            <PlaidLinkButton
+              operatingCompanyId={companyId}
+              accountType="credit_card"
+              label="+ Connect Credit Card"
+              onSuccess={() => {
+                void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
+              }}
+            />
+            <PlaidLinkButton
+              operatingCompanyId={companyId}
+              accountType="all"
+              label="+ Connect Other"
               onSuccess={() => {
                 void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
               }}

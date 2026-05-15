@@ -1,9 +1,16 @@
-import { CountryCode, Products } from "plaid";
+import { CountryCode } from "plaid";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
+import type { BankTransaction, TransactionCategoryRule } from "../../banking/types.js";
+import { insertPlaidSyncedBankTransaction, normalizeBankTransactionDescription } from "../../banking/transaction-ingestion.js";
 import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
 import { sendEmail } from "../../notifications/email.service.js";
-import type { BankTransaction, TransactionCategoryRule } from "../../banking/types.js";
+import {
+  buildLinkTokenCreateCore,
+  buildLinkTokenCreateRequestBase,
+  resolvePlaidLinkAccountType,
+  type PlaidLinkAccountType,
+} from "./link-token-config.js";
 import { getPlaidClient, getPlaidEnvForAudit } from "./plaid-client.js";
 
 type SyncCounts = {
@@ -26,6 +33,14 @@ function mapPlaidTypeToAccountType(input: string | null | undefined) {
   if (normalized.includes("savings")) return "savings";
   if (normalized.includes("credit")) return "credit";
   return normalized || "checking";
+}
+
+export function mapPlaidAccountClass(plaidAccountType: string | null | undefined): "depository" | "credit" | "investment" | "other" {
+  const t = String(plaidAccountType ?? "").toLowerCase();
+  if (t === "depository") return "depository";
+  if (t === "credit") return "credit";
+  if (t === "investment") return "investment";
+  return "other";
 }
 
 async function appendSystemAudit(
@@ -113,18 +128,23 @@ function matchesRule(patternRaw: string, categories: string[]) {
   return normalizedCategories.some((category) => category === normalizedPattern || category.includes(normalizedPattern));
 }
 
-export async function createLinkToken(userId: string, operatingCompanyId: string) {
+export async function createLinkToken(
+  userId: string,
+  operatingCompanyId: string,
+  accountTypeInput: string | undefined = "bank"
+) {
   const plaid = getPlaidClient();
   const webhookUrl =
     process.env.PLAID_WEBHOOK_URL?.trim() || "https://api.ih35dispatch.com/api/v1/banking/plaid/webhook";
 
+  const accountType: PlaidLinkAccountType = resolvePlaidLinkAccountType(accountTypeInput);
+  const core = buildLinkTokenCreateCore(accountType);
+
   const response = await plaid.linkTokenCreate({
     user: { client_user_id: userId },
-    client_name: "IH35 TMS",
-    products: [Products.Transactions, Products.Auth],
-    country_codes: [CountryCode.Us],
-    language: "en",
-    webhook: webhookUrl,
+    ...buildLinkTokenCreateRequestBase(webhookUrl),
+    products: core.products,
+    ...(core.account_filters ? { account_filters: core.account_filters } : {}),
   });
 
   await withCurrentUser(userId, async (client) => {
@@ -134,6 +154,64 @@ export async function createLinkToken(userId: string, operatingCompanyId: string
       "banking.plaid.link_token_created",
       {
         operating_company_id: operatingCompanyId,
+        plaid_env: getPlaidEnvForAudit(),
+        token_expires_at: response.data.expiration,
+        link_account_type: accountType,
+        plaid_products: core.products,
+        plaid_account_filters: core.account_filters ?? null,
+      },
+      "info",
+      "P5-T1.2-PLAID"
+    );
+  });
+
+  return {
+    link_token: response.data.link_token,
+    expiration: response.data.expiration,
+    accountType,
+    products: core.products,
+    account_filters: core.account_filters ?? null,
+  };
+}
+
+export async function createUpdateModeLinkToken(userId: string, operatingCompanyId: string, plaidItemId: string) {
+  const accessToken = await withLuciaBypass(async (client) => {
+    const res = await client.query<{ t: string | null }>(
+      `
+        SELECT plaid_access_token AS t
+        FROM banking.bank_accounts
+        WHERE operating_company_id = $1::uuid
+          AND plaid_item_id = $2
+          AND plaid_access_token IS NOT NULL
+        LIMIT 1
+      `,
+      [operatingCompanyId, plaidItemId]
+    );
+    return res.rows[0]?.t ?? null;
+  });
+
+  if (!accessToken) {
+    throw new Error("E_PLAID_UPDATE_TOKEN: Plaid item not found or missing access token for this company");
+  }
+
+  const plaid = getPlaidClient();
+  const webhookUrl =
+    process.env.PLAID_WEBHOOK_URL?.trim() || "https://api.ih35dispatch.com/api/v1/banking/plaid/webhook";
+
+  const response = await plaid.linkTokenCreate({
+    user: { client_user_id: userId },
+    ...buildLinkTokenCreateRequestBase(webhookUrl),
+    access_token: accessToken,
+  });
+
+  await withCurrentUser(userId, async (client) => {
+    await appendCrudAudit(
+      client,
+      userId,
+      "banking.plaid.update_link_token_created",
+      {
+        operating_company_id: operatingCompanyId,
+        plaid_item_id: plaidItemId,
         plaid_env: getPlaidEnvForAudit(),
         token_expires_at: response.data.expiration,
       },
@@ -174,6 +252,7 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
     for (const account of accountsResponse.data.accounts) {
       const accountName = account.name || account.official_name || "Bank Account";
       const accountType = mapPlaidTypeToAccountType(account.subtype || account.type);
+      const accountClass = mapPlaidAccountClass(account.type);
       const accountMask = account.mask ?? null;
       const currentBalance = toCents(account.balances.current);
       const availableBalance = toCents(account.balances.available ?? account.balances.current);
@@ -200,16 +279,28 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
               institution_name = $4,
               account_name = $5,
               account_type = $6,
-              account_mask = $7,
-              current_balance_cents = $8,
-              available_balance_cents = $9,
+              account_class = $7,
+              account_mask = $8,
+              current_balance_cents = $9,
+              available_balance_cents = $10,
               sync_status = 'active',
               is_active = true,
               updated_at = now(),
               deactivated_at = NULL
             WHERE id = $1
           `,
-          [accountId, itemId, accessToken, institutionName, accountName, accountType, accountMask, currentBalance, availableBalance]
+          [
+            accountId,
+            itemId,
+            accessToken,
+            institutionName,
+            accountName,
+            accountType,
+            accountClass,
+            accountMask,
+            currentBalance,
+            availableBalance,
+          ]
         );
         await appendCrudAudit(
           client,
@@ -234,6 +325,7 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
               institution_name,
               account_name,
               account_type,
+              account_class,
               account_mask,
               current_balance_cents,
               available_balance_cents,
@@ -243,10 +335,22 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
               created_at,
               updated_at
             )
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'USD',true,'active',now(),now())
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'USD',true,'active',now(),now())
             RETURNING id
           `,
-          [operatingCompanyId, itemId, accessToken, account.account_id, institutionName, accountName, accountType, accountMask, currentBalance, availableBalance]
+          [
+            operatingCompanyId,
+            itemId,
+            accessToken,
+            account.account_id,
+            institutionName,
+            accountName,
+            accountType,
+            accountClass,
+            accountMask,
+            currentBalance,
+            availableBalance,
+          ]
         );
         accountId = inserted.rows[0]?.id ?? null;
         if (accountId) {
@@ -282,7 +386,7 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
     );
   });
 
-  return { bankAccountIds: createdIds };
+  return { bankAccountIds: createdIds, item_id: itemId };
 }
 
 export async function autoCategorize(transaction: Pick<BankTransaction, "operating_company_id" | "id" | "plaid_category">) {
@@ -392,47 +496,25 @@ export async function syncTransactions(itemId: string) {
       for (const transaction of syncRes.data.added) {
         const bankAccount = accountByPlaidId.get(transaction.account_id);
         if (!bankAccount) continue;
-        const insert = await client.query(
-          `
-            INSERT INTO banking.bank_transactions (
-              bank_account_id,
-              operating_company_id,
-              plaid_transaction_id,
-              transaction_date,
-              posted_date,
-              amount_cents,
-              description,
-              merchant_name,
-              plaid_category,
-              pending,
-              is_credit,
-              created_at,
-              updated_at
-            )
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::text[],$10,$11,now(),now())
-            ON CONFLICT (plaid_transaction_id) DO NOTHING
-            RETURNING id, operating_company_id, plaid_category
-          `,
-          [
-            bankAccount.id,
-            bankAccount.operating_company_id,
-            transaction.transaction_id,
-            transaction.date,
-            transaction.authorized_date ?? null,
-            toCents(transaction.amount),
-            transaction.name ?? null,
-            transaction.merchant_name ?? null,
-            transaction.personal_finance_category
-              ? [
-                  transaction.personal_finance_category.primary,
-                  ...(transaction.personal_finance_category.detailed ? [transaction.personal_finance_category.detailed] : []),
-                ]
-              : [],
-            Boolean(transaction.pending),
-            transaction.amount < 0,
-          ]
-        );
-        if ((insert.rowCount ?? 0) > 0) {
+        const insert = await insertPlaidSyncedBankTransaction(client, {
+          bank_account_id: bankAccount.id,
+          operating_company_id: bankAccount.operating_company_id,
+          plaid_transaction_id: transaction.transaction_id,
+          transaction_date: transaction.date,
+          posted_date: transaction.authorized_date ?? null,
+          amount_cents: toCents(transaction.amount),
+          description: transaction.name ?? null,
+          merchant_name: transaction.merchant_name ?? null,
+          plaid_category: transaction.personal_finance_category
+            ? [
+                transaction.personal_finance_category.primary,
+                ...(transaction.personal_finance_category.detailed ? [transaction.personal_finance_category.detailed] : []),
+              ]
+            : [],
+          pending: Boolean(transaction.pending),
+          is_credit: transaction.amount < 0,
+        });
+        if ((insert.rows?.length ?? 0) > 0) {
           counts.added += 1;
           const row = insert.rows[0] as { id: string; operating_company_id: string; plaid_category: string[] } | undefined;
           if (row) {
@@ -461,6 +543,7 @@ export async function syncTransactions(itemId: string) {
               plaid_category = $7::text[],
               pending = $8,
               is_credit = $9,
+              normalized_description = $10,
               updated_at = now()
             WHERE plaid_transaction_id = $1
           `,
@@ -479,6 +562,7 @@ export async function syncTransactions(itemId: string) {
               : [],
             Boolean(transaction.pending),
             transaction.amount < 0,
+            normalizeBankTransactionDescription(transaction.name ?? null),
           ]
         );
         counts.modified += Number(update.rowCount ?? 0);

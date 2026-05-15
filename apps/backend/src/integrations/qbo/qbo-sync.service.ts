@@ -749,6 +749,7 @@ export function computePayloadHashFromTxn(txn: {
   matched_load_id: string | null;
   matched_bill_id: string | null;
   matched_settlement_id: string | null;
+  account_class?: string | null;
 }) {
   return hashPayload(txn);
 }

@@ -1,4 +1,5 @@
 import pg from "pg";
+import { normalizeBankTransactionDescription } from "../banking/transaction-ingestion.js";
 
 export type SeedType = "drivers" | "customers" | "vendors" | "assets" | "loads" | "bank_accounts" | "bank_transactions";
 export type CompanyCode = "TRK" | "TRANSP";
@@ -1186,14 +1187,19 @@ async function upsertBankTransactions(
                 amount_cents,
                 description,
                 merchant_name,
+                plaid_category,
                 pending,
                 is_credit,
                 matched_load_id,
-                status
+                status,
+                normalized_description,
+                source,
+                source_ref
               )
               VALUES (
-                $1,$2,$3,$4::date,$5::date,$6::bigint,$7,$8,$9,$10,$11,'pending_categorization'
+                $1,$2,$3,$4::date,$5::date,$6::bigint,$7,$8,'{}'::text[],$9,$10,$11,'pending_categorization',$12,$13,$14
               )
+              ON CONFLICT (bank_account_id, dedup_hash) DO NOTHING
             `,
             [
               bankAccountId,
@@ -1207,10 +1213,12 @@ async function upsertBankTransactions(
               pending,
               isCredit,
               matchedLoadId,
+              normalizeBankTransactionDescription(nullable(row.description)),
+              "csv_import",
+              plaidTxnId,
             ]
           );
         }
-
         counters.inserted += 1;
         await client.query("RELEASE SAVEPOINT seed_row_bank_tx");
       } catch (err) {

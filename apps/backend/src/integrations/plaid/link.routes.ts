@@ -13,6 +13,15 @@ const companyBodySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const linkTokenBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  accountType: z.enum(["bank", "credit_card", "all"]).optional(),
+});
+
+const linkTokenQuerySchema = z.object({
+  accountType: z.enum(["bank", "credit_card", "all"]).optional(),
+});
+
 const exchangeBodySchema = z.object({
   public_token: z.string().trim().min(1),
   operating_company_id: z.string().uuid(),
@@ -69,6 +78,7 @@ async function loadBankAccountsByIds(ids: string[], operatingCompanyId: string) 
           institution_name,
           account_name,
           account_type,
+          account_class,
           account_mask,
           current_balance_cents,
           available_balance_cents,
@@ -92,11 +102,21 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     if (!user) return;
     if (!ensureRole(reply, user.role, ownerAdminRoles)) return;
 
-    const body = companyBodySchema.safeParse(req.body ?? {});
+    const body = linkTokenBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
+    const query = linkTokenQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
 
-    const token = await createLinkToken(user.uuid, body.data.operating_company_id);
-    return { link_token: token.link_token, expiration: token.expiration };
+    const accountType = body.data.accountType ?? query.data.accountType;
+
+    const token = await createLinkToken(user.uuid, body.data.operating_company_id, accountType);
+    return {
+      link_token: token.link_token,
+      expiration: token.expiration,
+      accountType: token.accountType,
+      products: token.products,
+      account_filters: token.account_filters,
+    };
   });
 
   app.post("/api/v1/banking/plaid/exchange-public-token", async (req, reply) => {
@@ -128,6 +148,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             institution_name,
             account_name,
             account_type,
+            account_class,
             account_mask,
             current_balance_cents,
             available_balance_cents,
