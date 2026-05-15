@@ -114,8 +114,22 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       const rowsRes = await client.query(
         `
           SELECT
-            bt.*
+            bt.*,
+            vc.vendor_category AS _vendor_category_suggestion
           FROM banking.bank_transactions bt
+          LEFT JOIN LATERAL (
+            SELECT v.vendor_category
+            FROM mdata.vendors v
+            WHERE v.operating_company_id = bt.operating_company_id
+              AND v.vendor_category IS NOT NULL
+              AND v.deactivated_at IS NULL
+              AND (
+                COALESCE(bt.description, '') ILIKE '%' || v.vendor_name || '%'
+                OR COALESCE(bt.merchant_name, '') ILIKE '%' || v.vendor_name || '%'
+              )
+            ORDER BY length(v.vendor_name) DESC NULLS LAST
+            LIMIT 1
+          ) vc ON TRUE
           WHERE ${whereSql}
           ORDER BY bt.transaction_date DESC, bt.created_at DESC
           LIMIT $${limitIdx}
@@ -124,8 +138,23 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         values
       );
 
+      const rows = rowsRes.rows.map((r: Record<string, unknown>) => {
+        const existingRaw = r.category_kind;
+        const existing =
+          existingRaw != null && String(existingRaw).trim().length > 0 ? String(existingRaw).trim() : null;
+        const sugRaw = r._vendor_category_suggestion;
+        const sug = sugRaw != null && String(sugRaw).trim().length > 0 ? String(sugRaw).trim() : null;
+        const { _vendor_category_suggestion: _omit, ...rest } = r;
+        void _omit;
+        return {
+          ...rest,
+          suggested_category_kind: existing ?? sug ?? null,
+          categorization_confidence: existing ? "rule_match" : sug ? "vendor_category_fallback" : null,
+        };
+      });
+
       return {
-        rows: rowsRes.rows,
+        rows,
         total_count: Number(totalsRes.rows[0]?.total_count ?? 0),
         total_uncategorized_cents: Number(totalsRes.rows[0]?.total_uncategorized_cents ?? 0),
       };
