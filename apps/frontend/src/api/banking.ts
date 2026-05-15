@@ -391,6 +391,20 @@ export function disconnectPlaidItem(operatingCompanyId: string, plaidItemId: str
   });
 }
 
+export function syncPlaidItem(operatingCompanyId: string, plaidItemId: string) {
+  return apiRequest<{
+    ok: boolean;
+    item_id: string;
+    added: number;
+    modified: number;
+    removed: number;
+    has_more: boolean;
+  }>(`/api/v1/banking/plaid/items/${encodeURIComponent(plaidItemId)}/sync`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
 export type CompanyTransactionsSort = "date_desc" | "date_asc" | "amount_desc" | "amount_asc";
 
 export function getPlaidCompanyTransactions(

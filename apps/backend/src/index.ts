@@ -70,6 +70,7 @@ import { registerBankTxCategorizationRoutes } from "./banking/categorization.rou
 import { registerBankingRoutes } from "./banking/banking.routes.js";
 import { registerAccountBalanceRoutes } from "./banking/account-balance.routes.js";
 import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
+import { registerPlaidAdminRoutes } from "./integrations/plaid/admin.routes.js";
 import { registerPlaidWebhookRoutes } from "./integrations/plaid/webhook.routes.js";
 import { registerBankingPlaidWebhookRoutes } from "./banking/plaid/webhook.routes.js";
 import { registerBankingTransfersRoutes } from "./banking/transfers.routes.js";
@@ -369,6 +370,7 @@ async function main() {
   await registerPlaidBankingItemsRoutes(app);
   await registerAccountBalanceRoutes(app);
   await registerPlaidLinkRoutes(app);
+  await registerPlaidAdminRoutes(app);
   await registerPlaidWebhookRoutes(app);
   await registerBankingPlaidWebhookRoutes(app);
   await registerBankingTransfersRoutes(app);
