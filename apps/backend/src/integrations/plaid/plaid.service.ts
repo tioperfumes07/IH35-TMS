@@ -7,6 +7,7 @@ import {
   mergeManualBankTransactionStub,
   normalizeBankTransactionDescription,
 } from "../../banking/bank-tx-dedup.js";
+import { applyBankingRulesForTransaction } from "../../banking/banking-rules.engine.js";
 import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import {
@@ -557,6 +558,7 @@ export async function syncTransactions(itemId: string) {
           counts.added += 1;
           const row = insert.rows[0] as { id: string; operating_company_id: string; plaid_category: string[] } | undefined;
           if (row) {
+            await applyBankingRulesForTransaction(client, row.id, row.operating_company_id);
             await mergeManualBankTransactionStub(client, {
               plaidRowId: row.id,
               operatingCompanyId: row.operating_company_id,

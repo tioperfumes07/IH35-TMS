@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import crypto from "node:crypto";
+import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-retained-earnings.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -216,25 +217,87 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     const body = z.object({ operating_company_id: z.string().uuid(), closing_notes: z.string().optional() }).safeParse(req.body ?? {});
     if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
+    let retainedEarningsJeId: string | null = null;
+
     try {
       await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-        await client.query(
-          `
-            UPDATE accounting.periods
-            SET status = 'closed',
-                closed_at = now(),
-                closed_by_user_id = $3::uuid,
-                closing_notes = $4,
-                locks_txn_dates_le = period_end,
-                updated_at = now()
-            WHERE id = $1 AND operating_company_id = $2 AND status = 'open'
-          `,
-          [params.data.id, body.data.operating_company_id, user.uuid, body.data.closing_notes ?? null]
-        );
-        await appendCrudAudit(client, user.uuid, "accounting.period_closed", { period_id: params.data.id }, "info", "P7-W2-ACC");
+        await client.query("BEGIN");
+        try {
+          const periodRes = await client.query(
+            `
+              SELECT id, period_start::text, period_end::text, fiscal_year, status::text
+              FROM accounting.periods
+              WHERE id = $1 AND operating_company_id = $2
+              FOR UPDATE
+            `,
+            [params.data.id, body.data.operating_company_id]
+          );
+          const period = periodRes.rows[0] as
+            | { period_start: string; period_end: string; fiscal_year: number; status: string }
+            | undefined;
+          if (!period) {
+            await client.query("ROLLBACK");
+            throw new Error("period_not_found");
+          }
+          if (period.status !== "open") {
+            await client.query("ROLLBACK");
+            throw new Error("period_not_open");
+          }
+
+          retainedEarningsJeId = await insertRetainedEarningsClosingJournalIfNeeded(client, {
+            operating_company_id: body.data.operating_company_id,
+            period_start: period.period_start,
+            period_end: period.period_end,
+            fiscal_year: Number(period.fiscal_year),
+            closer_user_id: user.uuid,
+          });
+
+          const upd = await client.query(
+            `
+              UPDATE accounting.periods
+              SET status = 'closed',
+                  closed_at = now(),
+                  closed_by_user_id = $3::uuid,
+                  closing_notes = $4,
+                  locks_txn_dates_le = period_end,
+                  retained_earnings_entry_id = COALESCE($5::uuid, retained_earnings_entry_id),
+                  updated_at = now()
+              WHERE id = $1 AND operating_company_id = $2 AND status = 'open'
+              RETURNING id
+            `,
+            [params.data.id, body.data.operating_company_id, user.uuid, body.data.closing_notes ?? null, retainedEarningsJeId]
+          );
+
+          if (!upd.rows.length) {
+            await client.query("ROLLBACK");
+            throw new Error("period_close_race");
+          }
+
+          await appendCrudAudit(client, user.uuid, "accounting.period_closed", { period_id: params.data.id, retained_earnings_entry_id: retainedEarningsJeId }, "info", "P7-W2-ACC");
+
+          await client.query("COMMIT");
+        } catch (err) {
+          await client.query("ROLLBACK").catch(() => undefined);
+          throw err;
+        }
       });
-      return { ok: true };
+
+      if (retainedEarningsJeId) {
+        await enqueueSyncJob(
+          body.data.operating_company_id,
+          "journal_entry",
+          retainedEarningsJeId,
+          payloadHash({ retained_earnings_close: params.data.id }),
+          user.uuid
+        );
+      }
+
+      return { ok: true, retained_earnings_entry_id: retainedEarningsJeId };
     } catch (err) {
+      const msg = String((err as Error)?.message ?? err ?? "");
+      if (msg === "period_not_found") return reply.code(404).send({ error: "not_found" });
+      if (msg === "period_not_open") return reply.code(409).send({ error: "period_not_open" });
+      if (msg === "period_close_race") return reply.code(409).send({ error: "period_close_race" });
       if (mapPgClosedPeriod(reply, err)) return;
       throw err;
     }

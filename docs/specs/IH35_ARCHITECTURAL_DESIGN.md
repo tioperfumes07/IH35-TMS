@@ -727,11 +727,32 @@ Rules:
 
 **Conflicts:** `integrations.qbo_sync_conflicts` holds TMS vs QBO snapshots; finance roles resolve via REST; `tms_wins` re-enqueues affected entities on the outbound queue.
 
-**Bank review:** `accounting.banking_rules` drives tier‑1 suggestions; tiers 2–4 (vendor/history/PFC) are wired incrementally in `banking/suggestion-engine.ts`.
+**Bank review:** `accounting.banking_rules` drives tier‑1 suggestions via `banking/banking-rules.engine.ts` (runs after new Plaid-synced and CSV-import `banking.bank_transactions` inserts; priority `DESC`, first match wins). Tiers 2–4 (vendor/history/PFC) remain in `banking/suggestion-engine.ts` when no rule matches.
 
 **Reconciliation:** Canonical sessions remain `banking.reconciliation_sessions` (extended statuses include `finalized` / `reopened`). Parallel REST paths live under `/api/v1/banking/reconciliation-sessions/*` alongside legacy `/api/v1/banking/reconciliation/*`.
 
 **Period close:** `accounting.periods` plus triggers raising `IH35_CLOSED_PERIOD …` enforce locked fiscal periods (HTTP **423** when surfaced through API mappers).
+
+### Wave 2 follow-on — outbound PATCH, CDC, closing JE, recurring, banking rules
+
+**Outbound PATCH (accounting entities)** — Queue row has `qbo_id` + `qbo_sync_token` → worker builds entity-specific JSON (`integrations/qbo/translators/*`), POSTs `operation=update`, refreshes OAuth once on 401, writes `integrations.qbo_sync_conflicts` on 409 (blocked queue) / 422–400 (medium, backoff). Idempotency: SHA-256 of outbound payload stored on `integrations.qbo_sync_queue.idempotency_key` / `payload_jsonb`.
+
+```
+[TMS row changed] → enqueue qbo_sync_queue (pending)
+        → worker loads TMS + queue meta
+        → translator → QBO JSON + SyncToken
+        → POST …/entity?operation=update
+        → 200: bump TMS last_qbo_synced_at / version_int; queue synced
+        → 409: conflict row (high) + queue blocked
+```
+
+**Inbound CDC + replay** — Cron `qbo_cdc_poll` (5 min) calls QuickBooks `GET …/cdc` for env-configured realms (`QBO_REALM_ID_TRK`, `QBO_REALM_ID_TRANSP`), `changedSince` = max prior CDC/replay `qbo_last_updated_time` from `integrations.qbo_inbound_events` (`triggered_by` in `payload_raw`). Inserts `qbo_inbound_events` (`payload_raw.triggered_by`). Owner-only `POST /api/v1/admin/sync/inbound/replay-since` `{ since_iso, realm }` replays the same ingest path. On HTTP 410 CDC cursor expiry: single warning + full pull from epoch `1970-01-01T00:00:00Z`. Inbound worker snapshots `qbo_archive.entities_snapshot`; before marking applied it compares linked TMS invoice/bill vs QBO payload — if fields diverge **and** `tms.updated_at > coalesce(tms.last_qbo_synced_at, epoch)` (or invoice `qbo_sync_pending`), inserts `qbo_sync_conflicts` and sets inbound status `conflict`.
+
+**Year-end retained earnings JE** — When `period_end` is Dec 31, close transaction aggregates **posted** `journal_entry_postings` joined to `catalogs.accounts` for the period: debit remaining balances on Income / OtherIncome; credit remaining balances on Expense / CostOfGoodsSold / OtherExpense; plug difference to `catalogs.account_role_bindings.role_key = 'retained_earnings'` (fallback: first Equity account). Single transaction with period row update + `retained_earnings_entry_id`.
+
+**Recurring templates cron** — Every 15 minutes, `SELECT … WHERE next_run_at <= now() LIMIT 50`; each row `FOR UPDATE SKIP LOCKED` in its own transaction; materialize invoice/bill/journal/expense from `template_payload`; advance `next_run_at` via cadence (`weekly` +7d, `biweekly` +14d, `monthly` / `quarterly` / `annually` calendar math with Luxon; `custom_cron` via `cron-parser` next fire). Outbound enqueue currently runs for **`journal_entry`** rows only because the queue worker’s live QBO writers are not yet generalized for invoice/bill/expense on this branch (bill remains preview-mode in `processSyncQueueBatch`).
+
+**Admin sync health** — `GET /api/v1/admin/sync/health` (Owner/Administrator): cross-realm JSON + 30s in-memory cache (`realms[]`, `last_cdc_poll_at_per_realm`, `recurring_templates_due_now`, `next_period_close_company`).
 
 **Roles / RLS:** New integrations tables follow `ih35_app` grants + office-role SELECT patterns mirroring `integrations.integration_sync_log` (7175).
 

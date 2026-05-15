@@ -2,11 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withLuciaBypass, withCurrentUser } from "../auth/db.js";
-import {
-  dismissOutboundSyncQueueItem,
-  getSyncQueueStats,
-  retrySyncQueueItem,
-} from "../integrations/qbo/qbo-sync.service.js";
+import { dismissOutboundSyncQueueItem, retrySyncQueueItem } from "../integrations/qbo/qbo-sync.service.js";
+import { runQboCdcIngest } from "../integrations/qbo/qbo-cdc.service.js";
 
 const ownerAdmin = new Set(["Owner", "Administrator"]);
 
@@ -18,6 +15,16 @@ function gate(req: Parameters<typeof requireAuth>[0], reply: Parameters<typeof r
     return null;
   }
   return user as { role: string; uuid: string };
+}
+
+function ownerGate(req: Parameters<typeof requireAuth>[0], reply: Parameters<typeof requireAuth>[1]) {
+  const user = gate(req, reply);
+  if (!user) return null;
+  if (user.role !== "Owner") {
+    reply.code(403).send({ error: "forbidden" });
+    return null;
+  }
+  return user;
 }
 
 export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
@@ -147,68 +154,50 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/admin/sync/inbound/replay-since", async (req, reply) => {
-    const user = gate(req, reply);
+    const user = ownerGate(req, reply);
     if (!user) return;
 
     const body = z
       .object({
-        operating_company_id: z.string().uuid(),
-        since_iso: z.string(),
+        since_iso: z.string().min(1),
+        realm: z.string().trim().min(1),
       })
       .safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
-    await appendAudit(user.uuid, body.data.operating_company_id, "integrations.qbo_inbound_replay_requested", {
-      since_iso: body.data.since_iso,
-    });
-    return { ok: true, note: "replay_stub_audit_only" };
-  });
-
-  app.get("/api/v1/admin/sync/health", async (req, reply) => {
-    const user = gate(req, reply);
-    if (!user) return;
-
-    const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
-    if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
-
-    const stats = await getSyncQueueStats(q.data.operating_company_id);
-
-    const detail = await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [q.data.operating_company_id]);
-      const conn = await client.query(
+    const ocRow = await withLuciaBypass(async (client) => {
+      const res = await client.query<{ operating_company_id: string }>(
         `
-          SELECT realm_id, access_token_expires_at, revoked_at, last_used_at
+          SELECT operating_company_id::text
           FROM integrations.qbo_connections
-          WHERE operating_company_id = $1 AND revoked_at IS NULL
+          WHERE realm_id = $1 AND revoked_at IS NULL
           ORDER BY last_used_at DESC NULLS LAST
-          LIMIT 5
+          LIMIT 1
         `,
-        [q.data.operating_company_id]
+        [body.data.realm]
       );
-      const lastInbound = await client.query<{ max: string | null }>(
-        `SELECT MAX(received_at)::text AS max FROM integrations.qbo_inbound_events WHERE operating_company_id = $1`,
-        [q.data.operating_company_id]
-      );
-      const lastApplied = await client.query<{ max: string | null }>(
-        `SELECT MAX(applied_at)::text AS max FROM integrations.qbo_inbound_events WHERE operating_company_id = $1 AND status = 'applied'`,
-        [q.data.operating_company_id]
-      );
-      const conflicts = await client.query<{ c: string }>(
-        `SELECT COUNT(*)::text AS c FROM integrations.qbo_sync_conflicts WHERE operating_company_id = $1 AND resolved_at IS NULL`,
-        [q.data.operating_company_id]
-      );
-      return {
-        connections: conn.rows,
-        last_webhook_received_at: lastInbound.rows[0]?.max ?? null,
-        last_inbound_applied_at: lastApplied.rows[0]?.max ?? null,
-        unresolved_conflicts: Number(conflicts.rows[0]?.c ?? 0),
-      };
+      return res.rows[0] ?? null;
     });
 
-    return {
-      outbound_queue: stats,
-      ...detail,
-    };
+    if (!ocRow) return reply.code(404).send({ error: "realm_not_connected" });
+
+    const result = await runQboCdcIngest({
+      operating_company_id: ocRow.operating_company_id,
+      qbo_realm_id: body.data.realm,
+      changed_since_override_iso: body.data.since_iso,
+      triggered_by: "manual_replay",
+      logWarning: (msg, meta) => req.log.warn({ msg, meta }),
+    });
+
+    await appendAudit(user.uuid, ocRow.operating_company_id, "integrations.qbo_inbound_replay_requested", {
+      since_iso: body.data.since_iso,
+      realm: body.data.realm,
+      inserted: result.inserted,
+      skipped_duplicates: result.skipped_duplicates,
+      http_status: result.http_status,
+    });
+
+    return { ok: true, ...result };
   });
 
   app.post("/api/v1/admin/sync/reset-realm", async (req, reply) => {

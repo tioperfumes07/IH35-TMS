@@ -1,5 +1,6 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import { qboCompanyContext, qboGetEntityById } from "./qbo-client.js";
+import { evaluateInboundVersusTms } from "./sync-inbound-apply-guard.js";
 
 const ENTITY_REST: Record<string, string> = {
   Invoice: "invoice",
@@ -8,6 +9,10 @@ const ENTITY_REST: Record<string, string> = {
   bill: "bill",
   Payment: "payment",
   payment: "payment",
+  BillPayment: "billpayment",
+  billpayment: "billpayment",
+  CreditMemo: "creditmemo",
+  creditmemo: "creditmemo",
   JournalEntry: "journalentry",
   journalentry: "journalentry",
   Customer: "customer",
@@ -24,6 +29,8 @@ const REST_TO_QBO_TYPE: Record<string, string> = {
   invoice: "Invoice",
   bill: "Bill",
   payment: "Payment",
+  billpayment: "BillPayment",
+  creditmemo: "CreditMemo",
   journalentry: "JournalEntry",
   customer: "Customer",
   vendor: "Vendor",
@@ -32,10 +39,11 @@ const REST_TO_QBO_TYPE: Record<string, string> = {
 };
 
 /** Fetch QBO entity JSON and persist forensic snapshot + mark inbound event processed (best-effort). */
-export async function processInboundSyncBatch(limit = 25): Promise<{ processed: number; applied: number; errors: number }> {
+export async function processInboundSyncBatch(limit = 25): Promise<{ processed: number; applied: number; errors: number; conflicts: number }> {
   let processed = 0;
   let applied = 0;
   let errors = 0;
+  let conflicts = 0;
 
   await withLuciaBypass(async (client) => {
     const pending = await client.query<{
@@ -88,6 +96,15 @@ export async function processInboundSyncBatch(limit = 25): Promise<{ processed: 
         const rootKey = Object.keys(payload).find((k) => k !== "time" && typeof payload[k] === "object" && payload[k] !== null);
         const entityPayload = (rootKey ? (payload[rootKey] as Record<string, unknown>) : {}) ?? {};
 
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
+        const inboundConflict = await evaluateInboundVersusTms({
+          client,
+          operating_company_id: row.operating_company_id,
+          qbo_entity_type: String(row.qbo_entity_type ?? ""),
+          qbo_entity_id: entityId,
+          entity_payload: entityPayload,
+        });
+
         const batchIns = await client.query<{ id: string }>(
           `
             INSERT INTO qbo_archive.import_batches (
@@ -133,22 +150,41 @@ export async function processInboundSyncBatch(limit = 25): Promise<{ processed: 
 
         const metaUpdated =
           (entityPayload?.MetaData as { LastUpdatedTime?: string } | undefined)?.LastUpdatedTime ?? null;
-        await client.query(
-          `
-            UPDATE integrations.qbo_inbound_events
-            SET
-              status = 'applied',
-              applied_at = now(),
-              applied_to_tms_entity_table = $2,
-              applied_to_tms_entity_id = NULL,
-              qbo_last_updated_at = COALESCE($3::timestamptz, qbo_last_updated_at),
-              updated_at = now(),
-              error_message = NULL
-            WHERE id = $1
-          `,
-          [row.id, `qbo_archive.entities_snapshot`, metaUpdated]
-        );
-        applied += 1;
+        if (inboundConflict) {
+          conflicts += 1;
+          await client.query(
+            `
+              UPDATE integrations.qbo_inbound_events
+              SET
+                status = 'conflict',
+                applied_at = NULL,
+                applied_to_tms_entity_table = NULL,
+                applied_to_tms_entity_id = NULL,
+                qbo_last_updated_at = COALESCE($2::timestamptz, qbo_last_updated_at),
+                updated_at = now(),
+                error_message = 'tms_qbo_divergence'
+              WHERE id = $1
+            `,
+            [row.id, metaUpdated]
+          );
+        } else {
+          await client.query(
+            `
+              UPDATE integrations.qbo_inbound_events
+              SET
+                status = 'applied',
+                applied_at = now(),
+                applied_to_tms_entity_table = $2,
+                applied_to_tms_entity_id = NULL,
+                qbo_last_updated_at = COALESCE($3::timestamptz, qbo_last_updated_at),
+                updated_at = now(),
+                error_message = NULL
+              WHERE id = $1
+            `,
+            [row.id, `qbo_archive.entities_snapshot`, metaUpdated]
+          );
+          applied += 1;
+        }
       } catch (error) {
         errors += 1;
         await client.query(
@@ -165,7 +201,7 @@ export async function processInboundSyncBatch(limit = 25): Promise<{ processed: 
     }
   });
 
-  return { processed, applied, errors };
+  return { processed, applied, errors, conflicts };
 }
 
 function capitalizeEntity(name: string) {

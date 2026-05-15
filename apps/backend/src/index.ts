@@ -133,6 +133,7 @@ import { registerEmailRoutes } from "./email/email.routes.js";
 import { registerEmailQueueAdminRoutes } from "./admin/email-queue-admin.routes.js";
 import { registerAdminActivityRoutes } from "./admin/activity.routes.js";
 import { registerAdminAccountingSyncRoutes } from "./admin/accounting-sync.routes.js";
+import { registerAdminSyncHealthRoutes } from "./admin/sync-health.routes.js";
 import { registerAdminClientErrorRoutes } from "./admin/client-errors.routes.js";
 import { initializeEmailCron } from "./email/cron.js";
 import { initializeQboOutboxDispatcher, stopQboOutboxDispatcher } from "./integrations/qbo/outbox-dispatcher.js";
@@ -296,6 +297,7 @@ async function main() {
   await registerErrorMonitorRoutes(app);
   await registerAdminActivityRoutes(app);
   await registerAdminAccountingSyncRoutes(app);
+  await registerAdminSyncHealthRoutes(app);
   await registerLaunchReadinessRoutes(app);
   await registerHealthDeepRoutes(app);
   await registerMigrationStatusRoutes(app);
