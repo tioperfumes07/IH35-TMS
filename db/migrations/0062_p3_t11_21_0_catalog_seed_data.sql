@@ -19,7 +19,6 @@ BEGIN
     'pickup_time_types',
     'additional_charges',
     'mx_customs_brokers',
-    'cancellation_reasons',
     'load_trailer_equipment',
     'pay_rate_templates',
     'driver_pay_types',
@@ -409,16 +408,7 @@ SELECT catalogs.__seed_company_catalog(
   )
 );
 
-SELECT catalogs.__seed_company_catalog(
-  'cancellation_reasons',
-  jsonb_build_array(
-    jsonb_build_object('code', 'CARRIER-CANCEL', 'display_name', 'Carrier cancel', 'description', 'Cancelled by carrier', 'metadata', '{}'::jsonb, 'sort_order', 10),
-    jsonb_build_object('code', 'SHIPPER-CANCEL', 'display_name', 'Shipper cancel', 'description', 'Cancelled by shipper', 'metadata', '{}'::jsonb, 'sort_order', 20),
-    jsonb_build_object('code', 'NO-DRIVER', 'display_name', 'No driver', 'description', 'No driver available', 'metadata', '{}'::jsonb, 'sort_order', 30),
-    jsonb_build_object('code', 'EQUIPMENT-FAIL', 'display_name', 'Equipment failure', 'description', 'Equipment issue', 'metadata', '{}'::jsonb, 'sort_order', 40),
-    jsonb_build_object('code', 'WEATHER', 'display_name', 'Weather', 'description', 'Cancelled due to weather', 'metadata', '{}'::jsonb, 'sort_order', 50)
-  )
-);
+-- cancellation_reasons: NOT a generic company catalog — canonical global table is created in 0101_p5_f4_cancellation_reasons.sql (reason_code, reason_label, …).
 
 SELECT catalogs.__seed_company_catalog(
   'load_trailer_equipment',

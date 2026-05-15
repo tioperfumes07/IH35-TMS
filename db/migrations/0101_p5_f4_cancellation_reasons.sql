@@ -1,5 +1,25 @@
 BEGIN;
 
+-- Self-heal: migration 0062 once created catalogs.cancellation_reasons as a generic company-scoped catalog
+-- (columns: code, display_name, …). Migration 0101 expects a global table keyed by reason_code.
+-- CREATE TABLE IF NOT EXISTS would silently skip and leave the wrong shape → FK reason_code fails.
+DO $$
+BEGIN
+  IF to_regclass('catalogs.cancellation_reasons') IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'catalogs'
+        AND table_name = 'cancellation_reasons'
+        AND column_name = 'reason_code'
+    ) THEN
+      EXECUTE 'ALTER TABLE catalogs.cancellation_reasons RENAME TO cancellation_reasons_company_catalog_legacy';
+      RAISE NOTICE 'Renamed 0062 generic catalogs.cancellation_reasons stub to cancellation_reasons_company_catalog_legacy';
+    END IF;
+  END IF;
+END
+$$;
+
 CREATE TABLE IF NOT EXISTS catalogs.cancellation_reasons (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   reason_code text UNIQUE NOT NULL,

@@ -3155,6 +3155,22 @@ CREATE INDEX IF NOT EXISTS idx_assignment_history_driver
   ON dispatch.load_assignment_history (new_driver_id, assigned_at DESC);
 
 -- ===== From 0101_p5_f4_cancellation_reasons.sql =====
+DO $$
+BEGIN
+  IF to_regclass('catalogs.cancellation_reasons') IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'catalogs'
+        AND table_name = 'cancellation_reasons'
+        AND column_name = 'reason_code'
+    ) THEN
+      EXECUTE 'ALTER TABLE catalogs.cancellation_reasons RENAME TO cancellation_reasons_company_catalog_legacy';
+      RAISE NOTICE 'Renamed 0062 generic catalogs.cancellation_reasons stub to cancellation_reasons_company_catalog_legacy';
+    END IF;
+  END IF;
+END
+$$;
 CREATE TABLE IF NOT EXISTS catalogs.cancellation_reasons (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   reason_code text UNIQUE NOT NULL,

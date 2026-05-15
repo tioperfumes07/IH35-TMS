@@ -45,6 +45,15 @@ jobs:
       - name: Static checks — canonical renamed tables (no stale safety.fines refs)
         run: npm run verify:canonical-schema-names
 
+      - name: Static checks — FK REFERENCES order (outside CREATE / guarded DO blocks)
+        run: npm run db:verify:reference-order
+
+      - name: Static checks — rename fallout (ALTER TABLE … RENAME TO)
+        run: npm run db:verify:rename-fallout
+
+      - name: Static checks — backend SQL hints vs migration CREATE TABLE (informational)
+        run: npm run db:verify:backend-contract
+
       - name: Migrate database (integration tests)
         run: npm run db:migrate
 
