@@ -54,6 +54,7 @@ describe("Sidebar", () => {
       "DOCS",
       "LISTS",
       "REPORTS",
+      "HELP",
       "ELD",
       "LEGAL",
       "425C",
@@ -63,7 +64,7 @@ describe("Sidebar", () => {
     const rendered = screen.getAllByRole("link").map((el) => el.textContent?.replace(/\s+/g, " ").trim());
     expect(rendered).toEqual(expected);
     const iconCount = document.querySelectorAll("a svg").length;
-    expect(iconCount).toBe(20);
+    expect(iconCount).toBe(21);
   });
 
   it("uses uppercase 10px labels and active item weight 600", () => {
