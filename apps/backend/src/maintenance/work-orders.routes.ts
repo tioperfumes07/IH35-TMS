@@ -10,6 +10,7 @@ import {
   createWorkOrderWithLines,
 } from "./two-section-service.js";
 import { assertRoadsideFields, listWorkOrdersByBucket } from "./work-orders.service.js";
+import { isWoInvoiceMismatch, validateWoVendorInvoiceTotals } from "./wo-cost-validation.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
 const workOrderTypeSchema = z.enum(["pm", "repair", "tire", "accident"]);
@@ -408,6 +409,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             } else {
               await allocateInHouseFromWO(client as never, user.uuid, created.woUuid);
             }
+            await validateWoVendorInvoiceTotals(client as never, created.woUuid);
             await client.query("COMMIT");
             return {
               wo: { uuid: created.woUuid, display_id: created.display_id },
@@ -427,6 +429,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         }
         return reply.code(201).send(result);
       } catch (error) {
+        if (isWoInvoiceMismatch(error)) {
+          return reply.code(409).send({
+            error: error.code,
+            total_line_items_cents: error.total_line_items_cents,
+            vendor_invoice_cents: error.vendor_invoice_cents,
+            delta_cents: error.delta_cents,
+            source: error.source,
+          });
+        }
         const message = String((error as Error)?.message ?? "");
         if (message.includes("E_DIESEL_REQUIRES_LOAD")) {
           return reply.code(422).send({
@@ -471,7 +482,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       }
     }
 
-    const created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+    let created:
+      | { unavailable: true }
+      | { unavailable: false; row: Record<string, unknown> }
+      | undefined;
+    try {
+      created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) {
         return { unavailable: true as const };
       }
@@ -623,10 +639,25 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         );
       }
 
+      await validateWoVendorInvoiceTotals(client, String(wo.id));
+
       return { unavailable: false as const, row: wo };
     });
+    } catch (error) {
+      if (isWoInvoiceMismatch(error)) {
+        const err = error;
+        return reply.code(409).send({
+          error: err.code,
+          total_line_items_cents: err.total_line_items_cents,
+          vendor_invoice_cents: err.vendor_invoice_cents,
+          delta_cents: err.delta_cents,
+          source: err.source,
+        });
+      }
+      throw error;
+    }
 
-    if (created.unavailable) {
+    if (!created || created.unavailable) {
       return reply.code(501).send({ error: "maintenance_schema_not_available" });
     }
     return reply.code(201).send(created.row);
@@ -739,6 +770,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       const current = currentRes.rows[0];
       if (!current) return { notFound: true as const };
       try {
+        await validateWoVendorInvoiceTotals(client, String(params.data.id));
         const updateRes = await client.query(
           `
             UPDATE maintenance.work_orders
@@ -778,6 +810,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         );
         return { row: updateRes.rows[0] };
       } catch (error) {
+        if (isWoInvoiceMismatch(error)) {
+          return { invoiceMismatch: true as const, detail: error };
+        }
         const message = String((error as Error).message ?? "completion_failed");
         if (message.includes("E_EXTERNAL_VENDOR_FIELDS_REQUIRED")) {
           return { blocked: true as const, code: "E_EXTERNAL_VENDOR_FIELDS_REQUIRED", message };
@@ -787,6 +822,17 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     });
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
+    if ("invoiceMismatch" in result) {
+      const d = result.detail;
+      if (!d) return reply.code(409).send({ error: "WO_INVOICE_MISMATCH" });
+      return reply.code(409).send({
+        error: d.code,
+        total_line_items_cents: d.total_line_items_cents,
+        vendor_invoice_cents: d.vendor_invoice_cents,
+        delta_cents: d.delta_cents,
+        source: d.source,
+      });
+    }
     if ("blocked" in result) return reply.code(422).send({ error: result.code, message: result.message });
     return { ok: true, work_order: result.row };
   });
@@ -871,23 +917,39 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
-    const row = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await maintenanceReady(client))) return null;
-      const wo = await client.query(`SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
-        params.data.id,
-        companyId,
-      ]);
-      if (wo.rowCount === 0) return undefined;
-      const res = await client.query(
-        `
-          INSERT INTO maintenance.work_order_lines (work_order_id, line_type, description, quantity, unit_cost, amount)
-          VALUES ($1,$2,$3,$4,$5,$6)
-          RETURNING *
-        `,
-        [params.data.id, parsed.data.line_type, parsed.data.description, parsed.data.quantity, parsed.data.unit_cost, parsed.data.amount]
-      );
-      return res.rows[0];
-    });
+    let row: Record<string, unknown> | null | undefined;
+    try {
+      row = await withCompany(user.uuid, companyId, async (client) => {
+        if (!(await maintenanceReady(client))) return null;
+        const wo = await client.query(`SELECT id FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`, [
+          params.data.id,
+          companyId,
+        ]);
+        if (wo.rowCount === 0) return undefined;
+        const res = await client.query(
+          `
+            INSERT INTO maintenance.work_order_lines (work_order_id, line_type, description, quantity, unit_cost, amount)
+            VALUES ($1,$2,$3,$4,$5,$6)
+            RETURNING *
+          `,
+          [params.data.id, parsed.data.line_type, parsed.data.description, parsed.data.quantity, parsed.data.unit_cost, parsed.data.amount]
+        );
+        await validateWoVendorInvoiceTotals(client, String(params.data.id));
+        return res.rows[0];
+      });
+    } catch (error) {
+      if (isWoInvoiceMismatch(error)) {
+        const err = error;
+        return reply.code(409).send({
+          error: err.code,
+          total_line_items_cents: err.total_line_items_cents,
+          vendor_invoice_cents: err.vendor_invoice_cents,
+          delta_cents: err.delta_cents,
+          source: err.source,
+        });
+      }
+      throw error;
+    }
     if (row === null) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if (row === undefined) return reply.code(404).send({ error: "work_order_not_found" });
     return reply.code(201).send(row);
@@ -901,22 +963,39 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
-    const deleted = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await maintenanceReady(client))) return null;
-      const res = await client.query(
-        `
-          DELETE FROM maintenance.work_order_lines li
-          USING maintenance.work_orders w
-          WHERE li.id = $1
-            AND li.work_order_id = w.id
-            AND w.id = $2
-            AND w.operating_company_id = $3
-          RETURNING li.id
-        `,
-        [params.data.lid, params.data.id, companyId]
-      );
-      return res.rowCount > 0;
-    });
+    let deleted: boolean | null;
+    try {
+      deleted = await withCompany(user.uuid, companyId, async (client) => {
+        if (!(await maintenanceReady(client))) return null;
+        const res = await client.query(
+          `
+            DELETE FROM maintenance.work_order_lines li
+            USING maintenance.work_orders w
+            WHERE li.id = $1
+              AND li.work_order_id = w.id
+              AND w.id = $2
+              AND w.operating_company_id = $3
+            RETURNING li.id
+          `,
+          [params.data.lid, params.data.id, companyId]
+        );
+        const ok = Boolean(res.rowCount && res.rowCount > 0);
+        if (ok) await validateWoVendorInvoiceTotals(client, String(params.data.id));
+        return ok;
+      });
+    } catch (error) {
+      if (isWoInvoiceMismatch(error)) {
+        const err = error;
+        return reply.code(409).send({
+          error: err.code,
+          total_line_items_cents: err.total_line_items_cents,
+          vendor_invoice_cents: err.vendor_invoice_cents,
+          delta_cents: err.delta_cents,
+          source: err.source,
+        });
+      }
+      throw error;
+    }
     if (deleted === null) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if (!deleted) return reply.code(404).send({ error: "line_item_not_found" });
     return reply.code(204).send();

@@ -133,8 +133,8 @@ export async function runSamsaraHealthCheckForRow(client: PgClient, operatingCom
     samsaraOrgId: row.samsara_org_id ? String(row.samsara_org_id) : null,
   });
 
-  try {
-    await api.testConnection();
+  const result = await api.testConnection();
+  if (result.ok) {
     await client.query(
       `
         UPDATE integrations.samsara_config
@@ -143,8 +143,8 @@ export async function runSamsaraHealthCheckForRow(client: PgClient, operatingCom
       `,
       [operatingCompanyId]
     );
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "unknown_error";
+  } else {
+    const msg = result.error ?? "unknown_error";
     await client.query(
       `
         UPDATE integrations.samsara_config
