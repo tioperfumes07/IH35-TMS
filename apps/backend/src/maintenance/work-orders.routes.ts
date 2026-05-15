@@ -824,6 +824,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invoiceMismatch" in result) {
       const d = result.detail;
+      if (!d) return reply.code(409).send({ error: "WO_INVOICE_MISMATCH" });
       return reply.code(409).send({
         error: d.code,
         total_line_items_cents: d.total_line_items_cents,
