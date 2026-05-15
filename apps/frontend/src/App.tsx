@@ -4,8 +4,7 @@ import { useAuth } from "./auth/useAuth";
 import { Shell } from "./components/Shell";
 import { CompanyProvider } from "./contexts/CompanyContext";
 import { useCompanyContext } from "./contexts/CompanyContext";
-import { CustomersPage } from "./pages/Customers";
-import { CustomerDetailPage } from "./pages/CustomerDetail";
+import { AccountingCustomerDetailPage, CustomersListPage, SuspenseShell } from "./router";
 import { ListsHubPage } from "./pages/lists/ListsHubPage";
 import { DriverDetailPage } from "./pages/DriverDetail";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
@@ -349,7 +348,9 @@ export default function App() {
           path="/customers"
           element={
             <ProtectedRoute>
-              <CustomersPage />
+              <SuspenseShell>
+                <CustomersListPage />
+              </SuspenseShell>
             </ProtectedRoute>
           }
         />
@@ -357,7 +358,9 @@ export default function App() {
           path="/customers/:id"
           element={
             <ProtectedRoute>
-              <CustomerDetailPage />
+              <SuspenseShell>
+                <AccountingCustomerDetailPage />
+              </SuspenseShell>
             </ProtectedRoute>
           }
         />
