@@ -2,7 +2,11 @@ import { CountryCode } from "plaid";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import type { BankTransaction, TransactionCategoryRule } from "../../banking/types.js";
-import { insertPlaidSyncedBankTransaction, normalizeBankTransactionDescription } from "../../banking/transaction-ingestion.js";
+import {
+  computeBankTransactionDedupHash,
+  mergeManualBankTransactionStub,
+  normalizeBankTransactionDescription,
+} from "../../banking/bank-tx-dedup.js";
 import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
 import { sendEmail } from "../../notifications/email.service.js";
 import {
@@ -496,28 +500,71 @@ export async function syncTransactions(itemId: string) {
       for (const transaction of syncRes.data.added) {
         const bankAccount = accountByPlaidId.get(transaction.account_id);
         if (!bankAccount) continue;
-        const insert = await insertPlaidSyncedBankTransaction(client, {
+        const descParts = [transaction.name, transaction.merchant_name].filter(Boolean).join(" ");
+        const normalizedDescription = normalizeBankTransactionDescription(descParts);
+        const dedupHash = computeBankTransactionDedupHash({
           bank_account_id: bankAccount.id,
-          operating_company_id: bankAccount.operating_company_id,
-          plaid_transaction_id: transaction.transaction_id,
           transaction_date: transaction.date,
-          posted_date: transaction.authorized_date ?? null,
-          amount_cents: toCents(transaction.amount),
-          description: transaction.name ?? null,
-          merchant_name: transaction.merchant_name ?? null,
-          plaid_category: transaction.personal_finance_category
-            ? [
-                transaction.personal_finance_category.primary,
-                ...(transaction.personal_finance_category.detailed ? [transaction.personal_finance_category.detailed] : []),
-              ]
-            : [],
-          pending: Boolean(transaction.pending),
-          is_credit: transaction.amount < 0,
+          amount_cents: Math.abs(toCents(transaction.amount)),
+          normalized_description: normalizedDescription,
         });
-        if ((insert.rows?.length ?? 0) > 0) {
+        const insert = await client.query(
+          `
+            INSERT INTO banking.bank_transactions (
+              bank_account_id,
+              operating_company_id,
+              plaid_transaction_id,
+              transaction_date,
+              posted_date,
+              amount_cents,
+              description,
+              merchant_name,
+              plaid_category,
+              pending,
+              is_credit,
+              normalized_description,
+              dedup_hash,
+              source,
+              created_at,
+              updated_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::text[],$10,$11,$12,$13,'plaid',now(),now())
+            ON CONFLICT (plaid_transaction_id) DO NOTHING
+            RETURNING id, operating_company_id, plaid_category
+          `,
+          [
+            bankAccount.id,
+            bankAccount.operating_company_id,
+            transaction.transaction_id,
+            transaction.date,
+            transaction.authorized_date ?? null,
+            toCents(transaction.amount),
+            transaction.name ?? null,
+            transaction.merchant_name ?? null,
+            transaction.personal_finance_category
+              ? [
+                  transaction.personal_finance_category.primary,
+                  ...(transaction.personal_finance_category.detailed ? [transaction.personal_finance_category.detailed] : []),
+                ]
+              : [],
+            Boolean(transaction.pending),
+            transaction.amount < 0,
+            normalizedDescription,
+            dedupHash,
+          ]
+        );
+        if ((insert.rowCount ?? 0) > 0) {
           counts.added += 1;
           const row = insert.rows[0] as { id: string; operating_company_id: string; plaid_category: string[] } | undefined;
           if (row) {
+            await mergeManualBankTransactionStub(client, {
+              plaidRowId: row.id,
+              operatingCompanyId: row.operating_company_id,
+              bankAccountId: bankAccount.id,
+              transactionDate: transaction.date,
+              amountCents: Math.abs(toCents(transaction.amount)),
+              normalizedDescription,
+            });
             counts.autoCategorizeTotal += 1;
             const matched = await autoCategorize({
               id: row.id,
@@ -531,6 +578,16 @@ export async function syncTransactions(itemId: string) {
       }
 
       for (const transaction of syncRes.data.modified) {
+        const bankAccount = accountByPlaidId.get(transaction.account_id);
+        if (!bankAccount) continue;
+        const modDescParts = [transaction.name, transaction.merchant_name].filter(Boolean).join(" ");
+        const modNormalized = normalizeBankTransactionDescription(modDescParts);
+        const modDedupHash = computeBankTransactionDedupHash({
+          bank_account_id: bankAccount.id,
+          transaction_date: transaction.date,
+          amount_cents: Math.abs(toCents(transaction.amount)),
+          normalized_description: modNormalized,
+        });
         const update = await client.query(
           `
             UPDATE banking.bank_transactions
@@ -544,6 +601,7 @@ export async function syncTransactions(itemId: string) {
               pending = $8,
               is_credit = $9,
               normalized_description = $10,
+              dedup_hash = $11,
               updated_at = now()
             WHERE plaid_transaction_id = $1
           `,
@@ -562,7 +620,8 @@ export async function syncTransactions(itemId: string) {
               : [],
             Boolean(transaction.pending),
             transaction.amount < 0,
-            normalizeBankTransactionDescription(transaction.name ?? null),
+            modNormalized,
+            modDedupHash,
           ]
         );
         counts.modified += Number(update.rowCount ?? 0);

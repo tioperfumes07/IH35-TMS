@@ -51,9 +51,11 @@ function varianceClass(varianceCents: number) {
 }
 
 export function ReconciliationWorkspacePage() {
-  const { bankAccountId = "" } = useParams<{ bankAccountId: string }>();
+  const { bankAccountId = "" } = useParams<{ bankAccountId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id") ?? "";
+  const bankAccountHint = searchParams.get("bank_account_hint") ?? "";
+  const effectiveBankAccountId = bankAccountId || bankAccountHint;
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
@@ -126,7 +128,7 @@ export function ReconciliationWorkspacePage() {
       <PageHeader
         backHref="/banking"
         title="Reconciliation Workspace"
-        subtitle={bankAccountId ? `Account ${bankAccountId.slice(0, 8)}...` : ""}
+        subtitle={effectiveBankAccountId ? `Account ${effectiveBankAccountId.slice(0, 8)}...` : ""}
         actions={
           <ActionButton disabled>
             Auto-Match Suggestions (Phase 6)
@@ -159,18 +161,18 @@ export function ReconciliationWorkspacePage() {
               className="rounded border border-gray-300 px-2 py-1 text-sm"
             />
             <ActionButton
-              disabled={!companyId || !bankAccountId || !periodStart || !periodEnd || !statementBalanceInput || startLoading}
+              disabled={!companyId || !effectiveBankAccountId || !periodStart || !periodEnd || !statementBalanceInput || startLoading}
               onClick={() => {
                 setStartLoading(true);
                 const statementBalanceCents = Math.round(Number(statementBalanceInput) * 100);
                 void startReconciliationSession({
-                  bank_account_id: bankAccountId,
+                  bank_account_id: effectiveBankAccountId,
                   period_start: periodStart,
                   period_end: periodEnd,
                   statement_balance_cents: statementBalanceCents,
                 })
                   .then((res) => {
-                    setSearchParams({ session_id: res.session_id });
+                    setSearchParams({ session_id: res.session_id, bank_account_hint: effectiveBankAccountId });
                     pushToast("Reconciliation session started", "success");
                     void queryClient.invalidateQueries({ queryKey: ["banking", "reconciliation-sessions"] });
                   })
@@ -352,7 +354,7 @@ export function ReconciliationWorkspacePage() {
               </ActionButton>
             </div>
             <StatementUpload
-              bankAccountId={bankAccountId}
+              bankAccountId={effectiveBankAccountId}
               onUploaded={() => {
                 void workspaceQuery.refetch();
               }}

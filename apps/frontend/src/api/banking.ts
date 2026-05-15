@@ -642,3 +642,88 @@ export function uploadBankStatementCsv(file: File, bankAccountId: string) {
     form
   );
 }
+
+export type ObligationType = "load" | "settlement" | "fuel" | "work_order" | "ar_invoice" | "bill";
+
+export type UnmatchedBankTxnRow = {
+  id: string;
+  bank_account_id: string;
+  transaction_date: string;
+  posted_date: string | null;
+  amount_cents: number;
+  description: string | null;
+  merchant_name: string | null;
+  plaid_category: string[];
+  pending: boolean;
+  is_credit: boolean;
+  matched_load_id: string | null;
+  matched_bill_id: string | null;
+  matched_settlement_id: string | null;
+  reconciled_obligation_type: string | null;
+  reconciled_obligation_id: string | null;
+  reviewed_at: string | null;
+  status: string | null;
+  category: string | null;
+  notes?: string | null;
+  created_at?: string;
+};
+
+export function listUnmatchedReconcileTransactions(
+  operatingCompanyId: string,
+  filters: { bank_account_id?: string; date_from?: string; date_to?: string; amount_min_cents?: number; amount_max_cents?: number } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (filters.bank_account_id) q.set("bank_account_id", filters.bank_account_id);
+  if (filters.date_from) q.set("date_from", filters.date_from);
+  if (filters.date_to) q.set("date_to", filters.date_to);
+  if (filters.amount_min_cents != null) q.set("amount_min_cents", String(filters.amount_min_cents));
+  if (filters.amount_max_cents != null) q.set("amount_max_cents", String(filters.amount_max_cents));
+  return apiRequest<{ transactions: UnmatchedBankTxnRow[] }>(`/api/v1/banking/reconcile/unmatched-transactions?${q}`);
+}
+
+export function listReconcileObligations(operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{
+    obligations: Array<{
+      obligation_type: ObligationType;
+      obligation_id: string;
+      label: string;
+      amount_cents: number;
+      event_date: string;
+    }>;
+  }>(`/api/v1/banking/reconcile/obligations?${q}`);
+}
+
+export function getReconcileSuggestions(operatingCompanyId: string, bankTransactionId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, bank_transaction_id: bankTransactionId });
+  return apiRequest<{
+    suggestions: Array<{
+      obligation_type: ObligationType;
+      obligation_id: string;
+      label: string;
+      amount_cents: number;
+      event_date: string;
+      confidence: number;
+      lev: number;
+    }>;
+  }>(`/api/v1/banking/reconcile/suggestions?${q}`);
+}
+
+export function reconcileBankTransaction(
+  operatingCompanyId: string,
+  body: { bank_transaction_id: string; obligation_type: ObligationType; obligation_id: string }
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ ok: true }>(`/api/v1/banking/reconcile?${q}`, { method: "POST", body });
+}
+
+export function bulkReconcileAction(
+  operatingCompanyId: string,
+  body: {
+    bank_transaction_ids: string[];
+    action: "mark_reviewed" | "categorize_fuel" | "categorize_insurance" | "categorize_transfer";
+  }
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ ok: true; updated_count: number }>(`/api/v1/banking/reconcile/bulk?${q}`, { method: "POST", body });
+}

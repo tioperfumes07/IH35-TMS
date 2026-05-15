@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { z } from "zod";
 import { listInvoices, type Invoice } from "../api/accounting";
 import { listCustomerPayments, recordCustomerPayment, unapplyCustomerPayment, type CustomerPaymentListRow } from "../api/customers";
@@ -15,6 +16,7 @@ import {
   deactivateCustomerContact,
   getCustomerBillingSummary,
   getCustomerDetail,
+  getCustomerFinancialSummary,
   listCustomerLanes,
   listCustomerQualityEventReasons,
   listCustomerQualityEvents,
@@ -29,6 +31,7 @@ import {
   voidCustomerQualityEvent,
   type Customer,
   type CustomerBillingSummary,
+  type CustomerFinancialSummary,
   type CustomerLane,
   type CustomerContact,
   type CustomerContactDepartment,
@@ -149,6 +152,83 @@ function qualityFlagVariant(flag: Customer["quality_overall_flag"]): "positive" 
   return "neutral";
 }
 
+function CustomerFinancialOverviewSection(props: {
+  summary: CustomerFinancialSummary | undefined;
+  loading: boolean;
+  error: boolean;
+}) {
+  if (props.loading) return <div className="text-xs text-gray-500">Loading financial overview…</div>;
+  if (props.error || !props.summary) return null;
+
+  const chartData = props.summary.revenue_by_month.map((r) => ({
+    month: r.month,
+    revenue: r.total_cents / 100,
+  }));
+
+  const agingLabels: Record<string, string> = {
+    current: "Current",
+    "1_30": "1–30",
+    "31_60": "31–60",
+    "61_90": "61–90",
+    "90_plus": "90+",
+  };
+
+  return (
+    <div className="grid gap-3 lg:grid-cols-2">
+      <DataPanel title="Revenue (last 12 months)">
+        {chartData.length === 0 ? (
+          <p className="text-xs text-gray-500">No invoice history.</p>
+        ) : (
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip formatter={(v: number) => [`$${v.toFixed(0)}`, "Revenue"]} />
+                <Bar dataKey="revenue" fill="#0f172a" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </DataPanel>
+      <DataPanel title="AR aging (open invoices)">
+        <div className="space-y-1 text-sm">
+          {props.summary.ar_aging_buckets.length === 0 ? <p className="text-xs text-gray-500">No open AR.</p> : null}
+          {props.summary.ar_aging_buckets.map((b) => (
+            <div key={b.bucket} className="flex justify-between">
+              <span>{agingLabels[b.bucket] ?? b.bucket}</span>
+              <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(b.open_cents / 100)}</span>
+            </div>
+          ))}
+        </div>
+      </DataPanel>
+      <DataPanel title="Recent loads">
+        <div className="max-h-56 space-y-1 overflow-auto text-xs">
+          {props.summary.recent_loads.map((l) => (
+            <div key={l.id} className="flex justify-between gap-2 border-b border-gray-100 py-1">
+              <span className="truncate">{l.load_number ?? l.id.slice(0, 8)}</span>
+              <StatusBadge variant="neutral">{l.status ?? "—"}</StatusBadge>
+              <span>{new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(l.rate_total_cents ?? 0) / 100)}</span>
+            </div>
+          ))}
+          {props.summary.recent_loads.length === 0 ? <p className="text-gray-500">No loads.</p> : null}
+        </div>
+      </DataPanel>
+      <DataPanel title="Documents">
+        <div className="max-h-56 space-y-1 overflow-auto text-xs">
+          {(props.summary.documents as Array<{ id?: string; filename?: string; category?: string }>).map((d, i) => (
+            <div key={d.id ?? String(i)} className="flex justify-between gap-2 border-b border-gray-100 py-1">
+              <span className="truncate">{d.filename ?? d.id ?? "File"}</span>
+              <span className="text-gray-500">{d.category ?? ""}</span>
+            </div>
+          ))}
+          {props.summary.documents.length === 0 ? <p className="text-gray-500">No documents linked.</p> : null}
+        </div>
+      </DataPanel>
+    </div>
+  );
+}
+
 function emptyContactForm() {
   return {
     name: "",
@@ -256,6 +336,11 @@ export function CustomerDetailPage() {
   const billingSummaryQuery = useQuery({
     queryKey: ["customer-billing-summary", id, operatingCompanyId],
     queryFn: () => getCustomerBillingSummary(id, operatingCompanyId!),
+    enabled: Boolean(id && operatingCompanyId),
+  });
+  const financialSummaryQuery = useQuery({
+    queryKey: ["customer-financial-summary", id, operatingCompanyId],
+    queryFn: () => getCustomerFinancialSummary(id, operatingCompanyId!),
     enabled: Boolean(id && operatingCompanyId),
   });
   const lanesQuery = useQuery({
@@ -756,6 +841,8 @@ export function CustomerDetailPage() {
         ) : null}
         {customer.fmcsa_last_checked_at ? <span className="text-xs text-gray-500">{`Last checked ${new Date(customer.fmcsa_last_checked_at).toLocaleString()}`}</span> : null}
       </div>
+
+      <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} />
 
       <SecondaryNavTabs
         tabs={visibleTabs.map((tab) => ({ id: tab, label: tab }))}

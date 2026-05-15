@@ -17,6 +17,7 @@ import { OwnerApprovalPortalPage } from "./pages/driver-finance/OwnerApprovalPor
 import { FuelPlannerHomePage } from "./pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "./pages/banking/BankingHome";
 import { TransfersListPage } from "./pages/banking/TransfersListPage";
+import { BankingObligationReconcilePage } from "./pages/banking/BankingObligationReconcilePage";
 import { ReconciliationWorkspacePage } from "./pages/banking/ReconciliationWorkspace";
 import { CategorizationRulesPage } from "./pages/banking/CategorizationRulesPage";
 import { QboSyncQueuePage } from "./pages/banking/QboSyncQueuePage";
@@ -70,6 +71,7 @@ import { DriverLoadsPage } from "./pages/driver/DriverLoadsPage";
 import { DriverLoadDetailPage } from "./pages/driver/DriverLoadDetailPage";
 import { DriverHosPage } from "./pages/driver/DriverHosPage";
 import { DriverSettingsPage } from "./pages/driver/DriverSettingsPage";
+import { FuelReceiptPage } from "./pages/driver/FuelReceiptPage";
 import { NotificationPreferencesPage } from "./pages/settings/NotificationPreferencesPage";
 import { UserProfileSettingsPage } from "./pages/settings/UserProfileSettingsPage";
 import { DocumentsPage } from "./pages/Documents";
@@ -391,6 +393,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <TransfersListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/reconcile"
+          element={
+            <ProtectedRoute>
+              <BankingObligationReconcilePage />
             </ProtectedRoute>
           }
         />
@@ -1436,6 +1446,9 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/pwa/fuel-receipt" element={<DriverShell />}>
+          <Route index element={<FuelReceiptPage />} />
+        </Route>
         <Route path="/driver/login" element={<DriverLoginPage />} />
         <Route path="/driver" element={<DriverShell />}>
           <Route index element={<Navigate to="loads" replace />} />

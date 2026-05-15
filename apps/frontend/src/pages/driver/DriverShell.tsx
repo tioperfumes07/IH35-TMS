@@ -6,6 +6,7 @@ import { clearDriverAuth, hasDriverAccessToken } from "../../lib/auth-token";
 import { initDriverBackgroundSessionRefresh, registerDriverServiceWorker } from "../../lib/service-worker-registration";
 import { InstallPWAPrompt } from "./InstallPWAPrompt";
 import { DriverOnboardingTour } from "./DriverOnboardingTour";
+import { DriverOfflineBanner } from "./DriverOfflineBanner";
 import { FooterFaqLink, PageHelpLink } from "../../components/PageHelpLink";
 
 function applyDriverLanguageDefault() {
@@ -82,6 +83,9 @@ export function DriverShell() {
           <Link className={tabClass("/driver/hos")} to="/driver/hos" data-tour="driver-nav-hos">
             HOS
           </Link>
+          <Link className={tabClass("/pwa/fuel-receipt")} to="/pwa/fuel-receipt">
+            Receipt
+          </Link>
           <Link className={tabClass("/driver/disputes")} to="/driver/disputes" data-tour="driver-nav-disputes">
             Disputes
           </Link>
@@ -97,6 +101,7 @@ export function DriverShell() {
         </div>
       </header>
       <main className="mx-auto w-full max-w-lg flex-1 p-3">
+        <DriverOfflineBanner />
         <Outlet />
         <footer className="mt-8 flex justify-end pb-6">
           <FooterFaqLink className="text-slate-500 hover:text-slate-800" />
