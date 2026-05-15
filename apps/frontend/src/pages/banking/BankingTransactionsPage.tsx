@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
-  categorizeBankTransaction,
   getAllAccounts,
   getBankingTiles,
   getPlaidBankAccounts,
@@ -11,21 +10,18 @@ import {
   undoCategorization,
 } from "../../api/banking";
 import {
-  getBankTransactionMatchCandidates,
   getBankingTransactionsList,
   getBankingTransactionsReview,
-  postBankTransactionAccept,
   postBankTransactionExclude,
-  postBankTransactionMatch,
   type BankingReviewState,
 } from "../../api/banking-wave2";
 import { ApiError } from "../../api/client";
-import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useToast } from "../../components/Toast";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { filterBankingTilesForCompany, filterPlaidBankAccountsForCompany } from "../../lib/banking-company-filter";
 import { formatCurrencyCents } from "../../lib/format";
+import { CategorizeTransactionModal, type CategorizeModalMode } from "./components/CategorizeTransactionModal";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
 
 type TabId = "for_review" | "categorized" | "excluded";
@@ -147,17 +143,13 @@ export function BankingTransactionsPage() {
   const [page, setPage] = useState(Number(params.get("page") ?? "1") || 1);
   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>({});
   const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [inlineFor, setInlineFor] = useState<string | null>(null);
-  const [matchFor, setMatchFor] = useState<string | null>(null);
+  const [categorizeModal, setCategorizeModal] = useState<{
+    ids: string[];
+    mode: CategorizeModalMode;
+    preview: Record<string, unknown>;
+  } | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-
-  const [inlineVendorId, setInlineVendorId] = useState<string | null>(null);
-  const [inlineVendorLabel, setInlineVendorLabel] = useState("");
-  const [inlineAccountId, setInlineAccountId] = useState<string | null>(null);
-  const [inlineAccountLabel, setInlineAccountLabel] = useState("");
-  const [inlineClass, setInlineClass] = useState("");
-  const [inlineMemo, setInlineMemo] = useState("");
 
   const tilesQuery = useQuery({
     queryKey: ["banking", "tiles", companyId],
@@ -288,50 +280,18 @@ export function BankingTransactionsPage() {
     if (page !== safePage) setPage(safePage);
   }, [page, safePage]);
 
-  const matchCandidatesQuery = useQuery({
-    queryKey: ["banking", "match-candidates", companyId, matchFor],
-    queryFn: () => getBankTransactionMatchCandidates(matchFor!, companyId),
-    enabled: Boolean(companyId && matchFor),
-  });
-
   const invalidateBanking = () => {
     void queryClient.invalidateQueries({ queryKey: ["banking"] });
   };
 
-  const acceptOne = async (tx: Record<string, unknown>) => {
+  const openCategorize = (tx: Record<string, unknown>, mode: CategorizeModalMode) => {
     const id = String(tx.id ?? "");
-    const vendorId = inlineVendorId;
-    const accountId = inlineAccountId;
-    try {
-      await postBankTransactionAccept(id, companyId, {
-        vendor_id: vendorId,
-        account_id: accountId,
-        class_id: inlineClass.trim() || null,
-        memo: inlineMemo.trim() || null,
-      });
-    } catch (e) {
-      if (e instanceof ApiError && (e.status === 404 || e.status === 400 || e.status === 501)) {
-        await categorizeBankTransaction(id, companyId, {
-          category_kind: "bank_expense",
-          vendor_id: vendorId ?? undefined,
-          gl_account_id: accountId ?? undefined,
-          memo: inlineMemo.trim() || undefined,
-        });
-        return;
-      }
-      throw e;
-    }
+    setCategorizeModal({
+      ids: [id],
+      mode,
+      preview: { ...tx, bank_account_id: tx.bank_account_id ?? selectedAccountId },
+    });
   };
-
-  const acceptMut = useMutation({
-    mutationFn: acceptOne,
-    onSuccess: () => {
-      pushToast("Transaction saved", "success");
-      setInlineFor(null);
-      invalidateBanking();
-    },
-    onError: (e) => pushToast(String((e as Error).message ?? "Save failed"), "error"),
-  });
 
   const undoMut = useMutation({
     mutationFn: (id: string) => undoCategorization(id, companyId),
@@ -349,17 +309,6 @@ export function BankingTransactionsPage() {
       invalidateBanking();
     },
     onError: (e) => pushToast(String((e as Error).message ?? "Exclude failed"), "error"),
-  });
-
-  const matchMut = useMutation({
-    mutationFn: (args: { transactionId: string; kind: string; target_id: string }) =>
-      postBankTransactionMatch(args.transactionId, companyId, { kind: args.kind, target_id: args.target_id }),
-    onSuccess: () => {
-      pushToast("Matched", "success");
-      setMatchFor(null);
-      invalidateBanking();
-    },
-    onError: (e) => pushToast(String((e as Error).message ?? "Match failed"), "error"),
   });
 
   const selectedIds = useMemo(() => Object.keys(selected).filter((k) => selected[k]), [selected]);
@@ -419,17 +368,6 @@ export function BankingTransactionsPage() {
       },
       { replace: true }
     );
-  };
-
-  const openInline = (tx: Record<string, unknown>) => {
-    const id = String(tx.id ?? "");
-    setInlineFor(id);
-    setInlineVendorId(null);
-    setInlineVendorLabel(String(tx.vendor_display_name ?? ""));
-    setInlineAccountId(null);
-    setInlineAccountLabel("");
-    setInlineClass("");
-    setInlineMemo("");
   };
 
   const headerAccountLabel = selectedTile?.display_name ?? "Select account";
@@ -772,7 +710,7 @@ export function BankingTransactionsPage() {
                             type="button"
                             className="font-medium text-blue-700 hover:underline"
                             aria-label={`Add categorization for ${id}`}
-                            onClick={() => openInline(tx)}
+                            onClick={() => openCategorize(tx, "categorize")}
                           >
                             Add
                           </button>
@@ -782,7 +720,7 @@ export function BankingTransactionsPage() {
                             type="button"
                             className="font-medium text-blue-700 hover:underline"
                             aria-label={`Match transaction ${id}`}
-                            onClick={() => setMatchFor(id)}
+                            onClick={() => openCategorize(tx, "match")}
                           >
                             Match
                           </button>
@@ -800,158 +738,39 @@ export function BankingTransactionsPage() {
         </table>
       </div>
 
-      {inlineFor ? (
-        <div className="rounded border border-emerald-200 bg-emerald-50/40 p-3">
-          <div className="mb-2 text-sm font-semibold text-gray-900">Quick add</div>
-          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-            <label className="text-xs text-gray-700">
-              Vendor
-              <QboCombobox
-                entityType="vendor"
-                operatingCompanyId={companyId}
-                value={inlineVendorId}
-                displayValue={inlineVendorLabel}
-                onChange={(qid, label) => {
-                  setInlineVendorId(qid);
-                  setInlineVendorLabel(label);
-                }}
-                onPick={(row) => setInlineVendorId(row.id)}
-                placeholder="Search vendor…"
-              />
-            </label>
-            <label className="text-xs text-gray-700">
-              Account (required)
-              <QboCombobox
-                entityType="account"
-                operatingCompanyId={companyId}
-                value={inlineAccountId}
-                displayValue={inlineAccountLabel}
-                onChange={(qid, label) => {
-                  setInlineAccountId(qid);
-                  setInlineAccountLabel(label);
-                }}
-                onPick={(row) => setInlineAccountId(row.id)}
-                placeholder="Search account…"
-                allowFreeText={false}
-              />
-            </label>
-            <label className="text-xs text-gray-700">
-              Class
-              <input
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-                value={inlineClass}
-                onChange={(e) => setInlineClass(e.target.value)}
-                aria-label="Class identifier"
-              />
-            </label>
-            <label className="md:col-span-2 text-xs text-gray-700">
-              Memo
-              <input
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-                value={inlineMemo}
-                onChange={(e) => setInlineMemo(e.target.value)}
-                aria-label="Memo"
-              />
-            </label>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              className="rounded bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-              aria-label="Save categorized transaction"
-              disabled={!inlineAccountId || acceptMut.isPending}
-              onClick={() => {
-                const tx = sortedRows.find((r) => String(r.id) === inlineFor);
-                if (tx) void acceptMut.mutateAsync(tx);
-              }}
-            >
-              Add
-            </button>
-            <button
-              type="button"
-              className="text-sm text-blue-700 hover:underline"
-              aria-label="Cancel inline add"
-              onClick={() => setInlineFor(null)}
-            >
-              Cancel
-            </button>
-            <span className="text-xs text-gray-500">Split lines: use banking split flow from the register.</span>
-          </div>
-        </div>
-      ) : null}
-
-      {matchFor ? (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-40 cursor-default bg-black/20"
-            aria-label="Close match drawer"
-            onClick={() => setMatchFor(null)}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="match-drawer-title"
-            className="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto border-l border-gray-200 bg-white shadow-xl"
-          >
-            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-              <h2 id="match-drawer-title" className="text-base font-semibold">
-                Match transaction
-              </h2>
-              <button type="button" className="text-gray-600 hover:text-gray-900" aria-label="Close match drawer" onClick={() => setMatchFor(null)}>
-                ✕
-              </button>
-            </div>
-            <div className="space-y-2 p-4 text-sm">
-              {matchCandidatesQuery.isLoading ? <p>Loading candidates…</p> : null}
-              {(matchCandidatesQuery.data?.candidates ?? []).map((c, idx) => {
-                const kind = String(c.kind ?? c.type ?? "record");
-                const target = String(c.target_id ?? c.id ?? "");
-                const candVendor = String(c.vendor_name ?? "");
-                const candAmt = txAmount(c as Record<string, unknown>);
-                return (
-                  <div key={`${target}-${idx}`} className="rounded border border-gray-100 p-2">
-                    <div className="text-xs text-gray-600">{kind}</div>
-                    <div className="font-medium">{candVendor || String(c.label ?? target)}</div>
-                    <div className="text-xs text-gray-700">
-                      {formatCurrencyCents(candAmt)} · {formatDateMDY(String(c.date ?? ""))}
-                    </div>
-                    <button
-                      type="button"
-                      className="mt-2 rounded bg-emerald-600 px-3 py-1 text-xs font-medium text-white"
-                      aria-label="Apply match for candidate"
-                      disabled={matchMut.isPending}
-                      onClick={() =>
-                        void matchMut.mutateAsync({
-                          transactionId: matchFor,
-                          kind,
-                          target_id: target,
-                        })
-                      }
-                    >
-                      Match
-                    </button>
-                  </div>
-                );
-              })}
-              {!matchCandidatesQuery.isLoading && (matchCandidatesQuery.data?.candidates ?? []).length === 0 ? (
-                <p className="text-sm text-gray-600">No candidates returned.</p>
-              ) : null}
-              <button type="button" className="text-xs font-medium text-blue-700 hover:underline" aria-label="Find more matches">
-                + Find more matches
-              </button>
-            </div>
-          </div>
-        </>
-      ) : null}
-
       {selectedIds.length > 0 ? (
         <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-wrap items-center gap-3 border-t border-gray-200 bg-white px-4 py-2 shadow-lg">
           <span className="text-sm font-medium">{selectedIds.length} selected</span>
-          <button type="button" className="rounded border border-gray-300 px-2 py-1 text-sm" aria-label="Categorize selected">
+          <button
+            type="button"
+            className="rounded border border-gray-300 px-2 py-1 text-sm"
+            aria-label="Categorize selected transactions"
+            onClick={() => {
+              const first = sortedRows.find((r) => selectedIds.includes(String(r.id ?? "")));
+              if (!first) return;
+              setCategorizeModal({
+                ids: selectedIds,
+                mode: "categorize",
+                preview: { ...first, bank_account_id: first.bank_account_id ?? selectedAccountId },
+              });
+            }}
+          >
             Categorize…
           </button>
-          <button type="button" className="rounded border border-gray-300 px-2 py-1 text-sm" aria-label="Match selected">
+          <button
+            type="button"
+            className="rounded border border-gray-300 px-2 py-1 text-sm"
+            aria-label="Match selected transactions"
+            onClick={() => {
+              const first = sortedRows.find((r) => selectedIds.includes(String(r.id ?? "")));
+              if (!first) return;
+              setCategorizeModal({
+                ids: selectedIds,
+                mode: "match",
+                preview: { ...first, bank_account_id: first.bank_account_id ?? selectedAccountId },
+              });
+            }}
+          >
             Match…
           </button>
           <button
@@ -971,6 +790,22 @@ export function BankingTransactionsPage() {
             Clear selection
           </button>
         </div>
+      ) : null}
+
+      {categorizeModal ? (
+        <CategorizeTransactionModal
+          operatingCompanyId={companyId}
+          transactionIds={categorizeModal.ids}
+          open
+          initialMode={categorizeModal.mode}
+          transactionPreview={categorizeModal.preview}
+          onClose={() => setCategorizeModal(null)}
+          onSaved={() => {
+            setCategorizeModal(null);
+            setSelected({});
+            invalidateBanking();
+          }}
+        />
       ) : null}
 
       <ManageAccountsModal

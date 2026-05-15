@@ -34,8 +34,19 @@ vi.mock("../../../api/banking-wave2", async (importOriginal) => {
     postBankTransactionMatch: vi.fn(),
     postBankTransactionAccept: vi.fn(),
     postBankTransactionExclude: vi.fn(),
+    postBankTransactionCategorizeExtended: vi.fn().mockResolvedValue({ ok: true }),
   };
 });
+
+vi.mock("../../../components/forms/QboCombobox", () => ({
+  QboCombobox: ({ placeholder, "aria-label": ariaLabel }: { placeholder?: string; "aria-label"?: string }) => (
+    <input aria-label={ariaLabel ?? placeholder ?? "combobox"} placeholder={placeholder} />
+  ),
+}));
+
+vi.mock("../../../components/maintenance/LocationMapModal", () => ({
+  LocationMapModal: () => null,
+}));
 
 function wrap(ui: ReactElement, { route = "/banking/transactions" }: { route?: string } = {}) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -152,15 +163,16 @@ describe("BankingTransactionsPage", () => {
     await waitFor(() => expect(screen.getByText(/3 matches found/i)).toBeInTheDocument());
   });
 
-  it("Add click opens inline edit panel", async () => {
+  it("Add click opens categorize modal", async () => {
     const user = userEvent.setup();
     render(wrap(<BankingTransactionsPage />));
     const addBtn = await screen.findByRole("button", { name: /Add categorization for tx-2/i });
     await user.click(addBtn);
-    expect(await screen.findByText("Quick add")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Categorize transaction" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Categorize" })).toBeChecked();
   });
 
-  it("Match click opens drawer", async () => {
+  it("Match click opens modal in match mode", async () => {
     const user = userEvent.setup();
     vi.mocked(wave2.getBankTransactionMatchCandidates).mockResolvedValue({
       candidates: [{ kind: "invoice", target_id: "inv-1", vendor_name: "Acme", amount_cents: -5000, date: "2026-04-01" }],
@@ -168,7 +180,8 @@ describe("BankingTransactionsPage", () => {
     render(wrap(<BankingTransactionsPage />));
     const matchBtn = await screen.findByRole("button", { name: /Match transaction tx-1/i });
     await user.click(matchBtn);
-    expect(await screen.findByRole("dialog", { name: /Match transaction/i })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Categorize transaction" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Match" })).toBeChecked();
     expect(screen.getByText("Acme")).toBeInTheDocument();
   });
 

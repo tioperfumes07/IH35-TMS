@@ -13,6 +13,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { CategorizeTransactionModal } from "./components/CategorizeTransactionModal";
 
 const PAGE_SIZE = 50;
 
@@ -42,6 +43,7 @@ export function BankAccountDetailPage() {
   const [endDate, setEndDate] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [categorizeFor, setCategorizeFor] = useState<Record<string, unknown> | null>(null);
 
   const canSync = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const canDisconnect = auth.user?.role === "Owner";
@@ -199,6 +201,7 @@ export function BankAccountDetailPage() {
                 <th className="border-b border-gray-200 px-2 py-2">Amount</th>
                 <th className="border-b border-gray-200 px-2 py-2">Category</th>
                 <th className="border-b border-gray-200 px-2 py-2">Matched</th>
+                <th className="border-b border-gray-200 px-2 py-2">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -216,11 +219,26 @@ export function BankAccountDetailPage() {
                   <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
                     {row.matched_load_id || row.matched_bill_id || row.matched_settlement_id ? "Yes" : "No"}
                   </td>
+                  <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
+                    <button
+                      type="button"
+                      className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-900"
+                      aria-label={`Categorize transaction ${row.id}`}
+                      onClick={() =>
+                        setCategorizeFor({
+                          ...row,
+                          bank_account_id: id,
+                        })
+                      }
+                    >
+                      Categorize
+                    </button>
+                  </td>
                 </tr>
               ))}
               {transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-2 py-4 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-2 py-4 text-center text-sm text-gray-500">
                     No transactions found for this filter.
                   </td>
                 </tr>
@@ -248,6 +266,21 @@ export function BankAccountDetailPage() {
           </ActionButton>
         </div>
       </div>
+
+      {categorizeFor && id && companyId ? (
+        <CategorizeTransactionModal
+          operatingCompanyId={companyId}
+          transactionIds={[String(categorizeFor.id ?? "")]}
+          open={Boolean(String(categorizeFor.id ?? ""))}
+          initialMode="categorize"
+          transactionPreview={categorizeFor}
+          onClose={() => setCategorizeFor(null)}
+          onSaved={() => {
+            setCategorizeFor(null);
+            void transactionsQuery.refetch();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

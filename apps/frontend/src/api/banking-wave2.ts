@@ -1,5 +1,5 @@
 import { skipBankTransaction } from "./banking";
-import { ApiError, apiRequest } from "./client";
+import { ApiError, apiRequest, apiRequestFormData } from "./client";
 
 export type BankingReviewState = "for_review" | "categorized" | "excluded" | "matched" | "transfer";
 
@@ -202,4 +202,139 @@ export async function postBankTransactionExclude(transactionId: string, companyI
     }
     throw e;
   }
+}
+
+const qOp = (companyId: string) => new URLSearchParams({ operating_company_id: companyId }).toString();
+
+/** Wave 2 extended categorize body; on 404/501 falls back to accept (Phase D-PLUS). */
+export async function postBankTransactionCategorizeExtended(
+  transactionId: string,
+  companyId: string,
+  body: {
+    vendor_id?: string | null;
+    customer_id?: string | null;
+    account_id: string;
+    product_service_id?: string | null;
+    billable?: boolean;
+    location_codes?: string[];
+    class_id?: string | null;
+    memo?: string | null;
+  }
+) {
+  try {
+    return await apiRequest<{ ok: boolean }>(
+      `/api/v1/banking/transactions/${encodeURIComponent(transactionId)}/categorize?${qOp(companyId)}`,
+      {
+        method: "POST",
+        body: {
+          operating_company_id: companyId,
+          vendor_id: body.vendor_id ?? null,
+          customer_id: body.customer_id ?? null,
+          account_id: body.account_id,
+          product_service_id: body.product_service_id ?? null,
+          billable: body.billable ?? false,
+          location_codes: body.location_codes ?? [],
+          class_id: body.class_id ?? null,
+          memo: body.memo ?? null,
+        },
+      }
+    );
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 501)) {
+      return postBankTransactionAccept(transactionId, companyId, {
+        vendor_id: body.vendor_id ?? null,
+        account_id: body.account_id,
+        class_id: body.class_id ?? null,
+        memo: body.memo ?? null,
+      });
+    }
+    throw e;
+  }
+}
+
+export function postBankTransferWave2(
+  companyId: string,
+  body: {
+    from_bank_account_id: string;
+    to_bank_account_id: string;
+    transfer_date: string;
+    amount_cents: number;
+    memo?: string;
+    source_bank_transaction_id: string;
+  }
+) {
+  return apiRequest<{ id?: string; ok?: boolean }>(`/api/v1/banking/transfers`, {
+    method: "POST",
+    body: { operating_company_id: companyId, ...body },
+  });
+}
+
+export function postCreditCardPaymentWave2(
+  companyId: string,
+  body: {
+    credit_card_account_id: string;
+    from_bank_account_id: string;
+    payment_date: string;
+    amount_cents: number;
+    memo?: string;
+    source_bank_transaction_id: string;
+  }
+) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/credit-card-payments`, {
+    method: "POST",
+    body: { operating_company_id: companyId, ...body },
+  });
+}
+
+export function getAuditFeed(companyId: string, subject: string, id: string) {
+  const q = new URLSearchParams({ operating_company_id: companyId, subject, id });
+  return apiRequest<{ items?: Array<Record<string, unknown>>; events?: Array<Record<string, unknown>> }>(`/api/v1/audit/feed?${q}`);
+}
+
+export function postBankTransactionAttachment(transactionId: string, companyId: string, body: { document_id: string }) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${encodeURIComponent(transactionId)}/attachments?${qOp(companyId)}`, {
+    method: "POST",
+    body: { operating_company_id: companyId, ...body },
+  });
+}
+
+export function uploadDocumentSimple(file: File, companyId: string) {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("operating_company_id", companyId);
+  return apiRequestFormData<{ id: string }>(`/api/v1/documents/upload`, fd, "POST");
+}
+
+export function postBankingRulesReorder(companyId: string, ids_in_priority_order: string[]) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/rules/reorder`, {
+    method: "POST",
+    body: { operating_company_id: companyId, ids_in_priority_order },
+  });
+}
+
+export function postReconciliationMatch(sessionId: string, companyId: string, transactionId: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/reconciliation-sessions/${encodeURIComponent(sessionId)}/match?${qOp(companyId)}`, {
+    method: "POST",
+    body: { operating_company_id: companyId, transaction_id: transactionId },
+  });
+}
+
+export function postReconciliationUnmatch(sessionId: string, companyId: string, transactionId: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/reconciliation-sessions/${encodeURIComponent(sessionId)}/unmatch?${qOp(companyId)}`, {
+    method: "POST",
+    body: { operating_company_id: companyId, transaction_id: transactionId },
+  });
+}
+
+export function getReconciliationSuggestions(sessionId: string, companyId: string) {
+  return apiRequest<{ suggestions: Array<Record<string, unknown>> }>(
+    `/api/v1/banking/reconciliation-sessions/${encodeURIComponent(sessionId)}/suggestions?${qOp(companyId)}`
+  );
+}
+
+export function postReconciliationReopen(sessionId: string, companyId: string, reason: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/reconciliation-sessions/${encodeURIComponent(sessionId)}/reopen?${qOp(companyId)}`, {
+    method: "POST",
+    body: { operating_company_id: companyId, reason },
+  });
 }

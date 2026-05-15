@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -38,6 +38,7 @@ export function Modal({
   sizePreset,
   resizable = false,
 }: ModalProps) {
+  const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
@@ -142,6 +143,9 @@ export function Modal({
       >
         <div
           ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
           className={`relative flex flex-col rounded-lg bg-white shadow-xl ${
             useCustomSize ? "overflow-hidden" : "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))]"
           }`}
@@ -150,6 +154,7 @@ export function Modal({
         >
           <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3">
             <h2
+              id={titleId}
               className="uppercase"
               style={{ fontSize: typography.panelHeader, color: colors.bodyText, letterSpacing: typography.tightUpper }}
             >
