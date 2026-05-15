@@ -128,7 +128,7 @@ try {
 
   const fineRes = await client.query(
     `
-      INSERT INTO safety.fines (
+      INSERT INTO safety.civil_fines (
         operating_company_id, subject_type, subject_driver_id, issued_by_authority, violation_description, issued_date,
         amount_cents, created_by_user_id, updated_by_user_id
       ) VALUES ($1,'driver',$2,'DOT',$3,CURRENT_DATE,42000,$4,$4)
@@ -177,7 +177,7 @@ try {
         let lockFailed = false;
         await client.query("SAVEPOINT fine_lock_check");
         try {
-          await client.query(`UPDATE safety.fines SET amount_cents = 99999 WHERE id = $1`, [fineId]);
+          await client.query(`UPDATE safety.civil_fines SET amount_cents = 99999 WHERE id = $1`, [fineId]);
         } catch (error: any) {
           lockFailed = String(error.message).includes("E_FINE_LOCKED_AFTER_CONVERSION");
           await client.query("ROLLBACK TO SAVEPOINT fine_lock_check");
@@ -206,7 +206,7 @@ try {
           `,
           [liabilityId]
         );
-        const fineRes = await client.query(`SELECT status FROM safety.fines WHERE id = $1`, [fineId]);
+        const fineRes = await client.query(`SELECT status FROM safety.civil_fines WHERE id = $1`, [fineId]);
         if (String(fineRes.rows[0]?.status) === "recovered") {
           throw new Error("Fine status should not change when liability recovered");
         }
@@ -232,7 +232,7 @@ try {
     await client.query("RESET ROLE");
     await client.query("BEGIN");
     try {
-      if (createdFines.length > 0) await client.query(`DELETE FROM safety.fines WHERE id = ANY($1::uuid[])`, [createdFines]);
+      if (createdFines.length > 0) await client.query(`DELETE FROM safety.civil_fines WHERE id = ANY($1::uuid[])`, [createdFines]);
       if (createdLiabilities.length > 0) await client.query(`DELETE FROM driver_finance.driver_liabilities WHERE id = ANY($1::uuid[])`, [createdLiabilities]);
       if (createdDrivers.length > 0) await client.query(`DELETE FROM mdata.drivers WHERE id = ANY($1::uuid[])`, [createdDrivers]);
       if (createdUsers.length > 0) await client.query(`DELETE FROM identity.users WHERE id = ANY($1::uuid[])`, [createdUsers]);

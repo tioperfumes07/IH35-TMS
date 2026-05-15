@@ -3116,11 +3116,11 @@ SELECT
     COALESCE(e.status::text IN ('closed', 'resolved', 'voided'), false) = false
     OR EXISTS (
       SELECT 1
-      FROM safety.fines f
+      FROM safety.civil_fines f
       WHERE f.operating_company_id = e.operating_company_id
         AND f.subject_type = 'driver'
         AND f.subject_driver_id = e.driver_id
-        AND f.status IN ('open', 'under_review')
+        AND f.status IN ('open', 'contested')
     )
   ) AS is_active
 FROM views.safety_events_with_driver e;

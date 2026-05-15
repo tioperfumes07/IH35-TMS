@@ -104,7 +104,7 @@ try {
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
         const res = await client.query(
           `
-            INSERT INTO safety.fines (
+            INSERT INTO safety.civil_fines (
               operating_company_id, subject_type, subject_driver_id, issued_by_authority, violation_description,
               issued_date, amount_cents, created_by_user_id, updated_by_user_id
             ) VALUES ($1,'driver',$2,'DOT',$3,CURRENT_DATE,12000,$4,$4)
@@ -114,7 +114,7 @@ try {
         );
         convertedFineId = String(res.rows[0].id);
         createdFines.push(convertedFineId);
-        await client.query(`UPDATE safety.fines SET status = 'reduced', amount_cents = 11000 WHERE id = $1`, [convertedFineId]);
+        await client.query(`UPDATE safety.civil_fines SET status = 'reduced', amount_cents = 11000 WHERE id = $1`, [convertedFineId]);
         await client.query("COMMIT");
       } catch (error) {
         await client.query("ROLLBACK");
@@ -126,7 +126,7 @@ try {
   results.push(
     await pass("subject consistency constraint present", async () => {
       const consRes = await client.query(
-        `SELECT 1 FROM pg_constraint WHERE conrelid = 'safety.fines'::regclass AND conname = 'chk_fine_subject_consistency'`
+        `SELECT 1 FROM pg_constraint WHERE conrelid = 'safety.civil_fines'::regclass AND conname = 'chk_fine_subject_consistency'`
       );
       if (consRes.rows.length !== 1) throw new Error("chk_fine_subject_consistency missing");
     })
@@ -152,7 +152,7 @@ try {
 
         await client.query(
           `
-            UPDATE safety.fines
+            UPDATE safety.civil_fines
             SET converted_to_liability_id = $2,
                 converted_at = now(),
                 converted_by_user_id = $3
@@ -214,7 +214,7 @@ try {
   try {
     await client.query("RESET ROLE");
     await client.query("BEGIN");
-    if (createdFines.length > 0) await client.query(`DELETE FROM safety.fines WHERE id = ANY($1::uuid[])`, [createdFines]);
+    if (createdFines.length > 0) await client.query(`DELETE FROM safety.civil_fines WHERE id = ANY($1::uuid[])`, [createdFines]);
     if (createdLiabilities.length > 0) await client.query(`DELETE FROM driver_finance.driver_liabilities WHERE id = ANY($1::uuid[])`, [createdLiabilities]);
     if (createdDrivers.length > 0) await client.query(`DELETE FROM mdata.drivers WHERE id = ANY($1::uuid[])`, [createdDrivers]);
     if (createdUsers.length > 0) await client.query(`DELETE FROM identity.users WHERE id = ANY($1::uuid[])`, [createdUsers]);
