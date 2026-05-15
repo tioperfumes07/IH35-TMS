@@ -17,7 +17,7 @@ const coverageTargets = [
 export default defineConfig({
   root: repoRoot,
   test: {
-    include: ["apps/backend/src/**/*.test.ts"],
+    include: ["apps/backend/src/**/*.test.ts", "tests/integration/**/*.test.ts"],
     environment: "node",
     pool: "forks",
     setupFiles: [path.join(repoRoot, "apps/backend/test-helpers/setup-env.ts")],

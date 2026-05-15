@@ -1,29 +1,29 @@
 /**
- * Performance baseline smoke (Block E — P7-PERF-BASELINE).
+ * Performance baseline smoke (Block H — P7-PERF-RUN-001).
  *
- * Fires 10 sequential GETs per endpoint and records simple latency percentiles.
+ * Targets production/staging API latency with cookie-authenticated sessions.
  *
- * Prerequisites:
- * - API reachable at PERF_BASE_URL (default http://127.0.0.1:3000)
- * - PERF_OPERATING_COMPANY_ID set to a real UUID your auth user can access
- * - Auth via PERF_COOKIE (preferred for prod) OR PERF_TEST_AUTH (+ PERF_TEST_USER_ID / PERF_TEST_ROLE)
- *
- * Notes:
- * - `GET /api/v1/reports/cash-flow` is not registered; this script uses `/api/v1/reports/cash-flow-overview`.
- * - `GET /api/v1/banking/bank-accounts` is not registered; this script uses `/api/v1/banking/accounts/all`.
+ * Env:
+ * - PERF_BASE_URL (default https://api.ih35dispatch.com)
+ * - PERF_OPERATING_COMPANY_ID (required uuid)
+ * - PERF_COOKIE (preferred auth header for prod/staging)
+ * - PERF_TEST_AUTH (+ PERF_TEST_USER_ID / PERF_TEST_ROLE) legacy header fallback
+ * - PERF_RECORD_ONLY=true → write markdown + exit 0 even when requests fail / are slow
  */
 
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const BASE_URL = (process.env.PERF_BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
+const BASE_URL = (process.env.PERF_BASE_URL ?? "https://api.ih35dispatch.com").replace(/\/$/, "");
 const COMPANY_ID = process.env.PERF_OPERATING_COMPANY_ID?.trim();
 const COOKIE_HEADER = process.env.PERF_COOKIE?.trim();
+const RECORD_ONLY = process.env.PERF_RECORD_ONLY === "1" || process.env.PERF_RECORD_ONLY === "true";
 
 const TEST_USER_ID = process.env.PERF_TEST_USER_ID?.trim() ?? "f47ac10b-58cc-4372-a567-0e02b2c3d479";
 const TEST_ROLE = process.env.PERF_TEST_ROLE?.trim() ?? "Owner";
 
-const P95_THRESHOLD_MS = 2000;
+const SLOW_P95_MS = 500;
+const HARD_FAIL_P95_MS = 2000;
 const RUNS = 10;
 const OUTPUT_REL = path.join("tests", "results", "perf-baseline-2026-05-14.md");
 
@@ -41,75 +41,51 @@ function buildAuthHeaders(): Record<string, string> {
   return { "x-test-auth": payload };
 }
 
-function monthWindowUtc(reference = new Date()): { period_start: string; period_end: string; as_of: string } {
-  const as_of = reference.toISOString().slice(0, 10);
-  const monthStart = new Date(Date.UTC(reference.getUTCFullYear(), reference.getUTCMonth(), 1));
-  const period_start = monthStart.toISOString().slice(0, 10);
-  const period_end = as_of;
-  return { period_start, period_end, as_of };
-}
-
-type Endpoint = { label: string; path: string; auth: boolean };
+type Endpoint = { label: string; path: string; method: "GET" | "POST"; auth: boolean; body?: string };
 
 function buildEndpoints(companyId: string): Endpoint[] {
-  const { period_start, period_end, as_of } = monthWindowUtc();
-
-  const qs = new URLSearchParams({ operating_company_id: companyId });
-
+  const cid = encodeURIComponent(companyId);
   return [
-    { label: "GET /api/v1/_healthcheck", path: "/api/v1/_healthcheck", auth: false },
-    { label: "GET /api/v1/qbo/sync/health", path: `/api/v1/qbo/sync/health?${qs.toString()}`, auth: true },
-    { label: "GET /api/v1/scheduled-reports", path: `/api/v1/scheduled-reports?${qs.toString()}`, auth: true },
-    {
-      label: "GET /api/v1/banking/transactions/uncategorized",
-      path: `/api/v1/banking/transactions/uncategorized?operating_company_id=${encodeURIComponent(companyId)}&limit=25`,
-      auth: true,
-    },
-    {
-      label: "GET /api/v1/reports/ar-aging",
-      path: `/api/v1/reports/ar-aging?operating_company_id=${encodeURIComponent(companyId)}&as_of_date=${encodeURIComponent(as_of)}`,
-      auth: true,
-    },
-    {
-      label: "GET /api/v1/reports/profit-per-truck",
-      path: `/api/v1/reports/profit-per-truck?operating_company_id=${encodeURIComponent(
-        companyId
-      )}&period_start=${encodeURIComponent(period_start)}&period_end=${encodeURIComponent(period_end)}`,
-      auth: true,
-    },
-    {
-      label: "GET /api/v1/reports/cash-flow-overview (alias: cash-flow)",
-      path: `/api/v1/reports/cash-flow-overview?operating_company_id=${encodeURIComponent(
-        companyId
-      )}&as_of_date=${encodeURIComponent(as_of)}`,
-      auth: true,
-    },
-    {
-      label: "GET /api/v1/dispatch/loads",
-      path: `/api/v1/dispatch/loads?operating_company_id=${encodeURIComponent(companyId)}&limit=25&offset=0&view=loads`,
-      auth: true,
-    },
+    { label: "GET /api/v1/dispatch/loads", path: `/api/v1/dispatch/loads?operating_company_id=${cid}&limit=25&offset=0&view=loads`, method: "GET", auth: true },
+    { label: "GET /api/v1/mdata/drivers", path: `/api/v1/mdata/drivers?operating_company_id=${cid}&limit=25&offset=0`, method: "GET", auth: true },
+    { label: "GET /api/v1/mdata/customers", path: `/api/v1/mdata/customers?operating_company_id=${cid}&limit=25&offset=0`, method: "GET", auth: true },
+    { label: "GET /api/v1/mdata/vendors", path: `/api/v1/mdata/vendors?operating_company_id=${cid}&limit=25&offset=0`, method: "GET", auth: true },
     {
       label: "GET /api/v1/driver-finance/settlements",
-      path: `/api/v1/driver-finance/settlements?operating_company_id=${encodeURIComponent(companyId)}&limit=25&offset=0`,
+      path: `/api/v1/driver-finance/settlements?operating_company_id=${cid}&limit=25&offset=0`,
+      method: "GET",
       auth: true,
     },
-    {
-      label: "GET /api/v1/banking/accounts/all (alias: bank-accounts)",
-      path: `/api/v1/banking/accounts/all?operating_company_id=${encodeURIComponent(companyId)}`,
-      auth: true,
-    },
+    { label: "GET /api/v1/banking/dashboard/kpis (banking summary)", path: `/api/v1/banking/dashboard/kpis?operating_company_id=${cid}`, method: "GET", auth: true },
+    { label: "GET /api/v1/qbo/sync/health", path: `/api/v1/qbo/sync/health?operating_company_id=${cid}`, method: "GET", auth: true },
+    { label: "GET /api/v1/scheduled-reports", path: `/api/v1/scheduled-reports?operating_company_id=${cid}`, method: "GET", auth: true },
+    { label: "GET /api/v1/admin/activity", path: `/api/v1/admin/activity?limit=25`, method: "GET", auth: true },
+    { label: "GET /api/v1/admin/launch-readiness", path: `/api/v1/admin/launch-readiness`, method: "GET", auth: true },
+    { label: "POST /api/v1/banking/plaid/webhook (empty JSON)", path: `/api/v1/banking/plaid/webhook`, method: "POST", auth: false, body: "{}" },
+    { label: "GET /api/v1/email/queue", path: `/api/v1/email/queue?operating_company_id=${cid}`, method: "GET", auth: true },
   ];
 }
 
-async function measure(label: string, url: string, headers: Record<string, string>): Promise<{ samples: number[]; failures: string[] }> {
+async function measure(
+  label: string,
+  url: string,
+  headers: Record<string, string>,
+  method: "GET" | "POST",
+  body?: string
+): Promise<{ samples: number[]; failures: string[] }> {
   const samples: number[] = [];
   const failures: string[] = [];
 
   for (let i = 0; i < RUNS; i += 1) {
     const started = performance.now();
     try {
-      const res = await fetch(url, { headers });
+      const init: RequestInit = { method, headers: { ...headers } };
+      if (method === "POST") {
+        init.headers = { ...init.headers, "content-type": "application/json" };
+        init.body = body ?? "{}";
+      }
+
+      const res = await fetch(url, init);
       const elapsed = performance.now() - started;
       samples.push(elapsed);
       if (!res.ok) failures.push(`${label}: HTTP ${res.status} (${elapsed.toFixed(1)}ms)`);
@@ -138,24 +114,22 @@ async function main() {
   lines.push(`- Generated at (UTC): ${new Date().toISOString()}`);
   lines.push(`- Base URL: ${BASE_URL}`);
   lines.push(`- Runs per endpoint: ${RUNS} (sequential)`);
-  lines.push(`- Alert threshold: p95 ≤ ${P95_THRESHOLD_MS}ms`);
+  lines.push(`- Slow threshold (documentation): p95 > ${SLOW_P95_MS}ms`);
+  lines.push(`- Hard fail threshold (non-record mode): p95 > ${HARD_FAIL_P95_MS}ms`);
+  lines.push(`- Auth: ${COOKIE_HEADER ? "PERF_COOKIE" : "legacy PERF_TEST_AUTH header (likely insufficient for prod)"}`);
   lines.push("");
-  lines.push("## Endpoint mappings");
-  lines.push("");
-  lines.push("- Spec listed `GET /api/v1/reports/cash-flow` → measured `/api/v1/reports/cash-flow-overview`.");
-  lines.push("- Spec listed `GET /api/v1/banking/bank-accounts` → measured `/api/v1/banking/accounts/all`.");
-  lines.push("");
-
   lines.push("| Endpoint | p50 (ms) | p95 (ms) | p99 (ms) | max (ms) |");
   lines.push("|---|---:|---:|---:|---:|");
 
-  let failedThreshold = false;
+  const slow: string[] = [];
+  const hardSlow: string[] = [];
+  let failedHard = false;
   const allFailures: string[] = [];
 
   for (const ep of endpoints) {
     const url = `${BASE_URL}${ep.path}`;
     const headers = ep.auth ? authHeaders : {};
-    const { samples, failures } = await measure(ep.label, url, headers);
+    const { samples, failures } = await measure(ep.label, url, headers, ep.method, ep.body);
     allFailures.push(...failures);
 
     const sorted = [...samples].sort((a, b) => a - b);
@@ -164,10 +138,17 @@ async function main() {
     const p99 = percentile(sorted, 99);
     const max = sorted.length ? sorted[sorted.length - 1] ?? 0 : 0;
 
-    if (p95 > P95_THRESHOLD_MS) failedThreshold = true;
+    if (p95 > SLOW_P95_MS) slow.push(`- ${ep.label}: p95=${p95.toFixed(1)}ms`);
+    if (p95 > HARD_FAIL_P95_MS) hardSlow.push(`- ${ep.label}: p95=${p95.toFixed(1)}ms`);
 
     lines.push(`| ${ep.label} | ${p50.toFixed(1)} | ${p95.toFixed(1)} | ${p99.toFixed(1)} | ${max.toFixed(1)} |`);
   }
+
+  lines.push("");
+  lines.push(`## Endpoints exceeding ${SLOW_P95_MS}ms p95`);
+  lines.push("");
+  if (!slow.length) lines.push("- None observed.");
+  else slow.forEach((l) => lines.push(l));
 
   lines.push("");
   lines.push("## Failures / non-2xx");
@@ -179,14 +160,24 @@ async function main() {
   await writeFile(OUTPUT_REL, `${lines.join("\n")}\n`, "utf8");
 
   console.log(`[perf-baseline] wrote ${OUTPUT_REL}`);
-  if (failedThreshold) {
-    console.error(`[perf-baseline] FAIL: at least one authenticated endpoint exceeded p95=${P95_THRESHOLD_MS}ms`);
-    process.exit(1);
+
+  if (RECORD_ONLY) {
+    console.warn("[perf-baseline] PERF_RECORD_ONLY enabled — exiting 0 regardless of failures/slow endpoints");
+    process.exit(0);
   }
+
   if (allFailures.length) {
     console.error("[perf-baseline] FAIL: observed request failures (see markdown)");
     process.exit(1);
   }
+
+  if (hardSlow.length) {
+    failedHard = true;
+    console.error(`[perf-baseline] FAIL: at least one endpoint exceeded hard threshold p95=${HARD_FAIL_P95_MS}ms`);
+    hardSlow.forEach((l) => console.error(l));
+  }
+
+  if (failedHard) process.exit(1);
 }
 
 void main().catch((error) => {
