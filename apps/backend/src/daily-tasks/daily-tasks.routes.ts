@@ -35,7 +35,7 @@ export async function registerDailyTasksRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
       return createTask(client, {
         actorUserId: user.uuid,
         actorRole: String(user.role ?? ""),
@@ -56,7 +56,7 @@ export async function registerDailyTasksRoutes(app: FastifyInstance) {
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SET LOCAL app.operating_company_id = '${parsed.data.operating_company_id}'`);
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
       return listTasks(client, {
         actorUserId: user.uuid,
         actorRole: String(user.role ?? ""),
