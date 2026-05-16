@@ -1,6 +1,10 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { useToast } from "../../../components/Toast";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { QuickCreateEntityModal, type QuickCreateKind } from "../../../components/forms/shared/QuickCreateEntityModal";
 
 type Props = {
   register: UseFormRegister<CreateWOFormValues>;
@@ -32,6 +36,9 @@ export function CreateWOSectionIdentification({
   setValue,
   getValues,
 }: Props) {
+  const queryClient = useQueryClient();
+  const { pushToast } = useToast();
+  const [quickCreateKind, setQuickCreateKind] = useState<QuickCreateKind | null>(null);
   const type = watch("wo_type");
   const sourceType = watch("source_type");
   const bucket = watch("bucket");
@@ -96,35 +103,88 @@ export function CreateWOSectionIdentification({
               <input type="hidden" {...register("vendor_id")} />
               <input type="hidden" {...register("vendor_qbo_id")} />
               <input type="hidden" {...register("vendor_display_name")} />
-              <QboCombobox
-                entityType="vendor"
-                operatingCompanyId={operatingCompanyId}
-                value={watch("vendor_qbo_id") ? watch("vendor_qbo_id") : null}
-                displayValue={watch("vendor_display_name") ?? ""}
-                allowFreeText={false}
-                placeholder="Search QuickBooks vendors…"
-                onChange={(qboId, displayName) => {
-                  setValue("vendor_qbo_id", qboId ?? "", { shouldDirty: true });
-                  setValue("vendor_display_name", displayName, { shouldDirty: true });
-                  if (!qboId) setValue("vendor_id", "", { shouldDirty: true });
-                }}
-                onPick={(row) => {
-                  setValue("vendor_id", row.id, { shouldDirty: true });
-                  setValue("vendor_qbo_id", row.qbo_id, { shouldDirty: true });
-                  setValue("vendor_display_name", row.display_name || row.company_name || "", { shouldDirty: true });
-                  const shopNameNow = String(getValues("shop_name") ?? "").trim();
-                  if (!shopNameNow) {
-                    setValue("shop_name", row.display_name || row.company_name || "", { shouldDirty: true });
-                  }
-                  const shopPhoneNow = String(getValues("shop_phone") ?? "").trim();
-                  if (!shopPhoneNow && row.primary_phone) {
-                    setValue("shop_phone", row.primary_phone, { shouldDirty: true });
-                  }
-                }}
-              />
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <QboCombobox
+                    entityType="vendor"
+                    operatingCompanyId={operatingCompanyId}
+                    value={watch("vendor_qbo_id") ? watch("vendor_qbo_id") : null}
+                    displayValue={watch("vendor_display_name") ?? ""}
+                    allowFreeText={false}
+                    placeholder="Search QuickBooks vendors…"
+                    onChange={(qboId, displayName) => {
+                      setValue("vendor_qbo_id", qboId ?? "", { shouldDirty: true });
+                      setValue("vendor_display_name", displayName, { shouldDirty: true });
+                      if (!qboId) setValue("vendor_id", "", { shouldDirty: true });
+                    }}
+                    onPick={(row) => {
+                      setValue("vendor_id", row.id, { shouldDirty: true });
+                      setValue("vendor_qbo_id", row.qbo_id, { shouldDirty: true });
+                      setValue("vendor_display_name", row.display_name || row.company_name || "", { shouldDirty: true });
+                      const shopNameNow = String(getValues("shop_name") ?? "").trim();
+                      if (!shopNameNow) {
+                        setValue("shop_name", row.display_name || row.company_name || "", { shouldDirty: true });
+                      }
+                      const shopPhoneNow = String(getValues("shop_phone") ?? "").trim();
+                      if (!shopPhoneNow && row.primary_phone) {
+                        setValue("shop_phone", row.primary_phone, { shouldDirty: true });
+                      }
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="h-9 rounded border border-gray-300 px-2 text-xs"
+                  onClick={() => setQuickCreateKind("vendor")}
+                  aria-label="Quick create vendor"
+                >
+                  + Create
+                </button>
+              </div>
             </>
           ) : (
             <input {...register("vendor_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          )}
+        </Field>
+        <Field label="Customer">
+          {operatingCompanyId && setValue ? (
+            <>
+              <input type="hidden" {...register("customer_id")} />
+              <input type="hidden" {...register("customer_qbo_id")} />
+              <input type="hidden" {...register("customer_display_name")} />
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <QboCombobox
+                    entityType="customer"
+                    operatingCompanyId={operatingCompanyId}
+                    value={watch("customer_qbo_id") ? watch("customer_qbo_id") : null}
+                    displayValue={watch("customer_display_name") ?? ""}
+                    allowFreeText={false}
+                    placeholder="Search QuickBooks customers…"
+                    onChange={(qboId, displayName) => {
+                      setValue("customer_qbo_id", qboId ?? "", { shouldDirty: true });
+                      setValue("customer_display_name", displayName, { shouldDirty: true });
+                      if (!qboId) setValue("customer_id", "", { shouldDirty: true });
+                    }}
+                    onPick={(row) => {
+                      setValue("customer_id", row.id, { shouldDirty: true });
+                      setValue("customer_qbo_id", row.qbo_id, { shouldDirty: true });
+                      setValue("customer_display_name", row.display_name || row.company_name || "", { shouldDirty: true });
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="h-9 rounded border border-gray-300 px-2 text-xs"
+                  onClick={() => setQuickCreateKind("customer")}
+                  aria-label="Quick create customer"
+                >
+                  + Create
+                </button>
+              </div>
+            </>
+          ) : (
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-sm" disabled />
           )}
         </Field>
         <Field label="Vendor RO/Invoice #">
@@ -226,6 +286,31 @@ export function CreateWOSectionIdentification({
         </div>
       ) : null}
       {backendLoadError ? <div className="mt-2 text-xs font-semibold text-red-600">{backendLoadError}</div> : null}
+      {quickCreateKind && operatingCompanyId && setValue ? (
+        <QuickCreateEntityModal
+          open
+          kind={quickCreateKind}
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setQuickCreateKind(null)}
+          onCreated={(created) => {
+            if (quickCreateKind === "vendor") {
+              setValue("vendor_id", created.id, { shouldDirty: true });
+              setValue("vendor_qbo_id", "", { shouldDirty: true });
+              setValue("vendor_display_name", created.label, { shouldDirty: true });
+              const shopNameNow = getValues ? String(getValues("shop_name") ?? "").trim() : "";
+              if (!shopNameNow) setValue("shop_name", created.label, { shouldDirty: true });
+            } else if (quickCreateKind === "customer") {
+              setValue("customer_id", created.id, { shouldDirty: true });
+              setValue("customer_qbo_id", "", { shouldDirty: true });
+              setValue("customer_display_name", created.label, { shouldDirty: true });
+            } else {
+              pushToast("Unsupported quick create target.", "error");
+            }
+            setQuickCreateKind(null);
+            void queryClient.invalidateQueries({ queryKey: ["qbo-mdata-autocomplete"] });
+          }}
+        />
+      ) : null}
     </section>
   );
 }

@@ -539,6 +539,24 @@ export function getWoCostContext(operatingCompanyId: string) {
   return apiRequest<WoCostContextPayload>(`/api/v1/maintenance/wo-cost-context?${q.toString()}`);
 }
 
+export function createPartsInventoryPurchase(
+  operatingCompanyId: string,
+  body: {
+    part_description: string;
+    vendor_id?: string;
+    vendor_invoice_number?: string;
+    purchase_amount?: number;
+    qty_received: number;
+    location?: string;
+  }
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/parts-inventory/purchases?${q.toString()}`, {
+    method: "POST",
+    body,
+  });
+}
+
 export function getIntransitTriageQueue(operatingCompanyId: string) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ issues: Array<Record<string, unknown>> }>(`/api/v1/maintenance/dashboard/intransit-triage-queue?${q.toString()}`);

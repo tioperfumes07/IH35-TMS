@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as qboMdata from "../../api/qbo-mdata";
@@ -20,7 +20,7 @@ describe("QboCombobox", () => {
     vi.mocked(qboMdata.searchQboMasterData).mockResolvedValue({ results: [] });
   });
 
-  it("shows keep typing only when the input is empty", async () => {
+  it("keeps hint visible until minimum search length", async () => {
     const user = userEvent.setup({ delay: null });
     const onChange = vi.fn();
     render(
@@ -39,6 +39,11 @@ describe("QboCombobox", () => {
     expect(screen.getByText(/Keep typing to search/)).toBeInTheDocument();
 
     await user.type(screen.getByPlaceholderText(/Type to search QuickBooks/), "a");
-    expect(screen.queryByText(/Keep typing to search/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Keep typing to search/)).toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText(/Type to search QuickBooks/), "b");
+    await waitFor(() => {
+      expect(screen.queryByText(/Keep typing to search/)).not.toBeInTheDocument();
+    });
   });
 });

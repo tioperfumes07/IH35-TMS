@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { searchQboMasterData, type QboAutocompleteRow } from "../../api/qbo-mdata";
 
 export type QboEntityType = "vendor" | "customer" | "item" | "account";
+const MIN_CHARS_TO_SEARCH = 2;
 
 type Props = {
   entityType: QboEntityType;
@@ -56,7 +57,7 @@ export function QboCombobox({
   }, [displayValue]);
 
   const trimmedQuery = debouncedDraft.trim();
-  const enabled = Boolean(operatingCompanyId) && open && trimmedQuery.length > 0;
+  const enabled = Boolean(operatingCompanyId) && open && trimmedQuery.length >= MIN_CHARS_TO_SEARCH;
 
   const resultsQuery = useQuery({
     queryKey: ["qbo-mdata-autocomplete", entityType, operatingCompanyId, trimmedQuery, includeInactive],
@@ -134,10 +135,10 @@ export function QboCombobox({
           {resultsQuery.isError ? (
             <div className="px-2 py-2 text-xs text-red-600">Could not load suggestions.</div>
           ) : null}
-          {!resultsQuery.isLoading && draft.trim().length === 0 ? (
-            <div className="px-2 py-2 text-xs text-gray-600">Keep typing to search (250ms debounce).</div>
+          {!resultsQuery.isLoading && trimmedQuery.length < MIN_CHARS_TO_SEARCH ? (
+            <div className="px-2 py-2 text-xs text-gray-600">Keep typing to search ({MIN_CHARS_TO_SEARCH}+ chars, 250ms debounce).</div>
           ) : null}
-          {!resultsQuery.isLoading && trimmedQuery.length > 0 && rows.length === 0 ? (
+          {!resultsQuery.isLoading && trimmedQuery.length >= MIN_CHARS_TO_SEARCH && rows.length === 0 ? (
             <div className="px-2 py-2 text-xs text-gray-600">No matches. Will be saved as free text.</div>
           ) : null}
           {rows.map((row, idx) => {

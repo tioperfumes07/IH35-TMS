@@ -45,3 +45,43 @@ export function searchQboMasterData(
   const qs = search.toString();
   return apiRequest<QboAutocompleteResponse>(withCompany(`/api/v1/mdata/qbo/${plural}?${qs}`, operatingCompanyId));
 }
+
+export function createQboVendor(
+  operatingCompanyId: string,
+  body: { display_name: string; company_name?: string; primary_email?: string; primary_phone?: string }
+) {
+  return apiRequest<{ vendor: { id: string } }>(`/api/v1/mdata/qbo/vendors`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, ...body },
+  });
+}
+
+export function createQboCustomer(
+  operatingCompanyId: string,
+  body: { display_name: string; company_name?: string; primary_email?: string; primary_phone?: string; mc_number?: string }
+) {
+  return apiRequest<{ customer: { id: string } }>(`/api/v1/mdata/qbo/customers`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, ...body },
+  });
+}
+
+export function createQboItem(
+  operatingCompanyId: string,
+  body: { name: string; sku?: string; unit_price_cents?: number; income_account_qbo_id: string }
+) {
+  return apiRequest<{ item: { id: string } }>(`/api/v1/mdata/qbo/items`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, ...body },
+  });
+}
+
+export function createQboAccount(
+  operatingCompanyId: string,
+  body: { name: string; account_type: string; account_sub_type?: string; full_qualified_name?: string }
+) {
+  return apiRequest<{ account: { id: string } }>(`/api/v1/mdata/qbo/accounts`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, ...body },
+  });
+}
