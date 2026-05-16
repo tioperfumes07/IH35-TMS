@@ -30,12 +30,13 @@ export async function ensureIntegrationPrerequisites(): Promise<string> {
     // ON CONFLICT (email) requires a unique constraint/index on (email) alone — fresh DBs only have the expression index, so upsert by PK.
     await client.query(
       `
-        INSERT INTO identity.users (id, email, google_user_id, role)
-        VALUES ($1::uuid, $2, $3, 'Owner')
+        INSERT INTO identity.users (id, email, google_user_id, role, preferred_language)
+        VALUES ($1::uuid, $2, $3, 'Owner', 'en')
         ON CONFLICT (id) DO UPDATE
           SET email = EXCLUDED.email,
               role = EXCLUDED.role,
-              google_user_id = EXCLUDED.google_user_id
+              google_user_id = EXCLUDED.google_user_id,
+              preferred_language = EXCLUDED.preferred_language
       `,
       [TEST_OWNER_USER_ID, TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID]
     );
