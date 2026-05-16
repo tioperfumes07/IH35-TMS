@@ -4,7 +4,11 @@
 
 **Locked by:** Cursor R2 (APPROVED-SCREEN LAW) in `docs/specs/CURSOR-PERMANENT-RULES.md`, and IH35-TMS master rules §F invariant **#19** (approved navigation / chrome parity).
 
-## Inventory: **11** PNG files (not 12)
+## Inventory: **21** PNG files
+
+The folder now includes:
+- **11 canonical approved mockup PNGs** (the baseline set listed below)
+- **10 QBO reference PNGs** (`qbo-*.png`) used for accounting workflow parity checks
 
 Cursor R2 historically referenced “12 PNG mockups.” The twelfth asset, **App_Design.png** for the **driver PWA**, was never finalized as a separate PNG. Driver PWA chrome and dark-theme behavior are defined in **Part 6** of `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` (design system) and related PWA specs—not in this folder.
 
@@ -37,7 +41,3 @@ If upstream filenames omit dashes (e.g. `1HOME_PAGE.png`), **rename only** to ma
 ## Canonical copies
 
 Eleven binaries live in this folder with the filenames in the table above. Provenance: the same bytes were first stored under `docs/design/approved-screens/` with sequential filenames; this directory is the Cursor R2 canonical path and names only (no pixel edits on copy).
-
-## Repository status
-
-Until the eleven binaries are added from project storage, this folder carries **documentation + manifest only**. After PNGs are committed, delete or trim the “Repository status” note in a follow-up commit.
