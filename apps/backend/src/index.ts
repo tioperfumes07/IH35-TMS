@@ -165,6 +165,8 @@ import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js
 import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
 import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
 import { initializeErrorDigestCron } from "./cron/error-digest.cron.js";
+import { registerDailyTasksRoutes } from "./daily-tasks/daily-tasks.routes.js";
+import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/daily-task-alerts.cron.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -211,6 +213,7 @@ async function shutdown(signal: string) {
     stopQboSyncWorker();
     stopQboOutboxDispatcher();
     stopQboInboundSyncCron();
+    stopDailyTaskAlertsCron();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
   }
@@ -410,6 +413,7 @@ async function main() {
   await registerLegalSignRoutes(app);
   await registerLegalAttorneyReviewRoutes(app);
   await registerLegalMattersRoutes(app);
+  await registerDailyTasksRoutes(app);
 
   try {
     await initializeQboHistoricalImportRunner(app);
@@ -501,6 +505,13 @@ async function main() {
     app.log.info("[STARTUP] error-digest scheduler initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] error-digest scheduler failed");
+  }
+
+  try {
+    initializeDailyTaskAlertsCron(app);
+    app.log.info("[STARTUP] daily-task-alerts cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] daily-task-alerts cron failed");
   }
 
   try {
