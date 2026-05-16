@@ -30,9 +30,20 @@ export type ItemLine = {
   sub_rows?: ItemSubRow[];
 };
 
+export type CostContextOption = {
+  id: string;
+  label: string;
+};
+
 type Props = {
   sectionA: { lines: CategoryLine[] };
   sectionB: { lines: ItemLine[] };
+  expenseCategoryOptions?: CostContextOption[];
+  itemOptions?: CostContextOption[];
+  partOptions?: CostContextOption[];
+  onQuickCreateCategory?: (lineId: string) => void;
+  onQuickCreateItem?: (lineId: string) => void;
+  onQuickCreatePart?: (lineId: string, subId: string) => void;
   partsLaborMode: "none" | "parts-only" | "parts-and-labor";
   onSectionAChange: (lines: CategoryLine[]) => void;
   onSectionBChange: (lines: ItemLine[]) => void;
@@ -67,6 +78,12 @@ function emptyItemLine(): ItemLine {
 export function CostBreakdownBox({
   sectionA,
   sectionB,
+  expenseCategoryOptions = [],
+  itemOptions = [],
+  partOptions = [],
+  onQuickCreateCategory,
+  onQuickCreateItem,
+  onQuickCreatePart,
   partsLaborMode,
   onSectionAChange,
   onSectionBChange,
@@ -104,19 +121,36 @@ export function CostBreakdownBox({
                   {sectionA.lines.map((line) => (
                     <tr key={line.id} className="border-t border-gray-100">
                       <td className="px-2 py-1">
-                        <input
-                          disabled={readOnly}
-                          value={line.expense_category_uuid ?? ""}
-                          placeholder="expense_category_uuid"
-                          onChange={(event) =>
-                            onSectionAChange(
-                              sectionA.lines.map((entry) =>
-                                entry.id === line.id ? { ...entry, expense_category_uuid: event.target.value } : entry
+                        <div className="flex items-center gap-1">
+                          <select
+                            disabled={readOnly}
+                            value={line.expense_category_uuid ?? ""}
+                            onChange={(event) =>
+                              onSectionAChange(
+                                sectionA.lines.map((entry) =>
+                                  entry.id === line.id ? { ...entry, expense_category_uuid: event.target.value } : entry
+                                )
                               )
-                            )
-                          }
-                          className="w-full rounded border border-gray-300 px-2 py-1"
-                        />
+                            }
+                            className="w-full rounded border border-gray-300 px-2 py-1"
+                          >
+                            <option value="">Select category...</option>
+                            {expenseCategoryOptions.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            disabled={readOnly}
+                            onClick={() => onQuickCreateCategory?.(line.id)}
+                            className="rounded border border-gray-300 px-2 py-1 text-[11px]"
+                            aria-label="Quick create category"
+                          >
+                            + Create
+                          </button>
+                        </div>
                       </td>
                       <td className="px-2 py-1">
                         <input
@@ -209,15 +243,32 @@ export function CostBreakdownBox({
             {sectionB.lines.map((line) => (
               <div key={line.id} className="rounded border border-gray-200 bg-white p-2">
                 <div className="grid gap-2 md:grid-cols-[1fr_1.2fr_1fr_110px_90px_95px_40px]">
-                  <input
-                    disabled={readOnly}
-                    value={line.service_item_uuid ?? ""}
-                    onChange={(event) =>
-                      onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, service_item_uuid: event.target.value } : entry)))
-                    }
-                    className="rounded border border-gray-300 px-2 py-1 text-xs"
-                    placeholder="Product/Service"
-                  />
+                  <div className="flex items-center gap-1">
+                    <select
+                      disabled={readOnly}
+                      value={line.service_item_uuid ?? ""}
+                      onChange={(event) =>
+                        onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, service_item_uuid: event.target.value } : entry)))
+                      }
+                      className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                    >
+                      <option value="">Select product/service...</option>
+                      {itemOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      disabled={readOnly}
+                      onClick={() => onQuickCreateItem?.(line.id)}
+                      className="rounded border border-gray-300 px-2 py-1 text-[11px]"
+                      aria-label="Quick create item"
+                    >
+                      + Create
+                    </button>
+                  </div>
                   <input
                     disabled={readOnly}
                     value={line.description}
@@ -285,26 +336,96 @@ export function CostBreakdownBox({
                     {(line.sub_rows ?? []).map((row) => (
                       <div key={row.id} className="mb-1 grid gap-1 md:grid-cols-[80px_1fr_160px_80px_100px_100px_30px]">
                         <div className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] uppercase">{row.line_type}</div>
-                        <input
-                          disabled={readOnly}
-                          value={row.description}
-                          onChange={(event) =>
-                            onSectionBChange(
-                              sectionB.lines.map((entry) =>
-                                entry.id !== line.id
-                                  ? entry
-                                  : {
-                                      ...entry,
-                                      sub_rows: (entry.sub_rows ?? []).map((current) =>
-                                        current.id === row.id ? { ...current, description: event.target.value } : current
-                                      ),
-                                    }
+                        {row.line_type === "parts" ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1">
+                              <select
+                                disabled={readOnly}
+                                value={row.part_uuid ?? ""}
+                                onChange={(event) =>
+                                  onSectionBChange(
+                                    sectionB.lines.map((entry) =>
+                                      entry.id !== line.id
+                                        ? entry
+                                        : {
+                                            ...entry,
+                                            sub_rows: (entry.sub_rows ?? []).map((current) =>
+                                              current.id === row.id
+                                                ? {
+                                                    ...current,
+                                                    part_uuid: event.target.value || undefined,
+                                                    description:
+                                                      partOptions.find((part) => part.id === event.target.value)?.label ??
+                                                      current.description,
+                                                  }
+                                                : current
+                                            ),
+                                          }
+                                    )
+                                  )
+                                }
+                                className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                              >
+                                <option value="">Select part...</option>
+                                {partOptions.map((option) => (
+                                  <option key={option.id} value={option.id}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                disabled={readOnly}
+                                type="button"
+                                onClick={() => onQuickCreatePart?.(line.id, row.id)}
+                                className="rounded border border-gray-300 px-2 py-1 text-[11px]"
+                                aria-label="Quick create part"
+                              >
+                                + Create
+                              </button>
+                            </div>
+                            <input
+                              disabled={readOnly}
+                              value={row.description}
+                              onChange={(event) =>
+                                onSectionBChange(
+                                  sectionB.lines.map((entry) =>
+                                    entry.id !== line.id
+                                      ? entry
+                                      : {
+                                          ...entry,
+                                          sub_rows: (entry.sub_rows ?? []).map((current) =>
+                                            current.id === row.id ? { ...current, description: event.target.value } : current
+                                          ),
+                                        }
+                                  )
+                                )
+                              }
+                              className="rounded border border-gray-300 px-2 py-1 text-xs"
+                              placeholder="Part description"
+                            />
+                          </div>
+                        ) : (
+                          <input
+                            disabled={readOnly}
+                            value={row.description}
+                            onChange={(event) =>
+                              onSectionBChange(
+                                sectionB.lines.map((entry) =>
+                                  entry.id !== line.id
+                                    ? entry
+                                    : {
+                                        ...entry,
+                                        sub_rows: (entry.sub_rows ?? []).map((current) =>
+                                          current.id === row.id ? { ...current, description: event.target.value } : current
+                                        ),
+                                      }
+                                )
                               )
-                            )
-                          }
-                          className="rounded border border-gray-300 px-2 py-1 text-xs"
-                          placeholder={row.line_type === "parts" ? "Part description" : "Labor description"}
-                        />
+                            }
+                            className="rounded border border-gray-300 px-2 py-1 text-xs"
+                            placeholder="Labor description"
+                          />
+                        )}
                         {row.line_type === "parts" ? (
                           <button
                             disabled={readOnly}
