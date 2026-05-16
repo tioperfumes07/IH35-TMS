@@ -4,12 +4,15 @@
  *
  * Blocking:
  * - REFERENCES schema.table(col) outside CREATE TABLE bodies and outside dollar-quoted blocks.
- * - CREATE INDEX … ON schema.table(cols): each leading simple column — must be introduced
- *   (CREATE TABLE / ALTER ADD COLUMN) at or before this migration.
+ * - CREATE INDEX … ON schema.table(cols): column first introduced in a LATER migration (forward-dep).
+ * - CREATE INDEX … ON schema.table(cols): leading identifier never appears in any migration registry
+ *   (CREATE TABLE / ALTER ADD COLUMN) — wrong column name / phantom column (INDEX_COLUMN_PHANTOM).
+ *   Leading tokens matching common SQL functions (lower, coalesce, …) stay informational only.
  *
  * Informational (stderr; exit 0 unless blocking fired):
  * - REFERENCES inside DO $$ … END $$ bodies (often guarded at runtime).
- * - INDEX columns with no registry entry (parser missed intro — triage manually).
+ * - INDEX registry misses where the leading token looks like an expression function.
+ * - CREATE INDEX column lists inside DO $$ bodies.
  */
 import fs from "fs";
 import path from "path";
@@ -18,6 +21,44 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const MIG_DIR = path.join(ROOT, "db", "migrations");
+
+/** Leading identifier in an index column slice — likely an expression, not a bare column (informational only). */
+const INDEX_EXPR_PREFIXES = new Set([
+  "lower",
+  "upper",
+  "coalesce",
+  "greatest",
+  "least",
+  "abs",
+  "trim",
+  "regexp_replace",
+  "concat",
+  "concat_ws",
+  "date_trunc",
+  "extract",
+  "date_part",
+  "round",
+  "floor",
+  "ceil",
+  "substring",
+  "substr",
+  "replace",
+  "split_part",
+  "left",
+  "right",
+  "length",
+  "encode",
+  "decode",
+  "md5",
+  "digest",
+  "bool_and",
+  "bool_or",
+  "nullif",
+  "cast",
+  "timezone",
+  "to_char",
+  "to_timestamp",
+]);
 
 function migSortKey(filename) {
   const m = /^(\d+)/.exec(filename);
@@ -276,7 +317,8 @@ function main() {
   }
 
   const forwardIdx = [];
-  const unknownIdx = [];
+  const phantomIdx = [];
+  const exprUnknownIdx = [];
   const seenIdx = new Set();
   for (const u of idxUses) {
     const k = `${u.fq}.${u.col}`;
@@ -286,7 +328,17 @@ function main() {
     seenIdx.add(dedupe);
 
     if (!intro) {
-      unknownIdx.push(u);
+      if (INDEX_EXPR_PREFIXES.has(u.col)) {
+        exprUnknownIdx.push(u);
+      } else {
+        phantomIdx.push({
+          refFile: u.file,
+          refMig: u.migNum,
+          fq: u.fq,
+          col: u.col,
+          kind: "INDEX_COLUMN_PHANTOM",
+        });
+      }
       continue;
     }
     if (intro.migNum > u.migNum) {
@@ -297,42 +349,48 @@ function main() {
         col: u.col,
         introducedInMig: intro.migNum,
         introducedSource: intro.source,
-        kind: "INDEX_COLUMN",
+        kind: "INDEX_COLUMN_FORWARD",
       });
     }
   }
 
-  const blocking = [...forwardRefs, ...forwardIdx];
+  const blocking = [...forwardRefs, ...forwardIdx, ...phantomIdx];
 
   if (blocking.length > 0) {
     console.error(
-      "\ndb:verify:reference-order — BLOCKING (forward column dependency):\n",
+      "\ndb:verify:reference-order — BLOCKING (REFERENCES order / INDEX forward-deps / INDEX phantom columns):\n",
     );
     for (const row of blocking) {
-      console.error(
-        `  [${row.kind}] migration ${String(row.refMig).padStart(4, "0")} (${row.refFile}) uses ${row.fq}.${row.col} — column first introduced in migration ${row.introducedInMig} (${row.introducedSource})`,
-      );
+      if (row.kind === "INDEX_COLUMN_PHANTOM") {
+        console.error(
+          `  [${row.kind}] migration ${String(row.refMig).padStart(4, "0")} (${row.refFile}) INDEX uses ${row.fq}.${row.col} — column never appears in any migration CREATE TABLE / ALTER ADD COLUMN registry (wrong name or missing DDL)`,
+        );
+      } else {
+        console.error(
+          `  [${row.kind}] migration ${String(row.refMig).padStart(4, "0")} (${row.refFile}) uses ${row.fq}.${row.col} — column first introduced in migration ${row.introducedInMig} (${row.introducedSource})`,
+        );
+      }
     }
     console.error(`\nTotal blocking: ${blocking.length}\n`);
   } else {
     console.log(
-      "db:verify:reference-order — OK blocking scan (outer REFERENCES + CREATE INDEX column lists)",
+      "db:verify:reference-order — OK blocking scan (REFERENCES + INDEX cols / phantom detection)",
     );
   }
 
-  if (unknownIdx.length > 0) {
+  if (exprUnknownIdx.length > 0) {
     console.warn(
-      "\n[informational] INDEX columns with no static registry hit (CREATE TABLE / ALTER ADD COLUMN not matched):\n",
+      "\n[informational] INDEX leading identifiers with no registry hit but likely SQL expressions (lower/coalesce/…):\n",
     );
-    for (const u of unknownIdx.slice(0, 40)) {
+    for (const u of exprUnknownIdx.slice(0, 40)) {
       console.warn(
         `  migration ${String(u.migNum).padStart(4, "0")} (${u.file}) INDEX … ON ${u.fq}(… ${u.col} …)`,
       );
     }
-    if (unknownIdx.length > 40) {
-      console.warn(`  … plus ${unknownIdx.length - 40} more`);
+    if (exprUnknownIdx.length > 40) {
+      console.warn(`  … plus ${exprUnknownIdx.length - 40} more`);
     }
-    console.warn(`\nTotal informational unknown INDEX cols: ${unknownIdx.length}\n`);
+    console.warn(`\nTotal informational expr-like INDEX cols: ${exprUnknownIdx.length}\n`);
   }
 
   if (infoDoIndexes.length > 0) {
