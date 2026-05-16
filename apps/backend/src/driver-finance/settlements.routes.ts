@@ -70,7 +70,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     return fn(client);
   });
 }
@@ -115,7 +115,10 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         values.push(q.payment_state);
         where.push(`COALESCE(s.payment_state, 'unpaid') = $${values.length}`);
       }
-      const countRes = await client.query(`SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements WHERE ${where.join(" AND ")}`, values);
+      const countRes = await client.query(
+        `SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements s WHERE ${where.join(" AND ")}`,
+        values
+      );
       values.push(q.limit, q.offset);
       const rowsRes = await client.query(
         `

@@ -51,8 +51,8 @@ jobs:
       - name: Static checks — rename fallout (ALTER TABLE … RENAME TO)
         run: npm run db:verify:rename-fallout
 
-      - name: Static checks — backend SQL hints vs migration CREATE TABLE (informational)
-        run: npm run db:verify:backend-contract
+      - name: Static checks — test INSERT column hints (informational)
+        run: npm run verify:test-insert-columns
 
       - name: Static checks — data-dependent RAISE in DO $$ blocks (informational)
         run: npm run db:verify:empty-db-safe

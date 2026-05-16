@@ -3,6 +3,8 @@ import { buildPgClientConfig } from "../src/lib/pg-connection-options.js";
 import { TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID, TEST_OWNER_USER_ID } from "./constants.js";
 
 let cachedOperatingCompanyId: string | null = null;
+let cachedWorkOrderUnitId: string | null = null;
+let cachedWorkOrderDriverId: string | null = null;
 
 export async function ensureIntegrationPrerequisites(): Promise<string> {
   if (cachedOperatingCompanyId) return cachedOperatingCompanyId;
@@ -66,4 +68,63 @@ export function getOperatingCompanyId(): string {
     throw new Error("ensureIntegrationPrerequisites() must run before getOperatingCompanyId()");
   }
   return cachedOperatingCompanyId;
+}
+
+/**
+ * Resolves tenant-scoped unit + driver rows seeded by migrations (TRANSP).
+ * Used by work-order integration tests so payloads satisfy validateCreateWorkOrder.
+ */
+export async function getIntegrationWorkOrderSeedIds(): Promise<{ unitId: string; driverId: string }> {
+  if (cachedWorkOrderUnitId && cachedWorkOrderDriverId) {
+    return { unitId: cachedWorkOrderUnitId, driverId: cachedWorkOrderDriverId };
+  }
+
+  const companyId = cachedOperatingCompanyId ?? (await ensureIntegrationPrerequisites());
+
+  const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
+  if (!cs) {
+    throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required for getIntegrationWorkOrderSeedIds()");
+  }
+
+  const client = new pg.Client(buildPgClientConfig(cs));
+  await client.connect();
+
+  try {
+    await client.query("SET ROLE ih35_app");
+    await client.query("BEGIN");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+
+    const unitRes = await client.query<{ id: string }>(
+      `SELECT id FROM mdata.units WHERE currently_leased_to_company_id = $1::uuid LIMIT 1`,
+      [companyId]
+    );
+    const unitFallback = await client.query<{ id: string }>(
+      `SELECT id FROM mdata.units ORDER BY created_at ASC LIMIT 1`
+    );
+    const unitId = unitRes.rows[0]?.id ?? unitFallback.rows[0]?.id;
+
+    const driverRes = await client.query<{ id: string }>(
+      `SELECT id FROM mdata.drivers WHERE operating_company_id = $1::uuid LIMIT 1`,
+      [companyId]
+    );
+    const driverFallback = await client.query<{ id: string }>(
+      `SELECT id FROM mdata.drivers WHERE deactivated_at IS NULL ORDER BY created_at ASC LIMIT 1`
+    );
+    const driverId = driverRes.rows[0]?.id ?? driverFallback.rows[0]?.id;
+    if (!unitId || !driverId) {
+      throw new Error(
+        "integration tests require at least one mdata.units row leased to TRANSP and one mdata.drivers row scoped to that operating company (migration seeds)."
+      );
+    }
+
+    await client.query("COMMIT");
+    cachedWorkOrderUnitId = unitId;
+    cachedWorkOrderDriverId = driverId;
+    return { unitId, driverId };
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    await client.end();
+  }
 }

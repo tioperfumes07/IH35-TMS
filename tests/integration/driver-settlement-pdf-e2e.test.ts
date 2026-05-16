@@ -62,16 +62,17 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
 
       const driverRes = await pgClient.query<{ id: string }>(
         `
-          INSERT INTO mdata.drivers (first_name, last_name, phone, email, identity_user_id)
-          VALUES ('PDF', $2, '+15551234000', $3, $1::uuid)
+          INSERT INTO mdata.drivers (first_name, last_name, phone, email, identity_user_id, operating_company_id)
+          VALUES ('PDF', $2, '+15551234000', $3, $1::uuid, $4::uuid)
           ON CONFLICT (identity_user_id) DO UPDATE SET
             phone = EXCLUDED.phone,
             email = EXCLUDED.email,
             first_name = EXCLUDED.first_name,
-            last_name = EXCLUDED.last_name
+            last_name = EXCLUDED.last_name,
+            operating_company_id = EXCLUDED.operating_company_id
           RETURNING id
         `,
-        [TEST_OWNER_USER_ID, `E2E-${suffix}`, `pdf-e2e-${suffix}@test.invalid`]
+        [TEST_OWNER_USER_ID, `E2E-${suffix}`, `pdf-e2e-${suffix}@test.invalid`, companyId]
       );
       driverId = String(driverRes.rows[0]?.id ?? "");
       if (!driverId) throw new Error("driver_insert_failed");
@@ -81,8 +82,8 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
         customerId = String(customerExisting.rows[0].id);
       } else {
         const customerInsert = await pgClient.query<{ id: string }>(
-          `INSERT INTO mdata.customers (customer_name) VALUES ($1) RETURNING id`,
-          [`PDF E2E Customer ${suffix}`]
+          `INSERT INTO mdata.customers (customer_name, operating_company_id) VALUES ($1, $2::uuid) RETURNING id`,
+          [`PDF E2E Customer ${suffix}`, companyId]
         );
         customerId = String(customerInsert.rows[0]?.id ?? "");
       }
@@ -90,11 +91,16 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
 
       const unitInsert = await pgClient.query<{ id: string }>(
         `
-          INSERT INTO mdata.units (unit_number, vin)
-          VALUES ($1, $2)
+          INSERT INTO mdata.units (unit_number, vin, owner_company_id, currently_leased_to_company_id)
+          VALUES (
+            $1,
+            $2,
+            (SELECT id FROM org.companies WHERE code = 'TRK' LIMIT 1),
+            $3::uuid
+          )
           RETURNING id
         `,
-        [`U-PDF-${suffix}`, `VIN${suffix.padEnd(17, "0")}`.slice(0, 17)]
+        [`U-PDF-${suffix}`, `VIN${suffix.padEnd(17, "0")}`.slice(0, 17), companyId]
       );
       unitId = String(unitInsert.rows[0]?.id ?? "");
       if (!unitId) throw new Error("unit_insert_failed");

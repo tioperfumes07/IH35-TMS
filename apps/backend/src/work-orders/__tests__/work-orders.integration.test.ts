@@ -3,7 +3,11 @@ import type { FastifyInstance } from "fastify";
 import supertest from "supertest";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { testAuthHeaders } from "../../../test-helpers/auth-fixture.js";
-import { ensureIntegrationPrerequisites, getOperatingCompanyId } from "../../../test-helpers/db-fixture.js";
+import {
+  ensureIntegrationPrerequisites,
+  getIntegrationWorkOrderSeedIds,
+  getOperatingCompanyId,
+} from "../../../test-helpers/db-fixture.js";
 import { createIntegrationApp } from "../../../test-helpers/http-app.js";
 import { registerWorkOrdersV1Routes } from "../work-orders.routes.js";
 
@@ -12,10 +16,15 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 describeIntegration("work-orders.routes integration", () => {
   let app: FastifyInstance;
   let companyId: string;
+  let unitId: string;
+  let driverId: string;
 
   beforeAll(async () => {
     await ensureIntegrationPrerequisites();
     companyId = getOperatingCompanyId();
+    const anchors = await getIntegrationWorkOrderSeedIds();
+    unitId = anchors.unitId;
+    driverId = anchors.driverId;
     app = await createIntegrationApp(async (a) => {
       await registerWorkOrdersV1Routes(a);
     });
@@ -46,8 +55,8 @@ describeIntegration("work-orders.routes integration", () => {
       headers: testAuthHeaders(),
     });
     expect(res.statusCode).toBe(200);
-    const body = res.json() as { rows?: unknown[] };
-    expect(Array.isArray(body.rows)).toBe(true);
+    const body = res.json() as { work_orders?: unknown[] };
+    expect(Array.isArray(body.work_orders)).toBe(true);
   });
 
   it("GET /api/v1/work-orders supports supertest + authenticated callers", async () => {
@@ -55,7 +64,7 @@ describeIntegration("work-orders.routes integration", () => {
       .get(`/api/v1/work-orders?operating_company_id=${companyId}&limit=5`)
       .set(testAuthHeaders());
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.rows)).toBe(true);
+    expect(Array.isArray(res.body.work_orders)).toBe(true);
   });
 
   it("GET /api/v1/work-orders/:id returns 404 for unknown IDs", async () => {
@@ -123,6 +132,9 @@ describeIntegration("work-orders.routes integration", () => {
         operating_company_id: companyId,
         wo_billing_type: "internal",
         wo_service_class: "corrective",
+        unit_id: unitId,
+        driver_id: driverId,
+        vendor_invoice_number: "INT-INV-001",
         description: `integration-create-${randomUUID()}`,
       },
     });
