@@ -1,10 +1,162 @@
 [
   {
+    "filename": "0050_two_section_v5_and_safety_restructure.sql",
+    "ledger_checksum": "1d5f77d669ceb800c60f3b4cbf51060e174568fb22126be9ab3f3cadeb05c5de",
+    "disk_checksum": "8919f0ed54012cbbb865852a7074e0c69c9dad399357e5f14fefcffb682ec2ef",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0062_p3_t11_21_0_catalog_seed_data.sql",
+    "ledger_checksum": "cba54c3f629f433e5668d6101c9f97331c334d616f2c4b14bfae20e69e1d594c",
+    "disk_checksum": "76e26d55f6a5434acc021388f58ecc52dc190d2eb25f0f448a3c25dacd36c403",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0072_p5_t1_1_banking_bank_accounts.sql",
+    "ledger_checksum": "09aa91e8032b67a72caee6daca1849d752f8f8aed2c341033ca1fc6761dbb0f9",
+    "disk_checksum": "0120b2b04d10c0ff60b113e9eae8391443de16bcde138738a0a1d20a35e66754",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0073_p5_t1_1_banking_bank_transactions.sql",
+    "ledger_checksum": "d65dacd67bc5bf638e7257625253fed5ba004e7a31fbb4d7786e71632843aaa4",
+    "disk_checksum": "8a34ce9643fe79b0fb71ae34b014c834ad5345745a3994932556215986f1828a",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0074_p5_t1_1_banking_transaction_categories.sql",
+    "ledger_checksum": "6fb3f424591956256c1384f4afa6fc6c6c407ab9c9004291b2de0dbaf4db27dc",
+    "disk_checksum": "b105b08b01f7267464fc0e220c7958ebabf2ff522d7befad925035a349cfcc8c",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0075_p5_t1_1_banking_reconciliation_sessions.sql",
+    "ledger_checksum": "10366a338345fba7c1a552d5e70bcad91df601df0e368fc12029686343b9fe36",
+    "disk_checksum": "d372a17085dae7da93e9ef8ba152d2e0302ff81cd1f1a72c3c3e99f6f44d56cf",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0089_p5_d1_banking_transfers.sql",
+    "ledger_checksum": "1bbcaf4c5e5213ea0b6e1efdef5516ed80f24ff71db97eb57037bda90c4f98f2",
+    "disk_checksum": "11ec0de088782b53195e44bd47e7252943feffd74aedbfe75bcf32deb94ae495",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0091_p5_d3_qbo_vendor_driver_asset_linkage.sql",
+    "ledger_checksum": "b1e91919847db2d775d4fed8bf6a18a16e63ce7b9b4e8fcd8196fed19d05ed07",
+    "disk_checksum": "f7fc2ecc158547fa5415100f23f05f59649e5b1bf7a9f53c951f6c246c23cdf7",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0095_p5_e5_severe_repair_oos_estimate.sql",
+    "ledger_checksum": "bd8cc8fc47563a5779300100b724b5a538aabc4de9fc05564cc99674ac23ff06",
+    "disk_checksum": "5c32948187f57020f5ec014e9c0464b4a05b8f7b2cf4e33ffbb04a6e5e7dd104",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0096_p5_e2_settlement_disputes_workflow.sql",
+    "ledger_checksum": "519f459c944f0416b50e05f52f2f8c93374d100773e2660fdfede56417fd9357",
+    "disk_checksum": "aaa305afec1b86aa6f4b52bec103b400d1f85ac7924bc5a75dc414e70dcbf039",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0097_p5_e3_team_drivers_split.sql",
+    "ledger_checksum": "ae4ac31e3fb0aa886f220568fff69865f1b4aec4b0534aacc6a47aa2a3f85d6f",
+    "disk_checksum": "59c85fa034e5b1674fe142dcf9d0551211104ab9ba49c93d70f4f944ce2c01f5",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0098_p5_f1_roadservice_bucket.sql",
+    "ledger_checksum": "28fa613255eb343129a9a111165aa81e9a365f2f28d5a043f50059ea0a7623dd",
+    "disk_checksum": "a353d9c1a0f04b5c6423384b0eb59d7c79c4cc1b4d5c4e6d16e7f96a43c297e7",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0099_p5_f2_safety_active_filter.sql",
+    "ledger_checksum": "41de9d195c1f2b7dd115e0e8a4ce8bdc6c29c1d80f588210602f4214268aa7fc",
+    "disk_checksum": "b67696b4b08b860bab9ea69161c11e49c8f1ab816b42ae8a71a78c28189aa8a5",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0101_p5_f4_cancellation_reasons.sql",
+    "ledger_checksum": "8b524472ae21d15a6536ef252a38902f8fefcbd198c3dbdfc9916776d3b6377b",
+    "disk_checksum": "2aa9e148e83b782237bf62da14be0cf0af0ef73a9ecef51d450920b5fbfa2e6e",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0114_p6_owner_admin_role_provisioning.sql",
+    "ledger_checksum": "3f29b28fb3e8d3425702db878e61ec24f6dda1f99d98a89f1af7d79a28d3ee5c",
+    "disk_checksum": "c9a814e578ad59c3d7166f495b09e2166b9d3fb338ec8a2cd23633d148029934",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0123_p6_pre_ledger_drift_reconciliation.sql",
+    "ledger_checksum": "d54e0972e76fc26b5a39711cf7dc4d93a1f2079b4f8792494fc3e25dd3db6980",
+    "disk_checksum": "2d8ed1e017d32b7c3c9d1f56f93c9cd9c983f82d62fb5805e0325e4da558655e",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
     "filename": "0124_p6_active_drift_reconciliation.sql",
     "ledger_checksum": "e199881eb4ef1b25ee6d555b940207bb2e67135c897021623ab428033cf7b445",
     "disk_checksum": "4fe831c44e9299a1d652c050e457df50944c361171289d158029e1e8a18a1fc2",
     "reason": "Production applied legacy 0124 variant before final repository-stabilized text; allow deterministic replay without blocking subsequent migrations.",
     "added_at": "2026-05-12",
     "added_in_pr": "BLOCK-C-STABILITY"
+  },
+  {
+    "filename": "0141_p6_t11172_driver_finance_driver_bills.sql",
+    "ledger_checksum": "70c1115a7d2b2874ec7ed1ab7b7c3de2e96309bb4153331a3a37007cdb3a77f7",
+    "disk_checksum": "3e6aac5afb5b22438df07ec0b81b776ef37c0ffa9a277d811e27e9409ede8f8e",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0144_qbo_sync_observability_and_alerts.sql",
+    "ledger_checksum": "e04a6ef0e734e36276aaace75ade9bfe5fe79059a9a306e3dd82af05dfc16c54",
+    "disk_checksum": "1fead37b774c9dcfcafebb333be1f1cd6f62d2f91c6479f8c50393feed2e8a0b",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0162_p6_t11196_qbo_sync_runs_and_bill_payment_mappings.sql",
+    "ledger_checksum": "manual-apply-1778758391.834389",
+    "disk_checksum": "1089d70b388bd56d982a25fff03d446cf033971f1920211db0e4f5419b1fa178",
+    "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
+    "added_at": "2026-05-16",
+    "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
   }
 ]

@@ -3,6 +3,7 @@ dist
 .env
 .DS_Store
 *\ 2.*
+coverage/
 
 # Local design references and historical specs (kept local only)
 docs/design/approved-screens/
