@@ -1,4 +1,5 @@
 import pg from "pg";
+import { buildPgClientConfig } from "../src/lib/pg-connection-options.js";
 import { TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID, TEST_OWNER_USER_ID } from "./constants.js";
 
 let cachedOperatingCompanyId: string | null = null;
@@ -11,7 +12,7 @@ export async function ensureIntegrationPrerequisites(): Promise<string> {
     throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required for integration tests");
   }
 
-  const client = new pg.Client({ connectionString: cs, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client(buildPgClientConfig(cs));
   await client.connect();
 
   try {

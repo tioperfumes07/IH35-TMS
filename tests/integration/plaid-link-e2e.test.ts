@@ -5,6 +5,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerBankingPlaidWebhookRoutes } from "../../apps/backend/src/banking/plaid/webhook.routes";
 import { registerPlaidLinkRoutes } from "../../apps/backend/src/integrations/plaid/link.routes";
+import { buildPgClientConfig } from "../../apps/backend/src/lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../apps/backend/test-helpers/db-fixture";
 import { createIntegrationApp } from "../../apps/backend/test-helpers/http-app";
 import { testAuthHeaders } from "../../apps/backend/test-helpers/auth-fixture";
@@ -100,7 +101,7 @@ describePlaidLink("plaid link e2e — sandbox (Block I)", () => {
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
 
-    const db = new pg.Client({ connectionString: cs, ssl: { rejectUnauthorized: false } });
+    const db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
     await db.query("BEGIN");
@@ -143,7 +144,7 @@ describePlaidLink("plaid link e2e — sandbox (Block I)", () => {
     });
     expect(syncRes2.statusCode).toBe(200);
 
-    const db2 = new pg.Client({ connectionString: cs, ssl: { rejectUnauthorized: false } });
+    const db2 = new pg.Client(buildPgClientConfig(cs));
     await db2.connect();
     await db2.query("SET ROLE ih35_app");
     await db2.query("BEGIN");

@@ -1,7 +1,11 @@
 import dotenv from "dotenv";
 import pg from "pg";
+import { createRequire } from "node:module";
 
 dotenv.config();
+
+const require = createRequire(import.meta.url);
+const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
 if (!process.env.DATABASE_URL && process.env.DATABASE_DIRECT_URL) {
   process.env.DATABASE_URL = process.env.DATABASE_DIRECT_URL;
 }
@@ -18,7 +22,7 @@ if (!connectionString) {
   process.exit(1);
 }
 
-const db = new pg.Client({ connectionString, ssl: { rejectUnauthorized: false } });
+const db = new pg.Client(buildPgClientConfig(connectionString));
 
 function nowIsoPlus(hours = 2) {
   return new Date(Date.now() + hours * 3600 * 1000).toISOString();

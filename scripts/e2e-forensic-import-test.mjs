@@ -1,8 +1,12 @@
 import { spawn, spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import dotenv from "dotenv";
 import pg from "pg";
 
 dotenv.config();
+
+const require = createRequire(import.meta.url);
+const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
 
 const POLL_INTERVAL_MS = 15_000;
 const configuredTimeoutMs = Number(process.env.E2E_FORENSIC_TIMEOUT_MS ?? 0);
@@ -53,10 +57,7 @@ function assertOk(condition, message, context = {}) {
 const connectionString = process.env.DATABASE_URL || process.env.DATABASE_DIRECT_URL;
 assertOk(connectionString, "DATABASE_URL or DATABASE_DIRECT_URL is required");
 
-const client = new pg.Client({
-  connectionString,
-  ssl: { rejectUnauthorized: false },
-});
+const client = new pg.Client(buildPgClientConfig(connectionString));
 
 async function resolveCompanyAndActor() {
   const explicitCompany = process.env.TRK_UUID || process.env.OPERATING_COMPANY_ID || null;

@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerSettlementsMvpRoutes } from "../../apps/backend/src/driver-finance/settlements-mvp.routes";
+import { buildPgClientConfig } from "../../apps/backend/src/lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../apps/backend/test-helpers/constants";
 import { ensureIntegrationPrerequisites } from "../../apps/backend/test-helpers/db-fixture";
 import { createIntegrationApp } from "../../apps/backend/test-helpers/http-app";
@@ -38,7 +39,7 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required for settlement pdf e2e");
 
-    pgClient = new pg.Client({ connectionString: cs, ssl: { rejectUnauthorized: false } });
+    pgClient = new pg.Client(buildPgClientConfig(cs));
     await pgClient.connect();
     await pgClient.query("SET ROLE ih35_app");
     await pgClient.query("BEGIN");

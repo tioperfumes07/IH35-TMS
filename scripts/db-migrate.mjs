@@ -1,10 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import { createRequire } from "node:module";
 import dotenv from "dotenv";
 import pg from "pg";
 
 dotenv.config();
+
+const require = createRequire(import.meta.url);
+const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
 
 const { Client } = pg;
 const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
@@ -173,7 +177,7 @@ async function runBackfillLedger(client, diskMigrations, ledgerByFile) {
   console.log(`Backfill complete. Inserted ${toInsert.length} ledger row(s).`);
 }
 
-const client = new Client({ connectionString });
+const client = new Client(buildPgClientConfig(connectionString));
 
 try {
   await client.connect();
