@@ -50,11 +50,17 @@ BEGIN
       AND table_name = 'bank_transactions'
       AND column_name = 'dedup_hash'
   ) THEN
+    -- Self-heal: PostgreSQL rejects generated STORED expressions using date::text (cast is STABLE, session-/fmt-sensitive).
+    -- Effective dedup calendar date matches COALESCE(posted_date, transaction_date); immutable ISO text mirrors date_out YYYY-MM-DD.
     ALTER TABLE banking.bank_transactions
       ADD COLUMN dedup_hash text GENERATED ALWAYS AS (
         md5(
           bank_account_id::text || '|' ||
-          coalesce(posted_date::text, transaction_date::text) || '|' ||
+          (
+            (extract(year FROM coalesce(posted_date, transaction_date))::int)::text || '-' ||
+            lpad((extract(month FROM coalesce(posted_date, transaction_date))::int)::text, 2, '0') || '-' ||
+            lpad((extract(day FROM coalesce(posted_date, transaction_date))::int)::text, 2, '0')
+          ) || '|' ||
           amount_cents::text || '|' ||
           coalesce(normalized_description, '')
         )

@@ -60,6 +60,9 @@ jobs:
       - name: Static checks — DDL idempotency hints (informational)
         run: npm run db:verify:idempotency
 
+      - name: Static checks — generated columns vs IMMUTABLE (informational)
+        run: npm run db:verify:generated-immutable
+
       - name: Migrate database (integration tests)
         run: npm run db:migrate
 
