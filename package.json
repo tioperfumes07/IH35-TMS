@@ -145,7 +145,6 @@
   },
   "devDependencies": {
     "@axe-core/cli": "^4.10.2",
-    "@types/luxon": "^3.7.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/luxon": "^3.7.1",
     "@types/node": "^22.0.0",

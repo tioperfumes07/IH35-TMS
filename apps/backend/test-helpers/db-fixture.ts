@@ -26,12 +26,15 @@ export async function ensureIntegrationPrerequisites(): Promise<string> {
       throw new Error("integration tests require org.companies seed row code=TRANSP");
     }
 
+    -- Self-heal: 0057 drops inline UNIQUE on email (users_email_key) in favor of idx_users_email_unique on lower(email).
+    -- ON CONFLICT (email) requires a unique constraint/index on (email) alone — fresh DBs only have the expression index, so upsert by PK.
     await client.query(
       `
         INSERT INTO identity.users (id, email, google_user_id, role)
         VALUES ($1::uuid, $2, $3, 'Owner')
-        ON CONFLICT (email) DO UPDATE
-          SET role = EXCLUDED.role,
+        ON CONFLICT (id) DO UPDATE
+          SET email = EXCLUDED.email,
+              role = EXCLUDED.role,
               google_user_id = EXCLUDED.google_user_id
       `,
       [TEST_OWNER_USER_ID, TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID]
