@@ -29,11 +29,11 @@ describe("migration-status", () => {
     tmpRoots.push(repoRoot);
 
     const query = vi.fn(async (sql: string) => {
-      if (sql.includes("to_regclass('ih35_migrations.applied_migrations')")) {
+      if (sql.includes("to_regclass('_system._schema_migrations')")) {
         return { rows: [{ ok: true }] };
       }
-      if (sql.includes("FROM ih35_migrations.applied_migrations")) {
-        return { rows: [{ name: "0001_a.sql" }] };
+      if (sql.includes("FROM _system._schema_migrations")) {
+        return { rows: [{ name: "0001_a.sql", checksum: "x" }] };
       }
       return { rows: [] };
     });
@@ -48,11 +48,11 @@ describe("migration-status", () => {
     tmpRoots.push(repoRoot);
 
     const query = vi.fn(async (sql: string) => {
-      if (sql.includes("to_regclass('ih35_migrations.applied_migrations')")) {
+      if (sql.includes("to_regclass('_system._schema_migrations')")) {
         return { rows: [{ ok: true }] };
       }
-      if (sql.includes("FROM ih35_migrations.applied_migrations")) {
-        return { rows: [{ name: "0001_a.sql" }, { name: "9999_z.sql" }] };
+      if (sql.includes("FROM _system._schema_migrations")) {
+        return { rows: [{ name: "0001_a.sql", checksum: "x" }, { name: "9999_z.sql", checksum: "x" }] };
       }
       return { rows: [] };
     });
@@ -67,11 +67,11 @@ describe("migration-status", () => {
     tmpRoots.push(repoRoot);
 
     const query = vi.fn(async (sql: string) => {
-      if (sql.includes("to_regclass('ih35_migrations.applied_migrations')")) {
+      if (sql.includes("to_regclass('_system._schema_migrations')")) {
         return { rows: [{ ok: true }] };
       }
-      if (sql.includes("FROM ih35_migrations.applied_migrations")) {
-        return { rows: [{ name: "0001_a.sql" }] };
+      if (sql.includes("FROM _system._schema_migrations")) {
+        return { rows: [{ name: "0001_a.sql", checksum: "x" }] };
       }
       return { rows: [] };
     });
@@ -86,10 +86,10 @@ describe("migration-status", () => {
     tmpRoots.push(repoRoot);
 
     const query = vi.fn(async (sql: string) => {
-      if (sql.includes("to_regclass('ih35_migrations.applied_migrations')")) {
+      if (sql.includes("to_regclass('_system._schema_migrations')")) {
         return { rows: [{ ok: true }] };
       }
-      if (sql.includes("FROM ih35_migrations.applied_migrations")) {
+      if (sql.includes("FROM _system._schema_migrations")) {
         return { rows: [] };
       }
       return { rows: [] };

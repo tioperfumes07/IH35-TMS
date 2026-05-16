@@ -4,14 +4,19 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError } from "../accounting/shared.js";
 import { pool } from "../auth/db.js";
-import { findMigrationDrift, listExpectedMigrations, skipMigrationVerificationEnabled } from "../lib/migration-status.js";
+import {
+  findMigrationDrift,
+  getMigrationLedgerSnapshot,
+  listExpectedMigrations,
+  skipMigrationVerificationEnabled,
+} from "../lib/migration-status.js";
 
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 
 const repoRoot = resolveMonorepoRoot(import.meta.url);
 
 function ownerAdministrator(role: string) {
-  return role === "Owner";
+  return role === "Owner" || role === "Administrator";
 }
 
 function safeMigrationFilename(name: string): boolean {
@@ -19,7 +24,7 @@ function safeMigrationFilename(name: string): boolean {
 }
 
 export async function registerMigrationStatusRoutes(app: FastifyInstance) {
-  app.get("/api/v1/admin/health/migrations", async (req: FastifyRequest, reply: FastifyReply) => {
+  const readMigrationHealth = async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -28,25 +33,21 @@ export async function registerMigrationStatusRoutes(app: FastifyInstance) {
     try {
       const drift = await findMigrationDrift(client, repoRoot);
       const expected = await listExpectedMigrations(repoRoot);
-
-      let appliedNames: string[] = [];
-      try {
-        const ih35 = await client.query<{ name: string }>(
-          `SELECT name FROM ih35_migrations.applied_migrations ORDER BY name ASC`
-        );
-        appliedNames = ih35.rows.map((r) => String(r.name));
-      } catch {
-        const legacy = await client.query<{ name: string }>(
-          `SELECT filename AS name FROM _system._schema_migrations ORDER BY filename ASC`
-        );
-        appliedNames = legacy.rows.map((r) => String(r.name));
-      }
+      const snapshot = await getMigrationLedgerSnapshot(client, repoRoot);
 
       const payload = {
-        applied: appliedNames,
+        applied: snapshot.canonicalApplied,
         expected,
         missingInDB: drift.missingInDB,
         extraInDB: drift.extraInDB,
+        mirrorApplied: snapshot.mirrorApplied,
+        ledgerDivergence: {
+          onlyInCanonical: snapshot.onlyInCanonical,
+          onlyInMirror: snapshot.onlyInMirror,
+        },
+        checksumMismatches: snapshot.checksumMismatches,
+        canonicalLedger: "_system._schema_migrations",
+        mirrorLedger: "ih35_migrations.applied_migrations",
         ok: drift.missingInDB.length === 0,
       };
 
@@ -57,7 +58,10 @@ export async function registerMigrationStatusRoutes(app: FastifyInstance) {
     } finally {
       client.release();
     }
-  });
+  };
+
+  app.get("/api/v1/admin/health/migrations", readMigrationHealth);
+  app.get("/api/v1/internal/migrations/status", readMigrationHealth);
 
   app.get("/api/v1/admin/migrations/file", async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);

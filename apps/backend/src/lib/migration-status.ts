@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import type pg from "pg";
 
 const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;
@@ -7,6 +8,14 @@ const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;
 export type MigrationDrift = {
   missingInDB: string[];
   extraInDB: string[];
+};
+
+export type MigrationLedgerSnapshot = {
+  canonicalApplied: string[];
+  mirrorApplied: string[];
+  onlyInCanonical: string[];
+  onlyInMirror: string[];
+  checksumMismatches: Array<{ filename: string; ledgerChecksum: string; diskChecksum: string }>;
 };
 
 function sortUnique(names: string[]): string[] {
@@ -27,25 +36,25 @@ export async function listExpectedMigrations(repoRoot: string): Promise<string[]
 }
 
 export async function listAppliedMigrations(client: pg.PoolClient): Promise<string[]> {
-  const reg = await client.query(`SELECT to_regclass('ih35_migrations.applied_migrations') IS NOT NULL AS ok`);
+  const reg = await client.query(`SELECT to_regclass('_system._schema_migrations') IS NOT NULL AS ok`);
   if (reg.rows[0]?.ok) {
-    const ih35 = await client.query<{ name: string }>(
-      `SELECT name FROM ih35_migrations.applied_migrations ORDER BY name ASC`
+    const canonical = await client.query<{ name: string }>(
+      `SELECT filename AS name FROM _system._schema_migrations ORDER BY filename ASC`
     );
-    return ih35.rows.map((r) => String(r.name));
+    return canonical.rows.map((r) => String(r.name));
   }
 
-  const legacyExists = await client.query(`SELECT to_regclass('_system._schema_migrations') IS NOT NULL AS ok`);
-  if (!legacyExists.rows[0]?.ok) return [];
+  const mirrorExists = await client.query(`SELECT to_regclass('ih35_migrations.applied_migrations') IS NOT NULL AS ok`);
+  if (!mirrorExists.rows[0]?.ok) return [];
 
-  const legacy = await client.query<{ name: string }>(
+  const mirror = await client.query<{ name: string }>(
     `
-      SELECT filename AS name
-      FROM _system._schema_migrations
-      ORDER BY filename ASC
+      SELECT name
+      FROM ih35_migrations.applied_migrations
+      ORDER BY name ASC
     `
   );
-  return legacy.rows.map((r) => String(r.name));
+  return mirror.rows.map((r) => String(r.name));
 }
 
 export async function findMigrationDrift(client: pg.PoolClient, repoRoot: string): Promise<MigrationDrift> {
@@ -59,6 +68,56 @@ export async function findMigrationDrift(client: pg.PoolClient, repoRoot: string
   const extraInDB = applied.filter((name) => !expectedSet.has(name));
 
   return { missingInDB, extraInDB };
+}
+
+function sha256(content: string): string {
+  return crypto.createHash("sha256").update(content, "utf8").digest("hex");
+}
+
+export async function getMigrationLedgerSnapshot(client: pg.PoolClient, repoRoot: string): Promise<MigrationLedgerSnapshot> {
+  const canonicalReg = await client.query(`SELECT to_regclass('_system._schema_migrations') IS NOT NULL AS ok`);
+  const mirrorReg = await client.query(`SELECT to_regclass('ih35_migrations.applied_migrations') IS NOT NULL AS ok`);
+
+  const canonicalRows = canonicalReg.rows[0]?.ok
+    ? await client.query<{ name: string; checksum: string }>(
+        `SELECT filename AS name, checksum FROM _system._schema_migrations ORDER BY filename ASC`
+      )
+    : { rows: [] as Array<{ name: string; checksum: string }> };
+  const mirrorRows = mirrorReg.rows[0]?.ok
+    ? await client.query<{ name: string }>(`SELECT name FROM ih35_migrations.applied_migrations ORDER BY name ASC`)
+    : { rows: [] as Array<{ name: string }> };
+
+  const canonicalApplied = canonicalRows.rows.map((r) => String(r.name));
+  const mirrorApplied = mirrorRows.rows.map((r) => String(r.name));
+  const canonicalSet = new Set(canonicalApplied);
+  const mirrorSet = new Set(mirrorApplied);
+  const onlyInCanonical = canonicalApplied.filter((name) => !mirrorSet.has(name));
+  const onlyInMirror = mirrorApplied.filter((name) => !canonicalSet.has(name));
+
+  const diskFiles = await listExpectedMigrations(repoRoot);
+  const checksumMismatches: Array<{ filename: string; ledgerChecksum: string; diskChecksum: string }> = [];
+  for (const file of diskFiles) {
+    const ledgerRow = canonicalRows.rows.find((row) => String(row.name) === file);
+    if (!ledgerRow?.checksum) continue;
+    const fullPath = path.join(repoRoot, "db", "migrations", file);
+    if (!fs.existsSync(fullPath)) continue;
+    const diskChecksum = sha256(fs.readFileSync(fullPath, "utf8"));
+    if (diskChecksum !== ledgerRow.checksum) {
+      checksumMismatches.push({
+        filename: file,
+        ledgerChecksum: ledgerRow.checksum,
+        diskChecksum,
+      });
+    }
+  }
+
+  return {
+    canonicalApplied,
+    mirrorApplied,
+    onlyInCanonical,
+    onlyInMirror,
+    checksumMismatches,
+  };
 }
 
 export function skipMigrationVerificationEnabled(): boolean {
