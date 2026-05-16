@@ -14,6 +14,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-email-templates.mjs",
     "build:backend": "tsc -p tsconfig.json && node scripts/copy-email-templates.mjs",
+    "ci:boot-api-smoke": "node scripts/ci-boot-api-smoke.mjs",
     "build:driver-pwa": "cd apps/driver-pwa && npm run build",
     "build:frontend": "cd apps/frontend && npm run build",
     "start": "node dist/index.js",

@@ -149,8 +149,7 @@ import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 import { registerLaunchReadinessRoutes } from "./admin/launch-readiness.routes.js";
 import { registerHealthDeepRoutes } from "./admin/health-deep.routes.js";
 import { registerDataImportAdminRoutes } from "./admin/data-import.routes.js";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolveMonorepoRoot } from "./lib/monorepo-root.js";
 import { attachSentryRequestScope, initBackendSentry, registerSentryFastifyErrorHandler } from "./lib/sentry.js";
 import { runStartupEnvironmentChecks } from "./lib/env-validation.js";
 import { verifyMigrationsOnStartup } from "./lib/migration-verification.js";
@@ -169,7 +168,7 @@ import { initializeErrorDigestCron } from "./cron/error-digest.cron.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const repoRoot = resolveMonorepoRoot(import.meta.url);
 
 const app = Fastify({ logger: true });
 attachHttpErrorMonitor(app);

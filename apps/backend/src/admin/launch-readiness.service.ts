@@ -1,9 +1,9 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import type { PoolClient } from "pg";
 import { withLuciaBypass } from "../auth/db.js";
+import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 
 const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;
 
@@ -54,7 +54,7 @@ export type LaunchReadinessPayload = {
 };
 
 function repoRootFromHere() {
-  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+  return resolveMonorepoRoot(import.meta.url);
 }
 
 function migrationDiskFiles(repoRoot: string): string[] {

@@ -4,6 +4,11 @@ import { buildPgPoolConfig } from "../lib/pg-connection-options.js";
 const { Pool } = pg;
 const APP_DB_ROLE = "ih35_app";
 
+/** Boot smoke only: connect as DATABASE_URL user without SET ROLE (CI/local superuser). Never use in production. */
+function skipPoolAppRole(): boolean {
+  return process.env.IH35_BOOT_API_SMOKE === "true" && process.env.NODE_ENV === "test";
+}
+
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is required");
 }
@@ -31,6 +36,7 @@ export const luciaPool = new Pool(
 );
 
 luciaPool.on("connect", async (client) => {
+  if (skipPoolAppRole()) return;
   try {
     await client.query(`SET ROLE ${APP_DB_ROLE}`);
   } catch (err) {
@@ -39,6 +45,7 @@ luciaPool.on("connect", async (client) => {
 });
 
 pool.on("connect", async (client) => {
+  if (skipPoolAppRole()) return;
   try {
     await client.query(`SET ROLE ${APP_DB_ROLE}`);
   } catch (err) {
