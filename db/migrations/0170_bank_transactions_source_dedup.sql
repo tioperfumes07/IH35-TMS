@@ -41,32 +41,23 @@ BEGIN
   END IF;
 END $$;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'banking'
-      AND table_name = 'bank_transactions'
-      AND column_name = 'dedup_hash'
-  ) THEN
-    -- Self-heal: PostgreSQL rejects generated STORED expressions using date::text (cast is STABLE, session-/fmt-sensitive).
-    -- Effective dedup calendar date matches COALESCE(posted_date, transaction_date); immutable ISO text mirrors date_out YYYY-MM-DD.
-    ALTER TABLE banking.bank_transactions
-      ADD COLUMN dedup_hash text GENERATED ALWAYS AS (
-        md5(
-          bank_account_id::text || '|' ||
-          (
-            (extract(year FROM coalesce(posted_date, transaction_date))::int)::text || '-' ||
-            lpad((extract(month FROM coalesce(posted_date, transaction_date))::int)::text, 2, '0') || '-' ||
-            lpad((extract(day FROM coalesce(posted_date, transaction_date))::int)::text, 2, '0')
-          ) || '|' ||
-          amount_cents::text || '|' ||
-          coalesce(normalized_description, '')
-        )
-      ) STORED;
-  END IF;
-END $$;
+ALTER TABLE banking.bank_transactions ADD COLUMN IF NOT EXISTS dedup_hash text;
+
+-- Self-heal: Production keeps dedup_hash as a plain column filled by computeBankTransactionDedupHash (sha256); attgenerated is empty there.
+-- Historically ADD COLUMN IF NOT EXISTS skipped a GENERATED md5 definition whenever dedup_hash already existed as plain text — CI must converge to that shape (no competing DB-side hash).
+-- Backfill uses pgcrypto digest + encode(hex) for rows missing a hash so PARTITION BY dedup + DELETE duplicates remain deterministic.
+UPDATE banking.bank_transactions
+SET dedup_hash = encode(
+  digest(
+    bank_account_id::text || '|' ||
+    transaction_date::text || '|' ||
+    abs(round(amount_cents::numeric))::text || '|' ||
+    coalesce(normalized_description, ''),
+    'sha256'
+  ),
+  'hex'
+)
+WHERE dedup_hash IS NULL OR length(trim(dedup_hash)) = 0;
 
 WITH ranked AS (
   SELECT

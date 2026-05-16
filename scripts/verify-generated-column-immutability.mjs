@@ -2,6 +2,10 @@
 /**
  * Informational scan: PostgreSQL STORED generated columns require IMMUTABLE expressions.
  * Flags suspicious tokens commonly rejected by the planner (not exhaustive).
+ *
+ * Note: whether a column should be GENERATED vs plain text must match production — Neon/system
+ * catalogs (attgenerated / generation_expression) are the source of truth. Cross-check any new
+ * GENERATED definitions against prod before relying on migrations alone; this script does not connect to a DB.
  */
 import fs from "fs";
 import path from "path";
