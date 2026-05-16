@@ -8,6 +8,8 @@
  * - CREATE INDEX … ON schema.table(cols): leading identifier never appears in any migration registry
  *   (CREATE TABLE / ALTER ADD COLUMN) — wrong column name / phantom column (INDEX_COLUMN_PHANTOM).
  *   Leading tokens matching common SQL functions (lower, coalesce, …) stay informational only.
+ * - Bare `ALTER TABLE schema.table` outside DO $$ … END $$ runs before the first CREATE TABLE for that
+ *   fq table (ALTER_BEFORE_CREATE). ALTER inside DO blocks is ignored — typical guarded no-op pattern.
  *
  * Informational (stderr; exit 0 unless blocking fired):
  * - REFERENCES inside DO $$ … END $$ bodies (often guarded at runtime).
@@ -105,6 +107,39 @@ function maskCreateTableBodies(sql) {
 
 function stripAllDollarQuoted(sql) {
   return sql.replace(/\$\$[\s\S]*?\$\$/g, " ");
+}
+
+function stripDoBlocks(sql) {
+  const lower = sql.toLowerCase();
+  let out = "";
+  let pos = 0;
+  while (true) {
+    const i = lower.indexOf("do $$", pos);
+    if (i === -1) {
+      out += sql.slice(pos);
+      break;
+    }
+    out += sql.slice(pos, i);
+    const bodyStart = i + "do $$".length;
+    const slice = sql.slice(bodyStart);
+    const em = /\r?\n\s*end\s*\$\$/i.exec(slice);
+    if (!em) {
+      out += sql.slice(i);
+      break;
+    }
+    pos = bodyStart + em.index + em[0].length;
+  }
+  return out;
+}
+
+/** ALTER TABLE fq … outside DO $$ … END $$ bodies (guarded ALTERs usually live inside DO). */
+function collectBareAlterTableTargets(sql, migNum, filename, sink) {
+  const s = stripComments(stripDoBlocks(sql));
+  const re = /\bALTER\s+TABLE\s+(?:ONLY\s+)?([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)/gi;
+  let m;
+  while ((m = re.exec(s))) {
+    sink.push({ fq: m[1].toLowerCase(), migNum, file: filename });
+  }
 }
 
 /** Column intros: CREATE TABLE + ALTER ADD COLUMN */
@@ -270,6 +305,7 @@ function main() {
   const idxUses = [];
   const infoDoRefs = [];
   const infoDoIndexes = [];
+  const bareAlters = [];
 
   for (const file of files) {
     const migNum = migSortKey(file)[0];
@@ -279,6 +315,37 @@ function main() {
     idxUses.push(...collectIndexColumnUses(sql, migNum, file));
     collectRefsInsideDoInformational(sql, migNum, file, infoDoRefs);
     collectIndexColumnUsesInsideDo(sql, migNum, file, infoDoIndexes);
+    collectBareAlterTableTargets(sql, migNum, file, bareAlters);
+  }
+
+  const tableCreateMig = new Map();
+  for (const i of intros) {
+    if (i.kind !== "create") continue;
+    const prev = tableCreateMig.get(i.fq);
+    if (prev === undefined || i.migNum < prev) tableCreateMig.set(i.fq, i.migNum);
+  }
+
+  const firstBareAlter = new Map();
+  for (const a of bareAlters) {
+    const prev = firstBareAlter.get(a.fq);
+    if (prev === undefined || a.migNum < prev.migNum || (a.migNum === prev.migNum && a.file < prev.file)) {
+      firstBareAlter.set(a.fq, { migNum: a.migNum, file: a.file });
+    }
+  }
+
+  const alterBeforeCreate = [];
+  for (const [fq, al] of firstBareAlter) {
+    const cm = tableCreateMig.get(fq);
+    if (cm === undefined) continue;
+    if (al.migNum < cm) {
+      alterBeforeCreate.push({
+        kind: "ALTER_BEFORE_CREATE",
+        fq,
+        alterFile: al.file,
+        alterMig: al.migNum,
+        createMig: cm,
+      });
+    }
   }
 
   const firstIntro = new Map();
@@ -354,16 +421,20 @@ function main() {
     }
   }
 
-  const blocking = [...forwardRefs, ...forwardIdx, ...phantomIdx];
+  const blocking = [...forwardRefs, ...forwardIdx, ...phantomIdx, ...alterBeforeCreate];
 
   if (blocking.length > 0) {
     console.error(
-      "\ndb:verify:reference-order — BLOCKING (REFERENCES order / INDEX forward-deps / INDEX phantom columns):\n",
+      "\ndb:verify:reference-order — BLOCKING (REFERENCES order / INDEX forward-deps / INDEX phantom columns / ALTER before CREATE):\n",
     );
     for (const row of blocking) {
       if (row.kind === "INDEX_COLUMN_PHANTOM") {
         console.error(
           `  [${row.kind}] migration ${String(row.refMig).padStart(4, "0")} (${row.refFile}) INDEX uses ${row.fq}.${row.col} — column never appears in any migration CREATE TABLE / ALTER ADD COLUMN registry (wrong name or missing DDL)`,
+        );
+      } else if (row.kind === "ALTER_BEFORE_CREATE") {
+        console.error(
+          `  [${row.kind}] migration ${String(row.alterMig).padStart(4, "0")} (${row.alterFile}) ALTER TABLE ${row.fq} — table CREATE first appears in migration ${row.createMig} (move CREATE earlier or remove stray ALTER)`,
         );
       } else {
         console.error(
@@ -374,7 +445,7 @@ function main() {
     console.error(`\nTotal blocking: ${blocking.length}\n`);
   } else {
     console.log(
-      "db:verify:reference-order — OK blocking scan (REFERENCES + INDEX cols / phantom detection)",
+      "db:verify:reference-order — OK blocking scan (REFERENCES + INDEX cols / phantom detection / ALTER-before-CREATE)",
     );
   }
 

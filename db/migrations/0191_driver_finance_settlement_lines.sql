@@ -1,4 +1,4 @@
--- Self-heal: driver_finance.settlement_lines is queried by settlement PDF + MVP compose routes but had no baseline CREATE in the replay chain (0156/0158 only ALTER IF EXISTS).
+-- Roll-forward self-heal (idempotent). Canonical CREATE: 0141_p6_t11172_driver_finance_driver_bills.sql — MUST precede 0156/0158 guarded ALTERs on fresh replay.
 BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS driver_finance;

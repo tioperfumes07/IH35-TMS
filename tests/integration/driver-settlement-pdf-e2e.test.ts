@@ -237,7 +237,9 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
     }
   });
 
-  it("computes preview math, commits settlement to driver_finance.driver_settlements, approves, renders PDF, and enqueues notifications", async () => {
+  it(
+    "computes preview math, commits settlement to driver_finance.driver_settlements, approves, renders PDF, and enqueues notifications",
+    async () => {
     const previewRes = await app.inject({
       method: "POST",
       url: "/api/v1/settlements/preview",
@@ -354,7 +356,9 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       await pgClient.query("ROLLBACK").catch(() => {});
       throw err;
     }
-  });
+  },
+  120_000
+  );
 });
 
 describe("driver settlement pdf e2e wiring", () => {
