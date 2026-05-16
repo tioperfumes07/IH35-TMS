@@ -147,12 +147,9 @@ function buildPdfModel(params: {
     external_vendor_wo_number: wo.external_vendor_wo_number as string | null,
   });
 
-  const estimatedFromNumeric = centsFromNumeric(wo.total_estimated_cost);
   const actualFromNumeric = centsFromNumeric(wo.total_actual_cost);
   const estimatedTotalCents =
-    wo.estimated_cost_cents !== null && wo.estimated_cost_cents !== undefined
-      ? Number(wo.estimated_cost_cents)
-      : estimatedFromNumeric;
+    wo.estimated_cost_cents !== null && wo.estimated_cost_cents !== undefined ? Number(wo.estimated_cost_cents) : null;
   const actualTotalCents =
     wo.actual_cost_cents !== null && wo.actual_cost_cents !== undefined ? Number(wo.actual_cost_cents) : actualFromNumeric;
 
@@ -286,7 +283,12 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
       const orderBy =
         q.sort === "cost_desc"
-          ? "ORDER BY COALESCE(w.total_actual_cost, w.total_estimated_cost, 0) DESC NULLS LAST, w.created_at DESC"
+          ? `ORDER BY COALESCE(
+               w.actual_cost_cents::numeric / 100.0,
+               w.total_actual_cost,
+               w.estimated_cost_cents::numeric / 100.0,
+               0
+             ) DESC NULLS LAST, w.created_at DESC`
           : q.sort === "wo_number_asc"
             ? "ORDER BY w.display_id ASC NULLS LAST, w.created_at DESC"
             : q.sort === "labor_cost_desc" && timeReady
@@ -433,9 +435,6 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
             vendor_work_order_number: body.vendor_work_order_number ?? null,
           });
 
-          const estimatedTotalDollars =
-            body.estimated_cost_cents !== undefined ? Number(body.estimated_cost_cents) / 100 : 0;
-
           const linkedLoadRes = body.linked_load_id
             ? await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1 LIMIT 1`, [body.linked_load_id])
             : { rows: [] as Array<{ load_number?: string | null }> };
@@ -453,15 +452,12 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
                 load_id,
                 opened_at,
                 repair_location,
-                assigned_vendor,
-                vendor_invoice_number,
                 description,
                 external_vendor_id,
                 external_vendor_wo_number,
                 external_vendor_invoice_number,
                 display_id,
                 unit_sequence,
-                total_estimated_cost,
                 total_actual_cost,
                 bucket,
                 wo_billing_type,
@@ -480,7 +476,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
                 vendor_id,
                 vendor_qbo_id
               ) VALUES (
-                $1,$2,'IS','open',$3,$4,$5,now(),'in_house',NULL,$6,$7,NULL,$8,$9,$10,0,$11,NULL,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27
+                $1,$2,'IS','open',$3,$4,$5,now(),'in_house',$6,NULL,$7,$8,$9,0,NULL,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25
               )
               RETURNING *
             `,
@@ -490,17 +486,15 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
               body.unit_id ?? null,
               body.driver_id ?? null,
               body.linked_load_id ?? null,
-              vendor_invoice_number || null,
               body.description,
               vendor_work_order_number || null,
               vendor_invoice_number || null,
               displayId,
-              estimatedTotalDollars,
               bucket,
               body.wo_billing_type,
               body.wo_service_class,
               vendor_work_order_number || null,
-              body.estimated_cost_cents ?? null,
+              body.estimated_cost_cents ?? 0,
               body.actual_cost_cents ?? null,
               body.labor_hours ?? null,
               body.parts_cost_cents ?? null,
@@ -648,7 +642,6 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         push(`wo_type = $IDX`, mapServiceClassToOperationalWoType(body.wo_service_class));
       }
       if (body.vendor_invoice_number !== undefined) {
-        push(`vendor_invoice_number = $IDX`, body.vendor_invoice_number);
         push(`external_vendor_invoice_number = $IDX`, body.vendor_invoice_number);
       }
       if (body.vendor_work_order_number !== undefined) {
@@ -659,11 +652,9 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       if (body.vendor_qbo_id !== undefined) push(`vendor_qbo_id = $IDX`, body.vendor_qbo_id);
       if (body.estimated_cost_cents !== undefined) {
         push(`estimated_cost_cents = $IDX`, body.estimated_cost_cents);
-        push(`total_estimated_cost = $IDX`, Number(body.estimated_cost_cents) / 100);
       }
       if (body.actual_cost_cents !== undefined) {
         push(`actual_cost_cents = $IDX`, body.actual_cost_cents);
-        push(`total_actual_cost = $IDX`, Number(body.actual_cost_cents) / 100);
       }
       if (body.labor_hours !== undefined) push(`labor_hours = $IDX`, body.labor_hours);
       if (body.parts_cost_cents !== undefined) push(`parts_cost_cents = $IDX`, body.parts_cost_cents);

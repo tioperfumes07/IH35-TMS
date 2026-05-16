@@ -54,6 +54,9 @@ jobs:
       - name: Static checks — test INSERT column hints (informational)
         run: npm run verify:test-insert-columns
 
+      - name: Static checks — ih35_app schema USAGE vs watchlist (informational)
+        run: npm run verify:schema-usage-grants
+
       - name: Static checks — data-dependent RAISE in DO $$ blocks (informational)
         run: npm run db:verify:empty-db-safe
 

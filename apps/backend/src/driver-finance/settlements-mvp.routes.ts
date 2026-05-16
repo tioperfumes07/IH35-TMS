@@ -245,7 +245,7 @@ export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
               u.email AS user_email
             FROM driver_finance.driver_settlements s
             JOIN mdata.drivers d ON d.id = s.driver_id
-            LEFT JOIN identity.users u ON u.uuid = d.identity_user_id
+            LEFT JOIN identity.users u ON u.id = d.identity_user_id
             WHERE s.id = $1::uuid
               AND s.operating_company_id = $2::uuid
             LIMIT 1
@@ -358,7 +358,7 @@ export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
     } catch (error) {
       const message = String((error as Error)?.message ?? "settlement_approve_failed");
       if (message === "settlement_not_found") return reply.code(404).send({ error: message });
-      return reply.code(500).send({ error: "settlement_approve_failed" });
+      return reply.code(500).send({ error: "settlement_approve_failed", message });
     }
   });
 }

@@ -2,6 +2,9 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS banking;
 
+-- Self-heal: ih35_app runs queries via SET ROLE — schema USAGE is required before table GRANTs take effect (matches sms/whatsapp in 0166_block_h_notification_queues.sql).
+GRANT USAGE ON SCHEMA banking TO ih35_app;
+
 CREATE TABLE IF NOT EXISTS banking.bank_accounts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id uuid NOT NULL REFERENCES org.companies(id),

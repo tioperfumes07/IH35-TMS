@@ -4,7 +4,6 @@ import { DateTime } from "luxon";
 import crypto from "node:crypto";
 import { withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
-import type { QueueEntityType } from "../integrations/qbo/qbo-sync.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 
@@ -37,21 +36,6 @@ export function computeNextRecurringRunUtc(fromIso: string, cadence: string, cro
 
 function payloadHash(parts: unknown) {
   return crypto.createHash("sha256").update(JSON.stringify(parts)).digest("hex");
-}
-
-async function logRecurringTickFailure(err: unknown, tmplId: string) {
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT audit.append_event($1,$2,$3::jsonb,NULL,$4)`, [
-      "accounting.recurring_template_tick_failed",
-      "warning",
-      JSON.stringify({
-        tmpl_id: tmplId,
-        error: String(err),
-        stack: err instanceof Error ? err.stack ?? null : null,
-      }),
-      "P7-W2-RECURRING",
-    ]);
-  });
 }
 
 async function materializeInvoice(client: PoolClient, tmpl: Record<string, unknown>, actorId: string) {
@@ -467,7 +451,7 @@ export async function processRecurringTemplatesTick(limit = 50): Promise<{ attem
       if (enqueuePayload) {
         await enqueueSyncJob(
           enqueuePayload.operating_company_id,
-          enqueuePayload.entity_type as QueueEntityType,
+          enqueuePayload.entity_type as "invoice" | "bill" | "journal_entry" | "expense",
           enqueuePayload.entity_id,
           payloadHash({ recurring_template_id: enqueuePayload.tmplId }),
           enqueuePayload.actorId,
@@ -476,7 +460,7 @@ export async function processRecurringTemplatesTick(limit = 50): Promise<{ attem
         ran += 1;
       }
     } catch (err) {
-      await logRecurringTickFailure(err, id);
+      console.error({ err, tmplId: id }, "recurring_template_tick_failed");
     }
   }
 
