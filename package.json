@@ -35,6 +35,7 @@
     "test:a11y": "axe https://app.ih35dispatch.com/dashboard https://app.ih35dispatch.com/loads https://app.ih35dispatch.com/settlements https://app.ih35dispatch.com/banking https://app.ih35dispatch.com/drivers https://app.ih35dispatch.com/customers --tags wcag2a,wcag2aa --exit",
     "test:coverage": "vitest run --config apps/backend/vitest.config.ts --coverage",
     "db:migrate": "node scripts/db-migrate.mjs",
+    "db:check-drift": "node scripts/db-check-drift.mjs",
     "verify:canonical-schema-names": "node scripts/verify-canonical-schema-names.mjs",
     "verify:test-insert-columns": "node scripts/verify-test-insert-columns.mjs",
     "verify:schema-usage-grants": "node scripts/verify-schema-usage-grants.mjs",

@@ -22,6 +22,8 @@ const SEARCH_PATH =
 const MIGRATIONS_DIR = path.resolve("db/migrations");
 const CHECKSUM_OVERRIDES_FILE = path.resolve("scripts/lib/migration-checksum-overrides.json");
 const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;
+const CANONICAL_LEDGER_TABLE = "_system._schema_migrations";
+const MIRROR_LEDGER_TABLE = "ih35_migrations.applied_migrations";
 const ARGS = new Set(process.argv.slice(2));
 const VERIFY_ONLY = ARGS.has("--verify-only");
 const BACKFILL_LEDGER = ARGS.has("--backfill-ledger");
@@ -52,10 +54,11 @@ function isChecksumOverrideMatch(overridesByFile, file, ledgerChecksum, diskChec
   return override.ledger_checksum === ledgerChecksum && override.disk_checksum === diskChecksum;
 }
 
-async function ensureLedger(client) {
+async function ensureLedgers(client) {
   await client.query("CREATE SCHEMA IF NOT EXISTS _system;");
+  await client.query("CREATE SCHEMA IF NOT EXISTS ih35_migrations;");
   await client.query(`
-    CREATE TABLE IF NOT EXISTS _system._schema_migrations (
+    CREATE TABLE IF NOT EXISTS ${CANONICAL_LEDGER_TABLE} (
       filename text PRIMARY KEY,
       checksum text NOT NULL,
       applied_at timestamptz NOT NULL DEFAULT now(),
@@ -63,23 +66,42 @@ async function ensureLedger(client) {
       duration_ms integer
     );
   `);
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${MIRROR_LEDGER_TABLE} (
+      name text PRIMARY KEY,
+      applied_at timestamptz NOT NULL DEFAULT now()
+    );
+  `);
 }
 
-async function getLedgerRows(client) {
+async function getCanonicalLedgerRows(client) {
   const { rows } = await client.query(
-    "SELECT filename, checksum, applied_at FROM _system._schema_migrations ORDER BY filename ASC;"
+    `SELECT filename, checksum, applied_at FROM ${CANONICAL_LEDGER_TABLE} ORDER BY filename ASC;`
   );
+  return rows;
+}
+
+async function getMirrorLedgerRows(client) {
+  const { rows } = await client.query(`SELECT name, applied_at FROM ${MIRROR_LEDGER_TABLE} ORDER BY name ASC;`);
   return rows;
 }
 
 async function insertLedgerRow(client, file, checksum, durationMs) {
   await client.query(
     `
-      INSERT INTO _system._schema_migrations (filename, checksum, duration_ms)
+      INSERT INTO ${CANONICAL_LEDGER_TABLE} (filename, checksum, duration_ms)
       VALUES ($1, $2, $3)
       ON CONFLICT (filename) DO NOTHING;
     `,
     [file, checksum, durationMs]
+  );
+  await client.query(
+    `
+      INSERT INTO ${MIRROR_LEDGER_TABLE} (name)
+      VALUES ($1)
+      ON CONFLICT (name) DO NOTHING;
+    `,
+    [file]
   );
 }
 
@@ -100,10 +122,18 @@ async function applyMigration(client, file, sql, checksum) {
     await client.query(sql);
     await client.query(
       `
-        INSERT INTO _system._schema_migrations (filename, checksum, duration_ms)
+        INSERT INTO ${CANONICAL_LEDGER_TABLE} (filename, checksum, duration_ms)
         VALUES ($1, $2, $3);
       `,
       [file, checksum, Date.now() - start]
+    );
+    await client.query(
+      `
+        INSERT INTO ${MIRROR_LEDGER_TABLE} (name)
+        VALUES ($1)
+        ON CONFLICT (name) DO NOTHING;
+      `,
+      [file]
     );
     await client.query("COMMIT");
   } catch (error) {
@@ -112,9 +142,10 @@ async function applyMigration(client, file, sql, checksum) {
   }
 }
 
-async function runVerifyOnly(client, diskMigrations, ledgerByFile, overridesByFile) {
+async function runVerifyOnly(client, diskMigrations, ledgerByFile, mirrorByFile, overridesByFile) {
   const pending = [];
   const drift = [];
+  const appliedButUnlogged = [];
 
   for (const migration of diskMigrations) {
     const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, migration), "utf8");
@@ -123,6 +154,9 @@ async function runVerifyOnly(client, diskMigrations, ledgerByFile, overridesByFi
 
     if (!ledger) {
       pending.push(migration);
+      if (mirrorByFile.has(migration)) {
+        appliedButUnlogged.push(migration);
+      }
       continue;
     }
     if (ledger.checksum !== checksum && !isChecksumOverrideMatch(overridesByFile, migration, ledger.checksum, checksum)) {
@@ -137,9 +171,14 @@ async function runVerifyOnly(client, diskMigrations, ledgerByFile, overridesByFi
   }
 
   console.log(`Applied in ledger: ${ledgerByFile.size}`);
+  console.log(`Applied in mirror: ${mirrorByFile.size}`);
   console.log(`Pending on disk: ${pending.length}`);
+  console.log(`Applied-but-unlogged (mirror-only): ${appliedButUnlogged.length}`);
   if (pending.length > 0) {
     for (const file of pending) console.log(`  PENDING ${file}`);
+  }
+  if (appliedButUnlogged.length > 0) {
+    for (const file of appliedButUnlogged) console.log(`  UNLOGGED ${file}`);
   }
 
   if (drift.length > 0) {
@@ -181,15 +220,17 @@ const client = new Client(buildPgClientConfig(connectionString));
 
 try {
   await client.connect();
-  await ensureLedger(client);
+  await ensureLedgers(client);
 
   const diskMigrations = listMigrationFiles();
-  const ledgerRows = await getLedgerRows(client);
+  const ledgerRows = await getCanonicalLedgerRows(client);
+  const mirrorRows = await getMirrorLedgerRows(client);
   const ledgerByFile = new Map(ledgerRows.map((row) => [row.filename, row]));
+  const mirrorByFile = new Map(mirrorRows.map((row) => [row.name, row]));
   const overridesByFile = loadChecksumOverrides();
 
   if (VERIFY_ONLY) {
-    await runVerifyOnly(client, diskMigrations, ledgerByFile, overridesByFile);
+    await runVerifyOnly(client, diskMigrations, ledgerByFile, mirrorByFile, overridesByFile);
     process.exit(0);
   }
 
