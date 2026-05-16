@@ -9,7 +9,7 @@
 
 > Append-only. New additions get a date stamp + chat reference.
 
-Last updated: 2026-05-12 by Jorge + Claude (Block K PR1 additions)
+Last updated: 2026-05-16 by Jorge + Cursor (Phase A quick-create additions)
 
 ---
 
@@ -29,6 +29,7 @@ Last updated: 2026-05-12 by Jorge + Claude (Block K PR1 additions)
 12. Communication preference — tioperfumes07@gmail.com pattern
 13. Phase 8A Legal module (Option C approval)
 14. Phase 8C — Driver Scheduler / workforce planning (Block K)
+15. Maintenance — Work Order cost breakdown inline quick-create rule
 
 ---
 
@@ -597,6 +598,35 @@ Driver Scheduler / workforce planning (**Block K**) **office** UI is nested unde
 - `/safety/leave-balances` — Leave Balances
 
 **API split (unchanged):** office routes `/api/v1/safety/scheduler/*`; authenticated driver session routes `/api/v1/driver/scheduler/*` (driver PWA).
+
+---
+
+## 15. Maintenance — Work Order cost breakdown inline quick-create rule
+
+Source: Jorge chat 2026-05-16 (Phase A execution directive)
+Status: LOCKED
+Relevant block: Wave 2 Frontend Phase A
+
+### Rule
+
+For Maintenance Work Order creation surfaces that use QBO-backed pickers, every picker used in the flow must include an inline `+ Create` action that:
+
+- Opens a quick-create modal in-context (no navigation away from the current form).
+- Creates the missing entity in the correct company-scoped catalog/mirror source.
+- Returns focus to the same Work Order form state without losing unsaved edits.
+- Auto-selects the newly created entity in the picker when possible.
+
+### Minimum picker coverage for Phase A
+
+- Vendor picker
+- Customer picker
+- Category (Section A expense category) picker
+- Product/Service item (Section B item) picker
+- Part picker
+
+### Type-ahead UX rule
+
+QBO type-ahead helper text ("Keep typing...") must disappear once minimum search characters are met and/or suggestions are loading, to avoid stale guidance while searching.
 
 ---
 

@@ -27,6 +27,9 @@ export type CreateWOFormValues = {
   vendor_id: string;
   vendor_qbo_id: string;
   vendor_display_name: string;
+  customer_id: string;
+  customer_qbo_id: string;
+  customer_display_name: string;
   shop_name: string;
   shop_address: string;
   shop_phone: string;
@@ -90,6 +93,9 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       vendor_id: "",
       vendor_qbo_id: "",
       vendor_display_name: "",
+      customer_id: "",
+      customer_qbo_id: "",
+      customer_display_name: "",
       shop_name: "",
       shop_address: "",
       shop_phone: "",
