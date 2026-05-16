@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { dispatchNotification } from "../../apps/backend/src/notifications/dispatcher.js";
+import { buildPgClientConfig } from "../../apps/backend/src/lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../apps/backend/test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../apps/backend/test-helpers/db-fixture.js";
 
@@ -17,7 +18,7 @@ describeIntegration("notification e2e — settlement.approved (Block H)", () => 
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required for notification e2e");
 
-    client = new pg.Client({ connectionString: cs, ssl: { rejectUnauthorized: false } });
+    client = new pg.Client(buildPgClientConfig(cs));
     await client.connect();
     await client.query("SET ROLE ih35_app");
     await client.query("BEGIN");

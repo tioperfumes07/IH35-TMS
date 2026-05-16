@@ -4,6 +4,9 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS email;
 
+-- Self-heal: mirror GRANT USAGE ON SCHEMA sms TO ih35_app (0166_block_h_notification_queues.sql); without this, inserts/selects against email.* fail with "permission denied for schema email".
+GRANT USAGE ON SCHEMA email TO ih35_app;
+
 CREATE TABLE IF NOT EXISTS email.email_queue (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id UUID NOT NULL REFERENCES org.companies(id),
@@ -79,7 +82,7 @@ CREATE POLICY email_alerts_company_scope
     OR current_setting('app.bypass_rls', true) = 'lucia'
   );
 
-GRANT SELECT, INSERT, UPDATE ON email.email_queue TO ih35_app;
-GRANT SELECT, INSERT, UPDATE ON email.email_alerts TO ih35_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON email.email_queue TO ih35_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON email.email_alerts TO ih35_app;
 
 COMMIT;

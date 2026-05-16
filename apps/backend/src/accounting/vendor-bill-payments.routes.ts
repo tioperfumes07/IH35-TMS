@@ -114,7 +114,7 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
               MIN(bp.payment_date)::text AS date,
               SUM(bp.amount_cents)::bigint AS amount_cents,
               MIN(bp.payment_source_kind) AS source_kind,
-              MAX(bp.source_bank_transaction_id) AS source_bank_transaction_id,
+              MAX(bp.source_bank_transaction_id::text) AS source_bank_transaction_id,
               MAX(bp.qbo_bill_payment_id) AS qbo_bill_payment_id,
               json_agg(
                 json_build_object(

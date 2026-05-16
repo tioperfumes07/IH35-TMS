@@ -717,6 +717,58 @@ Rules:
 
 ---
 
+## ADDENDUM — P7 Wave 2 v3 (bidirectional QBO + banking review) — 2026-05
+
+**Schema note:** Operational bank movements live in `banking.bank_transactions` (not `banking.transactions`). Wave 2 review columns and reconciliation linkage attach there.
+
+**Inbound sync:** `integrations.qbo_inbound_events` stores verified webhook payloads (HMAC-SHA256 of raw body vs `intuit-signature`, verifier `QBO_WEBHOOK_VERIFIER`). Realm → company resolves via `integrations.qbo_connections.realm_id`. The inbound worker marks rows fetched/applied, creates short-lived `qbo_archive.import_batches` rows, and inserts forensic `qbo_archive.entities_snapshot` rows before TMS-side conflict merging is expanded.
+
+**Conflicts:** `integrations.qbo_sync_conflicts` holds TMS vs QBO snapshots; finance roles resolve via REST; `tms_wins` re-enqueues affected entities on the outbound queue.
+
+**Bank review:** `accounting.banking_rules` drives tier‑1 suggestions via `banking/banking-rules.engine.ts` (runs after new Plaid-synced and CSV-import `banking.bank_transactions` inserts; priority `DESC`, first match wins). Tiers 2–4 (vendor/history/PFC) remain in `banking/suggestion-engine.ts` when no rule matches.
+
+**Reconciliation:** Canonical sessions remain `banking.reconciliation_sessions` (extended statuses include `finalized` / `reopened`). Parallel REST paths live under `/api/v1/banking/reconciliation-sessions/*` alongside legacy `/api/v1/banking/reconciliation/*`.
+
+**Period close:** `accounting.periods` plus triggers raising `IH35_CLOSED_PERIOD …` enforce locked fiscal periods (HTTP **423** when surfaced through API mappers).
+
+**Outbound sync:** `integrations.qbo_sync_queue` remains the single outbound writer queue (extended with `idempotency_key`, `payload_jsonb`, `triggered_by`, and `dead_letter` status). Bank-transaction purchases continue to use `min(30s×2^(n−1), 1h)` backoff inside `qbo-sync.service.ts`; Wave 2 **accounting entity** outbound failures use `min(60s×2^(attempt+1), 3600s)` computed in `sync-outbound-accounting.ts`.
+
+### Outbound writer dispatcher (Wave 2 close-out)
+
+**Fan-out:** `processOutboundSyncWorkerTick` → `processSyncQueueBatch` claims pending rows → for accounting entities (`invoice`, `bill`, `bill_payment`, `journal_entry`, `payment`, `credit_memo`, `factoring_advance`, `expense`) calls `syncEntityToQbo` (`apps/backend/src/integrations/qbo/sync-outbound-accounting.ts`). Each entity routes through `buildAccountingOutboundPayload` (`sync-outbound-accounting.entities.ts`) → thin **`buildQbo…Payload`** translators under `apps/backend/src/integrations/qbo/translators/` (pure JSON builders; no DB reads).
+
+**Idempotency key:** When `integrations.qbo_sync_queue.idempotency_key` is null on first attempt, the dispatcher derives  
+`sha256(\`${operating_company_id}:${entity_type}:${entity_id}:${version_int}:${last_entity_touch_iso}\`).slice(0,40)`  
+and persists it on the queue row so retries reuse the same `Idempotency-Key` HTTP header.
+
+**Advisory lock:** Before reads/writes, `SELECT pg_try_advisory_xact_lock(hashtext(:operating_company_id || ':' || :entity_type || ':' || :entity_id))` prevents concurrent workers from mutating the same TMS entity inside one DB transaction (held across the QBO HTTP round-trip per dispatch).
+
+**HTTP:** Requests target `https://quickbooks.api.intuit.com/v3/company/<realm>/<entityPath>?minorversion=70` with Intuit OAuth bearer tokens (`getValidAccessToken` / `refreshAccessToken` on `401` once).
+
+**Response handling (accounting outbound)**
+
+| HTTP | Queue / TMS outcome |
+|------|---------------------|
+| **200** | Persist returned `Id` + `SyncToken` on both TMS row (`qbo_*_id`, `qbo_sync_token` where columns exist) and queue row; `sync_status='synced'` |
+| **401** | Refresh tokens once; repeat **401** → insert `qbo_sync_conflicts` (high), queue `blocked`, OAuth revoked when refresh returns invalid_grant |
+| **409** | Stale `SyncToken` → GET remote snapshot, insert conflict row (high), queue `blocked` (`error_message='stale_sync_token'`) |
+| **422** | Validation fault → conflict row (medium), queue `failed` then `dead_letter` after repeated failures (`attempt_count` threshold) |
+| **Other 4xx / 5xx / 429** | Queue returned to `pending` with exponential backoff window above; `dead_letter` once attempts exhaust guard |
+
+**Factoring advances:** Posted as **JournalEntry** rows in QBO; queue payload may carry `{ cash_account_qbo_id, liability_account_qbo_id }` until catalog bindings mature.
+
+**Recurring templates cron** — Materializes invoice/bill/journal/expense rows then **always** enqueues `integrations.qbo_sync_queue` via `enqueueSyncJob(..., { triggered_by: 'recurring_template', payload_jsonb })` so invoice/bill/expense parity matches journal entries.
+
+**Inbound CDC + replay** — Cron `qbo_cdc_poll` (5 min) calls QuickBooks `GET …/cdc` for env-configured realms (`QBO_REALM_ID_TRK`, `QBO_REALM_ID_TRANSP`), `changedSince` = max prior CDC/replay `qbo_last_updated_time` from `integrations.qbo_inbound_events`. Owner-only `POST /api/v1/admin/sync/inbound/replay-since` `{ since_iso, realm }` replays ingest; HTTP **410** cursor expiry resets to epoch replay once.
+
+**Year-end retained earnings JE** — When `period_end` is Dec 31, close aggregates posted postings joined to `catalogs.accounts`: clears Income / Expense / COGS / Other* buckets into `catalogs.account_role_bindings.role_key = 'retained_earnings'` (fallback: first Equity account).
+
+**Admin sync health** — `GET /api/v1/admin/sync/health` (Owner/Administrator) returns realm linkage JSON plus CDC timestamps (`realms[]`, `last_cdc_poll_at_per_realm`, `recurring_templates_due_now`, `next_period_close_company`) cached ~30s.
+
+**Roles / RLS:** Integration additions reuse `ih35_app` grants + office-role SELECT mirrors (`integrations.integration_sync_log` pattern).
+
+**Removed gaps (this branch):** Bill preview IDs, journal-only recurring enqueue, and `unsupported_entity_type_*` throws for the Wave 2 accounting entities are eliminated—the dispatcher + translators own live POST/PATCH with conflict recording (`integrations.qbo_sync_conflicts`).
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

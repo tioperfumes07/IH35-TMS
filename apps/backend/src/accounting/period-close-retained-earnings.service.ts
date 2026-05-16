@@ -1,0 +1,189 @@
+import type { PoolClient } from "pg";
+
+function isDec31(isoDate: string) {
+  return isoDate.slice(0, 10).endsWith("-12-31");
+}
+
+type CloseLine = {
+  account_id: string;
+  debit_or_credit: "debit" | "credit";
+  amount_cents: number;
+  description: string;
+};
+
+/**
+ * Year-end only (period_end == Dec 31): inserts a balancing posted JE closing P&L into retained earnings.
+ * Caller owns BEGIN/COMMIT together with period close UPDATE.
+ */
+export async function insertRetainedEarningsClosingJournalIfNeeded(
+  client: PoolClient,
+  params: {
+    operating_company_id: string;
+    period_start: string;
+    period_end: string;
+    fiscal_year: number;
+    closer_user_id: string;
+  }
+): Promise<string | null> {
+  if (!isDec31(params.period_end)) return null;
+
+  const agg = await client.query<{ account_id: string; account_type: string; debits: string; credits: string }>(
+    `
+      SELECT
+        jep.account_id::text AS account_id,
+        a.account_type::text AS account_type,
+        SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE 0 END)::text AS debits,
+        SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END)::text AS credits
+      FROM accounting.journal_entry_postings jep
+      INNER JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+      INNER JOIN catalogs.accounts a ON a.id = jep.account_id
+      WHERE jep.operating_company_id = $1::uuid
+        AND je.operating_company_id = $1::uuid
+        AND je.status = 'posted'
+        AND je.entry_date BETWEEN $2::date AND $3::date
+      GROUP BY jep.account_id, a.account_type
+    `,
+    [params.operating_company_id, params.period_start, params.period_end]
+  );
+
+  const lines: CloseLine[] = [];
+
+  for (const row of agg.rows) {
+    const debits = BigInt(row.debits || "0");
+    const credits = BigInt(row.credits || "0");
+    const t = row.account_type;
+
+    if (t === "Income" || t === "OtherIncome") {
+      const bal = credits - debits;
+      if (bal > 0n) {
+        lines.push({
+          account_id: row.account_id,
+          debit_or_credit: "debit",
+          amount_cents: Number(bal),
+          description: `FY${params.fiscal_year} close — income`,
+        });
+      }
+    }
+
+    if (t === "Expense" || t === "CostOfGoodsSold" || t === "OtherExpense") {
+      const bal = debits - credits;
+      if (bal > 0n) {
+        lines.push({
+          account_id: row.account_id,
+          debit_or_credit: "credit",
+          amount_cents: Number(bal),
+          description: `FY${params.fiscal_year} close — expense`,
+        });
+      }
+    }
+  }
+
+  if (lines.length === 0) return null;
+
+  let reAccountId: string | null = null;
+  const reRes = await client.query<{ account_id: string }>(
+    `SELECT account_id::text FROM catalogs.account_role_bindings WHERE role_key = 'retained_earnings' LIMIT 1`
+  );
+  reAccountId = reRes.rows[0]?.account_id ?? null;
+  if (!reAccountId) {
+    const fb = await client.query<{ id: string }>(
+      `
+        SELECT a.id::text
+        FROM catalogs.accounts a
+        INNER JOIN accounting.journal_entry_postings jep ON jep.account_id = a.id
+        WHERE jep.operating_company_id = $1::uuid
+          AND a.account_type = 'Equity'
+        ORDER BY a.account_number NULLS LAST, a.account_name NULLS LAST
+        LIMIT 1
+      `,
+      [params.operating_company_id]
+    );
+    reAccountId = fb.rows[0]?.id ?? null;
+  }
+  if (!reAccountId) {
+    const anyEq = await client.query<{ id: string }>(
+      `
+        SELECT id::text
+        FROM catalogs.accounts
+        WHERE account_type = 'Equity'
+        ORDER BY account_number NULLS LAST
+        LIMIT 1
+      `
+    );
+    reAccountId = anyEq.rows[0]?.id ?? null;
+  }
+  if (!reAccountId) throw new Error("retained_earnings_account_not_configured");
+
+  const debitTotal = lines.filter((l) => l.debit_or_credit === "debit").reduce((s, l) => s + l.amount_cents, 0);
+  const creditTotal = lines.filter((l) => l.debit_or_credit === "credit").reduce((s, l) => s + l.amount_cents, 0);
+  const diff = debitTotal - creditTotal;
+  if (diff > 0) {
+    lines.push({
+      account_id: reAccountId,
+      debit_or_credit: "credit",
+      amount_cents: diff,
+      description: `FY${params.fiscal_year} retained earnings`,
+    });
+  } else if (diff < 0) {
+    lines.push({
+      account_id: reAccountId,
+      debit_or_credit: "debit",
+      amount_cents: -diff,
+      description: `FY${params.fiscal_year} retained earnings`,
+    });
+  }
+
+  const td = lines.filter((l) => l.debit_or_credit === "debit").reduce((s, l) => s + l.amount_cents, 0);
+  const tc = lines.filter((l) => l.debit_or_credit === "credit").reduce((s, l) => s + l.amount_cents, 0);
+  if (td !== tc) throw new Error("retained_earnings_close_unbalanced");
+
+  const jeIns = await client.query<{ id: string }>(
+    `
+      INSERT INTO accounting.journal_entries (
+        operating_company_id,
+        entry_date,
+        memo,
+        status,
+        source,
+        created_by_user_id,
+        qbo_sync_pending,
+        created_at,
+        updated_at
+      )
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now())
+      RETURNING id::text
+    `,
+    [
+      params.operating_company_id,
+      params.period_end.slice(0, 10),
+      `Fiscal year-end close FY${params.fiscal_year}`,
+      params.closer_user_id,
+    ]
+  );
+  const jeId = jeIns.rows[0]?.id;
+  if (!jeId) throw new Error("closing_journal_insert_failed");
+
+  let seq = 1;
+  for (const ln of lines) {
+    await client.query(
+      `
+        INSERT INTO accounting.journal_entry_postings (
+          operating_company_id,
+          journal_entry_uuid,
+          line_sequence,
+          account_id,
+          debit_or_credit,
+          amount_cents,
+          description,
+          created_at,
+          updated_at
+        )
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, now(), now())
+      `,
+      [params.operating_company_id, jeId, seq, ln.account_id, ln.debit_or_credit, ln.amount_cents, ln.description]
+    );
+    seq += 1;
+  }
+
+  return jeId;
+}

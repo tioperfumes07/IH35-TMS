@@ -2,6 +2,8 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS banking;
 
+GRANT USAGE ON SCHEMA banking TO ih35_app;
+
 CREATE TABLE IF NOT EXISTS banking.transfers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id uuid NOT NULL REFERENCES org.companies(id),

@@ -6,6 +6,15 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS maintenance;
 
+-- Self-heal: ix_work_orders_linked_load + UPDATE … load_id run outside this DO; no earlier migration introduced maintenance.work_orders.load_id.
+DO $$
+BEGIN
+  IF to_regclass('maintenance.work_orders') IS NOT NULL THEN
+    ALTER TABLE maintenance.work_orders
+      ADD COLUMN IF NOT EXISTS load_id uuid REFERENCES mdata.loads(id);
+  END IF;
+END $$;
+
 DO $$
 BEGIN
   IF to_regclass('maintenance.work_orders') IS NULL THEN

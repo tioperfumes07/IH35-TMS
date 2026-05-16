@@ -55,6 +55,10 @@ CREATE INDEX IF NOT EXISTS idx_severe_estimate_company_open
   ON maintenance.severe_repair_estimates (operating_company_id, estimate_status, estimated_total_cents DESC)
   WHERE estimate_status IN ('open', 'awaiting_approval', 'approved');
 
+-- Self-heal forward-dep from migration 0095: maintenance.work_orders.severity is referenced by severe-repair functions/triggers below but had no prior ADD COLUMN anywhere earlier in the chain; nullable text matches API usage (apps/backend maintenance routes).
+ALTER TABLE maintenance.work_orders
+  ADD COLUMN IF NOT EXISTS severity text;
+
 CREATE OR REPLACE FUNCTION maintenance.recompute_severe_repair_estimate_for_wo(p_wo_id uuid)
 RETURNS void AS $$
 DECLARE

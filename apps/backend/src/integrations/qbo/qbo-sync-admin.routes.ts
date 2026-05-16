@@ -11,7 +11,7 @@ import {
 
 const queueListQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  status: z.enum(["pending", "in_flight", "synced", "failed", "blocked"]).optional(),
+  status: z.enum(["pending", "in_flight", "synced", "failed", "blocked", "dead_letter"]).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -22,7 +22,19 @@ const retryParamsSchema = z.object({
 
 const postQueueBodySchema = z.object({
   operating_company_id: z.string().uuid(),
-  entity_type: z.enum(["bank_transaction", "bill", "bill_payment", "expense", "invoice", "journal_entry", "settlement", "transfer"]),
+  entity_type: z.enum([
+    "bank_transaction",
+    "bill",
+    "bill_payment",
+    "credit_memo",
+    "expense",
+    "factoring_advance",
+    "invoice",
+    "journal_entry",
+    "payment",
+    "settlement",
+    "transfer",
+  ]),
   entity_id: z.string().uuid(),
   payload_hash: z.string().trim().min(1).max(128),
 });

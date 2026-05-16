@@ -1,4 +1,5 @@
 import pg from "pg";
+import { buildPgPoolConfig } from "../lib/pg-connection-options.js";
 
 const { Pool } = pg;
 const APP_DB_ROLE = "ih35_app";
@@ -16,18 +17,18 @@ function buildLuciaConnString(baseUrl: string): string {
   return url.toString();
 }
 
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-  max: 10,
-});
+export const pool = new Pool(
+  buildPgPoolConfig(process.env.DATABASE_URL, {
+    max: 10,
+  }),
+);
 
-export const luciaPool = new Pool({
-  connectionString: buildLuciaConnString(process.env.DATABASE_DIRECT_URL),
-  ssl: { rejectUnauthorized: false },
-  max: 10,
-  idleTimeoutMillis: 30_000,
-});
+export const luciaPool = new Pool(
+  buildPgPoolConfig(buildLuciaConnString(process.env.DATABASE_DIRECT_URL), {
+    max: 10,
+    idleTimeoutMillis: 30_000,
+  }),
+);
 
 luciaPool.on("connect", async (client) => {
   try {

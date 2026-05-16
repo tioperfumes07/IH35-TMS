@@ -3093,8 +3093,9 @@ ALTER TABLE maintenance.work_orders
   ADD COLUMN IF NOT EXISTS roadside_provider_vendor_id uuid REFERENCES mdata.vendors(id),
   ADD COLUMN IF NOT EXISTS roadside_location text,
   ADD COLUMN IF NOT EXISTS roadside_breakdown_load_id uuid REFERENCES mdata.loads(id);
+-- Self-heal: drift replay duplicates 0098_p5_f1_roadservice_bucket.sql; generated column must use IF NOT EXISTS so CI replay is idempotent.
 ALTER TABLE maintenance.work_orders
-  ADD COLUMN roadside_response_minutes int GENERATED ALWAYS AS (
+  ADD COLUMN IF NOT EXISTS roadside_response_minutes int GENERATED ALWAYS AS (
     CASE
       WHEN roadside_arrived_at IS NOT NULL AND roadside_callout_at IS NOT NULL
         THEN (EXTRACT(EPOCH FROM (roadside_arrived_at - roadside_callout_at)) / 60)::int
@@ -3116,11 +3117,11 @@ SELECT
     COALESCE(e.status::text IN ('closed', 'resolved', 'voided'), false) = false
     OR EXISTS (
       SELECT 1
-      FROM safety.fines f
+      FROM safety.civil_fines f
       WHERE f.operating_company_id = e.operating_company_id
         AND f.subject_type = 'driver'
         AND f.subject_driver_id = e.driver_id
-        AND f.status IN ('open', 'under_review')
+        AND f.status IN ('open', 'contested')
     )
   ) AS is_active
 FROM views.safety_events_with_driver e;
@@ -3155,6 +3156,22 @@ CREATE INDEX IF NOT EXISTS idx_assignment_history_driver
   ON dispatch.load_assignment_history (new_driver_id, assigned_at DESC);
 
 -- ===== From 0101_p5_f4_cancellation_reasons.sql =====
+DO $$
+BEGIN
+  IF to_regclass('catalogs.cancellation_reasons') IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'catalogs'
+        AND table_name = 'cancellation_reasons'
+        AND column_name = 'reason_code'
+    ) THEN
+      EXECUTE 'ALTER TABLE catalogs.cancellation_reasons RENAME TO cancellation_reasons_company_catalog_legacy';
+      RAISE NOTICE 'Renamed 0062 generic catalogs.cancellation_reasons stub to cancellation_reasons_company_catalog_legacy';
+    END IF;
+  END IF;
+END
+$$;
 CREATE TABLE IF NOT EXISTS catalogs.cancellation_reasons (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   reason_code text UNIQUE NOT NULL,

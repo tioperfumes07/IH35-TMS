@@ -4,6 +4,9 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS qbo;
 
+-- Self-heal: mirror GRANT USAGE ON SCHEMA sms TO ih35_app (0166_block_h_notification_queues.sql) so SET ROLE ih35_app can resolve qbo.*.
+GRANT USAGE ON SCHEMA qbo TO ih35_app;
+
 CREATE TABLE IF NOT EXISTS qbo.sync_alerts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id UUID NOT NULL REFERENCES org.companies(id),

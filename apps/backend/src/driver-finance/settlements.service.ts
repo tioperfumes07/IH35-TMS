@@ -24,74 +24,96 @@ export async function listDriverBillsForSettlementPeriod(
   const res = await client.query<DriverBillSettlementRow>(
     `
       SELECT
-        x.id,
-        x.load_number,
-        x.bill_number,
-        x.gross_amount_cents,
-        x.miles_basis,
-        x.miles_basis_type,
-        x.rate_per_mile_cents,
-        x.notes
+        picked.id,
+        picked.load_number,
+        picked.bill_number,
+        picked.gross_amount_cents,
+        picked.miles_basis,
+        picked.miles_basis_type,
+        picked.rate_per_mile_cents,
+        picked.notes
       FROM (
-        SELECT
-          db.id::text AS id,
-          db.load_number,
-          db.bill_number,
-          db.gross_amount_cents,
-          db.miles_basis,
-          db.miles_basis_type,
-          db.rate_per_mile_cents,
-          db.notes
-        FROM driver_finance.driver_bills db
-        WHERE db.operating_company_id = $1
-          AND db.driver_id = $2
-          AND db.created_at::date >= $3::date
-          AND db.created_at::date <= $4::date
-          AND db.status <> 'void'
+        SELECT DISTINCT ON (dedupe_key)
+          dedupe_key,
+          id,
+          load_number,
+          bill_number,
+          gross_amount_cents,
+          miles_basis,
+          miles_basis_type,
+          rate_per_mile_cents,
+          notes
+        FROM (
+          SELECT
+            COALESCE(db.load_id::text, db.bill_number, db.id::text) AS dedupe_key,
+            1 AS src_rank,
+            db.id::text AS id,
+            db.load_number,
+            db.bill_number,
+            db.gross_amount_cents,
+            db.miles_basis,
+            db.miles_basis_type,
+            db.rate_per_mile_cents,
+            db.notes
+          FROM driver_finance.driver_bills db
+          WHERE db.operating_company_id = $1
+            AND db.driver_id = $2
+            AND db.created_at::date >= $3::date
+            AND db.created_at::date <= $4::date
+            AND db.status <> 'void'
 
-        UNION ALL
+          UNION ALL
 
-        SELECT
-          ab.id::text AS id,
-          l.load_number,
-          ('B-' || regexp_replace(l.load_number, '^[Ll]-', '')) AS bill_number,
-          LEAST(GREATEST(COALESCE(ab.amount_cents, 0), -2147483648::bigint), 2147483647::bigint)::integer AS gross_amount_cents,
-          CASE
-            WHEN COALESCE(l.miles_shortest, 0) > 0 THEN l.miles_shortest
-            WHEN COALESCE(l.miles_practical, 0) > 0 THEN l.miles_practical
-            ELSE NULL
-          END AS miles_basis,
-          CASE
-            WHEN COALESCE(l.miles_shortest, 0) > 0 THEN 'short'::text
-            WHEN COALESCE(l.miles_practical, 0) > 0 THEN 'practical'::text
-            ELSE NULL
-          END AS miles_basis_type,
-          CASE
-            WHEN COALESCE(l.miles_shortest, 0) > 0 AND COALESCE(ab.amount_cents, 0) <> 0
-              THEN ROUND(ab.amount_cents::numeric / NULLIF(l.miles_shortest, 0))::integer
-            WHEN COALESCE(l.miles_practical, 0) > 0 AND COALESCE(ab.amount_cents, 0) <> 0
-              THEN ROUND(ab.amount_cents::numeric / NULLIF(l.miles_practical, 0))::integer
-            ELSE NULL
-          END AS rate_per_mile_cents,
-          ab.memo AS notes
-        FROM accounting.bills ab
-        INNER JOIN mdata.loads l
-          ON l.operating_company_id = ab.operating_company_id
-         AND regexp_replace(regexp_replace(COALESCE(ab.display_id, ab.bill_number, ''), '^[Bb]-', ''), '^[Ll]-', '')
-            = regexp_replace(l.load_number, '^[Ll]-', '')
-         AND l.soft_deleted_at IS NULL
-        WHERE ab.operating_company_id = $1
-          AND COALESCE(l.assigned_primary_driver_id, l.assigned_secondary_driver_id) = $2
-          AND ab.created_at::date >= $3::date
-          AND ab.created_at::date <= $4::date
-          AND ab.revoked_at IS NULL
-          AND ab.memo ILIKE 'Auto-created from load %'
-          AND NOT EXISTS (
-            SELECT 1 FROM driver_finance.driver_bills db2
-            WHERE db2.source_legacy_bill_id = ab.id
-          )
-      ) x
-      ORDER BY x.bill_number ASC
+          SELECT
+            COALESCE(l.id::text, ab.id::text) AS dedupe_key,
+            2 AS src_rank,
+            ab.id::text AS id,
+            l.load_number,
+            ('B-' || regexp_replace(l.load_number, '^[Ll]-', '')) AS bill_number,
+            LEAST(GREATEST(COALESCE(ab.amount_cents, 0), -2147483648::bigint), 2147483647::bigint)::integer AS gross_amount_cents,
+            CASE
+              WHEN COALESCE(l.miles_shortest, 0) > 0 THEN l.miles_shortest
+              WHEN COALESCE(l.miles_practical, 0) > 0 THEN l.miles_practical
+              ELSE NULL
+            END AS miles_basis,
+            CASE
+              WHEN COALESCE(l.miles_shortest, 0) > 0 THEN 'short'::text
+              WHEN COALESCE(l.miles_practical, 0) > 0 THEN 'practical'::text
+              ELSE NULL
+            END AS miles_basis_type,
+            CASE
+              WHEN COALESCE(l.miles_shortest, 0) > 0 AND COALESCE(ab.amount_cents, 0) <> 0
+                THEN ROUND(ab.amount_cents::numeric / NULLIF(l.miles_shortest, 0))::integer
+              WHEN COALESCE(l.miles_practical, 0) > 0 AND COALESCE(ab.amount_cents, 0) <> 0
+                THEN ROUND(ab.amount_cents::numeric / NULLIF(l.miles_practical, 0))::integer
+              ELSE NULL
+            END AS rate_per_mile_cents,
+            ab.memo AS notes
+          FROM accounting.bills ab
+          INNER JOIN mdata.loads l
+            ON l.operating_company_id = ab.operating_company_id
+           AND regexp_replace(regexp_replace(COALESCE(ab.display_id, ab.bill_number, ''), '^[Bb]-', ''), '^[Ll]-', '')
+              = regexp_replace(l.load_number, '^[Ll]-', '')
+           AND l.soft_deleted_at IS NULL
+          WHERE ab.operating_company_id = $1
+            AND COALESCE(l.assigned_primary_driver_id, l.assigned_secondary_driver_id) = $2
+            AND ab.created_at::date >= $3::date
+            AND ab.created_at::date <= $4::date
+            AND ab.revoked_at IS NULL
+            AND ab.memo ILIKE 'Auto-created from load %'
+            AND NOT EXISTS (
+              SELECT 1 FROM driver_finance.driver_bills db2
+              WHERE db2.source_legacy_bill_id = ab.id
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM driver_finance.driver_bills db3
+              WHERE db3.load_id = l.id
+                AND db3.operating_company_id = ab.operating_company_id
+            )
+        ) unioned
+        ORDER BY dedupe_key ASC, src_rank ASC, id DESC
+      ) picked
+      ORDER BY picked.bill_number ASC NULLS LAST
     `,
     [input.operatingCompanyId, input.driverId, input.periodStart, input.periodEnd]
   );

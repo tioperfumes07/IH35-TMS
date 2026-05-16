@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerSettlementsMvpRoutes } from "../../apps/backend/src/driver-finance/settlements-mvp.routes";
+import { buildPgClientConfig } from "../../apps/backend/src/lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../apps/backend/test-helpers/constants";
 import { ensureIntegrationPrerequisites } from "../../apps/backend/test-helpers/db-fixture";
 import { createIntegrationApp } from "../../apps/backend/test-helpers/http-app";
@@ -24,6 +25,7 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
 
   let settlementId: string;
   let displayId: string;
+  let memoMarker = "";
 
   const periodStart = "2026-05-05";
   const periodEnd = "2026-05-11";
@@ -38,7 +40,7 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required for settlement pdf e2e");
 
-    pgClient = new pg.Client({ connectionString: cs, ssl: { rejectUnauthorized: false } });
+    pgClient = new pg.Client(buildPgClientConfig(cs));
     await pgClient.connect();
     await pgClient.query("SET ROLE ih35_app");
     await pgClient.query("BEGIN");
@@ -58,30 +60,44 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       );
 
       const suffix = randomUUID().slice(0, 8);
+      memoMarker = `${MARKER}-${suffix}`;
 
       const driverRes = await pgClient.query<{ id: string }>(
         `
-          INSERT INTO mdata.drivers (first_name, last_name, phone, email, identity_user_id)
-          VALUES ('PDF', $2, '+15551234000', $3, $1::uuid)
+          INSERT INTO mdata.drivers (first_name, last_name, phone, email, identity_user_id, operating_company_id)
+          VALUES ('PDF', $2, '+15551234000', $3, $1::uuid, $4::uuid)
           ON CONFLICT (identity_user_id) DO UPDATE SET
             phone = EXCLUDED.phone,
             email = EXCLUDED.email,
             first_name = EXCLUDED.first_name,
-            last_name = EXCLUDED.last_name
+            last_name = EXCLUDED.last_name,
+            operating_company_id = EXCLUDED.operating_company_id
           RETURNING id
         `,
-        [TEST_OWNER_USER_ID, `E2E-${suffix}`, `pdf-e2e-${suffix}@test.invalid`]
+        [TEST_OWNER_USER_ID, `E2E-${suffix}`, `pdf-e2e-${suffix}@test.invalid`, companyId]
       );
       driverId = String(driverRes.rows[0]?.id ?? "");
       if (!driverId) throw new Error("driver_insert_failed");
+
+      await pgClient.query(`DELETE FROM driver_finance.driver_bills WHERE driver_id = $1::uuid`, [driverId]);
+      await pgClient.query(
+        `
+          DELETE FROM driver_finance.settlement_preview_costs
+          WHERE operating_company_id = $1::uuid
+            AND driver_id = $2::uuid
+            AND period_start = $3::date
+            AND period_end = $4::date
+        `,
+        [companyId, driverId, periodStart, periodEnd]
+      );
 
       const customerExisting = await pgClient.query<{ id: string }>(`SELECT id FROM mdata.customers WHERE deactivated_at IS NULL LIMIT 1`);
       if (customerExisting.rows[0]?.id) {
         customerId = String(customerExisting.rows[0].id);
       } else {
         const customerInsert = await pgClient.query<{ id: string }>(
-          `INSERT INTO mdata.customers (customer_name) VALUES ($1) RETURNING id`,
-          [`PDF E2E Customer ${suffix}`]
+          `INSERT INTO mdata.customers (customer_name, operating_company_id) VALUES ($1, $2::uuid) RETURNING id`,
+          [`PDF E2E Customer ${suffix}`, companyId]
         );
         customerId = String(customerInsert.rows[0]?.id ?? "");
       }
@@ -89,11 +105,16 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
 
       const unitInsert = await pgClient.query<{ id: string }>(
         `
-          INSERT INTO mdata.units (unit_number, vin)
-          VALUES ($1, $2)
+          INSERT INTO mdata.units (unit_number, vin, owner_company_id, currently_leased_to_company_id)
+          VALUES (
+            $1,
+            $2,
+            (SELECT id FROM org.companies WHERE code = 'TRK' LIMIT 1),
+            $3::uuid
+          )
           RETURNING id
         `,
-        [`U-PDF-${suffix}`, `VIN${suffix.padEnd(17, "0")}`.slice(0, 17)]
+        [`U-PDF-${suffix}`, `VIN${suffix.padEnd(17, "0")}`.slice(0, 17), companyId]
       );
       unitId = String(unitInsert.rows[0]?.id ?? "");
       if (!unitId) throw new Error("unit_insert_failed");
@@ -152,7 +173,7 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
             TIMESTAMPTZ '2026-05-08T15:00:00Z'
           )
         `,
-        [companyId, loadId, `L-PDF-${suffix}`, `B-PDF-${suffix}`, driverId, MARKER]
+        [companyId, loadId, `L-PDF-${suffix}`, `B-PDF-${suffix}`, driverId, memoMarker]
       );
 
       await pgClient.query(
@@ -171,7 +192,7 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
             ($1::uuid, $2::uuid, $3::date, $4::date, 'fuel', 280, $5),
             ($1::uuid, $2::uuid, $3::date, $4::date, 'cash_advance', 200, $5)
         `,
-        [companyId, driverId, periodStart, periodEnd, MARKER]
+        [companyId, driverId, periodStart, periodEnd, memoMarker]
       );
 
       await pgClient.query("COMMIT");
@@ -200,8 +221,10 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
         await pgClient.query(`DELETE FROM driver_finance.driver_settlements WHERE id = $1::uuid`, [settlementId]);
       }
 
-      await pgClient.query(`DELETE FROM driver_finance.settlement_preview_costs WHERE memo = $1`, [MARKER]);
-      await pgClient.query(`DELETE FROM driver_finance.driver_bills WHERE notes = $1`, [MARKER]);
+      if (memoMarker) {
+        await pgClient.query(`DELETE FROM driver_finance.settlement_preview_costs WHERE memo = $1`, [memoMarker]);
+        await pgClient.query(`DELETE FROM driver_finance.driver_bills WHERE notes = $1`, [memoMarker]);
+      }
 
       if (loadId) await pgClient.query(`DELETE FROM mdata.loads WHERE id = $1::uuid`, [loadId]);
       if (unitId) await pgClient.query(`DELETE FROM mdata.units WHERE id = $1::uuid`, [unitId]);
@@ -214,7 +237,9 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
     }
   });
 
-  it("computes preview math, commits settlement to driver_finance.driver_settlements, approves, renders PDF, and enqueues notifications", async () => {
+  it(
+    "computes preview math, commits settlement to driver_finance.driver_settlements, approves, renders PDF, and enqueues notifications",
+    async () => {
     const previewRes = await app.inject({
       method: "POST",
       url: "/api/v1/settlements/preview",
@@ -331,7 +356,9 @@ describeSettlementPdf("driver settlement pdf e2e — preview → commit → appr
       await pgClient.query("ROLLBACK").catch(() => {});
       throw err;
     }
-  });
+  },
+  120_000
+  );
 });
 
 describe("driver settlement pdf e2e wiring", () => {

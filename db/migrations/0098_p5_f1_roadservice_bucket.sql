@@ -24,8 +24,9 @@ ALTER TABLE maintenance.work_orders
 ALTER TABLE maintenance.work_orders
   DROP COLUMN IF EXISTS roadside_response_minutes;
 
+-- Self-heal: replay-safe generated column (matches 0123 drift reconciliation); IF NOT EXISTS avoids duplicate definition when reapplied.
 ALTER TABLE maintenance.work_orders
-  ADD COLUMN roadside_response_minutes int GENERATED ALWAYS AS (
+  ADD COLUMN IF NOT EXISTS roadside_response_minutes int GENERATED ALWAYS AS (
     CASE
       WHEN roadside_arrived_at IS NOT NULL AND roadside_callout_at IS NOT NULL
         THEN (EXTRACT(EPOCH FROM (roadside_arrived_at - roadside_callout_at)) / 60)::int

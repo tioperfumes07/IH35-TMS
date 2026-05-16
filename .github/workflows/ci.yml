@@ -42,6 +42,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Static checks — canonical renamed tables (no stale safety.fines refs)
+        run: npm run verify:canonical-schema-names
+
+      - name: Static checks — FK REFERENCES order (outside CREATE / guarded DO blocks)
+        run: npm run db:verify:reference-order
+
+      - name: Static checks — rename fallout (ALTER TABLE … RENAME TO)
+        run: npm run db:verify:rename-fallout
+
+      - name: Static checks — test INSERT column hints (informational)
+        run: npm run verify:test-insert-columns
+
+      - name: Static checks — ih35_app schema USAGE vs watchlist (informational)
+        run: npm run verify:schema-usage-grants
+
+      - name: Static checks — data-dependent RAISE in DO $$ blocks (informational)
+        run: npm run db:verify:empty-db-safe
+
+      - name: Static checks — DDL idempotency hints (informational)
+        run: npm run db:verify:idempotency
+
+      - name: Static checks — generated columns vs IMMUTABLE (informational)
+        run: npm run db:verify:generated-immutable
+
       - name: Migrate database (integration tests)
         run: npm run db:migrate
 

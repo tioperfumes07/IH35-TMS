@@ -31,13 +31,13 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
 
         const res = await client.query(
           `
-            SELECT invoice_date::text AS d,
+            SELECT issue_date::text AS d,
                    COALESCE(SUM(total_cents), 0)::text AS cents
             FROM accounting.invoices
             WHERE operating_company_id = $1::uuid
-              AND invoice_date >= (CURRENT_DATE - ($2::int * interval '1 day'))
-            GROUP BY invoice_date
-            ORDER BY invoice_date ASC
+              AND issue_date >= (CURRENT_DATE - ($2::int * interval '1 day'))
+            GROUP BY issue_date
+            ORDER BY issue_date ASC
           `,
           [parsed.data.operating_company_id, parsed.data.days]
         );
@@ -155,7 +155,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
             SELECT COALESCE(SUM(total_cents), 0)::text AS cents
             FROM accounting.invoices
             WHERE operating_company_id = $1::uuid
-              AND invoice_date = CURRENT_DATE
+              AND issue_date = CURRENT_DATE
           `,
           [parsed.data.operating_company_id]
         );

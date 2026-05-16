@@ -95,7 +95,7 @@ async function appendOwnerApprovalAuditLocal(
 
 async function resolveActorLabel(client: QueryableClient, userUuid: string | null | undefined): Promise<string | null> {
   if (!userUuid) return null;
-  const r = await client.query(`SELECT email::text AS email FROM identity.users WHERE uuid = $1 LIMIT 1`, [userUuid]);
+  const r = await client.query(`SELECT email::text AS email FROM identity.users WHERE id = $1 LIMIT 1`, [userUuid]);
   const email = r.rows[0]?.email;
   return email ? String(email) : null;
 }
@@ -135,13 +135,13 @@ async function notifyDriverPwaIfAvailable(
 export async function resolvePrimaryOwnerUserUuid(client: QueryableClient): Promise<string | null> {
   const r = await client.query(
     `
-      SELECT uuid::text AS uuid
+      SELECT id::text AS uuid
       FROM identity.users
       WHERE role = 'Owner'
         AND deactivated_at IS NULL
       ORDER BY
         CASE WHEN lower(email) = 'jpm@tioperfumes.com' THEN 0 ELSE 1 END,
-        uuid
+        id
       LIMIT 1
     `
   );
@@ -152,7 +152,7 @@ export async function resolvePrimaryOwnerUserUuid(client: QueryableClient): Prom
 export async function listOwnerEmails(client: QueryableClient): Promise<Array<{ uuid: string; email: string }>> {
   const r = await client.query<{ uuid: string; email: string }>(
     `
-      SELECT uuid::text AS uuid, email::text AS email
+      SELECT id::text AS uuid, email::text AS email
       FROM identity.users
       WHERE role = 'Owner'
         AND deactivated_at IS NULL
@@ -170,7 +170,7 @@ async function loadEscalationActorEmail(client: QueryableClient, requestId: stri
     `
       SELECT u.email::text AS email
       FROM driver_finance.cash_advance_request_audit a
-      JOIN identity.users u ON u.uuid = a.actor_user_id
+      JOIN identity.users u ON u.id = a.actor_user_id
       WHERE a.request_id = $1
         AND a.event_type = 'cash_advance_request_escalated_to_owner'
       ORDER BY a.id DESC

@@ -23,7 +23,7 @@ export const officeDenyBodySchema = z.object({
 
 async function resolveActorLabel(client: QueryableClient, userUuid: string | null | undefined): Promise<string | null> {
   if (!userUuid) return null;
-  const r = await client.query(`SELECT email::text AS email FROM identity.users WHERE uuid = $1 LIMIT 1`, [userUuid]);
+  const r = await client.query(`SELECT email::text AS email FROM identity.users WHERE id = $1 LIMIT 1`, [userUuid]);
   const email = r.rows[0]?.email;
   return email ? String(email) : null;
 }

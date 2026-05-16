@@ -2,8 +2,9 @@
 
 BEGIN;
 
+-- Self-heal: invoice_date never existed on accounting.invoices; canonical issuance column is issue_date (0060 schema).
 CREATE INDEX IF NOT EXISTS ix_invoices_company_date
-  ON accounting.invoices (operating_company_id, invoice_date DESC);
+  ON accounting.invoices (operating_company_id, issue_date DESC);
 
 CREATE INDEX IF NOT EXISTS ix_mdata_loads_company_status_updated
   ON mdata.loads (operating_company_id, status, updated_at DESC);

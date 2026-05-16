@@ -13,7 +13,11 @@
  * - EMAIL_QUEUE_SMOKE_SKIP=1 → exits 0 without touching DB.
  * - Missing DATABASE_URL/DATABASE_DIRECT_URL → exits 0 (SKIP).
  */
+import { createRequire } from "node:module";
 import pg from "pg";
+
+const require = createRequire(import.meta.url);
+const { buildPgClientConfig } = require("../lib/pg-connection-options.cjs");
 
 if (process.env.EMAIL_QUEUE_SMOKE_SKIP === "1") {
   console.log("[email-queue e2e] SKIP (EMAIL_QUEUE_SMOKE_SKIP=1)");
@@ -41,7 +45,7 @@ async function withBypass<T>(client: pg.Client, fn: (c: pg.Client) => Promise<T>
 
 async function main() {
   const started = Date.now();
-  const client = new pg.Client({ connectionString: cs, ssl: cs.includes("localhost") ? undefined : { rejectUnauthorized: false } });
+  const client = new pg.Client(buildPgClientConfig(cs));
   await client.connect();
   await client.query(`SET ROLE ih35_app`);
 

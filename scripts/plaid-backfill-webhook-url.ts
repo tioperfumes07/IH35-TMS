@@ -8,8 +8,12 @@
  * - PLAID_WEBHOOK_URL (optional; defaults to production banking webhook)
  */
 
+import { createRequire } from "node:module";
 import pg from "pg";
 import { PlaidEnvironments } from "plaid";
+
+const require = createRequire(import.meta.url);
+const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
 
 const WEBHOOK_URL =
   process.env.PLAID_WEBHOOK_URL?.trim() || "https://api.ih35dispatch.com/api/v1/banking/plaid/webhook";
@@ -51,7 +55,7 @@ async function main() {
   const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
   if (!cs) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required");
 
-  const client = new pg.Client({ connectionString: cs, ssl: { rejectUnauthorized: false } });
+  const client = new pg.Client(buildPgClientConfig(cs));
   await client.connect();
 
   try {

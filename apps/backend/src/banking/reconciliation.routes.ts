@@ -1,10 +1,12 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { PoolClient } from "pg";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { computePayloadHashFromTxn, enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { insertCsvStatementBankTransaction } from "./transaction-ingestion.js";
+import { applyBankingRulesForTransaction } from "./banking-rules.engine.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -781,7 +783,9 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           is_credit: cents < 0,
           notes: "source:manual_upload",
         });
-        if ((inserted.rows?.length ?? 0) > 0) {
+        const insRow = inserted.rows?.[0] as { id?: string } | undefined;
+        if (insRow?.id) {
+          await applyBankingRulesForTransaction(client as PoolClient, insRow.id, accountContext.operating_company_id);
           added += 1;
         }
       }

@@ -20,7 +20,11 @@
  * - BLOCK_X_SMOKE_TIMEOUT_MS (default 150000 local run wait)
  * - BLOCK_X_SMOKE_EMAIL_WAIT_MS (extra window after run success to observe email_queue row; default 45000)
  */
+import { createRequire } from "node:module";
 import pg from "pg";
+
+const require = createRequire(import.meta.url);
+const { buildPgClientConfig } = require("../lib/pg-connection-options.cjs");
 
 if (process.env.BLOCK_X_SMOKE_SKIP === "1") {
   console.log("[block-x scheduled-reports e2e] SKIP (BLOCK_X_SMOKE_SKIP=1)");
@@ -102,7 +106,7 @@ async function resolveOperatingCompanyId(): Promise<string> {
     );
   }
 
-  const client = new pg.Client({ connectionString: cs, ssl: cs.includes("localhost") ? undefined : { rejectUnauthorized: false } });
+  const client = new pg.Client(buildPgClientConfig(cs));
   await client.connect();
   try {
     await client.query(`SET ROLE ih35_app`);

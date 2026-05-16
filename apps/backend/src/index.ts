@@ -9,15 +9,14 @@ import { registerInviteAuthRoutes } from "./auth/invite.routes.js";
 import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
+import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.js";
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
-import { registerSamsaraMasterSyncRoutes } from "./integrations/samsara/samsara-master-sync.routes.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
 import { registerIdentityRoutes } from "./identity/users.routes.js";
-import { registerCompanyContextRoutes } from "./identity/company-context.routes.js";
 import { registerPasswordResetRoutes } from "./identity/password-reset.routes.js";
 import { registerNotificationPreferenceRoutes } from "./identity/notification-prefs.routes.js";
 import { registerUserPreferencesRoutes } from "./identity/user-preferences.routes.js";
@@ -80,6 +79,7 @@ import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
 import { registerBankingFactoringVirtualRoutes } from "./banking/factoring-virtual.routes.js";
 import { registerBankingEscrowVisualizerRoutes } from "./banking/escrow-visualizer.routes.js";
 import { registerBankingReconciliationRoutes } from "./banking/reconciliation.routes.js";
+import { registerBankingP7Wave2Routes } from "./banking/p7-wave2.routes.js";
 import { registerBankingObligationReconcileRoutes } from "./banking/obligation-reconcile.routes.js";
 import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
@@ -89,8 +89,6 @@ import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.rout
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
 import { registerMaintenanceDriverReportsRoutes } from "./maintenance/driver-reports.routes.js";
-import { registerMaintenancePartsInventoryRoutes } from "./maintenance/parts-inventory.routes.js";
-import { registerWoCostContextRoutes } from "./maintenance/wo-cost-context.routes.js";
 import { registerWoTimeEntriesRoutes } from "./maintenance/time-entries.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
@@ -109,8 +107,6 @@ import { registerQboMasterWriteRoutes } from "./mdata/qbo-master-write.routes.js
 import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.routes.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerAccountingRoutes } from "./accounting/index.js";
-import { registerQboMasterReadRoutes } from "./accounting/qbo-master-read.routes.js";
-import { registerVendorCategoryRoutes } from "./accounting/vendor-category.routes.js";
 import { registerAccountingSettlementDisputesP6Routes } from "./accounting/disputes.routes.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
@@ -123,10 +119,12 @@ import { registerLegalMattersRoutes } from "./legal/matters.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
 import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
+import { initializeQboInboundSyncCron, stopQboInboundSyncCron } from "./cron/qbo-inbound-sync.cron.js";
+import { initializeQboCdcPollCron } from "./cron/qbo-cdc-poll.cron.js";
+import { initializeRecurringTemplatesCron } from "./cron/recurring-templates.cron.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
 import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
 import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js";
-import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
@@ -134,6 +132,8 @@ import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
 import { registerEmailRoutes } from "./email/email.routes.js";
 import { registerEmailQueueAdminRoutes } from "./admin/email-queue-admin.routes.js";
 import { registerAdminActivityRoutes } from "./admin/activity.routes.js";
+import { registerAdminAccountingSyncRoutes } from "./admin/accounting-sync.routes.js";
+import { registerAdminSyncHealthRoutes } from "./admin/sync-health.routes.js";
 import { registerAdminClientErrorRoutes } from "./admin/client-errors.routes.js";
 import { initializeEmailCron } from "./email/cron.js";
 import { initializeQboOutboxDispatcher, stopQboOutboxDispatcher } from "./integrations/qbo/outbox-dispatcher.js";
@@ -211,6 +211,7 @@ async function shutdown(signal: string) {
   try {
     stopQboSyncWorker();
     stopQboOutboxDispatcher();
+    stopQboInboundSyncCron();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
   }
@@ -276,10 +277,10 @@ async function main() {
   await registerForensicLiveRoutes(app);
   await registerAuthRoutes(app);
   await registerQboOAuthRoutes(app);
+  await registerQboWebhookRoutes(app);
   await registerSamsaraWebhookRoutes(app);
   await registerSamsaraConfigRoutes(app);
   await registerSamsaraHealthRoutes(app);
-  await registerSamsaraMasterSyncRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -295,6 +296,8 @@ async function main() {
   await registerAdminClientErrorRoutes(app);
   await registerErrorMonitorRoutes(app);
   await registerAdminActivityRoutes(app);
+  await registerAdminAccountingSyncRoutes(app);
+  await registerAdminSyncHealthRoutes(app);
   await registerLaunchReadinessRoutes(app);
   await registerHealthDeepRoutes(app);
   await registerMigrationStatusRoutes(app);
@@ -304,7 +307,6 @@ async function main() {
   await registerOfficeLoginRoutes(app);
   await registerInviteAuthRoutes(app);
   await registerIdentityRoutes(app);
-  await registerCompanyContextRoutes(app);
   await registerPasswordResetRoutes(app);
   await registerNotificationPreferenceRoutes(app);
   await registerUserPreferencesRoutes(app);
@@ -387,13 +389,12 @@ async function main() {
   await registerBankingFactoringVirtualRoutes(app);
   await registerBankingEscrowVisualizerRoutes(app);
   await registerBankingReconciliationRoutes(app);
+  await registerBankingP7Wave2Routes(app);
   await registerBankingObligationReconcileRoutes(app);
   await registerFactoringRoutes(app);
   await registerDataInfrastructureRoutes(app);
   await registerOcrRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
-  await registerMaintenancePartsInventoryRoutes(app);
-  await registerWoCostContextRoutes(app);
   await registerWorkOrdersV1Routes(app);
   await registerWoTimeEntriesRoutes(app);
   await registerMaintenanceDriverReportsRoutes(app);
@@ -403,8 +404,6 @@ async function main() {
   await registerForm425CRoutes(app);
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);
-  await registerQboMasterReadRoutes(app);
-  await registerVendorCategoryRoutes(app);
   await registerAccountingSettlementDisputesP6Routes(app);
   await registerCompanyRoutes(app);
   await registerLegalTemplateRoutes(app);
@@ -429,6 +428,27 @@ async function main() {
   }
 
   try {
+    initializeQboInboundSyncCron(app);
+    app.log.info("[STARTUP] qbo-inbound-sync initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-inbound-sync failed");
+  }
+
+  try {
+    initializeQboCdcPollCron(app);
+    app.log.info("[STARTUP] qbo-cdc-poll initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-cdc-poll failed");
+  }
+
+  try {
+    initializeRecurringTemplatesCron(app);
+    app.log.info("[STARTUP] recurring-templates cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] recurring-templates cron failed");
+  }
+
+  try {
     await initializeQboTokenRefreshCron(app);
     app.log.info("[STARTUP] qbo-token-refresh-cron initialized");
   } catch (error) {
@@ -445,8 +465,6 @@ async function main() {
   try {
     initializeSamsaraHealthCheckCron(app);
     app.log.info("[STARTUP] samsara-health-cron initialized");
-    initializeSamsaraMasterSyncCron(app);
-    app.log.info("[STARTUP] samsara-master-sync-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] samsara-health-cron failed");
   }

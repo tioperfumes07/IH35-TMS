@@ -352,7 +352,7 @@ BEGIN
       FOR SELECT
       USING (
         operating_company_id = current_setting('app.operating_company_id', true)::uuid
-        AND COALESCE(current_setting('app.user_role', true), identity.current_user_role()) IN ('Owner', 'Administrator', 'Safety')
+        AND COALESCE(current_setting('app.user_role', true), identity.current_user_role()::text) IN ('Owner', 'Administrator', 'Safety')
       );
   END IF;
 
@@ -368,11 +368,11 @@ BEGIN
       FOR ALL
       USING (
         operating_company_id = current_setting('app.operating_company_id', true)::uuid
-        AND COALESCE(current_setting('app.user_role', true), identity.current_user_role()) IN ('Owner', 'Administrator', 'Safety')
+        AND COALESCE(current_setting('app.user_role', true), identity.current_user_role()::text) IN ('Owner', 'Administrator', 'Safety')
       )
       WITH CHECK (
         operating_company_id = current_setting('app.operating_company_id', true)::uuid
-        AND COALESCE(current_setting('app.user_role', true), identity.current_user_role()) IN ('Owner', 'Administrator', 'Safety')
+        AND COALESCE(current_setting('app.user_role', true), identity.current_user_role()::text) IN ('Owner', 'Administrator', 'Safety')
       );
   END IF;
 END

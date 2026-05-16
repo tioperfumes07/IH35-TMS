@@ -11,8 +11,11 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 describeIntegration("vendor bill payments routes", () => {
   let app: FastifyInstance;
   let companyId: string;
+  /** UUID path segment — bill_payments.vendor_id is uuid; non-UUID strings caused Postgres errors (500). */
+  let fixtureVendorId: string;
 
   beforeAll(async () => {
+    fixtureVendorId = randomUUID();
     await ensureIntegrationPrerequisites();
     companyId = getOperatingCompanyId();
     app = await createIntegrationApp(async (a) => {
@@ -35,7 +38,7 @@ describeIntegration("vendor bill payments routes", () => {
   it("GET /api/v1/vendors/:id/bill-payments returns envelope fields", async () => {
     const res = await app.inject({
       method: "GET",
-      url: `/api/v1/vendors/vendor-test/bill-payments?operating_company_id=${companyId}&limit=5`,
+      url: `/api/v1/vendors/${fixtureVendorId}/bill-payments?operating_company_id=${companyId}&limit=5`,
       headers: testAuthHeaders(undefined, "Owner"),
     });
     expect(res.statusCode).toBe(200);
@@ -47,7 +50,7 @@ describeIntegration("vendor bill payments routes", () => {
   it("POST /api/v1/vendors/:id/bill-payments rejects apply totals greater than payment amount", async () => {
     const res = await app.inject({
       method: "POST",
-      url: `/api/v1/vendors/vendor-test/bill-payments?operating_company_id=${companyId}`,
+      url: `/api/v1/vendors/${fixtureVendorId}/bill-payments?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
       payload: {
         paid_at: "2026-01-02",
@@ -65,7 +68,7 @@ describeIntegration("vendor bill payments routes", () => {
     const billId = randomUUID();
     const res = await app.inject({
       method: "POST",
-      url: `/api/v1/vendors/vendor-test/bill-payments?operating_company_id=${companyId}`,
+      url: `/api/v1/vendors/${fixtureVendorId}/bill-payments?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
       payload: {
         paid_at: "2026-01-02",
@@ -85,7 +88,7 @@ describeIntegration("vendor bill payments routes", () => {
   it("POST /api/v1/vendors/:id/bill-payments requires check metadata for check payments", async () => {
     const res = await app.inject({
       method: "POST",
-      url: `/api/v1/vendors/vendor-test/bill-payments?operating_company_id=${companyId}`,
+      url: `/api/v1/vendors/${fixtureVendorId}/bill-payments?operating_company_id=${companyId}`,
       headers: { "content-type": "application/json", ...testAuthHeaders(undefined, "Owner") },
       payload: {
         paid_at: "2026-01-02",
