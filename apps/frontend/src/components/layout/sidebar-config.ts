@@ -171,6 +171,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Dispatch Home", to: "/dispatch" },
         { label: "Loads", to: "/dispatch?view=loads" },
         { label: "Alerts", to: "/dispatch/alerts" },
+        { label: "Daily Tasks", to: "/daily-tasks" },
         { label: "Drivers", to: "/drivers" },
         { label: "Settlements", to: "/driver-finance/settlements" },
       ];
