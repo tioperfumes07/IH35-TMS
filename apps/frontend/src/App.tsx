@@ -188,6 +188,7 @@ import { DriverSchedulerGridPage } from "./pages/safety/driver-scheduler/DriverS
 import { DriverSchedulerRequestInboxPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { DriverSchedulerRequestDetailPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage";
 import { DriverLeaveBalancesPage } from "./pages/safety/driver-scheduler/DriverLeaveBalancesPage";
+import { DailyTasksPage } from "./pages/daily-tasks/DailyTasksPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -380,6 +381,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DispatchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/daily-tasks"
+          element={
+            <ProtectedRoute>
+              <DailyTasksPage />
             </ProtectedRoute>
           }
         />
