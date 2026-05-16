@@ -27,11 +27,13 @@ export function CompanySwitcher() {
     <div className="relative">
       <button
         type="button"
-        className="inline-flex items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-white/10"
+        className="inline-flex max-w-[280px] items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-white/10"
         style={{ borderColor: "#2A3242", color: "#E5E7EB", backgroundColor: "#151A24" }}
         onClick={() => setOpen((current) => !current)}
+        title={`Current company: ${selectedLabel}`}
       >
-        {selectedLabel}
+        <span className="text-[10px] text-gray-300">Current:</span>
+        <span className="truncate">{selectedLabel}</span>
         <ChevronDown className="h-3 w-3" />
       </button>
 

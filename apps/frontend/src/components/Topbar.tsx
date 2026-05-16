@@ -121,6 +121,17 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     return { dot, label, status, needsReconnect: Boolean(row.needs_reconnect), reconnectReason: row.reconnect_reason ?? null };
   }, [qboSyncHealthQuery.data, qboSyncHealthQuery.isError, companyLabel]);
 
+  const qboErrorBannerMessage = useMemo(() => {
+    if (!qboSyncPill || qboSyncPill.status !== "error") return null;
+    const row = qboSyncHealthQuery.data as Record<string, unknown> | undefined;
+    const parts: string[] = [];
+    if (qboSyncPill.reconnectReason) parts.push(`Reason: ${qboSyncPill.reconnectReason}`);
+    if (typeof row?.error_count === "number") parts.push(`Errors: ${row.error_count}`);
+    if (typeof row?.pending_count === "number") parts.push(`Pending: ${row.pending_count}`);
+    if (row?.last_failed_sync_at) parts.push(`Last failed: ${new Date(String(row.last_failed_sync_at)).toLocaleString()}`);
+    return parts.join(" · ");
+  }, [qboSyncPill, qboSyncHealthQuery.data]);
+
   const muted = colors.sidebarTextMuted;
   const active = colors.sidebarTextActive;
 
@@ -143,16 +154,15 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   );
 
   return (
-    <header
-      className="top-bar grid items-center border-b"
-      style={{
-        gridTemplateColumns: "1fr auto 1fr",
-        height: spacing.topbarHeight,
-        backgroundColor: colors.topbarBg,
-        borderBottomColor: colors.sidebarBorder,
-        padding: `${spacing.topbarPaddingY}px ${spacing.topbarPaddingX}px`,
-      }}
-    >
+    <div className="border-b" style={{ borderBottomColor: colors.sidebarBorder, backgroundColor: colors.topbarBg }}>
+      <header
+        className="top-bar grid items-center"
+        style={{
+          gridTemplateColumns: "1fr auto 1fr",
+          minHeight: spacing.topbarHeight,
+          padding: `${spacing.topbarPaddingY}px ${spacing.topbarPaddingX}px`,
+        }}
+      >
       <div className="flex items-center gap-2">
         {onOpenMobileNav ? (
           <button
@@ -179,9 +189,9 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex min-w-0 items-center justify-center gap-2">
         <div
-          className="flex max-w-[min(560px,92vw)] flex-wrap items-center justify-center gap-x-2 gap-y-1.5 rounded-full px-2 py-1 text-[12px] leading-snug"
+          className="flex max-w-[min(640px,94vw)] flex-wrap items-center justify-center gap-x-2 gap-y-1.5 rounded-full px-2 py-1 text-[12px] leading-snug"
           style={{ backgroundColor: "#151A24", color: muted }}
         >
           <span className="inline-flex items-center gap-1" style={{ color: active }}>
@@ -272,6 +282,25 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           </div>
         ) : null}
       </div>
-    </header>
+      </header>
+      {qboErrorBannerMessage ? (
+        <div className="px-3 pb-2">
+          <div className="rounded border border-red-400/60 bg-red-500/10 px-3 py-2 text-xs text-red-100">
+            <span className="font-semibold">QBO sync error.</span> {qboErrorBannerMessage}
+            {qboSyncPill?.needsReconnect && companyId ? (
+              <button
+                type="button"
+                className="ml-2 rounded border border-red-300/60 px-2 py-0.5 text-[11px] font-semibold hover:bg-red-500/20"
+                onClick={() => {
+                  window.location.href = getQboAuthorizeStartUrl(companyId);
+                }}
+              >
+                Reconnect now
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }

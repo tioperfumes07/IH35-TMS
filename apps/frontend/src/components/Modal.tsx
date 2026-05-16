@@ -43,19 +43,25 @@ export function Modal({
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
   const boxRef = useRef<{ w: number; h: number } | null>(null);
 
-  const useCustomSize = Boolean(resizable && modalKind && sizePreset);
+  const useCustomSize = Boolean(modalKind && sizePreset);
+  const resizeEnabled = resizable || true;
   const minBox = sizePreset ? MODAL_MIN_BY_PRESET[sizePreset] : { w: 320, h: 240 };
 
   const prefsQuery = useQuery({
     queryKey: ["user", "preferences"],
     queryFn: getUserPreferences,
-    enabled: open && useCustomSize,
+    enabled: open && resizeEnabled && useCustomSize,
     staleTime: 60_000,
   });
 
   useEffect(() => {
-    if (!open || !useCustomSize || !modalKind || !sizePreset) {
+    if (!open || !resizeEnabled) {
       setBox(null);
+      return;
+    }
+    if (!useCustomSize || !modalKind || !sizePreset) {
+      setBox(null);
+      boxRef.current = null;
       return;
     }
     const stored = readModalSizeFromPrefs(prefsQuery.data?.preferences as Record<string, unknown> | undefined, modalKind);
@@ -69,7 +75,7 @@ export function Modal({
     const next = { w, h };
     setBox(next);
     boxRef.current = next;
-  }, [open, useCustomSize, modalKind, sizePreset, prefsQuery.data]);
+  }, [open, resizeEnabled, useCustomSize, modalKind, sizePreset, prefsQuery.data]);
 
   const finalizeClose = useCallback(() => {
     setShowDiscardConfirm(false);
@@ -127,10 +133,9 @@ export function Modal({
     firstInput?.focus();
   }, [open]);
 
-  const panelStyle: CSSProperties | undefined =
-    useCustomSize && box
-      ? { width: box.w, height: box.h, maxWidth: "min(95vw, calc(100vw - 2rem))", maxHeight: "min(95vh, calc(100dvh - 2rem))" }
-      : undefined;
+  const panelStyle: CSSProperties | undefined = box
+    ? { width: box.w, height: box.h, maxWidth: "min(95vw, calc(100vw - 2rem))", maxHeight: "min(95vh, calc(100dvh - 2rem))" }
+    : undefined;
 
   if (!open) return null;
 
@@ -143,7 +148,7 @@ export function Modal({
         <div
           ref={panelRef}
           className={`relative flex flex-col rounded-lg bg-white shadow-xl ${
-            useCustomSize ? "overflow-hidden" : "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))]"
+            box ? "overflow-hidden" : "max-h-[min(90vh,calc(100dvh-2rem))] w-full max-w-[min(42rem,calc(100vw-2rem))]"
           }`}
           style={panelStyle}
           onMouseDown={(event) => event.stopPropagation()}
@@ -160,22 +165,28 @@ export function Modal({
             </button>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">{children}</div>
-          {useCustomSize && box && modalKind ? (
+          {resizeEnabled ? (
             <ResizeHandle
               onPointerDrag={(dx, dy) => {
                 setBox((prev) => {
-                  if (!prev) return prev;
+                  const base =
+                    prev ??
+                    (() => {
+                      const rect = panelRef.current?.getBoundingClientRect();
+                      if (!rect) return { w: 672, h: 420 };
+                      return { w: rect.width, h: rect.height };
+                    })();
                   const vw = window.innerWidth;
                   const vh = window.innerHeight;
-                  const nextW = Math.max(minBox.w, Math.min(prev.w + dx, vw * 0.95));
-                  const nextH = Math.max(minBox.h, Math.min(prev.h + dy, vh * 0.95));
+                  const nextW = Math.max(minBox.w, Math.min(base.w + dx, vw * 0.95));
+                  const nextH = Math.max(minBox.h, Math.min(base.h + dy, vh * 0.95));
                   const next = { w: nextW, h: nextH };
                   boxRef.current = next;
                   return next;
                 });
               }}
               onPointerDone={() => {
-                if (!modalKind) return;
+                if (!useCustomSize || !modalKind) return;
                 const b = boxRef.current;
                 if (!b) return;
                 void persistModalSize(modalKind, b).catch(() => undefined);
