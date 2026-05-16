@@ -1,7 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { pool } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -13,8 +12,9 @@ import {
   runAdminCsvImport,
   type CompanyCode,
 } from "../seed/csv-seed-import.js";
+import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
+const repoRoot = resolveMonorepoRoot(import.meta.url);
 
 const TEMPLATE_FILES: Record<AdminImportEntitySlug, string> = {
   drivers: "drivers.csv",

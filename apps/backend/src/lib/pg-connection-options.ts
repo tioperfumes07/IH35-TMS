@@ -1,14 +1,12 @@
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import type pg from "pg";
+
+import { resolveMonorepoRoot } from "./monorepo-root.js";
 
 const require = createRequire(import.meta.url);
 
-/** Repo root (works from both src/ and dist/ tree depth). */
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
-
-const impl = require(join(repoRoot, "scripts", "lib", "pg-connection-options.cjs")) as {
+const impl = require(join(resolveMonorepoRoot(import.meta.url), "scripts", "lib", "pg-connection-options.cjs")) as {
   inferPgSslOption: (cs: string) => boolean | { rejectUnauthorized: boolean };
   buildPgClientConfig: (cs: string, extra?: pg.ClientConfig) => pg.ClientConfig;
   buildPgPoolConfig: (cs: string, extra?: pg.PoolConfig) => pg.PoolConfig;

@@ -1,13 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError } from "../accounting/shared.js";
 import { pool } from "../auth/db.js";
 import { findMigrationDrift, listExpectedMigrations, skipMigrationVerificationEnabled } from "../lib/migration-status.js";
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
+import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
+
+const repoRoot = resolveMonorepoRoot(import.meta.url);
 
 function ownerAdministrator(role: string) {
   return role === "Owner";

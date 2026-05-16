@@ -70,6 +70,9 @@ export async function assertMigrationDriftBootGuard(opts: {
   client: pg.PoolClient;
   logError: (obj: Record<string, unknown>, msg: string) => void;
 }): Promise<void> {
+  if (process.env.IH35_BOOT_API_SMOKE === "true" && process.env.NODE_ENV === "test") {
+    return;
+  }
   const drift = await findMigrationDrift(opts.client, opts.repoRoot);
   if (drift.missingInDB.length === 0) return;
 

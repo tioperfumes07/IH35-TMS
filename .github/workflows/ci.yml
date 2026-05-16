@@ -83,3 +83,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
+        run: npm run ci:boot-api-smoke
