@@ -4,7 +4,7 @@
 
 **Locked by:** Cursor R2 (APPROVED-SCREEN LAW) in `docs/specs/CURSOR-PERMANENT-RULES.md`, and IH35-TMS master rules §F invariant **#19** (approved navigation / chrome parity).
 
-## Inventory: **36** PNG files
+## Inventory: **66** PNG files
 
 The folder now includes:
 - **11 canonical approved mockup PNGs** (the baseline set listed below)
@@ -60,3 +60,36 @@ If upstream filenames omit dashes (e.g. `1HOME_PAGE.png`), **rename only** to ma
 ## Canonical copies
 
 Eleven binaries live in this folder with the filenames in the table above. Provenance: the same bytes were first stored under `docs/design/approved-screens/` with sequential filenames; this directory is the Cursor R2 canonical path and names only (no pixel edits on copy).
+
+## Additional reference screenshots (30)
+
+- `screenshot-2026-05-16-at-7.47.16-pm.png`
+- `screenshot-2026-05-16-at-7.47.42-pm.png`
+- `screenshot-2026-05-16-at-7.47.51-pm.png`
+- `screenshot-2026-05-16-at-7.47.54-pm.png`
+- `screenshot-2026-05-16-at-7.48.12-pm.png`
+- `screenshot-2026-05-16-at-7.48.19-pm.png`
+- `screenshot-2026-05-16-at-7.48.37-pm.png`
+- `screenshot-2026-05-16-at-7.48.49-pm.png`
+- `screenshot-2026-05-16-at-7.49.02-pm.png`
+- `screenshot-2026-05-16-at-7.49.39-pm.png`
+- `screenshot-2026-05-16-at-7.49.50-pm.png`
+- `screenshot-2026-05-16-at-7.49.56-pm.png`
+- `screenshot-2026-05-16-at-7.50.02-pm.png`
+- `screenshot-2026-05-16-at-7.50.19-pm.png`
+- `screenshot-2026-05-16-at-7.50.29-pm.png`
+- `screenshot-2026-05-16-at-7.50.52-pm.png`
+- `screenshot-2026-05-16-at-7.51.15-pm.png`
+- `screenshot-2026-05-16-at-7.51.23-pm.png`
+- `screenshot-2026-05-16-at-7.51.31-pm.png`
+- `screenshot-2026-05-16-at-7.51.56-pm.png`
+- `screenshot-2026-05-16-at-7.52.06-pm.png`
+- `screenshot-2026-05-16-at-7.52.16-pm.png`
+- `screenshot-2026-05-16-at-7.52.23-pm.png`
+- `screenshot-2026-05-16-at-7.52.32-pm.png`
+- `screenshot-2026-05-16-at-7.52.45-pm.png`
+- `screenshot-2026-05-16-at-7.52.49-pm.png`
+- `screenshot-2026-05-16-at-7.53.02-pm.png`
+- `screenshot-2026-05-16-at-7.53.06-pm.png`
+- `screenshot-2026-05-16-at-7.53.09-pm.png`
+- `screenshot-2026-05-16-at-7.53.45-pm.png`
