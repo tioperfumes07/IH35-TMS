@@ -10,6 +10,7 @@ import {
 } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 function money(cents: number | null | undefined) {
   return `$${((Number(cents ?? 0) || 0) / 100).toFixed(2)}`;
@@ -94,14 +95,14 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
         <div className="grid gap-2 md:grid-cols-3">
           <label className="text-xs">
             <div className="mb-1 text-gray-500">Status</div>
-            <select
+            <SelectCombobox
               value={status}
               onChange={(event) => setStatus(event.target.value as "open" | "all")}
               className="w-full rounded border border-gray-300 px-2 py-1"
             >
               <option value="all">All</option>
               <option value="open">Open / Under Review</option>
-            </select>
+            </SelectCombobox>
           </label>
           <label className="text-xs">
             <div className="mb-1 text-gray-500">Driver ID</div>
@@ -236,7 +237,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
               >
                 Review
               </Button>
-              <select
+              <SelectCombobox
                 value={resolution}
                 onChange={(event) => setResolution(event.target.value as "in_favor" | "rejected" | "partial")}
                 className="rounded border border-gray-300 px-2 py-1 text-xs"
@@ -244,7 +245,7 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
                 <option value="in_favor">Resolve in Favor</option>
                 <option value="rejected">Reject</option>
                 <option value="partial">Partial</option>
-              </select>
+              </SelectCombobox>
               <input
                 value={resolutionAmount}
                 onChange={(event) => setResolutionAmount(event.target.value)}

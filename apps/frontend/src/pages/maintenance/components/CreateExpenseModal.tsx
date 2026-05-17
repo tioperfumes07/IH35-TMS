@@ -3,6 +3,7 @@ import { Modal } from "../../../components/Modal";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { EXPENSE_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
+import { Combobox } from "../../../components/shared/Combobox";
 import { UploadZone } from "../../../components/UploadZone";
 
 type Props = {
@@ -32,17 +33,67 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
         </div>
 
         <div className="grid gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
-          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-2" placeholder="Payee" />
+          <Field label="Expense Type *">
+            <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs" value={EXPENSE_TYPE_TABS.find((tab) => tab.id === expenseType)?.label ?? "Fuel Expense"} readOnly />
+          </Field>
           <div className="md:col-span-3" />
-          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Load Number" />
-          <select className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-2" defaultValue="">
-            <option value="" disabled>
-              Account Paid From
-            </option>
-            <option value="bank">Bank account</option>
-            <option value="credit-card">Credit card</option>
-          </select>
-          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Transaction date" type="date" />
+          <Field label="Expense Date">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" type="date" />
+          </Field>
+          <Field label="Expense Number">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Expense Number" />
+          </Field>
+
+          <Field label="Pay From Account">
+            <Combobox
+              options={[
+                { value: "bank", label: "Operating - Frost Bank" },
+                { value: "card", label: "Jorge Fuel Card (Comdata)" },
+              ]}
+              value={"bank"}
+              onChange={() => {}}
+            />
+          </Field>
+          <Field label="Payment Method">
+            <Combobox
+              options={[
+                { value: "fuel_card", label: "Fuel card" },
+                { value: "debit", label: "Debit" },
+                { value: "credit", label: "Credit" },
+                { value: "cash", label: "Cash" },
+              ]}
+              value={"fuel_card"}
+              onChange={() => {}}
+            />
+          </Field>
+          <div className="md:col-span-4" />
+
+          <div className="md:col-span-6 h-2" />
+          <Field label="Payee">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Payee" />
+          </Field>
+          <div className="md:col-span-4" />
+          <Field label="Load Number">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Load Number" />
+          </Field>
+
+          <div className="md:col-span-6 h-2" />
+          <Field label="Driver">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Driver" />
+          </Field>
+          <Field label="Unit Number">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Unit Number" />
+          </Field>
+          <div className="md:col-span-3" />
+          <Field label="Class">
+            <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs" value="Auto class" readOnly />
+          </Field>
+
+          <div className="md:col-span-6 h-2" />
+          <Field label="Invoice Number">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Invoice Number" />
+          </Field>
+          <div className="md:col-span-5" />
         </div>
 
         <TwoSectionLineEditor mode="expense" onChange={setLines} partsLaborMode="parts-and-labor" />
@@ -56,5 +107,14 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
         />
       </div>
     </Modal>
+  );
+}
+
+function Field({ label, children }: { label: string; children: JSX.Element }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-[11px] font-semibold text-gray-600">{label}</label>
+      {children}
+    </div>
   );
 }

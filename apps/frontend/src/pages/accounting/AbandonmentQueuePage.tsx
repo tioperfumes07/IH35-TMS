@@ -5,6 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 export function AbandonmentQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -39,10 +40,10 @@ export function AbandonmentQueuePage() {
       {!companyId ? <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm">Select a company.</div> : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <select className="h-9 rounded border border-gray-300 px-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+        <SelectCombobox className="h-9 rounded border border-gray-300 px-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
           <option value="pending">Pending</option>
           <option value="all">All</option>
-        </select>
+        </SelectCombobox>
       </div>
 
       <div className="overflow-auto rounded border border-gray-200 bg-white">

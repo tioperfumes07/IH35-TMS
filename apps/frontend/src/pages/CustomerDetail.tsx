@@ -50,6 +50,7 @@ import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
+import { SelectCombobox } from "../components/shared/SelectCombobox";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -1452,13 +1453,13 @@ export function CustomerDetailPage() {
                   </label>
                   <label className="block">
                     Method
-                    <select className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
+                    <SelectCombobox className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
                       <option value="ach">ACH</option>
                       <option value="check">Check</option>
                       <option value="wire">Wire</option>
                       <option value="credit_card">Credit Card</option>
                       <option value="other">Other</option>
-                    </select>
+                    </SelectCombobox>
                   </label>
                   <label className="block">
                     Reference

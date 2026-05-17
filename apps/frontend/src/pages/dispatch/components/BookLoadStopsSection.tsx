@@ -1,6 +1,7 @@
 import { useFieldArray, type Control, type UseFormRegister } from "react-hook-form";
 import { Button } from "../../../components/Button";
 import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   control: Control<any>;
@@ -95,10 +96,10 @@ export function BookLoadStopsSection({ control, register }: Props) {
               <Field
                 label="Type"
                 input={
-                  <select {...register(`stops.${index}.stop_type`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
+                  <SelectCombobox {...register(`stops.${index}.stop_type`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
                     <option value="pickup">PICKUP</option>
                     <option value="delivery">DELIVERY</option>
-                  </select>
+                  </SelectCombobox>
                 }
               />
               <Field label="Address" input={<input {...register(`stops.${index}.address_line1`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
@@ -122,13 +123,13 @@ export function BookLoadStopsSection({ control, register }: Props) {
               <Field
                 label="Lumper paid by"
                 input={
-                  <select {...register(`stops.${index}.lumper_paid_by`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
+                  <SelectCombobox {...register(`stops.${index}.lumper_paid_by`)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
                     <option value="carrier">Carrier</option>
                     <option value="shipper">Shipper</option>
                     <option value="broker">Broker</option>
                     <option value="receiver">Receiver</option>
                     <option value="unknown">Unknown</option>
-                  </select>
+                  </SelectCombobox>
                 }
               />
               <Field label="Lumper amount (cents)" input={<input type="number" min={0} step={1} {...register(`stops.${index}.lumper_amount_cents`, { valueAsNumber: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />

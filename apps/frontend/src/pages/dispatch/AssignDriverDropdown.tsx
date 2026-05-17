@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useId } from "react";
 import { getDispatchAvailableDrivers, type AvailableDriverRow } from "../../api/dispatch";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 export type AssignDriverDropdownProps = {
   loadId: string;
@@ -72,7 +73,7 @@ export function AssignDriverDropdown({
       <label htmlFor={selectId} className="text-xs font-semibold text-gray-600">
         Driver
       </label>
-      <select
+      <SelectCombobox
         id={selectId}
         className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
         value={value}
@@ -92,7 +93,7 @@ export function AssignDriverDropdown({
             {!d.hos_safe ? " — out of HOS" : ""}
           </option>
         ))}
-      </select>
+      </SelectCombobox>
       {pendingUnsafe ? (
         <div className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
           <p className="font-semibold">Driver is out of hours today</p>

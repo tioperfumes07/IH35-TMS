@@ -8,6 +8,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 const PAGE_SIZE = 50;
 
@@ -93,33 +94,33 @@ export function TransfersListPage() {
         </label>
         <label className="text-xs text-gray-600">
           Type
-          <select value={type} onChange={(e) => setType(e.target.value as TransferType | "")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox value={type} onChange={(e) => setType(e.target.value as TransferType | "")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
             <option value="">All</option>
             <option value="bank_to_bank">Bank-to-Bank</option>
             <option value="cc_payment">CC Payment</option>
             <option value="cash_deposit">Cash Deposit</option>
             <option value="owner_contribution">Owner Contribution</option>
             <option value="owner_distribution">Owner Distribution</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs text-gray-600">
           Account
-          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox value={accountId} onChange={(e) => setAccountId(e.target.value)} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
             <option value="">All</option>
             {(bankAccountsQuery.data?.accounts ?? []).map((account) => (
               <option key={account.id} value={account.id}>
                 {account.institution_name || "Bank"} - {account.account_name || "Account"}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs text-gray-600">
           Status
-          <select value={status} onChange={(e) => setStatus(e.target.value as "active" | "revoked" | "")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox value={status} onChange={(e) => setStatus(e.target.value as "active" | "revoked" | "")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
             <option value="">All</option>
             <option value="active">Active</option>
             <option value="revoked">Revoked</option>
-          </select>
+          </SelectCombobox>
         </label>
         <div className="flex items-end gap-2">
           <ActionButton

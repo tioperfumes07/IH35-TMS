@@ -3,6 +3,7 @@ import { sendLiabilityAckRequest } from "../../../api/liabilities";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -38,7 +39,7 @@ export function SendAckRequestModal({ open, operatingCompanyId, liabilityId, onC
       <div className="space-y-2 text-xs">
         <label className="block">
           Channel
-          <select
+          <SelectCombobox
             className="mt-1 h-8 w-full rounded border border-gray-300 px-2"
             value={channel}
             onChange={(event) => setChannel(event.target.value as "whatsapp" | "sms" | "email")}
@@ -46,7 +47,7 @@ export function SendAckRequestModal({ open, operatingCompanyId, liabilityId, onC
             <option value="whatsapp">WhatsApp</option>
             <option value="sms">SMS</option>
             <option value="email">Email</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="block">
           Message

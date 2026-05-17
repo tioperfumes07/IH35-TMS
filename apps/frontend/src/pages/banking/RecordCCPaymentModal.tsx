@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useToast } from "../../components/Toast";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -127,7 +128,7 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
         </label>
         <label className="block">
           Pay from bank account
-          <select
+          <SelectCombobox
             aria-label="Pay from bank account"
             className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
             value={fromBankId}
@@ -139,7 +140,7 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
                 {option.name}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">

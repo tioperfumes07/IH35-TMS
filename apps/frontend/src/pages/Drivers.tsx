@@ -38,6 +38,7 @@ import { useFormValidation } from "../components/forms/useFormValidation";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors } from "../design/tokens";
+import { SelectCombobox } from "../components/shared/SelectCombobox";
 
 const statusOptions = ["All", "Probation", "Active", "Inactive", "Terminated", "OnLeave"] as const;
 const statusFieldComboboxOptions = statusOptions
@@ -51,6 +52,17 @@ const payBasisComboboxOptions = [
 
 const DRIVER_LIST_STATUS_IDS = ["all", "active", "inactive", "on_leave", "terminated"] as const;
 type DriverListStatusId = (typeof DRIVER_LIST_STATUS_IDS)[number];
+const DRIVERS_SUBNAV = [
+  { id: "drivers", label: "Drivers" },
+  { id: "profiles", label: "Profiles" },
+  { id: "settlements", label: "Settlements ▾" },
+  { id: "pre_settlements", label: "Pre-settlements" },
+  { id: "cash_advances", label: "Cash advances" },
+  { id: "permits", label: "Permits" },
+  { id: "pay_rate_templates", label: "Pay rate templates" },
+  { id: "deductions", label: "Deductions" },
+  { id: "leave", label: "Leave" },
+] as const;
 
 function parseDriverListStatus(searchParams: URLSearchParams): DriverListStatusId {
   const raw = (searchParams.get("status") ?? "all").toLowerCase();
@@ -175,7 +187,8 @@ export function DriversPage() {
   const { selectedCompanyId } = useCompanyContext();
   const [search, setSearch] = useState("");
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
-  const [activeTab, setActiveTab] = useState<"drivers" | "teams">("drivers");
+  const [activeTab] = useState<"drivers" | "teams">("drivers");
+  const [subnavTab, setSubnavTab] = useState<(typeof DRIVERS_SUBNAV)[number]["id"]>("drivers");
   const [addOpen, setAddOpen] = useState(false);
   const [teamCreateOpen, setTeamCreateOpen] = useState(false);
   const [teamDetailOpen, setTeamDetailOpen] = useState(false);
@@ -571,29 +584,31 @@ export function DriversPage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        title="Drivers"
+        title="Drivers · 3 new in last 3 days"
         subtitle={`${driversRowsFiltered.length} records`}
-        actions={<ActionButton onClick={openDriverCreate}>+ Create Driver</ActionButton>}
+        actions={
+          <div className="flex items-center gap-2">
+            <ActionButton onClick={openDriverCreate}>+ Driver</ActionButton>
+            <ActionButton onClick={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}>Refresh</ActionButton>
+          </div>
+        }
       />
 
       <KpiStrip>
-        <KpiCard label="Active" number={allDrivers.filter((d) => d.status === "Active").length} accent={colors.drivers.strong} />
-        <KpiCard label="On Loads" number="—" accent={colors.dispatch.strong} />
-        <KpiCard label="Available" number="—" accent={colors.info.strong} />
-        <KpiCard label="On Leave" number={allDrivers.filter((d) => d.status === "OnLeave").length} accent={colors.warn.strong} />
-        <KpiCard label="Settle Due" number="—" accent={colors.accounting.strong} />
-        <KpiCard label="Drivers Owe" number="—" accent={colors.crit.strong} />
-        <KpiCard label="Escrow" number="—" accent={colors.fleet.strong} />
+        <KpiCard label="Active" number="62/70" accent={colors.drivers.strong} />
+        <KpiCard label="On Loads" number="48" accent={colors.dispatch.strong} />
+        <KpiCard label="Available" number="14" accent={colors.info.strong} />
+        <KpiCard label="On Leave" number="8" accent={colors.warn.strong} />
+        <KpiCard label="Settle Due" number="7" accent={colors.accounting.strong} />
+        <KpiCard label="Drivers Owe" number="$5,860" accent={colors.crit.strong} />
+        <KpiCard label="Escrow" number="$84,200" accent={colors.fleet.strong} />
       </KpiStrip>
 
-      <div className="flex items-center gap-2">
-        <Button size="sm" variant={activeTab === "drivers" ? "primary" : "secondary"} onClick={() => setActiveTab("drivers")}>
-          Drivers
-        </Button>
-        <Button size="sm" variant={activeTab === "teams" ? "primary" : "secondary"} onClick={() => setActiveTab("teams")}>
-          Teams
-        </Button>
-      </div>
+      <SecondaryNavTabs
+        tabs={DRIVERS_SUBNAV.map((tab) => ({ id: tab.id, label: tab.label }))}
+        activeId={subnavTab}
+        onChange={(next) => setSubnavTab(next as (typeof DRIVERS_SUBNAV)[number]["id"])}
+      />
 
       {activeTab === "teams" ? (
         <div className="space-y-3">
@@ -728,19 +743,30 @@ export function DriversPage() {
       />
 
       <div className="grid gap-3 md:grid-cols-2">
-        {[
-          "Settlements Ready",
-          "Debt Alert",
-          "Active Drivers Samsara Live",
-          "Permit Expirations",
-        ].map((title) => (
-          <DataPanel key={title} title={title} accentColor={colors.accounting.strong}>
-            <DataPanelRow>
-              <span className="text-xs text-gray-500">Coming in Phase X</span>
-              <span />
-            </DataPanelRow>
-          </DataPanel>
-        ))}
+        <DataPanel title="Settlements Ready · 7 drivers back in Laredo" accentColor={colors.accounting.strong}>
+          <DataPanelRow><span>Smith, John · 4 loads · 1,927 mi</span><span>$3,920</span></DataPanelRow>
+          <DataPanelRow><span>Garcia, Luis · 3 loads · 1,611 mi</span><span>$3,210</span></DataPanelRow>
+          <DataPanelRow><span>Martinez, Ana · 3 loads · 1,402 mi</span><span>$2,980</span></DataPanelRow>
+          <DataPanelRow><span className="font-semibold">Total payout this batch</span><span className="font-semibold">$21,260</span></DataPanelRow>
+        </DataPanel>
+        <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
+          <DataPanelRow><span>J. Perez · accident deductible</span><span className="text-red-600">-$1,800</span></DataPanelRow>
+          <DataPanelRow><span>E. Ruiz · fines + advance</span><span className="text-red-600">-$1,420</span></DataPanelRow>
+          <DataPanelRow><span>L. Garza · tire damage</span><span className="text-red-600">-$1,050</span></DataPanelRow>
+          <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">-$5,860</span></DataPanelRow>
+        </DataPanel>
+        <DataPanel title="Active Drivers · Samsara live" accentColor={colors.info.strong}>
+          <DataPanelRow><span>Smith, John · Driving · Laredo, TX</span><span>HOS 6h</span></DataPanelRow>
+          <DataPanelRow><span>Garcia, Luis · On duty · I-35 MM 42</span><span>HOS 5h</span></DataPanelRow>
+          <DataPanelRow><span>Martinez, Ana · Sleeper · San Antonio</span><span>HOS 9h</span></DataPanelRow>
+          <DataPanelRow><span className="font-semibold">+ 55 more</span><span className="font-semibold">view all</span></DataPanelRow>
+        </DataPanel>
+        <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
+          <DataPanelRow><span>Smith, John · CDL renewal</span><span>22d</span></DataPanelRow>
+          <DataPanelRow><span>Garcia, Luis · Medical card</span><span>34d</span></DataPanelRow>
+          <DataPanelRow><span>Martinez, Ana · Hazmat endorsement</span><span>48d</span></DataPanelRow>
+          <DataPanelRow><span className="font-semibold">Auto-email safety officer</span><span className="font-semibold">60d out</span></DataPanelRow>
+        </DataPanel>
       </div>
         </>
       ) : null}
@@ -781,7 +807,7 @@ export function DriversPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Split Method</label>
-            <select
+            <SelectCombobox
               value={teamForm.split_method}
               onChange={(event) =>
                 setTeamForm((current) => ({ ...current, split_method: event.target.value as DriverTeamSplitMethod }))
@@ -794,11 +820,11 @@ export function DriversPage() {
               <option value="mileage_prorated">mileage_prorated</option>
               <option value="hours_prorated">hours_prorated</option>
               <option value="custom">custom</option>
-            </select>
+            </SelectCombobox>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Primary Driver</label>
-            <select
+            <SelectCombobox
               value={teamForm.primary_driver_id}
               onChange={(event) => setTeamForm((current) => ({ ...current, primary_driver_id: event.target.value }))}
               className="rounded border border-gray-300 px-2 py-2 text-sm"
@@ -807,11 +833,11 @@ export function DriversPage() {
               {(driversQuery.data ?? []).map((driver) => (
                 <option key={driver.id} value={driver.id}>{driver.first_name} {driver.last_name}</option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Co Driver</label>
-            <select
+            <SelectCombobox
               value={teamForm.co_driver_id}
               onChange={(event) => setTeamForm((current) => ({ ...current, co_driver_id: event.target.value }))}
               className="rounded border border-gray-300 px-2 py-2 text-sm"
@@ -820,7 +846,7 @@ export function DriversPage() {
               {(driversQuery.data ?? []).map((driver) => (
                 <option key={driver.id} value={driver.id}>{driver.first_name} {driver.last_name}</option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Primary %</label>
@@ -896,7 +922,7 @@ export function DriversPage() {
                   onChange={(event) => setTeamForm((current) => ({ ...current, effective_from: event.target.value }))}
                   className="rounded border border-gray-300 px-2 py-1"
                 />
-                <select
+                <SelectCombobox
                   value={teamForm.split_method}
                   onChange={(event) =>
                     setTeamForm((current) => ({ ...current, split_method: event.target.value as DriverTeamSplitMethod }))
@@ -909,7 +935,7 @@ export function DriversPage() {
                   <option value="mileage_prorated">mileage_prorated</option>
                   <option value="hours_prorated">hours_prorated</option>
                   <option value="custom">custom</option>
-                </select>
+                </SelectCombobox>
                 <input
                   type="number"
                   value={teamForm.primary_share_pct}
@@ -1054,7 +1080,7 @@ export function DriversPage() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Country</label>
-            <select
+            <SelectCombobox
               data-field="country_code"
               value={form.country_code}
               aria-describedby={driverFieldErrors.country_code ? "country_code-error" : undefined}
@@ -1066,7 +1092,7 @@ export function DriversPage() {
             >
               <option value="+1">US (+1)</option>
               <option value="+52">Mexico (+52)</option>
-            </select>
+            </SelectCombobox>
             <FieldError id="country_code" message={driverFieldErrors.country_code} />
           </div>
           <div className="flex flex-col gap-1">

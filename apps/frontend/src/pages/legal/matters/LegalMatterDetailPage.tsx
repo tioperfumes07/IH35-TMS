@@ -13,6 +13,7 @@ import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Tab = "overview" | "timeline" | "documents" | "deadlines" | "notes";
 
@@ -247,13 +248,13 @@ export function LegalMatterDetailPage() {
             <div className="space-y-3 rounded border border-gray-200 bg-white p-4">
               {admin ? (
                 <div className="grid gap-2 border-b border-gray-100 pb-3 md:grid-cols-2">
-                  <select className="rounded border border-gray-200 px-2 py-1 text-sm" value={dlType} onChange={(e) => setDlType(e.target.value)}>
+                  <SelectCombobox className="rounded border border-gray-200 px-2 py-1 text-sm" value={dlType} onChange={(e) => setDlType(e.target.value)}>
                     {["statute_of_limitations", "response", "hearing", "filing", "other"].map((t) => (
                       <option key={t} value={t}>
                         {t}
                       </option>
                     ))}
-                  </select>
+                  </SelectCombobox>
                   <input
                     className="rounded border border-gray-200 px-2 py-1 text-sm"
                     placeholder="Title"

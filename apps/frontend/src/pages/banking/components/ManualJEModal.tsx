@@ -4,6 +4,7 @@ import { createJournalEntry, listClassesForJe, listCoaAccountsForJe } from "../.
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -139,7 +140,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             <div className="space-y-1">
               {lines.map((line, idx) => (
                 <div key={idx} className="grid grid-cols-6 gap-1 rounded border border-gray-200 p-1.5">
-                  <select
+                  <SelectCombobox
                     className="h-8 rounded border border-gray-300 px-1"
                     value={line.account_id}
                     onChange={(e) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, account_id: e.target.value } : row)))}
@@ -150,8 +151,8 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                         {account.account_number} - {account.account_name}
                       </option>
                     ))}
-                  </select>
-                  <select
+                  </SelectCombobox>
+                  <SelectCombobox
                     className="h-8 rounded border border-gray-300 px-1"
                     value={line.class_id}
                     onChange={(e) => setLines((prev) => prev.map((row, i) => (i === idx ? { ...row, class_id: e.target.value } : row)))}
@@ -162,7 +163,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                         {klass.class_code ? `${klass.class_code} - ` : ""}{klass.class_name}
                       </option>
                     ))}
-                  </select>
+                  </SelectCombobox>
                   <input
                     className="h-8 rounded border border-gray-300 px-2"
                     placeholder="Entity UUID (optional)"

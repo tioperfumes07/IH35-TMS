@@ -18,6 +18,7 @@ import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type TaskViewId = "my" | "team" | "created";
 
@@ -367,7 +368,7 @@ export function DailyTasksPage() {
               <label htmlFor="daily-task-assignee" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
                 Assignee
               </label>
-              <select
+              <SelectCombobox
                 id="daily-task-assignee"
                 className="w-full rounded border border-slate-300 px-2 py-1.5"
                 value={assignedToUserId}
@@ -379,13 +380,13 @@ export function DailyTasksPage() {
                     {user.email ?? user.id}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </div>
             <div>
               <label htmlFor="daily-task-priority" className="mb-1 block text-[11px] font-semibold uppercase text-slate-600">
                 Priority
               </label>
-              <select
+              <SelectCombobox
                 id="daily-task-priority"
                 className="w-full rounded border border-slate-300 px-2 py-1.5"
                 value={priority}
@@ -396,7 +397,7 @@ export function DailyTasksPage() {
                     {item.label}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </div>
           </div>
           <div>

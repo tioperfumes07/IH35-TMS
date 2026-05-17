@@ -5,6 +5,7 @@ import { ApiError } from "../../../api/client";
 import { createComplaintV64, listComplaints, patchComplaintV64, voidComplaintV64 } from "../../../api/safetyV64";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 function isPrivacyGateError(error: unknown) {
   if (!(error instanceof ApiError)) return false;
@@ -86,12 +87,12 @@ export function ComplaintsTab() {
           <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Respondent driver_id" value={form.respondent_driver_id} onChange={(e) => setForm((v) => ({ ...v, respondent_driver_id: e.target.value }))} />
           <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Type" value={form.complaint_type} onChange={(e) => setForm((v) => ({ ...v, complaint_type: e.target.value }))} />
           <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Summary" value={form.summary} onChange={(e) => setForm((v) => ({ ...v, summary: e.target.value }))} />
-          <select className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}>
+          <SelectCombobox className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}>
             <option value="low">low</option>
             <option value="medium">medium</option>
             <option value="high">high</option>
             <option value="critical">critical</option>
-          </select>
+          </SelectCombobox>
           <button type="button" className="rounded bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!form.complainant_external_name || !form.respondent_driver_id || !form.complaint_type || !form.summary || createMutation.isPending} onClick={() => createMutation.mutate()}>
             + Create
           </button>

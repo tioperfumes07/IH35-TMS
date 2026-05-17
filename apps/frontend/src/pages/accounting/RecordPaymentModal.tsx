@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
 import { Modal } from "../../components/Modal";
 import { UploadZone } from "../../components/UploadZone";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -200,13 +201,13 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment method
-            <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
               {PAYMENT_METHODS.map((method) => (
                 <option key={method.value} value={method.value}>
                   {method.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

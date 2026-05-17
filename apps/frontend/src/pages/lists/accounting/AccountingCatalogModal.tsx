@@ -3,6 +3,7 @@ import { ApiError } from "../../../api/client";
 import type { AccountingCatalogCreateBody, AccountingCatalogRow, AccountingCatalogUpdateBody } from "../../../api/catalogs-accounting";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 export type AccountingCatalogClient = {
   create: (operating_company_id: string, body: AccountingCatalogCreateBody) => Promise<{ id: string }>;
@@ -165,7 +166,7 @@ export function AccountingCatalogModal({
             return (
               <label key={field.key} className="block text-xs font-semibold text-gray-600">
                 {field.label}
-                <select
+                <SelectCombobox
                   value={String(value ?? "")}
                   disabled={readOnly}
                   onChange={(event) => setForm((current) => ({ ...current, metadata: { ...current.metadata, [field.key]: event.target.value } }))}
@@ -177,7 +178,7 @@ export function AccountingCatalogModal({
                       {option.label}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
                 {errors[`metadata.${field.key}`] ? <div className="mt-1 text-[11px] text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
               </label>
             );

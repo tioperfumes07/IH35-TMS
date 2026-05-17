@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createComplaint, getComplaints } from "../../api/safety";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -42,22 +43,22 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
     <div className="space-y-3">
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-7">
         <input type="date" value={form.complaint_date} onChange={(e) => setForm((v) => ({ ...v, complaint_date: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <select value={form.complainant_type} onChange={(e) => setForm((v) => ({ ...v, complainant_type: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
+        <SelectCombobox value={form.complainant_type} onChange={(e) => setForm((v) => ({ ...v, complainant_type: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
           <option value="driver">driver</option>
           <option value="customer">customer</option>
           <option value="employee">employee</option>
           <option value="external">external</option>
           <option value="anonymous">anonymous</option>
-        </select>
+        </SelectCombobox>
         <input value={form.respondent_uuid} placeholder="respondent_uuid" onChange={(e) => setForm((v) => ({ ...v, respondent_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.complaint_type_uuid} placeholder="complaint_type_uuid" onChange={(e) => setForm((v) => ({ ...v, complaint_type_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.summary} placeholder="Summary" onChange={(e) => setForm((v) => ({ ...v, summary: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <select value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
+        <SelectCombobox value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
           <option value="low">low</option>
           <option value="medium">medium</option>
           <option value="high">high</option>
           <option value="critical">critical</option>
-        </select>
+        </SelectCombobox>
         <button type="button" className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white" disabled={!form.respondent_uuid || !form.complaint_type_uuid || !form.summary || createMutation.isPending} onClick={() => createMutation.mutate()}>
           + Create Complaint
         </button>

@@ -13,6 +13,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { VendorLinkageModal } from "../../components/qbo/VendorLinkageModal";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type TabKey = "drivers" | "assets";
 
@@ -93,7 +94,7 @@ export function QboVendorLinkagePage() {
           <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white p-2">
             <div className="flex items-center gap-2">
               <label className="text-xs font-semibold text-gray-600">Filter:</label>
-              <select
+              <SelectCombobox
                 value={filter}
                 onChange={(event) => setFilter(event.target.value as "all" | "linked" | "unlinked")}
                 className="h-8 rounded border border-gray-300 px-2 text-xs"
@@ -101,7 +102,7 @@ export function QboVendorLinkagePage() {
                 <option value="all">All</option>
                 <option value="linked">Linked</option>
                 <option value="unlinked">Unlinked</option>
-              </select>
+              </SelectCombobox>
             </div>
             <Button onClick={() => void autoLinkHighConfidence()} disabled={!canManage}>
               Auto-Link High Confidence (&gt; 0.9)

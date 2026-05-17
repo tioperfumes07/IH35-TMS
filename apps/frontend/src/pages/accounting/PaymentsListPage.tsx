@@ -9,6 +9,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -109,22 +110,22 @@ export function PaymentsListPage() {
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-5">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Status
-          <select value={status} onChange={(event) => setStatus(event.target.value as "all" | "active" | "voided")} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | "active" | "voided")} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="voided">Voided</option>
-          </select>
+          </SelectCombobox>
         </label>
 
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Method
-          <select value={method} onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={method} onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
             {METHOD_OPTIONS.map((option) => (
               <option key={option.label} value={option.value}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
 
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">

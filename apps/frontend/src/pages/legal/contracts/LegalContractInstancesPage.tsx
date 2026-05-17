@@ -8,6 +8,7 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SendContractModal } from "./SendContractModal";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 const STATUS_OPTIONS: Array<{ value: "all" | LegalContractStatus; label: string }> = [
   { value: "all", label: "All statuses" },
@@ -132,7 +133,7 @@ export function LegalContractInstancesPage() {
             className="h-9 rounded border border-gray-300 px-2 text-sm xl:col-span-2"
             placeholder="Search signer or template code"
           />
-          <select
+          <SelectCombobox
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as "all" | LegalContractStatus)}
             className="h-9 rounded border border-gray-300 px-2 text-sm"
@@ -142,8 +143,8 @@ export function LegalContractInstancesPage() {
                 {option.label}
               </option>
             ))}
-          </select>
-          <select
+          </SelectCombobox>
+          <SelectCombobox
             value={templateFilter}
             onChange={(event) => setTemplateFilter(event.target.value)}
             className="h-9 rounded border border-gray-300 px-2 text-sm"
@@ -154,8 +155,8 @@ export function LegalContractInstancesPage() {
                 {code}
               </option>
             ))}
-          </select>
-          <select
+          </SelectCombobox>
+          <SelectCombobox
             value={signerTypeFilter}
             onChange={(event) => setSignerTypeFilter(event.target.value)}
             className="h-9 rounded border border-gray-300 px-2 text-sm"
@@ -166,7 +167,7 @@ export function LegalContractInstancesPage() {
             <option value="customer">Customer</option>
             <option value="vendor">Vendor</option>
             <option value="other">Other</option>
-          </select>
+          </SelectCombobox>
           <div className="grid grid-cols-2 gap-2 xl:col-span-2">
             <input value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} type="date" className="h-9 rounded border border-gray-300 px-2 text-sm" />
             <input value={dateTo} onChange={(event) => setDateTo(event.target.value)} type="date" className="h-9 rounded border border-gray-300 px-2 text-sm" />

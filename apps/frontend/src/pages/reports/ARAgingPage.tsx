@@ -5,6 +5,7 @@ import { getArAgingReport, type ARAgingRow } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -151,10 +152,10 @@ export function ARAgingPage() {
         </label>
         <label className="text-xs text-gray-600">
           Aging bucket
-          <select className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={bucketFilter} onChange={(e) => setBucketFilter(e.target.value as typeof bucketFilter)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={bucketFilter} onChange={(e) => setBucketFilter(e.target.value as typeof bucketFilter)}>
             <option value="all">All</option>
             <option value="61+">61+ days past due portion</option>
-          </select>
+          </SelectCombobox>
         </label>
       </div>
 

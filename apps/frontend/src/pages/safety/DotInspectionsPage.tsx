@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDotInspection, getDotInspections } from "../../api/safety";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -36,11 +37,11 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
         <input value={form.inspection_date} type="date" onChange={(e) => setForm((v) => ({ ...v, inspection_date: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.inspector_name} placeholder="Inspector name" onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.inspection_level} type="number" min={1} max={6} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <select value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
+        <SelectCombobox value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
           <option value="PASS">PASS</option>
           <option value="WARNING">WARNING</option>
           <option value="OOS">OOS</option>
-        </select>
+        </SelectCombobox>
         <button type="button" onClick={() => createMutation.mutate()} disabled={!form.inspector_name.trim() || createMutation.isPending} className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white">
           + Create DOT Inspection
         </button>

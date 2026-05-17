@@ -1,3 +1,4 @@
+import { SelectCombobox } from "../../shared/SelectCombobox";
 export type CategoryLine = {
   id: string;
   expense_category_uuid?: string;
@@ -122,7 +123,7 @@ export function CostBreakdownBox({
                     <tr key={line.id} className="border-t border-gray-100">
                       <td className="px-2 py-1">
                         <div className="flex items-center gap-1">
-                          <select
+                          <SelectCombobox
                             disabled={readOnly}
                             value={line.expense_category_uuid ?? ""}
                             onChange={(event) =>
@@ -140,7 +141,7 @@ export function CostBreakdownBox({
                                 {option.label}
                               </option>
                             ))}
-                          </select>
+                          </SelectCombobox>
                           <button
                             type="button"
                             disabled={readOnly}
@@ -244,7 +245,7 @@ export function CostBreakdownBox({
               <div key={line.id} className="rounded border border-gray-200 bg-white p-2">
                 <div className="grid gap-2 md:grid-cols-[1fr_1.2fr_1fr_110px_90px_95px_40px]">
                   <div className="flex items-center gap-1">
-                    <select
+                    <SelectCombobox
                       disabled={readOnly}
                       value={line.service_item_uuid ?? ""}
                       onChange={(event) =>
@@ -258,7 +259,7 @@ export function CostBreakdownBox({
                           {option.label}
                         </option>
                       ))}
-                    </select>
+                    </SelectCombobox>
                     <button
                       type="button"
                       disabled={readOnly}
@@ -339,7 +340,7 @@ export function CostBreakdownBox({
                         {row.line_type === "parts" ? (
                           <div className="space-y-1">
                             <div className="flex items-center gap-1">
-                              <select
+                              <SelectCombobox
                                 disabled={readOnly}
                                 value={row.part_uuid ?? ""}
                                 onChange={(event) =>
@@ -372,7 +373,7 @@ export function CostBreakdownBox({
                                     {option.label}
                                   </option>
                                 ))}
-                              </select>
+                              </SelectCombobox>
                               <button
                                 disabled={readOnly}
                                 type="button"

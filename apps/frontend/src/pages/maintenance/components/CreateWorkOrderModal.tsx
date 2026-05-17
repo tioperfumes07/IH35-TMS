@@ -376,7 +376,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           </div>
         </div>
         <div className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-900">
-          Will be: WO-{form.watch("unit_id") || "UNIT"}-{sourceType}-{new Date().toLocaleDateString("en-US").replace(/\//g, "-")}-XXXX (XXXX auto-generated)
+          Posts to QBO with class {form.watch("class_hint") || `${form.watch("unit_id") || "UNIT"}-${form.watch("driver_id") || "DRIVER"}`} on every line
         </div>
       </div>
     </Modal>

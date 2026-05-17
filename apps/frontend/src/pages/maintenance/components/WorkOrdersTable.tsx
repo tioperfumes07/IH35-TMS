@@ -1,5 +1,6 @@
 import type { WorkOrder } from "../../../api/maintenance";
 import { Link } from "react-router-dom";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   rows: WorkOrder[];
@@ -40,7 +41,7 @@ export function WorkOrdersTable({
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <label className="space-y-1 text-xs">
           <span className="text-gray-600">Filter by source type</span>
-          <select className="h-8 w-full rounded border border-gray-300 px-2 text-sm" value={sourceTypeFilter} onChange={(e) => onSourceTypeChange(e.target.value)}>
+          <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-sm" value={sourceTypeFilter} onChange={(e) => onSourceTypeChange(e.target.value)}>
             <option value="">All</option>
             <option value="IS">IS</option>
             <option value="ES">ES</option>
@@ -49,7 +50,7 @@ export function WorkOrdersTable({
             <option value="RT">RT</option>
             <option value="IT">IT</option>
             <option value="RS">RS</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="space-y-1 text-xs md:col-span-2">
           <span className="text-gray-600">Filter by external vendor (id)</span>

@@ -16,6 +16,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function canAccess(role?: string) {
   return role === "Owner" || role === "Administrator" || role === "Accountant";
@@ -232,7 +233,7 @@ export function CategorizationRulesPage() {
               min={1}
               className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
             />
-            <select
+            <SelectCombobox
               value={coaAccountId}
               onChange={(event) => setCoaAccountId(event.target.value)}
               className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
@@ -243,7 +244,7 @@ export function CategorizationRulesPage() {
                   {account.account_number} - {account.account_name}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
             <div className="flex flex-wrap gap-2 pt-1">
               <ActionButton disabled={saving} onClick={() => void onSaveRule()}>
                 {saving ? "Saving..." : "Save Rule"}

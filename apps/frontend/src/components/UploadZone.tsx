@@ -10,6 +10,7 @@ import {
   type AttachmentRow,
 } from "../api/attachments";
 import { Button } from "./Button";
+import { SelectCombobox } from "./shared/SelectCombobox";
 
 const CATEGORY_OPTIONS: AttachmentCategory[] = [
   "rate_confirmation",
@@ -203,7 +204,7 @@ export function UploadZone({
               </div>
             </div>
             <div className="ml-2 flex items-center gap-2">
-              <select
+              <SelectCombobox
                 className="h-8 rounded border border-slate-300 px-2 text-xs"
                 value={row.category}
                 onChange={(event) => setCategoryByFile((current) => ({ ...current, [row.filename]: event.target.value as AttachmentCategory }))}
@@ -213,7 +214,7 @@ export function UploadZone({
                     {option}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
               <Button
                 type="button"
                 size="sm"

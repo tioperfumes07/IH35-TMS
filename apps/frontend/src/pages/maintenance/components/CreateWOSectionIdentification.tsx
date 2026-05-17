@@ -4,6 +4,7 @@ import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch }
 import { useToast } from "../../../components/Toast";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { Combobox } from "../../../components/shared/Combobox";
 import { QuickCreateEntityModal, type QuickCreateKind } from "../../../components/forms/shared/QuickCreateEntityModal";
 
 type Props = {
@@ -49,53 +50,47 @@ export function CreateWOSectionIdentification({
   const requireExternalFields = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   const showExemptionReason = requireLoadForExpense && !selectedLoadId;
   return (
-    <section className="rounded border border-gray-200 bg-gray-50 p-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-700">A. Identification & Where</h3>
+    <section className="rounded border border-gray-200 bg-white p-3">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Work Order Details</h3>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
-        <Field label="WO #">
+        <Field label="WO Number">
           <input value="Auto on save" readOnly className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-sm" />
         </Field>
-        <Field label="Service Type">
-          <input {...register("wo_type")} readOnly className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-sm capitalize" />
-        </Field>
-        <Field label="Source Type *">
-          <select {...register("source_type", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
-            <option value="IS">Internal Shop (IS)</option>
-            <option value="ES">External Shop (ES)</option>
-            <option value="AC">Accident (AC)</option>
-            <option value="ET">External Tires (ET)</option>
-            <option value="RT">Roadside Tires (RT)</option>
-            <option value="IT">Internal Tires (IT)</option>
-            <option value="RS">Roadside Service (RS)</option>
-          </select>
-        </Field>
-        <Field label="R&M Bucket">
-          <select {...register("bucket")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
-            <option value="in_house">In-House</option>
-            <option value="external">External</option>
-            <option value="roadside">Roadside</option>
-          </select>
-        </Field>
-        <Field label="Date">
+        <Field label="Date Opened *">
           <input type="date" {...register("service_date")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
-        <Field label="Unit">
+        <Field label="Unit *">
           <input {...register("unit_id", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
-        <Field label={`Driver${requireDriverAndLoad ? " *" : ""}`}>
+        <Field label="Driver">
           <input {...register("driver_id", { required: requireDriverAndLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
-        <Field label="Class">
-          <input {...register("class_hint")} readOnly className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-sm" />
+        <Field label="Class (auto)">
+          <input {...register("class_hint")} readOnly className="h-8 w-full rounded border border-emerald-200 bg-emerald-50 px-2 text-sm font-semibold text-emerald-900" />
+        </Field>
+        <Field label="Load #">
+          <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
       </div>
       <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
-        <Field label="Repair Location">
-          <select {...register("repair_location")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
-            <option value="in_house">In-house</option>
-            <option value="external_shop">External Shop</option>
-            <option value="mobile_roadside">Mobile Roadside</option>
-          </select>
+        <Field label="Location *">
+          <Combobox
+            options={[
+              { value: "external_shop", label: "External shop" },
+              { value: "in_house", label: "Internal shop" },
+              { value: "mobile_roadside", label: "Roadside" },
+              { value: "internal_tires", label: "Internal tires" },
+              { value: "external_tires", label: "External tires" },
+            ]}
+            value={repairLocation}
+            onChange={(value) => {
+              if (!value || !setValue) return;
+              setValue("repair_location", value as CreateWOFormValues["repair_location"], { shouldDirty: true });
+              if (value === "in_house") setValue("bucket", "in_house", { shouldDirty: true });
+              if (value === "external_shop" || value === "external_tires") setValue("bucket", "external", { shouldDirty: true });
+              if (value === "mobile_roadside") setValue("bucket", "roadside", { shouldDirty: true });
+            }}
+          />
         </Field>
         <Field label={repairLocation !== "in_house" ? "Vendor *" : "Vendor"}>
           {operatingCompanyId && setValue && getValues ? (
@@ -146,6 +141,15 @@ export function CreateWOSectionIdentification({
             <input {...register("vendor_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
           )}
         </Field>
+        <Field label="Vendor RO / Invoice #">
+          <input {...register("vendor_invoice_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+        </Field>
+      </div>
+
+      <input type="hidden" {...register("source_type")} />
+      <input type="hidden" {...register("bucket")} />
+
+      <div className="mt-2 hidden">
         <Field label="Customer">
           {operatingCompanyId && setValue ? (
             <>
@@ -186,9 +190,6 @@ export function CreateWOSectionIdentification({
           ) : (
             <input className="h-8 w-full rounded border border-gray-300 px-2 text-sm" disabled />
           )}
-        </Field>
-        <Field label="Vendor RO/Invoice #">
-          <input {...register("vendor_invoice_number")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
       </div>
       {operatingCompanyId && setValue && getValues && (bucket === "external" || repairLocation === "external_shop") ? (
@@ -258,9 +259,6 @@ export function CreateWOSectionIdentification({
         </div>
       ) : null}
       <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
-        <Field label={`Load #${requireLoad ? " *" : ""}`}>
-          <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-        </Field>
         <div className="md:col-span-3">
           <Field label="Description">
             <input {...register("description", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />

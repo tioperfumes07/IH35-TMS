@@ -15,6 +15,7 @@ import { DriverMiscInvoiceModal } from "./modals/DriverMiscInvoiceModal";
 import { ManualInvoiceModal } from "./modals/ManualInvoiceModal";
 import { VendorChargebackModal } from "./modals/VendorChargebackModal";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 const STATUS_OPTIONS: Array<{ value: "" | InvoiceStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -72,7 +73,7 @@ export function InvoicesListPage() {
         subtitle="Accounts receivable invoice list"
         actions={
           <div className="flex items-center gap-2">
-            <select
+            <SelectCombobox
               value={createType}
               onChange={(event) => setCreateType(event.target.value as typeof createType)}
               className="h-8 rounded border border-gray-300 bg-white px-2 text-[12px]"
@@ -83,7 +84,7 @@ export function InvoicesListPage() {
               <option value="vendor_chargeback">Vendor chargeback</option>
               <option value="customer_adjustment">Customer adjustment</option>
               <option value="manual">Manual</option>
-            </select>
+            </SelectCombobox>
             <Button
               onClick={() => {
                 if (createType === "from_load") {
@@ -102,13 +103,13 @@ export function InvoicesListPage() {
         <div className="grid gap-2 md:grid-cols-5">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
-            <select value={status} onChange={(event) => setStatus(event.target.value as "" | InvoiceStatus)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "" | InvoiceStatus)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.label} value={option.value}>
                   {option.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
             Search

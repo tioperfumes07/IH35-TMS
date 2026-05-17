@@ -19,6 +19,7 @@ import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
 import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type FormValues = BookLoadFormValues & {
   trailer_type: string;
@@ -546,12 +547,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                   </label>
                   <label className="text-[10px] font-semibold text-gray-600">
                     Border routing
-                    <select {...form.register("border_routing")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm">
+                    <SelectCombobox {...form.register("border_routing")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm">
                       <option value="">—</option>
                       <option value="domestic">Domestic</option>
                       <option value="cross_border_mx">Cross-border (MX)</option>
                       <option value="cross_border_ca">Cross-border (CA)</option>
-                    </select>
+                    </SelectCombobox>
                   </label>
                 </div>
                 <ExpectedAdjustmentsCallout register={form.register as never} />

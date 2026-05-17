@@ -17,6 +17,7 @@ import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
 import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
 import { Link } from "react-router-dom";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type ItemGroup = { itemId: string; accounts: PlaidBankAccount[] };
 
@@ -294,7 +295,7 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
           aria-label="Filter transactions by description"
           className="min-w-[12rem] flex-1 rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
         />
-        <select
+        <SelectCombobox
           value={accountFilter}
           onChange={(e) => setAccountFilter(e.target.value)}
           aria-label="Filter by account"
@@ -306,7 +307,7 @@ export function BankingCompanyTransactionsPanel({ companyId }: { companyId: stri
               {(a.institution_name || "Bank") + " — " + (a.account_name || "Account")}
             </option>
           ))}
-        </select>
+        </SelectCombobox>
       </div>
       {txQuery.isError ? <p className="text-sm text-red-600">Unable to load transactions.</p> : null}
       {txQuery.isLoading ? <p className="text-sm text-gray-600">Loading…</p> : null}

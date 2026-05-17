@@ -4,6 +4,7 @@ import type { UseFormSetValue } from "react-hook-form";
 import { listLoadTemplates, createLoadTemplate, type LoadTemplateRow } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type BookStop = {
   stop_type: "pickup" | "delivery";
@@ -189,7 +190,7 @@ export function LoadTemplatePicker({ operatingCompanyId, onSelectTemplate }: Pic
   return (
     <label className="flex flex-col text-[10px] font-semibold text-gray-700">
       Load from template
-      <select
+      <SelectCombobox
         className="mt-0.5 h-8 rounded border border-gray-300 px-2 text-sm font-normal"
         defaultValue=""
         disabled={q.isLoading || templates.length === 0}
@@ -206,7 +207,7 @@ export function LoadTemplatePicker({ operatingCompanyId, onSelectTemplate }: Pic
             {t.name}
           </option>
         ))}
-      </select>
+      </SelectCombobox>
     </label>
   );
 }

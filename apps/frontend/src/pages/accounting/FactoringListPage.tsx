@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SubmitFactoringModal } from "./SubmitFactoringModal";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
   { value: "all", label: "All" },
@@ -66,13 +67,13 @@ export function FactoringListPage() {
         <div className="grid gap-2 md:grid-cols-4">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Status
-            <select value={status} onChange={(event) => setStatus(event.target.value as "all" | FactoringAdvance["status"])} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | FactoringAdvance["status"])} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Search

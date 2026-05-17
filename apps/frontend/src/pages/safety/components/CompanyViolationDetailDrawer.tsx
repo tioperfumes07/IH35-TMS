@@ -7,6 +7,7 @@ import {
   updateCompanyViolation,
 } from "../../../api/safety";
 import { CompanyViolationCorrectiveActionForm } from "./CompanyViolationCorrectiveActionForm";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -92,7 +93,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
           <div className="mt-2 grid gap-2 md:grid-cols-2">
             <label className="text-xs font-medium text-slate-700">
               Outcome
-              <select
+              <SelectCombobox
                 className="mt-1 h-9 w-full rounded border border-slate-300 px-2 text-xs"
                 value={outcome}
                 onChange={(event) => setOutcome(event.target.value as typeof outcome)}
@@ -102,7 +103,7 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
                 <option value="monetary_fine">Monetary fine</option>
                 <option value="termination">Termination</option>
                 <option value="dismissed">Dismissed</option>
-              </select>
+              </SelectCombobox>
             </label>
             <label className="text-xs font-medium text-slate-700">
               Fine Override (cents)

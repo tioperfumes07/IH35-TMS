@@ -16,6 +16,7 @@ import { PageHeader } from "../components/forms/shared/PageHeader";
 import { VendorCategoryChip } from "../components/vendors/VendorCategoryChip";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
+import { SelectCombobox } from "../components/shared/SelectCombobox";
 
 const tabs = ["Profile", "A/P", "Documents", "Audit History"] as const;
 type VendorTab = (typeof tabs)[number];
@@ -248,7 +249,7 @@ export function VendorDetailPage() {
                 <span className="text-xs text-amber-700">Select operating company to edit.</span>
               ) : (
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
+                  <SelectCombobox
                     className="h-8 rounded border border-gray-300 px-2 text-xs"
                     value={categoryDraft}
                     onChange={(e) => setCategoryDraft(e.target.value as VendorCategoryValue)}
@@ -258,7 +259,7 @@ export function VendorDetailPage() {
                         {c.replace(/_/g, " ")}
                       </option>
                     ))}
-                  </select>
+                  </SelectCombobox>
                   <label className="flex items-center gap-1 text-xs">
                     <input type="checkbox" checked={lockCategory} onChange={(e) => setLockCategory(e.target.checked)} />
                     Lock
@@ -327,13 +328,13 @@ export function VendorDetailPage() {
                   </label>
                   <label className="block">
                     Method
-                    <select className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={billPayMethod} onChange={(e) => setBillPayMethod(e.target.value)}>
+                    <SelectCombobox className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1" value={billPayMethod} onChange={(e) => setBillPayMethod(e.target.value)}>
                       <option value="ach">ACH</option>
                       <option value="check">Check</option>
                       <option value="wire">Wire</option>
                       <option value="credit_card">Credit Card</option>
                       <option value="other">Other</option>
-                    </select>
+                    </SelectCombobox>
                   </label>
                   <label className="block">
                     Reference

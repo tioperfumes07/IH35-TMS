@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { RunnerFilter } from "./runner-config";
 import { listDrivers, listUnits } from "../../../api/mdata";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   filters: RunnerFilter[];
@@ -79,14 +80,14 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             return (
               <label key={filter.key} className="block">
                 <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <select className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+                <SelectCombobox className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
                   <option value="">All units</option>
                   {units.map((unit) => (
                     <option key={unit.id} value={unit.id}>
                       {unit.unit_number}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
             );
           }
@@ -95,14 +96,14 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
             return (
               <label key={filter.key} className="block">
                 <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-                <select className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+                <SelectCombobox className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
                   <option value="">Select driver</option>
                   {drivers.map((driver) => (
                     <option key={driver.id} value={driver.id}>
                       {`${driver.first_name} ${driver.last_name}`}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
             );
           }
@@ -111,13 +112,13 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
           return (
             <label key={filter.key} className="block">
               <div className="mb-1 text-xs font-semibold text-slate-600">{filter.label}</div>
-              <select className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
+              <SelectCombobox className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" value={String(values[filter.key] ?? selectedCompanyId ?? "")} onChange={(e) => onChange(filter.key, e.target.value)}>
                 {companies.map((company) => (
                   <option key={company.id} value={company.id}>
                     {company.legal_name}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
           );
         })}

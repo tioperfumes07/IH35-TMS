@@ -4,6 +4,7 @@ import { listVendors } from "../../api/mdata";
 import { listFactoringCandidateInvoices, submitFactoringBatch } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -91,14 +92,14 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
         <div className="grid gap-2 md:grid-cols-2">
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Factoring company</span>
-            <select className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={vendorId} onChange={(event) => setVendorId(event.target.value)}>
+            <SelectCombobox className="h-9 rounded border border-gray-300 px-2 text-[13px]" value={vendorId} onChange={(event) => setVendorId(event.target.value)}>
               <option value="">Select vendor</option>
               {(vendorsQuery.data ?? []).map((vendor) => (
                 <option key={vendor.id} value={vendor.id}>
                   {vendor.name}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Submission batch ref</span>

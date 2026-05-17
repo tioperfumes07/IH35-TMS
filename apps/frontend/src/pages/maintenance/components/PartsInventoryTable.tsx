@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { adjustPartsInventory, listPartsInventory, recordPartsPurchase, type PartsInventoryRow } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   companyId: string;
@@ -98,12 +99,12 @@ export function PartsInventoryTable({ companyId, rows }: Props) {
       <Modal open={Boolean(adjustRow)} onClose={() => setAdjustRow(null)} title="Adjust Quantity">
         <div className="space-y-2">
           <input className="h-8 w-full rounded border border-gray-300 px-2 text-sm" type="number" value={deltaQty} onChange={(e) => setDeltaQty(Number(e.target.value || 0))} />
-          <select className="h-8 w-full rounded border border-gray-300 px-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value as typeof reason)}>
+          <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-sm" value={reason} onChange={(e) => setReason(e.target.value as typeof reason)}>
             <option value="used">used</option>
             <option value="discarded">discarded</option>
             <option value="shrinkage">shrinkage</option>
             <option value="recount">recount</option>
-          </select>
+          </SelectCombobox>
           <Button onClick={() => adjustMutation.mutate()} disabled={adjustMutation.isPending}>Apply Adjustment</Button>
         </div>
       </Modal>

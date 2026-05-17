@@ -5,6 +5,7 @@ import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -57,13 +58,13 @@ export function BillsPage() {
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-gray-600">Status:</span>
-        <select className="rounded border border-gray-300 px-2 py-1" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+        <SelectCombobox className="rounded border border-gray-300 px-2 py-1" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
           <option value="">All open items</option>
           <option value="unpaid">Unpaid</option>
           <option value="partial">Partial</option>
           <option value="paid">Paid</option>
           <option value="voided">Voided</option>
-        </select>
+        </SelectCombobox>
       </div>
 
       <div className="overflow-auto rounded border border-gray-200 bg-white">

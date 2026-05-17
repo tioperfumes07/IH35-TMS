@@ -21,6 +21,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function severityClass(severity: string) {
   if (severity === "critical") return "bg-red-100 text-red-700";
@@ -396,7 +397,7 @@ export function ForensicReviewPage() {
           {selectedAnomalyId ? (
             <div className="mt-3 rounded border border-gray-100 p-2">
               <p className="text-xs font-semibold text-gray-700">Review anomaly {selectedAnomalyId}</p>
-              <select
+              <SelectCombobox
                 value={reviewStatus}
                 onChange={(event) => setReviewStatus(event.target.value as typeof reviewStatus)}
                 className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs"
@@ -405,7 +406,7 @@ export function ForensicReviewPage() {
                 <option value="cleared">Cleared</option>
                 <option value="confirmed_issue">Confirmed Issue</option>
                 <option value="requires_legal">Requires Legal</option>
-              </select>
+              </SelectCombobox>
               <textarea
                 value={reviewNotes}
                 onChange={(event) => setReviewNotes(event.target.value)}

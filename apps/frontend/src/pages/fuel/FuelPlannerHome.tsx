@@ -27,14 +27,14 @@ import { TripPlanSummaryBanner } from "./components/TripPlanSummaryBanner";
 import { UploadLovesPricesModal } from "./components/UploadLovesPricesModal";
 
 const SUBNAV = [
-  { id: "active_plan", label: "Active Plan" },
-  { id: "fuel_log", label: "Fuel Log" },
-  { id: "loves_prices", label: "Loves Prices" },
-  { id: "relay_transactions", label: "Relay Transactions" },
-  { id: "def", label: "DEF" },
-  { id: "compliance_tracker", label: "Compliance Tracker" },
-  { id: "ifta", label: "Fuel by Unit/Driver/State (IFTA)" },
+  { id: "home", label: "Home" },
+  { id: "planner", label: "Planner" },
+  { id: "relay_inbox", label: "Relay inbox" },
   { id: "settings", label: "Settings" },
+  { id: "expense_mapping", label: "Expense mapping" },
+  { id: "history", label: "History & savings" },
+  { id: "loves_prices", label: "Loves prices" },
+  { id: "compliance", label: "Compliance" },
 ] as const;
 
 export function FuelPlannerHomePage() {
@@ -43,7 +43,7 @@ export function FuelPlannerHomePage() {
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [tab, setTab] = useState<(typeof SUBNAV)[number]["id"]>("active_plan");
+  const [tab, setTab] = useState<(typeof SUBNAV)[number]["id"]>("planner");
 
   const dashboardQuery = useQuery({
     queryKey: ["fuel", "planner", "dashboard", companyId],
@@ -90,8 +90,8 @@ export function FuelPlannerHomePage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        title="Fuel Planner"
-        subtitle="HOS-aware route optimizer + compliance"
+        title="Fuel · 0 new in last 3 days"
+        subtitle="Planner"
         actions={
           <div className="flex items-center gap-2">
             <HoverDropdown
@@ -112,7 +112,8 @@ export function FuelPlannerHomePage() {
                 ))}
               </div>
             </HoverDropdown>
-            <ActionButton onClick={() => setUploadOpen(true)}>+ Upload Loves Prices</ActionButton>
+            <ActionButton onClick={() => {}}>+ Plan trip</ActionButton>
+            <ActionButton onClick={() => setUploadOpen(true)}>Upload Loves prices</ActionButton>
             <ActionButton
               onClick={() => {
                 if (!activeRoute || !companyId) return;
@@ -124,7 +125,7 @@ export function FuelPlannerHomePage() {
                   .catch((error) => pushToast(String((error as Error).message || "Send failed"), "error"));
               }}
             >
-              + Send to Driver App
+              Send to driver app
             </ActionButton>
           </div>
         }
@@ -146,7 +147,7 @@ export function FuelPlannerHomePage() {
       <AvoidStatesBanner states={expensiveStates} />
 
       <section className="space-y-2">
-        <h3 className="text-sm font-semibold text-gray-900">HOS-Aware Fuel Route</h3>
+        <h3 className="text-sm font-semibold text-gray-900">HOS-aware route diagram</h3>
         <RouteDiagramSvg
           totalMiles={Number(detail?.total_distance_miles ?? 0)}
           stops={stops}
@@ -155,7 +156,7 @@ export function FuelPlannerHomePage() {
       </section>
 
       <section className="space-y-2">
-        <h3 className="text-sm font-semibold text-gray-900">Stop-by-Stop Reasoning</h3>
+        <h3 className="text-sm font-semibold text-gray-900">HOS-aware stop-logic panel</h3>
         <StopReasoningTable stops={stops} />
       </section>
 

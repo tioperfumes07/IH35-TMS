@@ -6,6 +6,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { MaintenanceCatalogModal, type MaintenanceCatalogClient } from "./MaintenanceCatalogModal";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   client: MaintenanceCatalogClient & {
@@ -72,11 +73,11 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or display name" className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
-        <select value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded border border-gray-300 px-2 text-sm">
+        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded border border-gray-300 px-2 text-sm">
           <option value="true">Active</option>
           <option value="false">Inactive</option>
           <option value="all">All</option>
-        </select>
+        </SelectCombobox>
       </div>
 
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">

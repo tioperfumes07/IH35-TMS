@@ -145,7 +145,7 @@ export function AccountingHubPage() {
         <HubSection title="Vendors (vendor_category or vendor_type)" to="/vendors" groups={vendorGroups} loading={vendorsQ.isLoading} />
         <HubSection title="Customers (customer_type)" to="/customers" groups={customerGroups} loading={customersQ.isLoading} />
         <HubSection title="Invoices (by customer category / name)" to="/accounting/invoices" groups={invoiceGroups} loading={invoicesQ.isLoading} />
-        <HubSection title="Customer payments (payment_method)" to="/accounting/payments" groups={paymentGroups} loading={paymentsQ.isLoading} />
+        <HubSection title="Receive Payment (payment_method)" to="/accounting/payments" groups={paymentGroups} loading={paymentsQ.isLoading} />
       </div>
     </div>
   );
