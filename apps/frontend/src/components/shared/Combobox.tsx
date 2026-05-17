@@ -1,3 +1,7 @@
+// TODO(P3-T12-followup): Combobox surface is intentionally 3 files for this PR:
+// components/Combobox.tsx engine + shared/Combobox.tsx wrapper +
+// shared/SelectCombobox.tsx adapter. Collapse to a single shared surface in a
+// dedicated follow-up PR; behavior must stay identical.
 import {
   Combobox as BaseCombobox,
   type ComboboxOption as BaseOption,
