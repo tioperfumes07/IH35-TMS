@@ -166,6 +166,22 @@ export type Transfer = {
   to_coa_name?: string | null;
 };
 
+export type EscrowDriverBalance = {
+  driver_id: string;
+  driver_name: string | null;
+  escrow_balance: number;
+};
+
+export type EscrowDriverTimelineRow = {
+  id: string;
+  driver_id: string;
+  entry_type: string | null;
+  bucket: string | null;
+  amount: number;
+  memo: string | null;
+  created_at: string;
+};
+
 function q(companyId: string) {
   return `operating_company_id=${encodeURIComponent(companyId)}`;
 }
@@ -684,6 +700,16 @@ export function completeReconciliationSession(
       method: "POST",
       body: payload,
     }
+  );
+}
+
+export function getEscrowDriverBalances(operatingCompanyId: string) {
+  return apiRequest<{ drivers: EscrowDriverBalance[] }>(`/api/v1/banking/escrow-visualizer?${q(operatingCompanyId)}`);
+}
+
+export function getEscrowDriverTimeline(operatingCompanyId: string, driverId: string) {
+  return apiRequest<{ timeline: EscrowDriverTimelineRow[] }>(
+    `/api/v1/banking/escrow-visualizer/${encodeURIComponent(driverId)}?${q(operatingCompanyId)}`
   );
 }
 

@@ -37,6 +37,8 @@ import { listVendorBalances } from "../../api/accounting";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
 import { BankingReviewCenter } from "./components/BankingReviewCenter";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { DriverEscrowTabContent } from "./components/DriverEscrowTabContent";
+import { BankingReportsTabContent } from "./components/BankingReportsTabContent";
 
 const BANKING_TABS = [
   { id: "accounts", label: "Accounts" },
@@ -392,15 +394,14 @@ export function BankingHomePage() {
       ) : null}
 
       {activeTab === "driver_escrow" ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">
-          Driver Escrow view - Phase B2
-        </div>
+        <DriverEscrowTabContent
+          operatingCompanyId={companyId}
+          driverEscrowBalance={Number(kpiQuery.data?.driver_escrow ?? 0)}
+        />
       ) : null}
 
       {activeTab === "reports" ? (
-        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">
-          Banking reports - Phase B2
-        </div>
+        <BankingReportsTabContent />
       ) : null}
 
       <CategorizeDrawer
