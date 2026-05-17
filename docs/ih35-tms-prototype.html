@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IH35-TMS — Interactive Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#102444;--navy-deep:#0a1830;
+  --ink:#1c2433;--slate:#5d6878;--faint:#8b94a3;
+  --line:#e4e7ec;--line-soft:#eef0f3;--bg:#eceef2;--card:#fff;
+  --green:#1c9d5b;--green-d:#15824a;--green-bg:#e7f4ec;
+  --red:#d23b3b;--red-bg:#fbeaea;--amber:#cf7d1e;--amber-bg:#fbf0df;
+  --blue:#2f6fb0;--blue-bg:#e8f0f8;--purple:#6b54b0;--purple-bg:#efe9f7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--ink);
+  font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.tnum{font-variant-numeric:tabular-nums}
+a{color:inherit;text-decoration:none}
+.hidden{display:none!important}
+
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:80px;background:var(--navy);flex:none;display:flex;flex-direction:column;
+  padding:5px 0;border-right:1px solid var(--navy-deep);overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.nav-i{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;
+  color:#9aa7bd;cursor:pointer;border-left:3px solid transparent;transition:.12s;flex:none}
+.nav-i svg{width:18px;height:18px}
+.nav-i span{font-size:9px;font-weight:600;letter-spacing:.03em}
+.nav-i:hover{color:#dde4ee;background:#16284a}
+.nav-i.active{color:#fff;background:#1b3160;border-left-color:var(--green)}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:48px;background:var(--navy);color:#cdd6e4;flex:none;display:flex;
+  align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--navy-deep)}
+.tb-l{display:flex;align-items:center;gap:14px}
+.tb-co{font-size:13px;font-weight:700;color:#fff;letter-spacing:.02em}
+.tb-status{display:flex;align-items:center;gap:13px;font-size:11px;color:#8d99ad}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:1px}
+.dot.ok{background:#36c07e}
+.tb-r{display:flex;align-items:center;gap:16px;font-size:11.5px;color:#9aa7bd}
+.tb-user{color:#fff;font-weight:600}
+.content{flex:1;overflow-y:auto;padding:16px 20px 48px}
+
+.phead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.phead-l{display:flex;align-items:baseline;gap:12px}
+.phead h1{font-size:21px;font-weight:700;letter-spacing:-.01em}
+.phead .sub{font-size:12px;color:var(--slate)}
+.newpill{font-size:11px;color:var(--slate);background:#fff;border:1px solid var(--line);
+  padding:3px 9px;border-radius:11px;font-weight:600}
+.phead-r{display:flex;gap:8px;position:relative}
+.btn{font-family:inherit;font-size:12px;font-weight:600;padding:7px 13px;border-radius:6px;
+  border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn:hover{background:#f6f7f9}
+.btn.primary{background:var(--green);border-color:var(--green-d);color:#fff}
+.btn.primary:hover{background:var(--green-d)}
+.btn .cv{font-size:8px}
+.createmenu{position:absolute;top:38px;right:0;background:#fff;border:1px solid var(--line);
+  border-radius:7px;box-shadow:0 12px 30px rgba(16,36,68,.18);padding:5px;min-width:210px;display:none;z-index:40}
+.createmenu.show{display:block}
+.createmenu a{display:block;padding:8px 11px;font-size:12px;font-weight:500;border-radius:5px;cursor:pointer}
+.createmenu a:hover{background:var(--bg)}
+.createmenu .sep{height:1px;background:var(--line-soft);margin:4px 2px}
+
+.verify{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);
+  border-left:3px solid var(--blue);border-radius:7px;padding:9px 14px;margin-bottom:12px;font-size:12px;flex-wrap:wrap}
+.verify .vtag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  background:var(--blue-bg);color:var(--blue);padding:3px 7px;border-radius:4px}
+.verify .vsep{color:var(--line)}
+.verify .vmatch{color:var(--green-d);font-weight:600}
+.verify .vmiss{color:var(--amber);font-weight:600}
+.verify .vspace{flex:1}
+.verify .vbtn{font-size:11px;font-weight:600;color:var(--slate);border:1px solid var(--line);
+  padding:5px 10px;border-radius:5px;cursor:pointer;background:#fff}
+.verify .vbtn:hover{background:#f6f7f9}
+
+.kpis{display:grid;gap:10px;margin-bottom:12px}
+.kpis.k6{grid-template-columns:repeat(6,1fr)}
+.kpis.k4{grid-template-columns:repeat(4,1fr)}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:7px;padding:11px 13px;border-left:3px solid var(--line)}
+.kpi.red{border-left-color:var(--red)}
+.kpi.amber{border-left-color:var(--amber)}
+.kpi.green{border-left-color:var(--green)}
+.kpi.blue{border-left-color:var(--blue)}
+.kpi .k-l{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--faint);text-transform:uppercase}
+.kpi .k-v{font-size:20px;font-weight:700;margin-top:4px;letter-spacing:-.01em}
+.kpi .k-v small{font-size:11px;font-weight:600;color:var(--slate)}
+.kpi .k-s{font-size:10px;color:var(--slate);margin-top:2px}
+
+.tabbar{display:flex;align-items:stretch;background:#fff;border:1px solid var(--line);
+  border-radius:7px;padding:0 4px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:11px 14px;font-size:12.5px;font-weight:600;color:var(--slate);cursor:pointer;border-bottom:2.5px solid transparent}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--ink);border-bottom-color:var(--navy)}
+
+.panel{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.p-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--line-soft)}
+.p-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate)}
+.p-tools{display:flex;gap:7px;align-items:center}
+.chip{font-size:11px;font-weight:600;color:var(--slate);border:1px solid var(--line);padding:5px 10px;border-radius:5px;cursor:pointer;background:#fff}
+.chip:hover{background:#f6f7f9}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.toggle button{font-family:inherit;font-size:11px;font-weight:700;padding:6px 12px;border:none;background:#fff;color:var(--slate);cursor:pointer}
+.toggle button.on{background:var(--navy);color:#fff}
+
+table{width:100%;border-collapse:collapse}
+thead th{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);
+  text-align:left;padding:9px 14px;border-bottom:1px solid var(--line-soft);background:#fafbfc;white-space:nowrap}
+thead th.r{text-align:right}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--line-soft);font-size:12px;vertical-align:middle}
+tbody td.r{text-align:right}
+tbody tr:hover{background:var(--bg)}
+tbody tr:last-child td{border-bottom:none}
+.tcode{font-weight:700;font-size:11.5px}
+.tsub{display:block;font-size:10.5px;color:var(--faint);font-weight:500}
+.amt{font-weight:700;white-space:nowrap}
+.amt.neg{color:var(--red)}
+.badge{font-size:10px;font-weight:700;padding:2.5px 8px;border-radius:11px;white-space:nowrap}
+.b-open{background:var(--blue-bg);color:var(--blue)}
+.b-paid{background:var(--green-bg);color:var(--green-d)}
+.b-due{background:var(--red-bg);color:var(--red)}
+.b-part{background:var(--amber-bg);color:var(--amber)}
+.b-posted{background:var(--green-bg);color:var(--green-d)}
+.b-draft{background:#edeef1;color:var(--slate)}
+.b-pend{background:var(--amber-bg);color:var(--amber)}
+.b-sync{background:var(--green-bg);color:var(--green-d)}
+.b-bank{background:var(--blue-bg);color:var(--blue)}
+.b-cc{background:var(--purple-bg);color:var(--purple)}
+.b-fact{background:#e4f2ee;color:var(--green-d)}
+.b-cash{background:#edeef1;color:var(--slate)}
+.b-active{background:var(--green-bg);color:var(--green-d)}
+.b-closed{background:#edeef1;color:var(--slate)}
+.mini{font-family:inherit;font-size:11px;font-weight:600;padding:5px 11px;border-radius:5px;cursor:pointer}
+.mini.go{background:var(--navy);color:#fff;border:1px solid var(--navy)}
+.mini.go:hover{background:#1b3160}
+.mini.ghost{background:#fff;color:var(--slate);border:1px solid var(--line)}
+.mini.ghost:hover{background:#f6f7f9}
+.mini.warn{background:#fff;color:var(--red);border:1px solid #f0c9c9}
+.mini.warn:hover{background:var(--red-bg)}
+.p-foot{padding:9px 14px;font-size:11px;color:var(--slate);background:#fafbfc;border-top:1px solid var(--line-soft);
+  display:flex;justify-content:space-between}
+.p-foot b{color:var(--ink)}
+.subtabs{display:flex;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line-soft)}
+.stab{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:5px;color:var(--slate);cursor:pointer}
+.stab.on{background:var(--navy);color:#fff}
+.sugg{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;background:var(--blue-bg);color:var(--blue);padding:4px 9px;border-radius:12px}
+.sugg.split{background:var(--purple-bg);color:var(--purple)}
+.sugg.xfer{background:var(--green-bg);color:var(--green-d)}
+.nosug{font-size:11px;font-weight:600;color:var(--faint);font-style:italic}
+.acctsel{display:flex;gap:9px;margin-bottom:12px;flex-wrap:wrap}
+.acctcard{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 13px;cursor:pointer;min-width:150px;border-bottom:3px solid transparent}
+.acctcard:hover{background:#f6f7f9}
+.acctcard.on{border-bottom-color:var(--navy);box-shadow:0 3px 10px rgba(16,36,68,.12)}
+.acctcard .ac-n{font-size:11.5px;font-weight:700}
+.acctcard .ac-b{font-size:15px;font-weight:700;margin-top:2px}
+.acctcard .ac-b.neg{color:var(--red)}
+.acctcard .ac-s{font-size:10px;color:var(--faint);margin-top:1px}
+.acctcard .ac-u{display:inline-block;font-size:9px;font-weight:700;background:var(--amber-bg);color:var(--amber);padding:2px 7px;border-radius:9px;margin-top:4px}
+.acctcard .ac-u.zero{background:var(--green-bg);color:var(--green-d)}
+.mini.confirm{background:var(--green);color:#fff;border:1px solid var(--green-d)}
+.mini.confirm:hover{background:var(--green-d)}
+.rowdone{opacity:.45}
+.donetag{font-size:11px;font-weight:700;color:var(--green-d)}
+
+.grouphd{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:#f4f6f8;border-bottom:1px solid var(--line-soft)}
+.grouphd .g-n{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate)}
+.grouphd .g-e{font-size:10.5px;font-weight:600;color:var(--blue);cursor:pointer}
+.acctrow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line-soft)}
+.acctrow:hover{background:var(--bg)}
+.drag{color:var(--faint);cursor:grab;font-size:13px;flex:none;letter-spacing:-2px}
+.acctrow .a-main{flex:1;min-width:0}
+.acctrow .a-n{font-size:12.5px;font-weight:700}
+.acctrow .a-s{font-size:10.5px;color:var(--faint)}
+.acctrow .a-col{width:148px;flex:none;font-size:11px;color:var(--slate)}
+.acctrow .a-col b{display:block;color:var(--ink);font-size:11.5px;font-weight:600}
+.acctrow .a-bal{width:104px;flex:none;text-align:right;font-size:13px;font-weight:700}
+.acctrow .a-bal.neg{color:var(--red)}
+.efilters{display:flex;gap:9px;padding:11px 14px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.efilters select{font-family:inherit;font-size:11.5px;padding:6px 9px;border:1px solid var(--line);border-radius:5px;color:var(--ink);background:#fff}
+.estat{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
+.estat .e-l{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.estat .e-v{font-size:18px;font-weight:700;margin-top:3px}
+.rptgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px}
+.rptcard{border:1px solid var(--line);border-radius:7px;padding:12px 13px;cursor:pointer}
+.rptcard:hover{background:var(--bg);border-color:#cdd3dc}
+.rptcard .r-n{font-size:12.5px;font-weight:700}
+.rptcard .r-d{font-size:10.5px;color:var(--slate);margin-top:2px}
+.seclist{padding:6px 6px}
+.secitem{display:flex;align-items:center;gap:11px;padding:10px 10px;border-radius:6px;cursor:pointer}
+.secitem:hover{background:var(--bg)}
+.secitem + .secitem{border-top:1px solid var(--line-soft)}
+.secdot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex:none}
+.secitem .s-n{font-size:12.5px;font-weight:600}
+.secitem .s-d{font-size:10.5px;color:var(--slate)}
+.secitem .s-go{margin-left:auto;font-size:11px;color:var(--faint)}
+.notebar{font-size:11px;color:var(--slate);background:var(--blue-bg);border:1px solid #cfe0ee;
+  border-radius:7px;padding:9px 13px;margin-bottom:12px}
+.notebar b{color:var(--blue)}
+
+.overlay{position:fixed;inset:0;background:rgba(12,22,42,.5);display:none;align-items:flex-start;
+  justify-content:center;padding:44px 20px;z-index:90;overflow-y:auto}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:10px;width:760px;max-width:100%;overflow:hidden;box-shadow:0 24px 60px rgba(8,18,38,.4)}
+.modal.sm{width:520px}
+.m-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.m-head h3{font-size:15px;font-weight:700}
+.m-head .m-sub{font-size:11px;color:var(--slate);margin-top:1px}
+.m-x{font-size:18px;color:var(--slate);cursor:pointer;line-height:1;border:none;background:none}
+.m-radios{display:flex;gap:20px;padding:12px 18px;border-bottom:1px solid var(--line-soft);background:#fafbfc;flex-wrap:wrap}
+.m-radios label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer}
+.m-radios input{accent-color:var(--green)}
+.m-body{padding:16px 18px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px 14px}
+.field label{display:block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.field label .req{color:var(--red)}
+.field input,.field select{width:100%;font-family:inherit;font-size:12px;padding:7px 9px;border:1px solid var(--line);border-radius:5px;color:var(--ink);background:#fff}
+.field.full{grid-column:1/-1}
+.field.span2{grid-column:span 2}
+.orsep{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase}
+.checkrow{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding-top:20px}
+.bankdetail{margin-top:14px;padding:9px 12px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--slate)}
+.bankdetail b{color:var(--ink);font-weight:700}
+.jelines{border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-top:6px}
+.jeline{display:grid;grid-template-columns:2fr 1fr 1fr}
+.jeline>div{padding:8px 10px;border-bottom:1px solid var(--line-soft);border-right:1px solid var(--line-soft)}
+.jeline>div:last-child{border-right:none}
+.jeline.hd>div{font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--faint);background:#fafbfc}
+.jeline input,.jeline select{width:100%;border:none;font-family:inherit;font-size:12px;background:transparent;color:var(--ink)}
+.jebal{display:flex;justify-content:flex-end;gap:18px;padding:10px 4px 0;font-size:12px;font-weight:700}
+.jebal .ok{color:var(--green-d)}
+.m-foot{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--line);background:#fafbfc}
+.m-links{display:flex;gap:14px;font-size:11px;font-weight:600;color:var(--blue)}
+.m-links span{cursor:pointer}
+.m-actions{display:flex;gap:8px}
+.warnbox{margin:0 18px 14px;padding:10px 12px;background:var(--amber-bg);border:1px solid #ecd6ab;border-radius:6px;font-size:11px;color:#8a5a13}
+.warnbox b{font-weight:700}
+.legend{font-size:10.5px;color:var(--faint);margin-top:6px;text-align:center;line-height:1.6}
+@media(max-width:1140px){.kpis.k6{grid-template-columns:repeat(3,1fr)}.kpis.k4{grid-template-columns:repeat(2,1fr)}.fgrid,.estat,.rptgrid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SIDEBAR (complete — nothing removed; every item navigable) ============ -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="tb-l">
+        <span class="tb-co">IH 35 TRANSPORTATION LLC</span>
+        <span class="tb-status">
+          <span><i class="dot ok"></i>QuickBooks</span>
+          <span><i class="dot ok"></i>Samsara</span>
+          <span><i class="dot ok"></i>Relay connected</span>
+        </span>
+      </div>
+      <div class="tb-r"><span>Sat, May 16 &middot; 4:42 PM CT</span><span class="tb-user">Jorge Munoz</span></div>
+    </header>
+
+    <div class="content">
+
+      <!-- ============ GENERIC MODULE VIEW (populated by JS) ============ -->
+      <div id="view-generic" class="hidden"></div>
+
+      <!-- ============ ACCOUNTING ============ -->
+      <div id="view-accounting" class="hidden">
+        <div class="phead">
+          <div class="phead-l"><h1>Accounting</h1><span class="newpill">38 new in last 3 days</span></div>
+          <div class="phead-r">
+            <button class="btn">Refresh</button>
+            <button class="btn primary" onclick="toggleMenu('acctCreate')">+ Create <span class="cv">&#9660;</span></button>
+            <div class="createmenu" id="acctCreate">
+              <a onclick="closeMenus()">Bill</a><a onclick="closeMenus()">Expense</a><a onclick="closeMenus()">Invoice</a>
+              <a onclick="closeMenus()">Customer payment</a><a onclick="closeMenus()">Bill payment</a>
+              <div class="sep"></div><a onclick="closeMenus();openModal('jeModal')">Manual journal entry</a>
+            </div>
+          </div>
+        </div>
+        <div class="verify">
+          <span class="vtag">Verification mode</span>
+          <span><b>TMS is system of record.</b> QuickBooks syncing in parallel for verification.</span>
+          <span class="vsep">|</span><span class="vmatch">1,204 entries matched</span>
+          <span class="vsep">|</span><span class="vmiss">3 mismatches to review</span>
+          <span class="vspace"></span><button class="vbtn">Compare ledgers</button><button class="vbtn">Disconnect QBO</button>
+        </div>
+        <div class="kpis k6">
+          <div class="kpi red"><div class="k-l">AP outstanding</div><div class="k-v tnum">$184,260</div><div class="k-s">38 vendors</div></div>
+          <div class="kpi blue"><div class="k-l">AR outstanding</div><div class="k-v tnum">$312,480</div><div class="k-s">22 customers</div></div>
+          <div class="kpi amber"><div class="k-l">Past-due AP</div><div class="k-v tnum">$22,140</div><div class="k-s">14 bills</div></div>
+          <div class="kpi green"><div class="k-l">Open period</div><div class="k-v">May 2026</div><div class="k-s">Apr closed May 5</div></div>
+          <div class="kpi amber"><div class="k-l">Recon findings</div><div class="k-v tnum">3</div><div class="k-s">open</div></div>
+          <div class="kpi"><div class="k-l">Journal entries</div><div class="k-v tnum">47 <small>MTD</small></div><div class="k-s">1 draft</div></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab active" onclick="pTab('acct','bills',this)">Bills</div>
+          <div class="tab" onclick="pTab('acct','expenses',this)">Expenses</div>
+          <div class="tab" onclick="pTab('acct','invoices',this)">Invoices</div>
+          <div class="tab" onclick="pTab('acct','payments',this)">Payments</div>
+          <div class="tab" onclick="pTab('acct','je',this)">Journal Entries</div>
+          <div class="tab" onclick="pTab('acct','recon',this)">Reconciliation</div>
+          <div class="tab" onclick="pTab('acct','periods',this)">Periods</div>
+          <div class="tab" onclick="pTab('acct','reports',this)">Reports</div>
+        </div>
+        <div class="acct-panel" id="acct-bills"><div class="panel">
+          <div class="p-head"><span class="p-title">Bills &middot; accounts payable</span><div class="p-tools"><span class="chip">All vendors</span><span class="chip">Status: all</span></div></div>
+          <table><thead><tr><th>Bill #</th><th>Vendor</th><th>Bill date</th><th>Due</th><th class="r">Amount</th><th class="r">Open balance</th><th>Status</th><th>QBO</th></tr></thead><tbody>
+            <tr><td class="tcode">B-4821</td><td>Lozano Tires<span class="tsub">Repair bill</span></td><td>May 4</td><td>May 4</td><td class="r amt tnum">$1,847.00</td><td class="r amt tnum">$1,847.00</td><td><span class="badge b-due">Past due 12d</span></td><td><span class="badge b-pend">queued</span></td></tr>
+            <tr><td class="tcode">B-4798</td><td>Cummins South TX<span class="tsub">Repair bill</span></td><td>May 8</td><td>May 8</td><td class="r amt tnum">$3,420.00</td><td class="r amt tnum">$3,420.00</td><td><span class="badge b-due">Past due 8d</span></td><td><span class="badge b-sync">synced</span></td></tr>
+            <tr><td class="tcode">B-4744</td><td>Pilot Travel Centers<span class="tsub">Fuel bill</span></td><td>May 13</td><td>May 13</td><td class="r amt tnum">$8,720.00</td><td class="r amt tnum">$4,360.00</td><td><span class="badge b-part">Partial</span></td><td><span class="badge b-sync">synced</span></td></tr>
+            <tr><td class="tcode">B-4901</td><td>TX TollTag<span class="tsub">Vendor bill</span></td><td>May 14</td><td>May 24</td><td class="r amt tnum">$1,240.00</td><td class="r amt tnum">$1,240.00</td><td><span class="badge b-open">Open</span></td><td><span class="badge b-sync">synced</span></td></tr>
+            <tr><td class="tcode">B-4912</td><td>Relay Payments<span class="tsub">Fuel bill</span></td><td>May 15</td><td>May 30</td><td class="r amt tnum">$9,318.72</td><td class="r amt tnum">$9,318.72</td><td><span class="badge b-open">Open</span></td><td><span class="badge b-pend">queued</span></td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>+ 33 more bills</span><span>AP outstanding <b class="tnum">$184,260.00</b></span></div>
+        </div></div>
+        <div class="acct-panel hidden" id="acct-expenses"><div class="panel">
+          <div class="p-head"><span class="p-title">Expense transactions</span></div>
+          <table><thead><tr><th>Expense #</th><th>Payee</th><th>Date</th><th>Category</th><th class="r">Amount</th><th>Class</th><th>QBO</th></tr></thead><tbody>
+            <tr><td class="tcode">EXP-2046</td><td>Pilot Laredo</td><td>May 2</td><td>Fuel / DEF</td><td class="r amt tnum">$612.40</td><td>TRK-REYES</td><td><span class="badge b-pend">queued</span></td></tr>
+            <tr><td class="tcode">EXP-2051</td><td>TX TollTag</td><td>May 3</td><td>Tolls / scales</td><td class="r amt tnum">$84.00</td><td>TRANSP-FLEET</td><td><span class="badge b-sync">synced</span></td></tr>
+            <tr><td class="tcode">EXP-2063</td><td>Border Truck Wash</td><td>May 9</td><td>Repair / maintenance</td><td class="r amt tnum">$180.00</td><td>TRK-GARZA</td><td><span class="badge b-sync">synced</span></td></tr>
+            <tr><td class="tcode">EXP-2071</td><td>Samsara</td><td>May 12</td><td>Software / telematics</td><td class="r amt tnum">$1,200.00</td><td>TRANSP-FLEET</td><td><span class="badge b-sync">synced</span></td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>+ 42 more expenses</span><span>Expenses MTD <b class="tnum">$58,920.00</b></span></div>
+        </div></div>
+        <div class="acct-panel hidden" id="acct-invoices"><div class="panel">
+          <div class="p-head"><span class="p-title">Invoices &middot; accounts receivable</span></div>
+          <table><thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Due</th><th class="r">Amount</th><th class="r">Open balance</th><th>Factoring</th><th>Status</th></tr></thead><tbody>
+            <tr><td class="tcode">INV-3310</td><td>C.H. Robinson</td><td>May 1</td><td>May 31</td><td class="r amt tnum">$4,850.00</td><td class="r amt tnum">$4,850.00</td><td><span class="badge b-fact">Triumph</span></td><td><span class="badge b-open">Open</span></td></tr>
+            <tr><td class="tcode">INV-3311</td><td>Werner Logistics</td><td>May 2</td><td>Jun 1</td><td class="r amt tnum">$3,200.00</td><td class="r amt tnum">$0.00</td><td><span class="badge b-fact">Triumph</span></td><td><span class="badge b-paid">Paid</span></td></tr>
+            <tr><td class="tcode">INV-3315</td><td>Total Quality Logistics</td><td>May 5</td><td>Jun 4</td><td class="r amt tnum">$5,600.00</td><td class="r amt tnum">$5,600.00</td><td>&mdash;</td><td><span class="badge b-open">Open</span></td></tr>
+            <tr><td class="tcode">INV-3324</td><td>J.B. Hunt</td><td>May 12</td><td>Jun 11</td><td class="r amt tnum">$6,100.00</td><td class="r amt tnum">$6,100.00</td><td>&mdash;</td><td><span class="badge b-open">Open</span></td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>+ 18 more invoices</span><span>AR outstanding <b class="tnum">$312,480.00</b></span></div>
+        </div></div>
+        <div class="acct-panel hidden" id="acct-payments"><div class="panel">
+          <div class="p-head"><span class="p-title">Payments &middot; received &amp; sent</span><div class="p-tools"><span class="chip on">All</span><span class="chip">Received</span><span class="chip">Sent</span></div></div>
+          <table><thead><tr><th>Payment #</th><th>Direction</th><th>Party</th><th>Date</th><th>Method</th><th class="r">Amount</th><th>Applied to</th></tr></thead><tbody>
+            <tr><td class="tcode">PMT-884</td><td><span class="badge b-paid">Received</span></td><td>C.H. Robinson</td><td>May 14</td><td>ACH</td><td class="r amt tnum">$4,850.00</td><td>INV-3309</td></tr>
+            <tr><td class="tcode">PMT-883</td><td><span class="badge b-due">Sent</span></td><td>Lozano Tires</td><td>May 13</td><td>ACH</td><td class="r amt tnum">$1,847.00</td><td>B-4821</td></tr>
+            <tr><td class="tcode">PMT-881</td><td><span class="badge b-paid">Received</span></td><td>Triumph (factoring advance)</td><td>May 11</td><td>Factoring</td><td class="r amt tnum">$4,365.00</td><td>INV-3310</td></tr>
+            <tr><td class="tcode">PMT-880</td><td><span class="badge b-paid">Received</span></td><td>Werner Logistics</td><td>May 10</td><td>ACH</td><td class="r amt tnum">$3,200.00</td><td>INV-3311</td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>+ 37 more payments</span><span>Bills paid MTD <b class="tnum">$112,840.00</b></span></div>
+        </div></div>
+        <div class="acct-panel hidden" id="acct-je"><div class="panel">
+          <div class="p-head"><span class="p-title">Journal entries</span><div class="p-tools"><button class="mini go" onclick="openModal('jeModal')">+ Create manual JE</button></div></div>
+          <table><thead><tr><th>JE #</th><th>Date</th><th>Memo</th><th class="r">Debit</th><th class="r">Credit</th><th>Status</th><th>Source</th></tr></thead><tbody>
+            <tr><td class="tcode">JE-1225</td><td>May 16</td><td>Insurance accrual adjustment</td><td class="r amt tnum">$2,100.00</td><td class="r amt tnum">$2,100.00</td><td><span class="badge b-draft">Draft</span></td><td>Manual &middot; Owner</td></tr>
+            <tr><td class="tcode">JE-1221</td><td>May 14</td><td>Bank fee &mdash; IBC DIP-4821</td><td class="r amt tnum">$45.00</td><td class="r amt tnum">$45.00</td><td><span class="badge b-posted">Posted</span></td><td>Banking</td></tr>
+            <tr><td class="tcode">JE-1215</td><td>May 9</td><td>Reclass &mdash; fuel accrual</td><td class="r amt tnum">$1,840.00</td><td class="r amt tnum">$1,840.00</td><td><span class="badge b-posted">Posted</span></td><td>Manual &middot; Owner</td></tr>
+            <tr><td class="tcode">JE-1204</td><td>May 1</td><td>Opening balances &mdash; May</td><td class="r amt tnum">$284,610.00</td><td class="r amt tnum">$284,610.00</td><td><span class="badge b-posted">Posted</span></td><td>System</td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>Posted entries are immutable &mdash; void via reversing JE</span><span>47 MTD</span></div>
+        </div></div>
+        <div class="acct-panel hidden" id="acct-recon"><div class="panel">
+          <div class="p-head"><span class="p-title">Reconciliation findings</span><div class="p-tools"><span class="chip on">Open</span><span class="chip">Resolved</span></div></div>
+          <table><thead><tr><th>Finding #</th><th>Source</th><th>Detected</th><th class="r">Drift</th><th>Status</th><th>Resolution</th><th class="r">Action</th></tr></thead><tbody>
+            <tr><td class="tcode">RF-053</td><td>banking.factoring_transactions</td><td>May 12</td><td class="r amt neg tnum">$840.00</td><td><span class="badge b-due">Open</span></td><td>&mdash;</td><td class="r"><button class="mini go">Resolve</button></td></tr>
+            <tr><td class="tcode">RF-051</td><td>banking.bank_transactions</td><td>May 14</td><td class="r amt neg tnum">$120.00</td><td><span class="badge b-due">Open</span></td><td>&mdash;</td><td class="r"><button class="mini go">Resolve</button></td></tr>
+            <tr><td class="tcode">RF-049</td><td>QBO parity &mdash; trial balance</td><td>May 15</td><td class="r amt neg tnum">$45.00</td><td><span class="badge b-due">Open</span></td><td>&mdash;</td><td class="r"><button class="mini go">Resolve</button></td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>Daily reconcile job 02:00 CT &middot; non-zero drift opens a finding + Owner alert</span><span>3 open</span></div>
+        </div></div>
+        <div class="acct-panel hidden" id="acct-periods"><div class="panel">
+          <div class="p-head"><span class="p-title">Accounting periods</span></div>
+          <table><thead><tr><th>Period</th><th>Status</th><th>Closed by</th><th>Closed date</th><th class="r">Action</th></tr></thead><tbody>
+            <tr><td class="tcode">May 2026</td><td><span class="badge b-open">Open</span></td><td>&mdash;</td><td>&mdash;</td><td class="r"><button class="mini go">Close period</button></td></tr>
+            <tr><td class="tcode">Apr 2026</td><td><span class="badge b-closed">Closed</span></td><td>Jorge Munoz</td><td>May 5, 2026</td><td class="r"><button class="mini warn">Reopen</button></td></tr>
+            <tr><td class="tcode">Mar 2026</td><td><span class="badge b-closed">Closed</span></td><td>Jorge Munoz</td><td>Apr 4, 2026</td><td class="r"><button class="mini warn">Reopen</button></td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>Reopen is an Owner-only high-risk action (typed confirmation)</span><span>&nbsp;</span></div>
+        </div></div>
+        <div class="acct-panel hidden" id="acct-reports"><div class="panel">
+          <div class="p-head"><span class="p-title">Accounting reports</span></div>
+          <div class="rptgrid">
+            <div class="rptcard"><div class="r-n">Profit &amp; Loss</div><div class="r-d">Income statement by period / class</div></div>
+            <div class="rptcard"><div class="r-n">Balance Sheet</div><div class="r-d">Assets, liabilities, equity</div></div>
+            <div class="rptcard"><div class="r-n">Trial Balance</div><div class="r-d">All accounts, debit / credit</div></div>
+            <div class="rptcard"><div class="r-n">General Ledger</div><div class="r-d">Full transaction detail per account</div></div>
+            <div class="rptcard"><div class="r-n">A/P Aging</div><div class="r-d">Vendor balances by age bucket</div></div>
+            <div class="rptcard"><div class="r-n">A/R Aging</div><div class="r-d">Customer balances by age bucket</div></div>
+            <div class="rptcard"><div class="r-n">Cash Flow</div><div class="r-d">Operating / investing / financing</div></div>
+            <div class="rptcard"><div class="r-n">Expense by Category</div><div class="r-d">Spend breakdown, period over period</div></div>
+            <div class="rptcard"><div class="r-n">QBO Parity Report</div><div class="r-d">TMS vs QuickBooks line-by-line</div></div>
+          </div>
+        </div></div>
+      </div><!-- /accounting -->
+
+      <!-- ============ BANKING ============ -->
+      <div id="view-banking" class="hidden">
+        <div class="phead">
+          <div class="phead-l"><h1>Banking</h1><span class="newpill">22 new in last 3 days</span></div>
+          <div class="phead-r">
+            <button class="btn">Refresh</button>
+            <button class="btn primary" onclick="toggleMenu('bankCreate')">+ Create <span class="cv">&#9660;</span></button>
+            <div class="createmenu" id="bankCreate">
+              <a onclick="closeMenus();openModal('acctModal')">Bank account</a><div class="sep"></div>
+              <a onclick="closeMenus()">Transfer between accounts</a><a onclick="closeMenus()">Credit card payment</a>
+              <a onclick="closeMenus();openModal('jeModal')">Journal entry</a><a onclick="closeMenus()">Reclassify transaction</a>
+            </div>
+          </div>
+        </div>
+        <div class="verify">
+          <span class="vtag">Verification mode</span>
+          <span><b>TMS is system of record.</b> Bank balances mirrored to QuickBooks for verification.</span>
+          <span class="vsep">|</span><span class="vmatch">5 accounts balanced vs QBO</span>
+          <span class="vsep">|</span><span class="vmiss">1 balance variance to review</span>
+          <span class="vspace"></span><button class="vbtn">Compare to QBO</button><button class="vbtn">Disconnect QBO</button>
+        </div>
+        <div class="kpis k6">
+          <div class="kpi green"><div class="k-l">Total bank balance</div><div class="k-v tnum">$284,610</div><div class="k-s">all active accounts</div></div>
+          <div class="kpi amber"><div class="k-l">Uncategorized</div><div class="k-v tnum">28</div><div class="k-s">transactions in queue</div></div>
+          <div class="kpi red"><div class="k-l">Oldest uncategorized</div><div class="k-v tnum">9 <small>days</small></div><div class="k-s">over 7-day threshold</div></div>
+          <div class="kpi"><div class="k-l">Last reconciliation</div><div class="k-v">Apr 30</div><div class="k-s">all accounts, $0 drift</div></div>
+          <div class="kpi blue"><div class="k-l">Driver escrow</div><div class="k-v tnum">$84,200</div><div class="k-s">70 active drivers</div></div>
+          <div class="kpi"><div class="k-l">Accounts</div><div class="k-v tnum">6</div><div class="k-s">across 4 groups</div></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab active" onclick="pTab('bank','accounts',this)">Accounts</div>
+          <div class="tab" onclick="pTab('bank','txns',this)">Transactions</div>
+          <div class="tab" onclick="pTab('bank','recon',this)">Reconciliation</div>
+          <div class="tab" onclick="pTab('bank','escrow',this)">Driver Escrow</div>
+          <div class="tab" onclick="pTab('bank','reports',this)">Reports</div>
+        </div>
+        <div class="bank-panel" id="bank-accounts"><div class="panel">
+          <div class="p-head"><span class="p-title">Bank account registry &mdash; drag to reorder, edit to organize</span>
+            <div class="p-tools"><span class="chip">Manage groups</span><button class="mini go" onclick="openModal('acctModal')">+ Create account</button></div></div>
+          <div class="grouphd"><span class="g-n">Operating accounts</span><span class="g-e">Rename group / reorder</span></div>
+          <div class="acctrow"><span class="drag">&#8942;&#8942;</span><span class="a-main"><div class="a-n">IBC &mdash; DIP-4821</div><div class="a-s">Checking &middot; &bull;&bull;4821 &middot; imported today 8:14 AM</div></span><span class="a-col"><b>IBC Bank</b>institution</span><span class="a-col"><b>1010 &middot; Cash &mdash; DIP</b>linked chart account</span><span class="a-col"><span class="badge b-bank">bank</span> <span class="badge b-active">active</span></span><span class="a-bal tnum">$142,840</span><span><button class="mini ghost" onclick="openModal('acctModal')">Edit</button></span></div>
+          <div class="acctrow"><span class="drag">&#8942;&#8942;</span><span class="a-main"><div class="a-n">Frost &mdash; Operating</div><div class="a-s">Checking &middot; &bull;&bull;1135 &middot; imported today 8:14 AM</div></span><span class="a-col"><b>Frost Bank</b>institution</span><span class="a-col"><b>1020 &middot; Cash &mdash; Operating</b>linked chart account</span><span class="a-col"><span class="badge b-bank">bank</span> <span class="badge b-active">active</span></span><span class="a-bal tnum">$98,420</span><span><button class="mini ghost" onclick="openModal('acctModal')">Edit</button></span></div>
+          <div class="acctrow"><span class="drag">&#8942;&#8942;</span><span class="a-main"><div class="a-n">IBC &mdash; Payroll</div><div class="a-s">Checking &middot; &bull;&bull;6129 &middot; imported today 8:14 AM</div></span><span class="a-col"><b>IBC Bank</b>institution</span><span class="a-col"><b>1030 &middot; Cash &mdash; Payroll</b>linked chart account</span><span class="a-col"><span class="badge b-bank">bank</span> <span class="badge b-active">active</span></span><span class="a-bal tnum">$42,150</span><span><button class="mini ghost" onclick="openModal('acctModal')">Edit</button></span></div>
+          <div class="grouphd"><span class="g-n">Cash on hand</span><span class="g-e">Rename group / reorder</span></div>
+          <div class="acctrow"><span class="drag">&#8942;&#8942;</span><span class="a-main"><div class="a-n">Petty cash</div><div class="a-s">Cash &middot; manual entry</div></span><span class="a-col"><b>&mdash;</b>institution</span><span class="a-col"><b>1090 &middot; Petty Cash</b>linked chart account</span><span class="a-col"><span class="badge b-cash">cash</span> <span class="badge b-active">active</span></span><span class="a-bal tnum">$1,200</span><span><button class="mini ghost" onclick="openModal('acctModal')">Edit</button></span></div>
+          <div class="grouphd"><span class="g-n">Credit cards</span><span class="g-e">Rename group / reorder</span></div>
+          <div class="acctrow"><span class="drag">&#8942;&#8942;</span><span class="a-main"><div class="a-n">Capital One CC</div><div class="a-s">Credit card &middot; &bull;&bull;7720 &middot; imported today 8:14 AM</div></span><span class="a-col"><b>Capital One</b>institution</span><span class="a-col"><b>2110 &middot; CC Payable</b>linked chart account</span><span class="a-col"><span class="badge b-cc">credit card</span> <span class="badge b-active">active</span></span><span class="a-bal neg tnum">&minus;$18,420</span><span><button class="mini ghost" onclick="openModal('acctModal')">Edit</button></span></div>
+          <div class="p-foot"><span>Full account number masked &mdash; Owner-only one-time decrypt with audit. Deactivate is Owner-only.</span><span>5 accounts</span></div>
+        </div></div>
+        <div class="bank-panel hidden" id="bank-txns">
+          <div class="acctsel" id="acctSel"></div>
+          <div class="panel">
+            <div class="p-head"><span class="p-title" id="txnTitle">Bank transactions</span>
+              <div class="p-tools"><span style="font-size:10px;font-weight:700;color:var(--faint);letter-spacing:.05em">CATEGORIZE BY</span>
+                <span class="toggle"><button class="on" id="catByCategory" onclick="setCatBy('category')">Category</button><button id="catByItem" onclick="setCatBy('item')">Item</button></span></div></div>
+            <div class="subtabs"><span class="stab on" id="subReview" onclick="setSub(this)">For review</span><span class="stab" onclick="setSub(this)">Categorized</span><span class="stab" onclick="setSub(this)">Excluded</span></div>
+            <table><thead><tr><th>Date</th><th>Bank detail</th><th class="r">Amount</th><th>Suggested category / match</th><th class="r">Action</th></tr></thead><tbody id="txnBody"></tbody></table>
+            <div class="p-foot"><span id="txnFoot">&nbsp;</span><span>Recategorize in a closed period is Owner-only</span></div>
+          </div>
+        </div>
+        <div class="bank-panel hidden" id="bank-recon"><div class="panel">
+          <div class="p-head"><span class="p-title">Reconciliation runs</span><div class="p-tools"><button class="mini go">Start reconciliation</button></div></div>
+          <table><thead><tr><th>Run</th><th>Account</th><th>Date range</th><th class="r">Matched</th><th class="r">Unmatched</th><th class="r">Drift</th><th>Status</th></tr></thead><tbody>
+            <tr><td class="tcode">REC-118</td><td>IBC DIP-4821</td><td>May 1 &ndash; 16</td><td class="r tnum">142</td><td class="r tnum">6</td><td class="r amt neg tnum">$120.00</td><td><span class="badge b-pend">In progress</span></td></tr>
+            <tr><td class="tcode">REC-117</td><td>IBC DIP-4821</td><td>Apr 1 &ndash; 30</td><td class="r tnum">388</td><td class="r tnum">0</td><td class="r amt tnum">$0.00</td><td><span class="badge b-posted">Reconciled</span></td></tr>
+            <tr><td class="tcode">REC-116</td><td>Frost Operating</td><td>Apr 1 &ndash; 30</td><td class="r tnum">204</td><td class="r tnum">0</td><td class="r amt tnum">$0.00</td><td><span class="badge b-posted">Reconciled</span></td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>Per-run detail shows matched / unmatched side-by-side</span><span>Daily reconcile feed active</span></div>
+        </div></div>
+        <div class="bank-panel hidden" id="bank-escrow"><div class="panel">
+          <div class="p-head"><span class="p-title">Driver escrow visualizer</span></div>
+          <div class="efilters">
+            <select><option>All drivers</option><option>J. Reyes</option><option>M. Garza</option></select>
+            <select><option>Date range &mdash; YTD 2026</option><option>This month</option></select>
+            <select><option>All deduction types</option><option>Accident</option><option>Fine</option><option>Antidoping</option><option>Cash advance</option><option>Tire damage</option></select>
+            <select><option>All events</option><option>Contributions</option><option>Deductions</option><option>Payouts</option></select>
+          </div>
+          <div class="estat">
+            <div><div class="e-l">Total escrow held</div><div class="e-v tnum">$84,200</div></div>
+            <div><div class="e-l">Active drivers</div><div class="e-v tnum">70</div></div>
+            <div><div class="e-l">Contributions MTD</div><div class="e-v tnum">$6,400</div></div>
+            <div><div class="e-l">Deductions applied MTD</div><div class="e-v tnum">$2,180</div></div>
+          </div>
+          <table><thead><tr><th>Driver</th><th>Unit</th><th class="r">Escrow balance</th><th class="r">Contributed YTD</th><th class="r">Deducted YTD</th><th>Last event</th></tr></thead><tbody>
+            <tr><td class="tcode">J. Reyes</td><td>218</td><td class="r amt tnum">$1,840.00</td><td class="r amt tnum">$2,400.00</td><td class="r amt neg tnum">$560.00</td><td>Accident deductible &middot; May 9</td></tr>
+            <tr><td class="tcode">M. Garza</td><td>204</td><td class="r amt tnum">$2,210.00</td><td class="r amt tnum">$2,400.00</td><td class="r amt neg tnum">$190.00</td><td>Fine &middot; May 11</td></tr>
+            <tr><td class="tcode">R. Ortiz</td><td>231</td><td class="r amt tnum">$980.00</td><td class="r amt tnum">$1,600.00</td><td class="r amt neg tnum">$620.00</td><td>Tire damage &middot; May 6</td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>Every escrow event traces to its source: accident &rarr; schedule &rarr; settlement line &rarr; payout</span><span>70 drivers</span></div>
+        </div></div>
+        <div class="bank-panel hidden" id="bank-reports"><div class="panel">
+          <div class="p-head"><span class="p-title">Banking reports</span></div>
+          <div class="rptgrid">
+            <div class="rptcard"><div class="r-n">Bank Balance Summary</div><div class="r-d">All accounts, current vs reconciled</div></div>
+            <div class="rptcard"><div class="r-n">Cash Position</div><div class="r-d">Daily cash across operating accounts</div></div>
+            <div class="rptcard"><div class="r-n">Uncategorized Aging</div><div class="r-d">Queue depth by age bucket</div></div>
+            <div class="rptcard"><div class="r-n">Reconciliation History</div><div class="r-d">Past runs, drift, sign-off</div></div>
+            <div class="rptcard"><div class="r-n">Driver Escrow Report</div><div class="r-d">Balances and movement by driver</div></div>
+            <div class="rptcard"><div class="r-n">QBO Bank Parity</div><div class="r-d">TMS vs QuickBooks balances</div></div>
+          </div>
+        </div></div>
+      </div><!-- /banking -->
+
+      <!-- ============ FACTORING (independent module) ============ -->
+      <div id="view-factoring" class="hidden">
+        <div class="phead">
+          <div class="phead-l"><h1>Factoring</h1><span class="newpill">Triumph &middot; active factor</span></div>
+          <div class="phead-r">
+            <button class="btn">Refresh</button>
+            <button class="btn primary" onclick="toggleMenu('factCreate')">+ Create <span class="cv">&#9660;</span></button>
+            <div class="createmenu" id="factCreate">
+              <a onclick="closeMenus()">Record advance</a><a onclick="closeMenus()">Record reserve release</a>
+              <a onclick="closeMenus()">Log chargeback</a><div class="sep"></div><a onclick="closeMenus()">Upload factoring statement</a>
+            </div>
+          </div>
+        </div>
+        <div class="verify">
+          <span class="vtag">Verification mode</span>
+          <span><b>TMS is system of record.</b> Factoring activity reconciled against the Triumph statement.</span>
+          <span class="vsep">|</span><span class="vmatch">Backfilled since 12/01/2024</span>
+          <span class="vspace"></span><button class="vbtn">Compare to statement</button>
+        </div>
+        <div class="kpis k6">
+          <div class="kpi blue"><div class="k-l">Reserves held</div><div class="k-v tnum">$48,720</div><div class="k-s">held by Triumph</div></div>
+          <div class="kpi green"><div class="k-l">Advances funded MTD</div><div class="k-v tnum">$184,260</div><div class="k-s">21 invoices</div></div>
+          <div class="kpi red"><div class="k-l">Chargebacks open</div><div class="k-v tnum">$3,420</div><div class="k-s">1 unresolved</div></div>
+          <div class="kpi amber"><div class="k-l">+30d aging fees</div><div class="k-v tnum">$840</div><div class="k-s">accrued this month</div></div>
+          <div class="kpi"><div class="k-l">Factored AR</div><div class="k-v tnum">$96,400</div><div class="k-s">assigned, open</div></div>
+          <div class="kpi"><div class="k-l">Last statement</div><div class="k-v">today</div><div class="k-s">uploaded 8:14 AM</div></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab active" onclick="pTab('fact','overview',this)">Overview</div>
+          <div class="tab" onclick="pTab('fact','advances',this)">Advances</div>
+          <div class="tab" onclick="pTab('fact','reserves',this)">Reserves</div>
+          <div class="tab" onclick="pTab('fact','chargebacks',this)">Chargebacks</div>
+          <div class="tab" onclick="pTab('fact','statements',this)">Statements</div>
+          <div class="tab" onclick="pTab('fact','reports',this)">Reports</div>
+        </div>
+        <div class="fact-panel" id="fact-overview"><div class="panel">
+          <div class="p-head"><span class="p-title">Factoring activity &mdash; recent</span></div>
+          <table><thead><tr><th>Txn #</th><th>Date</th><th>Type</th><th>Invoice</th><th class="r">Amount</th><th class="r">Reserve balance</th><th>Status</th></tr></thead><tbody>
+            <tr><td class="tcode">FT-222</td><td>May 14</td><td>Reserve release</td><td>INV-3298</td><td class="r amt tnum">$1,200.00</td><td class="r amt tnum">$48,720.00</td><td><span class="badge b-posted">Posted</span></td></tr>
+            <tr><td class="tcode">FT-221</td><td>May 12</td><td>Reserve hold</td><td>INV-3320</td><td class="r amt tnum">$485.00</td><td class="r amt tnum">$49,920.00</td><td><span class="badge b-posted">Posted</span></td></tr>
+            <tr><td class="tcode">FT-220</td><td>May 11</td><td>Advance</td><td>INV-3310</td><td class="r amt tnum">$4,365.00</td><td class="r amt tnum">$49,435.00</td><td><span class="badge b-posted">Posted</span></td></tr>
+            <tr><td class="tcode">FT-219</td><td>May 9</td><td>Chargeback</td><td>INV-3271</td><td class="r amt neg tnum">$3,420.00</td><td class="r amt tnum">$45,070.00</td><td><span class="badge b-due">Open</span></td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>Factoring company treated as its own virtual bank &middot; reverse is Owner-only high-risk</span><span>Backfilled since 12/01/2024</span></div>
+        </div></div>
+        <div class="fact-panel hidden" id="fact-advances"><div class="panel">
+          <div class="p-head"><span class="p-title">Advances</span><div class="p-tools"><span class="chip">All customers</span></div></div>
+          <table><thead><tr><th>Txn #</th><th>Date</th><th>Invoice</th><th>Customer</th><th class="r">Invoice amt</th><th class="r">Advance (80%)</th><th class="r">Reserve held</th></tr></thead><tbody>
+            <tr><td class="tcode">FT-220</td><td>May 11</td><td>INV-3310</td><td>C.H. Robinson</td><td class="r amt tnum">$4,850.00</td><td class="r amt tnum">$4,365.00</td><td class="r amt tnum">$485.00</td></tr>
+            <tr><td class="tcode">FT-216</td><td>May 8</td><td>INV-3305</td><td>Coyote Logistics</td><td class="r amt tnum">$2,940.00</td><td class="r amt tnum">$2,646.00</td><td class="r amt tnum">$294.00</td></tr>
+            <tr><td class="tcode">FT-210</td><td>May 4</td><td>INV-3291</td><td>Werner Logistics</td><td class="r amt tnum">$3,200.00</td><td class="r amt tnum">$2,880.00</td><td class="r amt tnum">$320.00</td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>+ 18 more advances MTD</span><span>Advances funded MTD <b class="tnum">$184,260.00</b></span></div>
+        </div></div>
+        <div class="fact-panel hidden" id="fact-reserves"><div class="panel">
+          <div class="p-head"><span class="p-title">Reserve ledger</span></div>
+          <table><thead><tr><th>Txn #</th><th>Date</th><th>Type</th><th>Invoice</th><th class="r">Amount</th><th class="r">Running balance</th></tr></thead><tbody>
+            <tr><td class="tcode">FT-222</td><td>May 14</td><td>Release</td><td>INV-3298</td><td class="r amt neg tnum">$1,200.00</td><td class="r amt tnum">$48,720.00</td></tr>
+            <tr><td class="tcode">FT-221</td><td>May 12</td><td>Hold</td><td>INV-3320</td><td class="r amt tnum">$485.00</td><td class="r amt tnum">$49,920.00</td></tr>
+            <tr><td class="tcode">FT-217</td><td>May 9</td><td>Release</td><td>INV-3284</td><td class="r amt neg tnum">$640.00</td><td class="r amt tnum">$49,435.00</td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>Reserve balance held by Triumph against open factored invoices</span><span>Held <b class="tnum">$48,720.00</b></span></div>
+        </div></div>
+        <div class="fact-panel hidden" id="fact-chargebacks"><div class="panel">
+          <div class="p-head"><span class="p-title">Chargebacks</span><div class="p-tools"><span class="chip on">Open</span><span class="chip">Resolved</span></div></div>
+          <table><thead><tr><th>Txn #</th><th>Date</th><th>Invoice</th><th>Customer</th><th>Reason</th><th class="r">Amount</th><th class="r">Action</th></tr></thead><tbody>
+            <tr><td class="tcode">FT-219</td><td>May 9</td><td>INV-3271</td><td>(non-payment)</td><td>Customer did not pay within 90d</td><td class="r amt neg tnum">$3,420.00</td><td class="r"><button class="mini go">Resolve</button></td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>Chargebacks reduce the reserve balance &middot; reverse is Owner-only high-risk</span><span>1 open</span></div>
+        </div></div>
+        <div class="fact-panel hidden" id="fact-statements"><div class="panel">
+          <div class="p-head"><span class="p-title">Factoring statements</span><div class="p-tools"><button class="mini go">Upload statement</button></div></div>
+          <table><thead><tr><th>Statement</th><th>Period</th><th>Uploaded</th><th class="r">Lines</th><th class="r">Drift vs TMS</th><th>Status</th></tr></thead><tbody>
+            <tr><td class="tcode">TRI-2026-05</td><td>May 2026 (MTD)</td><td>today 8:14 AM</td><td class="r tnum">42</td><td class="r amt tnum">$0.00</td><td><span class="badge b-posted">Reconciled</span></td></tr>
+            <tr><td class="tcode">TRI-2026-04</td><td>Apr 2026</td><td>May 2</td><td class="r tnum">88</td><td class="r amt tnum">$0.00</td><td><span class="badge b-posted">Reconciled</span></td></tr>
+          </tbody></table>
+          <div class="p-foot"><span>Statement uploads auto-reconcile against TMS factoring transactions</span><span>API connection planned</span></div>
+        </div></div>
+        <div class="fact-panel hidden" id="fact-reports"><div class="panel">
+          <div class="p-head"><span class="p-title">Factoring reports</span></div>
+          <div class="rptgrid">
+            <div class="rptcard"><div class="r-n">Reserve Balance Report</div><div class="r-d">Held vs released, by period</div></div>
+            <div class="rptcard"><div class="r-n">Advance Detail</div><div class="r-d">Every advance with rate &amp; reserve</div></div>
+            <div class="rptcard"><div class="r-n">Chargeback Register</div><div class="r-d">Open and resolved chargebacks</div></div>
+            <div class="rptcard"><div class="r-n">Factoring Fees</div><div class="r-d">Discount and aging fees</div></div>
+            <div class="rptcard"><div class="r-n">Per-Customer Factoring</div><div class="r-d">Volume and reserve by customer</div></div>
+            <div class="rptcard"><div class="r-n">Statement Parity</div><div class="r-d">TMS vs Triumph statement</div></div>
+          </div>
+        </div></div>
+      </div><!-- /factoring -->
+
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODALS ===================== -->
+<div class="overlay" id="catModal"><div class="modal">
+  <div class="m-head"><div><h3>Categorize transaction</h3><div class="m-sub">PILOT TRAVEL #482 LAREDO TX &middot; May 2 &middot; &minus;$612.40</div></div><button class="m-x" onclick="closeModal('catModal')">&times;</button></div>
+  <div class="m-radios">
+    <label><input type="radio" name="cat" checked> Categorize</label><label><input type="radio" name="cat"> Match</label>
+    <label><input type="radio" name="cat"> Record as transfer</label><label><input type="radio" name="cat"> Record as credit card payment</label>
+  </div>
+  <div class="m-body">
+    <div class="fgrid">
+      <div class="field"><label>Transaction date</label><input value="05/02/2026"></div>
+      <div class="field span2"><label>Vendor / Customer / project</label><select><option>Pilot Travel Centers</option></select></div>
+      <div class="field span2"><label>Account <span class="req">*</span></label><select><option>Fuel &amp; DEF expense : Over-the-road fuel</option><option>Repair &amp; maintenance</option></select></div>
+      <div class="orsep">&mdash; or &mdash;</div>
+      <div class="field span2"><label>Product / service (item)</label><select><option>Select product / service</option></select></div>
+      <div class="field"><label>Customer / project</label><select><option>Select customer / project</option></select></div>
+      <div class="field"><label>Location</label><select><option>Laredo terminal</option></select></div>
+      <div class="field"><label>Class</label><select><option>TRK-REYES</option><option>TRANSP-FLEET</option></select></div>
+      <div class="checkrow"><input type="checkbox"> Billable to customer</div>
+      <div class="field full"><label>Memo</label><input value="Over-the-road fuel — unit 218, driver J. Reyes"></div>
+    </div>
+    <div class="bankdetail">Bank detail &mdash; <b>PILOT TRAVEL #482 LAREDO TX</b> &middot; Check image 1730 &middot; IBC DIP-4821</div>
+  </div>
+  <div class="m-foot"><div class="m-links"><span>Add attachment</span><span>Create a rule</span><span>Exclude</span><span>Categorization history</span></div>
+    <div class="m-actions"><button class="mini ghost" onclick="closeModal('catModal')">Cancel</button><button class="mini go">Confirm &amp; post</button></div></div>
+</div></div>
+
+<div class="overlay" id="jeModal"><div class="modal">
+  <div class="m-head"><div><h3>Manual journal entry</h3><div class="m-sub">Step 1 of 2 &mdash; enter lines &middot; debits must equal credits</div></div><button class="m-x" onclick="closeModal('jeModal')">&times;</button></div>
+  <div class="m-body">
+    <div class="fgrid" style="grid-template-columns:1fr 1fr">
+      <div class="field"><label>JE date</label><input value="05/16/2026"></div>
+      <div class="field"><label>Memo</label><input value="Insurance accrual adjustment"></div>
+    </div>
+    <div class="jelines">
+      <div class="jeline hd"><div>Account</div><div>Debit</div><div>Credit</div></div>
+      <div class="jeline"><div><select><option>6310 · Insurance expense</option></select></div><div><input value="2,100.00"></div><div><input placeholder="0.00"></div></div>
+      <div class="jeline"><div><select><option>2210 · Accrued liabilities</option></select></div><div><input placeholder="0.00"></div><div><input value="2,100.00"></div></div>
+    </div>
+    <div class="jebal"><span>Debits <span class="tnum">$2,100.00</span></span><span>Credits <span class="tnum">$2,100.00</span></span><span class="ok">Balanced &#10003;</span></div>
+  </div>
+  <div class="warnbox"><b>High-risk action.</b> Manual journal entries are role-gated and audited. Step 2 requires review &amp; Owner confirmation before posting. Posted entries are immutable.</div>
+  <div class="m-foot"><div class="m-links"><span>Add line</span></div>
+    <div class="m-actions"><button class="mini ghost" onclick="closeModal('jeModal')">Cancel</button><button class="mini go">Continue to review</button></div></div>
+</div></div>
+
+<div class="overlay" id="acctModal"><div class="modal sm">
+  <div class="m-head"><div><h3>Edit bank account</h3><div class="m-sub">IBC &mdash; DIP-4821 &middot; organize, rename, regroup</div></div><button class="m-x" onclick="closeModal('acctModal')">&times;</button></div>
+  <div class="m-body">
+    <div class="fgrid" style="grid-template-columns:1fr 1fr">
+      <div class="field full"><label>Display name</label><input value="IBC — DIP-4821"></div>
+      <div class="field"><label>Account type</label><select><option>Bank</option><option>Credit card</option><option>Cash</option><option>Factoring virtual</option></select></div>
+      <div class="field"><label>Group</label><select><option>Operating accounts</option><option>Cash on hand</option><option>Credit cards</option><option>+ Create group&hellip;</option></select></div>
+      <div class="field"><label>Institution</label><input value="IBC Bank"></div>
+      <div class="field"><label>Last 4 digits</label><input value="4821"></div>
+      <div class="field span2"><label>Linked chart account</label><select><option>1010 · Cash — DIP Operating</option></select></div>
+      <div class="field"><label>Sort order</label><input value="1"></div>
+      <div class="field full"><label>Status</label><select><option>Active</option><option>Closed</option></select></div>
+    </div>
+    <div class="bankdetail">Full account number encrypted &amp; masked &middot; <b>Owner-only one-time decrypt</b> emits an audit event. Deactivating requires typed confirmation.</div>
+  </div>
+  <div class="m-foot"><div class="m-links"><span style="color:var(--red)">Deactivate account</span></div>
+    <div class="m-actions"><button class="mini ghost" onclick="closeModal('acctModal')">Cancel</button><button class="mini go">Save changes</button></div></div>
+</div></div>
+
+<script>
+/* ---- sidebar: complete nav, nothing removed, every item navigable ---- */
+var NAV=[
+ {k:'home',l:'HOME',d:'M3 11l9-8 9 8M5 10v10h14V10'},
+ {k:'maint',l:'MAINT',d:'M14 7l3 3M5 19l9-9M7 5L4 8l4 4 3-3zM15 13l5 5-3 3-5-5z'},
+ {k:'fuel',l:'FUEL',d:'M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16M15 9h2a2 2 0 012 2v6a2 2 0 11-4 0v-3'},
+ {k:'dispatch',l:'DISPATCH',d:'M3 7h11v9H3zM14 10h4l3 3v3h-7M6.5 19a2 2 0 100-4 2 2 0 000 4zM17.5 19a2 2 0 100-4 2 2 0 000 4z'},
+ {k:'safety',l:'SAFETY',d:'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'},
+ {k:'drivers',l:'DRIVERS',d:'M12 8a3.4 3.4 0 100-6.8A3.4 3.4 0 0012 8zM5 20c0-3.5 3-6 7-6s7 2.5 7 6'},
+ {k:'accounting',l:'ACCTG',d:'M12 3v18M8 7h6a3 3 0 010 6H8M8 13h6a3 3 0 010 6H8'},
+ {k:'banking',l:'BANK',d:'M3 9l9-5 9 5M4 9v11h16V9M9 20v-7h6v7'},
+ {k:'factoring',l:'FACT',d:'M4 7h16v10H4zM4 11h16M8 15h3M12 3v2M9 21l3-3 3 3'},
+ {k:'pay',l:'PAY',d:'M3 6h18v12H3zM3 10h18M7 14h4'},
+ {k:'customers',l:'CUSTOMERS',d:'M4 21V8l8-5 8 5v13M9 21v-6h6v6M8 11h.01M16 11h.01'},
+ {k:'vendors',l:'VENDORS',d:'M5 21V6l7-3 7 3v15M9 21v-5h6v5M9 9h.01M15 9h.01M9 13h.01M15 13h.01'},
+ {k:'lists',l:'LISTS',d:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01'},
+ {k:'reports',l:'REPORTS',d:'M4 20V10M10 20V4M16 20v-7M22 20H2'},
+ {k:'f425c',l:'425C',d:'M6 2h9l4 4v16H6zM14 2v5h5M9 13h6M9 17h4'},
+ {k:'legal',l:'LEGAL',d:'M12 3v18M12 6l-7 3 3 5a3 3 0 006 0l3-5zM12 6l7 3-3 5a3 3 0 01-6 0M7 21h10'},
+ {k:'docs',l:'DOCS',d:'M6 2h9l4 4v16H6zM14 2v5h5M9 13h6M9 17h6'},
+ {k:'drvapp',l:'DRV APP',d:'M7 2h10v20H7zM11 18h2'}
+];
+var sb=document.getElementById('sidebar');
+NAV.forEach(function(n){
+  var div=document.createElement('div');
+  div.className='nav-i'; div.id='nav-'+n.k;
+  div.onclick=function(){showModule(n.k);};
+  div.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="'+n.d+'"/></svg><span>'+n.l+'</span>';
+  sb.appendChild(div);
+});
+
+/* ---- generic module pages (navigable; full tabbed depth is built per cycle) ---- */
+var MODULES={
+ home:{t:'Home',tag:'Owner workspace — daily snapshot',kpis:[['Tracked assets','142','100 trucks · 42 trailers'],['Open loads','68','on active loads'],['Maint past due','7','3 critical'],['Pending QBO sync','12','auto-retry 60s']],
+   secs:[['Today’s attention list','Most urgent items across every module, ranked'],['Section quick-jumps','Per-module cards with 3-day new-record counts'],['Fleet snapshot','Trucks, trailers, QBO customers, tire alerts']]},
+ maint:{t:'Maintenance',tag:'Work orders, R&M, severe repairs, in-transit issues',kpis:[['Open work orders','23','8 in-shop · 3 roadside'],['Past due','7','PM overdue'],['Severe repair / OOS','4','$55,400 to return'],['In-transit issues','2','reported by drivers']],
+   secs:[['Work orders','PM, repair, tire, accident work orders'],['R&M status','In-shop, external shop, roadside buckets'],['Severe repair / out of service','Units down + estimates'],['Fleet table','Per-unit maintenance history']]},
+ fuel:{t:'Fuel Planner',tag:'Fuel cards, routes, station prices, Relay settlement',kpis:[['Fuel spend MTD','$28,420','Fuel / DEF'],['Active fuel cards','4','Relay'],['Avg $/gal','$3.74','last 30 days'],['Stations tracked','1,240','price feed']],
+   secs:[['Fuel transactions','Card swipes, Relay settlement detail'],['Route planner','Fuel-optimized routing'],['Card management','Limits, drivers, alerts'],['Station prices','Price feed by lane']]},
+ dispatch:{t:'Dispatch',tag:'Loads, stops, assignments, geofencing',kpis:[['Active loads','27','14 in transit'],['Awaiting POD','6','delivered'],['Available units','5','ready to assign'],['Booked today','9','new loads']],
+   secs:[['Load board','Kanban and list views'],['Book load','New load wizard'],['Assignments','Truck / trailer / driver'],['Settlements','Driver settlement integration']]},
+ safety:{t:'Safety',tag:'HOS, accidents, DOT inspections, antidoping, fines',kpis:[['Open accidents','2','1 with claim'],['DOT inspections MTD','4','0 OOS'],['Expiring CDLs','3','within 30 days'],['Integrity alerts','1','needs review']],
+   secs:[['Accidents & claims','Incident tracking'],['Fines & violations','Company and driver'],['Training & drug tests','Antidoping records'],['Compliance calendar','Expirations and renewals']]},
+ drivers:{t:'Drivers',tag:'Driver profiles, teams, settlements, permits',kpis:[['Active drivers','70','41 on loads'],['On leave','3',''],['Settlement due','6','this week'],['Drivers owe company','-$5,860','active liabilities']],
+   secs:[['Drivers','Profiles, status, CDL, hire date'],['Teams','Team-driver pairs (50/50 split)'],['Settlements','Driver settlement PDFs'],['Safety files & documents','Per-driver records']]},
+ pay:{t:'Payroll',tag:'W-2 office staff — runs through QuickBooks Payroll',kpis:[['Office staff','6','W-2'],['Next pay run','May 22','bi-weekly'],['Last run','May 8','completed'],['YTD gross','—','QBO Payroll']],
+   secs:[['Pay runs','W-2 office payroll via QuickBooks Payroll'],['Employees','Office staff records'],['Deductions & contributions','Benefit and tax setup'],['Note','Payroll is out of scope for the accounting build cycle — driver settlements live in the TMS, W-2 payroll stays in QBO Payroll']]},
+ customers:{t:'Customers',tag:'Customer profiles, lanes, credit, receivables',kpis:[['Active customers','22','8 preferred'],['AR outstanding','$312,480','open invoices'],['On caution','2','quality flag'],['Avg DSO','31 days','']],
+   secs:[['Customer list','Profiles and quality flags'],['Contacts','Per-customer contacts'],['Billing & receivables','Invoices and aging'],['Lanes & pricing','Rate history by lane']]},
+ vendors:{t:'Vendors',tag:'Vendor profiles, bills, transactions, QBO mapping',kpis:[['Active vendors','38','QBO synced 36'],['AP outstanding','$184,260','open bills'],['Past-due bills','14','$22,140'],['New this month','3','']],
+   secs:[['Vendor list','Profiles, terms, QBO vendor + class'],['Bills','Open and paid bills per vendor'],['Transactions','Full vendor transaction history'],['QBO mapping','Vendor and class alignment']]},
+ lists:{t:'Lists & Catalogs',tag:'Chart of accounts, items, classes, reference data',kpis:[['Catalogs','48','reference tables'],['Chart of accounts','68','accounts'],['Classes','100','{UNIT}-{LASTNAME}'],['Items','812','products / services']],
+   secs:[['Chart of accounts','Account tree, lifecycle state'],['Items','Products and services'],['Classes','QBO class list'],['Domain catalogs','Fuel, safety, dispatch, driver, fleet']]},
+ reports:{t:'Reports',tag:'Financial, trucking, operations, scheduled exports',kpis:[['Report types','36','available'],['Scheduled','18','email cadences'],['Run MTD','142',''],['Last run','today','']],
+   secs:[['Financial core','P&L, balance sheet, aging, GL'],['Trucking-specific','Per-mile, per-load, lane, driver'],['Operations','Integrity, utilization, compliance'],['Scheduled exports','Email cadences and CSV']]},
+ f425c:{t:'Form 425C',tag:'Monthly operating report — Chapter 11 DIP filing',kpis:[['Current period','May 2026','in progress'],['Status','Draft',''],['Due','Jun 14','filing deadline'],['Last filed','Apr 2026','on time']],
+   secs:[['Period setup','Reporting month and entity'],['Receipts & disbursements','Cash activity schedules'],['Supporting schedules','Per-court-template detail'],['Filing','Generate, sign, submit']]},
+ legal:{t:'Legal',tag:'Chapter 11, legal holds, attestations, claims',kpis:[['Active matters','3',''],['Legal holds','1','documents preserved'],['Attestations pending','2','Owner sign-off'],['Claims tracked','14','Ch.11 register']],
+   secs:[['Matters','Legal matters and counsel'],['Legal holds','Document preservation'],['Sign-offs & attestations','Owner attestation framework'],['Claims register','Chapter 11 proof-of-claim tracking']]},
+ docs:{t:'Documents',tag:'Evidence records, R2 storage, 20 file categories',kpis:[['Documents','4,210','stored in R2'],['Categories','20','BOL, POD, DVIR, etc.'],['Uploaded MTD','186',''],['Pending review','8','']],
+   secs:[['All documents','Searchable evidence library'],['By category','BOL, POD, rate con, accident, DVIR…'],['Upload','Office and driver upload'],['Evidence log','Access and integrity audit']]},
+ drvapp:{t:'Driver PWA',tag:'Driver-facing mobile app — driver.ih35dispatch.com',kpis:[['On app today','64','of 70 drivers'],['DVIRs submitted','38','today'],['HOS','live','Samsara sync'],['Incidents reported','1','today']],
+   secs:[['Today','Driver’s assigned loads and stops'],['DVIR & HOS','Inspections and hours of service'],['Earnings','Settlement preview'],['Incident report','Driver-reported issues']]}
+};
+var DEEP={accounting:'view-accounting',banking:'view-banking',factoring:'view-factoring'};
+
+function showModule(k){
+  document.querySelectorAll('.content > div').forEach(function(v){v.classList.add('hidden');});
+  if(DEEP[k]){ document.getElementById(DEEP[k]).classList.remove('hidden'); }
+  else { renderGeneric(k); document.getElementById('view-generic').classList.remove('hidden'); }
+  NAV.forEach(function(n){
+    document.getElementById('nav-'+n.k).classList.toggle('active', n.k===k);
+  });
+  closeMenus();
+  document.querySelector('.content').scrollTop=0;
+}
+function renderGeneric(k){
+  var m=MODULES[k]; if(!m)return;
+  var kpi=m.kpis.map(function(c,i){
+    var cls=['blue','green','amber',''][i%4];
+    var v=c[1], neg=(typeof v==='string'&&v.indexOf('-')===0)?' style="color:var(--red)"':'';
+    return '<div class="kpi '+cls+'"><div class="k-l">'+c[0]+'</div><div class="k-v tnum"'+neg+'>'+v+'</div><div class="k-s">'+c[2]+'</div></div>';
+  }).join('');
+  var secs=m.secs.map(function(s){
+    return '<div class="secitem"><span class="secdot"></span><span><div class="s-n">'+s[0]+'</div><div class="s-d">'+s[1]+'</div></span><span class="s-go">open &rarr;</span></div>';
+  }).join('');
+  document.getElementById('view-generic').innerHTML=
+    '<div class="phead"><div class="phead-l"><h1>'+m.t+'</h1><span class="sub">'+m.tag+'</span></div>'+
+    '<div class="phead-r"><button class="btn">Refresh</button><button class="btn primary">+ Create</button></div></div>'+
+    '<div class="notebar"><b>Module navigable.</b> '+m.t+' is wired into the shell and reachable from the sidebar. '+
+    'Accounting, Banking and Factoring are built to full tabbed depth in this cycle; '+m.t+' gets the same depth in its own cycle.</div>'+
+    '<div class="kpis k4">'+kpi+'</div>'+
+    '<div class="panel"><div class="p-head"><span class="p-title">'+m.t+' &mdash; primary sections</span></div>'+
+    '<div class="seclist">'+secs+'</div></div>';
+}
+function pTab(mod,tab,el){
+  var pc=mod+'-panel';
+  document.querySelectorAll('.'+pc).forEach(function(p){p.classList.add('hidden');});
+  document.getElementById(mod+'-'+tab).classList.remove('hidden');
+  el.parentNode.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+}
+function openModal(id){document.getElementById(id).classList.add('show');closeMenus();}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.overlay').forEach(function(o){
+  o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(function(o){o.classList.remove('show');});
+});
+function toggleMenu(id){var m=document.getElementById(id),w=m.classList.contains('show');closeMenus();if(!w)m.classList.add('show');}
+function closeMenus(){document.querySelectorAll('.createmenu').forEach(function(m){m.classList.remove('show');});}
+document.addEventListener('click',function(e){if(!e.target.closest('.phead-r'))closeMenus();});
+function setCatBy(mode){
+  document.getElementById('catByCategory').classList.toggle('on',mode==='category');
+  document.getElementById('catByItem').classList.toggle('on',mode==='item');
+}
+function setSub(el){el.parentNode.querySelectorAll('.stab').forEach(function(s){s.classList.remove('on');});el.classList.add('on');}
+
+/* ---- Banking > Transactions: account-scoped register, Confirm / Categorize ---- */
+var BANK_ACCTS=[
+ {id:'ibcdip',n:'IBC — DIP-4821',s:'Checking ·••4821',bal:'$142,840',neg:false,txns:[
+   {d:'May 2',t:'PILOT TRAVEL #482 LAREDO TX',sub:'Check image 1730',amt:'−$612.40',neg:true,sugg:{txt:'Pilot · Fuel / DEF',k:''}},
+   {d:'May 1',t:'XFER TO IBC PAYROLL ACCT',sub:'Internal transfer',amt:'−$24,000.00',neg:true,sugg:{txt:'Record as transfer · IBC Payroll',k:'xfer'}},
+   {d:'May 1',t:'DEPOSIT — CHECK 88231',sub:'Mobile deposit',amt:'$3,250.00',neg:false,sugg:null},
+   {d:'Apr 30',t:'RELAY FUEL SETTLEMENT',sub:'Weekly card settlement',amt:'−$9,318.72',neg:true,sugg:{txt:'Split 14 ways · by driver',k:'split'}},
+   {d:'Apr 29',t:'IBC SERVICE FEE',sub:'Monthly account fee',amt:'−$45.00',neg:true,sugg:{txt:'Bank charges · service fee',k:''}},
+   {d:'Apr 28',t:'ACH DEBIT REF 5521',sub:'Unrecognized debit',amt:'−$340.00',neg:true,sugg:null}
+ ]},
+ {id:'frost',n:'Frost — Operating',s:'Checking ·••1135',bal:'$98,420',neg:false,txns:[
+   {d:'May 1',t:'LOZANO TIRES INV-8821',sub:'ACH debit',amt:'−$1,847.00',neg:true,sugg:{txt:'Match · B-4821 open bill',k:'match'}},
+   {d:'Apr 30',t:'CAPITAL ONE CC PAYMENT',sub:'ACH debit',amt:'−$18,420.00',neg:true,sugg:{txt:'Record as credit card payment',k:'xfer'}},
+   {d:'Apr 29',t:'DEPOSIT — TRIUMPH ADVANCE',sub:'Factoring funding',amt:'$4,365.00',neg:false,sugg:{txt:'Match · FT-220 advance',k:'match'}},
+   {d:'Apr 27',t:'DEPOSIT REF 7740',sub:'Incoming wire',amt:'$2,900.00',neg:false,sugg:null}
+ ]},
+ {id:'ibcpay',n:'IBC — Payroll',s:'Checking ·••6129',bal:'$42,150',neg:false,txns:[
+   {d:'May 1',t:'XFER FROM IBC DIP-4821',sub:'Internal transfer',amt:'$24,000.00',neg:false,sugg:{txt:'Record as transfer · IBC DIP-4821',k:'xfer'}},
+   {d:'Apr 30',t:'IBC SERVICE FEE',sub:'Monthly account fee',amt:'−$15.00',neg:true,sugg:{txt:'Bank charges · service fee',k:''}}
+ ]},
+ {id:'capone',n:'Capital One CC',s:'Credit card ·••7720',bal:'−$18,420',neg:true,txns:[
+   {d:'May 3',t:'OFFICE DEPOT #1182',sub:'Card purchase',amt:'−$213.10',neg:true,sugg:{txt:'Office Depot · Office supplies',k:''}}
+ ]}
+];
+var curAcct='ibcdip';
+function renderAcctSel(){
+  document.getElementById('acctSel').innerHTML=BANK_ACCTS.map(function(a){
+    var u=a.txns.length;
+    return '<div class="acctcard'+(a.id===curAcct?' on':'')+'" onclick="selectBankAcct(\''+a.id+'\')">'+
+      '<div class="ac-n">'+a.n+'</div><div class="ac-b'+(a.neg?' neg':'')+' tnum">'+a.bal+'</div>'+
+      '<div class="ac-s">'+a.s+'</div>'+
+      '<span class="ac-u'+(u===0?' zero':'')+'">'+u+' to review</span></div>';
+  }).join('');
+}
+function renderTxns(){
+  var a=BANK_ACCTS.filter(function(x){return x.id===curAcct;})[0];
+  document.getElementById('txnTitle').textContent='Bank transactions — '+a.n;
+  document.getElementById('subReview').textContent='For review · '+a.txns.length;
+  document.getElementById('txnFoot').textContent='Showing all '+a.txns.length+' transactions for review in '+a.n;
+  document.getElementById('txnBody').innerHTML=a.txns.map(function(tx){
+    var sug,act;
+    if(tx.sugg){
+      sug='<span class="sugg'+(tx.sugg.k?' '+tx.sugg.k:'')+'">'+tx.sugg.txt+'</span>';
+      act='<button class="mini confirm" onclick="confirmTxn(this)">Confirm</button>';
+    }else{
+      sug='<span class="nosug">No suggestion — needs categorizing</span>';
+      act='<button class="mini go" onclick="openModal(\'catModal\')">Categorize</button>';
+    }
+    return '<tr><td>'+tx.d+'</td><td class="tcode">'+tx.t+'<span class="tsub">'+tx.sub+'</span></td>'+
+      '<td class="r amt'+(tx.neg?' neg':'')+' tnum">'+tx.amt+'</td><td>'+sug+'</td>'+
+      '<td class="r">'+act+'</td></tr>';
+  }).join('');
+}
+function selectBankAcct(id){curAcct=id;renderAcctSel();renderTxns();}
+function confirmTxn(btn){
+  btn.closest('tr').classList.add('rowdone');
+  btn.parentNode.innerHTML='<span class="donetag">Confirmed &#10003;</span>';
+}
+renderAcctSel();renderTxns();
+
+/* start on Accounting */
+showModule('accounting');
+</script>
+</body>
+</html>
