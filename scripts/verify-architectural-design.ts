@@ -2,243 +2,405 @@
 /**
  * verify-architectural-design.ts
  *
- * Reads docs/specs/IH35_ARCHITECTURAL_DESIGN.md to extract the canonical
- * tab count per module, then scans the frontend module pages for sub-nav
- * route definitions, and FAILS the build if they diverge.
+ * Locks accepted UI surface against silent removals. The baseline lives in:
+ *   docs/locked-ui-surface.json
  *
- * This is the enforcement gate that prevents Phase 3+ spec drift.
+ * Verification behavior:
+ * - FAIL if any locked route is no longer registered in App.tsx
+ * - FAIL if any locked sidebar item id is removed
+ * - FAIL if any locked sub-nav tab is removed
+ * - FAIL if any locked named section is removed
+ * - PASS when only additions are made
  *
- * Run via: npm run verify:arch-design
- * Runs in CI on every push to main and every PR.
- *
- * PARSER (two-pass):
- *   Pass 1: find every `## MODULE N — NAME` heading
- *   Pass 2: for each module, find the next `### Sub-nav tabs (X` heading
- *           between this module heading and the next module heading
- *           (or the end of the file)
- *
- * Module name is normalized: leading "MODULE N — " stripped, trailing
- * decoration (warning emoji, "JORGE'S CALLOUT", parenthetical notes) stripped.
+ * Use --write-baseline to regenerate the lock file intentionally.
  */
 
 import * as fs from "node:fs";
-import * as path from "node:path";
+import { execSync } from "node:child_process";
 
-interface ModuleSpec {
-  name: string;
-  expectedTabs: number;
-  rawHeading: string;
-}
+const APP_PATH = "apps/frontend/src/App.tsx";
+const SIDEBAR_PATH = "apps/frontend/src/components/layout/sidebar-config.ts";
+const LOCK_FILE_PATH = "docs/locked-ui-surface.json";
 
-const ARCH_DESIGN_PATH = "docs/specs/IH35_ARCHITECTURAL_DESIGN.md";
-const FRONTEND_PAGES = "apps/frontend/src/pages";
-
-// Map architectural design module names to frontend page directories.
-// Add entries here as new modules ship.
-const MODULE_DIR_MAP: Record<string, string> = {
-  HOME: "home",
-  MAINTENANCE: "maintenance",
-  ACCOUNTING: "accounting",
-  BANKING: "banking",
-  "FUEL PLANNER": "fuel",
-  SAFETY: "safety",
-  DRIVERS: "drivers",
-  CUSTOMERS: "customers",
-  DISPATCH: "dispatch",
-  VENDORS: "vendors",
-  DOCUMENTS: "docs",
-  "LISTS / CATALOGS": "lists",
-  REPORTS: "reports",
-  "425C": "form425c",
-  "425C (CH.11 DIP UST REPORT)": "form425c",
-  LEGAL: "legal",
-  "LEGAL / CONTRACTS": "legal",
+type LockedUiSurface = {
+  schemaVersion: 1;
+  generatedAt: string;
+  source: {
+    branch: string;
+    commit: string;
+  };
+  routes: string[];
+  sidebarItemIds: string[];
+  subNavTabs: Record<string, string[]>;
+  namedSections: Record<string, string[]>;
 };
 
-function normalizeModuleName(raw: string): string {
-  // raw examples:
-  //   "MODULE 1 — HOME / Owner Dashboard"   → "HOME"
-  //   "MODULE 2 — MAINTENANCE"              → "MAINTENANCE"
-  //   "MODULE 6 — SAFETY ⚠️ MOST GAPS — JORGE'S CALLOUT" → "SAFETY"
-  //   "MODULE 12 — LISTS / CATALOGS"        → "LISTS / CATALOGS" (compound name, keep)
-  //   "MODULE 14 — 425C (Ch.11 DIP UST Report)" → "425C"
-  //   "MODULE 5 — FUEL PLANNER"             → "FUEL PLANNER"
+type SubNavSource = {
+  module: string;
+  file: string;
+  startToken: string;
+  valueField: "label" | "id";
+};
 
-  // Step 1: strip leading "MODULE N — " or "MODULE N - "
-  let s = raw.replace(/^MODULE\s+\d+\s*[—\-]\s*/i, "");
+type NamedSectionSource = {
+  module: string;
+  file: string;
+  patterns: RegExp[];
+};
 
-  // Step 2: strip everything from first em-dash, parenthetical, OR non-ASCII char
-  // (handles ⚠️, "— JORGE'S CALLOUT", "(Ch.11 ...)" all in one pass)
-  s = s.replace(/\s*[—\-(].*$/, "");      // first em-dash, hyphen, or paren
-  s = s.replace(/\s*[^\x20-\x7E].*$/, ""); // first non-ASCII (emoji and beyond)
+const SUB_NAV_SOURCES: SubNavSource[] = [
+  {
+    module: "accounting",
+    file: "apps/frontend/src/pages/accounting/AccountingSubNav.tsx",
+    startToken: "export const ACCOUNTING_SUB_NAV_ITEMS = [",
+    valueField: "label",
+  },
+  {
+    module: "maintenance",
+    file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+    startToken: "const SUBNAV = [",
+    valueField: "label",
+  },
+  {
+    module: "fuel",
+    file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+    startToken: "const SUBNAV = [",
+    valueField: "label",
+  },
+  {
+    module: "drivers",
+    file: "apps/frontend/src/pages/Drivers.tsx",
+    startToken: "const DRIVERS_SUBNAV = [",
+    valueField: "label",
+  },
+  {
+    module: "safety",
+    file: "apps/frontend/src/pages/safety/SafetyTabsMeta.ts",
+    startToken: "export const TABS = [",
+    valueField: "id",
+  },
+  {
+    module: "reports",
+    file: "apps/frontend/src/pages/reports/ReportsSubNav.tsx",
+    startToken: "export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [",
+    valueField: "label",
+  },
+  {
+    module: "lists",
+    file: "apps/frontend/src/pages/lists/ListsSubNav.tsx",
+    startToken: "export const LISTS_SUB_NAV_ITEMS: NavItem[] = [",
+    valueField: "label",
+  },
+  {
+    module: "legal",
+    file: "apps/frontend/src/pages/legal/LegalModuleTabs.tsx",
+    startToken: "const TABS = [",
+    valueField: "label",
+  },
+  {
+    module: "form425c",
+    file: "apps/frontend/src/pages/form425c/Form425CHome.tsx",
+    startToken: "const TABS: Array<{ id: TabId; label: string }> = [",
+    valueField: "label",
+  },
+];
 
-  // Step 3: handle compound vs subtitle slash-separated names
-  // "HOME / Owner Dashboard" — second part is mixed case = subtitle, drop it
-  // "LISTS / CATALOGS" — both parts uppercase = compound name, keep both
-  if (s.includes("/")) {
-    const parts = s.split("/").map((p) => p.trim());
-    const allUpper = parts.every((p) => p === p.toUpperCase());
-    if (!allUpper) {
-      s = parts[0]; // subtitle pattern — keep first part only
-    }
-  }
+const NAMED_SECTION_SOURCES: NamedSectionSource[] = [
+  {
+    module: "accounting",
+    file: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<HubSection[^>]*\btitle="([^"]+)"/g],
+  },
+  {
+    module: "banking",
+    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
+    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g],
+  },
+  {
+    module: "maintenance",
+    file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g],
+  },
+  {
+    module: "fuel",
+    file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<h3[^>]*>\s*([^<]+?)\s*<\/h3>/g],
+  },
+  {
+    module: "drivers",
+    file: "apps/frontend/src/pages/Drivers.tsx",
+    patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<DataPanel[^>]*\btitle="([^"]+)"/g],
+  },
+];
 
-  // Step 4: collapse whitespace + uppercase
-  s = s.replace(/\s+/g, " ").trim().toUpperCase();
-  return s;
-}
-
-function parseExpectedTabs(): ModuleSpec[] {
-  if (!fs.existsSync(ARCH_DESIGN_PATH)) {
-    console.error(`✘ Architectural design not found at ${ARCH_DESIGN_PATH}`);
-    process.exit(1);
-  }
-  const md = fs.readFileSync(ARCH_DESIGN_PATH, "utf8");
-  const lines = md.split(/\r?\n/);
-
-  // Pass 1: indices of every `## MODULE N — NAME` heading
-  const moduleHeadings: { lineIdx: number; raw: string; name: string }[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(/^##\s+(MODULE\s+\d+\s*[—\-].*)$/i);
-    if (m) {
-      const raw = m[1].trim();
-      moduleHeadings.push({
-        lineIdx: i,
-        raw,
-        name: normalizeModuleName(raw),
-      });
-    }
-  }
-
-  // Pass 2: for each module, find next `### Sub-nav tabs (X` between this and next heading
-  const out: ModuleSpec[] = [];
-  for (let mi = 0; mi < moduleHeadings.length; mi++) {
-    const start = moduleHeadings[mi].lineIdx;
-    const end = mi + 1 < moduleHeadings.length ? moduleHeadings[mi + 1].lineIdx : lines.length;
-    let foundCount: number | null = null;
-    for (let i = start; i < end; i++) {
-      // Match either:
-      //   "### Sub-nav tabs (12 — locked)"
-      //   "### Sub-nav tabs (8 total — UPDATED ...)"
-      //   "### Top tabs (mobile-friendly bottom nav — 5)"   ← Driver PWA edge case
-      //   "### Sub-nav tabs (4)"
-      const tabMatch = lines[i].match(/^###\s+(?:Sub-nav|Top)\s+tabs?\s*\((\d+)/i);
-      if (tabMatch) {
-        foundCount = parseInt(tabMatch[1], 10);
-        break;
-      }
-    }
-    if (foundCount !== null) {
-      out.push({
-        name: moduleHeadings[mi].name,
-        expectedTabs: foundCount,
-        rawHeading: moduleHeadings[mi].raw,
-      });
-    }
+function unique(items: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of items) {
+    const value = item.trim();
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    out.push(value);
   }
   return out;
 }
 
-function countActualTabs(moduleDir: string): number | null {
-  const dir = path.join(FRONTEND_PAGES, moduleDir);
-  if (!fs.existsSync(dir)) return null;
+function readRequired(path: string): string {
+  if (!fs.existsSync(path)) {
+    console.error(`✘ Missing required file: ${path}`);
+    process.exit(1);
+  }
+  return fs.readFileSync(path, "utf8");
+}
 
-  // Look for SubNav-style array definitions in any .tsx/.ts file under the module dir.
-  // Patterns supported (any one match wins per file; max across files used):
-  //   const SUB_NAV = [ ... ]
-  //   const TABS = [ ... ]
-  //   const SUBNAV = [ ... ]
-  //   tabs: [ ... ]
-  let maxCount = 0;
-  const walk = (d: string) => {
-    for (const f of fs.readdirSync(d)) {
-      const p = path.join(d, f);
-      const s = fs.statSync(p);
-      if (s.isDirectory()) walk(p);
-      else if (f.endsWith(".tsx") || f.endsWith(".ts")) {
-        const content = fs.readFileSync(p, "utf8");
-        const arrayMatches = content.matchAll(
-          /(?:const|let)\s+(?:SUB_NAV|TABS|SUBNAV|tabs)\s*[:=]\s*\[([^\]]*?)\]/gs
-        );
-        for (const am of arrayMatches) {
-          const inner = am[1].trim();
-          if (inner.length === 0) continue;
-          const entries = inner.split(/\},\s*\{/).length;
-          if (entries > maxCount) maxCount = entries;
-        }
+function extractArrayBlock(content: string, startToken: string): string {
+  const start = content.indexOf(startToken);
+  if (start < 0) {
+    throw new Error(`Could not find array start token: ${startToken}`);
+  }
+  const assignment = content.indexOf("=", start);
+  if (assignment < 0) {
+    throw new Error(`Could not find '=' after token: ${startToken}`);
+  }
+  const startBracket = content.indexOf("[", assignment);
+  if (startBracket < 0) {
+    throw new Error(`Could not find '[' after token: ${startToken}`);
+  }
+  let depth = 0;
+  for (let i = startBracket; i < content.length; i++) {
+    const ch = content[i];
+    if (ch === "[") depth += 1;
+    else if (ch === "]") {
+      depth -= 1;
+      if (depth === 0) return content.slice(startBracket, i + 1);
+    }
+  }
+  throw new Error(`Unclosed array for token: ${startToken}`);
+}
+
+function extractRoutesFromApp(): string[] {
+  const content = readRequired(APP_PATH);
+  const out: string[] = [];
+
+  const directRouteRegex = /<Route\b[^>]*\bpath=(?:"([^"]+)"|'([^']+)')/g;
+  let directMatch: RegExpExecArray | null;
+  while ((directMatch = directRouteRegex.exec(content)) !== null) {
+    const route = directMatch[1] ?? directMatch[2];
+    if (route) out.push(route);
+  }
+
+  const mappedPathArrayRegex = /\[((?:.|\r|\n)*?)\]\.map\(\(path\)\s*=>[\s\S]*?<Route[\s\S]*?\bpath=\{path\}/g;
+  let mappedMatch: RegExpExecArray | null;
+  while ((mappedMatch = mappedPathArrayRegex.exec(content)) !== null) {
+    const arrayBlock = mappedMatch[1];
+    const literalRegex = /"([^"]+)"|'([^']+)'/g;
+    let literal: RegExpExecArray | null;
+    while ((literal = literalRegex.exec(arrayBlock)) !== null) {
+      const value = literal[1] ?? literal[2];
+      if (value && (value.startsWith("/") || value === "*")) out.push(value);
+    }
+  }
+
+  const mappedTupleArrayRegex = /\[((?:.|\r|\n)*?)\]\.map\(\(\[path[^\]]*\]\)\s*=>[\s\S]*?<Route[\s\S]*?\bpath=\{path\}/g;
+  let tupleMatch: RegExpExecArray | null;
+  while ((tupleMatch = mappedTupleArrayRegex.exec(content)) !== null) {
+    const arrayBlock = tupleMatch[1];
+    const pathLiteralRegex = /"((?:\/|\*)[^"]*)"|'((?:\/|\*)[^']*)'/g;
+    let pathLiteral: RegExpExecArray | null;
+    while ((pathLiteral = pathLiteralRegex.exec(arrayBlock)) !== null) {
+      const value = pathLiteral[1] ?? pathLiteral[2];
+      if (value) out.push(value);
+    }
+  }
+
+  return unique(out).sort();
+}
+
+function extractSidebarItemIds(): string[] {
+  const content = readRequired(SIDEBAR_PATH);
+  const block = extractArrayBlock(content, "export const SIDEBAR_ITEM_IDS = [");
+  const out: string[] = [];
+  const regex = /"([^"]+)"/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(block)) !== null) {
+    out.push(match[1]);
+  }
+  return unique(out);
+}
+
+function extractSubNavTabs(): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const source of SUB_NAV_SOURCES) {
+    const content = readRequired(source.file);
+    const block = extractArrayBlock(content, source.startToken);
+    const regex = source.valueField === "label" ? /label:\s*"([^"]+)"/g : /id:\s*"([^"]+)"/g;
+    const values: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(block)) !== null) {
+      values.push(match[1]);
+    }
+    out[source.module] = unique(values);
+  }
+  return out;
+}
+
+function extractNamedSections(): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const source of NAMED_SECTION_SOURCES) {
+    const content = readRequired(source.file);
+    const moduleValues = out[source.module] ?? [];
+    for (const pattern of source.patterns) {
+      let match: RegExpExecArray | null;
+      while ((match = pattern.exec(content)) !== null) {
+        moduleValues.push(match[1]);
       }
     }
-  };
-  try {
-    walk(dir);
-  } catch {
-    return null;
+    out[source.module] = unique(moduleValues);
   }
-  return maxCount;
+  return out;
+}
+
+function resolveGitDir(): string | null {
+  const gitMetaPath = ".git";
+  if (!fs.existsSync(gitMetaPath)) return null;
+  const stats = fs.statSync(gitMetaPath);
+  if (stats.isDirectory()) return gitMetaPath;
+  const raw = fs.readFileSync(gitMetaPath, "utf8").trim();
+  const match = raw.match(/^gitdir:\s*(.+)$/i);
+  if (!match) return null;
+  return match[1].trim();
+}
+
+function getCurrentRef(): { branch: string; commit: string } {
+  try {
+    const branch = execSync("git branch --show-current", { stdio: ["ignore", "pipe", "ignore"] }).toString("utf8").trim() || "unknown";
+    const commit = execSync("git rev-parse HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString("utf8").trim() || "unknown";
+    return { branch, commit };
+  } catch {
+    // Fall through to filesystem-based fallback below.
+  }
+  const gitDir = resolveGitDir();
+  if (!gitDir) return { branch: "unknown", commit: "unknown" };
+  const headPath = `${gitDir}/HEAD`;
+  if (!fs.existsSync(headPath)) return { branch: "unknown", commit: "unknown" };
+  const head = fs.readFileSync(headPath, "utf8").trim();
+  if (head.startsWith("ref: ")) {
+    const ref = head.slice(5);
+    const branch = ref.split("/").at(-1) ?? "unknown";
+    const refPath = `${gitDir}/${ref}`;
+    const commit = fs.existsSync(refPath) ? fs.readFileSync(refPath, "utf8").trim() : "unknown";
+    return { branch, commit };
+  }
+  return { branch: "detached", commit: head };
+}
+
+function buildCurrentSurface(): LockedUiSurface {
+  const ref = getCurrentRef();
+  return {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    source: {
+      branch: ref.branch,
+      commit: ref.commit,
+    },
+    routes: extractRoutesFromApp(),
+    sidebarItemIds: extractSidebarItemIds(),
+    subNavTabs: extractSubNavTabs(),
+    namedSections: extractNamedSections(),
+  };
+}
+
+function readBaseline(): LockedUiSurface {
+  if (!fs.existsSync(LOCK_FILE_PATH)) {
+    console.error(`✘ Baseline file missing: ${LOCK_FILE_PATH}`);
+    console.error(`  Run: tsx scripts/verify-architectural-design.ts --write-baseline`);
+    process.exit(1);
+  }
+  const parsed = JSON.parse(fs.readFileSync(LOCK_FILE_PATH, "utf8")) as LockedUiSurface;
+  if (parsed.schemaVersion !== 1) {
+    console.error(`✘ Unsupported ${LOCK_FILE_PATH} schemaVersion: ${String((parsed as { schemaVersion?: unknown }).schemaVersion)}`);
+    process.exit(1);
+  }
+  return parsed;
+}
+
+function diffMissing(expected: string[], actual: string[]): string[] {
+  const actualSet = new Set(actual);
+  return expected.filter((item) => !actualSet.has(item));
+}
+
+function verifyAgainstBaseline(current: LockedUiSurface, baseline: LockedUiSurface): string[] {
+  const failures: string[] = [];
+
+  const missingRoutes = diffMissing(baseline.routes, current.routes);
+  if (missingRoutes.length > 0) {
+    failures.push(`routes missing from code (${missingRoutes.length}): ${missingRoutes.join(", ")}`);
+  }
+
+  const missingSidebarIds = diffMissing(baseline.sidebarItemIds, current.sidebarItemIds);
+  if (missingSidebarIds.length > 0) {
+    failures.push(`sidebar ids missing from code (${missingSidebarIds.length}): ${missingSidebarIds.join(", ")}`);
+  }
+
+  const baselineModules = Object.keys(baseline.subNavTabs).sort();
+  for (const moduleName of baselineModules) {
+    const expectedTabs = baseline.subNavTabs[moduleName] ?? [];
+    const actualTabs = current.subNavTabs[moduleName] ?? [];
+    const missingTabs = diffMissing(expectedTabs, actualTabs);
+    if (missingTabs.length > 0) {
+      failures.push(`sub-nav tabs missing for '${moduleName}' (${missingTabs.length}): ${missingTabs.join(", ")}`);
+    }
+  }
+
+  const baselineSectionModules = Object.keys(baseline.namedSections).sort();
+  for (const moduleName of baselineSectionModules) {
+    const expectedSections = baseline.namedSections[moduleName] ?? [];
+    const actualSections = current.namedSections[moduleName] ?? [];
+    const missingSections = diffMissing(expectedSections, actualSections);
+    if (missingSections.length > 0) {
+      failures.push(`named sections missing for '${moduleName}' (${missingSections.length}): ${missingSections.join(", ")}`);
+    }
+  }
+
+  return failures;
+}
+
+function writeBaseline(surface: LockedUiSurface) {
+  fs.writeFileSync(LOCK_FILE_PATH, `${JSON.stringify(surface, null, 2)}\n`, "utf8");
 }
 
 function main() {
-  const expected = parseExpectedTabs();
-  if (expected.length === 0) {
-    console.error("✘ Could not parse any module / tab counts from architectural design.");
-    console.error(`  Expected per-module headings of format: '## MODULE N — NAME'`);
-    console.error(`  followed by '### Sub-nav tabs (X — ...)' (X = integer count)`);
-    process.exit(1);
+  const args = new Set(process.argv.slice(2));
+  const writeMode = args.has("--write-baseline");
+  const current = buildCurrentSurface();
+
+  if (writeMode) {
+    writeBaseline(current);
+    console.log(`✅ Wrote locked UI baseline: ${LOCK_FILE_PATH}`);
+    console.log(`   Routes: ${current.routes.length}`);
+    console.log(`   Sidebar ids: ${current.sidebarItemIds.length}`);
+    console.log(`   Sub-nav modules: ${Object.keys(current.subNavTabs).length}`);
+    console.log(`   Named section modules: ${Object.keys(current.namedSections).length}`);
+    return;
   }
 
-  console.log(`Parsed ${expected.length} module(s) from ${ARCH_DESIGN_PATH}:`);
-  for (const m of expected) {
-    console.log(`  • ${m.name} → ${m.expectedTabs} tabs (heading: '${m.rawHeading}')`);
-  }
-  console.log("");
-
-  const failures: string[] = [];
-  const warnings: string[] = [];
-
-  for (const mod of expected) {
-    // DRIVER PWA is a separate app; skip from this check.
-    if (mod.name.includes("DRIVER PWA")) {
-      console.log(`◦ ${mod.name}: skipped (separate Driver PWA app)`);
-      continue;
-    }
-    const dirName = MODULE_DIR_MAP[mod.name];
-    if (!dirName) {
-      warnings.push(`⚠ No frontend dir mapping for module: ${mod.name} (add to MODULE_DIR_MAP)`);
-      continue;
-    }
-    const actual = countActualTabs(dirName);
-    if (actual === null) {
-      warnings.push(`⚠ Frontend dir not found yet: ${dirName} (expected ${mod.expectedTabs} tabs) — module not yet implemented`);
-      continue;
-    }
-    if (actual === 0) {
-      warnings.push(`⚠ No SubNav array detected in ${dirName} (expected ${mod.expectedTabs} tabs) — module may use a different pattern; review verify script`);
-      continue;
-    }
-    if (actual !== mod.expectedTabs) {
-      failures.push(
-        `✘ MODULE MISMATCH: ${mod.name} (${dirName}) — architectural design says ${mod.expectedTabs} tabs, code has ${actual}`
-      );
-    } else {
-      console.log(`✓ ${mod.name}: ${actual} tabs match architectural design`);
-    }
-  }
-
-  if (warnings.length > 0) {
-    console.log("\n--- WARNINGS (non-fatal) ---");
-    warnings.forEach((w) => console.log(w));
-  }
+  const baseline = readBaseline();
+  const failures = verifyAgainstBaseline(current, baseline);
 
   if (failures.length > 0) {
     console.error("\n--- FAILURES (build blocked) ---");
-    failures.forEach((f) => console.error(f));
-    console.error(
-      "\nFix: Either add the missing tabs to the module OR update docs/specs/IH35_ARCHITECTURAL_DESIGN.md to reflect the new design (with Jorge approval)."
-    );
+    for (const failure of failures) {
+      console.error(`✘ ${failure}`);
+    }
+    console.error("\nFix: restore removed UI surface OR update docs/locked-ui-surface.json in the same PR to make intentional removals explicit.");
     process.exit(1);
   }
 
-  console.log("\n✅ All implemented modules match architectural design");
+  console.log("✅ Locked UI surface check passed");
+  console.log(`   Routes checked: ${baseline.routes.length}`);
+  console.log(`   Sidebar ids checked: ${baseline.sidebarItemIds.length}`);
+  console.log(`   Sub-nav modules checked: ${Object.keys(baseline.subNavTabs).length}`);
+  console.log(`   Named section modules checked: ${Object.keys(baseline.namedSections).length}`);
 }
 
 main();
