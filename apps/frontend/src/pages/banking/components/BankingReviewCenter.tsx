@@ -4,6 +4,7 @@ import { categorizeBankTransaction, getBankingUncategorized, getCoaAccounts, typ
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 export type BankingReviewDataSource = "uncategorized" | "review";
 
@@ -217,7 +218,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                         </label>
                         <label className="block text-[11px] font-medium text-gray-600">
                           GL account
-                          <select
+                          <SelectCombobox
                             className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
                             value={draft.gl_account_id}
                             onChange={(e) => setDrafts((d) => ({ ...d, [id]: { ...draft, gl_account_id: e.target.value } }))}
@@ -229,7 +230,7 @@ export function BankingReviewCenter({ companyId, dataSource, uncategorizedFilter
                                 {a.account_name}
                               </option>
                             ))}
-                          </select>
+                          </SelectCombobox>
                         </label>
                         <label className="block text-[11px] font-medium text-gray-600">
                           Memo

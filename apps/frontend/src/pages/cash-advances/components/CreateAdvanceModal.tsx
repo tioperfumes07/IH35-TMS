@@ -4,6 +4,7 @@ import { createCashAdvance, listUnpaidBills, type CashAdvanceMethod, type CashAd
 import { listDrivers } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -108,14 +109,14 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
             <span>Driver</span>
-            <select className="w-full rounded border border-gray-300 px-2 py-1" value={driverId} onChange={(e) => setDriverId(e.target.value)}>
+            <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={driverId} onChange={(e) => setDriverId(e.target.value)}>
               <option value="">Select driver</option>
               {(driversQuery.data?.drivers ?? []).map((driver) => (
                 <option key={driver.id} value={driver.id}>
                   {driver.first_name} {driver.last_name}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="space-y-1">
             <span>Amount</span>
@@ -130,23 +131,23 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           </label>
           <label className="space-y-1">
             <span>Purpose</span>
-            <select className="w-full rounded border border-gray-300 px-2 py-1" value={purpose} onChange={(e) => setPurpose(e.target.value as CashAdvancePurpose)}>
+            <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={purpose} onChange={(e) => setPurpose(e.target.value as CashAdvancePurpose)}>
               {PURPOSE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="space-y-1">
             <span>Disbursement Method</span>
-            <select className="w-full rounded border border-gray-300 px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}>
+            <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}>
               {METHOD_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <label className="space-y-1 md:col-span-2">
             <span>Recipient Name (wire / check / vendor)</span>
@@ -171,7 +172,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
             <div className="grid gap-2 md:grid-cols-2">
               <label className="space-y-1">
                 <span>Unpaid Bill</span>
-                <select
+                <SelectCombobox
                   className="w-full rounded border border-gray-300 px-2 py-1"
                   value={linkedBillId}
                   onChange={(e) => {
@@ -189,7 +190,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                       {String(bill.display_id)} · ${Number(bill.total_amount ?? 0).toFixed(2)}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
               <div className="rounded border border-blue-100 bg-white p-2">
                 <div>Bill amount auto-fills advance amount.</div>
@@ -234,10 +235,10 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
             </label>
             <label className="space-y-1">
               <span>Cadence</span>
-              <select className="w-full rounded border border-gray-300 px-2 py-1" value={cadence} onChange={(e) => setCadence(e.target.value as "weekly" | "biweekly")}>
+              <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={cadence} onChange={(e) => setCadence(e.target.value as "weekly" | "biweekly")}>
                 <option value="weekly">Weekly</option>
                 <option value="biweekly">Biweekly</option>
-              </select>
+              </SelectCombobox>
             </label>
           </div>
           <div className="mt-1 text-gray-600">Auto-suggest default: 4 weekly installments.</div>

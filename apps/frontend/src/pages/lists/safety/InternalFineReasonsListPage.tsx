@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { InternalFineReasonModal } from "./InternalFineReasonModal";
 import { ListsSubNav } from "../ListsSubNav";
 import { moneyFromCents, STATUS_OPTIONS, statusPillClass, type StatusFilter } from "./shared";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 export function InternalFineReasonsListPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -55,13 +56,13 @@ export function InternalFineReasonsListPage() {
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-3">
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by code or reason name" className="h-9 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
-        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-sm">
+        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-sm">
           {STATUS_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
-        </select>
+        </SelectCombobox>
       </div>
 
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">

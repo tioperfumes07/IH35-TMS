@@ -1,6 +1,7 @@
 import { useFieldArray, type Control, type UseFormRegister, type UseFormWatch } from "react-hook-form";
 import { Button } from "../../../components/Button";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   control: Control<CreateWOFormValues>;
@@ -31,11 +32,11 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
       <div className="space-y-2">
         {fields.map((field, idx) => (
           <div key={field.id} className="grid grid-cols-1 gap-2 rounded border border-yellow-100 bg-white p-2 md:grid-cols-7">
-            <select {...register(`line_items.${idx}.line_type`)} className="h-8 rounded border border-gray-300 px-2 text-sm">
+            <SelectCombobox {...register(`line_items.${idx}.line_type`)} className="h-8 rounded border border-gray-300 px-2 text-sm">
               <option value="parts">Parts</option>
               <option value="labor">Labor</option>
               <option value="other">Other</option>
-            </select>
+            </SelectCombobox>
             <input {...register(`line_items.${idx}.description`)} placeholder="Description" className="h-8 rounded border border-gray-300 px-2 text-sm md:col-span-2" />
             <input type="number" step="0.01" {...register(`line_items.${idx}.quantity`, { valueAsNumber: true })} placeholder="Qty" className="h-8 rounded border border-gray-300 px-2 text-sm" />
             <input type="number" step="0.01" {...register(`line_items.${idx}.unit_cost`, { valueAsNumber: true })} placeholder="Unit $" className="h-8 rounded border border-gray-300 px-2 text-sm" />

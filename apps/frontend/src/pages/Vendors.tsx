@@ -14,6 +14,7 @@ import { dataTableErrorState } from "../lib/tableError";
 import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { ApiError } from "../api/client";
+import { SelectCombobox } from "../components/shared/SelectCombobox";
 
 const VENDOR_LIST_TAB_IDS = ["all", "active", "inactive", "by-category"] as const;
 type VendorListTabId = (typeof VENDOR_LIST_TAB_IDS)[number];
@@ -231,7 +232,7 @@ export function VendorsPage() {
           <label className="text-xs font-semibold text-gray-600" htmlFor="vendor-category-filter">
             Vendor type
           </label>
-          <select
+          <SelectCombobox
             id="vendor-category-filter"
             value={categoryFilter}
             onChange={(event) => setCategoryFilter(event.target.value)}
@@ -243,7 +244,7 @@ export function VendorsPage() {
                 {type}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </div>
       ) : null}
       <DataTable
@@ -260,7 +261,7 @@ export function VendorsPage() {
           <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
             <span className="text-sm font-medium text-gray-800">{selectedIds.length} selected</span>
             <div className="flex flex-wrap items-center gap-2">
-              <select
+              <SelectCombobox
                 className="h-9 rounded border border-gray-300 px-2 text-sm"
                 value={batchCategory}
                 onChange={(e) => setBatchCategory(e.target.value as VendorCategoryValue)}
@@ -270,7 +271,7 @@ export function VendorsPage() {
                     {c.replace(/_/g, " ")}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
               <Button type="button" size="sm" onClick={() => batchMutation.mutate()} loading={batchMutation.isPending} disabled={!companyId}>
                 Apply to {selectedIds.length} selected
               </Button>
@@ -298,7 +299,7 @@ export function VendorsPage() {
           </label>
           <label className="block">
             <span className="text-xs font-semibold text-gray-600">Vendor type</span>
-            <select
+            <SelectCombobox
               className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
               value={createType}
               onChange={(e) => setCreateType(e.target.value as CreateVendorInput["vendor_type"])}
@@ -308,7 +309,7 @@ export function VendorsPage() {
                   {t}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" type="button" onClick={() => setCreateOpen(false)}>

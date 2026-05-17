@@ -20,6 +20,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { ManualJEModal } from "./components/ManualJEModal";
 import { TransferModal } from "./TransferModal";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function txDate(tx: Record<string, unknown>) {
   return String(tx.transaction_date ?? tx.txn_date ?? "");
@@ -367,7 +368,7 @@ export function BankTxCategorizationPage() {
               <Button size="sm" variant="secondary" onClick={() => void applyBulkSuggestions()}>
                 Apply suggestion to all selected
               </Button>
-              <select
+              <SelectCombobox
                 className="h-8 rounded border border-gray-300 px-2"
                 value={batchCoaId}
                 onChange={(e) => setBatchCoaId(e.target.value)}
@@ -378,7 +379,7 @@ export function BankTxCategorizationPage() {
                     {a.account_number} — {a.account_name}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
               <Button
                 size="sm"
                 disabled={!batchCoaId}
@@ -454,7 +455,7 @@ export function BankTxCategorizationPage() {
                       <td className="px-2 py-1.5 align-top" onClick={(e) => e.stopPropagation()}>
                         <div className="flex flex-col gap-1">
                           <div className="flex flex-wrap gap-1">
-                            <select
+                            <SelectCombobox
                               className="h-8 max-w-[140px] rounded border border-gray-300 px-1 text-[11px]"
                               value={coaPickByTx[id] ?? ""}
                               onChange={(e) => setCoaPickByTx((p) => ({ ...p, [id]: e.target.value }))}
@@ -465,7 +466,7 @@ export function BankTxCategorizationPage() {
                                   {a.account_number}
                                 </option>
                               ))}
-                            </select>
+                            </SelectCombobox>
                             <Button
                               size="sm"
                               disabled={!coaPickByTx[id]}

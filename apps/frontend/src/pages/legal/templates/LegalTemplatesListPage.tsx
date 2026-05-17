@@ -8,6 +8,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { LegalTemplateNewModal } from "./LegalTemplateNewModal";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 const STATUS_OPTIONS = ["draft", "pending_review", "approved", "active", "retired"] as const;
 
@@ -90,7 +91,7 @@ export function LegalTemplatesListPage() {
           placeholder="Category"
           className="h-9 rounded border border-gray-300 px-2 text-sm"
         />
-        <select
+        <SelectCombobox
           value={status}
           onChange={(event) => setStatus(event.target.value as (typeof STATUS_OPTIONS)[number] | "all")}
           className="h-9 rounded border border-gray-300 px-2 text-sm"
@@ -101,7 +102,7 @@ export function LegalTemplatesListPage() {
               {item}
             </option>
           ))}
-        </select>
+        </SelectCombobox>
       </div>
 
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">

@@ -37,6 +37,7 @@ import { PendingAckNotice } from "./components/PendingAckNotice";
 import { ReimbursementsSection } from "./components/ReimbursementsSection";
 import { SettlementHeader } from "./components/SettlementHeader";
 import { useLiveDebt } from "./hooks/useLiveDebt";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function toDeductionRows(lines: Array<Record<string, unknown>>): DeductionRow[] {
   return lines
@@ -202,7 +203,7 @@ export function SettlementDetailPage() {
         <div className="rounded border border-amber-200 bg-amber-50 p-3 text-xs">
           <p className="mb-2 font-semibold text-amber-900">Open Dispute</p>
           <div className="grid gap-2 md:grid-cols-3">
-            <select
+            <SelectCombobox
               value={disputeCategory}
               onChange={(event) => setDisputeCategory(event.target.value)}
               className="rounded border border-amber-300 bg-white px-2 py-1"
@@ -216,7 +217,7 @@ export function SettlementDetailPage() {
               <option value="fine_dispute">fine_dispute</option>
               <option value="escrow_dispute">escrow_dispute</option>
               <option value="other">other</option>
-            </select>
+            </SelectCombobox>
             <input
               value={disputeAmount}
               onChange={(event) => setDisputeAmount(event.target.value)}

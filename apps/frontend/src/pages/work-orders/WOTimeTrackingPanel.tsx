@@ -12,6 +12,7 @@ import {
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   workOrderId: string;
@@ -162,7 +163,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
       <div className="mt-3 grid gap-2 md:grid-cols-3">
         <label className="text-xs text-slate-600">
           Actor kind
-          <select
+          <SelectCombobox
             className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]"
             value={actorKind}
             onChange={(e) => setActorKind(e.target.value as (typeof ACTORS)[number])}
@@ -172,7 +173,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId }: Props) 
                 {a}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs text-slate-600">
           Labor rate (¢/hr)

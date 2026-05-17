@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { AssignDriverDropdown, REASSIGN_REASON_CODES, type AssignDriverDropdownProps } from "./AssignDriverDropdown";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -58,7 +59,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
         />
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Reason</label>
-          <select
+          <SelectCombobox
             className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
             value={reasonCode}
             onChange={(e) => setReasonCode(e.target.value)}
@@ -68,7 +69,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
                 {r.label}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Notes (optional)</label>

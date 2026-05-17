@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createInternalFine, getInternalFines } from "../../api/safety";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -38,11 +39,11 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         <input value={form.reason_uuid} placeholder="Filter by reason" onChange={(e) => setForm((v) => ({ ...v, reason_uuid: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.amount} type="number" min={1} placeholder="Show 25" onChange={(e) => setForm((v) => ({ ...v, amount: Number(e.target.value || 0) }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
         <input value={form.imposed_date} type="date" onChange={(e) => setForm((v) => ({ ...v, imposed_date: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs" />
-        <select value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
+        <SelectCombobox value={form.status} onChange={(e) => setForm((v) => ({ ...v, status: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="disputed">Disputed</option>
-        </select>
+        </SelectCombobox>
         <button type="button" className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white" disabled={!form.driver_uuid || !form.reason_uuid || createMutation.isPending} onClick={() => createMutation.mutate()}>
           + Create Internal Fine
         </button>

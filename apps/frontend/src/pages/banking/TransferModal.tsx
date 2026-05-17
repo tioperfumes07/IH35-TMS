@@ -4,6 +4,7 @@ import { createTransfer, getPlaidBankAccounts, markBankTransactionTransfer, type
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -123,7 +124,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
       <div className="space-y-3 text-sm">
         <label className="block">
           From bank account
-          <select
+          <SelectCombobox
             aria-label="From bank account"
             className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
             value={fromAccountId}
@@ -135,11 +136,11 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
                 {option.name}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="block">
           To bank account
-          <select
+          <SelectCombobox
             aria-label="To bank account"
             className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
             value={toAccountId}
@@ -153,7 +154,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
                   {option.name}
                 </option>
               ))}
-          </select>
+          </SelectCombobox>
         </label>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">

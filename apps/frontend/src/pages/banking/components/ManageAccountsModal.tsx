@@ -4,6 +4,7 @@ import { saveAccountVisibility } from "../../../api/banking";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type AccountRow = {
   id: string;
@@ -73,7 +74,7 @@ export function ManageAccountsModal({ open, operatingCompanyId, accounts, onClos
                 />
                 visible
               </label>
-              <select
+              <SelectCombobox
                 className="h-7 rounded border border-gray-300 px-1"
                 value={String(byId.get(row.id)?.tag ?? "")}
                 onChange={(event) =>
@@ -83,7 +84,7 @@ export function ManageAccountsModal({ open, operatingCompanyId, accounts, onClos
                 {["DIP Operating", "DIP Payroll", "DIP Other", "Factoring", "Escrow", "Relay Fuel", "Credit"].map((tag) => (
                   <option key={tag} value={tag}>{tag}</option>
                 ))}
-              </select>
+              </SelectCombobox>
               <label className="flex items-center gap-1">
                 <input
                   type="checkbox"

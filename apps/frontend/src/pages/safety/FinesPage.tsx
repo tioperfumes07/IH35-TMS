@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { convertFineToLiability, getSafetyFines } from "../../api/safety";
 import { FineCreateModal } from "./components/FineCreateModal";
 import { FineDetailDrawer } from "./components/FineDetailDrawer";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -49,7 +50,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <SelectCombobox
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
             className="rounded border border-gray-300 px-2 py-1 text-xs"
@@ -60,8 +61,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
             <option value="contested">Contested</option>
             <option value="dismissed">Dismissed</option>
             <option value="reduced">Reduced</option>
-          </select>
-          <select
+          </SelectCombobox>
+          <SelectCombobox
             value={subjectTypeFilter}
             onChange={(event) => setSubjectTypeFilter(event.target.value)}
             className="rounded border border-gray-300 px-2 py-1 text-xs"
@@ -69,7 +70,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
             <option value="">All subjects</option>
             <option value="driver">Driver</option>
             <option value="company">Company</option>
-          </select>
+          </SelectCombobox>
         </div>
         <button
           type="button"

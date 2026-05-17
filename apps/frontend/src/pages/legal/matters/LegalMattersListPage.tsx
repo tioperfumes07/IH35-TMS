@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 function daysUntil(dateStr: unknown) {
   if (!dateStr || typeof dateStr !== "string") return null;
@@ -52,7 +53,7 @@ export function LegalMattersListPage() {
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
-            <select
+            <SelectCombobox
               className="rounded border border-gray-200 px-2 py-1 text-sm"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
@@ -63,8 +64,8 @@ export function LegalMattersListPage() {
                   {s}
                 </option>
               ))}
-            </select>
-            <select
+            </SelectCombobox>
+            <SelectCombobox
               className="rounded border border-gray-200 px-2 py-1 text-sm"
               value={severity}
               onChange={(e) => setSeverity(e.target.value)}
@@ -75,15 +76,15 @@ export function LegalMattersListPage() {
                   {s}
                 </option>
               ))}
-            </select>
-            <select className="rounded border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
+            </SelectCombobox>
+            <SelectCombobox className="rounded border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
               <option value="">All types</option>
               {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
                 <option key={s} value={s}>
                   {s}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
           {listQuery.isLoading ? (
             <p className="text-sm text-gray-600">Loading…</p>

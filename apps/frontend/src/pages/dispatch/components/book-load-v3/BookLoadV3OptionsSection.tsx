@@ -1,4 +1,5 @@
 import type { UseFormRegister } from "react-hook-form";
+import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
 
 type V3Fields = {
   booking_mode: "single_popup" | "legacy_form";
@@ -21,10 +22,10 @@ export function BookLoadV3OptionsSection({ register }: Props) {
       <div className="grid gap-2 md:grid-cols-2">
         <label className="text-[11px] font-semibold text-gray-700">
           Booking mode
-          <select {...register("booking_mode")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
+          <SelectCombobox {...register("booking_mode")} className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm">
             <option value="single_popup">Single popup</option>
             <option value="legacy_form">Legacy form</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-[11px] font-semibold text-gray-700">
           Lumper amount (cents)

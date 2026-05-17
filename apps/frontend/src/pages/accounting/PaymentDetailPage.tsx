@@ -10,6 +10,7 @@ import { Modal } from "../../components/Modal";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -244,7 +245,7 @@ export function PaymentDetailPage() {
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Invoice
-            <select
+            <SelectCombobox
               value={selectedInvoiceId}
               onChange={(event) => {
                 const nextId = event.target.value;
@@ -262,7 +263,7 @@ export function PaymentDetailPage() {
                   {invoice.display_id} · Open {money(invoice.amount_open_cents)}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

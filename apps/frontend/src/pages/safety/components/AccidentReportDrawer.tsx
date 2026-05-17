@@ -3,6 +3,7 @@ import { addAccidentPhoto, setSafetyAccidentStatus, spawnSafetyLiability, spawnS
 import { Button } from "../../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
+import { Combobox } from "../../../components/shared/Combobox";
 import { useToast } from "../../../components/Toast";
 
 type Props = {
@@ -44,13 +45,101 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, onClo
           <h3 className="text-sm font-semibold">Accident Damage Details</h3>
           <button type="button" className="text-gray-500 underline" onClick={onClose}>Close</button>
         </div>
-        <div className="space-y-1 rounded border border-gray-200 bg-gray-50 p-2">
-          <div>Date: {String(accident.accident_at ?? "").slice(0, 16)}</div>
-          <div>Location: {String(accident.location ?? "—")}</div>
-          <div>Driver: {String(accident.driver_id ?? "—")}</div>
-          <div>Unit: {String(accident.unit_id ?? "—")}</div>
-          <div>Severity: {String(accident.severity ?? "—")}</div>
-          <div>Status: {String(accident.status ?? "open")}</div>
+        <div className="space-y-2 rounded border border-gray-200 bg-white p-2">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">Accident Damage Details</div>
+          <div className="grid grid-cols-6 gap-2">
+            <Field label="Record Type *" className="col-span-1">
+              <Combobox
+                options={[
+                  { value: "accident", label: "Accident" },
+                  { value: "damage", label: "Damage" },
+                  { value: "vandalism", label: "Vandalism" },
+                ]}
+                value={"accident"}
+                onChange={() => {}}
+              />
+            </Field>
+            <Field label="Service Type" className="col-span-1">
+              <Combobox
+                options={[
+                  { value: "repair", label: "Repair" },
+                  { value: "replacement", label: "Replacement" },
+                  { value: "tow", label: "Tow only" },
+                ]}
+                value={"repair"}
+                onChange={() => {}}
+              />
+            </Field>
+            <div className="col-span-1" />
+            <Field label="Incident Date *" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={String(accident.accident_at ?? "").slice(0, 10)} />
+            </Field>
+            <Field label="Report Date" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={new Date().toISOString().slice(0, 10)} />
+            </Field>
+            <Field label="Bill or Expense Number (if applicable)" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+            </Field>
+
+            <div className="col-span-6 h-2" />
+            <Field label="Repair Vendor" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+            </Field>
+            <div className="col-span-4" />
+            <Field label="Load" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+            </Field>
+
+            <div className="col-span-6 h-2" />
+            <Field label="Driver" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={String(accident.driver_id ?? "")} />
+            </Field>
+            <Field label="Unit" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={String(accident.unit_id ?? "")} />
+            </Field>
+            <div className="col-span-3" />
+            <Field label="Class" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2" readOnly value="Auto class" />
+            </Field>
+
+            <div className="col-span-6 h-2" />
+            <Field label="At Fault" className="col-span-1">
+              <Combobox
+                options={[
+                  { value: "no", label: "No" },
+                  { value: "yes", label: "Yes" },
+                  { value: "disputed", label: "Disputed" },
+                ]}
+                value={"no"}
+                onChange={() => {}}
+              />
+            </Field>
+            <Field label="Police Report Number" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+            </Field>
+            <Field label="Insurance Claim Number" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+            </Field>
+            <div className="col-span-3" />
+
+            <Field label="Location" className="col-span-6">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" defaultValue={String(accident.location ?? "")} />
+            </Field>
+            <Field label="3rd Party Name" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+            </Field>
+            <Field label="3rd Party Plate" className="col-span-1">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+            </Field>
+            <div className="col-span-4" />
+            <div className="col-span-6 h-2" />
+            <Field label="Vendor Invoice" className="col-span-6">
+              <input className="h-8 w-full rounded border border-gray-300 px-2" />
+            </Field>
+            <Field label="Memo" className="col-span-6">
+              <textarea className="w-full rounded border border-gray-300 px-2 py-1" rows={2} defaultValue={String(accident.notes ?? "")} />
+            </Field>
+          </div>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Button size="sm" variant="secondary" onClick={() => setStatus("under-investigation")}>Set Investigating</Button>
@@ -119,5 +208,14 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, onClo
         </div>
       </aside>
     </>
+  );
+}
+
+function Field({ label, children, className }: { label: string; children: JSX.Element; className?: string }) {
+  return (
+    <div className={`space-y-1 ${className ?? ""}`}>
+      <label className="text-[10px] font-semibold uppercase text-gray-600">{label}</label>
+      {children}
+    </div>
   );
 }

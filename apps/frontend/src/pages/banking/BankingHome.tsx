@@ -35,6 +35,7 @@ import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 import { listVendorBalances } from "../../api/accounting";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
 import { BankingReviewCenter } from "./components/BankingReviewCenter";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 export function BankingHomePage() {
   const auth = useAuth();
@@ -411,7 +412,7 @@ export function BankingHomePage() {
           <div className="w-full max-w-lg rounded bg-white p-4 shadow-lg">
             <h3 className="text-base font-semibold text-gray-900">Start reconciliation</h3>
             <div className="mt-3 grid grid-cols-1 gap-3">
-              <select
+              <SelectCombobox
                 value={reconAccountId}
                 onChange={(event) => setReconAccountId(event.target.value)}
                 className="rounded border border-gray-300 px-2 py-1 text-sm"
@@ -422,7 +423,7 @@ export function BankingHomePage() {
                     {account.institution_name || "Bank"} - {account.account_name || "Account"} {account.account_mask ? `••••${account.account_mask}` : ""}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
               <input
                 type="date"
                 value={reconPeriodStart}

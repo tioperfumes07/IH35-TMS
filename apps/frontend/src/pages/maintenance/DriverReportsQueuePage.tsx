@@ -4,6 +4,7 @@ import { listDriverReports, updateDriverReportStatus, type DriverReportRow } fro
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 export function DriverReportsQueuePage() {
   const { selectedCompanyId, companies } = useCompanyContext();
@@ -41,7 +42,7 @@ export function DriverReportsQueuePage() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Driver Reports Queue</h2>
-        <select
+        <SelectCombobox
           className="h-9 rounded border border-gray-300 px-2 text-sm"
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as "" | DriverReportRow["status"])}
@@ -51,7 +52,7 @@ export function DriverReportsQueuePage() {
           <option value="under_review">under_review</option>
           <option value="resolved">resolved</option>
           <option value="dismissed">dismissed</option>
-        </select>
+        </SelectCombobox>
       </div>
 
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">

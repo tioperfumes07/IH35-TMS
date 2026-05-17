@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { convertIssueToWo, type ArrivingSoonCard } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -53,7 +54,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
           </div>
           <label className="space-y-1">
             <span>WO Source Type</span>
-            <select
+            <SelectCombobox
               className="h-8 w-full rounded border border-gray-300 px-2 text-sm"
               value={sourceType}
               onChange={(e) => setSourceType(e.target.value as "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS")}
@@ -63,7 +64,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
                   {type}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </label>
           <div className="text-[11px] text-gray-600">Suggested type: {suggested}</div>
           <label className="space-y-1">

@@ -9,6 +9,7 @@ import { Button } from "../../components/Button";
 import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 export function AssetProfilePage() {
   const { id = "" } = useParams();
@@ -89,7 +90,7 @@ export function AssetProfilePage() {
         </label>
         <label className="block text-xs text-gray-600">
           Class (TMS catalog)
-          <select className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" value={qboClassTmsId} onChange={(e) => setQboClassTmsId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-sm" value={qboClassTmsId} onChange={(e) => setQboClassTmsId(e.target.value)}>
             <option value="">None</option>
             {(classesQuery.data?.classes ?? []).map((c) => (
               <option key={c.id} value={c.id}>
@@ -97,7 +98,7 @@ export function AssetProfilePage() {
                 {c.class_name}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <Button size="sm" disabled={!id || !companyId} loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
           Save

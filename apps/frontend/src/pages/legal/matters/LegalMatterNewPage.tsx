@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 export function LegalMatterNewPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -74,7 +75,7 @@ export function LegalMatterNewPage() {
             </label>
             <label className="text-xs text-gray-600">
               Type
-              <select
+              <SelectCombobox
                 className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
@@ -84,11 +85,11 @@ export function LegalMatterNewPage() {
                     {t}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             <label className="text-xs text-gray-600">
               Severity
-              <select
+              <SelectCombobox
                 className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
                 value={form.severity}
                 onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value }))}
@@ -98,11 +99,11 @@ export function LegalMatterNewPage() {
                     {t}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             <label className="text-xs text-gray-600">
               Our role
-              <select
+              <SelectCombobox
                 className="mt-1 w-full rounded border border-gray-200 px-2 py-1 text-sm"
                 value={form.our_role}
                 onChange={(e) => setForm((f) => ({ ...f, our_role: e.target.value }))}
@@ -112,7 +113,7 @@ export function LegalMatterNewPage() {
                     {t}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             <label className="text-xs text-gray-600 md:col-span-2">
               Opposing party

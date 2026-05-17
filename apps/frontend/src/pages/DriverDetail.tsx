@@ -41,6 +41,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { QboCombobox } from "../components/forms/QboCombobox";
 import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
+import { SelectCombobox } from "../components/shared/SelectCombobox";
 
 const tabs = [
   "Profile",
@@ -777,7 +778,7 @@ export function DriverDetailPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Class (TMS catalog)</label>
-                <select
+                <SelectCombobox
                   className="rounded border border-gray-300 px-2 py-2 text-sm"
                   value={qboClassTmsId}
                   onChange={(e) => setQboClassTmsId(e.target.value)}
@@ -789,7 +790,7 @@ export function DriverDetailPage() {
                       {c.class_name}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </div>
             </div>
             <div className="mt-2">

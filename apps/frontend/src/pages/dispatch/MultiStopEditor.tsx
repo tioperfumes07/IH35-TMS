@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getLoadStopsForDispatch, replaceLoadStopsDispatch, type RefinedLoadStop } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 export type UiStopType = "pickup" | "dropoff" | "fuel" | "rest" | "customs";
 
@@ -87,7 +88,7 @@ function SortableRow({
         <div className="grid flex-1 grid-cols-2 gap-2">
           <div>
             <div className="text-[10px] font-semibold text-gray-500">#{index + 1} Type</div>
-            <select
+            <SelectCombobox
               className="mt-0.5 h-8 w-full rounded border border-gray-300 px-1 text-xs"
               value={row.stop_type}
               onChange={(e) => onChange(row.key, { stop_type: e.target.value as UiStopType })}
@@ -97,7 +98,7 @@ function SortableRow({
                   {t}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
           <div className="flex items-end justify-end">
             <Button type="button" variant="secondary" size="sm" onClick={() => onRemove(row.key)}>

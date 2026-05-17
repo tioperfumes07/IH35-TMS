@@ -16,6 +16,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type CandidateEvent = { id: string; event_date: string; event_type: "load" | "bill" | "settlement" };
 
@@ -193,7 +194,7 @@ export function ReconciliationWorkspacePage() {
           <div className="rounded border border-gray-200 bg-white p-3 lg:col-span-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-900">Bank transactions</p>
-              <select
+              <SelectCombobox
                 value={filterMode}
                 onChange={(event) => setFilterMode(event.target.value as "all" | "matched" | "unmatched")}
                 className="rounded border border-gray-300 px-2 py-1 text-xs"
@@ -201,7 +202,7 @@ export function ReconciliationWorkspacePage() {
                 <option value="all">All</option>
                 <option value="matched">Matched</option>
                 <option value="unmatched">Unmatched</option>
-              </select>
+              </SelectCombobox>
             </div>
             <div className="max-h-[560px] space-y-1 overflow-auto">
               {visibleTransactions.map((tx) => {
@@ -230,7 +231,7 @@ export function ReconciliationWorkspacePage() {
           <div className="rounded border border-gray-200 bg-white p-3 lg:col-span-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-900">TMS candidate events</p>
-              <select
+              <SelectCombobox
                 value={eventFilter}
                 onChange={(event) => setEventFilter(event.target.value as "all" | "load" | "bill" | "settlement")}
                 className="rounded border border-gray-300 px-2 py-1 text-xs"
@@ -239,7 +240,7 @@ export function ReconciliationWorkspacePage() {
                 <option value="load">Loads</option>
                 <option value="bill">Bills</option>
                 <option value="settlement">Settlements</option>
-              </select>
+              </SelectCombobox>
             </div>
             <div className="max-h-[500px] space-y-1 overflow-auto">
               {visibleCandidates.map((event) => (

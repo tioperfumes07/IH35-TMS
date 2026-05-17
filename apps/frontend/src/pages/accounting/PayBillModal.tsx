@@ -4,6 +4,7 @@ import { payVendorBill, type BillPaymentMethod, type VendorBill } from "../../ap
 import { getAllAccounts } from "../../api/banking";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -135,13 +136,13 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Payment method
-              <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as BillPaymentMethod)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+              <SelectCombobox value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as BillPaymentMethod)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
                 {METHOD_OPTIONS.map((method) => (
                   <option key={method.value} value={method.value}>
                     {method.label}
                   </option>
                 ))}
-              </select>
+              </SelectCombobox>
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Payment amount (USD)
@@ -150,14 +151,14 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             {needsBankAccount ? (
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                 From bank account
-                <select value={fromBankAccountId} onChange={(event) => setFromBankAccountId(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+                <SelectCombobox value={fromBankAccountId} onChange={(event) => setFromBankAccountId(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
                   <option value="">Select account</option>
                   {(accountsQuery.data?.accounts ?? []).map((account: Record<string, unknown>) => (
                     <option key={String(account.id ?? "")} value={String(account.id ?? "")}>
                       {String(account.display_name ?? "Account")}
                     </option>
                   ))}
-                </select>
+                </SelectCombobox>
               </label>
             ) : null}
             {paymentMethod === "check" ? (

@@ -10,6 +10,7 @@ import {
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -167,25 +168,25 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
         </fieldset>
         <label className="block">
           From Account
-          <select className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={fromAccountId} onChange={(e) => setFromAccountId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={fromAccountId} onChange={(e) => setFromAccountId(e.target.value)}>
             <option value="">Select account</option>
             {fromOptions.map((option) => (
               <option key={`${option.kind}-${option.id}`} value={option.id}>
                 {option.name}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="block">
           To Account
-          <select className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={toAccountId} onChange={(e) => setToAccountId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={toAccountId} onChange={(e) => setToAccountId(e.target.value)}>
             <option value="">Select account</option>
             {toOptions.map((option) => (
               <option key={`${option.kind}-${option.id}`} value={option.id}>
                 {option.name}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">

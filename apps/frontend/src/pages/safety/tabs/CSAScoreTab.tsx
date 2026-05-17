@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { getCurrentCsaScore, listCsaScores, pullCsaFromSafer, recomputeCsa } from "../../../api/safetyV64";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type BasicRow = {
   label: string;
@@ -66,10 +67,10 @@ export function CSAScoreTab() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-3">
-        <select className="rounded border border-gray-300 px-2 py-1 text-xs" value={period} onChange={(e) => setPeriod(e.target.value)}>
+        <SelectCombobox className="rounded border border-gray-300 px-2 py-1 text-xs" value={period} onChange={(e) => setPeriod(e.target.value)}>
           <option value="rolling-24">Rolling 24-month</option>
           <option value="custom">Custom range</option>
-        </select>
+        </SelectCombobox>
         <button type="button" className="rounded bg-[#1f2a44] px-3 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!isOwner || recomputeMutation.isPending} onClick={() => recomputeMutation.mutate()}>
           Manual recompute
         </button>

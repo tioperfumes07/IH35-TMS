@@ -6,6 +6,7 @@ import { createScheduledReport, testSendScheduledReport } from "../../api/schedu
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -96,23 +97,23 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
       <div className="max-h-[70vh] space-y-3 overflow-auto pr-1 text-sm">
         <label className="block text-xs text-gray-600">
           Report
-          <select className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={reportId} onChange={(e) => setReportId(e.target.value)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded border border-gray-300 px-2" value={reportId} onChange={(e) => setReportId(e.target.value)}>
             {libraryIds.map((id) => (
               <option key={id} value={id}>
                 {id}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
 
         <fieldset className="rounded border border-gray-200 p-2">
           <legend className="px-1 text-xs font-semibold text-gray-700">Parameters</legend>
           <label className="mt-1 block text-xs text-gray-600">
             Date range type
-            <select className="mt-1 h-9 w-full rounded border px-2" value={rangeType} onChange={(e) => setRangeType(e.target.value as typeof rangeType)}>
+            <SelectCombobox className="mt-1 h-9 w-full rounded border px-2" value={rangeType} onChange={(e) => setRangeType(e.target.value as typeof rangeType)}>
               <option value="rolling">Rolling window</option>
               <option value="calendar">Calendar preset</option>
-            </select>
+            </SelectCombobox>
           </label>
           {rangeType === "rolling" ? (
             <label className="mt-2 block text-xs text-gray-600">
@@ -122,11 +123,11 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
           ) : (
             <label className="mt-2 block text-xs text-gray-600">
               Preset
-              <select className="mt-1 h-9 w-full rounded border px-2" value={calendarPreset} onChange={(e) => setCalendarPreset(e.target.value as typeof calendarPreset)}>
+              <SelectCombobox className="mt-1 h-9 w-full rounded border px-2" value={calendarPreset} onChange={(e) => setCalendarPreset(e.target.value as typeof calendarPreset)}>
                 <option value="current_month">Current month</option>
                 <option value="prev_month">Previous month</option>
                 <option value="quarter">Quarter</option>
-              </select>
+              </SelectCombobox>
             </label>
           )}
           {reportId.includes("profit") ? (
@@ -145,11 +146,11 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
           </label>
           {!showCron ? (
             <>
-              <select className="mt-1 h-9 w-full rounded border px-2" value={freqKind} onChange={(e) => setFreqKind(e.target.value as typeof freqKind)}>
+              <SelectCombobox className="mt-1 h-9 w-full rounded border px-2" value={freqKind} onChange={(e) => setFreqKind(e.target.value as typeof freqKind)}>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
-              </select>
+              </SelectCombobox>
               <label className="mt-2 block text-xs text-gray-600">
                 Local time (HH:MM)
                 <input className="mt-1 h-9 w-full rounded border px-2" value={timeLocal} onChange={(e) => setTimeLocal(e.target.value)} />
@@ -188,11 +189,11 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
 
         <label className="block text-xs text-gray-600">
           Format
-          <select className="mt-1 h-9 w-full rounded border px-2" value={format} onChange={(e) => setFormat(e.target.value as typeof format)}>
+          <SelectCombobox className="mt-1 h-9 w-full rounded border px-2" value={format} onChange={(e) => setFormat(e.target.value as typeof format)}>
             <option value="pdf">PDF</option>
             <option value="xlsx">XLSX</option>
             <option value="csv">CSV</option>
-          </select>
+          </SelectCombobox>
         </label>
 
         <label className="block text-xs text-gray-600">

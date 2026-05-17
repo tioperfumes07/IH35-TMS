@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { markCashAdvanceDisbursed, type CashAdvanceMethod } from "../../../api/cashAdvances";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -52,12 +53,12 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, onClos
         <div className="grid gap-2">
           <label className="space-y-1">
             <span>Disbursement Method</span>
-            <select className="w-full rounded border border-gray-300 px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}>
+            <SelectCombobox className="w-full rounded border border-gray-300 px-2 py-1" value={method} onChange={(e) => setMethod(e.target.value as CashAdvanceMethod)}>
               <option value="direct_bank_transfer">Direct bank transfer</option>
               <option value="wire">Wire</option>
               <option value="comdata">Comdata / EFS</option>
               <option value="in_person_check">In-person check</option>
-            </select>
+            </SelectCombobox>
           </label>
 
           {method === "direct_bank_transfer" ? (

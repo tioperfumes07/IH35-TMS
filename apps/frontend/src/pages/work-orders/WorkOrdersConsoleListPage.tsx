@@ -7,6 +7,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
 
@@ -59,7 +60,7 @@ export function WorkOrdersConsoleListPage() {
       <SecondaryNavTabs activeId={segment} onChange={(id) => setSegment(id as SegmentId)} tabs={tabs} />
 
       <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2">
-        <select
+        <SelectCombobox
           value={billing}
           onChange={(event) => setBilling(event.target.value as typeof billing)}
           className="h-8 rounded border border-gray-300 px-2 text-xs"
@@ -67,8 +68,8 @@ export function WorkOrdersConsoleListPage() {
           <option value="all">Billing: All</option>
           <option value="internal">Internal</option>
           <option value="external">External</option>
-        </select>
-        <select
+        </SelectCombobox>
+        <SelectCombobox
           value={svc}
           onChange={(event) => setSvc(event.target.value as typeof svc)}
           className="h-8 rounded border border-gray-300 px-2 text-xs"
@@ -81,8 +82,8 @@ export function WorkOrdersConsoleListPage() {
           <option value="inspection_state">State inspection</option>
           <option value="warranty">Warranty</option>
           <option value="other">Other</option>
-        </select>
-        <select
+        </SelectCombobox>
+        <SelectCombobox
           value={sort}
           onChange={(event) => setSort(event.target.value as typeof sort)}
           className="h-8 rounded border border-gray-300 px-2 text-xs"
@@ -91,7 +92,7 @@ export function WorkOrdersConsoleListPage() {
           <option value="cost_desc">Sort: Cost</option>
           <option value="labor_cost_desc">Sort: Labor cost</option>
           <option value="wo_number_asc">Sort: WO #</option>
-        </select>
+        </SelectCombobox>
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}

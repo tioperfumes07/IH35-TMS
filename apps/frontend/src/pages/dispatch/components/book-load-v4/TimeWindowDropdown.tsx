@@ -1,4 +1,5 @@
 import type { UseFormRegister } from "react-hook-form";
+import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
 
 type Props = {
   register: UseFormRegister<Record<string, unknown>>;
@@ -7,11 +8,11 @@ type Props = {
 
 export function TimeWindowDropdown({ register, name }: Props) {
   return (
-    <select {...register(name)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
+    <SelectCombobox {...register(name)} className="h-8 w-full rounded border border-gray-300 px-2 text-sm">
       <option value="appointment">Appointment (fixed time)</option>
       <option value="open_window">Open window (any time during business hours)</option>
       <option value="select_hours">Select hours (custom window)</option>
       <option value="refused">Refused (customer denied · needs reschedule)</option>
-    </select>
+    </SelectCombobox>
   );
 }

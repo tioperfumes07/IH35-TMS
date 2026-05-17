@@ -1,5 +1,6 @@
 import { MONTHS, QUESTIONNAIRE, YEARS } from "../lib/constants";
 import type { CompanyKey, CompanyProfiles, CurrentFormState } from "../types";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   activeCompany: CompanyKey;
@@ -55,30 +56,30 @@ export function CurrentPeriodTab({
       <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
         <label className="text-xs font-semibold uppercase text-slate-600">
           Company
-          <select className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
+          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
             <option value="trucking">{profiles.trucking.name}</option>
             <option value="transportation">{profiles.transportation.name}</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Month
-          <select className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
             {MONTHS.map((m, i) => (
               <option key={m} value={i}>
                 {m}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Year
-          <select className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
             {YEARS.map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <button type="button" onClick={onCreateOrLoad} className="self-end rounded bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
           Create / Load Draft

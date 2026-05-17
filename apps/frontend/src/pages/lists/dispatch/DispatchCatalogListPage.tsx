@@ -11,6 +11,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { CatalogEntryModal } from "./CatalogEntryModal";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type StatusFilter = "active" | "inactive" | "all";
 
@@ -134,11 +135,11 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show
-          <select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded border border-gray-300 px-2 text-[13px]">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
             <option value="all">All</option>
-          </select>
+          </SelectCombobox>
         </label>
       </div>
 

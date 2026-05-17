@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 export function HOSViolationsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -56,18 +57,18 @@ export function HOSViolationsTab() {
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Violation type" value={form.violation_code} onChange={(e) => setForm((v) => ({ ...v, violation_code: e.target.value }))} />
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Description" value={form.violation_description} onChange={(e) => setForm((v) => ({ ...v, violation_description: e.target.value }))} />
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" type="datetime-local" value={form.occurred_at.slice(0, 16)} onChange={(e) => setForm((v) => ({ ...v, occurred_at: new Date(e.target.value).toISOString() }))} />
-        <select className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.source} onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as typeof form.source }))}>
+        <SelectCombobox className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.source} onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as typeof form.source }))}>
           <option value="manual">manual_office</option>
           <option value="eld_import">samsara_auto</option>
           <option value="dot_inspection">dot_citation</option>
-        </select>
+        </SelectCombobox>
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Duration/status" value={form.duty_status} onChange={(e) => setForm((v) => ({ ...v, duty_status: e.target.value }))} />
-        <select className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}>
+        <SelectCombobox className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}>
           <option value="low">low</option>
           <option value="medium">medium</option>
           <option value="high">high</option>
           <option value="critical">critical</option>
-        </select>
+        </SelectCombobox>
         <button
           type="button"
           className="rounded bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"

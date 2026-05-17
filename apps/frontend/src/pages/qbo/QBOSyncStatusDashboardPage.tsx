@@ -16,6 +16,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function withinHours(iso: string, hours: number) {
   const t = new Date(iso).getTime();
@@ -154,7 +155,7 @@ export function QBOSyncStatusDashboardPage() {
       <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
           Status
-          <select
+          <SelectCombobox
             className="mt-1 block h-9 rounded border border-gray-300 px-2 text-sm"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -166,7 +167,7 @@ export function QBOSyncStatusDashboardPage() {
             <option value="failed">failed</option>
             <option value="dead_letter">dead_letter</option>
             <option value="cancelled">cancelled</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs text-gray-600">
           Kind
@@ -179,7 +180,7 @@ export function QBOSyncStatusDashboardPage() {
         </label>
         <label className="text-xs text-gray-600">
           Time range
-          <select
+          <SelectCombobox
             className="mt-1 block h-9 rounded border border-gray-300 px-2 text-sm"
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as typeof timeRange)}
@@ -188,7 +189,7 @@ export function QBOSyncStatusDashboardPage() {
             <option value="24h">24h</option>
             <option value="7d">7d</option>
             <option value="30d">30d</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs text-gray-600">
           Search

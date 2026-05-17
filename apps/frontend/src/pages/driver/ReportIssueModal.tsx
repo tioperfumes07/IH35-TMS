@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { submitDriverReport } from "../../api/driver";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -87,7 +88,7 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-lg border border-gray-200 bg-white p-4 shadow-lg sm:rounded-lg">
         <h3 className="mb-2 text-base font-semibold">{t("driver.report_modal_title")}</h3>
         <label className="block text-xs text-gray-600">{t("driver.report_type")}</label>
-        <select
+        <SelectCombobox
           className="mb-2 mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
           value={reportType}
           onChange={(e) => setReportType(e.target.value as typeof reportType)}
@@ -96,7 +97,7 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
           <option value="maintenance">maintenance</option>
           <option value="accident">accident</option>
           <option value="other">other</option>
-        </select>
+        </SelectCombobox>
         <label className="block text-xs text-gray-600">{t("driver.report_desc")}</label>
         <textarea
           className="mb-2 mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"

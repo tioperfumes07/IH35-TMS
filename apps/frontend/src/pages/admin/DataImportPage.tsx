@@ -9,6 +9,7 @@ import {
 import { ApiError } from "../../api/client";
 import { helpUrlFromRel } from "../../config/help-links";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type EntitySlug = "drivers" | "units" | "customers" | "vendors" | "bank-accounts" | "loads" | "bank-transactions";
 
@@ -222,14 +223,14 @@ export function DataImportPage() {
           {selected.companyRequired ? (
             <label className="block text-sm">
               <span className="font-medium text-slate-800">Operating company</span>
-              <select
+              <SelectCombobox
                 className="mt-1 block w-full max-w-xs rounded border border-slate-300 px-2 py-2 text-sm"
                 value={companyCode}
                 onChange={(e) => setCompanyCode(e.target.value as "TRK" | "TRANSP")}
               >
                 <option value="TRK">TRK</option>
                 <option value="TRANSP">TRANSP</option>
-              </select>
+              </SelectCombobox>
             </label>
           ) : (
             <div className="space-y-2 text-sm text-slate-600">
@@ -238,14 +239,14 @@ export function DataImportPage() {
                 Limit rows to a single operating company (optional query filter)
               </label>
               {applyCompanyFilter ? (
-                <select
+                <SelectCombobox
                   className="block max-w-xs rounded border border-slate-300 px-2 py-2 text-sm"
                   value={companyCode}
                   onChange={(e) => setCompanyCode(e.target.value as "TRK" | "TRANSP")}
                 >
                   <option value="TRK">TRK</option>
                   <option value="TRANSP">TRANSP</option>
-                </select>
+                </SelectCombobox>
               ) : (
                 <p className="text-xs text-slate-500">
                   Row-scoped CSVs carry <span className="font-mono">company_code</span> per line. Leave the box off to import every row in the file.

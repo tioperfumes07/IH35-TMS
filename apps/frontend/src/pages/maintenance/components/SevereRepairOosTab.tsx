@@ -13,6 +13,7 @@ import {
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -239,7 +240,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Unit</label>
-            <select
+            <SelectCombobox
               className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
               value={selectedUnitId}
               onChange={(event) => setSelectedUnitId(event.target.value)}
@@ -253,7 +254,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
                   </option>
                 );
               })}
-            </select>
+            </SelectCombobox>
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-gray-600">Reason</label>

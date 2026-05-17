@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIntegrityAlerts } from "../../api/safety";
 import { IntegrityAlertDetailDrawer } from "./components/IntegrityAlertDetailDrawer";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
   operatingCompanyId: string;
@@ -36,20 +37,20 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
           className="rounded border border-gray-300 px-2 py-1 text-xs"
           placeholder="Category"
         />
-        <select value={severity} onChange={(event) => setSeverity(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-xs">
+        <SelectCombobox value={severity} onChange={(event) => setSeverity(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-xs">
           <option value="">All severities</option>
           <option value="info">Info</option>
           <option value="warning">Warning</option>
           <option value="critical">Critical</option>
-        </select>
-        <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-xs">
+        </SelectCombobox>
+        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-xs">
           <option value="">All statuses</option>
           <option value="unresolved">Unresolved</option>
           <option value="investigating">Investigating</option>
           <option value="false_positive">False positive</option>
           <option value="confirmed_action_taken">Confirmed action taken</option>
           <option value="dismissed">Dismissed</option>
-        </select>
+        </SelectCombobox>
       </div>
 
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">

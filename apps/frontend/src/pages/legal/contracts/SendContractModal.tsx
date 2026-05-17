@@ -5,6 +5,7 @@ import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -140,7 +141,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
         {stepIdx === 0 ? (
           <div className="space-y-2">
             <label className="text-xs font-semibold text-gray-600">Active template</label>
-            <select
+            <SelectCombobox
               value={templateId}
               onChange={(event) => setTemplateId(event.target.value)}
               className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
@@ -151,7 +152,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                   {templateLabel(row)}
                 </option>
               ))}
-            </select>
+            </SelectCombobox>
           </div>
         ) : null}
 
@@ -159,7 +160,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
           <div className="grid gap-2 md:grid-cols-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Signer type</label>
-              <select
+              <SelectCombobox
                 value={signerType}
                 onChange={(event) => setSignerType(event.target.value as typeof signerType)}
                 className="h-9 rounded border border-gray-300 px-2 text-sm"
@@ -169,11 +170,11 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                 <option value="customer">Customer</option>
                 <option value="vendor">Vendor</option>
                 <option value="other">Other</option>
-              </select>
+              </SelectCombobox>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Language</label>
-              <select
+              <SelectCombobox
                 value={language}
                 onChange={(event) => setLanguage(event.target.value as typeof language)}
                 className="h-9 rounded border border-gray-300 px-2 text-sm"
@@ -181,7 +182,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
                 <option value="en">English</option>
                 <option value="es">Spanish</option>
                 <option value="bilingual">Bilingual</option>
-              </select>
+              </SelectCombobox>
             </div>
             <div className="flex flex-col gap-1 md:col-span-2">
               <label className="text-xs font-semibold text-gray-600">Signer name</label>
@@ -271,7 +272,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
         {stepIdx === 4 ? (
           <div className="space-y-2">
             <div className="text-xs font-semibold text-gray-600">Verification channel</div>
-            <select
+            <SelectCombobox
               value={verifyChannel}
               onChange={(event) => setVerifyChannel(event.target.value as typeof verifyChannel)}
               className="h-9 w-full rounded border border-gray-300 px-2 text-sm"
@@ -279,7 +280,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <option value="none">None</option>
               <option value="sms">SMS code</option>
               <option value="email">Email code</option>
-            </select>
+            </SelectCombobox>
             <div className="text-xs font-semibold text-gray-600">Delivery channels</div>
             <div className="grid gap-1 text-sm">
               <label><input type="checkbox" checked={sendEmail} onChange={(event) => setSendEmail(event.target.checked)} /> Email</label>

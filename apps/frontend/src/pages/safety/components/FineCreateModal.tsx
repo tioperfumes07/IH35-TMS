@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createSafetyFine } from "../../../api/safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   open: boolean;
@@ -51,14 +52,14 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
         <div className="grid gap-3 md:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Subject type</label>
-            <select
+            <SelectCombobox
               value={subjectType}
               onChange={(event) => setSubjectType(event.target.value as "driver" | "company")}
               className="rounded border border-gray-300 px-2 py-2 text-sm"
             >
               <option value="driver">Driver</option>
               <option value="company">Company</option>
-            </select>
+            </SelectCombobox>
           </div>
           {subjectType === "driver" ? (
             <div className="flex flex-col gap-1">

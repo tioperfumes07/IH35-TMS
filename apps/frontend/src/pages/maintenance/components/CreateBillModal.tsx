@@ -3,6 +3,7 @@ import { Modal } from "../../../components/Modal";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
+import { Combobox } from "../../../components/shared/Combobox";
 import { UploadZone } from "../../../components/UploadZone";
 
 type Props = {
@@ -35,11 +36,53 @@ export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, o
         <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Bill Details</div>
 
         <div className="grid gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
-          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Vendor" />
+          <Field label="Bill Type *">
+            <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs" value={BILL_TYPE_TABS.find((t) => t.id === billType)?.label ?? "Repair Bill"} readOnly />
+          </Field>
+          <div />
+          <Field label="Bill Date *">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" type="date" />
+          </Field>
+          <Field label="Terms">
+            <Combobox
+              options={[
+                { value: "net_30", label: "Net 30" },
+                { value: "net_15", label: "Net 15" },
+                { value: "net_7", label: "Net 7" },
+              ]}
+              value={"net_30"}
+              onChange={() => {}}
+            />
+          </Field>
+          <Field label="Due Date (auto, readonly)">
+            <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs" value="Auto from terms" readOnly />
+          </Field>
+          <Field label="Bill Number *">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Bill Number" />
+          </Field>
+
+          <div className="md:col-span-6 h-2" />
+          <Field label="Vendor *">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Vendor" />
+          </Field>
           <div className="md:col-span-4" />
-          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Load Number" />
-          <input className="rounded border border-gray-300 px-2 py-1 text-xs md:col-span-1" placeholder="Bill date" type="date" />
-          <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900 md:col-span-5">
+          <Field label="Load Number">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Load Number" />
+          </Field>
+
+          <div className="md:col-span-6 h-2" />
+          <Field label="Driver">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Driver" />
+          </Field>
+          <Field label="Unit">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Unit" />
+          </Field>
+          <div className="md:col-span-3" />
+          <Field label="Class">
+            <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs" value="Auto class" readOnly />
+          </Field>
+
+          <div className="md:col-span-6 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
             Linked - {linkedWoDisplayId || "WO-XXXX"}
           </div>
         </div>
@@ -55,5 +98,14 @@ export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, o
         />
       </div>
     </Modal>
+  );
+}
+
+function Field({ label, children }: { label: string; children: JSX.Element }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-[11px] font-semibold text-gray-600">{label}</label>
+      {children}
+    </div>
   );
 }

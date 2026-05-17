@@ -20,6 +20,7 @@ type ComboboxProps = {
   filterMode?: "contains" | "startsWith" | "fuzzy";
   /** Focus target for form validation (`[data-field="…"]`). */
   dataField?: string;
+  className?: string;
 };
 
 const MAX_VISIBLE_OPTIONS = 50;
@@ -62,6 +63,7 @@ export function Combobox({
   allowAddNew,
   filterMode = "contains",
   dataField,
+  className,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -178,7 +180,7 @@ export function Combobox({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={`relative ${className ?? ""}`}>
       <div
         className={`flex h-9 items-center gap-1 rounded border bg-white px-2 text-[13px] ${
           disabled

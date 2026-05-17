@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { MONTHS, YEARS } from "../lib/constants";
 import { parseQBText } from "../lib/parseQBText";
 import type { CompanyKey, CompanyProfiles, QBParsedLine } from "../types";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
   activeCompany: CompanyKey;
@@ -24,30 +25,30 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
         <label className="text-xs font-semibold uppercase text-slate-600">
           Company
-          <select className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
+          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={activeCompany} onChange={(e) => setActiveCompany(e.target.value as CompanyKey)}>
             <option value="trucking">{profiles.trucking.name}</option>
             <option value="transportation">{profiles.transportation.name}</option>
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Month
-          <select className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
             {MONTHS.map((m, i) => (
               <option key={m} value={i}>
                 {m}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <label className="text-xs font-semibold uppercase text-slate-600">
           Year
-          <select className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+          <SelectCombobox className="mt-1 w-full rounded border px-2 py-1.5 text-sm normal-case" value={year} onChange={(e) => setYear(Number(e.target.value))}>
             {YEARS.map((y) => (
               <option key={y} value={y}>
                 {y}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <div className="self-end text-xs text-slate-500">{profile.bankAccounts.length} configured account(s)</div>
       </div>

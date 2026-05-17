@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 export function ManualJEListPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -47,16 +48,16 @@ export function ManualJEListPage() {
     <div className="space-y-3">
       <PageHeader title="Manual Journal Entries" subtitle="Filter, review, and void posted entries" />
       <div className="grid grid-cols-5 gap-2 rounded border border-gray-200 bg-white p-2 text-xs">
-        <select className="h-8 rounded border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
+        <SelectCombobox className="h-8 rounded border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
           <option value="all">All sources</option>
           <option value="manual">Manual</option>
           <option value="auto">Auto</option>
-        </select>
-        <select className="h-8 rounded border border-gray-300 px-2" value={status} onChange={(e) => setStatus(e.target.value as JournalEntryStatus | "all")}>
+        </SelectCombobox>
+        <SelectCombobox className="h-8 rounded border border-gray-300 px-2" value={status} onChange={(e) => setStatus(e.target.value as JournalEntryStatus | "all")}>
           <option value="all">All statuses</option>
           <option value="posted">Posted</option>
           <option value="voided">Voided</option>
-        </select>
+        </SelectCombobox>
         <input type="date" className="h-8 rounded border border-gray-300 px-2" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
         <input type="date" className="h-8 rounded border border-gray-300 px-2" value={toDate} onChange={(e) => setToDate(e.target.value)} />
         <input

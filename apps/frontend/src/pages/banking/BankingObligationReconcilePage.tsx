@@ -16,6 +16,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -113,7 +114,7 @@ export function BankingObligationReconcilePage() {
       <div className="flex flex-wrap items-center gap-2">
         <label className="text-xs text-gray-600">
           Account{" "}
-          <select
+          <SelectCombobox
             className="ml-1 rounded border border-gray-300"
             value={accountFilter}
             onChange={(e) => setAccountFilter(e.target.value)}
@@ -124,7 +125,7 @@ export function BankingObligationReconcilePage() {
                 {a.institution_name ?? "Bank"} …{a.account_mask ?? ""}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
         <ActionButton
           disabled={selectedList.length === 0 || bulkMutation.isPending}

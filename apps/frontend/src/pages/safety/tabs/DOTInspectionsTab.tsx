@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createDotInspection, listDotInspections, uploadDotInspectionPdf, voidDotInspection } from "../../../api/safetyV64";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -71,11 +72,11 @@ export function DOTInspectionsTab() {
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="unit_id" value={form.unit_id} onChange={(e) => setForm((v) => ({ ...v, unit_id: e.target.value }))} />
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Inspector" value={form.inspector_name} onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} />
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" type="number" min={1} max={6} value={form.inspection_level} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))} />
-        <select className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value as typeof form.outcome }))}>
+        <SelectCombobox className="rounded border border-gray-300 px-2 py-1 text-xs" value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value as typeof form.outcome }))}>
           <option value="PASS">PASS</option>
           <option value="WARNING">WARNING</option>
           <option value="OOS">OOS</option>
-        </select>
+        </SelectCombobox>
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" placeholder="Location" value={form.location} onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))} />
         <input className="rounded border border-gray-300 px-2 py-1 text-xs" type="number" min={0} placeholder="CSA pts" value={form.csa_points} onChange={(e) => setForm((v) => ({ ...v, csa_points: Number(e.target.value || 0) }))} />
         <button type="button" className="rounded bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!form.inspector_name || createMutation.isPending} onClick={() => createMutation.mutate()}>
