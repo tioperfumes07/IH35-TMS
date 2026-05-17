@@ -4,11 +4,12 @@
 
 **Locked by:** Cursor R2 (APPROVED-SCREEN LAW) in `docs/specs/CURSOR-PERMANENT-RULES.md`, and IH35-TMS master rules §F invariant **#19** (approved navigation / chrome parity).
 
-## Inventory: **21** PNG files
+## Inventory: **36** PNG files
 
 The folder now includes:
 - **11 canonical approved mockup PNGs** (the baseline set listed below)
 - **10 QBO reference PNGs** (`qbo-*.png`) used for accounting workflow parity checks
+- **15 additional reference screenshots** (Jorge-approved, normalized for git/URL safety)
 
 Cursor R2 historically referenced “12 PNG mockups.” The twelfth asset, **App_Design.png** for the **driver PWA**, was never finalized as a separate PNG. Driver PWA chrome and dark-theme behavior are defined in **Part 6** of `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` (design system) and related PWA specs—not in this folder.
 
@@ -31,6 +32,24 @@ Place binary files here **exactly** as named (no content changes in Git—store 
 | 11 | `11-Form_425-Design.png` |
 
 If upstream filenames omit dashes (e.g. `1HOME_PAGE.png`), **rename only** to match this table when adding to the repo—do not edit pixels.
+
+## Additional reference screenshots (15)
+
+- `screenshot-2026-05-16-at-7.19.23-pm.png`
+- `screenshot-2026-05-16-at-7.19.32-pm.png`
+- `screenshot-2026-05-16-at-7.20.22-pm.png`
+- `screenshot-2026-05-16-at-7.20.32-pm.png`
+- `screenshot-2026-05-16-at-7.21.19-pm.png`
+- `screenshot-2026-05-16-at-7.21.25-pm.png`
+- `screenshot-2026-05-16-at-7.21.38-pm.png`
+- `screenshot-2026-05-16-at-7.21.52-pm.png`
+- `screenshot-2026-05-16-at-7.22.00-pm.png`
+- `screenshot-2026-05-16-at-7.24.43-pm.png`
+- `screenshot-2026-05-16-at-7.24.48-pm.png`
+- `screenshot-2026-05-16-at-7.25.00-pm.png`
+- `screenshot-2026-05-16-at-7.25.08-pm.png`
+- `screenshot-2026-05-16-at-7.25.16-pm.png`
+- `screenshot-2026-05-16-at-7.25.22-pm.png`
 
 ## Governance
 
