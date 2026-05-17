@@ -26,7 +26,7 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
   { label: "Customers", href: "/accounting/customers" },
   { label: "Reports", href: "/accounting/reports" },
   { label: "Invoices", href: "/accounting/invoices" },
-  { label: "Payments", href: "/accounting/payments" },
+  { label: "Receive Payment", href: "/accounting/payments" },
   { label: "Factoring", href: "/accounting/factoring" },
   { label: "Vendor balances", href: "/accounting/vendor-balances" },
   { label: "Journal entries", href: "/accounting/journal-entries" },

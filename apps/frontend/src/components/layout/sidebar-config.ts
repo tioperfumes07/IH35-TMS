@@ -28,7 +28,6 @@ export const SIDEBAR_ITEM_IDS = [
   "accounting",
   "bank",
   "factoring",
-  "pay",
   "customers",
   "vendors",
   "lists",
@@ -75,7 +74,6 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   accounting: { id: "accounting", label: "ACCTG", Icon: Calculator, to: "/accounting" },
   bank: { id: "bank", label: "BANK", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
   factoring: { id: "factoring", label: "FACT", Icon: Calculator, to: "/accounting/factoring" },
-  pay: { id: "pay", label: "PAY", Icon: Calculator, to: "/accounting/payments" },
   customers: { id: "customers", label: "CUSTOMERS", Icon: Building2, to: "/customers", dataTour: "tour-nav-customers" },
   vendors: { id: "vendors", label: "VENDORS", Icon: Building2, to: "/vendors" },
   lists: { id: "lists", label: "LISTS", Icon: ListChecks, to: "/lists" },
@@ -122,7 +120,7 @@ function parseUserOverride(raw: unknown): SidebarItemId[] | null {
 export const SIDEBAR_ROLE_ORDER: Partial<Record<UserRole, readonly SidebarItemId[]>> = {
   Mechanic: ["home", "maintenance", "safety", "lists", "docs", "eld", "reports", "drv_app", "users", "help"],
   Dispatcher: ["home", "dispatch", "safety", "maintenance", "customers", "vendors", "lists", "reports", "help"],
-  Accountant: ["home", "accounting", "bank", "factoring", "pay", "vendors", "customers", "reports", "lists", "form_425", "legal", "docs", "help"],
+  Accountant: ["home", "accounting", "bank", "factoring", "vendors", "customers", "reports", "lists", "form_425", "legal", "docs", "help"],
   Safety: ["home", "safety", "maintenance", "dispatch", "lists", "reports", "help", "users"],
   Manager: ["home", "dispatch", "maintenance", "customers", "vendors", "safety", "lists", "reports", "help", "users"],
 };
@@ -147,8 +145,6 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Payments", to: "/accounting/payments" },
         { label: "Factoring", to: "/accounting/factoring" },
       ];
-    case "pay":
-      return [{ label: "Record Payment", to: "/accounting/payments" }];
     case "maintenance":
       return [
         { label: "Dashboard", to: "/maintenance" },
