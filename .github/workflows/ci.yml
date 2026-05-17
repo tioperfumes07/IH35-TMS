@@ -75,7 +75,7 @@ jobs:
       - name: Backend tests + coverage gates
         run: npm run test:coverage
 
-      - name: Verify architectural design alignment
+      - name: Verify locked UI surface + architectural design alignment
         run: npm run verify:arch-design
 
       - name: Typecheck
