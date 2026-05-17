@@ -27,6 +27,7 @@ import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { RegisterTable } from "./components/RegisterTable";
 import { RegisterToolbar } from "./components/RegisterToolbar";
+import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { BankingCompanyTransactionsPanel, BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, useNavigate } from "react-router-dom";
@@ -36,6 +37,14 @@ import { listVendorBalances } from "../../api/accounting";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
 import { BankingReviewCenter } from "./components/BankingReviewCenter";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+
+const BANKING_TABS = [
+  { id: "accounts", label: "Accounts" },
+  { id: "transactions", label: "Transactions" },
+  { id: "reconciliation", label: "Reconciliation" },
+  { id: "driver_escrow", label: "Driver Escrow" },
+  { id: "reports", label: "Reports" },
+] as const;
 
 export function BankingHomePage() {
   const auth = useAuth();
@@ -58,6 +67,7 @@ export function BankingHomePage() {
   const [reconStatementBalance, setReconStatementBalance] = useState("");
   const [startingRecon, setStartingRecon] = useState(false);
   const [showDisconnectedBankAccounts, setShowDisconnectedBankAccounts] = useState(false);
+  const [activeTab, setActiveTab] = useState<(typeof BANKING_TABS)[number]["id"]>("accounts");
 
   const kpiQuery = useQuery({
     queryKey: ["banking", "kpis", companyId],
@@ -118,243 +128,280 @@ export function BankingHomePage() {
     [tiles, selectedId]
   );
 
+  const openStartReconciliation = () => {
+    setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
+    setStartReconOpen(true);
+  };
+
+  const headerActions =
+    activeTab === "accounts" ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <ActionButton>+ Import Statement</ActionButton>
+        <ActionButton onClick={() => setManageOpen(true)}>+ Create Account / Manage Accounts</ActionButton>
+        <PlaidLinkButton
+          operatingCompanyId={companyId}
+          accountType="bank"
+          label="Connect Bank"
+          onSuccess={() => {
+            void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
+          }}
+        />
+        <PlaidLinkButton
+          operatingCompanyId={companyId}
+          accountType="credit_card"
+          label="+ Connect Credit Card"
+          onSuccess={() => {
+            void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
+          }}
+        />
+        <PlaidLinkButton
+          operatingCompanyId={companyId}
+          accountType="all"
+          label="+ Connect Other"
+          onSuccess={() => {
+            void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
+          }}
+        />
+      </div>
+    ) : activeTab === "transactions" ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <ActionButton onClick={() => setManualJeOpen(true)}>+ Manual JE</ActionButton>
+        <ActionButton onClick={() => setTransferModalOpen(true)}>+ Record Transfer</ActionButton>
+        <ActionButton onClick={() => setCcPaymentModalOpen(true)}>+ Pay Credit Card</ActionButton>
+        <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
+      </div>
+    ) : activeTab === "reconciliation" ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <ActionButton onClick={openStartReconciliation}>+ Reconcile</ActionButton>
+        <ActionButton onClick={() => navigate("/banking/reconcile")}>Open Reconcile Queue</ActionButton>
+      </div>
+    ) : null;
+
   return (
     <div className="space-y-3">
       <PageHeader
         title="Banking Home"
         subtitle="QBO mirrored accounts + categorization"
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <ActionButton>+ Import Statement</ActionButton>
-            <ActionButton onClick={() => setManageOpen(true)}>+ Manage Accounts</ActionButton>
-            <PlaidLinkButton
-              operatingCompanyId={companyId}
-              accountType="bank"
-              label="Connect Bank"
-              onSuccess={() => {
-                void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
-              }}
-            />
-            <PlaidLinkButton
-              operatingCompanyId={companyId}
-              accountType="credit_card"
-              label="+ Connect Credit Card"
-              onSuccess={() => {
-                void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
-              }}
-            />
-            <PlaidLinkButton
-              operatingCompanyId={companyId}
-              accountType="all"
-              label="+ Connect Other"
-              onSuccess={() => {
-                void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
-              }}
-            />
-            <ActionButton
-              onClick={() => {
-                setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
-                setStartReconOpen(true);
-              }}
-            >
-              + Reconcile
-            </ActionButton>
-            <ActionButton onClick={() => setManualJeOpen(true)}>+ Manual JE</ActionButton>
-            <ActionButton onClick={() => setTransferModalOpen(true)}>+ Record Transfer</ActionButton>
-            <ActionButton onClick={() => setCcPaymentModalOpen(true)}>+ Pay Credit Card</ActionButton>
-            <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
-          </div>
-        }
+        actions={headerActions}
+      />
+      <SecondaryNavTabs
+        tabs={BANKING_TABS.map((tab) => ({ id: tab.id, label: tab.label }))}
+        activeId={activeTab}
+        onChange={(id) => setActiveTab(id as (typeof BANKING_TABS)[number]["id"])}
       />
       {kpiQuery.isError || tilesQuery.isError || registerQuery.isError ? <ListErrorBanner onRetry={() => void registerQuery.refetch()} /> : null}
+      {activeTab === "accounts" ? (
+        <>
+          <SyncStatusStrip
+            syncedAt={String(selectedTile?.last_txn_date ?? "") || null}
+            transactionCount={registerRows.length}
+            uncategorizedCount={Number(kpiQuery.data?.total_uncategorized ?? 0)}
+            pendingSyncCount={0}
+          />
+          <BankingKpiRow kpis={kpiQuery.data} />
+          <AccountTilesRow
+            tiles={tiles}
+            selectedId={selectedId}
+            onSelect={(id) => setSelectedAccountId(id)}
+            onManageAccounts={() => setManageOpen(true)}
+          />
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-600">
+            <input type="checkbox" checked={showDisconnectedBankAccounts} onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)} />
+            Show disconnected history (bank accounts list)
+          </label>
+          <BankingPlaidConnectionsPanel companyId={companyId} />
+        </>
+      ) : null}
 
-      <SyncStatusStrip
-        syncedAt={String(selectedTile?.last_txn_date ?? "") || null}
-        transactionCount={registerRows.length}
-        uncategorizedCount={Number(kpiQuery.data?.total_uncategorized ?? 0)}
-        pendingSyncCount={0}
-      />
-      <BankingKpiRow kpis={kpiQuery.data} />
-      <AccountTilesRow
-        tiles={tiles}
-        selectedId={selectedId}
-        onSelect={(id) => setSelectedAccountId(id)}
-        onManageAccounts={() => setManageOpen(true)}
-      />
-      <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-600">
-        <input type="checkbox" checked={showDisconnectedBankAccounts} onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)} />
-        Show disconnected history (bank accounts list)
-      </label>
-      <BankingPlaidConnectionsPanel companyId={companyId} />
-      <BankingCompanyTransactionsPanel companyId={companyId} />
-      <div className="rounded border border-gray-200 bg-white p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Auto-Categorize</p>
-          <Link to="/banking/categorize-rules" className="text-xs font-medium text-blue-700 hover:underline">
-            Manage Rules
-          </Link>
-        </div>
-        {categorizationStatsQuery.isLoading ? <p className="text-sm text-gray-500">Loading auto-categorize stats...</p> : null}
-        {categorizationStatsQuery.isError ? <p className="text-sm text-red-600">Unable to load auto-categorize stats.</p> : null}
-        {!categorizationStatsQuery.isLoading && !categorizationStatsQuery.isError ? (
-          <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 sm:grid-cols-3">
-            <p>
-              Active rules: <span className="font-semibold">{Number(categorizationStatsQuery.data?.active_rules ?? 0)}</span>
-            </p>
-            <p>
-              Matched (7d): <span className="font-semibold text-green-700">{Number(categorizationStatsQuery.data?.matched_7d ?? 0)}</span>
-            </p>
-            <p>
-              Unmatched (7d): <span className="font-semibold text-amber-700">{Number(categorizationStatsQuery.data?.unmatched_7d ?? 0)}</span>
-            </p>
-          </div>
-        ) : null}
-      </div>
-      <div className="rounded border border-gray-200 bg-white p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor Balances</p>
-          <Link to="/accounting/vendor-balances" className="text-xs font-medium text-blue-700 hover:underline">
-            View All Vendor Balances
-          </Link>
-        </div>
-        {vendorBalancesQuery.isLoading ? <p className="text-sm text-gray-500">Loading vendor balances...</p> : null}
-        {vendorBalancesQuery.isError ? <p className="text-sm text-red-600">Unable to load vendor balances.</p> : null}
-        {!vendorBalancesQuery.isLoading && !vendorBalancesQuery.isError ? (
-          <>
-            <p className="text-sm text-gray-700">
-              Total outstanding:{" "}
-              <span className="font-semibold text-red-700">
-                {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-                  (vendorBalancesQuery.data?.rows ?? []).reduce((sum, row) => sum + Number(row.balance_cents ?? 0), 0) / 100
-                )}
-              </span>
-            </p>
-            <div className="mt-2 space-y-1">
-              {(vendorBalancesQuery.data?.rows ?? []).slice(0, 5).map((row) => (
-                <button
-                  key={row.vendor_id}
-                  type="button"
-                  className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-                  onClick={() => navigate("/accounting/vendor-balances")}
-                >
-                  <span className="font-medium text-gray-800">{row.vendor_name}</span>
-                  <span className="float-right font-semibold text-red-700">
-                    {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(row.balance_cents ?? 0) || 0) / 100)}
-                  </span>
-                </button>
-              ))}
-              {(vendorBalancesQuery.data?.rows ?? []).length === 0 ? <p className="text-xs text-gray-500">No outstanding vendor balances.</p> : null}
+      {activeTab === "transactions" ? (
+        <>
+          <BankingCompanyTransactionsPanel companyId={companyId} />
+          <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Auto-Categorize</p>
+              <Link to="/banking/categorization-rules" className="text-xs font-medium text-blue-700 hover:underline">
+                Manage Rules
+              </Link>
             </div>
-          </>
-        ) : null}
-      </div>
-      <div className="rounded border border-gray-200 bg-white p-3">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">QBO Sync Status</p>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link to="/banking/email-queue" className="text-xs font-medium text-blue-700 hover:underline">
-              Email Queue
-            </Link>
-            <Link to="/banking/qbo-sync-queue" className="text-xs font-medium text-blue-700 hover:underline">
-              Manage Queue
-            </Link>
-          </div>
-        </div>
-        {qboSyncStatsQuery.isLoading ? <p className="text-sm text-gray-500">Loading sync status...</p> : null}
-        {qboSyncStatsQuery.isError ? <p className="text-sm text-red-600">Unable to load QBO sync status.</p> : null}
-        {!qboSyncStatsQuery.isLoading && !qboSyncStatsQuery.isError ? (
-          <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 sm:grid-cols-3">
-            <p>
-              Pending: <span className="font-semibold">{Number(qboSyncStatsQuery.data?.pending ?? 0)}</span>
-            </p>
-            <p>
-              Failed: <span className="font-semibold text-red-600">{Number(qboSyncStatsQuery.data?.failed ?? 0)}</span>
-            </p>
-            <p>
-              Last synced:{" "}
-              <span className="font-semibold">
-                {qboSyncStatsQuery.data?.last_successful_sync_at
-                  ? new Date(qboSyncStatsQuery.data.last_successful_sync_at).toLocaleString()
-                  : "Never"}
-              </span>
-            </p>
-          </div>
-        ) : null}
-      </div>
-      <div className="rounded border border-gray-200 bg-white p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Reconciliation</p>
-          <ActionButton
-            onClick={() => {
-              setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
-              setStartReconOpen(true);
-            }}
-          >
-            + Start Reconciliation
-          </ActionButton>
-        </div>
-        <p className="text-sm text-gray-700">Open sessions: {(reconciliationSessionsQuery.data?.open_sessions ?? []).length}</p>
-        <div className="mt-2 space-y-1">
-          {(reconciliationSessionsQuery.data?.open_sessions ?? []).map((session) => (
-            <button
-              key={session.id}
-              type="button"
-              className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-              onClick={() => navigate(`/banking/reconciliation?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
-            >
-              Open: {session.period_start} to {session.period_end} ({Number(session.variance_cents ?? 0) / 100})
-            </button>
-          ))}
-          {(reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 ? (
-            <p className="text-xs text-gray-500">No open reconciliation sessions.</p>
-          ) : null}
-        </div>
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Recent completed</p>
-          <div className="mt-1 space-y-1">
-            {(reconciliationSessionsQuery.data?.completed_sessions ?? []).map((session) => (
-              <button
-                key={session.id}
-                type="button"
-                className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-                onClick={() => navigate(`/banking/reconciliation?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
-              >
-                {session.period_start} to {session.period_end} - variance {Number(session.variance_cents ?? 0) / 100}
-              </button>
-            ))}
-            {(reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
-              <p className="text-xs text-gray-500">No completed sessions yet.</p>
+            {categorizationStatsQuery.isLoading ? <p className="text-sm text-gray-500">Loading auto-categorize stats...</p> : null}
+            {categorizationStatsQuery.isError ? <p className="text-sm text-red-600">Unable to load auto-categorize stats.</p> : null}
+            {!categorizationStatsQuery.isLoading && !categorizationStatsQuery.isError ? (
+              <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 sm:grid-cols-3">
+                <p>
+                  Active rules: <span className="font-semibold">{Number(categorizationStatsQuery.data?.active_rules ?? 0)}</span>
+                </p>
+                <p>
+                  Matched (7d): <span className="font-semibold text-green-700">{Number(categorizationStatsQuery.data?.matched_7d ?? 0)}</span>
+                </p>
+                <p>
+                  Unmatched (7d): <span className="font-semibold text-amber-700">{Number(categorizationStatsQuery.data?.unmatched_7d ?? 0)}</span>
+                </p>
+              </div>
             ) : null}
           </div>
-        </div>
-      </div>
+          <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor Balances</p>
+              <Link to="/accounting/vendor-balances" className="text-xs font-medium text-blue-700 hover:underline">
+                View All Vendor Balances
+              </Link>
+            </div>
+            {vendorBalancesQuery.isLoading ? <p className="text-sm text-gray-500">Loading vendor balances...</p> : null}
+            {vendorBalancesQuery.isError ? <p className="text-sm text-red-600">Unable to load vendor balances.</p> : null}
+            {!vendorBalancesQuery.isLoading && !vendorBalancesQuery.isError ? (
+              <>
+                <p className="text-sm text-gray-700">
+                  Total outstanding:{" "}
+                  <span className="font-semibold text-red-700">
+                    {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+                      (vendorBalancesQuery.data?.rows ?? []).reduce((sum, row) => sum + Number(row.balance_cents ?? 0), 0) / 100
+                    )}
+                  </span>
+                </p>
+                <div className="mt-2 space-y-1">
+                  {(vendorBalancesQuery.data?.rows ?? []).slice(0, 5).map((row) => (
+                    <button
+                      key={row.vendor_id}
+                      type="button"
+                      className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                      onClick={() => navigate("/accounting/vendor-balances")}
+                    >
+                      <span className="font-medium text-gray-800">{row.vendor_name}</span>
+                      <span className="float-right font-semibold text-red-700">
+                        {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(row.balance_cents ?? 0) || 0) / 100)}
+                      </span>
+                    </button>
+                  ))}
+                  {(vendorBalancesQuery.data?.rows ?? []).length === 0 ? <p className="text-xs text-gray-500">No outstanding vendor balances.</p> : null}
+                </div>
+              </>
+            ) : null}
+          </div>
+          <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">QBO Sync Status</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link to="/banking/email-queue" className="text-xs font-medium text-blue-700 hover:underline">
+                  Email Queue
+                </Link>
+                <Link to="/banking/qbo-sync-queue" className="text-xs font-medium text-blue-700 hover:underline">
+                  Manage Queue
+                </Link>
+              </div>
+            </div>
+            {qboSyncStatsQuery.isLoading ? <p className="text-sm text-gray-500">Loading sync status...</p> : null}
+            {qboSyncStatsQuery.isError ? <p className="text-sm text-red-600">Unable to load QBO sync status.</p> : null}
+            {!qboSyncStatsQuery.isLoading && !qboSyncStatsQuery.isError ? (
+              <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 sm:grid-cols-3">
+                <p>
+                  Pending: <span className="font-semibold">{Number(qboSyncStatsQuery.data?.pending ?? 0)}</span>
+                </p>
+                <p>
+                  Failed: <span className="font-semibold text-red-600">{Number(qboSyncStatsQuery.data?.failed ?? 0)}</span>
+                </p>
+                <p>
+                  Last synced:{" "}
+                  <span className="font-semibold">
+                    {qboSyncStatsQuery.data?.last_successful_sync_at
+                      ? new Date(qboSyncStatsQuery.data.last_successful_sync_at).toLocaleString()
+                      : "Never"}
+                  </span>
+                </p>
+              </div>
+            ) : null}
+          </div>
+          <BankingReviewCenter
+            companyId={companyId}
+            dataSource="uncategorized"
+            categorizedSection={
+              <>
+                <RegisterToolbar rowCount={registerRows.length} onRefresh={() => void registerQuery.refetch()} />
+                <RegisterTable
+                  rows={registerRows}
+                  selectedTransactionId={selectedTransaction ? String(selectedTransaction.id) : null}
+                  onSelect={(row) => setSelectedTransaction(row)}
+                  onCategorize={(row) => {
+                    setSelectedTransaction(row);
+                    setDrawerOpen(true);
+                  }}
+                  onUndo={(row) => {
+                    void undoCategorization(String(row.id), companyId)
+                      .then(() => {
+                        pushToast("Transaction reclassified", "success");
+                        void queryClient.invalidateQueries({ queryKey: ["banking"] });
+                      })
+                      .catch((error) => pushToast(String((error as Error).message || "Reclassify failed"), "error"));
+                  }}
+                />
+              </>
+            }
+          />
+        </>
+      ) : null}
 
-      <BankingReviewCenter
-        companyId={companyId}
-        dataSource="uncategorized"
-        categorizedSection={
-          <>
-            <RegisterToolbar rowCount={registerRows.length} onRefresh={() => void registerQuery.refetch()} />
-            <RegisterTable
-              rows={registerRows}
-              selectedTransactionId={selectedTransaction ? String(selectedTransaction.id) : null}
-              onSelect={(row) => setSelectedTransaction(row)}
-              onCategorize={(row) => {
-                setSelectedTransaction(row);
-                setDrawerOpen(true);
-              }}
-              onUndo={(row) => {
-                void undoCategorization(String(row.id), companyId)
-                  .then(() => {
-                    pushToast("Transaction reclassified", "success");
-                    void queryClient.invalidateQueries({ queryKey: ["banking"] });
-                  })
-                  .catch((error) => pushToast(String((error as Error).message || "Reclassify failed"), "error"));
-              }}
-            />
-          </>
-        }
-      />
+      {activeTab === "reconciliation" ? (
+        <div className="space-y-3">
+          <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Reconciliation</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link to="/banking/reconcile" className="text-xs font-medium text-blue-700 hover:underline">
+                  Open Reconcile Queue
+                </Link>
+                <Link to="/banking/reconciliation" className="text-xs font-medium text-blue-700 hover:underline">
+                  Open Workspace
+                </Link>
+              </div>
+            </div>
+            <p className="text-sm text-gray-700">Open sessions: {(reconciliationSessionsQuery.data?.open_sessions ?? []).length}</p>
+            <div className="mt-2 space-y-1">
+              {(reconciliationSessionsQuery.data?.open_sessions ?? []).map((session) => (
+                <button
+                  key={session.id}
+                  type="button"
+                  className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                  onClick={() => navigate(`/banking/reconciliation?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
+                >
+                  Open: {session.period_start} to {session.period_end} ({Number(session.variance_cents ?? 0) / 100})
+                </button>
+              ))}
+              {(reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 ? (
+                <p className="text-xs text-gray-500">No open reconciliation sessions.</p>
+              ) : null}
+            </div>
+            <div className="mt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Recent completed</p>
+              <div className="mt-1 space-y-1">
+                {(reconciliationSessionsQuery.data?.completed_sessions ?? []).map((session) => (
+                  <button
+                    key={session.id}
+                    type="button"
+                    className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                    onClick={() => navigate(`/banking/reconciliation?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
+                  >
+                    {session.period_start} to {session.period_end} - variance {Number(session.variance_cents ?? 0) / 100}
+                  </button>
+                ))}
+                {(reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
+                  <p className="text-xs text-gray-500">No completed sessions yet.</p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "driver_escrow" ? (
+        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">
+          Driver Escrow view - Phase B2
+        </div>
+      ) : null}
+
+      {activeTab === "reports" ? (
+        <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">
+          Banking reports - Phase B2
+        </div>
+      ) : null}
 
       <CategorizeDrawer
         open={drawerOpen}

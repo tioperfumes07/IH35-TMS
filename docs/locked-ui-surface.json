@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-17T20:13:11.571Z",
+  "generatedAt": "2026-05-17T20:31:17.484Z",
   "source": {
-    "branch": "chore/lock-arch-design-surface",
-    "commit": "b45cb090c3352e85d9751688d70e76bd5427b23f"
+    "branch": "feat/banking-b1-five-tab-shell",
+    "commit": "0f41d6794f6ca1f11ca56e7dc56b24c76ad5d21b"
   },
   "routes": [
     "*",
@@ -301,6 +301,13 @@
       "Pay rate templates",
       "Deductions",
       "Leave"
+    ],
+    "banking": [
+      "Accounts",
+      "Transactions",
+      "Reconciliation",
+      "Driver Escrow",
+      "Reports"
     ],
     "safety": [
       "driver-files",

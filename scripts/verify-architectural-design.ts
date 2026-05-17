@@ -74,6 +74,12 @@ const SUB_NAV_SOURCES: SubNavSource[] = [
     valueField: "label",
   },
   {
+    module: "banking",
+    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
+    startToken: "const BANKING_TABS = [",
+    valueField: "label",
+  },
+  {
     module: "safety",
     file: "apps/frontend/src/pages/safety/SafetyTabsMeta.ts",
     startToken: "export const TABS = [",
