@@ -407,7 +407,7 @@ export function BookLoadModalV3Deprecated({ open, operatingCompanyId, onClose, o
           />
         ) : null}
         {activeTab === "equipment" ? <BookLoadEquipmentSection register={form.register} /> : null}
-        {activeTab === "stops" ? <BookLoadStopsSection control={form.control as never} register={form.register as never} /> : null}
+        {activeTab === "stops" ? <BookLoadStopsSection control={form.control as never} register={form.register as never} watch={form.watch as never} /> : null}
         {activeTab === "v3" ? <BookLoadV3OptionsSection register={form.register as never} /> : null}
         <div className="rounded border border-gray-200 bg-gray-50 p-2">
           <label

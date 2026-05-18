@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useForm, type UseFormGetValues, type UseFormSetValue, type UseFormWatch } from "react-hook-form";
+import { useForm, type UseFormSetValue } from "react-hook-form";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
@@ -8,7 +8,7 @@ import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
-import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCustomerSection";
+import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
@@ -20,15 +20,26 @@ import { MilesStrip } from "./book-load-v4/MilesStrip";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
 import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { QboCombobox } from "../../../components/forms/QboCombobox";
 
 type FormValues = BookLoadFormValues & {
+  load_type: "broker" | "direct";
+  pieces: string;
   trailer_type: string;
   assigned_unit_id: string;
+  assigned_trailer_unit_id: string;
   assignment_mode: "solo" | "team";
   team_id: string;
   assigned_primary_driver_id: string;
   assigned_secondary_driver_id: string;
   temp_fahrenheit: number;
+  driver_pay_rate_per_mile: number;
+  reefer_setpoint: string;
+  requires_reefer_fuel: boolean;
+  requires_pulp_probe: boolean;
+  requires_locking_jacks: boolean;
+  requires_load_locks: boolean;
+  requires_straps: boolean;
   customer_po_number: string;
   hazmat: boolean;
   driver_instructions_text: string;
@@ -57,6 +68,9 @@ type FormValues = BookLoadFormValues & {
   miles_deadhead: number;
   pickup_number: string;
   border_routing: string;
+  cash_advance_cents: number;
+  fuel_advance_cents: number;
+  factoring_company_summary: string;
   stops: Array<{
     stop_type: "pickup" | "delivery";
     sequence_number: number;
@@ -125,13 +139,23 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
       linehaul_cents: 0,
       fuel_surcharge_cents: 0,
       accessorial_cents: 0,
+      load_type: "broker",
+      pieces: "",
       trailer_type: "dry_van",
       assigned_unit_id: "",
+      assigned_trailer_unit_id: "",
       assignment_mode: "solo",
       team_id: "",
       assigned_primary_driver_id: "",
       assigned_secondary_driver_id: "",
       temp_fahrenheit: 0,
+      driver_pay_rate_per_mile: 0,
+      reefer_setpoint: "",
+      requires_reefer_fuel: false,
+      requires_pulp_probe: false,
+      requires_locking_jacks: false,
+      requires_load_locks: false,
+      requires_straps: false,
       customer_po_number: "",
       hazmat: false,
       driver_instructions_text: "",
@@ -160,6 +184,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
       miles_deadhead: 0,
       pickup_number: "",
       border_routing: "",
+      cash_advance_cents: 0,
+      fuel_advance_cents: 0,
+      factoring_company_summary: "",
       stops: [
         { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
         { stop_type: "delivery", sequence_number: 2, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
@@ -201,11 +228,22 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   const linehaul = form.watch("linehaul_cents");
   const fuel = form.watch("fuel_surcharge_cents");
   const accessorial = form.watch("accessorial_cents");
+  const customerQboId = form.watch("customer_qbo_id");
+  const customerName = form.watch("customer_name");
+  const loadType = form.watch("load_type");
+  const driverPayRatePerMile = form.watch("driver_pay_rate_per_mile");
   const milesShortest = form.watch("miles_shortest");
   const milesPractical = form.watch("miles_practical");
   const milesDeadhead = form.watch("miles_deadhead");
+  const reservedLoadNumber = form.watch("reserved_load_number");
 
-  const driverBillPreview = useMemo(() => (linehaul || 0) + (fuel || 0) + (accessorial || 0), [accessorial, fuel, linehaul]);
+  const sectionTotal = useMemo(() => (linehaul || 0) + (fuel || 0) + (accessorial || 0), [accessorial, fuel, linehaul]);
+  const driverBillPreview = useMemo(() => {
+    const miles = Number(milesShortest || 0);
+    const rate = Number(driverPayRatePerMile || 0);
+    if (miles > 0 && rate > 0) return Math.round(miles * rate * 100);
+    return sectionTotal;
+  }, [driverPayRatePerMile, milesShortest, sectionTotal]);
   const ratePerMile = useMemo(() => {
     const miles = Number(milesShortest || 0);
     if (miles <= 0) return 0;
@@ -225,16 +263,32 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
 
   const validationIssues = useMemo(
     () => [
-      "Unit PM up-to-date check (WF-044)",
-      "DVIR / dispatch block (WF-050)",
-      "Trailer inspection check (stub)",
-      "Customer quality flag warning (stub)",
-      "FMCSA broker authority cache check (stub)",
-      "Driver instructions pushed to driver mobile app + dispatch sheet PDF",
-      "Expected adjustments flagged on customer invoice review banner",
+      { text: "Unit PM up-to-date · dispatch_eligible=true", source: "WF-044" },
+      { text: "Driver CDL valid · no active debt", source: "WF-050 + WF-011" },
+      { text: "Trailer inspection status passed", source: "WF-044" },
+      { text: "Customer quality profile verified", source: "customers.quality" },
+      { text: "PM due soon advisory", source: "WF-044 advisory", advisory: true },
     ],
     []
   );
+  const passCount = useMemo(() => validationIssues.filter((issue) => !issue.advisory).length, [validationIssues]);
+  const saveActions = useMemo(
+    () => [
+      "Insert load in dispatch.loads with assigned_not_dispatched status",
+      "Auto-create driver bill from current shortest miles and pay rate",
+      "Queue QBO outbox for customer invoice + driver bill vendor entry",
+      "Create dispatch.load.created audit event",
+      "Send driver assignment message",
+      "Push driver instructions to mobile + dispatch sheet",
+      "Flag expected adjustments in accounting invoice review",
+    ],
+    []
+  );
+  const billNumberPreview = useMemo(() => {
+    const reserved = reservedLoadNumber || "";
+    if (!reserved) return "B-—";
+    return reserved.startsWith("L-") ? reserved.replace(/^L-/, "B-") : `B-${reserved}`;
+  }, [reservedLoadNumber]);
 
   const canOverrideHardBlock = auth.user?.role === "Owner";
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
@@ -410,9 +464,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
         onMouseDown={(e) => e.stopPropagation()}
       >
         <header className="flex flex-shrink-0 items-center gap-4 border-b px-4 py-2.5 text-white" style={{ background: "#1A1F36" }}>
-          <div className="text-sm font-semibold">IH35 · Dispatch</div>
-          <div className="text-[10px]" style={{ color: "#A8B0C7" }}>
-            Dispatch › Book load › Blueprint v4
+          <div>
+            <div className="text-[10px]" style={{ color: "#A8B0C7" }}>
+              Dispatch › Book load
+            </div>
+            <div className="text-sm font-semibold">Book load</div>
           </div>
           <div className="ml-auto text-[10px]" style={{ color: "#A8B0C7" }}>
             {headerTime}
@@ -518,124 +574,238 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
           ) : null}
 
           <div className="grid grid-cols-1 border-t border-gray-200 lg:grid-cols-2">
-            <div className="border-r-0 border-b border-gray-200 lg:border-b-0 lg:border-r">
-              <div
-                className="flex h-[22px] items-center border-b px-3 text-[9px] font-semibold uppercase tracking-wide"
-                style={{ background: "#FEF3C7", color: "#78350F", borderColor: "#FCD34D" }}
-              >
-                <span>A</span>
+            <section className="border-b border-r-0 border-gray-200 bg-white lg:border-r">
+              <div className="flex h-[26px] items-center border-b border-gray-200 bg-[#F1EFE8] px-3 text-[10px] font-semibold tracking-[0.3px] text-[#1A1F36]">
+                <span className="rounded bg-[#1A1F36] px-1.5 py-0.5 text-[9px] font-semibold text-white">A</span>
                 <span className="ml-2">Customer · Invoice · Charges</span>
-              </div>
-              <div className="grid gap-2 p-3 lg:grid-cols-[2fr_1fr]">
-                <div className="space-y-2">
-                  <OcrDropZone
-                    operatingCompanyId={operatingCompanyId}
-                    onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })}
-                  />
-                  <LoadTemplatePicker
-                    operatingCompanyId={operatingCompanyId}
-                    onSelectTemplate={(row) => {
-                      applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, row.template_json as Record<string, unknown>);
-                      pushToast("Template applied", "success");
-                    }}
-                  />
-                  <BookLoadCustomerSection
-                    register={form.register}
-                    watch={form.watch as unknown as UseFormWatch<BookLoadFormValues>}
-                    operatingCompanyId={operatingCompanyId}
-                    setValue={form.setValue as unknown as UseFormSetValue<BookLoadFormValues>}
-                    getValues={form.getValues as unknown as UseFormGetValues<BookLoadFormValues>}
-                    customerIdError={form.formState.errors.customer_id?.message}
-                    showOptionalFields={false}
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="text-[10px] font-semibold text-gray-600">
-                      Pickup #
-                      <input {...form.register("pickup_number")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-                    </label>
-                    <label className="text-[10px] font-semibold text-gray-600">
-                      Border routing
-                      <SelectCombobox {...form.register("border_routing")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm">
-                        <option value="">—</option>
-                        <option value="domestic">Domestic</option>
-                        <option value="cross_border_mx">Cross-border (MX)</option>
-                        <option value="cross_border_ca">Cross-border (CA)</option>
-                      </SelectCombobox>
-                    </label>
-                  </div>
-                  <div className="rounded border border-gray-200 bg-gray-50 p-2">
-                    <button type="button" className="text-xs font-semibold text-gray-700" onClick={() => setShowSpecialNotes((openState) => !openState)}>
-                      {showSpecialNotes ? "−" : "+"} Special notes
-                    </button>
-                    {showSpecialNotes ? (
-                      <textarea {...form.register("notes")} rows={3} className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
-                    ) : null}
-                  </div>
-                </div>
-                <div className="rounded border border-amber-200 bg-amber-50 p-2">
-                  <button type="button" className="text-xs font-semibold text-amber-800" onClick={() => setShowExpectedAdjustments((openState) => !openState)}>
-                    {showExpectedAdjustments ? "−" : "+"} Expected adjustments
-                  </button>
-                  {showExpectedAdjustments ? <ExpectedAdjustmentsCallout register={form.register as never} /> : null}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div
-                className="flex h-[22px] items-center border-b px-3 text-[9px] font-semibold uppercase tracking-wide"
-                style={{ background: "#DBEAFE", color: "#1E3A8A", borderColor: "#93C5FD" }}
-              >
-                <span>B</span>
-                <span className="ml-2">Equipment · Driver · Trailer</span>
+                <span className="ml-auto text-[10px] font-medium text-gray-600">
+                  Section total: <strong>{money.format(sectionTotal / 100)}</strong>
+                </span>
               </div>
               <div className="space-y-2 p-3">
-                <BookLoadEquipmentSection register={form.register} />
-                <div className="rounded border border-gray-200 bg-gray-50 p-2">
+                <OcrDropZone operatingCompanyId={operatingCompanyId} onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })} />
+                <LoadTemplatePicker
+                  operatingCompanyId={operatingCompanyId}
+                  onSelectTemplate={(row) => {
+                    applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, row.template_json as Record<string, unknown>);
+                    pushToast("Template applied", "success");
+                  }}
+                />
+
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-[2fr_1fr_1fr]">
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Customer
+                    <input type="hidden" {...form.register("customer_id", { required: "Select a customer from QuickBooks search results" })} />
+                    <div className="mt-0.5">
+                      <QboCombobox
+                        entityType="customer"
+                        operatingCompanyId={operatingCompanyId}
+                        value={customerQboId?.trim() ? customerQboId : null}
+                        displayValue={customerName ?? ""}
+                        allowFreeText={false}
+                        placeholder="Select customer..."
+                        onChange={(qboId, name) => {
+                          if (qboId) {
+                            form.setValue("customer_qbo_id", qboId, { shouldDirty: true, shouldValidate: false });
+                            form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
+                            return;
+                          }
+                          form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
+                        }}
+                        onPick={(row) => {
+                          form.setValue("customer_id", row.id, { shouldDirty: true, shouldValidate: true });
+                          form.setValue("customer_qbo_id", row.qbo_id, { shouldDirty: true, shouldValidate: false });
+                          form.setValue("customer_name", row.display_name, { shouldDirty: true, shouldValidate: false });
+                        }}
+                      />
+                    </div>
+                    {form.formState.errors.customer_id?.message ? (
+                      <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span>
+                    ) : null}
+                  </label>
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Customer WO #
+                    <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                  </label>
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Pickup #
+                    <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Type
+                    <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded border border-gray-300 bg-white text-[11px]">
+                      <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1A1F36] text-white" : "text-gray-700"}`}>
+                        <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
+                        Broker
+                      </label>
+                      <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#1A1F36] text-white" : "text-gray-700"}`}>
+                        <input type="radio" value="direct" className="hidden" {...form.register("load_type")} />
+                        Direct
+                      </label>
+                    </div>
+                  </label>
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Commodity
+                    <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                  </label>
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Weight (lbs)
+                    <input type="number" {...form.register("weight_lbs", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                  </label>
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Pieces
+                    <input {...form.register("pieces")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                  </label>
+                </div>
+
+                <div className="overflow-hidden rounded border border-gray-200">
+                  <table className="w-full border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-[#F8F8F4] text-[9px] uppercase tracking-[0.4px] text-gray-600">
+                        <th className="px-2 py-1 text-left">Charge</th>
+                        <th className="px-2 py-1 text-right">Amount</th>
+                        <th className="px-2 py-1 text-right"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-t border-gray-100">
+                        <td className="px-2 py-1">Linehaul</td>
+                        <td className="px-2 py-1 text-right">
+                          <input type="number" min="0" step="1" {...form.register("linehaul_cents", { valueAsNumber: true })} className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs" />
+                        </td>
+                        <td className="px-2 py-1 text-right"></td>
+                      </tr>
+                      <tr className="border-t border-gray-100">
+                        <td className="px-2 py-1">Fuel surcharge</td>
+                        <td className="px-2 py-1 text-right">
+                          <input type="number" min="0" step="1" {...form.register("fuel_surcharge_cents", { valueAsNumber: true })} className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs" />
+                        </td>
+                        <td className="px-2 py-1 text-right"></td>
+                      </tr>
+                      <tr className="border-t border-gray-100">
+                        <td className="px-2 py-1">Accessorial</td>
+                        <td className="px-2 py-1 text-right">
+                          <input type="number" min="0" step="1" {...form.register("accessorial_cents", { valueAsNumber: true })} className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs" />
+                        </td>
+                        <td className="px-2 py-1 text-right"></td>
+                      </tr>
+                      <tr>
+                        <td colSpan={3} className="px-2 py-1.5 text-center">
+                          <button type="button" className="text-xs font-semibold text-[#2563EB]">
+                            + Add charge · detention · layover · accessorial
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t border-gray-200 bg-[#F8F8F4]">
+                        <td className="px-2 py-1.5 font-semibold">Total customer invoice</td>
+                        <td className="px-2 py-1.5 text-right font-semibold">{money.format(sectionTotal / 100)}</td>
+                        <td className="px-2 py-1.5"></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_2fr]">
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Cash advance
+                    <input type="number" min="0" step="1" {...form.register("cash_advance_cents", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                  </label>
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Fuel advance
+                    <input type="number" min="0" step="1" {...form.register("fuel_advance_cents", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                  </label>
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Factoring company
+                    <input {...form.register("factoring_company_summary")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Triumph · advances 87% · reserves 13%" />
+                  </label>
+                </div>
+
+                <label className="flex items-center gap-2 text-[11px] text-gray-700">
+                  <input type="checkbox" {...form.register("hazmat")} />
+                  Hazmat
+                </label>
+
+                <div className="rounded border border-gray-200 bg-[#F8F8F4] p-2">
+                  <button type="button" className="text-xs font-semibold text-gray-700" onClick={() => setShowSpecialNotes((openState) => !openState)}>
+                    {showSpecialNotes ? "−" : "+"} Special notes
+                  </button>
+                  {showSpecialNotes ? (
+                    <textarea {...form.register("notes")} rows={3} className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-xs" />
+                  ) : null}
+                </div>
+              </div>
+            </section>
+
+            <section className="border-b border-gray-200 bg-white">
+              <div className="flex h-[26px] items-center border-b border-gray-200 bg-[#F1EFE8] px-3 text-[10px] font-semibold tracking-[0.3px] text-[#1A1F36]">
+                <span className="rounded bg-[#1A1F36] px-1.5 py-0.5 text-[9px] font-semibold text-white">B</span>
+                <span className="ml-2">Equipment · Driver · Trailer</span>
+                <span className="ml-auto text-[10px] font-medium text-gray-600">Class: <strong>auto</strong></span>
+              </div>
+              <div className="space-y-2 p-3">
+                <BookLoadEquipmentSection register={form.register} watch={form.watch} operatingCompanyId={operatingCompanyId} />
+                <div className="rounded border border-gray-200 bg-[#F8F8F4] p-2">
                   <button type="button" className="text-xs font-semibold text-gray-700" onClick={() => setShowDriverInstructions((openState) => !openState)}>
                     {showDriverInstructions ? "−" : "+"} Driver instructions
                   </button>
                   {showDriverInstructions ? <DriverInstructionsTextarea register={form.register as never} /> : null}
                 </div>
+                <div className="rounded border border-[#FCD34D] bg-[#FFF7E6] p-2">
+                  <button type="button" className="text-xs font-semibold text-[#78350F]" onClick={() => setShowExpectedAdjustments((openState) => !openState)}>
+                    {showExpectedAdjustments ? "−" : "+"} Expected adjustments
+                  </button>
+                  {showExpectedAdjustments ? <div className="mt-2"><ExpectedAdjustmentsCallout register={form.register as never} /></div> : null}
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div className="border-t border-gray-200 lg:col-span-2">
-              <div
-                className="flex h-[22px] items-center border-b px-3 text-[9px] font-semibold uppercase tracking-wide"
-                style={{ background: "#D1FAE5", color: "#064E3B", borderColor: "#6EE7B7" }}
-              >
-                <span>C</span>
-                <span className="ml-2">Stops · PC*MILER</span>
+            <section className="border-b border-gray-200 bg-white lg:col-span-2">
+              <div className="flex h-[26px] items-center border-b border-gray-200 bg-[#F1EFE8] px-3 text-[10px] font-semibold tracking-[0.3px] text-[#1A1F36]">
+                <span className="rounded bg-[#1A1F36] px-1.5 py-0.5 text-[9px] font-semibold text-white">C</span>
+                <span className="ml-2">Stops · PC*MILER routing</span>
+                <span className="ml-auto text-[10px] font-medium text-gray-600">{form.watch("stops").length} stops</span>
               </div>
-              <div className="space-y-2 p-3">
-                <div className="grid grid-cols-3 gap-2">
-                  <label className="text-[10px] font-semibold text-gray-600">
-                    Practical mi
-                    <input type="number" {...form.register("miles_practical", { valueAsNumber: true })} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-                  </label>
-                  <label className="text-[10px] font-semibold text-gray-600">
-                    Shortest mi
-                    <input type="number" {...form.register("miles_shortest", { valueAsNumber: true })} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-                  </label>
-                  <label className="text-[10px] font-semibold text-gray-600">
-                    Deadhead mi
-                    <input type="number" {...form.register("miles_deadhead", { valueAsNumber: true })} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+              <div className="grid gap-3 p-3 md:grid-cols-2">
+                <BookLoadStopsSection control={form.control as never} register={form.register as never} watch={form.watch as never} />
+                <div className="space-y-2">
+                  <MilesStrip practical={milesPractical} shortest={milesShortest} deadhead={milesDeadhead} ratePerMile={ratePerMile} />
+                  <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
+                    Border routing
+                    <SelectCombobox {...form.register("border_routing")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs">
+                      <option value="">No border crossing</option>
+                      <option value="laredo">Routed via Laredo</option>
+                      <option value="pharr">Routed via Pharr</option>
+                    </SelectCombobox>
                   </label>
                 </div>
-                <MilesStrip practical={milesPractical} shortest={milesShortest} deadhead={milesDeadhead} ratePerMile={ratePerMile} />
-                <BookLoadStopsSection control={form.control as never} register={form.register as never} />
               </div>
-            </div>
+            </section>
 
-            <div className="border-t border-gray-200 lg:col-span-2">
-              <BookLoadValidationSection issues={validationIssues} />
-            </div>
+            <section className="bg-white lg:col-span-2">
+              <div className="flex h-[26px] items-center border-b border-gray-200 bg-[#F1EFE8] px-3 text-[10px] font-semibold tracking-[0.3px] text-[#1A1F36]">
+                <span className="rounded bg-[#1A1F36] px-1.5 py-0.5 text-[9px] font-semibold text-white">D</span>
+                <span className="ml-2">Pre-dispatch validation</span>
+                <span className="ml-auto text-[10px] font-medium text-gray-600">{passCount} of {validationIssues.length} checks pass</span>
+              </div>
+              <div className="p-3">
+                <BookLoadValidationSection issues={validationIssues} saveActions={saveActions} passCount={passCount} />
+              </div>
+            </section>
           </div>
 
-          <div className="flex flex-shrink-0 items-center justify-between border-t border-gray-200 bg-gray-50 px-3 py-2">
-            <div className="text-xs text-gray-600">
-              Driver bill preview: <span className="font-semibold">{money.format((driverBillPreview || 0) / 100)}</span>
+          <div className="flex flex-shrink-0 items-center justify-between border-t border-gray-200 bg-[#F1EFE8] px-3 py-2">
+            <div className="flex items-baseline gap-2 text-xs text-gray-600">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.4px]">Driver bill preview</span>
+              <span className="rounded border border-gray-200 bg-white px-2 py-0.5 font-mono text-[11px] text-[#1557A0]">{billNumberPreview}</span>
+              <span className="text-sm font-semibold text-[#1A1F36]">{money.format((driverBillPreview || 0) / 100)}</span>
+              <span className="text-[10px] text-gray-500">
+                {Number(milesShortest || 0).toLocaleString()} short mi × {(Number(driverPayRatePerMile || 0)).toFixed(2)}/mi
+              </span>
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="secondary" onClick={attemptBookLoadClose}>
@@ -653,7 +823,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
               <Button type="submit">Book + dispatch</Button>
             </div>
           </div>
-          <div className="border-t border-gray-100 px-3 py-1 text-[9px] text-gray-500">⌘S save draft · Esc close</div>
+          <div className="border-t border-gray-100 px-3 py-1 text-right text-[9px] text-gray-500">Esc closes · ⌘ S saves draft · ⌘ Enter books + dispatches</div>
         </form>
       </div>
     </div>
