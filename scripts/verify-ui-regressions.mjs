@@ -52,8 +52,22 @@ try {
 
   const dispatch = read("apps/frontend/src/pages/Dispatch.tsx");
   const accountingSubNav = read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx");
+  const appRoutes = read("apps/frontend/src/App.tsx");
+  const accountingPreSettlementsPage = read("apps/frontend/src/pages/accounting/AccountingPreSettlementsPage.tsx");
   assertIncludes(dispatch, 'label: "Pre-settlements"', "Dispatch pre-settlements tab missing");
   assertIncludes(accountingSubNav, 'label: "Pre-settlements"', "Accounting pre-settlements tab missing");
+  assertIncludes(appRoutes, 'path="/accounting/pre-settlements"', "Accounting pre-settlements route missing");
+  assertIncludes(accountingPreSettlementsPage, "PreSettlementsPanel", "Accounting pre-settlements must reuse shared panel");
+
+  const bankingTransactions = read("apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx");
+  assertIncludes(bankingTransactions, "COMPANY_TRANSACTIONS_PAGE_SIZE = 500", "Banking transactions batch-size fetch guard missing");
+  assertIncludes(bankingTransactions, "offset += COMPANY_TRANSACTIONS_PAGE_SIZE", "Banking transactions paging loop missing");
+  assertIncludes(bankingTransactions, "bank_account_id: selectedAccount?.id ?? undefined", "Banking account chip filter pass-through missing");
+  assertNotIncludes(bankingTransactions, "limit: 300", "Banking transactions still capped at 300 rows");
+
+  const bankingHomePage = read("apps/frontend/src/pages/banking/BankingHome.tsx");
+  assertIncludes(bankingHomePage, "bankAccountsPanelRows", "Banking Home accounts panel rows mapper missing");
+  assertIncludes(bankingHomePage, "plaidAccountsQuery.data?.accounts", "Banking Home accounts fallback to plaid data missing");
 
   const vendorDetail = read("apps/frontend/src/pages/VendorDetail.tsx");
   assertIncludes(vendorDetail, "Primary contact", "Vendor profile primary contact section missing");

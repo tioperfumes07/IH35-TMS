@@ -44,8 +44,7 @@ type RowDetailDraft = {
 };
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const COMPANY_TRANSACTIONS_PAGE_SIZE = 500;
-const COMPANY_TRANSACTIONS_MAX_PAGES = 25;
+const TRANSACTION_FETCH_BATCH_SIZE = 500;
 
 type ReviewTabId = "for_review" | "categorized" | "excluded";
 type AmountFilter = "all" | "spent" | "received";
@@ -156,22 +155,6 @@ function toExcelValue(value: string) {
   return value.includes(",") || value.includes('"') || value.includes("\n") ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
-async function fetchAllCompanyTransactions(operatingCompanyId: string) {
-  const all: PlaidBankTransaction[] = [];
-  for (let page = 0; page < COMPANY_TRANSACTIONS_MAX_PAGES; page += 1) {
-    const offset = page * COMPANY_TRANSACTIONS_PAGE_SIZE;
-    const response = await getPlaidCompanyTransactions(operatingCompanyId, {
-      limit: COMPANY_TRANSACTIONS_PAGE_SIZE,
-      offset,
-      sort: "date_desc",
-    });
-    const batch = response.transactions ?? [];
-    all.push(...batch);
-    if (batch.length < COMPANY_TRANSACTIONS_PAGE_SIZE) break;
-  }
-  return all;
-}
-
 export function BankingTransactionsDesignView({
   companyId,
   accounts,
@@ -227,8 +210,25 @@ export function BankingTransactionsDesignView({
   }, [accounts, selectedAccountId]);
 
   const transactionsQuery = useQuery({
-    queryKey: ["banking", "transactions-design", companyId],
-    queryFn: () => fetchAllCompanyTransactions(companyId),
+    queryKey: ["banking", "transactions-design", companyId, selectedAccount?.id ?? "", descriptionFilter],
+    queryFn: async () => {
+      const merged: PlaidBankTransaction[] = [];
+      let offset = 0;
+      while (true) {
+        const page = await getPlaidCompanyTransactions(companyId, {
+          limit: TRANSACTION_FETCH_BATCH_SIZE,
+          offset,
+          bank_account_id: selectedAccount?.id ?? undefined,
+          q: descriptionFilter.trim() || undefined,
+          sort: "date_desc",
+        });
+        const rows = page.transactions ?? [];
+        merged.push(...rows);
+        if (rows.length < TRANSACTION_FETCH_BATCH_SIZE) break;
+        offset += TRANSACTION_FETCH_BATCH_SIZE;
+      }
+      return { transactions: merged };
+    },
     enabled: Boolean(companyId),
   });
 
@@ -246,10 +246,10 @@ export function BankingTransactionsDesignView({
   });
 
   const scopedRows = useMemo(() => {
-    const rows = transactionsQuery.data ?? [];
+    const rows = transactionsQuery.data?.transactions ?? [];
     if (!selectedAccount?.id) return rows;
-    return rows.filter((tx) => tx.bank_account_id === selectedAccount.id);
-  }, [transactionsQuery.data, selectedAccount?.id]);
+    return rows.filter((tx) => !tx.bank_account_id || tx.bank_account_id === selectedAccount.id);
+  }, [transactionsQuery.data?.transactions, selectedAccount?.id]);
 
   const reviewTabBuckets = useMemo(() => {
     const out: Record<ReviewTabId, PlaidBankTransaction[]> = {
@@ -290,10 +290,6 @@ export function BankingTransactionsDesignView({
         const to = new Date(`${dateTo}T23:59:59`);
         if (!txDate || Number.isNaN(txDate.getTime()) || txDate > to) return false;
       }
-      if (descriptionFilter.trim()) {
-        const haystack = `${transactionLabel(tx)} ${tx.notes ?? ""}`.toLowerCase();
-        if (!haystack.includes(descriptionFilter.trim().toLowerCase())) return false;
-      }
       switch (selectedTransactionType) {
         case "money_in":
           return received > 0;
@@ -321,7 +317,7 @@ export function BankingTransactionsDesignView({
           return true;
       }
     });
-  }, [activeReviewTab, amountFilter, dateFrom, dateTo, descriptionFilter, reviewTabBuckets, selectedTransactionType]);
+  }, [activeReviewTab, amountFilter, dateFrom, dateTo, reviewTabBuckets, selectedTransactionType]);
 
   useEffect(() => {
     setCurrentPage(1);

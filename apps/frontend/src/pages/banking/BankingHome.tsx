@@ -84,18 +84,12 @@ export function BankingHomePage() {
   });
   const tiles = useMemo(() => filterBankingTilesForCompany(tilesQuery.data?.tiles ?? [], companyId), [tilesQuery.data?.tiles, companyId]);
 
-  useEffect(() => {
-    if (!selectedAccountId) return;
-    if (!tiles.some((t) => t.id === selectedAccountId)) setSelectedAccountId(null);
-  }, [tiles, selectedAccountId]);
-  const selectedId = selectedAccountId ?? tiles[0]?.id ?? null;
   const uncategorizedQuery = useQuery({
     queryKey: ["banking", "uncategorized", companyId],
     queryFn: () => getBankingUncategorized(companyId, { limit: 8 }),
     enabled: Boolean(companyId),
   });
 
-  const selectedTile = useMemo(() => tiles.find((tile: BankingTile) => tile.id === selectedId) ?? null, [tiles, selectedId]);
   const money = useMemo(
     () => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     []
@@ -111,19 +105,26 @@ export function BankingHomePage() {
     [tiles]
   );
   const bankAccountsPanelRows = useMemo(() => {
-    if (sortedBankTiles.length > 0) {
-      return sortedBankTiles.map((tile) => ({
+    const realTiles = sortedBankTiles.filter((tile) => String(tile.tile_kind) === "real");
+    if (realTiles.length > 0) {
+      return realTiles.map((tile) => ({
         id: tile.id,
-        label: tile.display_name,
+        displayName: tile.display_name,
         balance: Number(tile.current_balance ?? 0),
       }));
     }
     return (plaidAccountsQuery.data?.accounts ?? []).map((account) => ({
       id: account.id,
-      label: `${account.account_name ?? "Account"}${account.account_mask ? ` ••••${account.account_mask}` : ""}`,
+      displayName: `${account.account_name || "Account"}${account.account_mask ? ` ••••${account.account_mask}` : ""}`,
       balance: Number(account.current_balance_cents ?? 0) / 100,
     }));
   }, [plaidAccountsQuery.data?.accounts, sortedBankTiles]);
+  useEffect(() => {
+    if (!selectedAccountId) return;
+    if (!bankAccountsPanelRows.some((row) => row.id === selectedAccountId)) setSelectedAccountId(null);
+  }, [bankAccountsPanelRows, selectedAccountId]);
+  const selectedId = selectedAccountId ?? bankAccountsPanelRows[0]?.id ?? null;
+  const selectedTile = useMemo(() => tiles.find((tile: BankingTile) => tile.id === selectedId) ?? null, [tiles, selectedId]);
   const factoringTile = useMemo(
     () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
     [tiles]
@@ -222,7 +223,7 @@ export function BankingHomePage() {
                     onClick={() => setSelectedAccountId(row.id)}
                     className={`grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-3 py-1.5 text-left text-sm ${selectedId === row.id ? "bg-blue-50" : "hover:bg-gray-50"}`}
                   >
-                    <span className="truncate">{row.label}</span>
+                    <span className="truncate">{row.displayName}</span>
                     <span className="font-medium">{money.format(row.balance)}</span>
                   </button>
                 ))}

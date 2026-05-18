@@ -100,9 +100,9 @@ describe("BankingHomePage accounts summary", () => {
     expect(screen.queryByText("ONLINE PAYMENT - THANK YOU")).not.toBeInTheDocument();
   });
 
-  it("shows bank accounts from Plaid data when tiles are empty", async () => {
+  it("shows real bank accounts from plaid feed when tile list is empty", async () => {
     vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
-      total_cash: 0,
+      total_cash: 1000,
       dip_operating: 0,
       dip_payroll: 0,
       total_uncategorized: 0,
@@ -111,31 +111,33 @@ describe("BankingHomePage accounts summary", () => {
     });
     vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
     vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
+    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
+    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
     vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({
       accounts: [
         {
-          id: "acct-1",
+          id: "acct-5007",
           operating_company_id: "company-1",
-          institution_name: "Chase",
-          account_name: "Business Checking 3500",
-          account_type: "depository",
-          account_mask: "3500",
-          current_balance_cents: 123456,
-          available_balance_cents: 123456,
+          institution_name: "Amex",
+          account_name: "Business Platinum Card",
+          account_mask: "5007",
+          account_type: "credit",
+          current_balance_cents: 123400,
+          available_balance_cents: 123400,
           currency_code: "USD",
           sync_status: "active",
           is_active: true,
           last_synced_at: null,
         },
         {
-          id: "acct-2",
+          id: "acct-3500",
           operating_company_id: "company-1",
-          institution_name: "Amex",
-          account_name: "Business Platinum Card 5007",
-          account_type: "credit",
-          account_mask: "5007",
-          current_balance_cents: 98765,
-          available_balance_cents: 98765,
+          institution_name: "Bank",
+          account_name: "Business Checking",
+          account_mask: "3500",
+          account_type: "depository",
+          current_balance_cents: 500000,
+          available_balance_cents: 500000,
           currency_code: "USD",
           sync_status: "active",
           is_active: true,
@@ -143,13 +145,11 @@ describe("BankingHomePage accounts summary", () => {
         },
       ],
     });
-    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
-    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
 
     render(wrap(<BankingHomePage />));
 
-    expect(await screen.findByText(/Business Checking 3500/i)).toBeInTheDocument();
-    expect(screen.getByText(/Business Platinum Card 5007/i)).toBeInTheDocument();
+    expect(await screen.findByText("Business Platinum Card ••••5007")).toBeInTheDocument();
+    expect(screen.getByText("Business Checking ••••3500")).toBeInTheDocument();
     expect(screen.queryByText("No accounts yet.")).not.toBeInTheDocument();
   });
 });
