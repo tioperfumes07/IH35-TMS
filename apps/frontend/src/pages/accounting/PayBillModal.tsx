@@ -121,15 +121,19 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
         >
           {error ? <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
 
-          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
-            <div>Vendor: <span className="font-semibold text-gray-900">{vendorName}</span></div>
-            <div>Bill #: <span className="font-semibold text-gray-900">{bill.bill_number || bill.id.slice(0, 8)}</span></div>
-            <div>Total: <span className="font-semibold text-gray-900">{money(bill.amount_cents)}</span></div>
-            <div>Paid: <span className="font-semibold text-gray-900">{money(bill.paid_cents)}</span></div>
-            <div>Remaining: <span className="font-semibold text-red-700">{money(remainingCents)}</span></div>
+          <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+            Bill Payment Details
           </div>
 
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-6">
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              Vendor
+              <input value={vendorName} readOnly className="h-9 rounded border border-gray-300 bg-gray-100 px-2 text-[13px]" />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              Bill #
+              <input value={bill.bill_number || bill.id.slice(0, 8)} readOnly className="h-9 rounded border border-gray-300 bg-gray-100 px-2 text-[13px]" />
+            </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Payment date
               <input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
@@ -147,6 +151,10 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
             <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
               Payment amount (USD)
               <input value={amountDollars} onChange={(event) => setAmountDollars(event.target.value)} inputMode="decimal" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              Remaining
+              <input value={money(remainingCents)} readOnly className="h-9 rounded border border-gray-300 bg-gray-100 px-2 text-[13px]" />
             </label>
             {needsBankAccount ? (
               <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -171,10 +179,43 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
               Reference number
               <input value={referenceNumber} onChange={(event) => setReferenceNumber(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
+            <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-6">
               Memo
               <textarea rows={3} value={memo} onChange={(event) => setMemo(event.target.value)} className="rounded border border-gray-300 px-2 py-1.5 text-[13px]" />
             </label>
+          </div>
+
+          <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">Apply to bill</div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-xs">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr>
+                    <th className="px-2 py-1.5 font-semibold">Bill #</th>
+                    <th className="px-2 py-1.5 font-semibold">Total</th>
+                    <th className="px-2 py-1.5 font-semibold">Paid</th>
+                    <th className="px-2 py-1.5 font-semibold">Open</th>
+                    <th className="px-2 py-1.5 font-semibold">Apply</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t border-gray-100">
+                    <td className="px-2 py-1.5">{bill.bill_number || bill.id.slice(0, 8)}</td>
+                    <td className="px-2 py-1.5">{money(bill.amount_cents)}</td>
+                    <td className="px-2 py-1.5">{money(bill.paid_cents)}</td>
+                    <td className="px-2 py-1.5 font-semibold text-red-700">{money(remainingCents)}</td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        value={amountDollars}
+                        onChange={(event) => setAmountDollars(event.target.value)}
+                        inputMode="decimal"
+                        className="h-8 w-24 rounded border border-gray-300 px-2 text-[13px]"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="flex justify-end gap-2">
