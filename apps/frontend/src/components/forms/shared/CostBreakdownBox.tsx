@@ -42,6 +42,7 @@ type Props = {
   expenseCategoryOptions?: CostContextOption[];
   itemOptions?: CostContextOption[];
   partOptions?: CostContextOption[];
+  locationOptions?: CostContextOption[];
   onQuickCreateCategory?: (lineId: string) => void;
   onQuickCreateItem?: (lineId: string) => void;
   onQuickCreatePart?: (lineId: string, subId: string) => void;
@@ -82,6 +83,7 @@ export function CostBreakdownBox({
   expenseCategoryOptions = [],
   itemOptions = [],
   partOptions = [],
+  locationOptions = [],
   onQuickCreateCategory,
   onQuickCreateItem,
   onQuickCreatePart,
@@ -277,15 +279,21 @@ export function CostBreakdownBox({
                     className="rounded border border-gray-300 px-2 py-1 text-xs"
                     placeholder="Description"
                   />
-                  <input
+                  <SelectCombobox
                     disabled={readOnly}
                     value={line.location_label ?? ""}
                     onChange={(event) =>
                       onSectionBChange(sectionB.lines.map((entry) => (entry.id === line.id ? { ...entry, location_label: event.target.value } : entry)))
                     }
                     className="rounded border border-gray-300 px-2 py-1 text-xs"
-                    placeholder="Location"
-                  />
+                  >
+                    <option value="">Select location...</option>
+                    {locationOptions.map((option) => (
+                      <option key={option.id} value={option.label}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </SelectCombobox>
                   <input
                     disabled={readOnly}
                     type="number"

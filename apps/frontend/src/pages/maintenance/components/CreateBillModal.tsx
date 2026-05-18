@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { listDrivers, listUnits, listVendors } from "../../../api/mdata";
 import { Modal } from "../../../components/Modal";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
-import { Combobox } from "../../../components/shared/Combobox";
+import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { UploadZone } from "../../../components/UploadZone";
 
 type Props = {
@@ -18,6 +21,41 @@ export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, o
   const [taxRate, setTaxRate] = useState(8.25);
   const [billType, setBillType] = useState("repair");
   const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
+  const [billDate, setBillDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dueDate, setDueDate] = useState("");
+  const [billNumber, setBillNumber] = useState("");
+  const [terms, setTerms] = useState("net_30");
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [loadNumber, setLoadNumber] = useState("");
+  const [driverId, setDriverId] = useState("");
+  const [unitId, setUnitId] = useState("");
+  const [className, setClassName] = useState("");
+  const [accountQboId, setAccountQboId] = useState<string | null>(null);
+  const [accountDisplay, setAccountDisplay] = useState("");
+
+  const vendorsQuery = useQuery({
+    queryKey: ["create-bill-modal", "vendors", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId }),
+    enabled: Boolean(open && operatingCompanyId),
+  });
+  const driversQuery = useQuery({
+    queryKey: ["create-bill-modal", "drivers", operatingCompanyId],
+    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId }),
+    enabled: Boolean(open && operatingCompanyId),
+  });
+  const unitsQuery = useQuery({
+    queryKey: ["create-bill-modal", "units", operatingCompanyId],
+    queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId }),
+    enabled: Boolean(open && operatingCompanyId),
+  });
+  const vendorOptions = useMemo(
+    () =>
+      (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
+        value: vendor.id,
+        label: vendor.name,
+      })),
+    [vendorsQuery.data?.vendors]
+  );
   const subtotal = lines.reduce((sum, line) => {
     if (line.section === "A") return sum + Number(line.amount || 0);
     const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
@@ -39,47 +77,75 @@ export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, o
           <Field label="Bill Type *">
             <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs" value={BILL_TYPE_TABS.find((t) => t.id === billType)?.label ?? "Repair Bill"} readOnly />
           </Field>
-          <div />
           <Field label="Bill Date *">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" type="date" />
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" type="date" value={billDate} onChange={(event) => setBillDate(event.target.value)} />
           </Field>
           <Field label="Terms">
-            <Combobox
-              options={[
-                { value: "net_30", label: "Net 30" },
-                { value: "net_15", label: "Net 15" },
-                { value: "net_7", label: "Net 7" },
-              ]}
-              value={"net_30"}
-              onChange={() => {}}
-            />
+            <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={terms} onChange={(event) => setTerms(event.target.value)}>
+              <option value="net_30">Net 30</option>
+              <option value="net_15">Net 15</option>
+              <option value="net_7">Net 7</option>
+            </SelectCombobox>
           </Field>
-          <Field label="Due Date (auto, readonly)">
-            <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs" value="Auto from terms" readOnly />
+          <Field label="Due Date *">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
           </Field>
           <Field label="Bill Number *">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Bill Number" />
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={billNumber} onChange={(event) => setBillNumber(event.target.value)} placeholder="Bill Number" />
+          </Field>
+          <Field label="A/P Account *">
+            <QboCombobox
+              entityType="account"
+              operatingCompanyId={operatingCompanyId}
+              value={accountQboId}
+              displayValue={accountDisplay}
+              onChange={(qboId, displayName) => {
+                setAccountQboId(qboId);
+                setAccountDisplay(displayName);
+              }}
+            />
           </Field>
 
           <div className="md:col-span-6 h-2" />
           <Field label="Vendor *">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Vendor" />
+            <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={vendorId ?? ""} onChange={(event) => setVendorId(event.target.value || null)}>
+              <option value="">Select vendor...</option>
+              {vendorOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </Field>
+          <Field label="Load Number">
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Load Number" value={loadNumber} onChange={(event) => setLoadNumber(event.target.value)} />
           </Field>
           <div className="md:col-span-4" />
-          <Field label="Load Number">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Load Number" />
-          </Field>
 
           <div className="md:col-span-6 h-2" />
           <Field label="Driver">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Driver" />
+            <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={driverId} onChange={(event) => setDriverId(event.target.value)}>
+              <option value="">Select driver...</option>
+              {(driversQuery.data?.drivers ?? []).map((driver) => (
+                <option key={driver.id} value={driver.id}>
+                  {[driver.first_name, driver.last_name].filter(Boolean).join(" ").trim() || driver.id}
+                </option>
+              ))}
+            </SelectCombobox>
           </Field>
           <Field label="Unit">
-            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Unit" />
+            <SelectCombobox className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={unitId} onChange={(event) => setUnitId(event.target.value)}>
+              <option value="">Select unit...</option>
+              {((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).map((unit) => (
+                <option key={String(unit.id ?? "")} value={String(unit.id ?? "")}>
+                  {String(unit.unit_number ?? unit.id ?? "")}
+                </option>
+              ))}
+            </SelectCombobox>
           </Field>
           <div className="md:col-span-3" />
           <Field label="Class">
-            <input className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-xs" value="Auto class" readOnly />
+            <input className="h-8 w-full rounded border border-gray-300 px-2 text-xs" value={className} onChange={(event) => setClassName(event.target.value)} placeholder="Class" />
           </Field>
 
           <div className="md:col-span-6 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">

@@ -47,9 +47,9 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
   });
 
   const formNode = useMemo(() => {
-    if (action === "create_expense") return <CreateExpenseForm value={form} onChange={setForm} />;
-    if (action === "apply_bill") return <ApplyToBillForm value={form} onChange={setForm} />;
-    if (action === "bill_payment") return <BillPaymentForm value={form} onChange={setForm} />;
+    if (action === "create_expense") return <CreateExpenseForm value={form} onChange={setForm} operatingCompanyId={operatingCompanyId} />;
+    if (action === "apply_bill") return <ApplyToBillForm value={form} onChange={setForm} operatingCompanyId={operatingCompanyId} />;
+    if (action === "bill_payment") return <BillPaymentForm value={form} onChange={setForm} operatingCompanyId={operatingCompanyId} />;
     if (action === "transfer") return <TransferForm value={form} onChange={setForm} />;
     if (action === "driver_settlement") return <DriverSettlementForm value={form} onChange={setForm} />;
     if (action === "factoring_advance") return <FactoringAdvanceForm value={form} onChange={setForm} />;
@@ -59,7 +59,7 @@ export function CategorizeDrawer({ open, transaction, operatingCompanyId, onClos
         Open Split Modal
       </Button>
     );
-  }, [action, form]);
+  }, [action, form, operatingCompanyId]);
 
   if (!open || !transaction) return null;
 

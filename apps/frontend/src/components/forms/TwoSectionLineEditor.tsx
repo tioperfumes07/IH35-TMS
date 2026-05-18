@@ -89,6 +89,25 @@ export function TwoSectionLineEditor({
       })),
     [costContextQuery.data?.parts]
   );
+  const locationOptions = useMemo<CostContextOption[]>(
+    () =>
+      (costContextQuery.data?.parts ?? [])
+        .map((entry) => {
+          const label = String(
+            entry.location ??
+              entry.location_label ??
+              entry.bin_location ??
+              entry.bin ??
+              entry.warehouse_location ??
+              ""
+          ).trim();
+          if (!label) return null;
+          return { id: label.toLowerCase(), label };
+        })
+        .filter((row): row is CostContextOption => Boolean(row))
+        .filter((row, index, all) => all.findIndex((candidate) => candidate.label === row.label) === index),
+    [costContextQuery.data?.parts]
+  );
   const defaultIncomeAccountQboId = useMemo(
     () => String((costContextQuery.data?.expense_categories ?? []).find((row) => Boolean(row.qbo_id))?.qbo_id ?? ""),
     [costContextQuery.data?.expense_categories]
@@ -117,6 +136,7 @@ export function TwoSectionLineEditor({
         expenseCategoryOptions={expenseCategoryOptions}
         itemOptions={itemOptions}
         partOptions={partOptions}
+        locationOptions={locationOptions}
         onQuickCreateCategory={(lineId) => setQuickCreateTarget({ kind: "category", lineId })}
         onQuickCreateItem={(lineId) => setQuickCreateTarget({ kind: "item", lineId })}
         onQuickCreatePart={(lineId, subId) => setQuickCreateTarget({ kind: "part", lineId, subId })}
