@@ -769,9 +769,9 @@ export function DriversPage() {
         subtitle={`${newDriversInLast3Days} new in last 3 days`}
         actions={
           <div className="flex items-center gap-2">
-            <ActionButton className="rounded border border-emerald-700 bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-600" onClick={openDriverCreate}>
+            <Button type="button" onClick={openDriverCreate}>
               + Driver
-            </ActionButton>
+            </Button>
             <ActionButton onClick={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}>Refresh</ActionButton>
           </div>
         }
