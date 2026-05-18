@@ -163,4 +163,11 @@ describe("DriversPage list status tabs", () => {
     router.navigate(-1);
     await waitFor(() => expect(screen.getByText(/Ike InactiveOnly/)).toBeInTheDocument());
   });
+
+  it("renders + Driver as a labeled primary button", async () => {
+    renderDriversAt("/drivers");
+    const addDriverButton = await screen.findByRole("button", { name: "+ Driver" });
+    expect(addDriverButton).toHaveTextContent("+ Driver");
+    expect(addDriverButton.className).toContain("bg-[#16A34A]");
+  });
 });
