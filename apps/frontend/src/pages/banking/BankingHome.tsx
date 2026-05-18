@@ -114,6 +114,7 @@ export function BankingHomePage() {
     () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
     [tiles]
   );
+  const forReviewCount = Number(uncategorizedQuery.data?.meta?.uncategorized_count ?? uncategorizedCount);
 
   const openStartReconciliation = () => {
     setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
@@ -247,15 +248,20 @@ export function BankingHomePage() {
             <div className="border-b border-amber-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-amber-800">
               Categorize · {uncategorizedCount} unmatched bank transactions
             </div>
-            <div className="divide-y divide-amber-100">
-              {(uncategorizedQuery.data?.transactions ?? []).slice(0, 8).map((row, idx) => (
-                <button key={String(row.id ?? idx)} type="button" className="grid w-full grid-cols-[90px_1fr_auto] gap-2 px-3 py-1.5 text-left text-sm hover:bg-amber-100/40" onClick={() => setActiveTab("transactions")}>
-                  <span className="text-gray-600">{String(row.transaction_date ?? "—")}</span>
-                  <span className="truncate">{String(row.description ?? row.merchant_name ?? "—")}</span>
-                  <span className="font-medium">{money.format(Number((row.amount_cents as number | undefined) ?? 0) / 100)}</span>
+            <div className="px-3 py-3">
+              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+                <p className="text-sm text-amber-900">
+                  <span className="font-semibold">{forReviewCount}</span>{" "}
+                  transaction{forReviewCount === 1 ? "" : "s"} need review.
+                </p>
+                <button
+                  type="button"
+                  className="rounded border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100/60"
+                  onClick={() => setActiveTab("transactions")}
+                >
+                  Open Transactions - For review
                 </button>
-              ))}
-              {(uncategorizedQuery.data?.transactions ?? []).length === 0 ? <p className="px-3 py-2 text-sm text-gray-500">No unmatched transactions.</p> : null}
+              </div>
             </div>
           </div>
 
