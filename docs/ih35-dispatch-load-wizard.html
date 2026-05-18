@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1240, initial-scale=1">
+<title>Book Load — Dispatch Load Wizard · IH35-TMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#16203a; --navy-d:#0e1626; --ink:#1f2733; --slate:#5b6472; --faint:#8a93a1;
+  --line:#e3e6eb; --line-soft:#eef0f3; --bg:#e9ebef; --surface:#fff; --surface-2:#f7f8fa;
+  --hd:#eef1f4; --green:#1c9d5b; --green-d:#15824a; --red:#cf3b3b; --amber:#b8791d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--ink);
+  font-size:12px;line-height:1.4;-webkit-font-smoothing:antialiased;
+  display:flex;align-items:flex-start;justify-content:center;padding:26px 16px;min-height:100vh}
+.mono{font-family:'IBM Plex Mono',monospace}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- modal shell ---------- */
+.wiz{width:1160px;max-width:100%;background:var(--surface);border-radius:9px;
+  box-shadow:0 24px 64px rgba(10,18,34,.34);overflow:hidden}
+
+.w-head{background:var(--navy);color:#dfe4ec;padding:11px 18px;display:flex;
+  align-items:center;justify-content:space-between}
+.w-head .bc{font-size:10.5px;color:#9aa6ba;letter-spacing:.03em}
+.w-head .ti{font-size:16px;font-weight:700;color:#fff;margin-top:1px}
+.w-head .rt{display:flex;align-items:center;gap:14px;font-size:11px;color:#9aa6ba}
+.w-head .rt b{color:#fff;font-weight:600}
+.w-x{width:24px;height:24px;border:none;background:#243049;color:#cdd5e2;border-radius:5px;
+  font-size:14px;cursor:pointer;line-height:1}
+.w-x:hover{background:#2e3c5a}
+
+/* ---------- load # bar ---------- */
+.loadbar{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 18px;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.loadbar .lb-l{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--slate)}
+.lb-lab{font-size:9.5px;font-weight:700;letter-spacing:.07em;color:var(--faint)}
+.lb-id{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--ink);
+  background:#fff;border:1px solid var(--line);padding:2px 9px;border-radius:4px}
+.lb-resv{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:var(--green-d)}
+.lb-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.loadbar .lb-r{font-size:10.5px;color:var(--slate)}
+.loadbar .lb-r b{font-family:'IBM Plex Mono',monospace;color:var(--ink);font-weight:600}
+
+/* ---------- body ---------- */
+.w-body{padding:14px 18px;max-height:74vh;overflow-y:auto;background:var(--bg)}
+.toprow{display:grid;grid-template-columns:1.05fr 1fr;gap:12px;margin-bottom:12px}
+
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.sec-hd{display:flex;align-items:center;gap:9px;padding:7px 11px;background:var(--hd);
+  border-bottom:1px solid var(--line)}
+.sec-chip{width:18px;height:18px;border-radius:4px;background:var(--navy);color:#fff;
+  font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.sec-name{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate)}
+.sec-meta{margin-left:auto;font-size:10px;font-weight:600;color:var(--slate)}
+.sec-meta b{color:var(--ink)}
+.sec-body{padding:11px}
+
+/* ---------- compact fields ---------- */
+.frow{display:grid;gap:8px;margin-bottom:9px}
+.frow:last-child{margin-bottom:0}
+.c2{grid-template-columns:1fr 1fr}
+.c3{grid-template-columns:1fr 1fr 1fr}
+.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+.fld label{display:block;font-size:9px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+.fld input,.fld select,.fld textarea{width:100%;font-family:inherit;font-size:12px;
+  padding:5px 8px;border:1px solid var(--line);border-radius:4px;color:var(--ink);
+  background:#fff;height:29px}
+.fld textarea{height:auto;resize:vertical}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--navy)}
+.hint{font-size:9.5px;color:var(--faint);margin-top:4px}
+
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;height:29px}
+.seg button{font-family:inherit;font-size:11px;font-weight:600;padding:0 12px;border:none;
+  background:#fff;color:var(--slate);cursor:pointer}
+.seg button.on{background:var(--navy);color:#fff}
+
+/* OCR drop — slim */
+.ocr{display:flex;align-items:center;gap:9px;padding:8px 11px;border:1px dashed var(--line);
+  border-radius:5px;background:var(--surface-2);cursor:pointer;margin-bottom:9px}
+.ocr:hover{border-color:#b9c0cc;background:#f1f3f6}
+.ocr svg{width:16px;height:16px;color:var(--slate);flex:none}
+.ocr .o-t{font-size:11px;font-weight:600;color:var(--ink)}
+.ocr .o-s{font-size:9.5px;color:var(--faint)}
+
+/* charges mini-table */
+.charges{border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:7px}
+.chg{display:flex;justify-content:space-between;padding:6px 10px;font-size:11.5px;
+  border-bottom:1px solid var(--line-soft)}
+.chg:last-child{border-bottom:none}
+.chg.tot{background:var(--surface-2);font-weight:700}
+.chg .ca{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.chg .pass{font-size:9px;font-weight:700;color:var(--faint);letter-spacing:.05em}
+.addlink{font-size:10.5px;font-weight:600;color:var(--navy);cursor:pointer}
+.addlink:hover{text-decoration:underline}
+
+/* collapsible row */
+.collapse{border:1px solid var(--line);border-radius:5px;margin-top:9px;overflow:hidden}
+.col-bar{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;background:var(--surface-2)}
+.col-bar:hover{background:#f0f2f5}
+.col-plus{width:16px;height:16px;border-radius:3px;background:var(--navy);color:#fff;
+  font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
+.col-t{font-size:11px;font-weight:700;color:var(--ink)}
+.col-s{font-size:9.5px;color:var(--faint);margin-left:auto}
+.col-body{padding:11px;border-top:1px solid var(--line);display:none}
+.collapse.open .col-body{display:block}
+.collapse.open .col-plus{background:var(--slate)}
+.collapse.open .col-plus .ic::before{content:"\2212"}
+.col-plus .ic::before{content:"+"}
+
+/* equipment toggles */
+.toggles{display:flex;flex-wrap:wrap;gap:5px}
+.tg{font-size:10px;font-weight:600;padding:4px 9px;border:1px solid var(--line);
+  border-radius:11px;background:#fff;color:var(--slate);cursor:pointer}
+.tg.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* stops — compact */
+.stop{border:1px solid var(--line);border-radius:5px;padding:8px 10px;margin-bottom:7px;background:#fff}
+.stop-top{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.stop-tag{font-size:9px;font-weight:700;letter-spacing:.04em;padding:3px 7px;border-radius:3px;
+  background:var(--hd);color:var(--slate);flex:none}
+.stop-tag.pu{background:#e7eef6;color:#345d86}
+.stop-tag.del{background:#e9f1ec;color:var(--green-d)}
+.stop-ref{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--slate);flex:none}
+.stop-addr{font-size:11.5px;font-weight:600;flex:1;min-width:0;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.stop-when{font-size:10.5px;color:var(--slate);flex:none}
+
+/* PC*MILER strip */
+.pcm{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:7px}
+.pcm > div{background:#fff;padding:7px 9px;text-align:center}
+.pcm .p-l{font-size:8.5px;font-weight:700;letter-spacing:.04em;color:var(--faint);text-transform:uppercase}
+.pcm .p-v{font-size:14px;font-weight:700;font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.pcm > div.hl{background:#fbf6e9}
+
+/* validation */
+.vck{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:11px;border-bottom:1px solid var(--line-soft)}
+.vck:last-child{border-bottom:none}
+.vck .vi{width:15px;height:15px;border-radius:50%;background:var(--green);color:#fff;
+  font-size:9px;display:flex;align-items:center;justify-content:center;flex:none}
+.vck .vi.adv{background:var(--amber)}
+.vck .vt{flex:1}
+.vck .vw{font-size:9px;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.onsave{background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:9px 11px}
+.onsave .os-h{font-size:9px;font-weight:700;letter-spacing:.05em;color:var(--faint);
+  text-transform:uppercase;margin-bottom:5px}
+.onsave .os-i{font-size:10.5px;color:var(--slate);padding:2px 0}
+.onsave .os-i b{color:var(--ink);font-weight:600}
+
+/* footer */
+.w-foot{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;
+  border-top:1px solid var(--line);background:var(--surface)}
+.bill-prev{font-size:11px;color:var(--slate)}
+.bill-prev .bp-id{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink)}
+.bill-prev .bp-amt{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--ink)}
+.bill-prev .bp-calc{font-size:9.5px;color:var(--faint)}
+.f-actions{display:flex;gap:8px}
+.btn{font-family:inherit;font-size:12px;font-weight:600;padding:7px 14px;border-radius:5px;
+  border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--navy);border-color:var(--navy-d);color:#fff}
+.btn.primary:hover{background:#1d2a48}
+.kbd{padding:6px 18px 12px;background:var(--surface);font-size:9.5px;color:var(--faint);text-align:right}
+.kbd kbd{font-family:'IBM Plex Mono',monospace;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:3px;padding:0 4px;font-size:9px}
+</style>
+</head>
+<body>
+
+<div class="wiz">
+
+  <div class="w-head">
+    <div>
+      <div class="bc">Dispatch &rsaquo; Book load</div>
+      <div class="ti">Book load</div>
+    </div>
+    <div class="rt">
+      <span>Sat, May 16 &middot; 4:42 PM CT &middot; <b>Jorge Munoz</b></span>
+      <button class="w-x">&times;</button>
+    </div>
+  </div>
+
+  <div class="loadbar">
+    <div class="lb-l">
+      <span class="lb-lab">LOAD #</span>
+      <span class="lb-id">L-13518</span>
+      <span class="lb-resv"><span class="lb-dot"></span>Reserved &middot; 58s</span>
+    </div>
+    <div class="lb-r">Creates driver bill <b>B-13518</b> on save</div>
+  </div>
+
+  <div class="w-body">
+
+    <div class="toprow">
+
+      <!-- ===== SECTION A ===== -->
+      <div class="sec">
+        <div class="sec-hd">
+          <span class="sec-chip">A</span>
+          <span class="sec-name">Customer &middot; Invoice &middot; Charges</span>
+          <span class="sec-meta">Section total <b class="mono">$2,439.00</b></span>
+        </div>
+        <div class="sec-body">
+
+          <div class="ocr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
+            <div><div class="o-t">Drop rate confirmation PDF</div>
+            <div class="o-s">Auto-fills customer, origin, destination, dates, rate &mdash; or click to browse</div></div>
+          </div>
+
+          <div class="frow c3">
+            <div class="fld"><label>Customer</label><select><option>C.H. Robinson &middot; MC-281208</option></select></div>
+            <div class="fld"><label>Customer WO #</label><input value="CHR-2026-77441"></div>
+            <div class="fld"><label>Pickup #</label><input value="PU-883920"></div>
+          </div>
+          <div class="frow c4">
+            <div class="fld"><label>Type</label>
+              <span class="seg"><button class="on">Broker</button><button>Direct</button></span></div>
+            <div class="fld"><label>Commodity</label><input value="Frozen poultry"></div>
+            <div class="fld"><label>Weight (lbs)</label><input value="42,800"></div>
+            <div class="fld"><label>Pieces</label><input value="24 pallets"></div>
+          </div>
+
+          <div class="charges">
+            <div class="chg"><span>Linehaul</span><span class="ca">$2,250.00</span></div>
+            <div class="chg"><span>Fuel surcharge (8.4%)</span><span class="ca">$189.00</span></div>
+            <div class="chg"><span>Lumper <span class="pass">BROKER-PAID PASSTHROUGH</span></span><span class="ca">$0.00</span></div>
+            <div class="chg tot"><span>Total customer invoice</span><span class="ca">$2,439.00</span></div>
+          </div>
+          <span class="addlink">+ Add charge &middot; detention &middot; layover &middot; accessorial</span>
+
+          <div class="frow c3" style="margin-top:9px">
+            <div class="fld"><label>Cash advance</label><input value="$0"></div>
+            <div class="fld"><label>Fuel advance</label><input value="$200"></div>
+            <div class="fld"><label>Factoring company</label><input value="Faro · auto from customer" readonly></div>
+          </div>
+
+          <div class="collapse" id="c-notes">
+            <div class="col-bar" onclick="tog('c-notes')">
+              <span class="col-plus"><span class="ic"></span></span>
+              <span class="col-t">Special notes</span>
+              <span class="col-s">optional &mdash; click to add</span>
+            </div>
+            <div class="col-body">
+              <div class="fld"><textarea rows="2" placeholder="Internal notes — not printed on the dispatch sheet"></textarea></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ===== SECTION B + Expected adjustments ===== -->
+      <div>
+        <div class="sec" style="margin-bottom:12px">
+          <div class="sec-hd">
+            <span class="sec-chip">B</span>
+            <span class="sec-name">Equipment &middot; Driver &middot; Trailer</span>
+            <span class="sec-meta">Class <b>T120-SMITH</b></span>
+          </div>
+          <div class="sec-body">
+            <div class="frow c3">
+              <div class="fld"><label>Trailer type</label><select><option>Refrigerated van</option><option>Dry van</option><option>Flatbed</option></select></div>
+              <div class="fld"><label>Truck unit</label><select><option>T120 · 2022 Volvo VNL</option></select></div>
+              <div class="fld"><label>Trailer unit</label><select><option>RT-178</option></select></div>
+            </div>
+            <div class="frow c2">
+              <div class="fld"><label>Driver</label><select><option>R. Smith · CDL TX exp 2027-08</option></select></div>
+              <div class="fld"><label>Team driver (50/50 split)</label><select><option>Solo load</option><option>+ Add team driver</option></select></div>
+            </div>
+            <div class="fld" style="margin-bottom:9px"><label>Equipment</label>
+              <div class="toggles">
+                <span class="tg on">Reefer fuel</span><span class="tg on">Pulp probe</span>
+                <span class="tg">Locking jacks</span><span class="tg">Tarps</span>
+                <span class="tg">Load locks</span><span class="tg">Straps</span>
+              </div>
+            </div>
+            <div class="frow c2">
+              <div class="fld"><label>Driver pay rate / mi</label><input value="$0.50 (short mi)"></div>
+              <div class="fld"><label>Reefer setpoint</label><input value="-10°F continuous"></div>
+            </div>
+
+            <div class="collapse" id="c-driver">
+              <div class="col-bar" onclick="tog('c-driver')">
+                <span class="col-plus"><span class="ic"></span></span>
+                <span class="col-t">Driver instructions</span>
+                <span class="col-s">visible to driver &mdash; click to add</span>
+              </div>
+              <div class="col-body">
+                <div class="fld"><textarea rows="3" placeholder="Prints on dispatch sheet · shows in driver mobile app · driver marks read on receipt">Call dispatcher on arrival. Detention starts after 2 free hours. Gate 4-B entry. Lumper paid via Comcheck — see attached.</textarea></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expected adjustments — right side, collapsed -->
+        <div class="collapse" id="c-adj">
+          <div class="col-bar" onclick="tog('c-adj')">
+            <span class="col-plus"><span class="ic"></span></span>
+            <span class="col-t">Expected adjustments</span>
+            <span class="col-s">chargeback &middot; detention &middot; late risk</span>
+          </div>
+          <div class="col-body">
+            <p class="hint" style="margin:0 0 8px">Flag expected customer deductions and driver-pay risk up front. Accounting sees these before the customer pays.</p>
+            <div class="frow c2">
+              <div class="fld"><label>Expected deduction</label><input value="$0.00"></div>
+              <div class="fld"><label>Reason</label><input placeholder="e.g. ETA past appt window"></div>
+            </div>
+            <div class="frow c3">
+              <div class="fld"><label>Detention expected</label><select><option>No</option><option>Yes</option></select></div>
+              <div class="fld"><label>Bill customer / hr</label><input value="$65.00"></div>
+              <div class="fld"><label>Driver detention pay</label><input value="$20/hr after 2h"></div>
+            </div>
+            <div class="frow c2">
+              <div class="fld"><label>Late delivery risk</label><select><option>No</option><option>Yes</option></select></div>
+              <div class="fld"><label>Est. customer deduction</label><input value="$0.00"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /toprow -->
+
+    <!-- ===== SECTION C — Stops ===== -->
+    <div class="sec" style="margin-bottom:12px">
+      <div class="sec-hd">
+        <span class="sec-chip">C</span>
+        <span class="sec-name">Stops &middot; PC*MILER routing</span>
+        <span class="sec-meta">1 pickup &middot; 1 delivery</span>
+      </div>
+      <div class="sec-body">
+
+        <div class="stop">
+          <div class="stop-top">
+            <span class="stop-tag pu">PICKUP</span>
+            <span class="stop-ref">PU-883920</span>
+            <span class="stop-addr">Pilgrim's Pride &mdash; 4845 Eisenhauer Rd, San Antonio TX 78218</span>
+            <span class="stop-when">Mon May 18 &middot; 06:00 CT</span>
+          </div>
+          <div class="frow c2" style="margin:0">
+            <div class="fld"><label>Time window</label><select><option>Appointment (fixed time)</option><option>Open window</option><option>FCFS</option></select></div>
+            <div class="fld"><label>Free time / detention</label><input value="120 min · $65/hr after"></div>
+          </div>
+        </div>
+
+        <div class="stop">
+          <div class="stop-top">
+            <span class="stop-tag del">DELIVERY</span>
+            <span class="stop-ref">DEL-225601</span>
+            <span class="stop-addr">Continental Forwarding &mdash; 1100 N 23rd St, McAllen TX 78501</span>
+            <span class="stop-when">Tue May 19 &middot; 14:00 CT</span>
+          </div>
+          <div class="frow c2" style="margin:0">
+            <div class="fld"><label>Time window</label><select><option>Appointment (fixed time)</option><option>Open window</option><option>FCFS</option></select></div>
+            <div class="fld"><label>Free time / lumper</label><input value="120 min · customer-provided"></div>
+          </div>
+        </div>
+
+        <span class="addlink">+ Add stop &middot; multi-leg</span>
+
+        <div class="pcm" style="margin-top:9px">
+          <div><div class="p-l">Practical (fuel + ETA)</div><div class="p-v">238 mi</div></div>
+          <div class="hl"><div class="p-l">Shortest (driver pay)</div><div class="p-v">221 mi</div></div>
+          <div><div class="p-l">Deadhead</div><div class="p-v">42 mi</div></div>
+          <div><div class="p-l">RPM</div><div class="p-v">$9.45</div></div>
+        </div>
+        <p class="hint">Shortest miles (highlighted) used for driver pay. Practical used for fuel planning &amp; ETA.</p>
+
+      </div>
+    </div>
+
+    <!-- ===== SECTION D — Validation ===== -->
+    <div class="sec">
+      <div class="sec-hd">
+        <span class="sec-chip">D</span>
+        <span class="sec-name">Pre-dispatch validation</span>
+        <span class="sec-meta"><b>5 of 5 checks pass</b> &middot; ready to book</span>
+      </div>
+      <div class="sec-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div class="vck"><span class="vi">&#10003;</span><span class="vt">Unit T120 PM up to date</span><span class="vw">WF-044</span></div>
+          <div class="vck"><span class="vi">&#10003;</span><span class="vt">Driver CDL &amp; medical card valid &middot; no active debt</span><span class="vw">WF-050</span></div>
+          <div class="vck"><span class="vi">&#10003;</span><span class="vt">Trailer RT-178 DOT inspection 13 days ago</span><span class="vw">WF-044</span></div>
+          <div class="vck"><span class="vi">&#10003;</span><span class="vt">Customer C.H. Robinson &middot; FMCSA verified</span><span class="vw">FMCSA</span></div>
+          <div class="vck"><span class="vi adv">!</span><span class="vt">PM due in 1,840 mi &mdash; 238 mi load fits comfortably</span><span class="vw">advisory</span></div>
+        </div>
+        <div class="onsave">
+          <div class="os-h">On save &mdash; book + dispatch</div>
+          <div class="os-i">Create load <b>L-13518</b> &middot; status assigned</div>
+          <div class="os-i">Auto-create driver bill <b>B-13518</b> &middot; 221 mi &times; $0.50 = $110.50</div>
+          <div class="os-i">Queue QBO outbox &middot; invoice + bill</div>
+          <div class="os-i">SMS driver R. Smith &middot; dispatch sheet PDF</div>
+          <div class="os-i">Factoring packet prepared (Faro)</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /w-body -->
+
+  <div class="w-foot">
+    <div class="bill-prev">
+      Driver bill preview <span class="bp-id">B-13518</span> &nbsp;
+      <span class="bp-amt">$110.50</span>
+      <div class="bp-calc">221 short mi &times; $0.50/mi &middot; recalculates on field changes</div>
+    </div>
+    <div class="f-actions">
+      <button class="btn">Cancel</button>
+      <button class="btn">Save draft</button>
+      <button class="btn primary">Book + dispatch</button>
+    </div>
+  </div>
+  <div class="kbd"><kbd>Esc</kbd> close &nbsp; <kbd>&#8984;S</kbd> save draft &nbsp; <kbd>&#8984;&#9166;</kbd> book + dispatch</div>
+
+</div>
+
+<script>
+function tog(id){document.getElementById(id).classList.toggle('open');}
+document.querySelectorAll('.tg').forEach(function(t){
+  t.addEventListener('click',function(){t.classList.toggle('on');});
+});
+document.querySelectorAll('.seg button').forEach(function(b){
+  b.addEventListener('click',function(){
+    b.parentNode.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+    b.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>

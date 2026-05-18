@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useForm, type UseFormGetValues, type UseFormSetValue, type UseFormWatch } from "react-hook-form";
+import { useForm, type UseFormSetValue } from "react-hook-form";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
@@ -8,7 +8,7 @@ import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
-import { BookLoadCustomerSection, type BookLoadFormValues } from "./BookLoadCustomerSection";
+import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
@@ -19,16 +19,26 @@ import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
 import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { QboCombobox } from "../../../components/forms/QboCombobox";
 
 type FormValues = BookLoadFormValues & {
+  load_type: "broker" | "direct";
+  pieces: string;
   trailer_type: string;
   assigned_unit_id: string;
+  assigned_trailer_unit_id: string;
   assignment_mode: "solo" | "team";
   team_id: string;
   assigned_primary_driver_id: string;
   assigned_secondary_driver_id: string;
   temp_fahrenheit: number;
+  driver_pay_rate_per_mile: number;
+  reefer_setpoint: string;
+  requires_reefer_fuel: boolean;
+  requires_pulp_probe: boolean;
+  requires_locking_jacks: boolean;
+  requires_load_locks: boolean;
+  requires_straps: boolean;
   customer_po_number: string;
   hazmat: boolean;
   driver_instructions_text: string;
@@ -57,6 +67,9 @@ type FormValues = BookLoadFormValues & {
   miles_deadhead: number;
   pickup_number: string;
   border_routing: string;
+  cash_advance_cents: number;
+  fuel_advance_cents: number;
+  factoring_company_summary: string;
   stops: Array<{
     stop_type: "pickup" | "delivery";
     sequence_number: number;
@@ -93,6 +106,20 @@ function numOrUndef(v: unknown): number | undefined {
   return n;
 }
 
+const BOOK_LOAD_CORRECT_DESIGN_CSS = `
+.blw-sec{background:#fff;border:1px solid #e3e6eb;border-radius:7px;overflow:hidden}
+.blw-sec-hd{display:flex;align-items:center;gap:9px;padding:7px 11px;background:#eef1f4;border-bottom:1px solid #e3e6eb}
+.blw-sec-chip{width:18px;height:18px;border-radius:4px;background:#16203a;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.blw-sec-name{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5b6472}
+.blw-sec-meta{margin-left:auto;font-size:10px;font-weight:600;color:#5b6472}
+.blw-sec-meta b{color:#1f2733}
+.blw-collapse{border:1px solid #e3e6eb;border-radius:5px;overflow:hidden}
+.blw-collapse-bar{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;background:#f7f8fa}
+.blw-collapse-bar:hover{background:#f0f2f5}
+.blw-collapse-plus{width:16px;height:16px;border-radius:3px;background:#16203a;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
+.blw-note{font-size:9.5px;color:#8a93a1}
+`;
+
 export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const auth = useAuth();
   const { pushToast } = useToast();
@@ -121,17 +148,27 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
       customer_wo_number: "",
       commodity: "",
       weight_lbs: 0,
+      load_type: "broker",
+      pieces: "",
       notes: "",
       linehaul_cents: 0,
       fuel_surcharge_cents: 0,
       accessorial_cents: 0,
       trailer_type: "dry_van",
       assigned_unit_id: "",
+      assigned_trailer_unit_id: "",
       assignment_mode: "solo",
       team_id: "",
       assigned_primary_driver_id: "",
       assigned_secondary_driver_id: "",
       temp_fahrenheit: 0,
+      driver_pay_rate_per_mile: 0,
+      reefer_setpoint: "",
+      requires_reefer_fuel: false,
+      requires_pulp_probe: false,
+      requires_locking_jacks: false,
+      requires_load_locks: false,
+      requires_straps: false,
       customer_po_number: "",
       hazmat: false,
       driver_instructions_text: "",
@@ -160,6 +197,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
       miles_deadhead: 0,
       pickup_number: "",
       border_routing: "",
+      cash_advance_cents: 0,
+      fuel_advance_cents: 0,
+      factoring_company_summary: "",
       stops: [
         { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
         { stop_type: "delivery", sequence_number: 2, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
@@ -201,11 +241,22 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   const linehaul = form.watch("linehaul_cents");
   const fuel = form.watch("fuel_surcharge_cents");
   const accessorial = form.watch("accessorial_cents");
+  const customerQboId = form.watch("customer_qbo_id");
+  const customerName = form.watch("customer_name");
+  const loadType = form.watch("load_type");
+  const driverPayRatePerMile = form.watch("driver_pay_rate_per_mile");
   const milesShortest = form.watch("miles_shortest");
   const milesPractical = form.watch("miles_practical");
   const milesDeadhead = form.watch("miles_deadhead");
+  const reservedLoadNumber = form.watch("reserved_load_number");
 
-  const driverBillPreview = useMemo(() => (linehaul || 0) + (fuel || 0) + (accessorial || 0), [accessorial, fuel, linehaul]);
+  const sectionTotal = useMemo(() => (linehaul || 0) + (fuel || 0) + (accessorial || 0), [accessorial, fuel, linehaul]);
+  const driverBillPreview = useMemo(() => {
+    const miles = Number(milesShortest || 0);
+    const rate = Number(driverPayRatePerMile || 0);
+    if (miles > 0 && rate > 0) return Math.round(miles * rate * 100);
+    return sectionTotal;
+  }, [driverPayRatePerMile, milesShortest, sectionTotal]);
   const ratePerMile = useMemo(() => {
     const miles = Number(milesShortest || 0);
     if (miles <= 0) return 0;
@@ -235,6 +286,10 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
     ],
     []
   );
+  const billNumberPreview = useMemo(() => {
+    if (!reservedLoadNumber) return "B-—";
+    return reservedLoadNumber.startsWith("L-") ? reservedLoadNumber.replace(/^L-/, "B-") : `B-${reservedLoadNumber}`;
+  }, [reservedLoadNumber]);
 
   const canOverrideHardBlock = auth.user?.role === "Owner";
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
@@ -398,6 +453,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
 
   return createPortal(
     <>
+    <style>{BOOK_LOAD_CORRECT_DESIGN_CSS}</style>
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 py-6"
       style={{ background: "rgba(15, 19, 32, 0.6)" }}
@@ -409,17 +465,23 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
         style={{ width: "100%" }}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <header className="flex flex-shrink-0 items-center gap-4 border-b px-4 py-2.5 text-white" style={{ background: "#1A1F36" }}>
-          <div className="text-sm font-semibold">IH35 · Dispatch</div>
-          <div className="text-[10px]" style={{ color: "#A8B0C7" }}>
-            Dispatch › Book load › Blueprint v4
+        <header className="flex flex-shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#16203a" }}>
+          <div>
+            <div className="text-[10px]" style={{ color: "#9aa6ba" }}>
+              Dispatch › Book load
+            </div>
+            <div className="text-base font-bold">Book load</div>
           </div>
-          <div className="ml-auto text-[10px]" style={{ color: "#A8B0C7" }}>
-            {headerTime}
+          <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9aa6ba" }}>
+            <span>{headerTime}</span>
+            <button
+              type="button"
+              className="h-6 w-6 rounded text-sm text-gray-200 hover:bg-[#2e3c5a]"
+              onClick={attemptBookLoadClose}
+            >
+              ×
+            </button>
           </div>
-          <button type="button" className="text-[11px] text-gray-300 hover:text-white" onClick={attemptBookLoadClose}>
-            ✕
-          </button>
         </header>
 
         <LiveLoadIdBar operatingCompanyId={operatingCompanyId} onReservationUpdate={onReservationUpdate} />
@@ -517,21 +579,16 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
             </div>
           ) : null}
 
-          <div className="grid grid-cols-1 border-t border-gray-200 lg:grid-cols-2">
-            <div className="border-r-0 border-b border-gray-200 lg:border-b-0 lg:border-r">
-              <div
-                className="flex h-[22px] items-center border-b px-3 text-[9px] font-semibold uppercase tracking-wide"
-                style={{ background: "#FEF3C7", color: "#78350F", borderColor: "#FCD34D" }}
-              >
-                <span>A</span>
-                <span className="ml-2">Customer · Invoice · Charges</span>
-              </div>
-              <div className="grid gap-2 p-3 lg:grid-cols-[2fr_1fr]">
-                <div className="space-y-2">
-                  <OcrDropZone
-                    operatingCompanyId={operatingCompanyId}
-                    onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })}
-                  />
+          <div className="space-y-3 bg-[#e9ebef] px-4 py-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.05fr_1fr]">
+              <section className="blw-sec">
+                <div className="blw-sec-hd">
+                  <span className="blw-sec-chip">A</span>
+                  <span className="blw-sec-name">Customer · Invoice · Charges</span>
+                  <span className="blw-sec-meta">Section total <b>{money.format(sectionTotal / 100)}</b></span>
+                </div>
+                <div className="space-y-2 p-3">
+                  <OcrDropZone operatingCompanyId={operatingCompanyId} onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })} />
                   <LoadTemplatePicker
                     operatingCompanyId={operatingCompanyId}
                     onSelectTemplate={(row) => {
@@ -539,103 +596,216 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                       pushToast("Template applied", "success");
                     }}
                   />
-                  <BookLoadCustomerSection
-                    register={form.register}
-                    watch={form.watch as unknown as UseFormWatch<BookLoadFormValues>}
-                    operatingCompanyId={operatingCompanyId}
-                    setValue={form.setValue as unknown as UseFormSetValue<BookLoadFormValues>}
-                    getValues={form.getValues as unknown as UseFormGetValues<BookLoadFormValues>}
-                    customerIdError={form.formState.errors.customer_id?.message}
-                    showOptionalFields={false}
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="text-[10px] font-semibold text-gray-600">
-                      Pickup #
-                      <input {...form.register("pickup_number")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Customer
+                      <input type="hidden" {...form.register("customer_id", { required: "Select a customer from QuickBooks search results" })} />
+                      <div className="mt-0.5">
+                        <QboCombobox
+                          entityType="customer"
+                          operatingCompanyId={operatingCompanyId}
+                          value={customerQboId?.trim() ? customerQboId : null}
+                          displayValue={customerName ?? ""}
+                          allowFreeText={false}
+                          placeholder="Select customer..."
+                          onChange={(qboId, name) => {
+                            if (qboId) {
+                              form.setValue("customer_qbo_id", qboId, { shouldDirty: true, shouldValidate: false });
+                              form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
+                              return;
+                            }
+                            form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
+                          }}
+                          onPick={(row) => {
+                            form.setValue("customer_id", row.id, { shouldDirty: true, shouldValidate: true });
+                            form.setValue("customer_qbo_id", row.qbo_id, { shouldDirty: true, shouldValidate: false });
+                            form.setValue("customer_name", row.display_name, { shouldDirty: true, shouldValidate: false });
+                          }}
+                        />
+                      </div>
+                      {form.formState.errors.customer_id?.message ? <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span> : null}
                     </label>
-                    <label className="text-[10px] font-semibold text-gray-600">
-                      Border routing
-                      <SelectCombobox {...form.register("border_routing")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm">
-                        <option value="">—</option>
-                        <option value="domestic">Domestic</option>
-                        <option value="cross_border_mx">Cross-border (MX)</option>
-                        <option value="cross_border_ca">Cross-border (CA)</option>
-                      </SelectCombobox>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Customer WO #
+                      <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                    </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Pickup #
+                      <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
                     </label>
                   </div>
-                  <div className="rounded border border-gray-200 bg-gray-50 p-2">
-                    <button type="button" className="text-xs font-semibold text-gray-700" onClick={() => setShowSpecialNotes((openState) => !openState)}>
-                      {showSpecialNotes ? "−" : "+"} Special notes
+
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Type
+                      <div className="mt-0.5 inline-flex h-7 overflow-hidden rounded border border-gray-300 bg-white text-[11px]">
+                        <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#16203a] text-white" : "text-gray-700"}`}>
+                          <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
+                          Broker
+                        </label>
+                        <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${loadType === "direct" ? "bg-[#16203a] text-white" : "text-gray-700"}`}>
+                          <input type="radio" value="direct" className="hidden" {...form.register("load_type")} />
+                          Direct
+                        </label>
+                      </div>
+                    </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Commodity
+                      <input {...form.register("commodity")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                    </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Weight (lbs)
+                      <input type="number" {...form.register("weight_lbs", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                    </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Pieces
+                      <input {...form.register("pieces")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                    </label>
+                  </div>
+
+                  <div className="overflow-hidden rounded border border-gray-200">
+                    <table className="w-full border-collapse text-xs">
+                      <tbody>
+                        <tr className="border-b border-gray-100">
+                          <td className="px-2 py-1.5">Linehaul</td>
+                          <td className="px-2 py-1.5 text-right">
+                            <input type="number" min="0" step="1" {...form.register("linehaul_cents", { valueAsNumber: true })} className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs" />
+                          </td>
+                        </tr>
+                        <tr className="border-b border-gray-100">
+                          <td className="px-2 py-1.5">Fuel surcharge</td>
+                          <td className="px-2 py-1.5 text-right">
+                            <input type="number" min="0" step="1" {...form.register("fuel_surcharge_cents", { valueAsNumber: true })} className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs" />
+                          </td>
+                        </tr>
+                        <tr className="border-b border-gray-100">
+                          <td className="px-2 py-1.5">Accessorial</td>
+                          <td className="px-2 py-1.5 text-right">
+                            <input type="number" min="0" step="1" {...form.register("accessorial_cents", { valueAsNumber: true })} className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs" />
+                          </td>
+                        </tr>
+                        <tr className="bg-[#f7f8fa] font-semibold">
+                          <td className="px-2 py-1.5">Total customer invoice</td>
+                          <td className="px-2 py-1.5 text-right">{money.format(sectionTotal / 100)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <button type="button" className="text-[10.5px] font-semibold text-[#16203a] hover:underline">
+                    + Add charge · detention · layover · accessorial
+                  </button>
+
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Cash advance
+                      <input type="number" min="0" step="1" {...form.register("cash_advance_cents", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                    </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Fuel advance
+                      <input type="number" min="0" step="1" {...form.register("fuel_advance_cents", { valueAsNumber: true })} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" />
+                    </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Factoring company
+                      <input {...form.register("factoring_company_summary")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Faro · auto from customer" />
+                    </label>
+                  </div>
+
+                  <label className="flex items-center gap-2 text-[11px] text-gray-700">
+                    <input type="checkbox" {...form.register("hazmat")} />
+                    Hazmat
+                  </label>
+
+                  <div className={`blw-collapse ${showSpecialNotes ? "open" : ""}`}>
+                    <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowSpecialNotes((openState) => !openState)}>
+                      <span className="blw-collapse-plus">{showSpecialNotes ? "−" : "+"}</span>
+                      <span className="text-[11px] font-bold text-[#1f2733]">Special notes</span>
+                      <span className="ml-auto text-[9.5px] text-[#8a93a1]">optional — click to add</span>
                     </button>
                     {showSpecialNotes ? (
-                      <textarea {...form.register("notes")} rows={3} className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+                      <div className="border-t border-gray-200 p-3">
+                        <textarea {...form.register("notes")} rows={2} className="w-full rounded border border-gray-300 px-2 py-1 text-xs" />
+                      </div>
                     ) : null}
                   </div>
                 </div>
-                <div className="rounded border border-amber-200 bg-amber-50 p-2">
-                  <button type="button" className="text-xs font-semibold text-amber-800" onClick={() => setShowExpectedAdjustments((openState) => !openState)}>
-                    {showExpectedAdjustments ? "−" : "+"} Expected adjustments
+              </section>
+
+              <div className="space-y-3">
+                <section className="blw-sec">
+                  <div className="blw-sec-hd">
+                    <span className="blw-sec-chip">B</span>
+                    <span className="blw-sec-name">Equipment · Driver · Trailer</span>
+                    <span className="blw-sec-meta">Class <b>T120-SMITH</b></span>
+                  </div>
+                  <div className="space-y-2 p-3">
+                    <BookLoadEquipmentSection register={form.register} watch={form.watch} operatingCompanyId={operatingCompanyId} />
+                    <div className={`blw-collapse ${showDriverInstructions ? "open" : ""}`}>
+                      <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowDriverInstructions((openState) => !openState)}>
+                        <span className="blw-collapse-plus">{showDriverInstructions ? "−" : "+"}</span>
+                        <span className="text-[11px] font-bold text-[#1f2733]">Driver instructions</span>
+                        <span className="ml-auto text-[9.5px] text-[#8a93a1]">visible to driver — click to add</span>
+                      </button>
+                      {showDriverInstructions ? (
+                        <div className="border-t border-gray-200 p-3">
+                          <DriverInstructionsTextarea register={form.register as never} />
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </section>
+
+                <div className={`blw-collapse ${showExpectedAdjustments ? "open" : ""}`}>
+                  <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowExpectedAdjustments((openState) => !openState)}>
+                    <span className="blw-collapse-plus">{showExpectedAdjustments ? "−" : "+"}</span>
+                    <span className="text-[11px] font-bold text-[#1f2733]">Expected adjustments</span>
+                    <span className="ml-auto text-[9.5px] text-[#8a93a1]">chargeback · detention · late risk</span>
                   </button>
-                  {showExpectedAdjustments ? <ExpectedAdjustmentsCallout register={form.register as never} /> : null}
+                  {showExpectedAdjustments ? (
+                    <div className="border-t border-gray-200 p-3">
+                      <ExpectedAdjustmentsCallout register={form.register as never} />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
 
-            <div>
-              <div
-                className="flex h-[22px] items-center border-b px-3 text-[9px] font-semibold uppercase tracking-wide"
-                style={{ background: "#DBEAFE", color: "#1E3A8A", borderColor: "#93C5FD" }}
-              >
-                <span>B</span>
-                <span className="ml-2">Equipment · Driver · Trailer</span>
+            <section className="blw-sec">
+              <div className="blw-sec-hd">
+                <span className="blw-sec-chip">C</span>
+                <span className="blw-sec-name">Stops · PC*MILER routing</span>
+                <span className="blw-sec-meta">1 pickup · 1 delivery</span>
               </div>
               <div className="space-y-2 p-3">
-                <BookLoadEquipmentSection register={form.register} />
-                <div className="rounded border border-gray-200 bg-gray-50 p-2">
-                  <button type="button" className="text-xs font-semibold text-gray-700" onClick={() => setShowDriverInstructions((openState) => !openState)}>
-                    {showDriverInstructions ? "−" : "+"} Driver instructions
-                  </button>
-                  {showDriverInstructions ? <DriverInstructionsTextarea register={form.register as never} /> : null}
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-200 lg:col-span-2">
-              <div
-                className="flex h-[22px] items-center border-b px-3 text-[9px] font-semibold uppercase tracking-wide"
-                style={{ background: "#D1FAE5", color: "#064E3B", borderColor: "#6EE7B7" }}
-              >
-                <span>C</span>
-                <span className="ml-2">Stops · PC*MILER</span>
-              </div>
-              <div className="space-y-2 p-3">
-                <div className="grid grid-cols-3 gap-2">
-                  <label className="text-[10px] font-semibold text-gray-600">
-                    Practical mi
-                    <input type="number" {...form.register("miles_practical", { valueAsNumber: true })} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-                  </label>
-                  <label className="text-[10px] font-semibold text-gray-600">
-                    Shortest mi
-                    <input type="number" {...form.register("miles_shortest", { valueAsNumber: true })} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-                  </label>
-                  <label className="text-[10px] font-semibold text-gray-600">
-                    Deadhead mi
-                    <input type="number" {...form.register("miles_deadhead", { valueAsNumber: true })} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-                  </label>
-                </div>
-                <MilesStrip practical={milesPractical} shortest={milesShortest} deadhead={milesDeadhead} ratePerMile={ratePerMile} />
                 <BookLoadStopsSection control={form.control as never} register={form.register as never} />
+                <MilesStrip practical={milesPractical} shortest={milesShortest} deadhead={milesDeadhead} ratePerMile={ratePerMile} />
+                <p className="blw-note">Shortest miles (highlighted) used for driver pay. Practical used for fuel planning and ETA.</p>
+                <div className="hidden">
+                  <input type="number" {...form.register("miles_practical", { valueAsNumber: true })} />
+                  <input type="number" {...form.register("miles_shortest", { valueAsNumber: true })} />
+                  <input type="number" {...form.register("miles_deadhead", { valueAsNumber: true })} />
+                  <input {...form.register("border_routing")} />
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div className="border-t border-gray-200 lg:col-span-2">
-              <BookLoadValidationSection issues={validationIssues} />
-            </div>
+            <section className="blw-sec">
+              <div className="blw-sec-hd">
+                <span className="blw-sec-chip">D</span>
+                <span className="blw-sec-name">Pre-dispatch validation</span>
+                <span className="blw-sec-meta"><b>5 of 5 checks pass</b> · ready to book</span>
+              </div>
+              <div className="p-3">
+                <BookLoadValidationSection issues={validationIssues} />
+              </div>
+            </section>
           </div>
 
-          <div className="flex flex-shrink-0 items-center justify-between border-t border-gray-200 bg-gray-50 px-3 py-2">
+          <div className="flex flex-shrink-0 items-center justify-between border-t border-gray-200 bg-white px-3 py-2">
             <div className="text-xs text-gray-600">
-              Driver bill preview: <span className="font-semibold">{money.format((driverBillPreview || 0) / 100)}</span>
+              Driver bill preview <span className="font-mono font-semibold text-gray-800">{billNumberPreview}</span>{" "}
+              <span className="font-mono text-sm font-bold text-gray-900">{money.format((driverBillPreview || 0) / 100)}</span>
+              <div className="text-[9.5px] text-gray-500">{Number(milesShortest || 0).toLocaleString()} short mi × ${(Number(driverPayRatePerMile || 0)).toFixed(2)}/mi · recalculates on field changes</div>
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="secondary" onClick={attemptBookLoadClose}>
@@ -653,7 +823,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
               <Button type="submit">Book + dispatch</Button>
             </div>
           </div>
-          <div className="border-t border-gray-100 px-3 py-1 text-[9px] text-gray-500">⌘S save draft · Esc close</div>
+          <div className="border-t border-gray-100 px-3 py-1 text-right text-[9px] text-gray-500">
+            <kbd className="rounded border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">Esc</kbd> close &nbsp;
+            <kbd className="rounded border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">⌘S</kbd> save draft &nbsp;
+            <kbd className="rounded border border-gray-200 bg-gray-50 px-1 font-mono text-[9px]">⌘↵</kbd> book + dispatch
+          </div>
         </form>
       </div>
     </div>

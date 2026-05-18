@@ -37,7 +37,7 @@ function wrap(ui: ReactElement) {
 }
 
 describe("BookLoadModalV4", () => {
-  it("renders four banded sections, miles strip hint, and reserved load bar", async () => {
+  it("renders correct locked wizard structure", async () => {
     render(
       wrap(
         <ToastProvider>
@@ -51,12 +51,13 @@ describe("BookLoadModalV4", () => {
       )
     );
 
-    expect(screen.getByText(/Dispatch › Book load › Blueprint v4/)).toBeTruthy();
-    expect(screen.getByText(/Drop rate confirmation PDF here/)).toBeTruthy();
-    expect(screen.getByText(/Anticipated chargeback/i)).toBeTruthy();
+    expect(screen.getByText(/Dispatch › Book load/)).toBeTruthy();
+    expect(screen.getByText("Book load")).toBeTruthy();
+    expect(screen.getByText(/Drop rate confirmation PDF/)).toBeTruthy();
+    expect(screen.getAllByText(/Expected adjustments/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Equipment · Driver · Trailer/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/Stops · PC\*MILER/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Pre-Dispatch Validation/i)).toBeTruthy();
+    expect(screen.getAllByText(/Stops · PC\*MILER routing/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Pre-dispatch validation/i)).toBeTruthy();
     expect(screen.getByText(/Shortest miles \(yellow\) used for driver pay/i)).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText(/L-20991231-0001/)).toBeTruthy();
