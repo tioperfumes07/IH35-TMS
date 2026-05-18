@@ -5,15 +5,11 @@ import {
   getBankingKpis,
   getBankingRegister,
   getBankingTiles,
-  getCategorizationRulesStats,
   getPlaidBankAccounts,
-  getQboSyncQueueStats,
   getReconciliationSessions,
   startReconciliationSession,
   type BankingTile,
-  undoCategorization,
 } from "../../api/banking";
-import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { PlaidLinkButton } from "../../components/banking/PlaidLinkButton";
 import { ActionButton } from "../../components/shared/ActionButton";
@@ -22,23 +18,19 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountTilesRow } from "./components/AccountTilesRow";
 import { BankingKpiRow } from "./components/BankingKpiRow";
-import { CategorizeDrawer } from "./components/CategorizeDrawer";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { ManualJEModal } from "../accounting/ManualJEModal";
-import { RegisterTable } from "./components/RegisterTable";
-import { RegisterToolbar } from "./components/RegisterToolbar";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
-import { BankingCompanyTransactionsPanel, BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
+import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, useNavigate } from "react-router-dom";
 import { TransferModal } from "./TransferModal";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
-import { listVendorBalances } from "../../api/accounting";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
-import { BankingReviewCenter } from "./components/BankingReviewCenter";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DriverEscrowTabContent } from "./components/DriverEscrowTabContent";
 import { BankingReportsTabContent } from "./components/BankingReportsTabContent";
+import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
 
 const BANKING_TABS = [
   { id: "accounts", label: "Accounts" },
@@ -49,15 +41,12 @@ const BANKING_TABS = [
 ] as const;
 
 export function BankingHomePage() {
-  const auth = useAuth();
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-  const [selectedTransaction, setSelectedTransaction] = useState<Record<string, unknown> | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [manualJeOpen, setManualJeOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
@@ -95,21 +84,6 @@ export function BankingHomePage() {
     queryKey: ["banking", "reconciliation-sessions", companyId],
     queryFn: () => getReconciliationSessions(companyId),
     enabled: Boolean(companyId),
-  });
-  const qboSyncStatsQuery = useQuery({
-    queryKey: ["banking", "qbo-sync-stats", companyId],
-    queryFn: () => getQboSyncQueueStats(companyId),
-    enabled: Boolean(companyId && (auth.user?.role === "Owner" || auth.user?.role === "Administrator")),
-  });
-  const categorizationStatsQuery = useQuery({
-    queryKey: ["banking", "categorization-rules-stats", companyId],
-    queryFn: () => getCategorizationRulesStats(companyId),
-    enabled: Boolean(companyId && (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant")),
-  });
-  const vendorBalancesQuery = useQuery({
-    queryKey: ["accounting", "vendor-balances", companyId, "banking-home"],
-    queryFn: () => listVendorBalances(companyId, { all: false, sort: "balance_desc" }),
-    enabled: Boolean(companyId && (auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant")),
   });
   const tiles = useMemo(() => filterBankingTilesForCompany(tilesQuery.data?.tiles ?? [], companyId), [tilesQuery.data?.tiles, companyId]);
 
@@ -216,129 +190,16 @@ export function BankingHomePage() {
       ) : null}
 
       {activeTab === "transactions" ? (
-        <>
-          <BankingCompanyTransactionsPanel companyId={companyId} />
-          <div className="rounded border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Auto-Categorize</p>
-              <Link to="/banking/categorization-rules" className="text-xs font-medium text-blue-700 hover:underline">
-                Manage Rules
-              </Link>
-            </div>
-            {categorizationStatsQuery.isLoading ? <p className="text-sm text-gray-500">Loading auto-categorize stats...</p> : null}
-            {categorizationStatsQuery.isError ? <p className="text-sm text-red-600">Unable to load auto-categorize stats.</p> : null}
-            {!categorizationStatsQuery.isLoading && !categorizationStatsQuery.isError ? (
-              <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 sm:grid-cols-3">
-                <p>
-                  Active rules: <span className="font-semibold">{Number(categorizationStatsQuery.data?.active_rules ?? 0)}</span>
-                </p>
-                <p>
-                  Matched (7d): <span className="font-semibold text-green-700">{Number(categorizationStatsQuery.data?.matched_7d ?? 0)}</span>
-                </p>
-                <p>
-                  Unmatched (7d): <span className="font-semibold text-amber-700">{Number(categorizationStatsQuery.data?.unmatched_7d ?? 0)}</span>
-                </p>
-              </div>
-            ) : null}
-          </div>
-          <div className="rounded border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor Balances</p>
-              <Link to="/accounting/vendor-balances" className="text-xs font-medium text-blue-700 hover:underline">
-                View All Vendor Balances
-              </Link>
-            </div>
-            {vendorBalancesQuery.isLoading ? <p className="text-sm text-gray-500">Loading vendor balances...</p> : null}
-            {vendorBalancesQuery.isError ? <p className="text-sm text-red-600">Unable to load vendor balances.</p> : null}
-            {!vendorBalancesQuery.isLoading && !vendorBalancesQuery.isError ? (
-              <>
-                <p className="text-sm text-gray-700">
-                  Total outstanding:{" "}
-                  <span className="font-semibold text-red-700">
-                    {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-                      (vendorBalancesQuery.data?.rows ?? []).reduce((sum, row) => sum + Number(row.balance_cents ?? 0), 0) / 100
-                    )}
-                  </span>
-                </p>
-                <div className="mt-2 space-y-1">
-                  {(vendorBalancesQuery.data?.rows ?? []).slice(0, 5).map((row) => (
-                    <button
-                      key={row.vendor_id}
-                      type="button"
-                      className="w-full rounded border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-                      onClick={() => navigate("/accounting/vendor-balances")}
-                    >
-                      <span className="font-medium text-gray-800">{row.vendor_name}</span>
-                      <span className="float-right font-semibold text-red-700">
-                        {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(row.balance_cents ?? 0) || 0) / 100)}
-                      </span>
-                    </button>
-                  ))}
-                  {(vendorBalancesQuery.data?.rows ?? []).length === 0 ? <p className="text-xs text-gray-500">No outstanding vendor balances.</p> : null}
-                </div>
-              </>
-            ) : null}
-          </div>
-          <div className="rounded border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">QBO Sync Status</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Link to="/banking/email-queue" className="text-xs font-medium text-blue-700 hover:underline">
-                  Email Queue
-                </Link>
-                <Link to="/banking/qbo-sync-queue" className="text-xs font-medium text-blue-700 hover:underline">
-                  Manage Queue
-                </Link>
-              </div>
-            </div>
-            {qboSyncStatsQuery.isLoading ? <p className="text-sm text-gray-500">Loading sync status...</p> : null}
-            {qboSyncStatsQuery.isError ? <p className="text-sm text-red-600">Unable to load QBO sync status.</p> : null}
-            {!qboSyncStatsQuery.isLoading && !qboSyncStatsQuery.isError ? (
-              <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 sm:grid-cols-3">
-                <p>
-                  Pending: <span className="font-semibold">{Number(qboSyncStatsQuery.data?.pending ?? 0)}</span>
-                </p>
-                <p>
-                  Failed: <span className="font-semibold text-red-600">{Number(qboSyncStatsQuery.data?.failed ?? 0)}</span>
-                </p>
-                <p>
-                  Last synced:{" "}
-                  <span className="font-semibold">
-                    {qboSyncStatsQuery.data?.last_successful_sync_at
-                      ? new Date(qboSyncStatsQuery.data.last_successful_sync_at).toLocaleString()
-                      : "Never"}
-                  </span>
-                </p>
-              </div>
-            ) : null}
-          </div>
-          <BankingReviewCenter
-            companyId={companyId}
-            dataSource="uncategorized"
-            categorizedSection={
-              <>
-                <RegisterToolbar rowCount={registerRows.length} onRefresh={() => void registerQuery.refetch()} />
-                <RegisterTable
-                  rows={registerRows}
-                  selectedTransactionId={selectedTransaction ? String(selectedTransaction.id) : null}
-                  onSelect={(row) => setSelectedTransaction(row)}
-                  onCategorize={(row) => {
-                    setSelectedTransaction(row);
-                    setDrawerOpen(true);
-                  }}
-                  onUndo={(row) => {
-                    void undoCategorization(String(row.id), companyId)
-                      .then(() => {
-                        pushToast("Transaction reclassified", "success");
-                        void queryClient.invalidateQueries({ queryKey: ["banking"] });
-                      })
-                      .catch((error) => pushToast(String((error as Error).message || "Reclassify failed"), "error"));
-                  }}
-                />
-              </>
-            }
-          />
-        </>
+        <BankingTransactionsDesignView
+          companyId={companyId}
+          accounts={plaidAccountsQuery.data?.accounts ?? []}
+          selectedAccountId={selectedAccountId}
+          onSelectAccount={setSelectedAccountId}
+          onManageConnections={() => setActiveTab("accounts")}
+          onDataChanged={() => {
+            void queryClient.invalidateQueries({ queryKey: ["banking"] });
+          }}
+        />
       ) : null}
 
       {activeTab === "reconciliation" ? (
@@ -403,16 +264,6 @@ export function BankingHomePage() {
       {activeTab === "reports" ? (
         <BankingReportsTabContent />
       ) : null}
-
-      <CategorizeDrawer
-        open={drawerOpen}
-        transaction={selectedTransaction}
-        operatingCompanyId={companyId}
-        onClose={() => setDrawerOpen(false)}
-        onSaved={() => {
-          void queryClient.invalidateQueries({ queryKey: ["banking"] });
-        }}
-      />
 
       <ManageAccountsModal
         open={manageOpen}
