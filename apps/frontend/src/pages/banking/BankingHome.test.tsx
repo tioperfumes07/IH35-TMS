@@ -48,8 +48,8 @@ function wrap(ui: ReactElement) {
   );
 }
 
-describe("BankingHomePage categorize callout", () => {
-  it("renders a summary CTA instead of listing raw transactions", async () => {
+describe("BankingHomePage accounts summary", () => {
+  it("removes categorize band and keeps uncategorized KPI navigation", async () => {
     vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
       total_cash: 1000,
       dip_operating: 200,
@@ -93,11 +93,9 @@ describe("BankingHomePage categorize callout", () => {
 
     render(wrap(<BankingHomePage />));
 
-    expect(await screen.findByText(/Categorize · 2 unmatched bank transactions/i)).toBeInTheDocument();
-    expect(
-      screen.getAllByText((_, element) => element?.textContent?.includes("transactions need review.") ?? false).length
-    ).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: "Open Transactions - For review" })).toBeInTheDocument();
+    expect(await screen.findByText("Uncategorized")).toBeInTheDocument();
+    expect(screen.queryByText(/Categorize · 2 unmatched bank transactions/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Uncategorized/i })).toBeInTheDocument();
     expect(screen.queryByText("2026-05-17T00:00:00.000Z")).not.toBeInTheDocument();
     expect(screen.queryByText("ONLINE PAYMENT - THANK YOU")).not.toBeInTheDocument();
   });

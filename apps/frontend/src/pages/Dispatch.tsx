@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listCustomers, listDrivers } from "../api/mdata";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
+import { listSettlements } from "../api/driverFinance";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -16,15 +17,17 @@ import { DispatchBoard } from "./dispatch/DispatchBoard";
 import { FilterBar, type DispatchFilterState } from "../components/dispatch/FilterBar";
 import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
 import { BookLoadModal } from "./dispatch/components/BookLoadModal";
+import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 
 type ViewMode = "list" | "kanban";
-type DispatchSubTabId = "load_board" | "book_load" | "assignments" | "settlements";
+type DispatchSubTabId = "load_board" | "book_load" | "assignments" | "settlements" | "pre_settlements";
 
 const DISPATCH_SUB_TABS: Array<{ id: DispatchSubTabId; label: string }> = [
   { id: "load_board", label: "Load board" },
   { id: "book_load", label: "Book load" },
   { id: "assignments", label: "Assignments" },
   { id: "settlements", label: "Settlements" },
+  { id: "pre_settlements", label: "Pre-settlements" },
 ];
 
 function parseMulti(value: string | null): string[] {
@@ -111,6 +114,11 @@ export function DispatchPage() {
   const driverLookup = useQuery({
     queryKey: ["dispatch", "drivers", filters.search],
     queryFn: () => listDrivers({ status: "Active", search: filters.search || undefined }),
+  });
+  const preSettlementsQuery = useQuery({
+    queryKey: ["dispatch", "pre-settlements", defaultCompanyIds.join(",")],
+    queryFn: () => listSettlements(defaultCompanyIds[0] ?? ""),
+    enabled: Boolean(defaultCompanyIds[0]),
   });
   const allActiveDriversQuery = useQuery({
     queryKey: ["dispatch", "drivers", "all-active", defaultCompanyIds.join(",")],
@@ -357,6 +365,11 @@ export function DispatchPage() {
             <span className="text-sm text-gray-700">Active assignments are shown in the load board and load detail drawer.</span>
           </DataPanelRow>
         </DataPanel>
+      ) : subTab === "pre_settlements" ? (
+        <PreSettlementsPanel
+          rows={(preSettlementsQuery.data?.settlements ?? []).filter((settlement) => ["presettle", "acked", "locked"].includes(String(settlement.status)))}
+          loading={preSettlementsQuery.isLoading}
+        />
       ) : (
         <DataPanel title="Settlements">
           <DataPanelRow>

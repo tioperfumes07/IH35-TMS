@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listBills, listVendorBalances } from "../api/accounting";
@@ -74,6 +74,8 @@ export function VendorsPage() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [showFilterBox, setShowFilterBox] = useState(false);
   const [showColumnChooser, setShowColumnChooser] = useState(false);
+  const [pageSize, setPageSize] = useState(50);
+  const [currentPage, setCurrentPage] = useState(1);
   const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(
     () => Object.fromEntries(COLUMN_OPTIONS.map((column) => [column.key, column.defaultOn])) as Record<ColumnKey, boolean>
   );
@@ -149,6 +151,20 @@ export function VendorsPage() {
       return isOverdue ? sum + Math.max(balance, 0) : sum;
     }, 0);
   }, [txRows]);
+  const totalRows = txRows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * pageSize;
+  const pageRangeStart = totalRows === 0 ? 0 : pageStartIndex + 1;
+  const pageRangeEnd = totalRows === 0 ? 0 : Math.min(pageStartIndex + pageSize, totalRows);
+  const pagedRows = useMemo(
+    () => txRows.slice(pageStartIndex, pageStartIndex + pageSize),
+    [pageSize, pageStartIndex, txRows]
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, selectedVendor?.id, typeFilter, statusFilter, dateFrom, dateTo, categoryFilter, pageSize]);
 
   return (
     <div className="space-y-3">
@@ -234,6 +250,13 @@ export function VendorsPage() {
                     <span className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
                       {dateFrom || dateTo ? `Date: ${dateFrom || "…"} - ${dateTo || "…"}` : "Date: Any"}
                     </span>
+                    <SelectCombobox value={String(pageSize)} onChange={(event) => setPageSize(Number(event.target.value) || 50)} className="h-8 min-w-[84px] text-xs">
+                      <option value="50">50</option>
+                      <option value="75">75</option>
+                      <option value="100">100</option>
+                      <option value="200">200</option>
+                      <option value="300">300</option>
+                    </SelectCombobox>
                     <button type="button" className="ml-auto rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50" onClick={() => setShowColumnChooser((open) => !open)}>⚙</button>
                     {showFilterBox ? (
                       <div className="absolute left-0 top-9 z-10 w-[320px] rounded border border-gray-200 bg-white p-2 shadow">
@@ -276,7 +299,7 @@ export function VendorsPage() {
                         <tr>{COLUMN_OPTIONS.filter((column) => columns[column.key]).map((column) => <th key={column.key} className="px-2 py-1">{column.label}</th>)}</tr>
                       </thead>
                       <tbody>
-                        {txRows.map((bill) => {
+                        {pagedRows.map((bill) => {
                           const open = Number(bill.balance_cents ?? Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
                           const values: Record<ColumnKey, string> = {
                             date: bill.bill_date,
@@ -298,11 +321,33 @@ export function VendorsPage() {
                             </tr>
                           );
                         })}
-                        {txRows.length === 0 ? (
+                        {pagedRows.length === 0 ? (
                           <tr><td colSpan={COLUMN_OPTIONS.filter((column) => columns[column.key]).length} className="px-2 py-3 text-center text-sm text-gray-500">No transactions for current filters.</td></tr>
                         ) : null}
                       </tbody>
                     </table>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+                    <span>{pageRangeStart}-{pageRangeEnd} of {totalRows}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+                        disabled={safeCurrentPage <= 1}
+                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      >
+                        Previous
+                      </button>
+                      <span>Page {safeCurrentPage} of {totalPages}</span>
+                      <button
+                        type="button"
+                        className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+                        disabled={safeCurrentPage >= totalPages}
+                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : activeTab === "vendor_details" ? (

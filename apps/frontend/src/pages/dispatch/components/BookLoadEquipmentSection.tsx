@@ -74,7 +74,7 @@ export function BookLoadEquipmentSection({ register, watch, operatingCompanyId }
         <Field
           label="Trailer type"
           input={
-            <SelectCombobox {...register("trailer_type")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+            <SelectCombobox {...register("trailer_type")} className="h-7 w-full text-xs">
               <option value="refrigerated_van">Refrigerated van</option>
               <option value="dry_van">Dry van</option>
               <option value="flatbed">Flatbed</option>
@@ -86,7 +86,7 @@ export function BookLoadEquipmentSection({ register, watch, operatingCompanyId }
         <Field
           label="Truck unit"
           input={
-            <SelectCombobox {...register("assigned_unit_id")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+            <SelectCombobox {...register("assigned_unit_id")} className="h-7 w-full text-xs">
               <option value="">{unitsQuery.isLoading ? "Loading units..." : "Select truck unit"}</option>
               {units.map((unit) => (
                 <option key={unit.id} value={unit.id}>
@@ -99,7 +99,7 @@ export function BookLoadEquipmentSection({ register, watch, operatingCompanyId }
         <Field
           label="Trailer unit"
           input={
-            <SelectCombobox {...register("assigned_trailer_unit_id")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+            <SelectCombobox {...register("assigned_trailer_unit_id")} className="h-7 w-full text-xs">
               <option value="">{unitsQuery.isLoading ? "Loading units..." : "Select trailer unit"}</option>
               {units.map((unit) => (
                 <option key={`trailer-${unit.id}`} value={unit.id}>
@@ -114,7 +114,7 @@ export function BookLoadEquipmentSection({ register, watch, operatingCompanyId }
         <Field
           label="Driver"
           input={
-            <SelectCombobox {...register("assigned_primary_driver_id")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+            <SelectCombobox {...register("assigned_primary_driver_id")} className="h-7 w-full text-xs">
               <option value="">{driversQuery.isLoading ? "Loading drivers..." : "Select driver"}</option>
               {drivers.map((driver) => (
                 <option key={driver.id} value={driver.id}>
@@ -127,7 +127,7 @@ export function BookLoadEquipmentSection({ register, watch, operatingCompanyId }
         <Field
           label="Team driver"
           input={
-            <SelectCombobox {...register("assigned_secondary_driver_id")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+            <SelectCombobox {...register("assigned_secondary_driver_id")} className="h-7 w-full text-xs">
               <option value="">{driversQuery.isLoading ? "Loading drivers..." : "Solo load (optional)"}</option>
               {drivers.map((driver) => (
                 <option key={`team-${driver.id}`} value={driver.id}>
@@ -157,7 +157,7 @@ export function BookLoadEquipmentSection({ register, watch, operatingCompanyId }
         <Field
           label="Team preset"
           input={
-            <SelectCombobox {...register("team_id")} className="h-7 min-w-[240px] rounded border border-gray-300 bg-white px-2 text-xs">
+            <SelectCombobox {...register("team_id")} className="h-7 min-w-[240px] text-xs">
               <option value="">{teamsQuery.isLoading ? "Loading teams..." : "Optional team preset"}</option>
               {(teamsQuery.data?.teams ?? []).map((team) => (
                 <option key={team.id} value={team.id}>

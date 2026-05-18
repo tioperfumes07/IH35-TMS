@@ -110,6 +110,7 @@ import { BillsPage } from "./pages/accounting/BillsPage";
 import { VendorBalancesPage } from "./pages/accounting/VendorBalancesPage";
 import { ManualJEListPage } from "./pages/accounting/ManualJEListPage";
 import { BillPaymentsListPage } from "./pages/accounting/BillPaymentsListPage";
+import { AccountingPreSettlementsPage } from "./pages/accounting/AccountingPreSettlementsPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
@@ -1406,6 +1407,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <FactoringDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/pre-settlements"
+          element={
+            <ProtectedRoute>
+              <AccountingPreSettlementsPage />
             </ProtectedRoute>
           }
         />

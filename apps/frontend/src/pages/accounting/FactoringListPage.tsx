@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listFactoringAdvances, type FactoringAdvance } from "../../api/accounting";
@@ -42,6 +42,8 @@ export function FactoringListPage() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [pageSize, setPageSize] = useState(50);
+  const [currentPage, setCurrentPage] = useState(1);
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const query = useQuery({
@@ -57,6 +59,20 @@ export function FactoringListPage() {
   });
 
   const rows = query.data ?? [];
+  const totalRows = rows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * pageSize;
+  const pageRangeStart = totalRows === 0 ? 0 : pageStartIndex + 1;
+  const pageRangeEnd = totalRows === 0 ? 0 : Math.min(pageStartIndex + pageSize, totalRows);
+  const pagedRows = useMemo(
+    () => rows.slice(pageStartIndex, pageStartIndex + pageSize),
+    [pageSize, pageStartIndex, rows]
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [status, search, fromDate, toDate, pageSize]);
 
   return (
     <div className="space-y-3">
@@ -86,6 +102,16 @@ export function FactoringListPage() {
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Date to
             <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+            Page size
+            <SelectCombobox value={String(pageSize)} onChange={(event) => setPageSize(Number(event.target.value) || 50)} className="h-9 text-[13px]">
+              <option value="50">50</option>
+              <option value="75">75</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="300">300</option>
+            </SelectCombobox>
           </label>
         </div>
       </DataPanel>
@@ -119,7 +145,7 @@ export function FactoringListPage() {
                 </td>
               </tr>
             ) : null}
-            {rows.map((row) => (
+            {pagedRows.map((row) => (
               <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/factoring/${row.id}`)}>
                 <td className="px-3 py-2 font-semibold text-gray-900">{row.display_id}</td>
                 <td className="px-3 py-2 text-gray-700">{new Date(row.submitted_at).toLocaleDateString("en-US")}</td>
@@ -135,6 +161,28 @@ export function FactoringListPage() {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
+        <span>{pageRangeStart}-{pageRangeEnd} of {totalRows}</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+            disabled={safeCurrentPage <= 1}
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+          >
+            Previous
+          </button>
+          <span>Page {safeCurrentPage} of {totalPages}</span>
+          <button
+            type="button"
+            className="rounded border border-gray-300 px-2 py-1 disabled:opacity-50"
+            disabled={safeCurrentPage >= totalPages}
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {selectedCompanyId ? (

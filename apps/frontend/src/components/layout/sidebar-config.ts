@@ -23,7 +23,9 @@ import type { UserRole } from "../../types/api";
 export const SIDEBAR_ITEM_IDS = [
   "home",
   "maintenance",
+  "fuel",
   "dispatch",
+  "drivers",
   "safety",
   "accounting",
   "bank",
@@ -69,7 +71,9 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
     to: "/maintenance",
     badgeKey: "maintenance_severe",
   },
+  fuel: { id: "fuel", label: "FUEL", Icon: CarFront, to: "/fuel" },
   dispatch: { id: "dispatch", label: "DISPATCH", Icon: Truck, to: "/dispatch", dataTour: "tour-nav-dispatch" },
+  drivers: { id: "drivers", label: "DRIVERS", Icon: Truck, to: "/drivers" },
   safety: { id: "safety", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
   accounting: { id: "accounting", label: "ACCTG", Icon: Calculator, to: "/accounting" },
   bank: { id: "bank", label: "BANK", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
@@ -118,11 +122,11 @@ function parseUserOverride(raw: unknown): SidebarItemId[] | null {
 
 /** Role-first ordering; remaining ids append from `SIDEBAR_DEFAULT_ORDER`. Owner / Administrator / SuperAdmin use defaults only (no entry here). */
 export const SIDEBAR_ROLE_ORDER: Partial<Record<UserRole, readonly SidebarItemId[]>> = {
-  Mechanic: ["home", "maintenance", "safety", "lists", "docs", "eld", "reports", "drv_app", "users", "help"],
-  Dispatcher: ["home", "dispatch", "safety", "maintenance", "customers", "vendors", "lists", "reports", "help"],
-  Accountant: ["home", "accounting", "bank", "factoring", "vendors", "customers", "reports", "lists", "form_425", "legal", "docs", "help"],
-  Safety: ["home", "safety", "maintenance", "dispatch", "lists", "reports", "help", "users"],
-  Manager: ["home", "dispatch", "maintenance", "customers", "vendors", "safety", "lists", "reports", "help", "users"],
+  Mechanic: ["home", "maintenance", "fuel", "drivers", "safety", "lists", "docs", "eld", "reports", "drv_app", "users", "help"],
+  Dispatcher: ["home", "dispatch", "drivers", "fuel", "safety", "maintenance", "customers", "vendors", "lists", "reports", "help"],
+  Accountant: ["home", "accounting", "bank", "factoring", "vendors", "customers", "drivers", "fuel", "reports", "lists", "form_425", "legal", "docs", "help"],
+  Safety: ["home", "safety", "drivers", "maintenance", "dispatch", "fuel", "lists", "reports", "help", "users"],
+  Manager: ["home", "dispatch", "drivers", "maintenance", "fuel", "customers", "vendors", "safety", "lists", "reports", "help", "users"],
 };
 
 export function resolveSidebarOrder(role: UserRole, preferences: Record<string, unknown> | undefined): SidebarItemId[] {
