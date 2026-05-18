@@ -28,6 +28,7 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
   { label: "Invoices", href: "/accounting/invoices" },
   { label: "Receive Payment", href: "/accounting/payments" },
   { label: "Factoring", href: "/accounting/factoring" },
+  { label: "Pre-settlements", href: "/accounting/pre-settlements" },
   { label: "Vendor balances", href: "/accounting/vendor-balances" },
   { label: "Journal entries", href: "/accounting/journal-entries" },
 ] as const;
@@ -37,6 +38,7 @@ export function accountingSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/accounting/invoices/")) return "/accounting/invoices";
   if (pathname.startsWith("/accounting/payments/")) return "/accounting/payments";
   if (pathname.startsWith("/accounting/factoring/")) return "/accounting/factoring";
+  if (pathname.startsWith("/accounting/pre-settlements")) return "/accounting/pre-settlements";
   return pathname;
 }
 

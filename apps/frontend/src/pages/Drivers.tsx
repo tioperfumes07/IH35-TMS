@@ -31,6 +31,7 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
+import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 import { dataTableErrorState } from "../lib/tableError";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
@@ -650,9 +651,6 @@ export function DriversPage() {
       .filter((settlement) => ["presettle", "acked", "locked"].includes(String(settlement.status)))
       .slice(0, 8);
   }, [settlementsQuery.data?.settlements]);
-  const settlementsReadyTotal = useMemo(() => {
-    return settlementsReadyRows.reduce((sum, row) => sum + Number(row.net_pay ?? 0), 0);
-  }, [settlementsReadyRows]);
   const debtAlertRows = useMemo(() => {
     const aggregates = new Map<
       string,
@@ -925,17 +923,11 @@ export function DriversPage() {
         ]}
       />
 
+      {subnavTab === "pre_settlements" ? (
+        <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} />
+      ) : (
       <div className="grid auto-rows-fr gap-3 md:grid-cols-2">
-        <DataPanel title={`Settlements Ready · ${settlementsReadyRows.length} drivers`} accentColor={colors.accounting.strong}>
-          {settlementsReadyRows.map((settlement) => (
-            <DataPanelRow key={settlement.id}>
-              <span>{settlement.driver_full_name} · {settlement.period_start} to {settlement.period_end}</span>
-              <span>{formatMoney(Number(settlement.net_pay ?? 0))}</span>
-            </DataPanelRow>
-          ))}
-          {settlementsReadyRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No settlements ready right now.</p> : null}
-          <DataPanelRow><span className="font-semibold">Total payout this batch</span><span className="font-semibold">{formatMoney(settlementsReadyTotal)}</span></DataPanelRow>
-        </DataPanel>
+        <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} title="Settlements Ready" />
         <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
           {debtAlertRows.map((row) => (
             <DataPanelRow key={row.driver_id}>
@@ -970,6 +962,7 @@ export function DriversPage() {
           <DataPanelRow><span className="font-semibold">Pending escrow approvals</span><span className="font-semibold">{(pendingEscrowQuery.data?.data ?? []).length}</span></DataPanelRow>
         </DataPanel>
       </div>
+      )}
         </>
       ) : null}
 

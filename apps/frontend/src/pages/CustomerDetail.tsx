@@ -52,7 +52,7 @@ import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 
-const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents"] as const;
+const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "Contracts"] as const;
 type CustomerTab = (typeof tabs)[number];
 
 const customerSchema = z.object({
@@ -1300,6 +1300,23 @@ export function CustomerDetailPage() {
         ) : (
           <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
             You do not have permission to view customer documents.
+          </div>
+        )
+      ) : null}
+
+      {activeTab === "Contracts" ? (
+        canViewDocuments ? (
+          <ErrorBoundary>
+            <DataPanel title="Contracts">
+              <p className="mb-2 text-xs text-gray-600">
+                Upload broker/customer contract PDFs. Files are stored per-customer and remain viewable and downloadable.
+              </p>
+              <DocumentsTab entityType="customer" entityId={customer.id} entityName={customer.name} />
+            </DataPanel>
+          </ErrorBoundary>
+        ) : (
+          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+            You do not have permission to view customer contracts.
           </div>
         )
       ) : null}

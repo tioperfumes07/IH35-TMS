@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-18T17:02:21.207Z",
+  "generatedAt": "2026-05-18T19:35:46.611Z",
   "source": {
-    "branch": "fix/book-load-wizard-correct-design",
-    "commit": "bd0eec31c6f17fa67d763228f0af0bedbb853180"
+    "branch": "fix/wizard-nav-pagination-profiles-batch",
+    "commit": "79bc64ed24bf036f31d88c51bb562bac63f74253"
   },
   "routes": [
     "*",
@@ -23,6 +23,7 @@
     "/accounting/journal-entries",
     "/accounting/payments",
     "/accounting/payments/:id",
+    "/accounting/pre-settlements",
     "/accounting/vendor-balances",
     "/admin/activity",
     "/admin/data-import",
@@ -230,7 +231,9 @@
   "sidebarItemIds": [
     "home",
     "maintenance",
+    "fuel",
     "dispatch",
+    "drivers",
     "safety",
     "accounting",
     "bank",
@@ -266,6 +269,7 @@
       "Invoices",
       "Receive Payment",
       "Factoring",
+      "Pre-settlements",
       "Vendor balances",
       "Journal entries"
     ],

@@ -62,7 +62,7 @@ export function BookLoadStopsSection({ control, register }: Props) {
                 <Field
                   label="Type"
                   input={
-                    <SelectCombobox {...register(`stops.${index}.stop_type`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs">
+                    <SelectCombobox {...register(`stops.${index}.stop_type`)} className="h-7 w-full text-xs">
                       <option value="pickup">PICKUP</option>
                       <option value="delivery">DELIVERY</option>
                     </SelectCombobox>
@@ -81,7 +81,7 @@ export function BookLoadStopsSection({ control, register }: Props) {
                 <Field
                   label="Lumper paid by"
                   input={
-                    <SelectCombobox {...register(`stops.${index}.lumper_paid_by`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs">
+                    <SelectCombobox {...register(`stops.${index}.lumper_paid_by`)} className="h-7 w-full text-xs">
                       <option value="carrier">Carrier</option>
                       <option value="shipper">Shipper</option>
                       <option value="broker">Broker</option>

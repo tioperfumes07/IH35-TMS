@@ -122,6 +122,9 @@ export function FactoringDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <span className={statusPill(detail.status)}>{detail.status.replaceAll("_", " ")}</span>
+            <Button variant="secondary" onClick={() => navigate(`/vendors/${detail.factoring_company_vendor_id}`)}>
+              Edit factoring company profile
+            </Button>
             {showAdvance ? <Button onClick={() => setAction("advance")}>Mark Advanced</Button> : null}
             {showReserveHeld ? (
               <Button variant="secondary" onClick={() => setAction("reserve_held")}>

@@ -1017,6 +1017,23 @@ export function createVendor(body: CreateVendorInput) {
   return apiRequest<VendorOption>("/api/v1/mdata/vendors", { method: "POST", body });
 }
 
+export type UpdateVendorInput = Partial<{
+  name: string;
+  vendor_code: string | null;
+  vendor_type: "Fuel" | "Repair" | "Tires" | "Towing" | "Insurance" | "Permit" | "Toll" | "Other";
+  phone: string | null;
+  email: string | null;
+  operating_company_id: string;
+  address: string | null;
+  tax_id: string | null;
+  notes: string | null;
+  deactivated_at: string | null;
+}>;
+
+export function updateVendor(id: string, body: UpdateVendorInput) {
+  return apiRequest<VendorOption>(`/api/v1/mdata/vendors/${id}`, { method: "PATCH", body });
+}
+
 export function listLocations(params: CompanyScopedListParams = {}) {
   const query = new URLSearchParams();
   appendCompanyScopedQuery(query, params);

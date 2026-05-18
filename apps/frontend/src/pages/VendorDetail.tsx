@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { listVendorBills } from "../api/accounting";
 import { ApiError } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
-import { getVendor } from "../api/mdata";
+import { getVendor, updateVendor } from "../api/mdata";
 import { patchVendorAccountingCategory } from "../api/vendorCategory";
 import { useAuth } from "../auth/useAuth";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
@@ -26,6 +26,68 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 function billOpenBalanceCents(b: { balance_cents?: number; amount_cents: number; paid_cents: number }) {
   if (b.balance_cents != null) return Number(b.balance_cents);
   return Number(b.amount_cents ?? 0) - Number(b.paid_cents ?? 0);
+}
+
+const VENDOR_PROFILE_META_PREFIX = "IH35_VENDOR_PROFILE_V1::";
+
+type VendorProfileMeta = {
+  telephone: string;
+  address: string;
+  primaryContactName: string;
+  primaryContactTitle: string;
+  primaryContactPhone: string;
+  primaryContactEmail: string;
+  secondaryContactName: string;
+  secondaryContactTitle: string;
+  secondaryContactPhone: string;
+  secondaryContactEmail: string;
+  generalEmail: string;
+  accountingContact: string;
+  disputesContact: string;
+};
+
+type VendorProfileForm = VendorProfileMeta & {
+  name: string;
+  vendorType: string;
+  notes: string;
+};
+
+function emptyVendorProfileMeta(): VendorProfileMeta {
+  return {
+    telephone: "",
+    address: "",
+    primaryContactName: "",
+    primaryContactTitle: "",
+    primaryContactPhone: "",
+    primaryContactEmail: "",
+    secondaryContactName: "",
+    secondaryContactTitle: "",
+    secondaryContactPhone: "",
+    secondaryContactEmail: "",
+    generalEmail: "",
+    accountingContact: "",
+    disputesContact: "",
+  };
+}
+
+function parseVendorNotes(notes: string | null | undefined): { publicNotes: string; meta: VendorProfileMeta } {
+  const raw = String(notes ?? "");
+  if (!raw.startsWith(VENDOR_PROFILE_META_PREFIX)) {
+    return { publicNotes: raw, meta: emptyVendorProfileMeta() };
+  }
+  const newline = raw.indexOf("\n");
+  const jsonChunk = newline >= 0 ? raw.slice(VENDOR_PROFILE_META_PREFIX.length, newline) : raw.slice(VENDOR_PROFILE_META_PREFIX.length);
+  const publicNotes = newline >= 0 ? raw.slice(newline + 1).trim() : "";
+  try {
+    const parsed = JSON.parse(jsonChunk) as Partial<VendorProfileMeta>;
+    return { publicNotes, meta: { ...emptyVendorProfileMeta(), ...parsed } };
+  } catch {
+    return { publicNotes: raw, meta: emptyVendorProfileMeta() };
+  }
+}
+
+function serializeVendorNotes(meta: VendorProfileMeta, publicNotes: string): string {
+  return `${VENDOR_PROFILE_META_PREFIX}${JSON.stringify(meta)}\n${publicNotes.trim()}`.trim();
 }
 
 export function VendorDetailPage() {
@@ -50,6 +112,13 @@ export function VendorDetailPage() {
 
   const [categoryDraft, setCategoryDraft] = useState<VendorCategoryValue>("other");
   const [lockCategory, setLockCategory] = useState(false);
+  const [profileEditMode, setProfileEditMode] = useState(false);
+  const [profileForm, setProfileForm] = useState<VendorProfileForm>({
+    name: "",
+    vendorType: "",
+    notes: "",
+    ...emptyVendorProfileMeta(),
+  });
 
   useEffect(() => {
     if (searchParams.get("tab") === "ap") setActiveTab("A/P");
@@ -160,6 +229,39 @@ export function VendorDetailPage() {
     },
     onError: (e) => pushToast(e instanceof ApiError ? e.message : "Update failed", "error"),
   });
+  const updateVendorMutation = useMutation({
+    mutationFn: () => {
+      const meta: VendorProfileMeta = {
+        telephone: profileForm.telephone,
+        address: profileForm.address,
+        primaryContactName: profileForm.primaryContactName,
+        primaryContactTitle: profileForm.primaryContactTitle,
+        primaryContactPhone: profileForm.primaryContactPhone,
+        primaryContactEmail: profileForm.primaryContactEmail,
+        secondaryContactName: profileForm.secondaryContactName,
+        secondaryContactTitle: profileForm.secondaryContactTitle,
+        secondaryContactPhone: profileForm.secondaryContactPhone,
+        secondaryContactEmail: profileForm.secondaryContactEmail,
+        generalEmail: profileForm.generalEmail,
+        accountingContact: profileForm.accountingContact,
+        disputesContact: profileForm.disputesContact,
+      };
+      return updateVendor(id, {
+        name: profileForm.name.trim(),
+        vendor_type: profileForm.vendorType as "Fuel" | "Repair" | "Tires" | "Towing" | "Insurance" | "Permit" | "Toll" | "Other",
+        phone: profileForm.telephone.trim() || null,
+        address: profileForm.address.trim() || null,
+        email: profileForm.generalEmail.trim() || null,
+        notes: serializeVendorNotes(meta, profileForm.notes),
+      });
+    },
+    onSuccess: async () => {
+      pushToast("Vendor profile saved", "success");
+      setProfileEditMode(false);
+      await queryClient.invalidateQueries({ queryKey: ["vendor", id] });
+    },
+    onError: (error) => pushToast(String((error as Error).message ?? "Failed to save vendor profile"), "error"),
+  });
 
   useEffect(() => {
     const v = vendorQuery.data;
@@ -171,6 +273,16 @@ export function VendorDetailPage() {
       setCategoryDraft("other");
     }
     setLockCategory(Boolean(v.vendor_category_locked_at));
+    const parsed = parseVendorNotes(v.notes);
+    setProfileForm({
+      name: v.name ?? "",
+      vendorType: v.vendor_type ?? "Other",
+      notes: parsed.publicNotes,
+      ...parsed.meta,
+      telephone: parsed.meta.telephone || v.phone || "",
+      address: parsed.meta.address || v.address || "",
+      generalEmail: parsed.meta.generalEmail || v.email || "",
+    });
   }, [vendorQuery.data]);
 
   const canViewDocuments = useMemo(
@@ -235,11 +347,27 @@ export function VendorDetailPage() {
         <DataPanel title="Vendor Profile">
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor Name</span>
-            <span className="text-sm text-gray-900">{vendor.name}</span>
+            <input
+              value={profileForm.name}
+              onChange={(event) => setProfileForm((current) => ({ ...current, name: event.target.value }))}
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Vendor Type</span>
-            <span className="text-sm text-gray-900">{vendor.vendor_type}</span>
+            <SelectCombobox
+              value={profileForm.vendorType}
+              onChange={(event) => setProfileForm((current) => ({ ...current, vendorType: event.target.value }))}
+              disabled={!profileEditMode}
+              className="h-8 w-full max-w-md text-xs"
+            >
+              {["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"].map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </SelectCombobox>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Accounting category</span>
@@ -277,20 +405,96 @@ export function VendorDetailPage() {
             </div>
           </DataPanelRow>
           <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Phone</span>
-            <span className="text-sm text-gray-900">{vendor.phone ?? "-"}</span>
+            <span className="text-xs font-semibold text-gray-600">Telephone</span>
+            <input
+              value={profileForm.telephone}
+              onChange={(event) => setProfileForm((current) => ({ ...current, telephone: event.target.value }))}
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
           </DataPanelRow>
           <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Email</span>
-            <span className="text-sm text-gray-900">{vendor.email ?? "-"}</span>
+            <span className="text-xs font-semibold text-gray-600">Address</span>
+            <input
+              value={profileForm.address}
+              onChange={(event) => setProfileForm((current) => ({ ...current, address: event.target.value }))}
+              disabled={!profileEditMode}
+              className="w-full max-w-2xl rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
           </DataPanelRow>
           <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Payment Terms</span>
-            <span className="text-sm text-gray-900">Defined in accounting workflow</span>
+            <span className="text-xs font-semibold text-gray-600">Primary contact</span>
+            <div className="grid w-full max-w-2xl grid-cols-1 gap-2 md:grid-cols-2">
+              <input value={profileForm.primaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.primaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, primaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+            </div>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Secondary contact</span>
+            <div className="grid w-full max-w-2xl grid-cols-1 gap-2 md:grid-cols-2">
+              <input value={profileForm.secondaryContactName} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactName: event.target.value }))} disabled={!profileEditMode} placeholder="Name" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactTitle} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactTitle: event.target.value }))} disabled={!profileEditMode} placeholder="Title" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactPhone} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactPhone: event.target.value }))} disabled={!profileEditMode} placeholder="Phone" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+              <input value={profileForm.secondaryContactEmail} onChange={(event) => setProfileForm((current) => ({ ...current, secondaryContactEmail: event.target.value }))} disabled={!profileEditMode} placeholder="Email" className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent" />
+            </div>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">General email</span>
+            <input
+              value={profileForm.generalEmail}
+              onChange={(event) => setProfileForm((current) => ({ ...current, generalEmail: event.target.value }))}
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Accounting contact</span>
+            <input
+              value={profileForm.accountingContact}
+              onChange={(event) => setProfileForm((current) => ({ ...current, accountingContact: event.target.value }))}
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Disputes contact</span>
+            <input
+              value={profileForm.disputesContact}
+              onChange={(event) => setProfileForm((current) => ({ ...current, disputesContact: event.target.value }))}
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Notes</span>
-            <span className="text-sm text-gray-900">{vendor.notes ?? "-"}</span>
+            <textarea
+              value={profileForm.notes}
+              onChange={(event) => setProfileForm((current) => ({ ...current, notes: event.target.value }))}
+              disabled={!profileEditMode}
+              rows={3}
+              className="w-full max-w-2xl rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Profile actions</span>
+            <div className="flex gap-2">
+              {!profileEditMode ? (
+                <Button type="button" size="sm" onClick={() => setProfileEditMode(true)}>
+                  Edit
+                </Button>
+              ) : (
+                <>
+                  <Button type="button" size="sm" variant="secondary" onClick={() => setProfileEditMode(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="button" size="sm" loading={updateVendorMutation.isPending} onClick={() => updateVendorMutation.mutate()}>
+                    Save
+                  </Button>
+                </>
+              )}
+            </div>
           </DataPanelRow>
         </DataPanel>
       ) : null}

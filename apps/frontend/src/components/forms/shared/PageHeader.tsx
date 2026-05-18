@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./PageHeader.css";
 
 export type BreadcrumbItem = { label: string; href?: string };
@@ -19,6 +19,7 @@ export type PageHeaderProps = {
  * (`components/forms/shared/PageHeader`), not `components/layout/PageHeader`.
  */
 export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: PageHeaderProps) {
+  const navigate = useNavigate();
   const showBreadcrumb = breadcrumb != null && breadcrumb.length > 1;
 
   return (
@@ -39,11 +40,21 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: P
       ) : null}
       <div className="page-header-row">
         <div className="page-header-title-group">
-          {backHref ? (
-            <Link to={backHref} className="page-header-back" aria-label="Back" data-testid="page-header-back">
+          <button
+            type="button"
+            className="page-header-back"
+            aria-label="Back"
+            data-testid="page-header-back"
+            onClick={() => {
+              if (backHref) {
+                navigate(backHref);
+                return;
+              }
+              navigate(-1);
+            }}
+          >
               <ArrowLeft size={18} aria-hidden />
-            </Link>
-          ) : null}
+          </button>
           <h1 className="page-header-title">{title}</h1>
           {subtitle ? <span className="page-header-subtitle">{subtitle}</span> : null}
         </div>

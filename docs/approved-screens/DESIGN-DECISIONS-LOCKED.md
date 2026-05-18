@@ -17,3 +17,4 @@
 | Expense form | LOCKED 2026-05-18 | 12x6 header grid + Cost Breakdown Box per `02_PRODUCTION_CLEAN_v6_3.html` + `IH35TMSMASTERRULESLOCKED20260507.xlsx` | feat/bill-expense-payment-forms |
 | Bill Payment form | LOCKED 2026-05-18 | payment-application form per `02_PRODUCTION_CLEAN_v6_3.html` | feat/bill-expense-payment-forms |
 | Banking Transactions | LOCKED 2026-05-18 | QBO-parity transactions tab: account chips, For review/Categorized/Excluded sub-tabs, filter bar, grouped table, detail panel, transaction-type filter, gear view menu, print/export | feat/banking-transactions-qbo-parity |
+| Sidebar (owner-directed) | LOCKED 2026-05-18 | Added FUEL + DRIVERS left-sidebar entries while preserving all existing navigation entries/routes (F.24) | fix/wizard-nav-pagination-profiles-batch |

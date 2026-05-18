@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type UseFormSetValue } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
 import { ApiError } from "../../../api/client";
+import { listVendors } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
@@ -20,6 +22,7 @@ import { MilesStrip } from "./book-load-v4/MilesStrip";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
 import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
@@ -70,6 +73,7 @@ type FormValues = BookLoadFormValues & {
   cash_advance_cents: number;
   fuel_advance_cents: number;
   factoring_company_summary: string;
+  accessorial_charge_code: string;
   stops: Array<{
     stop_type: "pickup" | "delivery";
     sequence_number: number;
@@ -200,6 +204,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
       cash_advance_cents: 0,
       fuel_advance_cents: 0,
       factoring_company_summary: "",
+      accessorial_charge_code: "detention",
       stops: [
         { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
         { stop_type: "delivery", sequence_number: 2, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
@@ -249,6 +254,20 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   const milesPractical = form.watch("miles_practical");
   const milesDeadhead = form.watch("miles_deadhead");
   const reservedLoadNumber = form.watch("reserved_load_number");
+  const factoringCompanySummary = form.watch("factoring_company_summary");
+
+  const factoringVendorsQuery = useQuery({
+    queryKey: ["book-load-factoring-vendors", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const factoringVendorOptions = useMemo(
+    () =>
+      (factoringVendorsQuery.data?.vendors ?? [])
+        .filter((vendor) => (vendor.vendor_type ?? "").toLowerCase().includes("factor") || (vendor.name ?? "").toLowerCase().includes("factor"))
+        .map((vendor) => ({ value: vendor.name, label: vendor.name })),
+    [factoringVendorsQuery.data?.vendors]
+  );
 
   const sectionTotal = useMemo(() => (linehaul || 0) + (fuel || 0) + (accessorial || 0), [accessorial, fuel, linehaul]);
   const driverBillPreview = useMemo(() => {
@@ -695,6 +714,18 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                   <button type="button" className="text-[10.5px] font-semibold text-[#16203a] hover:underline">
                     + Add charge · detention · layover · accessorial
                   </button>
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Charge row type
+                      <SelectCombobox {...form.register("accessorial_charge_code")} className="mt-0.5 h-7 w-full text-xs">
+                        <option value="detention">Detention</option>
+                        <option value="layover">Layover</option>
+                        <option value="tonu">TONU</option>
+                        <option value="lumper">Lumper</option>
+                        <option value="misc_accessorial">Misc accessorial</option>
+                      </SelectCombobox>
+                    </label>
+                  </div>
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
@@ -707,7 +738,18 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Factoring company
-                      <input {...form.register("factoring_company_summary")} className="mt-0.5 h-7 w-full rounded border border-gray-300 px-2 text-xs" placeholder="Faro · auto from customer" />
+                      <SelectCombobox
+                        value={factoringCompanySummary}
+                        onChange={(event) => form.setValue("factoring_company_summary", event.target.value, { shouldDirty: true })}
+                        className="mt-0.5 h-7 w-full text-xs"
+                      >
+                        <option value="">{factoringVendorsQuery.isLoading ? "Loading factoring companies..." : "Select factoring company"}</option>
+                        {factoringVendorOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </SelectCombobox>
                     </label>
                   </div>
 

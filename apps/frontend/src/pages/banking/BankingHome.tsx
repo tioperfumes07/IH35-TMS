@@ -114,8 +114,6 @@ export function BankingHomePage() {
     () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
     [tiles]
   );
-  const forReviewCount = Number(uncategorizedQuery.data?.meta?.uncategorized_count ?? uncategorizedCount);
-
   const openStartReconciliation = () => {
     setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
     setStartReconOpen(true);
@@ -183,7 +181,14 @@ export function BankingHomePage() {
           <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
             <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Cash posting</div><div className="font-semibold">{money.format(cashPosting)}</div></div>
             <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">DIP balance</div><div className="font-semibold">{money.format(dipBalance)}</div></div>
-            <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-amber-700">Uncategorized</div><div className="font-semibold text-amber-800">{uncategorizedCount}</div></div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("transactions")}
+              className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-left text-[11px] transition hover:bg-amber-100"
+            >
+              <div className="text-[10px] uppercase text-amber-700">Uncategorized</div>
+              <div className="font-semibold text-amber-800">{uncategorizedCount}</div>
+            </button>
             <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Recon accts</div><div className="font-semibold">{reconAccounts}</div></div>
             <div className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-blue-700">Factoring res</div><div className="font-semibold text-blue-900">{money.format(factoringReserve)}</div></div>
             <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-emerald-700">Escrow feed</div><div className="font-semibold text-emerald-900">{money.format(escrowFeed)}</div></div>
@@ -239,27 +244,6 @@ export function BankingHomePage() {
                 <div className="flex justify-between"><span>Deductions MTD</span><span>{money.format(0)}</span></div>
                 <button type="button" onClick={() => setActiveTab("driver_escrow")} className="pt-1 text-xs text-emerald-700 hover:underline">
                   Filter by name + date
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded border border-amber-200 bg-amber-50">
-            <div className="border-b border-amber-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-amber-800">
-              Categorize · {uncategorizedCount} unmatched bank transactions
-            </div>
-            <div className="px-3 py-3">
-              <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-                <p className="text-sm text-amber-900">
-                  <span className="font-semibold">{forReviewCount}</span>{" "}
-                  transaction{forReviewCount === 1 ? "" : "s"} need review.
-                </p>
-                <button
-                  type="button"
-                  className="rounded border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100/60"
-                  onClick={() => setActiveTab("transactions")}
-                >
-                  Open Transactions - For review
                 </button>
               </div>
             </div>

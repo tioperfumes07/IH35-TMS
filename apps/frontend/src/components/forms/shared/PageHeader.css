@@ -48,7 +48,9 @@
   height: 24px;
   flex-shrink: 0;
   color: var(--color-text-secondary);
-  text-decoration: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
   border-radius: var(--radius-sm);
 }
 
