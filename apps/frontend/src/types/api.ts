@@ -11,8 +11,12 @@ export type UserRole =
 
 export type IdentityUser = {
   id: string;
+  name?: string;
+  first_name?: string | null;
+  last_name?: string | null;
   email: string | null;
   role: UserRole;
+  auth_method?: "Google" | "Password" | "Google + Password" | "Invite pending" | string;
   default_company_id?: string | null;
   created_at: string;
   deactivated_at: string | null;
