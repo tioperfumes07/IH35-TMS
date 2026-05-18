@@ -80,6 +80,30 @@ const SUB_NAV_SOURCES: SubNavSource[] = [
     valueField: "label",
   },
   {
+    module: "banking_transactions_review_tabs",
+    file: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    startToken: "export const BANKING_REVIEW_TABS = [",
+    valueField: "label",
+  },
+  {
+    module: "banking_transactions_type_filters",
+    file: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    startToken: "export const TRANSACTION_TYPE_FILTER_OPTIONS = [",
+    valueField: "label",
+  },
+  {
+    module: "banking_transactions_view_menu",
+    file: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    startToken: "export const VIEW_SETTINGS_LOCK_LABELS = [",
+    valueField: "label",
+  },
+  {
+    module: "banking_transactions_print_export",
+    file: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    startToken: "export const PRINT_EXPORT_CONTROL_LABELS = [",
+    valueField: "label",
+  },
+  {
     module: "safety",
     file: "apps/frontend/src/pages/safety/SafetyTabsMeta.ts",
     startToken: "export const TABS = [",
