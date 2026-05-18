@@ -40,15 +40,28 @@ const ROLE_OPTIONS: Array<UserRole | "Viewer"> = [
   "Mechanic",
   "Viewer",
 ];
-const roleComboboxOptions = ROLE_OPTIONS.map((role) => ({ value: role, label: role }));
+const ROLE_LABEL: Record<UserRole | "Viewer", string> = {
+  Owner: "Owner",
+  Administrator: "Administrator",
+  SuperAdmin: "Super Admin",
+  Manager: "Manager",
+  Accountant: "Accounting",
+  Dispatcher: "Dispatcher",
+  Safety: "Safety",
+  Driver: "Driver",
+  Mechanic: "Mechanic",
+  Viewer: "Viewer",
+};
+const roleComboboxOptions = ROLE_OPTIONS.map((role) => ({ value: role, label: ROLE_LABEL[role] }));
 const roleChangeComboboxOptions = ROLE_OPTIONS.filter((role): role is UserRole => role !== "Viewer").map((role) => ({
   value: role,
-  label: role,
+  label: ROLE_LABEL[role],
 }));
 
 const USER_TAB_IDS = ["all", "active", "pending", "deactivated"] as const;
 type UserListTabId = (typeof USER_TAB_IDS)[number];
 const PENDING_INVITE_DAYS = 7;
+type ProvisionMode = "set_password" | "send_invite";
 
 function parseUserListTab(searchParams: URLSearchParams): UserListTabId {
   const raw = (searchParams.get("tab") ?? "all").toLowerCase();
@@ -80,15 +93,21 @@ export function UsersPage() {
   const [roleModalUser, setRoleModalUser] = useState<IdentityUser | null>(null);
   const [menuUserId, setMenuUserId] = useState<string | null>(null);
   const [inviteRole, setInviteRole] = useState<UserRole | "Viewer">("Manager");
+  const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteInitialPassword, setInviteInitialPassword] = useState("");
+  const [provisionMode, setProvisionMode] = useState<ProvisionMode>("send_invite");
   const [overrideReturningWarning, setOverrideReturningWarning] = useState(false);
   const [returningDetection, setReturningDetection] = useState<ReturningDispatcherDetectionResult | null>(null);
   const [checkingReturningDispatcher, setCheckingReturningDispatcher] = useState(false);
   const [roleChangeRole, setRoleChangeRole] = useState<UserRole>("Manager");
   const [roleReason, setRoleReason] = useState("");
   const [inviteBaseline, setInviteBaseline] = useState({
+    inviteName: "",
     inviteEmail: "",
     inviteRole: "Manager" as UserRole | "Viewer",
+    inviteInitialPassword: "",
+    provisionMode: "send_invite" as ProvisionMode,
     overrideReturningWarning: false,
   });
   const [roleBaseline, setRoleBaseline] = useState({ roleChangeRole: "Manager" as UserRole, roleReason: "" });
@@ -119,7 +138,7 @@ export function UsersPage() {
     mutationFn: createUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      pushToast("User invited successfully", "success");
+      pushToast("User created successfully", "success");
     },
   });
 
@@ -156,7 +175,11 @@ export function UsersPage() {
     const keyword = search.trim().toLowerCase();
     if (keyword) {
       list = list.filter(
-        (user) => (user.email ?? "").toLowerCase().includes(keyword) || user.role.toLowerCase().includes(keyword)
+        (user) =>
+          (user.name ?? "").toLowerCase().includes(keyword) ||
+          (user.email ?? "").toLowerCase().includes(keyword) ||
+          user.role.toLowerCase().includes(keyword) ||
+          (user.auth_method ?? "").toLowerCase().includes(keyword)
       );
     }
     if (listTab === "deactivated") return list.filter((u) => u.deactivated_at);
@@ -165,7 +188,7 @@ export function UsersPage() {
     return list;
   }, [allUsers, search, listTab]);
 
-  const inviteSnapshot = { inviteEmail, inviteRole, overrideReturningWarning };
+  const inviteSnapshot = { inviteName, inviteEmail, inviteRole, inviteInitialPassword, provisionMode, overrideReturningWarning };
   const { isDirty: inviteIsDirty } = useUnsavedChanges(inviteSnapshot, inviteBaseline);
 
   const roleOpen = roleModalUser !== null;
@@ -208,11 +231,21 @@ export function UsersPage() {
   }, [inviteEmail, inviteOpen, inviteRole]);
 
   function resetInviteFields() {
+    setInviteName("");
     setInviteEmail("");
     setInviteRole("Manager");
+    setInviteInitialPassword("");
+    setProvisionMode("send_invite");
     setOverrideReturningWarning(false);
     setReturningDetection(null);
-    setInviteBaseline({ inviteEmail: "", inviteRole: "Manager", overrideReturningWarning: false });
+    setInviteBaseline({
+      inviteName: "",
+      inviteEmail: "",
+      inviteRole: "Manager",
+      inviteInitialPassword: "",
+      provisionMode: "send_invite",
+      overrideReturningWarning: false,
+    });
   }
 
   async function submitInvite(closeAfter: boolean) {
@@ -220,10 +253,21 @@ export function UsersPage() {
       pushToast("Viewer role comes in a future phase", "error");
       return;
     }
+    if (!inviteName.trim()) {
+      pushToast("Name is required", "error");
+      return;
+    }
+    if (provisionMode === "set_password" && inviteInitialPassword.trim().length === 0) {
+      pushToast("Initial password is required", "error");
+      return;
+    }
     try {
       await createUserMutation.mutateAsync({
+        name: inviteName.trim(),
         email: inviteEmail.trim().toLowerCase(),
         role: inviteRole,
+        initial_password: provisionMode === "set_password" ? inviteInitialPassword : undefined,
+        send_password_setup_invite: provisionMode === "send_invite",
         override_returning_warning: overrideReturningWarning,
       });
       if (closeAfter) {
@@ -247,7 +291,14 @@ export function UsersPage() {
         pushToast("User with this email already exists", "error");
         return;
       }
-      pushToast("Failed to invite user", "error");
+      if (error instanceof ApiError && error.status === 400) {
+        const body = error.data as { error?: string };
+        if (body?.error === "initial_password_or_invite_required") {
+          pushToast("Choose a password setup method", "error");
+          return;
+        }
+      }
+      pushToast("Failed to create user", "error");
     }
   }
 
@@ -258,7 +309,7 @@ export function UsersPage() {
 
   return (
     <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-3">
-      <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Invite User</ActionButton>} />
+      <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Add User</ActionButton>} />
 
       <KpiStrip>
         <KpiCard label="Total users" number={tabCounts.all} accent={colors.info.strong} />
@@ -297,12 +348,23 @@ export function UsersPage() {
         rowKey={(row) => row.id}
         onRowClick={(row) => navigate(`/users/${row.id}`)}
         columns={[
+          { key: "name", label: "Name", sortable: true },
           { key: "email", label: "Email", sortable: true },
-          { key: "role", label: "Role", sortable: true },
+          {
+            key: "role",
+            label: "Role",
+            sortable: true,
+            render: (row) => ROLE_LABEL[row.role as UserRole] ?? row.role,
+          },
           {
             key: "status",
             label: "Status",
             render: (row) => <StatusBadge status={userStatus(row)} />,
+          },
+          {
+            key: "auth_method",
+            label: "Auth method",
+            render: (row) => row.auth_method ?? "Invite pending",
           },
           {
             key: "last_login",
@@ -363,11 +425,21 @@ export function UsersPage() {
       <Modal
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
-        title="Invite User"
+        title="Add User"
         confirmDiscardOnClose
         isDirty={inviteIsDirty}
       >
         <form className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600">Name</label>
+            <input
+              value={inviteName}
+              onChange={(event) => setInviteName(event.target.value)}
+              required
+              type="text"
+              className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+            />
+          </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Email</label>
             <input
@@ -387,6 +459,42 @@ export function UsersPage() {
               placeholder="Select role"
             />
           </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-600">Password setup</label>
+            <div className="space-y-2 rounded border border-gray-200 p-2 text-xs text-gray-700">
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="password-setup-mode"
+                  checked={provisionMode === "send_invite"}
+                  onChange={() => setProvisionMode("send_invite")}
+                />
+                Email invite to set password
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="password-setup-mode"
+                  checked={provisionMode === "set_password"}
+                  onChange={() => setProvisionMode("set_password")}
+                />
+                Set initial password now
+              </label>
+            </div>
+          </div>
+          {provisionMode === "set_password" ? (
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600">Initial password</label>
+              <input
+                value={inviteInitialPassword}
+                onChange={(event) => setInviteInitialPassword(event.target.value)}
+                type="password"
+                autoComplete="new-password"
+                className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
+              />
+              <p className="mt-1 text-xs text-gray-500">Minimum 12 characters with upper, lower, number, and symbol.</p>
+            </div>
+          ) : null}
           {checkingReturningDispatcher ? <div className="text-xs text-gray-500">Checking returning dispatcher history...</div> : null}
           {returningDetection ? (
             <div className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
@@ -411,7 +519,7 @@ export function UsersPage() {
             </Button>
             <SaveDropdown
               storageKey="users-invite"
-              primaryLabel="Send invite"
+              primaryLabel={provisionMode === "send_invite" ? "Create and send invite" : "Create user"}
               loading={createUserMutation.isPending}
               disabled={Boolean(returningDetection) && !overrideReturningWarning}
               onSave={() => submitInvite(false)}

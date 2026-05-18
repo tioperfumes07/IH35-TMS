@@ -109,7 +109,14 @@ export function getUserDetail(id: string) {
   return apiRequest<IdentityUserDetail>(`/api/v1/identity/users/${id}/detail`);
 }
 
-export function createUser(body: { email: string; role: UserRole; override_returning_warning?: boolean }) {
+export function createUser(body: {
+  name: string;
+  email: string;
+  role: UserRole;
+  initial_password?: string;
+  send_password_setup_invite?: boolean;
+  override_returning_warning?: boolean;
+}) {
   return apiRequest<IdentityUser>("/api/v1/identity/users", { method: "POST", body });
 }
 

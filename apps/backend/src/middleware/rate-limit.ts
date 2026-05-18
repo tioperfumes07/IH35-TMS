@@ -71,6 +71,7 @@ let memoPasswordResetEmail: RateLimiterRedis | null | undefined;
 let memoPasswordResetRequestByEmail: RateLimiterRedis | null | undefined;
 let memoOtpVerify: RateLimiterRedis | null | undefined;
 let memoDriverPhoneVerify: RateLimiterRedis | null | undefined;
+let memoOfficePasswordLoginByEmail: RateLimiterRedis | null | undefined;
 
 function loginIpLimiter(): RateLimiterRedis | null {
   if (memoLoginIp !== undefined) return memoLoginIp;
@@ -122,6 +123,17 @@ function driverPhoneVerifyLimiter(): RateLimiterRedis | null {
       blockDurationSec: 60 * 60,
     }) ?? null;
   return memoDriverPhoneVerify;
+}
+
+function officePasswordLoginByEmailLimiter(): RateLimiterRedis | null {
+  if (memoOfficePasswordLoginByEmail !== undefined) return memoOfficePasswordLoginByEmail;
+  memoOfficePasswordLoginByEmail = buildLimiter({
+    keyPrefix: "rl_office_password_login_email",
+    points: 5,
+    durationSec: 15 * 60,
+    blockDurationSec: 60 * 60,
+  });
+  return memoOfficePasswordLoginByEmail;
 }
 
 async function consumeOr429(
@@ -261,6 +273,26 @@ export async function enforceOfficePasswordLoginIpLimits(req: FastifyRequest, re
   return consumeOr429(reply, loginIpLimiter(), ip, {
     route_key: "auth/office/email-login",
     limiter: "login_ip",
+    ip,
+  });
+}
+
+export async function enforceOfficePasswordLoginLimits(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  email: string
+): Promise<boolean> {
+  const ip = clientIp(req);
+  const okIp = await consumeOr429(reply, loginIpLimiter(), ip, {
+    route_key: "auth/office/email-login",
+    limiter: "login_ip",
+    ip,
+  });
+  if (!okIp) return false;
+  return consumeOr429(reply, officePasswordLoginByEmailLimiter(), email.toLowerCase(), {
+    route_key: "auth/office/email-login",
+    limiter: "office_password_login_email",
+    email,
     ip,
   });
 }
