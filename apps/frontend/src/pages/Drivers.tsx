@@ -4,6 +4,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
+import { getEscrowDriverBalances } from "../api/banking";
+import { cashAdvanceRequestsOfficeApi } from "../api/cashAdvanceRequests";
+import { listDispatchLoads } from "../api/dispatch";
+import { listPendingEscrowDeductions, listSettlements } from "../api/driverFinance";
+import { getActiveLiabilities } from "../api/liabilities";
 import {
   checkReturningDriver,
   createDriver,
@@ -17,6 +22,7 @@ import {
   updateDriverTeam,
 } from "../api/mdata";
 import { listMyCompanies } from "../api/org";
+import { getSamsaraHealth } from "../api/samsara";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
 import { DataTable } from "../components/DataTable";
@@ -170,6 +176,28 @@ function formatDate(value: string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString();
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
+}
+
+function isWithinNextDays(dateIso: string | null | undefined, days: number) {
+  if (!dateIso) return false;
+  const target = new Date(dateIso);
+  if (Number.isNaN(target.getTime())) return false;
+  const now = new Date();
+  const diffMs = target.getTime() - now.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  return diffDays >= 0 && diffDays <= days;
+}
+
+function daysUntil(dateIso: string | null | undefined) {
+  if (!dateIso) return null;
+  const target = new Date(dateIso);
+  if (Number.isNaN(target.getTime())) return null;
+  const now = new Date();
+  return Math.floor((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 function getDetectionSeverityClass(detection: ReturningDetectionResult | null) {
@@ -366,6 +394,48 @@ export function DriversPage() {
     queryKey: ["driver-team", selectedTeamId, selectedCompanyId],
     queryFn: () => getDriverTeam(selectedTeamId!, selectedCompanyId!).then((result) => result.team),
     enabled: Boolean(selectedTeamId && selectedCompanyId && teamDetailOpen),
+  });
+  const settlementsQuery = useQuery({
+    queryKey: ["driver-finance", "settlements", selectedCompanyId],
+    queryFn: () => listSettlements(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+  });
+  const pendingEscrowQuery = useQuery({
+    queryKey: ["driver-finance", "pending-escrow", selectedCompanyId],
+    queryFn: () => listPendingEscrowDeductions(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+  });
+  const escrowBalancesQuery = useQuery({
+    queryKey: ["banking", "escrow-driver-balances", selectedCompanyId],
+    queryFn: () => getEscrowDriverBalances(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+  });
+  const cashAdvancesQuery = useQuery({
+    queryKey: ["driver-finance", "cash-advance-requests", selectedCompanyId],
+    queryFn: () => cashAdvanceRequestsOfficeApi.list(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+  });
+  const liabilitiesQuery = useQuery({
+    queryKey: ["liabilities", "active", selectedCompanyId],
+    queryFn: () => getActiveLiabilities(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+  });
+  const dispatchLoadsQuery = useQuery({
+    queryKey: ["dispatch", "drivers-home", selectedCompanyId],
+    queryFn: () =>
+      listDispatchLoads({
+        operating_company_id: selectedCompanyId!,
+        view: "home",
+        limit: 200,
+        offset: 0,
+        status: ["assigned_not_dispatched", "dispatched", "in_transit"],
+      }),
+    enabled: Boolean(selectedCompanyId),
+  });
+  const samsaraHealthQuery = useQuery({
+    queryKey: ["samsara", "health", selectedCompanyId],
+    queryFn: () => getSamsaraHealth(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
   });
 
   const createTeamMutation = useMutation({
@@ -568,6 +638,117 @@ export function DriversPage() {
     () => allDrivers.filter((d) => driverMatchesListSegment(d.status, driverListStatus)),
     [allDrivers, driverListStatus]
   );
+  const newDriversInLast3Days = useMemo(() => {
+    const threshold = Date.now() - 3 * 24 * 60 * 60 * 1000;
+    return allDrivers.filter((driver) => {
+      const createdAt = new Date(driver.created_at).getTime();
+      return !Number.isNaN(createdAt) && createdAt >= threshold;
+    }).length;
+  }, [allDrivers]);
+  const settlementsReadyRows = useMemo(() => {
+    return (settlementsQuery.data?.settlements ?? [])
+      .filter((settlement) => ["presettle", "acked", "locked"].includes(String(settlement.status)))
+      .slice(0, 8);
+  }, [settlementsQuery.data?.settlements]);
+  const settlementsReadyTotal = useMemo(() => {
+    return settlementsReadyRows.reduce((sum, row) => sum + Number(row.net_pay ?? 0), 0);
+  }, [settlementsReadyRows]);
+  const debtAlertRows = useMemo(() => {
+    const aggregates = new Map<
+      string,
+      { driver_id: string; driver_name: string; total: number; reasons: string[] }
+    >();
+    const upsertDebt = (driverId: string, driverName: string, amount: number, reason: string) => {
+      if (!driverId || amount <= 0) return;
+      const current = aggregates.get(driverId) ?? { driver_id: driverId, driver_name: driverName, total: 0, reasons: [] };
+      current.total += amount;
+      current.reasons.push(reason);
+      aggregates.set(driverId, current);
+    };
+
+    for (const request of cashAdvancesQuery.data?.requests ?? []) {
+      const amount = Number(request.outstanding_balance ?? request.amount ?? request.requested_amount ?? 0);
+      const driverId = String(request.driver_id ?? request.driver_uuid ?? request.driver_full_name ?? "");
+      const driverName = String(request.driver_full_name ?? request.driver_name ?? "Unknown driver");
+      upsertDebt(driverId, driverName, amount, "cash advance");
+    }
+
+    for (const liability of liabilitiesQuery.data?.liabilities ?? []) {
+      const type = String(liability.type ?? "");
+      const source = String(liability.source_description ?? liability.description ?? "");
+      const category = `${type} ${source}`.toLowerCase();
+      const matchesDebtAlert =
+        category.includes("repair") ||
+        category.includes("damage") ||
+        category.includes("late") ||
+        category.includes("penalt");
+      if (!matchesDebtAlert) continue;
+      const amount = Number(liability.current_balance ?? liability.balance ?? 0);
+      const driverId = String(liability.driver_id ?? liability.driver_full_name ?? "");
+      const driverName = String(liability.driver_full_name ?? liability.driver_name ?? "Unknown driver");
+      upsertDebt(driverId, driverName, amount, source || type || "liability");
+    }
+
+    return Array.from(aggregates.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 8);
+  }, [cashAdvancesQuery.data?.requests, liabilitiesQuery.data?.liabilities]);
+  const totalDriversOwe = useMemo(
+    () => debtAlertRows.reduce((sum, row) => sum + Number(row.total || 0), 0),
+    [debtAlertRows]
+  );
+  const activeDriverLoadRows = useMemo(() => {
+    const byDriver = new Map<string, { driver_name: string; stage: string; route: string; eta: string }>();
+    for (const load of dispatchLoadsQuery.data?.loads ?? []) {
+      const driverName = String(load.driver_short_name ?? "").trim();
+      if (!driverName || byDriver.has(driverName)) continue;
+      const stage = String(load.driver_lifecycle_stage ?? "unknown").replaceAll("_", " ");
+      const route = `${String(load.pickup_city ?? "—")} - ${String(load.delivery_city ?? "—")}`;
+      const etaVariance = Number(load.latest_eta_prediction?.variance_minutes ?? 0);
+      const eta =
+        load.latest_eta_prediction?.predicted_arrival_at
+          ? `${new Date(load.latest_eta_prediction.predicted_arrival_at).toLocaleDateString()} (${etaVariance}m)`
+          : "ETA n/a";
+      byDriver.set(driverName, { driver_name: driverName, stage, route, eta });
+    }
+    return Array.from(byDriver.values()).slice(0, 8);
+  }, [dispatchLoadsQuery.data?.loads]);
+  const permitExpirationRows = useMemo(() => {
+    const rows: Array<{ id: string; driver_name: string; label: string; days: number }> = [];
+    for (const driver of allDrivers) {
+      const fullName = `${driver.first_name} ${driver.last_name}`;
+      const pushIfSoon = (date: string | null, label: string) => {
+        if (!isWithinNextDays(date, 60)) return;
+        const d = daysUntil(date);
+        if (d == null) return;
+        rows.push({ id: `${driver.id}-${label}`, driver_name: fullName, label, days: d });
+      };
+      pushIfSoon(driver.cdl_expires_at, "CDL renewal");
+      pushIfSoon(driver.dot_medical_expires_at, "Medical card");
+      pushIfSoon(driver.hazmat_endorsement_expires_at, "Hazmat endorsement");
+      pushIfSoon(driver.visa_expires_at, "Visa expiration");
+      pushIfSoon(driver.passport_expires_at, "Passport expiration");
+    }
+    return rows.sort((a, b) => a.days - b.days).slice(0, 8);
+  }, [allDrivers]);
+  const activeCount = useMemo(() => allDrivers.filter((driver) => driver.status === "Active").length, [allDrivers]);
+  const onLeaveCount = useMemo(() => allDrivers.filter((driver) => driver.status === "OnLeave").length, [allDrivers]);
+  const onLoadsCount = useMemo(() => {
+    const names = new Set((dispatchLoadsQuery.data?.loads ?? []).map((load) => String(load.driver_short_name ?? "").trim()).filter(Boolean));
+    return names.size;
+  }, [dispatchLoadsQuery.data?.loads]);
+  const availableCount = useMemo(
+    () => Math.max(activeCount - onLoadsCount - onLeaveCount, 0),
+    [activeCount, onLoadsCount, onLeaveCount]
+  );
+  const settleDueCount = useMemo(
+    () => (settlementsQuery.data?.settlements ?? []).filter((s) => ["presettle", "acked", "locked"].includes(String(s.status))).length,
+    [settlementsQuery.data?.settlements]
+  );
+  const escrowTotal = useMemo(
+    () => (escrowBalancesQuery.data?.drivers ?? []).reduce((sum, row) => sum + Number(row.escrow_balance ?? 0), 0),
+    [escrowBalancesQuery.data?.drivers]
+  );
 
   const setDriverListStatus = (next: DriverListStatusId) => {
     setSearchParams(
@@ -584,24 +765,26 @@ export function DriversPage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        title="Drivers · 3 new in last 3 days"
-        subtitle={`${driversRowsFiltered.length} records`}
+        title="Drivers"
+        subtitle={`${newDriversInLast3Days} new in last 3 days`}
         actions={
           <div className="flex items-center gap-2">
-            <ActionButton onClick={openDriverCreate}>+ Driver</ActionButton>
+            <ActionButton className="rounded border border-emerald-700 bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-600" onClick={openDriverCreate}>
+              + Driver
+            </ActionButton>
             <ActionButton onClick={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}>Refresh</ActionButton>
           </div>
         }
       />
 
       <KpiStrip>
-        <KpiCard label="Active" number="62/70" accent={colors.drivers.strong} />
-        <KpiCard label="On Loads" number="48" accent={colors.dispatch.strong} />
-        <KpiCard label="Available" number="14" accent={colors.info.strong} />
-        <KpiCard label="On Leave" number="8" accent={colors.warn.strong} />
-        <KpiCard label="Settle Due" number="7" accent={colors.accounting.strong} />
-        <KpiCard label="Drivers Owe" number="$5,860" accent={colors.crit.strong} />
-        <KpiCard label="Escrow" number="$84,200" accent={colors.fleet.strong} />
+        <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} />
+        <KpiCard label="On Loads" number={String(onLoadsCount)} accent={colors.dispatch.strong} />
+        <KpiCard label="Available" number={String(availableCount)} accent={colors.info.strong} />
+        <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} />
+        <KpiCard label="Settle Due" number={String(settleDueCount)} accent={colors.accounting.strong} />
+        <KpiCard label="Drivers Owe" number={formatMoney(totalDriversOwe)} accent={colors.crit.strong} />
+        <KpiCard label="Escrow" number={formatMoney(escrowTotal)} accent={colors.fleet.strong} />
       </KpiStrip>
 
       <SecondaryNavTabs
@@ -742,30 +925,49 @@ export function DriversPage() {
         ]}
       />
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <DataPanel title="Settlements Ready · 7 drivers back in Laredo" accentColor={colors.accounting.strong}>
-          <DataPanelRow><span>Smith, John · 4 loads · 1,927 mi</span><span>$3,920</span></DataPanelRow>
-          <DataPanelRow><span>Garcia, Luis · 3 loads · 1,611 mi</span><span>$3,210</span></DataPanelRow>
-          <DataPanelRow><span>Martinez, Ana · 3 loads · 1,402 mi</span><span>$2,980</span></DataPanelRow>
-          <DataPanelRow><span className="font-semibold">Total payout this batch</span><span className="font-semibold">$21,260</span></DataPanelRow>
+      <div className="grid auto-rows-fr gap-3 md:grid-cols-2">
+        <DataPanel title={`Settlements Ready · ${settlementsReadyRows.length} drivers`} accentColor={colors.accounting.strong}>
+          {settlementsReadyRows.map((settlement) => (
+            <DataPanelRow key={settlement.id}>
+              <span>{settlement.driver_full_name} · {settlement.period_start} to {settlement.period_end}</span>
+              <span>{formatMoney(Number(settlement.net_pay ?? 0))}</span>
+            </DataPanelRow>
+          ))}
+          {settlementsReadyRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No settlements ready right now.</p> : null}
+          <DataPanelRow><span className="font-semibold">Total payout this batch</span><span className="font-semibold">{formatMoney(settlementsReadyTotal)}</span></DataPanelRow>
         </DataPanel>
         <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
-          <DataPanelRow><span>J. Perez · accident deductible</span><span className="text-red-600">-$1,800</span></DataPanelRow>
-          <DataPanelRow><span>E. Ruiz · fines + advance</span><span className="text-red-600">-$1,420</span></DataPanelRow>
-          <DataPanelRow><span>L. Garza · tire damage</span><span className="text-red-600">-$1,050</span></DataPanelRow>
-          <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">-$5,860</span></DataPanelRow>
+          {debtAlertRows.map((row) => (
+            <DataPanelRow key={row.driver_id}>
+              <span>{row.driver_name} · {row.reasons.slice(0, 2).join(" + ")}</span>
+              <span className="text-red-600">-{formatMoney(row.total)}</span>
+            </DataPanelRow>
+          ))}
+          {debtAlertRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No outstanding cash advance, repair, damage, or late-arrival debt.</p> : null}
+          <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe)}</span></DataPanelRow>
         </DataPanel>
-        <DataPanel title="Active Drivers · Samsara live" accentColor={colors.info.strong}>
-          <DataPanelRow><span>Smith, John · Driving · Laredo, TX</span><span>HOS 6h</span></DataPanelRow>
-          <DataPanelRow><span>Garcia, Luis · On duty · I-35 MM 42</span><span>HOS 5h</span></DataPanelRow>
-          <DataPanelRow><span>Martinez, Ana · Sleeper · San Antonio</span><span>HOS 9h</span></DataPanelRow>
-          <DataPanelRow><span className="font-semibold">+ 55 more</span><span className="font-semibold">view all</span></DataPanelRow>
+        <DataPanel
+          title={`Active Drivers · Samsara ${samsaraHealthQuery.data?.is_enabled ? "live" : "not connected"}`}
+          accentColor={colors.info.strong}
+        >
+          {activeDriverLoadRows.map((row) => (
+            <DataPanelRow key={`${row.driver_name}-${row.route}`}>
+              <span>{row.driver_name} · {row.stage} · {row.route}</span>
+              <span>{row.eta}</span>
+            </DataPanelRow>
+          ))}
+          {activeDriverLoadRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No active driver movement from dispatch feed.</p> : null}
+          <DataPanelRow><span className="font-semibold">Samsara status</span><span className="font-semibold">{samsaraHealthQuery.data?.last_health_status ?? "unknown"}</span></DataPanelRow>
         </DataPanel>
         <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
-          <DataPanelRow><span>Smith, John · CDL renewal</span><span>22d</span></DataPanelRow>
-          <DataPanelRow><span>Garcia, Luis · Medical card</span><span>34d</span></DataPanelRow>
-          <DataPanelRow><span>Martinez, Ana · Hazmat endorsement</span><span>48d</span></DataPanelRow>
-          <DataPanelRow><span className="font-semibold">Auto-email safety officer</span><span className="font-semibold">60d out</span></DataPanelRow>
+          {permitExpirationRows.map((row) => (
+            <DataPanelRow key={row.id}>
+              <span>{row.driver_name} · {row.label}</span>
+              <span>{row.days}d</span>
+            </DataPanelRow>
+          ))}
+          {permitExpirationRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No permit/document expirations in the next 60 days.</p> : null}
+          <DataPanelRow><span className="font-semibold">Pending escrow approvals</span><span className="font-semibold">{(pendingEscrowQuery.data?.data ?? []).length}</span></DataPanelRow>
         </DataPanel>
       </div>
         </>

@@ -1,326 +1,322 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState, type ReactNode } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { batchCategorizeVendors } from "../api/vendorCategory";
-import { createVendor, listVendors, type CreateVendorInput, type VendorOption } from "../api/mdata";
-import { Button } from "../components/Button";
-import { DataTable } from "../components/DataTable";
-import { Modal } from "../components/Modal";
-import { PageHeader } from "../components/layout/PageHeader";
-import { useToast } from "../components/Toast";
-import { VendorCategoryChip } from "../components/vendors/VendorCategoryChip";
-import { useCompanyContext } from "../contexts/CompanyContext";
-import { dataTableErrorState } from "../lib/tableError";
-import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
-import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
-import { ApiError } from "../api/client";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { listBills, listVendorBalances } from "../api/accounting";
+import { listVendors, type VendorOption } from "../api/mdata";
+import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
+import { PageHeader } from "../components/layout/PageHeader";
+import { useCompanyContext } from "../contexts/CompanyContext";
 
-const VENDOR_LIST_TAB_IDS = ["all", "active", "inactive", "by-category"] as const;
-type VendorListTabId = (typeof VENDOR_LIST_TAB_IDS)[number];
+type VendorTabId = "transaction_list" | "vendor_details" | "notes";
 
-function parseVendorListTab(searchParams: URLSearchParams): VendorListTabId {
-  const raw = (searchParams.get("tab") ?? "all").toLowerCase().replace(/\s+/g, "-");
-  const normalized = raw === "by_category" ? "by-category" : raw;
-  return (VENDOR_LIST_TAB_IDS as readonly string[]).includes(normalized) ? (normalized as VendorListTabId) : "all";
+const VENDOR_TABS: Array<{ id: VendorTabId; label: string }> = [
+  { id: "transaction_list", label: "Transaction List" },
+  { id: "vendor_details", label: "Vendor Details" },
+  { id: "notes", label: "Notes" },
+];
+
+type ColumnKey =
+  | "date"
+  | "type"
+  | "doc_no"
+  | "status"
+  | "amount"
+  | "balance"
+  | "load_no"
+  | "settlement_no"
+  | "truck_no"
+  | "pickup_date"
+  | "delivery_date"
+  | "loaded_miles";
+
+const COLUMN_OPTIONS: Array<{ key: ColumnKey; label: string; defaultOn: boolean }> = [
+  { key: "date", label: "Date", defaultOn: true },
+  { key: "type", label: "Type", defaultOn: true },
+  { key: "doc_no", label: "Doc #", defaultOn: true },
+  { key: "status", label: "Status", defaultOn: true },
+  { key: "amount", label: "Amount", defaultOn: true },
+  { key: "balance", label: "Balance", defaultOn: true },
+  { key: "load_no", label: "Load #", defaultOn: true },
+  { key: "settlement_no", label: "Settlement #", defaultOn: false },
+  { key: "truck_no", label: "Truck #", defaultOn: false },
+  { key: "pickup_date", label: "Pick-up date", defaultOn: false },
+  { key: "delivery_date", label: "Delivery date", defaultOn: false },
+  { key: "loaded_miles", label: "Loaded miles", defaultOn: false },
+];
+
+const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+function fmtMoney(cents: number | null | undefined) {
+  return usd.format((Number(cents ?? 0) || 0) / 100);
 }
 
-const VENDOR_TYPES: CreateVendorInput["vendor_type"][] = ["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"];
+function buildAchDisplay(vendor: VendorOption) {
+  const text = `${vendor.notes ?? ""}`.toLowerCase();
+  if (text.includes("ach")) return "ACH on file";
+  return "—";
+}
 
 export function VendorsPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [editCategories, setEditCategories] = useState(false);
-  const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [batchCategory, setBatchCategory] = useState<VendorCategoryValue>("other");
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createName, setCreateName] = useState("");
-  const [createType, setCreateType] = useState<CreateVendorInput["vendor_type"]>("Other");
-
-  const vendorListTab = useMemo(() => parseVendorListTab(searchParams), [searchParams]);
-  const categoryFilter = searchParams.get("category") ?? "";
-
-  const setVendorListTab = (next: VendorListTabId) => {
-    setSearchParams(
-      (prev) => {
-        const nextParams = new URLSearchParams(prev);
-        if (next === "all") {
-          nextParams.delete("tab");
-          nextParams.delete("category");
-        } else {
-          nextParams.set("tab", next);
-          if (next !== "by-category") nextParams.delete("category");
-        }
-        return nextParams;
-      },
-      { replace: false }
-    );
-  };
-
-  const setCategoryFilter = (value: string) => {
-    setSearchParams(
-      (prev) => {
-        const nextParams = new URLSearchParams(prev);
-        nextParams.set("tab", "by-category");
-        if (!value) nextParams.delete("category");
-        else nextParams.set("category", value);
-        return nextParams;
-      },
-      { replace: false }
-    );
-  };
+  const [search, setSearch] = useState("");
+  const [sortByName, setSortByName] = useState<"name_asc" | "name_desc">("name_asc");
+  const [activeTab, setActiveTab] = useState<VendorTabId>("transaction_list");
+  const [selectedVendorId, setSelectedVendorId] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [showFilterBox, setShowFilterBox] = useState(false);
+  const [showColumnChooser, setShowColumnChooser] = useState(false);
+  const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(
+    () => Object.fromEntries(COLUMN_OPTIONS.map((column) => [column.key, column.defaultOn])) as Record<ColumnKey, boolean>
+  );
 
   const vendorsQuery = useQuery({
-    queryKey: ["vendors", "list-page", companyId],
-    queryFn: () => listVendors(companyId ? { operating_company_id: companyId } : {}).then((result) => result.vendors),
+    queryKey: ["vendors", "page", companyId],
+    queryFn: () => listVendors({ operating_company_id: companyId }).then((result) => result.vendors),
+    enabled: Boolean(companyId),
+  });
+  const balancesQuery = useQuery({
+    queryKey: ["accounting", "vendor-balances", companyId],
+    queryFn: () => listVendorBalances(companyId, { all: true }),
     enabled: Boolean(companyId),
   });
 
-  const allVendors = useMemo(() => vendorsQuery.data ?? [], [vendorsQuery.data]);
-
-  const vendorTypes = useMemo(() => {
-    const set = new Set<string>();
-    for (const v of allVendors) {
-      if (v.vendor_type) set.add(v.vendor_type);
-    }
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [allVendors]);
-
-  const vendorTabCounts = useMemo(() => {
-    const active = allVendors.filter((v) => !v.deactivated_at).length;
-    const inactive = allVendors.filter((v) => Boolean(v.deactivated_at)).length;
-    return {
-      all: allVendors.length,
-      active,
-      inactive,
-      byCategory: categoryFilter ? allVendors.filter((v) => v.vendor_type === categoryFilter).length : allVendors.length,
-    };
-  }, [allVendors, categoryFilter]);
-
-  const rowsFiltered = useMemo(() => {
-    let rows = [...allVendors];
-    if (vendorListTab === "active") rows = rows.filter((v) => !v.deactivated_at);
-    else if (vendorListTab === "inactive") rows = rows.filter((v) => Boolean(v.deactivated_at));
-    else if (vendorListTab === "by-category" && categoryFilter) rows = rows.filter((v) => v.vendor_type === categoryFilter);
+  const vendorsSorted = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const rows = (vendorsQuery.data ?? []).filter((vendor) => {
+      if (!q) return true;
+      return (
+        vendor.name.toLowerCase().includes(q) ||
+        String(vendor.vendor_code ?? "").toLowerCase().includes(q) ||
+        String(vendor.email ?? "").toLowerCase().includes(q)
+      );
+    });
+    rows.sort((a, b) => {
+      const cmp = a.name.localeCompare(b.name);
+      return sortByName === "name_asc" ? cmp : -cmp;
+    });
     return rows;
-  }, [allVendors, vendorListTab, categoryFilter]);
+  }, [vendorsQuery.data, search, sortByName]);
 
-  const selectedIds = useMemo(() => Object.entries(selected).filter(([, v]) => v).map(([id]) => id), [selected]);
+  const selectedVendor = useMemo(() => {
+    const exact = vendorsSorted.find((vendor) => vendor.id === selectedVendorId);
+    if (exact) return exact;
+    return vendorsSorted[0] ?? null;
+  }, [vendorsSorted, selectedVendorId]);
 
-  const batchMutation = useMutation({
-    mutationFn: () =>
-      batchCategorizeVendors({
-        operating_company_id: companyId,
-        vendor_ids: selectedIds,
-        category: batchCategory,
-        lock: false,
-      }),
-    onSuccess: async (data) => {
-      pushToast(`Updated ${data.updated} vendor(s)`, "success");
-      setSelected({});
-      setEditCategories(false);
-      await queryClient.invalidateQueries({ queryKey: ["vendors"] });
-    },
-    onError: (e) => {
-      pushToast(e instanceof ApiError ? e.message : "Batch categorize failed", "error");
-    },
-  });
-
-  const createMutation = useMutation({
-    mutationFn: () =>
-      createVendor({
-        name: createName.trim(),
-        vendor_type: createType,
-        operating_company_id: companyId || undefined,
-      }),
-    onSuccess: async (row) => {
-      pushToast("Vendor created", "success");
-      setCreateOpen(false);
-      setCreateName("");
-      await queryClient.invalidateQueries({ queryKey: ["vendors"] });
-      navigate(`/vendors/${row.id}`);
-    },
-    onError: (e) => pushToast(e instanceof ApiError ? e.message : "Create failed", "error"),
-  });
-
-  const columns = useMemo(() => {
-    const cols: Array<{
-      key: string;
-      label: string;
-      className?: string;
-      cellClass?: string;
-      render: (row: VendorOption) => ReactNode;
-    }> = [];
-    if (editCategories) {
-      cols.push({
-        key: "pick",
-        label: "",
-        render: (row) => (
-          <input
-            type="checkbox"
-            checked={Boolean(selected[row.id])}
-            onChange={(ev) => setSelected((prev) => ({ ...prev, [row.id]: ev.target.checked }))}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`Select ${row.name}`}
-          />
-        ),
-      });
+  const openByVendorId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const row of balancesQuery.data?.rows ?? []) {
+      map.set(row.vendor_id, Number(row.balance_cents ?? 0));
     }
-    cols.push(
-      {
-        key: "name",
-        label: "Name",
-        className: "max-w-[240px] whitespace-nowrap",
-        render: (row) => (
-          <span title={row.name} className="single-line-name">
-            {row.name}
-          </span>
-        ),
-      },
-      { key: "vendor_code", label: "Code", cellClass: "code-cell", render: (row) => row.vendor_code ?? "—" },
-      { key: "vendor_type", label: "Type", render: (row) => row.vendor_type },
-      {
-        key: "vendor_category",
-        label: "Category",
-        render: (row) => <VendorCategoryChip code={row.vendor_category} />,
-      },
-      {
-        key: "status",
-        label: "Status",
-        render: (row) => (row.deactivated_at ? "Inactive" : "Active"),
-      }
-    );
-    return cols;
-  }, [editCategories, selected]);
+    return map;
+  }, [balancesQuery.data?.rows]);
+
+  const billsQuery = useQuery({
+    queryKey: ["vendors", "transactions", companyId, selectedVendor?.id ?? "", statusFilter, dateFrom, dateTo],
+    queryFn: () =>
+      listBills(companyId, {
+        vendor_id: selectedVendor!.id,
+        status: statusFilter === "unpaid" ? "unpaid" : (statusFilter as "open" | "partial" | "paid" | "voided" | undefined),
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
+      }),
+    enabled: Boolean(companyId && selectedVendor?.id),
+  });
+
+  const txRows = useMemo(() => {
+    return (billsQuery.data?.rows ?? []).filter((bill) => {
+      if (typeFilter && "bill" !== typeFilter) return false;
+      if (categoryFilter && !String(bill.memo ?? "").toLowerCase().includes(categoryFilter.toLowerCase())) return false;
+      return true;
+    });
+  }, [billsQuery.data?.rows, typeFilter, categoryFilter]);
+
+  const overdueCents = useMemo(() => {
+    const now = new Date();
+    return txRows.reduce((sum, bill) => {
+      const due = bill.due_date ? new Date(`${bill.due_date}T00:00:00`) : null;
+      const isOverdue = due != null && !Number.isNaN(due.getTime()) && due.getTime() < now.getTime();
+      const balance = Number(bill.balance_cents ?? Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
+      return isOverdue ? sum + Math.max(balance, 0) : sum;
+    }, 0);
+  }, [txRows]);
 
   return (
-    <div className="space-y-3 pb-16">
-      <PageHeader
-        title="Vendors"
-        subtitle={`${rowsFiltered.length} records`}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" size="sm" variant="secondary" onClick={() => setEditCategories((e) => !e)}>
-              {editCategories ? "Done editing categories" : "Edit categories"}
-            </Button>
-            <Button type="button" size="sm" disabled={!companyId} onClick={() => setCreateOpen(true)}>
-              + Vendor
-            </Button>
-          </div>
-        }
-      />
-      {!companyId ? <p className="text-sm text-amber-800">Select an operating company to load vendors.</p> : null}
-      <SecondaryNavTabs
-        className="-mx-2"
-        activeId={vendorListTab}
-        onChange={(id) => {
-          if ((VENDOR_LIST_TAB_IDS as readonly string[]).includes(id)) setVendorListTab(id as VendorListTabId);
-        }}
-        tabs={[
-          { id: "all", label: `All (${vendorTabCounts.all})` },
-          { id: "active", label: `Active (${vendorTabCounts.active})` },
-          { id: "inactive", label: `Inactive (${vendorTabCounts.inactive})` },
-          { id: "by-category", label: `By Category (${vendorTabCounts.byCategory})` },
-        ]}
-      />
-      {vendorListTab === "by-category" ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="text-xs font-semibold text-gray-600" htmlFor="vendor-category-filter">
-            Vendor type
-          </label>
+    <div className="space-y-3">
+      <PageHeader title="Vendors" subtitle="Vendor list and transactions" />
+      <div className="flex gap-3">
+        <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by name or details"
+            className="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          />
           <SelectCombobox
-            id="vendor-category-filter"
-            value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-            className="h-8 max-w-xs rounded border border-gray-300 px-2 text-[13px]"
+            value={sortByName}
+            onChange={(event) => setSortByName(event.target.value as "name_asc" | "name_desc")}
+            className="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
           >
-            <option value="">All types</option>
-            {vendorTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
+            <option value="name_asc">Sort by name</option>
+            <option value="name_desc">Sort by name (Z-A)</option>
           </SelectCombobox>
-        </div>
-      ) : null}
-      <DataTable
-        rows={rowsFiltered}
-        rowKey={(row) => row.id}
-        loading={vendorsQuery.isLoading}
-        errorState={dataTableErrorState(vendorsQuery.error, () => void vendorsQuery.refetch())}
-        onRowClick={editCategories ? undefined : (row) => navigate(`/vendors/${row.id}`)}
-        columns={columns}
-      />
-
-      {editCategories && selectedIds.length > 0 ? (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] md:left-20">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
-            <span className="text-sm font-medium text-gray-800">{selectedIds.length} selected</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <SelectCombobox
-                className="h-9 rounded border border-gray-300 px-2 text-sm"
-                value={batchCategory}
-                onChange={(e) => setBatchCategory(e.target.value as VendorCategoryValue)}
+          <div className="max-h-[760px] space-y-1 overflow-y-auto">
+            {vendorsSorted.map((vendor) => (
+              <button
+                key={vendor.id}
+                type="button"
+                className={`w-full rounded border px-2 py-2 text-left ${selectedVendor?.id === vendor.id ? "border-blue-500 bg-blue-50" : "border-transparent hover:bg-gray-50"}`}
+                onClick={() => setSelectedVendorId(vendor.id)}
               >
-                {VENDOR_CATEGORY_VALUES.map((c) => (
-                  <option key={c} value={c}>
-                    {c.replace(/_/g, " ")}
-                  </option>
-                ))}
-              </SelectCombobox>
-              <Button type="button" size="sm" onClick={() => batchMutation.mutate()} loading={batchMutation.isPending} disabled={!companyId}>
-                Apply to {selectedIds.length} selected
-              </Button>
-            </div>
+                <p className="truncate text-sm font-medium text-gray-900">{vendor.name}</p>
+                <p className="text-xs text-gray-600">Open balance {fmtMoney(openByVendorId.get(vendor.id) ?? 0)}</p>
+              </button>
+            ))}
+            {vendorsSorted.length === 0 ? <p className="px-1 py-2 text-xs text-gray-500">No vendors found.</p> : null}
           </div>
-        </div>
-      ) : null}
+        </aside>
 
-      <Modal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        title="New vendor"
-        modalKind="vendors-quick-create"
-        sizePreset="md"
-        resizable
-      >
-        <div className="space-y-3 text-sm">
-          <label className="block">
-            <span className="text-xs font-semibold text-gray-600">Name</span>
-            <input
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
-              value={createName}
-              onChange={(e) => setCreateName(e.target.value)}
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-semibold text-gray-600">Vendor type</span>
-            <SelectCombobox
-              className="mt-1 h-9 w-full rounded border border-gray-300 px-2"
-              value={createType}
-              onChange={(e) => setCreateType(e.target.value as CreateVendorInput["vendor_type"])}
-            >
-              {VENDOR_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </SelectCombobox>
-          </label>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="secondary" type="button" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="button" disabled={!createName.trim() || !companyId} loading={createMutation.isPending} onClick={() => createMutation.mutate()}>
-              Save
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        <main className="min-w-0 flex-1 space-y-3">
+          {selectedVendor ? (
+            <>
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_320px]">
+                <section className="rounded border border-gray-200 bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">{selectedVendor.name}</h2>
+                      <p className="text-sm text-gray-500">{selectedVendor.vendor_code || "Vendor"} · {selectedVendor.vendor_type ?? "Type not set"}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ActionButton onClick={() => navigate(`/vendors/${selectedVendor.id}`)}>Edit</ActionButton>
+                      <ActionButton className="rounded border border-emerald-700 bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-600" onClick={() => navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)}>
+                        New transaction
+                      </ActionButton>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+                    <p><span className="font-semibold text-gray-600">Email:</span> {selectedVendor.email ?? "—"}</p>
+                    <p><span className="font-semibold text-gray-600">Phone:</span> {selectedVendor.phone ?? "—"}</p>
+                    <p><span className="font-semibold text-gray-600">Billing address:</span> {selectedVendor.address ?? "—"}</p>
+                    <p><span className="font-semibold text-gray-600">Shipping address:</span> —</p>
+                    <p><span className="font-semibold text-gray-600">Notes:</span> {selectedVendor.notes ?? "—"}</p>
+                    <p><span className="font-semibold text-gray-600">Custom fields:</span> —</p>
+                    <p className="md:col-span-2"><span className="font-semibold text-gray-600">Bill Pay ACH info:</span> {buildAchDisplay(selectedVendor)}</p>
+                  </div>
+                </section>
+                <section className="rounded border border-gray-200 bg-white p-3">
+                  <h3 className="mb-2 text-sm font-semibold text-gray-900">Summary</h3>
+                  <p className="text-sm text-gray-600">Open balance</p>
+                  <p className="text-xl font-semibold text-gray-900">{fmtMoney(openByVendorId.get(selectedVendor.id) ?? 0)}</p>
+                  <p className="mt-2 text-sm text-gray-600">Overdue payment</p>
+                  <p className="text-lg font-semibold text-red-700">{fmtMoney(overdueCents)}</p>
+                </section>
+              </div>
+
+              <SecondaryNavTabs tabs={VENDOR_TABS} activeId={activeTab} onChange={(id) => setActiveTab(id as VendorTabId)} />
+
+              {activeTab === "transaction_list" ? (
+                <div className="rounded border border-gray-200 bg-white p-3">
+                  <div className="relative mb-2 flex flex-wrap items-center gap-2">
+                    <SelectCombobox value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm">
+                      <option value="">Type: All</option>
+                      <option value="bill">bill</option>
+                    </SelectCombobox>
+                    <ActionButton onClick={() => setShowFilterBox((open) => !open)}>Filter</ActionButton>
+                    <span className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
+                      {dateFrom || dateTo ? `Date: ${dateFrom || "…"} - ${dateTo || "…"}` : "Date: Any"}
+                    </span>
+                    <button type="button" className="ml-auto rounded border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50" onClick={() => setShowColumnChooser((open) => !open)}>⚙</button>
+                    {showFilterBox ? (
+                      <div className="absolute left-0 top-9 z-10 w-[320px] rounded border border-gray-200 bg-white p-2 shadow">
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
+                        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm">
+                          <option value="">All</option>
+                          <option value="open">open</option>
+                          <option value="partial">partial</option>
+                          <option value="paid">paid</option>
+                          <option value="voided">voided</option>
+                          <option value="unpaid">unpaid</option>
+                        </SelectCombobox>
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
+                        <div className="mb-2 grid grid-cols-2 gap-2">
+                          <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
+                          <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="rounded border border-gray-300 px-2 py-1 text-sm" />
+                        </div>
+                        <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
+                        <input value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="w-full rounded border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
+                      </div>
+                    ) : null}
+                    {showColumnChooser ? (
+                      <div className="absolute right-0 top-9 z-10 w-[220px] rounded border border-gray-200 bg-white p-2 shadow">
+                        {COLUMN_OPTIONS.map((column) => (
+                          <label key={column.key} className="flex items-center gap-2 py-0.5 text-xs">
+                            <input
+                              type="checkbox"
+                              checked={columns[column.key]}
+                              onChange={(event) => setColumns((prev) => ({ ...prev, [column.key]: event.target.checked }))}
+                            />
+                            {column.label}
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-[1200px] w-full text-left text-sm">
+                      <thead className="bg-gray-50 text-xs uppercase text-gray-600">
+                        <tr>{COLUMN_OPTIONS.filter((column) => columns[column.key]).map((column) => <th key={column.key} className="px-2 py-1">{column.label}</th>)}</tr>
+                      </thead>
+                      <tbody>
+                        {txRows.map((bill) => {
+                          const open = Number(bill.balance_cents ?? Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0));
+                          const values: Record<ColumnKey, string> = {
+                            date: bill.bill_date,
+                            type: "bill",
+                            doc_no: bill.bill_number ?? bill.id.slice(0, 8),
+                            status: bill.status,
+                            amount: fmtMoney(bill.amount_cents),
+                            balance: fmtMoney(open),
+                            load_no: "—",
+                            settlement_no: "—",
+                            truck_no: "—",
+                            pickup_date: "—",
+                            delivery_date: "—",
+                            loaded_miles: "—",
+                          };
+                          return (
+                            <tr key={bill.id} className="border-t border-gray-100">
+                              {COLUMN_OPTIONS.filter((column) => columns[column.key]).map((column) => <td key={column.key} className="px-2 py-1">{values[column.key]}</td>)}
+                            </tr>
+                          );
+                        })}
+                        {txRows.length === 0 ? (
+                          <tr><td colSpan={COLUMN_OPTIONS.filter((column) => columns[column.key]).length} className="px-2 py-3 text-center text-sm text-gray-500">No transactions for current filters.</td></tr>
+                        ) : null}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : activeTab === "vendor_details" ? (
+                <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-700">
+                  Vendor details are shown in the header section for this layout.
+                </div>
+              ) : (
+                <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">{selectedVendor.notes ?? "No notes."}</div>
+              )}
+            </>
+          ) : (
+            <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">No vendor selected.</div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

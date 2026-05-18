@@ -40,13 +40,15 @@ type RowDetailDraft = {
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
-function mmddyyyy(iso: string | null | undefined) {
-  if (!iso) return "—";
-  const dt = new Date(`${iso}T00:00:00`);
-  if (Number.isNaN(dt.getTime())) return iso;
-  const mm = String(dt.getMonth() + 1).padStart(2, "0");
-  const dd = String(dt.getDate()).padStart(2, "0");
-  const yyyy = String(dt.getFullYear());
+export function formatBankTransactionDate(rawDate: string | null | undefined) {
+  if (!rawDate) return "—";
+  const dateMatch = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (dateMatch) return `${dateMatch[2]}/${dateMatch[3]}/${dateMatch[1]}`;
+  const dt = new Date(rawDate);
+  if (Number.isNaN(dt.getTime())) return rawDate;
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  const yyyy = String(dt.getUTCFullYear());
   return `${mm}/${dd}/${yyyy}`;
 }
 
@@ -341,7 +343,7 @@ export function BankingTransactionsDesignView({
                     <td className="px-2 py-2 align-top">
                       <input type="checkbox" onClick={(e) => e.stopPropagation()} />
                     </td>
-                    <td className="px-2 py-2 align-top text-gray-700">{mmddyyyy(tx.transaction_date)}</td>
+                    <td className="px-2 py-2 align-top text-gray-700">{formatBankTransactionDate(tx.transaction_date)}</td>
                     <td className="max-w-[760px] px-2 py-2 align-top">
                       <p className="truncate whitespace-nowrap text-gray-900">{transactionLabel(tx)}</p>
                     </td>
