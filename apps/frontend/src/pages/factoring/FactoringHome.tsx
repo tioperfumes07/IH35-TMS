@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deactivateFactoring, getFactoringChargebacksFees, getFactoringRecoursePipeline, getFactoringStatementsSettings, getFactoringSummary } from "../../api/factoring";
+import { listVendors, updateVendor } from "../../api/mdata";
 import {
   createDriverVendorMerge,
   createEquipmentLoan,
@@ -17,6 +18,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { parseVendorNotes, serializeVendorNotes } from "../../lib/vendorProfileMeta";
 
 const SUBNAV = [
   { id: "recourse_pipeline", label: "Recourse Pipeline" },
@@ -82,10 +84,16 @@ export function FactoringHomePage() {
   const [mergeReason, setMergeReason] = useState("duplicate_vendor_cleanup");
   const [mergeApplyToDriver, setMergeApplyToDriver] = useState(true);
   const [creatingMerge, setCreatingMerge] = useState(false);
+  const [savingFactorProfile, setSavingFactorProfile] = useState(false);
 
   const summaryQuery = useQuery({
     queryKey: ["factoring", "summary", companyId],
     queryFn: () => getFactoringSummary(companyId),
+    enabled: Boolean(companyId),
+  });
+  const vendorsQuery = useQuery({
+    queryKey: ["factoring", "vendors", companyId],
+    queryFn: () => listVendors({ operating_company_id: companyId, status: "active" }).then((res) => res.vendors),
     enabled: Boolean(companyId),
   });
   const recourseQuery = useQuery({
@@ -137,12 +145,21 @@ export function FactoringHomePage() {
   }, [invoices]);
 
   const summary = summaryQuery.data;
+  const activeFactorVendor = useMemo(() => {
+    const vendors = vendorsQuery.data ?? [];
+    if (summary?.active_factor_id) {
+      const byId = vendors.find((vendor) => vendor.id === summary.active_factor_id);
+      if (byId) return byId;
+    }
+    return vendors.find((vendor) => String(vendor.name ?? "").toLowerCase().includes("factoring")) ?? vendors[0] ?? null;
+  }, [summary?.active_factor_id, vendorsQuery.data]);
+  const factorParsed = useMemo(() => parseVendorNotes(activeFactorVendor?.notes), [activeFactorVendor?.notes]);
   const canDeactivate = user?.role === "Owner";
 
   return (
     <div className="space-y-3">
       <PageHeader
-        title="Factoring (Faro)"
+        title={`Factoring (${summary?.active_factor_name || activeFactorVendor?.name || "No active factor"})`}
         subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings"
         actions={
           <div className="flex items-center gap-2">
@@ -156,7 +173,7 @@ export function FactoringHomePage() {
       <div className="grid gap-2 md:grid-cols-4">
         <div className="rounded border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Active Factor</div>
-          <div className="mt-1 font-semibold text-gray-900">{summary?.active_factor_name ?? "Faro Factoring"}</div>
+          <div className="mt-1 font-semibold text-gray-900">{summary?.active_factor_name ?? activeFactorVendor?.name ?? "Not configured"}</div>
         </div>
         <div className="rounded border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Reserve Balance</div>
@@ -171,6 +188,85 @@ export function FactoringHomePage() {
           <div className="mt-1 font-semibold text-gray-900">{Number(summary?.recourse_days ?? 90)}</div>
         </div>
       </div>
+      {activeFactorVendor ? (
+        <div className="rounded border border-gray-200 bg-white p-3 text-sm">
+          <div className="mb-2 font-medium text-gray-900">Active factoring company profile</div>
+          <div className="grid gap-2 md:grid-cols-3">
+            <FieldRow label="Telephone" value={factorParsed.meta.telephone} />
+            <FieldRow label="Address" value={factorParsed.meta.address} />
+            <FieldRow label="General email" value={factorParsed.meta.generalEmail} />
+            <FieldRow label="Primary contact" value={factorParsed.meta.primaryContactName} />
+            <FieldRow label="Primary contact email" value={factorParsed.meta.primaryContactEmail} />
+            <FieldRow label="Accounting contact" value={factorParsed.meta.accountingContact} />
+            <FieldRow label="Disputes contact" value={factorParsed.meta.disputesContact} />
+            <FieldRow label="Factoring reserves %" value={factorParsed.meta.factoring.factoringReservesPct} />
+            <FieldRow label="Escrow reserves %" value={factorParsed.meta.factoring.escrowReservesPct} />
+            <FieldRow label="Late fees %" value={factorParsed.meta.factoring.lateFeesPct} />
+            <FieldRow label="Chargebacks %" value={factorParsed.meta.factoring.chargebacksPct} />
+            <FieldRow label="31-60 advance/fee %" value={`${factorParsed.meta.factoring.advanceRate31To60Pct || "—"} / ${factorParsed.meta.factoring.advanceFee31To60Pct || "—"}`} />
+            <FieldRow label="61-90 advance/fee %" value={`${factorParsed.meta.factoring.advanceRate61To90Pct || "—"} / ${factorParsed.meta.factoring.advanceFee61To90Pct || "—"}`} />
+          </div>
+          <div className="mt-3">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={async () => {
+                const nextTelephone = window.prompt("Telephone", factorParsed.meta.telephone) ?? factorParsed.meta.telephone;
+                const nextAddress = window.prompt("Address", factorParsed.meta.address) ?? factorParsed.meta.address;
+                const nextGeneralEmail = window.prompt("General email", factorParsed.meta.generalEmail) ?? factorParsed.meta.generalEmail;
+                const nextPrimaryContact = window.prompt("Primary contact", factorParsed.meta.primaryContactName) ?? factorParsed.meta.primaryContactName;
+                const nextPrimaryEmail = window.prompt("Primary contact email", factorParsed.meta.primaryContactEmail) ?? factorParsed.meta.primaryContactEmail;
+                const nextFactoringReserves = window.prompt("Factoring reserves %", factorParsed.meta.factoring.factoringReservesPct) ?? factorParsed.meta.factoring.factoringReservesPct;
+                const nextEscrowReserves = window.prompt("Escrow reserves %", factorParsed.meta.factoring.escrowReservesPct) ?? factorParsed.meta.factoring.escrowReservesPct;
+                const nextLateFees = window.prompt("Late fees %", factorParsed.meta.factoring.lateFeesPct) ?? factorParsed.meta.factoring.lateFeesPct;
+                const nextChargebacks = window.prompt("Chargebacks %", factorParsed.meta.factoring.chargebacksPct) ?? factorParsed.meta.factoring.chargebacksPct;
+                const nextRate31 = window.prompt("31-60 advance rate %", factorParsed.meta.factoring.advanceRate31To60Pct) ?? factorParsed.meta.factoring.advanceRate31To60Pct;
+                const nextFee31 = window.prompt("31-60 fee %", factorParsed.meta.factoring.advanceFee31To60Pct) ?? factorParsed.meta.factoring.advanceFee31To60Pct;
+                const nextRate61 = window.prompt("61-90 advance rate %", factorParsed.meta.factoring.advanceRate61To90Pct) ?? factorParsed.meta.factoring.advanceRate61To90Pct;
+                const nextFee61 = window.prompt("61-90 fee %", factorParsed.meta.factoring.advanceFee61To90Pct) ?? factorParsed.meta.factoring.advanceFee61To90Pct;
+                const mergedMeta = {
+                  ...factorParsed.meta,
+                  telephone: nextTelephone,
+                  address: nextAddress,
+                  generalEmail: nextGeneralEmail,
+                  primaryContactName: nextPrimaryContact,
+                  primaryContactEmail: nextPrimaryEmail,
+                  factoring: {
+                    ...factorParsed.meta.factoring,
+                    factoringReservesPct: nextFactoringReserves,
+                    escrowReservesPct: nextEscrowReserves,
+                    lateFeesPct: nextLateFees,
+                    chargebacksPct: nextChargebacks,
+                    advanceRate31To60Pct: nextRate31,
+                    advanceFee31To60Pct: nextFee31,
+                    advanceRate61To90Pct: nextRate61,
+                    advanceFee61To90Pct: nextFee61,
+                  },
+                };
+                try {
+                  setSavingFactorProfile(true);
+                  await updateVendor(activeFactorVendor.id, {
+                    phone: mergedMeta.telephone || null,
+                    address: mergedMeta.address || null,
+                    email: mergedMeta.generalEmail || null,
+                    notes: serializeVendorNotes(mergedMeta, factorParsed.publicNotes),
+                  });
+                  pushToast("Factoring profile saved", "success");
+                  await queryClient.invalidateQueries({ queryKey: ["factoring"] });
+                  await queryClient.invalidateQueries({ queryKey: ["factoring", "vendors", companyId] });
+                } catch (error) {
+                  pushToast(String((error as Error).message || "Failed to save profile"), "error");
+                } finally {
+                  setSavingFactorProfile(false);
+                }
+              }}
+              loading={savingFactorProfile}
+            >
+              Edit factoring profile
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
@@ -365,7 +461,7 @@ export function FactoringHomePage() {
                   }
                 }}
               >
-                Deactivate Faro Factor
+                Deactivate active factor
               </Button>
             </div>
             {!canDeactivate ? <div className="mt-2 text-xs text-amber-700">Only Owner role can deactivate an active factor.</div> : null}
@@ -705,6 +801,15 @@ export function FactoringHomePage() {
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function FieldRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1.5">
+      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-sm text-gray-900">{value || "—"}</div>
     </div>
   );
 }

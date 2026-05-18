@@ -9,6 +9,7 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { parseVendorNotes } from "../lib/vendorProfileMeta";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
 
@@ -57,6 +58,13 @@ function buildAchDisplay(vendor: VendorOption) {
   const text = `${vendor.notes ?? ""}`.toLowerCase();
   if (text.includes("ach")) return "ACH on file";
   return "—";
+}
+
+function vendorQualityLabel(notes: string | null | undefined) {
+  const rating = parseVendorNotes(notes).meta.qualityRating;
+  if (rating === "good") return { label: "Good", className: "bg-emerald-100 text-emerald-800" };
+  if (rating === "bad") return { label: "Bad", className: "bg-red-100 text-red-800" };
+  return { label: "Medium", className: "bg-amber-100 text-amber-800" };
 }
 
 export function VendorsPage() {
@@ -195,6 +203,9 @@ export function VendorsPage() {
               >
                 <p className="truncate text-sm font-medium text-gray-900">{vendor.name}</p>
                 <p className="text-xs text-gray-600">Open balance {fmtMoney(openByVendorId.get(vendor.id) ?? 0)}</p>
+                <p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${vendorQualityLabel(vendor.notes).className}`}>
+                  {vendorQualityLabel(vendor.notes).label}
+                </p>
               </button>
             ))}
             {vendorsSorted.length === 0 ? <p className="px-1 py-2 text-xs text-gray-500">No vendors found.</p> : null}
@@ -210,6 +221,9 @@ export function VendorsPage() {
                     <div>
                       <h2 className="text-lg font-semibold text-gray-900">{selectedVendor.name}</h2>
                       <p className="text-sm text-gray-500">{selectedVendor.vendor_code || "Vendor"} · {selectedVendor.vendor_type ?? "Type not set"}</p>
+                      <p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${vendorQualityLabel(selectedVendor.notes).className}`}>
+                        Vendor quality: {vendorQualityLabel(selectedVendor.notes).label}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <ActionButton onClick={() => navigate(`/vendors/${selectedVendor.id}`)}>Edit</ActionButton>

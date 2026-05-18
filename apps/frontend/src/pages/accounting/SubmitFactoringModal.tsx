@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listVendors } from "../../api/mdata";
 import { listFactoringCandidateInvoices, submitFactoringBatch } from "../../api/accounting";
+import { getFactoringSummary } from "../../api/factoring";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { parseVendorNotes } from "../../lib/vendorProfileMeta";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -39,6 +41,11 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
     queryFn: () => listFactoringCandidateInvoices(operatingCompanyId).then((res) => res.rows),
     enabled: open && Boolean(operatingCompanyId),
   });
+  const factoringSummaryQuery = useQuery({
+    queryKey: ["factoring", "summary", operatingCompanyId],
+    queryFn: () => getFactoringSummary(operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId),
+  });
 
   const selectedInvoices = useMemo(() => {
     const rows = invoicesQuery.data ?? [];
@@ -50,6 +57,19 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
     () => selectedInvoices.reduce((sum, row) => sum + Number(row.total_cents ?? 0), 0),
     [selectedInvoices]
   );
+
+  useEffect(() => {
+    if (!open) return;
+    if (!vendorId && factoringSummaryQuery.data?.active_factor_id) {
+      setVendorId(factoringSummaryQuery.data.active_factor_id);
+    }
+    const activeVendor = (vendorsQuery.data ?? []).find((vendor) => vendor.id === (factoringSummaryQuery.data?.active_factor_id ?? ""));
+    if (!activeVendor) return;
+    const parsed = parseVendorNotes(activeVendor.notes);
+    if (parsed.meta.factoring.advanceRate31To60Pct) setAdvanceRatePct(parsed.meta.factoring.advanceRate31To60Pct);
+    if (parsed.meta.factoring.factoringReservesPct) setReservePct(parsed.meta.factoring.factoringReservesPct);
+    if (parsed.meta.factoring.advanceFee31To60Pct) setFactorFeePct(parsed.meta.factoring.advanceFee31To60Pct);
+  }, [factoringSummaryQuery.data?.active_factor_id, open, vendorId, vendorsQuery.data]);
 
   function toggleInvoice(invoiceId: string) {
     setSelectedInvoiceIds((current) => (current.includes(invoiceId) ? current.filter((id) => id !== invoiceId) : [...current, invoiceId]));

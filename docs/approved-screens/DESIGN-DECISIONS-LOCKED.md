@@ -18,3 +18,7 @@
 | Bill Payment form | LOCKED 2026-05-18 | payment-application form per `02_PRODUCTION_CLEAN_v6_3.html` | feat/bill-expense-payment-forms |
 | Banking Transactions | LOCKED 2026-05-18 | QBO-parity transactions tab: account chips, For review/Categorized/Excluded sub-tabs, filter bar, grouped table, detail panel, transaction-type filter, gear view menu, print/export | feat/banking-transactions-qbo-parity |
 | Sidebar (owner-directed) | LOCKED 2026-05-18 | Added FUEL + DRIVERS left-sidebar entries while preserving all existing navigation entries/routes (F.24) | fix/wizard-nav-pagination-profiles-batch |
+| Factoring profile (owner-directed) | LOCKED 2026-05-18 | Active factoring company profile is editable and persisted (reserves, fees, aged advance/fee %, contacts) | feat/factoring-customer-vendor-quality |
+| Customer quality rating (owner-directed) | LOCKED 2026-05-18 | Automatic Good/Watch/Late-pay pill rendered from quality payment signals on list + profile; FMCSA standing surfaced on profile | feat/factoring-customer-vendor-quality |
+| Vendor quality rating (owner-directed) | LOCKED 2026-05-18 | Manual Good/Medium/Bad vendor rating persisted on profile and shown on list + profile; maintenance re-do warning surfaced from integrity feed | feat/factoring-customer-vendor-quality |
+| Dispatch factoring package (owner-directed) | LOCKED 2026-05-18 | Delivered/closed loads auto-generate factoring package summary PDF view (rate confirmation, POD/BOL, invoice) with email/mark-uploaded actions | feat/factoring-customer-vendor-quality |

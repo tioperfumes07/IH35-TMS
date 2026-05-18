@@ -34,6 +34,30 @@ async function withCompanyScope<T>(
   });
 }
 
+async function resolveActiveFactor(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, companyId: string) {
+  const res = await client
+    .query(
+      `
+        SELECT v.id, v.vendor_name
+        FROM mdata.vendors v
+        JOIN (
+          SELECT factoring_company_vendor_id AS vendor_id, COUNT(*)::int AS customer_count
+          FROM mdata.customers
+          WHERE operating_company_id = $1
+            AND factoring_company_vendor_id IS NOT NULL
+          GROUP BY factoring_company_vendor_id
+          ORDER BY COUNT(*) DESC
+          LIMIT 1
+        ) c ON c.vendor_id = v.id
+        WHERE v.operating_company_id = $1
+        LIMIT 1
+      `,
+      [companyId]
+    )
+    .catch(() => ({ rows: [] as Array<Record<string, unknown>> }));
+  return res.rows[0] ?? null;
+}
+
 export async function registerFactoringRoutes(app: FastifyInstance) {
   app.get("/api/v1/factoring/summary", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -43,6 +67,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const summary = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const activeFactor = await resolveActiveFactor(client, companyId);
       const res = await client
         .query(
           `
@@ -54,14 +79,13 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
           [companyId]
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return res.rows[0] ?? null;
+      return { row: res.rows[0] ?? null, activeFactor };
     });
 
-    return (
-      summary ?? {
+    return summary.row ?? {
         operating_company_id: companyId,
-        active_factor_id: null,
-        active_factor_name: "Faro Factoring",
+        active_factor_id: summary.activeFactor?.id ?? null,
+        active_factor_name: String(summary.activeFactor?.vendor_name ?? "Factoring Company"),
         recourse_days: 90,
         reserve_balance: 0,
         chargeback_balance: 0,
@@ -70,8 +94,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
         single_factor_invariant_ok: true,
         mtd_advances_count: 0,
         mtd_advanced_total: 0,
-      }
-    );
+      };
   });
 
   app.get("/api/v1/factoring/recourse-pipeline", async (req, reply) => {
@@ -155,6 +178,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const activeFactor = await resolveActiveFactor(client, companyId);
       const rowsRes = await client
         .query(
           `
@@ -171,8 +195,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       const rows = rowsRes.rows;
       const current = rows[0] ?? {
         operating_company_id: companyId,
-        active_factor_id: null,
-        active_factor_name: "Faro Factoring",
+        active_factor_id: activeFactor?.id ?? null,
+        active_factor_name: String(activeFactor?.vendor_name ?? "Factoring Company"),
         recourse_days: 90,
         active_factor_count: 0,
         single_factor_invariant_ok: true,

@@ -71,6 +71,19 @@ function fmtMoney(cents: number | null | undefined) {
   return usd.format((Number(cents ?? 0) || 0) / 100);
 }
 
+function customerQualityRating(paymentScore: string | null | undefined, overallFlag: "preferred" | "standard" | "caution" | "avoid") {
+  const numeric = Number(paymentScore ?? "");
+  if (Number.isFinite(numeric)) {
+    if (numeric >= 90) return { label: "Good", className: "bg-emerald-100 text-emerald-800" };
+    if (numeric >= 70) return { label: "Watch", className: "bg-amber-100 text-amber-800" };
+    return { label: "Late-pay", className: "bg-red-100 text-red-800" };
+  }
+  if (overallFlag === "preferred") return { label: "Good", className: "bg-emerald-100 text-emerald-800" };
+  if (overallFlag === "caution") return { label: "Watch", className: "bg-amber-100 text-amber-800" };
+  if (overallFlag === "avoid") return { label: "Late-pay", className: "bg-red-100 text-red-800" };
+  return { label: "Watch", className: "bg-amber-100 text-amber-800" };
+}
+
 export function CustomersPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -205,6 +218,13 @@ export function CustomersPage() {
               >
                 <p className="truncate text-sm font-medium text-gray-900">{customer.name}</p>
                 <p className="text-xs text-gray-600">Open balance {fmtMoney(openByCustomerId.get(customer.id) ?? 0)}</p>
+                <p
+                  className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    customerQualityRating(customer.quality_payment_score, customer.quality_overall_flag).className
+                  }`}
+                >
+                  {customerQualityRating(customer.quality_payment_score, customer.quality_overall_flag).label}
+                </p>
               </button>
             ))}
             {customersSorted.length === 0 ? <p className="px-1 py-2 text-xs text-gray-500">No customers found.</p> : null}
@@ -220,6 +240,18 @@ export function CustomersPage() {
                     <div>
                       <h2 className="text-lg font-semibold text-gray-900">{selectedCustomer.name}</h2>
                       <p className="text-sm text-gray-500">{selectedCustomer.customer_code || "Customer"} · {selectedCustomer.customer_type ?? "Type not set"}</p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            customerQualityRating(selectedCustomer.quality_payment_score, selectedCustomer.quality_overall_flag).className
+                          }`}
+                        >
+                          {customerQualityRating(selectedCustomer.quality_payment_score, selectedCustomer.quality_overall_flag).label}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          FMCSA: {selectedCustomer.fmcsa_authority_status_at_verification ?? "Not verified"}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <ActionButton onClick={() => navigate(`/customers/${selectedCustomer.id}`)}>Edit</ActionButton>
