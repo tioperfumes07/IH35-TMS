@@ -21,8 +21,8 @@ function statusPill(status: string) {
 
 export function LoadTable({ rows, selectedLoadId, onRowClick, onDriverStatusClick, onRowContextMenu }: Props) {
   return (
-    <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-      <table className="min-w-[1400px] w-full text-left text-[11px]">
+    <div className="overflow-hidden rounded border border-gray-200 bg-white">
+      <table className="w-full table-fixed text-left text-[11px]">
         <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
           <tr>
             {["Load #", "Unit", "Trailer", "WO", "Temp", "Driver", "Start", "End", "Customer", "Origin -> Destination", "Status", "Driver Status"].map(
@@ -41,18 +41,18 @@ export function LoadTable({ rows, selectedLoadId, onRowClick, onDriverStatusClic
               draggable
               className={`cursor-pointer border-t border-gray-100 hover:bg-gray-50 ${selectedLoadId === row.id ? "bg-[#E6F1FB]" : ""}`}
             >
-              <td className={`px-2 py-1 font-semibold text-blue-700 ${row.dispatch_status === "cancelled" ? "line-through opacity-70" : ""}`}>{row.load_number}</td>
-              <td className="px-2 py-1">
+              <td className={`truncate px-2 py-1 font-semibold text-blue-700 ${row.dispatch_status === "cancelled" ? "line-through opacity-70" : ""}`}>{row.load_number}</td>
+              <td className="truncate px-2 py-1">
                 <span className="inline-flex items-center gap-1">
                   {row.unit_number ?? "-"}
                   {row.has_open_pm_due_wo ? <span title="PM-due advisory (WF-044)">⚡</span> : null}
                   {row.is_dispatch_blocked ? <span title={row.dispatch_block_reason ?? "Dispatch blocked"}>🔒</span> : null}
                 </span>
               </td>
-              <td className="px-2 py-1">{row.trailer_number ?? "-"}</td>
+              <td className="truncate px-2 py-1">{row.trailer_number ?? "-"}</td>
               <td className="px-2 py-1 text-amber-700">—</td>
               <td className="px-2 py-1">dry</td>
-              <td className="px-2 py-1">
+              <td className="truncate px-2 py-1">
                 <span className="inline-flex items-center gap-1">
                   {row.driver_short_name ?? "Unassigned"}
                   {row.driver_short_name ? (
@@ -75,8 +75,8 @@ export function LoadTable({ rows, selectedLoadId, onRowClick, onDriverStatusClic
               </td>
               <td className="px-2 py-1">{row.created_at ? new Date(row.created_at).toLocaleDateString() : "-"}</td>
               <td className="px-2 py-1">{row.created_at ? new Date(row.created_at).toLocaleDateString() : "-"}</td>
-              <td className="px-2 py-1">{row.customer_name ?? "-"}</td>
-              <td className="px-2 py-1 truncate max-w-[260px]">
+              <td className="truncate px-2 py-1">{row.customer_name ?? "-"}</td>
+              <td className="truncate px-2 py-1">
                 {row.pickup_city ?? "-"} {row.pickup_state ?? ""} {"->"} {row.delivery_city ?? "-"} {row.delivery_state ?? ""}
               </td>
               <td className="px-2 py-1"><span className={statusPill(row.dispatch_status)}>{row.dispatch_status}</span></td>

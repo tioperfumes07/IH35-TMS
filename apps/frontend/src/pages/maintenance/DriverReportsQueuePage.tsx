@@ -55,8 +55,8 @@ export function DriverReportsQueuePage() {
         </SelectCombobox>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-[980px] w-full text-left text-xs">
+      <div className="overflow-hidden rounded border border-gray-200 bg-white">
+        <table className="w-full table-fixed text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>
               <th className="px-2 py-2">Reported</th>
@@ -72,11 +72,11 @@ export function DriverReportsQueuePage() {
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-gray-100 align-top">
-                <td className="px-2 py-2">{new Date(row.reported_at).toLocaleString()}</td>
-                <td className="px-2 py-2">{row.report_type}</td>
-                <td className="px-2 py-2">{row.driver_name ?? row.driver_id}</td>
-                <td className="px-2 py-2">{row.load_number ?? row.load_id ?? "—"}</td>
-                <td className="max-w-[320px] px-2 py-2">
+                <td className="truncate px-2 py-2">{new Date(row.reported_at).toLocaleString()}</td>
+                <td className="truncate px-2 py-2">{row.report_type}</td>
+                <td className="truncate px-2 py-2">{row.driver_name ?? row.driver_id}</td>
+                <td className="truncate px-2 py-2">{row.load_number ?? row.load_id ?? "—"}</td>
+                <td className="px-2 py-2">
                   <p className="whitespace-pre-wrap text-xs text-gray-700">{row.description}</p>
                   {row.latitude != null && row.longitude != null ? (
                     <p className="mt-1 text-[11px] text-gray-500">

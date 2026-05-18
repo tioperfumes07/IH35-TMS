@@ -59,7 +59,7 @@ export function DataTable<T>({
 
   return (
     <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
-      <table className="min-w-full text-left" style={{ fontSize: typography.tableRow }}>
+      <table className="w-full table-fixed text-left" style={{ fontSize: typography.tableRow }}>
         <thead className="bg-gray-50">
           <tr style={{ height: spacing.tableHeaderHeight }}>
             {columns.map((column) => (
@@ -132,7 +132,7 @@ export function DataTable<T>({
                 {columns.map((column) => (
                   <td
                     key={String(column.key)}
-                    className={`py-1 text-gray-800 ${column.cellClass ?? column.className ?? ""}`}
+                    className={`overflow-hidden break-all py-1 align-top text-gray-800 ${column.cellClass ?? column.className ?? ""}`}
                     style={{ paddingLeft: spacing.tableCellPaddingX, paddingRight: spacing.tableCellPaddingX }}
                   >
                     {column.render ? column.render(row) : String((row as Record<string, unknown>)[String(column.key)] ?? "")}
