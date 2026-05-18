@@ -107,6 +107,9 @@ import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
 import { VendorBillCreatePage } from "./pages/accounting/VendorBillCreatePage";
 import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { BillsPage } from "./pages/accounting/BillsPage";
+import { VendorBalancesPage } from "./pages/accounting/VendorBalancesPage";
+import { ManualJEListPage } from "./pages/accounting/ManualJEListPage";
+import { BillPaymentsListPage } from "./pages/accounting/BillPaymentsListPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
@@ -1430,6 +1433,30 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/accounting/vendor-balances"
+          element={
+            <ProtectedRoute>
+              <VendorBalancesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/journal-entries"
+          element={
+            <ProtectedRoute>
+              <ManualJEListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bill-payments"
+          element={
+            <ProtectedRoute>
+              <BillPaymentsListPage />
+            </ProtectedRoute>
+          }
+        />
         {[
           "/dispatch/loads",
           "/dispatch/geofencing",
@@ -1449,9 +1476,6 @@ export default function App() {
           "/safety/trailer-interchanges",
           "/drivers/settlements",
           "/drivers/permits",
-          "/accounting/bill-payments",
-          "/accounting/vendor-balances",
-          "/accounting/journal-entries",
           "/factoring/faro-imports",
           "/factoring/equipment-loans",
           "/factoring/vendor-merges",
