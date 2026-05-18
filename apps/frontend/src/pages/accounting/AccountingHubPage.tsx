@@ -58,12 +58,6 @@ function monthStartIso(date = new Date()) {
   return d.toISOString().slice(0, 10);
 }
 
-function daysAgoIso(days: number) {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - days);
-  return d.toISOString().slice(0, 10);
-}
-
 function isIsoOnOrAfter(left: string | null | undefined, right: string) {
   if (!left) return false;
   return left >= right;
@@ -144,7 +138,6 @@ export function AccountingHubPage() {
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const mtdStart = monthStartIso();
-  const last3dStart = daysAgoIso(3);
 
   useEffect(() => {
     const onDown = (event: MouseEvent) => {
@@ -203,14 +196,6 @@ export function AccountingHubPage() {
   const settlements = settlementsQ.data?.settlements ?? [];
   const invoices = invoicesQ.data?.invoices ?? [];
   const qboItems = qboQueueQ.data?.items ?? [];
-
-  const recentCount = useMemo(() => {
-    const recentBills = bills.filter((row) => isIsoOnOrAfter(row.created_at, last3dStart)).length;
-    const recentBillPayments = billPayments.filter((row) => isIsoOnOrAfter(row.created_at, last3dStart)).length;
-    const recentReceivePayments = receivePayments.filter((row) => isIsoOnOrAfter(row.created_at, last3dStart)).length;
-    const recentInvoices = invoices.filter((row) => isIsoOnOrAfter(row.created_at, last3dStart)).length;
-    return recentBills + recentBillPayments + recentReceivePayments + recentInvoices;
-  }, [bills, billPayments, receivePayments, invoices, last3dStart]);
 
   const openBills = useMemo(
     () =>
@@ -339,7 +324,6 @@ export function AccountingHubPage() {
           </div>
         }
       />
-      <p className="text-xs text-gray-500">{recentCount} new in last 3 days</p>
       {!companyId ? <p className="text-sm text-amber-800">Select an operating company.</p> : null}
 
       <div className="overflow-x-auto rounded border border-gray-200 bg-white px-2 py-1">
