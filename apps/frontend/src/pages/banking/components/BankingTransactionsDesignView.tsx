@@ -44,7 +44,7 @@ type RowDetailDraft = {
 };
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const TRANSACTION_FETCH_BATCH_SIZE = 500;
+const COMPANY_TRANSACTIONS_PAGE_SIZE = 500;
 
 type ReviewTabId = "for_review" | "categorized" | "excluded";
 type AmountFilter = "all" | "spent" | "received";
@@ -216,7 +216,7 @@ export function BankingTransactionsDesignView({
       let offset = 0;
       while (true) {
         const page = await getPlaidCompanyTransactions(companyId, {
-          limit: TRANSACTION_FETCH_BATCH_SIZE,
+          limit: COMPANY_TRANSACTIONS_PAGE_SIZE,
           offset,
           bank_account_id: selectedAccount?.id ?? undefined,
           q: descriptionFilter.trim() || undefined,
@@ -224,8 +224,8 @@ export function BankingTransactionsDesignView({
         });
         const rows = page.transactions ?? [];
         merged.push(...rows);
-        if (rows.length < TRANSACTION_FETCH_BATCH_SIZE) break;
-        offset += TRANSACTION_FETCH_BATCH_SIZE;
+        if (rows.length < COMPANY_TRANSACTIONS_PAGE_SIZE) break;
+        offset += COMPANY_TRANSACTIONS_PAGE_SIZE;
       }
       return { transactions: merged };
     },
