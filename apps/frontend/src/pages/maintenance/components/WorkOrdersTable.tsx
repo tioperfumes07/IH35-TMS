@@ -62,8 +62,8 @@ export function WorkOrdersTable({
           />
         </label>
       </div>
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-[1200px] w-full text-left text-xs">
+      <div className="overflow-hidden rounded border border-gray-200 bg-white">
+        <table className="w-full table-fixed text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>
               <th className="px-2 py-1">Display ID</th>
@@ -85,12 +85,12 @@ export function WorkOrdersTable({
                   </Link>
                 </td>
                 <td className="px-2 py-1">{row.source_type ?? "—"}</td>
-                <td className="px-2 py-1">{row.unit_id}</td>
-                <td className="px-2 py-1">{row.driver_id ?? "—"}</td>
-                <td className="px-2 py-1">{row.external_vendor_id ?? "—"}</td>
-                <td className="px-2 py-1">{row.status}</td>
+                <td className="truncate px-2 py-1">{row.unit_id}</td>
+                <td className="truncate px-2 py-1">{row.driver_id ?? "—"}</td>
+                <td className="truncate px-2 py-1">{row.external_vendor_id ?? "—"}</td>
+                <td className="truncate px-2 py-1">{row.status}</td>
                 <td className="px-2 py-1">${Number((row as Record<string, unknown>).total_actual_cost ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1">{renderDuration(row)}</td>
+                <td className="truncate px-2 py-1">{renderDuration(row)}</td>
               </tr>
             ))}
             {rows.length === 0 ? (

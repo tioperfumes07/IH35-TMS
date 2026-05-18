@@ -34,8 +34,8 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
   const avoidZones = stopPoints.filter((stop) => expensiveStates.includes(String(stop.station_state ?? stop.state ?? "").toUpperCase()));
 
   return (
-    <div className="overflow-x-auto rounded border border-gray-200 bg-white p-2">
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="min-w-[1100px] w-full">
+    <div className="overflow-hidden rounded border border-gray-200 bg-white p-2">
+      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full">
         <line x1={LEFT} y1={LINE_Y} x2={WIDTH - RIGHT} y2={LINE_Y} stroke="#1E3A8A" strokeWidth={3} />
 
         {avoidZones.map((zone) => (

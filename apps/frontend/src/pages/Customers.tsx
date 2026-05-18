@@ -340,8 +340,8 @@ export function CustomersPage() {
                       </div>
                     ) : null}
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-[1200px] w-full text-left text-sm">
+                  <div className="overflow-hidden">
+                    <table className="w-full table-fixed text-left text-sm">
                       <thead className="bg-gray-50 text-xs uppercase text-gray-600">
                         <tr>{COLUMN_OPTIONS.filter((column) => columns[column.key]).map((column) => <th key={column.key} className="px-2 py-1">{column.label}</th>)}</tr>
                       </thead>
@@ -363,7 +363,7 @@ export function CustomersPage() {
                           };
                           return (
                             <tr key={invoice.id} className="border-t border-gray-100">
-                              {COLUMN_OPTIONS.filter((column) => columns[column.key]).map((column) => <td key={column.key} className="px-2 py-1">{values[column.key]}</td>)}
+                              {COLUMN_OPTIONS.filter((column) => columns[column.key]).map((column) => <td key={column.key} className="truncate px-2 py-1">{values[column.key]}</td>)}
                             </tr>
                           );
                         })}

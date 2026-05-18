@@ -762,26 +762,26 @@ export function BankingTransactionsDesignView({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-[1900px] w-full text-left">
+      <div className="overflow-hidden rounded border border-gray-200 bg-white">
+        <table className="w-full table-fixed text-left text-[12px]">
           <thead className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>
-              <th className="px-2 py-2">☐</th>
-              <th className="px-2 py-2">Date</th>
-              <th className="px-2 py-2">Full bank description</th>
+              <th className="w-[3%] px-1 py-2">☐</th>
+              <th className="w-[7%] px-1 py-2">Date</th>
+              <th className="w-[17%] px-1 py-2">Full bank description</th>
               {viewSettings.showAmountsInOneColumn ? <th className="px-2 py-2">Amount</th> : <>
-                <th className="px-2 py-2">Spent</th>
-                <th className="px-2 py-2">Received</th>
+                <th className="w-[6%] px-1 py-2">Spent</th>
+                <th className="w-[6%] px-1 py-2">Received</th>
               </>}
-              <th className="px-2 py-2">From/To</th>
-              <th className="px-2 py-2">Customer</th>
-              <th className="px-2 py-2">Product/Service</th>
+              <th className="w-[12%] px-1 py-2">From/To</th>
+              <th className="w-[10%] px-1 py-2">Customer</th>
+              <th className="w-[10%] px-1 py-2">Product/Service</th>
               {viewSettings.showCheckNo ? <th className="px-2 py-2">Check No.</th> : null}
               {viewSettings.showPayee ? <th className="px-2 py-2">Payee</th> : null}
               {viewSettings.showClass ? <th className="px-2 py-2">Class</th> : null}
               {viewSettings.showLocation ? <th className="px-2 py-2">Location</th> : null}
-              <th className="px-2 py-2">Match/Categorize</th>
-              <th className="px-2 py-2">Action</th>
+              <th className="w-[9%] px-1 py-2">Match/Categorize</th>
+              <th className="w-[13%] px-1 py-2">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -830,10 +830,10 @@ export function BankingTransactionsDesignView({
                     className="cursor-pointer border-t border-gray-100 text-sm hover:bg-gray-50"
                     onClick={() => setExpandedTxId((cur) => (cur === tx.id ? null : tx.id))}
                   >
-                    <td className="px-2 py-2 align-top">
+                    <td className="px-1 py-2 align-top">
                       <input type="checkbox" onClick={(e) => e.stopPropagation()} />
                     </td>
-                    <td className="px-2 py-2 align-top text-gray-700">
+                    <td className="px-1 py-2 align-top text-gray-700">
                       {viewSettings.editableDateField && expanded ? (
                         <input
                           type="date"
@@ -846,9 +846,9 @@ export function BankingTransactionsDesignView({
                         formatBankTransactionDate(tx.transaction_date)
                       )}
                     </td>
-                    <td className="max-w-[760px] px-2 py-2 align-top">
+                    <td className="px-1 py-2 align-top">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="truncate whitespace-nowrap text-gray-900">{transactionLabel(tx)}</p>
+                        <p className="truncate text-gray-900">{transactionLabel(tx)}</p>
                         <div className="inline-flex items-center gap-1 text-gray-500">
                           <Paperclip className="h-4 w-4" />
                           <MessageSquare className="h-4 w-4" />
@@ -856,35 +856,35 @@ export function BankingTransactionsDesignView({
                       </div>
                     </td>
                     {viewSettings.showAmountsInOneColumn ? (
-                      <td className={`px-2 py-2 align-top ${spent > 0 ? "text-red-700" : "text-emerald-700"}`}>
+                      <td className={`px-1 py-2 align-top ${spent > 0 ? "text-red-700" : "text-emerald-700"}`}>
                         {spent > 0 ? `-${USD.format(spent / 100)}` : received > 0 ? USD.format(received / 100) : "—"}
                       </td>
                     ) : (
                       <>
-                        <td className="px-2 py-2 align-top text-red-700">{spent > 0 ? USD.format(spent / 100) : "—"}</td>
-                        <td className="px-2 py-2 align-top text-emerald-700">{received > 0 ? USD.format(received / 100) : "—"}</td>
+                        <td className="px-1 py-2 align-top text-red-700">{spent > 0 ? USD.format(spent / 100) : "—"}</td>
+                        <td className="px-1 py-2 align-top text-emerald-700">{received > 0 ? USD.format(received / 100) : "—"}</td>
                       </>
                     )}
-                    <td className="px-2 py-2 align-top text-gray-700">{draft.fromTo || "—"}</td>
-                    <td className="px-2 py-2 align-top text-gray-700">{draft.customerProject || "—"}</td>
-                    <td className="px-2 py-2 align-top text-gray-700">{draft.productService || "—"}</td>
-                    {viewSettings.showCheckNo ? <td className="px-2 py-2 align-top text-gray-700">{draft.checkNo || "—"}</td> : null}
-                    {viewSettings.showPayee ? <td className="px-2 py-2 align-top text-gray-700">{draft.payee || "—"}</td> : null}
-                    {viewSettings.showClass ? <td className="px-2 py-2 align-top text-gray-700">{draft.className || "—"}</td> : null}
-                    {viewSettings.showLocation ? <td className="px-2 py-2 align-top text-gray-700">{draft.location || "—"}</td> : null}
-                    <td className="px-2 py-2 align-top">
+                    <td className="truncate px-1 py-2 align-top text-gray-700">{draft.fromTo || "—"}</td>
+                    <td className="truncate px-1 py-2 align-top text-gray-700">{draft.customerProject || "—"}</td>
+                    <td className="truncate px-1 py-2 align-top text-gray-700">{draft.productService || "—"}</td>
+                    {viewSettings.showCheckNo ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.checkNo || "—"}</td> : null}
+                    {viewSettings.showPayee ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.payee || "—"}</td> : null}
+                    {viewSettings.showClass ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.className || "—"}</td> : null}
+                    {viewSettings.showLocation ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.location || "—"}</td> : null}
+                    <td className="px-1 py-2 align-top">
                       <span className="rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-700">
                         {draft.mode === "match" ? "Match" : "Categorize"}
                       </span>
                     </td>
-                    <td className="px-2 py-2 align-top" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative flex items-center gap-1">
-                        <ActionButton onClick={() => void postTransaction(tx)} disabled={postingTxId === tx.id}>
+                    <td className="px-1 py-2 align-top" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative flex items-center justify-end gap-1">
+                        <ActionButton className="h-7 px-2 text-[11px]" onClick={() => void postTransaction(tx)} disabled={postingTxId === tx.id}>
                           {postingTxId === tx.id ? "Posting..." : "Post"}
                         </ActionButton>
                         <button
                           type="button"
-                          className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                          className="rounded border border-gray-300 px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
                           onClick={() => setActionMenuTxId((cur) => (cur === tx.id ? null : tx.id))}
                         >
                           ▾
