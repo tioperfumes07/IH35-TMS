@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight, Download, MessageSquare, Paperclip, Printer, Settings } from "lucide-react";
@@ -123,9 +123,12 @@ export function formatBankTransactionDate(rawDate: string | null | undefined) {
   return `${mm}/${dd}/${yyyy}`;
 }
 
-function spentReceived(tx: PlaidBankTransaction) {
-  if (tx.is_credit) return { spent: 0, received: tx.amount_cents };
-  return { spent: tx.amount_cents, received: 0 };
+export function spentReceived(tx: PlaidBankTransaction) {
+  const amount = Math.abs(Number(tx.amount_cents ?? 0));
+  if (amount <= 0) return { spent: 0, received: 0 };
+  const isMoneyIn = tx.is_credit || Number(tx.amount_cents ?? 0) < 0;
+  if (isMoneyIn) return { spent: 0, received: amount };
+  return { spent: amount, received: 0 };
 }
 
 function transactionLabel(tx: PlaidBankTransaction) {
@@ -179,6 +182,7 @@ export function BankingTransactionsDesignView({
   const [postingTxId, setPostingTxId] = useState<string | null>(null);
   const [excludingTxId, setExcludingTxId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, RowDetailDraft>>({});
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [viewSettings, setViewSettings] = useState<ViewSettings>({
     showCheckNo: false,
@@ -303,7 +307,35 @@ export function BankingTransactionsDesignView({
     });
   }, [activeReviewTab, amountFilter, dateFrom, dateTo, reviewTabBuckets, selectedTransactionType]);
 
-  const pagedRows = useMemo(() => tableRows.slice(0, viewSettings.pageSize), [tableRows, viewSettings.pageSize]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    activeReviewTab,
+    amountFilter,
+    dateFrom,
+    dateTo,
+    descriptionFilter,
+    selectedAccount?.id,
+    selectedTransactionType,
+    viewSettings.pageSize,
+  ]);
+
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(tableRows.length / viewSettings.pageSize)), [tableRows.length, viewSettings.pageSize]);
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * viewSettings.pageSize;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const pagedRows = useMemo(
+    () => tableRows.slice(pageStartIndex, pageStartIndex + viewSettings.pageSize),
+    [pageStartIndex, tableRows, viewSettings.pageSize]
+  );
+  const pageRangeStart = tableRows.length === 0 ? 0 : pageStartIndex + 1;
+  const pageRangeEnd = tableRows.length === 0 ? 0 : Math.min(pageStartIndex + viewSettings.pageSize, tableRows.length);
 
   const groupedRows = useMemo(() => {
     if (viewSettings.turnOffGrouping) return [{ monthKey: "all", title: "All transactions", rows: pagedRows }];
@@ -589,7 +621,28 @@ export function BankingTransactionsDesignView({
                 </button>
               ))}
             </div>
-            <span className="text-xs text-gray-500">{pagedRows.length > 0 ? `1-${pagedRows.length} of ${tableRows.length}` : `0 of ${tableRows.length}`}</span>
+            <span className="text-xs text-gray-500">
+              {pageRangeStart > 0 ? `${pageRangeStart}-${pageRangeEnd} of ${tableRows.length}` : `0 of ${tableRows.length}`}
+            </span>
+            <div className="inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-700">
+              <button
+                type="button"
+                className="rounded px-1.5 py-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                disabled={safeCurrentPage <= 1}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              >
+                Previous
+              </button>
+              <span className="px-1 text-gray-500">{`Page ${safeCurrentPage} of ${totalPages}`}</span>
+              <button
+                type="button"
+                className="rounded px-1.5 py-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                disabled={safeCurrentPage >= totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              >
+                Next
+              </button>
+            </div>
             <div className="relative">
               <button
                 type="button"

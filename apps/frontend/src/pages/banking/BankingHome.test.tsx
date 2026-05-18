@@ -1,0 +1,104 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router-dom";
+import { describe, expect, it, vi } from "vitest";
+import * as bankingApi from "../../api/banking";
+import { ToastProvider } from "../../components/Toast";
+import { BankingHomePage } from "./BankingHome";
+
+vi.mock("../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({ selectedCompanyId: "company-1" }),
+}));
+
+vi.mock("./components/ManageAccountsModal", () => ({
+  ManageAccountsModal: () => null,
+}));
+vi.mock("../accounting/ManualJEModal", () => ({ ManualJEModal: () => null }));
+vi.mock("./TransferModal", () => ({ TransferModal: () => null }));
+vi.mock("./RecordCCPaymentModal", () => ({ RecordCCPaymentModal: () => null }));
+vi.mock("./components/DriverEscrowTabContent", () => ({ DriverEscrowTabContent: () => null }));
+vi.mock("./components/BankingReportsTabContent", () => ({ BankingReportsTabContent: () => null }));
+vi.mock("./components/BankingPlaidConnectionsPanel", () => ({
+  BankingPlaidConnectionsPanel: () => <div data-testid="plaid-connections" />,
+}));
+
+vi.mock("../../api/banking", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/banking")>();
+  return {
+    ...actual,
+    getBankingKpis: vi.fn(),
+    getBankingTiles: vi.fn(),
+    getBankingUncategorized: vi.fn(),
+    getPlaidBankAccounts: vi.fn(),
+    getReconciliationSessions: vi.fn(),
+    getAllAccounts: vi.fn(),
+    startReconciliationSession: vi.fn(),
+  };
+});
+
+function wrap(ui: ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>{ui}</ToastProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
+  );
+}
+
+describe("BankingHomePage categorize callout", () => {
+  it("renders a summary CTA instead of listing raw transactions", async () => {
+    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
+      total_cash: 1000,
+      dip_operating: 200,
+      dip_payroll: 300,
+      total_uncategorized: 2,
+      factoring_reserve: 50,
+      driver_escrow: 20,
+    });
+    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({
+      tiles: [
+        {
+          id: "tile-1",
+          operating_company_id: "company-1",
+          display_name: "Operating Account",
+          account_type: "bank",
+          tag: "",
+          tile_kind: "real",
+          current_balance: 1000,
+          uncategorized_count: 2,
+          color_tag: "",
+          is_relay: false,
+          display_order: 1,
+          last_txn_date: "2026-05-18",
+        },
+      ],
+    });
+    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({
+      transactions: [
+        {
+          id: "tx-1",
+          transaction_date: "2026-05-17T00:00:00.000Z",
+          description: "ONLINE PAYMENT - THANK YOU",
+          amount_cents: -4550,
+        },
+      ],
+      meta: { uncategorized_count: 2 },
+    });
+    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
+    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
+    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
+
+    render(wrap(<BankingHomePage />));
+
+    expect(await screen.findByText(/Categorize · 2 unmatched bank transactions/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText((_, element) => element?.textContent?.includes("transactions need review.") ?? false).length
+    ).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Open Transactions - For review" })).toBeInTheDocument();
+    expect(screen.queryByText("2026-05-17T00:00:00.000Z")).not.toBeInTheDocument();
+    expect(screen.queryByText("ONLINE PAYMENT - THANK YOU")).not.toBeInTheDocument();
+  });
+});
