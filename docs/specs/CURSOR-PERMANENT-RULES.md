@@ -8,6 +8,12 @@ Last updated: 2026-05-06 by Jorge
 
 ---
 
+## RULE 0 — CANONICAL DESIGN LOCK
+
+CANONICAL DESIGN LOCK — The ONLY design reference for any page is its approved-screens PNG. `docs/ih35-tms-prototype.html` must NEVER be used as a design source. Approved 2026-05-18 by Jorge.
+
+---
+
 ## RULE 1 — DUAL-SOURCE SPEC LAW
 
 For every block, the spec source-of-truth is BOTH:
