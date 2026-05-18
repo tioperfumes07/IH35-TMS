@@ -7,6 +7,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { AccountingSubNav } from "./AccountingSubNav";
+import { ManualJEModal } from "./ManualJEModal";
 
 export function ManualJEListPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -20,6 +22,7 @@ export function ManualJEListPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [accountId, setAccountId] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const entriesQuery = useQuery({
     queryKey: ["journal-entries", companyId, status, source, fromDate, toDate, accountId],
@@ -46,7 +49,16 @@ export function ManualJEListPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Manual Journal Entries" subtitle="Filter, review, and void posted entries" />
+      <AccountingSubNav />
+      <PageHeader
+        title="Manual Journal Entries"
+        subtitle="Filter, review, and void posted entries"
+        actions={
+          <Button onClick={() => setCreateOpen(true)} disabled={!companyId}>
+            + Create
+          </Button>
+        }
+      />
       <div className="grid grid-cols-5 gap-2 rounded border border-gray-200 bg-white p-2 text-xs">
         <SelectCombobox className="h-8 rounded border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
           <option value="all">All sources</option>
@@ -120,6 +132,17 @@ export function ManualJEListPage() {
           </tbody>
         </table>
       </div>
+      {companyId ? (
+        <ManualJEModal
+          open={createOpen}
+          operatingCompanyId={companyId}
+          onClose={() => setCreateOpen(false)}
+          onSaved={() => {
+            setCreateOpen(false);
+            void queryClient.invalidateQueries({ queryKey: ["journal-entries", companyId] });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

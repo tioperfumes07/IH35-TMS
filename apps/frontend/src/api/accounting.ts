@@ -414,6 +414,26 @@ export function listBills(
   return apiRequest<{ rows: VendorBill[] }>(withCompany(`/api/v1/accounting/bills?${qs}`, operatingCompanyId));
 }
 
+export function listBillPayments(
+  operatingCompanyId: string,
+  params: {
+    vendor_id?: string;
+    date_from?: string;
+    date_to?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.vendor_id) query.set("vendor_id", params.vendor_id);
+  if (params.date_from) query.set("date_from", params.date_from);
+  if (params.date_to) query.set("date_to", params.date_to);
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return apiRequest<{ rows: BillPayment[] }>(withCompany(`/api/v1/accounting/bill-payments${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
 export function listPaymentsForBill(billId: string, operatingCompanyId: string) {
   return apiRequest<{ payments: BillPayment[] }>(withCompany(`/api/v1/accounting/bills/${billId}/payments`, operatingCompanyId));
 }
