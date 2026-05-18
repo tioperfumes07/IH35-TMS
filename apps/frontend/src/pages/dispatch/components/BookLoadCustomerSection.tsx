@@ -26,9 +26,18 @@ type Props = {
   setValue?: UseFormSetValue<BookLoadFormValues>;
   getValues?: UseFormGetValues<BookLoadFormValues>;
   customerIdError?: string;
+  showOptionalFields?: boolean;
 };
 
-export function BookLoadCustomerSection({ register, watch, operatingCompanyId, setValue, getValues, customerIdError }: Props) {
+export function BookLoadCustomerSection({
+  register,
+  watch,
+  operatingCompanyId,
+  setValue,
+  getValues,
+  customerIdError,
+  showOptionalFields = true,
+}: Props) {
   const dollarsToCents = (value: unknown) => {
     if (value === null || value === undefined || value === "") return 0;
     const numeric = Number(value);
@@ -141,17 +150,21 @@ export function BookLoadCustomerSection({ register, watch, operatingCompanyId, s
           }
         />
       </div>
-      <div className="mt-2">
-        <label className="text-[11px] font-semibold text-gray-600">Special notes</label>
-        <textarea {...register("notes")} rows={2} className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
-      </div>
-      <div className="mt-2">
-        <label className="text-[11px] font-semibold text-gray-600">
-          Driver instructions
-          <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">VISIBLE TO DRIVER</span>
-        </label>
-        <textarea {...register("driver_instructions_text")} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
-      </div>
+      {showOptionalFields ? (
+        <>
+          <div className="mt-2">
+            <label className="text-[11px] font-semibold text-gray-600">Special notes</label>
+            <textarea {...register("notes")} rows={2} className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+          </div>
+          <div className="mt-2">
+            <label className="text-[11px] font-semibold text-gray-600">
+              Driver instructions
+              <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">VISIBLE TO DRIVER</span>
+            </label>
+            <textarea {...register("driver_instructions_text")} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+          </div>
+        </>
+      ) : null}
     </section>
   );
 }
