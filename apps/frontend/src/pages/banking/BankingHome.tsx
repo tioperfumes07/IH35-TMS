@@ -27,7 +27,7 @@ import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DriverEscrowTabContent } from "./components/DriverEscrowTabContent";
 import { BankingReportsTabContent } from "./components/BankingReportsTabContent";
-import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
+import { BankingTransactionsDesignView, formatBankTransactionDate } from "./components/BankingTransactionsDesignView";
 
 const BANKING_TABS = [
   { id: "accounts", label: "Accounts" },
@@ -250,7 +250,7 @@ export function BankingHomePage() {
             <div className="divide-y divide-amber-100">
               {(uncategorizedQuery.data?.transactions ?? []).slice(0, 8).map((row, idx) => (
                 <button key={String(row.id ?? idx)} type="button" className="grid w-full grid-cols-[90px_1fr_auto] gap-2 px-3 py-1.5 text-left text-sm hover:bg-amber-100/40" onClick={() => setActiveTab("transactions")}>
-                  <span className="text-gray-600">{String(row.transaction_date ?? "—")}</span>
+                  <span className="text-gray-600">{formatBankTransactionDate(typeof row.transaction_date === "string" ? row.transaction_date : null)}</span>
                   <span className="truncate">{String(row.description ?? row.merchant_name ?? "—")}</span>
                   <span className="font-medium">{money.format(Number((row.amount_cents as number | undefined) ?? 0) / 100)}</span>
                 </button>

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { listBills, listVendorBalances } from "../api/accounting";
 import { listVendors, type VendorOption } from "../api/mdata";
 import { ActionButton } from "../components/shared/ActionButton";
+import { Button } from "../components/Button";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -196,9 +197,13 @@ export function VendorsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <ActionButton onClick={() => navigate(`/vendors/${selectedVendor.id}`)}>Edit</ActionButton>
-                      <ActionButton className="rounded border border-emerald-700 bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-600" onClick={() => navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)}
+                      >
                         New transaction
-                      </ActionButton>
+                      </Button>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
