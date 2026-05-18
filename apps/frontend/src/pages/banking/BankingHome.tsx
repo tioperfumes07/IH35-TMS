@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getAllAccounts,
   getBankingKpis,
-  getBankingRegister,
   getBankingTiles,
+  getBankingUncategorized,
   getPlaidBankAccounts,
   getReconciliationSessions,
   startReconciliationSession,
@@ -16,12 +16,9 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { AccountTilesRow } from "./components/AccountTilesRow";
-import { BankingKpiRow } from "./components/BankingKpiRow";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
-import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, useNavigate } from "react-router-dom";
 import { TransferModal } from "./TransferModal";
@@ -92,16 +89,30 @@ export function BankingHomePage() {
     if (!tiles.some((t) => t.id === selectedAccountId)) setSelectedAccountId(null);
   }, [tiles, selectedAccountId]);
   const selectedId = selectedAccountId ?? tiles[0]?.id ?? null;
-  const registerQuery = useQuery({
-    queryKey: ["banking", "register", companyId, selectedId ?? ""],
-    queryFn: () => getBankingRegister(selectedId!, companyId),
-    enabled: Boolean(companyId && selectedId),
+  const uncategorizedQuery = useQuery({
+    queryKey: ["banking", "uncategorized", companyId],
+    queryFn: () => getBankingUncategorized(companyId, { limit: 8 }),
+    enabled: Boolean(companyId),
   });
-  const registerRows = registerQuery.data?.register_rows ?? [];
 
-  const selectedTile = useMemo(
-    () => tiles.find((tile: BankingTile) => tile.id === selectedId) ?? null,
-    [tiles, selectedId]
+  const selectedTile = useMemo(() => tiles.find((tile: BankingTile) => tile.id === selectedId) ?? null, [tiles, selectedId]);
+  const money = useMemo(
+    () => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    []
+  );
+  const cashPosting = Number(kpiQuery.data?.total_cash ?? 0);
+  const dipBalance = Number(kpiQuery.data?.dip_operating ?? 0) + Number(kpiQuery.data?.dip_payroll ?? 0);
+  const uncategorizedCount = Number(kpiQuery.data?.total_uncategorized ?? 0);
+  const reconAccounts = Number((reconciliationSessionsQuery.data?.open_sessions ?? []).length);
+  const factoringReserve = Number(kpiQuery.data?.factoring_reserve ?? 0);
+  const escrowFeed = Number(kpiQuery.data?.driver_escrow ?? 0);
+  const sortedBankTiles = useMemo(
+    () => [...tiles].sort((a, b) => a.display_order - b.display_order),
+    [tiles]
+  );
+  const factoringTile = useMemo(
+    () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
+    [tiles]
   );
 
   const openStartReconciliation = () => {
@@ -165,26 +176,89 @@ export function BankingHomePage() {
         activeId={activeTab}
         onChange={(id) => setActiveTab(id as (typeof BANKING_TABS)[number]["id"])}
       />
-      {kpiQuery.isError || tilesQuery.isError || registerQuery.isError ? <ListErrorBanner onRetry={() => void registerQuery.refetch()} /> : null}
+      {kpiQuery.isError || tilesQuery.isError || uncategorizedQuery.isError ? <ListErrorBanner onRetry={() => void uncategorizedQuery.refetch()} /> : null}
       {activeTab === "accounts" ? (
         <>
-          <SyncStatusStrip
-            syncedAt={String(selectedTile?.last_txn_date ?? "") || null}
-            transactionCount={registerRows.length}
-            uncategorizedCount={Number(kpiQuery.data?.total_uncategorized ?? 0)}
-            pendingSyncCount={0}
-          />
-          <BankingKpiRow kpis={kpiQuery.data} />
-          <AccountTilesRow
-            tiles={tiles}
-            selectedId={selectedId}
-            onSelect={(id) => setSelectedAccountId(id)}
-            onManageAccounts={() => setManageOpen(true)}
-          />
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-600">
-            <input type="checkbox" checked={showDisconnectedBankAccounts} onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)} />
-            Show disconnected history (bank accounts list)
-          </label>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+            <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Cash posting</div><div className="font-semibold">{money.format(cashPosting)}</div></div>
+            <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">DIP balance</div><div className="font-semibold">{money.format(dipBalance)}</div></div>
+            <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-amber-700">Uncategorized</div><div className="font-semibold text-amber-800">{uncategorizedCount}</div></div>
+            <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Recon accts</div><div className="font-semibold">{reconAccounts}</div></div>
+            <div className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-blue-700">Factoring res</div><div className="font-semibold text-blue-900">{money.format(factoringReserve)}</div></div>
+            <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-emerald-700">Escrow feed</div><div className="font-semibold text-emerald-900">{money.format(escrowFeed)}</div></div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr_1fr]">
+            <div className="rounded border border-gray-200 bg-white">
+              <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                <span>Bank accounts</span>
+                <button className="text-blue-700 hover:underline" type="button" onClick={() => setManageOpen(true)}>+</button>
+              </div>
+              <div className="max-h-[260px] overflow-y-auto">
+                {sortedBankTiles.map((tile) => (
+                  <button
+                    key={tile.id}
+                    type="button"
+                    onClick={() => setSelectedAccountId(tile.id)}
+                    className={`grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-3 py-1.5 text-left text-sm ${selectedId === tile.id ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                  >
+                    <span className="truncate">{tile.display_name}</span>
+                    <span className="font-medium">{money.format(Number(tile.current_balance ?? 0))}</span>
+                  </button>
+                ))}
+                {sortedBankTiles.length === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No accounts yet.</p> : null}
+              </div>
+              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs text-gray-600">
+                <input type="checkbox" checked={showDisconnectedBankAccounts} onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)} />
+                Show disconnected history
+              </label>
+            </div>
+
+            <div className="rounded border border-blue-200 bg-blue-50">
+              <div className="flex items-center justify-between border-b border-blue-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                <span>Factoring · virtual bank</span>
+                <span className="text-[10px]">Open</span>
+              </div>
+              <div className="space-y-1 px-3 py-2 text-sm">
+                <div className="flex justify-between"><span>Reserves held</span><span>{money.format(factoringReserve)}</span></div>
+                <div className="flex justify-between"><span>Advances funded MTD</span><span>{money.format(Math.max(cashPosting - factoringReserve, 0))}</span></div>
+                <div className="flex justify-between"><span>Chargebacks open</span><span className="text-red-700">{money.format(0)}</span></div>
+                <div className="flex justify-between"><span>+30 aging fees</span><span className="text-amber-700">{money.format(0)}</span></div>
+                <div className="pt-1 text-xs text-gray-500">Last upload: {selectedTile?.last_txn_date ? String(selectedTile.last_txn_date) : "—"}</div>
+                {factoringTile ? <div className="text-xs text-blue-800">{factoringTile.display_name}</div> : null}
+              </div>
+            </div>
+
+            <div className="rounded border border-emerald-200 bg-emerald-50">
+              <div className="border-b border-emerald-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">Driver escrow visualizer</div>
+              <div className="space-y-1 px-3 py-2 text-sm">
+                <div className="flex justify-between"><span>Total escrow held</span><span>{money.format(escrowFeed)}</span></div>
+                <div className="flex justify-between"><span>Active drivers</span><span>{(plaidAccountsQuery.data?.accounts ?? []).length}</span></div>
+                <div className="flex justify-between"><span>Contributions MTD</span><span>{money.format(0)}</span></div>
+                <div className="flex justify-between"><span>Deductions MTD</span><span>{money.format(0)}</span></div>
+                <button type="button" onClick={() => setActiveTab("driver_escrow")} className="pt-1 text-xs text-emerald-700 hover:underline">
+                  Filter by name + date
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded border border-amber-200 bg-amber-50">
+            <div className="border-b border-amber-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-amber-800">
+              Categorize · {uncategorizedCount} unmatched bank transactions
+            </div>
+            <div className="divide-y divide-amber-100">
+              {(uncategorizedQuery.data?.transactions ?? []).slice(0, 8).map((row, idx) => (
+                <button key={String(row.id ?? idx)} type="button" className="grid w-full grid-cols-[90px_1fr_auto] gap-2 px-3 py-1.5 text-left text-sm hover:bg-amber-100/40" onClick={() => setActiveTab("transactions")}>
+                  <span className="text-gray-600">{String(row.transaction_date ?? "—")}</span>
+                  <span className="truncate">{String(row.description ?? row.merchant_name ?? "—")}</span>
+                  <span className="font-medium">{money.format(Number((row.amount_cents as number | undefined) ?? 0) / 100)}</span>
+                </button>
+              ))}
+              {(uncategorizedQuery.data?.transactions ?? []).length === 0 ? <p className="px-3 py-2 text-sm text-gray-500">No unmatched transactions.</p> : null}
+            </div>
+          </div>
+
           <BankingPlaidConnectionsPanel companyId={companyId} />
         </>
       ) : null}
