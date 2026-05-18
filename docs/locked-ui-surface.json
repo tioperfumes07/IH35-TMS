@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-18T01:41:37.429Z",
+  "generatedAt": "2026-05-18T12:47:53.524Z",
   "source": {
-    "branch": "feat/accounting-redesign",
-    "commit": "06c6e33f52e2bfa2a3e7219be6b3b599784e2cb2"
+    "branch": "feat/drivers-redesign",
+    "commit": "66db580f0b7d60a77e39854bdf81f6485dce49c9"
   },
   "routes": [
     "*",
@@ -379,10 +379,8 @@
       "HOS-aware stop-logic panel"
     ],
     "drivers": [
-      "Drivers · 3 new in last 3 days",
-      "Settlements Ready · 7 drivers back in Laredo",
+      "Drivers",
       "Debt Alert · before any payment",
-      "Active Drivers · Samsara live",
       "Permit / Document Expirations"
     ]
   }
