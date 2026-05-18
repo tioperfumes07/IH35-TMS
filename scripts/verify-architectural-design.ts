@@ -161,6 +161,11 @@ const NAMED_SECTION_SOURCES: NamedSectionSource[] = [
     file: "apps/frontend/src/pages/Drivers.tsx",
     patterns: [/<PageHeader[^>]*\btitle="([^"]+)"/g, /<DataPanel[^>]*\btitle="([^"]+)"/g],
   },
+  {
+    module: "dispatch",
+    file: "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    patterns: [/>\s*(Book load)\s*</g],
+  },
 ];
 
 function unique(items: string[]): string[] {

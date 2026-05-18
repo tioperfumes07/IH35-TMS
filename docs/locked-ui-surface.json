@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-18T16:47:35.598Z",
+  "generatedAt": "2026-05-18T17:02:21.207Z",
   "source": {
-    "branch": "feat/banking-transactions-qbo-parity",
-    "commit": "b9cfbdd530c42072ab035b2d09f3cb739e0e144a"
+    "branch": "fix/book-load-wizard-correct-design",
+    "commit": "bd0eec31c6f17fa67d763228f0af0bedbb853180"
   },
   "routes": [
     "*",
@@ -424,6 +424,9 @@
       "Drivers",
       "Debt Alert · before any payment",
       "Permit / Document Expirations"
+    ],
+    "dispatch": [
+      "Book load"
     ]
   }
 }

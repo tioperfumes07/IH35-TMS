@@ -1,41 +1,203 @@
-import type { UseFormRegister } from "react-hook-form";
-import type { BookLoadFormValues } from "./BookLoadCustomerSection";
-
-type EquipmentFormValues = BookLoadFormValues & {
-  trailer_type: string;
-  assigned_unit_id: string;
-  assignment_mode: "solo" | "team";
-  team_id: string;
-  assigned_primary_driver_id: string;
-  assigned_secondary_driver_id: string;
-  temp_fahrenheit: number;
-};
+import { useQuery } from "@tanstack/react-query";
+import type { UseFormRegister, UseFormWatch } from "react-hook-form";
+import { listDrivers, listDriverTeams, listUnits } from "../../../api/mdata";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
-  register: UseFormRegister<EquipmentFormValues>;
+  register: UseFormRegister<any>;
+  watch?: UseFormWatch<any>;
+  operatingCompanyId?: string;
 };
 
-export function BookLoadEquipmentSection({ register }: Props) {
+type Option = { id: string; label: string };
+
+function getTextValue(source: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function toUnitOption(row: unknown, index: number): Option {
+  if (!row || typeof row !== "object") return { id: `unit-${index}`, label: `Unit ${index + 1}` };
+  const rec = row as Record<string, unknown>;
+  const id = typeof rec.id === "string" ? rec.id : `unit-${index}`;
+  const unitNumber = getTextValue(rec, ["unit_number", "truck_number", "number"]);
+  const trailerNumber = getTextValue(rec, ["trailer_number", "trailer_unit", "trailer"]);
+  const make = getTextValue(rec, ["make", "manufacturer"]);
+  const model = getTextValue(rec, ["model"]);
+  const title = [unitNumber || trailerNumber, [make, model].filter(Boolean).join(" ")].filter(Boolean).join(" · ");
+  return { id, label: title || `Unit ${index + 1}` };
+}
+
+function toDriverOption(row: unknown, index: number): Option {
+  if (!row || typeof row !== "object") return { id: `driver-${index}`, label: `Driver ${index + 1}` };
+  const rec = row as Record<string, unknown>;
+  const id = typeof rec.id === "string" ? rec.id : `driver-${index}`;
+  const fullName = getTextValue(rec, ["full_name", "display_name", "name"]);
+  const shortName = getTextValue(rec, ["short_name", "driver_code"]);
+  return { id, label: [fullName, shortName].filter(Boolean).join(" · ") || `Driver ${index + 1}` };
+}
+
+export function BookLoadEquipmentSection({ register, watch, operatingCompanyId }: Props) {
+  const assignmentMode = watch ? watch("assignment_mode") : "solo";
+  const unitsQuery = useQuery({
+    queryKey: ["book-load-units", operatingCompanyId],
+    queryFn: () => listUnits({ operating_company_id: operatingCompanyId }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const driversQuery = useQuery({
+    queryKey: ["book-load-drivers", operatingCompanyId],
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const teamsQuery = useQuery({
+    queryKey: ["book-load-driver-teams", operatingCompanyId],
+    queryFn: () => listDriverTeams(String(operatingCompanyId)),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const units = (unitsQuery.data?.units ?? []).map((row, index) => toUnitOption(row, index));
+  const drivers = (driversQuery.data?.drivers ?? []).map((row, index) => toDriverOption(row, index));
+  const toggles = [
+    { field: "requires_reefer_fuel", label: "Reefer fuel" },
+    { field: "requires_pulp_probe", label: "Pulp probe" },
+    { field: "requires_locking_jacks", label: "Locking jacks" },
+    { field: "requires_tarps", label: "Tarps" },
+    { field: "requires_load_locks", label: "Load locks" },
+    { field: "requires_straps", label: "Straps" },
+  ] as const;
+
   return (
-    <section className="rounded border border-blue-200 bg-blue-50 p-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-800">B. Equipment · Driver · Trailer</h3>
-      <div className="mb-2 flex items-center gap-4 rounded border border-blue-100 bg-white px-2 py-2 text-xs">
-        <label className="inline-flex items-center gap-1">
-          <input type="radio" value="solo" {...register("assignment_mode")} />
-          Solo Driver
-        </label>
-        <label className="inline-flex items-center gap-1">
-          <input type="radio" value="team" {...register("assignment_mode")} />
-          Team
-        </label>
+    <section className="space-y-2">
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        <Field
+          label="Trailer type"
+          input={
+            <SelectCombobox {...register("trailer_type")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+              <option value="refrigerated_van">Refrigerated van</option>
+              <option value="dry_van">Dry van</option>
+              <option value="flatbed">Flatbed</option>
+              <option value="power_only_no_trailer">Power-only · no trailer</option>
+              <option value="power_only_customer_trailer">Power-only · customer trailer</option>
+            </SelectCombobox>
+          }
+        />
+        <Field
+          label="Truck unit"
+          input={
+            <SelectCombobox {...register("assigned_unit_id")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+              <option value="">{unitsQuery.isLoading ? "Loading units..." : "Select truck unit"}</option>
+              {units.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          }
+        />
+        <Field
+          label="Trailer unit"
+          input={
+            <SelectCombobox {...register("assigned_trailer_unit_id")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+              <option value="">{unitsQuery.isLoading ? "Loading units..." : "Select trailer unit"}</option>
+              {units.map((unit) => (
+                <option key={`trailer-${unit.id}`} value={unit.id}>
+                  {unit.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          }
+        />
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-        <Field label="Trailer Type" input={<input {...register("trailer_type")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
-        <Field label="Truck Unit ID" input={<input {...register("assigned_unit_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
-        <Field label="Team ID (when Team mode)" input={<input {...register("team_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
-        <Field label="Primary Driver ID" input={<input {...register("assigned_primary_driver_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
-        <Field label="Team Driver ID (optional)" input={<input {...register("assigned_secondary_driver_id")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
-        <Field label="Temp °F" input={<input type="number" {...register("temp_fahrenheit", { valueAsNumber: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />} />
+        <Field
+          label="Driver"
+          input={
+            <SelectCombobox {...register("assigned_primary_driver_id")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+              <option value="">{driversQuery.isLoading ? "Loading drivers..." : "Select driver"}</option>
+              {drivers.map((driver) => (
+                <option key={driver.id} value={driver.id}>
+                  {driver.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          }
+        />
+        <Field
+          label="Team driver"
+          input={
+            <SelectCombobox {...register("assigned_secondary_driver_id")} className="h-7 w-full rounded border border-gray-300 bg-white px-2 text-xs">
+              <option value="">{driversQuery.isLoading ? "Loading drivers..." : "Solo load (optional)"}</option>
+              {drivers.map((driver) => (
+                <option key={`team-${driver.id}`} value={driver.id}>
+                  {driver.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          }
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-center">
+        <Field
+          label="Assignment mode"
+          input={
+            <div className="inline-flex h-7 overflow-hidden rounded border border-gray-300 bg-white text-[11px]">
+              <label className={`flex cursor-pointer items-center px-3 ${assignmentMode === "solo" ? "bg-[#16203a] text-white" : "text-gray-700"}`}>
+                <input type="radio" value="solo" className="hidden" {...register("assignment_mode")} />
+                Solo
+              </label>
+              <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${assignmentMode === "team" ? "bg-[#16203a] text-white" : "text-gray-700"}`}>
+                <input type="radio" value="team" className="hidden" {...register("assignment_mode")} />
+                Team
+              </label>
+            </div>
+          }
+        />
+        <Field
+          label="Team preset"
+          input={
+            <SelectCombobox {...register("team_id")} className="h-7 min-w-[240px] rounded border border-gray-300 bg-white px-2 text-xs">
+              <option value="">{teamsQuery.isLoading ? "Loading teams..." : "Optional team preset"}</option>
+              {(teamsQuery.data?.teams ?? []).map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.team_name}
+                </option>
+              ))}
+            </SelectCombobox>
+          }
+        />
+      </div>
+      <div>
+        <div className="mb-1 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
+        <div className="flex flex-wrap gap-1.5">
+          {toggles.map((toggle) => (
+            <label key={toggle.field} className="cursor-pointer">
+              <input type="checkbox" {...register(toggle.field)} className="peer sr-only" />
+              <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#16203a] peer-checked:text-white peer-checked:ring-[#16203a]">
+                {toggle.label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        <Field
+          label="Driver pay rate / mi"
+          input={
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              {...register("driver_pay_rate_per_mile", { valueAsNumber: true })}
+              className="h-7 w-full rounded border border-gray-300 px-2 text-xs"
+            />
+          }
+        />
+        <Field label="Reefer setpoint" input={<input {...register("reefer_setpoint")} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
+      </div>
+      <div className="hidden">
+        <input type="number" {...register("temp_fahrenheit", { valueAsNumber: true })} />
       </div>
     </section>
   );
