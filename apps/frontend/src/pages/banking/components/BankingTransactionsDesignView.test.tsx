@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as bankingApi from "../../../api/banking";
@@ -211,4 +211,110 @@ describe("BankingTransactionsDesignView date formatting", () => {
     expect(screen.getByText("$45.50")).toBeInTheDocument();
     expect(screen.queryByText("Fuel purchase")).not.toBeInTheDocument();
   });
+
+  it("filters by selected account chip and does not enforce a fixed 300-row cap", async () => {
+    const makeTx = (id: string, accountId: string): bankingApi.PlaidBankTransaction => ({
+      id,
+      bank_account_id: accountId,
+      transaction_date: "2026-05-18T00:00:00.000Z",
+      posted_date: null,
+      amount_cents: 1200,
+      description: `Txn ${id}`,
+      merchant_name: null,
+      plaid_category: [],
+      pending: false,
+      is_credit: false,
+      matched_load_id: null,
+      matched_bill_id: null,
+      matched_settlement_id: null,
+      institution_name: "Chase",
+      account_name: accountId === "acct-1" ? "Business Checking 3500" : "Business Platinum Card 5007",
+      account_mask: accountId === "acct-1" ? "3500" : "5007",
+      matched_kind: null,
+      notes: null,
+      created_at: "2026-05-18T10:00:00.000Z",
+    });
+
+    vi.mocked(bankingApi.getPlaidCompanyTransactions).mockImplementation(async (_companyId, options) => {
+      const limit = Number(options?.limit ?? 0);
+      const offset = Number(options?.offset ?? 0);
+      if (offset === 0) {
+        const rows = Array.from({ length: limit }, (_, index) => makeTx(`a1-${index}`, "acct-1"));
+        return { transactions: rows };
+      }
+      if (offset === limit) {
+        const rows = [
+          ...Array.from({ length: 10 }, (_, index) => makeTx(`a1-tail-${index}`, "acct-1")),
+          ...Array.from({ length: 10 }, (_, index) => makeTx(`a2-${index}`, "acct-2")),
+        ];
+        return { transactions: rows };
+      }
+      return { transactions: [] };
+    });
+
+    render(
+      wrap(
+        <StatefulTransactionsView />
+      )
+    );
+
+    expect(await screen.findByRole("button", { name: "For review · 510" })).toBeInTheDocument();
+    expect(screen.getByText("1-50 of 510")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Business Platinum Card 5007/i }));
+    expect(await screen.findByRole("button", { name: "For review · 10" })).toBeInTheDocument();
+    expect(screen.getByText("1-10 of 10")).toBeInTheDocument();
+
+    const limits = vi.mocked(bankingApi.getPlaidCompanyTransactions).mock.calls.map(([, options]) => options?.limit);
+    expect(limits.every((limit) => limit === 500)).toBe(true);
+    expect(limits.some((limit) => limit === 300)).toBe(false);
+  });
 });
+
+function StatefulTransactionsView() {
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>("acct-1");
+  return (
+    <BankingTransactionsDesignView
+      companyId="company-1"
+      accounts={[
+        {
+          id: "acct-1",
+          operating_company_id: "company-1",
+          institution_name: "Chase",
+          account_name: "Business Checking 3500",
+          account_mask: "3500",
+          account_type: "depository",
+          current_balance_cents: 100000,
+          available_balance_cents: 100000,
+          currency_code: "USD",
+          is_active: true,
+          sync_status: "active",
+          last_synced_at: null,
+          plaid_item_id: "item-1",
+          created_at: "2026-05-01T00:00:00.000Z",
+          updated_at: "2026-05-01T00:00:00.000Z",
+        },
+        {
+          id: "acct-2",
+          operating_company_id: "company-1",
+          institution_name: "Amex",
+          account_name: "Business Platinum Card 5007",
+          account_mask: "5007",
+          account_type: "credit",
+          current_balance_cents: 100000,
+          available_balance_cents: 100000,
+          currency_code: "USD",
+          is_active: true,
+          sync_status: "active",
+          last_synced_at: null,
+          plaid_item_id: "item-2",
+          created_at: "2026-05-01T00:00:00.000Z",
+          updated_at: "2026-05-01T00:00:00.000Z",
+        },
+      ]}
+      selectedAccountId={selectedAccountId}
+      onSelectAccount={setSelectedAccountId}
+      onManageConnections={() => {}}
+      onDataChanged={() => {}}
+    />
+  );
+}
