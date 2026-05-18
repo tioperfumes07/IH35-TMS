@@ -1,18 +1,17 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "./Button";
-import { Modal } from "./Modal";
 import { useToast } from "./Toast";
 import { switchIdentityCompany } from "../api/identity";
 import { ApiError } from "../api/client";
 import type { MyCompany } from "../api/org";
 import { useCompanyContext } from "../contexts/CompanyContext";
-import { setPostReloadToast } from "./PostReloadToastHost";
 
 export function CompanySwitcher() {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState<MyCompany | null>(null);
-  const [switching, setSwitching] = useState(false);
+  const [switchingCompanyId, setSwitchingCompanyId] = useState<string | null>(null);
   const { companies, selectedCompanyId, selectedCompany, setSelectedCompany, setDefaultCompanyForUser } = useCompanyContext();
   const { pushToast } = useToast();
 
@@ -22,6 +21,25 @@ export function CompanySwitcher() {
   const defaultCompanyId = useMemo(() => companies.find((company) => company.is_default)?.id ?? null, [companies]);
 
   if (!showSwitcher) return null;
+
+  async function switchCompany(company: MyCompany) {
+    setSwitchingCompanyId(company.id);
+    try {
+      await switchIdentityCompany({ target_company_id: company.id, confirm: true });
+      setSelectedCompany(company.id);
+      await queryClient.invalidateQueries();
+      pushToast(`Switched to ${company.short_name || company.legal_name}`, "success");
+      setOpen(false);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        pushToast(err.message || "Could not switch company", "error");
+      } else {
+        pushToast("Could not switch company", "error");
+      }
+    } finally {
+      setSwitchingCompanyId(null);
+    }
+  }
 
   return (
     <div className="relative">
@@ -46,30 +64,45 @@ export function CompanySwitcher() {
               const isDefault = company.id === defaultCompanyId;
               return (
                 <div key={company.id} className="rounded border border-gray-100 p-2">
-                  <button
-                    type="button"
-                    className={`w-full text-left ${isSelected ? "font-semibold text-gray-900" : "text-gray-700"}`}
-                    onClick={() => {
-                      if (company.id === selectedCompanyId) {
-                        setOpen(false);
-                        return;
-                      }
-                      setPending(company);
-                      setOpen(false);
-                    }}
-                  >
+                  <div className={`w-full text-left ${isSelected ? "font-semibold text-gray-900" : "text-gray-700"}`}>
                     {company.short_name || company.legal_name}
-                  </button>
+                  </div>
                   <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
                     <span>{company.code}</span>
-                    {isDefault ? <span>Default</span> : null}
+                    {isSelected ? <span>Current</span> : isDefault ? <span>Default</span> : null}
                   </div>
-                  {!isDefault ? (
+                  {!isSelected ? (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button
+                        type="button"
+                        className="h-7 px-2 py-1 text-[11px]"
+                        disabled={switchingCompanyId !== null}
+                        onClick={() => void switchCompany(company)}
+                      >
+                        {switchingCompanyId === company.id ? "Switching…" : "Switch"}
+                      </Button>
+                      {!isDefault ? (
+                        <Button
+                          variant="secondary"
+                          type="button"
+                          className="h-7 px-2 py-1 text-[11px]"
+                          disabled={switchingCompanyId !== null}
+                          onClick={async () => {
+                            await setDefaultCompanyForUser(company.id);
+                            setOpen(false);
+                          }}
+                        >
+                          Make default
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : !isDefault ? (
                     <div className="mt-2">
                       <Button
                         variant="secondary"
                         type="button"
                         className="h-7 px-2 py-1 text-[11px]"
+                        disabled={switchingCompanyId !== null}
                         onClick={async () => {
                           await setDefaultCompanyForUser(company.id);
                           setOpen(false);
@@ -85,52 +118,6 @@ export function CompanySwitcher() {
           </div>
         </div>
       ) : null}
-
-      <Modal
-        open={Boolean(pending)}
-        onClose={() => setPending(null)}
-        title="Switch company"
-        modalKind="company-switch-confirm"
-        sizePreset="sm"
-        resizable
-      >
-        <div className="space-y-3 text-sm text-gray-800">
-          <p>
-            Switch to <span className="font-semibold">{pending?.short_name || pending?.legal_name}</span>? Workspace will reload.
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" type="button" onClick={() => setPending(null)} disabled={switching}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              disabled={switching || !pending}
-              onClick={async () => {
-                if (!pending) return;
-                setSwitching(true);
-                try {
-                  await switchIdentityCompany({ target_company_id: pending.id, confirm: true });
-                  setSelectedCompany(pending.id);
-                  setPostReloadToast({
-                    message: `Switched to ${pending.short_name || pending.legal_name}`,
-                    kind: "success",
-                  });
-                  window.location.reload();
-                } catch (err) {
-                  setSwitching(false);
-                  if (err instanceof ApiError) {
-                    pushToast(err.message || "Could not switch company", "error");
-                    return;
-                  }
-                  pushToast("Could not switch company", "error");
-                }
-              }}
-            >
-              {switching ? "Switching…" : "Confirm"}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
