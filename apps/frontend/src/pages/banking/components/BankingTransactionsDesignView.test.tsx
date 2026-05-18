@@ -33,7 +33,8 @@ function wrap(ui: ReactElement) {
 }
 
 describe("BankingTransactionsDesignView date formatting", () => {
-  it("renders MM/DD/YYYY and not raw ISO timestamp", async () => {
+  it("renders required QBO parity controls and MM/DD/YYYY dates", async () => {
+    vi.stubGlobal("print", vi.fn());
     vi.mocked(bankingApi.getPlaidCompanyTransactions).mockResolvedValue({
       transactions: [
         {
@@ -91,7 +92,15 @@ describe("BankingTransactionsDesignView date formatting", () => {
       )
     );
 
+    expect(await screen.findByRole("button", { name: "For review · 1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Categorized · 0" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Excluded · 0" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Filter by description")).toBeInTheDocument();
+    expect(screen.getByText("Categorize by")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Collapse all groupings" })).toBeInTheDocument();
+    expect(screen.getByText("May 2026 (1)")).toBeInTheDocument();
     expect(await screen.findByText("05/17/2026")).toBeInTheDocument();
     expect(screen.queryByText("2026-05-17T00:00:00.000Z")).not.toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 });

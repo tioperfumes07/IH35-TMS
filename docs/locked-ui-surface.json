@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-18T12:47:53.524Z",
+  "generatedAt": "2026-05-18T16:47:35.598Z",
   "source": {
-    "branch": "feat/drivers-redesign",
-    "commit": "66db580f0b7d60a77e39854bdf81f6485dce49c9"
+    "branch": "feat/banking-transactions-qbo-parity",
+    "commit": "b9cfbdd530c42072ab035b2d09f3cb739e0e144a"
   },
   "routes": [
     "*",
@@ -308,6 +308,48 @@
       "Reconciliation",
       "Driver Escrow",
       "Reports"
+    ],
+    "banking_transactions_review_tabs": [
+      "For review",
+      "Categorized",
+      "Excluded"
+    ],
+    "banking_transactions_type_filters": [
+      "All transaction types",
+      "Money in",
+      "Money out",
+      "Ready to post",
+      "Suggested matches",
+      "Transfers",
+      "Rules",
+      "Missing From/To",
+      "Uncategorized",
+      "Requests: Waiting For Reply",
+      "Requests: Reply Received",
+      "Requests: Completed"
+    ],
+    "banking_transactions_view_menu": [
+      "Columns: Check No.",
+      "Columns: Payee",
+      "Columns: Class",
+      "Columns: Location",
+      "Groups: Turn off grouping",
+      "Automation review: Add new vendors",
+      "Transaction details: Show amounts in 1 column",
+      "Transaction details: Show tags field",
+      "Transaction details: Editable date field",
+      "Transaction details: Show bank details",
+      "Transaction details: Copy bank detail to memo",
+      "Transaction details: Enable suggested categorization",
+      "Page size: 50",
+      "Page size: 75",
+      "Page size: 100",
+      "Page size: 200",
+      "Page size: 300"
+    ],
+    "banking_transactions_print_export": [
+      "Print",
+      "Export to Excel"
     ],
     "safety": [
       "driver-files",
