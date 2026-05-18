@@ -109,6 +109,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
+  const [showSpecialNotes, setShowSpecialNotes] = useState(false);
+  const [showDriverInstructions, setShowDriverInstructions] = useState(false);
+  const [showExpectedAdjustments, setShowExpectedAdjustments] = useState(false);
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -247,6 +250,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
     setOverrideReason("");
     setOverrideToken(null);
     setPendingCloseAfterAdvisory(false);
+    setShowSpecialNotes(false);
+    setShowDriverInstructions(false);
+    setShowExpectedAdjustments(false);
   }, [open, form]);
 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
@@ -520,42 +526,58 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                 <span>A</span>
                 <span className="ml-2">Customer · Invoice · Charges</span>
               </div>
-              <div className="space-y-2 p-3">
-                <OcrDropZone
-                  operatingCompanyId={operatingCompanyId}
-                  onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })}
-                />
-                <LoadTemplatePicker
-                  operatingCompanyId={operatingCompanyId}
-                  onSelectTemplate={(row) => {
-                    applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, row.template_json as Record<string, unknown>);
-                    pushToast("Template applied", "success");
-                  }}
-                />
-                <BookLoadCustomerSection
-                  register={form.register}
-                  watch={form.watch as unknown as UseFormWatch<BookLoadFormValues>}
-                  operatingCompanyId={operatingCompanyId}
-                  setValue={form.setValue as unknown as UseFormSetValue<BookLoadFormValues>}
-                  getValues={form.getValues as unknown as UseFormGetValues<BookLoadFormValues>}
-                  customerIdError={form.formState.errors.customer_id?.message}
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="text-[10px] font-semibold text-gray-600">
-                    Pickup #
-                    <input {...form.register("pickup_number")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-                  </label>
-                  <label className="text-[10px] font-semibold text-gray-600">
-                    Border routing
-                    <SelectCombobox {...form.register("border_routing")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm">
-                      <option value="">—</option>
-                      <option value="domestic">Domestic</option>
-                      <option value="cross_border_mx">Cross-border (MX)</option>
-                      <option value="cross_border_ca">Cross-border (CA)</option>
-                    </SelectCombobox>
-                  </label>
+              <div className="grid gap-2 p-3 lg:grid-cols-[2fr_1fr]">
+                <div className="space-y-2">
+                  <OcrDropZone
+                    operatingCompanyId={operatingCompanyId}
+                    onUploaded={(key) => form.setValue("ocr_source_pdf_r2_key", key, { shouldDirty: true })}
+                  />
+                  <LoadTemplatePicker
+                    operatingCompanyId={operatingCompanyId}
+                    onSelectTemplate={(row) => {
+                      applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, row.template_json as Record<string, unknown>);
+                      pushToast("Template applied", "success");
+                    }}
+                  />
+                  <BookLoadCustomerSection
+                    register={form.register}
+                    watch={form.watch as unknown as UseFormWatch<BookLoadFormValues>}
+                    operatingCompanyId={operatingCompanyId}
+                    setValue={form.setValue as unknown as UseFormSetValue<BookLoadFormValues>}
+                    getValues={form.getValues as unknown as UseFormGetValues<BookLoadFormValues>}
+                    customerIdError={form.formState.errors.customer_id?.message}
+                    showOptionalFields={false}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="text-[10px] font-semibold text-gray-600">
+                      Pickup #
+                      <input {...form.register("pickup_number")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+                    </label>
+                    <label className="text-[10px] font-semibold text-gray-600">
+                      Border routing
+                      <SelectCombobox {...form.register("border_routing")} className="mt-0.5 h-8 w-full rounded border border-gray-300 px-2 text-sm">
+                        <option value="">—</option>
+                        <option value="domestic">Domestic</option>
+                        <option value="cross_border_mx">Cross-border (MX)</option>
+                        <option value="cross_border_ca">Cross-border (CA)</option>
+                      </SelectCombobox>
+                    </label>
+                  </div>
+                  <div className="rounded border border-gray-200 bg-gray-50 p-2">
+                    <button type="button" className="text-xs font-semibold text-gray-700" onClick={() => setShowSpecialNotes((openState) => !openState)}>
+                      {showSpecialNotes ? "−" : "+"} Special notes
+                    </button>
+                    {showSpecialNotes ? (
+                      <textarea {...form.register("notes")} rows={3} className="mt-2 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
+                    ) : null}
+                  </div>
                 </div>
-                <ExpectedAdjustmentsCallout register={form.register as never} />
+                <div className="rounded border border-amber-200 bg-amber-50 p-2">
+                  <button type="button" className="text-xs font-semibold text-amber-800" onClick={() => setShowExpectedAdjustments((openState) => !openState)}>
+                    {showExpectedAdjustments ? "−" : "+"} Expected adjustments
+                  </button>
+                  {showExpectedAdjustments ? <ExpectedAdjustmentsCallout register={form.register as never} /> : null}
+                </div>
               </div>
             </div>
 
@@ -569,7 +591,12 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
               </div>
               <div className="space-y-2 p-3">
                 <BookLoadEquipmentSection register={form.register} />
-                <DriverInstructionsTextarea register={form.register as never} />
+                <div className="rounded border border-gray-200 bg-gray-50 p-2">
+                  <button type="button" className="text-xs font-semibold text-gray-700" onClick={() => setShowDriverInstructions((openState) => !openState)}>
+                    {showDriverInstructions ? "−" : "+"} Driver instructions
+                  </button>
+                  {showDriverInstructions ? <DriverInstructionsTextarea register={form.register as never} /> : null}
+                </div>
               </div>
             </div>
 
