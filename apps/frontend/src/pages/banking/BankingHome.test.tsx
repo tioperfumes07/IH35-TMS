@@ -99,4 +99,57 @@ describe("BankingHomePage accounts summary", () => {
     expect(screen.queryByText("2026-05-17T00:00:00.000Z")).not.toBeInTheDocument();
     expect(screen.queryByText("ONLINE PAYMENT - THANK YOU")).not.toBeInTheDocument();
   });
+
+  it("shows real bank accounts from plaid feed when tile list is empty", async () => {
+    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
+      total_cash: 1000,
+      dip_operating: 0,
+      dip_payroll: 0,
+      total_uncategorized: 0,
+      factoring_reserve: 0,
+      driver_escrow: 0,
+    });
+    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
+    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
+    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
+    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
+    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({
+      accounts: [
+        {
+          id: "acct-5007",
+          operating_company_id: "company-1",
+          institution_name: "Amex",
+          account_name: "Business Platinum Card",
+          account_mask: "5007",
+          account_type: "credit",
+          current_balance_cents: 123400,
+          available_balance_cents: 123400,
+          currency_code: "USD",
+          sync_status: "active",
+          is_active: true,
+          last_synced_at: null,
+        },
+        {
+          id: "acct-3500",
+          operating_company_id: "company-1",
+          institution_name: "Bank",
+          account_name: "Business Checking",
+          account_mask: "3500",
+          account_type: "depository",
+          current_balance_cents: 500000,
+          available_balance_cents: 500000,
+          currency_code: "USD",
+          sync_status: "active",
+          is_active: true,
+          last_synced_at: null,
+        },
+      ],
+    });
+
+    render(wrap(<BankingHomePage />));
+
+    expect(await screen.findByText("Business Platinum Card ••••5007")).toBeInTheDocument();
+    expect(screen.getByText("Business Checking ••••3500")).toBeInTheDocument();
+    expect(screen.queryByText("No accounts yet.")).not.toBeInTheDocument();
+  });
 });

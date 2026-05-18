@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
-import type { ReactElement } from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState, type ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as bankingApi from "../../../api/banking";
@@ -30,6 +30,35 @@ function wrap(ui: ReactElement) {
       </QueryClientProvider>
     </MemoryRouter>
   );
+}
+
+function tx(id: string, accountId: string, amountCents: number, date = "2026-05-17T00:00:00.000Z", description = "Txn") {
+  return {
+    id,
+    bank_account_id: accountId,
+    transaction_date: date,
+    posted_date: null,
+    amount_cents: amountCents,
+    description,
+    merchant_name: null,
+    plaid_category: [],
+    pending: false,
+    is_credit: amountCents < 0,
+    matched_load_id: null,
+    matched_bill_id: null,
+    matched_settlement_id: null,
+    institution_name: "Test Bank",
+    account_name: "Operating",
+    account_mask: "1234",
+    matched_kind: null,
+    notes: null,
+    created_at: "2026-05-17T10:00:00.000Z",
+  };
+}
+
+function StatefulTransactionsView(props: Omit<Parameters<typeof BankingTransactionsDesignView>[0], "selectedAccountId" | "onSelectAccount">) {
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(props.accounts[0]?.id ?? null);
+  return <BankingTransactionsDesignView {...props} selectedAccountId={selectedAccountId} onSelectAccount={setSelectedAccountId} />;
 }
 
 describe("BankingTransactionsDesignView date formatting", () => {
@@ -210,5 +239,85 @@ describe("BankingTransactionsDesignView date formatting", () => {
     expect(screen.getByText("Page 1 of 1")).toBeInTheDocument();
     expect(screen.getByText("$45.50")).toBeInTheDocument();
     expect(screen.queryByText("Fuel purchase")).not.toBeInTheDocument();
+  });
+
+  it("filters by selected account chip and fetches beyond a fixed 300 row cap", async () => {
+    vi.mocked(bankingApi.getPlaidCompanyTransactions).mockImplementation(async (_companyId, options) => {
+      const accountId = options?.bank_account_id ?? "acct-1";
+      const offset = Number(options?.offset ?? 0);
+      if (accountId === "acct-1") {
+        if (offset === 0) return { transactions: Array.from({ length: 500 }, (_, index) => tx(`a1-${index}`, "acct-1", 1000, "2026-05-17T00:00:00.000Z", `Acct1 ${index}`)) };
+        if (offset === 500) return { transactions: Array.from({ length: 120 }, (_, index) => tx(`a1b-${index}`, "acct-1", 1000, "2026-05-16T00:00:00.000Z", `Acct1b ${index}`)) };
+        return { transactions: [] };
+      }
+      if (offset === 0) return { transactions: [tx("acct2-1", "acct-2", 2500, "2026-05-18T00:00:00.000Z", "Acct2 only row")] };
+      return { transactions: [] };
+    });
+
+    render(
+      wrap(
+        <StatefulTransactionsView
+          companyId="company-1"
+          accounts={[
+            {
+              id: "acct-1",
+              operating_company_id: "company-1",
+              institution_name: "Bank A",
+              account_name: "Operating",
+              account_mask: "1111",
+              account_type: "depository",
+              current_balance_cents: 100000,
+              available_balance_cents: 100000,
+              currency_code: "USD",
+              is_active: true,
+              sync_status: "active",
+              last_synced_at: null,
+              plaid_item_id: "item-1",
+              created_at: "2026-05-01T00:00:00.000Z",
+              updated_at: "2026-05-01T00:00:00.000Z",
+            },
+            {
+              id: "acct-2",
+              operating_company_id: "company-1",
+              institution_name: "Bank B",
+              account_name: "Business Platinum Card",
+              account_mask: "5007",
+              account_type: "credit",
+              current_balance_cents: 100000,
+              available_balance_cents: 100000,
+              currency_code: "USD",
+              is_active: true,
+              sync_status: "active",
+              last_synced_at: null,
+              plaid_item_id: "item-2",
+              created_at: "2026-05-01T00:00:00.000Z",
+              updated_at: "2026-05-01T00:00:00.000Z",
+            },
+          ]}
+          onManageConnections={() => {}}
+          onDataChanged={() => {}}
+        />
+      )
+    );
+
+    expect(await screen.findByRole("button", { name: "For review · 620" })).toBeInTheDocument();
+    expect(screen.getByText("1-50 of 620")).toBeInTheDocument();
+    expect(screen.getByText("Page 1 of 13")).toBeInTheDocument();
+    expect(vi.mocked(bankingApi.getPlaidCompanyTransactions)).toHaveBeenCalledWith(
+      "company-1",
+      expect.objectContaining({ bank_account_id: "acct-1", limit: 500, offset: 500, sort: "date_desc" })
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Business Platinum Card/i }));
+
+    expect(await screen.findByRole("button", { name: "For review · 1" })).toBeInTheDocument();
+    expect(screen.getByText("1-1 of 1")).toBeInTheDocument();
+    expect(screen.getAllByText("Acct2 only row").length).toBeGreaterThan(0);
+    await waitFor(() =>
+      expect(vi.mocked(bankingApi.getPlaidCompanyTransactions)).toHaveBeenCalledWith(
+        "company-1",
+        expect.objectContaining({ bank_account_id: "acct-2", limit: 500, offset: 0, sort: "date_desc" })
+      )
+    );
   });
 });

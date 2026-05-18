@@ -44,6 +44,7 @@ type RowDetailDraft = {
 };
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+const COMPANY_TRANSACTIONS_PAGE_SIZE = 500;
 
 type ReviewTabId = "for_review" | "categorized" | "excluded";
 type AmountFilter = "all" | "spent" | "received";
@@ -210,13 +211,24 @@ export function BankingTransactionsDesignView({
 
   const transactionsQuery = useQuery({
     queryKey: ["banking", "transactions-design", companyId, selectedAccount?.id ?? "", descriptionFilter],
-    queryFn: () =>
-      getPlaidCompanyTransactions(companyId, {
-        limit: 300,
-        bank_account_id: selectedAccount?.id ?? undefined,
-        q: descriptionFilter.trim() || undefined,
-        sort: "date_desc",
-      }),
+    queryFn: async () => {
+      const merged: PlaidBankTransaction[] = [];
+      let offset = 0;
+      while (true) {
+        const page = await getPlaidCompanyTransactions(companyId, {
+          limit: COMPANY_TRANSACTIONS_PAGE_SIZE,
+          offset,
+          bank_account_id: selectedAccount?.id ?? undefined,
+          q: descriptionFilter.trim() || undefined,
+          sort: "date_desc",
+        });
+        const rows = page.transactions ?? [];
+        merged.push(...rows);
+        if (rows.length < COMPANY_TRANSACTIONS_PAGE_SIZE) break;
+        offset += COMPANY_TRANSACTIONS_PAGE_SIZE;
+      }
+      return { transactions: merged };
+    },
     enabled: Boolean(companyId),
   });
 

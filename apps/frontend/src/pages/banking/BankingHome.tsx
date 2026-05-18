@@ -84,18 +84,12 @@ export function BankingHomePage() {
   });
   const tiles = useMemo(() => filterBankingTilesForCompany(tilesQuery.data?.tiles ?? [], companyId), [tilesQuery.data?.tiles, companyId]);
 
-  useEffect(() => {
-    if (!selectedAccountId) return;
-    if (!tiles.some((t) => t.id === selectedAccountId)) setSelectedAccountId(null);
-  }, [tiles, selectedAccountId]);
-  const selectedId = selectedAccountId ?? tiles[0]?.id ?? null;
   const uncategorizedQuery = useQuery({
     queryKey: ["banking", "uncategorized", companyId],
     queryFn: () => getBankingUncategorized(companyId, { limit: 8 }),
     enabled: Boolean(companyId),
   });
 
-  const selectedTile = useMemo(() => tiles.find((tile: BankingTile) => tile.id === selectedId) ?? null, [tiles, selectedId]);
   const money = useMemo(
     () => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     []
@@ -110,6 +104,27 @@ export function BankingHomePage() {
     () => [...tiles].sort((a, b) => a.display_order - b.display_order),
     [tiles]
   );
+  const bankAccountsPanelRows = useMemo(() => {
+    const realTiles = sortedBankTiles.filter((tile) => String(tile.tile_kind) === "real");
+    if (realTiles.length > 0) {
+      return realTiles.map((tile) => ({
+        id: tile.id,
+        displayName: tile.display_name,
+        balance: Number(tile.current_balance ?? 0),
+      }));
+    }
+    return (plaidAccountsQuery.data?.accounts ?? []).map((account) => ({
+      id: account.id,
+      displayName: `${account.account_name || "Account"}${account.account_mask ? ` ••••${account.account_mask}` : ""}`,
+      balance: Number(account.current_balance_cents ?? 0) / 100,
+    }));
+  }, [plaidAccountsQuery.data?.accounts, sortedBankTiles]);
+  useEffect(() => {
+    if (!selectedAccountId) return;
+    if (!bankAccountsPanelRows.some((row) => row.id === selectedAccountId)) setSelectedAccountId(null);
+  }, [bankAccountsPanelRows, selectedAccountId]);
+  const selectedId = selectedAccountId ?? bankAccountsPanelRows[0]?.id ?? null;
+  const selectedTile = useMemo(() => tiles.find((tile: BankingTile) => tile.id === selectedId) ?? null, [tiles, selectedId]);
   const factoringTile = useMemo(
     () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
     [tiles]
@@ -201,18 +216,18 @@ export function BankingHomePage() {
                 <button className="text-blue-700 hover:underline" type="button" onClick={() => setManageOpen(true)}>+</button>
               </div>
               <div className="max-h-[260px] overflow-y-auto">
-                {sortedBankTiles.map((tile) => (
+                {bankAccountsPanelRows.map((row) => (
                   <button
-                    key={tile.id}
+                    key={row.id}
                     type="button"
-                    onClick={() => setSelectedAccountId(tile.id)}
-                    className={`grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-3 py-1.5 text-left text-sm ${selectedId === tile.id ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                    onClick={() => setSelectedAccountId(row.id)}
+                    className={`grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-3 py-1.5 text-left text-sm ${selectedId === row.id ? "bg-blue-50" : "hover:bg-gray-50"}`}
                   >
-                    <span className="truncate">{tile.display_name}</span>
-                    <span className="font-medium">{money.format(Number(tile.current_balance ?? 0))}</span>
+                    <span className="truncate">{row.displayName}</span>
+                    <span className="font-medium">{money.format(row.balance)}</span>
                   </button>
                 ))}
-                {sortedBankTiles.length === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No accounts yet.</p> : null}
+                {bankAccountsPanelRows.length === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No accounts yet.</p> : null}
               </div>
               <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs text-gray-600">
                 <input type="checkbox" checked={showDisconnectedBankAccounts} onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)} />
