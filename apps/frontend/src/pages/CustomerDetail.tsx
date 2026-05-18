@@ -153,6 +153,18 @@ function qualityFlagVariant(flag: Customer["quality_overall_flag"]): "positive" 
   return "neutral";
 }
 
+function qualityRatingFromScores(customer: Customer): "Good" | "Watch" | "Late-pay" {
+  const numeric = Number(customer.quality_payment_score ?? "");
+  if (Number.isFinite(numeric)) {
+    if (numeric >= 90) return "Good";
+    if (numeric >= 70) return "Watch";
+    return "Late-pay";
+  }
+  if (customer.quality_overall_flag === "preferred") return "Good";
+  if (customer.quality_overall_flag === "avoid") return "Late-pay";
+  return "Watch";
+}
+
 function CustomerFinancialOverviewSection(props: {
   summary: CustomerFinancialSummary | undefined;
   loading: boolean;
@@ -1193,9 +1205,22 @@ export function CustomerDetailPage() {
         <div className="space-y-3">
           <DataPanel title="Quality Overview">
             <div className="mb-3 flex items-center justify-between">
-              <StatusBadge variant={qualityFlagVariant((hydratedForm.quality_overall_flag as Customer["quality_overall_flag"]) ?? customer.quality_overall_flag)}>
-                {(hydratedForm.quality_overall_flag || customer.quality_overall_flag).toUpperCase()}
-              </StatusBadge>
+              <div className="flex items-center gap-2">
+                <StatusBadge variant={qualityFlagVariant((hydratedForm.quality_overall_flag as Customer["quality_overall_flag"]) ?? customer.quality_overall_flag)}>
+                  {(hydratedForm.quality_overall_flag || customer.quality_overall_flag).toUpperCase()}
+                </StatusBadge>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    qualityRatingFromScores(customer) === "Good"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : qualityRatingFromScores(customer) === "Late-pay"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  {qualityRatingFromScores(customer)}
+                </span>
+              </div>
               {canWriteQuality && editMode ? (
                 <SelectField
                   label="Overall Flag"
@@ -1214,6 +1239,7 @@ export function CustomerDetailPage() {
               <MetricCell label="Payment Score" value={customer.quality_payment_score ?? "Not evaluated"} />
               <MetricCell label="Cancellation Score" value={customer.quality_cancellation_score ?? "Not evaluated"} />
               <MetricCell label="Disputes (12m)" value={String(customer.quality_disputes_count ?? 0)} />
+              <MetricCell label="FMCSA Standing" value={customer.fmcsa_authority_status_at_verification ?? "Not verified"} />
             </div>
             <div className="mt-3">
               <label className="mb-1 block text-xs font-semibold text-gray-600">Quality Notes</label>

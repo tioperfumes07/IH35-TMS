@@ -234,6 +234,10 @@ export function getMaintenanceKpis(companyId: string) {
   return apiRequest<MaintenanceKpis>(`/api/v1/maintenance/dashboard/kpis?${query(companyId)}`);
 }
 
+export function getVendorIntegrityHistory(vendorId: string, companyId: string) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/integrity/vendor-history/${encodeURIComponent(vendorId)}?${query(companyId)}`);
+}
+
 export function getMaintenanceRmStatus(companyId: string) {
   return apiRequest<{ in_house: WorkOrder[]; external: WorkOrder[]; roadside: WorkOrder[] }>(
     `/api/v1/maintenance/dashboard/rm-status?${query(companyId)}`

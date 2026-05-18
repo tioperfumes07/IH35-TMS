@@ -5,6 +5,7 @@ import { listVendorBills } from "../api/accounting";
 import { ApiError } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
 import { getVendor, updateVendor } from "../api/mdata";
+import { getVendorIntegrityHistory } from "../api/maintenance";
 import { patchVendorAccountingCategory } from "../api/vendorCategory";
 import { useAuth } from "../auth/useAuth";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
@@ -17,6 +18,7 @@ import { VendorCategoryChip } from "../components/vendors/VendorCategoryChip";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { emptyVendorProfileMeta, parseVendorNotes, serializeVendorNotes, type VendorProfileMeta } from "../lib/vendorProfileMeta";
 
 const tabs = ["Profile", "A/P", "Documents", "Audit History"] as const;
 type VendorTab = (typeof tabs)[number];
@@ -28,67 +30,11 @@ function billOpenBalanceCents(b: { balance_cents?: number; amount_cents: number;
   return Number(b.amount_cents ?? 0) - Number(b.paid_cents ?? 0);
 }
 
-const VENDOR_PROFILE_META_PREFIX = "IH35_VENDOR_PROFILE_V1::";
-
-type VendorProfileMeta = {
-  telephone: string;
-  address: string;
-  primaryContactName: string;
-  primaryContactTitle: string;
-  primaryContactPhone: string;
-  primaryContactEmail: string;
-  secondaryContactName: string;
-  secondaryContactTitle: string;
-  secondaryContactPhone: string;
-  secondaryContactEmail: string;
-  generalEmail: string;
-  accountingContact: string;
-  disputesContact: string;
-};
-
 type VendorProfileForm = VendorProfileMeta & {
   name: string;
   vendorType: string;
   notes: string;
 };
-
-function emptyVendorProfileMeta(): VendorProfileMeta {
-  return {
-    telephone: "",
-    address: "",
-    primaryContactName: "",
-    primaryContactTitle: "",
-    primaryContactPhone: "",
-    primaryContactEmail: "",
-    secondaryContactName: "",
-    secondaryContactTitle: "",
-    secondaryContactPhone: "",
-    secondaryContactEmail: "",
-    generalEmail: "",
-    accountingContact: "",
-    disputesContact: "",
-  };
-}
-
-function parseVendorNotes(notes: string | null | undefined): { publicNotes: string; meta: VendorProfileMeta } {
-  const raw = String(notes ?? "");
-  if (!raw.startsWith(VENDOR_PROFILE_META_PREFIX)) {
-    return { publicNotes: raw, meta: emptyVendorProfileMeta() };
-  }
-  const newline = raw.indexOf("\n");
-  const jsonChunk = newline >= 0 ? raw.slice(VENDOR_PROFILE_META_PREFIX.length, newline) : raw.slice(VENDOR_PROFILE_META_PREFIX.length);
-  const publicNotes = newline >= 0 ? raw.slice(newline + 1).trim() : "";
-  try {
-    const parsed = JSON.parse(jsonChunk) as Partial<VendorProfileMeta>;
-    return { publicNotes, meta: { ...emptyVendorProfileMeta(), ...parsed } };
-  } catch {
-    return { publicNotes: raw, meta: emptyVendorProfileMeta() };
-  }
-}
-
-function serializeVendorNotes(meta: VendorProfileMeta, publicNotes: string): string {
-  return `${VENDOR_PROFILE_META_PREFIX}${JSON.stringify(meta)}\n${publicNotes.trim()}`.trim();
-}
 
 export function VendorDetailPage() {
   const { id = "" } = useParams();
@@ -134,6 +80,11 @@ export function VendorDetailPage() {
     queryKey: ["vendor-ap-bills", companyId, id],
     queryFn: () => listVendorBills(companyId, { vendor_id: id, include_balance: true, limit: 200 }),
     enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
+  });
+  const vendorIntegrityQuery = useQuery({
+    queryKey: ["maintenance", "vendor-integrity", id, companyId],
+    queryFn: () => getVendorIntegrityHistory(id, companyId),
+    enabled: Boolean(companyId && id),
   });
 
   const vendorPaymentsQuery = useQuery({
@@ -245,6 +196,8 @@ export function VendorDetailPage() {
         generalEmail: profileForm.generalEmail,
         accountingContact: profileForm.accountingContact,
         disputesContact: profileForm.disputesContact,
+          qualityRating: profileForm.qualityRating,
+          factoring: profileForm.factoring,
       };
       return updateVendor(id, {
         name: profileForm.name.trim(),
@@ -308,6 +261,12 @@ export function VendorDetailPage() {
   }
 
   const vendor = vendorQuery.data;
+  const reworkSignalCount = Number(
+    (vendorIntegrityQuery.data?.repeat_failure_30d_count as number | undefined) ??
+      (vendorIntegrityQuery.data?.redo_30d_count as number | undefined) ??
+      (vendorIntegrityQuery.data?.repeat_returns_30d as number | undefined) ??
+      0
+  );
 
   return (
     <div className="space-y-3">
@@ -325,6 +284,11 @@ export function VendorDetailPage() {
           </span>
         }
       />
+      {reworkSignalCount > 0 ? (
+        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          Warning: {reworkSignalCount} possible re-do signal(s) in last 30 days (same vendor/unit/failure pattern).
+        </div>
+      ) : null}
 
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
         <div className="flex min-w-max gap-1">
@@ -368,6 +332,37 @@ export function VendorDetailPage() {
                 </option>
               ))}
             </SelectCombobox>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Quality rating</span>
+            <div className="flex items-center gap-2">
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                  profileForm.qualityRating === "good"
+                    ? "bg-emerald-100 text-emerald-800"
+                    : profileForm.qualityRating === "bad"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-amber-100 text-amber-800"
+                }`}
+              >
+                {profileForm.qualityRating === "good" ? "Good" : profileForm.qualityRating === "bad" ? "Bad" : "Medium"}
+              </span>
+              <SelectCombobox
+                value={profileForm.qualityRating}
+                onChange={(event) =>
+                  setProfileForm((current) => ({
+                    ...current,
+                    qualityRating: event.target.value as VendorProfileMeta["qualityRating"],
+                  }))
+                }
+                disabled={!profileEditMode}
+                className="h-8 w-[180px] text-xs"
+              >
+                <option value="good">Good</option>
+                <option value="medium">Medium</option>
+                <option value="bad">Bad</option>
+              </SelectCombobox>
+            </div>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Accounting category</span>
@@ -466,6 +461,120 @@ export function VendorDetailPage() {
               disabled={!profileEditMode}
               className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Factoring reserves %</span>
+            <input
+              value={profileForm.factoring.factoringReservesPct}
+              onChange={(event) =>
+                setProfileForm((current) => ({
+                  ...current,
+                  factoring: { ...current.factoring, factoringReservesPct: event.target.value },
+                }))
+              }
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Escrow reserves %</span>
+            <input
+              value={profileForm.factoring.escrowReservesPct}
+              onChange={(event) =>
+                setProfileForm((current) => ({
+                  ...current,
+                  factoring: { ...current.factoring, escrowReservesPct: event.target.value },
+                }))
+              }
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Late fees %</span>
+            <input
+              value={profileForm.factoring.lateFeesPct}
+              onChange={(event) =>
+                setProfileForm((current) => ({
+                  ...current,
+                  factoring: { ...current.factoring, lateFeesPct: event.target.value },
+                }))
+              }
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Chargebacks %</span>
+            <input
+              value={profileForm.factoring.chargebacksPct}
+              onChange={(event) =>
+                setProfileForm((current) => ({
+                  ...current,
+                  factoring: { ...current.factoring, chargebacksPct: event.target.value },
+                }))
+              }
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Aged invoices 31-60 (% rate / % fee)</span>
+            <div className="grid w-full max-w-md grid-cols-2 gap-2">
+              <input
+                value={profileForm.factoring.advanceRate31To60Pct}
+                onChange={(event) =>
+                  setProfileForm((current) => ({
+                    ...current,
+                    factoring: { ...current.factoring, advanceRate31To60Pct: event.target.value },
+                  }))
+                }
+                disabled={!profileEditMode}
+                placeholder="Advance rate %"
+                className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              />
+              <input
+                value={profileForm.factoring.advanceFee31To60Pct}
+                onChange={(event) =>
+                  setProfileForm((current) => ({
+                    ...current,
+                    factoring: { ...current.factoring, advanceFee31To60Pct: event.target.value },
+                  }))
+                }
+                disabled={!profileEditMode}
+                placeholder="Fee %"
+                className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              />
+            </div>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Aged invoices 61-90 (% rate / % fee)</span>
+            <div className="grid w-full max-w-md grid-cols-2 gap-2">
+              <input
+                value={profileForm.factoring.advanceRate61To90Pct}
+                onChange={(event) =>
+                  setProfileForm((current) => ({
+                    ...current,
+                    factoring: { ...current.factoring, advanceRate61To90Pct: event.target.value },
+                  }))
+                }
+                disabled={!profileEditMode}
+                placeholder="Advance rate %"
+                className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              />
+              <input
+                value={profileForm.factoring.advanceFee61To90Pct}
+                onChange={(event) =>
+                  setProfileForm((current) => ({
+                    ...current,
+                    factoring: { ...current.factoring, advanceFee61To90Pct: event.target.value },
+                  }))
+                }
+                disabled={!profileEditMode}
+                placeholder="Fee %"
+                className="rounded border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+              />
+            </div>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Notes</span>
