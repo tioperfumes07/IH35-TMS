@@ -23,7 +23,23 @@ If a feature is in NEITHER source, PAUSE and ask before coding — don't invent.
 
 ## RULE 2 — APPROVED-SCREEN LAW
 
-The directory docs/approved-screens/ contains 12 PNG mockups of every Phase 3 user-facing module. Before writing UI for any module, inspect the relevant PNG. If implementation deviates, flag it in the response.
+The only design source for page builds is `docs/approved-screens/`. The approved PNG set is law:
+
+- `1-HOME_PAGE.png`
+- `2-Maintenance.png`
+- `3-Accounting-Dropdown.png`
+- `4-Banking_Homepage.png`
+- `5-Fuel_Planner.png`
+- `6-Safety.png`
+- `7-Drivers.png`
+- `8-Dispatch-Home.png`
+- `9-Lists_and_catalogs.png`
+- `10-Reports.png`
+- `11-Form_425-Design.png`
+
+The prototype HTML (`docs/ih35-tms-prototype.html`, archived as `docs/_archive/ih35-tms-prototype-REFERENCE-ONLY.html`) is not a design source and must not be used for UI decisions.
+
+Every implementation must follow the route/component mapping in `docs/approved-screens/PAGE-MAP.md`.
 
 ---
 
