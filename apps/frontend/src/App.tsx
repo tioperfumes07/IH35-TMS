@@ -1347,6 +1347,38 @@ export default function App() {
           }
         />
         <Route
+          path="/accounting/vendors"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/vendors" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/customers"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/customers" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/reports"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/reports" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/maintenance-shop"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/maintenance" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/invoices"
           element={
             <ProtectedRoute>
