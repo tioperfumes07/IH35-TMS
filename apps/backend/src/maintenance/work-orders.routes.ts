@@ -303,7 +303,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         companyId,
       ]);
       if (wo.rowCount === 0) return null;
-      const lines = await client.query(`SELECT * FROM maintenance.work_order_lines WHERE work_order_id = $1 ORDER BY created_at ASC`, [params.data.id]);
+      const lines = await client.query(`SELECT * FROM maintenance.work_order_lines WHERE work_order_uuid = $1 ORDER BY created_at ASC`, [params.data.id]);
       const history = await client.query(`SELECT * FROM maintenance.wo_status_history WHERE work_order_id = $1 ORDER BY created_at ASC`, [params.data.id]);
       return { ...wo.rows[0], line_items: lines.rows, status_history: history.rows };
     });
@@ -505,14 +505,14 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         `
           INSERT INTO maintenance.work_orders (
             operating_company_id, wo_type, status, unit_id, driver_id, load_id, opened_at,
-            repair_location, assigned_vendor, vendor_invoice_number, description, severity,
-            source_type, external_vendor_id, external_vendor_wo_number, external_vendor_invoice_number,
+            repair_location, vendor_id, external_vendor_invoice_number, description,
+            source_type, external_vendor_id, external_vendor_wo_number,
             display_id, unit_sequence,
             bucket, roadside_callout_at, roadside_arrived_at, roadside_provider_vendor_id, roadside_location, roadside_breakdown_load_id
           )
           VALUES (
-            $1,$2,$3,$4,$5,$6,COALESCE($7::timestamptz, now()),$8,$9,$10,$11,$12,
-            $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24
+            $1,$2,$3,$4,$5,$6,COALESCE($7::timestamptz, now()),$8,$9,$10,$11,
+            $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22
           )
           RETURNING *
         `,
@@ -526,13 +526,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.service_date ?? null,
           body.repair_location,
           body.vendor_id ?? null,
-          body.vendor_invoice_number ?? null,
+          body.external_vendor_invoice_number ?? body.vendor_invoice_number ?? null,
           body.description,
-          body.severity ?? null,
           body.source_type,
           body.external_vendor_id ?? null,
           body.external_vendor_wo_number ?? null,
-          body.external_vendor_invoice_number ?? null,
           display?.display_id ?? null,
           Number(display?.sequence ?? 0) || null,
           body.bucket ?? "in_house",
@@ -548,7 +546,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       for (const line of body.line_items) {
         await client.query(
           `
-            INSERT INTO maintenance.work_order_lines (work_order_id, line_type, description, quantity, unit_cost, amount)
+            INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost)
             VALUES ($1,$2,$3,$4,$5,$6)
           `,
           [wo.id, line.line_type, line.description, line.quantity, line.unit_cost, line.amount]
@@ -928,7 +926,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         if (wo.rowCount === 0) return undefined;
         const res = await client.query(
           `
-            INSERT INTO maintenance.work_order_lines (work_order_id, line_type, description, quantity, unit_cost, amount)
+            INSERT INTO maintenance.work_order_lines (work_order_uuid, line_type, description, quantity, unit_cost, total_cost)
             VALUES ($1,$2,$3,$4,$5,$6)
             RETURNING *
           `,
@@ -972,7 +970,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             DELETE FROM maintenance.work_order_lines li
             USING maintenance.work_orders w
             WHERE li.id = $1
-              AND li.work_order_id = w.id
+              AND li.work_order_uuid = w.id
               AND w.id = $2
               AND w.operating_company_id = $3
             RETURNING li.id

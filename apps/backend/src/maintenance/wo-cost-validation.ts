@@ -37,9 +37,9 @@ export async function validateWoVendorInvoiceTotals(
 ): Promise<void> {
   const linesRes = await client.query(
     `
-      SELECT COALESCE(SUM(amount::numeric), 0)::numeric AS total
+      SELECT COALESCE(SUM(total_cost::numeric), 0)::numeric AS total
       FROM maintenance.work_order_lines
-      WHERE work_order_id = $1::uuid
+      WHERE work_order_uuid = $1::uuid
         AND section IN ('A', 'B')
     `,
     [woId]

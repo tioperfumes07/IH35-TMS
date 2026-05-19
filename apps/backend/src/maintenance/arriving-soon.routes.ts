@@ -205,7 +205,6 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
             driver_id,
             load_id,
             description,
-            severity,
             status,
             opened_at,
             display_id,
@@ -220,11 +219,10 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
             $5,
             $6,
             $7,
-            $8,
             'open',
             now(),
+            $8,
             $9,
-            $10,
             'mobile_roadside'
           )
           RETURNING *
@@ -237,7 +235,6 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
           load.driver_id ?? null,
           load.id,
           description,
-          issue.severity ?? null,
           displayId || null,
           unitSequence > 0 ? unitSequence : null,
         ]

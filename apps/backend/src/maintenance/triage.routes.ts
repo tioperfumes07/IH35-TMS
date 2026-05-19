@@ -66,12 +66,21 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
       const issue = issueRes.rows[0];
       if (!issue) return { notFound: true as const };
 
+      const displayIdRes = await client.query(
+        `
+          SELECT display_id, sequence
+          FROM maintenance.next_wo_display_id($1, 'IT', CURRENT_DATE, $2)
+        `,
+        [issue.unit_id, query.data.operating_company_id]
+      );
+      const display = displayIdRes.rows[0];
+
       const woRes = await client.query(
         `
           INSERT INTO maintenance.work_orders (
-            operating_company_id, wo_type, status, unit_id, driver_id, opened_at, repair_location, description, severity
+            operating_company_id, wo_type, source_type, status, unit_id, driver_id, opened_at, repair_location, description, display_id, unit_sequence
           )
-          VALUES ($1,$2,'open',$3,$4,now(),'mobile_roadside',$5,$6)
+          VALUES ($1,$2,'IT','open',$3,$4,now(),'mobile_roadside',$5,$6,$7)
           RETURNING id
         `,
         [
@@ -80,7 +89,8 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
           issue.unit_id,
           issue.driver_id,
           `${issue.issue_description ?? ""}\n${body.data.additional_notes ?? ""}\nGPS: ${issue.gps_lat ?? ""},${issue.gps_lng ?? ""} ${issue.gps_label ?? ""}`.trim(),
-          issue.severity ?? null,
+          display?.display_id ?? null,
+          Number(display?.sequence ?? 0) || null,
         ]
       );
       const workOrderId = String(woRes.rows[0].id);

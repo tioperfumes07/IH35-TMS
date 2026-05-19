@@ -402,7 +402,6 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             opened_at,
             repair_location,
             description,
-            severity,
             display_id,
             unit_sequence
           )
@@ -416,7 +415,6 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             now(),
             'external_shop',
             $4,
-            'severe',
             $5,
             $6
           )
