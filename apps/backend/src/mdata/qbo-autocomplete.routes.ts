@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
+import { searchCustomersForAutocomplete } from "./customer-autocomplete.shared.js";
 
 const querySchema = z.object({
   q: z.string().trim().default(""),
@@ -98,45 +99,13 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
         }
 
         if (table === "mdata.qbo_customers") {
-          return client.query(
-            `
-              SELECT
-                v.id,
-                v.qbo_id,
-                v.display_name,
-                v.company_name,
-                v.primary_email,
-                v.primary_phone,
-                v.mc_number,
-                v.active
-              FROM mdata.qbo_customers v
-              WHERE v.operating_company_id = $1::uuid
-                ${activeClause}
-                AND (
-                  $2::text = ''
-                  OR (
-                    length($2::text) >= 3
-                    AND to_tsvector('english', v.display_name || ' ' || COALESCE(v.company_name, ''))
-                      @@ plainto_tsquery('english', $2::text)
-                  )
-                  OR v.display_name ILIKE $3
-                  OR COALESCE(v.company_name, '') ILIKE $3
-                )
-              ORDER BY
-                CASE
-                  WHEN lower(v.display_name) = lower($2::text) THEN 0
-                  WHEN v.display_name ILIKE $3 OR COALESCE(v.company_name, '') ILIKE $3 THEN 1
-                  ELSE 2
-                END ASC,
-                ts_rank_cd(
-                  to_tsvector('english', v.display_name || ' ' || COALESCE(v.company_name, '')),
-                  plainto_tsquery('english', CASE WHEN length($2::text) >= 3 THEN $2::text ELSE 'zzzunused' END)
-                ) DESC NULLS LAST,
-                v.display_name ASC
-              LIMIT 25
-            `,
-            [operating_company_id, term, prefix]
-          );
+          const rows = await searchCustomersForAutocomplete(client, {
+            operating_company_id,
+            term,
+            limit: 25,
+            active_only,
+          });
+          return { rows };
         }
 
         if (table === "mdata.qbo_items") {
