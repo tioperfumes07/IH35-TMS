@@ -25,6 +25,7 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   status: driverStatusSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -119,6 +120,7 @@ const updateDriverBodySchema = z
     deactivated_at: isoDateSchema.nullable().optional(),
     qbo_vendor_id: z.string().trim().max(120).nullable().optional(),
     qbo_class_id: z.string().trim().max(120).nullable().optional(),
+    operating_company_id: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -205,7 +207,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search } = parsedQuery.data;
+    const { limit, offset, status, search, operating_company_id } = parsedQuery.data;
     const drivers = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
@@ -217,6 +219,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         values.push(`%${search}%`);
         const idx = values.length;
         filters.push(`(first_name ILIKE $${idx} OR last_name ILIKE $${idx} OR cdl_number ILIKE $${idx})`);
+      }
+      if (operating_company_id) {
+        values.push(operating_company_id);
+        filters.push(`operating_company_id = $${values.length}`);
       }
       values.push(limit);
       values.push(offset);
@@ -540,9 +546,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               status, notes, prior_driver_id, rehire_count, is_rehire,
-              created_by_user_id, updated_by_user_id
+            operating_company_id, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$37
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$38
             )
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
@@ -553,7 +559,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
               status, notes, prior_driver_id, rehire_count, is_rehire,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            operating_company_id, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
           [
             identityUserId,
@@ -592,6 +598,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             rehireState.prior_driver_id,
             rehireState.rehire_count,
             rehireState.is_rehire,
+            resolvedOperatingCompanyId,
             authUser.uuid,
           ]
         );
@@ -805,6 +812,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
             COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
             status, notes, prior_driver_id, rehire_count, is_rehire,
+          operating_company_id,
             qbo_vendor_id, qbo_class_id,
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.drivers
@@ -986,12 +994,29 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     if ("qbo_vendor_id" in b) add("qbo_vendor_id", b.qbo_vendor_id ?? null);
     if ("qbo_class_id" in b) add("qbo_class_id", b.qbo_class_id ?? null);
+    if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     add("updated_by_user_id", authUser.uuid);
 
     values.push(parsedParams.data.id);
     const idIdx = values.length;
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        if ("operating_company_id" in b && b.operating_company_id) {
+          const companyRes = await client.query<{ id: string }>(
+            `
+              SELECT id
+              FROM org.companies
+              WHERE id = $1
+                AND id IN (SELECT org.user_accessible_company_ids())
+                AND deactivated_at IS NULL
+                AND is_active = true
+              LIMIT 1
+            `,
+            [b.operating_company_id]
+          );
+          if (companyRes.rows.length === 0) return { error: "operating_company_not_found" as const };
+        }
+
         const oldRes = await client.query(
           `
             SELECT
@@ -1003,6 +1028,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
               status, notes, prior_driver_id, rehire_count, is_rehire,
+              operating_company_id,
               qbo_vendor_id, qbo_class_id,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
             FROM mdata.drivers
@@ -1028,6 +1054,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
               COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
               status, notes, prior_driver_id, rehire_count, is_rehire,
+              operating_company_id,
               qbo_vendor_id, qbo_class_id,
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           `,
@@ -1073,6 +1100,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                 emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
                 COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
                 status, notes, prior_driver_id, rehire_count, is_rehire,
+              operating_company_id,
                 qbo_vendor_id, qbo_class_id,
                 created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
               FROM mdata.drivers
@@ -1124,6 +1152,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         });
         return updatedRow;
       });
+      if (updated && typeof updated === "object" && "error" in updated) {
+        return reply.code(400).send({ error: "operating_company_not_found" });
+      }
       if (!updated) return reply.code(404).send({ error: "mdata_driver_not_found" });
       return updated;
     } catch (err) {
