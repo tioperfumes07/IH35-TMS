@@ -17,6 +17,7 @@ import { registerTrialBalanceRoutes } from "./trial-balance.routes.js";
 import { registerAccountingPeriodsReadRoutes } from "./periods.routes.js";
 import { registerProfitLossRoutes } from "./profit-loss.routes.js";
 import { registerBalanceSheetRoutes } from "./balance-sheet.routes.js";
+import { registerCashFlowRoutes } from "./cash-flow.routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
@@ -37,4 +38,5 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerAccountingPeriodsReadRoutes(app);
   await registerProfitLossRoutes(app);
   await registerBalanceSheetRoutes(app);
+  await registerCashFlowRoutes(app);
 }
