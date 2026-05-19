@@ -140,7 +140,7 @@ export async function createWorkOrderWithLines(
         shop_name, shop_address, shop_phone, vendor_id, vendor_qbo_id
       ) VALUES (
         $1,$2,$3,COALESCE($4,'open'),$5,$6,$7,COALESCE($8::timestamptz, now()),
-        $9,NULL,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
+        $9,NULL,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29
       )
       RETURNING id, display_id
     `,
