@@ -9,6 +9,8 @@ describe("qbo autocomplete routes (static guarantees)", () => {
     const routesPath = path.resolve(here, "../qbo-autocomplete.routes.ts");
     const src = readFileSync(routesPath, "utf8");
     const hits = src.match(/LIMIT 25/g) ?? [];
-    expect(hits.length).toBeGreaterThanOrEqual(4);
+    // Three SQL branches still own LIMIT 25 directly: vendors, items, and accounts.
+    // Customers now use shared canonical autocomplete with limit passed as an argument.
+    expect(hits.length).toBe(3);
   });
 });
