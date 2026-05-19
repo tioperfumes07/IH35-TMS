@@ -19,6 +19,7 @@ import { registerProfitLossRoutes } from "./profit-loss.routes.js";
 import { registerBalanceSheetRoutes } from "./balance-sheet.routes.js";
 import { registerCashFlowRoutes } from "./cash-flow.routes.js";
 import { registerArAgingRoutes } from "./ar-aging.routes.js";
+import { registerApAgingRoutes } from "./ap-aging.routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
@@ -41,4 +42,5 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerBalanceSheetRoutes(app);
   await registerCashFlowRoutes(app);
   await registerArAgingRoutes(app);
+  await registerApAgingRoutes(app);
 }
