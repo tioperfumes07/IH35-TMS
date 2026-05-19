@@ -7,6 +7,7 @@ import crypto from "node:crypto";
 import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-retained-earnings.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
+const periodCloseRoles = new Set(["Owner", "Administrator", "Accountant"]);
 
 function finance(req: Parameters<typeof currentAuthUser>[0], reply: Parameters<typeof currentAuthUser>[1]) {
   const user = currentAuthUser(req, reply);
@@ -212,6 +213,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
   app.post("/api/v1/accounting/periods/:id/close", async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
+    if (!periodCloseRoles.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
     const body = z.object({ operating_company_id: z.string().uuid(), closing_notes: z.string().optional() }).safeParse(req.body ?? {});

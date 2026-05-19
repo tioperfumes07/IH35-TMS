@@ -14,6 +14,7 @@ import { registerExpenseRoutes } from "./expenses.routes.js";
 import { registerAccountingP7Wave2Routes } from "./p7-wave2.routes.js";
 import { registerPostingEngineRoutes } from "./posting-engine.routes.js";
 import { registerTrialBalanceRoutes } from "./trial-balance.routes.js";
+import { registerAccountingPeriodsReadRoutes } from "./periods.routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
@@ -31,4 +32,5 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerAccountingP7Wave2Routes(app);
   await registerPostingEngineRoutes(app);
   await registerTrialBalanceRoutes(app);
+  await registerAccountingPeriodsReadRoutes(app);
 }
