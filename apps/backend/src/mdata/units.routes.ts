@@ -187,7 +187,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
               unit_number, vin, make, model, year, license_plate, license_state, status,
               assigned_driver_id, owner_company_id, currently_leased_to_company_id, acquired_date, notes, created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14
             )
             RETURNING
               id, unit_number, vin, make, model, year, license_plate, license_state, status,
