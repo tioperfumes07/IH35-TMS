@@ -133,14 +133,14 @@ export async function createWorkOrderWithLines(
     `
       INSERT INTO maintenance.work_orders (
         operating_company_id, wo_type, source_type, status, unit_id, driver_id, load_id, opened_at,
-        repair_location, assigned_vendor, vendor_invoice_number, description, severity,
-        external_vendor_id, external_vendor_wo_number, external_vendor_invoice_number,
-        display_id, unit_sequence, total_estimated_cost, total_actual_cost,
+        repair_location, vendor_id, external_vendor_invoice_number, description,
+        external_vendor_id, external_vendor_wo_number,
+        display_id, unit_sequence, estimated_cost_cents, total_actual_cost,
         bucket, roadside_callout_at, roadside_arrived_at, roadside_provider_vendor_id, roadside_location, roadside_breakdown_load_id,
-        shop_name, shop_address, shop_phone, vendor_id, vendor_qbo_id
+        shop_name, shop_address, shop_phone, vendor_qbo_id
       ) VALUES (
         $1,$2,$3,COALESCE($4,'open'),$5,$6,$7,COALESCE($8::timestamptz, now()),
-        $9,NULL,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29
+        $9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28
       )
       RETURNING id, display_id
     `,
@@ -154,14 +154,14 @@ export async function createWorkOrderWithLines(
       header.load_id ?? null,
       header.service_date ?? null,
       header.repair_location,
-      header.vendor_invoice_number ?? null,
+      header.vendor_id ?? null,
+      header.external_vendor_invoice_number ?? header.vendor_invoice_number ?? null,
       header.description,
-      header.severity ?? null,
       header.external_vendor_id ?? null,
       header.external_vendor_wo_number ?? null,
-      header.external_vendor_invoice_number ?? null,
       display?.display_id ?? null,
       Number(display?.sequence ?? 0) || null,
+      Math.max(0, Math.round(totalCost * 100)),
       totalCost,
       header.bucket ?? "in_house",
       header.roadside_callout_at ?? null,
@@ -172,7 +172,6 @@ export async function createWorkOrderWithLines(
       header.shop_name ?? null,
       header.shop_address ?? null,
       header.shop_phone ?? null,
-      header.vendor_id ?? null,
       header.vendor_qbo_id ?? null,
     ]
   );
@@ -184,7 +183,7 @@ export async function createWorkOrderWithLines(
     await client.query(
       `
         INSERT INTO maintenance.work_order_lines (
-          work_order_id, line_type, description, quantity, unit_cost, amount,
+          work_order_uuid, line_type, description, quantity, unit_cost, total_cost,
           section, expense_category_uuid
         ) VALUES ($1,'other',$2,$3,$4,$5,'A',$6)
       `,
@@ -204,7 +203,7 @@ export async function createWorkOrderWithLines(
     const parentInsert = await client.query<{ id: string }>(
       `
         INSERT INTO maintenance.work_order_lines (
-          work_order_id, line_type, description, quantity, unit_cost, amount,
+          work_order_uuid, line_type, description, quantity, unit_cost, total_cost,
           section, service_item_uuid
         ) VALUES ($1,'other',$2,$3,$4,$5,'B',$6)
         RETURNING id
@@ -225,7 +224,7 @@ export async function createWorkOrderWithLines(
       const insert = await client.query<{ id: string }>(
         `
           INSERT INTO maintenance.work_order_lines (
-            work_order_id, line_type, description, quantity, unit_cost, amount, section,
+            work_order_uuid, line_type, description, quantity, unit_cost, total_cost, section,
             parent_line_uuid, part_uuid, labor_rate_uuid, part_location_codes
           ) VALUES (
             $1,$2,$3,$4,$5,$6,'B',$7,$8,$9,$10
@@ -340,11 +339,11 @@ async function copyToAccountingLines(
   }>(
     `
       SELECT
-        id, line_type, description, quantity, unit_cost, amount,
+        uuid as id, line_type, description, quantity, unit_cost, total_cost AS amount,
         COALESCE(section, 'B') AS section,
         parent_line_uuid, expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes
       FROM maintenance.work_order_lines
-      WHERE work_order_id = $1
+      WHERE work_order_uuid = $1
       ORDER BY created_at ASC
     `,
     [sourceWoId]
@@ -395,12 +394,12 @@ export async function autoCreateBillFromWO(
       )
       SELECT
         w.operating_company_id,
-        COALESCE(w.external_vendor_id, w.assigned_vendor, w.vendor_id),
+        COALESCE(w.external_vendor_id, w.vendor_id),
         w.id,
         'draft',
         CURRENT_DATE,
         CURRENT_DATE + INTERVAL '30 days',
-        COALESCE(w.total_actual_cost, w.total_estimated_cost, 0),
+        COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0),
         true
       FROM maintenance.work_orders w
       WHERE w.id = $1
@@ -449,9 +448,9 @@ export async function autoCreateExpenseFromWO(
     `
       SELECT
         w.operating_company_id,
-        COALESCE(w.external_vendor_id, w.assigned_vendor, w.vendor_id) AS vendor_uuid,
+        COALESCE(w.external_vendor_id, w.vendor_id) AS vendor_uuid,
         w.load_id,
-        COALESCE(w.total_actual_cost, w.total_estimated_cost, 0) AS total_amount
+        COALESCE(w.total_actual_cost, (COALESCE(w.estimated_cost_cents, 0)::numeric / 100.0), 0) AS total_amount
       FROM maintenance.work_orders w
       WHERE w.id = $1
       LIMIT 1
@@ -473,7 +472,7 @@ export async function autoCreateExpenseFromWO(
               upper(COALESCE(wl.description, '')) AS line_desc
             FROM maintenance.work_order_lines wl
             LEFT JOIN catalogs.qbo_categories q ON q.id = wl.expense_category_uuid
-            WHERE wl.work_order_id = $1
+            WHERE wl.work_order_uuid = $1
               AND wl.section = 'A'
           )
           SELECT EXISTS (
@@ -488,7 +487,7 @@ export async function autoCreateExpenseFromWO(
           SELECT EXISTS (
             SELECT 1
             FROM maintenance.work_order_lines wl
-            WHERE wl.work_order_id = $1
+            WHERE wl.work_order_uuid = $1
               AND wl.section = 'A'
               AND upper(COALESCE(wl.description, '')) ~ '(FUEL|DIESEL|ROADSIDE|TOLL|PARKING)'
           ) AS requires_load
@@ -623,7 +622,7 @@ export async function allocateInHouseFromWO(client: DbClient, userId: string, wo
         FROM (
           SELECT part_uuid, SUM(COALESCE(quantity, 0))::int AS qty
           FROM maintenance.work_order_lines
-          WHERE work_order_id = $1
+          WHERE work_order_uuid = $1
             AND line_type = 'parts'
             AND part_uuid IS NOT NULL
           GROUP BY part_uuid
