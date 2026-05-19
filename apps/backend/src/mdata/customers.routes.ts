@@ -6,12 +6,16 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { verifyCustomerWithSafer } from "../integrations/fmcsa/safer.service.js";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
+import { searchCustomersForAutocomplete } from "./customer-autocomplete.shared.js";
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   status: z.enum(["active", "inactive"]).optional(),
   search: z.string().trim().min(1).max(100).optional(),
+  q: z.string().trim().max(100).optional(),
+  active_only: z.coerce.boolean().optional().default(true),
+  autocomplete: z.coerce.boolean().optional().default(false),
   operating_company_id: z.string().uuid().optional(),
 });
 
@@ -303,7 +307,24 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, operating_company_id } = parsedQuery.data;
+    const { limit, offset, status, search, q, active_only, autocomplete, operating_company_id } = parsedQuery.data;
+    const term = (q ?? search ?? "").trim();
+    if (autocomplete) {
+      if (!operating_company_id) {
+        return reply.code(400).send({ error: "operating_company_id_required" });
+      }
+      const results = await withCurrentUser(authUser.uuid, async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+        return searchCustomersForAutocomplete(client, {
+          operating_company_id,
+          term,
+          limit,
+          active_only,
+        });
+      });
+      return { results };
+    }
+
     const customers = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];

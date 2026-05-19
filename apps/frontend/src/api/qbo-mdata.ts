@@ -31,12 +31,18 @@ export function searchQboMasterData(
   operatingCompanyId: string,
   params: { q: string; active_only?: boolean }
 ) {
+  if (entityType === "customer") {
+    const search = new URLSearchParams();
+    search.set("autocomplete", "true");
+    search.set("q", params.q);
+    if (params.active_only === false) search.set("active_only", "false");
+    return apiRequest<QboAutocompleteResponse>(withCompany(`/api/v1/mdata/customers?${search.toString()}`, operatingCompanyId));
+  }
+
   const plural =
     entityType === "vendor"
       ? "vendors"
-      : entityType === "customer"
-        ? "customers"
-        : entityType === "item"
+      : entityType === "item"
           ? "items"
           : "accounts";
   const search = new URLSearchParams();
