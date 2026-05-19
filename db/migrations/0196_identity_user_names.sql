@@ -1,4 +1,4 @@
--- 0193_identity_user_names.sql
+-- 0196_identity_user_names.sql
 -- Add office-facing user profile columns used by Users management UI.
 -- F.24-safe additive migration: no destructive changes.
 
