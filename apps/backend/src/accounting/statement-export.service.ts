@@ -37,7 +37,7 @@ async function fetchCompanyCode(userId: string, operatingCompanyId: string): Pro
     const res = await client.query<{ code: string | null }>(
       `
         SELECT code
-        FROM mdata.companies
+        FROM org.companies
         WHERE id = $1::uuid
         LIMIT 1
       `,
