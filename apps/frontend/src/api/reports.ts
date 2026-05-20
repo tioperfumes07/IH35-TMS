@@ -1,4 +1,4 @@
-import { ApiError, apiRequest } from "./client";
+import { ApiError, apiRequest, resolveApiUrl } from "./client";
 
 export type ReportCategory =
   | "all"
@@ -132,6 +132,88 @@ export type APAgingResponse = {
   rows: APAgingRow[];
 };
 
+export type AccountingTrialBalanceRow = {
+  account_id: string;
+  account_code: string;
+  account_name: string;
+  account_type: string;
+  total_debits: number;
+  total_credits: number;
+  net_balance: number;
+};
+
+export type AccountingTrialBalanceResponse = {
+  rows: AccountingTrialBalanceRow[];
+  summary: {
+    grand_total_debits: number;
+    grand_total_credits: number;
+    balanced: boolean;
+  };
+};
+
+export type AccountingProfitLossLine = {
+  account_code: string;
+  account_name: string;
+  account_type: string;
+  amount: number;
+};
+
+export type AccountingProfitLossSection = {
+  lines: AccountingProfitLossLine[];
+  total: number;
+};
+
+export type AccountingProfitLossResponse = {
+  revenue: AccountingProfitLossSection;
+  cogs: AccountingProfitLossSection;
+  gross_profit: number;
+  operating_expenses: AccountingProfitLossSection;
+  net_income: number;
+};
+
+export type AccountingBalanceSheetLine = {
+  account_code: string;
+  account_name: string;
+  account_type: string;
+  amount: number;
+};
+
+export type AccountingBalanceSheetSection = {
+  lines: AccountingBalanceSheetLine[];
+  total: number;
+};
+
+export type AccountingBalanceSheetResponse = {
+  assets: AccountingBalanceSheetSection;
+  liabilities: AccountingBalanceSheetSection;
+  equity: AccountingBalanceSheetSection & { current_year_earnings: number };
+  total_liabilities_and_equity: number;
+  balanced: boolean;
+};
+
+export type AccountingCashFlowLine = {
+  label: string;
+  account_type: string;
+  account_subtype: string | null;
+  amount: number;
+};
+
+export type AccountingCashFlowSection = {
+  lines: AccountingCashFlowLine[];
+  total: number;
+};
+
+export type AccountingCashFlowResponse = {
+  operating: AccountingCashFlowSection;
+  investing: AccountingCashFlowSection;
+  financing: AccountingCashFlowSection;
+  net_cash_change: number;
+  cash_at_start: number;
+  cash_at_end: number;
+  reconciled: boolean;
+  unclassified_leg_count: number;
+};
+
 type ReportRunLogBody = {
   operating_company_id: string;
   report_id: string;
@@ -242,6 +324,151 @@ export async function getApAgingReport(companyId: string, asOfDate: string): Pro
     as_of_date: raw.as_of_date,
     rows,
   };
+}
+
+type StatementFormat = "pdf" | "xlsx";
+
+async function downloadBinaryExport(path: string) {
+  const response = await fetch(resolveApiUrl(path), {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") ?? "";
+    const payload = contentType.includes("application/json") ? await response.json() : await response.text();
+    throw new ApiError(response.status, payload);
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const fileNameMatch = disposition.match(/filename="([^"]+)"/i);
+  const extension = path.endsWith("/pdf") ? "pdf" : "xlsx";
+  const fileName = fileNameMatch?.[1] ?? `accounting-export.${extension}`;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function getTrialBalanceReport(params: {
+  operating_company_id: string;
+  from_date?: string;
+  to_date?: string;
+}): Promise<AccountingTrialBalanceResponse> {
+  const query = new URLSearchParams();
+  if (params.from_date) query.set("from_date", params.from_date);
+  if (params.to_date) query.set("to_date", params.to_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return apiRequest<AccountingTrialBalanceResponse>(withCompany(`/api/v1/accounting/trial-balance${suffix}`, params.operating_company_id));
+}
+
+export async function getProfitLossReport(params: {
+  operating_company_id: string;
+  from_date?: string;
+  to_date?: string;
+}): Promise<AccountingProfitLossResponse> {
+  const query = new URLSearchParams();
+  if (params.from_date) query.set("from_date", params.from_date);
+  if (params.to_date) query.set("to_date", params.to_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return apiRequest<AccountingProfitLossResponse>(withCompany(`/api/v1/accounting/profit-loss${suffix}`, params.operating_company_id));
+}
+
+export async function getBalanceSheetReport(params: {
+  operating_company_id: string;
+  as_of_date?: string;
+}): Promise<AccountingBalanceSheetResponse> {
+  const query = new URLSearchParams();
+  if (params.as_of_date) query.set("as_of_date", params.as_of_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return apiRequest<AccountingBalanceSheetResponse>(withCompany(`/api/v1/accounting/balance-sheet${suffix}`, params.operating_company_id));
+}
+
+export async function getCashFlowStatementReport(params: {
+  operating_company_id: string;
+  from_date?: string;
+  to_date?: string;
+}): Promise<AccountingCashFlowResponse> {
+  const query = new URLSearchParams();
+  if (params.from_date) query.set("from_date", params.from_date);
+  if (params.to_date) query.set("to_date", params.to_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return apiRequest<AccountingCashFlowResponse>(withCompany(`/api/v1/accounting/cash-flow${suffix}`, params.operating_company_id));
+}
+
+export async function exportTrialBalanceReport(params: {
+  operating_company_id: string;
+  as_of_date?: string;
+  format: StatementFormat;
+}) {
+  const query = new URLSearchParams();
+  if (params.as_of_date) query.set("as_of_date", params.as_of_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return downloadBinaryExport(withCompany(`/api/v1/accounting/trial-balance/export/${params.format}${suffix}`, params.operating_company_id));
+}
+
+export async function exportProfitLossReport(params: {
+  operating_company_id: string;
+  range_key?: string;
+  from_date?: string;
+  to_date?: string;
+  format: StatementFormat;
+}) {
+  const query = new URLSearchParams();
+  if (params.range_key) query.set("range_key", params.range_key);
+  if (params.from_date) query.set("from_date", params.from_date);
+  if (params.to_date) query.set("to_date", params.to_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return downloadBinaryExport(withCompany(`/api/v1/accounting/profit-loss/export/${params.format}${suffix}`, params.operating_company_id));
+}
+
+export async function exportBalanceSheetReport(params: {
+  operating_company_id: string;
+  as_of_date?: string;
+  format: StatementFormat;
+}) {
+  const query = new URLSearchParams();
+  if (params.as_of_date) query.set("as_of_date", params.as_of_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return downloadBinaryExport(withCompany(`/api/v1/accounting/balance-sheet/export/${params.format}${suffix}`, params.operating_company_id));
+}
+
+export async function exportCashFlowStatementReport(params: {
+  operating_company_id: string;
+  range_key?: string;
+  from_date?: string;
+  to_date?: string;
+  format: StatementFormat;
+}) {
+  const query = new URLSearchParams();
+  if (params.range_key) query.set("range_key", params.range_key);
+  if (params.from_date) query.set("from_date", params.from_date);
+  if (params.to_date) query.set("to_date", params.to_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return downloadBinaryExport(withCompany(`/api/v1/accounting/cash-flow/export/${params.format}${suffix}`, params.operating_company_id));
+}
+
+export async function exportArAging(params: {
+  operating_company_id: string;
+  as_of_date?: string;
+  format: StatementFormat;
+}) {
+  const query = new URLSearchParams();
+  if (params.as_of_date) query.set("as_of_date", params.as_of_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return downloadBinaryExport(withCompany(`/api/v1/accounting/ar-aging/export/${params.format}${suffix}`, params.operating_company_id));
+}
+
+export async function exportApAging(params: {
+  operating_company_id: string;
+  as_of_date?: string;
+  format: StatementFormat;
+}) {
+  const query = new URLSearchParams();
+  if (params.as_of_date) query.set("as_of_date", params.as_of_date);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return downloadBinaryExport(withCompany(`/api/v1/accounting/ap-aging/export/${params.format}${suffix}`, params.operating_company_id));
 }
 
 export async function getReportLibrary(companyId: string): Promise<ReportLibraryItem[]> {

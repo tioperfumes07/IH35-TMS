@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getArAgingReport, type ARAgingRow } from "../../api/reports";
+import { exportArAging, getArAgingReport, type ARAgingRow } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReportsSubNav } from "./ReportsSubNav";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -120,9 +121,10 @@ export function ARAgingPage() {
           body { background: white; }
         }
       `}</style>
+      <ReportsSubNav />
       <PageHeader
         title="A/R aging"
-        subtitle={`As of ${asOf} · open invoices by customer`}
+        subtitle={`As of ${asOf} · open invoices by customer · Accrual basis`}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>
@@ -130,6 +132,34 @@ export function ARAgingPage() {
             </Button>
             <Button size="sm" variant="secondary" onClick={exportCsv}>
               Export CSV
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!companyId}
+              onClick={() =>
+                exportArAging({
+                  operating_company_id: companyId,
+                  as_of_date: asOf,
+                  format: "pdf",
+                })
+              }
+            >
+              Export PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!companyId}
+              onClick={() =>
+                exportArAging({
+                  operating_company_id: companyId,
+                  as_of_date: asOf,
+                  format: "xlsx",
+                })
+              }
+            >
+              Export XLSX
             </Button>
           </div>
         }

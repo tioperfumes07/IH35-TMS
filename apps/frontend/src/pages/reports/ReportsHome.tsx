@@ -144,12 +144,16 @@ export function ReportsHomePage() {
         <div className="space-y-3">
           <section className="rounded border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-3 py-2">
-              <h3 className="text-sm font-semibold text-slate-900">Phase 6 financial reports</h3>
-              <p className="text-xs text-slate-500">Cash, settlements, customer margin, and unit profit (Block U)</p>
+              <h3 className="text-sm font-semibold text-slate-900">Accounting + financial reports</h3>
+              <p className="text-xs text-slate-500">Core accounting statements plus operational finance views</p>
             </div>
             <div className="grid gap-2 p-3 sm:grid-cols-2">
               {(
                 [
+                  ["trial-balance", "Trial balance"],
+                  ["profit-loss", "Profit & loss"],
+                  ["balance-sheet", "Balance sheet"],
+                  ["cash-flow-statement", "Cash flow statement"],
                   ["cash-flow-overview", "Cash flow overview"],
                   ["settlement-summary", "Settlement summary"],
                   ["customer-profitability", "Customer profitability"],

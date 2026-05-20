@@ -112,6 +112,7 @@ export async function exportTrialBalanceStatement(input: {
   const rows: Array<Array<string | number>> = [
     ["Trial Balance"],
     ["Company", companyCode],
+    ["Basis", "Accrual basis"],
     ["As of", input.as_of_date],
     ["Balanced", yesNo(report.summary.balanced)],
     [],
@@ -213,6 +214,7 @@ export async function exportProfitLossStatement(input: {
   const rows: Array<Array<string | number>> = [
     ["Profit and Loss"],
     ["Company", companyCode],
+    ["Basis", "Accrual basis"],
     ["Period", `${resolved.from_date ?? "all-time"} to ${resolved.to_date}`],
     ["Integrity", "not_applicable"],
     [],
@@ -301,6 +303,7 @@ export async function exportBalanceSheetStatement(input: {
   const rows: Array<Array<string | number>> = [
     ["Balance Sheet"],
     ["Company", companyCode],
+    ["Basis", "Accrual basis"],
     ["As of", input.as_of_date],
     ["Balanced", yesNo(report.balanced)],
     [],
@@ -407,6 +410,7 @@ export async function exportCashFlowStatement(input: {
   const rows: Array<Array<string | number>> = [
     ["Cash Flow"],
     ["Company", companyCode],
+    ["Basis", "Accrual basis"],
     ["Period", `${resolved.from_date ?? "all-time"} to ${resolved.to_date}`],
     ["Reconciled", yesNo(report.reconciled)],
     ["Unclassified Leg Count", report.unclassified_leg_count],
@@ -503,6 +507,7 @@ export async function exportArAgingStatement(input: {
   const rows: Array<Array<string | number>> = [
     ["AR Aging"],
     ["Company", companyCode],
+    ["Basis", "Accrual basis"],
     ["As of", input.as_of_date],
     ["Integrity", "not_applicable"],
     [],
@@ -601,6 +606,7 @@ export async function exportApAgingStatement(input: {
   const rows: Array<Array<string | number>> = [
     ["AP Aging"],
     ["Company", companyCode],
+    ["Basis", "Accrual basis"],
     ["As of", input.as_of_date],
     ["Integrity", "not_applicable"],
     [],

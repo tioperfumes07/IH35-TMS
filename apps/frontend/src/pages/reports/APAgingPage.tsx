@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { getApAgingReport, type APAgingRow } from "../../api/reports";
+import { exportApAging, getApAgingReport, type APAgingRow } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReportsSubNav } from "./ReportsSubNav";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -117,9 +118,10 @@ export function APAgingPage() {
           body { background: white; }
         }
       `}</style>
+      <ReportsSubNav />
       <PageHeader
         title="A/P aging"
-        subtitle={`As of ${asOf} · open bills by vendor`}
+        subtitle={`As of ${asOf} · open bills by vendor · Accrual basis`}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>
@@ -127,6 +129,34 @@ export function APAgingPage() {
             </Button>
             <Button size="sm" variant="secondary" onClick={exportCsv}>
               Export CSV
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!companyId}
+              onClick={() =>
+                exportApAging({
+                  operating_company_id: companyId,
+                  as_of_date: asOf,
+                  format: "pdf",
+                })
+              }
+            >
+              Export PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!companyId}
+              onClick={() =>
+                exportApAging({
+                  operating_company_id: companyId,
+                  as_of_date: asOf,
+                  format: "xlsx",
+                })
+              }
+            >
+              Export XLSX
             </Button>
           </div>
         }
