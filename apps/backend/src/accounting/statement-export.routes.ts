@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import {
@@ -30,7 +30,8 @@ function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function exportError(reply: FastifyReply, error: unknown) {
+function exportError(req: FastifyRequest, reply: FastifyReply, error: unknown) {
+  req.log.error({ err: error, route: req.url }, "statement_export_failed");
   const message = String((error as Error)?.message ?? "statement_export_failed");
   if (
     message === "invalid_range_key" ||
@@ -60,7 +61,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -81,7 +82,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -104,7 +105,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -127,7 +128,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -148,7 +149,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -169,7 +170,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -192,7 +193,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -215,7 +216,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -236,7 +237,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -257,7 +258,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -278,7 +279,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 
@@ -299,7 +300,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
       reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
       return reply.send(result.buffer);
     } catch (error) {
-      return exportError(reply, error);
+      return exportError(req, reply, error);
     }
   });
 }

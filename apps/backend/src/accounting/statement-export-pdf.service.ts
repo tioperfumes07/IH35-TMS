@@ -6,15 +6,12 @@ import puppeteer from "puppeteer";
 type TemplateDelegate = HandlebarsTemplateDelegate<Record<string, unknown>>;
 
 const templateCache = new Map<string, TemplateDelegate>();
+const templateRoot = path.resolve(process.cwd(), "apps/backend/src/accounting/export/templates");
 
 async function getCompiledTemplate(templateName: string): Promise<TemplateDelegate> {
   const cached = templateCache.get(templateName);
   if (cached) return cached;
-  const templatePath = path.resolve(
-    process.cwd(),
-    "apps/backend/src/accounting/export/templates",
-    `${templateName}.hbs`,
-  );
+  const templatePath = path.resolve(templateRoot, `${templateName}.hbs`);
   const source = await readFile(templatePath, "utf8");
   const compiled = Handlebars.compile(source);
   templateCache.set(templateName, compiled);
