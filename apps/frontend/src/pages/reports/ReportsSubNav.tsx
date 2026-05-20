@@ -8,6 +8,10 @@ const CATEGORY_ORDER: ReportCategory[] = ["all", "operations", "financial", "dri
 
 /** Phase 6 report ids — hrefs from phase6ReportLinks (Block U + W). */
 const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
+  { id: "trial-balance", label: "Trial balance" },
+  { id: "profit-loss", label: "Profit & loss" },
+  { id: "balance-sheet", label: "Balance sheet" },
+  { id: "cash-flow-statement", label: "Cash flow statement" },
   { id: "cash-flow-overview", label: "Cash flow overview" },
   { id: "settlement-summary", label: "Settlement summary" },
   { id: "customer-profitability", label: "Customer profitability" },
@@ -52,6 +56,10 @@ export function reportsSubNavActiveHref(pathname: string): string {
   if (
     pathname === "/reports/ar-aging" ||
     pathname === "/reports/ap-aging" ||
+    pathname === "/reports/trial-balance" ||
+    pathname === "/reports/profit-loss" ||
+    pathname === "/reports/balance-sheet" ||
+    pathname === "/reports/cash-flow-statement" ||
     pathname === "/reports/cash-flow-overview" ||
     pathname === "/reports/settlement-summary" ||
     pathname === "/reports/customer-profitability" ||

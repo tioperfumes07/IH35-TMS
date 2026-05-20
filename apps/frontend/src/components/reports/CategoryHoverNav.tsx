@@ -19,6 +19,10 @@ const CATEGORY_LABELS: Array<{ id: ReportCategory; label: string }> = [
 
 const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hint?: string }>> = {
   all: [
+    { id: "trial-balance", label: "Trial balance", hint: "Debits, credits, and balance check" },
+    { id: "profit-loss", label: "Profit & loss", hint: "Revenue, COGS, and net income" },
+    { id: "balance-sheet", label: "Balance sheet", hint: "Assets vs liabilities + equity" },
+    { id: "cash-flow-statement", label: "Cash flow statement", hint: "Operating, investing, financing" },
     { id: "cash-flow-overview", label: "Cash flow overview", hint: "Liquidity + 30-day projection" },
     { id: "settlement-summary", label: "Settlement summary", hint: "Driver pay + deductions" },
     { id: "customer-profitability", label: "Customer profitability", hint: "Revenue, cost, margin" },
@@ -39,6 +43,10 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
     { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit", hint: "WO spend by unit" },
   ],
   financial: [
+    { id: "trial-balance", label: "Trial balance", hint: "Debits, credits, and balance check" },
+    { id: "profit-loss", label: "Profit & loss", hint: "Revenue, COGS, and net income" },
+    { id: "balance-sheet", label: "Balance sheet", hint: "Assets vs liabilities + equity" },
+    { id: "cash-flow-statement", label: "Cash flow statement", hint: "Operating, investing, financing" },
     { id: "cash-flow-overview", label: "Cash flow overview", hint: "Operating + DIP + payroll buckets" },
     { id: "settlement-summary", label: "Settlement summary", hint: "Driver pay breakdown" },
     { id: "customer-profitability", label: "Customer profitability", hint: "Margin by customer" },

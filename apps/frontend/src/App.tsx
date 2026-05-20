@@ -87,6 +87,10 @@ import { ReportsHomePage } from "./pages/reports/ReportsHome";
 import { ReportsRunnerPage } from "./pages/reports/ReportsRunner";
 import { ARAgingPage } from "./pages/reports/ARAgingPage";
 import { APAgingPage } from "./pages/reports/APAgingPage";
+import { TrialBalancePage } from "./pages/reports/TrialBalancePage";
+import { ProfitLossPage } from "./pages/reports/ProfitLossPage";
+import { BalanceSheetPage } from "./pages/reports/BalanceSheetPage";
+import { CashFlowStatementPage } from "./pages/reports/CashFlowStatementPage";
 import { CashFlowOverviewPage } from "./pages/reports/CashFlowOverviewPage";
 import { SettlementSummaryPage } from "./pages/reports/SettlementSummaryPage";
 import { CustomerProfitabilityPage } from "./pages/reports/CustomerProfitabilityPage";
@@ -1143,6 +1147,38 @@ export default function App() {
           element={
             <ProtectedRoute>
               <APAgingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/trial-balance"
+          element={
+            <ProtectedRoute>
+              <TrialBalancePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/profit-loss"
+          element={
+            <ProtectedRoute>
+              <ProfitLossPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/balance-sheet"
+          element={
+            <ProtectedRoute>
+              <BalanceSheetPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/cash-flow-statement"
+          element={
+            <ProtectedRoute>
+              <CashFlowStatementPage />
             </ProtectedRoute>
           }
         />
