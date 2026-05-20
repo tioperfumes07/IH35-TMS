@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>{{{styles}}}</style>
+  </head>
+  <body>
+    <h1>{{title}}</h1>
+    <div class="meta">Company: {{company_code}} | {{period_label}}</div>
+    <div class="integrity">{{integrity_label}}: {{integrity_value}}</div>
+
+    <h2>Revenue</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Account Code</th>
+          <th>Account Name</th>
+          <th>Account Type</th>
+          <th class="amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each revenue_lines}}
+          <tr>
+            <td>{{account_code}}</td>
+            <td>{{account_name}}</td>
+            <td>{{account_type}}</td>
+            <td class="amount">{{amount}}</td>
+          </tr>
+        {{else}}
+          <tr><td colspan="4" class="empty">No data.</td></tr>
+        {{/each}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="3">Revenue Total</th>
+          <th class="amount">{{revenue_total}}</th>
+        </tr>
+      </tfoot>
+    </table>
+
+    <h2>Cost of Goods Sold</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Account Code</th>
+          <th>Account Name</th>
+          <th>Account Type</th>
+          <th class="amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each cogs_lines}}
+          <tr>
+            <td>{{account_code}}</td>
+            <td>{{account_name}}</td>
+            <td>{{account_type}}</td>
+            <td class="amount">{{amount}}</td>
+          </tr>
+        {{else}}
+          <tr><td colspan="4" class="empty">No data.</td></tr>
+        {{/each}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="3">COGS Total</th>
+          <th class="amount">{{cogs_total}}</th>
+        </tr>
+      </tfoot>
+    </table>
+
+    <h2>Operating Expenses</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Account Code</th>
+          <th>Account Name</th>
+          <th>Account Type</th>
+          <th class="amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each operating_expense_lines}}
+          <tr>
+            <td>{{account_code}}</td>
+            <td>{{account_name}}</td>
+            <td>{{account_type}}</td>
+            <td class="amount">{{amount}}</td>
+          </tr>
+        {{else}}
+          <tr><td colspan="4" class="empty">No data.</td></tr>
+        {{/each}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="3">Operating Expense Total</th>
+          <th class="amount">{{operating_expense_total}}</th>
+        </tr>
+      </tfoot>
+    </table>
+
+    <table>
+      <tbody>
+        <tr>
+          <th>Gross Profit</th>
+          <td class="amount">{{gross_profit}}</td>
+        </tr>
+        <tr>
+          <th>Net Income</th>
+          <td class="amount">{{net_income}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

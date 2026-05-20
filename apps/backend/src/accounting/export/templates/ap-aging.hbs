@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>{{{styles}}}</style>
+  </head>
+  <body>
+    <h1>{{title}}</h1>
+    <div class="meta">Company: {{company_code}} | {{period_label}}</div>
+    <div class="integrity">{{integrity_label}}: {{integrity_value}}</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Vendor</th>
+          <th>Vendor ID</th>
+          <th class="amount">Current</th>
+          <th class="amount">1-30</th>
+          <th class="amount">31-60</th>
+          <th class="amount">61-90</th>
+          <th class="amount">90+</th>
+          <th class="amount">Total Outstanding</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#if has_rows}}
+          {{#each vendors}}
+            <tr>
+              <td>{{vendor_name}}</td>
+              <td>{{vendor_id}}</td>
+              <td class="amount">{{current}}</td>
+              <td class="amount">{{d1_30}}</td>
+              <td class="amount">{{d31_60}}</td>
+              <td class="amount">{{d61_90}}</td>
+              <td class="amount">{{d90_plus}}</td>
+              <td class="amount">{{total_outstanding}}</td>
+            </tr>
+          {{/each}}
+        {{else}}
+          <tr><td colspan="8" class="empty">No data.</td></tr>
+        {{/if}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2">Totals</th>
+          <th class="amount">{{totals.current}}</th>
+          <th class="amount">{{totals.d1_30}}</th>
+          <th class="amount">{{totals.d31_60}}</th>
+          <th class="amount">{{totals.d61_90}}</th>
+          <th class="amount">{{totals.d90_plus}}</th>
+          <th class="amount">{{totals.total_outstanding}}</th>
+        </tr>
+      </tfoot>
+    </table>
+  </body>
+</html>

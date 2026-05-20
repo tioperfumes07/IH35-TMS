@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>{{{styles}}}</style>
+  </head>
+  <body>
+    <h1>{{title}}</h1>
+    <div class="meta">Company: {{company_code}} | {{period_label}}</div>
+    <div class="integrity">Balanced: {{balanced}}</div>
+
+    <h2>Assets</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Account Code</th>
+          <th>Account Name</th>
+          <th class="amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each assets_lines}}
+          <tr>
+            <td>{{account_code}}</td>
+            <td>{{account_name}}</td>
+            <td class="amount">{{amount}}</td>
+          </tr>
+        {{else}}
+          <tr><td colspan="3" class="empty">No data.</td></tr>
+        {{/each}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2">Assets Total</th>
+          <th class="amount">{{assets_total}}</th>
+        </tr>
+      </tfoot>
+    </table>
+
+    <h2>Liabilities</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Account Code</th>
+          <th>Account Name</th>
+          <th class="amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each liabilities_lines}}
+          <tr>
+            <td>{{account_code}}</td>
+            <td>{{account_name}}</td>
+            <td class="amount">{{amount}}</td>
+          </tr>
+        {{else}}
+          <tr><td colspan="3" class="empty">No data.</td></tr>
+        {{/each}}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2">Liabilities Total</th>
+          <th class="amount">{{liabilities_total}}</th>
+        </tr>
+      </tfoot>
+    </table>
+
+    <h2>Equity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Account Code</th>
+          <th>Account Name</th>
+          <th class="amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each equity_lines}}
+          <tr>
+            <td>{{account_code}}</td>
+            <td>{{account_name}}</td>
+            <td class="amount">{{amount}}</td>
+          </tr>
+        {{else}}
+          <tr><td colspan="3" class="empty">No data.</td></tr>
+        {{/each}}
+        <tr>
+          <td></td>
+          <td>Current Year Earnings</td>
+          <td class="amount">{{current_year_earnings}}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2">Equity Total</th>
+          <th class="amount">{{equity_total}}</th>
+        </tr>
+      </tfoot>
+    </table>
+
+    <table>
+      <tbody>
+        <tr>
+          <th>Total Liabilities and Equity</th>
+          <td class="amount">{{total_liabilities_and_equity}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
