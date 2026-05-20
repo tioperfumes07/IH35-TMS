@@ -16,6 +16,7 @@
     "build:backend": "tsc -p tsconfig.json && node scripts/copy-email-templates.mjs",
     "postinstall": "node -e \"if(process.env.SKIP_PUPPETEER_INSTALL!=='1'){require('child_process').execSync('npx puppeteer browsers install chrome',{stdio:'inherit'})}\"",
     "ci:boot-api-smoke": "node scripts/ci-boot-api-smoke.mjs",
+    "smoke:accounting": "tsx scripts/smoke-tests/accounting-endpoints-e2e.ts",
     "build:driver-pwa": "cd apps/driver-pwa && npm run build",
     "build:frontend": "cd apps/frontend && npm run build",
     "start": "node dist/index.js",

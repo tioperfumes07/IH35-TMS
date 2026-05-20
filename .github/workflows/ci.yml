@@ -89,3 +89,8 @@ jobs:
 
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
+
+      - name: Accounting endpoints smoke — 12 endpoints (6 JSON + 6 XLSX)
+        env:
+          IH35_TEST_AUTH_BYPASS: "1"
+        run: npm run smoke:accounting
