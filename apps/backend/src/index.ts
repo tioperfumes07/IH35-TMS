@@ -126,6 +126,7 @@ import { initializeRecurringTemplatesCron } from "./cron/recurring-templates.cro
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
 import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
 import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js";
+import { initializeSamsaraWebhookProjectionCron } from "./cron/samsara-webhook-projection.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
@@ -478,6 +479,13 @@ async function main() {
     app.log.info("[STARTUP] samsara-health-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] samsara-health-cron failed");
+  }
+
+  try {
+    initializeSamsaraWebhookProjectionCron(app);
+    app.log.info("[STARTUP] samsara-webhook-projection-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] samsara-webhook-projection-cron failed");
   }
 
   try {
