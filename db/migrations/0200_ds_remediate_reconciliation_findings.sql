@@ -5,6 +5,7 @@
 BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS _system;
+GRANT USAGE ON SCHEMA _system TO ih35_app;
 
 CREATE TABLE IF NOT EXISTS _system.reconciliation_findings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -73,6 +74,6 @@ CREATE POLICY reconciliation_findings_company_scope
     OR current_setting('app.bypass_rls', true) = 'lucia'
   );
 
-GRANT SELECT, INSERT, UPDATE ON _system.reconciliation_findings TO ih35_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON _system.reconciliation_findings TO ih35_app;
 
 COMMIT;
