@@ -3,6 +3,45 @@
 
 BEGIN;
 
+-- DS-REMEDIATE-2 drift capture (PR #84 class: manual prod ops never captured).
+-- outbox.queue exists in production but no migration creates it.
+-- Capture it here so fresh CI DBs match production.
+-- Long-term outbox unification with accounting.outbox_events is tracked separately.
+CREATE SCHEMA IF NOT EXISTS outbox;
+
+CREATE TABLE IF NOT EXISTS outbox.queue (
+  uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  target_system TEXT NOT NULL CHECK (target_system IN ('qbo', 'samsara', 'relay', 'plaid', 'twilio', 'resend')),
+  operation TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  entity_uuid UUID NOT NULL,
+  idempotency_key TEXT NOT NULL UNIQUE,
+  payload JSONB NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'in_flight', 'succeeded', 'failed', 'dead_letter')),
+  attempt_count INT NOT NULL DEFAULT 0,
+  next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_attempted_at TIMESTAMPTZ,
+  last_error_code TEXT,
+  last_error_msg TEXT,
+  succeeded_at TIMESTAMPTZ,
+  external_id TEXT,
+  external_version TEXT,
+  audit_user_id UUID,
+  audit_session_id UUID
+);
+
+CREATE INDEX IF NOT EXISTS outbox_pending_target_idx
+  ON outbox.queue (target_system, status, next_attempt_at)
+  WHERE status IN ('pending', 'failed');
+
+CREATE INDEX IF NOT EXISTS outbox_entity_idx
+  ON outbox.queue (entity_type, entity_uuid);
+
+-- RLS intentionally not added here. Production RLS policy could not be introspected in this environment
+-- (no DATABASE_URL available). Outbox unification and outbox.queue governance are tracked as follow-up work.
+
 DROP VIEW IF EXISTS views.catalogs_inventory;
 DROP VIEW IF EXISTS views.qbo_sync_health;
 
@@ -67,6 +106,8 @@ CREATE POLICY qbo_remote_count_collection_state_company_scope
 GRANT USAGE ON SCHEMA accounting TO ih35_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON accounting.qbo_remote_counts TO ih35_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON accounting.qbo_remote_count_collection_state TO ih35_app;
+GRANT USAGE ON SCHEMA outbox TO ih35_app;
+GRANT SELECT, INSERT, UPDATE ON outbox.queue TO ih35_app;
 
 CREATE OR REPLACE VIEW views.catalogs_inventory
 WITH (security_invoker = true) AS
