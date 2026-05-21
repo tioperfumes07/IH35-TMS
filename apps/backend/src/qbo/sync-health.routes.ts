@@ -138,8 +138,8 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
               AND resolved_at IS NULL
               AND (
                 lower(coalesce(error_code, '')) LIKE '%token%'
-                OR lower(coalesce(error_message, '')) LIKE '%refresh%'
-                OR lower(coalesce(error_message, '')) LIKE '%oauth%'
+                OR lower(coalesce(message, '')) LIKE '%refresh%'
+                OR lower(coalesce(message, '')) LIKE '%oauth%'
               )
           `,
           [parsed.data.operating_company_id]

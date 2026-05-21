@@ -67,7 +67,7 @@ async function persistAlert(input: {
           entity_id,
           operation,
           error_code,
-          error_message,
+          message,
           error_payload,
           retry_count,
           max_retries,
