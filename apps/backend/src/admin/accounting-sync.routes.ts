@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withLuciaBypass, withCurrentUser } from "../auth/db.js";
 import { dismissOutboundSyncQueueItem, retrySyncQueueItem } from "../integrations/qbo/qbo-sync.service.js";
-import { runQboCdcIngest } from "../integrations/qbo/qbo-cdc.service.js";
+import { buildIdempotencyKey, enqueueAdminJob } from "./admin-jobs.service.js";
 
 const ownerAdmin = new Set(["Owner", "Administrator"]);
 
@@ -181,23 +181,29 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
 
     if (!ocRow) return reply.code(404).send({ error: "realm_not_connected" });
 
-    const result = await runQboCdcIngest({
-      operating_company_id: ocRow.operating_company_id,
-      qbo_realm_id: body.data.realm,
-      changed_since_override_iso: body.data.since_iso,
-      triggered_by: "manual_replay",
-      logWarning: (msg, meta) => req.log.warn({ msg, meta }),
+    const jobId = await enqueueAdminJob({
+      operation: "qbo.inbound.replay_since",
+      operatingCompanyId: ocRow.operating_company_id,
+      requestedByUserId: user.uuid,
+      idempotencyKey: buildIdempotencyKey({
+        operation: "qbo.inbound.replay_since",
+        operatingCompanyId: ocRow.operating_company_id,
+        realmId: body.data.realm,
+        sinceIso: body.data.since_iso,
+      }),
+      payload: {
+        realm_id: body.data.realm,
+        since_iso: body.data.since_iso,
+      },
     });
 
     await appendAudit(user.uuid, ocRow.operating_company_id, "integrations.qbo_inbound_replay_requested", {
       since_iso: body.data.since_iso,
       realm: body.data.realm,
-      inserted: result.inserted,
-      skipped_duplicates: result.skipped_duplicates,
-      http_status: result.http_status,
+      job_id: jobId,
     });
 
-    return { ok: true, ...result };
+    return reply.code(202).send({ accepted: true, job_id: jobId });
   });
 
   app.post("/api/v1/admin/sync/reset-realm", async (req, reply) => {

@@ -3,10 +3,10 @@ import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
+import { buildIdempotencyKey, enqueueAdminJob } from "../../admin/admin-jobs.service.js";
 import {
   disableSamsaraConfig,
   getSamsaraConfigForCompany,
-  runSamsaraHealthCheckForRow,
   toPublicConfig,
   upsertSamsaraConfig,
 } from "./samsara.service.js";
@@ -87,11 +87,34 @@ export async function registerSamsaraConfigRoutes(app: FastifyInstance) {
         "info",
         SAMSARA_AUDIT_SOURCE
       );
-      await runSamsaraHealthCheckForRow(client, oc);
       const after = await getSamsaraConfigForCompany(client, oc);
-      return toPublicConfig(after);
+      const configId = String(after?.id ?? "");
+      const configVersion = String(after?.updated_at ?? after?.created_at ?? "");
+      if (!configId || !configVersion) {
+        throw new Error("samsara_config_missing_id_or_version");
+      }
+      const jobId = await enqueueAdminJob({
+        operation: "samsara.config.health_check",
+        operatingCompanyId: oc,
+        requestedByUserId: user.uuid,
+        idempotencyKey: buildIdempotencyKey({
+          operation: "samsara.config.health_check",
+          operatingCompanyId: oc,
+          samsaraConfigId: configId,
+          configVersion,
+        }),
+        payload: {
+          samsara_config_id: configId,
+          config_version: configVersion,
+        },
+      });
+      return { config: toPublicConfig(after), jobId };
     });
-    return out;
+    return reply.code(202).send({
+      accepted: true,
+      job_id: out.jobId,
+      ...out.config,
+    });
   });
 
   app.delete("/api/v1/integrations/samsara/config", async (req, reply) => {

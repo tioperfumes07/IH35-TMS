@@ -3,10 +3,10 @@ import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
+import { buildIdempotencyKey, enqueueAdminJob } from "../../admin/admin-jobs.service.js";
 import { generateExcelReport } from "./forensic-report.service.js";
-import { runForensicImportDeduped, startImportBatch } from "./forensic-import.service.js";
+import { startImportBatch } from "./forensic-import.service.js";
 import { auditBatchEvent, auditForensicImportError } from "./forensic-audit.service.js";
-import { qboCompanyContext, qboQuery } from "./qbo-client.js";
 
 const startBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -150,50 +150,33 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     }
 
     try {
-      const context = await qboCompanyContext(body.data.operating_company_id);
-      await qboQuery(context, "SELECT * FROM CompanyInfo");
-      await withLuciaBypass(async (client) => {
-        await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
-          "qbo_archive.batch.preflight_passed",
-          "info",
-          JSON.stringify({ operating_company_id: body.data.operating_company_id }),
-          user.uuid,
-          "P6-FOUNDATION-OPS",
-        ]);
-      });
-    } catch (error) {
-      const detail = String((error as Error)?.message ?? "qbo_preflight_failed").slice(0, 200);
-      await withLuciaBypass(async (client) => {
-        await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
-          "qbo_archive.batch.preflight_failed",
-          "warning",
-          JSON.stringify({ operating_company_id: body.data.operating_company_id, technical_detail: detail }),
-          user.uuid,
-          "P6-FOUNDATION-OPS",
-        ]);
-      });
-      return reply.code(503).send({
-        error: "qbo_unreachable",
-        message: "QBO connection failed for this company. Please re-authorize before starting an import.",
-        technical_detail: detail,
-      });
-    }
-
-    try {
       const batch = await startImportBatch(user.uuid, body.data.operating_company_id, body.data.since_date);
-      await auditBatchEvent(batch.batchId, body.data.operating_company_id, "preflight_qbo_check_passed");
-
-      const attachmentsSinceDate = process.env.QBO_FORENSIC_ATTACHMENTS_SINCE_DATE ?? "2021-01-01";
-      void runForensicImportDeduped(user.uuid, {
-        batchId: batch.batchId,
+      const jobId = await enqueueAdminJob({
+        operation: "qbo.forensic.start_import",
         operatingCompanyId: body.data.operating_company_id,
-        sinceDate: body.data.since_date,
-        attachmentsSinceDate,
-      }).catch((error) => {
-        app.log.error({ err: error, batchId: batch.batchId }, "forensic import failed after start-import");
+        requestedByUserId: user.uuid,
+        idempotencyKey: buildIdempotencyKey({
+          operation: "qbo.forensic.start_import",
+          operatingCompanyId: body.data.operating_company_id,
+          importBatchId: batch.batchId,
+        }),
+        payload: {
+          batch_id: batch.batchId,
+          since_date: body.data.since_date,
+          attachments_since_date: process.env.QBO_FORENSIC_ATTACHMENTS_SINCE_DATE ?? "2021-01-01",
+        },
+      });
+      await withLuciaBypass(async (client) => {
+        await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, $4::uuid, $5)`, [
+          "qbo_archive.batch.preflight_queued",
+          "info",
+          JSON.stringify({ operating_company_id: body.data.operating_company_id, batch_id: batch.batchId, job_id: jobId }),
+          user.uuid,
+          "P6-FOUNDATION-OPS",
+        ]);
       });
 
-      return { batch_id: batch.batchId };
+      return reply.code(202).send({ accepted: true, batch_id: batch.batchId, job_id: jobId });
     } catch (error) {
       const message = String((error as Error)?.message ?? "unable_to_start_import");
       if (message.includes("QBO not authorized")) {
