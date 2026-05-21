@@ -12,6 +12,21 @@ export type SamsaraConfig = {
 export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
 export type HosLog = Record<string, unknown>;
+export type SamsaraRemoteEntityType = "drivers" | "vehicles";
+
+export class SamsaraApiError extends Error {
+  readonly statusCode: number | null;
+  readonly body: Record<string, unknown> | null;
+  readonly retryable: boolean;
+
+  constructor(message: string, statusCode: number | null, body: Record<string, unknown> | null, retryable: boolean) {
+    super(message);
+    this.name = "SamsaraApiError";
+    this.statusCode = statusCode;
+    this.body = body;
+    this.retryable = retryable;
+  }
+}
 
 const SAMSARA_API_BASE = "https://api.samsara.com";
 
@@ -47,6 +62,49 @@ async function readJsonResponse(res: Response): Promise<Record<string, unknown>>
   }
 }
 
+function parsePagination(json: Record<string, unknown>): { hasNextPage: boolean; cursor: string | null } {
+  const pagination = json.pagination as { endCursor?: unknown; hasNextPage?: unknown } | undefined;
+  if (pagination && typeof pagination === "object") {
+    const hasNextPage = Boolean(pagination.hasNextPage);
+    const endCursor = typeof pagination.endCursor === "string" && pagination.endCursor.trim() ? pagination.endCursor : null;
+    return { hasNextPage, cursor: endCursor };
+  }
+  const after = typeof json.after === "string" && json.after.trim() ? json.after : null;
+  return { hasNextPage: Boolean(after), cursor: after };
+}
+
+async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fleet/vehicles", after: string | null): Promise<{
+  data: Record<string, unknown>[];
+  hasNextPage: boolean;
+  cursor: string | null;
+}> {
+  const url = new URL(`${SAMSARA_API_BASE}${endpoint}`);
+  url.searchParams.set("limit", "512");
+  if (after) url.searchParams.set("after", after);
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: bearerHeaders(token) });
+  } catch (error) {
+    throw new SamsaraApiError(
+      `samsara_network_error:${String((error as Error)?.message ?? error)}`,
+      null,
+      null,
+      true
+    );
+  }
+  if (!res.ok) {
+    const body = await readJsonResponse(res);
+    const retryable = res.status === 429 || res.status >= 500;
+    throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable);
+  }
+  const json = await readJsonResponse(res);
+  const data = Array.isArray(json.data)
+    ? json.data.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object"))
+    : [];
+  const { hasNextPage, cursor } = parsePagination(json);
+  return { data, hasNextPage, cursor };
+}
+
 export class SamsaraClient {
   constructor(private readonly _config: SamsaraConfig) {}
 
@@ -78,22 +136,14 @@ export class SamsaraClient {
     let after: string | null = null;
     try {
       for (let page = 0; page < 50; page += 1) {
-        const url = new URL(`${SAMSARA_API_BASE}/fleet/drivers`);
-        url.searchParams.set("limit", "512");
-        if (after) url.searchParams.set("after", after);
-        const res = await fetch(url, { headers: bearerHeaders(token) });
-        if (!res.ok) break;
-        const json = await readJsonResponse(res);
-        const data = Array.isArray(json.data) ? json.data : [];
+        const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/drivers", after);
         for (const row of data) {
-          if (row && typeof row === "object" && typeof (row as { id?: unknown }).id === "string") {
-            out.push({ id: String((row as { id: string }).id), raw: row as Record<string, unknown> });
+          if (typeof row.id === "string" && row.id.trim().length > 0) {
+            out.push({ id: row.id.trim(), raw: row });
           }
         }
-        const pagination = json.pagination as { endCursor?: string; hasNextPage?: boolean } | undefined;
-        if (pagination?.hasNextPage && pagination.endCursor) after = pagination.endCursor;
-        else if (typeof json.after === "string") after = json.after;
-        else break;
+        if (!hasNextPage || !cursor) break;
+        after = cursor;
       }
     } catch {
       return [];
@@ -108,26 +158,44 @@ export class SamsaraClient {
     let after: string | null = null;
     try {
       for (let page = 0; page < 50; page += 1) {
-        const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles`);
-        url.searchParams.set("limit", "512");
-        if (after) url.searchParams.set("after", String(after));
-        const res = await fetch(url, { headers: bearerHeaders(token) });
-        if (!res.ok) break;
-        const json = await readJsonResponse(res);
-        const data = Array.isArray(json.data) ? json.data : [];
+        const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/vehicles", after);
         for (const row of data) {
-          if (row && typeof row === "object" && typeof (row as { id?: unknown }).id === "string") {
-            out.push({ id: String((row as { id: string }).id), raw: row as Record<string, unknown> });
+          if (typeof row.id === "string" && row.id.trim().length > 0) {
+            out.push({ id: row.id.trim(), raw: row });
           }
         }
-        const pagination = json.pagination as { endCursor?: string; hasNextPage?: boolean } | undefined;
-        if (pagination?.hasNextPage && pagination.endCursor) after = pagination.endCursor;
-        else break;
+        if (!hasNextPage || !cursor) break;
+        after = cursor;
       }
     } catch {
       return [];
     }
     return out;
+  }
+
+  async countEntity(entityType: SamsaraRemoteEntityType): Promise<number> {
+    const token = this._token();
+    if (!token) {
+      throw new SamsaraApiError("samsara_not_configured", null, null, false);
+    }
+    const endpoint: "/fleet/drivers" | "/fleet/vehicles" = entityType === "drivers" ? "/fleet/drivers" : "/fleet/vehicles";
+    let total = 0;
+    let after: string | null = null;
+    for (let page = 0; page < 500; page += 1) {
+      const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, endpoint, after);
+      total += data.length;
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return total;
+  }
+
+  async countDrivers(): Promise<number> {
+    return this.countEntity("drivers");
+  }
+
+  async countVehicles(): Promise<number> {
+    return this.countEntity("vehicles");
   }
 
   async getHosLogs(_driverId: string, _range: { start: string; end: string }): Promise<HosLog[]> {

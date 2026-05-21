@@ -435,25 +435,141 @@ async function reconcileSamsaraStaticForCompany(
   operatingCompanyId: string,
   runId: string
 ) {
-  for (const table of ["integrations.samsara_drivers", "integrations.samsara_vehicles"]) {
+  const mirrors: Array<{
+    table: "integrations.samsara_drivers" | "integrations.samsara_vehicles";
+    entityType: "drivers" | "vehicles";
+    eventTypePrefix: "driver.%" | "vehicle.%";
+  }> = [
+    { table: "integrations.samsara_drivers", entityType: "drivers", eventTypePrefix: "driver.%" },
+    { table: "integrations.samsara_vehicles", entityType: "vehicles", eventTypePrefix: "vehicle.%" },
+  ];
+
+  for (const mirror of mirrors) {
     const localRes = await client.query<{ cnt: string }>(
-      `SELECT COUNT(*)::text AS cnt FROM ${table} WHERE operating_company_id = $1::uuid`,
+      `SELECT COUNT(*)::text AS cnt FROM ${mirror.table} WHERE operating_company_id = $1::uuid`,
       [operatingCompanyId]
     );
     const localCount = Number(localRes.rows[0]?.cnt ?? 0);
+
+    const remoteRes = await client.query<{ remote_count: number; polled_at: string }>(
+      `
+        SELECT remote_count, polled_at::text
+        FROM integrations.samsara_remote_counts
+        WHERE operating_company_id = $1::uuid
+          AND entity_type = $2
+        ORDER BY polled_at DESC
+        LIMIT 1
+      `,
+      [operatingCompanyId, mirror.entityType]
+    );
+    const latestRemote = remoteRes.rows[0];
+
+    const stateRes = await client.query<{ last_error_class: string | null }>(
+      `
+        SELECT last_error_class
+        FROM integrations.samsara_remote_count_collection_state
+        WHERE operating_company_id = $1::uuid
+      `,
+      [operatingCompanyId]
+    );
+    const lastErrorClass = stateRes.rows[0]?.last_error_class ?? null;
+
+    if (!latestRemote) {
+      await persistFinding(client, {
+        operatingCompanyId,
+        integration: "samsara",
+        mirrorCategory: "telematics_numeric",
+        findingType: "remote_unavailable",
+        severity: lastErrorClass === "auth_failed" ? "critical" : "cleanup",
+        runId,
+        resourceScope: {
+          table: mirror.table,
+          entity_type: mirror.entityType,
+          reason: lastErrorClass === "auth_failed" ? "auth_failed" : "samsara_count_missing",
+        },
+        localValue: { local_count: localCount },
+        remoteValue: null,
+        thresholdSnapshot: { stale_hours: 24, race_guard_minutes: 2 },
+      });
+      continue;
+    }
+
+    const polledAt = new Date(latestRemote.polled_at);
+    const staleMs = Date.now() - polledAt.getTime();
+    const staleThresholdMs = 24 * 60 * 60 * 1000;
+    if (staleMs > staleThresholdMs) {
+      await persistFinding(client, {
+        operatingCompanyId,
+        integration: "samsara",
+        mirrorCategory: "telematics_numeric",
+        findingType: "remote_unavailable",
+        severity: lastErrorClass === "auth_failed" ? "critical" : "cleanup",
+        runId,
+        resourceScope: {
+          table: mirror.table,
+          entity_type: mirror.entityType,
+          reason: lastErrorClass === "auth_failed" ? "auth_failed" : "samsara_count_stale",
+        },
+        localValue: { local_count: localCount },
+        remoteValue: { remote_count: latestRemote.remote_count, polled_at: latestRemote.polled_at },
+        thresholdSnapshot: { stale_hours: 24, race_guard_minutes: 2 },
+      });
+      continue;
+    }
+
+    const webhookRes = await client.query<{ latest_webhook: string | null }>(
+      `
+        SELECT MAX(received_at)::text AS latest_webhook
+        FROM integrations.samsara_webhook_events
+        WHERE operating_company_id = $1::uuid
+          AND event_type LIKE $2
+      `,
+      [operatingCompanyId, mirror.eventTypePrefix]
+    );
+    const latestWebhookRaw = webhookRes.rows[0]?.latest_webhook ?? null;
+    if (latestWebhookRaw) {
+      const latestWebhook = new Date(latestWebhookRaw);
+      const raceGuardBoundary = new Date(polledAt.getTime() + 2 * 60 * 1000);
+      if (latestWebhook > raceGuardBoundary) {
+        const gapSeconds = Math.floor((latestWebhook.getTime() - polledAt.getTime()) / 1000);
+        await appendAuditEvent(client, "cron_count_drift_check_skipped_pending_projection", "info", {
+          operating_company_id: operatingCompanyId,
+          table: mirror.table,
+          entity_type: mirror.entityType,
+          latest_webhook: latestWebhook.toISOString(),
+          polled_at: polledAt.toISOString(),
+          gap_seconds: gapSeconds,
+        });
+        continue;
+      }
+    }
+
+    const remoteCount = Number(latestRemote.remote_count ?? 0);
+    const delta = Math.abs(localCount - remoteCount);
+    if (delta === 0) continue;
     await persistFinding(client, {
       operatingCompanyId,
       integration: "samsara",
       mirrorCategory: "telematics_numeric",
-      findingType: "remote_unavailable",
-      severity: "cleanup",
+      findingType: "count_drift",
+      severity: "critical",
       runId,
-      resourceScope: { table, reason: "samsara_count_helper_not_shipped" },
+      resourceScope: { table: mirror.table, entity_type: mirror.entityType },
       localValue: { local_count: localCount },
-      remoteValue: null,
-      thresholdSnapshot: { policy: "emit_until_samsara_remote_counter_exists" },
+      remoteValue: { remote_count: remoteCount, polled_at: latestRemote.polled_at },
+      driftAbs: delta,
+      driftPct: calculateDriftPct(localCount, remoteCount),
+      thresholdSnapshot: { threshold_abs: 0, race_guard_minutes: 2, stale_hours: 24 },
     });
   }
+}
+
+export async function runSamsaraStaticReconciliationForCompany(
+  client: DbClient,
+  operatingCompanyId: string,
+  runId: string
+): Promise<void> {
+  await reconcileSamsaraStaticForCompany(client, operatingCompanyId, runId);
 }
 
 async function reconcileCap15IdentityForCompany(
