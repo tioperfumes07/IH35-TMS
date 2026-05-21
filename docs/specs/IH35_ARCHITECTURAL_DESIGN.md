@@ -769,6 +769,100 @@ and persists it on the queue row so retries reuse the same `Idempotency-Key` HTT
 
 **Removed gaps (this branch):** Bill preview IDs, journal-only recurring enqueue, and `unsupported_entity_type_*` throws for the Wave 2 accounting entities are eliminated—the dispatcher + translators own live POST/PATCH with conflict recording (`integrations.qbo_sync_conflicts`).
 
+---
+
+## ADDENDUM — 2026-05-21 Data Sovereignty + Telematics capability architecture
+
+### A. Data Sovereignty architecture layer
+
+The architecture enforces a strict split:
+
+- **Local Read Layer:** operational UI/API requests read from local persisted models only.
+- **Sync/Ingest Layer:** pollers, webhook handlers, replay workers, and reconciliation workers hydrate and validate local mirrors asynchronously.
+
+Reference flow:
+
+1. Third-party poll/webhook ingest
+2. Append-only event persistence
+3. Projection/materialization to local mirrors/read models
+4. Operational reads from local models only
+5. Async reconciliation + drift-finding logging
+
+Design-detail policy for this addendum is invariant-first: canonical architecture text locks boundaries and workflow contracts, while most concrete DDL and fixed thresholds remain implementation-spec concerns.
+
+### B. Telematics capability architecture (CAP-1..CAP-15)
+
+Core contexts:
+
+- dispatch telematics status derivation
+- fuel HOS-constrained planning
+- maintenance predictive signals
+- safety scoring/incident integration
+- identity integrity validation across systems
+
+Event contract family:
+
+- `telematics.position_updated`
+- `telematics.geofence_event_received`
+- `telematics.status_transition_inferred`
+- `telematics.dtc_fault_detected`
+- `maintenance.auto_wo_candidate_created`
+- `safety.driver_score_recomputed`
+- `integrity.mapping_violation_detected`
+
+### C. CAP-13 locked schema shape (lock-now decision)
+
+The CAP-13 architecture locks the core schema objects and outcome enum set now.
+
+```sql
+CREATE TABLE catalogs.dot_inspection_stations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  station_name text NOT NULL,
+  state_code text NOT NULL,
+  jurisdiction text NOT NULL CHECK (jurisdiction IN ('state_dps','state_police','port_of_entry','federal','other')),
+  highway_designation text NOT NULL,
+  center_lat numeric(10,7) NOT NULL,
+  center_lng numeric(10,7) NOT NULL,
+  radius_feet integer NOT NULL DEFAULT 500,
+  dwell_threshold_minutes integer NOT NULL DEFAULT 5,
+  active boolean NOT NULL DEFAULT true,
+  samsara_geofence_id text,
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+```
+
+```sql
+CREATE TABLE safety.dot_inspection_visits (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  operating_company_id uuid NOT NULL,
+  station_id uuid NOT NULL REFERENCES catalogs.dot_inspection_stations(id),
+  unit_id uuid NOT NULL REFERENCES mdata.units(id),
+  driver_id uuid REFERENCES mdata.drivers(id),
+  dispatch_id uuid REFERENCES dispatch.dispatches(id),
+  entry_at timestamptz NOT NULL,
+  exit_at timestamptz,
+  dwell_minutes integer NOT NULL,
+  outcome_status text NOT NULL DEFAULT 'unknown' CHECK (outcome_status IN
+    ('unknown','no_action','warning_issued','fine_pending','fine_received','false_positive')),
+  outcome_recorded_at timestamptz,
+  outcome_recorded_by_user_id uuid REFERENCES identity.users(id),
+  related_fine_id uuid REFERENCES safety.fines(id),
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+```
+
+Workflow expectations for CAP-13 remain locked:
+
+- station geofence catalog provisioning
+- dwell detection and visit persistence
+- unresolved visit alerting for stale outcomes
+- fine-link path to `safety.fines`
+
+Seed geography and threshold tuning are implementation-managed, not hardcoded further in canonical architecture text.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
