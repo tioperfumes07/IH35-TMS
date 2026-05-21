@@ -15,7 +15,6 @@ export function assertTenantContext(
         "This indicates scheduler context corruption. See B-017."
     );
   }
-
   if (!UUID_RE.test(operating_company_id)) {
     throw new Error(
       `[${cron_name}] Refusing to run with malformed operating_company_id: ` +
