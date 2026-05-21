@@ -131,6 +131,7 @@ import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
 import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
 import { initializeQboRemoteCountCollectorCron } from "./cron/qbo-remote-count-collector.cron.js";
+import { initializeReconciliationWorkerCron } from "./cron/reconciliation-worker.cron.js";
 import { registerEmailRoutes } from "./email/email.routes.js";
 import { registerEmailQueueAdminRoutes } from "./admin/email-queue-admin.routes.js";
 import { registerAdminActivityRoutes } from "./admin/activity.routes.js";
@@ -505,6 +506,13 @@ async function main() {
     app.log.info("[STARTUP] qbo-remote-count-collector-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] qbo-remote-count-collector-cron failed");
+  }
+
+  try {
+    initializeReconciliationWorkerCron(app);
+    app.log.info("[STARTUP] reconciliation-worker-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] reconciliation-worker-cron failed");
   }
 
   try {
