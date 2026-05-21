@@ -39,24 +39,23 @@ Read-only scan in `apps/backend/src` for:
 - Startup wiring in `index.ts` for route registration and cron/worker initialization.
 - Webhook signature verification and persistence behavior.
 
+Noise-reduction filter applied after first-pass scan:
+- Excluded `apps/backend/src/__tests__/`, `apps/backend/src/db/`, and `apps/backend/src/utils/` from external-call-site triage unless a runtime route imported the file.
+
 ## 3) Integration inventory and boundary classification
 
-### 3.1 Active third-party integrations discovered
+### 3.1 Tier 1 integrations (full DS-IMPL-4 treatment)
 
 - **QBO (Intuit):** OAuth, webhook ingest, CDC poller, sync queue worker, outbox dispatcher, admin replay/forensic surfaces.
 - **Samsara:** config + health + webhook route, health cron, mirror tables; master sync code exists but not wired.
 - **Plaid:** link/exchange/account lifecycle routes, webhook receiver, manual sync/admin sync surfaces, persisted bank account/transaction mirrors.
-- **FMCSA/SAFER:** lookup endpoints with local caching into `catalogs.fmcsa_lookups`.
-- **Twilio/WhatsApp:** phone verify, SMS sender, WhatsApp sender, outbox handlers.
-- **Email providers:** Postmark and SES provider adapters.
-- **Cloudflare R2:** object metadata/presigned URL/storage surfaces.
-- **Sentry:** telemetry/error reporting hooks.
+- **Relay:** no integration call surfaces discovered in backend runtime code.
+- **FMCSA/SAFER:** active; routes are registered via `catalogs/index.ts` and mounted through `registerCatalogsRoutes(app)` in `index.ts`.
 
 Not found in current backend runtime:
-- Relay integration call surfaces.
 - OpenAI/Anthropic runtime integration call surfaces.
 
-### 3.2 Local mirrors / local read stores per integration
+### 3.2 Tier 1 mirror/read-store inventory
 
 - **QBO:** `mdata.qbo_*`, `integrations.qbo_*`, `qbo_archive.*`, `qbo.*`, `accounting.qbo_remote_counts` (table present, currently empty).
 - **Samsara:** `integrations.samsara_config`, `integrations.samsara_drivers`, `integrations.samsara_vehicles`, `integrations.samsara_webhook_events`.
@@ -64,7 +63,7 @@ Not found in current backend runtime:
 - **FMCSA:** `catalogs.fmcsa_lookups` cache/ledger for lookup reuse.
 - **Outbox/queue:** `accounting.outbox_events`, `outbox.outbox_queue`.
 
-### 3.3 Current local table counts (selected)
+### 3.3 Tier 1 current local table counts (selected)
 
 - `integrations.qbo_connections`: TRANSP `1`, TRK `2`
 - `integrations.qbo_inbound_events`: `0`
@@ -79,6 +78,17 @@ Not found in current backend runtime:
 - `catalogs.fmcsa_lookups`: `0`
 - `accounting.outbox_events`: `0`
 - `outbox.outbox_queue`: `0`
+
+### 3.4 Tier 2 integrations (lightweight inventory only)
+
+- **Twilio/WhatsApp/SMS gateways:** `apps/backend/src/auth/twilio-verify.ts`, `apps/backend/src/sms/sender.ts`, `apps/backend/src/whatsapp/sender.ts`, `apps/backend/src/outbox/handlers/twilio-*.ts` — outbound verification/notification dispatch.
+- **Postmark/SES email:** `apps/backend/src/email/providers/postmark.ts`, `apps/backend/src/email/providers/ses.ts` — outbound email delivery providers.
+- **Cloudflare R2:** `apps/backend/src/storage/r2-client.ts` — file/object storage access and presigned URL generation.
+- **Sentry:** `apps/backend/src/lib/sentry.ts` — observability/error telemetry only.
+- **OpenAI/Anthropic:** not present in runtime backend integration paths during this audit.
+
+Reclassification check:
+- No Tier 2 integration was found reading external application-domain state for UI/runtime operational reads; no Tier 2 -> Tier 1 promotion triggered.
 
 ## 4) MUST-DS-1 boundary findings (request-path external reads)
 
@@ -120,31 +130,37 @@ From `_system.background_jobs`:
 
 ## 6) Operational read-path sampling (Local Read Layer)
 
-Sampled runtime APIs that resolve from local persisted stores:
+Sampled high-impact user-facing runtime APIs that resolve from local persisted stores:
 - `GET /api/v1/dispatch/loads` -> `views.dispatch_load_with_driver_status`, `mdata.*`, `views.*` joins.
 - `GET /api/v1/mdata/qbo/vendors` (and related autocomplete routes) -> `mdata.qbo_*`.
+- `GET /api/v1/customers/:id/billing-summary` / customer detail family -> local `mdata` projections.
 - `GET /api/v1/banking/transactions/uncategorized` -> `banking.bank_transactions` + local joins.
 - `GET /api/v1/reports/cash-flow-overview` -> `banking.bank_accounts`, `banking.bank_transactions`, `views.factoring_summary`.
 - `GET /api/v1/reports/fuel-reconciliation` -> `banking.bank_transactions`, `mdata.loads`, `mdata.units`, maintenance/work-order tables.
 - `GET /api/v1/mdata/units` -> local `mdata.units` scope.
-- `GET /api/v1/banking/plaid/accounts` and transaction list routes -> local `banking` mirrors.
 
 Conclusion: operational read layer is predominantly local-first; boundary pressure is concentrated in admin/control-plane integration routes.
 
 ## 7) Numbered findings
 
-- **DS-AUDIT-B-001:** System-wide integration footprint is broad and explicit (QBO/Samsara/Plaid/FMCSA/Twilio/WhatsApp/Email/R2/Sentry), with no Relay/OpenAI/Anthropic runtime surfaces discovered.
+- **DS-AUDIT-B-001:** Tier-1 integration scope (QBO/Samsara/Plaid/Relay/FMCSA) is fully covered; Relay has no active backend runtime surface, and FMCSA is active/registered through catalogs routing.
 - **DS-AUDIT-B-002:** Local Read Layer contract is largely upheld in high-frequency operational APIs (dispatch, reports, banking review, mdata, QBO autocomplete).
 - **DS-AUDIT-B-003:** MUST-DS-1 violation set from DS-IMPL-1/2 remains active: 4 request-time third-party read paths (3 QBO, 1 Samsara) are still synchronous.
-- **DS-AUDIT-B-004:** Plaid/FMCSA/Twilio routes include request-time external calls in control-plane endpoints; these are not core operational read endpoints but need explicit policy classification to prevent drift.
+- **DS-AUDIT-B-004:** Plaid/FMCSA routes include request-time external calls in Tier-1 control-plane endpoints; these are not core operational read endpoints but need explicit policy classification to prevent drift.
 - **DS-AUDIT-B-005:** Sync/Ingest architecture is mature on QBO (webhook + queue + worker + outbox) and present on Plaid/Samsara webhooks, but Samsara master-sync remains dormant due missing startup wiring.
 - **DS-AUDIT-B-006:** Background scheduler telemetry shows recurring UUID-context failure signatures in `qbo.sync_alerts_cron` and `samsara.health_check_cron`, indicating shared context hygiene risk in job execution.
-- **DS-AUDIT-B-007:** Several integration staging tables are currently empty (`integrations.qbo_inbound_events`, `integrations.qbo_sync_queue`, `integrations.qbo_sync_conflicts`, Samsara mirrors/events), which limits replay/reconciliation validation confidence until ingestion volume increases.
+- **DS-AUDIT-B-007:** Tier-2 integrations (Twilio/WhatsApp, Postmark/SES, R2, Sentry) are currently dispatch/infrastructure-only and do not drive operational external read-state in sampled runtime paths.
+- **DS-AUDIT-B-008:** Several integration staging tables are currently empty (`integrations.qbo_inbound_events`, `integrations.qbo_sync_queue`, `integrations.qbo_sync_conflicts`, Samsara mirrors/events), which limits replay/reconciliation validation confidence until ingestion volume increases.
 
-## 8) Hand-off to DS-IMPL-3 / remediation design
+## 8) Master remediation sequence (DS-IMPL-1 + DS-IMPL-2 + DS-IMPL-4)
 
-- **DS-AUDIT-B-008:** Consolidate all confirmed MUST-DS-1 violations (QBO x3 + Samsara x1) into a single queued/background remediation design with accepted/queued API semantics and status polling. **Severity:** Critical. **Effort:** 1-2 days.
-- **DS-AUDIT-B-009:** Define a formal boundary policy for control-plane routes (Plaid/FMCSA/Twilio) distinguishing allowed interactive external calls from prohibited operational reads, with route annotations and guardrails. **Severity:** Important. **Effort:** 4-6 hr.
-- **DS-AUDIT-B-010:** Activate or formally retire Samsara master-sync route/cron surfaces to eliminate dormant ambiguity and align runtime with documented sync architecture. **Severity:** Important. **Effort:** 2-4 hr.
-- **DS-AUDIT-B-011:** Add shared job-context hardening for UUID-bound schedulers (`app.operating_company_id` safety and validation) to remove recurring background-job UUID failures. **Severity:** Important. **Effort:** 2-4 hr.
-- **DS-AUDIT-B-012:** Extend reconciliation observability with integration-level count/status dashboards over local mirrors, queues, webhook ledgers, and outbox states (no live API count pull required for this block). **Severity:** Cleanup. **Effort:** 4-6 hr.
+- **DS-AUDIT-B-009:** Refactor active MUST-DS-1 request-path reads (QBO replay, QBO deep health, QBO forensic preflight, Samsara config health) to accepted+queued/background execution with persisted status polling. **Severity:** Critical. **Effort:** 1-2 days.
+- **DS-AUDIT-B-010:** Build canonical remote-count collector and populate `accounting.qbo_remote_counts` for deterministic drift visibility (carry-forward from DS-IMPL-1 F-TOOLING-001). **Severity:** Critical. **Effort:** 4-6 hr.
+- **DS-AUDIT-B-011:** Define canonical DS-5 mirror metadata contract and align QBO + Samsara mirror schemas incrementally (identity/source/direction/version/timestamps). **Severity:** Important. **Effort:** 1-2 days.
+- **DS-AUDIT-B-012:** Implement Samsara webhook-event projection worker into read models with idempotent replay semantics (carry-forward from DS-IMPL-2 S-004). **Severity:** Critical. **Effort:** 1 day.
+- **DS-AUDIT-B-013:** Activate or formally retire dormant `samsara-master-sync` route/cron surfaces so runtime behavior matches architectural intent (carry-forward from DS-IMPL-2 S-003 and DS-IMPL-4 B-005). **Severity:** Important. **Effort:** 2-4 hr.
+- **DS-AUDIT-B-014:** Materialize CAP-13 locked schema (`catalogs.dot_inspection_stations`, `safety.dot_inspection_visits`) with exact enum-value contract tests (carry-forward from DS-IMPL-2 S-005). **Severity:** Important. **Effort:** 1 day.
+- **DS-AUDIT-B-015:** Formalize CAP-15 reconciliation checks using TMS-driver hub-and-spoke identity validation across Samsara and QBO surfaces (carry-forward from DS-IMPL-2 S-006). **Severity:** Important. **Effort:** 4-6 hr.
+- **DS-AUDIT-B-016:** Add boundary policy annotations for Tier-1 control-plane routes (Plaid/FMCSA) to explicitly allow interactive external calls while preserving Local Read Layer guarantees for operational routes. **Severity:** Important. **Effort:** 4-6 hr.
+- **DS-AUDIT-B-017:** Harden scheduler context initialization to eliminate empty-UUID failures in `qbo.sync_alerts_cron` and `samsara.health_check_cron`. **Severity:** Important. **Effort:** 2-4 hr.
+- **DS-AUDIT-B-018:** Expand reconciliation observability across mirrors/webhook ledgers/queues/outbox with local-only dashboards and alerts (no live API pull in audit block). **Severity:** Cleanup. **Effort:** 4-6 hr.
