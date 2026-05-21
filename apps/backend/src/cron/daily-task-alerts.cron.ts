@@ -1,7 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 let timer: NodeJS.Timeout | undefined;
+const CRON_NAME = "daily.task_alerts_cron";
 
 function intervalMs(): number {
   const raw = Number(process.env.DAILY_TASK_ALERTS_INTERVAL_MS ?? "60000");
@@ -19,6 +21,7 @@ async function enqueueAlertAndEmail(
     alertType: "nearing_due" | "overdue";
   }
 ) {
+  assertTenantContext(args.operatingCompanyId, CRON_NAME);
   await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [args.operatingCompanyId]);
 

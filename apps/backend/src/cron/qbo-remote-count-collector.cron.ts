@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { randomUUID } from "node:crypto";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { collectQboRemoteCounts, listQboConnectedOperatingCompanies, qboRemoteCountEntityTypes } from "../integrations/qbo/remote-count-collector.js";
 
 let initialized = false;
@@ -14,6 +15,7 @@ async function runCollectorTick(app: FastifyInstance, runMode: "delta" | "full")
   }
 
   for (const operatingCompanyId of companies) {
+    assertTenantContext(operatingCompanyId, "qbo.remote_count_collector");
     const result = await collectQboRemoteCounts(operatingCompanyId, {
       runMode,
       entityTypes: qboRemoteCountEntityTypes(),

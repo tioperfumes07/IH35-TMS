@@ -45,6 +45,9 @@ jobs:
       - name: Static checks — canonical renamed tables (no stale safety.fines refs)
         run: npm run verify:canonical-schema-names
 
+      - name: Static checks — scheduler tenant context guard
+        run: npm run verify:scheduler-tenant-context
+
       - name: Static checks — FK REFERENCES order (outside CREATE / guarded DO blocks)
         run: npm run db:verify:reference-order
 

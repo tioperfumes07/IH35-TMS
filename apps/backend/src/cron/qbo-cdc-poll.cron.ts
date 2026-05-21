@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
 import { listConfiguredWave2Realms, runQboCdcIngest } from "../integrations/qbo/qbo-cdc.service.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 /** Poll QuickBooks CDC every 5 minutes for configured TRK/TRANSP realms (see env QBO_REALM_ID_*). */
 export function initializeQboCdcPollCron(app: FastifyInstance) {
@@ -17,6 +18,7 @@ export function initializeQboCdcPollCron(app: FastifyInstance) {
           return;
         }
         for (const row of realms) {
+          assertTenantContext(row.operating_company_id, "integrations.qbo_cdc_poll");
           try {
             await runQboCdcIngest({
               operating_company_id: row.operating_company_id,

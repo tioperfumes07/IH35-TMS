@@ -8,6 +8,7 @@ import { auditBatchEvent, auditForensicImportError } from "../integrations/qbo/f
 import { getValidAccessToken } from "../integrations/qbo/qbo-oauth.service.js";
 import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 let initialized = false;
 
@@ -77,6 +78,7 @@ async function autoFailStaleBatches(app: FastifyInstance) {
   });
 
   for (const row of stale) {
+    assertTenantContext(row.operating_company_id, "qbo.forensic_import_runner");
     await appendSystemAudit(
       "qbo_archive.batch.auto_failed",
       { batch_id: row.id, operating_company_id: row.operating_company_id, reason: "stale_heartbeat_auto_fail", stale_after_minutes: staleHeartbeatMinutesForAutoFail() },
@@ -130,6 +132,7 @@ async function runForensicRunnerCronTick(app: FastifyInstance): Promise<void> {
       const attachmentsSinceDate = process.env.QBO_FORENSIC_ATTACHMENTS_SINCE_DATE ?? "2021-01-01";
 
       for (const batch of batches) {
+        assertTenantContext(batch.operating_company_id, "qbo.forensic_import_runner");
         try {
           await appendSystemAudit("qbo_archive.import_resumed", { batch_id: batch.id, operating_company_id: batch.operating_company_id });
           await withLuciaBypass(async (client) => {

@@ -5,6 +5,7 @@ import { getConnectionsExpiringWithin, getQboConnectionStatus, refreshAccessToke
 import { sendEmail } from "../notifications/email.service.js";
 import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 let initialized = false;
 const disconnectAlertCooldownMs = 12 * 60 * 60 * 1000;
@@ -43,6 +44,7 @@ export async function initializeQboTokenRefreshCron(app: FastifyInstance) {
           markRunnerTick("token_refresh_cron");
           const expiring = await getConnectionsExpiringWithin(12 * 3600);
           for (const conn of expiring) {
+            assertTenantContext(conn.operating_company_id, "qbo.token_refresh_cron");
             try {
               await refreshAccessToken(conn.id, conn.operating_company_id, process.env.SYSTEM_ACTOR_USER_ID || undefined);
             } catch (error) {
@@ -77,6 +79,7 @@ export async function initializeQboTokenRefreshCron(app: FastifyInstance) {
           markRunnerTick("token_refresh_cron");
           const activeCompanyIds = await listActiveCompanyIds();
           for (const companyId of activeCompanyIds) {
+            assertTenantContext(companyId, "qbo.token_refresh_cron");
             try {
               const status = await getQboConnectionStatus(companyId);
               if (status.connected) {
