@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
+import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { appendDeadlineReminderSent, listDeadlinesNeedingReminder } from "./matters.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
@@ -52,6 +53,7 @@ export function initializeLegalMattersReminderCron(app: FastifyInstance) {
           const rows = await withLuciaBypass(async (client) => listDeadlinesNeedingReminder(client));
           for (const row of rows) {
             const companyId = String(row.operating_company_id ?? "");
+            assertTenantContext(companyId, "legal.matters_reminder_cron");
             const matterNumber = String(row.matter_number ?? "");
             const title = String(row.title ?? "Deadline");
             const due = String(row.deadline_at ?? "");

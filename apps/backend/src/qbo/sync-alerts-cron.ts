@@ -1,9 +1,25 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
+import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 let initialized = false;
+const CRON_NAME = "qbo.sync_alerts_cron";
+
+async function appendCronAuditEvent(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }> },
+  eventClass: string,
+  severity: "info" | "warning",
+  payload: Record<string, unknown>
+) {
+  await client.query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
+    eventClass,
+    severity,
+    JSON.stringify(payload),
+    "DS-REMEDIATE-6",
+  ]);
+}
 
 export function initializeQboSyncAlertsCron(app: FastifyInstance) {
   if (initialized) return;
@@ -16,7 +32,7 @@ export function initializeQboSyncAlertsCron(app: FastifyInstance) {
 
   cron.schedule("*/5 * * * *", async () => {
     await wrapBackgroundJobTick(
-      "qbo.sync_alerts_cron",
+      CRON_NAME,
       async () => {
         await withLuciaBypass(async (client) => {
           const exists = await client.query(`SELECT to_regclass('qbo.sync_alerts') IS NOT NULL AS ok`);
@@ -42,7 +58,18 @@ export function initializeQboSyncAlertsCron(app: FastifyInstance) {
           );
 
           for (const row of due.rows) {
-            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
+            const operatingCompanyId = row.operating_company_id;
+            try {
+              assertTenantContext(operatingCompanyId, CRON_NAME);
+            } catch (error) {
+              await appendCronAuditEvent(client, "cron_invalid_tenant_context", "warning", {
+                cron_name: CRON_NAME,
+                operating_company_id: operatingCompanyId ?? null,
+                reason: String((error as Error)?.message ?? error),
+              });
+              throw error;
+            }
+            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
             const nextRetryCount = Number(row.retry_count ?? 0) + 1;
             const baseMinutes = 5 * 2 ** Math.max(0, nextRetryCount - 1);
@@ -62,7 +89,7 @@ export function initializeQboSyncAlertsCron(app: FastifyInstance) {
 
               await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
                 "qbo.sync.escalated",
-                JSON.stringify({ alert_id: row.id, operating_company_id: row.operating_company_id }),
+                JSON.stringify({ alert_id: row.id, operating_company_id: operatingCompanyId }),
               ]);
               continue;
             }
@@ -81,7 +108,7 @@ export function initializeQboSyncAlertsCron(app: FastifyInstance) {
               "qbo.sync.retry_scheduled",
               JSON.stringify({
                 alert_id: row.id,
-                operating_company_id: row.operating_company_id,
+                operating_company_id: operatingCompanyId,
                 retry_count: nextRetryCount,
                 next_backoff_minutes: baseMinutes,
               }),

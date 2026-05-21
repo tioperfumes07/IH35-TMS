@@ -3,6 +3,7 @@ import type pg from "pg";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { createEmailProviderFromEnv } from "./factory.js";
 import type { EmailAttachment } from "./provider.js";
 import { computeNextRetryAt } from "./queue.service.js";
@@ -149,6 +150,7 @@ export async function processEmailQueueTick(logger?: Pick<FastifyBaseLogger, "in
   for (const row of rows) {
     const id = String(row.id ?? "");
     const operatingCompanyId = String(row.operating_company_id ?? "");
+    assertTenantContext(operatingCompanyId, "email.queue_processor");
     const templateKey = String(row.template_key ?? "");
     const templateVars = (row.template_vars ?? {}) as Record<string, unknown>;
     const subject = String(row.subject ?? "");

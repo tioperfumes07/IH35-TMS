@@ -1,6 +1,7 @@
 import type { FastifyBaseLogger } from "fastify";
 import cron from "node-cron";
 import { loadEnabledSchedules, runScheduledReport, type ScheduledReportId } from "../reports/scheduled-report-runner.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 const TIMEZONE = "America/Chicago";
 
@@ -36,6 +37,7 @@ export function initializeScheduledReportsCron(logger: FastifyBaseLogger) {
         try {
           const schedules = await loadEnabledSchedules(definition.reportId);
           for (const schedule of schedules) {
+            assertTenantContext(schedule.operating_company_id, "scheduled.reports_cron");
             try {
               await runScheduledReport({
                 reportId: definition.reportId,
