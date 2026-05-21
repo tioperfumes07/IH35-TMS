@@ -47,53 +47,59 @@ const QBO_TRANSACTIONAL_MIRRORS = [
   { table: "accounting.payments", remoteEntityType: "qbo_payments" },
 ] as const;
 
-const DS5_REQUIRED_COLUMNS: Array<{ tableSchema: string; tableName: string; requiredColumns: string[]; staleColumn: string; staleHours: number }> = [
+export const DS5_REQUIRED_COLUMNS: Array<{
+  tableSchema: string;
+  tableName: string;
+  requiredColumns: string[];
+  staleColumn: string;
+  staleHours: number;
+}> = [
   {
     tableSchema: "mdata",
     tableName: "qbo_accounts",
-    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "mirrored_at"],
-    staleColumn: "mirrored_at",
+    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "raw_payload", "last_seen_at", "created_at", "updated_at"],
+    staleColumn: "last_seen_at",
     staleHours: 24,
   },
   {
     tableSchema: "mdata",
     tableName: "qbo_classes",
-    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "mirrored_at"],
-    staleColumn: "mirrored_at",
+    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "raw_payload", "last_seen_at", "created_at", "updated_at"],
+    staleColumn: "last_seen_at",
     staleHours: 24,
   },
   {
     tableSchema: "mdata",
     tableName: "qbo_items",
-    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "mirrored_at"],
-    staleColumn: "mirrored_at",
+    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "raw_payload", "last_seen_at", "created_at", "updated_at"],
+    staleColumn: "last_seen_at",
     staleHours: 24,
   },
   {
     tableSchema: "mdata",
     tableName: "qbo_customers",
-    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "mirrored_at"],
-    staleColumn: "mirrored_at",
+    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "raw_payload", "last_seen_at", "created_at", "updated_at"],
+    staleColumn: "last_seen_at",
     staleHours: 24,
   },
   {
     tableSchema: "mdata",
     tableName: "qbo_vendors",
-    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "mirrored_at"],
-    staleColumn: "mirrored_at",
+    requiredColumns: ["qbo_id", "qbo_sync_token", "qbo_updated_at", "raw_payload", "last_seen_at", "created_at", "updated_at"],
+    staleColumn: "last_seen_at",
     staleHours: 24,
   },
   {
     tableSchema: "integrations",
     tableName: "samsara_drivers",
-    requiredColumns: ["samsara_driver_id", "last_seen_at", "raw_payload"],
+    requiredColumns: ["samsara_driver_id", "raw_payload", "last_seen_at", "created_at", "updated_at"],
     staleColumn: "last_seen_at",
     staleHours: 24,
   },
   {
     tableSchema: "integrations",
     tableName: "samsara_vehicles",
-    requiredColumns: ["samsara_vehicle_id", "last_seen_at", "raw_payload"],
+    requiredColumns: ["samsara_vehicle_id", "raw_payload", "last_seen_at", "created_at", "updated_at"],
     staleColumn: "last_seen_at",
     staleHours: 24,
   },
@@ -300,6 +306,10 @@ async function checkDs5Contract(
       thresholdSnapshot: { stale_hours: item.staleHours },
     });
   }
+}
+
+export async function runDs5ContractCheckForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  await checkDs5Contract(client, operatingCompanyId, runId);
 }
 
 async function reconcileQboRefdataForCompany(
