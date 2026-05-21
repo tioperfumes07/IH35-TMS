@@ -1,7 +1,7 @@
 # BLUEPRINT_DELTA (Cursor Independent Draft)
 
 Date: 2026-05-21  
-Status: DRAFT (do not commit yet)  
+Status: HISTORICAL DRAFT — audit trail; canonical content lives in IH35_UNIFIED_BLUEPRINT_ADDITIONS.md and IH35_ARCHITECTURAL_DESIGN.md  
 Authoring constraint: drafted independently from canonical blueprint and current code/state, not as a review of Claude delta text.
 
 ---

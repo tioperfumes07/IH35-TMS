@@ -1,7 +1,7 @@
 # ARCHITECTURE DELTA — Reconciled Draft (Resolved)
 
 Date: 2026-05-21  
-Status: DRAFT ONLY (no commit)  
+Status: HISTORICAL DRAFT — audit trail; canonical content lives in IH35_UNIFIED_BLUEPRINT_ADDITIONS.md and IH35_ARCHITECTURAL_DESIGN.md  
 Purpose: Arbitration-applied architecture draft ready for canonical append.
 Style: synthesized canonical per TRACE-01 (2026-05-21). Source mapping in `DELTA_COMPARISON_CLAUDE_VS_CURSOR_2026-05-21`.
 
