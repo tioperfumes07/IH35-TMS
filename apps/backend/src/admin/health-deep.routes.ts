@@ -11,6 +11,19 @@ function allowDeepHealth(role: string | undefined): boolean {
   return String(role ?? "") === "Owner";
 }
 
+type DeepHealthCheck = {
+  name: string;
+  ok: boolean;
+  tier: "critical" | "non_critical";
+  duration_ms: number;
+  skipped?: boolean;
+  error?: string;
+};
+
+function criticalHealthStatus(checks: DeepHealthCheck[]): boolean {
+  return checks.filter((check) => check.tier === "critical").every((check) => check.ok);
+}
+
 export async function registerHealthDeepRoutes(app: FastifyInstance) {
   app.get("/api/v1/admin/health/deep", async (req, reply) => {
     if (!requireAuth(req, reply)) return;
@@ -21,30 +34,32 @@ export async function registerHealthDeepRoutes(app: FastifyInstance) {
     try {
       const user = req.user as { uuid: string };
       const operatingCompanyId = await resolveDefaultOperatingCompanyIdForUser(user.uuid);
-      if (!operatingCompanyId) {
-        return reply.code(400).send({ error: "operating_company_context_missing" });
-      }
-
-      const latest = await getLatestCompletedAdminJob("admin.health.deep.refresh", operatingCompanyId);
+      const latest = operatingCompanyId
+        ? await getLatestCompletedAdminJob("admin.health.deep.refresh", operatingCompanyId)
+        : null;
       const staleMs = 10 * 60 * 1000;
       const lastProbedAt = latest?.completed_at ? new Date(latest.completed_at).getTime() : null;
       const isStale = !lastProbedAt || Number.isNaN(lastProbedAt) || Date.now() - lastProbedAt > staleMs;
 
       let refreshJobId: string | null = null;
-      if (isStale) {
-        refreshJobId = await enqueueAdminJob({
-          operation: "admin.health.deep.refresh",
-          operatingCompanyId,
-          requestedByUserId: user.uuid,
-          idempotencyKey: buildIdempotencyKey({
+      if (isStale && operatingCompanyId) {
+        try {
+          refreshJobId = await enqueueAdminJob({
             operation: "admin.health.deep.refresh",
             operatingCompanyId,
-            integration: "deep_health",
-            nowMs: Date.now(),
-          }),
-          payload: { trigger: "admin.health.deep", integration: "deep_health" },
-          maxAttempts: 3,
-        });
+            requestedByUserId: user.uuid,
+            idempotencyKey: buildIdempotencyKey({
+              operation: "admin.health.deep.refresh",
+              operatingCompanyId,
+              integration: "deep_health",
+              nowMs: Date.now(),
+            }),
+            payload: { trigger: "admin.health.deep", integration: "deep_health" },
+            maxAttempts: 3,
+          });
+        } catch (enqueueError) {
+          req.log.warn({ err: enqueueError }, "[health-deep] refresh_enqueue_failed");
+        }
       }
 
       if (!latest?.result) {
@@ -56,13 +71,13 @@ export async function registerHealthDeepRoutes(app: FastifyInstance) {
           refresh_enqueued: Boolean(refreshJobId),
           refresh_job_id: refreshJobId,
           last_probed_at: null,
+          cache_age_seconds: null,
         });
       }
 
-      const checks = Array.isArray(latest.result.checks) ? latest.result.checks : [];
-      const criticalOk = checks
-        .filter((check) => check && typeof check === "object" && check.tier === "critical")
-        .every((check) => (check as { ok?: unknown }).ok === true);
+      const checks = (Array.isArray(latest.result.checks) ? latest.result.checks : []) as DeepHealthCheck[];
+      const criticalOk = criticalHealthStatus(checks);
+      const cacheAgeSeconds = Math.max(0, Math.floor((Date.now() - (lastProbedAt ?? Date.now())) / 1000));
       return reply.code(criticalOk ? 200 : 503).send({
         ok: criticalOk,
         checks,
@@ -71,6 +86,7 @@ export async function registerHealthDeepRoutes(app: FastifyInstance) {
         refresh_enqueued: Boolean(refreshJobId),
         refresh_job_id: refreshJobId,
         last_probed_at: latest.completed_at,
+        cache_age_seconds: cacheAgeSeconds,
       });
     } catch (error) {
       app.log.error({ err: error }, "[health-deep] probe_failed");
