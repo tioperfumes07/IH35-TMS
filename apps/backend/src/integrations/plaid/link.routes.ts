@@ -327,6 +327,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         const accessToken = tokenRes.rows[0]?.plaid_access_token ?? null;
         if (accessToken) {
           try {
+            // CI-ALLOWLIST: registerPlaidLinkRoutes invokes Plaid item revoke in request path for explicit user disconnect intent — see DS-AUDIT-B-016.
             const plaid = getPlaidClient();
             await plaid.itemRemove({ access_token: accessToken });
           } catch {
@@ -411,6 +412,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
       const accessToken = tokenRes.rows[0]?.plaid_access_token ?? null;
       if (accessToken) {
         try {
+          // CI-ALLOWLIST: registerPlaidLinkRoutes invokes Plaid item revoke in request path for explicit user disconnect intent — see DS-AUDIT-B-016.
           const plaid = getPlaidClient();
           await plaid.itemRemove({ access_token: accessToken });
         } catch {

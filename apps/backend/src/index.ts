@@ -149,6 +149,7 @@ import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 import { registerLaunchReadinessRoutes } from "./admin/launch-readiness.routes.js";
 import { registerHealthDeepRoutes } from "./admin/health-deep.routes.js";
+import { registerAdminJobsRoutes } from "./admin/admin-jobs.routes.js";
 import { registerDataImportAdminRoutes } from "./admin/data-import.routes.js";
 import { resolveMonorepoRoot } from "./lib/monorepo-root.js";
 import { attachSentryRequestScope, initBackendSentry, registerSentryFastifyErrorHandler } from "./lib/sentry.js";
@@ -168,6 +169,7 @@ import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
 import { initializeErrorDigestCron } from "./cron/error-digest.cron.js";
 import { registerDailyTasksRoutes } from "./daily-tasks/daily-tasks.routes.js";
 import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/daily-task-alerts.cron.js";
+import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -215,6 +217,7 @@ async function shutdown(signal: string) {
     stopQboOutboxDispatcher();
     stopQboInboundSyncCron();
     stopDailyTaskAlertsCron();
+    stopAdminJobsWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
   }
@@ -303,6 +306,7 @@ async function main() {
   await registerAdminSyncHealthRoutes(app);
   await registerLaunchReadinessRoutes(app);
   await registerHealthDeepRoutes(app);
+  await registerAdminJobsRoutes(app);
   await registerMigrationStatusRoutes(app);
   await registerDataImportAdminRoutes(app);
   await registerPhoneAuthRoutes(app);
@@ -514,6 +518,13 @@ async function main() {
     app.log.info("[STARTUP] daily-task-alerts cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] daily-task-alerts cron failed");
+  }
+
+  try {
+    initializeAdminJobsWorker(app);
+    app.log.info("[STARTUP] admin-jobs-worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] admin-jobs-worker failed");
   }
 
   try {
