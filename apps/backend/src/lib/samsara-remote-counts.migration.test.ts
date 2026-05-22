@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { withLuciaBypass } from "../auth/db.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 
-const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
+const describeIntegration = describe.skipIf(!process.env.DATABASE_URL);
 
 describeIntegration("samsara remote counts migration", () => {
   it("creates integrations.samsara_remote_counts and helper index", async () => {
