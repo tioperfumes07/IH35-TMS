@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { withLuciaBypass } from "../auth/db.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 
-const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
+const describeIntegration = describe.skipIf(!process.env.DATABASE_URL);
 
 describeIntegration("samsara webhook projection state migration", () => {
   beforeAll(async () => {

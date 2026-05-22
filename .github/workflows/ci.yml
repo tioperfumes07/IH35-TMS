@@ -15,19 +15,20 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: ih35_test
+          POSTGRES_USER: verify
+          POSTGRES_PASSWORD: verify
+          POSTGRES_DB: ih35_verify
         ports:
-          - 5432:5432
+          - 54329:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U verify"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/ih35_test
-      DATABASE_DIRECT_URL: postgres://postgres:postgres@localhost:5432/ih35_test
+      DATABASE_URL: postgres://verify:verify@localhost:54329/ih35_verify
+      DATABASE_DIRECT_URL: postgres://verify:verify@localhost:54329/ih35_verify
 
     steps:
       - name: Checkout
@@ -42,47 +43,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Static checks — canonical renamed tables (no stale safety.fines refs)
-        run: npm run verify:canonical-schema-names
+      - name: Verification source of truth (local + CI parity)
+        run: npm run verify:pre-commit
 
-      - name: Static checks — scheduler tenant context guard
-        run: npm run verify:scheduler-tenant-context
-
-      - name: Static checks — FK REFERENCES order (outside CREATE / guarded DO blocks)
-        run: npm run db:verify:reference-order
-
-      - name: Static checks — rename fallout (ALTER TABLE … RENAME TO)
-        run: npm run db:verify:rename-fallout
-
-      - name: Static checks — test INSERT column hints (informational)
-        run: npm run verify:test-insert-columns
-
-      - name: Static checks — ih35_app schema USAGE vs watchlist (informational)
-        run: npm run verify:schema-usage-grants
-
-      - name: Static checks — data-dependent RAISE in DO $$ blocks (informational)
-        run: npm run db:verify:empty-db-safe
-
-      - name: Static checks — DDL idempotency hints (informational)
-        run: npm run db:verify:idempotency
-
-      - name: Static checks — generated columns vs IMMUTABLE (informational)
-        run: npm run db:verify:generated-immutable
-
-      - name: Migrate database (integration tests)
-        run: npm run db:migrate
-
-      - name: Migration drift surface check (disk vs ledger vs schema)
-        run: npm run db:check-drift
-
-      - name: Backend tests + coverage gates
+      - name: Backend tests + coverage (CI strict)
         run: npm run test:coverage
-
-      - name: Verify locked UI surface + architectural design alignment
-        run: npm run verify:arch-design
-
-      - name: Typecheck
-        run: npm run typecheck
 
       - name: Frontend build (match Render)
         run: cd apps/frontend && npm run build

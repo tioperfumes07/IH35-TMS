@@ -4,7 +4,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { runDs5ContractCheckForCompany } from "../reconciliation/reconciliation-worker.service.js";
 import { ensureIntegrationPrerequisites, getOperatingCompanyId } from "../../test-helpers/db-fixture.js";
 
-const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
+const describeIntegration = describe.skipIf(!process.env.DATABASE_URL);
 
 const EXPECTED_MIRRORS = [
   {
