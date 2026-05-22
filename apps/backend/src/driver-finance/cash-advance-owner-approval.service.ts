@@ -101,6 +101,7 @@ async function resolveActorLabel(client: QueryableClient, userUuid: string | nul
 }
 
 async function enqueueDriverFinanceOutbox(client: QueryableClient, eventType: string, payload: Record<string, unknown>) {
+  /* outbox-handler-parity: literal-types=["driver_finance.cash_advance_request.escalated_to_owner","driver_finance.cash_advance_request.owner_approved","driver_finance.cash_advance_request.owner_denied"] */
   await client.query(
     `
       INSERT INTO outbox.events (event_type, payload, next_retry_at)

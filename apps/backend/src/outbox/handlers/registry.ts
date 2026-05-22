@@ -3,6 +3,7 @@ import { TwilioSmsHandler } from "./twilio-sms.js";
 import { TwilioWhatsappHandler } from "./twilio-whatsapp.js";
 import { DispatchLoadDispatchedHandler } from "./dispatch-load-dispatched.handler.js";
 import { QboMasterEntityPushHandler } from "./qbo-master-entity-push.handler.js";
+import { buildTrailEventHandlers } from "./trail-events.handler.js";
 
 export type OutboxPayload = Record<string, unknown>;
 
@@ -77,6 +78,7 @@ export function buildOutboxHandlerRegistry() {
     new QboMasterEntityPushHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),
+    ...buildTrailEventHandlers(),
   ];
   return new Map(handlers.map((handler) => [handler.eventType, handler]));
 }

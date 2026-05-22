@@ -32,6 +32,7 @@ async function appendOutboxTrailEvent(
   payload: Record<string, unknown>
 ) {
   await withLuciaBypass(async (client) => {
+    /* outbox-handler-parity: literal-types=["twilio.sms.send","twilio.whatsapp.send"] */
     await client.query(
       `
         INSERT INTO outbox.events (event_type, payload, next_retry_at)

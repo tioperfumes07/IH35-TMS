@@ -112,7 +112,10 @@ try {
   console.log("verify:pre-commit step 7/10: verify-canonical-schema-names");
   if (run("npm", ["run", "verify:canonical-schema-names"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 8/10: backend-vitest");
+  console.log("verify:pre-commit step 8/11: verify-outbox-handler-parity");
+  if (run("npm", ["run", "verify:outbox-handler-parity"]) !== 0) process.exit(1);
+
+  console.log("verify:pre-commit step 9/11: backend-vitest");
   if (
     run("npx", [
       "vitest",
@@ -128,12 +131,12 @@ try {
   }
   parseBackendVitestReport();
 
-  console.log("verify:pre-commit step 9/10: frontend-vitest");
+  console.log("verify:pre-commit step 10/11: frontend-vitest");
   if (run("npx", ["vitest", "run", "src/components/ErrorBoundary.test.tsx"], { cwd: path.join(ROOT, "apps/frontend") }) !== 0) {
     process.exit(1);
   }
 
-  console.log("verify:pre-commit step 10/10: summary-report");
+  console.log("verify:pre-commit step 11/11: summary-report");
   console.log("verify:pre-commit PASS");
   process.exit(0);
 } finally {

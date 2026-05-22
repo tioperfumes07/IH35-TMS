@@ -50,13 +50,6 @@ async function appendAudit(client: PoolClient, eventClass: string, payload: Reco
   ]);
 }
 
-async function enqueueOutbox(client: PoolClient, eventType: string, payload: Record<string, unknown>) {
-  await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
-    eventType,
-    JSON.stringify(payload),
-  ]);
-}
-
 async function resolveDeltaCursorIso(
   client: PoolClient,
   operatingCompanyId: string,
@@ -371,13 +364,6 @@ async function syncEntity(params: SyncParams & { entity: MasterEntityType }): Pr
 
         const durationMs = Date.now() - startedAt;
         await appendAudit(client, `qbo.mdata.${entity}.${syncType}.completed`, {
-          operating_company_id: operatingCompanyId,
-          entity_type: entity,
-          sync_type: syncType,
-          rows_upserted: rowsUpserted,
-          duration_ms: durationMs,
-        });
-        await enqueueOutbox(client, `qbo.mdata.${entity}.synced`, {
           operating_company_id: operatingCompanyId,
           entity_type: entity,
           sync_type: syncType,

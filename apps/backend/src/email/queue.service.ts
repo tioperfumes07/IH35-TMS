@@ -67,15 +67,6 @@ export async function enqueueEmail(input: EnqueueEmailInput): Promise<{ queueId:
     const queueId = String(insertRes.rows[0]?.id ?? "");
     if (!queueId) throw new Error("enqueue_email_insert_failed");
 
-    await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
-      "email.queued",
-      JSON.stringify({
-        queue_id: queueId,
-        operating_company_id: input.operatingCompanyId,
-        template_key: input.templateKey,
-      }),
-    ]);
-
     return { queueId };
   });
 }

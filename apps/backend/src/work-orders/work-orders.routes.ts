@@ -103,6 +103,7 @@ async function enqueueWorkOrderOutbox(
   eventType: string,
   payload: Record<string, unknown>
 ) {
+  /* outbox-handler-parity: literal-types=["work_order.created","work_order.updated","work_order.approved","work_order.started","work_order.completed","accounting.bill.auto_created_from_wo","work_order.cancelled","work_order.photo_added"] */
   await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
     eventType,
     JSON.stringify(payload),

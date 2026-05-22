@@ -31,6 +31,7 @@ async function columnExists(client: any, schema: string, table: string, column: 
 }
 
 async function emitOutbox(client: any, eventType: string, payload: Record<string, unknown>) {
+  /* outbox-handler-parity: literal-types=["expense.created.attributed","expense.created.unattributed","expense.reattributed"] */
   await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
     eventType,
     JSON.stringify(payload),

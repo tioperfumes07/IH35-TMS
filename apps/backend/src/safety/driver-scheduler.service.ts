@@ -139,6 +139,7 @@ async function nextRequestNumber(client: QueryableClient, operatingCompanyId: st
 }
 
 async function enqueueOutbox(client: QueryableClient, eventType: string, payload: Record<string, unknown>) {
+  /* outbox-handler-parity: literal-types=["driver.scheduler.leave_requested","driver.scheduler.leave_denied","driver.scheduler.leave_approved","driver.scheduler.temp_cover_assigned"] */
   await client.query(
     `
       INSERT INTO outbox.events (event_type, payload, next_retry_at)

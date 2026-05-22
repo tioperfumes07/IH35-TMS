@@ -125,15 +125,6 @@ async function enqueueAlertAndEmail(
 
   const queueId = String(queueRes.rows[0]?.id ?? "");
   if (!queueId) return;
-
-  await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
-    "email.queued",
-    JSON.stringify({
-      queue_id: queueId,
-      operating_company_id: args.operatingCompanyId,
-      template_key: "notification-dispatch",
-    }),
-  ]);
 }
 
 async function appendTaskEvent(
