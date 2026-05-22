@@ -9,6 +9,7 @@ type DbClient = {
 };
 
 async function emitOutbox(client: DbClient, eventType: string, payload: Record<string, unknown>) {
+  /* outbox-handler-parity: literal-types=["settlement_dispute.submitted","settlement_dispute.decided"] */
   await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
     eventType,
     JSON.stringify(payload),

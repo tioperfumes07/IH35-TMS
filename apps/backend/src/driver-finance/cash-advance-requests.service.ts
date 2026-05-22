@@ -62,6 +62,7 @@ async function appendRequestAudit(
 }
 
 async function enqueueDriverFinanceOutbox(client: QueryableClient, eventType: string, payload: Record<string, unknown>) {
+  /* outbox-handler-parity: literal-types=["driver_finance.cash_advance_request.submitted","driver_finance.cash_advance_request.cancelled_by_driver","driver_finance.cash_advance_request.approved","driver_finance.cash_advance_request.denied"] */
   await client.query(
     `
       INSERT INTO outbox.events (event_type, payload, next_retry_at)

@@ -15,6 +15,7 @@ export function settlementDisplayIdFromLoadNumber(loadNumber: string): string {
 }
 
 async function emitOutbox(client: DbClient, eventType: string, payload: Record<string, unknown>) {
+  /* outbox-handler-parity: literal-types=["driver_finance.settlement.opened","driver_finance.settlement.payment_due","driver_finance.settlement.closed"] */
   await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
     eventType,
     JSON.stringify(payload),
