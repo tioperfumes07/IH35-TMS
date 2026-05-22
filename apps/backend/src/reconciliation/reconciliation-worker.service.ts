@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { withLuciaBypass } from "../auth/db.js";
+import { routeFindingAlert } from "./alert-routing.service.js";
 
 type Integration = "qbo" | "samsara";
 type MirrorCategory = "refdata_static" | "transactional" | "identity_mapping";
@@ -133,9 +134,9 @@ async function appendAuditEvent(
 }
 
 async function persistFinding(client: DbClient, input: FindingInput) {
-  const existing = await client.query<{ id: string }>(
+  const existing = await client.query<{ id: string; severity: FindingSeverity; detected_at: string }>(
     `
-      SELECT id::text
+      SELECT id::text, severity, detected_at::text
       FROM _system.reconciliation_findings
       WHERE operating_company_id = $1::uuid
         AND integration = $2
@@ -150,6 +151,8 @@ async function persistFinding(client: DbClient, input: FindingInput) {
   );
 
   if (existing.rows[0]?.id) {
+    const prior = existing.rows[0];
+    const severityEscalated = prior.severity !== "critical" && input.severity === "critical";
     await client.query(
       `
         UPDATE _system.reconciliation_findings
@@ -165,7 +168,7 @@ async function persistFinding(client: DbClient, input: FindingInput) {
         WHERE id = $1::uuid
       `,
       [
-        existing.rows[0].id,
+        prior.id,
         input.severity,
         JSON.stringify(input.localValue),
         JSON.stringify(input.remoteValue ?? null),
@@ -174,10 +177,25 @@ async function persistFinding(client: DbClient, input: FindingInput) {
         JSON.stringify(input.thresholdSnapshot),
       ]
     );
+    await routeFindingAlert({
+      client,
+      finding: {
+        id: prior.id,
+        operating_company_id: input.operatingCompanyId,
+        integration: input.integration,
+        mirror_category: input.mirrorCategory,
+        finding_type: input.findingType,
+        severity: input.severity,
+        status: "open",
+        detected_at: prior.detected_at,
+      },
+      isNew: false,
+      severityEscalated,
+    });
     return;
   }
 
-  await client.query(
+  const inserted = await client.query<{ id: string; detected_at: string }>(
     `
       INSERT INTO _system.reconciliation_findings (
         operating_company_id,
@@ -215,6 +233,7 @@ async function persistFinding(client: DbClient, input: FindingInput) {
         now(),
         now()
       )
+      RETURNING id::text, detected_at::text
     `,
     [
       input.operatingCompanyId,
@@ -231,6 +250,22 @@ async function persistFinding(client: DbClient, input: FindingInput) {
       JSON.stringify(input.thresholdSnapshot),
     ]
   );
+  if (!inserted.rows[0]?.id) return;
+  await routeFindingAlert({
+    client,
+    finding: {
+      id: inserted.rows[0].id,
+      operating_company_id: input.operatingCompanyId,
+      integration: input.integration,
+      mirror_category: input.mirrorCategory,
+      finding_type: input.findingType,
+      severity: input.severity,
+      status: "open",
+      detected_at: inserted.rows[0].detected_at,
+    },
+    isNew: true,
+    severityEscalated: false,
+  });
 }
 
 async function getMaxTimestamp(
