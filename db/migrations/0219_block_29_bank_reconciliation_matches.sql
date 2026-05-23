@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS bank.reconciliation_matches (
   match_score numeric(5,4) NOT NULL DEFAULT 0 CHECK (match_score >= 0 AND match_score <= 1),
   match_state text NOT NULL CHECK (match_state IN ('auto_matched','user_matched','rejected')),
   matched_at timestamptz NOT NULL DEFAULT now(),
-  matched_by_user_uuid uuid REFERENCES identity.users(uuid),
+  matched_by_user_uuid uuid REFERENCES identity.users(id),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
