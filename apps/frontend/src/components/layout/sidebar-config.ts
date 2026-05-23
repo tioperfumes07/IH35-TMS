@@ -170,6 +170,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       return [
         { label: "Dispatch Home", to: "/dispatch" },
         { label: "Loads", to: "/dispatch?view=loads" },
+        { label: "Geofencing", to: "/dispatch/geofencing" },
         { label: "Alerts", to: "/dispatch/alerts" },
         { label: "Daily Tasks", to: "/daily-tasks" },
         { label: "Drivers", to: "/drivers" },
