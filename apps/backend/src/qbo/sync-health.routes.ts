@@ -22,6 +22,104 @@ function officeRole(role: string) {
 }
 
 export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
+  app.get("/api/v1/qbo/sync-health", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
+
+    const parsed = querySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+
+    const payload = await withLuciaBypass(async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
+
+      const runsExist = await client.query(`SELECT to_regclass('qbo.sync_runs') IS NOT NULL AS ok`);
+      const alertsExist = await client.query(`SELECT to_regclass('qbo.sync_alerts') IS NOT NULL AS ok`);
+      const outboxExists = await client.query(`SELECT to_regclass('outbox.events') IS NOT NULL AS ok`);
+
+      const latestRun = runsExist.rows[0]?.ok
+        ? await client.query<{
+            status: string;
+            started_at: string | null;
+            completed_at: string | null;
+            run_kind: string | null;
+          }>(
+            `
+              SELECT
+                status,
+                started_at::text,
+                completed_at::text,
+                kind AS run_kind
+              FROM qbo.sync_runs
+              WHERE operating_company_id = $1::uuid
+              ORDER BY COALESCE(completed_at, started_at) DESC, started_at DESC
+              LIMIT 1
+            `,
+            [parsed.data.operating_company_id]
+          )
+        : { rows: [] };
+
+      const openAlertsCount = alertsExist.rows[0]?.ok
+        ? await client.query<{ c: string }>(
+            `
+              SELECT COUNT(*)::text AS c
+              FROM qbo.sync_alerts
+              WHERE operating_company_id = $1::uuid
+                AND resolved_at IS NULL
+            `,
+            [parsed.data.operating_company_id]
+          )
+        : { rows: [{ c: "0" }] };
+
+      const highSeverityAlertsCount = alertsExist.rows[0]?.ok
+        ? await client.query<{ c: string }>(
+            `
+              SELECT COUNT(*)::text AS c
+              FROM qbo.sync_alerts
+              WHERE operating_company_id = $1::uuid
+                AND resolved_at IS NULL
+                AND severity IN ('error', 'critical')
+            `,
+            [parsed.data.operating_company_id]
+          )
+        : { rows: [{ c: "0" }] };
+
+      const failedOutboxCount = outboxExists.rows[0]?.ok
+        ? await client.query<{ c: string }>(
+            `
+              SELECT COUNT(*)::text AS c
+              FROM outbox.events e
+              WHERE e.failed_at IS NOT NULL
+                AND (
+                  e.last_error ILIKE '%no handler registered%'
+                  OR e.failed_at < now() - interval '1 hour'
+                )
+                AND COALESCE(e.payload->>'operating_company_id', '') = $1::text
+            `,
+            [parsed.data.operating_company_id]
+          )
+        : { rows: [{ c: "0" }] };
+
+      const row = latestRun.rows[0];
+      return {
+        latest_run: row
+          ? {
+              status: row.status,
+              started_at: row.started_at,
+              completed_at: row.completed_at,
+              run_kind: row.run_kind,
+            }
+          : null,
+        open_alerts_count: Number(openAlertsCount.rows[0]?.c ?? 0),
+        failed_outbox_count: Number(failedOutboxCount.rows[0]?.c ?? 0),
+        high_severity_alerts_count: Number(highSeverityAlertsCount.rows[0]?.c ?? 0),
+        last_updated: new Date().toISOString(),
+      };
+    });
+
+    return payload;
+  });
+
   app.get("/api/v1/qbo/sync/health", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;

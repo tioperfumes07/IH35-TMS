@@ -8,6 +8,7 @@ import {
   fetchHomeFactoringBalance,
   fetchHomeFleetSnapshot,
   fetchHomeOpenLoadsCount,
+  fetchHomeQboSyncHealth,
   fetchHomeTodayRevenue,
   fetchHomeWosOpenCount,
 } from "../../api/home";
@@ -16,6 +17,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { SectionQuickJump } from "../../components/home/SectionQuickJump";
 import { FleetSnapshotPanel } from "../../components/home/FleetSnapshotPanel";
+import { QboSyncHealthCard } from "../../components/home/QboSyncHealthCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AttentionList } from "./AttentionList";
 import { FleetUtilizationGauge } from "./charts/FleetUtilizationGauge";
@@ -92,6 +94,13 @@ export function HomePage({ auth }: Props) {
     queryKey: ["home", "fleet-snapshot", selectedCompanyId],
     queryFn: () => fetchHomeFleetSnapshot(selectedCompanyId!),
     enabled: Boolean(selectedCompanyId),
+  });
+
+  const qboSyncHealthQuery = useQuery({
+    queryKey: ["home", "qbo-sync-health", selectedCompanyId],
+    queryFn: () => fetchHomeQboSyncHealth(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+    refetchInterval: 60_000,
   });
 
   const ownerCashPendingQuery = useQuery({
@@ -331,33 +340,43 @@ export function HomePage({ auth }: Props) {
       </div>
 
       <div className="order-7">
-        {fleetSnapshotQuery.isLoading ? (
-          <section className="rounded border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Fleet Snapshot</div>
-            <div className="space-y-2 p-3">
-              <div className="h-6 animate-pulse rounded bg-slate-100" />
-              <div className="h-6 animate-pulse rounded bg-slate-100" />
-              <div className="h-6 animate-pulse rounded bg-slate-100" />
-            </div>
-          </section>
-        ) : fleetSnapshotQuery.isError ? (
-          <section className="rounded border border-red-200 bg-red-50">
-            <div className="border-b border-red-200 px-3 py-2 text-sm font-semibold text-red-900">Fleet Snapshot</div>
-            <div className="flex items-center justify-between px-3 py-3 text-sm text-red-800">
-              <span>Failed to load fleet snapshot. Try refreshing.</span>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  void fleetSnapshotQuery.refetch();
-                }}
-              >
-                Refresh
-              </Button>
-            </div>
-          </section>
-        ) : (
-          <FleetSnapshotPanel rows={fleetRows} />
-        )}
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+          {fleetSnapshotQuery.isLoading ? (
+            <section className="rounded border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">Fleet Snapshot</div>
+              <div className="space-y-2 p-3">
+                <div className="h-6 animate-pulse rounded bg-slate-100" />
+                <div className="h-6 animate-pulse rounded bg-slate-100" />
+                <div className="h-6 animate-pulse rounded bg-slate-100" />
+              </div>
+            </section>
+          ) : fleetSnapshotQuery.isError ? (
+            <section className="rounded border border-red-200 bg-red-50">
+              <div className="border-b border-red-200 px-3 py-2 text-sm font-semibold text-red-900">Fleet Snapshot</div>
+              <div className="flex items-center justify-between px-3 py-3 text-sm text-red-800">
+                <span>Failed to load fleet snapshot. Try refreshing.</span>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    void fleetSnapshotQuery.refetch();
+                  }}
+                >
+                  Refresh
+                </Button>
+              </div>
+            </section>
+          ) : (
+            <FleetSnapshotPanel rows={fleetRows} />
+          )}
+          <QboSyncHealthCard
+            data={qboSyncHealthQuery.data}
+            isLoading={qboSyncHealthQuery.isLoading}
+            isError={qboSyncHealthQuery.isError}
+            onRetry={() => {
+              void qboSyncHealthQuery.refetch();
+            }}
+          />
+        </div>
       </div>
 
       <footer className="order-8 text-xs text-gray-500">

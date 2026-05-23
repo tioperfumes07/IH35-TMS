@@ -126,6 +126,39 @@ export async function fetchHomeFleetSnapshot(companyId: string): Promise<HomeFle
   }
 }
 
+export type HomeQboSyncHealth = {
+  latest_run: {
+    status: string;
+    started_at: string | null;
+    completed_at: string | null;
+    run_kind: string | null;
+  } | null;
+  open_alerts_count: number;
+  failed_outbox_count: number;
+  high_severity_alerts_count: number;
+  last_updated: string;
+};
+
+export async function fetchHomeQboSyncHealth(companyId: string): Promise<HomeQboSyncHealth> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/qbo/sync-health", companyId));
+  const latestRunRaw =
+    raw.latest_run && typeof raw.latest_run === "object" ? (raw.latest_run as Record<string, unknown>) : null;
+  return {
+    latest_run: latestRunRaw
+      ? {
+          status: typeof latestRunRaw.status === "string" ? latestRunRaw.status : "unknown",
+          started_at: typeof latestRunRaw.started_at === "string" ? latestRunRaw.started_at : null,
+          completed_at: typeof latestRunRaw.completed_at === "string" ? latestRunRaw.completed_at : null,
+          run_kind: typeof latestRunRaw.run_kind === "string" ? latestRunRaw.run_kind : null,
+        }
+      : null,
+    open_alerts_count: num(raw.open_alerts_count),
+    failed_outbox_count: num(raw.failed_outbox_count),
+    high_severity_alerts_count: num(raw.high_severity_alerts_count),
+    last_updated: typeof raw.last_updated === "string" ? raw.last_updated : new Date().toISOString(),
+  };
+}
+
 /* —— T11.19 KPI + chart payloads (backend routes may ship incrementally). */
 
 export type HomeTodayRevenue = {
