@@ -47,6 +47,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-expense-category-map-soft-delete.mjs",
   "scripts/verify-maintenance-posting-uses-resolver.mjs",
   "scripts/verify-fuel-posting-uses-resolver.mjs",
+  "scripts/verify-bill-lines-account-id-required.mjs",
   "scripts/verify-hos-duty-events-append-only.mjs",
   "scripts/verify-hos-clocks-tenant-scope.mjs",
 ] as const;
