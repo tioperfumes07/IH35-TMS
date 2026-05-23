@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import {
   exportProfitLossReport,
   getProfitLossReport,
@@ -31,14 +32,16 @@ export function ProfitLossPage() {
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(currentMonthRange);
   const [applied, setApplied] = useState(currentMonthRange);
+  const [basis, setBasis] = useState<AccountingBasis>("accrual");
 
   const query = useQuery({
-    queryKey: ["reports", "profit-loss", companyId, applied.start, applied.end],
+    queryKey: ["reports", "profit-loss", companyId, applied.start, applied.end, basis],
     queryFn: () =>
       getProfitLossReport({
         operating_company_id: companyId,
         from_date: applied.start,
         to_date: applied.end,
+        basis,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -56,7 +59,7 @@ export function ProfitLossPage() {
       <ReportsSubNav />
       <PageHeader
         title="Profit & loss"
-        subtitle="Revenue, COGS, expenses, and net income · Accrual basis"
+        subtitle={`Revenue, COGS, expenses, and net income · ${basis === "cash" ? "Cash" : "Accrual"} basis`}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>
@@ -102,6 +105,7 @@ export function ProfitLossPage() {
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
       <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+        <BasisSelector value={basis} onChange={setBasis} />
         <label className="text-xs text-gray-600">
           From
           <input

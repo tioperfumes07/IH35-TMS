@@ -165,6 +165,9 @@ export function ARAgingPage() {
         }
       />
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      <p className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        This report is always accrual basis per CPA sign-off.
+      </p>
       {query.isError ? <p className="text-sm text-red-600">Failed to load report.</p> : null}
 
       <div className="no-print grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-4">
