@@ -5,6 +5,7 @@ import { processAutoStatusSuggestionForVehicleEvent } from "../../../telematics/
 import { processDashcamAutoLinkFromWebhook } from "../../../telematics/dashcam-auto-link.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../../telematics/geofence-detector.service.js";
 import { processMaintenancePredictorForOdometer } from "../../../telematics/maintenance-predictor.service.js";
+import { deriveEngineState, ingestVehicleLocationEvent } from "../../../telematics/vehicle-locations.service.js";
 import { processVehicleDriverPairingWebhookEvent } from "../../../telematics/vehicle-driver-lookup.service.js";
 import { processHarshEventsFromVehiclePayload } from "../../../safety/harsh-events-ingestion.service.js";
 import { notifyDriverWebPush } from "../../../services/push-notification.service.js";
@@ -134,6 +135,25 @@ function extractEngineOn(payload: Record<string, unknown>): boolean | null {
   return null;
 }
 
+function extractHeadingDeg(payload: Record<string, unknown>): number | null {
+  const record = extractVehicleRecord(payload) ?? payload;
+  const candidates = [
+    asObject(record.location)?.heading_deg,
+    asObject(record.location)?.heading,
+    asObject(record.location)?.bearing,
+    asObject(payload.location)?.heading_deg,
+    asObject(payload.location)?.heading,
+    asObject(payload.location)?.bearing,
+  ];
+  for (const raw of candidates) {
+    const value = Number(raw);
+    if (!Number.isFinite(value)) continue;
+    const normalized = ((value % 360) + 360) % 360;
+    return Number(normalized.toFixed(2));
+  }
+  return null;
+}
+
 export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhookEvent): Promise<ProjectionResult> {
   const vehicleId = extractVehicleId(event.payload);
   if (!vehicleId) {
@@ -166,6 +186,22 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
   const odometerMiles = extractOdometerMiles(event.payload);
   const localUnitId = upsertRes.rows[0]?.local_unit_id ?? null;
   if (location && localUnitId) {
+    const speedMph = extractSpeedMph(event.payload);
+    const engineOn = extractEngineOn(event.payload);
+    await ingestVehicleLocationEvent(client, {
+      operating_company_id: event.operating_company_id,
+      unit_id: localUnitId,
+      samsara_vehicle_id: vehicleId,
+      captured_at: location.occurred_at,
+      lat: location.latitude,
+      lng: location.longitude,
+      speed_mph: speedMph,
+      heading_deg: extractHeadingDeg(event.payload),
+      engine_state: deriveEngineState(engineOn, speedMph),
+      raw_samsara_event_id: event.samsara_event_id,
+      payload: event.payload,
+    });
+
     await processGeofenceDetectionsForGpsPoint(client, {
       operating_company_id: event.operating_company_id,
       unit_id: localUnitId,
@@ -189,8 +225,8 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
       operating_company_id: event.operating_company_id,
       unit_id: localUnitId,
       occurred_at: location.occurred_at,
-      speed_mph: extractSpeedMph(event.payload),
-      engine_on: extractEngineOn(event.payload),
+      speed_mph: speedMph,
+      engine_on: engineOn,
     });
   }
 
