@@ -17,6 +17,7 @@ import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNav } from "./AccountingSubNav";
+import { FactorReserveCard } from "./FactorReserveCard";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -220,6 +221,7 @@ export function FactoringDetailPage() {
           </table>
         </div>
       </DataPanel>
+      {selectedCompanyId ? <FactorReserveCard operatingCompanyId={selectedCompanyId} /> : null}
 
       <Modal
         open={Boolean(action)}
