@@ -15,6 +15,7 @@ import { registerArAgingRoutes } from "./ar-aging.routes.js";
 import { registerDetentionClaimsRoutes } from "./detention-claims.routes.js";
 import { registerIftaStatusRoutes } from "./ifta-status.routes.js";
 import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.routes.js";
+import { registerGeofenceDwellRoutes } from "./geofence-dwell.routes.js";
 
 export async function registerReportsRoutes(app: FastifyInstance) {
   await registerReportsLibraryRoutes(app);
@@ -32,5 +33,6 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerApAgingRoutes(app);
   await registerDetentionClaimsRoutes(app);
   await registerIftaStatusRoutes(app);
+  await registerGeofenceDwellRoutes(app);
   await registerScheduledReportAdminRoutes(app);
 }

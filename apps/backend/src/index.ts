@@ -47,6 +47,7 @@ import { registerDispatchCancellationRoutes } from "./dispatch/cancellation.rout
 import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinements.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
+import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
 import { registerDriverFinanceSettlementHtmlRoutes } from "./driver-finance/settlement-render.routes.js";
 import { registerDriverFinanceDriverBillsRoutes } from "./driver-finance/driver-bills.routes.js";
@@ -382,6 +383,7 @@ async function main() {
   await registerDispatchRefinementsRoutes(app);
   await registerIntransitIssuesRoutes(app);
   await registerDriverRoutes(app);
+  await registerGeofencesRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
   await registerWeeklyCloseRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);

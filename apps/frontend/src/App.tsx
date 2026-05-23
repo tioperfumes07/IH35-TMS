@@ -12,6 +12,7 @@ import { DriverHosDetailPage } from "./pages/drivers/DriverHosDetailPage";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
+import { GeofencesPage } from "./pages/operations/GeofencesPage";
 import { DispatchAlertsPage } from "./pages/dispatch/DispatchAlertsPage";
 import { SettlementsPage } from "./pages/driver-finance/SettlementsPage";
 import { CashAdvanceRequestsPage } from "./pages/driver-finance/CashAdvanceRequestsPage";
@@ -99,6 +100,7 @@ import { ProfitPerTruckPage } from "./pages/reports/ProfitPerTruckPage";
 import { FuelReconciliationPage } from "./pages/reports/FuelReconciliationPage";
 import { MaintenanceCostPerUnitPage } from "./pages/reports/MaintenanceCostPerUnitPage";
 import { ScheduledReportsPage } from "./pages/reports/ScheduledReportsPage";
+import { GeofenceDwellReport } from "./pages/reports/GeofenceDwellReport";
 import { QboSyncDetailPage } from "./pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
 import { AccountingHubPage } from "./pages/accounting/AccountingHubPage";
@@ -392,6 +394,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DispatchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/geofencing"
+          element={
+            <ProtectedRoute>
+              <GeofencesPage />
             </ProtectedRoute>
           }
         />
@@ -1250,6 +1260,14 @@ export default function App() {
           }
         />
         <Route
+          path="/reports/geofence-dwell"
+          element={
+            <ProtectedRoute>
+              <GeofenceDwellReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/reports/scheduled"
           element={
             <ProtectedRoute>
@@ -1555,7 +1573,6 @@ export default function App() {
         />
         {[
           "/dispatch/loads",
-          "/dispatch/geofencing",
           "/dispatch/factoring-packets",
           "/dispatch/incidents",
           "/maintenance/work-orders",

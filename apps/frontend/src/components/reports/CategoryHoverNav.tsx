@@ -29,6 +29,7 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
     { id: "profit-per-truck", label: "Profit per truck", hint: "Unit economics" },
     { id: "fuel-reconciliation", label: "Fuel reconciliation", hint: "Card vs WO (Block V)" },
     { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
+    { id: "geofence-dwell", label: "Geofence dwell report", hint: "Customer/yard dwell windows" },
     { id: "scheduled-reports", label: "Scheduled reports", hint: "Email automation" },
     { id: "profit-truck-mtd", label: "Profit per truck · MTD", hint: "Margin by unit" },
     { id: "driver-settlement", label: "Driver settlement summary", hint: "Current cycle" },
@@ -41,6 +42,7 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
     { id: "detention-claims", label: "Detention claims", hint: "Billed vs collected" },
     { id: "fuel-reconciliation", label: "Fuel reconciliation", hint: "Card vs WO" },
     { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit", hint: "WO spend by unit" },
+    { id: "geofence-dwell", label: "Geofence dwell report", hint: "Entry/exit duration by site" },
   ],
   financial: [
     { id: "trial-balance", label: "Trial balance", hint: "Debits, credits, and balance check" },

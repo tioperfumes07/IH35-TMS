@@ -10,6 +10,7 @@ Projection lifecycle is tracked in `integrations.samsara_webhook_projection_stat
 | `driver.*` | `integrations.samsara_drivers` | UPSERT on `(operating_company_id, samsara_driver_id)` |
 | `vehicle.*` | `integrations.samsara_vehicles` | UPSERT on `(operating_company_id, samsara_vehicle_id)` |
 | `*hos*`, `*eld*`, `*duty_status*` | `hos.duty_status_events` | Append-only INSERT, mapped to local `driver_id` / `unit_id` |
+| `*gps*`, `*location*`, `*position*` | `integrations.samsara_vehicles` + `geo.geofence_events` | vehicle mirror UPSERT + geofence transition detection when local unit mapping exists |
 | `*` | (none) | Dead-letter with `mirror_table_missing` |
 
 Unsupported/unknown values (`""`, `unknown`) dead-letter with `unsupported_event_type`.
