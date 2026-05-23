@@ -749,3 +749,76 @@ export function listClassesForJe() {
     "/api/v1/catalogs/classes?include_inactive=false&limit=300"
   );
 }
+
+export type ExpenseCategoryMapKind =
+  | "fuel"
+  | "maintenance"
+  | "driver_pay"
+  | "factoring_fee"
+  | "toll"
+  | "escrow"
+  | "insurance"
+  | "office"
+  | "other";
+
+export type ExpenseCategoryMapPostingSide = "debit" | "credit";
+
+export type ExpenseCategoryMapRow = {
+  id: string;
+  operating_company_id: string;
+  category_kind: ExpenseCategoryMapKind;
+  category_code: string;
+  account_id: string;
+  account_number?: string | null;
+  account_name?: string | null;
+  posting_side: ExpenseCategoryMapPostingSide;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by_user_uuid?: string | null;
+  updated_by_user_uuid?: string | null;
+};
+
+export function listExpenseCategoryMappings(
+  operatingCompanyId: string,
+  options: { include_inactive?: boolean; category_kind?: ExpenseCategoryMapKind } = {}
+) {
+  const query = new URLSearchParams();
+  query.set("operating_company_id", operatingCompanyId);
+  if (options.include_inactive !== undefined) query.set("include_inactive", String(options.include_inactive));
+  if (options.category_kind) query.set("category_kind", options.category_kind);
+  return apiRequest<{ rows: ExpenseCategoryMapRow[] }>(`/api/v1/accounting/expense-category-map?${query.toString()}`);
+}
+
+export function createExpenseCategoryMapping(
+  payload: {
+    operating_company_id: string;
+    category_kind: ExpenseCategoryMapKind;
+    category_code: string;
+    account_id: string;
+    posting_side: ExpenseCategoryMapPostingSide;
+  }
+) {
+  return apiRequest<ExpenseCategoryMapRow>("/api/v1/accounting/expense-category-map", { method: "POST", body: payload });
+}
+
+export function updateExpenseCategoryMapping(
+  id: string,
+  payload: {
+    operating_company_id: string;
+    category_kind?: ExpenseCategoryMapKind;
+    category_code?: string;
+    account_id?: string;
+    posting_side?: ExpenseCategoryMapPostingSide;
+    is_active?: boolean;
+  }
+) {
+  return apiRequest<ExpenseCategoryMapRow>(`/api/v1/accounting/expense-category-map/${id}`, { method: "PATCH", body: payload });
+}
+
+export function deactivateExpenseCategoryMapping(id: string, operatingCompanyId: string) {
+  return apiRequest<{ ok: true; id: string }>(`/api/v1/accounting/expense-category-map/${id}`, {
+    method: "DELETE",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}

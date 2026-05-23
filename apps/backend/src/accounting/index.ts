@@ -22,6 +22,7 @@ import { registerArAgingRoutes } from "./ar-aging.routes.js";
 import { registerApAgingRoutes } from "./ap-aging.routes.js";
 import { registerDateRangesRoutes } from "./date-ranges.routes.js";
 import { registerStatementExportRoutes } from "./statement-export.routes.js";
+import { registerExpenseCategoryMapRoutes } from "./expense-category-map/routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
@@ -47,4 +48,5 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerApAgingRoutes(app);
   await registerDateRangesRoutes(app);
   await registerStatementExportRoutes(app);
+  await registerExpenseCategoryMapRoutes(app);
 }
