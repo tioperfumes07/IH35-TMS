@@ -251,7 +251,15 @@ export function getUnitDispatchStatus(unitId: string, operatingCompanyId: string
 }
 
 export function getDriverHosStatus(driverId: string, operatingCompanyId: string) {
-  return apiRequest<Record<string, unknown>>(
+  return apiRequest<{
+    driver_id: string;
+    drive_remaining_min: number;
+    window_remaining_min: number;
+    break_remaining_min: number;
+    cycle_remaining_min: number;
+    last_reset_at: string | null;
+    status: "ok" | "warning_1hr" | "warning_15min" | "violation";
+  }>(
     `/api/v1/dispatch/drivers/${driverId}/hos-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
 }

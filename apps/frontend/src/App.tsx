@@ -8,6 +8,7 @@ import { CustomersPage } from "./pages/Customers";
 import { CustomerDetailPage } from "./pages/CustomerDetail";
 import { ListsHubPage } from "./pages/lists/ListsHubPage";
 import { DriverDetailPage } from "./pages/DriverDetail";
+import { DriverHosDetailPage } from "./pages/drivers/DriverHosDetailPage";
 import { DriverLoadStatusesPage } from "./pages/DriverLoadStatusesPage";
 import { DriversPage } from "./pages/Drivers";
 import { DispatchPage } from "./pages/Dispatch";
@@ -1701,6 +1702,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DriverDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/:id/hos"
+          element={
+            <ProtectedRoute>
+              <DriverHosDetailPage />
             </ProtectedRoute>
           }
         />
