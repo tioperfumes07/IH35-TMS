@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { verifyCustomerWithSafer } from "../integrations/fmcsa/safer.service.js";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
+import { enqueueTmsCustomerPushRequested } from "../qbo/tms-customer-push-chain.service.js";
 import { searchCustomersForAutocomplete } from "./customer-autocomplete.shared.js";
 
 const listQuerySchema = z.object({
@@ -477,6 +478,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           "info",
           "BT-1-CUSTOMER-FULL-PROFILE"
         );
+        await enqueueTmsCustomerPushRequested(client, {
+          operating_company_id: String(row.operating_company_id),
+          customer_id: String(row.id),
+          operation: "create",
+        });
         return {
           customerId: row.id as string,
           customer: mapCustomerRow(row, canReadTaxId(authUser.role)),
@@ -782,6 +788,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           );
         }
 
+        await enqueueTmsCustomerPushRequested(client, {
+          operating_company_id: String(updatedRow.operating_company_id),
+          customer_id: String(updatedRow.id),
+          operation: "update",
+        });
+
         return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "mdata_customer_not_found" });
@@ -822,7 +834,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
-      const oldRes = await client.query(`SELECT id, deactivated_at FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      const oldRes = await client.query(`SELECT id, operating_company_id, deactivated_at FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
       let deactivatedAt = oldRow.deactivated_at as string | null;
@@ -839,6 +851,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         resource_id: oldRow.id,
         resource_type: "mdata.customers",
         was_already_deactivated: wasAlreadyDeactivated,
+      });
+      await enqueueTmsCustomerPushRequested(client, {
+        operating_company_id: String(oldRow.operating_company_id ?? ""),
+        customer_id: String(oldRow.id),
+        operation: "update",
       });
       return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
     });
