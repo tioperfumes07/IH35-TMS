@@ -26,6 +26,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-fleet-snapshot-tenant-scope.mjs",
   "scripts/verify-customers-tenant-scope.mjs",
   "scripts/verify-vendors-tenant-scope.mjs",
+  "scripts/verify-94-live-counter-linkage.mjs",
 ] as const;
 
 type LockedUiSurface = {
