@@ -26,10 +26,13 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
   { label: "Customers", href: "/accounting/customers" },
   { label: "Reports", href: "/accounting/reports" },
   { label: "Invoices", href: "/accounting/invoices" },
+  { label: "Multi-entity", href: "/accounting/multi-entity" },
   { label: "Receive Payment", href: "/accounting/payments" },
   { label: "Factoring", href: "/accounting/factoring" },
   { label: "Factor reconciliation", href: "/accounting/factor-reconciliation" },
   { label: "Sales tax", href: "/accounting/sales-tax" },
+  { label: "Audit trail", href: "/accounting/audit-trail" },
+  { label: "Posting lineage", href: "/accounting/posting-lineage" },
   { label: "Pre-settlements", href: "/accounting/pre-settlements" },
   { label: "Vendor balances", href: "/accounting/vendor-balances" },
   { label: "Journal entries", href: "/accounting/journal-entries" },
@@ -45,10 +48,13 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
 /** Map detail paths to list href so leaf tabs stay active (primitive compares exact href). */
 export function accountingSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/accounting/invoices/")) return "/accounting/invoices";
+  if (pathname.startsWith("/accounting/multi-entity")) return "/accounting/multi-entity";
   if (pathname.startsWith("/accounting/payments/")) return "/accounting/payments";
   if (pathname.startsWith("/accounting/factoring/")) return "/accounting/factoring";
   if (pathname.startsWith("/accounting/factor-reconciliation")) return "/accounting/factor-reconciliation";
   if (pathname.startsWith("/accounting/sales-tax")) return "/accounting/sales-tax";
+  if (pathname.startsWith("/accounting/audit-trail")) return "/accounting/audit-trail";
+  if (pathname.startsWith("/accounting/posting-lineage")) return "/accounting/posting-lineage";
   if (pathname.startsWith("/accounting/pre-settlements")) return "/accounting/pre-settlements";
   if (pathname.startsWith("/accounting/settings/expense-category-map")) return "/accounting/settings/expense-category-map";
   if (pathname.startsWith("/accounting/settings/coa-roles")) return "/accounting/settings/coa-roles";

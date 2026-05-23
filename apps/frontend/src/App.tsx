@@ -36,6 +36,7 @@ import {
   DamageReportsTab,
   DOTComplianceTab,
   DOTInspectionsTab,
+  DriverScoringTab,
   DriverFilesTab,
   DrugAlcoholTab,
   EscrowRecordTab,
@@ -104,6 +105,7 @@ import { ScheduledReportsPage } from "./pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "./pages/reports/GeofenceDwellReport";
 import { QboSyncDetailPage } from "./pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
+import { MultiEntityAccountingPage } from "./pages/accounting/MultiEntityAccountingPage";
 import { AccountingHubPage } from "./pages/accounting/AccountingHubPage";
 import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
 import { AbandonmentQueuePage } from "./pages/accounting/AbandonmentQueuePage";
@@ -123,6 +125,8 @@ import { AccountingPreSettlementsPage } from "./pages/accounting/AccountingPreSe
 import { ExpenseCategoryMapPage } from "./pages/accounting/ExpenseCategoryMapPage";
 import { CoaRolesPage } from "./pages/accounting/CoaRolesPage";
 import { SalesTaxPage } from "./pages/accounting/SalesTaxPage";
+import { AccountingAuditTrailPage } from "./pages/accounting/AccountingAuditTrailPage";
+import { PostingLineagePage } from "./pages/accounting/PostingLineagePage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
@@ -513,6 +517,7 @@ export default function App() {
           <Route path="hos-violations" element={<HOSViolationsTab />} />
           <Route path="idvr" element={<IDVRTab />} />
           <Route path="dot-inspections" element={<DOTInspectionsTab />} />
+          <Route path="driver-scoring" element={<DriverScoringTab />} />
           <Route path="csa-score" element={<CSAScoreTab />} />
           <Route path="dot-compliance" element={<DOTComplianceTab />} />
           <Route path="accidents" element={<AccidentsIncidentsTab />} />
@@ -1464,6 +1469,14 @@ export default function App() {
           }
         />
         <Route
+          path="/accounting/multi-entity"
+          element={
+            <ProtectedRoute>
+              <MultiEntityAccountingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/dispute-queue"
           element={
             <ProtectedRoute>
@@ -1532,6 +1545,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <SalesTaxPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/audit-trail"
+          element={
+            <ProtectedRoute>
+              <AccountingAuditTrailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/posting-lineage"
+          element={
+            <ProtectedRoute>
+              <PostingLineagePage />
             </ProtectedRoute>
           }
         />

@@ -5,6 +5,7 @@ import { processDashcamAutoLinkFromWebhook } from "../../../telematics/dashcam-a
 import { processGeofenceDetectionsForGpsPoint } from "../../../telematics/geofence-detector.service.js";
 import { processMaintenancePredictorForOdometer } from "../../../telematics/maintenance-predictor.service.js";
 import { processVehicleDriverPairingWebhookEvent } from "../../../telematics/vehicle-driver-lookup.service.js";
+import { processHarshEventsFromVehiclePayload } from "../../../safety/harsh-events-ingestion.service.js";
 import { notifyDriverWebPush } from "../../../services/push-notification.service.js";
 
 function extractVehicleRecord(payload: Record<string, unknown>): Record<string, unknown> | null {
@@ -177,6 +178,12 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
       operating_company_id: event.operating_company_id,
       unit_id: localUnitId,
       occurred_at: location?.occurred_at ?? new Date().toISOString(),
+    });
+    await processHarshEventsFromVehiclePayload(client, {
+      operating_company_id: event.operating_company_id,
+      unit_id: localUnitId,
+      event_at: location?.occurred_at ?? new Date().toISOString(),
+      samsara_event_id: event.samsara_event_id,
       payload: event.payload,
     });
   }

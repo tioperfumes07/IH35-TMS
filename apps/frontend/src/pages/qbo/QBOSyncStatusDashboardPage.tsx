@@ -267,7 +267,7 @@ export function QBOSyncStatusDashboardPage() {
                     <td className="max-w-xs truncate px-2 py-2 text-gray-700">{r.last_error ?? "—"}</td>
                     <td className="px-2 py-2 text-right">{r.duration_ms != null ? `${r.duration_ms}ms` : "—"}</td>
                     <td className="space-x-1 px-2 py-2">
-                      {(r.status === "failed" || r.status === "dead_letter") && (
+                      {r.status === "dead_letter" && (
                         <Button
                           size="sm"
                           loading={retryMut.isPending}
