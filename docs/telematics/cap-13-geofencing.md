@@ -10,15 +10,17 @@
   - GPS points are consumed from Samsara webhook payloads during projection (`webhook-projectors/vehicle-projector.ts`).
   - CAP-13 detection hooks into that projection path and emits `geo.geofence_events` transitions.
 - Geofence storage decision:
-  - PostGIS polygon geography is selected (`geography(POLYGON, 4326)`) rather than center-radius circles.
-  - Rationale: customer yards/terminals are often irregular; polygon containment gives accurate detention/dwell boundaries.
+  - PostGIS dependency was removed to keep migrations Neon-compatible by default (no extension enablement required).
+  - Geofence polygons are stored as `vertices_json` (`[{ lat, lng }, ...]`) in plain Postgres.
+  - Runtime containment uses a TypeScript ray-casting point-in-polygon check.
+  - Scale assumption: per-tenant geofence count is low enough for in-memory iteration on incoming GPS points.
 
 ## CAP-13 Data Model
 
 - `geo.geofences`:
-  - Tenant-scoped geofence definitions with polygon geography and soft reference (`location_ref_id`).
+  - Tenant-scoped geofence definitions with polygon vertices in jsonb and soft reference (`location_ref_id`).
 - `geo.geofence_events`:
-  - Append-only entry/exit stream by geofence + unit (+ optional driver), storing the raw GPS point for audit.
+  - Append-only entry/exit stream by geofence + unit (+ optional driver), storing raw latitude/longitude for audit.
 
 ## Runtime Flow
 

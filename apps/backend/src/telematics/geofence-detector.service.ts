@@ -6,8 +6,13 @@ type Transition = "entered" | "exited" | null;
 
 type GeofenceContainmentRow = {
   geofence_id: string;
-  is_inside: boolean;
+  vertices_json: unknown;
   last_event_kind: "entered" | "exited" | null;
+};
+
+type LatLngVertex = {
+  lat: number;
+  lng: number;
 };
 
 export type GpsPointInput = {
@@ -32,6 +37,52 @@ export function computeGeofenceTransition(
   if (isInside && lastEventKind !== "entered") return "entered";
   if (!isInside && lastEventKind === "entered") return "exited";
   return null;
+}
+
+function normalizeVertices(raw: unknown): LatLngVertex[] {
+  if (!Array.isArray(raw)) return [];
+  const out: LatLngVertex[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const value = entry as { lat?: unknown; lng?: unknown };
+    const lat = typeof value.lat === "number" ? value.lat : Number.NaN;
+    const lng = typeof value.lng === "number" ? value.lng : Number.NaN;
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      out.push({ lat, lng });
+    }
+  }
+  return out;
+}
+
+function pointOnSegment(px: number, py: number, ax: number, ay: number, bx: number, by: number): boolean {
+  const cross = (py - ay) * (bx - ax) - (px - ax) * (by - ay);
+  if (Math.abs(cross) > 1e-12) return false;
+  const dot = (px - ax) * (bx - ax) + (py - ay) * (by - ay);
+  if (dot < 0) return false;
+  const squaredLength = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+  return dot <= squaredLength;
+}
+
+export function pointInPolygon(latitude: number, longitude: number, vertices: LatLngVertex[]): boolean {
+  if (vertices.length < 3) return false;
+
+  let inside = false;
+  const x = longitude;
+  const y = latitude;
+
+  for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+    const xi = vertices[i].lng;
+    const yi = vertices[i].lat;
+    const xj = vertices[j].lng;
+    const yj = vertices[j].lat;
+
+    if (pointOnSegment(x, y, xi, yi, xj, yj)) return true;
+
+    const intersects = (yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    if (intersects) inside = !inside;
+  }
+
+  return inside;
 }
 
 async function resolveDriverIdForUnit(
@@ -63,10 +114,7 @@ async function fetchContainmentRows(
     `
       SELECT
         g.id::text AS geofence_id,
-        ST_Covers(
-          g.polygon::geometry,
-          ST_SetSRID(ST_MakePoint($4::double precision, $3::double precision), 4326)
-        ) AS is_inside,
+        g.vertices_json,
         (
           SELECT ge.event_kind::text
           FROM geo.geofence_events ge
@@ -80,7 +128,7 @@ async function fetchContainmentRows(
       WHERE g.operating_company_id = $1::uuid
         AND g.is_active = true
     `,
-    [input.operating_company_id, input.unit_id, input.latitude, input.longitude]
+    [input.operating_company_id, input.unit_id]
   );
   return res.rows;
 }
@@ -98,7 +146,8 @@ export async function processGeofenceDetectionsForGpsPoint(
 
   let transitionsWritten = 0;
   for (const row of rows) {
-    const transition = computeGeofenceTransition(row.last_event_kind, row.is_inside);
+    const isInside = pointInPolygon(input.latitude, input.longitude, normalizeVertices(row.vertices_json));
+    const transition = computeGeofenceTransition(row.last_event_kind, isInside);
     if (!transition) continue;
     await client.query(
       `
@@ -109,7 +158,8 @@ export async function processGeofenceDetectionsForGpsPoint(
           driver_id,
           event_kind,
           occurred_at,
-          raw_gps_point,
+          point_lat,
+          point_lng,
           source
         )
         VALUES (
@@ -119,7 +169,8 @@ export async function processGeofenceDetectionsForGpsPoint(
           $4::uuid,
           $5,
           $6::timestamptz,
-          ST_SetSRID(ST_MakePoint($8::double precision, $7::double precision), 4326)::geography,
+          $7::numeric,
+          $8::numeric,
           $9
         )
         ON CONFLICT (operating_company_id, geofence_id, unit_id, event_kind, occurred_at, source) DO NOTHING

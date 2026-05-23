@@ -54,6 +54,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-hos-clocks-tenant-scope.mjs",
   "scripts/verify-geofence-events-append-only.mjs",
   "scripts/verify-geofence-detector-tenant-scope.mjs",
+  "scripts/verify-migrations-no-postgis-dependency.mjs",
 ] as const;
 
 type LockedUiSurface = {

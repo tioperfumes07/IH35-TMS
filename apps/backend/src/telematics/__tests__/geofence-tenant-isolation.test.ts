@@ -12,7 +12,12 @@ describe("geofence detector tenant isolation", () => {
             rows: [
               {
                 geofence_id: "11111111-1111-1111-1111-111111111111",
-                is_inside: true,
+                vertices_json: [
+                  { lng: -97.75, lat: 30.28 },
+                  { lng: -97.73, lat: 30.28 },
+                  { lng: -97.73, lat: 30.26 },
+                  { lng: -97.75, lat: 30.26 },
+                ],
                 last_event_kind: null,
               },
             ],

@@ -10,11 +10,24 @@ describe("geofence state transitions", () => {
     const client = {
       query: vi.fn(async (sql: string) => {
         if (sql.includes("FROM geo.geofences g")) {
+          const verticesJson = inside
+            ? [
+                { lng: -97.75, lat: 30.28 },
+                { lng: -97.73, lat: 30.28 },
+                { lng: -97.73, lat: 30.26 },
+                { lng: -97.75, lat: 30.26 },
+              ]
+            : [
+                { lng: -97.90, lat: 30.40 },
+                { lng: -97.88, lat: 30.40 },
+                { lng: -97.88, lat: 30.38 },
+                { lng: -97.90, lat: 30.38 },
+              ];
           return {
             rows: [
               {
                 geofence_id: "11111111-1111-1111-1111-111111111111",
-                is_inside: inside,
+                vertices_json: verticesJson,
                 last_event_kind: last,
               },
             ],

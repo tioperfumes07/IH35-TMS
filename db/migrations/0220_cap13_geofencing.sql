@@ -3,15 +3,13 @@ BEGIN;
 -- CAP-13 (Phase 5 Telematics): tenant-scoped polygon geofencing + append-only entry/exit events.
 CREATE SCHEMA IF NOT EXISTS geo;
 
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 CREATE TABLE IF NOT EXISTS geo.geofences (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id uuid NOT NULL REFERENCES org.companies(id),
   label text NOT NULL CHECK (char_length(trim(label)) > 0),
   location_kind text NOT NULL CHECK (location_kind IN ('customer_site', 'yard', 'vendor_site', 'custom')),
   location_ref_id uuid NULL,
-  polygon geography(POLYGON, 4326) NOT NULL,
+  vertices_json jsonb NOT NULL CHECK (jsonb_typeof(vertices_json) = 'array' AND jsonb_array_length(vertices_json) >= 3),
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
   created_by_user_uuid uuid NULL REFERENCES identity.users(id),
@@ -22,10 +20,6 @@ CREATE TABLE IF NOT EXISTS geo.geofences (
 CREATE INDEX IF NOT EXISTS ix_geo_geofences_company_active
   ON geo.geofences (operating_company_id, is_active, created_at DESC);
 
-CREATE INDEX IF NOT EXISTS ix_geo_geofences_polygon_gist
-  ON geo.geofences
-  USING GIST (polygon);
-
 CREATE TABLE IF NOT EXISTS geo.geofence_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id uuid NOT NULL REFERENCES org.companies(id),
@@ -34,7 +28,8 @@ CREATE TABLE IF NOT EXISTS geo.geofence_events (
   driver_id uuid NULL REFERENCES mdata.drivers(id),
   event_kind text NOT NULL CHECK (event_kind IN ('entered', 'exited')),
   occurred_at timestamptz NOT NULL,
-  raw_gps_point geography(POINT, 4326) NOT NULL,
+  point_lat numeric(10,7) NOT NULL,
+  point_lng numeric(10,7) NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   source text NOT NULL DEFAULT 'samsara_gps' CHECK (source IN ('samsara_gps', 'manual'))
 );
@@ -44,10 +39,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_geo_geofence_events_dedupe
 
 CREATE INDEX IF NOT EXISTS ix_geo_geofence_events_company_lookup
   ON geo.geofence_events (operating_company_id, geofence_id, unit_id, occurred_at DESC);
-
-CREATE INDEX IF NOT EXISTS ix_geo_geofence_events_point_gist
-  ON geo.geofence_events
-  USING GIST (raw_gps_point);
 
 CREATE OR REPLACE FUNCTION geo.touch_geofence_updated_at()
 RETURNS trigger
