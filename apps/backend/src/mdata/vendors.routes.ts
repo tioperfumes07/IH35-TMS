@@ -16,6 +16,9 @@ const listQuerySchema = z.object({
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+const detailQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
+});
 
 const createVendorBodySchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -99,7 +102,15 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const { limit, offset, status, search, vendor_type, operating_company_id } = parsedQuery.data;
+    const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, operating_company_id)
+    );
+    if (!resolvedOperatingCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+
     const vendors = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       const values: unknown[] = [];
       const filters: string[] = [];
       if (status === "active") filters.push("deactivated_at IS NULL");
@@ -113,10 +124,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         const idx = values.length;
         filters.push(`(vendor_name ILIKE $${idx} OR vendor_code ILIKE $${idx} OR email ILIKE $${idx})`);
       }
-      if (operating_company_id) {
-        values.push(operating_company_id);
-        filters.push(`operating_company_id = $${values.length}`);
-      }
+      values.push(resolvedOperatingCompanyId);
+      filters.push(`operating_company_id = $${values.length}`);
       values.push(limit);
       values.push(offset);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -235,8 +244,17 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id)
+    );
+    if (!resolvedOperatingCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `
           SELECT
@@ -259,9 +277,10 @@ export async function registerVendorRoutes(app: FastifyInstance) {
             updated_by_user_id
           FROM mdata.vendors
           WHERE id = $1
+            AND operating_company_id = $2
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, resolvedOperatingCompanyId]
       );
       return res.rows[0] ?? null;
     });
