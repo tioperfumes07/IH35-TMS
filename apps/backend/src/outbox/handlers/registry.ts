@@ -5,6 +5,7 @@ import { DispatchLoadDispatchedHandler } from "./dispatch-load-dispatched.handle
 import { QboMasterEntityPushHandler } from "./qbo-master-entity-push.handler.js";
 import { TmsCustomerPushHandler } from "./tms-customer-push.handler.js";
 import { TmsVendorPushHandler } from "./tms-vendor-push.handler.js";
+import { TmsItemPushHandler } from "./tms-item-push.handler.js";
 import { buildTrailEventHandlers } from "./trail-events.handler.js";
 
 export type OutboxPayload = Record<string, unknown>;
@@ -80,6 +81,7 @@ export function buildOutboxHandlerRegistry() {
     new QboMasterEntityPushHandler(),
     new TmsCustomerPushHandler(),
     new TmsVendorPushHandler(),
+    new TmsItemPushHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),
     ...buildTrailEventHandlers(),
