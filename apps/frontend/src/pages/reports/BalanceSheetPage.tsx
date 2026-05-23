@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import {
   exportBalanceSheetReport,
   getBalanceSheetReport,
@@ -24,13 +25,15 @@ export function BalanceSheetPage() {
   const companyId = selectedCompanyId ?? "";
   const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
   const [appliedAsOf, setAppliedAsOf] = useState(() => new Date().toISOString().slice(0, 10));
+  const [basis, setBasis] = useState<AccountingBasis>("accrual");
 
   const query = useQuery({
-    queryKey: ["reports", "balance-sheet", companyId, appliedAsOf],
+    queryKey: ["reports", "balance-sheet", companyId, appliedAsOf, basis],
     queryFn: () =>
       getBalanceSheetReport({
         operating_company_id: companyId,
         as_of_date: appliedAsOf,
+        basis,
       }),
     enabled: Boolean(companyId),
     retry: false,
@@ -39,6 +42,23 @@ export function BalanceSheetPage() {
   const assets = useMemo(() => sortLines(query.data?.assets.lines ?? []), [query.data?.assets.lines]);
   const liabilities = useMemo(() => sortLines(query.data?.liabilities.lines ?? []), [query.data?.liabilities.lines]);
   const equity = useMemo(() => sortLines(query.data?.equity.lines ?? []), [query.data?.equity.lines]);
+  const cashBasisAdjustment = useMemo(
+    () =>
+      equity.find(
+        (line) =>
+          String(line.account_name).toLowerCase() === "cash basis adjustment" ||
+          String(line.account_code).toUpperCase() === "CASH_BASIS_ADJ",
+      ) ?? null,
+    [equity],
+  );
+  const equityLinesWithoutAdjustment = useMemo(
+    () =>
+      equity.filter(
+        (line) =>
+          !(String(line.account_name).toLowerCase() === "cash basis adjustment" || String(line.account_code).toUpperCase() === "CASH_BASIS_ADJ"),
+      ),
+    [equity],
+  );
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -48,7 +68,7 @@ export function BalanceSheetPage() {
       <ReportsSubNav />
       <PageHeader
         title="Balance sheet"
-        subtitle={`As of ${appliedAsOf} · Accrual basis`}
+        subtitle={`As of ${appliedAsOf} · ${basis === "cash" ? "Cash" : "Accrual"} basis`}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>
@@ -90,6 +110,7 @@ export function BalanceSheetPage() {
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
 
       <div className="no-print flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
+        <BasisSelector value={basis} onChange={setBasis} />
         <label className="text-xs text-gray-600">
           As-of date
           <input type="date" className="mt-1 block h-9 rounded border border-gray-300 px-2" value={asOf} onChange={(event) => setAsOf(event.target.value)} />
@@ -206,14 +227,14 @@ export function BalanceSheetPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {equity.length === 0 ? (
+                  {equityLinesWithoutAdjustment.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="px-3 py-4 text-gray-500">
                         No rows
                       </td>
                     </tr>
                   ) : (
-                    equity.map((line) => (
+                    equityLinesWithoutAdjustment.map((line) => (
                       <tr key={`equity-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
                         <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
                         <td className="px-3 py-2">{line.account_name || "—"}</td>
@@ -221,6 +242,13 @@ export function BalanceSheetPage() {
                       </tr>
                     ))
                   )}
+                  {basis === "cash" ? (
+                    <tr className="border-b border-gray-100">
+                      <td className="px-3 py-2 font-medium text-gray-900">{cashBasisAdjustment?.account_code ?? "CASH_BASIS_ADJ"}</td>
+                      <td className="px-3 py-2">{cashBasisAdjustment?.account_name ?? "Cash Basis Adjustment"}</td>
+                      <td className="px-3 py-2 text-right">{money(cashBasisAdjustment?.amount ?? 0)}</td>
+                    </tr>
+                  ) : null}
                   <tr className="bg-slate-50 font-semibold">
                     <td colSpan={2} className="px-3 py-2 text-right">
                       Current year earnings

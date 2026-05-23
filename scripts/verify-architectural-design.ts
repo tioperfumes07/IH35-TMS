@@ -35,6 +35,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-samsara-vendor-mapping-actions-tenant-scope.mjs",
   "scripts/verify-cash-basis-engine-determinism.mjs",
   "scripts/verify-period-cash-basis-snapshot-shape.mjs",
+  "scripts/verify-basis-selector-allowed-pages.mjs",
 ] as const;
 
 type LockedUiSurface = {

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
+import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import { CategoryHoverNav } from "../../components/reports/CategoryHoverNav";
 import { PHASE_6_REPORT_HREFS } from "../../components/reports/phase6ReportLinks";
 import { FrequentlyRunTable } from "../../components/reports/FrequentlyRunTable";
@@ -47,6 +48,7 @@ type ReportsKpi = {
 
 export function ReportsHomePage() {
   const [category, setCategory] = useState<ReportCategory>("all");
+  const [basis, setBasis] = useState<AccountingBasis>("accrual");
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const navigate = useNavigate();
@@ -112,6 +114,11 @@ export function ReportsHomePage() {
     navigate(`/reports/run/${encodeURIComponent(row.id)}`);
   }
 
+  function basisForReport(reportId: string) {
+    if (reportId === "trial-balance" || reportId === "profit-loss" || reportId === "balance-sheet") return basis;
+    return "accrual";
+  }
+
   return (
     <div className="space-y-3">
       <ReportsSubNav />
@@ -144,7 +151,10 @@ export function ReportsHomePage() {
         <div className="space-y-3">
           <section className="rounded border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-3 py-2">
-              <h3 className="text-sm font-semibold text-slate-900">Accounting + financial reports</h3>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-slate-900">Accounting + financial reports</h3>
+                <BasisSelector value={basis} onChange={setBasis} />
+              </div>
               <p className="text-xs text-slate-500">Core accounting statements plus operational finance views</p>
             </div>
             <div className="grid gap-2 p-3 sm:grid-cols-2">
@@ -169,7 +179,12 @@ export function ReportsHomePage() {
                   className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:border-[#1f2a44] hover:bg-white"
                   onClick={() => navigate(PHASE_6_REPORT_HREFS[id])}
                 >
-                  {label}
+                  <span className="flex items-center justify-between gap-2">
+                    <span>{label}</span>
+                    <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                      {basisForReport(id)}
+                    </span>
+                  </span>
                 </button>
               ))}
             </div>

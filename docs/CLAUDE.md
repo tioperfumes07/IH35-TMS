@@ -130,6 +130,7 @@ Top hover-dropdown navigation only for Safety. Never side panel (Jorge G3).
 - QBO customer master-data tenant invariants and implemented/future-state chain are documented in `docs/qbo-sync/customers-chain.md`.
 - Block-20.1 foundation adds `?basis=cash|accrual` contract for accounting report endpoints with default `accrual`; cash transforms are currently wired for Balance Sheet + Trial Balance only, while Cash Flow + AR/AP aging + IFTA remain accrual outputs.
 - Closed-period cash-basis numbers are snapshotted in `accounting.period_cash_basis_snapshot` and verified via `verify-cash-basis-engine-determinism.mjs` plus `verify-period-cash-basis-snapshot-shape.mjs`.
+- Block-20.2 frontend basis selector is restricted to Balance Sheet, Trial Balance, Profit & Loss, and Reports Home only; Cash Flow, AR/AP Aging, and IFTA remain accrual-only and are guarded by `verify-basis-selector-allowed-pages.mjs`.
 - Documents are soft-delete only with a 90-day Owner recovery window.
 - `docs.file_links` is polymorphic; `entity_id` is not enforced as a single FK.
 - Documents preview uses native browser PDF viewer (not PDF.js).

@@ -38,6 +38,9 @@ export function IftaPreparerCard({ status }: Props) {
       </div>
 
       <div className="space-y-2 px-3 py-3 text-xs">
+        <p className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-slate-600">
+          This report is always accrual basis per CPA sign-off.
+        </p>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">1</span>
           <span className="text-slate-700">Pull state-by-state miles and gallons from closed trips</span>

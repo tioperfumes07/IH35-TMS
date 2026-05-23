@@ -12,6 +12,8 @@ export type ReportCategory =
   | "automation"
   | "saved";
 
+export type AccountingBasis = "accrual" | "cash";
+
 export type FrequentlyRunReport = {
   id: string;
   name: string;
@@ -150,6 +152,7 @@ export type AccountingTrialBalanceResponse = {
     grand_total_credits: number;
     balanced: boolean;
   };
+  basis?: AccountingBasis;
 };
 
 export type AccountingProfitLossLine = {
@@ -170,6 +173,7 @@ export type AccountingProfitLossResponse = {
   gross_profit: number;
   operating_expenses: AccountingProfitLossSection;
   net_income: number;
+  basis?: AccountingBasis;
 };
 
 export type AccountingBalanceSheetLine = {
@@ -190,6 +194,7 @@ export type AccountingBalanceSheetResponse = {
   equity: AccountingBalanceSheetSection & { current_year_earnings: number };
   total_liabilities_and_equity: number;
   balanced: boolean;
+  basis?: AccountingBasis;
 };
 
 export type AccountingCashFlowLine = {
@@ -356,10 +361,12 @@ export async function getTrialBalanceReport(params: {
   operating_company_id: string;
   from_date?: string;
   to_date?: string;
+  basis?: AccountingBasis;
 }): Promise<AccountingTrialBalanceResponse> {
   const query = new URLSearchParams();
   if (params.from_date) query.set("from_date", params.from_date);
   if (params.to_date) query.set("to_date", params.to_date);
+  if (params.basis) query.set("basis", params.basis);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return apiRequest<AccountingTrialBalanceResponse>(withCompany(`/api/v1/accounting/trial-balance${suffix}`, params.operating_company_id));
 }
@@ -368,10 +375,12 @@ export async function getProfitLossReport(params: {
   operating_company_id: string;
   from_date?: string;
   to_date?: string;
+  basis?: AccountingBasis;
 }): Promise<AccountingProfitLossResponse> {
   const query = new URLSearchParams();
   if (params.from_date) query.set("from_date", params.from_date);
   if (params.to_date) query.set("to_date", params.to_date);
+  if (params.basis) query.set("basis", params.basis);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return apiRequest<AccountingProfitLossResponse>(withCompany(`/api/v1/accounting/profit-loss${suffix}`, params.operating_company_id));
 }
@@ -379,9 +388,11 @@ export async function getProfitLossReport(params: {
 export async function getBalanceSheetReport(params: {
   operating_company_id: string;
   as_of_date?: string;
+  basis?: AccountingBasis;
 }): Promise<AccountingBalanceSheetResponse> {
   const query = new URLSearchParams();
   if (params.as_of_date) query.set("as_of_date", params.as_of_date);
+  if (params.basis) query.set("basis", params.basis);
   const suffix = query.toString() ? `?${query.toString()}` : "";
   return apiRequest<AccountingBalanceSheetResponse>(withCompany(`/api/v1/accounting/balance-sheet${suffix}`, params.operating_company_id));
 }
