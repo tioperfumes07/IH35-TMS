@@ -77,6 +77,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-auto-geofence-no-blocking-call.mjs",
   "scripts/verify-dot-dwell-detector-tenant-scope.mjs",
   "scripts/verify-dot-inspection-events-append-only.mjs",
+  "scripts/verify-dashcam-clips-tenant-scope.mjs",
+  "scripts/verify-dashcam-rbac-restrict.mjs",
   "scripts/verify-auto-status-no-direct-status-write.mjs",
   "scripts/verify-load-progress-no-db-writes.mjs",
   "scripts/verify-pm-alerts-append-only.mjs",

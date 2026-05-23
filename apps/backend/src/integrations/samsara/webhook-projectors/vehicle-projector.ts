@@ -1,6 +1,7 @@
 import type { DbClient, ProjectionResult, SamsaraWebhookEvent } from "../webhook-projection.types.js";
 import { processArrivalDetectionsForGpsPoint } from "../../../telematics/arrival-detection.service.js";
 import { processAutoStatusSuggestionForVehicleEvent } from "../../../telematics/auto-status.service.js";
+import { processDashcamAutoLinkFromWebhook } from "../../../telematics/dashcam-auto-link.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../../telematics/geofence-detector.service.js";
 import { processMaintenancePredictorForOdometer } from "../../../telematics/maintenance-predictor.service.js";
 import { processVehicleDriverPairingWebhookEvent } from "../../../telematics/vehicle-driver-lookup.service.js";
@@ -169,6 +170,14 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
       unit_id: localUnitId,
       odometer_mi: odometerMiles,
       occurred_at: location?.occurred_at ?? new Date().toISOString(),
+    });
+  }
+  if (localUnitId) {
+    await processDashcamAutoLinkFromWebhook(client, {
+      operating_company_id: event.operating_company_id,
+      unit_id: localUnitId,
+      occurred_at: location?.occurred_at ?? new Date().toISOString(),
+      payload: event.payload,
     });
   }
   await processVehicleDriverPairingWebhookEvent(client, event, vehicleId);

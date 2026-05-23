@@ -13,6 +13,7 @@ export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
 export type HosLog = Record<string, unknown>;
 export type SamsaraRemoteEntityType = "drivers" | "vehicles";
+export type DashcamFacing = "road" | "in_cab" | "both";
 
 export class SamsaraApiError extends Error {
   readonly statusCode: number | null;
@@ -204,5 +205,56 @@ export class SamsaraClient {
     const token = this._token();
     if (!token) return [];
     return [];
+  }
+
+  async getDashcamClipUrl(clipId: string): Promise<string | null> {
+    const token = this._token();
+    if (!token || !clipId.trim()) return null;
+    const url = new URL(`${SAMSARA_API_BASE}/fleet/dashcam/clips/${encodeURIComponent(clipId)}`);
+    try {
+      const res = await fetch(url, { headers: bearerHeaders(token) });
+      if (!res.ok) return null;
+      const json = await readJsonResponse(res);
+      const direct = typeof json.url === "string" ? json.url : null;
+      const nested = json.data && typeof json.data === "object" ? (json.data as Record<string, unknown>) : null;
+      const nestedUrl = nested && typeof nested.url === "string" ? nested.url : null;
+      return direct ?? nestedUrl ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async requestDashcamClip(input: {
+    vehicleId: string;
+    startAtIso: string;
+    durationSec: number;
+    cameraFacing: DashcamFacing;
+  }): Promise<{ clipId: string; clipUrl: string | null } | null> {
+    const token = this._token();
+    if (!token) return null;
+    const url = new URL(`${SAMSARA_API_BASE}/fleet/dashcam/clips`);
+    const body = {
+      vehicleId: input.vehicleId,
+      startTime: input.startAtIso,
+      durationSec: input.durationSec,
+      cameraFacing: input.cameraFacing,
+    };
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { ...bearerHeaders(token), "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return null;
+      const json = await readJsonResponse(res);
+      const clipId =
+        (typeof json.id === "string" && json.id) ||
+        (typeof (json.data as Record<string, unknown> | undefined)?.id === "string" ? String((json.data as Record<string, unknown>).id) : "");
+      if (!clipId) return null;
+      const clipUrl = await this.getDashcamClipUrl(clipId);
+      return { clipId, clipUrl };
+    } catch {
+      return null;
+    }
   }
 }
