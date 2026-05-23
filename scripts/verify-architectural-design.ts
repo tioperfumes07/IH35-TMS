@@ -62,6 +62,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-coa-roles-no-string-match-bypass.mjs",
   "scripts/verify-vehicle-driver-pairing-tenant-scope.mjs",
   "scripts/verify-vehicle-driver-pairing-append-only.mjs",
+  "scripts/verify-arrival-detection-tenant-scope.mjs",
+  "scripts/verify-arrival-haversine-uses-locked-radius.mjs",
 ] as const;
 
 type LockedUiSurface = {

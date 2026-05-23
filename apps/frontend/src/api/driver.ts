@@ -37,6 +37,17 @@ export type HosSnapshot = {
   last_synced_at: string;
 };
 
+export type DriverArrivalPrompt = {
+  id: string;
+  stop_id: string;
+  unit_id: string;
+  triggered_at: string;
+  distance_at_trigger_ft: number;
+  stop_name: string | null;
+  load_id: string;
+  load_number: string | null;
+};
+
 export async function getDriverMe() {
   return driverApiRequest<DriverMeResponse>("/api/v1/driver/me");
 }
@@ -62,4 +73,22 @@ export async function getDriverHos() {
 
 export async function submitDriverReport(body: Record<string, unknown>) {
   return driverApiRequest<{ id: string }>("/api/v1/driver/reports", { method: "POST", body });
+}
+
+export async function listDriverArrivalPrompts() {
+  return driverApiRequest<{ prompts: DriverArrivalPrompt[] }>("/api/v1/driver/arrival-prompts");
+}
+
+export async function confirmDriverArrivalPrompt(id: string, body: { confirmed_at?: string } = {}) {
+  return driverApiRequest<{ ok: boolean }>(`/api/v1/driver/arrival-prompts/${encodeURIComponent(id)}/confirm`, {
+    method: "POST",
+    body,
+  });
+}
+
+export async function dismissDriverArrivalPrompt(id: string, body: { reason?: string } = {}) {
+  return driverApiRequest<{ ok: boolean }>(`/api/v1/driver/arrival-prompts/${encodeURIComponent(id)}/dismiss`, {
+    method: "POST",
+    body,
+  });
 }
