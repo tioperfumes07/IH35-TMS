@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { recommendFuelStopsForRecommendation } from "../telematics/fuel-stop-planner.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -198,7 +199,11 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           stops = byRouteRecommendationId.rows;
         }
       }
-      return { ...recommendation, stops };
+      const hosAware = await recommendFuelStopsForRecommendation(client, {
+        operating_company_id: companyId,
+        recommendation_id: params.data.id,
+      }).catch(() => []);
+      return { ...recommendation, stops, hos_aware_recommendations: hosAware };
     });
 
     if (!detail) return reply.code(404).send({ error: "fuel_recommendation_not_found" });

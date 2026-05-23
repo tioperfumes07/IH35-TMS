@@ -6,6 +6,7 @@ import { clearDriverAuth, hasDriverAccessToken } from "../../lib/auth-token";
 import { initDriverBackgroundSessionRefresh, registerDriverServiceWorker } from "../../lib/service-worker-registration";
 import { InstallPWAPrompt } from "./InstallPWAPrompt";
 import { ArrivalPrompt } from "./ArrivalPrompt";
+import { StatusSuggestionPrompt } from "./StatusSuggestionPrompt";
 import { DriverOnboardingTour } from "./DriverOnboardingTour";
 import { DriverOfflineBanner } from "./DriverOfflineBanner";
 import { FooterFaqLink, PageHelpLink } from "../../components/PageHelpLink";
@@ -51,6 +52,7 @@ export function DriverShell() {
     <div className="flex min-h-screen flex-col bg-slate-50">
       <DriverOnboardingTour />
       <ArrivalPrompt />
+      <StatusSuggestionPrompt />
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-3 py-2">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
           <span className="text-sm font-semibold">{t("driver.app_title")}</span>

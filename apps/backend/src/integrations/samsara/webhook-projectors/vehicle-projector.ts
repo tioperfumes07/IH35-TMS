@@ -1,9 +1,11 @@
 import type { DbClient, ProjectionResult, SamsaraWebhookEvent } from "../webhook-projection.types.js";
 import { processArrivalDetectionsForGpsPoint } from "../../../telematics/arrival-detection.service.js";
 import { processDtcAutoWorkOrderEvent } from "../../../telematics/dtc-auto-work-order.service.js";
+import { processAutoStatusSuggestionForVehicleEvent } from "../../../telematics/auto-status.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../../telematics/geofence-detector.service.js";
 import { processMaintenancePredictorForOdometer } from "../../../telematics/maintenance-predictor.service.js";
 import { processVehicleDriverPairingWebhookEvent } from "../../../telematics/vehicle-driver-lookup.service.js";
+import { processHarshEventsFromVehiclePayload } from "../../../safety/harsh-events-ingestion.service.js";
 import { notifyDriverWebPush } from "../../../services/push-notification.service.js";
 
 function extractVehicleRecord(payload: Record<string, unknown>): Record<string, unknown> | null {
@@ -104,6 +106,33 @@ function extractDtcEntries(payload: Record<string, unknown>): Array<{ code: stri
   return out;
 }
 
+function extractSpeedMph(payload: Record<string, unknown>): number | null {
+  const record = extractVehicleRecord(payload) ?? payload;
+  const candidates = [
+    record.speed_mph,
+    record.speedMph,
+    asObject(record.location)?.speed_mph,
+    asObject(record.location)?.speedMph,
+    asObject(payload.location)?.speed_mph,
+  ];
+  for (const raw of candidates) {
+    const value = Number(raw);
+    if (Number.isFinite(value) && value >= 0) return value;
+  }
+  return null;
+}
+
+function extractEngineOn(payload: Record<string, unknown>): boolean | null {
+  const record = extractVehicleRecord(payload) ?? payload;
+  const raw = record.engine_on ?? record.engineOn ?? record.is_engine_on ?? asObject(record.engine)?.on;
+  if (typeof raw === "boolean") return raw;
+  if (typeof raw === "string") {
+    if (raw.toLowerCase() === "on" || raw.toLowerCase() === "true") return true;
+    if (raw.toLowerCase() === "off" || raw.toLowerCase() === "false") return false;
+  }
+  return null;
+}
+
 export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhookEvent): Promise<ProjectionResult> {
   const vehicleId = extractVehicleId(event.payload);
   if (!vehicleId) {
@@ -154,6 +183,14 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
     }, {
       notifyDriver: notifyDriverWebPush,
     });
+
+    await processAutoStatusSuggestionForVehicleEvent(client, {
+      operating_company_id: event.operating_company_id,
+      unit_id: localUnitId,
+      occurred_at: location.occurred_at,
+      speed_mph: extractSpeedMph(event.payload),
+      engine_on: extractEngineOn(event.payload),
+    });
   }
 
   if (localUnitId && odometerMiles != null) {
@@ -176,6 +213,14 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
         description: dtc.description,
       });
     }
+
+    await processHarshEventsFromVehiclePayload(client, {
+      operating_company_id: event.operating_company_id,
+      unit_id: localUnitId,
+      event_at: location?.occurred_at ?? new Date().toISOString(),
+      samsara_event_id: event.samsara_event_id,
+      payload: event.payload,
+    });
   }
   await processVehicleDriverPairingWebhookEvent(client, event, vehicleId);
   return { success: true };

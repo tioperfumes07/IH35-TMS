@@ -66,6 +66,7 @@ export async function transitionToSucceeded(client: PoolClient, input: { syncRun
           records_processed = COALESCE(records_processed, 0) + 1
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
+        AND status = 'running'
       RETURNING id::text
     `,
     [input.syncRunId, input.operatingCompanyId, targetStatus],
@@ -93,6 +94,7 @@ export async function transitionToFailed(client: PoolClient, input: {
           next_retry_at = CASE WHEN $6 THEN NULL ELSE $7::timestamptz END
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
+        AND status = 'running'
       RETURNING id::text
     `,
     [input.syncRunId, input.operatingCompanyId, targetStatus, input.attemptCountAfterFailure, input.errorMessage, terminal, nextRetryAt],
@@ -113,9 +115,11 @@ export async function transitionTerminalToPending(client: PoolClient, input: { s
           retry_count = 0,
           error_message = NULL,
           next_retry_at = NULL,
-          dead_letter_at = NULL
+          dead_letter_at = NULL,
+          completed_at = NULL
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
+        AND status = 'dead_letter'
       RETURNING id::text
     `,
     [input.syncRunId, input.operatingCompanyId, targetStatus],

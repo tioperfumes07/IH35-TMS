@@ -924,6 +924,56 @@ export type CoaRoleRow = {
   updated_at: string | null;
 };
 
+export type MultiEntityCompanySummary = {
+  operating_company_id: string;
+  company_name: string;
+  revenue_cents: number;
+  expense_cents: number;
+  net_income_cents: number;
+};
+
+export type MultiEntityConsolidatedSummary = {
+  revenue_cents: number;
+  expense_cents: number;
+  net_income_cents: number;
+};
+
+export type MultiEntityAccountBalance = {
+  account_id: string;
+  account_number: string | null;
+  account_name: string;
+  account_type: string;
+  debit_cents: number;
+  credit_cents: number;
+};
+
+export type SalesTaxAgency = {
+  id: string;
+  operating_company_id: string;
+  name: string;
+  jurisdiction: string | null;
+  agency_vendor_id: string | null;
+  agency_vendor_name?: string | null;
+  created_at: string;
+};
+
+export type SalesTaxReturn = {
+  id: string;
+  operating_company_id: string;
+  agency_id: string;
+  agency_name?: string;
+  period_start: string;
+  period_end: string;
+  taxable_sales_cents: number;
+  non_taxable_sales_cents: number;
+  tax_collected_cents: number;
+  tax_owed_cents: number;
+  status: "open" | "filed" | "paid";
+  filed_at?: string | null;
+  paid_bill_id?: string | null;
+  created_at: string;
+};
+
 export function listExpenseCategoryMappings(
   operatingCompanyId: string,
   options: { include_inactive?: boolean; category_kind?: ExpenseCategoryMapKind } = {}
@@ -993,4 +1043,153 @@ export function validateCoaRoles(operatingCompanyId: string) {
     missing_roles: CoaRole[];
     valid: boolean;
   }>(withCompany("/api/v1/accounting/coa-roles/validate", operatingCompanyId));
+}
+
+export function getMultiEntityAccountingSummary(input: {
+  operating_company_ids: string[];
+  start: string;
+  end: string;
+}) {
+  const query = new URLSearchParams();
+  query.set("operating_company_ids", input.operating_company_ids.join(","));
+  query.set("start", input.start);
+  query.set("end", input.end);
+  return apiRequest<{
+    period: { start: string; end: string };
+    companies: string[];
+    consolidated: MultiEntityConsolidatedSummary;
+    by_company: MultiEntityCompanySummary[];
+    accounts: MultiEntityAccountBalance[];
+  }>(`/api/v1/accounting/multi-entity/summary?${query.toString()}`);
+}
+
+export function listSalesTaxAgencies(operatingCompanyId: string) {
+  return apiRequest<{ agencies: SalesTaxAgency[] }>(withCompany("/api/v1/accounting/sales-tax/agencies", operatingCompanyId));
+}
+
+export function createSalesTaxAgency(
+  body: {
+    operating_company_id: string;
+    name: string;
+    jurisdiction?: string;
+    agency_vendor_id?: string;
+  }
+) {
+  return apiRequest<{ agency: SalesTaxAgency }>("/api/v1/accounting/sales-tax/agencies", {
+    method: "POST",
+    body,
+  });
+}
+
+export function listSalesTaxReturns(
+  operatingCompanyId: string,
+  params: { start?: string; end?: string; limit?: number } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.start) query.set("start", params.start);
+  if (params.end) query.set("end", params.end);
+  if (params.limit != null) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return apiRequest<{ returns: SalesTaxReturn[] }>(
+    withCompany(`/api/v1/accounting/sales-tax/returns${qs ? `?${qs}` : ""}`, operatingCompanyId)
+  );
+}
+
+export function prepareSalesTaxReturn(body: {
+  operating_company_id: string;
+  agency_id: string;
+  period_start: string;
+  period_end: string;
+}) {
+  return apiRequest<{ sales_tax_return: SalesTaxReturn }>("/api/v1/accounting/sales-tax/returns/prepare", {
+    method: "POST",
+    body,
+  });
+}
+
+export function fileSalesTaxReturn(id: string, operatingCompanyId: string) {
+  return apiRequest<{ sales_tax_return: SalesTaxReturn }>(`/api/v1/accounting/sales-tax/returns/${id}/file`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+export function markSalesTaxReturnPaid(id: string, body: { operating_company_id: string; paid_bill_id?: string }) {
+  return apiRequest<{ sales_tax_return: SalesTaxReturn }>(`/api/v1/accounting/sales-tax/returns/${id}/mark-paid`, {
+    method: "POST",
+    body,
+  });
+}
+
+export type AccountingAuditTrailEvent = {
+  id: string;
+  occurred_at: string;
+  event_class: "accounting.posting_line_created" | "accounting.posting_line_reversal" | "accounting.posting_line_reversed";
+  operating_company_id: string;
+  journal_entry_id: string;
+  posting_batch_id: string | null;
+  source_transaction_type: string | null;
+  source_transaction_id: string | null;
+  source_transaction_line_id: string | null;
+  account_id: string;
+  account_number: string | null;
+  account_name: string | null;
+  debit_or_credit: "debit" | "credit";
+  amount_cents: number;
+  description: string | null;
+  before_state_json: Record<string, unknown> | null;
+  after_state_json: Record<string, unknown>;
+};
+
+export type AccountingSourceLineageRow = {
+  posting_id: string;
+  journal_entry_id: string;
+  posting_batch_id: string | null;
+  source_transaction_type: string;
+  source_transaction_id: string;
+  source_transaction_line_id: string | null;
+  linked_object_type: string | null;
+  linked_object_id: string | null;
+  relationship_role: string | null;
+  account_id: string;
+  account_number: string | null;
+  account_name: string | null;
+  debit_or_credit: "debit" | "credit";
+  amount_cents: number;
+  description: string | null;
+  occurred_at: string;
+};
+
+export function listAccountingAuditTrail(
+  operatingCompanyId: string,
+  params: {
+    limit?: number;
+    cursor?: string;
+    source_transaction_type?: string;
+    source_transaction_id?: string;
+    account_id?: string;
+  } = {}
+) {
+  const query = new URLSearchParams();
+  query.set("operating_company_id", operatingCompanyId);
+  if (params.limit != null) query.set("limit", String(params.limit));
+  if (params.cursor) query.set("cursor", params.cursor);
+  if (params.source_transaction_type) query.set("source_transaction_type", params.source_transaction_type);
+  if (params.source_transaction_id) query.set("source_transaction_id", params.source_transaction_id);
+  if (params.account_id) query.set("account_id", params.account_id);
+  return apiRequest<{ events: AccountingAuditTrailEvent[]; next_cursor: string | null }>(
+    `/api/v1/accounting/audit-trail?${query.toString()}`
+  );
+}
+
+export function getAccountingSourceLineage(
+  operatingCompanyId: string,
+  params: { source_transaction_type: string; source_transaction_id: string; limit?: number }
+) {
+  const query = new URLSearchParams();
+  query.set("operating_company_id", operatingCompanyId);
+  query.set("source_transaction_type", params.source_transaction_type);
+  query.set("source_transaction_id", params.source_transaction_id);
+  if (params.limit != null) query.set("limit", String(params.limit));
+  return apiRequest<{ rows: AccountingSourceLineageRow[] }>(`/api/v1/accounting/audit-trail/source-lineage?${query.toString()}`);
 }
