@@ -19,8 +19,11 @@ function mergeDefaults(raw: unknown) {
   };
 }
 
-export async function getPrefs(userId: string) {
+export async function getPrefs(userId: string, operatingCompanyId?: string | null) {
   return withCurrentUser(userId, async (client) => {
+    if (operatingCompanyId) {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    }
     const res = await client.query<{ preferences: Record<string, unknown> | null }>(
       `
         SELECT preferences
@@ -34,8 +37,11 @@ export async function getPrefs(userId: string) {
   });
 }
 
-export async function updatePrefs(userId: string, partial: Record<string, unknown>) {
+export async function updatePrefs(userId: string, partial: Record<string, unknown>, operatingCompanyId?: string | null) {
   return withCurrentUser(userId, async (client) => {
+    if (operatingCompanyId) {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    }
     const currentRes = await client.query<{ preferences: Record<string, unknown> | null }>(
       `SELECT preferences FROM identity.user_preferences WHERE user_id = $1 LIMIT 1`,
       [userId]

@@ -23,6 +23,7 @@ const roleSchema = z.enum([
 const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  operating_company_id: z.string().uuid().optional(),
   include_inactive: z
     .union([z.boolean(), z.string()])
     .optional()
@@ -31,6 +32,10 @@ const paginationSchema = z.object({
 
 const userIdParamSchema = z.object({
   id: z.string().uuid(),
+});
+
+const tenantQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const patchUserBodySchema = z.object({
@@ -196,19 +201,42 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     }
 
     const users = await withCurrentUser(authUser.uuid, async (client) => {
-      const filters: string[] = [];
+      const filters: string[] = [
+        `(u.default_company_id IN (SELECT org.user_accessible_company_ids()) OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = u.id
+              AND uca.company_id IN (SELECT org.user_accessible_company_ids())
+          ))`,
+      ];
+      const values: unknown[] = [];
+      if (parsedQuery.data.operating_company_id) {
+        values.push(parsedQuery.data.operating_company_id);
+        filters.push(`(
+          u.default_company_id = $${values.length}::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = u.id
+              AND uca.company_id = $${values.length}::uuid
+          )
+        )`);
+      }
       if (!include_inactive) filters.push("u.deactivated_at IS NULL");
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      const whereClause = `WHERE ${filters.join(" AND ")}`;
+      values.push(limit, offset);
+      const limitIdx = values.length - 1;
+      const offsetIdx = values.length;
       const res = await client.query<IdentityUserRow>(
         `
           SELECT u.id, u.email, u.role, u.first_name, u.last_name, u.google_user_id, u.password_hash, u.default_company_id, u.created_at, u.deactivated_at
           FROM identity.users u
           ${whereClause}
           ORDER BY u.created_at DESC
-          LIMIT $1
-          OFFSET $2
+          LIMIT $${limitIdx}
+          OFFSET $${offsetIdx}
         `,
-        [limit, offset]
+        values
       );
       return res.rows.map(mapIdentityUser);
     });
@@ -225,16 +253,42 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     if (!parsedParams.success) {
       return sendValidationError(reply, parsedParams.error);
     }
+    const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) {
+      return sendValidationError(reply, parsedQuery.error);
+    }
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
+      const values: unknown[] = [parsedParams.data.id];
+      const filters = [
+        "id = $1",
+        `(default_company_id IN (SELECT org.user_accessible_company_ids()) OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = identity.users.id
+              AND uca.company_id IN (SELECT org.user_accessible_company_ids())
+          ))`,
+      ];
+      if (parsedQuery.data.operating_company_id) {
+        values.push(parsedQuery.data.operating_company_id);
+        filters.push(`(
+          default_company_id = $${values.length}::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = identity.users.id
+              AND uca.company_id = $${values.length}::uuid
+          )
+        )`);
+      }
       const res = await client.query<IdentityUserRow>(
         `
           SELECT id, email, role, first_name, last_name, google_user_id, password_hash, default_company_id, created_at, deactivated_at
           FROM identity.users
-          WHERE id = $1
+          WHERE ${filters.join(" AND ")}
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        values
       );
       return res.rows[0] ?? null;
     });
@@ -251,16 +305,40 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedParams = userIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const detail = await withCurrentUser(authUser.uuid, async (client) => {
+      const values: unknown[] = [parsedParams.data.id];
+      const filters = [
+        "id = $1",
+        `(default_company_id IN (SELECT org.user_accessible_company_ids()) OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = identity.users.id
+              AND uca.company_id IN (SELECT org.user_accessible_company_ids())
+          ))`,
+      ];
+      if (parsedQuery.data.operating_company_id) {
+        values.push(parsedQuery.data.operating_company_id);
+        filters.push(`(
+          default_company_id = $${values.length}::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = identity.users.id
+              AND uca.company_id = $${values.length}::uuid
+          )
+        )`);
+      }
       const userRes = await client.query<IdentityUserRow>(
         `
           SELECT id, email, role, first_name, last_name, google_user_id, password_hash, default_company_id, created_at, deactivated_at
           FROM identity.users
-          WHERE id = $1
+          WHERE ${filters.join(" AND ")}
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        values
       );
       const user = userRes.rows[0] ?? null;
       if (!user) return null;

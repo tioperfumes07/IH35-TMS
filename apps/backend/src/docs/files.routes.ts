@@ -374,6 +374,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     const response = await withCurrentUser(user.uuid, async (client) => {
       const filters: string[] = [];
       const values: unknown[] = [];
+      filters.push("f.operating_company_id IN (SELECT org.user_accessible_company_ids())");
       if (query.entity_type) {
         values.push(query.entity_type);
         filters.push(
@@ -456,7 +457,16 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
-      const fileRes = await client.query(`SELECT * FROM docs.files WHERE id = $1 LIMIT 1`, [parsedParams.data.file_id]);
+      const fileRes = await client.query(
+        `
+          SELECT *
+          FROM docs.files
+          WHERE id = $1
+            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
+          LIMIT 1
+        `,
+        [parsedParams.data.file_id]
+      );
       const file = fileRes.rows[0] ?? null;
       if (!file) return null;
 
@@ -524,7 +534,13 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
 
     const file = await withCurrentUser(user.uuid, async (client) => {
       const res = await client.query(
-        `SELECT id, original_filename, r2_key, upload_completed_at, deleted_at FROM docs.files WHERE id = $1 LIMIT 1`,
+        `
+          SELECT id, original_filename, r2_key, upload_completed_at, deleted_at
+          FROM docs.files
+          WHERE id = $1
+            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
+          LIMIT 1
+        `,
         [parsedParams.data.file_id]
       );
       return res.rows[0] ?? null;
