@@ -10,14 +10,26 @@ function inferArApSource(accountCode: string, accountName: string): CashBasisEnt
   return "other";
 }
 
-function balanceSheetLineToEntry(line: BalanceSheetLine): CashBasisEntry {
+type RoleMatcherInput = {
+  arControlAccountId?: string | null;
+  apControlAccountId?: string | null;
+};
+
+function inferArApSourceByRole(line: { account_id?: string | null; account_code: string; account_name: string }, roles?: RoleMatcherInput) {
+  if (roles?.arControlAccountId && line.account_id === roles.arControlAccountId) return "ar_control" as const;
+  if (roles?.apControlAccountId && line.account_id === roles.apControlAccountId) return "ap_control" as const;
+  return inferArApSource(line.account_code, line.account_name);
+}
+
+function balanceSheetLineToEntry(line: BalanceSheetLine, roles?: RoleMatcherInput): CashBasisEntry {
   return {
-    entry_id: `${line.account_code}:${line.account_name}`,
+    entry_id: `${line.account_id ?? line.account_code}:${line.account_name}`,
     account_code: line.account_code,
     account_name: line.account_name,
     account_type: line.account_type,
+    account_subtype: null,
     amount_cents: line.amount,
-    source_type: inferArApSource(line.account_code, line.account_name),
+    source_type: inferArApSourceByRole(line, roles),
   };
 }
 
@@ -30,8 +42,12 @@ function entryToBalanceSheetLine(entry: CashBasisEntry): BalanceSheetLine {
   };
 }
 
-export function transformBalanceSheetToCashBasis(report: BalanceSheetReport, asOfDate: string): BalanceSheetReport {
-  const allEntries = [...report.assets.lines.map(balanceSheetLineToEntry), ...report.liabilities.lines.map(balanceSheetLineToEntry), ...report.equity.lines.map(balanceSheetLineToEntry)];
+export function transformBalanceSheetToCashBasis(report: BalanceSheetReport, asOfDate: string, roles?: RoleMatcherInput): BalanceSheetReport {
+  const allEntries = [
+    ...report.assets.lines.map((line) => balanceSheetLineToEntry(line, roles)),
+    ...report.liabilities.lines.map((line) => balanceSheetLineToEntry(line, roles)),
+    ...report.equity.lines.map((line) => balanceSheetLineToEntry(line, roles)),
+  ];
   const transformed = applyCashBasisSuppression(allEntries, { as_of_date: asOfDate });
 
   const assets = transformed.filter((entry) => entry.account_type === "Asset").map(entryToBalanceSheetLine);
@@ -63,11 +79,11 @@ export function transformBalanceSheetToCashBasis(report: BalanceSheetReport, asO
   };
 }
 
-function inferTrialSourceType(row: TrialBalanceRow): CashBasisEntry["source_type"] {
-  return inferArApSource(row.account_code, row.account_name);
+function inferTrialSourceType(row: TrialBalanceRow, roles?: RoleMatcherInput): CashBasisEntry["source_type"] {
+  return inferArApSourceByRole(row, roles);
 }
 
-function trialRowToEntries(row: TrialBalanceRow): CashBasisEntry[] {
+function trialRowToEntries(row: TrialBalanceRow, roles?: RoleMatcherInput): CashBasisEntry[] {
   return [
     {
       entry_id: `${row.account_id}:debit`,
@@ -75,7 +91,7 @@ function trialRowToEntries(row: TrialBalanceRow): CashBasisEntry[] {
       account_name: row.account_name,
       account_type: row.account_type,
       amount_cents: row.total_debits,
-      source_type: inferTrialSourceType(row),
+      source_type: inferTrialSourceType(row, roles),
     },
     {
       entry_id: `${row.account_id}:credit`,
@@ -83,13 +99,13 @@ function trialRowToEntries(row: TrialBalanceRow): CashBasisEntry[] {
       account_name: row.account_name,
       account_type: row.account_type,
       amount_cents: -row.total_credits,
-      source_type: inferTrialSourceType(row),
+      source_type: inferTrialSourceType(row, roles),
     },
   ];
 }
 
-export function transformTrialBalanceToCashBasis(rows: TrialBalanceRow[], summary: TrialBalanceSummary, asOfDate: string) {
-  const transformed = applyCashBasisSuppression(rows.flatMap(trialRowToEntries), { as_of_date: asOfDate });
+export function transformTrialBalanceToCashBasis(rows: TrialBalanceRow[], summary: TrialBalanceSummary, asOfDate: string, roles?: RoleMatcherInput) {
+  const transformed = applyCashBasisSuppression(rows.flatMap((row) => trialRowToEntries(row, roles)), { as_of_date: asOfDate });
   const aggregates = new Map<string, TrialBalanceRow>();
   for (const row of rows) aggregates.set(row.account_id, { ...row, total_debits: 0, total_credits: 0, net_balance: 0 });
   for (const entry of transformed) {

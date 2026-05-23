@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 
 export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment";
 export type PostingPurpose = "initial_post" | "reversal";
@@ -126,39 +127,6 @@ export function buildPostingMvpIdempotencyKey(input: {
   ].join(":");
 }
 
-async function resolveRoleBoundAccount(client: DbClient, roleKey: string): Promise<string | null> {
-  const bound = await client.query<{ account_id: string }>(
-    `
-      SELECT arb.account_id::text
-      FROM catalogs.account_role_bindings arb
-      JOIN catalogs.accounts a ON a.id = arb.account_id
-      WHERE arb.role_key = $1
-        AND arb.deactivated_at IS NULL
-        AND a.deactivated_at IS NULL
-        AND a.is_postable = true
-      LIMIT 1
-    `,
-    [roleKey]
-  );
-  return bound.rows[0]?.account_id ?? null;
-}
-
-async function resolveAccountBySubtype(client: DbClient, subtype: string): Promise<string | null> {
-  const account = await client.query<{ id: string }>(
-    `
-      SELECT id::text AS id
-      FROM catalogs.accounts
-      WHERE account_subtype = $1
-        AND deactivated_at IS NULL
-        AND is_postable = true
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `,
-    [subtype]
-  );
-  return account.rows[0]?.id ?? null;
-}
-
 async function resolveFirstAccountByType(client: DbClient, accountType: string): Promise<string | null> {
   const account = await client.query<{ id: string }>(
     `
@@ -175,56 +143,19 @@ async function resolveFirstAccountByType(client: DbClient, accountType: string):
   return account.rows[0]?.id ?? null;
 }
 
-async function resolveArAccount(client: DbClient): Promise<string | null> {
-  return (
-    (await resolveRoleBoundAccount(client, "ar_clearing")) ??
-    (await resolveAccountBySubtype(client, "AccountsReceivable")) ??
-    null
-  );
+async function resolveArAccountForCompany(client: DbClient, operatingCompanyId: string): Promise<string | null> {
+  return resolveRoleAccountOptional(client, operatingCompanyId, "ar_control");
 }
 
-async function resolveApAccount(client: DbClient): Promise<string | null> {
-  return (
-    (await resolveRoleBoundAccount(client, "ap_clearing")) ??
-    (await resolveAccountBySubtype(client, "AccountsPayable")) ??
-    null
-  );
+async function resolveApAccountForCompany(client: DbClient, operatingCompanyId: string): Promise<string | null> {
+  return resolveRoleAccountOptional(client, operatingCompanyId, "ap_control");
 }
 
-async function resolveCashLikeAccount(client: DbClient): Promise<string | null> {
-  const roleBound = await resolveRoleBoundAccount(client, "undeposited_funds");
-  if (roleBound) return roleBound;
-
-  const bySubtype = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      WHERE account_subtype IN ('UndepositedFunds', 'Checking', 'Savings', 'CashOnHand')
-        AND deactivated_at IS NULL
-        AND is_postable = true
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `
+async function resolveCashLikeAccountForCompany(client: DbClient, operatingCompanyId: string): Promise<string | null> {
+  return (
+    (await resolveRoleAccountOptional(client, operatingCompanyId, "undeposited_funds")) ??
+    (await resolveRoleAccountOptional(client, operatingCompanyId, "cash_clearing"))
   );
-  if (bySubtype.rows[0]?.id) return bySubtype.rows[0].id;
-
-  const byName = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM catalogs.accounts
-      WHERE account_type = 'Asset'
-        AND deactivated_at IS NULL
-        AND is_postable = true
-        AND (
-          account_name ILIKE '%cash%'
-          OR account_name ILIKE '%bank%'
-          OR account_name ILIKE '%checking%'
-        )
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `
-  );
-  return byName.rows[0]?.id ?? null;
 }
 
 async function ensureOpenPeriod(client: DbClient, operatingCompanyId: string, postingDate: string) {
@@ -444,7 +375,7 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
       `Invoice status ${invoice.status} is not posting-eligible`
     );
   }
-  const arAccountId = await resolveArAccount(client);
+  const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
   if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
 
   const revenueFromLines = await client.query<{ account_id: string }>(
@@ -458,7 +389,10 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     `,
     [sourceId]
   );
-  const revenueAccountId = revenueFromLines.rows[0]?.account_id ?? (await resolveFirstAccountByType(client, "Income"));
+  const revenueAccountId =
+    revenueFromLines.rows[0]?.account_id ??
+    (await resolveRoleAccountOptional(client, operatingCompanyId, "revenue_default")) ??
+    (await resolveFirstAccountByType(client, "Income"));
   if (!revenueAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Revenue account mapping is missing");
 
   const amount = Number(invoice.total_cents ?? 0);
@@ -558,7 +492,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
     throw new PostingEngineError("BILL_NOT_POSTING_ELIGIBLE", "Voided bill is not posting-eligible");
   }
 
-  const apAccountId = await resolveApAccount(client);
+  const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
   if (!apAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
 
   const lineAccountColumn = await detectBillLineAccountColumn(client);
@@ -591,15 +525,16 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
   const debitLines: PostingLineDraft[] = [];
   const accountResolutionTrace: Array<Record<string, unknown>> = [];
   const headerFallback = bill.coa_account_id;
+  const roleExpenseDefault = await resolveRoleAccountOptional(client, operatingCompanyId, "expense_default");
 
   if (lineRows.rows.length === 0) {
     const amountCents =
       bill.amount_cents != null ? Number(bill.amount_cents) : Math.round(Number(bill.total_amount ?? "0") * 100);
-    if (!headerFallback) {
+    if (!headerFallback && !roleExpenseDefault) {
       throw new PostingEngineError("BILL_LINE_ACCOUNT_UNRESOLVED", "Bill header/line account mapping is unresolved");
     }
     debitLines.push({
-      account_id: headerFallback,
+      account_id: headerFallback ?? roleExpenseDefault!,
       debit_or_credit: "debit",
       amount_cents: amountCents,
       description: bill.memo ?? "Bill expense",
@@ -625,6 +560,10 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
       if (!accountId && headerFallback) {
         accountId = headerFallback;
         method = "header_coa_account_fallback";
+      }
+      if (!accountId && roleExpenseDefault) {
+        accountId = roleExpenseDefault;
+        method = "role_expense_default";
       }
       if (!accountId) {
         throw new PostingEngineError(
@@ -691,12 +630,12 @@ async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: s
   if (!payment) throw new PostingEngineError("SOURCE_NOT_FOUND", "Customer payment not found");
   if (payment.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided customer payment is not posting-eligible");
 
-  const arAccountId = await resolveArAccount(client);
+  const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
   if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
 
   let debitCashAccount = payment.deposited_to_account_id?.trim() || null;
   if (!debitCashAccount) {
-    debitCashAccount = await resolveCashLikeAccount(client);
+    debitCashAccount = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
   }
   if (!debitCashAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
 
@@ -757,9 +696,9 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided bill payment is not posting-eligible");
   }
 
-  const apAccountId = await resolveApAccount(client);
+  const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
   if (!apAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
-  const cashAccountId = await resolveCashLikeAccount(client);
+  const cashAccountId = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
   if (!cashAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
 
   const amount = Number(payment.amount_cents ?? Math.round(Number(payment.amount ?? "0") * 100));

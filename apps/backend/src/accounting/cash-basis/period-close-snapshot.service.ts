@@ -6,6 +6,7 @@ import {
   transformProfitLossToCashBasis,
   transformTrialBalanceToCashBasis,
 } from "./report-transforms.js";
+import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -245,6 +246,10 @@ export async function writePeriodCashBasisSnapshotAtClose(
     computedByUserUuid: string;
   },
 ) {
+  const roleMatches = {
+    arControlAccountId: await resolveRoleAccountOptional(client, input.operatingCompanyId, "ar_control"),
+    apControlAccountId: await resolveRoleAccountOptional(client, input.operatingCompanyId, "ap_control"),
+  };
   const periodRows = await queryPeriodAggregates(client, input);
   const accrualTrialBalance = buildAccrualTrialBalance(periodRows);
   const accrualProfitLoss = buildAccrualProfitLoss(periodRows);
@@ -252,8 +257,13 @@ export async function writePeriodCashBasisSnapshotAtClose(
     operatingCompanyId: input.operatingCompanyId,
     asOfDate: input.periodEnd,
   });
-  const cashBalanceSheet = transformBalanceSheetToCashBasis(accrualBalanceSheet, input.periodEnd);
-  const cashTrialBalance = transformTrialBalanceToCashBasis(accrualTrialBalance.rows, accrualTrialBalance.summary, input.periodEnd);
+  const cashBalanceSheet = transformBalanceSheetToCashBasis(accrualBalanceSheet, input.periodEnd, roleMatches);
+  const cashTrialBalance = transformTrialBalanceToCashBasis(
+    accrualTrialBalance.rows,
+    accrualTrialBalance.summary,
+    input.periodEnd,
+    roleMatches
+  );
   const cashProfitLoss = transformProfitLossToCashBasis(accrualProfitLoss, input.periodEnd);
   const payload = buildSnapshotPayload({
     operatingCompanyId: input.operatingCompanyId,

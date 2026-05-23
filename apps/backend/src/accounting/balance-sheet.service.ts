@@ -1,6 +1,7 @@
 import { withCurrentUser } from "../auth/db.js";
 
 type BalanceSheetAccountRowDb = {
+  account_id: string;
   account_code: string;
   account_name: string;
   account_type: string;
@@ -15,6 +16,7 @@ type CurrentYearEarningsRowDb = {
 };
 
 export type BalanceSheetLine = {
+  account_id?: string;
   account_code: string;
   account_name: string;
   account_type: string;
@@ -55,6 +57,7 @@ export async function getBalanceSheetReport(input: {
     const balanceSheetRows = await client.query<BalanceSheetAccountRowDb>(
       `
         SELECT
+          a.id::text AS account_id,
           COALESCE(a.account_number, '') AS account_code,
           COALESCE(a.account_name, '') AS account_name,
           COALESCE(a.account_type, '') AS account_type,
@@ -74,7 +77,7 @@ export async function getBalanceSheetReport(input: {
           AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
           AND je.entry_date <= $2::date
           AND a.account_type IN ('Asset', 'Liability', 'Equity')
-        GROUP BY a.account_number, a.account_name, a.account_type
+        GROUP BY a.id, a.account_number, a.account_name, a.account_type
         ORDER BY a.account_number ASC NULLS LAST, a.account_name ASC
       `,
       [input.operating_company_id, input.as_of_date]
@@ -91,6 +94,7 @@ export async function getBalanceSheetReport(input: {
         account_code: row.account_code,
         account_name: row.account_name,
         account_type: row.account_type,
+        account_id: row.account_id,
         amount: 0,
       };
 

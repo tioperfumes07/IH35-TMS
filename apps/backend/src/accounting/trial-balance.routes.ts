@@ -6,6 +6,7 @@ import { DEFAULT_BASIS } from "./cash-basis/engine.js";
 import { CashBasisSnapshotMissingError, resolveCashBasisRead } from "./cash-basis/read-policy.service.js";
 import { transformTrialBalanceToCashBasis } from "./cash-basis/report-transforms.js";
 import { findClosedPeriodForDate, readPeriodCashBasisSnapshot } from "./cash-basis/snapshot.service.js";
+import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 
 const trialBalanceQuerySchema = companyQuerySchema.extend({
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -54,13 +55,19 @@ export async function registerTrialBalanceRoutes(app: FastifyInstance) {
           snapshotPayload: snapshotResult.snapshotPayload,
           reportKey: "trial_balance",
           computeLiveCash: async () => {
+            const roleMatches = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+              return {
+                arControlAccountId: await resolveRoleAccountOptional(client, query.data.operating_company_id, "ar_control"),
+                apControlAccountId: await resolveRoleAccountOptional(client, query.data.operating_company_id, "ap_control"),
+              };
+            });
             const accrualReport = await getTrialBalanceReport({
               userId: user.uuid,
               operating_company_id: query.data.operating_company_id,
               from_date: query.data.from_date,
               to_date: query.data.to_date,
             });
-            return transformTrialBalanceToCashBasis(accrualReport.rows, accrualReport.summary, anchorDate);
+            return transformTrialBalanceToCashBasis(accrualReport.rows, accrualReport.summary, anchorDate, roleMatches);
           },
         });
         return reply.code(200).send({ ...(resolved.report as Record<string, unknown>), basis, source: resolved.source });
