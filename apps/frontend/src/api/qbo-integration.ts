@@ -83,6 +83,18 @@ export type QboSyncAlertRecord = {
   error_payload?: unknown;
 };
 
+export type QboSyncEventKind = "run" | "alert" | "outbox";
+export type QboSyncEventSeverity = "info" | "warn" | "error";
+
+export type QboSyncEventLogRecord = {
+  id: string;
+  kind: QboSyncEventKind;
+  occurred_at: string;
+  severity: QboSyncEventSeverity;
+  summary: string;
+  detail: Record<string, unknown>;
+};
+
 export type ListQboSyncRunsParams = {
   operating_company_id: string;
   status?: string;
@@ -107,6 +119,25 @@ export async function listQboSyncAlerts(params: { operating_company_id: string; 
   if (params.limit != null) q.set("limit", String(params.limit));
   if (params.resolved === false) q.set("resolved", "false");
   return apiRequest<{ alerts: QboSyncAlertRecord[]; next_cursor: string | null }>(`/api/v1/qbo/sync/alerts?${q.toString()}`);
+}
+
+export async function listQboSyncEventLog(params: {
+  operating_company_id: string;
+  limit?: number;
+  cursor?: string;
+  since?: string;
+  kind?: QboSyncEventKind;
+  severity?: QboSyncEventSeverity;
+}) {
+  const q = new URLSearchParams({ operating_company_id: params.operating_company_id });
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.cursor) q.set("cursor", params.cursor);
+  if (params.since) q.set("since", params.since);
+  if (params.kind) q.set("kind", params.kind);
+  if (params.severity) q.set("severity", params.severity);
+  return apiRequest<{ events: QboSyncEventLogRecord[]; next_cursor: string | null; total_estimated: number }>(
+    `/api/v1/qbo/sync-event-log?${q.toString()}`,
+  );
 }
 
 export async function retryQboSyncRun(id: string, operatingCompanyId: string) {

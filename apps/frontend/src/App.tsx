@@ -98,7 +98,7 @@ import { ProfitPerTruckPage } from "./pages/reports/ProfitPerTruckPage";
 import { FuelReconciliationPage } from "./pages/reports/FuelReconciliationPage";
 import { MaintenanceCostPerUnitPage } from "./pages/reports/MaintenanceCostPerUnitPage";
 import { ScheduledReportsPage } from "./pages/reports/ScheduledReportsPage";
-import { QBOSyncStatusDashboardPage } from "./pages/qbo/QBOSyncStatusDashboardPage";
+import { QboSyncDetailPage } from "./pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
 import { AccountingHubPage } from "./pages/accounting/AccountingHubPage";
 import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
@@ -1111,6 +1111,14 @@ export default function App() {
           }
         />
         <Route
+          path="/samsara/vendor-mapping-integrity"
+          element={
+            <ProtectedRoute>
+              <ComingSoonPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/help"
           element={
             <ProtectedRoute>
@@ -1218,7 +1226,7 @@ export default function App() {
           path="/qbo/sync-dashboard"
           element={
             <ProtectedRoute>
-              <QBOSyncStatusDashboardPage />
+              <QboSyncDetailPage />
             </ProtectedRoute>
           }
         />

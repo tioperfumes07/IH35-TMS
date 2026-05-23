@@ -139,6 +139,17 @@ export type HomeQboSyncHealth = {
   last_updated: string;
 };
 
+export type HomeVendorMappingIntegrity = {
+  status: "green" | "yellow" | "red";
+  totals: {
+    unmapped_drivers: number;
+    duplicate_mapping: number;
+    name_mismatch: number;
+    major_drift: number;
+    total_issues: number;
+  };
+};
+
 export async function fetchHomeQboSyncHealth(companyId: string): Promise<HomeQboSyncHealth> {
   const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/qbo/sync-health", companyId));
   const latestRunRaw =
@@ -156,6 +167,23 @@ export async function fetchHomeQboSyncHealth(companyId: string): Promise<HomeQbo
     failed_outbox_count: num(raw.failed_outbox_count),
     high_severity_alerts_count: num(raw.high_severity_alerts_count),
     last_updated: typeof raw.last_updated === "string" ? raw.last_updated : new Date().toISOString(),
+  };
+}
+
+export async function fetchHomeVendorMappingIntegrity(companyId: string): Promise<HomeVendorMappingIntegrity> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/samsara/vendor-mapping-integrity", companyId));
+  const totals = raw.totals && typeof raw.totals === "object" ? (raw.totals as Record<string, unknown>) : {};
+  const statusRaw = String(raw.status ?? "green").toLowerCase();
+  const status = statusRaw === "red" || statusRaw === "yellow" ? statusRaw : "green";
+  return {
+    status,
+    totals: {
+      unmapped_drivers: num(totals.unmapped_drivers),
+      duplicate_mapping: num(totals.duplicate_mapping),
+      name_mismatch: num(totals.name_mismatch),
+      major_drift: num(totals.major_drift),
+      total_issues: num(totals.total_issues),
+    },
   };
 }
 

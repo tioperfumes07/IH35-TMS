@@ -13,6 +13,7 @@ import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
+import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -150,6 +151,7 @@ import { registerQboSyncConflictDetectionRoutes } from "./qbo/sync-conflict-dete
 import { registerQboUnlinkedEntitiesRoutes } from "./qbo/unlinked-entities.routes.js";
 import { registerQboBulkLinkRoutes } from "./qbo/bulk-link.routes.js";
 import { registerQboSyncHealthRoutes } from "./qbo/sync-health.routes.js";
+import { registerQboSyncEventLogRoutes } from "./qbo/sync-event-log.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 import { registerLaunchReadinessRoutes } from "./admin/launch-readiness.routes.js";
@@ -303,6 +305,7 @@ async function main() {
   await registerSamsaraWebhookRoutes(app);
   await registerSamsaraConfigRoutes(app);
   await registerSamsaraHealthRoutes(app);
+  await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -314,6 +317,7 @@ async function main() {
   await registerQboUnlinkedEntitiesRoutes(app);
   await registerQboBulkLinkRoutes(app);
   await registerQboSyncHealthRoutes(app);
+  await registerQboSyncEventLogRoutes(app);
   await registerEmailRoutes(app);
   await registerEmailQueueAdminRoutes(app);
   await registerAdminClientErrorRoutes(app);
