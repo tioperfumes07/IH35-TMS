@@ -174,6 +174,7 @@ import { initializeErrorDigestCron } from "./cron/error-digest.cron.js";
 import { registerDailyTasksRoutes } from "./daily-tasks/daily-tasks.routes.js";
 import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/daily-task-alerts.cron.js";
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
+import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -243,6 +244,16 @@ async function main() {
 
   registerSentryFastifyErrorHandler(app);
   await registerHealthRoutes(app);
+
+  const driftConn = await pool.connect();
+  try {
+    await runStartupMigrationDriftGuard({
+      repoRoot,
+      client: driftConn,
+    });
+  } finally {
+    driftConn.release();
+  }
 
   if (process.env.SKIP_MIGRATION_VERIFICATION !== "true") {
     try {
