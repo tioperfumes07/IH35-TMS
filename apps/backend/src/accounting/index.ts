@@ -26,6 +26,7 @@ import { registerExpenseCategoryMapRoutes } from "./expense-category-map/routes.
 import { registerCoaRolesRoutes } from "./coa-roles/routes.js";
 import { registerBankReconWorklistRoutes } from "./bank-recon/recon-worklist.routes.js";
 import { registerFactorReconciliationRoutes } from "./factor-reconciliation/routes.js";
+import { registerMultiEntityAccountingRoutes } from "./multi-entity/routes.js";
 import { registerSalesTaxRoutes } from "./sales-tax/routes.js";
 import { registerAccountingAuditTrailRoutes } from "./audit-trail/routes.js";
 
@@ -57,6 +58,7 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerCoaRolesRoutes(app);
   await registerBankReconWorklistRoutes(app);
   await registerFactorReconciliationRoutes(app);
+  await registerMultiEntityAccountingRoutes(app);
   await registerSalesTaxRoutes(app);
   await registerAccountingAuditTrailRoutes(app);
 }

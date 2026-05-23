@@ -56,6 +56,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-sales-tax-routes-tenant-scope.mjs",
   "scripts/verify-bank-recon-ui-tenant-scope.mjs",
   "scripts/verify-bank-recon-variance-uses-q8.mjs",
+  "scripts/verify-multi-entity-access-scope.mjs",
+  "scripts/verify-multi-entity-accounting-filter.mjs",
   "scripts/verify-migrations-no-uuid-pk-reference.mjs",
   "scripts/verify-hos-duty-events-append-only.mjs",
   "scripts/verify-hos-clocks-tenant-scope.mjs",
@@ -83,6 +85,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-dot-inspection-events-append-only.mjs",
   "scripts/verify-auto-status-no-direct-status-write.mjs",
   "scripts/verify-load-progress-no-db-writes.mjs",
+  "scripts/verify-ts-brace-balance.mjs",
   "scripts/verify-pm-alerts-append-only.mjs",
   "scripts/verify-pm-alerts-tenant-scope.mjs",
 ] as const;
