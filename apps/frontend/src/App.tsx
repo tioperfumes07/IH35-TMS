@@ -197,6 +197,7 @@ import { DriverSchedulerRequestInboxPage } from "./pages/safety/driver-scheduler
 import { DriverSchedulerRequestDetailPage } from "./pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage";
 import { DriverLeaveBalancesPage } from "./pages/safety/driver-scheduler/DriverLeaveBalancesPage";
 import { DailyTasksPage } from "./pages/daily-tasks/DailyTasksPage";
+import { VendorMappingResolutionPage } from "./pages/samsara-vendor-mapping/VendorMappingResolutionPage";
 
 function RootRedirect() {
   const auth = useAuth();
@@ -1114,7 +1115,7 @@ export default function App() {
           path="/samsara/vendor-mapping-integrity"
           element={
             <ProtectedRoute>
-              <ComingSoonPage />
+              <VendorMappingResolutionPage />
             </ProtectedRoute>
           }
         />

@@ -3,8 +3,7 @@
 ## Purpose
 
 CAP-15 adds detection and surfacing for driver-to-vendor mapping integrity.
-This is read-only observability to prevent wrong-person payments and catch duplicates.
-Auto-link and auto-fix remain out of scope for this contract.
+Resolution actions are now included to prevent wrong-person payments and catch duplicates.
 
 ## Integrity Classes
 
@@ -41,11 +40,45 @@ Tenant constraints:
 
 No cross-tenant joins are permitted.
 
+## Resolution Actions
+
+Endpoint family:
+- `POST /api/v1/samsara/vendor-mapping/link`
+- `POST /api/v1/samsara/vendor-mapping/dedupe`
+- `POST /api/v1/samsara/vendor-mapping/confirm-mismatch`
+
+Action behaviors:
+1. `link`
+   - Input: `{ operating_company_id, samsara_driver_id, qbo_vendor_id }`
+   - Effect: resolves tenant vendor and sets `mdata.drivers.qbo_vendor_id` for the mapped Samsara driver.
+2. `dedupe`
+   - Input: `{ operating_company_id, samsara_driver_id, canonical_qbo_vendor_id, deprecated_qbo_vendor_ids[] }`
+   - Effect: rewrites duplicate mappings for the Samsara driver to the canonical vendor in tenant scope.
+3. `confirm-mismatch`
+   - Input: `{ operating_company_id, samsara_driver_id, qbo_vendor_id }`
+   - Effect: records owner acknowledgement that names diverged while mapping remains accepted.
+
+Cross-tenant refusal:
+- All mutations require explicit user access to `operating_company_id`.
+- Vendor and driver rows are resolved only inside that same tenant.
+- Missing tenant access or tenant-mismatched identifiers are rejected.
+
+## Audit Trail Contract
+
+Each resolution action appends an audit record via `audit.append_event` with:
+- `event_class='vendor_mapping_resolution'`
+- `severity='info'`
+- payload keys:
+  - `action`
+  - `driver_id`
+  - `vendor_id`
+  - `samsara_driver_id`
+  - `actor_user_uuid`
+  - `deprecated_vendor_ids` (dedupe only)
+
 ## Home Surface
 
-The Office HOME card displays status and counters:
+The Office HOME card displays status and counters and links to the resolution detail page:
 - GREEN: no issues
 - YELLOW: unmapped or non-major drift
 - RED: duplicate mappings or major drift
-
-Card navigation points to a detail route placeholder for follow-up work.
