@@ -119,6 +119,7 @@ Top hover-dropdown navigation only for Safety. Never side panel (Jorge G3).
 - Audit events live in `audit.audit_events` (`uuid`, `created_at`, `event_class`, `severity`, `payload`, `actor_user_uuid`, `source`). `audit.events` is not a table and must not be referenced by code.
 - HELP is a frontend-only module (no backend routes). Tenant scoping is N/A. If a backend Help service is added later, add `verify-help-tenant-scope.mjs` at that time.
 - Office HOME exposes QBO sync health via `GET /api/v1/qbo/sync-health`. The endpoint is tenant-scoped and surfaces `qbo.sync_runs` latest, `qbo.sync_alerts` open count, and `outbox.events` failed count for the current tenant.
+- `GET /api/v1/qbo/sync-event-log` surfaces per-tenant QBO sync observability from `qbo.sync_runs` + `qbo.sync_alerts` + terminal `outbox.events` where `event_type LIKE 'qbo.%'`; read-only, tenant-scoped, cursor-paginated (no OFFSET), and linked from the Office HOME sync health card.
 - `integrations.samsara_vehicles` is raw Samsara seed/projection data scoped by `operating_company_id`; UI fleet-live counters must also require `local_unit_id IS NOT NULL` for tenant-correct reporting. Seed does not auto-link existing rows; run `node scripts/link-samsara-to-units.mjs` after seed.
 - QBO customer master-data tenant invariants and implemented/future-state chain are documented in `docs/qbo-sync/customers-chain.md`.
 - Documents are soft-delete only with a 90-day Owner recovery window.

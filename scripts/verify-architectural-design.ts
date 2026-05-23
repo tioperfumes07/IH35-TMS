@@ -28,6 +28,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-vendors-tenant-scope.mjs",
   "scripts/verify-94-live-counter-linkage.mjs",
   "scripts/verify-qbo-customer-sync-tenant-chain.mjs",
+  "scripts/verify-qbo-sync-event-log-tenant-scope.mjs",
 ] as const;
 
 type LockedUiSurface = {

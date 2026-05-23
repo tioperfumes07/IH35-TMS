@@ -149,6 +149,7 @@ import { registerQboSyncRunsListRoutes } from "./qbo/sync-runs-list.routes.js";
 import { registerQboUnlinkedEntitiesRoutes } from "./qbo/unlinked-entities.routes.js";
 import { registerQboBulkLinkRoutes } from "./qbo/bulk-link.routes.js";
 import { registerQboSyncHealthRoutes } from "./qbo/sync-health.routes.js";
+import { registerQboSyncEventLogRoutes } from "./qbo/sync-event-log.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 import { registerLaunchReadinessRoutes } from "./admin/launch-readiness.routes.js";
@@ -312,6 +313,7 @@ async function main() {
   await registerQboUnlinkedEntitiesRoutes(app);
   await registerQboBulkLinkRoutes(app);
   await registerQboSyncHealthRoutes(app);
+  await registerQboSyncEventLogRoutes(app);
   await registerEmailRoutes(app);
   await registerEmailQueueAdminRoutes(app);
   await registerAdminClientErrorRoutes(app);
