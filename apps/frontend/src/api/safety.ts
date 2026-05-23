@@ -76,6 +76,49 @@ export function getLatestCsa(companyId: string) {
   return apiRequest<{ latest: Record<string, unknown> | null }>(`/api/v1/safety/csa/latest?${q(companyId)}`);
 }
 
+export type DriverScoreRow = {
+  driver_id: string;
+  driver_name: string;
+  incidents: number;
+  counts_by_kind: { critical: number; major: number; minor: number };
+  score: number;
+  trend_vs_prior: number;
+  period_miles: number;
+  score_per_1k_miles: number | null;
+};
+
+export type DriverScoreEvent = {
+  id: string;
+  driver_id: string;
+  unit_id: string;
+  unit_number: string | null;
+  event_at: string;
+  event_kind: string;
+  severity: string;
+  speed_at_event_mph: number | null;
+  g_force: number | null;
+  latitude: number | null;
+  longitude: number | null;
+};
+
+export function listDriverScores(companyId: string, periodDays: number) {
+  const qs = new URLSearchParams({
+    operating_company_id: companyId,
+    period_days: String(periodDays),
+  });
+  return apiRequest<{ rows: DriverScoreRow[] }>(`/api/v1/safety/driver-scoring?${qs.toString()}`);
+}
+
+export function listDriverScoreEvents(companyId: string, driverId: string, periodDays: number) {
+  const qs = new URLSearchParams({
+    operating_company_id: companyId,
+    period_days: String(periodDays),
+  });
+  return apiRequest<{ events: DriverScoreEvent[] }>(
+    `/api/v1/safety/driver-scoring/${encodeURIComponent(driverId)}/events?${qs.toString()}`
+  );
+}
+
 export function getSafetyFines(
   companyId: string,
   params: { status?: string; subject_type?: "driver" | "company"; subject_driver_id?: string } = {}

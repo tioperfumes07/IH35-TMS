@@ -37,6 +37,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     tabs: [
       { id: "idvr", label: "Vehicle Inspections-IDVR", route: "/safety/idvr", badge: "renamed" },
       { id: "dot-inspections", label: "DOT Inspections", route: "/safety/dot-inspections", badge: "new" },
+      { id: "driver-scoring", label: "Driver Scoring", route: "/safety/driver-scoring", badge: "new" },
       { id: "csa-score", label: "CSA Score", route: "/safety/csa-score", badge: "new" },
       { id: "dot-compliance", label: "DOT Compliance", route: "/safety/dot-compliance", badge: null },
     ],
@@ -99,6 +100,7 @@ export const TABS = [
   { id: "hos-violations" },
   { id: "idvr" },
   { id: "dot-inspections" },
+  { id: "driver-scoring" },
   { id: "csa-score" },
   { id: "dot-compliance" },
   { id: "accidents" },

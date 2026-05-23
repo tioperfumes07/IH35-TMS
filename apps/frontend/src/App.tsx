@@ -36,6 +36,7 @@ import {
   DamageReportsTab,
   DOTComplianceTab,
   DOTInspectionsTab,
+  DriverScoringTab,
   DriverFilesTab,
   DrugAlcoholTab,
   EscrowRecordTab,
@@ -513,6 +514,7 @@ export default function App() {
           <Route path="hos-violations" element={<HOSViolationsTab />} />
           <Route path="idvr" element={<IDVRTab />} />
           <Route path="dot-inspections" element={<DOTInspectionsTab />} />
+          <Route path="driver-scoring" element={<DriverScoringTab />} />
           <Route path="csa-score" element={<CSAScoreTab />} />
           <Route path="dot-compliance" element={<DOTComplianceTab />} />
           <Route path="accidents" element={<AccidentsIncidentsTab />} />

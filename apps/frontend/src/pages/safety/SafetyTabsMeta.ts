@@ -7,6 +7,7 @@ export const TABS = [
   { id: "hos-violations" },
   { id: "idvr" },
   { id: "dot-inspections" },
+  { id: "driver-scoring" },
   { id: "csa-score" },
   { id: "dot-compliance" },
   { id: "accidents" },
