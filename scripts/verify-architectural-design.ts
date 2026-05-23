@@ -45,6 +45,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-period-cash-basis-snapshot-readonly.mjs",
   "scripts/verify-expense-category-map-tenant-scope.mjs",
   "scripts/verify-expense-category-map-soft-delete.mjs",
+  "scripts/verify-maintenance-posting-uses-resolver.mjs",
 ] as const;
 
 type LockedUiSurface = {
