@@ -38,6 +38,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-qbo-sync-event-log-tenant-scope.mjs",
   "scripts/verify-samsara-qbo-vendor-mapping-tenant-scope.mjs",
   "scripts/verify-qbo-sync-state-machine-transitions.mjs",
+  "scripts/verify-qbo-sync-repair-dead-letter-gate.mjs",
   "scripts/verify-samsara-vendor-mapping-actions-tenant-scope.mjs",
   "scripts/verify-cash-basis-engine-determinism.mjs",
   "scripts/verify-period-cash-basis-snapshot-shape.mjs",

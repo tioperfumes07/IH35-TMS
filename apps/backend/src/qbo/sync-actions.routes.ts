@@ -29,10 +29,24 @@ export async function registerQboSyncActionsRoutes(app: FastifyInstance) {
         syncRunId: params.data.id,
         operatingCompanyId: body.data.operating_company_id,
       });
-      return ok ? params.data.id : null;
+      if (ok) return { code: "ok" as const };
+      const exists = await client.query(
+        `
+          SELECT id::text
+          FROM qbo.sync_runs
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [params.data.id, body.data.operating_company_id],
+      );
+      const existsRow = exists.rows[0] as { id?: string } | undefined;
+      if (!existsRow?.id) return { code: "not_found" as const };
+      return { code: "not_dead_letter" as const };
     });
 
-    if (!updated) return reply.code(404).send({ error: "sync_run_not_found" });
+    if (updated.code === "not_found") return reply.code(404).send({ error: "sync_run_not_found" });
+    if (updated.code === "not_dead_letter") return reply.code(409).send({ error: "retry_not_dead_letter" });
 
     await appendQboSyncActionAuditEvent(
       "qbo.sync_run_retried_manual",
