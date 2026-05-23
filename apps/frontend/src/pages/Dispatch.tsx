@@ -105,6 +105,7 @@ export function DispatchPage() {
     pickup_date_to: filters.dateMode === "pickup" ? filters.dateTo || undefined : undefined,
     delivery_date_from: filters.dateMode === "delivery" ? filters.dateFrom || undefined : undefined,
     delivery_date_to: filters.dateMode === "delivery" ? filters.dateTo || undefined : undefined,
+    include_progress: true,
   });
 
   const customerLookup = useQuery({

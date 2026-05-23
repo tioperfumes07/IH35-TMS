@@ -4,6 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
+import { computeProgressStatus } from "../telematics/load-progress.service.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -60,6 +61,7 @@ const listLoadsQuerySchema = z.object({
     .trim()
     .regex(/^(created_at|load_number|status|rate_total_cents):(asc|desc)$/i)
     .default("created_at:desc"),
+  include_progress: z.coerce.boolean().default(false),
 });
 
 const loadStatusTransitionBodySchema = z.object({
@@ -448,6 +450,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       to_date,
       search,
       sort,
+      include_progress,
     } = parsedQuery.data;
     const [sortField, sortDir] = sort.toLowerCase().split(":") as [string, "asc" | "desc"];
     const sortColumnMap: Record<string, string> = {
@@ -576,11 +579,31 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return {
-        rows: res.rows.map((row) => ({
+      const rows = res.rows.map((row) => ({
+        ...row,
+        flag_code: statusToFlagCode(row.status as z.infer<typeof loadStatusSchema>),
+      }));
+
+      if (!include_progress) {
+        return { rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
+      }
+
+      const enrichedRows = [];
+      for (const row of rows as Array<Record<string, unknown>>) {
+        const progress = await computeProgressStatus(client, {
+          operating_company_id: String(row.operating_company_id),
+          load_id: String(row.id),
+          assigned_unit_id: row.assigned_unit_id ? String(row.assigned_unit_id) : null,
+        });
+        enrichedRows.push({
           ...row,
-          flag_code: statusToFlagCode(row.status as z.infer<typeof loadStatusSchema>),
-        })),
+          progress_status: progress.progress_status,
+          progress_eta_delta_minutes: progress.eta_delta_minutes,
+        });
+      }
+
+      return {
+        rows: enrichedRows,
         totalCount: Number(countRes.rows[0]?.total_count ?? 0),
       };
     });

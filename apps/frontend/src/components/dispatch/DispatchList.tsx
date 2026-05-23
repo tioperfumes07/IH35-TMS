@@ -35,6 +35,13 @@ function statusVariant(status: DispatchLoadRow["status"]) {
   return "bg-amber-100 text-amber-700";
 }
 
+function progressPill(progress?: DispatchLoadRow["progress_status"]) {
+  if (progress === "early" || progress === "on_track") return "bg-emerald-100 text-emerald-800";
+  if (progress === "behind") return "bg-amber-100 text-amber-800";
+  if (progress === "delayed") return "bg-red-100 text-red-800";
+  return "bg-gray-100 text-gray-700";
+}
+
 export function DispatchList({
   loads,
   totalCount,
@@ -110,6 +117,7 @@ export function DispatchList({
                 ["driver", "Driver"],
                 ["hos", "HOS"],
                 ["status", "Status"],
+                ["progress", "Progress"],
                 ...(showEtaColumn ? [["eta", "ETA"] as const] : []),
                 ["rate_total_cents", "Rate"],
                 ["created_at", "Created"],
@@ -131,7 +139,7 @@ export function DispatchList({
             {loading
               ? Array.from({ length: Math.max(4, limit / 10) }).map((_, idx) => (
                   <tr key={idx} className="border-b border-gray-100">
-                    <td colSpan={showEtaColumn ? 12 : 11} className="px-3 py-3 text-gray-400">
+                    <td colSpan={showEtaColumn ? 13 : 12} className="px-3 py-3 text-gray-400">
                       Loading loads...
                     </td>
                   </tr>
@@ -163,6 +171,18 @@ export function DispatchList({
                     <td className="px-3 py-2">
                       <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
                         {STATUS_LABEL[load.status]}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`rounded-full px-2 py-1 text-xs font-semibold ${progressPill(load.progress_status)}`}
+                        title={
+                          load.progress_eta_delta_minutes == null
+                            ? "No live GPS/appointment delta available."
+                            : `ETA delta vs scheduled: ${load.progress_eta_delta_minutes} min`
+                        }
+                      >
+                        {(load.progress_status ?? "unknown").replace("_", " ")}
                       </span>
                     </td>
                     {showEtaColumn ? (
@@ -212,6 +232,18 @@ export function DispatchList({
               </div>
               <div className="mt-2">
                 <DriverHosPill driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
+              </div>
+              <div className="mt-2">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${progressPill(load.progress_status)}`}
+                  title={
+                    load.progress_eta_delta_minutes == null
+                      ? "No live GPS/appointment delta available."
+                      : `ETA delta vs scheduled: ${load.progress_eta_delta_minutes} min`
+                  }
+                >
+                  {(load.progress_status ?? "unknown").replace("_", " ")}
+                </span>
               </div>
               {showEtaColumn && load.status === "in_transit" ? (
                 <div className="mt-2">
