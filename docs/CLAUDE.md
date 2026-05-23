@@ -115,6 +115,7 @@ Top hover-dropdown navigation only for Safety. Never side panel (Jorge G3).
 - R2 CORS policy is required for `app.ih35dispatch.com`, `driver.ih35dispatch.com`, `api.ih35dispatch.com`, and localhost dev origins.
 - `DATABASE_URL` is Neon; Render `ih35-db` is not in active use.
 - Outbox processor runs in-process inside backend (no separate Render worker).
+- Backend refuses to boot if any `db/migrations/*.sql` file is missing from both `_system._schema_migrations` and `ih35_migrations.applied_migrations`; Render Pre-Deploy must be `npm run db:migrate` for backend services.
 - Documents are soft-delete only with a 90-day Owner recovery window.
 - `docs.file_links` is polymorphic; `entity_id` is not enforced as a single FK.
 - Documents preview uses native browser PDF viewer (not PDF.js).
