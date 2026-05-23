@@ -33,7 +33,10 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
   { label: "Journal entries", href: "/accounting/journal-entries" },
   {
     label: "Settings",
-    children: [{ label: "Expense category map", href: "/accounting/settings/expense-category-map" }],
+    children: [
+      { label: "Expense category map", href: "/accounting/settings/expense-category-map" },
+      { label: "CoA roles", href: "/accounting/settings/coa-roles" },
+    ],
   },
 ] as const;
 
@@ -44,6 +47,7 @@ export function accountingSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/accounting/factoring/")) return "/accounting/factoring";
   if (pathname.startsWith("/accounting/pre-settlements")) return "/accounting/pre-settlements";
   if (pathname.startsWith("/accounting/settings/expense-category-map")) return "/accounting/settings/expense-category-map";
+  if (pathname.startsWith("/accounting/settings/coa-roles")) return "/accounting/settings/coa-roles";
   return pathname;
 }
 

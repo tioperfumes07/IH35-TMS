@@ -59,6 +59,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-geofence-events-append-only.mjs",
   "scripts/verify-geofence-detector-tenant-scope.mjs",
   "scripts/verify-migrations-no-postgis-dependency.mjs",
+  "scripts/verify-coa-roles-no-string-match-bypass.mjs",
   "scripts/verify-vehicle-driver-pairing-tenant-scope.mjs",
   "scripts/verify-vehicle-driver-pairing-append-only.mjs",
 ] as const;

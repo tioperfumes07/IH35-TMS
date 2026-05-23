@@ -6,6 +6,7 @@ import { DEFAULT_BASIS } from "./cash-basis/engine.js";
 import { CashBasisSnapshotMissingError, resolveCashBasisRead } from "./cash-basis/read-policy.service.js";
 import { transformBalanceSheetToCashBasis } from "./cash-basis/report-transforms.js";
 import { findClosedPeriodForDate, readPeriodCashBasisSnapshot } from "./cash-basis/snapshot.service.js";
+import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 
 const balanceSheetQuerySchema = companyQuerySchema.extend({
   as_of_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -53,12 +54,18 @@ export async function registerBalanceSheetRoutes(app: FastifyInstance) {
           snapshotPayload: snapshotResult.snapshotPayload,
           reportKey: "balance_sheet",
           computeLiveCash: async () => {
+            const roleMatches = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+              return {
+                arControlAccountId: await resolveRoleAccountOptional(client, query.data.operating_company_id, "ar_control"),
+                apControlAccountId: await resolveRoleAccountOptional(client, query.data.operating_company_id, "ap_control"),
+              };
+            });
             const accrualReport = await getBalanceSheetReport({
               userId: user.uuid,
               operating_company_id: query.data.operating_company_id,
               as_of_date: asOfDate,
             });
-            return transformBalanceSheetToCashBasis(accrualReport, asOfDate);
+            return transformBalanceSheetToCashBasis(accrualReport, asOfDate, roleMatches);
           },
         });
         return reply.code(200).send({ ...(resolved.report as Record<string, unknown>), basis, source: resolved.source });

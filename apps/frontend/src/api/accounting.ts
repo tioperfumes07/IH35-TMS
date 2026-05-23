@@ -785,6 +785,32 @@ export type ExpenseCategoryMapRow = {
   updated_by_user_uuid?: string | null;
 };
 
+export const COA_ROLE_VALUES = [
+  "ar_control",
+  "ap_control",
+  "cash_clearing",
+  "undeposited_funds",
+  "revenue_default",
+  "expense_default",
+  "factor_reserve_default",
+  "escrow_liability_default",
+  "sales_tax_payable",
+  "cash_basis_adjustment_equity",
+  "retained_earnings",
+] as const;
+
+export type CoaRole = (typeof COA_ROLE_VALUES)[number];
+
+export type CoaRoleRow = {
+  role: CoaRole;
+  id: string | null;
+  account_id: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  is_active: boolean;
+  updated_at: string | null;
+};
+
 export function listExpenseCategoryMappings(
   operatingCompanyId: string,
   options: { include_inactive?: boolean; category_kind?: ExpenseCategoryMapKind } = {}
@@ -827,4 +853,31 @@ export function deactivateExpenseCategoryMapping(id: string, operatingCompanyId:
     method: "DELETE",
     body: { operating_company_id: operatingCompanyId },
   });
+}
+
+export function listCoaRoles(operatingCompanyId: string) {
+  return apiRequest<{ rows: CoaRoleRow[] }>(withCompany("/api/v1/accounting/coa-roles", operatingCompanyId));
+}
+
+export function upsertCoaRole(
+  operatingCompanyId: string,
+  body: {
+    role: CoaRole;
+    account_id: string;
+    is_active?: boolean;
+  }
+) {
+  return apiRequest<{ id: string }>(withCompany("/api/v1/accounting/coa-roles", operatingCompanyId), {
+    method: "PUT",
+    body,
+  });
+}
+
+export function validateCoaRoles(operatingCompanyId: string) {
+  return apiRequest<{
+    required_roles: CoaRole[];
+    mapped_roles: CoaRole[];
+    missing_roles: CoaRole[];
+    valid: boolean;
+  }>(withCompany("/api/v1/accounting/coa-roles/validate", operatingCompanyId));
 }

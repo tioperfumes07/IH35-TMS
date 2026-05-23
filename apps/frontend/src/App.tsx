@@ -119,6 +119,7 @@ import { ManualJEListPage } from "./pages/accounting/ManualJEListPage";
 import { BillPaymentsListPage } from "./pages/accounting/BillPaymentsListPage";
 import { AccountingPreSettlementsPage } from "./pages/accounting/AccountingPreSettlementsPage";
 import { ExpenseCategoryMapPage } from "./pages/accounting/ExpenseCategoryMapPage";
+import { CoaRolesPage } from "./pages/accounting/CoaRolesPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
@@ -1560,6 +1561,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ExpenseCategoryMapPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/settings/coa-roles"
+          element={
+            <ProtectedRoute>
+              <CoaRolesPage />
             </ProtectedRoute>
           }
         />
