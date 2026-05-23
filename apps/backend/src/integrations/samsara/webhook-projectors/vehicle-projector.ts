@@ -1,6 +1,8 @@
 import type { DbClient, ProjectionResult, SamsaraWebhookEvent } from "../webhook-projection.types.js";
+import { processArrivalDetectionsForGpsPoint } from "../../../telematics/arrival-detection.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../../telematics/geofence-detector.service.js";
 import { processVehicleDriverPairingWebhookEvent } from "../../../telematics/vehicle-driver-lookup.service.js";
+import { notifyDriverWebPush } from "../../../services/push-notification.service.js";
 
 function extractVehicleRecord(payload: Record<string, unknown>): Record<string, unknown> | null {
   if (payload.data && typeof payload.data === "object" && payload.data !== null) {
@@ -99,6 +101,16 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
       longitude: location.longitude,
       occurred_at: location.occurred_at,
       source: "samsara_gps",
+    });
+
+    await processArrivalDetectionsForGpsPoint(client, {
+      operating_company_id: event.operating_company_id,
+      unit_id: localUnitId,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      occurred_at: location.occurred_at,
+    }, {
+      notifyDriver: notifyDriverWebPush,
     });
   }
   await processVehicleDriverPairingWebhookEvent(client, event, vehicleId);
