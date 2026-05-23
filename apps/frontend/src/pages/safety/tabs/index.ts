@@ -5,6 +5,7 @@ export { HoursOfServiceTab } from "./HoursOfServiceTab";
 export { HOSViolationsTab } from "./HOSViolationsTab";
 export { IDVRTab } from "./IDVRTab";
 export { DOTInspectionsTab } from "./DOTInspectionsTab";
+export { DriverScoringTab } from "./DriverScoringTab";
 export { CSAScoreTab } from "./CSAScoreTab";
 export { DOTComplianceTab } from "./DOTComplianceTab";
 export { AccidentsIncidentsTab } from "./AccidentsIncidentsTab";
