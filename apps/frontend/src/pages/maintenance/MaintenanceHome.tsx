@@ -18,6 +18,7 @@ import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
 import { InTransitTriageBand } from "./components/InTransitTriageBand";
 import { IntegrationsStrip } from "./components/IntegrationsStrip";
 import { MaintKpiRows } from "./components/MaintKpiRows";
+import { MaintenanceAlertsCard } from "./components/MaintenanceAlertsCard";
 import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { RecentActivityRow } from "./components/RecentActivityRow";
@@ -147,6 +148,7 @@ export function MaintenanceHomePage() {
       />
 
       <MaintKpiRows kpis={kpis} />
+      {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} /> : null}
       <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
 
       {tab === "active_wos" ? (

@@ -70,6 +70,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-auto-geofence-tenant-scope.mjs",
   "scripts/verify-auto-geofence-no-blocking-call.mjs",
   "scripts/verify-load-progress-no-db-writes.mjs",
+  "scripts/verify-pm-alerts-append-only.mjs",
+  "scripts/verify-pm-alerts-tenant-scope.mjs",
 ] as const;
 
 type LockedUiSurface = {
