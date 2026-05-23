@@ -5,6 +5,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import crypto from "node:crypto";
 import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-retained-earnings.service.js";
+import { writePeriodCashBasisSnapshotAtClose } from "./cash-basis/period-close-snapshot.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 const periodCloseRoles = new Set(["Owner", "Administrator", "Accountant"]);
@@ -252,6 +253,14 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
             period_end: period.period_end,
             fiscal_year: Number(period.fiscal_year),
             closer_user_id: user.uuid,
+          });
+
+          await writePeriodCashBasisSnapshotAtClose(client, {
+            operatingCompanyId: body.data.operating_company_id,
+            periodId: params.data.id,
+            periodStart: period.period_start,
+            periodEnd: period.period_end,
+            computedByUserUuid: user.uuid,
           });
 
           const upd = await client.query(

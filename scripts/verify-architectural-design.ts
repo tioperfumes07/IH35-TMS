@@ -37,6 +37,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-cash-basis-engine-determinism.mjs",
   "scripts/verify-period-cash-basis-snapshot-shape.mjs",
   "scripts/verify-basis-selector-allowed-pages.mjs",
+  "scripts/verify-period-cash-basis-snapshot-readonly.mjs",
 ] as const;
 
 type LockedUiSurface = {

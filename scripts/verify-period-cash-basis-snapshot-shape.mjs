@@ -4,6 +4,7 @@ import path from "node:path";
 
 const migrationPath = path.join(process.cwd(), "db/migrations/0217_accounting_period_cash_basis_snapshot.sql");
 const snapshotServicePath = path.join(process.cwd(), "apps/backend/src/accounting/cash-basis/snapshot.service.ts");
+const closeWriterPath = path.join(process.cwd(), "apps/backend/src/accounting/cash-basis/period-close-snapshot.service.ts");
 
 function fail(messages) {
   console.error("verify:period-cash-basis-snapshot-shape — FAILED");
@@ -40,13 +41,24 @@ if (!fs.existsSync(snapshotServicePath)) {
   const requiredSourceChecks = [
     /findClosedPeriodForDate/,
     /readPeriodCashBasisSnapshot/,
-    /upsertPeriodCashBasisSnapshot/,
     /FROM accounting\.period_cash_basis_snapshot/,
-    /INSERT INTO accounting\.period_cash_basis_snapshot/,
-    /ON CONFLICT \(operating_company_id, period_id\)/,
   ];
   for (const pattern of requiredSourceChecks) {
     if (!pattern.test(source)) failures.push(`snapshot service missing required logic: ${pattern}`);
+  }
+}
+
+if (!fs.existsSync(closeWriterPath)) {
+  failures.push(`missing close-time snapshot writer: ${closeWriterPath}`);
+} else {
+  const source = fs.readFileSync(closeWriterPath, "utf8");
+  const requiredWriterChecks = [
+    /writePeriodCashBasisSnapshotAtClose/,
+    /INSERT INTO accounting\.period_cash_basis_snapshot/,
+    /ON CONFLICT \(operating_company_id, period_id\) DO NOTHING/,
+  ];
+  for (const pattern of requiredWriterChecks) {
+    if (!pattern.test(source)) failures.push(`close-time writer missing required logic: ${pattern}`);
   }
 }
 
