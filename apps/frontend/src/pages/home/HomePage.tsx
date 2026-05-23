@@ -9,6 +9,7 @@ import {
   fetchHomeFleetSnapshot,
   fetchHomeOpenLoadsCount,
   fetchHomeQboSyncHealth,
+  fetchHomeVendorMappingIntegrity,
   fetchHomeTodayRevenue,
   fetchHomeWosOpenCount,
 } from "../../api/home";
@@ -18,6 +19,7 @@ import { Button } from "../../components/Button";
 import { SectionQuickJump } from "../../components/home/SectionQuickJump";
 import { FleetSnapshotPanel } from "../../components/home/FleetSnapshotPanel";
 import { QboSyncHealthCard } from "../../components/home/QboSyncHealthCard";
+import { VendorMappingIntegrityCard } from "../../components/home/VendorMappingIntegrityCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AttentionList } from "./AttentionList";
 import { FleetUtilizationGauge } from "./charts/FleetUtilizationGauge";
@@ -99,6 +101,13 @@ export function HomePage({ auth }: Props) {
   const qboSyncHealthQuery = useQuery({
     queryKey: ["home", "qbo-sync-health", selectedCompanyId],
     queryFn: () => fetchHomeQboSyncHealth(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+    refetchInterval: 60_000,
+  });
+
+  const vendorMappingIntegrityQuery = useQuery({
+    queryKey: ["home", "vendor-mapping-integrity", selectedCompanyId],
+    queryFn: () => fetchHomeVendorMappingIntegrity(selectedCompanyId!),
     enabled: Boolean(selectedCompanyId),
     refetchInterval: 60_000,
   });
@@ -368,14 +377,24 @@ export function HomePage({ auth }: Props) {
           ) : (
             <FleetSnapshotPanel rows={fleetRows} />
           )}
-          <QboSyncHealthCard
-            data={qboSyncHealthQuery.data}
-            isLoading={qboSyncHealthQuery.isLoading}
-            isError={qboSyncHealthQuery.isError}
-            onRetry={() => {
-              void qboSyncHealthQuery.refetch();
-            }}
-          />
+          <div className="space-y-2">
+            <QboSyncHealthCard
+              data={qboSyncHealthQuery.data}
+              isLoading={qboSyncHealthQuery.isLoading}
+              isError={qboSyncHealthQuery.isError}
+              onRetry={() => {
+                void qboSyncHealthQuery.refetch();
+              }}
+            />
+            <VendorMappingIntegrityCard
+              data={vendorMappingIntegrityQuery.data}
+              isLoading={vendorMappingIntegrityQuery.isLoading}
+              isError={vendorMappingIntegrityQuery.isError}
+              onRetry={() => {
+                void vendorMappingIntegrityQuery.refetch();
+              }}
+            />
+          </div>
         </div>
       </div>
 
