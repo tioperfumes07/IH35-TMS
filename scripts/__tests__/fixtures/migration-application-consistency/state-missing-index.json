@@ -1,0 +1,10 @@
+{
+  "tables": [
+    "qa.parent",
+    "qa.child"
+  ],
+  "indexes": [],
+  "fks": [
+    "qa.child.fk_child_parent"
+  ]
+}

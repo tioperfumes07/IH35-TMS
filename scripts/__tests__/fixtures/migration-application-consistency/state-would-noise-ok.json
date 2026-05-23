@@ -1,0 +1,7 @@
+{
+  "tables": [
+    "qa.real_table"
+  ],
+  "indexes": [],
+  "fks": []
+}

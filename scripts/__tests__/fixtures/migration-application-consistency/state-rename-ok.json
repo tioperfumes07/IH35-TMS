@@ -1,0 +1,7 @@
+{
+  "tables": [
+    "safety.liability_fines"
+  ],
+  "indexes": [],
+  "fks": []
+}

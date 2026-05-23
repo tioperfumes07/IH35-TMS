@@ -46,6 +46,9 @@ jobs:
       - name: Verification source of truth (local + CI parity)
         run: npm run verify:pre-commit
 
+      - name: Migration application consistency guard
+        run: npm run verify:migration-application-consistency
+
       - name: Backend tests + coverage (CI strict)
         run: npm run test:coverage
 
