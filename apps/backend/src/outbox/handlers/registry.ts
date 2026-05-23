@@ -82,7 +82,6 @@ export function buildOutboxHandlerRegistry() {
     new TmsCustomerPushHandler(),
     new TmsVendorPushHandler(),
     new TmsItemPushHandler(),
-    new TmsVendorPushHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),
     ...buildTrailEventHandlers(),
