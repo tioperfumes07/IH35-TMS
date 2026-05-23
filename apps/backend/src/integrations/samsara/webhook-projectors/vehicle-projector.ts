@@ -2,6 +2,7 @@ import type { DbClient, ProjectionResult, SamsaraWebhookEvent } from "../webhook
 import { processArrivalDetectionsForGpsPoint } from "../../../telematics/arrival-detection.service.js";
 import { processDtcAutoWorkOrderEvent } from "../../../telematics/dtc-auto-work-order.service.js";
 import { processAutoStatusSuggestionForVehicleEvent } from "../../../telematics/auto-status.service.js";
+import { processDashcamAutoLinkFromWebhook } from "../../../telematics/dashcam-auto-link.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../../telematics/geofence-detector.service.js";
 import { processMaintenancePredictorForOdometer } from "../../../telematics/maintenance-predictor.service.js";
 import { processVehicleDriverPairingWebhookEvent } from "../../../telematics/vehicle-driver-lookup.service.js";
@@ -202,6 +203,12 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
     });
   }
   if (localUnitId) {
+    await processDashcamAutoLinkFromWebhook(client, {
+      operating_company_id: event.operating_company_id,
+      unit_id: localUnitId,
+      occurred_at: location?.occurred_at ?? new Date().toISOString(),
+    payload: event.payload,
+    });
     const dtcs = extractDtcEntries(event.payload);
     const occurredAt = location?.occurred_at ?? extractOccurredAt(event.payload);
     for (const dtc of dtcs) {

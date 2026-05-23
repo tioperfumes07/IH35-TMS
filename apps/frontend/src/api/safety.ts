@@ -289,6 +289,28 @@ export function updateSafetySettings(companyId: string, body: Record<string, unk
   });
 }
 
+export function requestDashcamClip(companyId: string, body: {
+  unit_id: string;
+  start_at: string;
+  duration_sec: number;
+  camera_facing: "road" | "in_cab" | "both";
+}) {
+  return apiRequest<Record<string, unknown>>("/api/v1/dashcam/request-clip", {
+    method: "POST",
+    body: {
+      operating_company_id: companyId,
+      ...body,
+    },
+  });
+}
+
+export function listHarshEventDashcamClips(companyId: string, harshEventId: string) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  return apiRequest<{ rows: Array<Record<string, unknown>> }>(
+    `/api/v1/safety/harsh-events/${encodeURIComponent(harshEventId)}/dashcam-clips?${qs.toString()}`
+  );
+}
+
 export async function addAccidentPhoto(id: string, companyId: string, file: File) {
   const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
   const url = `${base ? base.replace(/\/$/, "") : ""}/api/v1/safety/accidents/${id}/photos?${q(companyId)}`;
