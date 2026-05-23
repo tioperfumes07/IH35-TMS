@@ -47,6 +47,17 @@ export type RecommendedStop = {
 
 export type FuelRecommendationDetail = FuelActiveRoute & {
   stops: RecommendedStop[];
+  hos_aware_recommendations?: Array<{
+    stop_id: string;
+    sequence_number: number;
+    city: string | null;
+    state: string | null;
+    reason: "low_fuel" | "ten_hour_reset_window";
+    estimated_arrival_at: string | null;
+    estimated_route_mile: number;
+    drive_remaining_min_at_arrival: number;
+    note: string;
+  }>;
 };
 
 function q(companyId: string) {
