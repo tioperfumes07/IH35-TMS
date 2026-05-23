@@ -33,6 +33,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-samsara-qbo-vendor-mapping-tenant-scope.mjs",
   "scripts/verify-qbo-sync-state-machine-transitions.mjs",
   "scripts/verify-samsara-vendor-mapping-actions-tenant-scope.mjs",
+  "scripts/verify-cash-basis-engine-determinism.mjs",
+  "scripts/verify-period-cash-basis-snapshot-shape.mjs",
 ] as const;
 
 type LockedUiSurface = {

@@ -128,6 +128,8 @@ Top hover-dropdown navigation only for Safety. Never side panel (Jorge G3).
 - `integrations.samsara_vehicles` is raw Samsara seed/projection data scoped by `operating_company_id`; UI fleet-live counters must also require `local_unit_id IS NOT NULL` for tenant-correct reporting. Seed does not auto-link existing rows; run `node scripts/link-samsara-to-units.mjs` after seed.
 - `mdata.units` is populated from `integrations.samsara_vehicles` via `scripts/ingest-samsara-to-mdata-units.mjs`. Carrier attribution is defined in `config/samsara-carrier-attribution.json` (TRK=owner, TRANSP/USMCA=lease). Test units (`unit_number LIKE 'TEST-%'`) are forbidden in prod and enforced by `verify-no-test-units-in-prod.mjs`.
 - QBO customer master-data tenant invariants and implemented/future-state chain are documented in `docs/qbo-sync/customers-chain.md`.
+- Block-20.1 foundation adds `?basis=cash|accrual` contract for accounting report endpoints with default `accrual`; cash transforms are currently wired for Balance Sheet + Trial Balance only, while Cash Flow + AR/AP aging + IFTA remain accrual outputs.
+- Closed-period cash-basis numbers are snapshotted in `accounting.period_cash_basis_snapshot` and verified via `verify-cash-basis-engine-determinism.mjs` plus `verify-period-cash-basis-snapshot-shape.mjs`.
 - Documents are soft-delete only with a 90-day Owner recovery window.
 - `docs.file_links` is polymorphic; `entity_id` is not enforced as a single FK.
 - Documents preview uses native browser PDF viewer (not PDF.js).
