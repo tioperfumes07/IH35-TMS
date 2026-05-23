@@ -13,6 +13,7 @@ const querySchema = z.object({
   since: z.string().datetime().optional(),
   kind: z.enum(["run", "alert", "outbox"]).optional(),
   severity: z.enum(["info", "warn", "error"]).optional(),
+  state: z.enum(["dead_letter"]).optional(),
 });
 
 type DecodedCursor = {
@@ -45,6 +46,7 @@ type BuildParams = {
   since?: string;
   kind?: "run" | "alert" | "outbox";
   severity?: "info" | "warn" | "error";
+  state?: "dead_letter";
 };
 
 function buildMergedSql(params: BuildParams): { sql: string; values: unknown[] } {
@@ -70,6 +72,7 @@ function buildMergedSql(params: BuildParams): { sql: string; values: unknown[] }
       ELSE 'warn'
     END`;
     const runWhere = [`r.operating_company_id = ${companyUuid}::uuid`];
+    if (params.state === "dead_letter") runWhere.push(`r.status = 'dead_letter'`);
     if (params.since) runWhere.push(`COALESCE(r.completed_at, r.started_at) >= ${bind(params.since)}::timestamptz`);
     if (params.severity) runWhere.push(`${runSeverityExpr} = ${bind(params.severity)}::text`);
     blocks.push(`
@@ -101,6 +104,7 @@ function buildMergedSql(params: BuildParams): { sql: string; values: unknown[] }
       ELSE 'info'
     END`;
     const alertWhere = [`a.operating_company_id = ${companyUuid}::uuid`];
+    if (params.state === "dead_letter") alertWhere.push(`lower(coalesce(a.error_code, '')) = 'dead_letter'`);
     if (params.since) alertWhere.push(`a.created_at >= ${bind(params.since)}::timestamptz`);
     if (params.severity) alertWhere.push(`${alertSeverityExpr} = ${bind(params.severity)}::text`);
     blocks.push(`
@@ -134,6 +138,7 @@ function buildMergedSql(params: BuildParams): { sql: string; values: unknown[] }
       `o.event_type LIKE 'qbo.%'`,
       `(o.failed_at IS NOT NULL OR o.delivered_at IS NOT NULL)`,
     ];
+    if (params.state === "dead_letter") outboxWhere.push(`o.failed_at IS NOT NULL`);
     if (params.since) outboxWhere.push(`COALESCE(o.failed_at, o.delivered_at) >= ${bind(params.since)}::timestamptz`);
     if (params.severity) outboxWhere.push(`${outboxSeverityExpr} = ${bind(params.severity)}::text`);
     blocks.push(`
@@ -197,6 +202,7 @@ export async function registerQboSyncEventLogRoutes(app: FastifyInstance) {
         since: parsed.data.since,
         kind: parsed.data.kind,
         severity: parsed.data.severity,
+        state: parsed.data.state,
       });
 
       const countRes = (await client.query(
