@@ -54,6 +54,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-migrations-no-uuid-pk-reference.mjs",
   "scripts/verify-hos-duty-events-append-only.mjs",
   "scripts/verify-hos-clocks-tenant-scope.mjs",
+  "scripts/verify-payment-application-no-overpay.mjs",
+  "scripts/verify-payment-application-tenant-chain.mjs",
 ] as const;
 
 type LockedUiSurface = {

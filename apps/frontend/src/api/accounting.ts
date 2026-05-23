@@ -124,10 +124,13 @@ export type Payment = {
 export type PaymentApplication = {
   id: string;
   payment_id: string;
-  invoice_id: string;
-  invoice_display_id: string;
-  invoice_amount_open_cents: number;
+  invoice_id: string | null;
+  target_kind?: "invoice" | "bill" | "credit_memo";
+  target_id?: string;
+  invoice_display_id: string | null;
+  invoice_amount_open_cents: number | null;
   amount_cents: number;
+  amount_applied?: number;
   applied_at: string;
 };
 
@@ -529,7 +532,9 @@ export function applyPayment(
   paymentId: string,
   operatingCompanyId: string,
   body: {
-    invoice_id: string;
+    invoice_id?: string;
+    target_kind?: "invoice" | "bill";
+    target_id?: string;
     amount_cents: number;
   }
 ) {
@@ -538,6 +543,7 @@ export function applyPayment(
     payment_amount_unapplied_cents: number;
     invoice_amount_open_cents: number;
     invoice_status: string;
+    overpayment_credit_memo_display_id?: string | null;
   }>(withCompany(`/api/v1/accounting/payments/${paymentId}/applications`, operatingCompanyId), {
     method: "POST",
     body,
