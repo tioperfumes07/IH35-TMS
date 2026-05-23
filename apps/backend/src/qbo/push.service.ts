@@ -9,6 +9,13 @@ export type QboMasterPushPayload = {
   operation: "create" | "update";
 };
 
+export type QboInvoicePushPayload = {
+  operating_company_id: string;
+  mirror_row_id: string;
+  operation: "create" | "update";
+  qbo_body: Record<string, unknown>;
+};
+
 export async function enqueueQboMasterEntityPush(client: PoolClient, payload: QboMasterPushPayload) {
   await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
     "qbo.master_entity.push_requested",
@@ -402,4 +409,46 @@ async function deliverAccount(payload: QboMasterPushPayload, client: PoolClient)
     [payload.mirror_row_id, payload.operating_company_id, qboId, nextToken, JSON.stringify(entity)]
   );
   return { message: `account_updated_${qboId}` };
+}
+
+export async function deliverQboInvoicePush(payload: QboInvoicePushPayload, ctx: OutboxHandlerContext) {
+  await applyBypass(ctx.client, payload.operating_company_id);
+
+  const rowRes = await ctx.client.query(
+    `
+      SELECT *
+      FROM mdata.qbo_invoices
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [payload.mirror_row_id, payload.operating_company_id],
+  );
+  const row = rowRes.rows[0] as Record<string, unknown> | undefined;
+  if (!row) throw new Error("mirror_invoice_missing");
+
+  const resp = await qboPostMasterJson(payload.operating_company_id, "invoice", payload.qbo_body, payload.operation);
+  const invoiceEntity = (resp.Invoice as Record<string, unknown> | undefined) ?? unwrapIntuitEntity(resp);
+  const qboId = invoiceEntity.Id != null ? String(invoiceEntity.Id) : "";
+  const syncToken = invoiceEntity.SyncToken != null ? String(invoiceEntity.SyncToken) : null;
+  if (!qboId) throw new Error("invoice_push_missing_id");
+
+  await ctx.client.query(
+    `
+      UPDATE mdata.qbo_invoices
+      SET qbo_id = $3,
+          qbo_sync_token = $4,
+          payload_json = $5::jsonb,
+          sync_status = 'synced',
+          last_synced_at = now(),
+          last_push_at = now(),
+          updated_at = now(),
+          created_in_tms = true
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+    `,
+    [payload.mirror_row_id, payload.operating_company_id, qboId, syncToken, JSON.stringify(invoiceEntity)],
+  );
+
+  return { message: `invoice_${payload.operation}_${qboId}`, qbo_id: qboId, qbo_sync_token: syncToken };
 }

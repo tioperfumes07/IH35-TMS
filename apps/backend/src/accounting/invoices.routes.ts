@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { enqueueEmail } from "../email/queue.service.js";
+import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { buildInvoiceFromLoad } from "./from-load.js";
 import { createExpandedInvoice } from "./invoices.service.js";
@@ -265,6 +266,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         "info",
         "P3-T11.20.2-INVOICE-FLOW"
       );
+      await enqueueTmsInvoicePushRequested(client, {
+        operating_company_id: query.data.operating_company_id,
+        invoice_id: invoiceId,
+        operation: "create",
+      });
       const detail = await enrichInvoice(client, invoiceId);
       return { code: 201 as const, data: detail };
     });
@@ -281,11 +287,20 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
     try {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-        return buildInvoiceFromLoad(client, {
+        const built = await buildInvoiceFromLoad(client, {
           userId: user.uuid,
           operatingCompanyId: query.data.operating_company_id,
           loadId: body.data.load_id,
         });
+        const invoiceId = String((built.invoice as { id?: unknown }).id ?? "");
+        if (invoiceId) {
+          await enqueueTmsInvoicePushRequested(client, {
+            operating_company_id: query.data.operating_company_id,
+            invoice_id: invoiceId,
+            operation: built.idempotent ? "update" : "create",
+          });
+        }
+        return built;
       });
       return reply.code(result.idempotent ? 200 : 201).send(result);
     } catch (error) {
@@ -317,6 +332,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             internalNotes: body.data.internal_notes,
             customerNotes: body.data.customer_notes,
             autoDeductSettlement: body.data.auto_deduct_settlement,
+          });
+          await enqueueTmsInvoicePushRequested(client, {
+            operating_company_id: query.data.operating_company_id,
+            invoice_id: created.id,
+            operation: "create",
           });
           return enrichInvoice(client, created.id);
         });
@@ -403,6 +423,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         "info",
         "P3-T11.20.2-INVOICE-FLOW"
       );
+      await enqueueTmsInvoicePushRequested(client, {
+        operating_company_id: query.data.operating_company_id,
+        invoice_id: params.data.id,
+        operation: "update",
+      });
       const detail = await enrichInvoice(client, params.data.id);
       return { code: 200 as const, data: detail };
     });
@@ -449,6 +474,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         "info",
         "P3-T11.20.2-INVOICE-FLOW"
       );
+      await enqueueTmsInvoicePushRequested(client, {
+        operating_company_id: query.data.operating_company_id,
+        invoice_id: params.data.id,
+        operation: "update",
+      });
       const detail = await enrichInvoice(client, params.data.id);
       if (detail) {
         const invoiceRow = detail as Record<string, unknown>;
@@ -537,6 +567,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         "warning",
         "P3-T11.20.2-INVOICE-FLOW"
       );
+      await enqueueTmsInvoicePushRequested(client, {
+        operating_company_id: query.data.operating_company_id,
+        invoice_id: params.data.id,
+        operation: "update",
+      });
       const detail = await enrichInvoice(client, params.data.id);
       return { code: 200 as const, data: detail };
     });
