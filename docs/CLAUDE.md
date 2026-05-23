@@ -120,6 +120,7 @@ Top hover-dropdown navigation only for Safety. Never side panel (Jorge G3).
 - HELP is a frontend-only module (no backend routes). Tenant scoping is N/A. If a backend Help service is added later, add `verify-help-tenant-scope.mjs` at that time.
 - Office HOME exposes QBO sync health via `GET /api/v1/qbo/sync-health`. The endpoint is tenant-scoped and surfaces `qbo.sync_runs` latest, `qbo.sync_alerts` open count, and `outbox.events` failed count for the current tenant.
 - `integrations.samsara_vehicles` is raw Samsara seed/projection data scoped by `operating_company_id`; UI fleet-live counters must also require `local_unit_id IS NOT NULL` for tenant-correct reporting. Seed does not auto-link existing rows; run `node scripts/link-samsara-to-units.mjs` after seed.
+- `mdata.units` is populated from `integrations.samsara_vehicles` via `scripts/ingest-samsara-to-mdata-units.mjs`. Carrier attribution is defined in `config/samsara-carrier-attribution.json` (TRK=owner, TRANSP/USMCA=lease). Test units (`unit_number LIKE 'TEST-%'`) are forbidden in prod and enforced by `verify-no-test-units-in-prod.mjs`.
 - QBO customer master-data tenant invariants and implemented/future-state chain are documented in `docs/qbo-sync/customers-chain.md`.
 - Documents are soft-delete only with a 90-day Owner recovery window.
 - `docs.file_links` is polymorphic; `entity_id` is not enforced as a single FK.
