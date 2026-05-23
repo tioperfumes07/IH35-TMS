@@ -65,6 +65,7 @@
     "e2e:forensic-import": "node scripts/e2e-forensic-import-test.mjs",
     "cutover:smoke-test": "node scripts/cutover-smoke-test.mjs",
     "db:verify:critical-runtime": "node scripts/db-verify-critical-runtime.mjs",
+    "db:verify:live-schema": "node scripts/db-verify-live-schema.mjs",
     "db:verify:audit-append-only": "node scripts/db-verify-audit-append-only.mjs",
     "outbox:worker": "node scripts/outbox-worker.mjs",
     "db:verify:outbox-drain": "node scripts/db-verify-outbox-drain.mjs",
