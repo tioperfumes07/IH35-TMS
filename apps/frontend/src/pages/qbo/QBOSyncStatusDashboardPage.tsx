@@ -17,6 +17,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ConflictsTab } from "../qbo-sync-detail/ConflictsTab";
 
 function withinHours(iso: string, hours: number) {
   const t = new Date(iso).getTime();
@@ -53,6 +54,7 @@ export function QBOSyncStatusDashboardPage() {
   const [timeRange, setTimeRange] = useState<"1h" | "24h" | "7d" | "30d">("24h");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const [activeTab, setActiveTab] = useState<"runs" | "conflicts">("runs");
 
   const runsQuery = useQuery({
     queryKey: ["qbo", "sync-runs", companyId, status, kind, timeRange, search],
@@ -151,6 +153,31 @@ export function QBOSyncStatusDashboardPage() {
           <div className="text-2xl font-semibold text-red-900">{kpis.dead}</div>
         </div>
       </div>
+
+      <div className="flex flex-wrap gap-2 rounded border border-gray-200 bg-white p-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab("runs")}
+          className={`rounded px-3 py-1 text-xs font-medium ${
+            activeTab === "runs" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          Sync Runs + Alerts
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("conflicts")}
+          className={`rounded px-3 py-1 text-xs font-medium ${
+            activeTab === "conflicts" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          Conflicts
+        </button>
+      </div>
+
+      {activeTab === "conflicts" ? <ConflictsTab operatingCompanyId={companyId} /> : null}
+      {activeTab !== "runs" ? null : (
+        <>
 
       <div className="flex flex-wrap items-end gap-3 rounded border border-gray-200 bg-white p-3">
         <label className="text-xs text-gray-600">
@@ -309,6 +336,8 @@ export function QBOSyncStatusDashboardPage() {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

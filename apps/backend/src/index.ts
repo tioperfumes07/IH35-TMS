@@ -13,6 +13,7 @@ import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
+import { registerSamsaraVendorMappingActionsRoutes } from "./integrations/samsara/vendor-mapping-actions.routes.js";
 import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
@@ -147,6 +148,7 @@ import { initializeQboSyncWorker, stopQboSyncWorker } from "./integrations/qbo/q
 import { registerQboSyncAlertsRoutes } from "./qbo/sync-alerts.routes.js";
 import { registerQboSyncActionsRoutes } from "./qbo/sync-actions.routes.js";
 import { registerQboSyncRunsListRoutes } from "./qbo/sync-runs-list.routes.js";
+import { registerQboSyncConflictDetectionRoutes } from "./qbo/sync-conflict-detection.routes.js";
 import { registerQboUnlinkedEntitiesRoutes } from "./qbo/unlinked-entities.routes.js";
 import { registerQboBulkLinkRoutes } from "./qbo/bulk-link.routes.js";
 import { registerQboSyncHealthRoutes } from "./qbo/sync-health.routes.js";
@@ -305,12 +307,14 @@ async function main() {
   await registerSamsaraConfigRoutes(app);
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
+  await registerSamsaraVendorMappingActionsRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
   await registerMasterDataSyncRoutes(app);
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);
+  await registerQboSyncConflictDetectionRoutes(app);
   await registerQboSyncActionsRoutes(app);
   await registerQboUnlinkedEntitiesRoutes(app);
   await registerQboBulkLinkRoutes(app);
