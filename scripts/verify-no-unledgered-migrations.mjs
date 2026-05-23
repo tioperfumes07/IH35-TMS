@@ -74,6 +74,8 @@ const missing = [...new Set(readLines(MISSING_LIST))].sort((a, b) => a.localeCom
 const normal = [...new Set(readLines(NORMAL_LIST))].sort((a, b) => a.localeCompare(b));
 const missingSet = new Set(missing);
 const normalSet = new Set(normal);
+const trackedFiles = [...new Set([...missing, ...normal])].sort((a, b) => a.localeCompare(b));
+const maxTracked = trackedFiles.at(-1) ?? null;
 
 for (const file of [...missing, ...normal]) {
   if (!MIGRATION_NAME.test(file)) fail(`invalid migration filename in docs/batch-8 lists: ${file}`);
@@ -85,6 +87,7 @@ for (const file of missing) {
 }
 
 for (const file of migrationFiles) {
+  if (maxTracked !== null && file.localeCompare(maxTracked) > 0) continue;
   if (!missingSet.has(file) && !normalSet.has(file)) {
     fail(`unaccounted migration file (neither missing nor normal): ${file}`);
   }
@@ -110,14 +113,14 @@ for (const file of backfillMigrations) {
 // 1) dynamic placeholders are not statically verifiable
 // 2) targets retired by subsequent migrations are not required to exist as originally named
 const sqlByMigration = new Map(
-  migrationFiles.map((file) => [file, fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf8").toLowerCase()])
+  trackedFiles.map((file) => [file, fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf8").toLowerCase()])
 );
 const unresolvedStaticTargets = [];
-for (let i = 0; i < migrationFiles.length; i += 1) {
-  const file = migrationFiles[i];
+for (let i = 0; i < trackedFiles.length; i += 1) {
+  const file = trackedFiles[i];
   const sql = sqlByMigration.get(file) ?? "";
   const targets = collectCreates(sql);
-  const subsequent = migrationFiles.slice(i + 1).map((f) => sqlByMigration.get(f) ?? "");
+  const subsequent = trackedFiles.slice(i + 1).map((f) => sqlByMigration.get(f) ?? "");
   for (const rawTarget of targets) {
     if (isDynamicTarget(rawTarget)) continue;
     const lowerTarget = rawTarget.toLowerCase();

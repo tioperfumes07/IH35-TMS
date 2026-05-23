@@ -116,6 +116,7 @@ Top hover-dropdown navigation only for Safety. Never side panel (Jorge G3).
 - `DATABASE_URL` is Neon; Render `ih35-db` is not in active use.
 - Outbox processor runs in-process inside backend (no separate Render worker).
 - Backend refuses to boot if any `db/migrations/*.sql` file is missing from both `_system._schema_migrations` and `ih35_migrations.applied_migrations`; Render Pre-Deploy must be `npm run db:migrate` for backend services.
+- Audit events live in `audit.audit_events` (`uuid`, `created_at`, `event_class`, `severity`, `payload`, `actor_user_uuid`, `source`). `audit.events` is not a table and must not be referenced by code.
 - Documents are soft-delete only with a 90-day Owner recovery window.
 - `docs.file_links` is polymorphic; `entity_id` is not enforced as a single FK.
 - Documents preview uses native browser PDF viewer (not PDF.js).

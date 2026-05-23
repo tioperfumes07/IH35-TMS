@@ -270,7 +270,7 @@ async function main() {
           (SELECT count(*)::int FROM integrations.samsara_vehicles WHERE operating_company_id = $1::uuid) AS vehicles_rows,
           (SELECT count(*)::int FROM integrations.samsara_remote_counts WHERE operating_company_id = $1::uuid AND entity_type = 'drivers') AS rc_drivers_rows,
           (SELECT count(*)::int FROM integrations.samsara_remote_counts WHERE operating_company_id = $1::uuid AND entity_type = 'vehicles') AS rc_vehicles_rows,
-          (SELECT count(*)::int FROM audit.events WHERE operating_company_id = $1::uuid AND event_class = 'samsara_remote_count_collected') AS audit_rows
+          (SELECT count(*)::int FROM audit.audit_events WHERE event_class = 'samsara_remote_count_collected' AND payload->>'operating_company_id' = $1::text) AS audit_rows
       `,
       [OPERATING_COMPANY_ID]
     );

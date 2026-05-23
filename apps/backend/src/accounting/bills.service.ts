@@ -453,7 +453,7 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
           FROM audit.audit_events
           WHERE payload->>'resource_id' = $1
             AND payload->>'resource_type' IN ('accounting.bills','accounting.bill_payments')
-          ORDER BY happened_at DESC
+          ORDER BY created_at DESC
           LIMIT 100
         `,
         [billId]
