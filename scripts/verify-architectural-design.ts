@@ -28,6 +28,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-vendors-tenant-scope.mjs",
   "scripts/verify-94-live-counter-linkage.mjs",
   "scripts/verify-tms-item-push-tenant-chain.mjs",
+  "scripts/verify-tms-account-push-tenant-chain.mjs",
   "scripts/verify-qbo-customer-sync-tenant-chain.mjs",
   "scripts/verify-qbo-sync-event-log-tenant-scope.mjs",
   "scripts/verify-samsara-qbo-vendor-mapping-tenant-scope.mjs",
