@@ -7,6 +7,18 @@ type Props = {
   onClick: (id: string) => void;
 };
 
+function progressPill(progress: DispatchLoadRow["progress_status"]) {
+  if (progress === "early" || progress === "on_track") return "bg-emerald-100 text-emerald-800";
+  if (progress === "behind") return "bg-amber-100 text-amber-800";
+  if (progress === "delayed") return "bg-red-100 text-red-800";
+  return "bg-gray-100 text-gray-700";
+}
+
+function progressLabel(progress: DispatchLoadRow["progress_status"]) {
+  if (!progress) return "unknown";
+  return progress.replace("_", " ");
+}
+
 export function LoadCard({ load, onClick }: Props) {
   const draggableEnabled = canDragLoad(load.status);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -46,6 +58,18 @@ export function LoadCard({ load, onClick }: Props) {
       <div className="mt-1 flex items-center justify-between text-xs">
         <span className="rounded bg-gray-100 px-2 py-0.5 text-gray-700">{STATUS_LABEL[load.status]}</span>
         <span className="font-semibold text-gray-800">{formatMoneyCents(load.rate_total_cents, load.currency_code)}</span>
+      </div>
+      <div className="mt-1">
+        <span
+          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${progressPill(load.progress_status)}`}
+          title={
+            load.progress_eta_delta_minutes == null
+              ? "No live GPS/appointment delta available."
+              : `ETA delta vs scheduled: ${load.progress_eta_delta_minutes} min`
+          }
+        >
+          {progressLabel(load.progress_status)}
+        </span>
       </div>
     </div>
   );

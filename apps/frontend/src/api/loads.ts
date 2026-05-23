@@ -61,6 +61,8 @@ export type DispatchLoadRow = {
   updated_at: string;
   soft_deleted_at: string | null;
   deleted_by_user_id: string | null;
+  progress_status?: "on_track" | "behind" | "delayed" | "early" | "unknown";
+  progress_eta_delta_minutes?: number | null;
 };
 
 export type LoadsListResponse = {
@@ -96,6 +98,7 @@ export type LoadsListFilters = {
   delivery_date_to?: string | null;
   status?: LoadStatus[];
   operating_company_id?: string[];
+  include_progress?: boolean;
 };
 
 type CreateLoadWizardBody = {
@@ -140,6 +143,7 @@ export function listLoads(filters: LoadsListFilters) {
   if (filters.delivery_date_to) query.set("delivery_date_to", filters.delivery_date_to);
   encodeMulti(query, "status", filters.status);
   encodeMulti(query, "operating_company_id", filters.operating_company_id);
+  if (filters.include_progress !== undefined) query.set("include_progress", String(filters.include_progress));
   const qs = query.toString();
   return apiRequest<LoadsListResponse>(`/api/v1/mdata/loads${qs ? `?${qs}` : ""}`);
 }
