@@ -122,6 +122,7 @@ import { BillPaymentsListPage } from "./pages/accounting/BillPaymentsListPage";
 import { AccountingPreSettlementsPage } from "./pages/accounting/AccountingPreSettlementsPage";
 import { ExpenseCategoryMapPage } from "./pages/accounting/ExpenseCategoryMapPage";
 import { CoaRolesPage } from "./pages/accounting/CoaRolesPage";
+import { SalesTaxPage } from "./pages/accounting/SalesTaxPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
@@ -1523,6 +1524,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <FactorReconciliationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/sales-tax"
+          element={
+            <ProtectedRoute>
+              <SalesTaxPage />
             </ProtectedRoute>
           }
         />

@@ -924,6 +924,33 @@ export type CoaRoleRow = {
   updated_at: string | null;
 };
 
+export type SalesTaxAgency = {
+  id: string;
+  operating_company_id: string;
+  name: string;
+  jurisdiction: string | null;
+  agency_vendor_id: string | null;
+  agency_vendor_name?: string | null;
+  created_at: string;
+};
+
+export type SalesTaxReturn = {
+  id: string;
+  operating_company_id: string;
+  agency_id: string;
+  agency_name?: string;
+  period_start: string;
+  period_end: string;
+  taxable_sales_cents: number;
+  non_taxable_sales_cents: number;
+  tax_collected_cents: number;
+  tax_owed_cents: number;
+  status: "open" | "filed" | "paid";
+  filed_at?: string | null;
+  paid_bill_id?: string | null;
+  created_at: string;
+};
+
 export function listExpenseCategoryMappings(
   operatingCompanyId: string,
   options: { include_inactive?: boolean; category_kind?: ExpenseCategoryMapKind } = {}
@@ -993,4 +1020,62 @@ export function validateCoaRoles(operatingCompanyId: string) {
     missing_roles: CoaRole[];
     valid: boolean;
   }>(withCompany("/api/v1/accounting/coa-roles/validate", operatingCompanyId));
+}
+
+export function listSalesTaxAgencies(operatingCompanyId: string) {
+  return apiRequest<{ agencies: SalesTaxAgency[] }>(withCompany("/api/v1/accounting/sales-tax/agencies", operatingCompanyId));
+}
+
+export function createSalesTaxAgency(
+  body: {
+    operating_company_id: string;
+    name: string;
+    jurisdiction?: string;
+    agency_vendor_id?: string;
+  }
+) {
+  return apiRequest<{ agency: SalesTaxAgency }>("/api/v1/accounting/sales-tax/agencies", {
+    method: "POST",
+    body,
+  });
+}
+
+export function listSalesTaxReturns(
+  operatingCompanyId: string,
+  params: { start?: string; end?: string; limit?: number } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.start) query.set("start", params.start);
+  if (params.end) query.set("end", params.end);
+  if (params.limit != null) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return apiRequest<{ returns: SalesTaxReturn[] }>(
+    withCompany(`/api/v1/accounting/sales-tax/returns${qs ? `?${qs}` : ""}`, operatingCompanyId)
+  );
+}
+
+export function prepareSalesTaxReturn(body: {
+  operating_company_id: string;
+  agency_id: string;
+  period_start: string;
+  period_end: string;
+}) {
+  return apiRequest<{ sales_tax_return: SalesTaxReturn }>("/api/v1/accounting/sales-tax/returns/prepare", {
+    method: "POST",
+    body,
+  });
+}
+
+export function fileSalesTaxReturn(id: string, operatingCompanyId: string) {
+  return apiRequest<{ sales_tax_return: SalesTaxReturn }>(`/api/v1/accounting/sales-tax/returns/${id}/file`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+export function markSalesTaxReturnPaid(id: string, body: { operating_company_id: string; paid_bill_id?: string }) {
+  return apiRequest<{ sales_tax_return: SalesTaxReturn }>(`/api/v1/accounting/sales-tax/returns/${id}/mark-paid`, {
+    method: "POST",
+    body,
+  });
 }

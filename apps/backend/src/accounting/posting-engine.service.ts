@@ -354,11 +354,19 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     status: string;
     issue_date: string;
     total_cents: number;
+    tax_cents: number;
     display_id: string | null;
     source_load_id: string | null;
   }>(
     `
-      SELECT id::text, status::text, issue_date::text, total_cents::bigint AS total_cents, display_id, source_load_id::text
+      SELECT
+        id::text,
+        status::text,
+        issue_date::text,
+        total_cents::bigint AS total_cents,
+        tax_cents::bigint AS tax_cents,
+        display_id,
+        source_load_id::text
       FROM accounting.invoices
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -394,9 +402,35 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
     (await resolveRoleAccountOptional(client, operatingCompanyId, "revenue_default")) ??
     (await resolveFirstAccountByType(client, "Income"));
   if (!revenueAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Revenue account mapping is missing");
+  const salesTaxPayableAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, "sales_tax_payable");
 
   const amount = Number(invoice.total_cents ?? 0);
+  const taxAmountRaw = Number(invoice.tax_cents ?? 0);
+  const taxAmount = Math.max(0, Math.min(taxAmountRaw, amount));
+  const revenueAmount = amount - taxAmount;
+  if (taxAmount > 0 && !salesTaxPayableAccountId) {
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Sales tax payable account mapping is missing");
+  }
   const descriptionBase = invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`;
+  const creditLines: PostingLineDraft[] = [];
+  if (revenueAmount > 0) {
+    creditLines.push({
+      account_id: revenueAccountId,
+      debit_or_credit: "credit",
+      amount_cents: revenueAmount,
+      description: `${descriptionBase} Revenue`,
+      source_transaction_line_id: null,
+    });
+  }
+  if (taxAmount > 0 && salesTaxPayableAccountId) {
+    creditLines.push({
+      account_id: salesTaxPayableAccountId,
+      debit_or_credit: "credit",
+      amount_cents: taxAmount,
+      description: `${descriptionBase} Sales tax payable`,
+      source_transaction_line_id: null,
+    });
+  }
   return {
     postingDate: invoice.issue_date,
     memo: `${descriptionBase} posting`,
@@ -408,13 +442,7 @@ async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, s
         description: `${descriptionBase} AR`,
         source_transaction_line_id: null,
       },
-      {
-        account_id: revenueAccountId,
-        debit_or_credit: "credit",
-        amount_cents: amount,
-        description: `${descriptionBase} Revenue`,
-        source_transaction_line_id: null,
-      },
+      ...creditLines,
     ],
   };
 }
