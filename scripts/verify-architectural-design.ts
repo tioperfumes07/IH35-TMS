@@ -61,6 +61,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-migrations-no-postgis-dependency.mjs",
   "scripts/verify-coa-roles-no-string-match-bypass.mjs",
   "scripts/verify-factoring-posting-uses-resolver-and-roles.mjs",
+  "scripts/verify-factoring-fees-not-netted-against-revenue.mjs",
   "scripts/verify-vehicle-driver-pairing-tenant-scope.mjs",
   "scripts/verify-vehicle-driver-pairing-append-only.mjs",
   "scripts/verify-arrival-detection-tenant-scope.mjs",

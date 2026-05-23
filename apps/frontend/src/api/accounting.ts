@@ -102,6 +102,26 @@ export type FactoringAdvanceDetail = FactoringAdvance & {
   }>;
 };
 
+export type FactorReserveBalance = {
+  customer_id: string;
+  customer_name: string;
+  reserve_balance_cents: number;
+  reserve_accrued_cents: number;
+  reserve_released_cents: number;
+};
+
+export type FactorReserveEvent = {
+  factoring_advance_id: string;
+  display_id: string;
+  customer_id: string;
+  customer_name: string;
+  status: string;
+  reserve_amount_cents: number;
+  release_amount_cents: number;
+  factor_fee_cents: number;
+  occurred_at: string;
+};
+
 export type Payment = {
   id: string;
   operating_company_id: string;
@@ -580,6 +600,13 @@ export function listFactoringAdvances(
 
 export function getFactoringAdvance(id: string, operatingCompanyId: string) {
   return apiRequest<FactoringAdvanceDetail>(withCompany(`/api/v1/accounting/factoring-advances/${id}`, operatingCompanyId));
+}
+
+export function listFactoringReserveBalances(operatingCompanyId: string) {
+  return apiRequest<{
+    rows: FactorReserveBalance[];
+    recent_events: FactorReserveEvent[];
+  }>(withCompany("/api/v1/accounting/factoring-reserve-balances", operatingCompanyId));
 }
 
 export function listFactoringCandidateInvoices(operatingCompanyId: string) {

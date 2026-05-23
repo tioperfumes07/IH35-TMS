@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { listFactorReserveBalances, postFactoringFeeExpenseEvent } from "./factoring-fees-posting/poster.service.js";
 import { postFactoringAdvanceEvent, postFactoringReleaseEvent } from "./factoring-posting/poster.service.js";
 import { nextFactoringDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
@@ -115,6 +116,17 @@ async function fetchAdvanceDetail(client: any, advanceId: string) {
 }
 
 export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
+  app.get("/api/v1/accounting/factoring-reserve-balances", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const payload = await listFactorReserveBalances({
+      operating_company_id: query.data.operating_company_id,
+    });
+    return payload;
+  });
+
   app.get("/api/v1/accounting/factoring-advances", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -556,6 +568,16 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         released_at_iso: releasedAt,
         release_amount_cents: Number(body.data.release_amount_cents ?? 0),
         factor_fee_cents: Number(body.data.factor_fee_cents ?? 0),
+      });
+      await postFactoringFeeExpenseEvent({
+        operating_company_id: query.data.operating_company_id,
+        factoring_advance_id: params.data.id,
+        factor_fee_cents: Number(body.data.factor_fee_cents ?? 0),
+        released_at_iso: releasedAt,
+        actor: {
+          user_id: user.uuid,
+          role: user.role,
+        },
       });
 
       const invoiceTotal = Number(advance.invoice_total_cents ?? 0);
