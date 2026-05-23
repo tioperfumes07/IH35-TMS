@@ -80,6 +80,7 @@ export function FuelPlannerHomePage() {
 
   const detail = detailQuery.data ?? null;
   const stops = detail?.stops ?? [];
+  const hosAware = detail?.hos_aware_recommendations ?? [];
   const expensiveStates = settingsQuery.data?.expensive_states ?? ["NY", "PA", "NJ", "CA", "IL", "OR", "WA", "HI"];
 
   const driverPct = useMemo(() => {
@@ -158,6 +159,35 @@ export function FuelPlannerHomePage() {
       <section className="space-y-2">
         <h3 className="text-sm font-semibold text-gray-900">HOS-aware stop-logic panel</h3>
         <StopReasoningTable stops={stops} />
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="text-sm font-semibold text-gray-900">Recommended stops (HOS-aware)</h3>
+        <div className="rounded border border-gray-200 bg-white p-3">
+          {hosAware.length === 0 ? (
+            <p className="text-xs text-gray-500">No HOS-aware stop recommendations available.</p>
+          ) : (
+            <div className="space-y-2">
+              {hosAware.map((rec) => (
+                <div key={`${rec.stop_id}-${rec.reason}`} className="rounded border border-gray-200 p-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-gray-900">
+                      Stop {rec.sequence_number} · {rec.city ?? "Unknown"}, {rec.state ?? "NA"}
+                    </span>
+                    <span className="rounded bg-blue-100 px-2 py-0.5 text-blue-700">
+                      {rec.reason === "low_fuel" ? "low fuel" : "10-hr reset"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-gray-600">
+                    ETA: {rec.estimated_arrival_at ? new Date(rec.estimated_arrival_at).toLocaleString() : "n/a"} · HOS drive rem:{" "}
+                    {rec.drive_remaining_min_at_arrival} min · Mile {Math.round(rec.estimated_route_mile)}
+                  </p>
+                  <p className="text-gray-500">{rec.note}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       <TripPlanSummaryBanner route={detail ?? activeRoute} />
