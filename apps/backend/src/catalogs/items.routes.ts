@@ -4,6 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { enqueueTmsItemPushRequested } from "../qbo/tms-item-push-chain.service.js";
 
 const itemTypeSchema = z.enum(["Service", "Inventory", "NonInventory", "Bundle", "Discount", "Charge"]);
 
@@ -29,6 +30,7 @@ const createBodySchema = z.object({
   qbo_item_id: z.string().trim().max(100).optional(),
   taxable: z.boolean().default(false),
   notes: z.string().trim().max(2000).optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const updateBodySchema = z
@@ -45,6 +47,7 @@ const updateBodySchema = z
     taxable: z.boolean().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
+    operating_company_id: z.string().uuid().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -63,6 +66,31 @@ function mapItemConflict(constraint?: string): string {
   if (constraint.includes("item_code")) return "catalog_item_conflict_item_code";
   if (constraint.includes("qbo_item_id")) return "catalog_item_conflict_qbo_item_id";
   return "catalog_item_conflict";
+}
+
+async function resolveOperatingCompanyId(
+  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  requested?: string,
+) {
+  if (requested) return requested;
+  const res = await client.query(
+    `
+      SELECT c.id
+      FROM identity.users u
+      JOIN org.companies c ON c.id = u.default_company_id
+      WHERE u.id = $1::uuid
+        AND c.deactivated_at IS NULL
+      UNION
+      SELECT c.id
+      FROM org.companies c
+      WHERE c.id IN (SELECT org.user_accessible_company_ids())
+      ORDER BY id
+      LIMIT 1
+    `,
+    [userId],
+  );
+  return res.rows[0]?.id ?? null;
 }
 
 export async function registerItemRoutes(app: FastifyInstance) {
@@ -160,6 +188,14 @@ export async function registerItemRoutes(app: FastifyInstance) {
           item_code: row.item_code,
           item_type: row.item_type,
         });
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (operatingCompanyId) {
+          await enqueueTmsItemPushRequested(client, {
+            operating_company_id: operatingCompanyId,
+            item_id: String(row.id),
+            operation: "create",
+          });
+        }
         return row;
       });
       return reply.code(201).send(created);
@@ -275,6 +311,14 @@ export async function registerItemRoutes(app: FastifyInstance) {
           resource_type: "catalogs.items",
           changes,
         });
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (operatingCompanyId) {
+          await enqueueTmsItemPushRequested(client, {
+            operating_company_id: operatingCompanyId,
+            item_id: String(updatedRow.id),
+            operation: "update",
+          });
+        }
         return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "catalog_item_not_found" });
@@ -331,6 +375,14 @@ export async function registerItemRoutes(app: FastifyInstance) {
         resource_type: "catalogs.items",
         was_already_deactivated: wasAlreadyDeactivated,
       });
+      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (operatingCompanyId) {
+        await enqueueTmsItemPushRequested(client, {
+          operating_company_id: operatingCompanyId,
+          item_id: String(oldRow.id),
+          operation: "update",
+        });
+      }
 
       return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
     });
