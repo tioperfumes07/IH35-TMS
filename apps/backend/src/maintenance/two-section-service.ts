@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { resolveBillLineAccountId } from "../bills/bill-line-account-resolution.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -322,6 +323,18 @@ async function copyToAccountingLines(
   destinationFkColumn: "bill_id" | "expense_id",
   destinationId: string
 ) {
+  const woContext = await client.query<{ operating_company_id: string }>(
+    `
+      SELECT operating_company_id::text
+      FROM maintenance.work_orders
+      WHERE id = $1::uuid
+      LIMIT 1
+    `,
+    [sourceWoId]
+  );
+  const operatingCompanyId = String(woContext.rows[0]?.operating_company_id ?? "");
+  if (!operatingCompanyId) throw new Error("work_order_not_found_for_bill_line_copy");
+
   const source = await client.query<{
     id: string;
     line_type: string;
@@ -353,29 +366,66 @@ async function copyToAccountingLines(
   let seq = 1;
   for (const row of source.rows) {
     const parentMapped = row.parent_line_uuid ? idMap.get(row.parent_line_uuid) ?? null : null;
-    const insert = await client.query<{ id: string }>(
-      `
-        INSERT INTO ${destinationTable} (
-          ${destinationFkColumn}, line_sequence, amount, description, section, parent_line_uuid,
-          expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-        RETURNING id
-      `,
-      [
-        destinationId,
-        seq++,
-        asNumber(row.amount),
-        row.description,
-        row.section,
-        parentMapped,
-        row.expense_category_uuid,
-        row.service_item_uuid,
-        row.part_uuid,
-        row.labor_rate_uuid,
-        row.part_location_codes ?? null,
-        row.id,
-      ]
-    );
+    const sequence = seq++;
+    const isBillLineCopy = destinationTable === "accounting.bill_lines";
+    const insert = isBillLineCopy
+      ? await (async () => {
+          const resolution = await resolveBillLineAccountId(operatingCompanyId, {
+            description: row.description,
+            line_type: row.line_type,
+            category_kind: "maintenance",
+          });
+          return client.query<{ id: string }>(
+            `
+              INSERT INTO accounting.bill_lines (
+                ${destinationFkColumn}, line_sequence, amount, description, section, parent_line_uuid,
+                expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid,
+                category_kind, category_code, account_id
+              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+              RETURNING id
+            `,
+            [
+              destinationId,
+              sequence,
+              asNumber(row.amount),
+              row.description,
+              row.section,
+              parentMapped,
+              row.expense_category_uuid,
+              row.service_item_uuid,
+              row.part_uuid,
+              row.labor_rate_uuid,
+              row.part_location_codes ?? null,
+              row.id,
+              resolution.category_kind,
+              resolution.category_code,
+              resolution.account_id,
+            ]
+          );
+        })()
+      : await client.query<{ id: string }>(
+          `
+            INSERT INTO ${destinationTable} (
+              ${destinationFkColumn}, line_sequence, amount, description, section, parent_line_uuid,
+              expense_category_uuid, service_item_uuid, part_uuid, labor_rate_uuid, part_location_codes, linked_wo_line_uuid
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+            RETURNING id
+          `,
+          [
+            destinationId,
+            sequence,
+            asNumber(row.amount),
+            row.description,
+            row.section,
+            parentMapped,
+            row.expense_category_uuid,
+            row.service_item_uuid,
+            row.part_uuid,
+            row.labor_rate_uuid,
+            row.part_location_codes ?? null,
+            row.id,
+          ]
+        );
     idMap.set(row.id, String(insert.rows[0]?.id ?? ""));
   }
 }
