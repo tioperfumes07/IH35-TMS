@@ -1,0 +1,167 @@
+export type HosDutyStatus =
+  | "off_duty"
+  | "sleeper"
+  | "driving"
+  | "on_duty_not_driving"
+  | "personal_conveyance"
+  | "yard_moves";
+
+export type HosDutyStatusEvent = {
+  started_at: string;
+  ended_at: string | null;
+  duty_status: HosDutyStatus;
+};
+
+export type HosClocks = {
+  drive_remaining_min: number;
+  window_remaining_min: number;
+  break_remaining_min: number;
+  cycle_remaining_min: number;
+  last_reset_at: string | null;
+  status: "ok" | "warning_1hr" | "warning_15min" | "violation";
+};
+
+type DbClient = {
+  query: <T extends Record<string, unknown> = Record<string, unknown>>(
+    text: string,
+    params?: unknown[]
+  ) => Promise<{ rows: T[] }>;
+};
+
+const TEN_HOURS_MIN = 10 * 60;
+const ELEVEN_HOURS_MIN = 11 * 60;
+const FOURTEEN_HOURS_MIN = 14 * 60;
+const EIGHT_HOURS_MIN = 8 * 60;
+const BREAK_MIN = 30;
+const CYCLE_70_EIGHT_DAYS_MIN = 70 * 60;
+const EIGHT_DAYS_MS = 8 * 24 * 60 * 60 * 1000;
+
+function asDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function minutesBetween(start: Date, end: Date): number {
+  if (end <= start) return 0;
+  return (end.getTime() - start.getTime()) / 60000;
+}
+
+function overlapMinutes(start: Date, end: Date, rangeStart: Date, rangeEnd: Date): number {
+  if (rangeEnd <= rangeStart || end <= rangeStart || start >= rangeEnd) return 0;
+  const s = start > rangeStart ? start : rangeStart;
+  const e = end < rangeEnd ? end : rangeEnd;
+  return minutesBetween(s, e);
+}
+
+function isResetDuty(status: HosDutyStatus): boolean {
+  return status === "off_duty" || status === "sleeper" || status === "personal_conveyance";
+}
+
+function isDriving(status: HosDutyStatus): boolean {
+  return status === "driving";
+}
+
+function isOnDutyForCycle(status: HosDutyStatus): boolean {
+  return status === "driving" || status === "on_duty_not_driving" || status === "yard_moves";
+}
+
+export function computeHosClocks(events: HosDutyStatusEvent[], asOfInput: Date = new Date()): HosClocks {
+  const asOf = new Date(asOfInput);
+  const sorted = [...events]
+    .map((event) => ({ ...event, start: asDate(event.started_at), end: asDate(event.ended_at) ?? asOf }))
+    .filter((event): event is HosDutyStatusEvent & { start: Date; end: Date } => Boolean(event.start))
+    .filter((event) => event.start < asOf)
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+  if (sorted.length === 0) {
+    return {
+      drive_remaining_min: ELEVEN_HOURS_MIN,
+      window_remaining_min: FOURTEEN_HOURS_MIN,
+      break_remaining_min: EIGHT_HOURS_MIN,
+      cycle_remaining_min: CYCLE_70_EIGHT_DAYS_MIN,
+      last_reset_at: null,
+      status: "ok",
+    };
+  }
+
+  let resetAccumulator = 0;
+  let lastResetAt: Date | null = null;
+  for (const event of sorted) {
+    const segmentEnd = event.end < asOf ? event.end : asOf;
+    const segmentMin = minutesBetween(event.start, segmentEnd);
+    if (segmentMin <= 0) continue;
+    if (isResetDuty(event.duty_status)) {
+      resetAccumulator += segmentMin;
+      if (resetAccumulator >= TEN_HOURS_MIN) {
+        lastResetAt = new Date(segmentEnd);
+      }
+    } else {
+      resetAccumulator = 0;
+    }
+  }
+
+  const resetBase = lastResetAt ?? sorted[0].start;
+  let drivingSinceReset = 0;
+  let drivingSinceBreak = 0;
+  let nonDrivingStreak = 0;
+  for (const event of sorted) {
+    const segmentEnd = event.end < asOf ? event.end : asOf;
+    const segmentMinutes = overlapMinutes(event.start, segmentEnd, resetBase, asOf);
+    if (segmentMinutes <= 0) continue;
+    if (isDriving(event.duty_status)) {
+      drivingSinceReset += segmentMinutes;
+      drivingSinceBreak += segmentMinutes;
+      nonDrivingStreak = 0;
+      continue;
+    }
+    nonDrivingStreak += segmentMinutes;
+    if (nonDrivingStreak >= BREAK_MIN) {
+      drivingSinceBreak = 0;
+    }
+  }
+
+  const cycleWindowStart = new Date(asOf.getTime() - EIGHT_DAYS_MS);
+  let cycleOnDuty = 0;
+  for (const event of sorted) {
+    if (!isOnDutyForCycle(event.duty_status)) continue;
+    const segmentEnd = event.end < asOf ? event.end : asOf;
+    cycleOnDuty += overlapMinutes(event.start, segmentEnd, cycleWindowStart, asOf);
+  }
+
+  const driveRemaining = Math.max(0, Math.floor(ELEVEN_HOURS_MIN - drivingSinceReset));
+  const windowElapsed = minutesBetween(resetBase, asOf);
+  const windowRemaining = Math.max(0, Math.floor(FOURTEEN_HOURS_MIN - windowElapsed));
+  const breakRemaining = Math.max(0, Math.floor(EIGHT_HOURS_MIN - drivingSinceBreak));
+  const cycleRemaining = Math.max(0, Math.floor(CYCLE_70_EIGHT_DAYS_MIN - cycleOnDuty));
+
+  const minimum = Math.min(driveRemaining, windowRemaining, breakRemaining, cycleRemaining);
+  const status: HosClocks["status"] =
+    minimum <= 0 ? "violation" : minimum <= 15 ? "warning_15min" : minimum <= 60 ? "warning_1hr" : "ok";
+
+  return {
+    drive_remaining_min: driveRemaining,
+    window_remaining_min: windowRemaining,
+    break_remaining_min: breakRemaining,
+    cycle_remaining_min: cycleRemaining,
+    last_reset_at: lastResetAt ? lastResetAt.toISOString() : null,
+    status,
+  };
+}
+
+export async function getCurrentClocks(client: DbClient, operatingCompanyId: string, driverId: string, asOf = new Date()): Promise<HosClocks> {
+  const res = await client.query<HosDutyStatusEvent>(
+    `
+      SELECT
+        e.started_at::text,
+        e.ended_at::text,
+        e.duty_status
+      FROM hos.duty_status_events e
+      WHERE e.operating_company_id = $1::uuid
+        AND e.driver_id = $2::uuid
+      ORDER BY e.started_at ASC
+    `,
+    [operatingCompanyId, driverId]
+  );
+  return computeHosClocks(res.rows, asOf);
+}

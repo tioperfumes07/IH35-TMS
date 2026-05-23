@@ -179,6 +179,7 @@ import { registerDailyTasksRoutes } from "./daily-tasks/daily-tasks.routes.js";
 import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/daily-task-alerts.cron.js";
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
+import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -443,6 +444,7 @@ async function main() {
   await registerLegalAttorneyReviewRoutes(app);
   await registerLegalMattersRoutes(app);
   await registerDailyTasksRoutes(app);
+  await registerTelematicsHosRoutes(app);
 
   try {
     await initializeQboHistoricalImportRunner(app);
