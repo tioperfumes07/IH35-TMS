@@ -63,20 +63,26 @@ async function getDriverForVehicleAtTime(
   unitId: string,
   ts: string
 ): Promise<string | null> {
-  const res = await client.query<{ driver_id: string | null }>(
-    `
-      SELECT a.driver_id::text
-      FROM telematics.vehicle_driver_assignments a
-      WHERE a.operating_company_id = $1::uuid
-        AND a.unit_id = $2::uuid
-        AND a.started_at <= $3::timestamptz
-        AND (a.ended_at IS NULL OR a.ended_at > $3::timestamptz)
-      ORDER BY a.started_at DESC, a.created_at DESC
-      LIMIT 1
-    `,
-    [operatingCompanyId, unitId, ts]
-  );
-  return res.rows[0]?.driver_id ?? null;
+  try {
+    const res = await client.query<{ driver_id: string | null }>(
+      `
+        SELECT a.driver_id::text
+        FROM telematics.vehicle_driver_assignments a
+        WHERE a.operating_company_id = $1::uuid
+          AND a.unit_id = $2::uuid
+          AND a.started_at <= $3::timestamptz
+          AND (a.ended_at IS NULL OR a.ended_at > $3::timestamptz)
+        ORDER BY a.started_at DESC, a.created_at DESC
+        LIMIT 1
+      `,
+      [operatingCompanyId, unitId, ts]
+    );
+    return res.rows[0]?.driver_id ?? null;
+  } catch (error) {
+    const message = String((error as Error).message ?? "");
+    if (message.includes("telematics.vehicle_driver_assignments")) return null;
+    throw error;
+  }
 }
 
 async function fetchRemainingStops(client: DbClient, input: ArrivalGpsInput): Promise<RemainingStopRow[]> {
