@@ -1,0 +1,11 @@
+{
+  "tables": [
+    "qa.parent"
+  ],
+  "indexes": [
+    "qa.idx_child_parent"
+  ],
+  "fks": [
+    "qa.child.fk_child_parent"
+  ]
+}
