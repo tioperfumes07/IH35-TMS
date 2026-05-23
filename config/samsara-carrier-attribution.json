@@ -1,0 +1,20 @@
+{
+  "owner_company_id_for_all": "b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e",
+  "lease_assignment_rules": [
+    {
+      "samsara_tag": "IH 35 TRANSPORTATION",
+      "operating_company_id": "91e0bf0a-133f-4ce8-a734-2586cfa66d96"
+    },
+    {
+      "samsara_tag": "USMCA",
+      "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80",
+      "active": false,
+      "active_from": "2026-07-01"
+    },
+    {
+      "samsara_tag": "IH 35 Trucking",
+      "operating_company_id": null
+    }
+  ],
+  "default_lease": "91e0bf0a-133f-4ce8-a734-2586cfa66d96"
+}
