@@ -553,7 +553,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               ELSE CONCAT_WS(' ', d.first_name, d.last_name)
             END AS assigned_primary_driver_name,
             sp.city AS first_pickup_city,
-            sd.city AS first_delivery_city
+            sd.city AS first_delivery_city,
+            EXISTS (
+              SELECT 1
+              FROM geo.geofences g
+              WHERE g.operating_company_id = l.operating_company_id
+                AND g.location_kind = 'customer_site'
+                AND g.is_active = true
+                AND g.location_ref_id = l.customer_id
+            ) AS geofence_ready
           FROM mdata.loads l
           JOIN mdata.customers c ON c.id = l.customer_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
