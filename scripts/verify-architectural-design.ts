@@ -46,6 +46,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-expense-category-map-tenant-scope.mjs",
   "scripts/verify-expense-category-map-soft-delete.mjs",
   "scripts/verify-maintenance-posting-uses-resolver.mjs",
+  "scripts/verify-fuel-posting-uses-resolver.mjs",
 ] as const;
 
 type LockedUiSurface = {
