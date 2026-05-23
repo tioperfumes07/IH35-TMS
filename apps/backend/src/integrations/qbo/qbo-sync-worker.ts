@@ -4,6 +4,7 @@ import type { PoolClient } from "pg";
 import { pool, withLuciaBypass } from "../../auth/db.js";
 import { enqueueSyncJob, type QueueEntityType } from "./qbo-sync.service.js";
 import { notifyQboSyncDeadLetter } from "../../qbo/sync-alert-notifier.js";
+import { MAX_SYNC_ATTEMPTS, transitionToFailed, transitionToInProgress, transitionToSucceeded } from "../../qbo/sync-state-machine.js";
 
 export type SyncRunRow = {
   id: string;
@@ -16,11 +17,6 @@ export type SyncRunRow = {
 
 function hashPayload(input: unknown) {
   return crypto.createHash("sha256").update(JSON.stringify(input ?? {})).digest("hex");
-}
-
-export function computeSyncRunBackoffMs(retryCountAfterFailure: number): number {
-  const exp = Math.min(Math.max(retryCountAfterFailure, 1), 16);
-  return Math.pow(2, exp) * 60_000;
 }
 
 const QUEUE_ENTITY_TYPES = new Set<string>([
@@ -78,18 +74,13 @@ async function executeSyncRun(row: SyncRunRow): Promise<void> {
 
 async function markSuccess(runId: string) {
   await withLuciaBypass(async (client: PoolClient) => {
-    await client.query(
-      `
-        UPDATE qbo.sync_runs
-        SET status = 'success',
-            completed_at = now(),
-            error_message = NULL,
-            next_retry_at = NULL,
-            records_processed = COALESCE(records_processed, 0) + 1
-        WHERE id = $1::uuid
-      `,
-      [runId]
+    const run = await client.query<{ operating_company_id: string }>(
+      `SELECT operating_company_id::text AS operating_company_id FROM qbo.sync_runs WHERE id = $1::uuid LIMIT 1`,
+      [runId],
     );
+    const operatingCompanyId = run.rows[0]?.operating_company_id;
+    if (!operatingCompanyId) return;
+    await transitionToSucceeded(client, { syncRunId: runId, operatingCompanyId });
   });
 }
 
@@ -149,25 +140,16 @@ async function insertCriticalAlert(input: {
 async function finalizeFailure(row: SyncRunRow, err: unknown) {
   const message = String((err as Error)?.message ?? "sync_failed").slice(0, 2000);
   const nextRetryCount = Number(row.retry_count ?? 0) + 1;
+  const transition = await withLuciaBypass(async (client: PoolClient) =>
+    transitionToFailed(client, {
+      syncRunId: row.id,
+      operatingCompanyId: row.operating_company_id,
+      attemptCountAfterFailure: nextRetryCount,
+      errorMessage: message,
+    }),
+  );
 
-  if (nextRetryCount >= 5) {
-    await withLuciaBypass(async (client: PoolClient) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
-      await client.query(
-        `
-          UPDATE qbo.sync_runs
-          SET status = 'dead_letter',
-              retry_count = $2,
-              completed_at = now(),
-              dead_letter_at = now(),
-              error_message = $3,
-              next_retry_at = NULL
-          WHERE id = $1::uuid
-        `,
-        [row.id, nextRetryCount, message]
-      );
-    });
-
+  if (transition.terminal) {
     await insertCriticalAlert({
       operatingCompanyId: row.operating_company_id,
       syncRunId: row.id,
@@ -199,25 +181,6 @@ async function finalizeFailure(row: SyncRunRow, err: unknown) {
     });
     return;
   }
-
-  const backoffMs = computeSyncRunBackoffMs(nextRetryCount);
-  const nextRetryAt = new Date(Date.now() + backoffMs).toISOString();
-
-  await withLuciaBypass(async (client: PoolClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [row.operating_company_id]);
-    await client.query(
-      `
-        UPDATE qbo.sync_runs
-        SET status = 'failed',
-            retry_count = $2,
-            error_message = $3,
-            completed_at = NULL,
-            next_retry_at = $4::timestamptz
-        WHERE id = $1::uuid
-      `,
-      [row.id, nextRetryCount, message, nextRetryAt]
-    );
-  });
 }
 
 export async function processQboSyncRunsOnce(log?: FastifyInstance["log"]): Promise<{ processed: number }> {
@@ -247,7 +210,7 @@ export async function processQboSyncRunsOnce(log?: FastifyInstance["log"]): Prom
             status = 'pending'
             OR (
               status = 'failed'
-              AND retry_count < 5
+              AND retry_count < $1
               AND (next_retry_at IS NULL OR next_retry_at <= now())
             )
           )
@@ -255,7 +218,8 @@ export async function processQboSyncRunsOnce(log?: FastifyInstance["log"]): Prom
         ORDER BY COALESCE(next_retry_at, started_at) ASC NULLS LAST
         LIMIT 10
         FOR UPDATE SKIP LOCKED
-      `
+      `,
+      [MAX_SYNC_ATTEMPTS],
     );
 
     claimed = sel.rows.map((r: SyncRunRow) => ({
@@ -268,17 +232,6 @@ export async function processQboSyncRunsOnce(log?: FastifyInstance["log"]): Prom
       return { processed: 0 };
     }
 
-    await client.query(
-      `
-        UPDATE qbo.sync_runs
-        SET status = 'running',
-            started_at = COALESCE(started_at, now()),
-            error_message = NULL
-        WHERE id = ANY($1::uuid[])
-      `,
-      [claimed.map((r) => r.id)]
-    );
-
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
@@ -290,6 +243,12 @@ export async function processQboSyncRunsOnce(log?: FastifyInstance["log"]): Prom
 
   for (const row of claimed) {
     try {
+      await withLuciaBypass(async (client: PoolClient) => {
+        await transitionToInProgress(client, {
+          syncRunId: row.id,
+          operatingCompanyId: row.operating_company_id,
+        });
+      });
       await withTimeout(executeSyncRun(row), 30_000, row.id);
       await markSuccess(row.id);
     } catch (error) {

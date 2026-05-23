@@ -128,6 +128,7 @@ export async function listQboSyncEventLog(params: {
   since?: string;
   kind?: QboSyncEventKind;
   severity?: QboSyncEventSeverity;
+  state?: "dead_letter";
 }) {
   const q = new URLSearchParams({ operating_company_id: params.operating_company_id });
   if (params.limit != null) q.set("limit", String(params.limit));
@@ -135,6 +136,7 @@ export async function listQboSyncEventLog(params: {
   if (params.since) q.set("since", params.since);
   if (params.kind) q.set("kind", params.kind);
   if (params.severity) q.set("severity", params.severity);
+  if (params.state) q.set("state", params.state);
   return apiRequest<{ events: QboSyncEventLogRecord[]; next_cursor: string | null; total_estimated: number }>(
     `/api/v1/qbo/sync-event-log?${q.toString()}`,
   );

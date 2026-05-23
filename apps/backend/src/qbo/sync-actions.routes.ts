@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { appendQboSyncActionAuditEvent } from "../integrations/qbo/sync-action-audit.js";
+import { dismissTerminalRun, transitionTerminalToPending } from "./sync-state-machine.js";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -24,21 +25,11 @@ export async function registerQboSyncActionsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const updated = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-      const res = await client.query(
-        `
-          UPDATE qbo.sync_runs
-          SET status = 'pending',
-              retry_count = 0,
-              error_message = NULL,
-              next_retry_at = NULL,
-              dead_letter_at = NULL
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
-          RETURNING id
-        `,
-        [params.data.id, body.data.operating_company_id]
-      );
-      return res.rows[0]?.id ? String(res.rows[0].id) : null;
+      const ok = await transitionTerminalToPending(client, {
+        syncRunId: params.data.id,
+        operatingCompanyId: body.data.operating_company_id,
+      });
+      return ok ? params.data.id : null;
     });
 
     if (!updated) return reply.code(404).send({ error: "sync_run_not_found" });
@@ -68,19 +59,11 @@ export async function registerQboSyncActionsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const updated = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-      const res = await client.query(
-        `
-          UPDATE qbo.sync_runs
-          SET status = 'cancelled',
-              dead_letter_at = NULL
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND status = 'dead_letter'
-          RETURNING id
-        `,
-        [params.data.id, body.data.operating_company_id]
-      );
-      return res.rows[0]?.id ? String(res.rows[0].id) : null;
+      const ok = await dismissTerminalRun(client, {
+        syncRunId: params.data.id,
+        operatingCompanyId: body.data.operating_company_id,
+      });
+      return ok ? params.data.id : null;
     });
 
     if (!updated) return reply.code(409).send({ error: "dismiss_not_dead_letter" });
