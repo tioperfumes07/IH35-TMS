@@ -1,6 +1,6 @@
 import { apiRequest } from "./client";
 
-export type GeofenceLocationKind = "customer_site" | "yard" | "vendor_site" | "custom";
+export type GeofenceLocationKind = "customer_site" | "yard" | "vendor_site" | "custom" | "dot_inspection_station";
 
 export type Geofence = {
   id: string;
