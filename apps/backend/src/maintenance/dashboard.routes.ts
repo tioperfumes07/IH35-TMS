@@ -162,4 +162,39 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     });
     return payload;
   });
+
+  app.get("/api/v1/maintenance/dashboard/dtc-auto-work-orders", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const companyId = parsed.data.operating_company_id;
+
+    const rows = await withCompany(user.uuid, companyId, async (client) => {
+      if (!(await relationExists(client, "maintenance.work_orders"))) return [];
+      const res = await client.query(
+        `
+          SELECT
+            w.id::text,
+            w.display_id,
+            w.unit_id::text,
+            u.unit_number,
+            w.status::text,
+            w.description,
+            w.opened_at::text,
+            w.updated_at::text
+          FROM maintenance.work_orders w
+          JOIN mdata.units u ON u.id = w.unit_id
+          WHERE w.operating_company_id = $1::uuid
+            AND w.status::text IN ('open', 'in_progress', 'waiting_parts')
+            AND w.description ILIKE '[samsara_dtc_auto]%'
+          ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
+          LIMIT 50
+        `,
+        [companyId]
+      );
+      return res.rows;
+    });
+    return { rows };
+  });
 }
