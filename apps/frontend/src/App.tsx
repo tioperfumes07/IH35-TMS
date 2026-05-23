@@ -22,6 +22,7 @@ import { BankingHomePage } from "./pages/banking/BankingHome";
 import { TransfersListPage } from "./pages/banking/TransfersListPage";
 import { BankingObligationReconcilePage } from "./pages/banking/BankingObligationReconcilePage";
 import { ReconciliationWorkspacePage } from "./pages/banking/ReconciliationWorkspace";
+import { BankReconciliationPage } from "./pages/banking/BankReconciliationPage";
 import { CategorizationRulesPage } from "./pages/banking/CategorizationRulesPage";
 import { QboSyncQueuePage } from "./pages/banking/QboSyncQueuePage";
 import { EmailQueuePage } from "./pages/banking/EmailQueuePage";
@@ -449,6 +450,14 @@ export default function App() {
         />
         <Route
           path="/banking/reconciliation"
+          element={
+            <ProtectedRoute>
+              <BankReconciliationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/reconciliation-workspace"
           element={
             <ProtectedRoute>
               <ReconciliationWorkspacePage />
