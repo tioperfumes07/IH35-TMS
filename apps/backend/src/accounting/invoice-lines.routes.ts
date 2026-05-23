@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
+import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -118,6 +119,11 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
         "info",
         "P3-T11.20.2-INVOICE-FLOW"
       );
+      await enqueueTmsInvoicePushRequested(client, {
+        operating_company_id: query.data.operating_company_id,
+        invoice_id: params.data.id,
+        operation: "update",
+      });
       return { ok: true as const, code: 201 as const, data: { line, totals } };
     });
 
@@ -203,6 +209,11 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
         "info",
         "P3-T11.20.2-INVOICE-FLOW"
       );
+      await enqueueTmsInvoicePushRequested(client, {
+        operating_company_id: query.data.operating_company_id,
+        invoice_id: params.data.id,
+        operation: "update",
+      });
       return { ok: true as const, code: 200 as const, data: { line, totals } };
     });
 
@@ -247,6 +258,11 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
         "warning",
         "P3-T11.20.2-INVOICE-FLOW"
       );
+      await enqueueTmsInvoicePushRequested(client, {
+        operating_company_id: query.data.operating_company_id,
+        invoice_id: params.data.id,
+        operation: "update",
+      });
       return { ok: true as const, code: 200 as const, data: { ok: true, totals } };
     });
 
