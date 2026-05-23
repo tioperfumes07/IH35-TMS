@@ -1,0 +1,7 @@
+{
+  "tables": [
+    "safety.civil_fines"
+  ],
+  "indexes": [],
+  "fks": []
+}

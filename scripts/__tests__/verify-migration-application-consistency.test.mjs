@@ -38,9 +38,29 @@ test("handles table rename across migration order", () => {
   assert.match(run.stdout, /verify:migration-application-consistency OK/);
 });
 
+test("handles table rename inside DO block", () => {
+  const migrationsDir = path.resolve(fixturesRoot, "do-rename-migrations");
+  const stateFile = path.resolve(fixturesRoot, "state-do-rename-ok.json");
+  const run = spawnSync("node", [scriptPath, "--migrations-dir", migrationsDir, "--state-file", stateFile], {
+    encoding: "utf8",
+  });
+  assert.equal(run.status, 0);
+  assert.match(run.stdout, /verify:migration-application-consistency OK/);
+});
+
 test("ignores comments and notices containing the word would", () => {
   const migrationsDir = path.resolve(fixturesRoot, "would-noise-migrations");
   const stateFile = path.resolve(fixturesRoot, "state-would-noise-ok.json");
+  const run = spawnSync("node", [scriptPath, "--migrations-dir", migrationsDir, "--state-file", stateFile], {
+    encoding: "utf8",
+  });
+  assert.equal(run.status, 0);
+  assert.match(run.stdout, /verify:migration-application-consistency OK/);
+});
+
+test("ignores conditional foreign keys added inside DO blocks", () => {
+  const migrationsDir = path.resolve(fixturesRoot, "do-conditional-fk-migrations");
+  const stateFile = path.resolve(fixturesRoot, "state-do-conditional-fk-ok.json");
   const run = spawnSync("node", [scriptPath, "--migrations-dir", migrationsDir, "--state-file", stateFile], {
     encoding: "utf8",
   });

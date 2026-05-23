@@ -1,0 +1,8 @@
+{
+  "tables": [
+    "qa.parent",
+    "qa.child"
+  ],
+  "indexes": [],
+  "fks": []
+}

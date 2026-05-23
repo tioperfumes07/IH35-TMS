@@ -269,7 +269,7 @@ function collectExpectedObjects(migrationsDirectory) {
       if (/^do\b/i.test(lowerStmt)) {
         const doMasked = normalizedStmt.replace(/'(?:''|[^'])*'/g, "''");
         const doOps = doMasked.match(
-          /(drop\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+(?:rename\s+to|set\s+schema|add\s+constraint|drop\s+constraint)\s+[^;]+|create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+on\s+(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|drop\s+index\s+(?:concurrently\s+)?(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+index\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+rename\s+to\s+"?[\w$]+"?|alter\s+schema\s+"?[\w$]+"?\s+rename\s+to\s+"?[\w$]+"?)/gi
+          /(drop\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+(?:rename\s+to|set\s+schema)\s+[^;]+|create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+on\s+(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|drop\s+index\s+(?:concurrently\s+)?(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+index\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+rename\s+to\s+"?[\w$]+"?|alter\s+schema\s+"?[\w$]+"?\s+rename\s+to\s+"?[\w$]+"?)/gi
         );
         if (doOps) {
           for (const op of doOps) {
@@ -363,32 +363,6 @@ function collectExpectedObjects(migrationsDirectory) {
                 line: existing?.line ?? stmt.line,
               });
               continue;
-            }
-
-            const alterTableFkInDo = opStmt.match(
-              /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+(.+)/i
-            );
-            if (alterTableFkInDo) {
-              const tableParts = parseQualifiedName(alterTableFkInDo[1], defaultSchema);
-              const body = alterTableFkInDo[2];
-              const addFkMatch = body.match(/add\s+constraint\s+("?[\w$]+"?)\s+foreign\s+key/i);
-              if (addFkMatch) {
-                const constraint = normalizeIdent(addFkMatch[1]);
-                expectedFks.set(fkKey(tableParts.schema, tableParts.name, constraint), {
-                  tableSchema: tableParts.schema,
-                  table: tableParts.name,
-                  constraint,
-                  file: filename,
-                  line: stmt.line,
-                });
-                continue;
-              }
-              const dropFkMatch = body.match(/drop\s+constraint\s+(?:if\s+exists\s+)?("?[\w$]+"?)/i);
-              if (dropFkMatch) {
-                const constraint = normalizeIdent(dropFkMatch[1]);
-                expectedFks.delete(fkKey(tableParts.schema, tableParts.name, constraint));
-                continue;
-              }
             }
 
             if (opLower.startsWith("create table")) {
