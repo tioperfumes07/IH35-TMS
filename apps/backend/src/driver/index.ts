@@ -9,6 +9,7 @@ import { registerDriverPreferencesRoutes } from "./preferences.routes.js";
 import { registerDriverPushSubscriptionRoutes } from "./push-subscriptions.routes.js";
 import { registerDriverReportsRoutes } from "./reports.routes.js";
 import { registerDriverArrivalPromptsRoutes } from "./arrival-prompts.routes.js";
+import { registerDriverStatusSuggestionsRoutes } from "./status-suggestions.routes.js";
 
 import { registerDriverFuelReceiptRoutes } from "./fuel-receipt.routes.js";
 
@@ -23,6 +24,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
   await registerDriverPreferencesRoutes(app);
   await registerDriverPushSubscriptionRoutes(app);
   await registerDriverArrivalPromptsRoutes(app);
+  await registerDriverStatusSuggestionsRoutes(app);
   await registerDriverReportsRoutes(app);
   await registerDriverFuelReceiptRoutes(app);
 }
