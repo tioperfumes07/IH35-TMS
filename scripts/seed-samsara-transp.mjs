@@ -11,10 +11,10 @@ const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
 
 const { Client } = pg;
 const OPERATING_COMPANY_ID = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
-const API_BASE = "https://api.samsara.com";
-const TOKEN = (process.env.SAMSARA_API_TOKEN_TRANSP ?? "").trim();
-const WEBHOOK_SECRET = (process.env.SAMSARA_WEBHOOK_SECRET_TRANSP ?? TOKEN).trim();
-const ORG_ID = (process.env.SAMSARA_ORG_ID_TRANSP ?? "").trim() || null;
+const API_BASE = (process.env.SAMSARA_API_BASE_URL ?? "https://api.samsara.com").trim();
+const TOKEN = (process.env.SAMSARA_API_TOKEN ?? "").trim();
+const WEBHOOK_SECRET = (process.env.SAMSARA_WEBHOOK_SECRET ?? TOKEN).trim();
+const ORG_ID = (process.env.SAMSARA_ORG_ID ?? "").trim() || null;
 const DATABASE_URL = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 
 const ALGORITHM = "aes-256-gcm";
@@ -224,8 +224,8 @@ async function insertRemoteCountIfAvailable(client, entityType, remoteCount, run
 
 async function main() {
   if (!DATABASE_URL) throw new Error("DATABASE_URL or DATABASE_DIRECT_URL is required");
-  if (!TOKEN) throw new Error("SAMSARA_API_TOKEN_TRANSP is required");
-  if (!WEBHOOK_SECRET) throw new Error("SAMSARA_WEBHOOK_SECRET_TRANSP (or fallback token) is required");
+  if (!TOKEN) throw new Error("SAMSARA_API_TOKEN is required");
+  if (!WEBHOOK_SECRET) throw new Error("SAMSARA_WEBHOOK_SECRET (or fallback token) is required");
 
   const client = new Client(buildPgClientConfig(DATABASE_URL));
   await client.connect();
