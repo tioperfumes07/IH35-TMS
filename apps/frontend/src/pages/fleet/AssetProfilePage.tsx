@@ -10,6 +10,7 @@ import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { UnitDriverHistoryStrip } from "../units/UnitDriverHistoryStrip";
 
 export function AssetProfilePage() {
   const { id = "" } = useParams();
@@ -70,6 +71,8 @@ export function AssetProfilePage() {
       <PageHeader title={`Unit ${String(unit?.unit_number ?? id.slice(0, 8))}`} subtitle="Fleet asset · QBO vendor & class for reporting" />
       {unitQuery.isError ? <ListErrorBanner onRetry={() => void unitQuery.refetch()} /> : null}
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
+
+      {companyId ? <UnitDriverHistoryStrip operatingCompanyId={companyId} unitId={id} /> : null}
 
       <div id="asset-financial" className="max-w-2xl scroll-mt-4 space-y-3 rounded border border-gray-200 bg-white p-4">
         <div className="text-xs font-semibold text-gray-600">QBO mapping</div>

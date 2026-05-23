@@ -181,6 +181,7 @@ import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/d
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
 import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
+import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -447,6 +448,7 @@ async function main() {
   await registerLegalMattersRoutes(app);
   await registerDailyTasksRoutes(app);
   await registerTelematicsHosRoutes(app);
+  await registerVehicleDriverPairingRoutes(app);
 
   try {
     await initializeQboHistoricalImportRunner(app);
