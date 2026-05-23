@@ -160,3 +160,35 @@ export async function acknowledgeQboSyncAlert(id: string, operatingCompanyId: st
     body: { operating_company_id: operatingCompanyId, note },
   });
 }
+
+export type QboConflictType = "field_drift" | "missing_in_qbo" | "missing_in_mirror";
+export type QboConflictEntityType = "customer" | "vendor" | "product" | "account";
+
+export type QboSyncConflictRow = {
+  entity_type: QboConflictEntityType;
+  qbo_id: string | null;
+  mirror_id: string;
+  conflict_type: QboConflictType;
+  summary: string;
+  detected_at: string;
+  mirror_snapshot: Record<string, unknown>;
+  qbo_snapshot: Record<string, unknown>;
+  diff: Array<{ field: string; mirror: string | null; qbo: string | null }>;
+};
+
+export async function listQboSyncConflicts(params: {
+  operating_company_id: string;
+  entity: QboConflictEntityType;
+  conflict_type?: QboConflictType;
+  limit?: number;
+  cursor?: string;
+}) {
+  const q = new URLSearchParams({
+    operating_company_id: params.operating_company_id,
+    entity: params.entity,
+  });
+  if (params.conflict_type) q.set("conflict_type", params.conflict_type);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.cursor) q.set("cursor", params.cursor);
+  return apiRequest<{ items: QboSyncConflictRow[]; next_cursor: string | null }>(`/api/v1/qbo/sync-conflicts?${q.toString()}`);
+}

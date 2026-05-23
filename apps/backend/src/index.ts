@@ -147,6 +147,7 @@ import { initializeQboSyncWorker, stopQboSyncWorker } from "./integrations/qbo/q
 import { registerQboSyncAlertsRoutes } from "./qbo/sync-alerts.routes.js";
 import { registerQboSyncActionsRoutes } from "./qbo/sync-actions.routes.js";
 import { registerQboSyncRunsListRoutes } from "./qbo/sync-runs-list.routes.js";
+import { registerQboSyncConflictDetectionRoutes } from "./qbo/sync-conflict-detection.routes.js";
 import { registerQboUnlinkedEntitiesRoutes } from "./qbo/unlinked-entities.routes.js";
 import { registerQboBulkLinkRoutes } from "./qbo/bulk-link.routes.js";
 import { registerQboSyncHealthRoutes } from "./qbo/sync-health.routes.js";
@@ -311,6 +312,7 @@ async function main() {
   await registerMasterDataSyncRoutes(app);
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);
+  await registerQboSyncConflictDetectionRoutes(app);
   await registerQboSyncActionsRoutes(app);
   await registerQboUnlinkedEntitiesRoutes(app);
   await registerQboBulkLinkRoutes(app);
