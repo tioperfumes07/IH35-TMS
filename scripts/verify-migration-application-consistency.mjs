@@ -186,6 +186,56 @@ function extractInlineFks(createTableStatement) {
   return matches;
 }
 
+function renameTableState(expectedTables, expectedIndexes, expectedFks, fromSchema, fromName, toSchema, toName, source) {
+  const fromKey = tableKey(fromSchema, fromName);
+  const existing = expectedTables.get(fromKey);
+  expectedTables.delete(fromKey);
+  expectedTables.set(tableKey(toSchema, toName), {
+    schema: toSchema,
+    table: toName,
+    file: existing?.file ?? source.file,
+    line: existing?.line ?? source.line,
+  });
+
+  for (const idx of expectedIndexes.values()) {
+    if (idx.tableSchema === fromSchema && idx.table === fromName) {
+      idx.tableSchema = toSchema;
+      idx.table = toName;
+      if (idx.indexSchema === fromSchema) idx.indexSchema = toSchema;
+    }
+  }
+
+  for (const fk of expectedFks.values()) {
+    if (fk.tableSchema === fromSchema && fk.table === fromName) {
+      fk.tableSchema = toSchema;
+      fk.table = toName;
+    }
+  }
+}
+
+function renameSchemaState(expectedTables, expectedIndexes, expectedFks, fromSchema, toSchema) {
+  for (const [key, t] of expectedTables.entries()) {
+    if (t.schema !== fromSchema) continue;
+    expectedTables.delete(key);
+    t.schema = toSchema;
+    expectedTables.set(tableKey(t.schema, t.table), t);
+  }
+
+  for (const [key, idx] of expectedIndexes.entries()) {
+    expectedIndexes.delete(key);
+    if (idx.indexSchema === fromSchema) idx.indexSchema = toSchema;
+    if (idx.tableSchema === fromSchema) idx.tableSchema = toSchema;
+    expectedIndexes.set(indexKey(idx.indexSchema, idx.indexName), idx);
+  }
+
+  for (const [key, fk] of expectedFks.entries()) {
+    if (fk.tableSchema !== fromSchema) continue;
+    expectedFks.delete(key);
+    fk.tableSchema = toSchema;
+    expectedFks.set(fkKey(fk.tableSchema, fk.table, fk.constraint), fk);
+  }
+}
+
 function collectExpectedObjects(migrationsDirectory) {
   const files = fs
     .readdirSync(migrationsDirectory)
@@ -216,7 +266,153 @@ function collectExpectedObjects(migrationsDirectory) {
         continue;
       }
 
-      if (/^do\b/i.test(lowerStmt)) continue;
+      if (/^do\b/i.test(lowerStmt)) {
+        const doMasked = normalizedStmt.replace(/'(?:''|[^'])*'/g, "''");
+        const doOps = doMasked.match(
+          /(drop\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+(?:rename\s+to|set\s+schema|add\s+constraint|drop\s+constraint)\s+[^;]+|create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+on\s+(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|drop\s+index\s+(?:concurrently\s+)?(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+index\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+rename\s+to\s+"?[\w$]+"?|alter\s+schema\s+"?[\w$]+"?\s+rename\s+to\s+"?[\w$]+"?)/gi
+        );
+        if (doOps) {
+          for (const op of doOps) {
+            const opStmt = op.replace(/\s+/g, " ").trim();
+            const opLower = opStmt.toLowerCase();
+            const opSource = { file: filename, line: stmt.line };
+
+            const dropTableInDo = opStmt.match(
+              /^drop\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)/i
+            );
+            if (dropTableInDo) {
+              const { schema, name } = parseQualifiedName(dropTableInDo[1], defaultSchema);
+              expectedTables.delete(tableKey(schema, name));
+              removeTableOwnedObjects(expectedIndexes, expectedFks, schema, name);
+              continue;
+            }
+
+            const renameInDo = opStmt.match(
+              /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+rename\s+to\s+("?[\w$]+"?)/i
+            );
+            if (renameInDo) {
+              const from = parseQualifiedName(renameInDo[1], defaultSchema);
+              const toName = normalizeIdent(renameInDo[2]);
+              renameTableState(expectedTables, expectedIndexes, expectedFks, from.schema, from.name, from.schema, toName, opSource);
+              continue;
+            }
+
+            const setSchemaInDo = opStmt.match(
+              /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+set\s+schema\s+("?[\w$]+"?)/i
+            );
+            if (setSchemaInDo) {
+              const from = parseQualifiedName(setSchemaInDo[1], defaultSchema);
+              const toSchema = normalizeIdent(setSchemaInDo[2]);
+              renameTableState(expectedTables, expectedIndexes, expectedFks, from.schema, from.name, toSchema, from.name, opSource);
+              continue;
+            }
+
+            const alterSchemaInDo = opStmt.match(/^alter\s+schema\s+("?[\w$]+"?)\s+rename\s+to\s+("?[\w$]+"?)/i);
+            if (alterSchemaInDo) {
+              renameSchemaState(
+                expectedTables,
+                expectedIndexes,
+                expectedFks,
+                normalizeIdent(alterSchemaInDo[1]),
+                normalizeIdent(alterSchemaInDo[2])
+              );
+              continue;
+            }
+
+            const createIndexInDo = opStmt.match(
+              /^create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+on\s+((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)/i
+            );
+            if (createIndexInDo) {
+              const tableParts = parseQualifiedName(createIndexInDo[2], defaultSchema);
+              const indexParts = parseQualifiedName(createIndexInDo[1], tableParts.schema);
+              expectedIndexes.set(indexKey(indexParts.schema, indexParts.name), {
+                indexSchema: indexParts.schema,
+                indexName: indexParts.name,
+                tableSchema: tableParts.schema,
+                table: tableParts.name,
+                file: filename,
+                line: stmt.line,
+              });
+              continue;
+            }
+
+            const dropIndexInDo = opStmt.match(
+              /^drop\s+index\s+(?:concurrently\s+)?(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)/i
+            );
+            if (dropIndexInDo) {
+              const { schema, name } = parseQualifiedName(dropIndexInDo[1], defaultSchema);
+              expectedIndexes.delete(indexKey(schema, name));
+              continue;
+            }
+
+            const alterIndexInDo = opStmt.match(
+              /^alter\s+index\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+rename\s+to\s+("?[\w$]+"?)/i
+            );
+            if (alterIndexInDo) {
+              const from = parseQualifiedName(alterIndexInDo[1], defaultSchema);
+              const toName = normalizeIdent(alterIndexInDo[2]);
+              const fromKey = indexKey(from.schema, from.name);
+              const existing = expectedIndexes.get(fromKey);
+              expectedIndexes.delete(fromKey);
+              expectedIndexes.set(indexKey(from.schema, toName), {
+                indexSchema: from.schema,
+                indexName: toName,
+                tableSchema: existing?.tableSchema ?? from.schema,
+                table: existing?.table ?? "",
+                file: existing?.file ?? filename,
+                line: existing?.line ?? stmt.line,
+              });
+              continue;
+            }
+
+            const alterTableFkInDo = opStmt.match(
+              /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+(.+)/i
+            );
+            if (alterTableFkInDo) {
+              const tableParts = parseQualifiedName(alterTableFkInDo[1], defaultSchema);
+              const body = alterTableFkInDo[2];
+              const addFkMatch = body.match(/add\s+constraint\s+("?[\w$]+"?)\s+foreign\s+key/i);
+              if (addFkMatch) {
+                const constraint = normalizeIdent(addFkMatch[1]);
+                expectedFks.set(fkKey(tableParts.schema, tableParts.name, constraint), {
+                  tableSchema: tableParts.schema,
+                  table: tableParts.name,
+                  constraint,
+                  file: filename,
+                  line: stmt.line,
+                });
+                continue;
+              }
+              const dropFkMatch = body.match(/drop\s+constraint\s+(?:if\s+exists\s+)?("?[\w$]+"?)/i);
+              if (dropFkMatch) {
+                const constraint = normalizeIdent(dropFkMatch[1]);
+                expectedFks.delete(fkKey(tableParts.schema, tableParts.name, constraint));
+                continue;
+              }
+            }
+
+            if (opLower.startsWith("create table")) {
+              const ct = opStmt.match(
+                /^create\s+table\s+(?:if\s+not\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s*\(/i
+              );
+              if (ct) {
+                const { schema, name } = parseQualifiedName(ct[1], defaultSchema);
+                expectedTables.set(tableKey(schema, name), { schema, table: name, file: filename, line: stmt.line });
+                for (const constraint of extractInlineFks(opStmt)) {
+                  expectedFks.set(fkKey(schema, name, constraint), {
+                    tableSchema: schema,
+                    table: name,
+                    constraint,
+                    file: filename,
+                    line: stmt.line,
+                  });
+                }
+              }
+            }
+          }
+        }
+        continue;
+      }
 
       const createTableMatch = normalizedStmt.match(
         /^create\s+table\s+(?:if\s+not\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s*\(/i
@@ -252,23 +448,37 @@ function collectExpectedObjects(migrationsDirectory) {
       if (alterTableRenameMatch) {
         const from = parseQualifiedName(alterTableRenameMatch[1], defaultSchema);
         const toName = normalizeIdent(alterTableRenameMatch[2]);
-        const fromKey = tableKey(from.schema, from.name);
-        const toKey = tableKey(from.schema, toName);
-        const existing = expectedTables.get(fromKey);
-        expectedTables.delete(fromKey);
-        expectedTables.set(toKey, {
-          schema: from.schema,
-          table: toName,
-          file: existing?.file ?? filename,
-          line: existing?.line ?? stmt.line,
+        renameTableState(expectedTables, expectedIndexes, expectedFks, from.schema, from.name, from.schema, toName, {
+          file: filename,
+          line: stmt.line,
         });
+        continue;
+      }
 
-        for (const idx of expectedIndexes.values()) {
-          if (idx.tableSchema === from.schema && idx.table === from.name) idx.table = toName;
-        }
-        for (const fk of expectedFks.values()) {
-          if (fk.tableSchema === from.schema && fk.table === from.name) fk.table = toName;
-        }
+      const alterTableSetSchemaMatch = normalizedStmt.match(
+        /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+set\s+schema\s+("?[\w$]+"?)/i
+      );
+      if (alterTableSetSchemaMatch) {
+        const from = parseQualifiedName(alterTableSetSchemaMatch[1], defaultSchema);
+        const toSchema = normalizeIdent(alterTableSetSchemaMatch[2]);
+        renameTableState(expectedTables, expectedIndexes, expectedFks, from.schema, from.name, toSchema, from.name, {
+          file: filename,
+          line: stmt.line,
+        });
+        continue;
+      }
+
+      const alterSchemaRenameMatch = normalizedStmt.match(
+        /^alter\s+schema\s+("?[\w$]+"?)\s+rename\s+to\s+("?[\w$]+"?)/i
+      );
+      if (alterSchemaRenameMatch) {
+        renameSchemaState(
+          expectedTables,
+          expectedIndexes,
+          expectedFks,
+          normalizeIdent(alterSchemaRenameMatch[1]),
+          normalizeIdent(alterSchemaRenameMatch[2])
+        );
         continue;
       }
 
