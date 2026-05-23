@@ -1,5 +1,6 @@
 import type { DbClient, ProjectionResult, SamsaraWebhookEvent } from "../webhook-projection.types.js";
 import { processArrivalDetectionsForGpsPoint } from "../../../telematics/arrival-detection.service.js";
+import { processDtcAutoWorkOrderEvent } from "../../../telematics/dtc-auto-work-order.service.js";
 import { processAutoStatusSuggestionForVehicleEvent } from "../../../telematics/auto-status.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../../telematics/geofence-detector.service.js";
 import { processMaintenancePredictorForOdometer } from "../../../telematics/maintenance-predictor.service.js";
@@ -75,6 +76,34 @@ function extractOdometerMiles(payload: Record<string, unknown>): number | null {
     if (Number.isFinite(numeric) && numeric >= 0) return Math.round(numeric);
   }
   return null;
+}
+
+function extractOccurredAt(payload: Record<string, unknown>): string {
+  const record = extractVehicleRecord(payload) ?? payload;
+  const raw = String(record.timestamp ?? record.time ?? record.occurred_at ?? payload.timestamp ?? new Date().toISOString());
+  return new Date(raw).toISOString();
+}
+
+function extractDtcEntries(payload: Record<string, unknown>): Array<{ code: string; description: string | null }> {
+  const record = extractVehicleRecord(payload) ?? payload;
+  const candidates = [record.dtc_codes, record.diagnostics, record.faults, payload.dtc_codes, payload.faults];
+  const out: Array<{ code: string; description: string | null }> = [];
+  for (const raw of candidates) {
+    if (!Array.isArray(raw)) continue;
+    for (const item of raw) {
+      if (!item || typeof item !== "object") continue;
+      const obj = item as Record<string, unknown>;
+      const codeRaw = obj.code ?? obj.dtc_code ?? obj.id;
+      const code = typeof codeRaw === "string" ? codeRaw.trim() : "";
+      if (!code) continue;
+      const descriptionRaw = obj.description ?? obj.message ?? obj.name;
+      out.push({
+        code,
+        description: typeof descriptionRaw === "string" ? descriptionRaw : null,
+      });
+    }
+  }
+  return out;
 }
 
 function extractSpeedMph(payload: Record<string, unknown>): number | null {
@@ -173,6 +202,18 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
     });
   }
   if (localUnitId) {
+    const dtcs = extractDtcEntries(event.payload);
+    const occurredAt = location?.occurred_at ?? extractOccurredAt(event.payload);
+    for (const dtc of dtcs) {
+      await processDtcAutoWorkOrderEvent(client, {
+        operating_company_id: event.operating_company_id,
+        unit_id: localUnitId,
+        occurred_at: occurredAt,
+        dtc_code: dtc.code,
+        description: dtc.description,
+      });
+    }
+
     await processHarshEventsFromVehiclePayload(client, {
       operating_company_id: event.operating_company_id,
       unit_id: localUnitId,

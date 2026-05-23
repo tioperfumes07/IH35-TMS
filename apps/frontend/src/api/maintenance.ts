@@ -61,6 +61,17 @@ export type WorkOrder = {
   updated_at?: string | null;
 };
 
+export type DtcAutoWorkOrderRow = {
+  id: string;
+  display_id?: string | null;
+  unit_id: string;
+  unit_number: string | null;
+  status: string;
+  description: string | null;
+  opened_at: string | null;
+  updated_at: string | null;
+};
+
 export type ArrivingSoonCard = {
   load_id: string;
   load_display_id: string;
@@ -331,6 +342,12 @@ export function getMaintenanceInTransitQueue(companyId: string) {
 export function getMaintenanceRecentActivity(companyId: string) {
   return apiRequest<{ recent: WorkOrder[]; completed: WorkOrder[] }>(
     `/api/v1/maintenance/dashboard/recent-activity?${query(companyId)}`
+  );
+}
+
+export function getMaintenanceDtcAutoWorkOrders(companyId: string) {
+  return apiRequest<{ rows: DtcAutoWorkOrderRow[] }>(
+    `/api/v1/maintenance/dashboard/dtc-auto-work-orders?${query(companyId)}`
   );
 }
 
