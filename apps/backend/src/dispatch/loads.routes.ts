@@ -12,6 +12,7 @@ import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bo
 import { notifyAbandonedLoadStakeholders } from "../notifications/dispatcher.js";
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
+import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 
 const dispatchStatusSchema = z.enum([
   "unassigned",
@@ -647,6 +648,17 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
       if (result.kind === "error") {
         return reply.code(result.status).send(result.payload);
+      }
+      const createdLoadId = String(result.row.id ?? "");
+      const createdCompanyId = String(result.row.operating_company_id ?? body.data.operating_company_id);
+      if (createdLoadId && createdCompanyId) {
+        // Non-blocking hook: load booking response should not wait on geocoding/geofence creation.
+        void autoCreateGeofencesForLoad(authUser.uuid, {
+          operating_company_id: createdCompanyId,
+          load_id: createdLoadId,
+        }).catch((err) => {
+          req.log.warn({ err, load_id: createdLoadId }, "auto_geofence_post_book_failed");
+        });
       }
       return reply.code(201).send(result.row);
     } catch (error) {

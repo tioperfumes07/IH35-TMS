@@ -22,6 +22,7 @@ import { BankingHomePage } from "./pages/banking/BankingHome";
 import { TransfersListPage } from "./pages/banking/TransfersListPage";
 import { BankingObligationReconcilePage } from "./pages/banking/BankingObligationReconcilePage";
 import { ReconciliationWorkspacePage } from "./pages/banking/ReconciliationWorkspace";
+import { BankReconciliationPage } from "./pages/banking/BankReconciliationPage";
 import { CategorizationRulesPage } from "./pages/banking/CategorizationRulesPage";
 import { QboSyncQueuePage } from "./pages/banking/QboSyncQueuePage";
 import { EmailQueuePage } from "./pages/banking/EmailQueuePage";
@@ -111,6 +112,7 @@ import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
 import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
 import { FactoringListPage } from "./pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
+import { FactorReconciliationPage } from "./pages/accounting/FactorReconciliationPage";
 import { VendorBillCreatePage } from "./pages/accounting/VendorBillCreatePage";
 import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { BillsPage } from "./pages/accounting/BillsPage";
@@ -448,6 +450,14 @@ export default function App() {
         />
         <Route
           path="/banking/reconciliation"
+          element={
+            <ProtectedRoute>
+              <BankReconciliationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/reconciliation-workspace"
           element={
             <ProtectedRoute>
               <ReconciliationWorkspacePage />
@@ -1505,6 +1515,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <FactoringDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/factor-reconciliation"
+          element={
+            <ProtectedRoute>
+              <FactorReconciliationPage />
             </ProtectedRoute>
           }
         />

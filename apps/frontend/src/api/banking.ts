@@ -91,6 +91,38 @@ export type ReconciliationWorkspacePayload = {
   };
 };
 
+export type BankReconWorklistRow = {
+  id: string;
+  transaction_date: string;
+  amount_cents: number;
+  description: string | null;
+  merchant_name: string | null;
+  is_credit: boolean;
+};
+
+export type BankReconWorklistPayload = {
+  unmatched_transactions: BankReconWorklistRow[];
+  auto_matched_candidates: Array<
+    BankReconWorklistRow & {
+      ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";
+      ledger_entry_id: string;
+      match_score: number;
+      match_state: string;
+    }
+  >;
+  variance_resolved_entries: Array<{
+    journal_entry_id: string;
+    entry_date: string;
+    reference_no: string | null;
+    variance_cents: number;
+  }>;
+  progress: {
+    total_transactions: number;
+    matched_or_skipped_transactions: number;
+    percent: number;
+  };
+};
+
 export type QboSyncQueueStats = {
   pending: number;
   in_flight: number;
@@ -701,6 +733,81 @@ export function completeReconciliationSession(
       body: payload,
     }
   );
+}
+
+export function getBankReconWorklist(
+  operatingCompanyId: string,
+  input: {
+    account_id: string;
+    period_start: string;
+    period_end: string;
+  }
+) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    account_id: input.account_id,
+    period_start: input.period_start,
+    period_end: input.period_end,
+  });
+  return apiRequest<BankReconWorklistPayload>(`/api/v1/bank-recon/worklist?${query.toString()}`);
+}
+
+export function acceptBankReconMatch(
+  input: {
+    operating_company_id: string;
+    bank_transaction_id: string;
+    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";
+    ledger_entry_id: string;
+    variance_account_id?: string;
+  }
+) {
+  return apiRequest<{ ok: boolean; result: Record<string, unknown> }>(`/api/v1/bank-recon/accept-match`, {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function rejectBankReconMatch(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+  ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";
+  ledger_entry_id: string;
+}) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/bank-recon/reject-match`, {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function manualBankReconMatch(
+  input: {
+    operating_company_id: string;
+    bank_transaction_id: string;
+    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";
+    ledger_entry_id: string;
+    variance_account_id?: string;
+  }
+) {
+  return apiRequest<{ ok: boolean; result: Record<string, unknown> }>(`/api/v1/bank-recon/manual-match`, {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function closeBankReconPeriod(input: {
+  operating_company_id: string;
+  account_id: string;
+  period_end: string;
+}) {
+  return apiRequest<{
+    ok: boolean;
+    covered_transactions: number;
+    total_transactions: number;
+    closed_period_cutoff: string | null;
+  }>(`/api/v1/bank-recon/close-period`, {
+    method: "POST",
+    body: input,
+  });
 }
 
 export function getEscrowDriverBalances(operatingCompanyId: string) {

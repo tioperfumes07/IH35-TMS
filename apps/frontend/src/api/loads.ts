@@ -56,6 +56,7 @@ export type DispatchLoadRow = {
   driver_instructions_file_id?: string | null;
   first_pickup_city: string | null;
   first_delivery_city: string | null;
+  geofence_ready?: boolean;
   flag_code: string;
   created_at: string;
   updated_at: string;

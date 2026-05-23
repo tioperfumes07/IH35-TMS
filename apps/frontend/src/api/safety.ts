@@ -166,6 +166,28 @@ export function createDotInspection(
   });
 }
 
+export function listDotInspectionEvents(companyId: string, followUpState = "open") {
+  return apiRequest<{ events: Array<Record<string, unknown>> }>(
+    `/api/v1/safety/dot-inspection-events?${q(companyId)}&follow_up_state=${encodeURIComponent(followUpState)}`
+  );
+}
+
+export function followUpDotInspectionEvent(
+  id: string,
+  companyId: string,
+  followUpState: "open" | "reviewed" | "citation" | "clean",
+  note?: string
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/dot-inspection-events/${id}/follow-up`, {
+    method: "POST",
+    body: {
+      operating_company_id: companyId,
+      follow_up_state: followUpState,
+      note: note ?? null,
+    },
+  });
+}
+
 export function getInternalFines(companyId: string) {
   return apiRequest<{ fines: Array<Record<string, unknown>> }>(`/api/v1/safety/internal-fines?${q(companyId)}`);
 }

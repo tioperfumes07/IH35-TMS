@@ -122,6 +122,36 @@ export type FactorReserveEvent = {
   occurred_at: string;
 };
 
+export type FactorReconciliationRun = {
+  id: string;
+  operating_company_id: string;
+  factor_id: string;
+  statement_date: string;
+  status: "open" | "closed";
+  total_advances_cents: number;
+  total_fees_cents: number;
+  total_reserves_released_cents: number;
+  source_daily_import_id: string | null;
+  created_at: string;
+  item_count?: number;
+  mismatch_count?: number;
+};
+
+export type FactorReconciliationItem = {
+  id: string;
+  run_id: string;
+  operating_company_id: string;
+  invoice_id: string | null;
+  statement_invoice_number: string | null;
+  ledger_match_state: "matched" | "missing_in_ledger" | "missing_on_statement" | "amount_mismatch";
+  factor_amount_cents: number;
+  ledger_amount_cents: number;
+  variance_cents: number;
+  tolerance_cents: number;
+  details: Record<string, unknown> | null;
+  created_at: string;
+};
+
 export type Payment = {
   id: string;
   operating_company_id: string;
@@ -607,6 +637,62 @@ export function listFactoringReserveBalances(operatingCompanyId: string) {
     rows: FactorReserveBalance[];
     recent_events: FactorReserveEvent[];
   }>(withCompany("/api/v1/accounting/factoring-reserve-balances", operatingCompanyId));
+}
+
+export function listFactorReconciliationRuns(
+  operatingCompanyId: string,
+  params: { factor_id?: string; limit?: number } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.factor_id) query.set("factor_id", params.factor_id);
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return apiRequest<{ rows: FactorReconciliationRun[] }>(
+    withCompany(`/api/v1/accounting/factor-reconciliation/runs${qs ? `?${qs}` : ""}`, operatingCompanyId)
+  );
+}
+
+export function listFactorReconciliationItems(runId: string, operatingCompanyId: string) {
+  return apiRequest<{ rows: FactorReconciliationItem[] }>(
+    withCompany(`/api/v1/accounting/factor-reconciliation/runs/${runId}/items`, operatingCompanyId)
+  );
+}
+
+export function listFactorReconciliationImportCandidates(
+  operatingCompanyId: string,
+  params: { limit?: number } = {}
+) {
+  const query = new URLSearchParams();
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return apiRequest<{
+    rows: Array<{
+      id: string;
+      statement_date: string;
+      statement_reference: string;
+      source_filename: string | null;
+      imported_at: string;
+      advance_total_cents: number;
+      fee_total_cents: number;
+      reserve_total_cents: number;
+      factor_id: string | null;
+      factor_name: string | null;
+    }>;
+  }>(withCompany(`/api/v1/accounting/factor-reconciliation/import-candidates${qs ? `?${qs}` : ""}`, operatingCompanyId));
+}
+
+export function importFactorReconciliationRun(
+  operatingCompanyId: string,
+  body: { factor_id: string; daily_import_id: string }
+) {
+  return apiRequest<{ run: FactorReconciliationRun }>("/api/v1/accounting/factor-reconciliation/import", {
+    method: "POST",
+    body: {
+      operating_company_id: operatingCompanyId,
+      factor_id: body.factor_id,
+      daily_import_id: body.daily_import_id,
+    },
+  });
 }
 
 export function listFactoringCandidateInvoices(operatingCompanyId: string) {

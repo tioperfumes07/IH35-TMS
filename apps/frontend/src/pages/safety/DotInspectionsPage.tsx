@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createDotInspection, getDotInspections } from "../../api/safety";
+import { createDotInspection, followUpDotInspectionEvent, getDotInspections, listDotInspectionEvents } from "../../api/safety";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
@@ -28,6 +28,20 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
     onSuccess: async () => {
       setForm({ inspection_date: new Date().toISOString().slice(0, 10), inspector_name: "", inspection_level: 1, outcome: "PASS", notes: "" });
       await queryClient.invalidateQueries({ queryKey: ["safety", "dot-inspections", operatingCompanyId] });
+    },
+  });
+
+  const openEventsQuery = useQuery({
+    queryKey: ["safety", "dot-inspection-events", operatingCompanyId],
+    queryFn: () => listDotInspectionEvents(operatingCompanyId, "open"),
+    enabled: Boolean(operatingCompanyId),
+  });
+
+  const followUpMutation = useMutation({
+    mutationFn: (payload: { id: string; state: "reviewed" | "citation" | "clean" }) =>
+      followUpDotInspectionEvent(payload.id, operatingCompanyId, payload.state),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["safety", "dot-inspection-events", operatingCompanyId] });
     },
   });
 
@@ -69,6 +83,51 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="rounded border border-gray-200 bg-white p-3">
+        <h3 className="mb-2 text-xs font-semibold text-gray-800">Open DOT Station Dwell Events (last captured)</h3>
+        {(openEventsQuery.data?.events ?? []).length === 0 ? (
+          <p className="text-xs text-gray-500">No open DOT dwell follow-ups.</p>
+        ) : (
+          <div className="space-y-2">
+            {(openEventsQuery.data?.events ?? []).slice(0, 20).map((row) => (
+              <div key={String(row.id)} className="rounded border border-gray-200 p-2 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-gray-800">
+                    {String(row.station_label ?? "DOT station")} · Unit {String(row.unit_number ?? "—")}
+                  </span>
+                  <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800">{String(row.dwell_minutes ?? 0)} min</span>
+                </div>
+                <p className="mt-1 text-gray-600">
+                  Driver: {String(row.driver_name ?? "Unknown")} · Departed: {String(row.departed_at ?? "n/a")}
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded bg-blue-700 px-2 py-1 text-[11px] font-semibold text-white"
+                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "reviewed" })}
+                  >
+                    Mark Reviewed
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded bg-red-700 px-2 py-1 text-[11px] font-semibold text-white"
+                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "citation" })}
+                  >
+                    Mark Citation
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded bg-emerald-700 px-2 py-1 text-[11px] font-semibold text-white"
+                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "clean" })}
+                  >
+                    Mark Clean
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
