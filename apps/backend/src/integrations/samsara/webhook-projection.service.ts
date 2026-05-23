@@ -104,6 +104,18 @@ function routeProjector(eventType: string): "driver" | "vehicle" | "hos" | "miss
   if (normalized.length === 0 || normalized === "unknown") return "unsupported";
   if (normalized.includes("hos") || normalized.includes("eld") || normalized.includes("duty_status")) return "hos";
   if (normalized.includes("gps") || normalized.includes("location") || normalized.includes("position")) return "vehicle";
+  if (
+    normalized.includes("driver_log_on") ||
+    normalized.includes("driver.log_on") ||
+    normalized.includes("driver_log_off") ||
+    normalized.includes("driver.log_off") ||
+    normalized.includes("vehicle_assigned") ||
+    normalized.includes("vehicle.assigned") ||
+    normalized.includes("vehicle_unassigned") ||
+    normalized.includes("vehicle.unassigned")
+  ) {
+    return "vehicle";
+  }
   if (normalized.startsWith("driver.")) return "driver";
   if (normalized.startsWith("vehicle.")) return "vehicle";
   return "missing_mirror";

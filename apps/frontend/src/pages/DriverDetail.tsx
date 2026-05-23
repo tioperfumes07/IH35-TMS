@@ -42,6 +42,7 @@ import { useToast } from "../components/Toast";
 import { QboCombobox } from "../components/forms/QboCombobox";
 import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { UnitDriverHistoryStrip } from "./units/UnitDriverHistoryStrip";
 
 const tabs = [
   "Profile",
@@ -654,6 +655,8 @@ export function DriverDetailPage() {
         activeId={activeTab}
         onChange={(nextTab) => setActiveTab(nextTab as DriverTab)}
       />
+
+      {driver.operating_company_id ? <UnitDriverHistoryStrip operatingCompanyId={driver.operating_company_id} driverId={driver.id} /> : null}
 
       {activeTab === "Profile" ? (
         <div className="grid gap-3 md:grid-cols-2">
