@@ -945,6 +945,8 @@ export type MultiEntityAccountBalance = {
   account_type: string;
   debit_cents: number;
   credit_cents: number;
+};
+
 export type SalesTaxAgency = {
   id: string;
   operating_company_id: string;
@@ -1059,6 +1061,8 @@ export function getMultiEntityAccountingSummary(input: {
     by_company: MultiEntityCompanySummary[];
     accounts: MultiEntityAccountBalance[];
   }>(`/api/v1/accounting/multi-entity/summary?${query.toString()}`);
+}
+
 export function listSalesTaxAgencies(operatingCompanyId: string) {
   return apiRequest<{ agencies: SalesTaxAgency[] }>(withCompany("/api/v1/accounting/sales-tax/agencies", operatingCompanyId));
 }
