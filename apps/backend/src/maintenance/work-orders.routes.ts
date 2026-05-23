@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import {
@@ -832,6 +833,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       });
     }
     if ("blocked" in result) return reply.code(422).send({ error: result.code, message: result.message });
+    await processMaintenanceWorkOrderClose({
+      operating_company_id: companyId,
+      work_order_id: params.data.id,
+      actor_user_id: user.uuid,
+    });
     return { ok: true, work_order: result.row };
   });
 
@@ -902,6 +908,13 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
+    if (CLOSED_STATUSES.has(parsed.data.new_status)) {
+      await processMaintenanceWorkOrderClose({
+        operating_company_id: companyId,
+        work_order_id: params.data.id,
+        actor_user_id: user.uuid,
+      });
+    }
     return { ok: true };
   });
 

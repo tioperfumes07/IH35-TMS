@@ -1,5 +1,6 @@
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
 import { projectDriverEvent } from "./webhook-projectors/driver-projector.js";
+import { projectHosEvent } from "./webhook-projectors/hos-projector.js";
 import { projectVehicleEvent } from "./webhook-projectors/vehicle-projector.js";
 import type {
   DbClient,
@@ -98,9 +99,10 @@ function classifyThrownError(error: unknown): {
   };
 }
 
-function routeProjector(eventType: string): "driver" | "vehicle" | "missing_mirror" | "unsupported" {
+function routeProjector(eventType: string): "driver" | "vehicle" | "hos" | "missing_mirror" | "unsupported" {
   const normalized = eventType.trim().toLowerCase();
   if (normalized.length === 0 || normalized === "unknown") return "unsupported";
+  if (normalized.includes("hos") || normalized.includes("eld") || normalized.includes("duty_status")) return "hos";
   if (normalized.startsWith("driver.")) return "driver";
   if (normalized.startsWith("vehicle.")) return "vehicle";
   return "missing_mirror";
@@ -126,6 +128,7 @@ async function projectEvent(client: DbClient, event: SamsaraWebhookEvent): Promi
   const route = routeProjector(event.event_type);
   if (route === "driver") return projectDriverEvent(client, event);
   if (route === "vehicle") return projectVehicleEvent(client, event);
+  if (route === "hos") return projectHosEvent(client, event);
   if (route === "unsupported") {
     return {
       success: false,

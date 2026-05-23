@@ -11,6 +11,7 @@ import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { notifyAbandonedLoadStakeholders } from "../notifications/dispatcher.js";
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
+import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
 
 const dispatchStatusSchema = z.enum([
   "unassigned",
@@ -599,29 +600,33 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
-    const row = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
-      const res = await client
-        .query(
-          `
-            SELECT id, hos_badge_color, is_in_violation, minutes_until_violation
-            FROM views.drivers_with_hos_status
-            WHERE id = $1
-              AND operating_company_id = $2
-            LIMIT 1
-          `,
-          [params.data.driver_id, operatingCompanyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return res.rows[0] ?? null;
+    const payload = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
+      const driverRes = await client.query<{ id: string }>(
+        `
+          SELECT id::text AS id
+          FROM mdata.drivers
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [params.data.driver_id, operatingCompanyId]
+      );
+      if (!driverRes.rows[0]) return null;
+
+      const clocks = await getCurrentClocks(client, operatingCompanyId, params.data.driver_id);
+      return {
+        driver_id: params.data.driver_id,
+        drive_remaining_min: clocks.drive_remaining_min,
+        window_remaining_min: clocks.window_remaining_min,
+        break_remaining_min: clocks.break_remaining_min,
+        cycle_remaining_min: clocks.cycle_remaining_min,
+        status: clocks.status,
+        last_reset_at: clocks.last_reset_at,
+      };
     });
 
-    if (!row) return reply.code(404).send({ error: "driver_not_found" });
-    return {
-      driver_id: row.id,
-      hos_badge_color: row.hos_badge_color,
-      is_violation: Boolean(row.is_in_violation),
-      minutes_until_violation: Number(row.minutes_until_violation ?? 0),
-    };
+    if (!payload) return reply.code(404).send({ error: "driver_not_found" });
+    return payload;
   });
 
   app.post("/api/v1/dispatch/loads", async (req, reply) => {

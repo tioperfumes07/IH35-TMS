@@ -612,6 +612,9 @@ export function DriverDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge status={driver.status} />
+            <Link to={`/drivers/${driver.id}/hos`} className="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
+              HOS Detail
+            </Link>
             {!editMode ? (
               <Button onClick={() => setEditMode(true)}>Edit</Button>
             ) : (

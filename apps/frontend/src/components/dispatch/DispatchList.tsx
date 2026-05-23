@@ -5,6 +5,7 @@ import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents } from "./constants";
 import { InTransitEtaChip } from "./InTransitEtaChip";
+import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
 
 type SortField = "created_at" | "load_number" | "status" | "rate_total_cents";
 type SortDirection = "asc" | "desc";
@@ -107,6 +108,7 @@ export function DispatchList({
                 ["delivery", "Delivery"],
                 ["unit", "Unit"],
                 ["driver", "Driver"],
+                ["hos", "HOS"],
                 ["status", "Status"],
                 ...(showEtaColumn ? [["eta", "ETA"] as const] : []),
                 ["rate_total_cents", "Rate"],
@@ -129,7 +131,7 @@ export function DispatchList({
             {loading
               ? Array.from({ length: Math.max(4, limit / 10) }).map((_, idx) => (
                   <tr key={idx} className="border-b border-gray-100">
-                    <td colSpan={showEtaColumn ? 11 : 10} className="px-3 py-3 text-gray-400">
+                    <td colSpan={showEtaColumn ? 12 : 11} className="px-3 py-3 text-gray-400">
                       Loading loads...
                     </td>
                   </tr>
@@ -154,6 +156,9 @@ export function DispatchList({
                       <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
                         {load.assigned_primary_driver_name ?? "Unassigned"}
                       </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <DriverHosPill driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
                     </td>
                     <td className="px-3 py-2">
                       <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
@@ -204,6 +209,9 @@ export function DispatchList({
                   {load.assigned_primary_driver_name ?? "Unassigned"}
                 </span>
                 <span>{formatMoneyCents(load.rate_total_cents, load.currency_code)}</span>
+              </div>
+              <div className="mt-2">
+                <DriverHosPill driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
               </div>
               {showEtaColumn && load.status === "in_transit" ? (
                 <div className="mt-2">

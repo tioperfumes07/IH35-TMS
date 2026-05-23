@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { withCurrentUser } from "../auth/db.js";
 import { maybeNotifyHosShiftWarning } from "../services/push-notification.service.js";
+import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
 import { requireDriverSession } from "./auth.js";
 
 type DutyStatus = "driving" | "on_duty_not_driving" | "off_duty" | "sleeper_berth";
@@ -25,10 +26,10 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function inferDutyStatus(hosBadgeColor: string | null, isViolation: boolean): DutyStatus {
-  if (isViolation) return "on_duty_not_driving";
-  if (hosBadgeColor === "green") return "driving";
-  if (hosBadgeColor === "red") return "driving";
+function inferDutyStatusFromEvent(value: string | null): DutyStatus {
+  if (value === "driving") return "driving";
+  if (value === "on_duty_not_driving" || value === "yard_moves") return "on_duty_not_driving";
+  if (value === "sleeper") return "sleeper_berth";
   return "off_duty";
 }
 
@@ -46,9 +47,8 @@ export async function registerDriverHosRoutes(app: FastifyInstance) {
       const companyRes = await client.query<{ operating_company_id: string }>(
         `
           SELECT operating_company_id
-          FROM mdata.loads
-          WHERE assigned_primary_driver_id = $1 OR assigned_secondary_driver_id = $1
-          ORDER BY updated_at DESC
+          FROM mdata.drivers
+          WHERE id = $1::uuid
           LIMIT 1
         `,
         [driver.id]
@@ -56,43 +56,39 @@ export async function registerDriverHosRoutes(app: FastifyInstance) {
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return null;
 
-      const hosRes = await client
-        .query<{ id: string; hos_badge_color: string | null; is_in_violation: boolean; minutes_until_violation: number | null }>(
-          `
-            SELECT id, hos_badge_color, is_in_violation, minutes_until_violation
-            FROM views.drivers_with_hos_status
-            WHERE id = $1
-              AND operating_company_id = $2
-            LIMIT 1
-          `,
-          [driver.id, operatingCompanyId]
-        )
-        .catch(() => ({ rows: [] as Array<{ id: string; hos_badge_color: string | null; is_in_violation: boolean; minutes_until_violation: number | null }> }));
-
-      const row = hosRes.rows[0] ?? {
-        id: driver.id,
-        hos_badge_color: null,
-        is_in_violation: false,
-        minutes_until_violation: 0,
-      };
-
-      const minutesUntilViolation = Number(row.minutes_until_violation ?? 0);
-      const dutyStatus = inferDutyStatus(row.hos_badge_color, Boolean(row.is_in_violation));
+      const clocks = await getCurrentClocks(client, operatingCompanyId, driver.id);
+      const latestEventRes = await client.query<{ duty_status: string | null }>(
+        `
+          SELECT duty_status
+          FROM hos.duty_status_events
+          WHERE operating_company_id = $1::uuid
+            AND driver_id = $2::uuid
+          ORDER BY started_at DESC
+          LIMIT 1
+        `,
+        [operatingCompanyId, driver.id]
+      );
+      const dutyStatus = inferDutyStatusFromEvent(latestEventRes.rows[0]?.duty_status ?? null);
       const syncedAt = nowIso();
       const payload: HosSnapshot = {
         duty_status: dutyStatus,
         clocks: [
-          { key: "drive", remaining_minutes: Math.max(0, minutesUntilViolation), max_minutes: 11 * 60, next_reset_at: nowIso() },
-          { key: "shift", remaining_minutes: Math.max(0, minutesUntilViolation + 120), max_minutes: 14 * 60, next_reset_at: nowIso() },
-          { key: "cycle", remaining_minutes: Math.max(0, minutesUntilViolation + 600), max_minutes: 70 * 60, next_reset_at: nowIso() },
-          { key: "break", remaining_minutes: Math.max(0, Math.min(30, minutesUntilViolation)), max_minutes: 30, next_reset_at: nowIso() },
+          { key: "drive", remaining_minutes: clocks.drive_remaining_min, max_minutes: 11 * 60, next_reset_at: clocks.last_reset_at },
+          { key: "shift", remaining_minutes: clocks.window_remaining_min, max_minutes: 14 * 60, next_reset_at: clocks.last_reset_at },
+          { key: "cycle", remaining_minutes: clocks.cycle_remaining_min, max_minutes: 70 * 60, next_reset_at: null },
+          { key: "break", remaining_minutes: clocks.break_remaining_min, max_minutes: 30, next_reset_at: null },
         ],
         last_synced_at: syncedAt,
         status: {
-          id: row.id,
-          hos_badge_color: row.hos_badge_color,
-          is_in_violation: Boolean(row.is_in_violation),
-          minutes_until_violation: minutesUntilViolation,
+          id: driver.id,
+          hos_badge_color: clocks.status === "violation" ? "red" : clocks.status === "ok" ? "green" : "yellow",
+          is_in_violation: clocks.status === "violation",
+          minutes_until_violation: Math.min(
+            clocks.drive_remaining_min,
+            clocks.window_remaining_min,
+            clocks.break_remaining_min,
+            clocks.cycle_remaining_min
+          ),
         },
       };
       const shiftRemaining =
