@@ -67,6 +67,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-factoring-posting-uses-resolver-and-roles.mjs",
   "scripts/verify-factoring-fees-not-netted-against-revenue.mjs",
   "scripts/verify-factor-recon-tolerance-from-q11.mjs",
+  "scripts/verify-accounting-audit-trail-tenant-scope.mjs",
+  "scripts/verify-accounting-audit-trail-lineage.mjs",
   "scripts/verify-vehicle-driver-pairing-tenant-scope.mjs",
   "scripts/verify-vehicle-driver-pairing-append-only.mjs",
   "scripts/verify-arrival-detection-tenant-scope.mjs",
