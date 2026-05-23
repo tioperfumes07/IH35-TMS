@@ -323,151 +323,177 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       const items = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         await client.query(`SET LOCAL statement_timeout = '5000ms'`);
         const companyId = query.data.operating_company_id;
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
 
-        let maintenancePastDue = 0;
-      if (await relationExists(client, "maintenance.work_orders")) {
-        const res = await client.query(
-          `
-            SELECT count(*)::text AS total
-            FROM maintenance.work_orders
-            WHERE operating_company_id = $1
-              AND status = 'past_due'
-              AND opened_at <= now() - interval '24 hours'
-          `,
-          [companyId]
-        );
-        maintenancePastDue = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
-      }
+        const tenantSettingExpr = `current_setting('app.operating_company_id', true)::uuid`;
+        const items: Array<{
+          type: string;
+          severity: "info" | "warning" | "error" | "critical";
+          title: string;
+          count: number;
+          action_url: string;
+          action_label: string;
+        }> = [];
 
-      let qboRetriesPending = 0;
-      if (await relationExists(client, "outbox.events")) {
-        const res = await client.query(
-          `
-            SELECT count(*)::text AS total
-            FROM outbox.events e
-            WHERE e.event_type ILIKE '%qbo%'
-              AND e.delivered_at IS NULL
-              AND (
-                e.failed_at IS NOT NULL
-                OR COALESCE(e.retry_count, 0) > 0
-              )
-              AND (
-                e.payload->>'operating_company_id' = $1
-                OR e.payload->>'company_id' = $1
-              )
-          `,
-          [companyId]
-        );
-        qboRetriesPending = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
-      }
+        let lateInFlightLoads = 0;
+        const loadRelation = (await relationExists(client, "dispatch.loads"))
+          ? { schema: "dispatch", table: "loads" }
+          : (await relationExists(client, "mdata.loads"))
+            ? { schema: "mdata", table: "loads" }
+            : null;
+        if (loadRelation) {
+          const hasOperatingCompany = await columnExists(client, loadRelation.schema, loadRelation.table, "operating_company_id");
+          const hasStatus = await columnExists(client, loadRelation.schema, loadRelation.table, "status");
+          const lateColumnCandidates = ["delivery_due_at", "delivery_deadline_at", "scheduled_delivery_at", "eta_at", "delivery_at"];
+          let lateColumn: string | null = null;
+          for (const candidate of lateColumnCandidates) {
+            if (await columnExists(client, loadRelation.schema, loadRelation.table, candidate)) {
+              lateColumn = candidate;
+              break;
+            }
+          }
+          const whereParts: string[] = [];
+          if (hasOperatingCompany) whereParts.push(`operating_company_id = ${tenantSettingExpr}`);
+          if (hasStatus) {
+            whereParts.push(
+              `COALESCE(status::text, '') IN ('booked','planned','assigned','dispatched','at_pickup','in_transit','at_delivery','assigned_not_dispatched')`,
+            );
+          }
+          if (lateColumn) {
+            whereParts.push(`${lateColumn} IS NOT NULL AND ${lateColumn} < now()`);
+          }
+          if (whereParts.length > 0) {
+            const res = await client.query(
+              `
+                SELECT count(*)::text AS total
+                FROM ${loadRelation.schema}.${loadRelation.table}
+                WHERE ${whereParts.join(" AND ")}
+              `,
+            );
+            lateInFlightLoads = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
+          }
+        }
+        items.push({
+          type: "dispatch_loads_in_flight_late",
+          severity: "critical",
+          title: "In-flight loads running late",
+          count: lateInFlightLoads,
+          action_url: "/dispatch",
+          action_label: "Open dispatch",
+        });
 
-      let openDamageAwaitingEstimate = 0;
-      if (await relationExists(client, "safety.accident_reports")) {
-        const res = await client.query(
-          `
-            SELECT count(*)::text AS total
-            FROM safety.accident_reports
-            WHERE operating_company_id = $1
-              AND COALESCE(trim(description), '') = ''
-          `,
-          [companyId]
-        );
-        openDamageAwaitingEstimate = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
-      }
+        let maintenanceCriticalOrOverdue = 0;
+        if (await relationExists(client, "maintenance.work_orders")) {
+          const hasOperatingCompany = await columnExists(client, "maintenance", "work_orders", "operating_company_id");
+          const hasStatus = await columnExists(client, "maintenance", "work_orders", "status");
+          const hasPriority = await columnExists(client, "maintenance", "work_orders", "priority");
+          const hasSeverity = await columnExists(client, "maintenance", "work_orders", "severity");
+          const hasDueDate = await columnExists(client, "maintenance", "work_orders", "due_date");
+          const whereParts: string[] = [];
+          if (hasOperatingCompany) whereParts.push(`operating_company_id = ${tenantSettingExpr}`);
+          if (hasStatus) whereParts.push(`COALESCE(status::text, '') NOT IN ('complete','completed','cancelled','void')`);
+          const issueParts: string[] = [];
+          if (hasPriority) issueParts.push(`lower(COALESCE(priority::text, '')) IN ('critical','urgent','high')`);
+          if (hasSeverity) issueParts.push(`lower(COALESCE(severity::text, '')) IN ('critical','urgent','high')`);
+          if (hasDueDate) issueParts.push(`due_date IS NOT NULL AND due_date < CURRENT_DATE`);
+          if (issueParts.length > 0) whereParts.push(`(${issueParts.join(" OR ")})`);
+          if (whereParts.length > 0) {
+            const res = await client.query(
+              `
+                SELECT count(*)::text AS total
+                FROM maintenance.work_orders
+                WHERE ${whereParts.join(" AND ")}
+              `,
+            );
+            maintenanceCriticalOrOverdue = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
+          }
+        }
+        items.push({
+          type: "maintenance_open_critical_or_overdue_pm",
+          severity: "error",
+          title: "Open critical or overdue PM work orders",
+          count: maintenanceCriticalOrOverdue,
+          action_url: "/maintenance",
+          action_label: "Open maintenance",
+        });
 
-      let dispatchChanged24h = 0;
-      if (await relationExists(client, "mdata.loads")) {
-        const res = await client.query(
-          `
-            SELECT count(*)::text AS total
-            FROM mdata.loads
-            WHERE operating_company_id = $1
-              AND updated_at >= now() - interval '24 hours'
-          `,
-          [companyId]
-        );
-        dispatchChanged24h = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
-      }
+        let safetyOpenDriverIssues = 0;
+        if (await relationExists(client, "safety.complaints")) {
+          const hasOperatingCompany = await columnExists(client, "safety", "complaints", "operating_company_id");
+          const hasStatus = await columnExists(client, "safety", "complaints", "status");
+          const whereParts: string[] = [];
+          if (hasOperatingCompany) whereParts.push(`operating_company_id = ${tenantSettingExpr}`);
+          if (hasStatus) whereParts.push(`COALESCE(status::text, '') NOT IN ('resolved','closed','void','dismissed')`);
+          if (whereParts.length > 0) {
+            const res = await client.query(
+              `
+                SELECT count(*)::text AS total
+                FROM safety.complaints
+                WHERE ${whereParts.join(" AND ")}
+              `,
+            );
+            safetyOpenDriverIssues = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
+          }
+        }
+        items.push({
+          type: "safety_open_driver_issues",
+          severity: "warning",
+          title: "Open safety driver issues",
+          count: safetyOpenDriverIssues,
+          action_url: "/safety",
+          action_label: "Open safety",
+        });
 
-      let fuelRecommendations24h = 0;
-      if (
-        (await relationExists(client, "fuel.route_recommendations")) &&
-        (await columnExists(client, "fuel", "route_recommendations", "operating_company_id")) &&
-        (await columnExists(client, "fuel", "route_recommendations", "created_at"))
-      ) {
-        const res = await client.query(
-          `
-            SELECT count(*)::text AS total
-            FROM fuel.route_recommendations
-            WHERE operating_company_id = $1
-              AND created_at >= now() - interval '24 hours'
-          `,
-          [companyId]
-        );
-        fuelRecommendations24h = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
-      }
+        let accountingOverdue = 0;
+        if (await relationExists(client, "views.ap_aging")) {
+          const apRes = await client.query(
+            `
+              SELECT count(*)::text AS total
+              FROM views.ap_aging
+              WHERE operating_company_id = ${tenantSettingExpr}
+                AND (
+                  COALESCE(bucket_31_60_cents, 0)
+                  + COALESCE(bucket_61_90_cents, 0)
+                  + COALESCE(bucket_91_plus_cents, 0)
+                ) > 0
+            `,
+          );
+          accountingOverdue += Number((apRes.rows[0] as { total?: string } | undefined)?.total ?? 0);
+        }
+        if (await relationExists(client, "views.ar_aging")) {
+          const arRes = await client.query(
+            `
+              SELECT count(*)::text AS total
+              FROM views.ar_aging
+              WHERE operating_company_id = ${tenantSettingExpr}
+                AND (
+                  COALESCE(bucket_31_60_cents, 0)
+                  + COALESCE(bucket_61_90_cents, 0)
+                  + COALESCE(bucket_91_plus_cents, 0)
+                ) > 0
+            `,
+          );
+          accountingOverdue += Number((arRes.rows[0] as { total?: string } | undefined)?.total ?? 0);
+        }
+        items.push({
+          type: "accounting_overdue_bills_customers",
+          severity: "warning",
+          title: "Overdue bills and customers",
+          count: accountingOverdue,
+          action_url: "/accounting",
+          action_label: "Open accounting",
+        });
 
-      let permitRefreshDue30d = 0;
-      if (await relationExists(client, "mdata.drivers") && await relationExists(client, "mdata.driver_company_authorizations")) {
-        const res = await client.query(
-          `
-            SELECT count(*)::text AS total
-            FROM mdata.drivers d
-            JOIN mdata.driver_company_authorizations a
-              ON a.driver_id = d.id
-             AND a.company_id = $1
-             AND a.is_authorized = true
-             AND a.deactivated_at IS NULL
-            WHERE d.status::text IN ('Active', 'Probation', 'OnLeave')
-              AND (
-                (d.cdl_expires_at IS NOT NULL AND d.cdl_expires_at <= CURRENT_DATE + interval '30 days')
-                OR (d.dot_medical_expires_at IS NOT NULL AND d.dot_medical_expires_at <= CURRENT_DATE + interval '30 days')
-                OR (d.hazmat_endorsement_expires_at IS NOT NULL AND d.hazmat_endorsement_expires_at <= CURRENT_DATE + interval '30 days')
-              )
-          `,
-          [companyId]
-        );
-        permitRefreshDue30d = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
-      }
-
-      return [
-        {
-          severity: "critical" as const,
-          message: "maintenance past-due jobs exceed 24h threshold",
-          link: "/maintenance",
-          count: maintenancePastDue,
-        },
-        {
-          severity: "warning" as const,
-          message: "QBO sync retries pending in accounting queue",
-          link: "/accounting",
-          count: qboRetriesPending,
-        },
-        {
-          severity: "warning" as const,
-          message: "open damage cases waiting external estimate",
-          link: "/safety",
-          count: openDamageAwaitingEstimate,
-        },
-        {
-          severity: "info" as const,
-          message: "dispatch loads changed state in last 24h",
-          link: "/dispatch",
-          count: dispatchChanged24h,
-        },
-        {
-          severity: "info" as const,
-          message: "fuel planner recommendations generated",
-          link: "/fuel",
-          count: fuelRecommendations24h,
-        },
-        {
-          severity: "warning" as const,
-          message: "driver files require monthly permit refresh",
-          link: "/drivers",
-          count: permitRefreshDue30d,
-        },
-      ];
+        const rank: Record<"info" | "warning" | "error" | "critical", number> = {
+          info: 0,
+          warning: 1,
+          error: 2,
+          critical: 3,
+        };
+        return items
+          .filter((item) => item.count > 0)
+          .sort((a, b) => rank[b.severity] - rank[a.severity] || b.count - a.count)
+          .slice(0, 8);
       });
 
       const body = { items };
@@ -493,6 +519,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       const snapshot = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         await client.query(`SET LOCAL statement_timeout = '5000ms'`);
         const companyId = query.data.operating_company_id;
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
 
       let trucks = 0;
       let flatbeds = 0;
@@ -501,12 +528,17 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       let trailers = 0;
 
       if (await relationExists(client, "mdata.equipment")) {
+        const equipmentHasOperatingCompany = await columnExists(client, "mdata", "equipment", "operating_company_id");
         const fleetRes = await client.query(
           `
             SELECT lower(COALESCE(equipment_type, '')) AS equipment_type, count(*)::text AS total
             FROM mdata.equipment
             WHERE deactivated_at IS NULL
-              AND (owner_company_id = $1 OR currently_leased_to_company_id = $1)
+              AND ${
+                equipmentHasOperatingCompany
+                  ? "operating_company_id = current_setting('app.operating_company_id', true)::uuid"
+                  : "(owner_company_id = $1 OR currently_leased_to_company_id = $1)"
+              }
             GROUP BY lower(COALESCE(equipment_type, ''))
           `,
           [companyId]
@@ -549,6 +581,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       let totalUnits = 0;
       let samsaraLive = 0;
       if (await relationExists(client, "mdata.units")) {
+        const unitsHaveOperatingCompany = await columnExists(client, "mdata", "units", "operating_company_id");
         const unitsRes = await client.query(
           `
             SELECT
@@ -557,7 +590,11 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
               count(*) FILTER (WHERE updated_at >= now() - interval '6 hours')::text AS samsara_live
             FROM mdata.units
             WHERE deactivated_at IS NULL
-              AND (owner_company_id = $1 OR currently_leased_to_company_id = $1)
+              AND ${
+                unitsHaveOperatingCompany
+                  ? "operating_company_id = current_setting('app.operating_company_id', true)::uuid"
+                  : "(owner_company_id = $1 OR currently_leased_to_company_id = $1)"
+              }
           `,
           [companyId]
         );

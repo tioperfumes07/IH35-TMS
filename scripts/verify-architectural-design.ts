@@ -21,6 +21,10 @@ import { execSync } from "node:child_process";
 const APP_PATH = "apps/frontend/src/App.tsx";
 const SIDEBAR_PATH = "apps/frontend/src/components/layout/sidebar-config.ts";
 const LOCK_FILE_PATH = "docs/locked-ui-surface.json";
+const EXTRA_GUARDS = [
+  "scripts/verify-home-attention-tenant-scope.mjs",
+  "scripts/verify-fleet-snapshot-tenant-scope.mjs",
+] as const;
 
 type LockedUiSurface = {
   schemaVersion: 1;
@@ -429,6 +433,10 @@ function main() {
     }
     console.error("\nFix: restore removed UI surface OR update docs/locked-ui-surface.json in the same PR to make intentional removals explicit.");
     process.exit(1);
+  }
+
+  for (const guardPath of EXTRA_GUARDS) {
+    execSync(`node ${guardPath}`, { stdio: "inherit" });
   }
 
   console.log("✅ Locked UI surface check passed");
