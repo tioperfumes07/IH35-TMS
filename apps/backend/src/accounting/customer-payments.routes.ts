@@ -210,11 +210,22 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
               operating_company_id,
               payment_id,
               invoice_id,
+              target_kind,
+              target_id,
               amount_cents,
-              applied_by_user_id
-            ) VALUES ($1,$2,$3,$4,$5)
+              amount_applied,
+              applied_by_user_id,
+              applied_by_user_uuid
+            ) VALUES ($1,$2,$3,'invoice',$3,$4,$5,$6,$6)
           `,
-          [query.data.operating_company_id, payment.id, applyRow.invoice_id, applyRow.amount_cents, user.uuid]
+          [
+            query.data.operating_company_id,
+            payment.id,
+            applyRow.invoice_id,
+            applyRow.amount_cents,
+            applyRow.amount_cents / 100,
+            user.uuid,
+          ]
         );
         applicationsCount += 1;
       }

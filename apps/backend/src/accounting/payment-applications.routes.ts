@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { applyPayment as applyPaymentEngine, ApplyPaymentError } from "./payments/apply.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 
 const paramsSchema = z.object({
@@ -13,7 +14,9 @@ const deleteParamsSchema = z.object({
 });
 
 const createBodySchema = z.object({
-  invoice_id: z.string().uuid(),
+  target_kind: z.enum(["invoice", "bill"]).default("invoice"),
+  target_id: z.string().uuid().optional(),
+  invoice_id: z.string().uuid().optional(),
   amount_cents: z.coerce.number().int().positive(),
 });
 
@@ -29,71 +32,41 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
     const body = createBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const paymentRes = await client.query(
-        `
-          SELECT id, customer_id, amount_unapplied_cents, voided_at
-          FROM accounting.payments
-          WHERE id = $1
-            AND operating_company_id = $2
-          LIMIT 1
-        `,
-        [params.data.paymentId, query.data.operating_company_id]
-      );
-      const payment = paymentRes.rows[0] as
-        | {
-            id: string;
-            customer_id: string;
-            amount_unapplied_cents: number;
-            voided_at: string | null;
-          }
-        | null;
-      if (!payment) return { code: 404 as const, error: "payment_not_found" };
-      if (payment.voided_at) return { code: 409 as const, error: "payment_voided" };
-      if (body.data.amount_cents > Number(payment.amount_unapplied_cents ?? 0)) {
-        return { code: 400 as const, error: "amount_exceeds_payment_unapplied" };
-      }
+    const targetKind = body.data.target_kind ?? "invoice";
+    const targetId = body.data.target_id ?? body.data.invoice_id;
+    if (!targetId) return reply.code(400).send({ error: "target_id_required" });
 
-      const invoiceRes = await client.query(
-        `
-          SELECT id, status, amount_open_cents, customer_id
-          FROM accounting.invoices
-          WHERE id = $1
-            AND operating_company_id = $2
-          LIMIT 1
-        `,
-        [body.data.invoice_id, query.data.operating_company_id]
-      );
-      const invoice = invoiceRes.rows[0] as { id: string; status: string; amount_open_cents: number; customer_id: string } | null;
-      if (!invoice) return { code: 404 as const, error: "invoice_not_found" };
-      if (String(invoice.customer_id) !== String(payment.customer_id)) return { code: 409 as const, error: "invoice_customer_mismatch" };
-      if (!["sent", "partial"].includes(String(invoice.status))) return { code: 409 as const, error: "invoice_not_open_for_payment" };
-      if (body.data.amount_cents > Number(invoice.amount_open_cents ?? 0)) return { code: 400 as const, error: "amount_exceeds_invoice_open" };
+    let result;
+    try {
+      result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
 
-      const insertRes = await client.query(
-        `
-          INSERT INTO accounting.payment_applications (
-            operating_company_id,
-            payment_id,
-            invoice_id,
-            amount_cents,
-            applied_by_user_id
-          ) VALUES ($1,$2,$3,$4,$5)
-          RETURNING id
-        `,
-        [query.data.operating_company_id, params.data.paymentId, body.data.invoice_id, body.data.amount_cents, user.uuid]
+      const applied = await applyPaymentEngine(
+        client,
+        {
+          operating_company_id: query.data.operating_company_id,
+          payment_id: params.data.paymentId,
+          applications: [
+            {
+              target_kind: targetKind,
+              target_id: targetId,
+              amount_cents: body.data.amount_cents,
+            },
+          ],
+        },
+        { user_id: user.uuid }
       );
-      const applicationId = insertRes.rows[0]?.id;
+
+      const applicationId = applied.application_ids[0];
       if (!applicationId) return { code: 500 as const, error: "payment_application_create_failed" };
 
       const paymentAfterRes = await client.query(
         `SELECT amount_unapplied_cents FROM accounting.payments WHERE id = $1 LIMIT 1`,
         [params.data.paymentId]
       );
-      const invoiceAfterRes = await client.query(
-        `SELECT amount_open_cents, status FROM accounting.invoices WHERE id = $1 LIMIT 1`,
-        [body.data.invoice_id]
-      );
+      const invoiceAfterRes =
+        targetKind === "invoice"
+          ? await client.query(`SELECT amount_open_cents, status FROM accounting.invoices WHERE id = $1 LIMIT 1`, [targetId])
+          : { rows: [{ amount_open_cents: 0, status: "n/a" }] };
 
       await appendCrudAudit(
         client,
@@ -104,8 +77,10 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
           resource_id: applicationId,
           operating_company_id: query.data.operating_company_id,
           payment_id: params.data.paymentId,
-          invoice_id: body.data.invoice_id,
+          target_kind: body.data.target_kind,
+          target_id: body.data.target_id ?? body.data.invoice_id,
           amount_cents: body.data.amount_cents,
+          overpayment_credit_memo_display_id: applied.overpayment_credit_memo_display_id,
         },
         "info",
         "P3-T11.20.3-PAYMENT-RECORDING"
@@ -118,10 +93,31 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
           payment_amount_unapplied_cents: Number(paymentAfterRes.rows[0]?.amount_unapplied_cents ?? 0),
           invoice_amount_open_cents: Number(invoiceAfterRes.rows[0]?.amount_open_cents ?? 0),
           invoice_status: String(invoiceAfterRes.rows[0]?.status ?? ""),
+          overpayment_credit_memo_display_id: applied.overpayment_credit_memo_display_id,
         },
       };
-    });
-
+      });
+    } catch (error) {
+      if (error instanceof ApplyPaymentError) {
+        if (
+          error.code === "payment_not_found" ||
+          error.code === "invoice_not_found" ||
+          error.code === "bill_not_found"
+        ) {
+          return reply.code(404).send({ error: error.code });
+        }
+        if (
+          error.code === "payment_voided" ||
+          error.code === "invoice_not_open_for_payment" ||
+          error.code === "invoice_customer_mismatch" ||
+          error.code === "bill_customer_mismatch"
+        ) {
+          return reply.code(409).send({ error: error.code });
+        }
+        return reply.code(400).send({ error: error.code });
+      }
+      throw error;
+    }
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     return reply.code(result.code).send(result.data);
   });
@@ -155,7 +151,7 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
           DELETE FROM accounting.payment_applications
           WHERE id = $1
             AND payment_id = $2
-          RETURNING id, invoice_id, amount_cents
+          RETURNING id, invoice_id, target_kind, target_id, amount_cents
         `,
         [params.data.id, params.data.paymentId]
       );
@@ -172,6 +168,8 @@ export async function registerPaymentApplicationsRoutes(app: FastifyInstance) {
           operating_company_id: query.data.operating_company_id,
           payment_id: params.data.paymentId,
           invoice_id: deleted.invoice_id,
+          target_kind: deleted.target_kind,
+          target_id: deleted.target_id,
           amount_cents: deleted.amount_cents,
         },
         "warning",

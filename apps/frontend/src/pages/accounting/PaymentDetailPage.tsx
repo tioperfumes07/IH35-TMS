@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment } from "../../api/accounting";
@@ -6,11 +6,10 @@ import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
-import { Modal } from "../../components/Modal";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNav } from "./AccountingSubNav";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { PaymentApplyModal } from "./PaymentApplyModal";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -22,9 +21,6 @@ export function PaymentDetailPage() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const [applyOpen, setApplyOpen] = useState(false);
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
-  const [applyAmountDollars, setApplyAmountDollars] = useState("");
-  const [applySearch, setApplySearch] = useState("");
 
   const detailQuery = useQuery({
     queryKey: ["accounting", "payment", selectedCompanyId, id],
@@ -61,9 +57,6 @@ export function PaymentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "payments"] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice"] });
       setApplyOpen(false);
-      setSelectedInvoiceId("");
-      setApplyAmountDollars("");
-      setApplySearch("");
     },
   });
 
@@ -84,15 +77,6 @@ export function PaymentDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice"] });
     },
   });
-
-  const filteredInvoices = useMemo(() => {
-    const rows = openInvoicesQuery.data ?? [];
-    if (!applySearch.trim()) return rows;
-    const q = applySearch.toLowerCase();
-    return rows.filter((row) => row.display_id.toLowerCase().includes(q) || (row.customer_name ?? "").toLowerCase().includes(q));
-  }, [openInvoicesQuery.data, applySearch]);
-
-  const selectedInvoice = filteredInvoices.find((row) => row.id === selectedInvoiceId) ?? null;
 
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading payment...</div>;
   if (!payment) return <div className="text-sm text-red-600">Payment not found.</div>;
@@ -228,64 +212,14 @@ export function PaymentDetailPage() {
         </button>
       </div>
 
-      <Modal open={applyOpen} onClose={() => setApplyOpen(false)} title="Apply to Invoice">
-        <form
-          className="space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const cents = Math.round(Number(applyAmountDollars || "0") * 100);
-            if (!selectedInvoiceId || !Number.isFinite(cents) || cents <= 0) return;
-            applyMutation.mutate({ invoice_id: selectedInvoiceId, amount_cents: cents });
-          }}
-        >
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Search
-            <input value={applySearch} onChange={(event) => setApplySearch(event.target.value)} placeholder="Search invoice #" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
-          </label>
-
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Invoice
-            <SelectCombobox
-              value={selectedInvoiceId}
-              onChange={(event) => {
-                const nextId = event.target.value;
-                setSelectedInvoiceId(nextId);
-                const invoice = filteredInvoices.find((row) => row.id === nextId);
-                if (!invoice) return;
-                const nextDefault = Math.min(Number(payment.amount_unapplied_cents ?? 0), Number(invoice.amount_open_cents ?? 0));
-                setApplyAmountDollars((nextDefault / 100).toFixed(2));
-              }}
-              className="h-9 rounded border border-gray-300 px-2 text-[13px]"
-            >
-              <option value="">Select invoice</option>
-              {filteredInvoices.map((invoice) => (
-                <option key={invoice.id} value={invoice.id}>
-                  {invoice.display_id} · Open {money(invoice.amount_open_cents)}
-                </option>
-              ))}
-            </SelectCombobox>
-          </label>
-
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Apply amount (USD)
-            <input value={applyAmountDollars} onChange={(event) => setApplyAmountDollars(event.target.value)} inputMode="decimal" className="h-9 rounded border border-gray-300 px-2 text-[13px]" />
-          </label>
-
-          <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
-            Unapplied available: {money(payment.amount_unapplied_cents)}
-            {selectedInvoice ? ` · Invoice open: ${money(selectedInvoice.amount_open_cents)}` : ""}
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setApplyOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={applyMutation.isPending}>
-              Apply
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      <PaymentApplyModal
+        open={applyOpen}
+        loading={applyMutation.isPending}
+        unappliedCents={Number(payment.amount_unapplied_cents ?? 0)}
+        invoices={openInvoicesQuery.data ?? []}
+        onClose={() => setApplyOpen(false)}
+        onSubmit={(payload) => applyMutation.mutate(payload)}
+      />
     </div>
   );
 }
