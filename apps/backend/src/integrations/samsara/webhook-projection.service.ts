@@ -116,6 +116,9 @@ function routeProjector(eventType: string): "driver" | "vehicle" | "hos" | "miss
   ) {
     return "vehicle";
   }
+  if (normalized.includes("dtc") || normalized.includes("fault") || normalized.includes("diagnostic")) {
+    return "vehicle";
+  }
   if (normalized.startsWith("driver.")) return "driver";
   if (normalized.startsWith("vehicle.")) return "vehicle";
   return "missing_mirror";

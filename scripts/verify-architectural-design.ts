@@ -76,6 +76,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-load-progress-no-db-writes.mjs",
   "scripts/verify-pm-alerts-append-only.mjs",
   "scripts/verify-pm-alerts-tenant-scope.mjs",
+  "scripts/verify-dtc-auto-wo-tenant-scope.mjs",
+  "scripts/verify-dtc-auto-wo-dedup.mjs",
 ] as const;
 
 type LockedUiSurface = {
