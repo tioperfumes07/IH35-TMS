@@ -124,6 +124,7 @@ import { ExpenseCategoryMapPage } from "./pages/accounting/ExpenseCategoryMapPag
 import { CoaRolesPage } from "./pages/accounting/CoaRolesPage";
 import { SalesTaxPage } from "./pages/accounting/SalesTaxPage";
 import { AccountingAuditTrailPage } from "./pages/accounting/AccountingAuditTrailPage";
+import { PostingLineagePage } from "./pages/accounting/PostingLineagePage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
@@ -1541,6 +1542,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AccountingAuditTrailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/posting-lineage"
+          element={
+            <ProtectedRoute>
+              <PostingLineagePage />
             </ProtectedRoute>
           }
         />
