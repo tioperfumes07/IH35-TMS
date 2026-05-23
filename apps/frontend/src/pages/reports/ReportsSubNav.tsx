@@ -18,6 +18,7 @@ const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
   { id: "profit-per-truck", label: "Profit per truck" },
   { id: "fuel-reconciliation", label: "Fuel reconciliation" },
   { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
+  { id: "geofence-dwell", label: "Geofence dwell report" },
   { id: "scheduled-reports", label: "Scheduled reports" },
 ];
 
@@ -66,6 +67,7 @@ export function reportsSubNavActiveHref(pathname: string): string {
     pathname === "/reports/profit-per-truck" ||
     pathname === "/reports/fuel-reconciliation" ||
     pathname === "/reports/maintenance-cost-per-unit" ||
+    pathname === "/reports/geofence-dwell" ||
     pathname === "/reports/scheduled"
   ) {
     return pathname;

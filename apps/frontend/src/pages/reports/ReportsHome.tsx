@@ -170,6 +170,7 @@ export function ReportsHomePage() {
                   ["profit-per-truck", "Profit per truck"],
                   ["fuel-reconciliation", "Fuel reconciliation"],
                   ["maintenance-cost-per-unit", "Maintenance cost per unit"],
+                  ["geofence-dwell", "Geofence dwell report"],
                   ["scheduled-reports", "Scheduled reports"],
                 ] as const
               ).map(([id, label]) => (

@@ -92,6 +92,13 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     status: "real",
   },
   {
+    id: "geofence-dwell",
+    name: "Geofence dwell report",
+    category: "operations",
+    description: "Entry/exit dwell windows by geofence with unit and paired driver context.",
+    status: "real",
+  },
+  {
     id: "detention-claims",
     name: "Detention claims",
     category: "operations",
