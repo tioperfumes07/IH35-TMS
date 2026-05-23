@@ -3,6 +3,7 @@ import { withLuciaBypass } from "../../auth/db.js";
 export const EXPENSE_CATEGORY_MAP_KIND_VALUES = [
   "fuel",
   "maintenance",
+  "revenue",
   "driver_pay",
   "factoring_fee",
   "toll",

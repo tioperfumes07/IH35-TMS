@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 
@@ -126,6 +127,9 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   const invoice = invoiceRes.rows[0];
 
   const lineTotal = Number(load.rate_total_cents ?? 0);
+  const revenueResolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, {
+    line_type: "linehaul",
+  });
   const lineRes = await client.query(
     `
       INSERT INTO accounting.invoice_lines (
@@ -133,15 +137,25 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
         invoice_id,
         source_load_id,
         line_type,
+        revenue_code,
+        account_id,
         description,
         quantity,
         unit_amount_cents,
         line_total_cents,
         display_order
-      ) VALUES ($1,$2,$3,'linehaul',$4,1,$5,$5,0)
+      ) VALUES ($1,$2,$3,'linehaul',$4,$5,$6,1,$7,$7,0)
       RETURNING *
     `,
-    [input.operatingCompanyId, invoice.id, input.loadId, `Linehaul · Load ${String(load.id)}`, lineTotal]
+    [
+      input.operatingCompanyId,
+      invoice.id,
+      input.loadId,
+      revenueResolution.revenue_code,
+      revenueResolution.account_id,
+      `Linehaul · Load ${String(load.id)}`,
+      lineTotal,
+    ]
   );
   const line = lineRes.rows[0];
 

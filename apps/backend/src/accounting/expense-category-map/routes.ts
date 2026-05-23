@@ -5,6 +5,7 @@ import { currentAuthUser, validationError, withCompanyScope } from "../shared.js
 const CATEGORY_KIND_VALUES = [
   "fuel",
   "maintenance",
+  "revenue",
   "driver_pay",
   "factoring_fee",
   "toll",
