@@ -50,7 +50,20 @@ export function LoadCard({ load, onClick }: Props) {
         <div className="text-sm">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</div>
       </div>
       <div className="mt-1 text-sm text-gray-700">{load.customer_name ?? "-"}</div>
-      <div className="mt-1 text-xs text-gray-500">{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</div>
+      <div className="mt-1 flex items-center justify-between gap-2 text-xs text-gray-500">
+        <span>{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</span>
+        <button
+          type="button"
+          title={load.geofence_ready ? "Geofence ready (auto or manual)." : "Geofence pending."}
+          onClick={(event) => {
+            event.stopPropagation();
+            onClick(load.id);
+          }}
+          className={`rounded px-1 py-0.5 ${load.geofence_ready ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-600"}`}
+        >
+          🗺️
+        </button>
+      </div>
       <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
         <span>{load.assigned_primary_driver_name ?? "Unassigned"}</span>
         <span>{new Date(load.created_at).toLocaleDateString()}</span>
