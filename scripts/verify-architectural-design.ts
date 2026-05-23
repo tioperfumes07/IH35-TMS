@@ -69,6 +69,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-factor-recon-tolerance-from-q11.mjs",
   "scripts/verify-accounting-audit-trail-tenant-scope.mjs",
   "scripts/verify-accounting-audit-trail-lineage.mjs",
+  "scripts/verify-posting-lineage-ui-contract.mjs",
   "scripts/verify-vehicle-driver-pairing-tenant-scope.mjs",
   "scripts/verify-vehicle-driver-pairing-append-only.mjs",
   "scripts/verify-arrival-detection-tenant-scope.mjs",
