@@ -45,7 +45,7 @@ export async function registerDispatchOverrideAuditRoutes(app: FastifyInstance) 
         query.operating_company_id,
       ];
       const filters: string[] = [
-        "event_type = ANY($1::text[])",
+        "event_class = ANY($1::text[])",
         "(payload->>'operating_company_id')::uuid = $2::uuid",
       ];
       if (query.from) {
@@ -58,7 +58,7 @@ export async function registerDispatchOverrideAuditRoutes(app: FastifyInstance) 
       }
       if (query.user_id) {
         values.push(query.user_id);
-        filters.push(`user_id = $${values.length}::uuid`);
+        filters.push(`actor_user_uuid = $${values.length}::uuid`);
       }
       if (query.override_type) {
         values.push(query.override_type);
@@ -68,7 +68,13 @@ export async function registerDispatchOverrideAuditRoutes(app: FastifyInstance) 
       const res = await client
         .query(
           `
-            SELECT id, user_id, event_type, severity, payload, created_at
+            SELECT
+              uuid AS id,
+              actor_user_uuid AS user_id,
+              event_class AS event_type,
+              severity,
+              payload,
+              created_at
             FROM audit.audit_events
             WHERE ${filters.join(" AND ")}
             ORDER BY created_at DESC

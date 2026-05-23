@@ -331,7 +331,7 @@ export async function getTransferDetail(transferId: string, operatingCompanyId: 
           FROM audit.audit_events
           WHERE payload->>'resource_type' = 'banking.transfers'
             AND payload->>'resource_id' = $1
-          ORDER BY happened_at DESC
+          ORDER BY created_at DESC
           LIMIT 50
         `,
         [transferId]
