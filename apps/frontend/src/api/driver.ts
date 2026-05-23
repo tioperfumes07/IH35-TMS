@@ -48,6 +48,16 @@ export type DriverArrivalPrompt = {
   load_number: string | null;
 };
 
+export type DriverStatusSuggestion = {
+  id: string;
+  load_id: string;
+  load_number: string | null;
+  suggested_from: string;
+  suggested_to: string;
+  reason: string;
+  suggested_at: string;
+};
+
 export async function getDriverMe() {
   return driverApiRequest<DriverMeResponse>("/api/v1/driver/me");
 }
@@ -88,6 +98,20 @@ export async function confirmDriverArrivalPrompt(id: string, body: { confirmed_a
 
 export async function dismissDriverArrivalPrompt(id: string, body: { reason?: string } = {}) {
   return driverApiRequest<{ ok: boolean }>(`/api/v1/driver/arrival-prompts/${encodeURIComponent(id)}/dismiss`, {
+    method: "POST",
+    body,
+  });
+}
+
+export async function listDriverStatusSuggestions() {
+  return driverApiRequest<{ suggestions: DriverStatusSuggestion[] }>("/api/v1/driver/status-suggestions");
+}
+
+export async function respondDriverStatusSuggestion(
+  id: string,
+  body: { response: "confirmed" | "overridden" | "dismissed" | "expired"; note?: string }
+) {
+  return driverApiRequest<{ ok: boolean }>(`/api/v1/driver/status-suggestions/${encodeURIComponent(id)}/respond`, {
     method: "POST",
     body,
   });
