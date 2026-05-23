@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import crypto from "node:crypto";
 import { withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
+import { resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 
@@ -121,6 +122,10 @@ async function materializeInvoice(client: PoolClient, tmpl: Record<string, unkno
     const qty = Number(ln.quantity ?? 1);
     const unit = Number(ln.unit_amount_cents ?? ln.amount_cents ?? 0);
     const lineType = typeof ln.line_type === "string" ? ln.line_type : "other";
+    const revenueResolution = await resolveInvoiceLineRevenueAccountId(oc, {
+      line_type: lineType,
+      revenue_code: typeof ln.revenue_code === "string" ? ln.revenue_code : null,
+    });
     const description = String(ln.description ?? "Recurring line");
     const lineTotal = Math.round(qty * unit);
     await client.query(
@@ -129,6 +134,8 @@ async function materializeInvoice(client: PoolClient, tmpl: Record<string, unkno
           operating_company_id,
           invoice_id,
           line_type,
+          revenue_code,
+          account_id,
           description,
           quantity,
           unit_amount_cents,
@@ -136,9 +143,9 @@ async function materializeInvoice(client: PoolClient, tmpl: Record<string, unkno
           display_order,
           created_at
         )
-        VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8,now())
+        VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,now())
       `,
-      [oc, invoiceId, lineType, description, qty, unit, lineTotal, order]
+      [oc, invoiceId, lineType, revenueResolution.revenue_code, revenueResolution.account_id, description, qty, unit, lineTotal, order]
     );
   }
   await recomputeInvoiceTotals(client, invoiceId);

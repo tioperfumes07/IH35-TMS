@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
+import { ExpenseCategoryMapResolutionError, resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 
@@ -60,75 +61,88 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const body = createLineBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
-
-    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const guard = await ensureDraftInvoice(client, params.data.id, query.data.operating_company_id);
-      if (!guard.ok) return guard;
-      const lineTotal = Math.round(body.data.quantity * body.data.unit_amount_cents);
-      const rowRes = await client.query(
-        `
-          INSERT INTO accounting.invoice_lines (
-            operating_company_id,
-            invoice_id,
-            source_load_id,
-            line_type,
-            description,
-            quantity,
-            unit_amount_cents,
-            line_total_cents,
-            qbo_class_snapshot,
-            qbo_item_id,
-            display_order
-          ) VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-            COALESCE($11, (
-              SELECT COALESCE(MAX(display_order), -1) + 1
-              FROM accounting.invoice_lines
-              WHERE invoice_id = $2
-            ))
-          )
-          RETURNING *
-        `,
-        [
-          query.data.operating_company_id,
-          params.data.id,
-          body.data.source_load_id ?? null,
-          body.data.line_type,
-          body.data.description,
-          body.data.quantity,
-          body.data.unit_amount_cents,
-          lineTotal,
-          body.data.qbo_class_snapshot ?? null,
-          body.data.qbo_item_id ?? null,
-          body.data.display_order ?? null,
-        ]
-      );
-      const line = rowRes.rows[0] ?? null;
-      if (!line) return { ok: false as const, code: 500 as const, error: "invoice_line_create_failed" };
-      const totals = await recomputeInvoiceTotals(client, params.data.id);
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.invoice_lines.created",
-        {
-          resource_type: "accounting.invoice_lines",
-          resource_id: line.id,
-          invoice_id: params.data.id,
+    try {
+      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        const guard = await ensureDraftInvoice(client, params.data.id, query.data.operating_company_id);
+        if (!guard.ok) return guard;
+        const lineTotal = Math.round(body.data.quantity * body.data.unit_amount_cents);
+        const revenueResolution = await resolveInvoiceLineRevenueAccountId(query.data.operating_company_id, {
+          line_type: body.data.line_type,
+        });
+        const rowRes = await client.query(
+          `
+            INSERT INTO accounting.invoice_lines (
+              operating_company_id,
+              invoice_id,
+              source_load_id,
+              line_type,
+              revenue_code,
+              account_id,
+              description,
+              quantity,
+              unit_amount_cents,
+              line_total_cents,
+              qbo_class_snapshot,
+              qbo_item_id,
+              display_order
+            ) VALUES (
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
+              COALESCE($13, (
+                SELECT COALESCE(MAX(display_order), -1) + 1
+                FROM accounting.invoice_lines
+                WHERE invoice_id = $2
+              ))
+            )
+            RETURNING *
+          `,
+          [
+            query.data.operating_company_id,
+            params.data.id,
+            body.data.source_load_id ?? null,
+            body.data.line_type,
+            revenueResolution.revenue_code,
+            revenueResolution.account_id,
+            body.data.description,
+            body.data.quantity,
+            body.data.unit_amount_cents,
+            lineTotal,
+            body.data.qbo_class_snapshot ?? null,
+            body.data.qbo_item_id ?? null,
+            body.data.display_order ?? null,
+          ]
+        );
+        const line = rowRes.rows[0] ?? null;
+        if (!line) return { ok: false as const, code: 500 as const, error: "invoice_line_create_failed" };
+        const totals = await recomputeInvoiceTotals(client, params.data.id);
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "accounting.invoice_lines.created",
+          {
+            resource_type: "accounting.invoice_lines",
+            resource_id: line.id,
+            invoice_id: params.data.id,
+            operating_company_id: query.data.operating_company_id,
+          },
+          "info",
+          "P3-T11.20.2-INVOICE-FLOW"
+        );
+        await enqueueTmsInvoicePushRequested(client, {
           operating_company_id: query.data.operating_company_id,
-        },
-        "info",
-        "P3-T11.20.2-INVOICE-FLOW"
-      );
-      await enqueueTmsInvoicePushRequested(client, {
-        operating_company_id: query.data.operating_company_id,
-        invoice_id: params.data.id,
-        operation: "update",
+          invoice_id: params.data.id,
+          operation: "update",
+        });
+        return { ok: true as const, code: 201 as const, data: { line, totals } };
       });
-      return { ok: true as const, code: 201 as const, data: { line, totals } };
-    });
 
-    if (!result.ok) return reply.code(result.code).send({ error: result.error });
-    return reply.code(result.code).send(result.data);
+      if (!result.ok) return reply.code(result.code).send({ error: result.error });
+      return reply.code(result.code).send(result.data);
+    } catch (error) {
+      if (error instanceof ExpenseCategoryMapResolutionError) {
+        return reply.code(409).send({ error: "invoice_line_revenue_account_mapping_missing" });
+      }
+      throw error;
+    }
   });
 
   app.patch("/api/v1/accounting/invoices/:id/lines/:lineId", async (req, reply) => {
@@ -141,9 +155,10 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
     const body = patchLineBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const guard = await ensureDraftInvoice(client, params.data.id, query.data.operating_company_id);
-      if (!guard.ok) return guard;
+    try {
+      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        const guard = await ensureDraftInvoice(client, params.data.id, query.data.operating_company_id);
+        if (!guard.ok) return guard;
 
       const oldRes = await client.query(
         `
@@ -181,7 +196,14 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       values.push(params.data.lineId);
       values.push(params.data.id);
 
-      const rowRes = await client.query(
+        const resolvedLineType = body.data.line_type ?? String(oldRow.line_type ?? "");
+        const revenueResolution = await resolveInvoiceLineRevenueAccountId(query.data.operating_company_id, {
+          line_type: resolvedLineType,
+        });
+        add("revenue_code", revenueResolution.revenue_code);
+        add("account_id", revenueResolution.account_id);
+
+        const rowRes = await client.query(
         `
           UPDATE accounting.invoice_lines
           SET ${setParts.join(", ")}
@@ -191,34 +213,40 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
         `,
         values
       );
-      const line = rowRes.rows[0] ?? null;
-      if (!line) return { ok: false as const, code: 404 as const, error: "invoice_line_not_found" };
-      const totals = await recomputeInvoiceTotals(client, params.data.id);
-      const changes = buildPatchChanges(body.data as Record<string, unknown>, oldRow as Record<string, unknown>, line as Record<string, unknown>);
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.invoice_lines.updated",
-        {
-          resource_type: "accounting.invoice_lines",
-          resource_id: line.id,
-          invoice_id: params.data.id,
+        const line = rowRes.rows[0] ?? null;
+        if (!line) return { ok: false as const, code: 404 as const, error: "invoice_line_not_found" };
+        const totals = await recomputeInvoiceTotals(client, params.data.id);
+        const changes = buildPatchChanges(body.data as Record<string, unknown>, oldRow as Record<string, unknown>, line as Record<string, unknown>);
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "accounting.invoice_lines.updated",
+          {
+            resource_type: "accounting.invoice_lines",
+            resource_id: line.id,
+            invoice_id: params.data.id,
+            operating_company_id: query.data.operating_company_id,
+            changes,
+          },
+          "info",
+          "P3-T11.20.2-INVOICE-FLOW"
+        );
+        await enqueueTmsInvoicePushRequested(client, {
           operating_company_id: query.data.operating_company_id,
-          changes,
-        },
-        "info",
-        "P3-T11.20.2-INVOICE-FLOW"
-      );
-      await enqueueTmsInvoicePushRequested(client, {
-        operating_company_id: query.data.operating_company_id,
-        invoice_id: params.data.id,
-        operation: "update",
+          invoice_id: params.data.id,
+          operation: "update",
+        });
+        return { ok: true as const, code: 200 as const, data: { line, totals } };
       });
-      return { ok: true as const, code: 200 as const, data: { line, totals } };
-    });
 
-    if (!result.ok) return reply.code(result.code).send({ error: result.error });
-    return reply.code(result.code).send(result.data);
+      if (!result.ok) return reply.code(result.code).send({ error: result.error });
+      return reply.code(result.code).send(result.data);
+    } catch (error) {
+      if (error instanceof ExpenseCategoryMapResolutionError) {
+        return reply.code(409).send({ error: "invoice_line_revenue_account_mapping_missing" });
+      }
+      throw error;
+    }
   });
 
   app.delete("/api/v1/accounting/invoices/:id/lines/:lineId", async (req, reply) => {
