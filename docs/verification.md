@@ -15,9 +15,23 @@ The command runs fail-fast in this order:
 5. Architectural verification (`npm run verify:arch-design`).
 6. Scheduler tenant-context verification.
 7. Canonical schema name verification.
-8. Backend vitest with JSON output + migration-test skip detector.
-9. Frontend vitest smoke.
-10. Summary report.
+8. Outbox emitter/handler parity guard.
+9. Migration application consistency guard (CREATE TABLE / CREATE INDEX / FOREIGN KEY coverage).
+10. Backend vitest with JSON output + migration-test skip detector.
+11. Frontend vitest smoke.
+12. Summary report.
+
+## Migration Application Consistency Guard
+
+Run standalone:
+
+- `npm run verify:migration-application-consistency`
+
+This guard parses migration files and verifies that objects expected to exist after migration replay are actually present in the connected database:
+
+- tables declared by `CREATE TABLE`
+- indexes declared by `CREATE INDEX`
+- foreign-key constraints declared inline or through `ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY`
 
 ## Exit Codes
 

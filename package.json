@@ -43,6 +43,8 @@
     "verify:db:reset": "node scripts/verify-db-reset.mjs",
     "verify:outbox-handler-parity": "node scripts/verify-outbox-handler-parity.mjs",
     "verify:outbox-handler-parity:test": "node --test scripts/__tests__/verify-outbox-handler-parity.test.mjs",
+    "verify:migration-application-consistency": "node scripts/verify-migration-application-consistency.mjs",
+    "verify:migration-application-consistency:test": "node --test scripts/__tests__/verify-migration-application-consistency.test.mjs",
     "verify:pre-commit": "node scripts/verify-pre-commit.mjs",
     "verify:canonical-schema-names": "node scripts/verify-canonical-schema-names.mjs",
     "verify:test-insert-columns": "node scripts/verify-test-insert-columns.mjs",

@@ -91,31 +91,34 @@ function cleanup() {
 }
 
 try {
-  console.log("verify:pre-commit step 1/10: ensure-database-url");
+  console.log("verify:pre-commit step 1/12: ensure-database-url");
   ensureDatabaseUrl();
 
-  console.log("verify:pre-commit step 2/10: db-reset");
+  console.log("verify:pre-commit step 2/12: db-reset");
   if (run("npm", ["run", "verify:db:reset"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 3/10: build-backend-emit");
+  console.log("verify:pre-commit step 3/12: build-backend-emit");
   if (run("npm", ["run", "build:backend"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 4/10: frontend-tsc");
+  console.log("verify:pre-commit step 4/12: frontend-tsc");
   if (run("npx", ["tsc", "-b"], { cwd: path.join(ROOT, "apps/frontend") }) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 5/10: verify-arch-design");
+  console.log("verify:pre-commit step 5/12: verify-arch-design");
   if (run("npm", ["run", "verify:arch-design"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 6/10: verify-scheduler-tenant-context");
+  console.log("verify:pre-commit step 6/12: verify-scheduler-tenant-context");
   if (run("npm", ["run", "verify:scheduler-tenant-context"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 7/10: verify-canonical-schema-names");
+  console.log("verify:pre-commit step 7/12: verify-canonical-schema-names");
   if (run("npm", ["run", "verify:canonical-schema-names"]) !== 0) process.exit(1);
 
   console.log("verify:pre-commit step 8/11: verify-outbox-handler-parity");
   if (run("npm", ["run", "verify:outbox-handler-parity"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 9/11: backend-vitest");
+  console.log("verify:pre-commit step 9/12: verify-migration-application-consistency");
+  if (run("npm", ["run", "verify:migration-application-consistency"]) !== 0) process.exit(1);
+
+  console.log("verify:pre-commit step 10/12: backend-vitest");
   if (
     run("npx", [
       "vitest",
@@ -131,12 +134,12 @@ try {
   }
   parseBackendVitestReport();
 
-  console.log("verify:pre-commit step 10/11: frontend-vitest");
+  console.log("verify:pre-commit step 11/12: frontend-vitest");
   if (run("npx", ["vitest", "run", "src/components/ErrorBoundary.test.tsx"], { cwd: path.join(ROOT, "apps/frontend") }) !== 0) {
     process.exit(1);
   }
 
-  console.log("verify:pre-commit step 11/11: summary-report");
+  console.log("verify:pre-commit step 12/12: summary-report");
   console.log("verify:pre-commit PASS");
   process.exit(0);
 } finally {
