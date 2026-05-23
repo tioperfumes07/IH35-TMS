@@ -26,6 +26,7 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
   { label: "Customers", href: "/accounting/customers" },
   { label: "Reports", href: "/accounting/reports" },
   { label: "Invoices", href: "/accounting/invoices" },
+  { label: "Multi-entity", href: "/accounting/multi-entity" },
   { label: "Receive Payment", href: "/accounting/payments" },
   { label: "Factoring", href: "/accounting/factoring" },
   { label: "Factor reconciliation", href: "/accounting/factor-reconciliation" },
@@ -44,6 +45,7 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
 /** Map detail paths to list href so leaf tabs stay active (primitive compares exact href). */
 export function accountingSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/accounting/invoices/")) return "/accounting/invoices";
+  if (pathname.startsWith("/accounting/multi-entity")) return "/accounting/multi-entity";
   if (pathname.startsWith("/accounting/payments/")) return "/accounting/payments";
   if (pathname.startsWith("/accounting/factoring/")) return "/accounting/factoring";
   if (pathname.startsWith("/accounting/factor-reconciliation")) return "/accounting/factor-reconciliation";

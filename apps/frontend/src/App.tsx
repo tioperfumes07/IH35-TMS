@@ -104,6 +104,7 @@ import { ScheduledReportsPage } from "./pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "./pages/reports/GeofenceDwellReport";
 import { QboSyncDetailPage } from "./pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "./pages/accounting/InvoicesListPage";
+import { MultiEntityAccountingPage } from "./pages/accounting/MultiEntityAccountingPage";
 import { AccountingHubPage } from "./pages/accounting/AccountingHubPage";
 import { DisputeQueuePage } from "./pages/accounting/DisputeQueuePage";
 import { AbandonmentQueuePage } from "./pages/accounting/AbandonmentQueuePage";
@@ -1459,6 +1460,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <InvoicesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/multi-entity"
+          element={
+            <ProtectedRoute>
+              <MultiEntityAccountingPage />
             </ProtectedRoute>
           }
         />

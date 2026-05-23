@@ -924,6 +924,29 @@ export type CoaRoleRow = {
   updated_at: string | null;
 };
 
+export type MultiEntityCompanySummary = {
+  operating_company_id: string;
+  company_name: string;
+  revenue_cents: number;
+  expense_cents: number;
+  net_income_cents: number;
+};
+
+export type MultiEntityConsolidatedSummary = {
+  revenue_cents: number;
+  expense_cents: number;
+  net_income_cents: number;
+};
+
+export type MultiEntityAccountBalance = {
+  account_id: string;
+  account_number: string | null;
+  account_name: string;
+  account_type: string;
+  debit_cents: number;
+  credit_cents: number;
+};
+
 export function listExpenseCategoryMappings(
   operatingCompanyId: string,
   options: { include_inactive?: boolean; category_kind?: ExpenseCategoryMapKind } = {}
@@ -993,4 +1016,22 @@ export function validateCoaRoles(operatingCompanyId: string) {
     missing_roles: CoaRole[];
     valid: boolean;
   }>(withCompany("/api/v1/accounting/coa-roles/validate", operatingCompanyId));
+}
+
+export function getMultiEntityAccountingSummary(input: {
+  operating_company_ids: string[];
+  start: string;
+  end: string;
+}) {
+  const query = new URLSearchParams();
+  query.set("operating_company_ids", input.operating_company_ids.join(","));
+  query.set("start", input.start);
+  query.set("end", input.end);
+  return apiRequest<{
+    period: { start: string; end: string };
+    companies: string[];
+    consolidated: MultiEntityConsolidatedSummary;
+    by_company: MultiEntityCompanySummary[];
+    accounts: MultiEntityAccountBalance[];
+  }>(`/api/v1/accounting/multi-entity/summary?${query.toString()}`);
 }
