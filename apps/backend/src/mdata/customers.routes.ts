@@ -20,6 +20,9 @@ const listQuerySchema = z.object({
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+const detailQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
+});
 const customerTypeInputSchema = z.enum(["broker", "direct", "direct_shipper"]);
 const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
 const customerStatusSchema = z.enum(["active", "inactive", "credit_hold", "blacklist"]);
@@ -325,7 +328,15 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       return { results };
     }
 
+    const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, operating_company_id)
+    );
+    if (!resolvedOperatingCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+
     const customers = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       const values: unknown[] = [];
       const filters: string[] = [];
       if (status === "active") filters.push("deactivated_at IS NULL");
@@ -337,10 +348,8 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           `(customer_name ILIKE $${idx} OR customer_code ILIKE $${idx} OR mc_number ILIKE $${idx} OR dot_number ILIKE $${idx} OR billing_email ILIKE $${idx} OR status::text ILIKE $${idx})`
         );
       }
-      if (operating_company_id) {
-        values.push(operating_company_id);
-        filters.push(`operating_company_id = $${values.length}`);
-      }
+      values.push(resolvedOperatingCompanyId);
+      filters.push(`operating_company_id = $${values.length}`);
       values.push(limit);
       values.push(offset);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -497,8 +506,20 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id)
+    );
+    if (!resolvedOperatingCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
     const row = await withCurrentUser(authUser.uuid, async (client) => {
-      const res = await client.query(`SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+      const res = await client.query(
+        `SELECT ${CUSTOMER_SELECT_COLUMNS} FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.id, resolvedOperatingCompanyId]
+      );
       return res.rows[0] ?? null;
     });
     if (!row) return reply.code(404).send({ error: "mdata_customer_not_found" });
@@ -510,7 +531,16 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id)
+    );
+    if (!resolvedOperatingCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
     const row = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `
           SELECT
@@ -519,6 +549,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
               SELECT v.vendor_name
               FROM mdata.vendors v
               WHERE v.id = c.factoring_company_vendor_id
+                AND v.operating_company_id = c.operating_company_id
               LIMIT 1
             ) AS factoring_company_name,
             COALESCE((
@@ -546,9 +577,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
             ), '[]'::json) AS contacts
           FROM mdata.customers c
           WHERE c.id = $1
+            AND c.operating_company_id = $2
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, resolvedOperatingCompanyId]
       );
       return res.rows[0] ?? null;
     });

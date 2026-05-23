@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const ROOT = process.cwd();
 const MIGRATIONS_DIR = path.join(ROOT, "db", "migrations");
@@ -30,6 +31,19 @@ function parseBackfillInserts(sql) {
   let match;
   while ((match = insertRegex.exec(sql)) !== null) out.push(match[1]);
   return [...new Set(out)];
+}
+
+function parseAppBackfillInserts(sql) {
+  const out = [];
+  const insertRegex =
+    /insert\s+into\s+ih35_migrations\.applied_migrations\s*\([^)]*name[^)]*\)\s*values\s*\(\s*'([^']+)'/gim;
+  let match;
+  while ((match = insertRegex.exec(sql)) !== null) out.push(match[1]);
+  return [...new Set(out)];
+}
+
+export function computeMissingMigrations(migrationFiles, sysLedger, appLedger) {
+  return migrationFiles.filter((file) => !sysLedger.has(file) || !appLedger.has(file));
 }
 
 function isDynamicTarget(raw) {
@@ -95,17 +109,33 @@ for (const file of migrationFiles) {
 
 if (!fs.existsSync(BACKFILL_SQL)) fail("missing scripts/batch-8-ledger-backfill.sql");
 const sqlText = fs.readFileSync(BACKFILL_SQL, "utf8");
-const backfillMigrations = parseBackfillInserts(sqlText).sort((a, b) => a.localeCompare(b));
+const backfillSys = parseBackfillInserts(sqlText).sort((a, b) => a.localeCompare(b));
+const backfillApp = parseAppBackfillInserts(sqlText).sort((a, b) => a.localeCompare(b));
 
-if (backfillMigrations.length !== missing.length) {
-  fail(`backfill insert count (${backfillMigrations.length}) must equal missing count (${missing.length})`);
+if (backfillSys.length !== missing.length) {
+  fail(`_system insert count (${backfillSys.length}) must equal missing count (${missing.length})`);
+}
+if (backfillApp.length !== missing.length) {
+  fail(`app insert count (${backfillApp.length}) must equal missing count (${missing.length})`);
+}
+
+const backfillLedgerTargets = [...new Set([...backfillSys, ...backfillApp])];
+const backfillMissing = computeMissingMigrations(
+  backfillLedgerTargets,
+  new Set(backfillSys),
+  new Set(backfillApp),
+);
+
+if (backfillMissing.length !== 0) {
+  fail(`backfill has single-ledger drift entries: ${backfillMissing.slice(0, 5).join(", ")}`);
 }
 
 for (const file of missing) {
-  if (!backfillMigrations.includes(file)) fail(`missing migration not inserted in backfill SQL: ${file}`);
+  if (!backfillSys.includes(file)) fail(`missing migration not inserted in _system backfill SQL: ${file}`);
+  if (!backfillApp.includes(file)) fail(`missing migration not inserted in app backfill SQL: ${file}`);
 }
 
-for (const file of backfillMigrations) {
+for (const file of [...backfillSys, ...backfillApp]) {
   if (!missingSet.has(file)) fail(`backfill SQL contains migration not in missing list: ${file}`);
 }
 
@@ -134,12 +164,18 @@ if (unresolvedStaticTargets.length === 0) {
   fail("unexpected parse outcome: unresolved static target set is empty");
 }
 
-console.log(
-  JSON.stringify({
-    event: "verify_no_unledgered_migrations_ok",
-    migration_count: migrationFiles.length,
-    missing_count: missing.length,
-    normal_count: normal.length,
-    unresolved_static_targets: unresolvedStaticTargets.length,
-  })
-);
+function run() {
+  console.log(
+    JSON.stringify({
+      event: "verify_no_unledgered_migrations_ok",
+      migration_count: migrationFiles.length,
+      missing_count: missing.length,
+      normal_count: normal.length,
+      unresolved_static_targets: unresolvedStaticTargets.length,
+    })
+  );
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  run();
+}

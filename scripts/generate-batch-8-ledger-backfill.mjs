@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 import dotenv from "dotenv";
 import pg from "pg";
 
@@ -45,6 +46,10 @@ const SUPPRESSED_FILE_TARGETS = new Set([
   "0163_p6_t11199_qbo_sync_worker_retry_outbox.sql|table|qbo.sync_dead_letter_email_throttle",
   "0163_p6_t11199_qbo_sync_worker_retry_outbox.sql|index|ix_outbox_events_company_pending",
 ]);
+
+export function computeMissingMigrations(migrationFiles, sysLedger, appLedger) {
+  return migrationFiles.filter((file) => !sysLedger.has(file) || !appLedger.has(file));
+}
 
 function sha256(content) {
   return crypto.createHash("sha256").update(content, "utf8").digest("hex");
@@ -332,7 +337,7 @@ async function main() {
       if (ledger === "app") appLedger.add(migration);
     }
 
-    const missing = migrationFiles.filter((file) => !sysLedger.has(file) || !appLedger.has(file));
+    const missing = computeMissingMigrations(migrationFiles, sysLedger, appLedger);
     const normalLedgered = migrationFiles.filter((file) => !missing.includes(file));
     const migrationIndexByFile = new Map(migrationFiles.map((file, idx) => [file, idx]));
     const sqlByFile = new Map(
@@ -543,8 +548,10 @@ ON CONFLICT (name) DO NOTHING;`
   }
 }
 
-main().catch((error) => {
-  console.error(String(error?.message ?? error));
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(String(error?.message ?? error));
+    process.exit(1);
+  });
+}
 
