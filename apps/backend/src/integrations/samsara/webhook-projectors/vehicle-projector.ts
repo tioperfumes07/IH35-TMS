@@ -1,6 +1,7 @@
 import type { DbClient, ProjectionResult, SamsaraWebhookEvent } from "../webhook-projection.types.js";
 import { processArrivalDetectionsForGpsPoint } from "../../../telematics/arrival-detection.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../../telematics/geofence-detector.service.js";
+import { processMaintenancePredictorForOdometer } from "../../../telematics/maintenance-predictor.service.js";
 import { processVehicleDriverPairingWebhookEvent } from "../../../telematics/vehicle-driver-lookup.service.js";
 import { notifyDriverWebPush } from "../../../services/push-notification.service.js";
 
@@ -63,6 +64,17 @@ function extractLocation(payload: Record<string, unknown>): { latitude: number; 
   return null;
 }
 
+function extractOdometerMiles(payload: Record<string, unknown>): number | null {
+  const record = extractVehicleRecord(payload) ?? payload;
+  const candidates = [asObject(record), asObject(payload)].filter((v): v is Record<string, unknown> => Boolean(v));
+  for (const candidate of candidates) {
+    const raw = candidate.odometer_mi ?? candidate.odometerMiles ?? candidate.odometer_miles ?? candidate.odometer;
+    const numeric = Number(raw);
+    if (Number.isFinite(numeric) && numeric >= 0) return Math.round(numeric);
+  }
+  return null;
+}
+
 export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhookEvent): Promise<ProjectionResult> {
   const vehicleId = extractVehicleId(event.payload);
   if (!vehicleId) {
@@ -92,6 +104,7 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
   );
 
   const location = extractLocation(event.payload);
+  const odometerMiles = extractOdometerMiles(event.payload);
   const localUnitId = upsertRes.rows[0]?.local_unit_id ?? null;
   if (location && localUnitId) {
     await processGeofenceDetectionsForGpsPoint(client, {
@@ -111,6 +124,15 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
       occurred_at: location.occurred_at,
     }, {
       notifyDriver: notifyDriverWebPush,
+    });
+  }
+
+  if (localUnitId && odometerMiles != null) {
+    await processMaintenancePredictorForOdometer(client, {
+      operating_company_id: event.operating_company_id,
+      unit_id: localUnitId,
+      odometer_mi: odometerMiles,
+      occurred_at: location?.occurred_at ?? new Date().toISOString(),
     });
   }
   await processVehicleDriverPairingWebhookEvent(client, event, vehicleId);

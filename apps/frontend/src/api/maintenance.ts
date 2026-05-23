@@ -19,6 +19,18 @@ export type MaintenanceKpis = {
   pending_qbo: number;
 };
 
+export type MaintenancePmAlert = {
+  id: string;
+  unit_id: string;
+  unit_number: string;
+  pm_schedule_id: string;
+  schedule_label: string;
+  trigger_odometer: number;
+  triggered_at: string;
+  state: "open" | "acknowledged" | "scheduled" | "dismissed";
+  scheduled_work_order_id: string | null;
+};
+
 export type WorkOrder = {
   id: string;
   display_id?: string | null;
@@ -232,6 +244,24 @@ function query(companyId: string) {
 
 export function getMaintenanceKpis(companyId: string) {
   return apiRequest<MaintenanceKpis>(`/api/v1/maintenance/dashboard/kpis?${query(companyId)}`);
+}
+
+export function listMaintenancePmAlerts(companyId: string) {
+  return apiRequest<{ alerts: MaintenancePmAlert[] }>(`/api/v1/maintenance/pm-alerts?${query(companyId)}`);
+}
+
+export function acknowledgeMaintenancePmAlert(alertId: string, companyId: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/maintenance/pm-alerts/${encodeURIComponent(alertId)}/ack`, {
+    method: "PATCH",
+    body: { operating_company_id: companyId },
+  });
+}
+
+export function scheduleMaintenancePmAlert(alertId: string, companyId: string, workOrderId: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/maintenance/pm-alerts/${encodeURIComponent(alertId)}/schedule`, {
+    method: "PATCH",
+    body: { operating_company_id: companyId, work_order_id: workOrderId },
+  });
 }
 
 export function getVendorIntegrityHistory(vendorId: string, companyId: string) {

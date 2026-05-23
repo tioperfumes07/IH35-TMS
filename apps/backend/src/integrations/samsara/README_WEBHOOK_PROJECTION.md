@@ -8,7 +8,7 @@ Projection lifecycle is tracked in `integrations.samsara_webhook_projection_stat
 | Pattern of `event_type` | Target mirror | Notes |
 |---|---|---|
 | `driver.*` | `integrations.samsara_drivers` | UPSERT on `(operating_company_id, samsara_driver_id)` |
-| `vehicle.*` | `integrations.samsara_vehicles` | UPSERT on `(operating_company_id, samsara_vehicle_id)` + downstream geofence/arrival detectors when location is present |
+| `vehicle.*` | `integrations.samsara_vehicles` | UPSERT on `(operating_company_id, samsara_vehicle_id)` + downstream geofence/arrival detectors + maintenance predictor when GPS/odometer are present |
 | `*driver_log_on*`, `*driver_log_off*`, `*vehicle_assigned*`, `*vehicle_unassigned*` | `telematics.vehicle_driver_assignments` | Close/open assignment windows by unit at event timestamp |
 | `*hos*`, `*eld*`, `*duty_status*` | `hos.duty_status_events` | Append-only INSERT, mapped to local `driver_id` / `unit_id` |
 | `*gps*`, `*location*`, `*position*` | `integrations.samsara_vehicles` + `geo.geofence_events` | vehicle mirror UPSERT + geofence transition detection when local unit mapping exists |

@@ -65,6 +65,7 @@ import { registerDriverSchedulerRoutes } from "./safety/driver-scheduler.routes.
 import { registerSafetyFinesRoutes } from "./safety/fines.routes.js";
 import { registerSafetyCompanyViolationsRoutes } from "./safety/company-violations.routes.js";
 import { registerSafetyV5Routes } from "./safety/safety-v5.routes.js";
+import { registerDotInspectionEventsRoutes } from "./safety/dot-inspection-events.routes.js";
 import { registerSafetyHosViolationsRoutes } from "./routes/safety/hos-violations.js";
 import { registerSafetyDotInspectionsRoutes } from "./routes/safety/dot-inspections.js";
 import { registerSafetyCsaScoresRoutes } from "./routes/safety/csa-scores.js";
@@ -90,6 +91,7 @@ import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
+import { registerMaintenancePmAlertsRoutes } from "./maintenance/pm-alerts.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
 import { registerMaintenanceDriverReportsRoutes } from "./maintenance/driver-reports.routes.js";
@@ -404,6 +406,7 @@ async function main() {
   await registerSafetyFinesRoutes(app);
   await registerSafetyCompanyViolationsRoutes(app);
   await registerSafetyV5Routes(app);
+  await registerDotInspectionEventsRoutes(app);
   await registerSafetyHosViolationsRoutes(app);
   await registerSafetyDotInspectionsRoutes(app);
   await registerSafetyCsaScoresRoutes(app);
@@ -434,6 +437,7 @@ async function main() {
   await registerWoTimeEntriesRoutes(app);
   await registerMaintenanceDriverReportsRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
+  await registerMaintenancePmAlertsRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);
   await registerForm425CRoutes(app);
