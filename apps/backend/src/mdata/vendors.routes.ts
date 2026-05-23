@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { enqueueTmsVendorPushRequested } from "../qbo/tms-vendor-push-chain.service.js";
 
 const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);
 
@@ -225,6 +226,11 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           vendor_code: row.vendor_code,
           vendor_type: row.vendor_type,
         });
+        await enqueueTmsVendorPushRequested(client, {
+          operating_company_id: String(row.operating_company_id),
+          vendor_id: String(row.id),
+          operation: "create",
+        });
         return row;
       });
       return reply.code(201).send(created);
@@ -364,6 +370,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
               vendor_category_locked_at,
               phone,
               email,
+              operating_company_id,
               address_line1 AS address,
               tax_id,
               notes,
@@ -388,6 +395,11 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           resource_type: "mdata.vendors",
           changes,
         });
+        await enqueueTmsVendorPushRequested(client, {
+          operating_company_id: String(updatedRow.operating_company_id),
+          vendor_id: String(updatedRow.id),
+          operation: "update",
+        });
         return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "mdata_vendor_not_found" });
@@ -410,7 +422,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, deactivated_at
+          SELECT id, operating_company_id, deactivated_at
           FROM mdata.vendors
           WHERE id = $1
           LIMIT 1
@@ -441,6 +453,11 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         resource_id: oldRow.id,
         resource_type: "mdata.vendors",
         was_already_deactivated: wasAlreadyDeactivated,
+      });
+      await enqueueTmsVendorPushRequested(client, {
+        operating_company_id: String(oldRow.operating_company_id ?? ""),
+        vendor_id: String(oldRow.id),
+        operation: "update",
       });
 
       return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
