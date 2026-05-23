@@ -57,6 +57,7 @@ type GeofenceRow = {
   location_kind: string;
   location_ref_id: string | null;
   is_active: boolean;
+  source: "manual" | "auto_dispatch" | string;
   vertices_json: unknown;
   created_at: string;
   created_by_user_uuid: string | null;
@@ -118,6 +119,7 @@ function mapGeofenceRow(row: GeofenceRow) {
     location_kind: row.location_kind,
     location_ref_id: row.location_ref_id,
     is_active: row.is_active,
+    source: row.source,
     polygon_geojson: polygonGeoJsonFromVertices(row.vertices_json),
     created_at: row.created_at,
     created_by_user_uuid: row.created_by_user_uuid,
@@ -168,6 +170,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
             g.location_kind,
             g.location_ref_id::text,
             g.is_active,
+            g.source,
             g.vertices_json,
             g.created_at::text,
             g.created_by_user_uuid::text,
@@ -210,6 +213,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
             location_ref_id,
             vertices_json,
             is_active,
+            source,
             created_by_user_uuid,
             updated_by_user_uuid
           )
@@ -220,6 +224,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
             $4::uuid,
             $5::jsonb,
             $6,
+            'manual',
             $7::uuid,
             $7::uuid
           )
@@ -230,6 +235,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
             location_kind,
             location_ref_id::text,
             is_active,
+            source,
             vertices_json,
             created_at::text,
             created_by_user_uuid::text,
@@ -298,6 +304,7 @@ export async function registerGeofencesRoutes(app: FastifyInstance) {
             location_kind,
             location_ref_id::text,
             is_active,
+            source,
             vertices_json,
             created_at::text,
             created_by_user_uuid::text,

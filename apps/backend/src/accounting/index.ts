@@ -25,6 +25,7 @@ import { registerStatementExportRoutes } from "./statement-export.routes.js";
 import { registerExpenseCategoryMapRoutes } from "./expense-category-map/routes.js";
 import { registerCoaRolesRoutes } from "./coa-roles/routes.js";
 import { registerBankReconWorklistRoutes } from "./bank-recon/recon-worklist.routes.js";
+import { registerFactorReconciliationRoutes } from "./factor-reconciliation/routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
@@ -53,4 +54,5 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerExpenseCategoryMapRoutes(app);
   await registerCoaRolesRoutes(app);
   await registerBankReconWorklistRoutes(app);
+  await registerFactorReconciliationRoutes(app);
 }

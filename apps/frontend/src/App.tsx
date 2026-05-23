@@ -112,6 +112,7 @@ import { PaymentsListPage } from "./pages/accounting/PaymentsListPage";
 import { PaymentDetailPage } from "./pages/accounting/PaymentDetailPage";
 import { FactoringListPage } from "./pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "./pages/accounting/FactoringDetailPage";
+import { FactorReconciliationPage } from "./pages/accounting/FactorReconciliationPage";
 import { VendorBillCreatePage } from "./pages/accounting/VendorBillCreatePage";
 import { ExpenseCreatePage } from "./pages/accounting/ExpenseCreatePage";
 import { BillsPage } from "./pages/accounting/BillsPage";
@@ -1514,6 +1515,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <FactoringDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/factor-reconciliation"
+          element={
+            <ProtectedRoute>
+              <FactorReconciliationPage />
             </ProtectedRoute>
           }
         />
