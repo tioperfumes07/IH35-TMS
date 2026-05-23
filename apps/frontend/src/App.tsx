@@ -1111,6 +1111,14 @@ export default function App() {
           }
         />
         <Route
+          path="/samsara/vendor-mapping-integrity"
+          element={
+            <ProtectedRoute>
+              <ComingSoonPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/help"
           element={
             <ProtectedRoute>
