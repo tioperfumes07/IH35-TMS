@@ -320,12 +320,21 @@ async function deliverAccount(payload: QboMasterPushPayload, client: PoolClient)
   );
   const row = rowRes.rows[0] as Record<string, unknown> | undefined;
   if (!row) throw new Error("mirror_account_missing");
+  const hints = asPayloadJson(row);
 
   if (payload.operation === "create") {
     if (row.qbo_id) return { message: "account_already_linked_skip" };
     const name = String(row.name ?? "").trim().slice(0, 100) || "IH35 Account";
     const accountType = String(row.account_type ?? "Expense").trim().slice(0, 64) || "Expense";
     const accountSubType = row.account_sub_type != null ? String(row.account_sub_type).trim().slice(0, 64) : undefined;
+    const classification =
+      typeof hints.classification === "string" && hints.classification.trim().length > 0
+        ? hints.classification.trim().slice(0, 32)
+        : undefined;
+    const acctNum =
+      typeof hints.acct_num === "string" && hints.acct_num.trim().length > 0
+        ? hints.acct_num.trim().slice(0, 32)
+        : undefined;
 
     const body: Record<string, unknown> = {
       Name: name,
@@ -333,6 +342,8 @@ async function deliverAccount(payload: QboMasterPushPayload, client: PoolClient)
       Active: row.active === undefined ? true : Boolean(row.active),
     };
     if (accountSubType) body.AccountSubType = accountSubType;
+    if (classification) body.Classification = classification;
+    if (acctNum) body.AcctNum = acctNum;
 
     const resp = await qboPostMasterJson(payload.operating_company_id, "account", body, "create");
     const entity = unwrapIntuitEntity(resp);
@@ -369,6 +380,12 @@ async function deliverAccount(payload: QboMasterPushPayload, client: PoolClient)
     Active: Boolean(row.active),
   };
   if (row.account_sub_type != null) sparseBody.AccountSubType = String(row.account_sub_type).trim().slice(0, 64);
+  if (typeof hints.classification === "string" && hints.classification.trim().length > 0) {
+    sparseBody.Classification = hints.classification.trim().slice(0, 32);
+  }
+  if (typeof hints.acct_num === "string" && hints.acct_num.trim().length > 0) {
+    sparseBody.AcctNum = hints.acct_num.trim().slice(0, 32);
+  }
 
   const resp = await qboPostMasterJson(payload.operating_company_id, "account", sparseBody, "update");
   const entity = unwrapIntuitEntity(resp);

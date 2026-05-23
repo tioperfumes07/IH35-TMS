@@ -4,6 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isCatalogWriteRole } from "../auth/role-helpers.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { enqueueTmsAccountPushRequested } from "../qbo/tms-account-push-chain.service.js";
 
 const accountTypeSchema = z.enum([
   "Asset",
@@ -39,6 +40,7 @@ const createAccountBodySchema = z.object({
   currency_code: z.string().trim().regex(/^[A-Z]{3}$/).default("USD"),
   opening_balance_cents: z.coerce.number().int().optional(),
   notes: z.string().trim().max(2000).optional(),
+  operating_company_id: z.string().uuid().optional(),
 });
 
 const updateAccountBodySchema = z
@@ -55,6 +57,7 @@ const updateAccountBodySchema = z
     opening_balance_cents: z.coerce.number().int().nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
+    operating_company_id: z.string().uuid().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -72,6 +75,31 @@ function mapAccountConflict(constraint?: string): string {
   if (constraint.includes("account_number")) return "catalog_account_conflict_account_number";
   if (constraint.includes("qbo_account_id")) return "catalog_account_conflict_qbo_account_id";
   return "catalog_account_conflict";
+}
+
+async function resolveOperatingCompanyId(
+  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  requested?: string,
+) {
+  if (requested) return requested;
+  const res = await client.query(
+    `
+      SELECT c.id
+      FROM identity.users u
+      JOIN org.companies c ON c.id = u.default_company_id
+      WHERE u.id = $1::uuid
+        AND c.deactivated_at IS NULL
+      UNION
+      SELECT c.id
+      FROM org.companies c
+      WHERE c.id IN (SELECT org.user_accessible_company_ids())
+      ORDER BY id
+      LIMIT 1
+    `,
+    [userId],
+  );
+  return res.rows[0]?.id ?? null;
 }
 
 export async function registerAccountRoutes(app: FastifyInstance) {
@@ -171,6 +199,14 @@ export async function registerAccountRoutes(app: FastifyInstance) {
           account_name: row.account_name,
           account_type: row.account_type,
         });
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (operatingCompanyId) {
+          await enqueueTmsAccountPushRequested(client, {
+            operating_company_id: operatingCompanyId,
+            account_id: String(row.id),
+            operation: "create",
+          });
+        }
         return row;
       });
       return reply.code(201).send(created);
@@ -287,6 +323,14 @@ export async function registerAccountRoutes(app: FastifyInstance) {
           resource_type: "catalogs.accounts",
           changes,
         });
+        const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
+        if (operatingCompanyId) {
+          await enqueueTmsAccountPushRequested(client, {
+            operating_company_id: operatingCompanyId,
+            account_id: String(updatedRow.id),
+            operation: "update",
+          });
+        }
         return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "catalog_account_not_found" });
@@ -343,6 +387,14 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         resource_type: "catalogs.accounts",
         was_already_deactivated: wasAlreadyDeactivated,
       });
+      const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      if (operatingCompanyId) {
+        await enqueueTmsAccountPushRequested(client, {
+          operating_company_id: operatingCompanyId,
+          account_id: String(oldRow.id),
+          operation: "update",
+        });
+      }
 
       return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
     });
