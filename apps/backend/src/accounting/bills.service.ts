@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
+import { enqueueTmsBillPushRequested } from "../qbo/tms-bill-push-chain.service.js";
 
 type BillStatus = "open" | "partial" | "paid" | "voided";
 type PaymentMethod = "check" | "ach" | "wire" | "cash" | "credit_card";
@@ -543,6 +544,14 @@ export async function createBill(input: CreateBillInput, userId: string) {
     userId
   );
 
+  await withCurrentUser(userId, async (client) => {
+    await enqueueTmsBillPushRequested(client, {
+      operating_company_id: input.operatingCompanyId,
+      bill_id: bill.id,
+      operation: "create",
+    });
+  });
+
   return bill;
 }
 
@@ -668,11 +677,19 @@ export async function payBill(input: PayBillInput, userId: string) {
     userId
   );
 
+  await withCurrentUser(userId, async (client) => {
+    await enqueueTmsBillPushRequested(client, {
+      operating_company_id: input.operatingCompanyId,
+      bill_id: input.billId,
+      operation: "update",
+    });
+  });
+
   return payment;
 }
 
 export async function voidBill(operatingCompanyId: string, billId: string, reason: string, userId: string) {
-  return withCurrentUser(userId, async (client) => {
+  const result = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const billRes = await client.query<BillRow>(
       `
@@ -729,6 +746,14 @@ export async function voidBill(operatingCompanyId: string, billId: string, reaso
     );
     return { ok: true };
   });
+  await withCurrentUser(userId, async (client) => {
+    await enqueueTmsBillPushRequested(client, {
+      operating_company_id: operatingCompanyId,
+      bill_id: billId,
+      operation: "update",
+    });
+  });
+  return result;
 }
 
 export async function voidBillPayment(operatingCompanyId: string, paymentId: string, reason: string, userId: string) {

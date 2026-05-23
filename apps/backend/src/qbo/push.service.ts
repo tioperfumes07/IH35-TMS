@@ -16,6 +16,13 @@ export type QboInvoicePushPayload = {
   qbo_body: Record<string, unknown>;
 };
 
+export type QboBillPushPayload = {
+  operating_company_id: string;
+  bill_id: string;
+  operation: "create" | "update";
+  qbo_body: Record<string, unknown>;
+};
+
 export async function enqueueQboMasterEntityPush(client: PoolClient, payload: QboMasterPushPayload) {
   await client.query(`INSERT INTO outbox.events (event_type, payload, next_retry_at) VALUES ($1, $2::jsonb, now())`, [
     "qbo.master_entity.push_requested",
@@ -53,6 +60,15 @@ export async function deliverQboMasterEntityPush(payload: QboMasterPushPayload, 
   if (payload.entity === "customer") return deliverCustomer(payload, ctx.client);
   if (payload.entity === "item") return deliverItem(payload, ctx.client);
   return deliverAccount(payload, ctx.client);
+}
+
+export async function deliverQboBillPush(payload: QboBillPushPayload) {
+  const response = await qboPostMasterJson(payload.operating_company_id, "bill", payload.qbo_body, payload.operation);
+  const row =
+    response && typeof response === "object" && !Array.isArray(response) && (response as Record<string, unknown>).Bill
+      ? ((response as Record<string, unknown>).Bill as Record<string, unknown>)
+      : unwrapIntuitEntity(response);
+  return row;
 }
 
 async function deliverVendor(payload: QboMasterPushPayload, client: PoolClient) {

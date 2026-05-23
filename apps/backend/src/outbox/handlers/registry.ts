@@ -8,6 +8,7 @@ import { TmsVendorPushHandler } from "./tms-vendor-push.handler.js";
 import { TmsItemPushHandler } from "./tms-item-push.handler.js";
 import { TmsAccountPushHandler } from "./tms-account-push.handler.js";
 import { TmsInvoicePushHandler } from "./tms-invoice-push.handler.js";
+import { TmsBillPushHandler } from "./tms-bill-push.handler.js";
 import { buildTrailEventHandlers } from "./trail-events.handler.js";
 
 export type OutboxPayload = Record<string, unknown>;
@@ -86,6 +87,7 @@ export function buildOutboxHandlerRegistry() {
     new TmsItemPushHandler(),
     new TmsAccountPushHandler(),
     new TmsInvoicePushHandler(),
+    new TmsBillPushHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),
     ...buildTrailEventHandlers(),

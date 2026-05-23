@@ -14,6 +14,7 @@ export function buildQboBillPayload(input: {
   vendorQboId: string;
   apAccountQboId: string;
   txnDate: string;
+  dueDate?: string | null;
   docNumber?: string | null;
   privateNote?: string | null;
   totalCents: number;
@@ -39,6 +40,7 @@ export function buildQboBillPayload(input: {
     VendorRef: { value: input.vendorQboId },
     APAccountRef: { value: input.apAccountQboId },
     TxnDate: input.txnDate.slice(0, 10),
+    ...(input.dueDate ? { DueDate: input.dueDate.slice(0, 10) } : {}),
     ...(input.docNumber ? { DocNumber: input.docNumber } : {}),
     ...(input.privateNote ? { PrivateNote: input.privateNote } : {}),
     Line: qLines,
