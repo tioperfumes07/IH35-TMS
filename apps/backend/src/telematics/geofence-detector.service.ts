@@ -1,3 +1,5 @@
+import { processDotDwellForGeofenceEvent } from "./dot-dwell-detector.service.js";
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -187,6 +189,14 @@ export async function processGeofenceDetectionsForGpsPoint(
         input.source ?? "samsara_gps",
       ]
     );
+    await processDotDwellForGeofenceEvent(client, {
+      operating_company_id: input.operating_company_id,
+      geofence_id: row.geofence_id,
+      unit_id: input.unit_id,
+      driver_id: resolvedDriverId,
+      event_kind: transition,
+      occurred_at: input.occurred_at,
+    });
     transitionsWritten += 1;
   }
 

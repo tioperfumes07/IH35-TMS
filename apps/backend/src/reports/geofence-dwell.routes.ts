@@ -6,7 +6,7 @@ const querySchema = companyQuerySchema.extend({
   period_start: z.string().date(),
   period_end: z.string().date(),
   geofence_id: z.string().uuid().optional(),
-  location_kind: z.enum(["customer_site", "yard", "vendor_site", "custom"]).optional(),
+  location_kind: z.enum(["customer_site", "yard", "vendor_site", "custom", "dot_inspection_station"]).optional(),
 });
 
 export async function registerGeofenceDwellRoutes(app: FastifyInstance) {

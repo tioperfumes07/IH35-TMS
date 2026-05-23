@@ -65,6 +65,7 @@ import { registerDriverSchedulerRoutes } from "./safety/driver-scheduler.routes.
 import { registerSafetyFinesRoutes } from "./safety/fines.routes.js";
 import { registerSafetyCompanyViolationsRoutes } from "./safety/company-violations.routes.js";
 import { registerSafetyV5Routes } from "./safety/safety-v5.routes.js";
+import { registerDotInspectionEventsRoutes } from "./safety/dot-inspection-events.routes.js";
 import { registerSafetyHosViolationsRoutes } from "./routes/safety/hos-violations.js";
 import { registerSafetyDotInspectionsRoutes } from "./routes/safety/dot-inspections.js";
 import { registerSafetyCsaScoresRoutes } from "./routes/safety/csa-scores.js";
@@ -404,6 +405,7 @@ async function main() {
   await registerSafetyFinesRoutes(app);
   await registerSafetyCompanyViolationsRoutes(app);
   await registerSafetyV5Routes(app);
+  await registerDotInspectionEventsRoutes(app);
   await registerSafetyHosViolationsRoutes(app);
   await registerSafetyDotInspectionsRoutes(app);
   await registerSafetyCsaScoresRoutes(app);
