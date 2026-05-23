@@ -249,6 +249,22 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id]
       );
+      const liveUnitsRes = await client.query(
+        `
+          SELECT CASE
+            WHEN to_regclass('mdata.units') IS NULL THEN 0
+            ELSE (
+              SELECT count(*)::bigint
+              FROM mdata.units u
+              WHERE u.deactivated_at IS NULL
+                AND COALESCE(u.is_oos, false) = false
+                AND COALESCE(u.status::text, '') <> 'OutOfService'
+                AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
+            )
+          END AS total
+        `,
+        [query.data.operating_company_id]
+      );
       return {
         scheduled: Number(((scheduledRes.rows[0] as { cnt?: string } | undefined)?.cnt ?? 0)),
         run_last_7d: Number(((runRes.rows[0] as { cnt?: string } | undefined)?.cnt ?? 0)),
@@ -258,6 +274,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         maint_past_due: Number(((maintPastDueRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
         open_damage: Number(((openDamageRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
         pending_qbo_sync: Number(((pendingQboSyncRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
+        live_units: Number(((liveUnitsRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
       };
     });
 
@@ -271,6 +288,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       maint_past_due: data.maint_past_due,
       open_damage: data.open_damage,
       pending_qbo_sync: data.pending_qbo_sync,
+      live_units: data.live_units,
       ifta_status: getCurrentQuarterInfo(),
     };
     } catch (error) {
@@ -285,6 +303,7 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         maint_past_due: 0,
         open_damage: 0,
         pending_qbo_sync: 0,
+        live_units: 0,
         ifta_status: getCurrentQuarterInfo(),
       };
     }

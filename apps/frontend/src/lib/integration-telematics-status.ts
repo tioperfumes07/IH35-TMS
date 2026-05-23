@@ -24,7 +24,7 @@ export function resolveSamsaraVisualStatus(health: SamsaraPublicHealth | undefin
     return { label: "Samsara: not configured", dot: "gray" };
   }
 
-  const staleByStatus = health.last_health_status === "stale";
+  const staleByStatus = false;
   const staleByAge =
     health.last_health_status === "ok" && checkOlderThan(health.last_health_check_at, HOUR_MS);
 
@@ -33,10 +33,14 @@ export function resolveSamsaraVisualStatus(health: SamsaraPublicHealth | undefin
   }
 
   if (health.last_health_status === "ok") {
-    return { label: "Samsara: live", dot: "green" };
+    return { label: "Samsara: connected", dot: "green" };
   }
 
-  if (health.last_health_status === "error") {
+  if (
+    health.last_health_status === "auth_failed" ||
+    health.last_health_status === "rate_limited" ||
+    health.last_health_status === "transient_error"
+  ) {
     return {
       label: "Samsara: error",
       dot: "red",

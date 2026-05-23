@@ -6,9 +6,18 @@ export type PgClient = {
   query: (text: string, params?: unknown[]) => Promise<QueryResult<Record<string, unknown>>>;
 };
 
+function encryptedTokenFromRow(row: Record<string, unknown> | null): Buffer | null {
+  if (!row) return null;
+  const canonical = row.encrypted_api_token;
+  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
+  const legacy = row.api_token_encrypted;
+  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
+  return null;
+}
+
 export function rowIsConfigured(row: Record<string, unknown> | null): boolean {
   if (!row) return false;
-  return row.api_token_encrypted != null && Buffer.isBuffer(row.api_token_encrypted) && row.api_token_encrypted.length > 0;
+  return encryptedTokenFromRow(row) !== null;
 }
 
 export function toPublicConfig(row: Record<string, unknown> | null): {
@@ -57,13 +66,17 @@ export async function upsertSamsaraConfig(
   await client.query(
     `
       INSERT INTO integrations.samsara_config (
-        operating_company_id, samsara_org_id, api_token_encrypted, webhook_secret_encrypted, is_enabled
-      ) VALUES ($1, $2, $3, $4, true)
+        operating_company_id, samsara_org_id, api_token_encrypted, encrypted_api_token, webhook_secret_encrypted, is_enabled, connected_at, disconnected_at, token_key_version
+      ) VALUES ($1, $2, $3, $3, $4, true, now(), NULL, 1)
       ON CONFLICT (operating_company_id) DO UPDATE SET
         samsara_org_id = EXCLUDED.samsara_org_id,
         api_token_encrypted = EXCLUDED.api_token_encrypted,
+        encrypted_api_token = EXCLUDED.encrypted_api_token,
         webhook_secret_encrypted = EXCLUDED.webhook_secret_encrypted,
-        is_enabled = true
+        is_enabled = true,
+        connected_at = now(),
+        disconnected_at = NULL,
+        token_key_version = 1
     `,
     [operatingCompanyId, input.samsara_org_id, encToken, encWh]
   );
@@ -76,8 +89,10 @@ export async function disableSamsaraConfig(client: PgClient, operatingCompanyId:
       SET
         is_enabled = false,
         api_token_encrypted = NULL,
+        encrypted_api_token = NULL,
         webhook_secret_encrypted = NULL,
         samsara_org_id = NULL,
+        disconnected_at = now(),
         last_health_check_at = NULL,
         last_health_status = 'not_configured',
         last_error = NULL
@@ -112,14 +127,14 @@ export async function runSamsaraHealthCheckForRow(client: PgClient, operatingCom
 
   let token: string | null = null;
   try {
-    token = row.api_token_encrypted ? decryptSamsaraSecret(row.api_token_encrypted as Buffer) : null;
+    token = decryptSamsaraSecret(encryptedTokenFromRow(row));
   } catch (e) {
     await client.query(
       `
         UPDATE integrations.samsara_config
         SET
           last_health_check_at = now(),
-          last_health_status = 'error',
+          last_health_status = 'transient_error',
           last_error = $2
         WHERE operating_company_id = $1
       `,
@@ -145,16 +160,23 @@ export async function runSamsaraHealthCheckForRow(client: PgClient, operatingCom
     );
   } else {
     const msg = result.error ?? "unknown_error";
+    const lowered = msg.toLowerCase();
+    const status =
+      lowered.includes("http_401") || lowered.includes("http_403")
+        ? "auth_failed"
+        : lowered.includes("http_429")
+          ? "rate_limited"
+          : "transient_error";
     await client.query(
       `
         UPDATE integrations.samsara_config
         SET
           last_health_check_at = now(),
-          last_health_status = 'error',
-          last_error = $2
+          last_health_status = $2,
+          last_error = $3
         WHERE operating_company_id = $1
       `,
-      [operatingCompanyId, msg]
+      [operatingCompanyId, status, msg]
     );
   }
 }

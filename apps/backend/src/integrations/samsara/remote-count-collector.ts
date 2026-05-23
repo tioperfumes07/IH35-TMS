@@ -57,6 +57,15 @@ function classifyCollectorError(error: unknown): { failureClass: FailureClass; s
   return { failureClass: "transient_error", statusCode: null, message };
 }
 
+function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
+  if (!config) return null;
+  const canonical = config.encrypted_api_token;
+  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
+  const legacy = config.api_token_encrypted;
+  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
+  return null;
+}
+
 async function appendAuditEvent(
   client: DbClient,
   eventClass: string,
@@ -189,9 +198,7 @@ export async function collectSamsaraRemoteCounts(
       };
     }
 
-    const token = config.api_token_encrypted
-      ? decryptSamsaraSecret(config.api_token_encrypted as Buffer)
-      : null;
+    const token = decryptSamsaraSecret(readEncryptedToken(config));
     const samsara = new SamsaraClient({
       apiToken: token,
       samsaraOrgId: config.samsara_org_id ? String(config.samsara_org_id) : null,
