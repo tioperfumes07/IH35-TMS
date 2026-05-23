@@ -51,6 +51,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-invoice-lines-account-id-required.mjs",
   "scripts/verify-bank-recon-match-tenant-scope.mjs",
   "scripts/verify-bank-recon-tolerance-from-q11.mjs",
+  "scripts/verify-sales-tax-posting-split.mjs",
+  "scripts/verify-sales-tax-routes-tenant-scope.mjs",
   "scripts/verify-migrations-no-uuid-pk-reference.mjs",
   "scripts/verify-hos-duty-events-append-only.mjs",
   "scripts/verify-hos-clocks-tenant-scope.mjs",
