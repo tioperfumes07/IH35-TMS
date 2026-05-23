@@ -6,6 +6,7 @@ import { getCashFlowReport } from "./cash-flow.service.js";
 const cashFlowQuerySchema = companyQuerySchema.extend({
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  basis: z.enum(["accrual", "cash"]).optional(),
 });
 
 function canAccessCashFlow(role: string) {
@@ -28,6 +29,6 @@ export async function registerCashFlowRoutes(app: FastifyInstance) {
       to_date: query.data.to_date,
     });
 
-    return reply.code(200).send(report);
+    return reply.code(200).send({ ...report, basis: "accrual" });
   });
 }

@@ -5,6 +5,7 @@ import { getArAgingReport } from "./ar-aging.service.js";
 
 const arAgingQuerySchema = companyQuerySchema.extend({
   as_of_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  basis: z.enum(["accrual", "cash"]).optional(),
 });
 
 function canAccessArAging(role: string) {
@@ -30,6 +31,6 @@ export async function registerArAgingRoutes(app: FastifyInstance) {
       as_of_date: query.data.as_of_date ?? todayIsoDate(),
     });
 
-    return reply.code(200).send(report);
+    return reply.code(200).send({ ...report, basis: "accrual" });
   });
 }
