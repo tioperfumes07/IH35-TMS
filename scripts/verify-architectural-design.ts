@@ -32,6 +32,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-tms-invoice-push-tenant-chain.mjs",
   "scripts/verify-tms-invoice-line-item-shape.mjs",
   "scripts/verify-qbo-invoices-mirror-shape.mjs",
+  "scripts/verify-tms-bill-push-tenant-chain.mjs",
+  "scripts/verify-tms-bill-line-item-shape.mjs",
   "scripts/verify-qbo-customer-sync-tenant-chain.mjs",
   "scripts/verify-qbo-sync-event-log-tenant-scope.mjs",
   "scripts/verify-samsara-qbo-vendor-mapping-tenant-scope.mjs",
