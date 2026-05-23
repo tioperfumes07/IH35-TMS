@@ -31,6 +31,10 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
   { label: "Pre-settlements", href: "/accounting/pre-settlements" },
   { label: "Vendor balances", href: "/accounting/vendor-balances" },
   { label: "Journal entries", href: "/accounting/journal-entries" },
+  {
+    label: "Settings",
+    children: [{ label: "Expense category map", href: "/accounting/settings/expense-category-map" }],
+  },
 ] as const;
 
 /** Map detail paths to list href so leaf tabs stay active (primitive compares exact href). */
@@ -39,6 +43,7 @@ export function accountingSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/accounting/payments/")) return "/accounting/payments";
   if (pathname.startsWith("/accounting/factoring/")) return "/accounting/factoring";
   if (pathname.startsWith("/accounting/pre-settlements")) return "/accounting/pre-settlements";
+  if (pathname.startsWith("/accounting/settings/expense-category-map")) return "/accounting/settings/expense-category-map";
   return pathname;
 }
 
