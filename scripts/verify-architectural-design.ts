@@ -24,6 +24,8 @@ const LOCK_FILE_PATH = "docs/locked-ui-surface.json";
 const EXTRA_GUARDS = [
   "scripts/verify-home-attention-tenant-scope.mjs",
   "scripts/verify-fleet-snapshot-tenant-scope.mjs",
+  "scripts/verify-customers-tenant-scope.mjs",
+  "scripts/verify-vendors-tenant-scope.mjs",
 ] as const;
 
 type LockedUiSurface = {
