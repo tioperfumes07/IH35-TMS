@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { nextFactoringDisplayId, nextPaymentDisplayId } from "./display-id.js";
+import { postFactoringAdvanceEvent, postFactoringReleaseEvent } from "./factoring-posting/poster.service.js";
+import { nextFactoringDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 
 const idParamsSchema = z.object({
@@ -55,37 +56,6 @@ const recourseBodySchema = z.object({
 const voidBodySchema = z.object({
   reason: z.string().trim().min(3).max(500).optional(),
 });
-
-type InvoiceAlloc = {
-  invoice_id: string;
-  customer_id: string;
-  total_cents: number;
-};
-
-function allocateByProportion(total: number, lines: InvoiceAlloc[]) {
-  if (total <= 0 || lines.length === 0) return new Map<string, number>();
-  const sumBase = lines.reduce((acc, row) => acc + row.total_cents, 0);
-  if (sumBase <= 0) return new Map<string, number>();
-
-  const provisional = lines.map((row) => {
-    const raw = (row.total_cents / sumBase) * total;
-    const floor = Math.floor(raw);
-    return { invoice_id: row.invoice_id, floor, remainder: raw - floor };
-  });
-
-  let assigned = provisional.reduce((acc, row) => acc + row.floor, 0);
-  let remaining = total - assigned;
-  provisional.sort((a, b) => b.remainder - a.remainder);
-  for (const row of provisional) {
-    if (remaining <= 0) break;
-    row.floor += 1;
-    remaining -= 1;
-  }
-
-  const out = new Map<string, number>();
-  for (const row of provisional) out.set(row.invoice_id, row.floor);
-  return out;
-}
 
 async function fetchAdvanceDetail(client: any, advanceId: string) {
   const advanceRes = await client.query(
@@ -438,6 +408,12 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         `,
         [params.data.id, user.uuid]
       );
+      await postFactoringAdvanceEvent({
+        operating_company_id: query.data.operating_company_id,
+        factoring_advance_id: params.data.id,
+        actor_user_id: user.uuid,
+        advanced_at_iso: at,
+      });
 
       await appendCrudAudit(
         client,
@@ -573,136 +549,18 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         `,
         [params.data.id, user.uuid]
       );
+      await postFactoringReleaseEvent({
+        operating_company_id: query.data.operating_company_id,
+        factoring_advance_id: params.data.id,
+        actor_user_id: user.uuid,
+        released_at_iso: releasedAt,
+        release_amount_cents: Number(body.data.release_amount_cents ?? 0),
+        factor_fee_cents: Number(body.data.factor_fee_cents ?? 0),
+      });
 
       const invoiceTotal = Number(advance.invoice_total_cents ?? 0);
       const advanceTotal = Number(advance.advance_amount_cents ?? 0);
       const reserveTotal = Number(advance.reserve_amount_cents ?? 0);
-      const advanceAlloc = allocateByProportion(advanceTotal, invoices);
-      const reserveAlloc = allocateByProportion(reserveTotal, invoices);
-
-      const byCustomer = new Map<string, { invoices: string[]; advance: number; reserve: number }>();
-      for (const row of invoices) {
-        const entry = byCustomer.get(row.customer_id) ?? { invoices: [], advance: 0, reserve: 0 };
-        entry.invoices.push(row.invoice_id);
-        entry.advance += Number(advanceAlloc.get(row.invoice_id) ?? 0);
-        entry.reserve += Number(reserveAlloc.get(row.invoice_id) ?? 0);
-        byCustomer.set(row.customer_id, entry);
-      }
-
-      for (const [customerId, info] of byCustomer.entries()) {
-        const paymentDate = releasedAt.slice(0, 10);
-        if (info.advance > 0) {
-          const displayId = await nextPaymentDisplayId(client, query.data.operating_company_id, new Date(paymentDate));
-          const paymentRes = await client.query(
-            `
-              INSERT INTO accounting.payments (
-                operating_company_id,
-                customer_id,
-                display_id,
-                payment_method,
-                payment_date,
-                reference,
-                amount_cents,
-                deposited_to_account_id,
-                notes,
-                created_by_user_id
-              )
-              VALUES ($1,$2,$3,'factoring_advance',$4,$5,$6,'ops_checking',$7,$8)
-              RETURNING id
-            `,
-            [
-              query.data.operating_company_id,
-              customerId,
-              displayId,
-              paymentDate,
-              `FAC:${advance.display_id}:ADVANCE`,
-              info.advance,
-              `Auto-created from factoring release ${advance.display_id}`,
-              user.uuid,
-            ]
-          );
-          const paymentId = String(paymentRes.rows[0]?.id ?? "");
-          if (paymentId) {
-            for (const invoiceId of info.invoices) {
-              const amount = Number(advanceAlloc.get(invoiceId) ?? 0);
-              if (amount <= 0) continue;
-              await client.query(
-                `
-                  INSERT INTO accounting.payment_applications (
-                    operating_company_id,
-                    payment_id,
-                    invoice_id,
-                    target_kind,
-                    target_id,
-                    amount_cents,
-                    amount_applied,
-                    applied_by_user_id,
-                    applied_by_user_uuid
-                  )
-                  VALUES ($1,$2,$3,'invoice',$3,$4,$5,$6,$6)
-                `,
-                [query.data.operating_company_id, paymentId, invoiceId, amount, amount / 100, user.uuid]
-              );
-            }
-          }
-        }
-
-        if (info.reserve > 0) {
-          const displayId = await nextPaymentDisplayId(client, query.data.operating_company_id, new Date(paymentDate));
-          const paymentRes = await client.query(
-            `
-              INSERT INTO accounting.payments (
-                operating_company_id,
-                customer_id,
-                display_id,
-                payment_method,
-                payment_date,
-                reference,
-                amount_cents,
-                deposited_to_account_id,
-                notes,
-                created_by_user_id
-              )
-              VALUES ($1,$2,$3,'factoring_reserve',$4,$5,$6,'ops_checking',$7,$8)
-              RETURNING id
-            `,
-            [
-              query.data.operating_company_id,
-              customerId,
-              displayId,
-              paymentDate,
-              `FAC:${advance.display_id}:RESERVE`,
-              info.reserve,
-              `Auto-created from factoring release ${advance.display_id} (net release ${body.data.release_amount_cents}; fee ${body.data.factor_fee_cents})`,
-              user.uuid,
-            ]
-          );
-          const paymentId = String(paymentRes.rows[0]?.id ?? "");
-          if (paymentId) {
-            for (const invoiceId of info.invoices) {
-              const amount = Number(reserveAlloc.get(invoiceId) ?? 0);
-              if (amount <= 0) continue;
-              await client.query(
-                `
-                  INSERT INTO accounting.payment_applications (
-                    operating_company_id,
-                    payment_id,
-                    invoice_id,
-                    target_kind,
-                    target_id,
-                    amount_cents,
-                    amount_applied,
-                    applied_by_user_id,
-                    applied_by_user_uuid
-                  )
-                  VALUES ($1,$2,$3,'invoice',$3,$4,$5,$6,$6)
-                `,
-                [query.data.operating_company_id, paymentId, invoiceId, amount, amount / 100, user.uuid]
-              );
-            }
-          }
-        }
-      }
 
       await appendCrudAudit(
         client,

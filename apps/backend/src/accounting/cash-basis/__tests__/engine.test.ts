@@ -177,6 +177,18 @@ function buildScenarioEntries(scenario: number): CashBasisEntry[] {
         amount_cents: row.amount * 100,
         source_type: "factoring_advance",
       });
+      continue;
+    }
+    if (row.event_type === "Customer pays factor") {
+      entries.push({
+        entry_id: `${id}-rev`,
+        account_code: "4000",
+        account_name: "Transportation Revenue",
+        account_type: "Income",
+        amount_cents: row.amount * 100,
+        source_type: "invoice_revenue",
+        settlement_date: row.date,
+      });
     }
   }
   return entries;
@@ -308,5 +320,11 @@ describe("cash-basis engine sample transaction scenarios", () => {
     const transformed = applyCashBasisSuppression(buildScenarioEntries(8), { as_of_date: "2026-01-31" });
     const liabilityTotal = sumByType(transformed, "Liability");
     expect(liabilityTotal).toBe(8000 * 100);
+    expect(sumByType(transformed, "Income")).toBe(0);
+  });
+
+  it("Scenario 8: customer-pays-factor recognizes only released cash in February", () => {
+    const transformed = applyCashBasisSuppression(buildScenarioEntries(8), { as_of_date: "2026-02-28" });
+    expect(sumByType(transformed, "Income")).toBe(1800 * 100);
   });
 });
