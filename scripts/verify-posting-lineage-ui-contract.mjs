@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const appPath = path.join(process.cwd(), "apps/frontend/src/App.tsx");
+const routesManifestPath = path.join(process.cwd(), "apps/frontend/src/routes/manifest.tsx");
 const pagePath = path.join(process.cwd(), "apps/frontend/src/pages/accounting/PostingLineagePage.tsx");
 const navPath = path.join(process.cwd(), "apps/frontend/src/pages/accounting/AccountingSubNav.tsx");
 const apiPath = path.join(process.cwd(), "apps/frontend/src/api/accounting.ts");
@@ -16,7 +17,7 @@ for (const file of [appPath, pagePath, navPath, apiPath]) {
   if (!fs.existsSync(file)) fail(`missing required file: ${file}`);
 }
 
-const appText = fs.readFileSync(appPath, "utf8");
+const appText = `${fs.readFileSync(appPath, "utf8")}\n${fs.existsSync(routesManifestPath) ? fs.readFileSync(routesManifestPath, "utf8") : ""}`;
 const pageText = fs.readFileSync(pagePath, "utf8");
 const navText = fs.readFileSync(navPath, "utf8");
 const apiText = fs.readFileSync(apiPath, "utf8");
