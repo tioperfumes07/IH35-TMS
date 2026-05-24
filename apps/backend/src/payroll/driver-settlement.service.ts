@@ -401,7 +401,6 @@ export async function postSettlement(input: PostSettlementInput, userId: string)
         { userId, role: "Accountant" }
       );
     }
-
     const updatedRes = await client.query<DriverSettlementRow>(
       `
         UPDATE payroll.driver_settlements
