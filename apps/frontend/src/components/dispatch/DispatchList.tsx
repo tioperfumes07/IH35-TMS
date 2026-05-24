@@ -12,6 +12,7 @@ type SortDirection = "asc" | "desc";
 
 export type DispatchListProps = {
   loads: DispatchLoadRow[];
+  activeGeofenceBreachVehicleIds?: Set<string>;
   totalCount: number;
   limit: number;
   offset: number;
@@ -44,6 +45,7 @@ function progressPill(progress?: DispatchLoadRow["progress_status"]) {
 
 export function DispatchList({
   loads,
+  activeGeofenceBreachVehicleIds,
   totalCount,
   limit,
   offset,
@@ -169,9 +171,14 @@ export function DispatchList({
                       <DriverHosPill driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />
                     </td>
                     <td className="px-3 py-2">
-                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
-                        {STATUS_LABEL[load.status]}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
+                          {STATUS_LABEL[load.status]}
+                        </span>
+                        {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
+                          <span className="rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <span
@@ -244,6 +251,9 @@ export function DispatchList({
                 >
                   {(load.progress_status ?? "unknown").replace("_", " ")}
                 </span>
+                {load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id) ? (
+                  <span className="ml-2 rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
+                ) : null}
               </div>
               {showEtaColumn && load.status === "in_transit" ? (
                 <div className="mt-2">

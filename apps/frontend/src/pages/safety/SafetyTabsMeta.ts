@@ -18,6 +18,7 @@ export const TABS = [
   { id: "external-fines" },
   { id: "complaints" },
   { id: "escrow-record" },
+  { id: "geofence-alerts" },
   { id: "insurance" },
   { id: "permits" },
   { id: "integrity-reports" },
