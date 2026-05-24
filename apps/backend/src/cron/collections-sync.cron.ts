@@ -3,7 +3,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { syncCollectionTasks } from "../accounting/collections.service.js";
-import { assertTenantContext as defaultAssertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 let initialized = false;
 const CRON_NAME = "accounting.collections_sync_cron";
@@ -30,16 +30,14 @@ export async function listActiveOperatingCompanyIds(client: DbClient): Promise<s
 export async function runCollectionsSyncCronTick(deps?: {
   withLuciaBypassImpl?: typeof withLuciaBypass;
   syncCollectionTasksImpl?: typeof syncCollectionTasks;
-  assertTenantContextImpl?: typeof defaultAssertTenantContext;
 }) {
   const withLuciaBypassImpl = deps?.withLuciaBypassImpl ?? withLuciaBypass;
   const syncCollectionTasksImpl = deps?.syncCollectionTasksImpl ?? syncCollectionTasks;
-  const assertTenantContext: typeof defaultAssertTenantContext = deps?.assertTenantContextImpl ?? defaultAssertTenantContext;
 
   return withLuciaBypassImpl(async (client) => {
     const companyIds = await listActiveOperatingCompanyIds(client);
     for (const operatingCompanyId of companyIds) {
-      assertTenantContext(operatingCompanyId, CRON_NAME);
+      assertTenantContext(operatingCompanyId, "accounting.collections_sync_cron");
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       await syncCollectionTasksImpl({
         operatingCompanyId,

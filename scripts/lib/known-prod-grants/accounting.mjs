@@ -11,7 +11,7 @@ export default [
       "authenticated",
       "service_role"
     ],
-    "source_migration": "0237_accounting_ar_collection_tasks.sql"
+    "source_migration": "0238_accounting_ar_collection_tasks.sql"
   },
   {
     "schema": "accounting",
@@ -25,6 +25,6 @@ export default [
       "authenticated",
       "service_role"
     ],
-    "source_migration": "0237_accounting_ar_collection_tasks.sql"
+    "source_migration": "0238_accounting_ar_collection_tasks.sql"
   }
 ];

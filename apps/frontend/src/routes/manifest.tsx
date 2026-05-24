@@ -132,7 +132,7 @@ import { MonthClosePage } from "../pages/accounting/MonthClosePage";
 import { EscrowPage } from "../pages/accounting/EscrowPage";
 import { CashForecastPage } from "../pages/accounting/CashForecastPage";
 import { PeriodComparisonPage } from "../pages/accounting/PeriodComparisonPage";
-import { CollectionsPage } from "../pages/accounting/CollectionsPage";
+import { COLLECTIONS_ROUTE } from "./collections.routes";
 import { ForensicReviewPage } from "../pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "../pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "../pages/admin/MigrationStatus";
@@ -1595,10 +1595,10 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/accounting/collections"
+          path={COLLECTIONS_ROUTE.path}
           element={
             <ProtectedRoute>
-              <CollectionsPage />
+              {COLLECTIONS_ROUTE.component}
             </ProtectedRoute>
           }
         />
