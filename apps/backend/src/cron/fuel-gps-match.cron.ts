@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
+import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { runFuelGpsMatchBatch } from "../safety/fuel-gps-match.service.js";
 
@@ -21,6 +22,7 @@ export function initializeFuelGpsMatchCron(app: FastifyInstance) {
           `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
         );
         for (const company of companies.rows) {
+          assertTenantContext(company.id, "safety.fuel_gps_match_cron");
           await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
           const matched = await runFuelGpsMatchBatch(client, company.id);
           app.log.info({ operating_company_id: company.id, matched }, "[FUEL_GPS_MATCH_CRON] run complete");
