@@ -16,104 +16,15 @@
  */
 
 import * as fs from "node:fs";
+import path from "node:path";
 import { execSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 const APP_PATH = "apps/frontend/src/App.tsx";
 const SIDEBAR_PATH = "apps/frontend/src/components/layout/sidebar-config.ts";
 const LOCK_FILE_PATH = "docs/locked-ui-surface.json";
-const EXTRA_GUARDS = [
-  "scripts/verify-home-attention-tenant-scope.mjs",
-  "scripts/verify-fleet-snapshot-tenant-scope.mjs",
-  "scripts/verify-customers-tenant-scope.mjs",
-  "scripts/verify-vendors-tenant-scope.mjs",
-  "scripts/verify-94-live-counter-linkage.mjs",
-  "scripts/verify-tms-item-push-tenant-chain.mjs",
-  "scripts/verify-tms-account-push-tenant-chain.mjs",
-  "scripts/verify-tms-invoice-push-tenant-chain.mjs",
-  "scripts/verify-tms-invoice-line-item-shape.mjs",
-  "scripts/verify-qbo-invoices-mirror-shape.mjs",
-  "scripts/verify-tms-bill-push-tenant-chain.mjs",
-  "scripts/verify-tms-bill-line-item-shape.mjs",
-  "scripts/verify-qbo-customer-sync-tenant-chain.mjs",
-  "scripts/verify-qbo-sync-event-log-tenant-scope.mjs",
-  "scripts/verify-samsara-qbo-vendor-mapping-tenant-scope.mjs",
-  "scripts/verify-qbo-sync-state-machine-transitions.mjs",
-  "scripts/verify-qbo-sync-repair-dead-letter-gate.mjs",
-  "scripts/verify-samsara-vendor-mapping-actions-tenant-scope.mjs",
-  "scripts/verify-cash-basis-engine-determinism.mjs",
-  "scripts/verify-period-cash-basis-snapshot-shape.mjs",
-  "scripts/verify-basis-selector-allowed-pages.mjs",
-  "scripts/verify-period-cash-basis-snapshot-readonly.mjs",
-  "scripts/verify-expense-category-map-tenant-scope.mjs",
-  "scripts/verify-expense-category-map-soft-delete.mjs",
-  "scripts/verify-maintenance-posting-uses-resolver.mjs",
-  "scripts/verify-fuel-posting-uses-resolver.mjs",
-  "scripts/verify-bill-lines-account-id-required.mjs",
-  "scripts/verify-invoice-lines-account-id-required.mjs",
-  "scripts/verify-bank-recon-match-tenant-scope.mjs",
-  "scripts/verify-bank-recon-tolerance-from-q11.mjs",
-  "scripts/verify-sales-tax-posting-split.mjs",
-  "scripts/verify-sales-tax-routes-tenant-scope.mjs",
-  "scripts/verify-bank-recon-ui-tenant-scope.mjs",
-  "scripts/verify-bank-recon-variance-uses-q8.mjs",
-  "scripts/verify-multi-entity-access-scope.mjs",
-  "scripts/verify-multi-entity-accounting-filter.mjs",
-  "scripts/verify-migrations-no-uuid-pk-reference.mjs",
-  "scripts/verify-hos-duty-events-append-only.mjs",
-  "scripts/verify-hos-clocks-tenant-scope.mjs",
-  "scripts/verify-payment-application-no-overpay.mjs",
-  "scripts/verify-payment-application-tenant-chain.mjs",
-  "scripts/verify-geofence-events-append-only.mjs",
-  "scripts/verify-geofence-detector-tenant-scope.mjs",
-  "scripts/verify-migrations-no-postgis-dependency.mjs",
-  "scripts/verify-coa-roles-no-string-match-bypass.mjs",
-  "scripts/verify-factoring-posting-uses-resolver-and-roles.mjs",
-  "scripts/verify-factoring-fees-not-netted-against-revenue.mjs",
-  "scripts/verify-factor-recon-tolerance-from-q11.mjs",
-  "scripts/verify-accounting-audit-trail-tenant-scope.mjs",
-  "scripts/verify-accounting-audit-trail-lineage.mjs",
-  "scripts/verify-posting-lineage-ui-contract.mjs",
-  "scripts/verify-vehicle-driver-pairing-tenant-scope.mjs",
-  "scripts/verify-vehicle-driver-pairing-append-only.mjs",
-  "scripts/verify-vehicle-locations-tenant-scope.mjs",
-  "scripts/verify-vehicle-locations-append-only.mjs",
-  "scripts/verify-position-endpoints-no-pii-leak.mjs",
-  "scripts/verify-day-summary-tenant-scope.mjs",
-  "scripts/verify-heatmap-tenant-scope.mjs",
-  "scripts/verify-arrival-detection-tenant-scope.mjs",
-  "scripts/verify-arrival-haversine-uses-locked-radius.mjs",
-  "scripts/verify-fuel-stop-planner-no-db-writes.mjs",
-  "scripts/verify-fuel-stop-planner-uses-cap-hos.mjs",
-  "scripts/verify-month-close-requires-checklist-complete.mjs",
-  "scripts/verify-cash-forecast-tenant-scope.mjs",
-  "scripts/verify-collections-readonly.mjs",
-  "scripts/verify-collections-tenant-scope.mjs",
-  "scripts/verify-comparison-respects-basis.mjs",
-  "scripts/verify-auto-geofence-tenant-scope.mjs",
-  "scripts/verify-auto-geofence-no-blocking-call.mjs",
-  "scripts/verify-dot-dwell-detector-tenant-scope.mjs",
-  "scripts/verify-dot-inspection-events-append-only.mjs",
-  "scripts/verify-dashcam-clips-tenant-scope.mjs",
-  "scripts/verify-dashcam-rbac-restrict.mjs",
-  "scripts/verify-auto-status-no-direct-status-write.mjs",
-  "scripts/verify-harsh-events-append-only.mjs",
-  "scripts/verify-driver-scoring-no-db-writes.mjs",
-  "scripts/verify-fuel-match-tenant-scope.mjs",
-  "scripts/verify-geofence-breach-tenant-scope.mjs",
-  "scripts/verify-load-progress-no-db-writes.mjs",
-  "scripts/verify-ts-brace-balance.mjs",
-  "scripts/verify-pm-alerts-append-only.mjs",
-  "scripts/verify-pm-alerts-tenant-scope.mjs",
-  "scripts/verify-dtc-auto-wo-tenant-scope.mjs",
-  "scripts/verify-dtc-auto-wo-dedup.mjs",
-  "scripts/verify-live-db-schema-script-wiring.mjs",
-  "scripts/verify-driver-settlement-tenant-scope.mjs",
-  "scripts/verify-driver-settlement-uses-bill-not-je.mjs",
-  "scripts/verify-escrow-tenant-scope.mjs",
-  "scripts/verify-escrow-amount-conservation.mjs",
-  "scripts/verify-escrow-emits-audit.mjs",
-  "scripts/verify-steps/_meta-no-hand-numbered.mjs",
-] as const;
+const EXTRA_GUARDS = [] as const;
+const EXTRA_GUARDS_DIR = "scripts/verify-guards";
 
 type LockedUiSurface = {
   schemaVersion: 1;
@@ -139,6 +50,12 @@ type NamedSectionSource = {
   module: string;
   file: string;
   patterns: RegExp[];
+};
+
+type ExtraGuardSpec = {
+  script: string;
+  label: string;
+  optional?: boolean;
 };
 
 const SUB_NAV_SOURCES: SubNavSource[] = [
@@ -279,6 +196,23 @@ function readRequired(path: string): string {
     process.exit(1);
   }
   return fs.readFileSync(path, "utf8");
+}
+
+async function loadExtraGuards(): Promise<ExtraGuardSpec[]> {
+  const guardFiles = fs
+    .readdirSync(EXTRA_GUARDS_DIR)
+    .filter((file) => file.endsWith(".mjs") && !file.startsWith("_"))
+    .sort();
+
+  const guardModules = await Promise.all(
+    guardFiles.map(async (file) => {
+      const modulePath = pathToFileURL(path.resolve(EXTRA_GUARDS_DIR, file)).href;
+      const loaded = (await import(modulePath)).default as ExtraGuardSpec;
+      return loaded;
+    })
+  );
+
+  return guardModules;
 }
 
 function extractArrayBlock(content: string, startToken: string): string {
@@ -497,7 +431,7 @@ function writeBaseline(surface: LockedUiSurface) {
   fs.writeFileSync(LOCK_FILE_PATH, `${JSON.stringify(surface, null, 2)}\n`, "utf8");
 }
 
-function main() {
+async function main() {
   const args = new Set(process.argv.slice(2));
   const writeMode = args.has("--write-baseline");
   const current = buildCurrentSurface();
@@ -528,6 +462,11 @@ function main() {
     execSync(`node ${guardPath}`, { stdio: "inherit" });
   }
 
+  const loadedGuards = await loadExtraGuards();
+  for (const guard of loadedGuards) {
+    execSync(`node ${guard.script}`, { stdio: "inherit" });
+  }
+
   console.log("✅ Locked UI surface check passed");
   console.log(`   Routes checked: ${baseline.routes.length}`);
   console.log(`   Sidebar ids checked: ${baseline.sidebarItemIds.length}`);
@@ -535,4 +474,7 @@ function main() {
   console.log(`   Named section modules checked: ${Object.keys(baseline.namedSections).length}`);
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
