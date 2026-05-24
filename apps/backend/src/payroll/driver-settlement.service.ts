@@ -1,6 +1,7 @@
 import { withCurrentUser } from "../auth/db.js";
 import { createBill, payBill } from "../accounting/bills.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
+import { depositEscrow, openEscrow } from "../accounting/escrow/service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -366,6 +367,40 @@ export async function postSettlement(input: PostSettlementInput, userId: string)
       },
       userId
     );
+
+    const bondLineTotal = await client.query<{ amount_cents: number | null }>(
+      `
+        SELECT COALESCE(SUM(ABS(amount_cents)), 0)::bigint AS amount_cents
+        FROM payroll.driver_settlement_line_items
+        WHERE settlement_id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND line_type = 'driver_bond_deduction'
+      `,
+      [input.settlementId, input.operatingCompanyId]
+    );
+    const bondAmountCents = Math.max(0, asCents(bondLineTotal.rows[0]?.amount_cents));
+    if (bondAmountCents > 0) {
+      const escrow = await openEscrow(
+        {
+          operating_company_id: input.operatingCompanyId,
+          holder_id: settlement.driver_id,
+          holder_type: "driver",
+          purpose: "driver_bond",
+        },
+        { userId, role: "Accountant" }
+      );
+      await depositEscrow(
+        {
+          operating_company_id: input.operatingCompanyId,
+          escrow_account_id: escrow.escrow_account.id,
+          amount_cents: bondAmountCents,
+          source_type: "driver_settlement",
+          source_id: settlement.id,
+          note: `Driver bond deduction from settlement ${settlement.id}`,
+        },
+        { userId, role: "Accountant" }
+      );
+    }
 
     const updatedRes = await client.query<DriverSettlementRow>(
       `

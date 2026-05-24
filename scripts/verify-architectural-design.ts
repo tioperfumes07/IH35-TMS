@@ -104,6 +104,9 @@ const EXTRA_GUARDS = [
   "scripts/verify-live-db-schema-script-wiring.mjs",
   "scripts/verify-driver-settlement-tenant-scope.mjs",
   "scripts/verify-driver-settlement-uses-bill-not-je.mjs",
+  "scripts/verify-escrow-tenant-scope.mjs",
+  "scripts/verify-escrow-amount-conservation.mjs",
+  "scripts/verify-escrow-emits-audit.mjs",
 ] as const;
 
 type LockedUiSurface = {

@@ -128,6 +128,7 @@ import { SalesTaxPage } from "./pages/accounting/SalesTaxPage";
 import { AccountingAuditTrailPage } from "./pages/accounting/AccountingAuditTrailPage";
 import { PostingLineagePage } from "./pages/accounting/PostingLineagePage";
 import { MonthClosePage } from "./pages/accounting/MonthClosePage";
+import { EscrowPage } from "./pages/accounting/EscrowPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
@@ -1570,6 +1571,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <PostingLineagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/escrow"
+          element={
+            <ProtectedRoute>
+              <EscrowPage />
             </ProtectedRoute>
           }
         />
