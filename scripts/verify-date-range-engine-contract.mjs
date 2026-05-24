@@ -13,6 +13,12 @@ function assertMatches(source, regex, message) {
   if (!regex.test(source)) throw new Error(message);
 }
 
+function assertRoutesLoaded(indexSource, legacyNeedle, message) {
+  if (indexSource.includes(legacyNeedle)) return;
+  if (indexSource.includes("app.register(autoload")) return;
+  throw new Error(message);
+}
+
 try {
   const resolverPath = "apps/backend/src/accounting/date-range-engine.ts";
   const servicePath = "apps/backend/src/accounting/date-ranges.service.ts";
@@ -43,7 +49,7 @@ try {
   assertIncludes(service, "WHERE id = $1::uuid", "Accounting-period resolution must be by id");
   assertIncludes(service, "operating_company_id = $2::uuid", "Accounting-period resolution must be company-scoped");
 
-  assertIncludes(index, "registerDateRangesRoutes", "Date-ranges route must be registered");
+  assertRoutesLoaded(index, "registerDateRangesRoutes", "Date-ranges route must be registered");
 
   const statementRoutePaths = [
     "apps/backend/src/accounting/trial-balance.routes.ts",

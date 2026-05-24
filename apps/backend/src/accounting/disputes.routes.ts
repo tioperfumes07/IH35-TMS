@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -142,3 +143,8 @@ export async function registerAccountingSettlementDisputesP6Routes(app: FastifyI
     }
   });
 }
+
+
+export default fp(async (app) => {
+  await registerAccountingSettlementDisputesP6Routes(app);
+}, { name: "accounting.registerAccountingSettlementDisputesP6Routes" });

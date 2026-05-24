@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
@@ -169,3 +170,8 @@ export async function registerVendorCategoryRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 }
+
+
+export default fp(async (app) => {
+  await registerVendorCategoryRoutes(app);
+}, { name: "accounting.registerVendorCategoryRoutes" });

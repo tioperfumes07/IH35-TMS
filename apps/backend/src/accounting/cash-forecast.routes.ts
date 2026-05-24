@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { buildForecastWeeks, type ForecastSettings } from "./cash-forecast.math.js";
@@ -243,3 +244,8 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
     return payload;
   });
 }
+
+
+export default fp(async (app) => {
+  await registerCashForecastRoutes(app);
+}, { name: "accounting.registerCashForecastRoutes" });

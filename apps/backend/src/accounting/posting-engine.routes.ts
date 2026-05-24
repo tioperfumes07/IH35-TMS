@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import {
   PostingEngineError,
@@ -131,3 +132,8 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
     });
   });
 }
+
+
+export default fp(async (app) => {
+  await registerPostingEngineRoutes(app);
+}, { name: "accounting.registerPostingEngineRoutes" });

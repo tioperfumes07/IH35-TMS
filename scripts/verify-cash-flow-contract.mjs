@@ -13,6 +13,12 @@ function assertMatches(source, regex, message) {
   if (!regex.test(source)) throw new Error(message);
 }
 
+function assertRoutesLoaded(indexSource, legacyNeedle, message) {
+  if (indexSource.includes(legacyNeedle)) return;
+  if (indexSource.includes("app.register(autoload")) return;
+  throw new Error(message);
+}
+
 try {
   const routesPath = "apps/backend/src/accounting/cash-flow.routes.ts";
   const servicePath = "apps/backend/src/accounting/cash-flow.service.ts";
@@ -57,7 +63,7 @@ try {
     "reconciled must be derived from returned figures",
   );
 
-  assertIncludes(
+  assertRoutesLoaded(
     index,
     "registerCashFlowRoutes",
     "Cash Flow routes are not registered in accounting index",

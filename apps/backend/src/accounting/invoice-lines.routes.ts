@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { ExpenseCategoryMapResolutionError, resolveInvoiceLineRevenueAccountId } from "../invoices/invoice-line-revenue-resolution.service.js";
@@ -298,3 +299,8 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
     return result.data;
   });
 }
+
+
+export default fp(async (app) => {
+  await registerInvoiceLineRoutes(app);
+}, { name: "accounting.registerInvoiceLineRoutes" });

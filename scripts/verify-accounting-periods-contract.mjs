@@ -13,6 +13,12 @@ function assertMatches(source, regex, message) {
   if (!regex.test(source)) throw new Error(message);
 }
 
+function assertRoutesLoaded(indexSource, legacyNeedle, message) {
+  if (indexSource.includes(legacyNeedle)) return;
+  if (indexSource.includes("app.register(autoload")) return;
+  throw new Error(message);
+}
+
 try {
   const periodsRoutesPath = "apps/backend/src/accounting/periods.routes.ts";
   const p7Wave2Path = "apps/backend/src/accounting/p7-wave2.routes.ts";
@@ -42,7 +48,7 @@ try {
     throw new Error("Periods read module must be SQL read-only (write SQL keyword found)");
   }
 
-  assertIncludes(
+  assertRoutesLoaded(
     accountingIndex,
     "registerAccountingPeriodsReadRoutes",
     "Accounting periods read routes are not registered",

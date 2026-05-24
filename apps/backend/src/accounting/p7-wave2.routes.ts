@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
@@ -475,3 +476,8 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     return reply.code(501).send({ error: "pdf_not_implemented" });
   });
 }
+
+
+export default fp(async (app) => {
+  await registerAccountingP7Wave2Routes(app);
+}, { name: "accounting.registerAccountingP7Wave2Routes" });

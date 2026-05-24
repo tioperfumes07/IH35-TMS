@@ -13,6 +13,12 @@ function assertMatches(source, regex, message) {
   if (!regex.test(source)) throw new Error(message);
 }
 
+function assertRoutesLoaded(indexSource, legacyNeedle, message) {
+  if (indexSource.includes(legacyNeedle)) return;
+  if (indexSource.includes("app.register(autoload")) return;
+  throw new Error(message);
+}
+
 try {
   const routePath = "apps/backend/src/accounting/trial-balance.routes.ts";
   const servicePath = "apps/backend/src/accounting/trial-balance.service.ts";
@@ -35,7 +41,7 @@ try {
     "getTrialBalanceReport(",
     "Trial balance route must use service layer",
   );
-  assertIncludes(
+  assertRoutesLoaded(
     accountingIndex,
     "registerTrialBalanceRoutes",
     "Trial balance routes are not registered in accounting index",

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import {
   createBill,
@@ -264,3 +265,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     return { rows };
   });
 }
+
+
+export default fp(async (app) => {
+  await registerBillsRoutes(app);
+}, { name: "accounting.registerBillsRoutes" });

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { getTrialBalanceReport } from "./trial-balance.service.js";
@@ -89,3 +90,8 @@ export async function registerTrialBalanceRoutes(app: FastifyInstance) {
     return reply.code(200).send({ ...report, basis });
   });
 }
+
+
+export default fp(async (app) => {
+  await registerTrialBalanceRoutes(app);
+}, { name: "accounting.registerTrialBalanceRoutes" });

@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
@@ -380,3 +381,8 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
     };
   });
 }
+
+
+export default fp(async (app) => {
+  await registerQboMasterReadRoutes(app);
+}, { name: "accounting.registerQboMasterReadRoutes" });

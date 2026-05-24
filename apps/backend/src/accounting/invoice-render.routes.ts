@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -294,3 +295,8 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
     return reply.send(wrapPdfDocument({ title: payload.title, body: payload.body }));
   });
 }
+
+
+export default fp(async (app) => {
+  await registerAccountingInvoiceHtmlRoutes(app);
+}, { name: "accounting.registerAccountingInvoiceHtmlRoutes" });

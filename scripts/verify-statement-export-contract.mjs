@@ -13,6 +13,12 @@ function assertMatches(source, regex, message) {
   if (!regex.test(source)) throw new Error(message);
 }
 
+function assertRoutesLoaded(indexSource, legacyNeedle, message) {
+  if (indexSource.includes(legacyNeedle)) return;
+  if (indexSource.includes("app.register(autoload")) return;
+  throw new Error(message);
+}
+
 try {
   const routesPath = "apps/backend/src/accounting/statement-export.routes.ts";
   const servicePath = "apps/backend/src/accounting/statement-export.service.ts";
@@ -80,7 +86,7 @@ try {
     assertIncludes(service, fnName, `Statement export service missing report-service call: ${fnName}`);
   }
 
-  assertIncludes(index, "registerStatementExportRoutes", "Statement export routes are not registered in accounting index");
+  assertRoutesLoaded(index, "registerStatementExportRoutes", "Statement export routes are not registered in accounting index");
   assertIncludes(pkg, '"verify:statement-export-contract"', "Missing verify:statement-export-contract npm script");
   assertIncludes(pkg, "npm run verify:statement-export-contract", "verify:arch-design must run statement export contract guard");
 

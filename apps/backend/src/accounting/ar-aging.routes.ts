@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { getArAgingReport } from "./ar-aging.service.js";
@@ -34,3 +35,8 @@ export async function registerArAgingRoutes(app: FastifyInstance) {
     return reply.code(200).send({ ...report, basis: "accrual" });
   });
 }
+
+
+export default fp(async (app) => {
+  await registerArAgingRoutes(app);
+}, { name: "accounting.registerArAgingRoutes" });

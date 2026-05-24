@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { listResolvedNamedDateRanges, resolveAccountingPeriodDateRange } from "./date-ranges.service.js";
@@ -42,3 +43,8 @@ export async function registerDateRangesRoutes(app: FastifyInstance) {
     });
   });
 }
+
+
+export default fp(async (app) => {
+  await registerDateRangesRoutes(app);
+}, { name: "accounting.registerDateRangesRoutes" });

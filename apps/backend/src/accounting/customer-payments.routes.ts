@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { nextPaymentDisplayId } from "./display-id.js";
@@ -271,3 +272,8 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
     return reply.code(result.code).send(result.data);
   });
 }
+
+
+export default fp(async (app) => {
+  await registerCustomerPaymentsRoutes(app);
+}, { name: "accounting.registerCustomerPaymentsRoutes" });
