@@ -45,10 +45,33 @@ type SettlementPdfInput = {
   settlementId: string;
 };
 
+async function payrollSchemaAvailable(client: DbClient): Promise<boolean> {
+  try {
+    const payrollExistsRes = await client.query<{ ok: boolean }>(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM pg_class c
+          JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = 'payroll'
+            AND c.relname = 'driver_settlements'
+            AND c.relkind IN ('r', 'p')
+        )
+        AND has_schema_privilege(current_user, 'payroll', 'USAGE')
+        AND has_table_privilege(current_user, 'payroll.driver_settlements', 'SELECT')
+        AS ok
+      `
+    );
+    return Boolean(payrollExistsRes.rows[0]?.ok);
+  } catch {
+    // If catalog inspection fails for any reason, keep PDF generation on driver_finance fallback.
+    return false;
+  }
+}
+
 export async function renderSettlementStatementPdf(client: DbClient, input: SettlementPdfInput) {
   const terms = await loadTerms();
-  const payrollExistsRes = await client.query<{ ok: boolean }>(`SELECT to_regclass('payroll.driver_settlements') IS NOT NULL AS ok`);
-  const payrollExists = Boolean(payrollExistsRes.rows[0]?.ok);
+  const payrollExists = await payrollSchemaAvailable(client);
 
   const payrollSettlementRes = payrollExists
     ? await client.query<{
