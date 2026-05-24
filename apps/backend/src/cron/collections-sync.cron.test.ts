@@ -1,4 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+
+const assertTenantContextMock = vi.fn();
+vi.mock("./_helpers/tenant-context-guard.js", () => ({
+  assertTenantContext: (...args: unknown[]) => assertTenantContextMock(...args),
+}));
+
 import { runCollectionsSyncCronTick } from "./collections-sync.cron.js";
 
 describe("collections-sync cron", () => {
@@ -73,7 +79,7 @@ describe("collections-sync cron", () => {
   });
 
   it("enforces tenant context guard for each company", async () => {
-    const assertTenantContextImpl = vi.fn();
+    assertTenantContextMock.mockClear();
     const client = {
       query: vi.fn(async (sql: string) => {
         if (sql.includes("FROM org.companies")) {
@@ -86,10 +92,9 @@ describe("collections-sync cron", () => {
     await runCollectionsSyncCronTick({
       withLuciaBypassImpl: async (fn) => fn(client as never),
       syncCollectionTasksImpl: async () => ({ created: 0, updated: 0, resolved: 0, open_count: 0 }),
-      assertTenantContextImpl: assertTenantContextImpl as never,
     });
 
-    expect(assertTenantContextImpl).toHaveBeenCalledWith(
+    expect(assertTenantContextMock).toHaveBeenCalledWith(
       "11111111-1111-1111-1111-111111111111",
       "accounting.collections_sync_cron"
     );

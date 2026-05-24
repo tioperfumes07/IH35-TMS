@@ -5,7 +5,7 @@ import path from "node:path";
 const servicePath = path.join(process.cwd(), "apps/backend/src/accounting/collections.service.ts");
 const routesPath = path.join(process.cwd(), "apps/backend/src/accounting/collections.routes.ts");
 const cronPath = path.join(process.cwd(), "apps/backend/src/cron/collections-sync.cron.ts");
-const migrationPath = path.join(process.cwd(), "db/migrations/0237_accounting_ar_collection_tasks.sql");
+const migrationPath = path.join(process.cwd(), "db/migrations/0238_accounting_ar_collection_tasks.sql");
 
 function fail(message) {
   console.error(`verify:collections-tenant-scope — FAILED\n- ${message}`);

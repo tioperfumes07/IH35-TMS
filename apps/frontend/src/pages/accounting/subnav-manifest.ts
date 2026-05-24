@@ -1,4 +1,5 @@
 import type { NavItem } from "../../components/forms/shared/HoverDropdownNav";
+import { COLLECTIONS_SUBNAV_ITEM } from "./subnav-collections";
 
 export type AccountingSubNavItem = {
   label: string;
@@ -26,7 +27,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Customers", path: "/accounting/customers", section: "direct" },
   { label: "Reports", path: "/accounting/reports", section: "direct" },
   { label: "AR Aging", path: "/reports/ar-aging", section: "direct" },
-  { label: "Collections", path: "/accounting/collections", section: "direct" },
+  COLLECTIONS_SUBNAV_ITEM,
   { label: "AP Aging", path: "/reports/ap-aging", section: "direct" },
   { label: "Invoices", path: "/accounting/invoices", section: "direct" },
   { label: "Multi-entity", path: "/accounting/multi-entity", section: "direct" },
