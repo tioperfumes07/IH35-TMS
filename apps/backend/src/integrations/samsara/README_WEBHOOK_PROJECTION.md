@@ -11,7 +11,7 @@ Projection lifecycle is tracked in `integrations.samsara_webhook_projection_stat
 | `vehicle.*` | `integrations.samsara_vehicles` | UPSERT on `(operating_company_id, samsara_vehicle_id)` + downstream geofence/arrival detectors + maintenance predictor when GPS/odometer are present |
 | `*driver_log_on*`, `*driver_log_off*`, `*vehicle_assigned*`, `*vehicle_unassigned*` | `telematics.vehicle_driver_assignments` | Close/open assignment windows by unit at event timestamp |
 | `*hos*`, `*eld*`, `*duty_status*` | `hos.duty_status_events` | Append-only INSERT, mapped to local `driver_id` / `unit_id` |
-| `*gps*`, `*location*`, `*position*` | `integrations.samsara_vehicles` + `geo.geofence_events` | vehicle mirror UPSERT + geofence transition detection when local unit mapping exists |
+| `*gps*`, `*location*`, `*position*` | `integrations.samsara_vehicles` + `telematics.vehicle_locations` + `geo.geofence_events` | vehicle mirror UPSERT + append-only GPS history + geofence transition detection when local unit mapping exists |
 | `*harsh*`, `*speeding*`, `*distracted*`, `*mobile_use*`, `*seatbelt*` | `telematics.dashcam_clips` | If webhook includes clip IDs, auto-links clips to `safety.harsh_events` via Samsara clip URL lookup |
 | `*harsh*`, `*speeding*`, `*distracted*`, `*mobile_use*`, `*seatbelt*` | `safety.harsh_events` | Append-only insert with CAP-9 pairing lookup + idempotency by `(tenant, raw_samsara_id)` |
 | `*dtc*`, `*fault*`, `*diagnostic*` | `maintenance.work_orders` | Auto-create repair WO for major/critical DTCs with 7-day dedupe |

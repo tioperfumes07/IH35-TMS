@@ -49,6 +49,7 @@ import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.route
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
 import { registerDashcamOnDemandRoutes } from "./telematics/dashcam-on-demand.routes.js";
+import { registerTelematicsPositionsRoutes } from "./telematics/positions.routes.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
 import { registerDriverFinanceSettlementHtmlRoutes } from "./driver-finance/settlement-render.routes.js";
 import { registerDriverFinanceDriverBillsRoutes } from "./driver-finance/driver-bills.routes.js";
@@ -390,6 +391,7 @@ async function main() {
   await registerDriverRoutes(app);
   await registerGeofencesRoutes(app);
   await registerDashcamOnDemandRoutes(app);
+  await registerTelematicsPositionsRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
   await registerWeeklyCloseRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);

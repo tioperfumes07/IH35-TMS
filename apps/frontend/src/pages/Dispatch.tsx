@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listCustomers, listDrivers } from "../api/mdata";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
 import { listSettlements } from "../api/driverFinance";
+import { listLatestPositions } from "../api/telematics";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -124,6 +125,12 @@ export function DispatchPage() {
   const allActiveDriversQuery = useQuery({
     queryKey: ["dispatch", "drivers", "all-active", defaultCompanyIds.join(",")],
     queryFn: () => listDrivers({ status: "Active" }),
+  });
+  const latestPositionsQuery = useQuery({
+    queryKey: ["dispatch", "telematics", "latest-positions", defaultCompanyIds[0] ?? ""],
+    queryFn: () => listLatestPositions(defaultCompanyIds[0] ?? ""),
+    enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board",
+    refetchInterval: 30_000,
   });
 
   const statusMutation = useUpdateLoadStatus();
@@ -273,6 +280,14 @@ export function DispatchPage() {
           <DataPanelRow>
             <span className="text-sm text-gray-700">Truck / trailer / driver</span>
             <span className="text-xs text-blue-700">open →</span>
+          </DataPanelRow>
+        </DataPanel>
+        <DataPanel title="Dispatch map feed">
+          <DataPanelRow>
+            <span className="text-sm text-gray-700">
+              Live GPS positions: {latestPositionsQuery.data?.rows.length ?? 0} active units
+            </span>
+            <span className="text-xs text-gray-500">polls every 30s</span>
           </DataPanelRow>
         </DataPanel>
         <DataPanel title="Settlements">
