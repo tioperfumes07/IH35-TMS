@@ -21,7 +21,11 @@ try {
   const appSource = `${read("apps/frontend/src/App.tsx")}\n${
     fs.existsSync("apps/frontend/src/routes/manifest.tsx") ? read("apps/frontend/src/routes/manifest.tsx") : ""
   }`;
-  const accountingSubNav = read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx");
+  const accountingSubNav = `${read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx")}\n${
+    fs.existsSync("apps/frontend/src/pages/accounting/subnav-manifest.ts")
+      ? read("apps/frontend/src/pages/accounting/subnav-manifest.ts")
+      : ""
+  }`;
 
   const parityMap = [
     { from: "/accounting/vendors", to: "/vendors", targetPage: "VendorsPage" },
@@ -31,7 +35,11 @@ try {
   ];
 
   for (const { from, to, targetPage } of parityMap) {
-    assertIncludes(accountingSubNav, `href: "${from}"`, `Accounting sub-nav item missing for ${from}`);
+    assertMatches(
+      accountingSubNav,
+      new RegExp(`(?:href|path):\\s*"${escapeRegex(from)}"`),
+      `Accounting sub-nav item missing for ${from}`,
+    );
 
     assertMatches(
       appSource,

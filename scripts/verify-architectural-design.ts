@@ -62,8 +62,8 @@ type ExtraGuardSpec = {
 const SUB_NAV_SOURCES: SubNavSource[] = [
   {
     module: "accounting",
-    file: "apps/frontend/src/pages/accounting/AccountingSubNav.tsx",
-    startToken: "export const ACCOUNTING_SUB_NAV_ITEMS = [",
+    file: "apps/frontend/src/pages/accounting/subnav-manifest.ts",
+    startToken: "export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [",
     valueField: "label",
   },
   {
@@ -303,6 +303,19 @@ function extractSubNavTabs(): Record<string, string[]> {
     let match: RegExpExecArray | null;
     while ((match = regex.exec(block)) !== null) {
       values.push(match[1]);
+    }
+    if (source.module === "accounting" && source.file.endsWith("subnav-manifest.ts")) {
+      const groupLabelsMatch = content.match(
+        /const GROUP_LABELS:[\s\S]*?=\s*\{([\s\S]*?)\};/
+      );
+      if (groupLabelsMatch) {
+        const groupBlock = groupLabelsMatch[1];
+        const groupRegex = /:\s*"([^"]+)"/g;
+        let groupMatch: RegExpExecArray | null;
+        while ((groupMatch = groupRegex.exec(groupBlock)) !== null) {
+          values.push(groupMatch[1]);
+        }
+      }
     }
     out[source.module] = unique(values);
   }

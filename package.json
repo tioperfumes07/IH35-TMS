@@ -117,6 +117,7 @@
     "verify:responsive-layout": "node scripts/verify-responsive-layout.mjs",
     "verify:user-password-auth": "node scripts/verify-user-password-auth.mjs",
     "verify:no-duplicate-routes": "node scripts/verify-no-duplicate-routes.mjs",
+    "verify:branch-fresh": "node scripts/verify-branch-fresh.mjs",
     "verify:accounting-route-map": "node scripts/verify-accounting-route-map.mjs",
     "verify:accounting-autoload-coverage": "node scripts/verify-accounting-autoload-coverage.mjs",
     "verify:accounting-backbone-schema": "node scripts/verify-accounting-backbone-schema.mjs",
