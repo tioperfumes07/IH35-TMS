@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import {
@@ -132,3 +133,8 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     }
   });
 }
+
+
+export default fp(async (app) => {
+  await registerJournalEntryRoutes(app);
+}, { name: "accounting.registerJournalEntryRoutes" });

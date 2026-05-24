@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { getMonthCloseStatus, lockMonthClose } from "./month-close.service.js";
@@ -72,3 +73,8 @@ export async function registerMonthCloseRoutes(app: FastifyInstance) {
     }
   });
 }
+
+
+export default fp(async (app) => {
+  await registerMonthCloseRoutes(app);
+}, { name: "accounting.registerMonthCloseRoutes" });

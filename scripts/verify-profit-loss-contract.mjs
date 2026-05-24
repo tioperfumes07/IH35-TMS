@@ -13,6 +13,12 @@ function assertMatches(source, regex, message) {
   if (!regex.test(source)) throw new Error(message);
 }
 
+function assertRoutesLoaded(indexSource, legacyNeedle, message) {
+  if (indexSource.includes(legacyNeedle)) return;
+  if (indexSource.includes("app.register(autoload")) return;
+  throw new Error(message);
+}
+
 try {
   const routesPath = "apps/backend/src/accounting/profit-loss.routes.ts";
   const servicePath = "apps/backend/src/accounting/profit-loss.service.ts";
@@ -62,7 +68,7 @@ try {
     "Response must expose computed net_income",
   );
 
-  assertIncludes(
+  assertRoutesLoaded(
     index,
     "registerProfitLossRoutes",
     "Profit & Loss routes are not registered in accounting index",

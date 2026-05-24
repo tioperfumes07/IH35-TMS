@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import {
@@ -136,3 +137,8 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
     return reply.code(200).send(result);
   });
 }
+
+
+export default fp(async (app) => {
+  await registerCollectionsRoutes(app);
+}, { name: "accounting.registerCollectionsRoutes" });

@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -375,3 +376,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     }
   });
 }
+
+
+export default fp(async (app) => {
+  await registerExpenseRoutes(app);
+}, { name: "accounting.registerExpenseRoutes" });

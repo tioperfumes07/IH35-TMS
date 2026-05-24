@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -35,3 +36,8 @@ export async function registerExpenseLoadLookupRoutes(app: FastifyInstance) {
     return reply.send({ data: result });
   });
 }
+
+
+export default fp(async (app) => {
+  await registerExpenseLoadLookupRoutes(app);
+}, { name: "accounting.registerExpenseLoadLookupRoutes" });

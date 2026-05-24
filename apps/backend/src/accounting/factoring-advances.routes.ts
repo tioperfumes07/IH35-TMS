@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { listFactorReserveBalances, postFactoringFeeExpenseEvent } from "./factoring-fees-posting/poster.service.js";
@@ -741,3 +742,8 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
 function recourceResRow(row: Record<string, unknown> | undefined) {
   return { all_recourse: row?.all_recourse };
 }
+
+
+export default fp(async (app) => {
+  await registerFactoringAdvancesRoutes(app);
+}, { name: "accounting.registerFactoringAdvancesRoutes" });

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { getComparisonReport } from "./comparison-report.service.js";
@@ -45,3 +46,8 @@ export async function registerComparisonReportRoutes(app: FastifyInstance) {
     }
   });
 }
+
+
+export default fp(async (app) => {
+  await registerComparisonReportRoutes(app);
+}, { name: "accounting.registerComparisonReportRoutes" });

@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import {
@@ -304,3 +305,8 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 }
+
+
+export default fp(async (app) => {
+  await registerStatementExportRoutes(app);
+}, { name: "accounting.registerStatementExportRoutes" });

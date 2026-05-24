@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 
@@ -84,3 +85,8 @@ export async function registerAccountingPeriodsReadRoutes(app: FastifyInstance) 
     return row;
   });
 }
+
+
+export default fp(async (app) => {
+  await registerAccountingPeriodsReadRoutes(app);
+}, { name: "accounting.registerAccountingPeriodsReadRoutes" });

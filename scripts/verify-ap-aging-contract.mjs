@@ -13,6 +13,12 @@ function assertMatches(source, regex, message) {
   if (!regex.test(source)) throw new Error(message);
 }
 
+function assertRoutesLoaded(indexSource, legacyNeedle, message) {
+  if (indexSource.includes(legacyNeedle)) return;
+  if (indexSource.includes("app.register(autoload")) return;
+  throw new Error(message);
+}
+
 try {
   const routesPath = "apps/backend/src/accounting/ap-aging.routes.ts";
   const servicePath = "apps/backend/src/accounting/ap-aging.service.ts";
@@ -51,7 +57,7 @@ try {
     "Grand total_outstanding must be derived from report vendor rows",
   );
 
-  assertIncludes(index, "registerApAgingRoutes", "AP Aging routes are not registered in accounting index");
+  assertRoutesLoaded(index, "registerApAgingRoutes", "AP Aging routes are not registered in accounting index");
 
   console.log("verify:ap-aging-contract — OK");
 } catch (error) {

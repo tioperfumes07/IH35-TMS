@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { getBalanceSheetReport } from "./balance-sheet.service.js";
@@ -86,3 +87,8 @@ export async function registerBalanceSheetRoutes(app: FastifyInstance) {
     return reply.code(200).send({ ...report, basis });
   });
 }
+
+
+export default fp(async (app) => {
+  await registerBalanceSheetRoutes(app);
+}, { name: "accounting.registerBalanceSheetRoutes" });

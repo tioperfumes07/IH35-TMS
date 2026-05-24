@@ -13,6 +13,12 @@ function assertMatches(source, regex, message) {
   if (!regex.test(source)) throw new Error(message);
 }
 
+function assertRoutesLoaded(indexSource, legacyNeedle, message) {
+  if (indexSource.includes(legacyNeedle)) return;
+  if (indexSource.includes("app.register(autoload")) return;
+  throw new Error(message);
+}
+
 try {
   const routesPath = "apps/backend/src/accounting/balance-sheet.routes.ts";
   const servicePath = "apps/backend/src/accounting/balance-sheet.service.ts";
@@ -66,7 +72,7 @@ try {
     "Response must expose current-year-earnings",
   );
 
-  assertIncludes(
+  assertRoutesLoaded(
     index,
     "registerBalanceSheetRoutes",
     "Balance Sheet routes are not registered in accounting index",

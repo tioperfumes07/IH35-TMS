@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueAccountingOutbox } from "./outbox-events.js";
@@ -320,3 +321,8 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
     }
   });
 }
+
+
+export default fp(async (app) => {
+  await registerVendorBillPaymentsRoutes(app);
+}, { name: "accounting.registerVendorBillPaymentsRoutes" });

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
 import { type LedgerEntryKind } from "./match.service.js";
@@ -152,3 +153,8 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     }
   });
 }
+
+
+export default fp(async (app) => {
+  await registerBankReconWorklistRoutes(app);
+}, { name: "accounting.registerBankReconWorklistRoutes" });

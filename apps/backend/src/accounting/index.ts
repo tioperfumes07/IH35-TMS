@@ -1,77 +1,19 @@
+import autoload from "@fastify/autoload";
 import type { FastifyInstance } from "fastify";
-import { registerInvoiceRoutes } from "./invoices.routes.js";
-import { registerAccountingInvoiceHtmlRoutes } from "./invoice-render.routes.js";
-import { registerInvoiceLineRoutes } from "./invoice-lines.routes.js";
-import { registerPaymentsRoutes } from "./payments.routes.js";
-import { registerPaymentApplicationsRoutes } from "./payment-applications.routes.js";
-import { registerCustomerPaymentsRoutes } from "./customer-payments.routes.js";
-import { registerVendorBillPaymentsRoutes } from "./vendor-bill-payments.routes.js";
-import { registerFactoringAdvancesRoutes } from "./factoring-advances.routes.js";
-import { registerBillsRoutes } from "./bills.routes.js";
-import { registerJournalEntryRoutes } from "./journal-entries.routes.js";
-import { registerExpenseLoadLookupRoutes } from "./load-lookup.routes.js";
-import { registerExpenseRoutes } from "./expenses.routes.js";
-import { registerAccountingP7Wave2Routes } from "./p7-wave2.routes.js";
-import { registerPostingEngineRoutes } from "./posting-engine.routes.js";
-import { registerTrialBalanceRoutes } from "./trial-balance.routes.js";
-import { registerAccountingPeriodsReadRoutes } from "./periods.routes.js";
-import { registerProfitLossRoutes } from "./profit-loss.routes.js";
-import { registerBalanceSheetRoutes } from "./balance-sheet.routes.js";
-import { registerCashFlowRoutes } from "./cash-flow.routes.js";
-import { registerArAgingRoutes } from "./ar-aging.routes.js";
-import { registerApAgingRoutes } from "./ap-aging.routes.js";
-import { registerDateRangesRoutes } from "./date-ranges.routes.js";
-import { registerStatementExportRoutes } from "./statement-export.routes.js";
-import { registerExpenseCategoryMapRoutes } from "./expense-category-map/routes.js";
-import { registerCoaRolesRoutes } from "./coa-roles/routes.js";
-import { registerBankReconWorklistRoutes } from "./bank-recon/recon-worklist.routes.js";
-import { registerFactorReconciliationRoutes } from "./factor-reconciliation/routes.js";
-import { registerMultiEntityAccountingRoutes } from "./multi-entity/routes.js";
-import { registerSalesTaxRoutes } from "./sales-tax/routes.js";
-import { registerAccountingAuditTrailRoutes } from "./audit-trail/routes.js";
-import { registerMonthCloseRoutes } from "./month-close.routes.js";
-import { registerEscrowRoutes } from "./escrow/routes.js";
-import { registerCashForecastRoutes } from "./cash-forecast.routes.js";
-import { registerComparisonReportRoutes } from "./comparison-report.routes.js";
-import { registerCollectionsRoutes } from "./collections.routes.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { initializeCollectionsSyncCron } from "../cron/collections-sync.cron.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 export async function registerAccountingRoutes(app: FastifyInstance) {
-  await registerInvoiceRoutes(app);
-  await registerAccountingInvoiceHtmlRoutes(app);
-  await registerInvoiceLineRoutes(app);
-  await registerPaymentsRoutes(app);
-  await registerPaymentApplicationsRoutes(app);
-  await registerCustomerPaymentsRoutes(app);
-  await registerVendorBillPaymentsRoutes(app);
-  await registerFactoringAdvancesRoutes(app);
-  await registerBillsRoutes(app);
-  await registerJournalEntryRoutes(app);
-  await registerExpenseLoadLookupRoutes(app);
-  await registerExpenseRoutes(app);
-  await registerAccountingP7Wave2Routes(app);
-  await registerPostingEngineRoutes(app);
-  await registerTrialBalanceRoutes(app);
-  await registerAccountingPeriodsReadRoutes(app);
-  await registerProfitLossRoutes(app);
-  await registerBalanceSheetRoutes(app);
-  await registerCashFlowRoutes(app);
-  await registerArAgingRoutes(app);
-  await registerApAgingRoutes(app);
-  await registerDateRangesRoutes(app);
-  await registerStatementExportRoutes(app);
-  await registerExpenseCategoryMapRoutes(app);
-  await registerCoaRolesRoutes(app);
-  await registerBankReconWorklistRoutes(app);
-  await registerFactorReconciliationRoutes(app);
-  await registerMultiEntityAccountingRoutes(app);
-  await registerSalesTaxRoutes(app);
-  await registerAccountingAuditTrailRoutes(app);
-  await registerMonthCloseRoutes(app);
-  await registerEscrowRoutes(app);
-  await registerCashForecastRoutes(app);
-  await registerComparisonReportRoutes(app);
-  await registerCollectionsRoutes(app);
+  await app.register(autoload, {
+    dir: __dirname,
+    matchFilter: /\.routes\.(ts|js)$/,
+    // Prevent autoload from treating this module as a folder index plugin.
+    indexPattern: /^autoload-index-disabled$/,
+    ignorePattern: /\.test\./,
+  });
 }
 
 export function initializeAccountingCrons(app: FastifyInstance) {

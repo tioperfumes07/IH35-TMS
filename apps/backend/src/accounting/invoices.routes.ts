@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { enqueueEmail } from "../email/queue.service.js";
@@ -579,3 +580,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     return result.data;
   });
 }
+
+
+export default fp(async (app) => {
+  await registerInvoiceRoutes(app);
+}, { name: "accounting.registerInvoiceRoutes" });
