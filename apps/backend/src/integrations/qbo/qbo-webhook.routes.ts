@@ -16,7 +16,9 @@ type VerifierConfig = {
 
 function resolveVerifierConfig(app: FastifyInstance): VerifierConfig {
   const verifierToken = (process.env.QBO_WEBHOOK_VERIFIER_TOKEN ?? "").trim();
-  const allowInsecureWithoutVerifier = (process.env.QBO_WEBHOOK_ALLOW_INSECURE_DEV ?? "").trim() === "true";
+  const allowInsecureWithoutVerifier =
+    (process.env.QBO_WEBHOOK_ALLOW_INSECURE_DEV ?? "").trim() === "true" ||
+    (process.env.IH35_BOOT_API_SMOKE ?? "").trim() === "true";
   const isProduction = process.env.NODE_ENV === "production";
 
   if (!verifierToken) {
