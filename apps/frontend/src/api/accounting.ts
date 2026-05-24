@@ -1193,3 +1193,67 @@ export function getAccountingSourceLineage(
   if (params.limit != null) query.set("limit", String(params.limit));
   return apiRequest<{ rows: AccountingSourceLineageRow[] }>(`/api/v1/accounting/audit-trail/source-lineage?${query.toString()}`);
 }
+
+export type MonthClosePendingAccount = {
+  bank_account_id: string;
+  bank_account_name: string;
+  total_transactions: number;
+  covered_transactions: number;
+};
+
+export type MonthCloseStatus = {
+  period: string;
+  period_start: string;
+  period_end: string;
+  period_id: string | null;
+  period_status: string | null;
+  bank_recon: {
+    complete: boolean;
+    accounts_pending: MonthClosePendingAccount[];
+  };
+  ar_aging_review: {
+    complete: boolean;
+    overdue_count: number;
+  };
+  ap_aging_review: {
+    complete: boolean;
+    overdue_count: number;
+  };
+  fuel_tax: {
+    complete: boolean;
+    ifta_filed: boolean;
+  };
+  adjusting_entries: {
+    count: number;
+  };
+  can_lock: boolean;
+};
+
+export function getMonthCloseStatus(operatingCompanyId: string, period: string) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    period,
+  });
+  return apiRequest<MonthCloseStatus>(`/api/v1/accounting/month-close-status?${query.toString()}`);
+}
+
+export function closeMonth(
+  operatingCompanyId: string,
+  body: {
+    period: string;
+    closing_notes?: string;
+  }
+) {
+  return apiRequest<{
+    ok: boolean;
+    period_id: string;
+    retained_earnings_entry_id: string | null;
+  }>("/api/v1/accounting/month-close", {
+    method: "POST",
+    body: {
+      operating_company_id: operatingCompanyId,
+      period: body.period,
+      closing_notes: body.closing_notes,
+    },
+  });
+}

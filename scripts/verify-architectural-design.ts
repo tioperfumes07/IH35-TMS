@@ -84,6 +84,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-arrival-haversine-uses-locked-radius.mjs",
   "scripts/verify-fuel-stop-planner-no-db-writes.mjs",
   "scripts/verify-fuel-stop-planner-uses-cap-hos.mjs",
+  "scripts/verify-month-close-requires-checklist-complete.mjs",
   "scripts/verify-auto-geofence-tenant-scope.mjs",
   "scripts/verify-auto-geofence-no-blocking-call.mjs",
   "scripts/verify-dot-dwell-detector-tenant-scope.mjs",
