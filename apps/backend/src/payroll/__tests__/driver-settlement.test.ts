@@ -139,6 +139,9 @@ describe("driver settlement engine (Block-22)", () => {
         };
       }
       if (sql.includes("FROM mdata.drivers")) return { rows: [{ qbo_vendor_id: "VND-001" }] };
+      if (sql.includes("FROM payroll.driver_settlement_line_items") && sql.includes("driver_bond_deduction")) {
+        return { rows: [{ amount_cents: 0 }] };
+      }
       if (sql.includes("UPDATE payroll.driver_settlements")) {
         return {
           rows: [
