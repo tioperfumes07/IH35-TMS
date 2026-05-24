@@ -18,6 +18,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { SectionQuickJump } from "../../components/home/SectionQuickJump";
 import { FleetSnapshotPanel } from "../../components/home/FleetSnapshotPanel";
+import { DriverDaySummaryCard } from "../../components/home/DriverDaySummaryCard";
 import { QboSyncHealthCard } from "../../components/home/QboSyncHealthCard";
 import { VendorMappingIntegrityCard } from "../../components/home/VendorMappingIntegrityCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -219,7 +220,11 @@ export function HomePage({ auth }: Props) {
         </div>
       </section>
 
-      <section className="kpi-grid order-2 grid grid-cols-1 gap-2 md:grid-cols-2 lg:order-1 lg:grid-cols-3">
+      <div className="order-2 lg:order-2">
+        <DriverDaySummaryCard operatingCompanyId={selectedCompanyId} />
+      </div>
+
+      <section className="kpi-grid order-3 grid grid-cols-1 gap-2 md:grid-cols-2 lg:order-1 lg:grid-cols-3">
         <HomeKpiCard
           label="Today's Revenue"
           number={tr ? formatUsdFromCents(tr.revenue_cents) : "—"}

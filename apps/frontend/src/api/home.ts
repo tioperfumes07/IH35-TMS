@@ -236,6 +236,16 @@ export type HomeFleetUtilization = {
   percentage: number;
 };
 
+export type HomeDriverDaySummaryRow = {
+  driver_id: string;
+  driver_name: string;
+  miles: number;
+  hours_on_duty: number;
+  fuel_stops: number;
+  on_time_arrivals: number;
+  late_arrivals: number;
+};
+
 function num(raw: unknown, fallback = 0): number {
   const n = Number(raw);
   return Number.isFinite(n) ? n : fallback;
@@ -359,4 +369,25 @@ export async function fetchHomeFleetUtilization(companyId: string): Promise<Home
     total_units: num(raw.total_units),
     percentage: num(raw.percentage),
   };
+}
+
+export async function fetchDriverDaySummary(companyId: string, date: string): Promise<HomeDriverDaySummaryRow[]> {
+  const path = withCompany(`/api/v1/telematics/driver-day-summary?date=${encodeURIComponent(date)}`, companyId);
+  const raw = await apiRequest<{ rows?: unknown }>(path);
+  const rows = Array.isArray(raw.rows) ? raw.rows : [];
+  return rows
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const row = entry as Record<string, unknown>;
+      return {
+        driver_id: String(row.driver_id ?? ""),
+        driver_name: String(row.driver_name ?? "Unknown driver"),
+        miles: num(row.miles),
+        hours_on_duty: num(row.hours_on_duty),
+        fuel_stops: num(row.fuel_stops),
+        on_time_arrivals: num(row.on_time_arrivals),
+        late_arrivals: num(row.late_arrivals),
+      };
+    })
+    .filter((row): row is HomeDriverDaySummaryRow => Boolean(row?.driver_id));
 }
