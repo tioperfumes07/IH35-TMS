@@ -131,6 +131,7 @@ import { MonthClosePage } from "./pages/accounting/MonthClosePage";
 import { EscrowPage } from "./pages/accounting/EscrowPage";
 import { CashForecastPage } from "./pages/accounting/CashForecastPage";
 import { PeriodComparisonPage } from "./pages/accounting/PeriodComparisonPage";
+import { CollectionsPage } from "./pages/accounting/CollectionsPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
@@ -1589,6 +1590,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CashForecastPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/collections"
+          element={
+            <ProtectedRoute>
+              <CollectionsPage />
             </ProtectedRoute>
           }
         />

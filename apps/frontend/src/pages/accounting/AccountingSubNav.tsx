@@ -25,6 +25,9 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
   { label: "Vendors", href: "/accounting/vendors" },
   { label: "Customers", href: "/accounting/customers" },
   { label: "Reports", href: "/accounting/reports" },
+  { label: "AR Aging", href: "/reports/ar-aging" },
+  { label: "Collections", href: "/accounting/collections" },
+  { label: "AP Aging", href: "/reports/ap-aging" },
   { label: "Invoices", href: "/accounting/invoices" },
   { label: "Multi-entity", href: "/accounting/multi-entity" },
   { label: "Receive Payment", href: "/accounting/payments" },
@@ -62,7 +65,10 @@ export function accountingSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/accounting/posting-lineage")) return "/accounting/posting-lineage";
   if (pathname.startsWith("/accounting/escrow")) return "/accounting/escrow";
   if (pathname.startsWith("/accounting/cash-forecast")) return "/accounting/cash-forecast";
+  if (pathname.startsWith("/accounting/collections")) return "/accounting/collections";
   if (pathname.startsWith("/accounting/period-comparison")) return "/accounting/period-comparison";
+  if (pathname.startsWith("/reports/ar-aging")) return "/reports/ar-aging";
+  if (pathname.startsWith("/reports/ap-aging")) return "/reports/ap-aging";
   if (pathname.startsWith("/accounting/pre-settlements")) return "/accounting/pre-settlements";
   if (pathname.startsWith("/accounting/settings/expense-category-map")) return "/accounting/settings/expense-category-map";
   if (pathname.startsWith("/accounting/settings/coa-roles")) return "/accounting/settings/coa-roles";

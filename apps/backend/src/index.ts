@@ -118,7 +118,7 @@ import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.j
 import { registerQboMasterWriteRoutes } from "./mdata/qbo-master-write.routes.js";
 import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.routes.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
-import { registerAccountingRoutes } from "./accounting/index.js";
+import { initializeAccountingCrons, registerAccountingRoutes } from "./accounting/index.js";
 import { registerAccountingSettlementDisputesP6Routes } from "./accounting/disputes.routes.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
@@ -468,6 +468,13 @@ async function main() {
   await registerTelematicsHosRoutes(app);
   await registerVehicleDriverPairingRoutes(app);
   await registerPayrollDriverSettlementRoutes(app);
+
+  try {
+    initializeAccountingCrons(app);
+    app.log.info("[STARTUP] accounting cron suite initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] accounting cron suite failed");
+  }
 
   try {
     await initializeQboHistoricalImportRunner(app);

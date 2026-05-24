@@ -106,19 +106,25 @@ try {
   console.log("verify:pre-commit step 5/12: verify-arch-design");
   if (run("npm", ["run", "verify:arch-design"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 6/12: verify-scheduler-tenant-context");
+  console.log("verify:pre-commit step 6/14: verify-collections-readonly");
+  if (run("node", ["scripts/verify-collections-readonly.mjs"]) !== 0) process.exit(1);
+
+  console.log("verify:pre-commit step 7/14: verify-collections-tenant-scope");
+  if (run("node", ["scripts/verify-collections-tenant-scope.mjs"]) !== 0) process.exit(1);
+
+  console.log("verify:pre-commit step 8/14: verify-scheduler-tenant-context");
   if (run("npm", ["run", "verify:scheduler-tenant-context"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 7/12: verify-canonical-schema-names");
+  console.log("verify:pre-commit step 9/14: verify-canonical-schema-names");
   if (run("npm", ["run", "verify:canonical-schema-names"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 8/11: verify-outbox-handler-parity");
+  console.log("verify:pre-commit step 10/14: verify-outbox-handler-parity");
   if (run("npm", ["run", "verify:outbox-handler-parity"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 9/12: verify-migration-application-consistency");
+  console.log("verify:pre-commit step 11/14: verify-migration-application-consistency");
   if (run("npm", ["run", "verify:migration-application-consistency"]) !== 0) process.exit(1);
 
-  console.log("verify:pre-commit step 10/12: backend-vitest");
+  console.log("verify:pre-commit step 12/14: backend-vitest");
   if (
     run("npx", [
       "vitest",
@@ -134,12 +140,12 @@ try {
   }
   parseBackendVitestReport();
 
-  console.log("verify:pre-commit step 11/12: frontend-vitest");
+  console.log("verify:pre-commit step 13/14: frontend-vitest");
   if (run("npx", ["vitest", "run", "src/components/ErrorBoundary.test.tsx"], { cwd: path.join(ROOT, "apps/frontend") }) !== 0) {
     process.exit(1);
   }
 
-  console.log("verify:pre-commit step 12/12: summary-report");
+  console.log("verify:pre-commit step 14/14: summary-report");
   console.log("verify:pre-commit PASS");
   process.exit(0);
 } finally {
