@@ -47,7 +47,62 @@ type SettlementPdfInput = {
 
 export async function renderSettlementStatementPdf(client: DbClient, input: SettlementPdfInput) {
   const terms = await loadTerms();
-  const settlementRes = await client.query<{
+  const payrollExistsRes = await client.query<{ ok: boolean }>(`SELECT to_regclass('payroll.driver_settlements') IS NOT NULL AS ok`);
+  const payrollExists = Boolean(payrollExistsRes.rows[0]?.ok);
+
+  const payrollSettlementRes = payrollExists
+    ? await client.query<{
+        id: string;
+        display_id: string | null;
+        period_start: string;
+        period_end: string;
+        status: string;
+        settlement_model: string | null;
+        first_load_number: string | null;
+        last_load_number: string | null;
+        trip_started_at: string | null;
+        trip_closed_at: string | null;
+        gross_pay: string | number | null;
+        deductions_total: string | number | null;
+        reimbursements_total: string | number | null;
+        net_pay: string | number | null;
+        driver_id: string;
+        driver_name: string | null;
+        preferred_language: "en" | "es" | null;
+      }>(
+        `
+          SELECT
+            s.id::text AS id,
+            ('PS-' || upper(substr(s.id::text, 1, 8)))::text AS display_id,
+            s.pay_period_start::text AS period_start,
+            s.pay_period_end::text AS period_end,
+            s.status::text AS status,
+            NULL::text AS settlement_model,
+            NULL::text AS first_load_number,
+            NULL::text AS last_load_number,
+            NULL::text AS trip_started_at,
+            NULL::text AS trip_closed_at,
+            (s.gross_cents::numeric / 100.0)::text AS gross_pay,
+            (s.deductions_cents::numeric / 100.0)::text AS deductions_total,
+            0::text AS reimbursements_total,
+            (s.net_cents::numeric / 100.0)::text AS net_pay,
+            s.driver_id::text AS driver_id,
+            concat_ws(' ', d.first_name, d.last_name) AS driver_name,
+            u.preferred_language
+          FROM payroll.driver_settlements s
+          JOIN mdata.drivers d ON d.id = s.driver_id
+          LEFT JOIN identity.users u ON u.id = d.identity_user_id
+          WHERE s.operating_company_id = $1::uuid
+            AND s.id = $2::uuid
+          LIMIT 1
+        `,
+        [input.operatingCompanyId, input.settlementId]
+      )
+    : { rows: [] };
+
+  const settlementRes = payrollSettlementRes.rows[0]
+    ? payrollSettlementRes
+    : await client.query<{
     id: string;
     display_id: string | null;
     period_start: string;
@@ -97,7 +152,28 @@ export async function renderSettlementStatementPdf(client: DbClient, input: Sett
   const settlement = settlementRes.rows[0] ?? null;
   if (!settlement) throw new Error("settlement_not_found");
 
-  const lineRows = await client.query<{
+  const payrollLines = payrollSettlementRes.rows[0]
+    ? await client.query<{
+        line_type: string;
+        description: string;
+        amount: string | number;
+      }>(
+        `
+          SELECT
+            line_type::text,
+            description,
+            (amount_cents::numeric / 100.0)::text AS amount
+          FROM payroll.driver_settlement_line_items
+          WHERE settlement_id = $1::uuid
+          ORDER BY created_at ASC
+        `,
+        [input.settlementId]
+      )
+    : null;
+
+  const lineRows = payrollLines
+    ? payrollLines
+    : await client.query<{
     line_type: string;
     description: string;
     amount: string | number;

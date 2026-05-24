@@ -191,6 +191,7 @@ import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jo
 import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
 import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
 import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
+import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -466,6 +467,7 @@ async function main() {
   await registerDailyTasksRoutes(app);
   await registerTelematicsHosRoutes(app);
   await registerVehicleDriverPairingRoutes(app);
+  await registerPayrollDriverSettlementRoutes(app);
 
   try {
     await initializeQboHistoricalImportRunner(app);
