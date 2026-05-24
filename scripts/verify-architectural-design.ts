@@ -112,6 +112,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-escrow-tenant-scope.mjs",
   "scripts/verify-escrow-amount-conservation.mjs",
   "scripts/verify-escrow-emits-audit.mjs",
+  "scripts/verify-steps/_meta-no-hand-numbered.mjs",
 ] as const;
 
 type LockedUiSurface = {
