@@ -75,6 +75,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-posting-lineage-ui-contract.mjs",
   "scripts/verify-vehicle-driver-pairing-tenant-scope.mjs",
   "scripts/verify-vehicle-driver-pairing-append-only.mjs",
+  "scripts/verify-heatmap-tenant-scope.mjs",
   "scripts/verify-arrival-detection-tenant-scope.mjs",
   "scripts/verify-arrival-haversine-uses-locked-radius.mjs",
   "scripts/verify-fuel-stop-planner-no-db-writes.mjs",
