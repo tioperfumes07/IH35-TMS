@@ -88,6 +88,7 @@ const EXTRA_GUARDS = [
   "scripts/verify-auto-status-no-direct-status-write.mjs",
   "scripts/verify-harsh-events-append-only.mjs",
   "scripts/verify-driver-scoring-no-db-writes.mjs",
+  "scripts/verify-fuel-match-tenant-scope.mjs",
   "scripts/verify-load-progress-no-db-writes.mjs",
   "scripts/verify-ts-brace-balance.mjs",
   "scripts/verify-pm-alerts-append-only.mjs",

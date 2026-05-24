@@ -136,8 +136,12 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
             bt.transaction_date::text AS transaction_date,
             ABS(bt.amount_cents)::text AS amount_cents,
             bt.merchant_name,
-            bt.description
+            bt.description,
+            gm.confidence AS gps_match_confidence
           FROM banking.bank_transactions bt
+          LEFT JOIN safety.fuel_gps_matches gm
+            ON gm.operating_company_id = bt.operating_company_id
+           AND gm.fuel_txn_id = bt.id
           WHERE bt.operating_company_id = $1
             AND ${btFuel}
             AND (
@@ -294,6 +298,10 @@ export async function registerFuelReconciliationRoutes(app: FastifyInstance) {
           amount_cents: num(row.amount_cents),
           merchant_name: row.merchant_name,
           description: row.description,
+          gps_match_confidence:
+            row.gps_match_confidence === "high" || row.gps_match_confidence === "medium" || row.gps_match_confidence === "no_match"
+              ? row.gps_match_confidence
+              : null,
         })),
         unmatched_wo_entries: unmatchedWo.rows.map((row: Record<string, unknown>) => ({
           work_order_id: row.work_order_id,

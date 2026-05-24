@@ -58,7 +58,9 @@ const sample: FuelReconciliationResponse = {
       flags: ["unmatched"],
     },
   ],
-  unmatched_card_transactions: [{ id: "c1", txn_date: "2026-01-05", amount_cents: 500, merchant: "FuelCo" }],
+  unmatched_card_transactions: [
+    { transaction_id: "c1", transaction_date: "2026-01-05", amount_cents: 500, merchant_name: "FuelCo", gps_match_confidence: "no_match" },
+  ],
   unmatched_wo_entries: [] as {
     wo_id: string;
     wo_number: string;
@@ -72,6 +74,7 @@ describe("FuelReconciliationPage", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(reportsApi, "getFuelReconciliation").mockResolvedValue(sample);
+    vi.spyOn(reportsApi, "rematchFuelTxnToGps").mockResolvedValue({ ok: true });
   });
 
   it("renders totals and flags; highlights suspicious delta row", async () => {
@@ -102,11 +105,16 @@ describe("FuelReconciliationPage", () => {
     expect(await screen.findByTestId("report-block-v-pending")).toBeInTheDocument();
   });
 
-  it("manual match opens stub modal", async () => {
+  it("re-match button triggers GPS rematch", async () => {
     const user = userEvent.setup();
     render(wrap(<FuelReconciliationPage />));
     await screen.findByText("FuelCo");
-    await user.click(screen.getByRole("button", { name: /manual match/i }));
-    expect(await screen.findByRole("heading", { name: /manual match/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /re-match gps/i }));
+    await waitFor(() => {
+      expect(reportsApi.rematchFuelTxnToGps).toHaveBeenCalledWith({
+        operating_company_id: "11111111-1111-1111-1111-111111111111",
+        transaction_id: "c1",
+      });
+    });
   });
 });

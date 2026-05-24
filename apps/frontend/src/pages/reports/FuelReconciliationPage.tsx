@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   getFuelReconciliation,
+  rematchFuelTxnToGps,
   type FuelReconciliationFlag,
   type FuelReconciliationResponse,
   type FuelReconciliationTruckRow,
@@ -11,6 +12,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 
@@ -36,6 +38,8 @@ type SortKey = keyof FuelReconciliationTruckRow;
 export function FuelReconciliationPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(defaultRange);
   const [applied, setApplied] = useState(defaultRange);
@@ -221,13 +225,41 @@ export function FuelReconciliationPage() {
                 </thead>
                 <tbody>
                   {(query.data.unmatched_card_transactions ?? []).map((row) => (
-                    <tr key={row.id} className="border-t border-gray-100">
-                      <td className="py-1">{row.txn_date}</td>
+                    <tr key={row.transaction_id} className="border-t border-gray-100">
+                      <td className="py-1">{row.transaction_date}</td>
                       <td className="py-1">{money(row.amount_cents)}</td>
-                      <td className="py-1">{row.merchant}</td>
                       <td className="py-1">
-                        <Button size="sm" variant="secondary" onClick={() => setMatchOpen(true)}>
-                          Manual Match
+                        <div>{row.merchant_name ?? row.description ?? "—"}</div>
+                        <div className="mt-0.5 text-[10px]">
+                          {row.gps_match_confidence === "high" ? (
+                            <span className="rounded bg-emerald-100 px-1 text-emerald-700">GPS match: high</span>
+                          ) : row.gps_match_confidence === "medium" ? (
+                            <span className="rounded bg-amber-100 px-1 text-amber-700">GPS match: medium</span>
+                          ) : row.gps_match_confidence === "no_match" ? (
+                            <span className="rounded bg-red-100 px-1 text-red-700">GPS match: no match</span>
+                          ) : (
+                            <span className="rounded bg-gray-100 px-1 text-gray-600">GPS match: pending</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-1">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            if (!companyId) return;
+                            void rematchFuelTxnToGps({
+                              operating_company_id: companyId,
+                              transaction_id: row.transaction_id,
+                            })
+                              .then(() => {
+                                pushToast("GPS re-match queued", "success");
+                                void queryClient.invalidateQueries({ queryKey: ["reports", "fuel-reconciliation", companyId] });
+                              })
+                              .catch((error: Error) => pushToast(error.message || "Failed to re-match GPS", "error"));
+                          }}
+                        >
+                          Re-match GPS
                         </Button>
                       </td>
                     </tr>
