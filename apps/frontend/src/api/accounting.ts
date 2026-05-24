@@ -1257,3 +1257,44 @@ export function closeMonth(
     },
   });
 }
+
+export type EscrowAccount = {
+  id: string;
+  operating_company_id: string;
+  holder_id: string;
+  holder_type: "driver" | "vendor" | "factor" | "other";
+  purpose: "driver_bond" | "repair_reserve" | "factor_reserve" | "other";
+  coa_account_id: string;
+  balance_cents: number;
+  status: "active" | "closed";
+  created_at: string;
+  updated_at: string;
+};
+
+export type EscrowPosting = {
+  id: string;
+  operating_company_id: string;
+  escrow_account_id: string;
+  posting_type: "deposit" | "release" | "adjustment";
+  amount_cents: number;
+  source_type: "driver_settlement" | "factoring_advance" | "vendor_bill" | "manual" | "reconciliation";
+  source_id: string | null;
+  note: string | null;
+  posted_at: string;
+  posted_by_user_id: string;
+  linked_journal_entry_id: string | null;
+  created_at: string;
+};
+
+export function listEscrowAccounts(operatingCompanyId: string) {
+  return apiRequest<{ rows: EscrowAccount[] }>(withCompany("/api/v1/accounting/escrow/accounts", operatingCompanyId));
+}
+
+export function listEscrowPostings(operatingCompanyId: string, escrowAccountId: string, limit = 200) {
+  const query = new URLSearchParams();
+  query.set("operating_company_id", operatingCompanyId);
+  query.set("limit", String(limit));
+  return apiRequest<{ rows: EscrowPosting[] }>(
+    `/api/v1/accounting/escrow/accounts/${encodeURIComponent(escrowAccountId)}/postings?${query.toString()}`
+  );
+}
