@@ -7,6 +7,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { computePayloadHashFromTxn, enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { insertCsvStatementBankTransaction } from "./transaction-ingestion.js";
 import { applyBankingRulesForTransaction } from "./banking-rules.engine.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -69,6 +70,7 @@ async function withCompanyScope<T>(
   operatingCompanyId: string,
   fn: (client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }> }) => Promise<T>
 ) {
+  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     return fn(client);

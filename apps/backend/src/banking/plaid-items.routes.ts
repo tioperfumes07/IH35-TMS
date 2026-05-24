@@ -5,6 +5,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { requireAuth } from "../auth/session-middleware.js";
 import { getPlaidClient } from "../integrations/plaid/plaid-client.js";
 import { syncTransactions } from "../integrations/plaid/plaid.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 function officeRole(role: string) {
   return role !== "Driver";

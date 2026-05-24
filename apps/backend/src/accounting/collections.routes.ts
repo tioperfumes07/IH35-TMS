@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
   getCollectionTask,
   listCollectionTasks,
@@ -58,6 +59,7 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
 
     const query = listCollectionsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const result = await listCollectionTasks({
       userId: user.uuid,

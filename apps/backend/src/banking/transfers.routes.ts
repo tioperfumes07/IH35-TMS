@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { createTransfer, getTransferDetail, listTransfers, revokeTransfer } from "./transfers.service.js";
-import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 
 const createBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -29,7 +30,6 @@ const listQuerySchema = z.object({
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const revokeBodySchema = z.object({ reason: z.string().trim().min(3).max(500) });
-const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 
 const ccPaymentBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -43,15 +43,6 @@ const ccPaymentBodySchema = z.object({
   statement_period: z.string().trim().max(120).optional(),
 });
 
-function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
-  return req.user as { uuid: string; role: string };
-}
-
-function sendValidationError(reply: FastifyReply, error: z.ZodError) {
-  return reply.code(400).send({ error: "validation_error", details: error.flatten() });
-}
-
 function isOwnerAdminAccountant(role: string) {
   return role === "Owner" || role === "Administrator" || role === "Accountant";
 }
@@ -62,7 +53,8 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = createBodySchema.safeParse(req.body ?? {});
-    if (!body.success) return sendValidationError(reply, body.error);
+    if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const transfer = await createTransfer(
         {
@@ -98,7 +90,8 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = ccPaymentBodySchema.safeParse(req.body ?? {});
-    if (!body.success) return sendValidationError(reply, body.error);
+    if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const memoParts = [`CC payment · QBO vendor ${body.data.cc_vendor_id}`];
     if (body.data.statement_period) memoParts.push(`Statement ${body.data.statement_period}`);
     if (body.data.memo) memoParts.push(body.data.memo);
@@ -136,7 +129,8 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
     const query = listQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return sendValidationError(reply, query.error);
+    if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const transfers = await listTransfers({
       userId: user.uuid,
@@ -157,9 +151,10 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
     const params = idParamsSchema.safeParse(req.params ?? {});
-    if (!params.success) return sendValidationError(reply, params.error);
+    if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return sendValidationError(reply, query.error);
+    if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const detail = await getTransferDetail(params.data.id, query.data.operating_company_id, user.uuid);
     if (!detail) return reply.code(404).send({ error: "transfer_not_found" });
@@ -171,11 +166,12 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
     const params = idParamsSchema.safeParse(req.params ?? {});
-    if (!params.success) return sendValidationError(reply, params.error);
+    if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return sendValidationError(reply, query.error);
+    if (!query.success) return validationError(reply, query.error);
     const body = revokeBodySchema.safeParse(req.body ?? {});
-    if (!body.success) return sendValidationError(reply, body.error);
+    if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     try {
       const transfer = await revokeTransfer(params.data.id, query.data.operating_company_id, body.data.reason, user.uuid);

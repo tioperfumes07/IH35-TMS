@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { listResolvedNamedDateRanges, resolveAccountingPeriodDateRange } from "./date-ranges.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const dateRangesQuerySchema = companyQuerySchema.extend({
   reference_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -21,6 +22,7 @@ export async function registerDateRangesRoutes(app: FastifyInstance) {
 
     const query = dateRangesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const base = await listResolvedNamedDateRanges({
       reference_date: query.data.reference_date,

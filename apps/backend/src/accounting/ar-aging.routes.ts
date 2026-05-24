@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { getArAgingReport } from "./ar-aging.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const arAgingQuerySchema = companyQuerySchema.extend({
   as_of_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -25,6 +26,7 @@ export async function registerArAgingRoutes(app: FastifyInstance) {
 
     const query = arAgingQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const report = await getArAgingReport({
       userId: user.uuid,

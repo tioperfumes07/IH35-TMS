@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
   createJournalEntry,
   getJournalEntryDetail,
@@ -79,6 +80,7 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const items = await listJournalEntries({
       userId: user.uuid,
       operating_company_id: query.data.operating_company_id,

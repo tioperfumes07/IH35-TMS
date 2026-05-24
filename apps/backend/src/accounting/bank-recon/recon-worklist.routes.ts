@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { type LedgerEntryKind } from "./match.service.js";
 import { acceptReconMatch, closeReconPeriod, getReconWorklist, rejectReconMatch } from "./recon-worklist.service.js";
 
@@ -55,6 +56,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
     const query = worklistQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const payload = await getReconWorklist({
       operating_company_id: query.data.operating_company_id,
       account_id: query.data.account_id,
@@ -70,6 +72,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = acceptBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const result = await acceptReconMatch({
         operating_company_id: body.data.operating_company_id,
@@ -95,6 +98,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = rejectBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     await rejectReconMatch({
       operating_company_id: body.data.operating_company_id,
       bank_transaction_id: body.data.bank_transaction_id,
@@ -111,6 +115,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = manualBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const result = await acceptReconMatch({
         operating_company_id: body.data.operating_company_id,
@@ -136,6 +141,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = closeBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     try {
       const result = await closeReconPeriod({
         operating_company_id: body.data.operating_company_id,
