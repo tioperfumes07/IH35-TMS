@@ -29,6 +29,7 @@ import { registerFactorReconciliationRoutes } from "./factor-reconciliation/rout
 import { registerMultiEntityAccountingRoutes } from "./multi-entity/routes.js";
 import { registerSalesTaxRoutes } from "./sales-tax/routes.js";
 import { registerAccountingAuditTrailRoutes } from "./audit-trail/routes.js";
+import { registerMonthCloseRoutes } from "./month-close.routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
@@ -61,4 +62,5 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerMultiEntityAccountingRoutes(app);
   await registerSalesTaxRoutes(app);
   await registerAccountingAuditTrailRoutes(app);
+  await registerMonthCloseRoutes(app);
 }

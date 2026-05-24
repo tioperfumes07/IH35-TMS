@@ -127,6 +127,7 @@ import { CoaRolesPage } from "./pages/accounting/CoaRolesPage";
 import { SalesTaxPage } from "./pages/accounting/SalesTaxPage";
 import { AccountingAuditTrailPage } from "./pages/accounting/AccountingAuditTrailPage";
 import { PostingLineagePage } from "./pages/accounting/PostingLineagePage";
+import { MonthClosePage } from "./pages/accounting/MonthClosePage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
 import { MigrationStatusPage } from "./pages/admin/MigrationStatus";
@@ -1545,6 +1546,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <SalesTaxPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/month-close"
+          element={
+            <ProtectedRoute>
+              <MonthClosePage />
             </ProtectedRoute>
           }
         />

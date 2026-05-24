@@ -31,6 +31,7 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
   { label: "Factoring", href: "/accounting/factoring" },
   { label: "Factor reconciliation", href: "/accounting/factor-reconciliation" },
   { label: "Sales tax", href: "/accounting/sales-tax" },
+  { label: "Month close", href: "/accounting/month-close" },
   { label: "Audit trail", href: "/accounting/audit-trail" },
   { label: "Posting lineage", href: "/accounting/posting-lineage" },
   { label: "Pre-settlements", href: "/accounting/pre-settlements" },
@@ -53,6 +54,7 @@ export function accountingSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/accounting/factoring/")) return "/accounting/factoring";
   if (pathname.startsWith("/accounting/factor-reconciliation")) return "/accounting/factor-reconciliation";
   if (pathname.startsWith("/accounting/sales-tax")) return "/accounting/sales-tax";
+  if (pathname.startsWith("/accounting/month-close")) return "/accounting/month-close";
   if (pathname.startsWith("/accounting/audit-trail")) return "/accounting/audit-trail";
   if (pathname.startsWith("/accounting/posting-lineage")) return "/accounting/posting-lineage";
   if (pathname.startsWith("/accounting/pre-settlements")) return "/accounting/pre-settlements";
