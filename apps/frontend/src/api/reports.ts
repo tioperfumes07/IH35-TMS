@@ -852,10 +852,12 @@ export type FuelReconciliationTruckRow = {
 };
 
 export type FuelReconciliationUnmatchedCard = {
-  id: string;
-  txn_date: string;
+  transaction_id: string;
+  transaction_date: string;
   amount_cents: number;
-  merchant: string;
+  merchant_name: string | null;
+  description?: string | null;
+  gps_match_confidence?: "high" | "medium" | "no_match" | null;
 };
 
 export type FuelReconciliationUnmatchedWo = {
@@ -891,6 +893,13 @@ export async function getFuelReconciliation(params: {
   });
   return apiRequest<FuelReconciliationResponse>(
     withCompany(`/api/v1/reports/fuel-reconciliation?${q.toString()}`, params.operating_company_id),
+  );
+}
+
+export async function rematchFuelTxnToGps(params: { operating_company_id: string; transaction_id: string }): Promise<{ ok: boolean }> {
+  return apiRequest<{ ok: boolean }>(
+    withCompany(`/api/v1/safety/fuel-gps-match/rematch/${encodeURIComponent(params.transaction_id)}`, params.operating_company_id),
+    { method: "POST" }
   );
 }
 

@@ -70,6 +70,7 @@ import { registerSafetyFinesRoutes } from "./safety/fines.routes.js";
 import { registerSafetyCompanyViolationsRoutes } from "./safety/company-violations.routes.js";
 import { registerSafetyV5Routes } from "./safety/safety-v5.routes.js";
 import { registerDriverScoringRoutes } from "./safety/driver-scoring.routes.js";
+import { registerFuelGpsMatchRoutes } from "./safety/fuel-gps-match.routes.js";
 import { registerDotInspectionEventsRoutes } from "./safety/dot-inspection-events.routes.js";
 import { registerSafetyHosViolationsRoutes } from "./routes/safety/hos-violations.js";
 import { registerSafetyDotInspectionsRoutes } from "./routes/safety/dot-inspections.js";
@@ -138,6 +139,7 @@ import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-requ
 import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js";
 import { initializeSamsaraWebhookProjectionCron } from "./cron/samsara-webhook-projection.cron.js";
 import { initializeSamsaraRemoteCountCollectorCron } from "./cron/samsara-remote-count-collector.cron.js";
+import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
@@ -416,6 +418,7 @@ async function main() {
   await registerSafetyCompanyViolationsRoutes(app);
   await registerSafetyV5Routes(app);
   await registerDriverScoringRoutes(app);
+  await registerFuelGpsMatchRoutes(app);
   await registerDotInspectionEventsRoutes(app);
   await registerSafetyHosViolationsRoutes(app);
   await registerSafetyDotInspectionsRoutes(app);
@@ -533,6 +536,13 @@ async function main() {
     app.log.info("[STARTUP] samsara-remote-count-collector-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] samsara-remote-count-collector-cron failed");
+  }
+
+  try {
+    initializeFuelGpsMatchCron(app);
+    app.log.info("[STARTUP] fuel-gps-match-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] fuel-gps-match-cron failed");
   }
 
   try {
