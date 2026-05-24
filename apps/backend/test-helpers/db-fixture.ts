@@ -22,6 +22,9 @@ export async function ensureIntegrationPrerequisites(): Promise<string> {
     await client.query("SET ROLE ih35_app");
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    // Vitest runs files in parallel forks; serialize fixture seeding to avoid
+    // concurrent upserts tripping unique constraints (e.g. google_user_id).
+    await client.query("SELECT pg_advisory_xact_lock(922337203685477000::bigint)");
 
     const companyRes = await client.query(`SELECT id FROM org.companies WHERE code = 'TRANSP' LIMIT 1`);
     const companyId = companyRes.rows[0]?.id as string | undefined;

@@ -1298,6 +1298,58 @@ export function listEscrowPostings(operatingCompanyId: string, escrowAccountId: 
     `/api/v1/accounting/escrow/accounts/${encodeURIComponent(escrowAccountId)}/postings?${query.toString()}`
   );
 }
+export type CashForecastSettings = {
+  fuel_estimate_weekly_cents: number;
+  insurance_weekly_cents: number;
+  lease_weekly_cents: number;
+  payroll_weekly_cents: number;
+};
+
+export type CashForecastWeek = {
+  week_start: string;
+  expected_inflows: { invoices: number; factoring: number; other: number };
+  expected_outflows: { bills: number; payroll: number; fuel_estimate: number; factoring_fee: number };
+  projected_balance: number;
+};
+
+export type CashForecastResponse = {
+  as_of_date: string;
+  opening_balance_cents: number;
+  settings: CashForecastSettings;
+  weeks: CashForecastWeek[];
+};
+
+export function getCashForecast(
+  operatingCompanyId: string,
+  params: {
+    weeks?: number;
+    as_of_date?: string;
+  } = {}
+) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    weeks: String(params.weeks ?? 13),
+  });
+  if (params.as_of_date) query.set("as_of_date", params.as_of_date);
+  return apiRequest<CashForecastResponse>(`/api/v1/accounting/cash-forecast?${query.toString()}`);
+}
+
+export function getCashForecastSettings(operatingCompanyId: string) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+  });
+  return apiRequest<{ settings: CashForecastSettings }>(`/api/v1/accounting/cash-forecast/settings?${query.toString()}`);
+}
+
+export function upsertCashForecastSettings(operatingCompanyId: string, settings: CashForecastSettings) {
+  return apiRequest<{ settings: CashForecastSettings }>("/api/v1/accounting/cash-forecast/settings", {
+    method: "PUT",
+    body: {
+      operating_company_id: operatingCompanyId,
+      ...settings,
+    },
+  });
+}
 
 export type ComparisonReportType = "pl" | "bs";
 export type ComparisonReportBasis = "accrual" | "cash";

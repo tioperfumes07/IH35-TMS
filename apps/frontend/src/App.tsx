@@ -129,6 +129,7 @@ import { AccountingAuditTrailPage } from "./pages/accounting/AccountingAuditTrai
 import { PostingLineagePage } from "./pages/accounting/PostingLineagePage";
 import { MonthClosePage } from "./pages/accounting/MonthClosePage";
 import { EscrowPage } from "./pages/accounting/EscrowPage";
+import { CashForecastPage } from "./pages/accounting/CashForecastPage";
 import { PeriodComparisonPage } from "./pages/accounting/PeriodComparisonPage";
 import { ForensicReviewPage } from "./pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "./pages/admin/ActivityLogPage";
@@ -1580,6 +1581,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <EscrowPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/cash-forecast"
+          element={
+            <ProtectedRoute>
+              <CashForecastPage />
             </ProtectedRoute>
           }
         />

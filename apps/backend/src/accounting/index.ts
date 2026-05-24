@@ -31,6 +31,7 @@ import { registerSalesTaxRoutes } from "./sales-tax/routes.js";
 import { registerAccountingAuditTrailRoutes } from "./audit-trail/routes.js";
 import { registerMonthCloseRoutes } from "./month-close.routes.js";
 import { registerEscrowRoutes } from "./escrow/routes.js";
+import { registerCashForecastRoutes } from "./cash-forecast.routes.js";
 import { registerComparisonReportRoutes } from "./comparison-report.routes.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
@@ -66,5 +67,6 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerAccountingAuditTrailRoutes(app);
   await registerMonthCloseRoutes(app);
   await registerEscrowRoutes(app);
+  await registerCashForecastRoutes(app);
   await registerComparisonReportRoutes(app);
 }
