@@ -30,7 +30,7 @@ export async function listActiveOperatingCompanyIds(client: DbClient): Promise<s
 export async function runCollectionsSyncCronTick(deps?: {
   withLuciaBypassImpl?: typeof withLuciaBypass;
   syncCollectionTasksImpl?: typeof syncCollectionTasks;
-  assertTenantContextImpl?: typeof assertTenantContext;
+  assertTenantContextImpl?: typeof defaultAssertTenantContext;
 }) {
   const withLuciaBypassImpl = deps?.withLuciaBypassImpl ?? withLuciaBypass;
   const syncCollectionTasksImpl = deps?.syncCollectionTasksImpl ?? syncCollectionTasks;
