@@ -117,6 +117,7 @@
     "verify:responsive-layout": "node scripts/verify-responsive-layout.mjs",
     "verify:user-password-auth": "node scripts/verify-user-password-auth.mjs",
     "verify:accounting-route-map": "node scripts/verify-accounting-route-map.mjs",
+    "verify:accounting-autoload-coverage": "node scripts/verify-accounting-autoload-coverage.mjs",
     "verify:accounting-backbone-schema": "node scripts/verify-accounting-backbone-schema.mjs",
     "verify:posting-engine-mvp-contract": "node scripts/verify-posting-engine-mvp-contract.mjs",
     "verify:trial-balance-contract": "node scripts/verify-trial-balance-contract.mjs",

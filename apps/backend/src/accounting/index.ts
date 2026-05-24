@@ -10,6 +10,8 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await app.register(autoload, {
     dir: __dirname,
     matchFilter: /\.routes\.(ts|js)$/,
+    // Prevent autoload from treating this module as a folder index plugin.
+    indexPattern: /^autoload-index-disabled$/,
     ignorePattern: /\.test\./,
   });
 }
