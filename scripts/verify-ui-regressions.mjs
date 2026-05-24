@@ -51,7 +51,11 @@ try {
   assertIncludes(formPageHeader, "navigate(-1)", "Form PageHeader back navigation missing");
 
   const dispatch = read("apps/frontend/src/pages/Dispatch.tsx");
-  const accountingSubNav = read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx");
+  const accountingSubNav = `${read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx")}\n${
+    fs.existsSync("apps/frontend/src/pages/accounting/subnav-manifest.ts")
+      ? read("apps/frontend/src/pages/accounting/subnav-manifest.ts")
+      : ""
+  }`;
   const appRoutes = `${read("apps/frontend/src/App.tsx")}\n${
     fs.existsSync("apps/frontend/src/routes/manifest.tsx") ? read("apps/frontend/src/routes/manifest.tsx") : ""
   }`;
