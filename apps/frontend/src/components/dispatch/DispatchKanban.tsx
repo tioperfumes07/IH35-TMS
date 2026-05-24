@@ -9,6 +9,7 @@ import { KanbanColumn } from "./KanbanColumn";
 
 type Props = {
   loads: DispatchLoadRow[];
+  activeGeofenceBreachVehicleIds?: Set<string>;
   loading: boolean;
   onLoadClick: (loadId: string) => void;
   onStatusDrop: (loadId: string, nextStatus: LoadStatus) => Promise<void>;
@@ -25,7 +26,7 @@ function groupLoadsByColumn(loads: DispatchLoadRow[]) {
   return grouped;
 }
 
-export function DispatchKanban({ loads, loading, onLoadClick, onStatusDrop, listError }: Props) {
+export function DispatchKanban({ loads, activeGeofenceBreachVehicleIds, loading, onLoadClick, onStatusDrop, listError }: Props) {
   const [optimisticLoads, setOptimisticLoads] = useState<DispatchLoadRow[]>(loads);
   const { pushToast } = useToast();
 
@@ -84,6 +85,7 @@ export function DispatchKanban({ loads, loading, onLoadClick, onStatusDrop, list
             columnKey={group.key}
             title={group.title}
             loads={grouped.get(group.key) ?? []}
+            activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
             collapsed={Boolean(group.collapsedByDefault)}
             onLoadClick={onLoadClick}
           />

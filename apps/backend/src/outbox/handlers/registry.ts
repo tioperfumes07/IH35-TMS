@@ -76,6 +76,19 @@ class AuditPersistHandler implements OutboxEventHandler {
   }
 }
 
+class GeofenceBreachDetectedHandler implements OutboxEventHandler {
+  eventType = "geofence_breach_detected" as const;
+
+  canHandle() {
+    return true;
+  }
+
+  async deliver(payload: OutboxPayload, ctx: OutboxHandlerContext) {
+    ctx.log("outbox geofence_breach_detected delivered", { eventId: ctx.eventId, payload });
+    return { message: "geofence_breach_detected_logged" };
+  }
+}
+
 export function buildOutboxHandlerRegistry() {
   const handlers: OutboxEventHandler[] = [
     new TwilioSmsHandler(),
@@ -88,6 +101,7 @@ export function buildOutboxHandlerRegistry() {
     new TmsAccountPushHandler(),
     new TmsInvoicePushHandler(),
     new TmsBillPushHandler(),
+    new GeofenceBreachDetectedHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),
     ...buildTrailEventHandlers(),

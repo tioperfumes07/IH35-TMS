@@ -70,6 +70,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     id: "compliance-monitoring",
     label: "Compliance Docs & Monitoring",
     tabs: [
+      { id: "geofence-alerts", label: "Geofence Alerts", route: "/safety/geofence-alerts", badge: "new" },
       { id: "insurance", label: "Insurance", route: "/safety/insurance", badge: null },
       { id: "permits", label: "Permits", route: "/safety/permits", badge: null },
       { id: "integrity-reports", label: "Integrity Reports", route: "/safety/integrity-reports", badge: "new" },
@@ -111,6 +112,7 @@ export const TABS = [
   { id: "external-fines" },
   { id: "complaints" },
   { id: "escrow-record" },
+  { id: "geofence-alerts" },
   { id: "insurance" },
   { id: "permits" },
   { id: "integrity-reports" },

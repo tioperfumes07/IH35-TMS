@@ -6,11 +6,12 @@ type Props = {
   columnKey: string;
   title: string;
   loads: DispatchLoadRow[];
+  activeGeofenceBreachVehicleIds?: Set<string>;
   collapsed?: boolean;
   onLoadClick: (loadId: string) => void;
 };
 
-export function KanbanColumn({ columnKey, title, loads, collapsed = false, onLoadClick }: Props) {
+export function KanbanColumn({ columnKey, title, loads, activeGeofenceBreachVehicleIds, collapsed = false, onLoadClick }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${columnKey}` });
 
   if (collapsed) {
@@ -36,7 +37,12 @@ export function KanbanColumn({ columnKey, title, loads, collapsed = false, onLoa
       >
         {loads.length === 0 ? <div className="rounded border border-dashed border-gray-300 p-3 text-xs text-gray-500">(empty)</div> : null}
         {loads.map((load) => (
-          <LoadCard key={load.id} load={load} onClick={onLoadClick} />
+          <LoadCard
+            key={load.id}
+            load={load}
+            hasActiveGeofenceBreach={Boolean(load.assigned_unit_id && activeGeofenceBreachVehicleIds?.has(load.assigned_unit_id))}
+            onClick={onLoadClick}
+          />
         ))}
       </div>
     </section>
