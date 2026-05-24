@@ -1349,4 +1349,42 @@ export function upsertCashForecastSettings(operatingCompanyId: string, settings:
       ...settings,
     },
   });
+
+export type ComparisonReportType = "pl" | "bs";
+export type ComparisonReportBasis = "accrual" | "cash";
+
+export type ComparisonReportRow = {
+  row_key: string;
+  account: string;
+  account_code: string | null;
+  account_id: string | null;
+  account_type: string | null;
+  period_1_amount: number;
+  period_2_amount: number;
+  variance_cents: number;
+  variance_pct: number | null;
+};
+
+export type ComparisonReportResponse = {
+  type: ComparisonReportType;
+  basis: ComparisonReportBasis;
+  periods: [string, string];
+  rows: ComparisonReportRow[];
+};
+
+export function getComparisonReport(
+  operatingCompanyId: string,
+  params: {
+    type: ComparisonReportType;
+    periods: string;
+    basis?: ComparisonReportBasis;
+  }
+) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    type: params.type,
+    periods: params.periods,
+  });
+  if (params.basis) query.set("basis", params.basis);
+  return apiRequest<ComparisonReportResponse>(`/api/v1/accounting/comparison-report?${query.toString()}`);
 }
