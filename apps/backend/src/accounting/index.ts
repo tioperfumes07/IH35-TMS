@@ -33,6 +33,8 @@ import { registerMonthCloseRoutes } from "./month-close.routes.js";
 import { registerEscrowRoutes } from "./escrow/routes.js";
 import { registerCashForecastRoutes } from "./cash-forecast.routes.js";
 import { registerComparisonReportRoutes } from "./comparison-report.routes.js";
+import { registerCollectionsRoutes } from "./collections.routes.js";
+import { initializeCollectionsSyncCron } from "../cron/collections-sync.cron.js";
 
 export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerInvoiceRoutes(app);
@@ -69,4 +71,9 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
   await registerEscrowRoutes(app);
   await registerCashForecastRoutes(app);
   await registerComparisonReportRoutes(app);
+  await registerCollectionsRoutes(app);
+}
+
+export function initializeAccountingCrons(app: FastifyInstance) {
+  initializeCollectionsSyncCron(app);
 }

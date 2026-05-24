@@ -86,6 +86,8 @@ const EXTRA_GUARDS = [
   "scripts/verify-fuel-stop-planner-uses-cap-hos.mjs",
   "scripts/verify-month-close-requires-checklist-complete.mjs",
   "scripts/verify-cash-forecast-tenant-scope.mjs",
+  "scripts/verify-collections-readonly.mjs",
+  "scripts/verify-collections-tenant-scope.mjs",
   "scripts/verify-comparison-respects-basis.mjs",
   "scripts/verify-auto-geofence-tenant-scope.mjs",
   "scripts/verify-auto-geofence-no-blocking-call.mjs",
