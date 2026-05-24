@@ -18,7 +18,9 @@ function assertMatches(source, regex, message) {
 }
 
 try {
-  const appSource = read("apps/frontend/src/App.tsx");
+  const appSource = `${read("apps/frontend/src/App.tsx")}\n${
+    fs.existsSync("apps/frontend/src/routes/manifest.tsx") ? read("apps/frontend/src/routes/manifest.tsx") : ""
+  }`;
   const accountingSubNav = read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx");
 
   const parityMap = [

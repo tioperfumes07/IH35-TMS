@@ -20,7 +20,7 @@ try {
   const apAgingPath = "apps/frontend/src/pages/reports/APAgingPage.tsx";
   const packagePath = "package.json";
 
-  const app = read(appPath);
+  const app = `${read(appPath)}\n${fs.existsSync("apps/frontend/src/routes/manifest.tsx") ? read("apps/frontend/src/routes/manifest.tsx") : ""}`;
   const api = read(apiPath);
   const home = read(homePath);
   const subNav = read(subNavPath);

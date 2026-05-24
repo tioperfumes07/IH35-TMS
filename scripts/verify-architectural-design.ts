@@ -19,6 +19,7 @@ import * as fs from "node:fs";
 import { execSync } from "node:child_process";
 
 const APP_PATH = "apps/frontend/src/App.tsx";
+const ROUTES_MANIFEST_PATH = "apps/frontend/src/routes/manifest.tsx";
 const SIDEBAR_PATH = "apps/frontend/src/components/layout/sidebar-config.ts";
 const LOCK_FILE_PATH = "docs/locked-ui-surface.json";
 const EXTRA_GUARDS = [
@@ -307,7 +308,9 @@ function extractArrayBlock(content: string, startToken: string): string {
 }
 
 function extractRoutesFromApp(): string[] {
-  const content = readRequired(APP_PATH);
+  const appContent = readRequired(APP_PATH);
+  const manifestContent = fs.existsSync(ROUTES_MANIFEST_PATH) ? readRequired(ROUTES_MANIFEST_PATH) : "";
+  const content = `${appContent}\n${manifestContent}`;
   const out: string[] = [];
 
   const directRouteRegex = /<Route\b[^>]*\bpath=(?:"([^"]+)"|'([^']+)')/g;
