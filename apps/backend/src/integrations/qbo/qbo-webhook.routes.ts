@@ -9,8 +9,41 @@ type EventNotification = {
   };
 };
 
+type VerifierConfig = {
+  verifierToken: string;
+  allowInsecureWithoutVerifier: boolean;
+};
+
+function resolveVerifierConfig(app: FastifyInstance): VerifierConfig {
+  const verifierToken = (process.env.QBO_WEBHOOK_VERIFIER_TOKEN ?? "").trim();
+  const allowInsecureWithoutVerifier = (process.env.QBO_WEBHOOK_ALLOW_INSECURE_DEV ?? "").trim() === "true";
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (!verifierToken) {
+    if (isProduction) {
+      app.log.error(
+        "QBO webhook verifier token missing: set QBO_WEBHOOK_VERIFIER_TOKEN in production before registering webhook route"
+      );
+      throw new Error("qbo_webhook_verifier_token_required_in_production");
+    }
+    if (!allowInsecureWithoutVerifier) {
+      app.log.error(
+        "QBO webhook verifier token missing: refusing to register webhook route (set QBO_WEBHOOK_ALLOW_INSECURE_DEV=true to opt in for local/dev only)"
+      );
+      throw new Error("qbo_webhook_verifier_token_required_unless_dev_opt_in");
+    }
+    app.log.warn(
+      "QBO webhook verifier token missing: insecure dev/test opt-in enabled; inbound webhooks are accepted without signature verification"
+    );
+  }
+
+  return { verifierToken, allowInsecureWithoutVerifier };
+}
+
 /** Scoped webhook routes — JSON parsed as Buffer for HMAC verification (matches Plaid/Samsara pattern). */
 export async function registerQboWebhookRoutes(app: FastifyInstance) {
+  const verifierConfig = resolveVerifierConfig(app);
+
   await app.register(async (scoped) => {
     scoped.removeContentTypeParser("application/json");
     scoped.addContentTypeParser("application/json", { parseAs: "buffer" }, (_req, body, done) => {
@@ -18,7 +51,6 @@ export async function registerQboWebhookRoutes(app: FastifyInstance) {
     });
 
     scoped.post("/api/v1/integrations/qbo/webhook", async (req, reply) => {
-      const verifier = (process.env.QBO_WEBHOOK_VERIFIER ?? "").trim();
       const rawBody = req.body as Buffer;
       if (!Buffer.isBuffer(rawBody)) {
         return reply.code(400).send({ error: "invalid_body" });
@@ -27,8 +59,11 @@ export async function registerQboWebhookRoutes(app: FastifyInstance) {
       const signatureHeaderRaw = req.headers["intuit-signature"] ?? req.headers["Intuit-Signature"];
       const signatureHeader = Array.isArray(signatureHeaderRaw) ? signatureHeaderRaw[0] : signatureHeaderRaw;
 
-      const verified = verifier ? verifyIntuitWebhookSignature(rawBody, verifier, signatureHeader) : false;
-      if (verifier && !verified) {
+      const shouldEnforceSignature = Boolean(verifierConfig.verifierToken);
+      const verified = shouldEnforceSignature
+        ? verifyIntuitWebhookSignature(rawBody, verifierConfig.verifierToken, signatureHeader)
+        : false;
+      if (shouldEnforceSignature && !verified) {
         return reply.code(401).send({ error: "invalid_signature" });
       }
 
@@ -95,7 +130,7 @@ export async function registerQboWebhookRoutes(app: FastifyInstance) {
               [
                 operatingCompanyId,
                 realmId,
-                verifier ? verified : false,
+                shouldEnforceSignature ? verified : false,
                 ent.operation ?? null,
                 entityType,
                 entityId,
