@@ -35,6 +35,7 @@ export const ACCOUNTING_SUB_NAV_ITEMS = [
   { label: "Audit trail", href: "/accounting/audit-trail" },
   { label: "Posting lineage", href: "/accounting/posting-lineage" },
   { label: "Escrow", href: "/accounting/escrow" },
+  { label: "Cash forecast", href: "/accounting/cash-forecast" },
   { label: "Pre-settlements", href: "/accounting/pre-settlements" },
   { label: "Vendor balances", href: "/accounting/vendor-balances" },
   { label: "Journal entries", href: "/accounting/journal-entries" },
@@ -59,6 +60,7 @@ export function accountingSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/accounting/audit-trail")) return "/accounting/audit-trail";
   if (pathname.startsWith("/accounting/posting-lineage")) return "/accounting/posting-lineage";
   if (pathname.startsWith("/accounting/escrow")) return "/accounting/escrow";
+  if (pathname.startsWith("/accounting/cash-forecast")) return "/accounting/cash-forecast";
   if (pathname.startsWith("/accounting/pre-settlements")) return "/accounting/pre-settlements";
   if (pathname.startsWith("/accounting/settings/expense-category-map")) return "/accounting/settings/expense-category-map";
   if (pathname.startsWith("/accounting/settings/coa-roles")) return "/accounting/settings/coa-roles";
