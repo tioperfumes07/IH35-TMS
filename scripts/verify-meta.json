@@ -1,0 +1,10 @@
+{
+  "_comment": "DB-gated verify:* scripts: verify:db:start, verify:db:stop, verify:db:reset, verify:pre-commit, verify:migration-application-consistency",
+  "db_gated_verify_scripts": [
+    "verify:db:start",
+    "verify:db:stop",
+    "verify:db:reset",
+    "verify:pre-commit",
+    "verify:migration-application-consistency"
+  ]
+}

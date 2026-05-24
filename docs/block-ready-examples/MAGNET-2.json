@@ -1,0 +1,17 @@
+{
+  "block_id": "MAGNET-2",
+  "phase": "Refactor",
+  "task": "MAGNET-2",
+  "allowed_files": [
+    "scripts/verify-architectural-design.ts",
+    "scripts/verify-guards/**",
+    "scripts/verify-steps/**",
+    "package.json"
+  ],
+  "extra_gates": [
+    "verify:arch-design"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}

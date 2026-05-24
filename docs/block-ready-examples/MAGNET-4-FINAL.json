@@ -1,0 +1,21 @@
+{
+  "block_id": "MAGNET-4-FINAL",
+  "phase": "Refactor",
+  "task": "MAGNET-4",
+  "allowed_files": [
+    "apps/backend/src/accounting/index.ts",
+    "scripts/verify-accounting-autoload-coverage.mjs",
+    "scripts/verify-steps/15-verify-accounting-autoload-coverage.mjs",
+    "scripts/__tests__/verify-accounting-autoload-coverage.test.mjs",
+    "scripts/__tests__/fixtures/accounting-autoload-coverage/**",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "extra_gates": [
+    "verify:accounting-route-map",
+    "verify:accounting-autoload-coverage"
+  ],
+  "runtime_path": "both",
+  "db_required": true,
+  "guard_required": true
+}
