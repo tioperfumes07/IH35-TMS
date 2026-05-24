@@ -1,8 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 import { CashBasisSnapshotMissingError, resolveCashBasisRead } from "../../cash-basis/read-policy.service.js";
 import { writePeriodCashBasisSnapshotAtClose } from "../../cash-basis/period-close-snapshot.service.js";
+
+const testDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(testDir, "../../../../../..");
 
 describe("period close cash snapshot lock policy", () => {
   it("close-time writer inserts cash snapshot payload", async () => {
@@ -124,7 +128,7 @@ describe("period close cash snapshot lock policy", () => {
   });
 
   it("migration defines trigger blocking UPDATE/DELETE post-close", () => {
-    const migrationPath = path.join(process.cwd(), "db/migrations/0218_period_cash_basis_snapshot_lock_trigger.sql");
+    const migrationPath = path.join(repoRoot, "db/migrations/0218_period_cash_basis_snapshot_lock_trigger.sql");
     const sql = fs.readFileSync(migrationPath, "utf8");
     expect(sql).toMatch(/BEFORE UPDATE OR DELETE ON accounting\.period_cash_basis_snapshot/);
     expect(sql).toMatch(/IH35_CASH_BASIS_SNAPSHOT_LOCKED/);

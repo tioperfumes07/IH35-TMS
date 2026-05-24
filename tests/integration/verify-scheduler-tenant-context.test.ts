@@ -2,9 +2,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
-const scriptPath = path.resolve(process.cwd(), "scripts/verify-scheduler-tenant-context.mjs");
+const testDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(testDir, "../..");
+const scriptPath = path.join(repoRoot, "scripts/verify-scheduler-tenant-context.mjs");
 const tempDirs: string[] = [];
 
 function writeFixture(root: string, relPath: string, content: string) {
