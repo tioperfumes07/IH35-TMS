@@ -4,6 +4,7 @@ export { SafetyMeetingsTab } from "./SafetyMeetingsTab";
 export { HoursOfServiceTab } from "./HoursOfServiceTab";
 export { HOSViolationsTab } from "./HOSViolationsTab";
 export { IDVRTab } from "./IDVRTab";
+export { GeofenceBreachesTab } from "./GeofenceBreachesTab";
 export { DOTInspectionsTab } from "./DOTInspectionsTab";
 export { DriverScoringTab } from "./DriverScoringTab";
 export { CSAScoreTab } from "./CSAScoreTab";

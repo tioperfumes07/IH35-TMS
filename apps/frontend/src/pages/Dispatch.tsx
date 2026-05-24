@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listCustomers, listDrivers } from "../api/mdata";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
 import { listSettlements } from "../api/driverFinance";
+import { listGeofenceBreaches } from "../api/safetyGeofence";
 import { listLatestPositions } from "../api/telematics";
 import { getTelematicsHeatmap } from "../api/telematicsApi";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -146,6 +147,16 @@ export function DispatchPage() {
       }),
     enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board" && showPositionHeatmap,
   });
+  const geofenceBreachesQuery = useQuery({
+    queryKey: ["dispatch", "geofence-breaches", defaultCompanyIds[0] ?? ""],
+    queryFn: () =>
+      listGeofenceBreaches({
+        operating_company_id: defaultCompanyIds[0] ?? "",
+        filter: "active",
+      }),
+    enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board",
+    refetchInterval: 30_000,
+  });
 
   const statusMutation = useUpdateLoadStatus();
   const loadId = searchParams.get("load_id");
@@ -171,6 +182,13 @@ export function DispatchPage() {
   );
 
   const loads = loadsQuery.data?.loads ?? [];
+  const activeGeofenceBreachVehicleIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const event of geofenceBreachesQuery.data?.events ?? []) {
+      if (!event.acknowledged_at) ids.add(event.vehicle_id);
+    }
+    return ids;
+  }, [geofenceBreachesQuery.data?.events]);
   const totalCount = loadsQuery.data?.total_count ?? 0;
   const kpis = useMemo(() => {
     const activeLoads = loads.filter((load) =>
@@ -400,6 +418,7 @@ export function DispatchPage() {
         view === "list" ? (
           <DispatchBoard
             loads={loads}
+            activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
             totalCount={totalCount}
             loading={loadsQuery.isLoading}
             listError={dataTableErrorState(loadsQuery.error, () => void loadsQuery.refetch())}
@@ -428,6 +447,7 @@ export function DispatchPage() {
         ) : (
           <DispatchKanban
             loads={loads}
+            activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
             loading={loadsQuery.isLoading}
             listError={dataTableErrorState(loadsQuery.error, () => void loadsQuery.refetch())}
             onLoadClick={(id) => {

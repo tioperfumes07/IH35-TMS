@@ -41,6 +41,7 @@ import {
   DrugAlcoholTab,
   EscrowRecordTab,
   ExternalFinesTab,
+  GeofenceBreachesTab,
   HOSViolationsTab,
   HoursOfServiceTab,
   IDVRTab,
@@ -532,6 +533,7 @@ export default function App() {
           <Route path="external-fines" element={<ExternalFinesTab />} />
           <Route path="complaints" element={<ComplaintsTab />} />
           <Route path="escrow-record" element={<EscrowRecordTab />} />
+          <Route path="geofence-alerts" element={<GeofenceBreachesTab />} />
           <Route path="insurance" element={<InsuranceTab />} />
           <Route path="permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />

@@ -4,6 +4,7 @@ import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, canDragLoad, formatMoneyCents, toRout
 
 type Props = {
   load: DispatchLoadRow;
+  hasActiveGeofenceBreach?: boolean;
   onClick: (id: string) => void;
 };
 
@@ -19,7 +20,7 @@ function progressLabel(progress: DispatchLoadRow["progress_status"]) {
   return progress.replace("_", " ");
 }
 
-export function LoadCard({ load, onClick }: Props) {
+export function LoadCard({ load, hasActiveGeofenceBreach = false, onClick }: Props) {
   const draggableEnabled = canDragLoad(load.status);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: load.id,
@@ -52,17 +53,24 @@ export function LoadCard({ load, onClick }: Props) {
       <div className="mt-1 text-sm text-gray-700">{load.customer_name ?? "-"}</div>
       <div className="mt-1 flex items-center justify-between gap-2 text-xs text-gray-500">
         <span>{toRouteSummary(load.first_pickup_city, load.first_delivery_city)}</span>
-        <button
-          type="button"
-          title={load.geofence_ready ? "Geofence ready (auto or manual)." : "Geofence pending."}
-          onClick={(event) => {
-            event.stopPropagation();
-            onClick(load.id);
-          }}
-          className={`rounded px-1 py-0.5 ${load.geofence_ready ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-600"}`}
-        >
-          🗺️
-        </button>
+        <div className="flex items-center gap-1">
+          {hasActiveGeofenceBreach ? (
+            <span className="rounded bg-red-100 px-1 py-0.5 text-[10px] font-semibold text-red-700" title="Active geofence breach alert">
+              GEOFENCE ALERT
+            </span>
+          ) : null}
+          <button
+            type="button"
+            title={load.geofence_ready ? "Geofence ready (auto or manual)." : "Geofence pending."}
+            onClick={(event) => {
+              event.stopPropagation();
+              onClick(load.id);
+            }}
+            className={`rounded px-1 py-0.5 ${load.geofence_ready ? "bg-emerald-100 text-emerald-800" : "bg-gray-100 text-gray-600"}`}
+          >
+            🗺️
+          </button>
+        </div>
       </div>
       <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
         <span>{load.assigned_primary_driver_name ?? "Unassigned"}</span>
