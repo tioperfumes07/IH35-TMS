@@ -1589,6 +1589,10 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CashForecastPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/period-comparison"
           element={
             <ProtectedRoute>

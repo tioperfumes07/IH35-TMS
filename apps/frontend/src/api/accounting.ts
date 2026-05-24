@@ -1349,6 +1349,7 @@ export function upsertCashForecastSettings(operatingCompanyId: string, settings:
       ...settings,
     },
   });
+}
 
 export type ComparisonReportType = "pl" | "bs";
 export type ComparisonReportBasis = "accrual" | "cash";
