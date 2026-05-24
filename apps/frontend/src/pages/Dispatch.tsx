@@ -5,6 +5,7 @@ import { listCustomers, listDrivers } from "../api/mdata";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
 import { listSettlements } from "../api/driverFinance";
 import { listLatestPositions } from "../api/telematics";
+import { getTelematicsHeatmap } from "../api/telematicsApi";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -77,6 +78,9 @@ export function DispatchPage() {
   const { pushToast } = useToast();
   const [newLoadOpen, setNewLoadOpen] = useState(false);
   const [subTab, setSubTab] = useState<DispatchSubTabId>("load_board");
+  const [showPositionHeatmap, setShowPositionHeatmap] = useState(false);
+  const [heatmapFrom, setHeatmapFrom] = useState(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+  const [heatmapTo, setHeatmapTo] = useState(() => new Date().toISOString());
 
   const view = (searchParams.get("view") as ViewMode) || "kanban";
   const sort = searchParams.get("sort") ?? "created_at:desc";
@@ -131,6 +135,16 @@ export function DispatchPage() {
     queryFn: () => listLatestPositions(defaultCompanyIds[0] ?? ""),
     enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board",
     refetchInterval: 30_000,
+  });
+  const heatmapQuery = useQuery({
+    queryKey: ["dispatch", "heatmap", defaultCompanyIds[0] ?? "", heatmapFrom, heatmapTo],
+    queryFn: () =>
+      getTelematicsHeatmap({
+        operating_company_id: defaultCompanyIds[0] ?? "",
+        from: heatmapFrom,
+        to: heatmapTo,
+      }),
+    enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board" && showPositionHeatmap,
   });
 
   const statusMutation = useUpdateLoadStatus();
@@ -297,6 +311,66 @@ export function DispatchPage() {
           </DataPanelRow>
         </DataPanel>
       </div>
+
+      <DataPanel title="Dispatch map controls">
+        <DataPanelRow>
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={showPositionHeatmap}
+              onChange={(event) => setShowPositionHeatmap(event.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            Show position heatmap
+          </label>
+          <span className="text-xs text-gray-500">bucket size 0.001 deg</span>
+        </DataPanelRow>
+        {showPositionHeatmap ? (
+          <div className="space-y-2 px-3 pb-3">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <label className="text-xs text-gray-600">
+                From
+                <input
+                  type="datetime-local"
+                  value={heatmapFrom.slice(0, 16)}
+                  onChange={(event) => setHeatmapFrom(new Date(event.target.value).toISOString())}
+                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                />
+              </label>
+              <label className="text-xs text-gray-600">
+                To
+                <input
+                  type="datetime-local"
+                  value={heatmapTo.slice(0, 16)}
+                  onChange={(event) => setHeatmapTo(new Date(event.target.value).toISOString())}
+                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                />
+              </label>
+            </div>
+            {heatmapQuery.isLoading ? (
+              <p className="text-xs text-gray-500">Loading heatmap buckets...</p>
+            ) : heatmapQuery.isError ? (
+              <p className="text-xs text-red-700">Unable to load position heatmap buckets.</p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500">
+                  {heatmapQuery.data?.rows.length ?? 0} bucket cells in selected range. Top buckets shown below.
+                </p>
+                <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
+                  {(heatmapQuery.data?.rows ?? []).slice(0, 12).map((bucket) => (
+                    <div key={`${bucket.lat_bucket}:${bucket.lng_bucket}`} className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs">
+                      <span className="font-medium text-gray-800">
+                        {bucket.lat_bucket.toFixed(3)}, {bucket.lng_bucket.toFixed(3)}
+                      </span>
+                      <span className="ml-2 text-gray-600">{bucket.hit_count} hits</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </DataPanel>
 
       <FilterBar
         value={filters}
