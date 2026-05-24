@@ -396,13 +396,15 @@ function runCheckC7(manifest) {
   const runtime = manifest.runtime_path;
   const extra = manifest.extra_gates;
   if (runtime === "dist" || runtime === "both") {
-    if (!fs.existsSync(path.resolve(ROOT, "dist"))) {
-      fail("C7", "runtime_path requires dist but dist/ does not exist");
+    const distCandidates = [path.resolve(ROOT, "apps/backend/dist"), path.resolve(ROOT, "dist")];
+    const distPath = distCandidates.find((candidate) => fs.existsSync(candidate));
+    if (!distPath) {
+      fail("C7", "runtime_path requires dist but neither apps/backend/dist nor dist/ exists");
     }
     const srcNewest = getNewestMtimeMs(path.resolve(ROOT, "apps/backend/src"));
-    const distNewest = getNewestMtimeMs(path.resolve(ROOT, "dist"));
+    const distNewest = getNewestMtimeMs(distPath);
     if (distNewest < srcNewest) {
-      fail("C7", "dist/ is older than apps/backend/src; run build first");
+      fail("C7", `${path.relative(ROOT, distPath)} is older than apps/backend/src; run build first`);
     }
     const distGates = extra.filter((name) => /dist|smoke|autoload-coverage/i.test(name));
     for (const gate of distGates) {
