@@ -10,8 +10,6 @@ import { registerMaintenanceCostPerUnitRoutes } from "./maintenance-cost-per-uni
 import { registerFuelReconciliationRoutes } from "./fuel-reconciliation.routes.js";
 import { registerFuelSavingsRoutes } from "./fuel-savings.routes.js";
 import { registerCsaFleetScoreRoutes } from "./csa-fleet-score.routes.js";
-import { registerApAgingRoutes } from "./ap-aging.routes.js";
-import { registerArAgingRoutes } from "./ar-aging.routes.js";
 import { registerDetentionClaimsRoutes } from "./detention-claims.routes.js";
 import { registerIftaStatusRoutes } from "./ifta-status.routes.js";
 import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.routes.js";
@@ -29,8 +27,6 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerFuelReconciliationRoutes(app);
   await registerFuelSavingsRoutes(app);
   await registerCsaFleetScoreRoutes(app);
-  await registerArAgingRoutes(app);
-  await registerApAgingRoutes(app);
   await registerDetentionClaimsRoutes(app);
   await registerIftaStatusRoutes(app);
   await registerGeofenceDwellRoutes(app);
