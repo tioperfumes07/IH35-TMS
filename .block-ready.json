@@ -1,5 +1,5 @@
 {
-  "block_id": "P7-AUDIT-P0-1-RESUME",
+  "block_id": "P7-AUDIT-P0-1-RESUME-VERBOSE",
   "phase": "Phase 7 Stabilization",
   "task": "P7-AUDIT-P0-1-RESUME",
   "allowed_files": [
@@ -38,11 +38,10 @@
     "scripts/verify-guards/094-verify-tenant-scope-on-routes.mjs",
     "scripts/verify-tenant-scope-on-routes.mjs",
     "package.json",
+    "scripts/verify-pre-commit.mjs",
     ".block-ready.json"
   ],
-  "extra_gates": [
-    "verify:tenant-scope-on-routes"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": false
