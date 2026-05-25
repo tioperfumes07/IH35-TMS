@@ -103,6 +103,11 @@ import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js"
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
 import { registerMaintenanceDriverReportsRoutes } from "./maintenance/driver-reports.routes.js";
 import { registerWoTimeEntriesRoutes } from "./maintenance/time-entries.routes.js";
+import { registerMaintenancePartsInventoryRoutes } from "./maintenance/parts-inventory.routes.js";
+import { registerMaintenancePartsInvoiceLinksRoutes } from "./maintenance/parts-invoice-links.routes.js";
+import { registerMaintenanceSevereRepairEstimateRoutes } from "./maintenance/severe-repair-estimate.routes.js";
+import { registerMaintenanceIntegrityRoutes } from "./maintenance/integrity.routes.js";
+import { registerWoCostContextRoutes } from "./maintenance/wo-cost-context.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
@@ -463,6 +468,11 @@ async function main() {
   await registerMaintenancePmAlertsRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);
+  await registerMaintenancePartsInventoryRoutes(app);
+  await registerMaintenancePartsInvoiceLinksRoutes(app);
+  await registerMaintenanceSevereRepairEstimateRoutes(app);
+  await registerMaintenanceIntegrityRoutes(app);
+  await registerWoCostContextRoutes(app);
   await registerForm425CRoutes(app);
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);

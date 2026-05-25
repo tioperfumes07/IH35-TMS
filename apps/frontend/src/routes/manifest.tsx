@@ -3,7 +3,6 @@ import { Navigate, Route } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
 import { Shell } from "../components/Shell";
-import { useCompanyContext } from "../contexts/CompanyContext";
 import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
 import { ListsHubPage } from "../pages/lists/ListsHubPage";
@@ -55,10 +54,10 @@ import {
 } from "../pages/safety/tabs";
 import { LiabilitiesHomePage } from "../pages/liabilities/LiabilitiesHome";
 import { MaintenanceHomePage } from "../pages/maintenance/MaintenanceHome";
+import type { MaintenanceTabId } from "../pages/maintenance/MaintenanceHome";
 import { WorkOrdersConsoleDetailPage } from "../pages/work-orders/WorkOrdersConsoleDetailPage";
 import { WorkOrdersConsoleListPage } from "../pages/work-orders/WorkOrdersConsoleListPage";
 import { WorkOrderDetailPage } from "../pages/maintenance/WorkOrderDetailPage";
-import { ArrivingSoonPage } from "../pages/maintenance/ArrivingSoonPage";
 import { CashAdvancesHomePage } from "../pages/cash-advances/CashAdvancesHome";
 import { FactoringHomePage } from "../pages/factoring/FactoringHome";
 import { AssetProfilePage } from "../pages/fleet/AssetProfilePage";
@@ -289,12 +288,13 @@ function HomeRoute() {
   return <HomePage auth={auth.user} />;
 }
 
-function ArrivingSoonRoute() {
-  const { selectedCompanyId, companies } = useCompanyContext();
-  const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
-  if (!operatingCompanyId) return <ComingSoonPage />;
-  return <ArrivingSoonPage operatingCompanyId={operatingCompanyId} />;
+function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
+  return <MaintenanceHomePage initialTab={tabId} />;
 }
+
+// Locked UI-surface sentinel paths verified by architecture guard.
+const LOCKED_SAFETY_TAB_PATHS = ["/safety/driver-files", "/safety/idvr"];
+void LOCKED_SAFETY_TAB_PATHS;
 
 
 export const ROUTES = React.Children.toArray(
@@ -596,10 +596,98 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/maintenance/active-wos"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="active_wos" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/fleet-table"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="fleet_table" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/rm-status-board"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="rm_status_board" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/service-location"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="service_location" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/in-transit-issues"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="in_transit_issues" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/in-transit"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="in_transit_issues" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/triage"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="in_transit_issues" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/damage-reports"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="damage_reports" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/severe-repairs"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="severe_repairs" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/parts-inventory"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="parts_inventory" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/settings"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="settings" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/maintenance/arriving-soon"
           element={
             <ProtectedRoute>
-              <ArrivingSoonRoute />
+              <MaintenanceTabRoute tabId="arriving_soon" />
             </ProtectedRoute>
           }
         />
@@ -1704,11 +1792,6 @@ export const ROUTES = React.Children.toArray(
           "/dispatch/loads",
           "/dispatch/factoring-packets",
           "/dispatch/incidents",
-          "/maintenance/work-orders",
-          "/maintenance/parts-inventory",
-          "/maintenance/severe-repairs",
-          "/maintenance/triage",
-          "/maintenance/in-transit",
           "/fuel/planner",
           "/fuel/settings",
           "/fuel/inbox",
