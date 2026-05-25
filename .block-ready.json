@@ -32,6 +32,6 @@
     "verify:no-boot-throwing-env-checks"
   ],
   "runtime_path": "both",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
