@@ -5,22 +5,43 @@ DECLARE
   v_now timestamptz := now();
   v_reason text := 'seed-purge-prod 2026-05-24 P7-AUDIT-VISUAL-P1';
   v_row record;
+  v_driver_predicate text := 'FALSE';
+  v_customer_predicate text := 'FALSE';
 BEGIN
   CREATE TEMP TABLE tmp_void_seed (entity_type text, entity_id uuid) ON COMMIT DROP;
 
   IF to_regclass('mdata.drivers') IS NOT NULL THEN
-    INSERT INTO tmp_void_seed(entity_type, entity_id)
-    SELECT 'mdata.drivers', d.id
-    FROM mdata.drivers d
-    WHERE (
-      COALESCE(d.display_id, '') = 'TEST-DRIVER'
-      OR COALESCE(d.display_id, '') ILIKE 'seed-test-%'
-      OR COALESCE(d.driver_name, '') ILIKE '%TEST%'
-    )
-      AND (
-        d.deactivated_at IS NULL
-        OR d.status::text <> 'Inactive'
-      );
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'mdata'
+        AND table_name = 'drivers'
+        AND column_name = 'display_id'
+    ) THEN
+      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.display_id, '''') = ''TEST-DRIVER''';
+      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.display_id, '''') ILIKE ''seed-test-%''';
+    END IF;
+
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'mdata'
+        AND table_name = 'drivers'
+        AND column_name = 'driver_name'
+    ) THEN
+      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.driver_name, '''') ILIKE ''%TEST%''';
+    END IF;
+
+    EXECUTE format(
+      $sql$
+        INSERT INTO tmp_void_seed(entity_type, entity_id)
+        SELECT 'mdata.drivers', d.id
+        FROM mdata.drivers d
+        WHERE (%s)
+          AND (d.deactivated_at IS NULL OR d.status::text <> 'Inactive')
+      $sql$,
+      v_driver_predicate
+    );
 
     UPDATE mdata.drivers d
     SET
@@ -31,18 +52,37 @@ BEGIN
   END IF;
 
   IF to_regclass('mdata.customers') IS NOT NULL THEN
-    INSERT INTO tmp_void_seed(entity_type, entity_id)
-    SELECT 'mdata.customers', c.id
-    FROM mdata.customers c
-    WHERE (
-      COALESCE(c.display_id, '') = 'TEST-CUSTOMER'
-      OR COALESCE(c.display_id, '') ILIKE 'seed-test-%'
-      OR COALESCE(c.customer_name, '') ILIKE '%TEST%'
-    )
-      AND (
-        c.deactivated_at IS NULL
-        OR c.status::text <> 'inactive'
-      );
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'mdata'
+        AND table_name = 'customers'
+        AND column_name = 'display_id'
+    ) THEN
+      v_customer_predicate := v_customer_predicate || ' OR COALESCE(c.display_id, '''') = ''TEST-CUSTOMER''';
+      v_customer_predicate := v_customer_predicate || ' OR COALESCE(c.display_id, '''') ILIKE ''seed-test-%''';
+    END IF;
+
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'mdata'
+        AND table_name = 'customers'
+        AND column_name = 'customer_name'
+    ) THEN
+      v_customer_predicate := v_customer_predicate || ' OR COALESCE(c.customer_name, '''') ILIKE ''%TEST%''';
+    END IF;
+
+    EXECUTE format(
+      $sql$
+        INSERT INTO tmp_void_seed(entity_type, entity_id)
+        SELECT 'mdata.customers', c.id
+        FROM mdata.customers c
+        WHERE (%s)
+          AND (c.deactivated_at IS NULL OR c.status::text <> 'inactive')
+      $sql$,
+      v_customer_predicate
+    );
 
     UPDATE mdata.customers c
     SET
