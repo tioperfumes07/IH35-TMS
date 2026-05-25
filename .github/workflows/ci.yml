@@ -109,6 +109,15 @@ jobs:
       - name: Verify no internal user-facing strings
         run: npm run verify:no-internal-strings
 
+      - name: Verify no qbo_archive runtime reads
+        run: npm run verify:no-qbo-archive-runtime-reads
+
+      - name: Verify mdata routes are local-first
+        run: npm run verify:mdata-routes-local-first
+
+      - name: Verify qbo master write route contract
+        run: npm run verify:qbo-master-write-contract
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 

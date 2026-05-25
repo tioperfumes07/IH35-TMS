@@ -51,6 +51,7 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { useCompanyContext } from "../contexts/CompanyContext";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "Contracts"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -289,6 +290,7 @@ export function CustomerDetailPage() {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { user } = useAuth();
+  const { selectedCompanyId } = useCompanyContext();
 
   const [activeTab, setActiveTab] = useState<CustomerTab>("Profile");
   useEffect(() => {
@@ -335,8 +337,8 @@ export function CustomerDetailPage() {
   const [payInvoiceAmount, setPayInvoiceAmount] = useState<Record<string, string>>({});
 
   const detailQuery = useQuery({
-    queryKey: ["customer-detail", id],
-    queryFn: () => getCustomerDetail(id).then((result) => result.customer),
+    queryKey: ["customer-detail", id, selectedCompanyId ?? "none"],
+    queryFn: () => getCustomerDetail(id, selectedCompanyId).then((result) => result.customer),
     enabled: Boolean(id),
   });
   const operatingCompanyId = detailQuery.data?.operating_company_id ?? null;
@@ -481,6 +483,7 @@ export function CustomerDetailPage() {
   const updateCustomerMutation = useMutation({
     mutationFn: (statusChangeReason?: string) =>
       updateCustomer(id, {
+        operating_company_id: selectedCompanyId ?? operatingCompanyId ?? undefined,
         name: hydratedForm.name,
         customer_code: hydratedForm.customer_code || null,
         email: hydratedForm.email || null,

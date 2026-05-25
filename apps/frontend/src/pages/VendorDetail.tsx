@@ -72,7 +72,7 @@ export function VendorDetailPage() {
 
   const vendorQuery = useQuery({
     queryKey: ["vendor", id],
-    queryFn: () => getVendor(id),
+    queryFn: () => getVendor(id, companyId || null),
     enabled: Boolean(id),
   });
 
@@ -205,6 +205,7 @@ export function VendorDetailPage() {
         phone: profileForm.telephone.trim() || null,
         address: profileForm.address.trim() || null,
         email: profileForm.generalEmail.trim() || null,
+        operating_company_id: companyId || undefined,
         notes: serializeVendorNotes(meta, profileForm.notes),
       });
     },

@@ -778,8 +778,9 @@ export function updateCustomer(id: string, body: UpdateCustomerInput) {
   return apiRequest<Customer>(`/api/v1/mdata/customers/${id}`, { method: "PATCH", body });
 }
 
-export function getCustomerDetail(id: string) {
-  return apiRequest<{ customer: CustomerDetailFull }>(`/api/v1/mdata/customers/${id}/detail`);
+export function getCustomerDetail(id: string, operatingCompanyId?: string | null) {
+  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  return apiRequest<{ customer: CustomerDetailFull }>(`/api/v1/mdata/customers/${id}/detail${query}`);
 }
 
 export type CustomerFinancialSummary = {
@@ -997,8 +998,9 @@ export function listVendors(params: CompanyScopedListParams = {}) {
   return apiRequest<{ vendors: VendorOption[] }>(`/api/v1/mdata/vendors${qs ? `?${qs}` : ""}`);
 }
 
-export function getVendor(id: string) {
-  return apiRequest<VendorOption>(`/api/v1/mdata/vendors/${id}`);
+export function getVendor(id: string, operatingCompanyId?: string | null) {
+  const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
+  return apiRequest<VendorOption>(`/api/v1/mdata/vendors/${id}${query}`);
 }
 
 export type CreateVendorInput = {
