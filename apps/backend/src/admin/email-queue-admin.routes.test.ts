@@ -23,10 +23,10 @@ describeIntegration("email.queue GET /api/v1/email/queue integration", () => {
     await app.close();
   });
 
-  it("returns 200 with empty items for an operating_company_id with no queue rows", async () => {
+  it("returns 200 with empty items when status filter has no matches", async () => {
     const res = await app.inject({
       method: "GET",
-      url: `/api/v1/email/queue?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+      url: `/api/v1/email/queue?operating_company_id=${encodeURIComponent(operatingCompanyId)}&status=__no_such_status__`,
       headers: testAuthHeaders(undefined, "Owner"),
     });
     expect(res.statusCode).toBe(200);
