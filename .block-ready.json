@@ -34,6 +34,7 @@
     "scripts/__tests__/verify-sidebar-route-resolution.test.mjs",
     "scripts/__tests__/verify-no-internal-strings.test.mjs",
     "scripts/__tests__/fixtures/audit-visual-p1/**",
+    ".github/workflows/ci.yml",
     "package.json",
     "docs/trackers/phase-7.md",
     ".block-ready.json"
