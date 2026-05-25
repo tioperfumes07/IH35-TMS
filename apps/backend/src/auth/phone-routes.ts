@@ -6,7 +6,7 @@ import { enforceAuthPhoneStartLimits, enforceAuthPhoneVerifyLimits } from "../mi
 import { withLuciaBypass } from "./db.js";
 import { lucia } from "./lucia.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
-import { checkVerification, startVerification, type TwilioChannel } from "./twilio-verify.js";
+import { checkVerification, getTwilioClient, isTwilioVerifyConfigured, startVerification, type TwilioChannel } from "./twilio-verify.js";
 
 const startBodySchema = z.object({
   phone: z.string().regex(/^\+\d{10,15}$/, "phone must be E.164 format (e.g., +19565550001)"),
@@ -27,6 +27,14 @@ function maskPhone(phone: string) {
   return `${phone.slice(0, 3)}***${phone.slice(-2)}`;
 }
 
+function twilioNotConfiguredResponse(reply: FastifyReply) {
+  return reply.code(503).send({
+    error: "twilio_verify_not_configured",
+    detail:
+      "Phone authentication is not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID in production.",
+  });
+}
+
 async function appendOutboxTrailEvent(
   eventType: "twilio.sms.send" | "twilio.whatsapp.send",
   payload: Record<string, unknown>
@@ -45,6 +53,10 @@ async function appendOutboxTrailEvent(
 
 export async function registerPhoneAuthRoutes(app: FastifyInstance) {
   app.post("/api/v1/auth/phone/start", async (req, reply) => {
+    if (!isTwilioVerifyConfigured() || !getTwilioClient()) {
+      return twilioNotConfiguredResponse(reply);
+    }
+
     const parsed = startBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 
@@ -143,6 +155,10 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/auth/phone/verify", async (req, reply) => {
+    if (!isTwilioVerifyConfigured() || !getTwilioClient()) {
+      return twilioNotConfiguredResponse(reply);
+    }
+
     const parsed = verifyBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 

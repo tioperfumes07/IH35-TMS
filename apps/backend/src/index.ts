@@ -193,6 +193,7 @@ import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guar
 import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
 import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
+import { applyEnvStartupChecks, setDisabledFeatures } from "./config/required-env.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -255,6 +256,11 @@ async function shutdown(signal: string) {
 async function main() {
   initBackendSentry();
   await runStartupEnvironmentChecks();
+  const envCheck = applyEnvStartupChecks(app.log);
+  setDisabledFeatures(envCheck.disabled_features);
+  if (envCheck.hard_fail_messages.length > 0) {
+    throw new Error(`required_env_missing:\n${envCheck.hard_fail_messages.join("\n")}`);
+  }
 
   if (!app.hasDecorator("forensicRunnerStatus")) {
     app.decorate("forensicRunnerStatus", "pending");

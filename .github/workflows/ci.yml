@@ -88,6 +88,12 @@ jobs:
       - name: Verify no duplicate routes (static)
         run: npm run verify:no-duplicate-routes
 
+      - name: Verify QBO webhook fail-closed contract
+        run: npm run verify:qbo-webhook-fail-closed
+
+      - name: Verify no boot-time env throws
+        run: npm run verify:no-boot-throwing-env-checks
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 

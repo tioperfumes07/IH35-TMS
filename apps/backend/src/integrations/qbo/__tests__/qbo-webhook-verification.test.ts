@@ -22,119 +22,91 @@ const validPayload = Buffer.from(
 
 const ORIGINAL_ENV = { ...process.env };
 
-afterEach(() => {
+afterEach(async () => {
   process.env = { ...ORIGINAL_ENV };
   vi.resetModules();
   vi.restoreAllMocks();
+  const env = await import("../../../config/required-env.js");
+  env.setDisabledFeatures(new Set());
 });
 
-async function buildRouteHarness(options: {
-  nodeEnv: string;
-  verifierToken?: string;
-  allowInsecureDev?: boolean;
-}) {
-  process.env.NODE_ENV = options.nodeEnv;
+async function buildRouteHarness(options: { verifierToken?: string; disabledFeatures?: Set<string> }) {
   process.env.QBO_WEBHOOK_VERIFIER_TOKEN = options.verifierToken ?? "";
-  process.env.QBO_WEBHOOK_ALLOW_INSECURE_DEV = options.allowInsecureDev ? "true" : "false";
 
   const queryMock = vi
     .fn()
     .mockResolvedValueOnce({ rows: [{ operating_company_id: "11111111-1111-4111-8111-111111111111" }] })
     .mockResolvedValue({ rows: [] });
-  const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof queryMock }) => Promise<unknown>) =>
-    fn({ query: queryMock })
-  );
+
+  const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof queryMock }) => Promise<unknown>) => fn({ query: queryMock }));
   vi.doMock("../../../auth/db.js", () => ({ withLuciaBypass }));
+
+  const requiredEnv = await import("../../../config/required-env.js");
+  requiredEnv.setDisabledFeatures(options.disabledFeatures ?? new Set());
 
   const { registerQboWebhookRoutes } = await import("../qbo-webhook.routes.js");
   const app = Fastify({ logger: false });
-  const warnSpy = vi.spyOn(app.log, "warn");
+  app.get("/api/v1/health", async () => ({ status: "ok" }));
   const errorSpy = vi.spyOn(app.log, "error");
 
-  return { app, registerQboWebhookRoutes, queryMock, withLuciaBypass, warnSpy, errorSpy };
+  await registerQboWebhookRoutes(app);
+  await app.ready();
+
+  return { app, withLuciaBypass, errorSpy };
 }
 
 describe("qbo webhook fail-closed verification", () => {
-  it("returns 200 when signature is valid", async () => {
+  it("valid signed payload returns 200", async () => {
     const token = "verifier-token";
-    const { app, registerQboWebhookRoutes, withLuciaBypass } = await buildRouteHarness({
-      nodeEnv: "test",
-      verifierToken: token,
-    });
-    await registerQboWebhookRoutes(app);
-    await app.ready();
-
+    const { app, withLuciaBypass } = await buildRouteHarness({ verifierToken: token });
     const res = await app.inject({
       method: "POST",
-      url: "/api/v1/integrations/qbo/webhook",
+      url: "/api/v1/qbo/webhook",
       payload: validPayload,
       headers: {
         "content-type": "application/json",
         "intuit-signature": signPayload(token, validPayload),
       },
     });
-
     expect(res.statusCode).toBe(200);
     expect(withLuciaBypass).toHaveBeenCalledTimes(1);
     await app.close();
   });
 
-  it("returns 401 when signature is invalid", async () => {
+  it("invalid signature returns 401", async () => {
     const token = "verifier-token";
-    const { app, registerQboWebhookRoutes, withLuciaBypass } = await buildRouteHarness({
-      nodeEnv: "test",
-      verifierToken: token,
-    });
-    await registerQboWebhookRoutes(app);
-    await app.ready();
-
+    const { app, withLuciaBypass } = await buildRouteHarness({ verifierToken: token });
     const res = await app.inject({
       method: "POST",
-      url: "/api/v1/integrations/qbo/webhook",
+      url: "/api/v1/qbo/webhook",
       payload: validPayload,
       headers: {
         "content-type": "application/json",
         "intuit-signature": "bad-signature",
       },
     });
-
     expect(res.statusCode).toBe(401);
+    expect(JSON.parse(res.body).error).toBe("qbo_webhook_signature_invalid");
     expect(withLuciaBypass).not.toHaveBeenCalled();
     await app.close();
   });
 
-  it("fails route registration in production when verifier token is missing", async () => {
-    const { app, registerQboWebhookRoutes, errorSpy } = await buildRouteHarness({
-      nodeEnv: "production",
-      verifierToken: "",
-    });
+  it("missing env returns 503, logs error, and backend health remains healthy", async () => {
+    const { app, withLuciaBypass, errorSpy } = await buildRouteHarness({ verifierToken: "" });
 
-    await expect(registerQboWebhookRoutes(app)).rejects.toThrow("qbo_webhook_verifier_token_required_in_production");
-    expect(errorSpy).toHaveBeenCalled();
-    await app.close();
-  });
-
-  it("allows dev/test insecure opt-in with warning when verifier token is missing", async () => {
-    const { app, registerQboWebhookRoutes, warnSpy, withLuciaBypass } = await buildRouteHarness({
-      nodeEnv: "test",
-      verifierToken: "",
-      allowInsecureDev: true,
-    });
-    await registerQboWebhookRoutes(app);
-    await app.ready();
-
-    const res = await app.inject({
+    const webhook = await app.inject({
       method: "POST",
-      url: "/api/v1/integrations/qbo/webhook",
-      payload: validPayload,
-      headers: {
-        "content-type": "application/json",
-      },
+      url: "/api/v1/qbo/webhook",
+      payload: Buffer.from("{}", "utf8"),
+      headers: { "content-type": "application/json" },
     });
+    expect(webhook.statusCode).toBe(503);
+    expect(JSON.parse(webhook.body).error).toBe("qbo_webhook_verifier_not_configured");
+    expect(errorSpy).toHaveBeenCalled();
+    expect(withLuciaBypass).not.toHaveBeenCalled();
 
-    expect(warnSpy).toHaveBeenCalled();
-    expect(res.statusCode).toBe(200);
-    expect(withLuciaBypass).toHaveBeenCalledTimes(1);
+    const health = await app.inject({ method: "GET", url: "/api/v1/health" });
+    expect(health.statusCode).toBe(200);
     await app.close();
   });
 });

@@ -649,6 +649,27 @@ Cross-capability lock language:
 
 ---
 
+## 2026-05-25 — Honest fail-closed env pattern + KNOWN_OFFENDERS_DEBT
+
+Source: Jorge approval in chat 2026-05-25  
+Status: LOCKED  
+Relevant block: P7-AUDIT-P0-2-HOTFIX-1 / HOTFIX-2
+
+Pattern: env-gated features must NEVER throw at module load when env is missing. Instead, route-registration code consults `apps/backend/src/config/required-env.ts` (`REQUIRED_ENV`), which declares each env's `behavior_in_prod`:
+
+- `hard_fail_at_boot`: backend may throw at boot via `applyEnvStartupChecks`. Only `DATABASE_URL` is currently in this category.
+- `disable_feature_log_error`: route registers a fail-closed `503` handler with descriptive error code (e.g. `qbo_webhook_verifier_not_configured`, `twilio_verify_not_configured`).
+- `disable_feature_log_warning`: same runtime behavior with warning-level logging.
+
+Static guard contract:
+
+- `scripts/verify-no-boot-throwing-env-checks.mjs` catches module-load throws and top-level env-driven constructors/calls.
+- Guard allows only envs explicitly marked `hard_fail_at_boot` in `REQUIRED_ENV`.
+- Pre-existing violations are tracked as declared debt in `KNOWN_OFFENDERS_DEBT` with tracker `P7-AUDIT-P0-2-HOTFIX-2`.
+- HOTFIX-2 closure requirement: `KNOWN_OFFENDERS_DEBT` must reach zero.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:

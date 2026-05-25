@@ -1,23 +1,45 @@
 import Twilio from "twilio";
-
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-const TWILIO_VERIFY_SERVICE_SID = process.env.TWILIO_VERIFY_SERVICE_SID;
-
-if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_VERIFY_SERVICE_SID) {
-  console.warn("Twilio env vars missing — phone auth will not function until configured.");
-}
-
-const twilioClient = TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN ? Twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN) : null;
+import { isFeatureDisabled } from "../config/required-env.js";
 
 export type TwilioChannel = "whatsapp" | "sms";
 
+let cachedClient: ReturnType<typeof Twilio> | null = null;
+
+export function resetTwilioClientForTests() {
+  cachedClient = null;
+}
+
+function readTwilioConfig() {
+  const sid = (process.env.TWILIO_ACCOUNT_SID ?? "").trim();
+  const token = (process.env.TWILIO_AUTH_TOKEN ?? "").trim();
+  const verifyServiceSid = (process.env.TWILIO_VERIFY_SERVICE_SID ?? "").trim();
+  return { sid, token, verifyServiceSid };
+}
+
+export function getTwilioClient() {
+  if (cachedClient) return cachedClient;
+  const { sid, token } = readTwilioConfig();
+  if (!sid || !token || !sid.startsWith("AC")) {
+    return null;
+  }
+  cachedClient = Twilio(sid, token);
+  return cachedClient;
+}
+
+export function isTwilioVerifyConfigured() {
+  if (isFeatureDisabled("phone_auth")) return false;
+  const { verifyServiceSid } = readTwilioConfig();
+  return Boolean(getTwilioClient() && verifyServiceSid);
+}
+
 export async function startVerification(phone: string, channel: TwilioChannel = "whatsapp") {
-  if (!twilioClient || !TWILIO_VERIFY_SERVICE_SID) {
+  const client = getTwilioClient();
+  const { verifyServiceSid } = readTwilioConfig();
+  if (!client || !verifyServiceSid || isFeatureDisabled("phone_auth")) {
     throw new Error("twilio_not_configured");
   }
   try {
-    const verification = await twilioClient.verify.v2.services(TWILIO_VERIFY_SERVICE_SID).verifications.create({
+    const verification = await client.verify.v2.services(verifyServiceSid).verifications.create({
       to: phone,
       channel,
     });
@@ -29,11 +51,13 @@ export async function startVerification(phone: string, channel: TwilioChannel = 
 }
 
 export async function checkVerification(phone: string, code: string) {
-  if (!twilioClient || !TWILIO_VERIFY_SERVICE_SID) {
+  const client = getTwilioClient();
+  const { verifyServiceSid } = readTwilioConfig();
+  if (!client || !verifyServiceSid || isFeatureDisabled("phone_auth")) {
     throw new Error("twilio_not_configured");
   }
   try {
-    const verificationCheck = await twilioClient.verify.v2.services(TWILIO_VERIFY_SERVICE_SID).verificationChecks.create({
+    const verificationCheck = await client.verify.v2.services(verifyServiceSid).verificationChecks.create({
       to: phone,
       code,
     });

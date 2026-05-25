@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../../auth/db.js";
+import { getEnvStatus, getRequiredEnvSpec, isFeatureDisabled } from "../../config/required-env.js";
 import { verifyIntuitWebhookSignature } from "./qbo-webhook-signature.js";
 
 type EventNotification = {
@@ -9,42 +10,35 @@ type EventNotification = {
   };
 };
 
-type VerifierConfig = {
-  verifierToken: string;
-  allowInsecureWithoutVerifier: boolean;
-};
+const DISABLED_RESPONSE = {
+  error: "qbo_webhook_verifier_not_configured",
+  detail:
+    "QBO webhook signature verification is not configured. Set QBO_WEBHOOK_VERIFIER_TOKEN in production. Endpoint disabled per fail-closed policy.",
+} as const;
 
-function resolveVerifierConfig(app: FastifyInstance): VerifierConfig {
-  const verifierToken = (process.env.QBO_WEBHOOK_VERIFIER_TOKEN ?? "").trim();
-  const allowInsecureWithoutVerifier =
-    (process.env.QBO_WEBHOOK_ALLOW_INSECURE_DEV ?? "").trim() === "true" ||
-    (process.env.IH35_BOOT_API_SMOKE ?? "").trim() === "true";
-  const isProduction = process.env.NODE_ENV === "production";
-
-  if (!verifierToken) {
-    if (isProduction) {
-      app.log.error(
-        "QBO webhook verifier token missing: set QBO_WEBHOOK_VERIFIER_TOKEN in production before registering webhook route"
-      );
-      throw new Error("qbo_webhook_verifier_token_required_in_production");
-    }
-    if (!allowInsecureWithoutVerifier) {
-      app.log.error(
-        "QBO webhook verifier token missing: refusing to register webhook route (set QBO_WEBHOOK_ALLOW_INSECURE_DEV=true to opt in for local/dev only)"
-      );
-      throw new Error("qbo_webhook_verifier_token_required_unless_dev_opt_in");
-    }
-    app.log.warn(
-      "QBO webhook verifier token missing: insecure dev/test opt-in enabled; inbound webhooks are accepted without signature verification"
-    );
-  }
-
-  return { verifierToken, allowInsecureWithoutVerifier };
+function resolveVerifierToken() {
+  const spec = getRequiredEnvSpec("QBO_WEBHOOK_VERIFIER_TOKEN");
+  if (!spec) return "";
+  const status = getEnvStatus(spec);
+  return status.state === "present" ? status.value : "";
 }
 
 /** Scoped webhook routes — JSON parsed as Buffer for HMAC verification (matches Plaid/Samsara pattern). */
 export async function registerQboWebhookRoutes(app: FastifyInstance) {
-  const verifierConfig = resolveVerifierConfig(app);
+  const verifierToken = resolveVerifierToken();
+  const featureDisabled = isFeatureDisabled("qbo_webhook_signature_verification");
+  const endpointDisabled = featureDisabled || verifierToken.length === 0;
+
+  if (endpointDisabled) {
+    app.log.error(
+      {
+        event: "qbo_webhook_verifier_missing",
+        env_name: "QBO_WEBHOOK_VERIFIER_TOKEN",
+        feature: "qbo_webhook_signature_verification",
+      },
+      "QBO webhook route registered in fail-closed disabled mode"
+    );
+  }
 
   await app.register(async (scoped) => {
     scoped.removeContentTypeParser("application/json");
@@ -52,7 +46,11 @@ export async function registerQboWebhookRoutes(app: FastifyInstance) {
       done(null, body);
     });
 
-    scoped.post("/api/v1/integrations/qbo/webhook", async (req, reply) => {
+    scoped.post("/api/v1/qbo/webhook", async (req, reply) => {
+      if (endpointDisabled) {
+        return reply.code(503).send(DISABLED_RESPONSE);
+      }
+
       const rawBody = req.body as Buffer;
       if (!Buffer.isBuffer(rawBody)) {
         return reply.code(400).send({ error: "invalid_body" });
@@ -60,13 +58,9 @@ export async function registerQboWebhookRoutes(app: FastifyInstance) {
 
       const signatureHeaderRaw = req.headers["intuit-signature"] ?? req.headers["Intuit-Signature"];
       const signatureHeader = Array.isArray(signatureHeaderRaw) ? signatureHeaderRaw[0] : signatureHeaderRaw;
-
-      const shouldEnforceSignature = Boolean(verifierConfig.verifierToken);
-      const verified = shouldEnforceSignature
-        ? verifyIntuitWebhookSignature(rawBody, verifierConfig.verifierToken, signatureHeader)
-        : false;
-      if (shouldEnforceSignature && !verified) {
-        return reply.code(401).send({ error: "invalid_signature" });
+      const verified = verifyIntuitWebhookSignature(rawBody, verifierToken, signatureHeader);
+      if (!verified) {
+        return reply.code(401).send({ error: "qbo_webhook_signature_invalid" });
       }
 
       let parsed: { eventNotifications?: EventNotification[] };
@@ -118,13 +112,13 @@ export async function registerQboWebhookRoutes(app: FastifyInstance) {
                 VALUES (
                   $1::uuid,
                   $2,
+                  true,
                   $3,
                   $4,
                   $5,
-                  $6,
-                  COALESCE($7::timestamptz, NULL),
+                  COALESCE($6::timestamptz, NULL),
                   'received',
-                  $8::jsonb,
+                  $7::jsonb,
                   now(),
                   now()
                 )
@@ -132,7 +126,6 @@ export async function registerQboWebhookRoutes(app: FastifyInstance) {
               [
                 operatingCompanyId,
                 realmId,
-                shouldEnforceSignature ? verified : false,
                 ent.operation ?? null,
                 entityType,
                 entityId,
