@@ -22,6 +22,7 @@
     "apps/backend/src/accounting/posting-engine.routes.ts",
     "apps/backend/src/accounting/shared.ts",
     "apps/backend/src/accounting/statement-export.routes.ts",
+    "apps/backend/src/admin/email-queue-admin.routes.test.ts",
     "apps/backend/src/banking/account-balance.routes.ts",
     "apps/backend/src/banking/banking.routes.ts",
     "apps/backend/src/banking/categorization-rules.routes.ts",
