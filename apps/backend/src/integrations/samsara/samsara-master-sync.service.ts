@@ -192,8 +192,8 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
     samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null,
   });
 
-  const hasVid = await columnExists(client, "mdata", "equipment", "samsara_vehicle_id");
-  if (!hasVid) {
+  const hasEquipmentVehicleId = await columnExists(client, "mdata", "equipment", "samsara_vehicle_id");
+  if (!hasEquipmentVehicleId) {
     const msg = "missing_required_column:mdata.equipment.samsara_vehicle_id";
     errors.push(msg);
     await writeSyncLog(client, {
@@ -207,6 +207,7 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
     });
     return { added: 0, updated: 0, removed: 0, errors };
   }
+  const hasUnitsVehicleId = await columnExists(client, "mdata", "units", "samsara_vehicle_id");
 
   const vehicles = await api.listVehicles();
   let added = 0;
@@ -308,6 +309,78 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
         ]
       );
       added += 1;
+    }
+
+    // Keep /fleet/units views in sync when units support samsara_vehicle_id.
+    if (hasUnitsVehicleId) {
+      const existingUnit = await client.query(
+        `
+          SELECT id FROM mdata.units
+          WHERE samsara_vehicle_id = $2
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
+          LIMIT 1
+        `,
+        [operatingCompanyId, v.id]
+      );
+
+      if (existingUnit.rows[0]) {
+        await client.query(
+          `
+            UPDATE mdata.units
+            SET vin = COALESCE($1, vin),
+                make = COALESCE($2, make),
+                model = COALESCE($3, model),
+                year = COALESCE($4::int, year),
+                license_plate = COALESCE($5, license_plate),
+                license_state = COALESCE($6, license_state),
+                updated_at = now()
+            WHERE id = $7::uuid
+          `,
+          [
+            vinRaw,
+            make,
+            model,
+            Number.isFinite(year as number) ? year : null,
+            licensePlate,
+            licenseState,
+            String(existingUnit.rows[0].id),
+          ]
+        );
+      } else {
+        const numRes = await client.query(`SELECT gen_random_uuid() AS g`);
+        const suffix = String(numRes.rows[0]?.g ?? v.id).replace(/-/g, "").slice(0, 8);
+        const unitNumber = `SAM-${suffix}`;
+        await client.query(
+          `
+            INSERT INTO mdata.units (
+              unit_number,
+              vin,
+              make,
+              model,
+              year,
+              license_plate,
+              license_state,
+              owner_company_id,
+              currently_leased_to_company_id,
+              samsara_vehicle_id,
+              status
+            ) VALUES (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7,
+              $8::uuid,
+              $8::uuid,
+              $9,
+              'InService'
+            )
+          `,
+          [unitNumber, vinRaw ?? `SAMVIN-${suffix}`, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, operatingCompanyId, v.id]
+        );
+      }
     }
   }
 

@@ -55,6 +55,14 @@ export const REQUIRED_ENV: ReadonlyArray<RequiredEnvSpec> = [
     affects: ["all DB-backed routes"],
     documentation: "Postgres connection string. Backend cannot function without DB.",
   },
+  {
+    name: "SAMSARA_API_TOKEN",
+    feature: "samsara_master_sync",
+    behavior_in_prod: "disable_feature_log_error",
+    behavior_in_dev: "disable_feature_log_warning",
+    affects: ["samsara master sync cron", "samsara master projection to mdata.drivers/mdata.equipment"],
+    documentation: "Samsara API token required for driver/vehicle master sync jobs.",
+  },
 ] as const;
 
 type Logger = {

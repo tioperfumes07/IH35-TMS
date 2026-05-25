@@ -139,6 +139,7 @@ import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-requ
 import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js";
 import { initializeSamsaraWebhookProjectionCron } from "./cron/samsara-webhook-projection.cron.js";
 import { initializeSamsaraRemoteCountCollectorCron } from "./cron/samsara-remote-count-collector.cron.js";
+import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
@@ -193,7 +194,7 @@ import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guar
 import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
 import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
-import { applyEnvStartupChecks, setDisabledFeatures } from "./config/required-env.js";
+import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -552,6 +553,17 @@ async function main() {
     app.log.info("[STARTUP] samsara-remote-count-collector-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] samsara-remote-count-collector-cron failed");
+  }
+
+  try {
+    if (isFeatureDisabled("samsara_master_sync")) {
+      app.log.warn("[STARTUP] samsara-master-sync-cron disabled by required env checks");
+    } else {
+      initializeSamsaraMasterSyncCron(app);
+      app.log.info("[STARTUP] samsara-master-sync-cron initialized");
+    }
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] samsara-master-sync-cron failed");
   }
 
   try {
