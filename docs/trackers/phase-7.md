@@ -48,3 +48,5 @@ _No backend regressions requiring immediate hotfix were identified during P6-T11
 | **P7-AUDIT-P0-2-HOTFIX-1** | Honest fail-closed for QBO webhook + Twilio + REQUIRED_ENV + KNOWN_OFFENDERS_DEBT guard | In flight -> DONE on PR merge |
 | **P7-AUDIT-P0-2-HOTFIX-2** | Migrate 15 remaining boot-time env crash offenders to REQUIRED_ENV pattern; empty KNOWN_OFFENDERS_DEBT | PENDING |
 | **P7-FIX-MIG-IMMUTABILITY-GUARD** | Static CI guard preventing already-applied migration content modification | DONE on PR merge |
+| **P7-FIX-VERIFY-CONTENT-DRIFT** | 13 verifier patches + 14 reconciliation entries (0242) + verify:content-drift-check guard | DONE on PR merge |
+| **P7-AUDIT-TRIGGER-STRATEGY** | Decide whether audit.tg_audit_row should be created to activate guarded tg_audit_* triggers or keep guarded-skip as canonical | PENDING |

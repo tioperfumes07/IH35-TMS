@@ -208,6 +208,14 @@ try {
       maxNumber: Number.MAX_SAFE_INTEGER,
     });
 
+    for (const migration of contentReport.report) {
+      for (const skipped of migration.skipped ?? []) {
+        console.log(
+          `${skipped.reason}: migration ${migration.filename} declares ${skipped.kind}:${skipped.object} (${skipped.trace})`
+        );
+      }
+    }
+
     if (contentReport.totalMissing > 0) {
       for (const migration of contentReport.report) {
         for (const missing of migration.missing) {
@@ -231,7 +239,7 @@ try {
     }
 
     console.log(
-      `PASS: migration content verified (${contentReport.migrationCount} files, missing=${contentReport.totalMissing})`
+      `PASS: migration content verified (${contentReport.migrationCount} files, missing=${contentReport.totalMissing}, skipped=${contentReport.totalSkipped ?? 0})`
     );
   }
 
