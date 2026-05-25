@@ -1,0 +1,1 @@
+export function BadModal() { return <Modal><h2>Work Order Details</h2><h3>Work Order Details</h3></Modal>; }

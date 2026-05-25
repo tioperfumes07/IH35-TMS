@@ -83,8 +83,8 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   lists: { id: "lists", label: "LISTS", Icon: ListChecks, to: "/lists" },
   reports: { id: "reports", label: "REPORTS", Icon: BarChart2, to: "/reports" },
   legal: { id: "legal", label: "LEGAL", Icon: Scale, to: "/legal", visibleRoles: ["Owner", "Administrator"] },
-  docs: { id: "docs", label: "DOCS", Icon: FileText, to: "/documents", visibleRoles: ["Owner", "Administrator"] },
-  eld: { id: "eld", label: "ELD", Icon: Radio, to: "/integrations/samsara", visibleRoles: ["Owner"] },
+  docs: { id: "docs", label: "DOCS", Icon: FileText, to: "/docs", visibleRoles: ["Owner", "Administrator"] },
+  eld: { id: "eld", label: "ELD", Icon: Radio, to: "/eld", visibleRoles: ["Owner"] },
   form_425: { id: "form_425", label: "425C", Icon: SquareStack, to: "/425c" },
   drv_app: { id: "drv_app", label: "DRV APP", Icon: Activity, to: "/driver-app" },
   users: {

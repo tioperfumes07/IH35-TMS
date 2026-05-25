@@ -1,0 +1,1 @@
+export function GoodModal() { return <Modal><h2>Work Order Details</h2><h3>Other</h3></Modal>; }

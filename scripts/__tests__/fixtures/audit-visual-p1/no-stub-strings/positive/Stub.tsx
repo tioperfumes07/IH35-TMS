@@ -1,0 +1,1 @@
+export function Stub(){ return <div>No records yet</div>; }
