@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const transactionIdParamsSchema = z.object({
   id: z.string().uuid(),

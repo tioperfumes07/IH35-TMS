@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { getMonthCloseStatus, lockMonthClose } from "./month-close.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const monthCloseRoles = new Set(["Owner", "Administrator", "Accountant"]);
 
@@ -34,6 +35,7 @@ export async function registerMonthCloseRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = monthCloseStatusQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     try {
       const status = await getMonthCloseStatus({

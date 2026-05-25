@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
   createBill,
   getBillDetail,
@@ -77,6 +78,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
 
     const query = listVendorBalancesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const rows = await listVendorBalances(String(user.uuid), query.data.operating_company_id, {
       includeZero: Boolean(query.data.all),

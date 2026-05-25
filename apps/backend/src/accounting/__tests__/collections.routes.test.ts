@@ -17,6 +17,10 @@ vi.mock("../collections.service.js", () => ({
   syncCollectionTasks: (...args: unknown[]) => syncCollectionTasksMock(...args),
 }));
 
+vi.mock("../../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: vi.fn(async () => undefined),
+}));
+
 import { registerCollectionsRoutes } from "../collections.routes.js";
 
 describe("collections.routes", () => {

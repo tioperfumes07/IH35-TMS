@@ -12,12 +12,39 @@ const ROOT = path.resolve(__dirname, "..");
 const stepsDir = path.join(__dirname, "verify-steps");
 const stepFiles = readdirSync(stepsDir).filter((f) => f.endsWith(".mjs") && !f.startsWith("_")).sort();
 const steps = await Promise.all(stepFiles.map(async (file) => (await import(pathToFileURL(path.join(stepsDir, file)).href)).default));
+const resolvedSteps = steps.map((step) => {
+  if (step.name !== "backend-vitest") {
+    return step;
+  }
+
+  return {
+    ...step,
+    run: async (ctx) => {
+      if (
+        ctx.run("npx", [
+          "vitest",
+          "run",
+          "--config",
+          "apps/backend/vitest.config.ts",
+          "--reporter=default",
+          "--reporter=json",
+          "--outputFile",
+          ctx.VITEST_REPORT_PATH,
+        ]) !== 0
+      ) {
+        process.exit(1);
+      }
+
+      ctx.parseBackendVitestReport();
+    },
+  };
+});
 const ctx = createVerifyPrecommitContext(ROOT);
 
 try {
-  for (let i = 0; i < steps.length; i += 1) {
-    const step = steps[i];
-    await runStep({ index: i + 1, total: steps.length, name: step.name, run: () => step.run(ctx) });
+  for (let i = 0; i < resolvedSteps.length; i += 1) {
+    const step = resolvedSteps[i];
+    await runStep({ index: i + 1, total: resolvedSteps.length, name: step.name, run: () => step.run(ctx) });
   }
   console.log("verify:pre-commit PASS");
 } finally {

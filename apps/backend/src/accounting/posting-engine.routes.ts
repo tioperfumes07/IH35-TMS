@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
   PostingEngineError,
   postSourceTransaction,
@@ -62,6 +63,7 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const body = postBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 

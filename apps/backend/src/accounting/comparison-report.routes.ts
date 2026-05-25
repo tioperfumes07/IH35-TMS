@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { getComparisonReport } from "./comparison-report.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const comparisonReportQuerySchema = companyQuerySchema.extend({
   type: z.enum(["pl", "bs"]),
@@ -29,6 +30,7 @@ export async function registerComparisonReportRoutes(app: FastifyInstance) {
 
     const query = comparisonReportQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     try {
       const report = await getComparisonReport({

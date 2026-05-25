@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
   decideSettlementDisputeP6,
   listSettlementDisputeQueueP6,
@@ -62,6 +63,7 @@ export async function registerAccountingSettlementDisputesP6Routes(app: FastifyI
     if (!params.success) return sendValidationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     if (!OFFICE_READ_ROLES.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
     try {

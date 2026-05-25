@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { getCashFlowReport } from "./cash-flow.service.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const cashFlowQuerySchema = companyQuerySchema.extend({
   from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -22,6 +23,7 @@ export async function registerCashFlowRoutes(app: FastifyInstance) {
 
     const query = cashFlowQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const report = await getCashFlowReport({
       userId: user.uuid,

@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
   exportApAgingStatement,
   exportArAgingStatement,
@@ -51,6 +52,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = pointInTimeQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     try {
       const result = await exportTrialBalanceStatement({
         userId: user.uuid,
