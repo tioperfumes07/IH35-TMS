@@ -76,6 +76,9 @@ jobs:
       - name: Migration application consistency guard
         run: npm run verify:migration-application-consistency
 
+      - name: Verify content drift check
+        run: npm run verify:content-drift-check
+
       - name: Verify applied migrations immutable
         run: npm run verify:applied-migrations-immutable
 

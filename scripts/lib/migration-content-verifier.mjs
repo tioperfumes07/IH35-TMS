@@ -79,7 +79,8 @@ function parseMigrationObjects(sql) {
   }
 
   {
-    const regex = /create\s+table\s+(?:if\s+not\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    const regex =
+      /(?:^|[;\n])\s*create\s+table\s+(?:if\s+not\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
     let match;
     while ((match = regex.exec(text))) {
       const { schema, name } = parseQualifiedName(match[1], match[2], defaultSchema);
@@ -215,6 +216,141 @@ function parseMigrationObjects(sql) {
   return expected;
 }
 
+function makeObjectKey(kind, objectName) {
+  return `${kind}:${objectName}`;
+}
+
+export function parseConditionalGuardedTargets(sql) {
+  const text = stripComments(sql);
+  const defaultSchemas = parseDefaultSchemas(text);
+  const defaultSchema = defaultSchemas[0] || "public";
+  const guardedTargets = [];
+  const guardRegex = /if\s+exists\s*\(([\s\S]*?)\)\s+then([\s\S]*?)end\s+if/gi;
+  let match;
+  while ((match = guardRegex.exec(text))) {
+    const guardExpr = match[1];
+    const guardedBody = match[2];
+
+    let dependency = null;
+    const procGuardMatch = guardExpr.match(
+      /n\.nspname\s*=\s*'([^']+)'\s+and\s+p\.proname\s*=\s*'([^']+)'/i
+    );
+    if (procGuardMatch) {
+      dependency = {
+        kind: "function",
+        schema: normalizeIdent(procGuardMatch[1]),
+        name: normalizeIdent(procGuardMatch[2]),
+      };
+    }
+    const regclassGuardMatch = guardExpr.match(/to_regclass\(\s*'([^']+)'\s*\)\s+is\s+not\s+null/i);
+    if (!dependency && regclassGuardMatch) {
+      const [schemaRaw, tableRaw] = regclassGuardMatch[1].split(".");
+      if (schemaRaw && tableRaw) {
+        dependency = {
+          kind: "table",
+          schema: normalizeIdent(schemaRaw),
+          name: normalizeIdent(tableRaw),
+        };
+      }
+    }
+    if (!dependency) continue;
+
+    const targets = [];
+
+    {
+      const regex =
+        /create\s+trigger\s+(?:"?([a-zA-Z_][\w$]*)"?)\s+[\s\S]*?\son\s+(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+      let triggerMatch;
+      while ((triggerMatch = regex.exec(guardedBody))) {
+        const triggerName = normalizeIdent(triggerMatch[1]);
+        const tableSchema = normalizeIdent(triggerMatch[2] || defaultSchema);
+        const tableName = normalizeIdent(triggerMatch[3]);
+        targets.push({
+          kind: "trigger",
+          objectName: `${tableSchema}.${tableName}.${triggerName}`,
+        });
+      }
+    }
+
+    {
+      const regex =
+        /create\s+(?:or\s+replace\s+)?function\s+(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)\s*\(/gi;
+      let functionMatch;
+      while ((functionMatch = regex.exec(guardedBody))) {
+        const { schema, name } = parseQualifiedName(functionMatch[1], functionMatch[2], defaultSchema);
+        targets.push({
+          kind: "function",
+          objectName: `${schema}.${name}`,
+        });
+      }
+    }
+
+    {
+      const regex =
+        /create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)\s+on\s+(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+      let indexMatch;
+      while ((indexMatch = regex.exec(guardedBody))) {
+        const indexSchema = normalizeIdent(indexMatch[1] || indexMatch[3] || defaultSchema);
+        const indexName = normalizeIdent(indexMatch[2]);
+        targets.push({
+          kind: "index",
+          objectName: `${indexSchema}.${indexName}`,
+        });
+      }
+    }
+
+    if (targets.length > 0) {
+      guardedTargets.push({
+        dependency,
+        targets,
+      });
+    }
+  }
+  return guardedTargets;
+}
+
+export function parseTransientObjects(sql) {
+  const text = maskLiteralBodies(stripComments(sql));
+  const defaultSchemas = parseDefaultSchemas(text);
+  const defaultSchema = defaultSchemas[0] || "public";
+  const transient = new Set();
+
+  {
+    const regex =
+      /create\s+temp(?:orary)?\s+table\s+(?:if\s+not\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const { schema, name } = parseQualifiedName(match[1], match[2], defaultSchema);
+      transient.add(`${schema}.${name}`);
+    }
+  }
+
+  const createdFunctions = new Set();
+  {
+    const regex =
+      /create\s+(?:or\s+replace\s+)?function\s+(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)\s*\(/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const { schema, name } = parseQualifiedName(match[1], match[2], defaultSchema);
+      createdFunctions.add(`${schema}.${name}`);
+    }
+  }
+  {
+    const regex =
+      /drop\s+function\s+(?:if\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const { schema, name } = parseQualifiedName(match[1], match[2], defaultSchema);
+      const fqfn = `${schema}.${name}`;
+      if (createdFunctions.has(fqfn)) {
+        transient.add(fqfn);
+      }
+    }
+  }
+
+  return transient;
+}
+
 async function tableExists(client, schema, table, tableExistsCache) {
   const key = `${schema}.${table}`;
   if (tableExistsCache.has(key)) return tableExistsCache.get(key);
@@ -232,6 +368,59 @@ async function tableExists(client, schema, table, tableExistsCache) {
   const exists = res.rows.length > 0;
   tableExistsCache.set(key, exists);
   return exists;
+}
+
+async function functionExists(client, schema, functionName, functionExistsCache) {
+  const key = `${schema}.${functionName}`;
+  if (functionExistsCache.has(key)) return functionExistsCache.get(key);
+  const res = await client.query(
+    `
+      SELECT 1
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = $1
+        AND p.proname = $2
+      LIMIT 1
+    `,
+    [schema, functionName]
+  );
+  const exists = res.rows.length > 0;
+  functionExistsCache.set(key, exists);
+  return exists;
+}
+
+async function indexExists(client, schema, indexName) {
+  const res = await client.query(
+    `
+      SELECT 1
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE c.relkind = 'i'
+        AND n.nspname = $1
+        AND c.relname = $2
+      LIMIT 1
+    `,
+    [schema, indexName]
+  );
+  return res.rows.length > 0;
+}
+
+async function triggerExists(client, schema, tableName, triggerName) {
+  const res = await client.query(
+    `
+      SELECT 1
+      FROM pg_trigger t
+      JOIN pg_class c ON c.oid = t.tgrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE NOT t.tgisinternal
+        AND n.nspname = $1
+        AND c.relname = $2
+        AND t.tgname = $3
+      LIMIT 1
+    `,
+    [schema, tableName, triggerName]
+  );
+  return res.rows.length > 0;
 }
 
 function missingObjectName(item) {
@@ -276,9 +465,50 @@ function loadIgnoreSet(ignoreEntries = []) {
   return set;
 }
 
-async function checkMigrationObjects(client, expected, tableExistsCache, ignoreObjectSet) {
+async function checkMigrationObjects(
+  client,
+  expected,
+  tableExistsCache,
+  functionExistsCache,
+  ignoreObjectSet,
+  transientObjectSet,
+  conditionalSkipByObject
+) {
   const missing = [];
+  const skipped = [];
   const declaredTables = new Set(expected.tables.map((item) => `${item.schema}.${item.table}`));
+
+  function shouldSkipObject(objectName, kind) {
+    if (!objectName) return { skip: false };
+    if (ignoreObjectSet.has(objectName)) {
+      return { skip: true, reason: "IGNORE_RULE", trace: `${makeObjectKey(kind, objectName)} via ignore list` };
+    }
+    if (transientObjectSet.has(objectName)) {
+      return {
+        skip: true,
+        reason: "TRANSIENT_SKIP",
+        trace: `${makeObjectKey(kind, objectName)} transient in migration`,
+      };
+    }
+    if (conditionalSkipByObject.has(makeObjectKey(kind, objectName))) {
+      return {
+        skip: true,
+        reason: "CONDITIONAL_SKIP",
+        trace: `${makeObjectKey(kind, objectName)} dependency absent; guarded DDL skipped`,
+      };
+    }
+    return { skip: false };
+  }
+
+  function pushMissing(kind, item) {
+    const objectName = missingObjectName(item);
+    const skip = shouldSkipObject(objectName, kind);
+    if (skip.skip) {
+      skipped.push({ kind, object: objectName, reason: skip.reason, trace: skip.trace });
+      return;
+    }
+    missing.push({ kind, ...item });
+  }
 
   for (const item of expected.schemas) {
     const res = await client.query(
@@ -291,8 +521,7 @@ async function checkMigrationObjects(client, expected, tableExistsCache, ignoreO
       [item.schema]
     );
     if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "schema", ...item });
+      pushMissing("schema", item);
     }
   }
 
@@ -309,8 +538,7 @@ async function checkMigrationObjects(client, expected, tableExistsCache, ignoreO
       [item.schema, item.table]
     );
     if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "table", ...item });
+      pushMissing("table", item);
     }
   }
 
@@ -326,8 +554,7 @@ async function checkMigrationObjects(client, expected, tableExistsCache, ignoreO
       [item.schema, item.view]
     );
     if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "view", ...item });
+      pushMissing("view", item);
     }
   }
 
@@ -345,8 +572,7 @@ async function checkMigrationObjects(client, expected, tableExistsCache, ignoreO
       [item.schema, item.view]
     );
     if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "materialized_view", ...item });
+      pushMissing("materialized_view", item);
     }
   }
 
@@ -368,8 +594,7 @@ async function checkMigrationObjects(client, expected, tableExistsCache, ignoreO
       [item.schema, item.table, item.column]
     );
     if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "column", ...item });
+      pushMissing("column", item);
     }
   }
 
@@ -392,8 +617,7 @@ async function checkMigrationObjects(client, expected, tableExistsCache, ignoreO
       [item.indexSchema, item.indexName]
     );
     if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "index", ...item });
+      pushMissing("index", item);
     }
   }
 
@@ -410,8 +634,7 @@ async function checkMigrationObjects(client, expected, tableExistsCache, ignoreO
       [item.schema, item.type]
     );
     if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "type", ...item });
+      pushMissing("type", item);
     }
   }
 
@@ -430,26 +653,14 @@ async function checkMigrationObjects(client, expected, tableExistsCache, ignoreO
       [item.schema, item.type, item.value]
     );
     if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "enum_value", ...item });
+      pushMissing("enum_value", item);
     }
   }
 
   for (const item of expected.functions) {
-    const res = await client.query(
-      `
-        SELECT 1
-        FROM pg_proc p
-        JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE n.nspname = $1
-          AND p.proname = $2
-        LIMIT 1
-      `,
-      [item.schema, item.functionName]
-    );
-    if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "function", ...item });
+    const exists = await functionExists(client, item.schema, item.functionName, functionExistsCache);
+    if (!exists) {
+      pushMissing("function", item);
     }
   }
 
@@ -474,20 +685,18 @@ async function checkMigrationObjects(client, expected, tableExistsCache, ignoreO
       [item.tableSchema, item.tableName, item.triggerName]
     );
     if (res.rows.length === 0) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "trigger", ...item });
+      pushMissing("trigger", item);
     }
   }
 
   for (const item of expected.seedTables) {
     const tableIsPresent = await tableExists(client, item.schema, item.table, tableExistsCache);
     if (!tableIsPresent) {
-      const objectName = missingObjectName(item);
-      if (!objectName || !ignoreObjectSet.has(objectName)) missing.push({ kind: "seed_rows", ...item });
+      pushMissing("seed_rows", item);
     }
   }
 
-  return missing;
+  return { missing, skipped };
 }
 
 export async function verifyMigrationContent({
@@ -515,22 +724,98 @@ export async function verifyMigrationContent({
   const ignoreObjectSet = loadIgnoreSet(ignoreEntries);
 
   const tableExistsCache = new Map();
+  const functionExistsCache = new Map();
   const seenObjectKeys = new Set();
   const report = [];
   let totalMissing = 0;
+  let totalSkipped = 0;
 
   for (const filename of migrationFiles) {
     const fullPath = path.join(migrationsDirectory, filename);
     const sql = await fs.readFile(fullPath, "utf8");
+    const transientObjectSet = parseTransientObjects(sql);
     const expected = dedupeExpectedObjects(parseMigrationObjects(sql), seenObjectKeys);
-    const missing = await checkMigrationObjects(client, expected, tableExistsCache, ignoreObjectSet);
+    const conditionalSkipByObject = new Set();
+    const conditionalMismatch = [];
+    const guardedTargets = parseConditionalGuardedTargets(sql);
+    for (const guardedTarget of guardedTargets) {
+      if (guardedTarget.dependency.kind === "function") {
+        const dependencyExists = await functionExists(
+          client,
+          guardedTarget.dependency.schema,
+          guardedTarget.dependency.name,
+          functionExistsCache
+        );
+        if (!dependencyExists) {
+          for (const target of guardedTarget.targets) {
+            conditionalSkipByObject.add(makeObjectKey(target.kind, target.objectName));
+            if (target.kind === "function") {
+              const [schema, functionName] = target.objectName.split(".");
+              if (await functionExists(client, schema, functionName, functionExistsCache)) {
+                conditionalMismatch.push({
+                  kind: "conditional_mismatch",
+                  key: target.objectName,
+                  detail: "dependency_absent_target_present",
+                });
+              }
+            } else if (target.kind === "index") {
+              const [schema, indexName] = target.objectName.split(".");
+              if (await indexExists(client, schema, indexName)) {
+                conditionalMismatch.push({
+                  kind: "conditional_mismatch",
+                  key: target.objectName,
+                  detail: "dependency_absent_target_present",
+                });
+              }
+            } else if (target.kind === "trigger") {
+              const [schema, tableName, triggerName] = target.objectName.split(".");
+              if (await triggerExists(client, schema, tableName, triggerName)) {
+                conditionalMismatch.push({
+                  kind: "conditional_mismatch",
+                  key: target.objectName,
+                  detail: "dependency_absent_target_present",
+                });
+              }
+            }
+          }
+        }
+      } else if (guardedTarget.dependency.kind === "table") {
+        const dependencyExists = await tableExists(
+          client,
+          guardedTarget.dependency.schema,
+          guardedTarget.dependency.name,
+          tableExistsCache
+        );
+        if (!dependencyExists) {
+          for (const target of guardedTarget.targets) {
+            conditionalSkipByObject.add(makeObjectKey(target.kind, target.objectName));
+          }
+        }
+      }
+    }
+
+    const { missing, skipped } = await checkMigrationObjects(
+      client,
+      expected,
+      tableExistsCache,
+      functionExistsCache,
+      ignoreObjectSet,
+      transientObjectSet,
+      conditionalSkipByObject
+    );
     totalMissing += missing.length;
+    if (conditionalMismatch.length > 0) {
+      missing.push(...conditionalMismatch);
+      totalMissing += conditionalMismatch.length;
+    }
+    totalSkipped += skipped.length;
     report.push({
       filename,
       expectedCounts: Object.fromEntries(
         Object.entries(expected).map(([kind, entries]) => [kind, entries.length])
       ),
       missing,
+      skipped,
     });
   }
 
@@ -539,6 +824,7 @@ export async function verifyMigrationContent({
     maxNumber,
     migrationCount: migrationFiles.length,
     totalMissing,
+    totalSkipped,
     report,
   };
 }

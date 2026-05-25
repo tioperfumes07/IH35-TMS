@@ -680,6 +680,24 @@ Applied migrations are immutable. The `verify:applied-migrations-immutable` guar
 
 ---
 
+## 2026-05-25 — Verify-content conditional/transient rules
+
+Source: Jorge + Cursor triage chat 2026-05-25  
+Status: LOCKED  
+Relevant block: P7-FIX-VERIFY-CONTENT-DRIFT
+
+`db:verify:critical-runtime -- --verify-content` enforces migration/content parity, with two explicit verifier exemptions:
+
+1. **Conditional DDL skip (`CONDITIONAL_SKIP`)**  
+   When a migration wraps `CREATE TRIGGER` / `CREATE FUNCTION` / `CREATE INDEX` in an `IF EXISTS (...) THEN ... END IF` dependency guard, and the dependency is absent in runtime schema, the wrapped object is treated as a deliberate skip if also absent.
+
+2. **Transient object skip (`TRANSIENT_SKIP`)**  
+   Objects created and dropped within the same migration file, and `CREATE TEMP TABLE ... ON COMMIT DROP` artifacts, are excluded from persistent drift targets.
+
+Guardrail: if guard/target states are inconsistent (dependency absent but target present, or dependency present while guarded target is still absent), verifier reports drift rather than silently passing.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:

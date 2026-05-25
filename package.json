@@ -161,6 +161,7 @@
     "verify:sidebar-route-resolution": "node scripts/verify-sidebar-route-resolution.mjs",
     "verify:no-internal-strings": "node scripts/verify-no-internal-strings.mjs",
     "verify:applied-migrations-immutable": "node scripts/verify-applied-migrations-immutable.mjs",
+    "verify:content-drift-check": "node scripts/verify-content-drift-check.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",
     "verify:mdata-routes-local-first": "node scripts/verify-mdata-routes-local-first.mjs",
     "verify:qbo-master-write-contract": "node scripts/verify-qbo-master-write-contract.mjs",
