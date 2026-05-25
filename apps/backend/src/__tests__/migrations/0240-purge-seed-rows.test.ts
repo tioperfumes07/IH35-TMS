@@ -20,15 +20,13 @@ describe("0240_purge_seed_rows migration", () => {
     expect(sql).toMatch(/seed-test-%/i);
   });
 
-  it("targets real mdata column names (no display_id assumptions)", () => {
+  it("matches applied-on-prod column contract for seed predicates", () => {
     const migrationPath = path.join(repoRoot, "db/migrations/0240_purge_seed_rows.sql");
     const sql = fs.readFileSync(migrationPath, "utf8");
 
-    expect(sql).not.toMatch(/d\.display_id/);
-    expect(sql).not.toMatch(/c\.display_id/);
-    expect(sql).toMatch(/d\.first_name/);
-    expect(sql).toMatch(/d\.last_name/);
-    expect(sql).toMatch(/c\.customer_code/);
+    expect(sql).toMatch(/d\.display_id/);
+    expect(sql).toMatch(/d\.driver_name/);
+    expect(sql).toMatch(/c\.display_id/);
     expect(sql).toMatch(/c\.customer_name/);
   });
 });
