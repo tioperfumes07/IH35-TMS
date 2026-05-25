@@ -35,6 +35,12 @@ _No backend regressions requiring immediate hotfix were identified during P6-T11
 | **P7-EMAIL-SMOKE-001** | Email queue smoke + admin retry API/UI | `npm run smoke:email-queue`, `POST /api/v1/admin/email-queue/:id/retry`, `/banking/email-queue` |
 | **P7-SCHEDULED-REPORT-E2E-001** | Prod-safe scheduled-report e2e (`BLOCK_X_PROD_COOKIE`) | `scripts/smoke-tests/block-x-scheduled-reports-e2e.ts` |
 
+## Phase 7 visual audit cleanup (2026-05-24)
+
+| ID | Title | Notes |
+| --- | --- | --- |
+| **P7-AUDIT-VISUAL-P1** | 5 prod-walk frontend fixes + 5 guards + 0240 seed purge | DONE on PR merge |
+
 ## Phase 7 stabilization hotfix split (2026-05-25)
 
 | ID | Title | Notes |

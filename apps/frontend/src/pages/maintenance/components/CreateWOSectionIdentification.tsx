@@ -51,7 +51,6 @@ export function CreateWOSectionIdentification({
   const showExemptionReason = requireLoadForExpense && !selectedLoadId;
   return (
     <section className="rounded border border-gray-200 bg-white p-3">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Work Order Details</h3>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
         <Field label="WO Number">
           <input value="Auto on save" readOnly className="h-8 w-full rounded border border-gray-300 bg-gray-100 px-2 text-sm" />

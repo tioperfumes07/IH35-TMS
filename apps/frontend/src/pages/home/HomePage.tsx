@@ -404,7 +404,7 @@ export function HomePage({ auth }: Props) {
       </div>
 
       <footer className="order-8 text-xs text-gray-500">
-        Backend version: {import.meta.env.VITE_BUILD_COMMIT ? String(import.meta.env.VITE_BUILD_COMMIT) : "dev"}
+        Backend version: {import.meta.env.VITE_BUILD_COMMIT ? String(import.meta.env.VITE_BUILD_COMMIT) : "not available"}
       </footer>
     </div>
   );

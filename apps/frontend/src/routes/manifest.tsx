@@ -81,6 +81,8 @@ import { FuelReceiptPage } from "../pages/driver/FuelReceiptPage";
 import { NotificationPreferencesPage } from "../pages/settings/NotificationPreferencesPage";
 import { UserProfileSettingsPage } from "../pages/settings/UserProfileSettingsPage";
 import { DocumentsPage } from "../pages/Documents";
+import { DocsPage } from "../pages/docs/DocsPage";
+import { EldPage } from "../pages/eld/EldPage";
 import { UserDetailPage } from "../pages/UserDetail";
 import { UsersPage } from "../pages/Users";
 import { VendorsPage } from "../pages/Vendors";
@@ -391,6 +393,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DocumentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/docs"
+          element={
+            <ProtectedRoute>
+              <DocsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eld"
+          element={
+            <ProtectedRoute>
+              <EldPage />
             </ProtectedRoute>
           }
         />

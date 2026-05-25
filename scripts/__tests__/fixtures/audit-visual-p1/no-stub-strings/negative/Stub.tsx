@@ -1,0 +1,1 @@
+export function Stub(){ return <div>Coming soon</div>; }

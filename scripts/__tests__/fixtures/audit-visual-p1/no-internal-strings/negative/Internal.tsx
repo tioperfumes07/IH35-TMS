@@ -1,0 +1,1 @@
+export function Internal(){ return <h2>qbo_archive</h2>; }
