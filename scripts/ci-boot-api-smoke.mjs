@@ -17,6 +17,7 @@ const child = spawn(process.execPath, ["dist/index.js"], {
     PORT: port,
     ENABLE_OUTBOX_PROCESSOR: "false",
     NODE_ENV: process.env.NODE_ENV ?? "test",
+    IH35_BOOT_API_SMOKE: "true",
     DATABASE_DIRECT_URL: process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL,
     OAUTH_GOOGLE_CLIENT_ID: process.env.OAUTH_GOOGLE_CLIENT_ID ?? "boot-smoke-google-client-id",
     OAUTH_GOOGLE_CLIENT_SECRET: process.env.OAUTH_GOOGLE_CLIENT_SECRET ?? "boot-smoke-google-client-secret",
