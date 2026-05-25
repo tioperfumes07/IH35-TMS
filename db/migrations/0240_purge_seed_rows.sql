@@ -16,10 +16,9 @@ BEGIN
       FROM information_schema.columns
       WHERE table_schema = 'mdata'
         AND table_name = 'drivers'
-        AND column_name = 'display_id'
+        AND column_name = 'first_name'
     ) THEN
-      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.display_id, '''') = ''TEST-DRIVER''';
-      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.display_id, '''') ILIKE ''seed-test-%''';
+      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.first_name, '''') ILIKE ''%TEST%''';
     END IF;
 
     IF EXISTS (
@@ -27,9 +26,20 @@ BEGIN
       FROM information_schema.columns
       WHERE table_schema = 'mdata'
         AND table_name = 'drivers'
-        AND column_name = 'driver_name'
+        AND column_name = 'last_name'
     ) THEN
-      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.driver_name, '''') ILIKE ''%TEST%''';
+      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.last_name, '''') ILIKE ''%TEST%''';
+    END IF;
+
+    IF EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'mdata'
+        AND table_name = 'drivers'
+        AND column_name = 'employee_number'
+    ) THEN
+      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.employee_number, '''') = ''TEST-DRIVER''';
+      v_driver_predicate := v_driver_predicate || ' OR COALESCE(d.employee_number, '''') ILIKE ''seed-test-%''';
     END IF;
 
     EXECUTE format(
@@ -57,10 +67,10 @@ BEGIN
       FROM information_schema.columns
       WHERE table_schema = 'mdata'
         AND table_name = 'customers'
-        AND column_name = 'display_id'
+        AND column_name = 'customer_code'
     ) THEN
-      v_customer_predicate := v_customer_predicate || ' OR COALESCE(c.display_id, '''') = ''TEST-CUSTOMER''';
-      v_customer_predicate := v_customer_predicate || ' OR COALESCE(c.display_id, '''') ILIKE ''seed-test-%''';
+      v_customer_predicate := v_customer_predicate || ' OR COALESCE(c.customer_code, '''') = ''TEST-CUSTOMER''';
+      v_customer_predicate := v_customer_predicate || ' OR COALESCE(c.customer_code, '''') ILIKE ''seed-test-%''';
     END IF;
 
     IF EXISTS (
