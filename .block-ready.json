@@ -21,6 +21,7 @@
     "scripts/__tests__/fixtures/maintenance-routes-bootstrapped/**",
     "scripts/__tests__/fixtures/maintenance-tab-coverage/**",
     "package.json",
+    ".github/workflows/ci.yml",
     "docs/trackers/phase-7.md",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
     ".block-ready.json"

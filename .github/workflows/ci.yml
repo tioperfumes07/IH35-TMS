@@ -82,6 +82,12 @@ jobs:
       - name: Verify applied migrations immutable
         run: npm run verify:applied-migrations-immutable
 
+      - name: Verify maintenance routes bootstrapped
+        run: npm run verify:maintenance-routes-bootstrapped
+
+      - name: Verify maintenance tab coverage
+        run: npm run verify:maintenance-tab-coverage
+
       - name: Backend tests + coverage (CI strict)
         run: npm run test:coverage
 
