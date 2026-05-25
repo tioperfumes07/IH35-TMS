@@ -153,6 +153,8 @@
     "verify:no-test-units-in-prod": "node scripts/verify-no-test-units-in-prod.mjs",
     "verify:qbo-customer-sync-tenant-chain": "node scripts/verify-qbo-customer-sync-tenant-chain.mjs",
     "verify:qbo-conflict-detection-tenant-scope": "node scripts/verify-qbo-conflict-detection-tenant-scope.mjs",
+    "verify:qbo-webhook-fail-closed": "node scripts/verify-qbo-webhook-fail-closed.mjs",
+    "verify:no-boot-throwing-env-checks": "node scripts/verify-no-boot-throwing-env-checks.mjs",
     "verify:tenant-scope-on-routes": "node scripts/verify-tenant-scope-on-routes.mjs",
     "verify:tms-customer-push-tenant-chain": "node scripts/verify-tms-customer-push-tenant-chain.mjs",
     "verify:tms-vendor-push-tenant-chain": "node scripts/verify-tms-vendor-push-tenant-chain.mjs",
