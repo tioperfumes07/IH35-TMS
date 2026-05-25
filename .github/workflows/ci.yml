@@ -76,6 +76,9 @@ jobs:
       - name: Migration application consistency guard
         run: npm run verify:migration-application-consistency
 
+      - name: Verify applied migrations immutable
+        run: npm run verify:applied-migrations-immutable
+
       - name: Backend tests + coverage (CI strict)
         run: npm run test:coverage
 

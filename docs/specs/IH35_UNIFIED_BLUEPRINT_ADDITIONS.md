@@ -670,6 +670,16 @@ Static guard contract:
 
 ---
 
+## 2026-05-25 — Applied migration immutability guard
+
+Source: Jorge chat 2026-05-25  
+Status: LOCKED  
+Relevant block: P7-FIX-MIG-IMMUTABILITY-GUARD
+
+Applied migrations are immutable. The `verify:applied-migrations-immutable` guard enforces this. To change behavior, add a new migration with the next available number.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:
