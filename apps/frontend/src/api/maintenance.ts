@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, resolveApiUrl } from "./client";
 
 export type WorkOrderType = "pm" | "repair" | "tire" | "accident";
 export type WorkOrderStatus = "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
@@ -368,6 +368,10 @@ export function listWorkOrdersFiltered(
 
 export function getWorkOrder(id: string, companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/work-orders/${id}?${query(companyId)}`);
+}
+
+export function getMaintenanceWorkOrderPdfUrl(id: string, companyId: string) {
+  return resolveApiUrl(`/api/v1/maintenance/work-orders/${id}/pdf?${query(companyId)}`);
 }
 
 export function createWorkOrder(payload: CreateWorkOrderLegacyPayload | CreateWorkOrderTwoSectionPayload) {
