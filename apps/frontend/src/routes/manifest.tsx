@@ -58,6 +58,11 @@ import type { MaintenanceTabId } from "../pages/maintenance/MaintenanceHome";
 import { WorkOrdersConsoleDetailPage } from "../pages/work-orders/WorkOrdersConsoleDetailPage";
 import { WorkOrdersConsoleListPage } from "../pages/work-orders/WorkOrdersConsoleListPage";
 import { WorkOrderDetailPage } from "../pages/maintenance/WorkOrderDetailPage";
+import { PmSchedulePage } from "../pages/maintenance/pm-schedule/PmSchedulePage";
+import { InspectionsPage } from "../pages/maintenance/inspections/InspectionsPage";
+import { VendorsPage as MaintenanceVendorsPage } from "../pages/maintenance/vendors/VendorsPage";
+import { MaintenanceReportsPage } from "../pages/maintenance/reports/MaintenanceReportsPage";
+import { Compliance425CPage } from "../pages/maintenance/compliance/Compliance425CPage";
 import { CashAdvancesHomePage } from "../pages/cash-advances/CashAdvancesHome";
 import { FactoringHomePage } from "../pages/factoring/FactoringHome";
 import { AssetProfilePage } from "../pages/fleet/AssetProfilePage";
@@ -688,6 +693,46 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <MaintenanceTabRoute tabId="arriving_soon" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/pm-schedule"
+          element={
+            <ProtectedRoute>
+              <PmSchedulePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/inspections"
+          element={
+            <ProtectedRoute>
+              <InspectionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/vendors"
+          element={
+            <ProtectedRoute>
+              <MaintenanceVendorsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/reports"
+          element={
+            <ProtectedRoute>
+              <MaintenanceReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/compliance"
+          element={
+            <ProtectedRoute>
+              <Compliance425CPage />
             </ProtectedRoute>
           }
         />

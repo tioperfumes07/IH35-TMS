@@ -13,8 +13,8 @@
     "scripts/verify-steps/29-verify-safety-tab-coverage.mjs",
     "scripts/__tests__/verify-safety-tab-coverage.test.mjs",
     "scripts/__tests__/fixtures/safety-tab-coverage/**",
-    ".github/workflows/ci.yml",
     "package.json",
+    ".github/workflows/ci.yml",
     "docs/trackers/phase-7.md",
     ".block-ready.json"
   ],

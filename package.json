@@ -167,6 +167,8 @@
     "verify:safety-tab-coverage": "node scripts/verify-safety-tab-coverage.mjs",
     "verify:wo-display-id-format": "node scripts/verify-wo-display-id-format.mjs",
     "verify:wo-status-transitions": "node scripts/verify-wo-status-transitions.mjs",
+    "verify:pm-due-soon-calculation": "node scripts/verify-pm-due-soon-calculation.mjs",
+    "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",
     "verify:mdata-routes-local-first": "node scripts/verify-mdata-routes-local-first.mjs",
     "verify:qbo-master-write-contract": "node scripts/verify-qbo-master-write-contract.mjs",
