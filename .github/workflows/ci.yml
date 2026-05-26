@@ -102,6 +102,12 @@ jobs:
       - name: Verify safety tab coverage
         run: npm run verify:safety-tab-coverage
 
+      - name: Verify safety random pool determinism
+        run: npm run verify:safety-random-pool-determinism
+
+      - name: Verify safety reports coverage
+        run: npm run verify:safety-reports-coverage
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 
