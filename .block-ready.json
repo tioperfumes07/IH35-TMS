@@ -14,6 +14,8 @@
     "apps/backend/src/maintenance/vehicles*.ts",
     "apps/backend/src/maintenance/drivers*.ts",
     "apps/backend/src/maintenance/parts*.ts",
+    "apps/backend/src/outbox/handlers/registry.ts",
+    "apps/backend/src/outbox/handlers/samsara-master-data-push.handler.ts",
     "apps/backend/src/index.ts",
     "apps/backend/src/maintenance/__tests__/**",
     "apps/backend/src/lib/csv-import/**",
@@ -39,6 +41,6 @@
     "verify:csv-import-gated-for-projected-entities"
   ],
   "runtime_path": "both",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
