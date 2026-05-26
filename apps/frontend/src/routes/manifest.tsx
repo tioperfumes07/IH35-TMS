@@ -58,6 +58,9 @@ import type { MaintenanceTabId } from "../pages/maintenance/MaintenanceHome";
 import { WorkOrdersConsoleDetailPage } from "../pages/work-orders/WorkOrdersConsoleDetailPage";
 import { WorkOrdersConsoleListPage } from "../pages/work-orders/WorkOrdersConsoleListPage";
 import { WorkOrderDetailPage } from "../pages/maintenance/WorkOrderDetailPage";
+import { VehiclesMasterDataPage } from "../pages/maintenance/vehicles/VehiclesMasterDataPage";
+import { DriversMasterDataPage } from "../pages/maintenance/drivers/DriversMasterDataPage";
+import { PartsMasterDataPage } from "../pages/maintenance/parts/PartsMasterDataPage";
 import { CashAdvancesHomePage } from "../pages/cash-advances/CashAdvancesHome";
 import { FactoringHomePage } from "../pages/factoring/FactoringHome";
 import { AssetProfilePage } from "../pages/fleet/AssetProfilePage";
@@ -680,6 +683,30 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <MaintenanceTabRoute tabId="settings" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/vehicles"
+          element={
+            <ProtectedRoute>
+              <VehiclesMasterDataPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/drivers"
+          element={
+            <ProtectedRoute>
+              <DriversMasterDataPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/parts"
+          element={
+            <ProtectedRoute>
+              <PartsMasterDataPage />
             </ProtectedRoute>
           }
         />

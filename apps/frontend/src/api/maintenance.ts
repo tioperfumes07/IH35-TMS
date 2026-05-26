@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, apiRequestFormData, resolveApiUrl } from "./client";
 
 export type WorkOrderType = "pm" | "repair" | "tire" | "accident";
 export type WorkOrderStatus = "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
@@ -132,6 +132,54 @@ export type PartsInventoryRow = {
   location: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type MaintenanceVehicleRow = {
+  id: string;
+  unit_display_id: string;
+  vehicle_type: string | null;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  vin: string;
+  plate: string | null;
+  mileage: number | null;
+  status: string;
+  notes: string | null;
+  voided_at: string | null;
+  voided_reason: string | null;
+  source: "Samsara" | "Manual" | "Voided";
+  samsara_vehicle_id?: string | null;
+};
+
+export type MaintenanceDriverRow = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string | null;
+  cdl_number: string | null;
+  cdl_state: string | null;
+  status: string;
+  notes: string | null;
+  voided_at: string | null;
+  voided_reason: string | null;
+  source: "Samsara" | "Manual" | "Voided";
+  samsara_driver_id?: string | null;
+};
+
+export type MaintenancePartRow = {
+  id: string;
+  part_number: string;
+  name: string;
+  vendor_default: string | null;
+  unit_cost: number | null;
+  qty_on_hand: number;
+  reorder_threshold: number;
+  location: string | null;
+  source: "manual" | "csv";
+  voided_at: string | null;
+  voided_reason: string | null;
 };
 
 export type SevereRepairEstimate = {
@@ -611,4 +659,195 @@ export function createPartsInventoryPurchase(
 export function getIntransitTriageQueue(operatingCompanyId: string) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ issues: Array<Record<string, unknown>> }>(`/api/v1/maintenance/dashboard/intransit-triage-queue?${q.toString()}`);
+}
+
+export function listMaintenanceVehicles(operatingCompanyId: string, params: { search?: string; include_voided?: boolean } = {}) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.search) q.set("search", params.search);
+  if (params.include_voided) q.set("include_voided", "true");
+  return apiRequest<{ rows: MaintenanceVehicleRow[]; csv_import_enabled: boolean }>(`/api/v1/maintenance/vehicles?${q.toString()}`);
+}
+
+export function createMaintenanceVehicle(
+  operatingCompanyId: string,
+  body: {
+    unit_display_id: string;
+    vehicle_type?: string;
+    make?: string;
+    model?: string;
+    year?: number;
+    vin: string;
+    plate?: string;
+    mileage?: number;
+    status?: "InService" | "OutOfService" | "InMaintenance" | "Sold" | "Totaled";
+    notes?: string;
+  }
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<MaintenanceVehicleRow>(`/api/v1/maintenance/vehicles?${q.toString()}`, { method: "POST", body });
+}
+
+export function updateMaintenanceVehicle(
+  vehicleId: string,
+  operatingCompanyId: string,
+  body: Partial<{
+    vehicle_type: string | null;
+    make: string | null;
+    model: string | null;
+    year: number | null;
+    vin: string;
+    plate: string | null;
+    mileage: number | null;
+    status: "InService" | "OutOfService" | "InMaintenance" | "Sold" | "Totaled";
+    notes: string | null;
+  }>
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<MaintenanceVehicleRow>(`/api/v1/maintenance/vehicles/${encodeURIComponent(vehicleId)}?${q.toString()}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function voidMaintenanceVehicle(vehicleId: string, operatingCompanyId: string, voidReason: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ ok: true }>(`/api/v1/maintenance/vehicles/${encodeURIComponent(vehicleId)}/void?${q.toString()}`, {
+    method: "PATCH",
+    body: { void_reason: voidReason },
+  });
+}
+
+export function importMaintenanceVehicles(operatingCompanyId: string, file: File) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  const formData = new FormData();
+  formData.set("file", file);
+  return apiRequestFormData<Record<string, unknown>>(`/api/v1/maintenance/vehicles/import?${q.toString()}`, formData, "POST");
+}
+
+export function listMaintenanceDrivers(operatingCompanyId: string, params: { search?: string; include_voided?: boolean } = {}) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.search) q.set("search", params.search);
+  if (params.include_voided) q.set("include_voided", "true");
+  return apiRequest<{ rows: MaintenanceDriverRow[]; csv_import_enabled: boolean }>(`/api/v1/maintenance/drivers?${q.toString()}`);
+}
+
+export function createMaintenanceDriver(
+  operatingCompanyId: string,
+  body: {
+    first_name: string;
+    last_name: string;
+    phone: string;
+    email?: string;
+    cdl_number?: string;
+    cdl_state?: string;
+    status?: "Active" | "Probation" | "Inactive" | "Terminated" | "OnLeave";
+    notes?: string;
+  }
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<MaintenanceDriverRow>(`/api/v1/maintenance/drivers?${q.toString()}`, { method: "POST", body });
+}
+
+export function updateMaintenanceDriver(
+  driverId: string,
+  operatingCompanyId: string,
+  body: Partial<{
+    first_name: string;
+    last_name: string;
+    phone: string | null;
+    email: string | null;
+    cdl_number: string | null;
+    cdl_state: string | null;
+    status: "Active" | "Probation" | "Inactive" | "Terminated" | "OnLeave";
+    notes: string | null;
+  }>
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<MaintenanceDriverRow>(`/api/v1/maintenance/drivers/${encodeURIComponent(driverId)}?${q.toString()}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function voidMaintenanceDriver(driverId: string, operatingCompanyId: string, voidReason: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ ok: true }>(`/api/v1/maintenance/drivers/${encodeURIComponent(driverId)}/void?${q.toString()}`, {
+    method: "PATCH",
+    body: { void_reason: voidReason },
+  });
+}
+
+export function importMaintenanceDrivers(operatingCompanyId: string, file: File) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  const formData = new FormData();
+  formData.set("file", file);
+  return apiRequestFormData<Record<string, unknown>>(`/api/v1/maintenance/drivers/import?${q.toString()}`, formData, "POST");
+}
+
+export function listMaintenanceParts(operatingCompanyId: string, params: { search?: string; include_voided?: boolean } = {}) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.search) q.set("search", params.search);
+  if (params.include_voided) q.set("include_voided", "true");
+  return apiRequest<{ rows: MaintenancePartRow[] }>(`/api/v1/maintenance/parts?${q.toString()}`);
+}
+
+export function getMaintenancePartsKpis(operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ total_parts: number; low_stock_count: number; total_inventory_value: number }>(`/api/v1/maintenance/parts/kpis?${q.toString()}`);
+}
+
+export function createMaintenancePart(
+  operatingCompanyId: string,
+  body: {
+    part_number: string;
+    name: string;
+    vendor_default?: string;
+    unit_cost?: number;
+    qty_on_hand?: number;
+    reorder_threshold?: number;
+    location?: string;
+  }
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<MaintenancePartRow>(`/api/v1/maintenance/parts?${q.toString()}`, { method: "POST", body });
+}
+
+export function updateMaintenancePart(
+  partId: string,
+  operatingCompanyId: string,
+  body: Partial<{
+    part_number: string;
+    name: string;
+    vendor_default: string | null;
+    unit_cost: number | null;
+    qty_on_hand: number;
+    reorder_threshold: number;
+    location: string | null;
+  }>
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<MaintenancePartRow>(`/api/v1/maintenance/parts/${encodeURIComponent(partId)}?${q.toString()}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function voidMaintenancePart(partId: string, operatingCompanyId: string, voidReason: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ ok: true }>(`/api/v1/maintenance/parts/${encodeURIComponent(partId)}/void?${q.toString()}`, {
+    method: "PATCH",
+    body: { void_reason: voidReason },
+  });
+}
+
+export function importMaintenanceParts(operatingCompanyId: string, file: File) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  const formData = new FormData();
+  formData.set("file", file);
+  return apiRequestFormData<Record<string, unknown>>(`/api/v1/maintenance/parts/import?${q.toString()}`, formData, "POST");
+}
+
+export function getMaintenancePartsTemplateUrl(operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return resolveApiUrl(`/api/v1/maintenance/parts/import-template?${q.toString()}`);
 }

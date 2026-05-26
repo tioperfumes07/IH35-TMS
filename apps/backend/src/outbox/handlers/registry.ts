@@ -10,6 +10,7 @@ import { TmsAccountPushHandler } from "./tms-account-push.handler.js";
 import { TmsInvoicePushHandler } from "./tms-invoice-push.handler.js";
 import { TmsBillPushHandler } from "./tms-bill-push.handler.js";
 import { buildTrailEventHandlers } from "./trail-events.handler.js";
+import { SamsaraMasterDataPushHandler } from "./samsara-master-data-push.handler.js";
 
 export type OutboxPayload = Record<string, unknown>;
 
@@ -101,6 +102,7 @@ export function buildOutboxHandlerRegistry() {
     new TmsAccountPushHandler(),
     new TmsInvoicePushHandler(),
     new TmsBillPushHandler(),
+    new SamsaraMasterDataPushHandler(),
     new GeofenceBreachDetectedHandler(),
     new AuditPersistHandler(),
     new TestNoopHandler(),

@@ -88,6 +88,12 @@ jobs:
       - name: Verify maintenance tab coverage
         run: npm run verify:maintenance-tab-coverage
 
+      - name: Verify master-data write routes
+        run: npm run verify:master-data-write-routes
+
+      - name: Verify CSV import gating for projected entities
+        run: npm run verify:csv-import-gated-for-projected-entities
+
       - name: Backend tests + coverage (CI strict)
         run: npm run test:coverage
 

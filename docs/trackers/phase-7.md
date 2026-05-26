@@ -51,3 +51,4 @@ _No backend regressions requiring immediate hotfix were identified during P6-T11
 | **P7-FIX-VERIFY-CONTENT-DRIFT** | 13 verifier patches + 14 reconciliation entries (0242) + verify:content-drift-check guard | DONE on PR merge |
 | **P7-AUDIT-TRIGGER-STRATEGY** | Decide whether audit.tg_audit_row should be created to activate guarded tg_audit_* triggers or keep guarded-skip as canonical | PENDING |
 | **P7-MAINT-FOUNDATION** | Maintenance route bootstrap + per-tab foundation + placeholder purge + 2 CI guards | DONE on PR merge |
+| **P7-MAINT-MASTER-DATA** | Vehicles + Drivers + Parts CRUD UI on top of projected master_data; CSV import primary for Parts, fallback for V/D | DONE on PR merge |
