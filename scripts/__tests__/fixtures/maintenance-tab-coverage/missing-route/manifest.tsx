@@ -1,0 +1,9 @@
+<Route path="/maintenance" />
+<Route path="/maintenance/fleet-table" />
+<Route path="/maintenance/rm-status-board" />
+<Route path="/maintenance/service-location" />
+<Route path="/maintenance/arriving-soon" />
+<Route path="/maintenance/in-transit-issues" />
+<Route path="/maintenance/damage-reports" />
+<Route path="/maintenance/severe-repairs" />
+<Route path="/maintenance/parts-inventory" />

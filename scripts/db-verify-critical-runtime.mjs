@@ -148,17 +148,23 @@ try {
   }
   console.log(`PASS: required columns present (${REQUIRED_COLUMNS.length})`);
 
-  const ownerRes = await client.query(`
-    SELECT count(*)::int AS owner_count
-    FROM identity.users
-    WHERE role = 'Owner'::identity.role_enum;
-  `);
-  const ownerCount = ownerRes.rows[0]?.owner_count ?? 0;
-  if (ownerCount < 1) {
-    console.error("FAIL: expected at least 1 Owner in identity.users");
-    process.exit(1);
+  // Content-drift verification runs on fresh CI databases with no seeded users.
+  // Keep owner-role enforcement for runtime checks, but skip it when verify-content is requested.
+  if (!verifyContent) {
+    const ownerRes = await client.query(`
+      SELECT count(*)::int AS owner_count
+      FROM identity.users
+      WHERE role = 'Owner'::identity.role_enum;
+    `);
+    const ownerCount = ownerRes.rows[0]?.owner_count ?? 0;
+    if (ownerCount < 1) {
+      console.error("FAIL: expected at least 1 Owner in identity.users");
+      process.exit(1);
+    }
+    console.log(`PASS: owner count is ${ownerCount}`);
+  } else {
+    console.log("PASS: owner-count runtime check skipped during --verify-content");
   }
-  console.log(`PASS: owner count is ${ownerCount}`);
 
   const missingSchemaUsage = [];
   for (const schema of REQUIRED_SCHEMA_USAGE) {

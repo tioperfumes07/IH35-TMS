@@ -918,6 +918,55 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  app.post("/api/v1/maintenance/work-orders/:id/status", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const parsed = transitionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    const result = await withCompany(user.uuid, companyId, async (client) => {
+      if (!(await maintenanceReady(client))) return { unavailable: true as const };
+      const currentRes = await client.query(
+        `SELECT status FROM maintenance.work_orders WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [params.data.id, companyId]
+      );
+      const current = currentRes.rows[0] as { status: z.infer<typeof workOrderStatusSchema> } | undefined;
+      if (!current) return { notFound: true as const };
+      if (!allowedTransitions[current.status as z.infer<typeof workOrderStatusSchema>].includes(parsed.data.new_status)) {
+        return { invalid: true as const, from: current.status, to: parsed.data.new_status };
+      }
+      await client.query(`UPDATE maintenance.work_orders SET status = $2, updated_at = now() WHERE id = $1`, [
+        params.data.id,
+        parsed.data.new_status,
+      ]);
+      await client.query(
+        `
+          INSERT INTO maintenance.wo_status_history (work_order_id, from_status, to_status, changed_at, changed_by_user_id, notes)
+          VALUES ($1,$2,$3,now(),$4,$5)
+        `,
+        [params.data.id, current.status, parsed.data.new_status, user.uuid, parsed.data.cancellation_reason ?? null]
+      );
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "maintenance.work_order.status_transition",
+        { resource_id: params.data.id, from_status: current.status, to_status: parsed.data.new_status },
+        "info",
+        "BT-3-MAINTENANCE-REBUILD"
+      );
+      return { ok: true as const };
+    });
+
+    if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
+    if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
+    if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
+    return { ok: true };
+  });
+
   app.post("/api/v1/maintenance/work-orders/:id/line-items", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;

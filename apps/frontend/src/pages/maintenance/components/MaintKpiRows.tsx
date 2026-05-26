@@ -14,24 +14,23 @@ function Card({ label, value }: { label: string; value: string | number }) {
 }
 
 export function MaintKpiRows({ kpis }: Props) {
+  const dynamicKpis = kpis as Record<string, unknown>;
+  const pastDue = Number(dynamicKpis.past_due ?? kpis.past_due_pm ?? 0);
+  const avgCloseDays = Number(dynamicKpis.avg_close_days ?? kpis.avg_wo_age_days ?? 0);
+  const openDollars = Number(dynamicKpis.open_dollars ?? kpis.mtd_repair_cost ?? 0);
+  const tireAlerts = Number(dynamicKpis.tire_alerts ?? 0);
+  const pmDue = Number(dynamicKpis.pm_due ?? kpis.past_due_pm ?? 0);
+  const dotOo = Number(dynamicKpis.dot_oos ?? kpis.out_of_service ?? 0);
+
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
         <Card label="Open WOs" value={kpis.open_wos} />
-        <Card label="In Shop" value={kpis.in_shop} />
-        <Card label="Past Due PM" value={kpis.past_due_pm} />
-        <Card label="Out of Service" value={kpis.out_of_service} />
-        <Card label="Open Damage" value={kpis.open_damage} />
-        <Card label="Avg WO Age" value={`${kpis.avg_wo_age_days.toFixed(1)} d`} />
-      </div>
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
-        <Card label="MTD Repair $" value={`$${kpis.mtd_repair_cost.toLocaleString()}`} />
-        <Card label="MTD Parts $" value={`$${kpis.mtd_parts_cost.toLocaleString()}`} />
-        <Card label="Avg Cost/WO" value={`$${kpis.avg_wo_cost.toLocaleString()}`} />
-        <Card label="Top Vendor" value={kpis.top_vendor ?? "-"} />
-        <Card label="Top Failure" value={kpis.top_failure ?? "-"} />
-        <Card label="Pending QBO" value={kpis.pending_qbo} />
-      </div>
+        <Card label="Past Due" value={pastDue} />
+        <Card label="Avg Close" value={`${avgCloseDays.toFixed(1)} d`} />
+        <Card label="Open $" value={`$${openDollars.toLocaleString()}`} />
+        <Card label="Tire Alerts" value={tireAlerts} />
+        <Card label="PM Due" value={pmDue} />
+        <Card label="DOT O/O" value={dotOo} />
     </div>
   );
 }

@@ -698,6 +698,39 @@ Guardrail: if guard/target states are inconsistent (dependency absent but target
 
 ---
 
+## 2026-05-25 — Maintenance foundation
+
+Source: Jorge + Cursor execution chat 2026-05-25  
+Status: LOCKED  
+Relevant block: P7-MAINT-FOUNDATION
+
+Canonical maintenance tab list is locked at 10 tabs (additive-only naming):
+
+1. maintenance-home
+2. fleet-table
+3. rm-status-board
+4. service-location
+5. arriving-soon
+6. in-transit-issues
+7. damage-reports
+8. severe-repairs
+9. parts-inventory
+10. settings
+
+Foundational-shell pattern for MISSING/PARTIAL tabs:
+
+- KPI row (read-backed)
+- empty state with icon + heading + one-line description + `+ Create` placeholder CTA
+- read-only list/table
+- no Add/Edit/Void/CSV-write workflows in this block
+
+Permanent recurrence guards:
+
+- `verify:maintenance-routes-bootstrapped` enforces every `apps/backend/src/maintenance/*.routes.ts` module is imported + registered in `apps/backend/src/index.ts`.
+- `verify:maintenance-tab-coverage` enforces 10-tab route presence in frontend manifest, component coverage, and required maintenance KPI endpoints.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:
