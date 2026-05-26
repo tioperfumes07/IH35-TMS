@@ -30,7 +30,6 @@
     "scripts/__tests__/fixtures/master-data-write-routes/**",
     "scripts/__tests__/fixtures/csv-import-gated-for-projected-entities/**",
     "package.json",
-    ".github/workflows/ci.yml",
     "docs/trackers/phase-7.md",
     ".block-ready.json"
   ],

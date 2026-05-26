@@ -1,7 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { getWoCostContext, getWorkOrder } from "../../api/maintenance";
+import { getMaintenanceWorkOrderPdfUrl, getWoCostContext, getWorkOrder } from "../../api/maintenance";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -108,6 +108,16 @@ export function WorkOrderDetailPage() {
       <div className="flex flex-wrap gap-2">
         <Button type="button" disabled={invoiceMismatch || !id}>
           Save header
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => {
+            const url = getMaintenanceWorkOrderPdfUrl(id, companyId);
+            window.open(url, "_blank", "noopener,noreferrer");
+          }}
+        >
+          Generate WO PDF
         </Button>
         {invoiceMismatch ? <span className="text-xs text-red-700">Resolve invoice vs line total before saving.</span> : null}
       </div>

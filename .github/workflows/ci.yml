@@ -99,6 +99,14 @@ jobs:
 
       - name: Verify projected entity CSV import gating
         run: npm run verify:csv-import-gated-for-projected-entities
+      - name: Verify safety tab coverage
+        run: npm run verify:safety-tab-coverage
+
+      - name: Verify PM due-soon calculation guard
+        run: npm run verify:pm-due-soon-calculation
+
+      - name: Verify maintenance reports coverage guard
+        run: npm run verify:maintenance-reports-coverage
 
       - name: Backend tests + coverage (CI strict)
         run: npm run test:coverage

@@ -313,6 +313,21 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return detail;
   });
 
+  app.get("/api/v1/maintenance/work-orders/:id/pdf", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    // Canonical WO PDF renderer lives under /api/v1/work-orders/:id/pdf.
+    return reply.redirect(
+      `/api/v1/work-orders/${encodeURIComponent(params.data.id)}/pdf?operating_company_id=${encodeURIComponent(companyId)}`,
+      307
+    );
+  });
+
   app.get("/api/v1/maintenance/part-locations", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
