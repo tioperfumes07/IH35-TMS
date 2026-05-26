@@ -9,6 +9,7 @@ export { DOTInspectionsTab } from "./DOTInspectionsTab";
 export { DriverScoringTab } from "./DriverScoringTab";
 export { CSAScoreTab } from "./CSAScoreTab";
 export { DOTComplianceTab } from "./DOTComplianceTab";
+export { SafetyEventsTab } from "./SafetyEventsTab";
 export { AccidentsIncidentsTab } from "./AccidentsIncidentsTab";
 export { DamageReportsTab } from "./DamageReportsTab";
 export { TrailerInterchangesTab } from "./TrailerInterchangesTab";

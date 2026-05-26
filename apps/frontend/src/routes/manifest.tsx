@@ -34,6 +34,7 @@ import {
   CSAScoreTab,
   DamageReportsTab,
   DOTComplianceTab,
+  SafetyEventsTab,
   DOTInspectionsTab,
   DriverScoringTab,
   DriverFilesTab,
@@ -551,6 +552,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="driver-scoring" element={<DriverScoringTab />} />
           <Route path="csa-score" element={<CSAScoreTab />} />
           <Route path="dot-compliance" element={<DOTComplianceTab />} />
+          <Route path="safety-events" element={<SafetyEventsTab />} />
           <Route path="accidents" element={<AccidentsIncidentsTab />} />
           <Route path="damage-reports" element={<DamageReportsTab />} />
           <Route path="trailer-interchanges" element={<TrailerInterchangesTab />} />

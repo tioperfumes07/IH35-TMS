@@ -46,6 +46,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     id: "incidents-claims",
     label: "Incidents & Claims",
     tabs: [
+      { id: "safety-events", label: "Safety Events", route: "/safety/safety-events", badge: "new" },
       { id: "accidents", label: "Accidents & Incidents", route: "/safety/accidents", badge: null },
       { id: "damage-reports", label: "Damage Reports", route: "/safety/damage-reports", badge: null },
       { id: "trailer-interchanges", label: "Trailer Interchanges", route: "/safety/trailer-interchanges", badge: null },
@@ -104,6 +105,7 @@ export const TABS = [
   { id: "driver-scoring" },
   { id: "csa-score" },
   { id: "dot-compliance" },
+  { id: "safety-events" },
   { id: "accidents" },
   { id: "damage-reports" },
   { id: "trailer-interchanges" },
