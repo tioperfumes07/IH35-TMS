@@ -94,6 +94,12 @@ jobs:
       - name: Verify CSV import gating for projected entities
         run: npm run verify:csv-import-gated-for-projected-entities
 
+      - name: Verify master data write routes guard
+        run: npm run verify:master-data-write-routes
+
+      - name: Verify projected entity CSV import gating
+        run: npm run verify:csv-import-gated-for-projected-entities
+
       - name: Backend tests + coverage (CI strict)
         run: npm run test:coverage
 
