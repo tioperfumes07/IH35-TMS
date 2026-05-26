@@ -36,7 +36,7 @@
     "verify:pm-due-soon-calculation",
     "verify:maintenance-reports-coverage"
   ],
-  "runtime_path": "both",
+  "runtime_path": "src",
   "db_required": false,
   "guard_required": true
 }
