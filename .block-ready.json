@@ -56,6 +56,8 @@
     "scripts/__tests__/fixtures/safety-reports-coverage/**",
     "package.json",
     ".github/workflows/ci.yml",
+    ".github/workflows/**",
+    "**/.github/workflows/ci.yml",
     "docs/trackers/phase-7.md",
     ".block-ready.json"
   ],
