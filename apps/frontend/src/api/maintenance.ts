@@ -690,3 +690,240 @@ export function getIntransitTriageQueue(operatingCompanyId: string) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ issues: Array<Record<string, unknown>> }>(`/api/v1/maintenance/dashboard/intransit-triage-queue?${q.toString()}`);
 }
+
+export type MaintenanceVehicleRow = {
+  id: string;
+  unit_display_id: string;
+  vehicle_type: string | null;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  vin: string;
+  plate: string | null;
+  mileage: number | null;
+  status: string;
+  notes: string | null;
+  source: "Samsara" | "Manual" | "Voided" | string;
+  voided_at: string | null;
+  voided_reason: string | null;
+};
+
+export type MaintenanceDriverRow = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  email: string | null;
+  cdl_number: string | null;
+  cdl_state: string | null;
+  status: string;
+  notes: string | null;
+  source: "Samsara" | "Manual" | "Voided" | string;
+  voided_at: string | null;
+  voided_reason: string | null;
+};
+
+export type MaintenancePartRow = {
+  id: string;
+  part_number: string;
+  name: string;
+  vendor_default: string | null;
+  unit_cost: number | null;
+  qty_on_hand: number;
+  reorder_threshold: number;
+  location: string | null;
+  source: string;
+  voided_at: string | null;
+  voided_reason: string | null;
+};
+
+export type MaintenancePartsKpis = {
+  total_parts: number;
+  low_stock_count: number;
+  total_inventory_value: number;
+};
+
+export function listMaintenanceVehicles(
+  operatingCompanyId: string,
+  params: { search?: string; include_voided?: boolean } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.search) q.set("search", params.search);
+  if (params.include_voided != null) q.set("include_voided", String(params.include_voided));
+  return apiRequest<{ rows: MaintenanceVehicleRow[]; csv_import_enabled: boolean }>(
+    `/api/v1/maintenance/vehicles?${q.toString()}`
+  );
+}
+
+export function createMaintenanceVehicle(
+  operatingCompanyId: string,
+  body: {
+    unit_display_id: string;
+    vehicle_type?: string;
+    make?: string;
+    model?: string;
+    year?: number;
+    vin: string;
+    plate?: string;
+    mileage?: number;
+    status: "InService" | "OutOfService" | "InMaintenance" | "Sold" | "Totaled";
+    notes?: string;
+  }
+) {
+  return apiRequest<MaintenanceVehicleRow>(
+    `/api/v1/maintenance/vehicles?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body }
+  );
+}
+
+export function updateMaintenanceVehicle(
+  id: string,
+  operatingCompanyId: string,
+  body: Partial<Omit<MaintenanceVehicleRow, "id" | "source" | "voided_at" | "voided_reason">>
+) {
+  return apiRequest<MaintenanceVehicleRow>(
+    `/api/v1/maintenance/vehicles/${encodeURIComponent(id)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "PATCH", body }
+  );
+}
+
+export function voidMaintenanceVehicle(id: string, operatingCompanyId: string, voidReason: string) {
+  return apiRequest<{ ok: boolean }>(
+    `/api/v1/maintenance/vehicles/${encodeURIComponent(id)}/void?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "PATCH", body: { void_reason: voidReason } }
+  );
+}
+
+export function importMaintenanceVehicles(operatingCompanyId: string, file: File) {
+  const form = new FormData();
+  form.set("file", file);
+  return apiRequest<{ inserted_rows: number; invalid_rows: number; errors: Array<{ row: number; message: string }> }>(
+    `/api/v1/maintenance/vehicles/import?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body: form }
+  );
+}
+
+export function listMaintenanceDrivers(
+  operatingCompanyId: string,
+  params: { search?: string; include_voided?: boolean } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.search) q.set("search", params.search);
+  if (params.include_voided != null) q.set("include_voided", String(params.include_voided));
+  return apiRequest<{ rows: MaintenanceDriverRow[]; csv_import_enabled: boolean }>(
+    `/api/v1/maintenance/drivers?${q.toString()}`
+  );
+}
+
+export function createMaintenanceDriver(
+  operatingCompanyId: string,
+  body: {
+    first_name: string;
+    last_name: string;
+    phone: string;
+    email?: string;
+    cdl_number?: string;
+    cdl_state?: string;
+    status: "Active" | "Probation" | "Inactive" | "Terminated" | "OnLeave";
+    notes?: string;
+  }
+) {
+  return apiRequest<MaintenanceDriverRow>(
+    `/api/v1/maintenance/drivers?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body }
+  );
+}
+
+export function updateMaintenanceDriver(
+  id: string,
+  operatingCompanyId: string,
+  body: Partial<Omit<MaintenanceDriverRow, "id" | "source" | "voided_at" | "voided_reason">>
+) {
+  return apiRequest<MaintenanceDriverRow>(
+    `/api/v1/maintenance/drivers/${encodeURIComponent(id)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "PATCH", body }
+  );
+}
+
+export function voidMaintenanceDriver(id: string, operatingCompanyId: string, voidReason: string) {
+  return apiRequest<{ ok: boolean }>(
+    `/api/v1/maintenance/drivers/${encodeURIComponent(id)}/void?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "PATCH", body: { void_reason: voidReason } }
+  );
+}
+
+export function importMaintenanceDrivers(operatingCompanyId: string, file: File) {
+  const form = new FormData();
+  form.set("file", file);
+  return apiRequest<{ inserted_rows: number; invalid_rows: number; errors: Array<{ row: number; message: string }> }>(
+    `/api/v1/maintenance/drivers/import?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body: form }
+  );
+}
+
+export function listMaintenanceParts(
+  operatingCompanyId: string,
+  params: { search?: string; include_voided?: boolean } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.search) q.set("search", params.search);
+  if (params.include_voided != null) q.set("include_voided", String(params.include_voided));
+  return apiRequest<{ rows: MaintenancePartRow[] }>(`/api/v1/maintenance/parts?${q.toString()}`);
+}
+
+export function getMaintenancePartsKpis(operatingCompanyId: string) {
+  return apiRequest<MaintenancePartsKpis>(
+    `/api/v1/maintenance/parts/kpis?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function createMaintenancePart(
+  operatingCompanyId: string,
+  body: {
+    part_number: string;
+    name: string;
+    vendor_default?: string;
+    unit_cost?: number;
+    qty_on_hand: number;
+    reorder_threshold: number;
+    location?: string;
+  }
+) {
+  return apiRequest<MaintenancePartRow>(
+    `/api/v1/maintenance/parts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body }
+  );
+}
+
+export function updateMaintenancePart(
+  id: string,
+  operatingCompanyId: string,
+  body: Partial<Omit<MaintenancePartRow, "id" | "source" | "voided_at" | "voided_reason">>
+) {
+  return apiRequest<MaintenancePartRow>(
+    `/api/v1/maintenance/parts/${encodeURIComponent(id)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "PATCH", body }
+  );
+}
+
+export function voidMaintenancePart(id: string, operatingCompanyId: string, voidReason: string) {
+  return apiRequest<{ ok: boolean }>(
+    `/api/v1/maintenance/parts/${encodeURIComponent(id)}/void?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "PATCH", body: { void_reason: voidReason } }
+  );
+}
+
+export function importMaintenanceParts(operatingCompanyId: string, file: File) {
+  const form = new FormData();
+  form.set("file", file);
+  return apiRequest<{ inserted_rows: number; invalid_rows: number; rolled_back: boolean; errors: Array<{ row: number; message: string }> }>(
+    `/api/v1/maintenance/parts/import?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body: form }
+  );
+}
+
+export function getMaintenancePartsTemplateUrl(operatingCompanyId: string) {
+  return resolveApiUrl(
+    `/api/v1/maintenance/parts/import-template?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}

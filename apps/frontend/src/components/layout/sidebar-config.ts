@@ -152,6 +152,9 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "maintenance":
       return [
         { label: "Dashboard", to: "/maintenance" },
+        { label: "Vehicles", to: "/maintenance/vehicles" },
+        { label: "Drivers", to: "/maintenance/drivers" },
+        { label: "Parts", to: "/maintenance/parts" },
         { label: "Severe Repairs", to: "/maintenance?tab=severe" },
         { label: "PM Schedule", to: "/maintenance/pm-schedule" },
         { label: "Inspections", to: "/maintenance/inspections" },
