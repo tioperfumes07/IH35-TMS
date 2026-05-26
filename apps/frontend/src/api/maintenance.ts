@@ -594,6 +594,80 @@ export function getWoCostContext(operatingCompanyId: string) {
   return apiRequest<WoCostContextPayload>(`/api/v1/maintenance/wo-cost-context?${q.toString()}`);
 }
 
+export type PmScheduleRow = {
+  id: string;
+  unit_id: string;
+  unit_display_id: string;
+  pm_type: string;
+  interval_kind: string;
+  interval_value: number;
+  status: "current" | "due_soon" | "overdue";
+};
+
+export function listMaintenancePmSchedules(operatingCompanyId: string) {
+  return apiRequest<{ rows: PmScheduleRow[] }>(
+    `/api/v1/maintenance/pm-schedule?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function createMaintenancePmSchedule(
+  body: {
+    operating_company_id: string;
+    unit_id: string;
+    pm_type: string;
+    interval_kind: "miles" | "hours" | "days";
+    interval_value: number;
+    last_service_odometer?: number;
+  }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/pm-schedule`, { method: "POST", body });
+}
+
+export function generateMaintenancePmWorkOrder(id: string, operatingCompanyId: string) {
+  return apiRequest<{ work_order_id: string }>(
+    `/api/v1/maintenance/pm-schedule/${encodeURIComponent(id)}/generate-wo?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST" }
+  );
+}
+
+export function listMaintenanceInspections(operatingCompanyId: string) {
+  return apiRequest<{ rows: Array<Record<string, unknown>> }>(
+    `/api/v1/maintenance/inspections?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function createMaintenanceInspection(body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/inspections`, { method: "POST", body });
+}
+
+export function listMaintenanceVendors(operatingCompanyId: string) {
+  return apiRequest<{ rows: Array<Record<string, unknown>> }>(
+    `/api/v1/maintenance/vendors?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function createMaintenanceVendor(body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/vendors`, { method: "POST", body });
+}
+
+export function getMaintenanceReportRows(report: string, operatingCompanyId: string) {
+  return apiRequest<{ report: string; rows: Array<Record<string, unknown>> }>(
+    `/api/v1/maintenance/reports/${encodeURIComponent(report)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function getMaintenanceReportXlsxUrl(report: string, operatingCompanyId: string) {
+  return resolveApiUrl(
+    `/api/v1/maintenance/reports/${encodeURIComponent(report)}/export.xlsx?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function listMaintenanceCompliance425cLog(operatingCompanyId: string) {
+  return apiRequest<{ rows: Array<Record<string, unknown>> }>(
+    `/api/v1/maintenance/compliance/425c-log?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function createPartsInventoryPurchase(
   operatingCompanyId: string,
   body: {
