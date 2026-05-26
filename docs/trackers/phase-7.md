@@ -54,5 +54,6 @@ _No backend regressions requiring immediate hotfix were identified during P6-T11
 | **P7-MAINT-MASTER-DATA** | Vehicles + Drivers + Parts CRUD UI on top of projected master_data; CSV import primary for Parts, fallback for V/D | DONE on PR merge |
 | **P7-MAINT-WORK-ORDERS** | WO create + list + edit + status transitions + WO-PDF end-to-end | DONE on PR merge |
 | **P7-SAFETY-DRIVER-PROFILES** | Driver Safety profile + DQ file + Medical cards + Background checks + Training records | DONE on PR merge |
+| **P7-SAFETY-TRAINING-PROGRAMS** | Training programs + Drug pool + HOS + 425C audit trail + Safety Reports | DONE on PR merge |
 | **P7-MAINT-PM-INSPECTIONS** | PM Schedules + Inspections + Vendors + Reports + Compliance 425C linkage | DONE on PR merge |
 | **P7-SAFETY-FOUNDATION** | 21 Safety sub-tabs across 8 groups: routes + sub-nav + KPI shells + empty states | DONE on PR merge |
