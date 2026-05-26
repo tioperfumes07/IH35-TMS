@@ -35,7 +35,7 @@ export async function registerSafetyReportsRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT event_class, count(*)::int AS total
-          FROM audit.events
+          FROM audit.audit_events
           WHERE payload->>'operating_company_id' = $1
             AND event_class ILIKE 'safety.%'
           GROUP BY event_class

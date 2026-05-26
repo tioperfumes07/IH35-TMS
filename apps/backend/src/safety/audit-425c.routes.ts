@@ -32,7 +32,7 @@ export async function registerSafetyAudit425cRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT id, event_class, payload, emitted_at
-          FROM audit.events
+          FROM audit.audit_events
           WHERE payload->>'operating_company_id' = $1
           ORDER BY emitted_at DESC
           LIMIT 500
