@@ -108,6 +108,11 @@ import { registerMaintenancePartsInvoiceLinksRoutes } from "./maintenance/parts-
 import { registerMaintenanceSevereRepairEstimateRoutes } from "./maintenance/severe-repair-estimate.routes.js";
 import { registerMaintenanceIntegrityRoutes } from "./maintenance/integrity.routes.js";
 import { registerWoCostContextRoutes } from "./maintenance/wo-cost-context.routes.js";
+import { registerMaintenancePmScheduleRoutes } from "./maintenance/pm-schedule.routes.js";
+import { registerMaintenanceInspectionsRoutes } from "./maintenance/inspections.routes.js";
+import { registerMaintenanceVendorsRoutes } from "./maintenance/vendors.routes.js";
+import { registerMaintenanceReportsRoutes } from "./maintenance/reports.routes.js";
+import { registerMaintenanceComplianceRoutes } from "./maintenance/compliance.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
@@ -473,6 +478,11 @@ async function main() {
   await registerMaintenanceSevereRepairEstimateRoutes(app);
   await registerMaintenanceIntegrityRoutes(app);
   await registerWoCostContextRoutes(app);
+  await registerMaintenancePmScheduleRoutes(app);
+  await registerMaintenanceInspectionsRoutes(app);
+  await registerMaintenanceVendorsRoutes(app);
+  await registerMaintenanceReportsRoutes(app);
+  await registerMaintenanceComplianceRoutes(app);
   await registerForm425CRoutes(app);
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);
