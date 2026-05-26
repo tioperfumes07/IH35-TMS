@@ -164,6 +164,8 @@
     "verify:content-drift-check": "node scripts/verify-content-drift-check.mjs",
     "verify:maintenance-routes-bootstrapped": "node scripts/verify-maintenance-routes-bootstrapped.mjs",
     "verify:maintenance-tab-coverage": "node scripts/verify-maintenance-tab-coverage.mjs",
+    "verify:wo-display-id-format": "node scripts/verify-wo-display-id-format.mjs",
+    "verify:wo-status-transitions": "node scripts/verify-wo-status-transitions.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",
     "verify:mdata-routes-local-first": "node scripts/verify-mdata-routes-local-first.mjs",
     "verify:qbo-master-write-contract": "node scripts/verify-qbo-master-write-contract.mjs",
