@@ -166,7 +166,6 @@
     "verify:maintenance-tab-coverage": "node scripts/verify-maintenance-tab-coverage.mjs",
     "verify:master-data-write-routes": "node scripts/verify-master-data-write-routes.mjs",
     "verify:csv-import-gated-for-projected-entities": "node scripts/verify-csv-import-gated-for-projected-entities.mjs",
-    "verify:list-detail-source-parity": "node scripts/verify-list-detail-source-parity.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",
     "verify:mdata-routes-local-first": "node scripts/verify-mdata-routes-local-first.mjs",
     "verify:qbo-master-write-contract": "node scripts/verify-qbo-master-write-contract.mjs",

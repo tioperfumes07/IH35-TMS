@@ -210,7 +210,7 @@ export function DriversMasterDataPage() {
               <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.last_name} onChange={(e) => setEditing((p) => (p ? { ...p, last_name: e.target.value } : p))} />
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.phone} onChange={(e) => setEditing((p) => (p ? { ...p, phone: e.target.value } : p))} />
+              <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.phone ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, phone: e.target.value } : p))} />
               <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={editing.email ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, email: e.target.value || null } : p))} />
             </div>
             <textarea className="w-full rounded border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value } : p))} />
