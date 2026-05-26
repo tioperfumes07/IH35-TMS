@@ -164,6 +164,7 @@
     "verify:content-drift-check": "node scripts/verify-content-drift-check.mjs",
     "verify:maintenance-routes-bootstrapped": "node scripts/verify-maintenance-routes-bootstrapped.mjs",
     "verify:maintenance-tab-coverage": "node scripts/verify-maintenance-tab-coverage.mjs",
+    "verify:safety-tab-coverage": "node scripts/verify-safety-tab-coverage.mjs",
     "verify:wo-display-id-format": "node scripts/verify-wo-display-id-format.mjs",
     "verify:wo-status-transitions": "node scripts/verify-wo-status-transitions.mjs",
     "verify:pm-due-soon-calculation": "node scripts/verify-pm-due-soon-calculation.mjs",

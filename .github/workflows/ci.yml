@@ -88,6 +88,9 @@ jobs:
       - name: Verify maintenance tab coverage
         run: npm run verify:maintenance-tab-coverage
 
+      - name: Verify safety tab coverage
+        run: npm run verify:safety-tab-coverage
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 
