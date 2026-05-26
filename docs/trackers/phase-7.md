@@ -57,3 +57,6 @@ _No backend regressions requiring immediate hotfix were identified during P6-T11
 | **P7-SAFETY-TRAINING-PROGRAMS** | Training programs + Drug pool + HOS + 425C audit trail + Safety Reports | DONE on PR merge |
 | **P7-MAINT-PM-INSPECTIONS** | PM Schedules + Inspections + Vendors + Reports + Compliance 425C linkage | DONE on PR merge |
 | **P7-SAFETY-FOUNDATION** | 21 Safety sub-tabs across 8 groups: routes + sub-nav + KPI shells + empty states | DONE on PR merge |
+| **P7-INFRA-BRANCH-TOOLING** | 4 branch scripts + pre-push hook + tests + docs | DONE on PR merge |
+| **P7-INFRA-BRANCH-TOOLING** | 4 branch scripts + pre-push hook + tests + docs | DONE on PR merge |
+| **P7-INFRA-BRANCH-TOOLING** | 4 branch scripts + pre-push hook + tests + docs | DONE on PR merge |

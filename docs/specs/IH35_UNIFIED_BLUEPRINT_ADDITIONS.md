@@ -731,6 +731,49 @@ Permanent recurrence guards:
 
 ---
 
+## 2026-05-26 — Branch tooling and pre-push gate
+
+Source: Jorge + Cursor dispatch (IH35-TMS-NEXT-10-BLOCKS Block 01)  
+Status: LOCKED  
+Relevant block: P7-INFRA-BRANCH-TOOLING
+
+Branch operations are encapsulated as npm scripts with refusal guards (no bypass flags):
+
+- `branch:rebuild-linear` — reset to `origin/main`, apply one or more source SHAs with `git apply --3way`, single commit; conflicts require manual resolve + `--resume`.
+- `branch:precheck-push` — feature-branch-only full verify chain + `block-ready`; wired to `.husky/pre-push`.
+- `branch:safe-switch` — dirty-tree / in-progress-operation / excessive-checkout guards before `git checkout`.
+- `branch:cleanup-stale` — prune locals with no unique work vs `origin/main` (`--dry-run`, confirm, or `--force`).
+
+Canonical reference: `docs/specs/BRANCH-TOOLING.md`.
+
+---
+
+## 2026-05-26 — Branch tooling and pre-push gate
+
+Source: IH35-TMS-NEXT-10-BLOCKS.md Block 01 (P7-INFRA-BRANCH-TOOLING)  
+Status: LOCKED  
+Relevant block: P7-INFRA-BRANCH-TOOLING
+
+### Scope
+
+- `npm run branch:rebuild-linear` — linearize feature work onto `origin/main` via patch apply + single commit.
+- `npm run branch:precheck-push` — build + verify chain + `block-ready` gate before push.
+- `npm run branch:safe-switch` — guarded branch switching (dirty tree, in-progress git ops, reflog churn).
+- `npm run branch:cleanup-stale` — delete merged local branches with no unique work.
+- `.husky/pre-push` runs `branch:precheck-push` automatically (installed by `npm run prepare`).
+
+### Invariants
+
+- Rebuild/switch refuse dirty trees.
+- Rebuild refuses `main`.
+- Precheck refuses branches behind `origin/main`.
+- No auto-push from tooling scripts.
+- No env-based bypass for pre-push hook.
+
+Reference: `docs/specs/BRANCH-TOOLING.md`
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:
@@ -739,3 +782,20 @@ Append new entries with:
 - Affected module
 - Status (PROPOSED / LOCKED / IMPLEMENTED)
 - Relevant block
+
+---
+
+## 2026-05-26 — Branch tooling and pre-push gate
+
+Source: Jorge + Cursor execution chat 2026-05-26  
+Status: LOCKED  
+Relevant block: P7-INFRA-BRANCH-TOOLING
+
+Branch operations are standardized through project scripts:
+
+- `branch:rebuild-linear` rebuilds feature history from source SHAs onto `origin/main` with conflict-aware `git apply --3way`.
+- `branch:precheck-push` is the required push gate: backend build, frontend typecheck build, all `verify:*` scripts, then `block-ready`.
+- `branch:safe-switch` enforces clean-tree and low-thrash checkout safety.
+- `branch:cleanup-stale` prunes merged local branches while preserving unique work and recent `wip/*`/`tmp/*`.
+
+Pre-push is locked to `npm run branch:precheck-push` via husky. Pushes that bypass the scripted precheck are non-compliant with Phase 7 stabilization process.
