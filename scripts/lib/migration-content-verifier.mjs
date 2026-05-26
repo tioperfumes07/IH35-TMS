@@ -351,6 +351,73 @@ export function parseTransientObjects(sql) {
   return transient;
 }
 
+export function parseDroppedObjects(sql) {
+  const text = maskLiteralBodies(stripComments(sql));
+  const defaultSchemas = parseDefaultSchemas(text);
+  const defaultSchema = defaultSchemas[0] || "public";
+  const droppedObjectKeys = new Set();
+  const renamedTables = new Map();
+
+  {
+    const regex =
+      /drop\s+table\s+(?:if\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const { schema, name } = parseQualifiedName(match[1], match[2], defaultSchema);
+      droppedObjectKeys.add(makeObjectKey("table", `${schema}.${name}`));
+    }
+  }
+
+  {
+    const regex =
+      /drop\s+index\s+(?:if\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const { schema, name } = parseQualifiedName(match[1], match[2], defaultSchema);
+      droppedObjectKeys.add(makeObjectKey("index", `${schema}.${name}`));
+    }
+  }
+
+  {
+    const regex =
+      /drop\s+trigger\s+(?:if\s+exists\s+)?(?:"?([a-zA-Z_][\w$]*)"?)\s+on\s+(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const triggerName = normalizeIdent(match[1]);
+      const tableSchema = normalizeIdent(match[2] || defaultSchema);
+      const tableName = normalizeIdent(match[3]);
+      droppedObjectKeys.add(makeObjectKey("trigger", `${tableSchema}.${tableName}.${triggerName}`));
+    }
+  }
+
+  {
+    const regex =
+      /drop\s+function\s+(?:if\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const { schema, name } = parseQualifiedName(match[1], match[2], defaultSchema);
+      droppedObjectKeys.add(makeObjectKey("function", `${schema}.${name}`));
+    }
+  }
+
+  {
+    const regex =
+      /alter\s+table\s+(?:if\s+exists\s+)?(?:(?:"?([a-zA-Z_][\w$]*)"?)[.])?(?:"?([a-zA-Z_][\w$]*)"?)\s+rename\s+to\s+(?:"?([a-zA-Z_][\w$]*)"?)/gi;
+    let match;
+    while ((match = regex.exec(text))) {
+      const tableSchema = normalizeIdent(match[1] || defaultSchema);
+      const oldTable = normalizeIdent(match[2]);
+      const newTable = normalizeIdent(match[3]);
+      const oldFqtn = `${tableSchema}.${oldTable}`;
+      const newFqtn = `${tableSchema}.${newTable}`;
+      renamedTables.set(oldFqtn, newFqtn);
+      droppedObjectKeys.add(makeObjectKey("table", oldFqtn));
+    }
+  }
+
+  return { droppedObjectKeys, renamedTables };
+}
+
 async function tableExists(client, schema, table, tableExistsCache) {
   const key = `${schema}.${table}`;
   if (tableExistsCache.has(key)) return tableExistsCache.get(key);
@@ -472,7 +539,9 @@ async function checkMigrationObjects(
   functionExistsCache,
   ignoreObjectSet,
   transientObjectSet,
-  conditionalSkipByObject
+  conditionalSkipByObject,
+  droppedObjectSet,
+  renamedTableMap
 ) {
   const missing = [];
   const skipped = [];
@@ -480,6 +549,31 @@ async function checkMigrationObjects(
 
   function shouldSkipObject(objectName, kind) {
     if (!objectName) return { skip: false };
+    if (droppedObjectSet.has(makeObjectKey(kind, objectName))) {
+      return {
+        skip: true,
+        reason: "DROPPED_LATER",
+        trace: `${makeObjectKey(kind, objectName)} dropped in later migration`,
+      };
+    }
+    if (kind === "table" && renamedTableMap.has(objectName)) {
+      return {
+        skip: true,
+        reason: "RENAMED_LATER",
+        trace: `${makeObjectKey(kind, objectName)} renamed to ${renamedTableMap.get(objectName)}`,
+      };
+    }
+    if ((kind === "trigger" || kind === "column" || kind === "seed_rows") && objectName.includes(".")) {
+      const parts = objectName.split(".");
+      const tableRef = kind === "trigger" ? `${parts[0]}.${parts[1]}` : `${parts[0]}.${parts[1]}`;
+      if (renamedTableMap.has(tableRef)) {
+        return {
+          skip: true,
+          reason: "RENAMED_LATER",
+          trace: `${makeObjectKey(kind, objectName)} table renamed to ${renamedTableMap.get(tableRef)}`,
+        };
+      }
+    }
     if (ignoreObjectSet.has(objectName)) {
       return { skip: true, reason: "IGNORE_RULE", trace: `${makeObjectKey(kind, objectName)} via ignore list` };
     }
@@ -726,9 +820,23 @@ export async function verifyMigrationContent({
   const tableExistsCache = new Map();
   const functionExistsCache = new Map();
   const seenObjectKeys = new Set();
+  const droppedObjectSet = new Set();
+  const renamedTableMap = new Map();
   const report = [];
   let totalMissing = 0;
   let totalSkipped = 0;
+
+  for (const filename of migrationFiles) {
+    const fullPath = path.join(migrationsDirectory, filename);
+    const sql = await fs.readFile(fullPath, "utf8");
+    const { droppedObjectKeys, renamedTables } = parseDroppedObjects(sql);
+    for (const droppedKey of droppedObjectKeys) {
+      droppedObjectSet.add(droppedKey);
+    }
+    for (const [fromTable, toTable] of renamedTables.entries()) {
+      renamedTableMap.set(fromTable, toTable);
+    }
+  }
 
   for (const filename of migrationFiles) {
     const fullPath = path.join(migrationsDirectory, filename);
@@ -801,7 +909,9 @@ export async function verifyMigrationContent({
       functionExistsCache,
       ignoreObjectSet,
       transientObjectSet,
-      conditionalSkipByObject
+      conditionalSkipByObject,
+      droppedObjectSet,
+      renamedTableMap
     );
     totalMissing += missing.length;
     if (conditionalMismatch.length > 0) {

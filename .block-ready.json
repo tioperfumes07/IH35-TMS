@@ -16,6 +16,8 @@
     "scripts/verify-guards/123-verify-maintenance-tab-coverage.mjs",
     "scripts/verify-steps/24-verify-maintenance-routes-bootstrapped.mjs",
     "scripts/verify-steps/25-verify-maintenance-tab-coverage.mjs",
+    "scripts/db-verify-critical-runtime.mjs",
+    "scripts/lib/migration-content-verifier.mjs",
     "scripts/__tests__/verify-maintenance-routes-bootstrapped.test.mjs",
     "scripts/__tests__/verify-maintenance-tab-coverage.test.mjs",
     "scripts/__tests__/fixtures/maintenance-routes-bootstrapped/**",
