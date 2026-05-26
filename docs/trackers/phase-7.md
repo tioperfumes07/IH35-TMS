@@ -52,5 +52,6 @@ _No backend regressions requiring immediate hotfix were identified during P6-T11
 | **P7-AUDIT-TRIGGER-STRATEGY** | Decide whether audit.tg_audit_row should be created to activate guarded tg_audit_* triggers or keep guarded-skip as canonical | PENDING |
 | **P7-MAINT-FOUNDATION** | Maintenance route bootstrap + per-tab foundation + placeholder purge + 2 CI guards | DONE on PR merge |
 | **P7-MAINT-WORK-ORDERS** | WO create + list + edit + status transitions + WO-PDF end-to-end | DONE on PR merge |
+| **P7-SAFETY-DRIVER-PROFILES** | Driver Safety profile + DQ file + Medical cards + Background checks + Training records | DONE on PR merge |
 | **P7-MAINT-PM-INSPECTIONS** | PM Schedules + Inspections + Vendors + Reports + Compliance 425C linkage | DONE on PR merge |
 | **P7-SAFETY-FOUNDATION** | 21 Safety sub-tabs across 8 groups: routes + sub-nav + KPI shells + empty states | DONE on PR merge |
