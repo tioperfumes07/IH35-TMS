@@ -73,6 +73,7 @@ import { registerDriverScoringRoutes } from "./safety/driver-scoring.routes.js";
 import { registerFuelGpsMatchRoutes } from "./safety/fuel-gps-match.routes.js";
 import { registerGeofenceBreachRoutes } from "./safety/geofence-breach.routes.js";
 import { registerDotInspectionEventsRoutes } from "./safety/dot-inspection-events.routes.js";
+import { registerSafetyFoundationKpiRoutes } from "./safety/foundation-kpis.routes.js";
 import { registerSafetyHosViolationsRoutes } from "./routes/safety/hos-violations.js";
 import { registerSafetyDotInspectionsRoutes } from "./routes/safety/dot-inspections.js";
 import { registerSafetyCsaScoresRoutes } from "./routes/safety/csa-scores.js";
@@ -435,6 +436,7 @@ async function main() {
   await registerFuelGpsMatchRoutes(app);
   await registerGeofenceBreachRoutes(app);
   await registerDotInspectionEventsRoutes(app);
+  await registerSafetyFoundationKpiRoutes(app);
   await registerSafetyHosViolationsRoutes(app);
   await registerSafetyDotInspectionsRoutes(app);
   await registerSafetyCsaScoresRoutes(app);

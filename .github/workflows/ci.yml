@@ -88,6 +88,9 @@ jobs:
       - name: Verify maintenance tab coverage
         run: npm run verify:maintenance-tab-coverage
 
+      - name: Verify safety tab coverage
+        run: npm run verify:safety-tab-coverage
+
       - name: Backend tests + coverage (CI strict)
         run: npm run test:coverage
 
