@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { generateState, generateCodeVerifier, OAuth2RequestError } from "arctic";
-import { lucia, google } from "./lucia.js";
+import { lucia, getGoogleOAuthClient } from "./lucia.js";
 import { withLuciaBypass } from "./db.js";
 import { oauthPkceCookieOptions, setLuciaSessionCookie, clearSessionCookieOptions } from "./session-cookie-policy.js";
 
@@ -53,6 +53,10 @@ function decodeOAuthState(encoded: string): PackedState | null {
 
 export async function registerAuthRoutes(app: FastifyInstance) {
   app.get("/api/v1/auth/google/login", async (req, reply) => {
+    const google = getGoogleOAuthClient();
+    if (!google) {
+      return reply.code(503).send({ error: "google_oauth_not_configured" });
+    }
     const query = req.query as Record<string, string | undefined>;
     const state = generateState();
     const returnTo = validateReturnTo(query["returnTo"]);
@@ -66,6 +70,10 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/auth/google/callback", async (req, reply) => {
+    const google = getGoogleOAuthClient();
+    if (!google) {
+      return reply.code(503).send({ error: "google_oauth_not_configured" });
+    }
     const query = req.query as Record<string, string | undefined>;
     const code = query["code"];
     const packedState = query["state"];

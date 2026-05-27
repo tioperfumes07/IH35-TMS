@@ -14,11 +14,6 @@ if (!fs.existsSync(DIST_ROOT)) {
 
 const KNOWN_OFFENDERS_DEBT = [
   { file: "dist/auth/db.js", envs: ["IH35_BOOT_API_SMOKE", "NODE_ENV"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
-  {
-    file: "dist/auth/lucia.js",
-    envs: ["OAUTH_GOOGLE_CLIENT_ID", "OAUTH_GOOGLE_CLIENT_SECRET", "OAUTH_REDIRECT_URI"],
-    tracker: "P7-AUDIT-P0-2-HOTFIX-2",
-  },
   { file: "dist/auth/routes.js", envs: ["CORS_ALLOWED_ORIGINS"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
   { file: "dist/cron/geofence-breach-detector.cron.js", envs: ["GEOFENCE_BREACH_CRON_ENABLED"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
   { file: "dist/driver/driver-jwt.js", envs: ["DRIVER_JWT_SECRET", "NODE_ENV"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },

@@ -169,6 +169,7 @@
     "verify:no-internal-strings": "node scripts/verify-no-internal-strings.mjs",
     "verify:applied-migrations-immutable": "node scripts/verify-applied-migrations-immutable.mjs",
     "verify:content-drift-check": "node scripts/verify-content-drift-check.mjs",
+    "verify:google-oauth-lazy-env": "node scripts/verify-google-oauth-lazy-env.mjs",
     "verify:maintenance-routes-bootstrapped": "node scripts/verify-maintenance-routes-bootstrapped.mjs",
     "verify:maintenance-tab-coverage": "node scripts/verify-maintenance-tab-coverage.mjs",
     "verify:master-data-write-routes": "node scripts/verify-master-data-write-routes.mjs",

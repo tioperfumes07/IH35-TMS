@@ -26,10 +26,10 @@ test("fails illegal ad-hoc throw fixture", () => {
   assert.match(run.stderr, /env=TWILIO_ACCOUNT_SID/);
 });
 
-test("passes debt-exempt fixture and prints DEBT line", () => {
+test("fails debt-exempt fixture because debt entries are no longer allowed", () => {
   const run = runFixture("debt-exempt");
-  assert.equal(run.status, 0);
-  assert.match(run.stdout, /DEBT \(exempt until P7-AUDIT-P0-2-HOTFIX-2\): dist\/auth\/db\.js:IH35_BOOT_API_SMOKE/);
+  assert.equal(run.status, 1);
+  assert.match(run.stderr, /dist\/auth\/db\.js:\d+ env=IH35_BOOT_API_SMOKE/);
 });
 
 test("fails top-level Twilio eager constructor fixture", () => {
