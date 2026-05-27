@@ -1,37 +1,19 @@
 {
-  "block_id": "P7-HOTFIX-3-AUDIT-P0-P1",
+  "block_id": "P7-FIX-MIG-DEDUPE-001",
   "phase": "Phase 7 Stabilization",
-  "task": "P7-HOTFIX-3-AUDIT-P0-P1",
+  "task": "P7-FIX-MIG-DEDUPE-001",
   "allowed_files": [
-    "apps/frontend/src/pages/Customers.tsx",
-    "apps/frontend/src/pages/customers/**",
-    "apps/frontend/src/pages/Vendors.tsx",
-    "apps/frontend/src/pages/Drivers.tsx",
-    "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
-    "apps/frontend/src/pages/accounting/journal-entries/**",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-no-demo-rows-in-safety.mjs",
-    "scripts/verify-no-internal-payload-in-notes.mjs",
-    "scripts/verify-no-orphan-route-aliases.mjs",
-    "scripts/verify-guards/126-*.mjs",
-    "scripts/verify-guards/127-*.mjs",
-    "scripts/verify-guards/128-*.mjs",
-    "scripts/verify-steps/28-*.mjs",
-    "scripts/verify-steps/29-*.mjs",
-    "scripts/verify-steps/30-*.mjs",
-    "scripts/__tests__/verify-no-*.test.mjs",
-    ".github/workflows/ci.yml",
+    "db/migrations/0262_reconcile_0237_0238_duplicate_history.sql",
+    "scripts/verify-no-duplicate-migrations.mjs",
+    "scripts/__tests__/verify-no-duplicate-migrations.test.mjs",
     "package.json",
     ".block-ready.json"
   ],
   "extra_gates": [
-    "verify:no-demo-rows-in-safety",
-    "verify:no-internal-payload-in-notes",
-    "verify:no-orphan-route-aliases",
-    "verify:applied-migrations-immutable",
-    "verify:content-drift-check"
+    "verify:no-duplicate-migrations",
+    "verify:no-duplicate-migrations:test"
   ],
-  "runtime_path": "both",
+  "runtime_path": "backend",
   "db_required": false,
   "guard_required": true
 }
