@@ -53,7 +53,6 @@ export type PostingErrorCode =
   | "INVOICE_NOT_POSTING_ELIGIBLE"
   | "BILL_NOT_POSTING_ELIGIBLE"
   | "PAYMENT_NOT_POSTING_ELIGIBLE"
-  | "POSTING_ALREADY_IN_PROGRESS"
   | "PERIOD_LOCKED"
   | "UNBALANCED_ENTRY"
   | "ACCOUNT_MAPPING_MISSING"
@@ -243,8 +242,7 @@ async function createJournalEntryHeader(
   operatingCompanyId: string,
   entryDate: string,
   memo: string,
-  createdByUserId: string,
-  idempotencyKey: string
+  createdByUserId: string
 ) {
   const created = await client.query<{ id: string }>(
     `
@@ -254,75 +252,19 @@ async function createJournalEntryHeader(
         memo,
         status,
         source,
-        idempotency_key,
         created_by_user_id,
         qbo_sync_pending,
         created_at,
         updated_at
       )
-      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4, $5::uuid, true, now(), now())
-      ON CONFLICT (operating_company_id, idempotency_key)
-      WHERE idempotency_key IS NOT NULL
-      DO NOTHING
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now())
       RETURNING id::text
     `,
-    [operatingCompanyId, entryDate, memo, idempotencyKey, createdByUserId]
+    [operatingCompanyId, entryDate, memo, createdByUserId]
   );
   const journalEntryId = created.rows[0]?.id;
-  if (journalEntryId) return { journalEntryId, insertedNew: true as const };
-  const existing = await client.query<{ id: string }>(
-    `
-      SELECT id::text
-      FROM accounting.journal_entries
-      WHERE operating_company_id = $1::uuid
-        AND idempotency_key = $2
-      LIMIT 1
-      FOR UPDATE SKIP LOCKED
-    `,
-    [operatingCompanyId, idempotencyKey]
-  );
-  const existingId = existing.rows[0]?.id;
-  if (!existingId) throw new Error("posting_journal_entry_create_failed");
-  return { journalEntryId: existingId, insertedNew: false as const };
-}
-
-async function getExistingPostingResultByJournalEntryIdempotencyKey(
-  client: DbClient,
-  operatingCompanyId: string,
-  idempotencyKey: string,
-  postingPurpose: PostingPurpose,
-  sourceType: PostingSourceType,
-  sourceId: string
-): Promise<PostingResult | null> {
-  const rows = await client.query<{ posting_id: string; journal_entry_uuid: string; posting_batch_id: string | null }>(
-    `
-      SELECT
-        jep.id::text AS posting_id,
-        jep.journal_entry_uuid::text,
-        jep.posting_batch_id::text
-      FROM accounting.journal_entry_postings jep
-      JOIN accounting.journal_entries je
-        ON je.id = jep.journal_entry_uuid
-      WHERE je.operating_company_id = $1::uuid
-        AND je.idempotency_key = $2
-      ORDER BY jep.line_sequence ASC, jep.created_at ASC
-    `,
-    [operatingCompanyId, idempotencyKey]
-  );
-  if (!rows.rows.length) return null;
-  const postingIds = rows.rows.map((r) => r.posting_id);
-  const journalEntryId = rows.rows[0]?.journal_entry_uuid ?? "";
-  if (!journalEntryId || postingIds.length === 0) return null;
-  return {
-    result: postingPurpose === "reversal" ? "reversed" : "already_posted",
-    posting_batch_id: rows.rows[0]?.posting_batch_id ?? "",
-    journal_entry_id: journalEntryId,
-    journal_entry_posting_ids: postingIds,
-    idempotency_key: idempotencyKey,
-    posting_purpose: postingPurpose,
-    source_transaction_type: sourceType,
-    source_transaction_id: sourceId,
-  };
+  if (!journalEntryId) throw new Error("posting_journal_entry_create_failed");
+  return journalEntryId;
 }
 
 async function insertPostingLines(input: {
@@ -900,32 +842,12 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
             updated_at
           )
           VALUES ($1::uuid, 'queued', $2, $3, $4, $5::uuid, now(), now())
-          ON CONFLICT (operating_company_id, idempotency_key)
-          WHERE idempotency_key IS NOT NULL
-          DO NOTHING
           RETURNING id::text
         `,
         [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId]
       );
       const postingBatchId = batch.rows[0]?.id;
-      if (!postingBatchId) {
-        for (let attempt = 0; attempt < 6; attempt += 1) {
-          const existingByJeIdempotency = await getExistingPostingResultByJournalEntryIdempotencyKey(
-            client,
-            input.operating_company_id,
-            idempotencyKey,
-            postingPurpose,
-            sourceType,
-            sourceId
-          );
-          if (existingByJeIdempotency) return existingByJeIdempotency;
-          await new Promise((resolve) => setTimeout(resolve, 20));
-        }
-        throw new PostingEngineError(
-          "POSTING_ALREADY_IN_PROGRESS",
-          "Posting already in progress for this idempotency key; retry shortly."
-        );
-      }
+      if (!postingBatchId) throw new Error("posting_batch_create_failed");
 
       await client.query(
         `
@@ -937,30 +859,13 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
         [postingBatchId]
       );
 
-      const journalEntry = await createJournalEntryHeader(
+      const journalEntryId = await createJournalEntryHeader(
         client,
         input.operating_company_id,
         draft.postingDate,
         draft.memo,
-        actor.userId,
-        idempotencyKey
+        actor.userId
       );
-      if (!journalEntry.insertedNew) {
-        const existingByJeIdempotency = await getExistingPostingResultByJournalEntryIdempotencyKey(
-          client,
-          input.operating_company_id,
-          idempotencyKey,
-          postingPurpose,
-          sourceType,
-          sourceId
-        );
-        if (existingByJeIdempotency) return existingByJeIdempotency;
-        throw new PostingEngineError(
-          "POSTING_ALREADY_IN_PROGRESS",
-          "Posting already in progress for this idempotency key; retry shortly."
-        );
-      }
-      const journalEntryId = journalEntry.journalEntryId;
 
       const postingIds = await insertPostingLines({
         client,
@@ -998,12 +903,7 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
   } catch (error) {
     if (!(error instanceof PostingEngineError)) {
       await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
-    } else if (
-      error.code !== "INVOICE_NOT_POSTING_ELIGIBLE" &&
-      error.code !== "BILL_NOT_POSTING_ELIGIBLE" &&
-      error.code !== "PAYMENT_NOT_POSTING_ELIGIBLE" &&
-      error.code !== "POSTING_ALREADY_IN_PROGRESS"
-    ) {
+    } else if (error.code !== "INVOICE_NOT_POSTING_ELIGIBLE" && error.code !== "BILL_NOT_POSTING_ELIGIBLE" && error.code !== "PAYMENT_NOT_POSTING_ELIGIBLE") {
       await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
     }
     throw error;
@@ -1082,30 +982,13 @@ export async function reversePostedSourceTransaction(input: ReverseBatchInput, a
     const reversalBatchId = reversalBatch.rows[0]?.id;
     if (!reversalBatchId) throw new Error("reversal_batch_create_failed");
 
-    const reversalJe = await createJournalEntryHeader(
+    const reversalJeId = await createJournalEntryHeader(
       client,
       input.operating_company_id,
       reversalDate,
       `Reversal of ${original.journal_entry_id}`,
-      actor.userId,
-      idempotencyKey
+      actor.userId
     );
-    if (!reversalJe.insertedNew) {
-      const existingReversalByIdempotency = await getExistingPostingResultByJournalEntryIdempotencyKey(
-        client,
-        input.operating_company_id,
-        idempotencyKey,
-        "reversal",
-        sourceType,
-        sourceId
-      );
-      if (existingReversalByIdempotency) return existingReversalByIdempotency;
-      throw new PostingEngineError(
-        "POSTING_ALREADY_IN_PROGRESS",
-        "Reversal posting already in progress for this idempotency key; retry shortly."
-      );
-    }
-    const reversalJeId = reversalJe.journalEntryId;
 
     const reversalPostingIds: string[] = [];
     let lineSequence = 1;

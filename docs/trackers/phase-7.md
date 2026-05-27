@@ -57,7 +57,6 @@ _No backend regressions requiring immediate hotfix were identified during P6-T11
 | **P7-SAFETY-TRAINING-PROGRAMS** | Training programs + Drug pool + HOS + 425C audit trail + Safety Reports | DONE on PR merge |
 | **P7-SAFETY-EVENTS** | Block 02 safety events: routes + migration + frontend page + CI guards | IN PROGRESS on feature branch `feat/safety-events-phase7` |
 | **P7-INFRA-SYNC-ORCHESTRATOR** | sync + block:ship orchestrator + GITHUB_BASE_SHA fallback + improved C1 merged-upstream guidance | DONE on PR merge |
-| **P7-AUDIT-P0-3-POSTING-RACE** | Posting-engine concurrent retry hardening: row-claim protection + JE idempotency uniqueness + verifier guards | IN PROGRESS on feature branch `fix/audit-p0-3-posting-race` |
 | **P7-MAINT-PM-INSPECTIONS** | PM Schedules + Inspections + Vendors + Reports + Compliance 425C linkage | DONE on PR merge |
 | **P7-SAFETY-FOUNDATION** | 21 Safety sub-tabs across 8 groups: routes + sub-nav + KPI shells + empty states | DONE on PR merge |
 | **P7-INFRA-BRANCH-TOOLING** | 4 branch scripts + pre-push hook + tests + docs | DONE on PR merge |

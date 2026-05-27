@@ -1,6 +1,7 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { UseFormGetValues, UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { listMaintenanceDrivers, listMaintenanceVehicles } from "../../../api/maintenance";
 import { useToast } from "../../../components/Toast";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
@@ -27,6 +28,21 @@ function Field({ label, children }: { label: string; children: JSX.Element }) {
   );
 }
 
+const SOURCE_TYPE_OPTIONS: Array<{
+  value: CreateWOFormValues["source_type"];
+  label: string;
+  repairLocation: CreateWOFormValues["repair_location"];
+  bucket: CreateWOFormValues["bucket"];
+}> = [
+  { value: "IS", label: "IS - Internal shop", repairLocation: "in_house", bucket: "in_house" },
+  { value: "ES", label: "ES - External shop", repairLocation: "external_shop", bucket: "external" },
+  { value: "AC", label: "AC - Accident", repairLocation: "external_shop", bucket: "external" },
+  { value: "ET", label: "ET - External tires", repairLocation: "external_tires", bucket: "external" },
+  { value: "RT", label: "RT - Road call", repairLocation: "mobile_roadside", bucket: "roadside" },
+  { value: "IT", label: "IT - Internal tires", repairLocation: "internal_tires", bucket: "in_house" },
+  { value: "RS", label: "RS - Roadside service", repairLocation: "mobile_roadside", bucket: "roadside" },
+];
+
 export function CreateWOSectionIdentification({
   register,
   watch,
@@ -49,6 +65,24 @@ export function CreateWOSectionIdentification({
   const requireLoad = requireDriverAndLoad || requireLoadForExpense;
   const requireExternalFields = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
   const showExemptionReason = requireLoadForExpense && !selectedLoadId;
+  const vehiclesQuery = useQuery({
+    queryKey: ["maintenance", "master-data", "vehicles", operatingCompanyId, "create-wo"],
+    queryFn: () => listMaintenanceVehicles(String(operatingCompanyId), {}),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const driversQuery = useQuery({
+    queryKey: ["maintenance", "master-data", "drivers", operatingCompanyId, "create-wo"],
+    queryFn: () => listMaintenanceDrivers(String(operatingCompanyId), {}),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const vehicleOptions = (vehiclesQuery.data?.rows ?? [])
+    .map((row) => ({ value: row.id, label: row.unit_display_id || row.id }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const driverOptions = (driversQuery.data?.rows ?? [])
+    .map((row) => ({ value: row.id, label: `${row.first_name} ${row.last_name}`.trim() || row.id }))
+    .sort((a, b) => a.label.localeCompare(b.label));
   return (
     <section className="rounded border border-gray-200 bg-white p-3">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-6">
@@ -59,10 +93,34 @@ export function CreateWOSectionIdentification({
           <input type="date" {...register("service_date")} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
         <Field label="Unit *">
-          <input {...register("unit_id", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          {operatingCompanyId && setValue ? (
+            <>
+              <input type="hidden" {...register("unit_id", { required: true })} />
+              <Combobox
+                options={vehicleOptions}
+                value={watch("unit_id") || null}
+                placeholder={vehiclesQuery.isLoading ? "Loading units..." : "Select unit"}
+                onChange={(value) => setValue("unit_id", value ?? "", { shouldDirty: true })}
+              />
+            </>
+          ) : (
+            <input {...register("unit_id", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          )}
         </Field>
         <Field label="Driver">
-          <input {...register("driver_id", { required: requireDriverAndLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          {operatingCompanyId && setValue ? (
+            <>
+              <input type="hidden" {...register("driver_id", { required: requireDriverAndLoad })} />
+              <Combobox
+                options={driverOptions}
+                value={watch("driver_id") || null}
+                placeholder={driversQuery.isLoading ? "Loading drivers..." : "Select driver"}
+                onChange={(value) => setValue("driver_id", value ?? "", { shouldDirty: true })}
+              />
+            </>
+          ) : (
+            <input {...register("driver_id", { required: requireDriverAndLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
+          )}
         </Field>
         <Field label="Class (auto)">
           <input {...register("class_hint")} readOnly className="h-8 w-full rounded border border-emerald-200 bg-emerald-50 px-2 text-sm font-semibold text-emerald-900" />
@@ -71,7 +129,21 @@ export function CreateWOSectionIdentification({
           <input {...register("load_id", { required: requireLoad })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
         </Field>
       </div>
-      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
+        <Field label="Source Type *">
+          <Combobox
+            options={SOURCE_TYPE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+            value={sourceType}
+            onChange={(value) => {
+              if (!value || !setValue) return;
+              const selected = SOURCE_TYPE_OPTIONS.find((option) => option.value === value);
+              setValue("source_type", value as CreateWOFormValues["source_type"], { shouldDirty: true });
+              if (!selected) return;
+              setValue("repair_location", selected.repairLocation, { shouldDirty: true });
+              setValue("bucket", selected.bucket, { shouldDirty: true });
+            }}
+          />
+        </Field>
         <Field label="Location *">
           <Combobox
             options={[
@@ -109,10 +181,14 @@ export function CreateWOSectionIdentification({
                     onChange={(qboId, displayName) => {
                       setValue("vendor_qbo_id", qboId ?? "", { shouldDirty: true });
                       setValue("vendor_display_name", displayName, { shouldDirty: true });
-                      if (!qboId) setValue("vendor_id", "", { shouldDirty: true });
+                      if (!qboId) {
+                        setValue("vendor_id", "", { shouldDirty: true });
+                        setValue("external_vendor_id", "", { shouldDirty: true });
+                      }
                     }}
                     onPick={(row) => {
                       setValue("vendor_id", row.id, { shouldDirty: true });
+                      setValue("external_vendor_id", row.id, { shouldDirty: true });
                       setValue("vendor_qbo_id", row.qbo_id, { shouldDirty: true });
                       setValue("vendor_display_name", row.display_name || row.company_name || "", { shouldDirty: true });
                       const shopNameNow = String(getValues("shop_name") ?? "").trim();
@@ -147,6 +223,7 @@ export function CreateWOSectionIdentification({
 
       <input type="hidden" {...register("source_type")} />
       <input type="hidden" {...register("bucket")} />
+      <input type="hidden" {...register("external_vendor_id")} />
 
       <div className="mt-2 hidden">
         <Field label="Customer">
@@ -204,25 +281,6 @@ export function CreateWOSectionIdentification({
           </Field>
         </div>
       ) : null}
-      {operatingCompanyId && setValue && getValues ? (
-        <div className="mt-2">
-          <Field label="QBO vendor lookup (appends to Description)">
-            <QboCombobox
-              entityType="vendor"
-              operatingCompanyId={operatingCompanyId}
-              value={null}
-              displayValue=""
-              allowFreeText={false}
-              onChange={(qboId, displayName) => {
-                if (!qboId) return;
-                const prev = String(getValues("description") ?? "");
-                const line = `QBO vendor: ${displayName} (${qboId})`;
-                setValue("description", prev ? `${prev}\n${line}` : line, { shouldDirty: true });
-              }}
-            />
-          </Field>
-        </div>
-      ) : null}
       {bucket === "roadside" ? (
         <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
           <Field label="Roadside Callout At *">
@@ -245,10 +303,7 @@ export function CreateWOSectionIdentification({
         </div>
       ) : null}
       {requireExternalFields ? (
-        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
-          <Field label="External Vendor *">
-            <input {...register("external_vendor_id", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
-          </Field>
+        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
           <Field label="External Vendor WO Number *">
             <input {...register("external_vendor_wo_number", { required: true })} className="h-8 w-full rounded border border-gray-300 px-2 text-sm" />
           </Field>
@@ -292,6 +347,7 @@ export function CreateWOSectionIdentification({
           onCreated={(created) => {
             if (quickCreateKind === "vendor") {
               setValue("vendor_id", created.id, { shouldDirty: true });
+              setValue("external_vendor_id", created.id, { shouldDirty: true });
               setValue("vendor_qbo_id", "", { shouldDirty: true });
               setValue("vendor_display_name", created.label, { shouldDirty: true });
               const shopNameNow = getValues ? String(getValues("shop_name") ?? "").trim() : "";

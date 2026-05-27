@@ -18,6 +18,17 @@ vi.mock("../../../auth/useAuth", () => ({
   }),
 }));
 
+vi.mock("../../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({
+    selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+    companies: [],
+    selectedCompany: null,
+    isLoading: false,
+    setSelectedCompany: vi.fn(),
+    setDefaultCompanyForUser: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 vi.mock("../../../api/mdata", () => ({
   listCustomers: vi.fn().mockResolvedValue({ customers: [] }),
   listPaymentTermOptions: vi.fn().mockResolvedValue({ payment_terms: [] }),
