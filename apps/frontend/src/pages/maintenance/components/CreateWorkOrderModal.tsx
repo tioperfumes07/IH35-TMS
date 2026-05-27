@@ -75,6 +75,12 @@ const typeTabs: Array<{ id: WorkOrderType; label: string }> = [
 ];
 
 const G18_EXPENSE_REGEX = /\b(fuel|diesel|roadside|toll|parking)\b/i;
+const DEFAULT_SOURCE_BY_TYPE: Record<WorkOrderType, CreateWOFormValues["source_type"]> = {
+  pm: "IS",
+  repair: "IS",
+  tire: "IT",
+  accident: "AC",
+};
 
 export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "pm", initialValues, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
@@ -83,7 +89,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   const form = useForm<CreateWOFormValues>({
     defaultValues: {
       wo_type: initialType,
-      source_type: initialType === "accident" ? "AC" : initialType === "tire" ? "IT" : "IS",
+      source_type: DEFAULT_SOURCE_BY_TYPE[initialType],
       bucket: "in_house",
       service_date: new Date().toISOString().slice(0, 10),
       unit_id: "",
@@ -122,9 +128,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
 
   useEffect(() => {
     if (!open) return;
+    const nextSource = initialValues?.source_type ?? DEFAULT_SOURCE_BY_TYPE[initialType];
     form.reset({
       ...form.getValues(),
       wo_type: initialType,
+      source_type: nextSource,
       ...initialValues,
     });
     setLines([]);
@@ -164,7 +172,11 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     { label: "Vendor required for non in-house location", ok: form.watch("repair_location") === "in_house" || Boolean(form.watch("vendor_id")) },
     {
       label: "External WO fields required for ES/AC/ET/RT/RS",
-      ok: !needsExternalVendor || (Boolean(form.watch("external_vendor_id")) && Boolean(form.watch("external_vendor_wo_number")) && Boolean(form.watch("external_vendor_invoice_number"))),
+      ok:
+        !needsExternalVendor ||
+        ((Boolean(form.watch("external_vendor_id")) || Boolean(form.watch("vendor_id"))) &&
+          Boolean(form.watch("external_vendor_wo_number")) &&
+          Boolean(form.watch("external_vendor_invoice_number"))),
     },
     { label: "At least one cost line item", ok: (form.watch("line_items") ?? []).length > 0 },
   ];
@@ -243,6 +255,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
     }
     setBackendLoadError(null);
     try {
+      const canonicalVendorId = values.external_vendor_id || values.vendor_id || undefined;
       const response = await createWorkOrder({
         header: {
           operating_company_id: operatingCompanyId,
@@ -260,7 +273,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           shop_address: values.shop_address || undefined,
           shop_phone: values.shop_phone || undefined,
           vendor_invoice_number: values.vendor_invoice_number || undefined,
-          external_vendor_id: values.external_vendor_id || undefined,
+          external_vendor_id: needsExternalVendor ? canonicalVendorId : undefined,
           external_vendor_wo_number: values.external_vendor_wo_number || undefined,
           external_vendor_invoice_number: values.external_vendor_invoice_number || undefined,
           description: values.description,
@@ -311,9 +324,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             onChange={(tabId) => {
               const typed = tabId as WorkOrderType;
               form.setValue("wo_type", typed);
-              if (typed === "accident") form.setValue("source_type", "AC");
-              else if (typed === "tire") form.setValue("source_type", "IT");
-              else form.setValue("source_type", "IS");
+              form.setValue("source_type", DEFAULT_SOURCE_BY_TYPE[typed]);
             }}
           />
         </div>

@@ -182,6 +182,7 @@
     "verify:safety-reports-coverage": "node scripts/verify-safety-reports-coverage.mjs",
     "verify:pm-due-soon-calculation": "node scripts/verify-pm-due-soon-calculation.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
+    "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",
     "verify:mdata-routes-local-first": "node scripts/verify-mdata-routes-local-first.mjs",
     "verify:qbo-master-write-contract": "node scripts/verify-qbo-master-write-contract.mjs",
