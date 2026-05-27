@@ -54,17 +54,26 @@ type AuditMeta = {
   userAgent?: string | null;
 };
 
-const r2Client =
-  process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
-    ? new S3Client({
-        region: "auto",
-        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        credentials: {
-          accessKeyId: process.env.R2_ACCESS_KEY_ID,
-          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-        },
-      })
-    : null;
+let r2ClientInstance: S3Client | null | undefined;
+
+function getR2Client(): S3Client | null {
+  if (r2ClientInstance !== undefined) {
+    return r2ClientInstance;
+  }
+  const accountId = process.env.R2_ACCOUNT_ID?.trim();
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    r2ClientInstance = null;
+    return r2ClientInstance;
+  }
+  r2ClientInstance = new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey },
+  });
+  return r2ClientInstance;
+}
 
 function normalizeTokenForHash(rawToken: string) {
   return crypto.createHash("sha256").update(rawToken).digest("hex");
@@ -616,6 +625,7 @@ async function uploadSignedPdfToR2(
   pdfBuffer: Buffer,
   contentType: string
 ) {
+  const r2Client = getR2Client();
   if (!r2Client) throw new Error("r2_not_configured");
   const key = `${operatingCompanyId}/legal/contracts/${contractInstanceId}/${crypto.randomUUID()}.pdf`;
   await r2Client.send(

@@ -4,10 +4,17 @@ import { Eta } from "eta";
 
 const templatesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "templates");
 
-const eta = new Eta({
-  views: templatesDir,
-  cache: process.env.NODE_ENV === "production",
-});
+let etaInstance: Eta | null = null;
+
+function getEta() {
+  if (!etaInstance) {
+    etaInstance = new Eta({
+      views: templatesDir,
+      cache: process.env.NODE_ENV === "production",
+    });
+  }
+  return etaInstance;
+}
 
 const allowedKeys = new Set([
   "driver-invite",
@@ -34,7 +41,7 @@ export function deriveTextFallback(html: string, explicit?: string): string | un
 
 export function renderEmailTemplate(templateKey: string, vars: Record<string, unknown>): { html: string; text?: string } {
   const key = assertAllowedTemplateKey(templateKey);
-  const html = eta.render(key, vars);
+  const html = getEta().render(key, vars);
   const explicitText = typeof vars.textBody === "string" ? vars.textBody : undefined;
   const text = deriveTextFallback(html, explicitText);
   return { html, text };

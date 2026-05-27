@@ -27,9 +27,12 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+function getFrontendBaseUrl(): string {
+  return (process.env.FRONTEND_BASE_URL || "https://app.ih35dispatch.com").replace(/\/$/, "");
+}
+
 function frontendResetConfirmUrl(token: string): string {
-  const base = (process.env.FRONTEND_BASE_URL || "https://app.ih35dispatch.com").replace(/\/$/, "");
-  return `${base}/login/reset/confirm?token=${encodeURIComponent(token)}`;
+  return `${getFrontendBaseUrl()}/login/reset/confirm?token=${encodeURIComponent(token)}`;
 }
 
 const argon2id = new Argon2id();

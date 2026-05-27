@@ -44,13 +44,16 @@ export function hashAttorneyReviewToken(rawToken: string) {
   return crypto.createHash("sha256").update(rawToken).digest("hex");
 }
 
-export function resolveAttorneyReviewUrl(rawToken: string) {
-  const base = (
+function getSignerAppBaseUrl() {
+  return (
     process.env.SIGNER_APP_BASE_URL ||
     process.env.FRONTEND_BASE_URL ||
     "https://ih35-tms-web.onrender.com"
   ).replace(/\/$/, "");
-  return `${base}/attorney-review/${rawToken}`;
+}
+
+export function resolveAttorneyReviewUrl(rawToken: string) {
+  return `${getSignerAppBaseUrl()}/attorney-review/${rawToken}`;
 }
 
 const ATTORNEY_REVIEW_TOKEN_TTL_HOURS = 30 * 24;

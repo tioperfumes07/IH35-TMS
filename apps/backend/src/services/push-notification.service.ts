@@ -4,6 +4,10 @@ import { dispatchNotification } from "../notifications/dispatcher.js";
 
 let vapidReady = false;
 
+function frontendBaseUrl(): string {
+  return process.env.FRONTEND_BASE_URL?.replace(/\/$/, "") ?? "";
+}
+
 export function ensureWebPushConfigured(): boolean {
   if (vapidReady) return true;
   const pub = process.env.VAPID_PUBLIC_KEY?.trim();
@@ -113,7 +117,7 @@ export async function notifyLoadAssigned(input: {
     const driverName =
       `${String(row.first_name ?? "").trim()} ${String(row.last_name ?? "").trim()}`.trim() || "Driver";
     const phone = String(row.phone ?? "").trim();
-    const baseUrl = process.env.FRONTEND_BASE_URL?.replace(/\/$/, "") ?? "";
+    const baseUrl = frontendBaseUrl();
 
     await dispatchNotification({
       user_id: String(row.identity_user_id),

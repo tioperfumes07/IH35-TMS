@@ -8,13 +8,16 @@ const STATE_COOKIE = "ih35_oauth_state";
 const VERIFIER_COOKIE = "ih35_oauth_verifier";
 const COOKIE_MAX_AGE = 60 * 10;
 const DEFAULT_FRONTEND_BASE_URL = "https://ih35-tms-web.onrender.com";
-const ALLOWED_RETURN_URLS = (
-  process.env.CORS_ALLOWED_ORIGINS ??
-  "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,https://app.ih35dispatch.com,http://localhost:5173,http://localhost:5174"
-)
-  .split(",")
-  .map((value) => value.trim().replace(/\/$/, ""))
-  .filter(Boolean);
+
+function allowedReturnUrls(): string[] {
+  const origins =
+    process.env.CORS_ALLOWED_ORIGINS ??
+    "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,https://app.ih35dispatch.com,http://localhost:5173,http://localhost:5174";
+  return origins
+    .split(",")
+    .map((value) => value.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+}
 
 type PackedState = {
   state: string;
@@ -30,7 +33,7 @@ function validateReturnTo(returnTo: string | undefined): string {
   if (!returnTo) return fallback;
   const normalized = returnTo.trim().replace(/\/$/, "");
   if (!normalized) return fallback;
-  if (!ALLOWED_RETURN_URLS.includes(normalized)) return fallback;
+  if (!allowedReturnUrls().includes(normalized)) return fallback;
   return normalized;
 }
 
@@ -53,61 +56,85 @@ function decodeOAuthState(encoded: string): PackedState | null {
 
 export async function registerAuthRoutes(app: FastifyInstance) {
   app.get("/api/v1/auth/google/login", async (req, reply) => {
-    const google = getGoogleOAuthClient();
-    if (!google) {
-      return reply.code(503).send({ error: "google_oauth_not_configured" });
+    try {
+      const google = getGoogleOAuthClient();
+      if (!google) {
+        return reply.code(503).send({ error: "google_oauth_not_configured" });
+      }
+      const query = req.query as Record<string, string | undefined>;
+      const state = generateState();
+      const returnTo = validateReturnTo(query["returnTo"]);
+      const packedState = encodeOAuthState({ state, returnTo });
+      const codeVerifier = generateCodeVerifier();
+      const url = await google.createAuthorizationURL(packedState, codeVerifier, ["openid", "email", "profile"]);
+      const pkce = oauthPkceCookieOptions(COOKIE_MAX_AGE);
+      reply.setCookie(STATE_COOKIE, state, pkce);
+      reply.setCookie(VERIFIER_COOKIE, codeVerifier, pkce);
+      return reply.redirect(url.toString());
+    } catch (err) {
+      const statusCode = typeof err === "object" && err !== null ? (err as { statusCode?: unknown }).statusCode : undefined;
+      if (statusCode === 503) {
+        return reply.code(503).send({
+          statusCode: 503,
+          error: "google_oauth_not_configured",
+          message: "Google OAuth is not configured",
+        });
+      }
+      throw err;
     }
-    const query = req.query as Record<string, string | undefined>;
-    const state = generateState();
-    const returnTo = validateReturnTo(query["returnTo"]);
-    const packedState = encodeOAuthState({ state, returnTo });
-    const codeVerifier = generateCodeVerifier();
-    const url = await google.createAuthorizationURL(packedState, codeVerifier, ["openid", "email", "profile"]);
-    const pkce = oauthPkceCookieOptions(COOKIE_MAX_AGE);
-    reply.setCookie(STATE_COOKIE, state, pkce);
-    reply.setCookie(VERIFIER_COOKIE, codeVerifier, pkce);
-    return reply.redirect(url.toString());
   });
 
   app.get("/api/v1/auth/google/callback", async (req, reply) => {
-    const google = getGoogleOAuthClient();
-    if (!google) {
-      return reply.code(503).send({ error: "google_oauth_not_configured" });
-    }
-    const query = req.query as Record<string, string | undefined>;
-    const code = query["code"];
-    const packedState = query["state"];
-    const parsedState = packedState ? decodeOAuthState(packedState) : null;
-    const storedState = req.cookies[STATE_COOKIE];
-    const codeVerifier = req.cookies[VERIFIER_COOKIE];
-    if (!code || !parsedState || !storedState || !codeVerifier || parsedState.state !== storedState) {
-      return reply.code(400).send({ error: "invalid_oauth_state" });
-    }
-    const returnTo = validateReturnTo(parsedState.returnTo);
     try {
-      const tokens = await google.validateAuthorizationCode(code, codeVerifier);
-      const userInfoResp = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
-        headers: { Authorization: "Bearer " + tokens.accessToken() },
-      });
-      if (!userInfoResp.ok) {
-        return reply.code(401).send({ error: "google_userinfo_failed" });
+      const google = getGoogleOAuthClient();
+      if (!google) {
+        return reply.code(503).send({ error: "google_oauth_not_configured" });
       }
-      const userInfo = await userInfoResp.json() as Record<string, unknown>;
-      const googleUserId = String(userInfo["sub"] || "");
-      const email = String(userInfo["email"] || "").toLowerCase();
-      if (!googleUserId || !email) {
-        return reply.code(400).send({ error: "missing_userinfo_fields" });
+      const query = req.query as Record<string, string | undefined>;
+      const code = query["code"];
+      const packedState = query["state"];
+      const parsedState = packedState ? decodeOAuthState(packedState) : null;
+      const storedState = req.cookies[STATE_COOKIE];
+      const codeVerifier = req.cookies[VERIFIER_COOKIE];
+      if (!code || !parsedState || !storedState || !codeVerifier || parsedState.state !== storedState) {
+        return reply.code(400).send({ error: "invalid_oauth_state" });
       }
-      const userUuid = await findOrCreateUser(email, googleUserId);
-      const session = await lucia.createSession(userUuid, {});
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      setLuciaSessionCookie(reply, sessionCookie);
-      reply.clearCookie(STATE_COOKIE, { path: "/" });
-      reply.clearCookie(VERIFIER_COOKIE, { path: "/" });
-      return reply.redirect(`${returnTo}/home`);
+      const returnTo = validateReturnTo(parsedState.returnTo);
+      try {
+        const tokens = await google.validateAuthorizationCode(code, codeVerifier);
+        const userInfoResp = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+          headers: { Authorization: "Bearer " + tokens.accessToken() },
+        });
+        if (!userInfoResp.ok) {
+          return reply.code(401).send({ error: "google_userinfo_failed" });
+        }
+        const userInfo = await userInfoResp.json() as Record<string, unknown>;
+        const googleUserId = String(userInfo["sub"] || "");
+        const email = String(userInfo["email"] || "").toLowerCase();
+        if (!googleUserId || !email) {
+          return reply.code(400).send({ error: "missing_userinfo_fields" });
+        }
+        const userUuid = await findOrCreateUser(email, googleUserId);
+        const session = await lucia.createSession(userUuid, {});
+        const sessionCookie = lucia.createSessionCookie(session.id);
+        setLuciaSessionCookie(reply, sessionCookie);
+        reply.clearCookie(STATE_COOKIE, { path: "/" });
+        reply.clearCookie(VERIFIER_COOKIE, { path: "/" });
+        return reply.redirect(`${returnTo}/home`);
+      } catch (err) {
+        if (err instanceof OAuth2RequestError) {
+          return reply.code(400).send({ error: "oauth_validation_failed" });
+        }
+        throw err;
+      }
     } catch (err) {
-      if (err instanceof OAuth2RequestError) {
-        return reply.code(400).send({ error: "oauth_validation_failed" });
+      const statusCode = typeof err === "object" && err !== null ? (err as { statusCode?: unknown }).statusCode : undefined;
+      if (statusCode === 503) {
+        return reply.code(503).send({
+          statusCode: 503,
+          error: "google_oauth_not_configured",
+          message: "Google OAuth is not configured",
+        });
       }
       throw err;
     }

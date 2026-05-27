@@ -9,11 +9,23 @@ function skipPoolAppRole(): boolean {
   return process.env.IH35_BOOT_API_SMOKE === "true" && process.env.NODE_ENV === "test";
 }
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required");
+let poolInstance: pg.Pool | null = null;
+let luciaPoolInstance: pg.Pool | null = null;
+
+function requireDatabaseUrl() {
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) {
+    throw new Error("DATABASE_URL is required");
+  }
+  return url;
 }
-if (!process.env.DATABASE_DIRECT_URL) {
-  throw new Error("DATABASE_DIRECT_URL is required");
+
+function requireDatabaseDirectUrl() {
+  const url = process.env.DATABASE_DIRECT_URL?.trim();
+  if (!url) {
+    throw new Error("DATABASE_DIRECT_URL is required");
+  }
+  return url;
 }
 
 function buildLuciaConnString(baseUrl: string): string {
@@ -22,44 +34,76 @@ function buildLuciaConnString(baseUrl: string): string {
   return url.toString();
 }
 
-export const pool = new Pool(
-  buildPgPoolConfig(process.env.DATABASE_URL, {
-    max: 10,
-  }),
-);
+function buildPool(): pg.Pool {
+  const client = new Pool(
+    buildPgPoolConfig(requireDatabaseUrl(), {
+      max: 10,
+    }),
+  );
+  client.on("connect", async (conn) => {
+    if (skipPoolAppRole()) return;
+    try {
+      await conn.query(`SET ROLE ${APP_DB_ROLE}`);
+    } catch (err) {
+      console.error("Failed to set auth role for pool connection:", err);
+    }
+  });
+  client.on("error", (err) => {
+    console.error("Unexpected pool error:", err);
+  });
+  return client;
+}
 
-export const luciaPool = new Pool(
-  buildPgPoolConfig(buildLuciaConnString(process.env.DATABASE_DIRECT_URL), {
-    max: 10,
-    idleTimeoutMillis: 30_000,
-  }),
-);
+function buildLuciaPool(): pg.Pool {
+  const client = new Pool(
+    buildPgPoolConfig(buildLuciaConnString(requireDatabaseDirectUrl()), {
+      max: 10,
+      idleTimeoutMillis: 30_000,
+    }),
+  );
+  client.on("connect", async (conn) => {
+    if (skipPoolAppRole()) return;
+    try {
+      await conn.query(`SET ROLE ${APP_DB_ROLE}`);
+    } catch (err) {
+      console.error("Failed to set auth role for luciaPool connection:", err);
+    }
+  });
+  client.on("error", (err) => {
+    console.error("Unexpected luciaPool error:", err);
+  });
+  return client;
+}
 
-luciaPool.on("connect", async (client) => {
-  if (skipPoolAppRole()) return;
-  try {
-    await client.query(`SET ROLE ${APP_DB_ROLE}`);
-  } catch (err) {
-    console.error("Failed to set auth role for luciaPool connection:", err);
+function createLazyPool(getter: () => pg.Pool): pg.Pool {
+  return new Proxy({} as pg.Pool, {
+    get(_target, prop, receiver) {
+      const instance = getter() as unknown as Record<PropertyKey, unknown>;
+      const value = Reflect.get(instance, prop, receiver);
+      if (typeof value === "function") {
+        return (value as (...args: unknown[]) => unknown).bind(instance);
+      }
+      return value;
+    },
+  });
+}
+
+export function getPool(): pg.Pool {
+  if (!poolInstance) {
+    poolInstance = buildPool();
   }
-});
+  return poolInstance;
+}
 
-pool.on("connect", async (client) => {
-  if (skipPoolAppRole()) return;
-  try {
-    await client.query(`SET ROLE ${APP_DB_ROLE}`);
-  } catch (err) {
-    console.error("Failed to set auth role for pool connection:", err);
+export function getLuciaPool(): pg.Pool {
+  if (!luciaPoolInstance) {
+    luciaPoolInstance = buildLuciaPool();
   }
-});
+  return luciaPoolInstance;
+}
 
-luciaPool.on("error", (err) => {
-  console.error("Unexpected luciaPool error:", err);
-});
-
-pool.on("error", (err) => {
-  console.error("Unexpected pool error:", err);
-});
+export const pool: pg.Pool = createLazyPool(getPool);
+export const luciaPool: pg.Pool = createLazyPool(getLuciaPool);
 
 export async function withLuciaBypass<T>(
   fn: (client: pg.PoolClient) => Promise<T>

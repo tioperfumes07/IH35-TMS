@@ -218,13 +218,16 @@ const repoRoot = resolveMonorepoRoot(import.meta.url);
 const app = Fastify({ logger: true });
 attachHttpErrorMonitor(app);
 let shuttingDown = false;
-const ALLOWED_ORIGINS = (
-  process.env.CORS_ALLOWED_ORIGINS ??
-  "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174"
-)
-  .split(",")
-  .map((value) => value.trim())
-  .filter(Boolean);
+
+function getAllowedOrigins(): string[] {
+  const origins =
+    process.env.CORS_ALLOWED_ORIGINS ??
+    "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174";
+  return origins
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
 
 // Required for BT-1-AUTH-DRIVER phone auth:
 // - TWILIO_ACCOUNT_SID
@@ -317,7 +320,7 @@ async function main() {
   await app.register(cors, {
     origin: (origin: string | undefined, cb: (err: Error | null, allow: CorsOriginValue) => void) => {
       if (!origin) return cb(null, true);
-      if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+      if (getAllowedOrigins().includes(origin)) return cb(null, true);
       return cb(new Error("CORS: origin not allowed"), false);
     },
     credentials: true,

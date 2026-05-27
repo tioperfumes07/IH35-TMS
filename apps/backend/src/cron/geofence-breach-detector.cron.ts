@@ -33,6 +33,10 @@ type CronRunStats = {
 const COMPANY_WATERMARKS = new Map<string, string>();
 let initialized = false;
 
+function isGeofenceCronEnabled(): boolean {
+  return (process.env.GEOFENCE_BREACH_CRON_ENABLED ?? "true").trim() !== "false";
+}
+
 async function fetchActiveCustomerGeofences(client: DbClient, operatingCompanyId: string): Promise<GeofenceRow[]> {
   const res = await client.query<GeofenceRow>(
     `
@@ -243,7 +247,7 @@ export async function runGeofenceBreachDetectionTick(
 export function initializeGeofenceBreachDetectorCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
-  if ((process.env.GEOFENCE_BREACH_CRON_ENABLED ?? "true").trim() === "false") {
+  if (!isGeofenceCronEnabled()) {
     app.log.info("Geofence breach detector cron disabled via GEOFENCE_BREACH_CRON_ENABLED=false");
     return;
   }
