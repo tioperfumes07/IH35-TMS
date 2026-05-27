@@ -24,6 +24,76 @@ export function getSafetyEventsFiltered(companyId: string, filter: "active" | "r
   }>(`/api/v1/safety/events?${q(companyId)}&filter=${encodeURIComponent(filter)}`);
 }
 
+
+export type SafetyEventLogRow = {
+  id: string;
+  operating_company_id: string;
+  event_type: string;
+  severity: "low" | "medium" | "high" | "critical";
+  status: "open" | "acknowledged" | "closed";
+  kpi_bucket: "incidents" | "violations" | "claims" | "commendations";
+  subject_type: "driver" | "unit" | "company";
+  subject_driver_id: string | null;
+  subject_unit_id: string | null;
+  related_load_id: string | null;
+  occurred_at: string;
+  title: string;
+  description: string | null;
+  created_by: string;
+  created_at: string;
+  subject_driver_name?: string | null;
+  subject_unit_number?: string | null;
+};
+
+export function listSafetyEventLog(
+  companyId: string,
+  params: { status?: "open" | "acknowledged" | "closed"; severity?: "low" | "medium" | "high" | "critical"; search?: string } = {}
+) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (params.status) qs.set("status", params.status);
+  if (params.severity) qs.set("severity", params.severity);
+  if (params.search) qs.set("search", params.search);
+  return apiRequest<{ events: SafetyEventLogRow[] }>(`/api/v1/safety/events-log?${qs.toString()}`);
+}
+
+export function getSafetyEventKpis(companyId: string) {
+  return apiRequest<{ kpis: { total: number; open_count: number; severe_count: number; commendations_count: number } }>(
+    `/api/v1/safety/events-log/kpis?${q(companyId)}`
+  );
+}
+
+export function getSafetyEventDetail(eventId: string, companyId: string) {
+  return apiRequest<{ event: SafetyEventLogRow }>(`/api/v1/safety/events-log/${encodeURIComponent(eventId)}?${q(companyId)}`);
+}
+
+export function listSafetyEventNotes(eventId: string, companyId: string) {
+  return apiRequest<{ notes: Array<{ id: string; safety_event_id: string; note: string; created_by: string; created_at: string; created_by_name?: string | null }> }>(
+    `/api/v1/safety/events-log/${encodeURIComponent(eventId)}/notes?${q(companyId)}`
+  );
+}
+
+export function createSafetyEvent(
+  body: {
+    operating_company_id: string;
+    event_type: string;
+    severity: "low" | "medium" | "high" | "critical";
+    status?: "open" | "acknowledged" | "closed";
+    kpi_bucket?: "incidents" | "violations" | "claims" | "commendations";
+    subject_type?: "driver" | "unit" | "company";
+    subject_driver_id?: string;
+    subject_unit_id?: string;
+    related_load_id?: string;
+    occurred_at?: string;
+    title: string;
+    description?: string;
+  }
+) {
+  return apiRequest<{ event: SafetyEventLogRow }>("/api/v1/safety/events-log", {
+    method: "POST",
+    body,
+  });
+}
+
 export function getUserPreferences() {
   return apiRequest<{ preferences: Record<string, unknown> }>("/api/v1/user/preferences");
 }
