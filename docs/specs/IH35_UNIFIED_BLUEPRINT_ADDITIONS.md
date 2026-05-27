@@ -793,6 +793,21 @@ This fallback removes local false-negative failures while preserving CI behavior
 
 ---
 
+## 2026-05-27 — Posting engine concurrent retry race hardening
+
+Source: IH35-TMS-BLOCKS-02.5-TO-10.md Block 05 (`P7-AUDIT-P0-3-POSTING-RACE`)  
+Status: LOCKED  
+Relevant block: P7-AUDIT-P0-3-POSTING-RACE
+
+Posting-engine retry safety now requires all of the following:
+
+- Row-claim behavior for idempotent posting work must include `FOR UPDATE SKIP LOCKED` semantics on claim/read paths to avoid dual workers advancing the same idempotency scope.
+- `accounting.journal_entries` must carry posting `idempotency_key` with company-scoped uniqueness to prevent duplicate journal headers under concurrent retries.
+- Posting retries that lose idempotency claim must resolve as already-posted (or in-progress retry signal) rather than creating duplicate accounting rows.
+- CI guards `verify:posting-uses-skip-locked` and `verify:journal-entries-idempotency-key-required` enforce recurrence prevention.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:

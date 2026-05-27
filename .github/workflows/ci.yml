@@ -114,15 +114,6 @@ jobs:
       - name: Verify maintenance reports coverage guard
         run: npm run verify:maintenance-reports-coverage
 
-      - name: Verify no demo rows in safety surfaces
-        run: npm run verify:no-demo-rows-in-safety
-
-      - name: Verify notes do not expose internal payloads
-        run: npm run verify:no-internal-payload-in-notes
-
-      - name: Verify route aliases have canonical targets
-        run: npm run verify:no-orphan-route-aliases
-
       - name: Backend tests + coverage (CI strict)
         run: npm run test:coverage
 

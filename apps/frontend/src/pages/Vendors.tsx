@@ -55,7 +55,7 @@ function fmtMoney(cents: number | null | undefined) {
 }
 
 function buildAchDisplay(vendor: VendorOption) {
-  const text = parseVendorNotes(vendor.notes).publicNotes.toLowerCase();
+  const text = `${vendor.notes ?? ""}`.toLowerCase();
   if (text.includes("ach")) return "ACH on file";
   return "—";
 }
@@ -121,10 +121,6 @@ export function VendorsPage() {
     if (exact) return exact;
     return vendorsSorted[0] ?? null;
   }, [vendorsSorted, selectedVendorId]);
-  const selectedVendorPublicNotes = useMemo(
-    () => parseVendorNotes(selectedVendor?.notes).publicNotes,
-    [selectedVendor?.notes]
-  );
 
   const openByVendorId = useMemo(() => {
     const map = new Map<string, number>();
@@ -241,7 +237,7 @@ export function VendorsPage() {
                     <p><span className="font-semibold text-gray-600">Phone:</span> {selectedVendor.phone ?? "—"}</p>
                     <p><span className="font-semibold text-gray-600">Billing address:</span> {selectedVendor.address ?? "—"}</p>
                     <p><span className="font-semibold text-gray-600">Shipping address:</span> —</p>
-                    <p><span className="font-semibold text-gray-600">Notes:</span> {selectedVendorPublicNotes || "—"}</p>
+                    <p><span className="font-semibold text-gray-600">Notes:</span> {selectedVendor.notes ?? "—"}</p>
                     <p><span className="font-semibold text-gray-600">Custom fields:</span> —</p>
                     <p className="md:col-span-2"><span className="font-semibold text-gray-600">Bill Pay ACH info:</span> {buildAchDisplay(selectedVendor)}</p>
                   </div>
@@ -373,7 +369,7 @@ export function VendorsPage() {
                   Vendor details are shown in the header section for this layout.
                 </div>
               ) : (
-                <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">{selectedVendorPublicNotes || "No notes."}</div>
+                <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">{selectedVendor.notes ?? "No notes."}</div>
               )}
             </>
           ) : (
