@@ -17,6 +17,8 @@
     "branch:precheck-push": "node scripts/branch-precheck-push.mjs",
     "branch:safe-switch": "node scripts/branch-safe-switch.mjs",
     "branch:cleanup-stale": "node scripts/branch-cleanup-stale.mjs",
+    "sync": "node scripts/sync.mjs",
+    "block:ship": "node scripts/block-ship.mjs",
     "build": "tsc -p tsconfig.json && node scripts/copy-email-templates.mjs",
     "build:backend": "tsc -p tsconfig.json && node scripts/copy-email-templates.mjs",
     "postinstall": "node -e \"if(process.env.SKIP_PUPPETEER_INSTALL!=='1'){require('child_process').execSync('npx puppeteer browsers install chrome',{stdio:'inherit'})}\"",
