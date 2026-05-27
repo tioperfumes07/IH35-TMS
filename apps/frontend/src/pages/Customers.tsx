@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { listInvoices } from "../api/accounting";
-import { getCustomerBillingSummary, listCustomers } from "../api/mdata";
+import { ApiError } from "../api/client";
+import { createCustomer, getCustomerBillingSummary, listCustomers } from "../api/mdata";
 import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { PageHeader } from "../components/layout/PageHeader";
+import { Modal } from "../components/Modal";
+import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
 
 type CustomerTabId =
@@ -86,6 +89,8 @@ function customerQualityRating(paymentScore: string | null | undefined, overallF
 
 export function CustomersPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
@@ -104,6 +109,58 @@ export function CustomersPage() {
   const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(
     () => Object.fromEntries(COLUMN_OPTIONS.map((column) => [column.key, column.defaultOn])) as Record<ColumnKey, boolean>
   );
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createLegalName, setCreateLegalName] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createPhone, setCreatePhone] = useState("");
+  const [createFormError, setCreateFormError] = useState("");
+  const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string }>({});
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const legalName = createLegalName.trim();
+      if (!legalName) {
+        const error = new Error("Customer legal name is required.");
+        (error as Error & { code?: string }).code = "legal_name_required";
+        throw error;
+      }
+      return createCustomer({
+        name: legalName,
+        legal_name: legalName,
+        email: createEmail.trim() || undefined,
+        phone: createPhone.trim() || undefined,
+        operating_company_id: companyId,
+      });
+    },
+    onSuccess: async (customer) => {
+      await queryClient.invalidateQueries({ queryKey: ["customers", "page", companyId] });
+      setCreateOpen(false);
+      setCreateLegalName("");
+      setCreateEmail("");
+      setCreatePhone("");
+      setCreateFormError("");
+      setCreateFieldErrors({});
+      pushToast("Customer created.", "success");
+      if (customer?.id) navigate(`/customers/${customer.id}`);
+    },
+    onError: (error) => {
+      setCreateFormError("");
+      setCreateFieldErrors({});
+      if ((error as Error & { code?: string }).code === "legal_name_required") {
+        setCreateFieldErrors({ legal_name: "Legal name is required" });
+        return;
+      }
+      const err = error as ApiError;
+      if (err instanceof ApiError && err.status === 409) {
+        setCreateFormError("Could not save customer.");
+        setCreateFieldErrors({ mc_number: "Already in use" });
+        pushToast("Could not save customer: duplicate customer record.", "error");
+        return;
+      }
+      setCreateFormError("Could not save customer.");
+      pushToast(String((error as Error)?.message || "Could not save customer."), "error");
+    },
+  });
 
   const customersQuery = useQuery({
     queryKey: ["customers", "page", companyId],
@@ -191,7 +248,15 @@ export function CustomersPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Customers" subtitle="Customer list and transactions" />
+      <PageHeader
+        title="Customers"
+        subtitle="Customer list and transactions"
+        actions={
+          <ActionButton onClick={() => setCreateOpen(true)}>
+            + Create Customer
+          </ActionButton>
+        }
+      />
       <div className="flex gap-3">
         <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2">
           <input
@@ -405,6 +470,68 @@ export function CustomersPage() {
           )}
         </main>
       </div>
+      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Customer">
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setCreateFormError("");
+            setCreateFieldErrors({});
+            createMutation.mutate();
+          }}
+        >
+          {createFormError ? (
+            <div role="alert" className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
+              {createFormError}
+            </div>
+          ) : null}
+          <label className="block text-sm">
+            <span className="mb-1 block text-xs font-semibold text-gray-600">Legal name *</span>
+            <input
+              data-field="legal_name"
+              value={createLegalName}
+              onChange={(event) => setCreateLegalName(event.target.value)}
+              className="w-full rounded border border-gray-300 px-2 py-1.5"
+            />
+            {createFieldErrors.legal_name ? (
+              <span id="legal_name-error" className="mt-1 block text-xs text-red-700">
+                {createFieldErrors.legal_name}
+              </span>
+            ) : null}
+          </label>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <label className="block text-sm">
+              <span className="mb-1 block text-xs font-semibold text-gray-600">Email</span>
+              <input
+                value={createEmail}
+                onChange={(event) => setCreateEmail(event.target.value)}
+                className="w-full rounded border border-gray-300 px-2 py-1.5"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block text-xs font-semibold text-gray-600">Phone</span>
+              <input
+                value={createPhone}
+                onChange={(event) => setCreatePhone(event.target.value)}
+                className="w-full rounded border border-gray-300 px-2 py-1.5"
+              />
+            </label>
+          </div>
+          <div className="flex justify-end gap-2">
+            <ActionButton type="button" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </ActionButton>
+            <ActionButton type="submit" disabled={createMutation.isPending || !companyId}>
+              {createMutation.isPending ? "Saving..." : "Save"}
+            </ActionButton>
+          </div>
+          {createFieldErrors.mc_number ? (
+            <span id="mc_number-error" className="block text-xs text-red-700">
+              {createFieldErrors.mc_number}
+            </span>
+          ) : null}
+        </form>
+      </Modal>
     </div>
   );
 }
