@@ -76,13 +76,6 @@ function parseDriverListStatus(searchParams: URLSearchParams): DriverListStatusI
   return (DRIVER_LIST_STATUS_IDS as readonly string[]).includes(raw) ? (raw as DriverListStatusId) : "all";
 }
 
-function parseDriverSubnav(searchParams: URLSearchParams): (typeof DRIVERS_SUBNAV)[number]["id"] {
-  const raw = (searchParams.get("subtab") ?? "drivers").toLowerCase();
-  return (DRIVERS_SUBNAV as readonly { id: string; label: string }[]).some((tab) => tab.id === raw)
-    ? (raw as (typeof DRIVERS_SUBNAV)[number]["id"])
-    : "drivers";
-}
-
 function driverMatchesListSegment(status: string, segment: DriverListStatusId): boolean {
   if (segment === "all") return true;
   if (segment === "active") return status === "Active";
@@ -224,7 +217,7 @@ export function DriversPage() {
   const [search, setSearch] = useState("");
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
   const [activeTab] = useState<"drivers" | "teams">("drivers");
-  const subnavTab = useMemo(() => parseDriverSubnav(searchParams), [searchParams]);
+  const [subnavTab, setSubnavTab] = useState<(typeof DRIVERS_SUBNAV)[number]["id"]>("drivers");
   const [addOpen, setAddOpen] = useState(false);
   const [teamCreateOpen, setTeamCreateOpen] = useState(false);
   const [teamDetailOpen, setTeamDetailOpen] = useState(false);
@@ -795,18 +788,7 @@ export function DriversPage() {
       <SecondaryNavTabs
         tabs={DRIVERS_SUBNAV.map((tab) => ({ id: tab.id, label: tab.label }))}
         activeId={subnavTab}
-        onChange={(next) => {
-          const nextTab = next as (typeof DRIVERS_SUBNAV)[number]["id"];
-          setSearchParams(
-            (prev) => {
-              const nextParams = new URLSearchParams(prev);
-              if (nextTab === "drivers") nextParams.delete("subtab");
-              else nextParams.set("subtab", nextTab);
-              return nextParams;
-            },
-            { replace: false }
-          );
-        }}
+        onChange={(next) => setSubnavTab(next as (typeof DRIVERS_SUBNAV)[number]["id"])}
       />
 
       {activeTab === "teams" ? (
@@ -877,173 +859,110 @@ export function DriversPage() {
 
       {activeTab === "drivers" ? (
         <>
-          <SecondaryNavTabs
-            className="-mx-2"
-            activeId={driverListStatus}
-            onChange={(id) => {
-              if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriverListStatusId);
-            }}
-            tabs={[
-              { id: "all", label: `All (${driverListTabCounts.all})` },
-              { id: "active", label: `Active (${driverListTabCounts.active})` },
-              { id: "inactive", label: `Inactive (${driverListTabCounts.inactive})` },
-              { id: "on_leave", label: `On Leave (${driverListTabCounts.on_leave})` },
-              { id: "terminated", label: `Terminated (${driverListTabCounts.terminated})` },
-            ]}
-          />
-          {subnavTab === "drivers" ? (
-            <>
-              <div className="flex flex-wrap gap-2">
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search by name"
-                  className="h-8 w-full max-w-xs rounded border border-gray-300 px-2 text-[13px]"
-                />
-              </div>
-              <DataTable
-                rows={driversRowsFiltered}
-                loading={driversQuery.isLoading}
-                errorState={dataTableErrorState(driversQuery.error, () => void driversQuery.refetch())}
-                rowKey={(row) => row.id}
-                onRowClick={(row) => navigate(`/drivers/${row.id}`)}
-                columns={[
-                  {
-                    key: "name",
-                    label: "Name",
-                    sortable: true,
-                    className: "max-w-[220px] whitespace-nowrap",
-                    render: (row) => {
-                      const v = `${row.first_name} ${row.last_name}`;
-                      return (
-                        <span title={v} className="single-line-name">
-                          {v}
-                        </span>
-                      );
-                    },
-                  },
-                  { key: "phone", label: "Phone" },
-                  { key: "cdl_number", label: "CDL #", cellClass: "code-cell" },
-                  {
-                    key: "cdl_expires_at",
-                    label: "CDL Expires",
-                    render: (row) => formatDate(row.cdl_expires_at),
-                  },
-                  {
-                    key: "status",
-                    label: "Status",
-                    render: (row) => <StatusBadge status={row.status} />,
-                  },
-                  {
-                    key: "hire_date",
-                    label: "Hire Date",
-                    render: (row) => formatDate(row.hire_date),
-                  },
-                ]}
-              />
-            </>
-          ) : null}
-          {subnavTab === "settlements" || subnavTab === "pre_settlements" ? (
-            <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} />
-          ) : null}
-          {subnavTab === "cash_advances" || subnavTab === "deductions" ? (
-            <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
-              {debtAlertRows.map((row) => (
-                <DataPanelRow key={row.driver_id}>
-                  <span>{row.driver_name} · {row.reasons.slice(0, 2).join(" + ")}</span>
-                  <span className="text-red-600">-{formatMoney(row.total)}</span>
-                </DataPanelRow>
-              ))}
-              {debtAlertRows.length === 0 ? (
-                <p className="px-2 py-2 text-xs text-gray-500">No outstanding cash advance, repair, damage, or late-arrival debt.</p>
-              ) : null}
-              <DataPanelRow>
-                <span className="font-semibold">Total outstanding</span>
-                <span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe)}</span>
-              </DataPanelRow>
-            </DataPanel>
-          ) : null}
-          {subnavTab === "permits" ? (
-            <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
-              {permitExpirationRows.map((row) => (
-                <DataPanelRow key={row.id}>
-                  <span>{row.driver_name} · {row.label}</span>
-                  <span>{row.days}d</span>
-                </DataPanelRow>
-              ))}
-              {permitExpirationRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No permit/document expirations in the next 60 days.</p> : null}
-            </DataPanel>
-          ) : null}
-          {subnavTab === "profiles" ? (
-            <DataPanel title="Active Drivers · Movement" accentColor={colors.info.strong}>
-              {activeDriverLoadRows.map((row) => (
-                <DataPanelRow key={`${row.driver_name}-${row.route}`}>
-                  <span>{row.driver_name} · {row.stage} · {row.route}</span>
-                  <span>{row.eta}</span>
-                </DataPanelRow>
-              ))}
-              {activeDriverLoadRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No active driver movement from dispatch feed.</p> : null}
-              <DataPanelRow>
-                <span className="font-semibold">Samsara status</span>
-                <span className="font-semibold">{samsaraHealthQuery.data?.last_health_status ?? "unknown"}</span>
-              </DataPanelRow>
-            </DataPanel>
-          ) : null}
-          {subnavTab === "leave" ? (
-            <DataPanel title="Leave Overview" accentColor={colors.warn.strong}>
-              <DataPanelRow>
-                <span>On leave</span>
-                <span>{onLeaveCount}</span>
-              </DataPanelRow>
-              <DataPanelRow>
-                <span>Available drivers</span>
-                <span>{availableCount}</span>
-              </DataPanelRow>
-            </DataPanel>
-          ) : null}
-          {subnavTab === "pay_rate_templates" ? (
-            <DataPanel title="Pay Rate Templates" accentColor={colors.drivers.strong}>
-              <p className="px-2 py-2 text-xs text-gray-500">Use Lists &gt; Driver &gt; Pay rate templates to manage templates.</p>
-            </DataPanel>
-          ) : null}
-          {subnavTab === "drivers" ? (
-            <div className="grid auto-rows-fr gap-3 md:grid-cols-2">
-              <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} title="Settlements Ready" />
-              <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
-                {debtAlertRows.map((row) => (
-                  <DataPanelRow key={row.driver_id}>
-                    <span>{row.driver_name} · {row.reasons.slice(0, 2).join(" + ")}</span>
-                    <span className="text-red-600">-{formatMoney(row.total)}</span>
-                  </DataPanelRow>
-                ))}
-                {debtAlertRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No outstanding cash advance, repair, damage, or late-arrival debt.</p> : null}
-                <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe)}</span></DataPanelRow>
-              </DataPanel>
-              <DataPanel
-                title={`Active Drivers · Samsara ${samsaraHealthQuery.data?.is_enabled ? "live" : "not connected"}`}
-                accentColor={colors.info.strong}
-              >
-                {activeDriverLoadRows.map((row) => (
-                  <DataPanelRow key={`${row.driver_name}-${row.route}`}>
-                    <span>{row.driver_name} · {row.stage} · {row.route}</span>
-                    <span>{row.eta}</span>
-                  </DataPanelRow>
-                ))}
-                {activeDriverLoadRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No active driver movement from dispatch feed.</p> : null}
-                <DataPanelRow><span className="font-semibold">Samsara status</span><span className="font-semibold">{samsaraHealthQuery.data?.last_health_status ?? "unknown"}</span></DataPanelRow>
-              </DataPanel>
-              <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
-                {permitExpirationRows.map((row) => (
-                  <DataPanelRow key={row.id}>
-                    <span>{row.driver_name} · {row.label}</span>
-                    <span>{row.days}d</span>
-                  </DataPanelRow>
-                ))}
-                {permitExpirationRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No permit/document expirations in the next 60 days.</p> : null}
-                <DataPanelRow><span className="font-semibold">Pending escrow approvals</span><span className="font-semibold">{(pendingEscrowQuery.data?.data ?? []).length}</span></DataPanelRow>
-              </DataPanel>
-            </div>
-          ) : null}
+      <SecondaryNavTabs
+        className="-mx-2"
+        activeId={driverListStatus}
+        onChange={(id) => {
+          if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriverListStatusId);
+        }}
+        tabs={[
+          { id: "all", label: `All (${driverListTabCounts.all})` },
+          { id: "active", label: `Active (${driverListTabCounts.active})` },
+          { id: "inactive", label: `Inactive (${driverListTabCounts.inactive})` },
+          { id: "on_leave", label: `On Leave (${driverListTabCounts.on_leave})` },
+          { id: "terminated", label: `Terminated (${driverListTabCounts.terminated})` },
+        ]}
+      />
+      <div className="flex flex-wrap gap-2">
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search by name"
+          className="h-8 w-full max-w-xs rounded border border-gray-300 px-2 text-[13px]"
+        />
+      </div>
+
+      <DataTable
+        rows={driversRowsFiltered}
+        loading={driversQuery.isLoading}
+        errorState={dataTableErrorState(driversQuery.error, () => void driversQuery.refetch())}
+        rowKey={(row) => row.id}
+        onRowClick={(row) => navigate(`/drivers/${row.id}`)}
+        columns={[
+          {
+            key: "name",
+            label: "Name",
+            sortable: true,
+            className: "max-w-[220px] whitespace-nowrap",
+            render: (row) => {
+              const v = `${row.first_name} ${row.last_name}`;
+              return (
+                <span title={v} className="single-line-name">
+                  {v}
+                </span>
+              );
+            },
+          },
+          { key: "phone", label: "Phone" },
+          { key: "cdl_number", label: "CDL #", cellClass: "code-cell" },
+          {
+            key: "cdl_expires_at",
+            label: "CDL Expires",
+            render: (row) => formatDate(row.cdl_expires_at),
+          },
+          {
+            key: "status",
+            label: "Status",
+            render: (row) => <StatusBadge status={row.status} />,
+          },
+          {
+            key: "hire_date",
+            label: "Hire Date",
+            render: (row) => formatDate(row.hire_date),
+          },
+        ]}
+      />
+
+      {subnavTab === "pre_settlements" ? (
+        <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} />
+      ) : (
+      <div className="grid auto-rows-fr gap-3 md:grid-cols-2">
+        <PreSettlementsPanel rows={settlementsReadyRows} loading={settlementsQuery.isLoading} title="Settlements Ready" />
+        <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
+          {debtAlertRows.map((row) => (
+            <DataPanelRow key={row.driver_id}>
+              <span>{row.driver_name} · {row.reasons.slice(0, 2).join(" + ")}</span>
+              <span className="text-red-600">-{formatMoney(row.total)}</span>
+            </DataPanelRow>
+          ))}
+          {debtAlertRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No outstanding cash advance, repair, damage, or late-arrival debt.</p> : null}
+          <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe)}</span></DataPanelRow>
+        </DataPanel>
+        <DataPanel
+          title={`Active Drivers · Samsara ${samsaraHealthQuery.data?.is_enabled ? "live" : "not connected"}`}
+          accentColor={colors.info.strong}
+        >
+          {activeDriverLoadRows.map((row) => (
+            <DataPanelRow key={`${row.driver_name}-${row.route}`}>
+              <span>{row.driver_name} · {row.stage} · {row.route}</span>
+              <span>{row.eta}</span>
+            </DataPanelRow>
+          ))}
+          {activeDriverLoadRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No active driver movement from dispatch feed.</p> : null}
+          <DataPanelRow><span className="font-semibold">Samsara status</span><span className="font-semibold">{samsaraHealthQuery.data?.last_health_status ?? "unknown"}</span></DataPanelRow>
+        </DataPanel>
+        <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
+          {permitExpirationRows.map((row) => (
+            <DataPanelRow key={row.id}>
+              <span>{row.driver_name} · {row.label}</span>
+              <span>{row.days}d</span>
+            </DataPanelRow>
+          ))}
+          {permitExpirationRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No permit/document expirations in the next 60 days.</p> : null}
+          <DataPanelRow><span className="font-semibold">Pending escrow approvals</span><span className="font-semibold">{(pendingEscrowQuery.data?.data ?? []).length}</span></DataPanelRow>
+        </DataPanel>
+      </div>
+      )}
         </>
       ) : null}
 

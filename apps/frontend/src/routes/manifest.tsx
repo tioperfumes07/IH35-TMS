@@ -132,7 +132,6 @@ import { BillsPage } from "../pages/accounting/BillsPage";
 import { VendorBalancesPage } from "../pages/accounting/VendorBalancesPage";
 import { ManualJEListPage } from "../pages/accounting/ManualJEListPage";
 import { BillPaymentsListPage } from "../pages/accounting/BillPaymentsListPage";
-import { JournalEntryDetailPage } from "../pages/accounting/journal-entries/JournalEntryDetailPage";
 import { AccountingPreSettlementsPage } from "../pages/accounting/AccountingPreSettlementsPage";
 import { ExpenseCategoryMapPage } from "../pages/accounting/ExpenseCategoryMapPage";
 import { CoaRolesPage } from "../pages/accounting/CoaRolesPage";
@@ -542,7 +541,7 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/safety/safety-events" replace />} />
+          <Route index element={<Navigate to="/safety/driver-files" replace />} />
           <Route path="driver-files" element={<DriverFilesTab />} />
           <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
           <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
@@ -1840,14 +1839,6 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/accounting/journal-entries/:id"
-          element={
-            <ProtectedRoute>
-              <JournalEntryDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/accounting/settings/expense-category-map"
           element={
             <ProtectedRoute>
@@ -1879,6 +1870,7 @@ export const ROUTES = React.Children.toArray(
           "/fuel/settings",
           "/fuel/inbox",
           "/safety/accidents-incidents",
+          "/safety/integrity-alerts",
           "/safety/permits",
           "/safety/trailer-interchanges",
           "/drivers/settlements",
@@ -1897,14 +1889,6 @@ export const ROUTES = React.Children.toArray(
             }
           />
         ))}
-        <Route
-          path="/safety/integrity-alerts"
-          element={
-            <ProtectedRoute>
-              <Navigate to="/safety/integrity-reports" replace />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/reports/run/:reportId"
           element={
