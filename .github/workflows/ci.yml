@@ -141,6 +141,9 @@ jobs:
       - name: Verify no boot-time env throws
         run: npm run verify:no-boot-throwing-env-checks
 
+      - name: Verify Google OAuth lazy env guard
+        run: npm run verify:google-oauth-lazy-env
+
       - name: Verify no duplicate modal headers
         run: npm run verify:no-duplicate-modal-headers
 
