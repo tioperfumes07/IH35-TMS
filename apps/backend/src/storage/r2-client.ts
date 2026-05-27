@@ -16,6 +16,8 @@ type ObjectMetadata = {
 };
 
 let warnedMissingConfig = false;
+let cachedConfig: R2Config | null | undefined;
+let cachedClient: S3Client | null | undefined;
 
 function getMissingEnvKeys() {
   const missing: string[] = [];
@@ -26,37 +28,50 @@ function getMissingEnvKeys() {
 }
 
 function loadConfig(): R2Config | null {
+  if (cachedConfig !== undefined) {
+    return cachedConfig;
+  }
   const missing = getMissingEnvKeys();
   if (missing.length > 0) {
     if (!warnedMissingConfig) {
       warnedMissingConfig = true;
       console.warn(`R2 client disabled: missing env vars ${missing.join(", ")}. Document upload/download endpoints will return service_unavailable.`);
     }
-    return null;
+    cachedConfig = null;
+    return cachedConfig;
   }
-  return {
+  cachedConfig = {
     accountId: process.env.R2_ACCOUNT_ID as string,
     accessKeyId: process.env.R2_ACCESS_KEY_ID as string,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY as string,
     bucket: process.env.R2_BUCKET || "ih35-tms-evidence",
   };
+  return cachedConfig;
 }
 
-const r2Config = loadConfig();
-
-const r2Client =
-  r2Config === null
-    ? null
-    : new S3Client({
-        region: "auto",
-        endpoint: `https://${r2Config.accountId}.r2.cloudflarestorage.com`,
-        credentials: {
-          accessKeyId: r2Config.accessKeyId,
-          secretAccessKey: r2Config.secretAccessKey,
-        },
-      });
+function getR2Client() {
+  if (cachedClient !== undefined) {
+    return cachedClient;
+  }
+  const r2Config = loadConfig();
+  if (!r2Config) {
+    cachedClient = null;
+    return cachedClient;
+  }
+  cachedClient = new S3Client({
+    region: "auto",
+    endpoint: `https://${r2Config.accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: r2Config.accessKeyId,
+      secretAccessKey: r2Config.secretAccessKey,
+    },
+  });
+  return cachedClient;
+}
 
 function ensureConfigured() {
+  const r2Config = loadConfig();
+  const r2Client = getR2Client();
   if (!r2Client || !r2Config) {
     throw new Error(`r2_not_configured:${getMissingEnvKeys().join(",")}`);
   }
@@ -64,11 +79,11 @@ function ensureConfigured() {
 }
 
 export function isR2Configured() {
-  return Boolean(r2Client && r2Config);
+  return Boolean(loadConfig() && getR2Client());
 }
 
 export function getR2BucketName() {
-  return r2Config?.bucket ?? process.env.R2_BUCKET ?? "ih35-tms-evidence";
+  return loadConfig()?.bucket ?? process.env.R2_BUCKET ?? "ih35-tms-evidence";
 }
 
 export async function generatePresignedUploadUrl(r2Key: string, contentType: string, expiresInSeconds = 900) {

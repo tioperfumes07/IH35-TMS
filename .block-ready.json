@@ -1,17 +1,29 @@
 {
-  "block_id": "P7-FIX-MIG-DEDUPE-001",
+  "block_id": "P7-AUDIT-P0-2-HOTFIX-2B",
   "phase": "Phase 7 Stabilization",
-  "task": "P7-FIX-MIG-DEDUPE-001",
+  "task": "P7-AUDIT-P0-2-HOTFIX-2B",
   "allowed_files": [
-    "db/migrations/0262_reconcile_0237_0238_duplicate_history.sql",
-    "scripts/verify-no-duplicate-migrations.mjs",
-    "scripts/__tests__/verify-no-duplicate-migrations.test.mjs",
-    "package.json",
+    "apps/backend/src/auth/db.ts",
+    "apps/backend/src/auth/routes.ts",
+    "apps/backend/src/cron/geofence-breach-detector.cron.ts",
+    "apps/backend/src/driver/driver-jwt.ts",
+    "apps/backend/src/email/render.ts",
+    "apps/backend/src/identity/password-reset.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/backend/src/integrations/qbo/forensic-import.service.ts",
+    "apps/backend/src/legal/contracts.service.ts",
+    "apps/backend/src/legal/matters.service.ts",
+    "apps/backend/src/legal/templates.service.ts",
+    "apps/backend/src/middleware/rate-limit.ts",
+    "apps/backend/src/services/push-notification.service.ts",
+    "apps/backend/src/storage/r2-client.ts",
+    "apps/backend/src/__tests__/env-guards/**",
+    "scripts/verify-no-boot-throwing-env-checks.mjs",
     ".block-ready.json"
   ],
   "extra_gates": [
-    "verify:no-duplicate-migrations",
-    "verify:no-duplicate-migrations:test"
+    "verify:no-boot-throwing-env-checks",
+    "build:backend"
   ],
   "runtime_path": "backend",
   "db_required": false,

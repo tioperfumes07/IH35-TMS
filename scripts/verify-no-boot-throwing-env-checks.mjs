@@ -12,46 +12,7 @@ if (!fs.existsSync(DIST_ROOT)) {
   process.exit(1);
 }
 
-const KNOWN_OFFENDERS_DEBT = [
-  { file: "dist/auth/db.js", envs: ["IH35_BOOT_API_SMOKE", "NODE_ENV"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
-  { file: "dist/auth/routes.js", envs: ["CORS_ALLOWED_ORIGINS"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
-  { file: "dist/cron/geofence-breach-detector.cron.js", envs: ["GEOFENCE_BREACH_CRON_ENABLED"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
-  { file: "dist/driver/driver-jwt.js", envs: ["DRIVER_JWT_SECRET", "NODE_ENV"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
-  { file: "dist/email/render.js", envs: ["NODE_ENV"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
-  { file: "dist/identity/password-reset.routes.js", envs: ["FRONTEND_BASE_URL"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
-  {
-    file: "dist/index.js",
-    envs: ["CORS_ALLOWED_ORIGINS", "SKIP_MIGRATION_VERIFICATION", "PORT", "ENABLE_OUTBOX_PROCESSOR"],
-    tracker: "P7-AUDIT-P0-2-HOTFIX-2",
-  },
-  {
-    file: "dist/integrations/qbo/forensic-import.service.js",
-    envs: ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET_EVIDENCE", "R2_BUCKET"],
-    tracker: "P7-AUDIT-P0-2-HOTFIX-2",
-  },
-  {
-    file: "dist/legal/contracts.service.js",
-    envs: ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "SIGNER_APP_BASE_URL", "FRONTEND_BASE_URL"],
-    tracker: "P7-AUDIT-P0-2-HOTFIX-2",
-  },
-  {
-    file: "dist/legal/matters.service.js",
-    envs: ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET"],
-    tracker: "P7-AUDIT-P0-2-HOTFIX-2",
-  },
-  {
-    file: "dist/legal/templates.service.js",
-    envs: ["SIGNER_APP_BASE_URL", "FRONTEND_BASE_URL"],
-    tracker: "P7-AUDIT-P0-2-HOTFIX-2",
-  },
-  { file: "dist/middleware/rate-limit.js", envs: ["REDIS_URL", "SENTRY_DSN"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
-  {
-    file: "dist/services/push-notification.service.js",
-    envs: ["VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_SUBJECT"],
-    tracker: "P7-AUDIT-P0-2-HOTFIX-2",
-  },
-  { file: "dist/storage/r2-client.js", envs: ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET"], tracker: "P7-AUDIT-P0-2-HOTFIX-2" },
-];
+const KNOWN_OFFENDERS_DEBT = [];
 
 const KNOWN_THROWING_CONSTRUCTORS = new Set(["Twilio", "Google"]);
 
@@ -146,6 +107,12 @@ for (const debt of KNOWN_OFFENDERS_DEBT) {
   }
 }
 
+if (KNOWN_OFFENDERS_DEBT.length > 0) {
+  console.error("verify:no-boot-throwing-env-checks failed");
+  console.error("KNOWN_OFFENDERS_DEBT must remain empty. Do not reintroduce debt exemptions.");
+  process.exit(1);
+}
+
 const violations = [];
 for (const file of collectFiles(DIST_ROOT)) {
   const relDist = relativeDistPath(file);
@@ -179,9 +146,7 @@ for (const file of collectFiles(DIST_ROOT)) {
   }
 }
 
-console.log(
-  `verify:no-boot-throwing-env-checks: ${KNOWN_OFFENDERS_DEBT.length} debt entries remaining; remove via P7-AUDIT-P0-2-HOTFIX-2.`
-);
+console.log("verify:no-boot-throwing-env-checks: debt exemptions disabled.");
 
 if (violations.length > 0) {
   console.error("verify:no-boot-throwing-env-checks failed");

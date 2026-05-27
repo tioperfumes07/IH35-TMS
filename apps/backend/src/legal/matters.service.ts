@@ -8,17 +8,26 @@ export type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 };
 
-const r2UploadClient =
-  process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY
-    ? new S3Client({
-        region: "auto",
-        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        credentials: {
-          accessKeyId: process.env.R2_ACCESS_KEY_ID,
-          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-        },
-      })
-    : null;
+let r2UploadClientInstance: S3Client | null | undefined;
+
+function getR2UploadClient(): S3Client | null {
+  if (r2UploadClientInstance !== undefined) {
+    return r2UploadClientInstance;
+  }
+  const accountId = process.env.R2_ACCOUNT_ID?.trim();
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    r2UploadClientInstance = null;
+    return r2UploadClientInstance;
+  }
+  r2UploadClientInstance = new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey },
+  });
+  return r2UploadClientInstance;
+}
 
 export const matterCreateSchema = z.object({
   matter_number: z.string().trim().min(2).max(120),
@@ -472,6 +481,7 @@ export async function addMatterEventRow(
 }
 
 async function uploadMatterBytesToR2(operatingCompanyId: string, matterId: string, buffer: Buffer, contentType: string) {
+  const r2UploadClient = getR2UploadClient();
   if (!r2UploadClient) throw new Error("r2_not_configured");
   const key = `${operatingCompanyId}/legal/matters/${matterId}/${crypto.randomUUID()}${contentType.includes("pdf") ? ".pdf" : ""}`;
   await r2UploadClient.send(

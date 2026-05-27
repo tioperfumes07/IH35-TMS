@@ -39,9 +39,13 @@ async function auditRateLimitExceeded(payload: Record<string, unknown>) {
   }
 }
 
+function isSentryConfigured() {
+  return Boolean(process.env.SENTRY_DSN?.trim());
+}
+
 async function send429(reply: FastifyReply, retrySeconds: number, payload: Record<string, unknown>) {
   reply.header("Retry-After", String(Math.max(1, retrySeconds)));
-  if (process.env.SENTRY_DSN?.trim()) {
+  if (isSentryConfigured()) {
     Sentry.captureMessage("identity.rate_limit_exceeded", {
       level: "warning",
       tags: { subsystem: "rate-limit" },
