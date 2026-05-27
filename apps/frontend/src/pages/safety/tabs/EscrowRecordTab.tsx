@@ -22,18 +22,7 @@ type Attempt = {
   created_at: string;
 };
 
-const DEFAULT_ROWS: EscrowRow[] = [
-  {
-    id: "legacy-demo",
-    driver_name: "Legacy Driver (demo)",
-    current_balance: 0,
-    pre_clause_total: 0,
-    post_clause_total: 0,
-    accumulation_rate_pct: 0,
-    forfeiture_history_count: 0,
-    has_signed_clause: false,
-  },
-];
+const DEFAULT_ROWS: EscrowRow[] = [];
 
 export function EscrowRecordTab() {
   const auth = useAuth();
@@ -50,7 +39,7 @@ export function EscrowRecordTab() {
   return (
     <div className="space-y-3">
       <div className="rounded border border-gray-200 bg-white p-3 text-xs text-slate-600">
-        Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable, including blocked legacy-driver attempts.
+        Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable.
       </div>
 
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
@@ -86,6 +75,13 @@ export function EscrowRecordTab() {
                 </td>
               </tr>
             ))}
+            {rows.length === 0 ? (
+              <tr className="border-t border-gray-100">
+                <td className="px-2 py-3 text-center text-slate-500" colSpan={7}>
+                  No escrow records available for the selected company.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
@@ -113,7 +109,7 @@ export function EscrowRecordTab() {
               <input className="w-full rounded border border-gray-300 px-2 py-1 text-xs" value={linkedLiabilityId} onChange={(e) => setLinkedLiabilityId(e.target.value)} placeholder="Linked liability_id (optional)" />
             </div>
             {!selected.has_signed_clause ? (
-              <p className="mt-2 text-xs text-red-700">Blocked: legacy driver without signed escrow clause (MUST 3.13.6.3.D).</p>
+              <p className="mt-2 text-xs text-red-700">Blocked: forfeiture requires a signed escrow clause (MUST 3.13.6.3.D).</p>
             ) : null}
             <div className="mt-3 flex justify-end gap-2">
               <button type="button" className="rounded border border-gray-300 px-2 py-1 text-xs" onClick={() => setSelected(null)}>
