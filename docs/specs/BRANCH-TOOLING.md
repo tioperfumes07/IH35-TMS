@@ -1,6 +1,6 @@
 # Branch Tooling Reference
 
-This project standardizes branch operations through four scripts plus a pre-push guard. Use these commands instead of ad-hoc git recovery steps.
+This project standardizes branch operations through six scripts plus a pre-push guard. Use these commands instead of ad-hoc git recovery steps.
 
 ## 1) Rebuild a branch linearly
 
@@ -71,6 +71,33 @@ Behavior:
 - Without `--force`, asks for confirmation before deletion.
 - Prints deletion/retention summary at the end.
 
+## 5) Sync state snapshot
+
+Command:
+
+`npm run sync`
+
+Behavior:
+
+- Fetches `origin`.
+- Prints a single status report with branch/head/dirty state.
+- Summarizes branch vs `origin/main`, open PR signal, env readiness, and block context.
+- Uses `gh` when present; otherwise falls back to GitHub REST with `GITHUB_TOKEN`.
+
+## 6) Block ship orchestrator
+
+Command:
+
+`npm run block:ship -- "<commit message>"`
+
+Behavior:
+
+- Runs `sync` first and applies decision logic.
+- Refuses on non-feature branch.
+- Refuses when behind `origin/main` and suggests `branch:rebuild-linear`.
+- Commits dirty working trees with the provided message.
+- Runs `branch:precheck-push` and then pushes with `--force-with-lease` on success.
+
 ## Hooks and installation
 
 - `npm run prepare` installs husky hooks and writes `.husky/pre-push`.
@@ -90,6 +117,8 @@ One-page reference for safe branch operations in IH35-TMS.
 | `npm run branch:precheck-push` | Run build + verify chain + `block-ready` before push |
 | `npm run branch:safe-switch -- <branch>` | Switch branches with dirty/merge/reflog guardrails |
 | `npm run branch:cleanup-stale [--dry-run] [--force]` | Delete local branches with no unique work vs `origin/main` |
+| `npm run sync` | One-command status snapshot (git + GitHub + Render + env) |
+| `npm run block:ship -- "<message>"` | Orchestrate commit/verify/push with branch-aware guards |
 
 ## Recover a conflicted PR in one command
 

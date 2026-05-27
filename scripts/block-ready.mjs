@@ -313,6 +313,13 @@ function runCheckC1() {
   if (mergeBase !== originMain) {
     const missingRes = runCommand("git log --oneline -1 HEAD..origin/main", "C1");
     const missing = (missingRes.stdout || "").trim() || originMain;
+    const mergeBranchHintMatch = missing.match(/Merge pull request #\d+ from [^/]+\/(.+)$/);
+    if (mergeBranchHintMatch && mergeBranchHintMatch[1] === branch) {
+      fail(
+        "C1",
+        `branch appears merged upstream (${missing}); run "git checkout main && git pull --ff-only origin main && git branch -D ${branch}" then start next block from main`
+      );
+    }
     fail("C1", `branch is not rebased onto origin/main; missing commit ${missing}`);
   }
 

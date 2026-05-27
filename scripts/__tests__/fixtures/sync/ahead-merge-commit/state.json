@@ -1,0 +1,8 @@
+{
+  "branch": "feat/ahead-merge",
+  "ahead": 3,
+  "behind": 0,
+  "dirtyCount": 0,
+  "mergeCommits": 1,
+  "mergedUpstream": false
+}

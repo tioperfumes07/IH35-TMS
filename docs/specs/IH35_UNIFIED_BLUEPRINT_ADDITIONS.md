@@ -774,6 +774,25 @@ Reference: `docs/specs/BRANCH-TOOLING.md`
 
 ---
 
+## 2026-05-26 — Sync orchestrator and block:ship
+
+Source: IH35-TMS-BLOCKS-02.5-TO-10.md Block 02.5 (`P7-INFRA-SYNC-ORCHESTRATOR`)  
+Status: LOCKED  
+Relevant block: P7-INFRA-SYNC-ORCHESTRATOR
+
+New commands:
+
+- `npm run sync`: one status report for branch/head/tree, branch-vs-main, PR/deploy signal, env readiness, and block context.
+- `npm run block:ship -- "<message>"`: orchestrates sync -> commit decision -> precheck -> push.
+
+`verify:branch-fresh` now includes a local fallback when CI env is missing:
+
+- If `GITHUB_BASE_SHA` is unset, infer from `origin/main` and print a warning.
+
+This fallback removes local false-negative failures while preserving CI behavior.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:
