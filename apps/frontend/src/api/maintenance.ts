@@ -1,4 +1,4 @@
-import { apiRequest, resolveApiUrl } from "./client";
+import { ApiError, apiRequest, resolveApiUrl } from "./client";
 
 export type WorkOrderType = "pm" | "repair" | "tire" | "accident";
 export type WorkOrderStatus = "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
@@ -589,9 +589,98 @@ export type WoCostContextPayload = {
   labor_rates: Array<Record<string, unknown>>;
 };
 
+export type MaintPmDueRow = {
+  id: string;
+  asset_id: string;
+  unit_code: string;
+  pm_type: "oil" | "tires" | "dot_inspection" | "brake" | string;
+  is_due: boolean;
+  due_reasons: Array<"miles" | "date">;
+  miles_remaining: number | null;
+  days_remaining: number | null;
+  current_odometer_mi: number | null;
+  next_due_miles: number | null;
+  next_due_date: string | null;
+};
+
+export type MaintPartRow = {
+  id: string;
+  sku: string;
+  name: string;
+  category: string | null;
+  unit_cost_cents: number;
+  qty_on_hand: number;
+  reorder_point: number;
+  needs_reorder: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkOrderPostingPreviewLine = {
+  line_type: "parts" | "labor" | "other" | string;
+  description: string;
+  quantity: number;
+  amount_cents: number;
+  asset_id?: string | null;
+  asset_unit_code?: string | null;
+  ps_category_id?: string | null;
+  ps_category_name?: string | null;
+  ps_item_id?: string | null;
+  ps_item_name?: string | null;
+  account_id?: string | null;
+  account_name?: string | null;
+};
+
+export type WorkOrderPostingPreview = {
+  work_order_id: string;
+  currency: string;
+  vendor_id: string | null;
+  bill_date: string | null;
+  due_date: string | null;
+  total_cents: number;
+  lines: WorkOrderPostingPreviewLine[];
+};
+
 export function getWoCostContext(operatingCompanyId: string) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<WoCostContextPayload>(`/api/v1/maintenance/wo-cost-context?${q.toString()}`);
+}
+
+export function listMaintPmDue(operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ rows: MaintPmDueRow[] }>(`/api/v1/maint/pm/due?${q.toString()}`);
+}
+
+export function listMaintParts(operatingCompanyId: string, params: { search?: string } = {}) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.search) q.set("search", params.search);
+  return apiRequest<{ rows: MaintPartRow[] }>(`/api/v1/maint/parts?${q.toString()}`);
+}
+
+export async function getWorkOrderPostingPreview(workOrderId: string, operatingCompanyId: string) {
+  const q = `operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
+  const candidatePaths = [
+    `/api/v1/maint/work-orders/${encodeURIComponent(workOrderId)}/posting-preview?${q}`,
+    `/api/v1/maintenance/work-orders/${encodeURIComponent(workOrderId)}/posting-preview?${q}`,
+  ];
+
+  let lastError: unknown = null;
+  for (const path of candidatePaths) {
+    try {
+      return await apiRequest<WorkOrderPostingPreview>(path);
+    } catch (error) {
+      lastError = error;
+      if (error instanceof ApiError && [404, 405, 501].includes(error.status)) {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  if (lastError instanceof ApiError && [404, 405, 501].includes(lastError.status)) {
+    return null;
+  }
+  throw lastError;
 }
 
 export type PmScheduleRow = {

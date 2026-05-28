@@ -27,6 +27,20 @@ const getWorkOrder = vi.fn((_id: string, _operatingCompanyId: string) =>
 
 vi.mock("../../api/maintenance", () => ({
   getWorkOrder: (id: string, operatingCompanyId: string) => getWorkOrder(id, operatingCompanyId),
+  getWoCostContext: () =>
+    Promise.resolve({
+      expense_categories: [],
+      items: [],
+      parts: [],
+      labor_rates: [],
+    }),
+  listMaintenanceVehicles: () =>
+    Promise.resolve({
+      rows: [],
+      csv_import_enabled: false,
+    }),
+  getWorkOrderPostingPreview: () => Promise.resolve(null),
+  getMaintenanceWorkOrderPdfUrl: () => "https://example.com/wo.pdf",
 }));
 
 function renderPage() {
@@ -53,7 +67,7 @@ describe("WorkOrderDetailPage (invariant #21 pilot)", () => {
     renderPage();
 
     const back = await screen.findByTestId("page-header-back");
-    expect(back.getAttribute("href")).toBe("/maintenance");
+    expect(back.tagName.toLowerCase()).toBe("button");
 
     expect(screen.getByTestId("page-header-breadcrumb")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Work Order WO-PILOT-TEST");

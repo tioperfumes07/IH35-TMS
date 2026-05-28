@@ -1,9 +1,18 @@
-import { useQueries } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getMaintenanceWorkOrderPdfUrl, getWoCostContext, getWorkOrder } from "../../api/maintenance";
+import {
+  getMaintenanceWorkOrderPdfUrl,
+  getWoCostContext,
+  getWorkOrder,
+  getWorkOrderPostingPreview,
+  listMaintenanceVehicles,
+} from "../../api/maintenance";
 import { Button } from "../../components/Button";
+import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/forms/TwoSectionLineEditor";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { UploadZone } from "../../components/UploadZone";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -39,10 +48,118 @@ function sumLineItemsCents(lineItems: unknown): number {
   return sum;
 }
 
+function toFiniteNumber(value: unknown, fallback = 0): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+function normalizeLineItems(lineItems: unknown): TwoSectionLine[] {
+  if (!Array.isArray(lineItems)) return [];
+  const normalized: TwoSectionLine[] = [];
+  lineItems.forEach((raw, index) => {
+    if (!raw || typeof raw !== "object") return;
+    const line = raw as Record<string, unknown>;
+    const lineType = String(line.line_type ?? "").toLowerCase();
+    const sectionRaw = String(line.section ?? "");
+    const quantity = toFiniteNumber(line.quantity, 1);
+    const unitCost =
+      toFiniteNumber(line.unit_cost, Number.NaN) ||
+      toFiniteNumber(line.unit_cost_cents, Number.NaN) / 100 ||
+      toFiniteNumber(line.amount, Number.NaN);
+    const amount =
+      toFiniteNumber(line.amount, Number.NaN) ||
+      toFiniteNumber(line.total_cost, Number.NaN) ||
+      toFiniteNumber(line.total_cents, Number.NaN) / 100 ||
+      quantity * toFiniteNumber(unitCost, 0);
+    const description = String(line.description ?? line.part_description ?? line.labor_label ?? `Line ${index + 1}`);
+    const id = String(line.id ?? `${index}`);
+    const forcedSection = sectionRaw === "A" || sectionRaw === "B" ? sectionRaw : null;
+    const isPartsOrLabor = lineType === "parts" || lineType === "labor";
+    const section = forcedSection ?? (isPartsOrLabor ? "B" : "A");
+
+    if (section === "A") {
+      normalized.push({
+        id,
+        section,
+        description,
+        quantity,
+        unit_cost: toFiniteNumber(unitCost, toFiniteNumber(amount, 0)),
+        amount: toFiniteNumber(amount, 0),
+        expense_category_uuid: String(line.expense_category_uuid ?? line.ps_category_id ?? ""),
+      });
+      return;
+    }
+
+    const subRowsRaw = Array.isArray(line.sub_rows) ? line.sub_rows : [];
+    const subRows =
+      subRowsRaw.length > 0
+        ? subRowsRaw
+            .map((subRaw, subIndex) => {
+              if (!subRaw || typeof subRaw !== "object") return null;
+              const sub = subRaw as Record<string, unknown>;
+              const subQty = toFiniteNumber(sub.quantity, 1);
+              const subUnitCost =
+                toFiniteNumber(sub.unit_cost, Number.NaN) || toFiniteNumber(sub.unit_cost_cents, Number.NaN) / 100;
+              const subAmount =
+                toFiniteNumber(sub.amount, Number.NaN) ||
+                toFiniteNumber(sub.total_cost, Number.NaN) ||
+                toFiniteNumber(sub.total_cents, Number.NaN) / 100 ||
+                subQty * toFiniteNumber(subUnitCost, 0);
+              return {
+                id: String(sub.id ?? `${id}-sub-${subIndex}`),
+                line_type: String(sub.line_type ?? (lineType || "parts")) as "parts" | "labor",
+                description: String(sub.description ?? `Sub-row ${subIndex + 1}`),
+                quantity: subQty,
+                unit_cost: toFiniteNumber(subUnitCost, toFiniteNumber(subAmount, 0)),
+                amount: toFiniteNumber(subAmount, 0),
+                part_uuid: String(sub.part_uuid ?? ""),
+                labor_rate_uuid: String(sub.labor_rate_uuid ?? ""),
+                part_location_codes: Array.isArray(sub.part_location_codes)
+                  ? sub.part_location_codes.map((code) => String(code))
+                  : [],
+              };
+            })
+            .filter((row): row is NonNullable<typeof row> => Boolean(row))
+        : [
+            {
+              id: `${id}-sub-0`,
+              line_type: (isPartsOrLabor ? lineType : "parts") as "parts" | "labor",
+              description,
+              quantity,
+              unit_cost: toFiniteNumber(unitCost, toFiniteNumber(amount, 0)),
+              amount: toFiniteNumber(amount, 0),
+              part_uuid: String(line.part_uuid ?? line.inventory_part_id ?? ""),
+              labor_rate_uuid: String(line.labor_rate_uuid ?? ""),
+              part_location_codes: Array.isArray(line.part_location_codes)
+                ? line.part_location_codes.map((code) => String(code))
+                : [],
+            },
+          ];
+
+    normalized.push({
+      id,
+      section,
+      description,
+      quantity,
+      unit_cost: toFiniteNumber(unitCost, toFiniteNumber(amount, 0)),
+      amount: toFiniteNumber(amount, 0),
+      service_item_uuid: String(line.service_item_uuid ?? line.ps_item_id ?? ""),
+      sub_rows: subRows,
+    });
+  });
+  return normalized;
+}
+
 export function WorkOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [selectedAssetId, setSelectedAssetId] = useState("");
+  const [lineDraft, setLineDraft] = useState<TwoSectionLine[]>([]);
 
   const [woQ, costQ] = useQueries({
     queries: [
@@ -58,6 +175,18 @@ export function WorkOrderDetailPage() {
       },
     ],
   });
+  const previewQ = useQuery({
+    queryKey: ["maintenance", "work-order-posting-preview", id, companyId],
+    queryFn: () => getWorkOrderPostingPreview(id!, companyId),
+    enabled: Boolean(id && companyId),
+    retry: false,
+  });
+  const vehiclesQ = useQuery({
+    queryKey: ["maintenance", "master-data", "vehicles", companyId, "wo-detail"],
+    queryFn: () => listMaintenanceVehicles(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+  });
 
   const wo = woQ.data;
 
@@ -67,6 +196,20 @@ export function WorkOrderDetailPage() {
   const invoiceMismatch = deltaCents != null ? Math.abs(deltaCents) > 1 : false;
 
   const woNumber = String(wo?.display_id ?? id?.slice(0, 8) ?? "—");
+  const assetOptions = useMemo(
+    () =>
+      (vehiclesQ.data?.rows ?? [])
+        .map((row) => ({ id: row.id, label: row.unit_display_id || row.vin || row.id }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [vehiclesQ.data?.rows]
+  );
+
+  useEffect(() => {
+    if (!wo) return;
+    const initialAsset = String(wo.asset_id ?? wo.unit_id ?? "");
+    setSelectedAssetId(initialAsset);
+    setLineDraft(normalizeLineItems(wo.line_items));
+  }, [wo]);
 
   if (!id) {
     return <div className="p-4 text-sm text-red-600">Missing work order id.</div>;
@@ -117,15 +260,130 @@ export function WorkOrderDetailPage() {
             window.open(url, "_blank", "noopener,noreferrer");
           }}
         >
-          Generate WO PDF
+          Download WO PDF
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => {
+            const url = getMaintenanceWorkOrderPdfUrl(id, companyId);
+            const popup = window.open(url, "_blank", "noopener,noreferrer");
+            if (popup) {
+              setTimeout(() => popup.print(), 600);
+            }
+          }}
+        >
+          Print WO PDF
         </Button>
         {invoiceMismatch ? <span className="text-xs text-red-700">Resolve invoice vs line total before saving.</span> : null}
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
-        <p>Status: {String(wo.status ?? "—")}</p>
-        <p>Source type: {String(wo.source_type ?? "—")}</p>
-        <p>Unit: {String(wo.unit_id ?? "—")}</p>
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_1fr]">
+        <div className="space-y-3">
+          <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Status</div>
+                <p>{String(wo.status ?? "—")}</p>
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Source Type</div>
+                <p>{String(wo.source_type ?? "—")}</p>
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Asset Selector</div>
+                <SelectCombobox
+                  className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm"
+                  value={selectedAssetId}
+                  onChange={(event) => setSelectedAssetId(event.target.value)}
+                >
+                  <option value="">Select asset</option>
+                  {assetOptions.map((asset) => (
+                    <option key={asset.id} value={asset.id}>
+                      {asset.label}
+                    </option>
+                  ))}
+                </SelectCombobox>
+              </div>
+            </div>
+            <div className="mt-3 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+              Asset + line save wiring will call MAINT-11 mutation contract once backend PR is merged.
+            </div>
+          </div>
+
+          <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="mb-2 text-sm font-semibold text-gray-900">Parts Picker + Labor Lines (P&S)</div>
+            <div className="mb-2 text-xs text-gray-600">
+              Section A uses P&S Category, Section B uses P&S Item, and sub-rows map parts/labor.
+            </div>
+            <TwoSectionLineEditor
+              key={`wo-lines-${id}`}
+              mode="wo"
+              initialLines={lineDraft}
+              onChange={setLineDraft}
+              partsLaborMode="parts-and-labor"
+            />
+            <div className="mt-2 text-xs text-gray-500">Line updates are local preview until MAINT-11 save endpoint is available.</div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="rounded border border-gray-200 bg-white p-4">
+            <div className="mb-2 text-sm font-semibold text-gray-900">Posting Preview</div>
+            {previewQ.isLoading ? <div className="text-xs text-gray-500">Loading posting preview...</div> : null}
+            {previewQ.isError ? (
+              <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                Posting preview unavailable in this backend build. MAINT-11 contract fallback is active.
+              </div>
+            ) : null}
+            {!previewQ.isLoading && !previewQ.isError && previewQ.data == null ? (
+              <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                Posting preview endpoint not deployed yet for this environment.
+              </div>
+            ) : null}
+            {previewQ.data ? (
+              <div className="space-y-2 text-xs text-gray-700">
+                <div className="rounded border border-gray-100 bg-gray-50 p-2">
+                  <div>Total: {money.format((previewQ.data.total_cents ?? 0) / 100)}</div>
+                  <div>Currency: {previewQ.data.currency || "USD"}</div>
+                  <div>Lines: {previewQ.data.lines?.length ?? 0}</div>
+                </div>
+                <div className="max-h-60 overflow-auto rounded border border-gray-100">
+                  <table className="min-w-full text-left text-[11px]">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 py-1">Line</th>
+                        <th className="px-2 py-1">P&S Category</th>
+                        <th className="px-2 py-1">P&S Item</th>
+                        <th className="px-2 py-1">Asset</th>
+                        <th className="px-2 py-1">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewQ.data.lines.map((line, index) => (
+                        <tr key={`${line.description}-${index}`} className="border-t border-gray-100">
+                          <td className="px-2 py-1">{line.description || line.line_type}</td>
+                          <td className="px-2 py-1">{line.ps_category_name || line.ps_category_id || "—"}</td>
+                          <td className="px-2 py-1">{line.ps_item_name || line.ps_item_id || "—"}</td>
+                          <td className="px-2 py-1">{line.asset_unit_code || line.asset_id || "—"}</td>
+                          <td className="px-2 py-1">{money.format((line.amount_cents ?? 0) / 100)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <UploadZone
+            operatingCompanyId={companyId}
+            entityType="work_order"
+            entityId={id}
+            defaultCategory="receipt"
+            title="Receipts & WO Attachments"
+          />
+        </div>
       </div>
 
       <details className="rounded border border-gray-200 bg-white">
