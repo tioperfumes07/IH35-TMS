@@ -1,21 +1,18 @@
 {
-  "block_id": "P7-ALLOC-ENGINE",
+  "block_id": "P7-ACCT-BILLFORM-FIX",
   "phase": "Phase 7",
-  "task": "P7-ALLOC-ENGINE",
+  "task": "P7-ACCT-BILLFORM-FIX",
   "allowed_files": [
-    "db/migrations/0264_bill_unit_allocation.sql",
-    "apps/backend/src/accounting/allocation.ts",
-    "apps/backend/src/accounting/allocation.test.ts",
-    "apps/backend/src/accounting/bills.routes.ts",
-    "scripts/verify-allocation-integrity.mjs",
-    ".github/workflows/ci.yml",
-    "package.json",
+    "apps/frontend/src/components/accounting/VendorBillForm.tsx",
+    "apps/frontend/src/pages/accounting/VendorBillCreatePage.tsx",
+    "apps/frontend/src/pages/accounting/VendorBillCreatePage.test.tsx",
+    "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
     ".block-ready.json"
   ],
   "extra_gates": [
-    "verify:allocation-integrity"
+    "build:frontend"
   ],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }
