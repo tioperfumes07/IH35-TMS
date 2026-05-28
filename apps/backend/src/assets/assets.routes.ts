@@ -19,6 +19,16 @@ const listQuerySchema = z.object({
 const idParamSchema = z.object({
   id: z.string().uuid(),
 });
+const companyScopeQuerySchema = z.object({
+  operating_company_id: z.string().uuid().optional(),
+});
+const statusTransitionBodySchema = z.object({
+  status: assetStatusSchema,
+  repair_estimate_cents: z.number().int().nonnegative().nullable().optional(),
+  damage_notes: z.string().trim().max(5000).nullable().optional(),
+  out_of_service: z.boolean().optional(),
+  operating_company_id: z.string().uuid().optional(),
+});
 
 const createAssetBodySchema = z.object({
   unit_code: z.string().trim().min(1).max(100),
@@ -206,6 +216,43 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     return asset;
   });
 
+  app.get("/api/v1/assets/:id/status-history", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, parsedQuery.data.operating_company_id);
+    if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    const history = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
+      const res = await client.query(
+        `
+          SELECT
+            id,
+            tenant_id,
+            asset_id,
+            old_status,
+            new_status,
+            changed_by,
+            note,
+            changed_at
+          FROM mdata.asset_status_history
+          WHERE asset_id = $1
+            AND tenant_id = $2
+          ORDER BY changed_at DESC
+        `,
+        [parsedParams.data.id, resolvedCompanyId]
+      );
+      return res.rows;
+    });
+
+    return { history };
+  });
+
   app.post("/api/v1/assets", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -319,5 +366,121 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
 
     if (!updated) return reply.code(404).send({ error: "asset_not_found" });
     return updated;
+  });
+
+  app.patch("/api/v1/assets/:id/status", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedBody = statusTransitionBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const body = parsedBody.data;
+
+    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, body.operating_company_id);
+    if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
+      const currentRes = await client.query(
+        `
+          SELECT id, status
+          FROM mdata.assets
+          WHERE id = $1
+            AND tenant_id = $2
+          LIMIT 1
+        `,
+        [parsedParams.data.id, resolvedCompanyId]
+      );
+      const current = currentRes.rows[0] as { id: string; status: string } | undefined;
+      if (!current) return null;
+
+      const next = await client.query(
+        `
+          UPDATE mdata.assets
+          SET status = $3,
+              repair_estimate_cents = COALESCE($4, repair_estimate_cents),
+              damage_notes = COALESCE($5, damage_notes),
+              out_of_service = COALESCE($6, out_of_service),
+              damage_reported_at = CASE
+                WHEN $3 = 'damaged' AND damage_reported_at IS NULL THEN NOW()
+                ELSE damage_reported_at
+              END
+          WHERE id = $1
+            AND tenant_id = $2
+          RETURNING *
+        `,
+        [
+          parsedParams.data.id,
+          resolvedCompanyId,
+          body.status,
+          body.repair_estimate_cents ?? null,
+          body.damage_notes ?? null,
+          body.out_of_service ?? null,
+        ]
+      );
+      const row = next.rows[0] ?? null;
+      if (!row) return null;
+
+      await client.query(
+        `
+          INSERT INTO mdata.asset_status_history (
+            tenant_id,
+            asset_id,
+            old_status,
+            new_status,
+            changed_by,
+            note
+          )
+          VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        [resolvedCompanyId, parsedParams.data.id, current.status, body.status, authUser.uuid, body.damage_notes ?? null]
+      );
+
+      return row;
+    });
+
+    if (!updated) return reply.code(404).send({ error: "asset_not_found" });
+    return updated;
+  });
+
+  app.get("/api/v1/assets/summary", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const resolvedCompanyId = await resolveOperatingCompanyId(authUser.uuid, parsedQuery.data.operating_company_id);
+    if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    const summary = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
+      const countsRes = await client.query(
+        `
+          SELECT status, COUNT(*)::int AS count
+          FROM mdata.assets
+          WHERE tenant_id = $1
+          GROUP BY status
+          ORDER BY status ASC
+        `,
+        [resolvedCompanyId]
+      );
+      const repairTotalsRes = await client.query(
+        `
+          SELECT COALESCE(SUM(repair_estimate_cents), 0)::bigint AS total_repair_estimate_cents
+          FROM mdata.assets
+          WHERE tenant_id = $1
+            AND status = 'damaged'
+        `,
+        [resolvedCompanyId]
+      );
+      return {
+        by_status: countsRes.rows,
+        damaged_total_repair_estimate_cents: Number(repairTotalsRes.rows[0]?.total_repair_estimate_cents ?? 0),
+      };
+    });
+
+    return summary;
   });
 }

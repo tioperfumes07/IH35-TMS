@@ -1,14 +1,11 @@
 {
-  "block_id": "P7-ASSET-REGISTRY",
+  "block_id": "P7-ASSET-DAMAGE",
   "phase": "Phase 7",
-  "task": "P7-ASSET-REGISTRY",
+  "task": "P7-ASSET-DAMAGE",
   "allowed_files": [
-    "db/migrations/0262_asset_registry.sql",
+    "db/migrations/0263_asset_damage.sql",
     "apps/backend/src/assets/assets.routes.ts",
-    "apps/backend/src/index.ts",
     "scripts/verify-asset-registry.mjs",
-    ".github/workflows/ci.yml",
-    "package.json",
     ".block-ready.json"
   ],
   "extra_gates": [
@@ -16,5 +13,5 @@
   ],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }
