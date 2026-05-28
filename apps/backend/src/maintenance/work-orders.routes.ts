@@ -4,7 +4,6 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
-import { mapMaintWoApHttpError, processMaintWorkOrderApPosting } from "../maint/wo-ap-posting.service.js";
 import {
   allocateInHouseFromWO,
   autoCreateBillFromWO,
@@ -849,17 +848,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       });
     }
     if ("blocked" in result) return reply.code(422).send({ error: result.code, message: result.message });
-    try {
-      await processMaintWorkOrderApPosting({
-        operating_company_id: companyId,
-        work_order_id: params.data.id,
-        actor_user_id: user.uuid,
-      });
-    } catch (error) {
-      const mapped = mapMaintWoApHttpError(error);
-      if (mapped) return reply.code(mapped.statusCode).send(mapped.body);
-      throw error;
-    }
+    await processMaintenanceWorkOrderClose({
+      operating_company_id: companyId,
+      work_order_id: params.data.id,
+      actor_user_id: user.uuid,
+    });
     return { ok: true, work_order: result.row };
   });
 
@@ -931,25 +924,11 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
     if (CLOSED_STATUSES.has(parsed.data.new_status)) {
-      if (parsed.data.new_status === "complete") {
-        try {
-          await processMaintWorkOrderApPosting({
-            operating_company_id: companyId,
-            work_order_id: params.data.id,
-            actor_user_id: user.uuid,
-          });
-        } catch (error) {
-          const mapped = mapMaintWoApHttpError(error);
-          if (mapped) return reply.code(mapped.statusCode).send(mapped.body);
-          throw error;
-        }
-      } else {
-        await processMaintenanceWorkOrderClose({
-          operating_company_id: companyId,
-          work_order_id: params.data.id,
-          actor_user_id: user.uuid,
-        });
-      }
+      await processMaintenanceWorkOrderClose({
+        operating_company_id: companyId,
+        work_order_id: params.data.id,
+        actor_user_id: user.uuid,
+      });
     }
     return { ok: true };
   });
