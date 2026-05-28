@@ -8,6 +8,7 @@
     "apps/backend/src/banking/categorization.routes.ts",
     "apps/backend/src/banking/banking.routes.ts",
     "scripts/verify-bank-bulk.mjs",
+    "scripts/verify-banking-bulk-contract.mjs",
     ".github/workflows/ci.yml",
     "package.json",
     ".block-ready.agent2.json"
