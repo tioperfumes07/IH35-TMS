@@ -3,13 +3,20 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolveBlockReadyManifest } from "./block-ready-agent-manifest.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const FETCH_MAX_AGE_MS = 5 * 60 * 1000;
 
-export function parseArgs(argv) {
-  const args = { manifest: ".block-ready.json" };
+export function parseArgs(argv, options = {}) {
+  const defaultManifest =
+    options.defaultManifest ??
+    resolveBlockReadyManifest({
+      agentEnv: options.agentEnv,
+      worktreePath: options.worktreePath ?? ROOT,
+    }).manifest;
+  const args = { manifest: defaultManifest };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
     if (token === "--manifest" && argv[i + 1]) {
@@ -497,7 +504,13 @@ function runCheckC10(manifest) {
 }
 
 function main() {
-  const args = parseArgs(process.argv.slice(2));
+  const resolved = resolveBlockReadyManifest({ worktreePath: ROOT });
+  const args = parseArgs(process.argv.slice(2), {
+    defaultManifest: resolved.manifest,
+    worktreePath: ROOT,
+    agentEnv: process.env.AGENT,
+  });
+  console.log(`[C2] RESOLVED manifest=${args.manifest} agent=${resolved.agent}`);
   runCheckC1();
   const manifest = runCheckC2(args.manifest);
   const verifyMeta = readVerifyMeta();

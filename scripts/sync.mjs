@@ -4,6 +4,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { formatSyncStatus } from "./sync-status-format.mjs";
+import { resolveBlockReadyManifest } from "./block-ready-agent-manifest.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -204,7 +205,8 @@ function readBlockPlanFile() {
 }
 
 function getBlockContext() {
-  const manifestPath = path.resolve(ROOT, ".block-ready.json");
+  const resolvedManifest = resolveBlockReadyManifest({ worktreePath: ROOT });
+  const manifestPath = path.resolve(ROOT, resolvedManifest.manifest);
   const manifest = fs.existsSync(manifestPath) ? parseJson(fs.readFileSync(manifestPath, "utf8"), {}) : {};
   const planContent = readBlockPlanFile();
   if (!planContent) {

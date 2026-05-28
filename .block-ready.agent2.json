@@ -9,7 +9,7 @@
     "scripts/verify-pse-mirror.mjs",
     ".github/workflows/ci.yml",
     "package.json",
-    ".block-ready.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
     "verify:pse-mirror"

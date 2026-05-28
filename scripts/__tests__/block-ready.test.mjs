@@ -5,9 +5,11 @@ import {
   computeDbGatePlan,
   evaluateGuardRequirement,
   matchesAnyAllowedFile,
+  parseArgs,
   parseManifest,
   validateManifest,
 } from "../block-ready.mjs";
+import { resolveBlockReadyManifest } from "../block-ready-agent-manifest.mjs";
 
 test("valid manifest passes validation", () => {
   const manifest = {
@@ -82,4 +84,26 @@ test("db_required=true skips ci:boot-api-smoke", () => {
 test("parseManifest reads existing JSON file", () => {
   const parsed = parseManifest("docs/block-ready-examples/MAGNET-4-FINAL.json");
   assert.equal(parsed.manifest.block_id, "MAGNET-4-FINAL");
+});
+
+test("resolveBlockReadyManifest uses AGENT env override", () => {
+  const resolved = resolveBlockReadyManifest({
+    agentEnv: "agent2",
+    worktreePath: "/tmp/IH35-TMS-agent1",
+  });
+  assert.equal(resolved.agent, "2");
+  assert.equal(resolved.manifest, ".block-ready.agent2.json");
+});
+
+test("resolveBlockReadyManifest infers AGENT from worktree path", () => {
+  const resolved = resolveBlockReadyManifest({
+    worktreePath: "/tmp/IH35-TMS-agent2-acct",
+  });
+  assert.equal(resolved.agent, "2");
+  assert.equal(resolved.manifest, ".block-ready.agent2.json");
+});
+
+test("parseArgs defaults to resolved manifest", () => {
+  const args = parseArgs([], { agentEnv: "agent1", worktreePath: "/tmp/IH35-TMS-agent1" });
+  assert.equal(args.manifest, ".block-ready.agent1.json");
 });
