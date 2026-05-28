@@ -127,6 +127,7 @@ import { FactoringListPage } from "../pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "../pages/accounting/FactoringDetailPage";
 import { FactorReconciliationPage } from "../pages/accounting/FactorReconciliationPage";
 import { VendorBillCreatePage } from "../pages/accounting/VendorBillCreatePage";
+import { CreateMultipleBillsPage } from "../pages/accounting/CreateMultipleBillsPage";
 import { ExpenseCreatePage } from "../pages/accounting/ExpenseCreatePage";
 import { BillsPage } from "../pages/accounting/BillsPage";
 import { VendorBalancesPage } from "../pages/accounting/VendorBalancesPage";
@@ -1812,6 +1813,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <VendorBillCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bills/multiple"
+          element={
+            <ProtectedRoute>
+              <CreateMultipleBillsPage />
             </ProtectedRoute>
           }
         />

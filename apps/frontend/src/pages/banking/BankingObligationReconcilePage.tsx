@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   bulkReconcileAction,
   getPlaidBankAccounts,
@@ -23,6 +24,7 @@ function money(cents: number) {
 }
 
 export function BankingObligationReconcilePage() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const auth = useAuth();
@@ -65,7 +67,7 @@ export function BankingObligationReconcilePage() {
   });
 
   const bulkMutation = useMutation({
-    mutationFn: (args: { bank_transaction_ids: string[]; action: "mark_reviewed" | "categorize_fuel" | "categorize_insurance" }) =>
+    mutationFn: (args: { bank_transaction_ids: string[]; action: "mark_reviewed" | "categorize_fuel" | "categorize_insurance" | "categorize_transfer" }) =>
       bulkReconcileAction(companyId, args),
     onSuccess: async () => {
       pushToast("Bulk update applied", "success");
@@ -87,6 +89,19 @@ export function BankingObligationReconcilePage() {
   };
 
   const selectedList = useMemo(() => Array.from(selectedTxnIds), [selectedTxnIds]);
+  const hasSelected = selectedList.length > 0;
+  const selectedRows = useMemo(
+    () =>
+      transactions
+        .filter((row) => selectedTxnIds.has(row.id))
+        .map((row) => ({
+          bank_transaction_id: row.id,
+          transaction_date: row.transaction_date,
+          amount_cents: Number(row.amount_cents) || 0,
+          description: row.description ?? row.merchant_name ?? "",
+        })),
+    [transactions, selectedTxnIds]
+  );
 
   if (!["Owner", "Administrator", "Accountant"].includes(auth.user?.role ?? "")) {
     return <div className="p-4 text-sm text-gray-600">You need accounting access to use obligation reconciliation.</div>;
@@ -127,25 +142,53 @@ export function BankingObligationReconcilePage() {
             ))}
           </SelectCombobox>
         </label>
-        <ActionButton
-          disabled={selectedList.length === 0 || bulkMutation.isPending}
-          onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "mark_reviewed" })}
-        >
-          Mark reviewed ({selectedList.length})
-        </ActionButton>
-        <ActionButton
-          disabled={selectedList.length === 0 || bulkMutation.isPending}
-          onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "categorize_fuel" })}
-        >
-          Categorize as Fuel
-        </ActionButton>
-        <ActionButton
-          disabled={selectedList.length === 0 || bulkMutation.isPending}
-          onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "categorize_insurance" })}
-        >
-          Categorize as Insurance
-        </ActionButton>
       </div>
+      {hasSelected ? (
+        <div className="flex flex-wrap items-center gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2">
+          <span className="text-xs font-semibold text-blue-900">{selectedList.length} selected</span>
+          <ActionButton
+            disabled={bulkMutation.isPending}
+            onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "mark_reviewed" })}
+          >
+            Mark reviewed
+          </ActionButton>
+          <ActionButton
+            disabled={bulkMutation.isPending}
+            onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "categorize_fuel" })}
+          >
+            Categorize as Fuel
+          </ActionButton>
+          <ActionButton
+            disabled={bulkMutation.isPending}
+            onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "categorize_insurance" })}
+          >
+            Categorize as Insurance
+          </ActionButton>
+          <ActionButton
+            disabled={bulkMutation.isPending}
+            onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "categorize_transfer" })}
+          >
+            Categorize as Transfer
+          </ActionButton>
+          <ActionButton
+            disabled={selectedRows.length === 0}
+            onClick={() =>
+              navigate("/accounting/bills/multiple", {
+                state: { seeds: selectedRows },
+              })
+            }
+          >
+            Create bills ({selectedRows.length})
+          </ActionButton>
+          <button
+            type="button"
+            className="rounded border border-blue-300 px-2 py-1 text-xs text-blue-800 hover:bg-blue-100"
+            onClick={() => setSelectedTxnIds(new Set())}
+          >
+            Clear selection
+          </button>
+        </div>
+      ) : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
         <section className="rounded border border-slate-200 bg-white p-2">
