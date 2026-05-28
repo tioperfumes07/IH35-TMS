@@ -117,6 +117,9 @@ jobs:
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
+      - name: Verify safety reminders contract
+        run: npm run verify:safety-reminders
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 

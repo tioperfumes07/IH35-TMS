@@ -189,6 +189,7 @@
     "verify:safety-random-pool-determinism": "node scripts/verify-safety-random-pool-determinism.mjs",
     "verify:safety-reports-coverage": "node scripts/verify-safety-reports-coverage.mjs",
     "verify:safety-medical-cards": "node scripts/verify-safety-medical-cards.mjs",
+    "verify:safety-reminders": "node scripts/verify-safety-reminders.mjs",
     "verify:pm-due-soon-calculation": "node scripts/verify-pm-due-soon-calculation.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",

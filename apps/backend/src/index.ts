@@ -83,6 +83,7 @@ import { registerSafetyCsaScoresRoutes } from "./routes/safety/csa-scores.js";
 import { registerSafetyComplaintsRoutes } from "./routes/safety/complaints.js";
 import { registerSafetyIntegrityRoutes } from "./routes/safety/integrity.js";
 import { registerSafetyMedicalCardsRoutes } from "./safety/medical-cards.routes.js";
+import { registerSafetyRemindersRoutes } from "./safety/reminders.routes.js";
 import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
 import { registerBankTxCategorizationRoutes } from "./banking/categorization.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
@@ -162,6 +163,7 @@ import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
+import { initializeSafetyRemindersCron } from "./safety/reminders.cron.js";
 import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
 import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
@@ -463,6 +465,7 @@ async function main() {
   await registerSafetyComplaintsRoutes(app);
   await registerSafetyIntegrityRoutes(app);
   await registerSafetyMedicalCardsRoutes(app);
+  await registerSafetyRemindersRoutes(app);
   await registerLiabilitiesRoutes(app);
   await registerCashAdvancesRoutes(app);
   await registerBankTxCategorizationRoutes(app);
@@ -626,6 +629,13 @@ async function main() {
     app.log.info("[STARTUP] legal-matters-reminder-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] legal-matters-reminder-cron failed");
+  }
+
+  try {
+    initializeSafetyRemindersCron(app);
+    app.log.info("[STARTUP] safety-reminders-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] safety-reminders-cron failed");
   }
 
   try {
