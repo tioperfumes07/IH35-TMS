@@ -26,7 +26,7 @@ export type ReportRunnerConfig = {
 export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
   "profit-per-truck": {
     id: "profit-per-truck",
-    name: "Profit per truck",
+    name: "Per-truck CPM dashboard",
     apiPath: "/api/v1/reports/profit-per-truck",
     filters: [
       { type: "date_range", key: "date_range", label: "Date range", required: true },
