@@ -10,7 +10,7 @@ import {
 } from "../../api/accounting";
 import { getQboSyncQueue, getQboSyncQueueStats } from "../../api/banking";
 import { listSettlements } from "../../api/driverFinance";
-import { getTrialBalanceReport } from "../../api/reports";
+import { getProfitLossReport, getTrialBalanceReport } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -147,6 +147,12 @@ export function AccountingHubPage() {
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const mtdStart = monthStartIso();
+  const monthRange = useMemo(() => {
+    const now = new Date();
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
+    return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  }, []);
   const quarterRange = useMemo(() => currentQuarterRange(), []);
 
   useEffect(() => {
@@ -160,7 +166,7 @@ export function AccountingHubPage() {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  const [billsQ, billPaymentsQ, paymentsQ, settlementsQ, invoicesQ, qboStatsQ, qboQueueQ, trialBalanceQ] = useQueries({
+  const [billsQ, billPaymentsQ, paymentsQ, settlementsQ, invoicesQ, qboStatsQ, qboQueueQ, trialBalanceQ, profitLossQ] = useQueries({
     queries: [
       {
         queryKey: ["accounting-proto", "bills", companyId],
@@ -204,6 +210,18 @@ export function AccountingHubPage() {
             operating_company_id: companyId,
             from_date: quarterRange.start,
             to_date: quarterRange.end,
+            basis: "accrual",
+          }),
+        enabled: Boolean(companyId),
+        retry: false,
+      },
+      {
+        queryKey: ["accounting-hub", "profit-loss", companyId, monthRange.start, monthRange.end],
+        queryFn: () =>
+          getProfitLossReport({
+            operating_company_id: companyId,
+            from_date: monthRange.start,
+            to_date: monthRange.end,
             basis: "accrual",
           }),
         enabled: Boolean(companyId),
@@ -342,6 +360,41 @@ export function AccountingHubPage() {
     ];
   }, [trialBalanceQ.data, trialBalanceQ.isError, trialBalanceQ.isLoading]);
 
+  const profitLossRows: AmountRow[] = useMemo(() => {
+    if (profitLossQ.isError) {
+      return [
+        {
+          key: "pl-stub",
+          left: "P&L snapshot",
+          right: "Contract stub",
+          muted: "endpoint pending",
+        },
+      ];
+    }
+    if (profitLossQ.isLoading || !profitLossQ.data) {
+      return [{ key: "pl-loading", left: "P&L snapshot", right: "Loading…" }];
+    }
+    const report = profitLossQ.data;
+    return [
+      {
+        key: "pl-revenue",
+        left: "Revenue",
+        right: money.format(report.revenue.total / 100),
+      },
+      {
+        key: "pl-gross",
+        left: "Gross profit",
+        right: money.format(report.gross_profit / 100),
+      },
+      {
+        key: "pl-net",
+        left: "Net income",
+        right: money.format(report.net_income / 100),
+        muted: report.net_income < 0 ? "loss" : "profit",
+      },
+    ];
+  }, [profitLossQ.data, profitLossQ.isError, profitLossQ.isLoading]);
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -452,6 +505,15 @@ export function AccountingHubPage() {
               : `Quarter-to-date ${quarterRange.start} → ${quarterRange.end}.`,
             "/reports/trial-balance",
             "Open trial balance"
+          )}
+          {homePanel(
+            "Profit & loss (Block 12 foundation)",
+            profitLossRows,
+            profitLossQ.isError
+              ? "P&L snapshot uses contract stub until ledger endpoint is reachable."
+              : `Month-to-date ${monthRange.start} → ${monthRange.end}.`,
+            "/reports/profit-loss",
+            "Open profit & loss"
           )}
           {homePanel(
             "Assets (Block 04 foundation)",

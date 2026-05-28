@@ -1,7 +1,7 @@
 {
-  "block_id": "P7-ACCT-TB-HUB",
+  "block_id": "P7-ACCT-PL-HUB",
   "phase": "Phase 7",
-  "task": "P7-ACCT-TB-HUB",
+  "task": "P7-ACCT-PL-HUB",
   "allowed_files": [
     "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
     "apps/frontend/src/pages/accounting/AccountingHubPage.test.tsx",
