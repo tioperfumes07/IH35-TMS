@@ -94,6 +94,60 @@ export function createSafetyEvent(
   });
 }
 
+export type DriverQualificationFileItem = {
+  id: string;
+  driver_id: string;
+  item_name: string;
+  status: "present" | "missing" | "expired";
+  effective_date: string | null;
+  expiry_date: string | null;
+  notes: string | null;
+  expiry_pill?: "unknown" | "red" | "amber" | "green";
+};
+
+export function listDriverQualificationItems(driverId: string, companyId: string) {
+  return apiRequest<{ items: DriverQualificationFileItem[] }>(
+    `/api/v1/safety/driver-qualification/drivers/${encodeURIComponent(driverId)}/items?${q(companyId)}`
+  );
+}
+
+export function createDriverQualificationItem(
+  companyId: string,
+  body: {
+    driver_id: string;
+    item_name: string;
+    status?: "present" | "missing" | "expired";
+    effective_date?: string;
+    expiry_date?: string;
+    notes?: string;
+  }
+) {
+  return apiRequest<DriverQualificationFileItem>(`/api/v1/safety/driver-qualification/items?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function patchDriverQualificationItem(
+  itemId: string,
+  companyId: string,
+  body: {
+    status?: "present" | "missing" | "expired";
+    effective_date?: string | null;
+    expiry_date?: string | null;
+    notes?: string | null;
+    voided_reason?: string;
+  }
+) {
+  return apiRequest<DriverQualificationFileItem>(
+    `/api/v1/safety/driver-qualification/items/${encodeURIComponent(itemId)}?${q(companyId)}`,
+    {
+      method: "PATCH",
+      body,
+    }
+  );
+}
+
 export function getUserPreferences() {
   return apiRequest<{ preferences: Record<string, unknown> }>("/api/v1/user/preferences");
 }
