@@ -208,7 +208,8 @@
     "verify:safety-events-tenant-scope": "node scripts/verify-safety-events-tenant-scope.mjs",
     "verify:no-demo-rows-in-safety": "node scripts/verify-no-demo-rows-in-safety.mjs",
     "verify:no-internal-payload-in-notes": "node scripts/verify-no-internal-payload-in-notes.mjs",
-    "verify:no-orphan-route-aliases": "node scripts/verify-no-orphan-route-aliases.mjs"
+    "verify:no-orphan-route-aliases": "node scripts/verify-no-orphan-route-aliases.mjs",
+    "verify:eld-foundation-coverage": "node scripts/verify-eld-foundation-coverage.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

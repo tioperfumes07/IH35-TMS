@@ -102,6 +102,9 @@ jobs:
       - name: Verify safety tab coverage
         run: npm run verify:safety-tab-coverage
 
+      - name: Verify ELD foundation coverage
+        run: npm run verify:eld-foundation-coverage
+
       - name: Verify safety random pool determinism
         run: npm run verify:safety-random-pool-determinism
 
