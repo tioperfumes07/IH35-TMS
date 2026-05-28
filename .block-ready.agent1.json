@@ -1,18 +1,18 @@
 {
-  "block_id": "P7-SAF-DRIVER-DQF",
+  "block_id": "P7-SAF-DRIVER-MED",
   "phase": "Dispatch 2",
-  "task": "P7-SAF-DRIVER-DQF",
+  "task": "P7-SAF-DRIVER-MED",
   "allowed_files": [
-    "db/migrations/0267_safety_driver_dqf.sql",
-    "apps/backend/src/safety/driver-qualification.routes.ts",
+    "db/migrations/0268_safety_medical_cards_dispatch2.sql",
+    "apps/backend/src/safety/medical-cards.routes.ts",
     "apps/backend/src/index.ts",
-    "scripts/verify-safety-driver-dqf.mjs",
+    "scripts/verify-safety-medical-cards.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:safety-driver-dqf"
+    "verify:safety-medical-cards"
   ],
   "runtime_path": "src",
   "db_required": true,
