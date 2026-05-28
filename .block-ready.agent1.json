@@ -11,9 +11,14 @@
     "scripts/verify-guards/130-verify-insurance-schema.mjs",
     "package.json",
     ".github/workflows/ci.yml",
+    "db/migrations/0276_audit_triggers.sql",
+    "apps/backend/src/audit/audit.service.ts",
+    "apps/backend/src/audit/audit.routes.ts",
+    "apps/backend/src/audit/__tests__/audit.service.test.ts",
+    "scripts/verify-audit-coverage.mjs",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": ["verify:insurance-schema"],
+  "extra_gates": ["verify:insurance-schema", "verify:audit-coverage"],
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true
