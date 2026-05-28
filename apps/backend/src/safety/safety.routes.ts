@@ -88,9 +88,10 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         .query<{ count: number }>(
           `
             SELECT COUNT(*)::int AS count
-            FROM safety.drug_alcohol_tests
+            FROM safety.drug_test
             WHERE operating_company_id = $1
               AND test_date >= date_trunc('year', now())
+              AND voided_at IS NULL
           `,
           [companyId]
         )
@@ -193,8 +194,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         .query(
           `
             SELECT *
-            FROM safety.drug_alcohol_tests
+            FROM safety.drug_test
             WHERE operating_company_id = $1
+              AND voided_at IS NULL
             ORDER BY test_date DESC
             LIMIT 500
           `,

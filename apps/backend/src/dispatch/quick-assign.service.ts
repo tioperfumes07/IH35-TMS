@@ -90,6 +90,29 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
         });
       }
 
+      const latestDrug = await client
+        .query<{ result: string }>(
+          `
+            SELECT result::text
+            FROM safety.drug_test
+            WHERE operating_company_id = $1
+              AND driver_id = $2
+              AND voided_at IS NULL
+            ORDER BY test_date DESC, created_at DESC
+            LIMIT 1
+          `,
+          [input.operating_company_id, input.driver_id]
+        )
+        .catch(() => ({ rows: [] as { result: string }[] }));
+      const drugResult = String(latestDrug.rows[0]?.result ?? "");
+      if (["positive", "refusal", "adulterated", "substituted"].includes(drugResult)) {
+        warnings.push({
+          code: "WF037_DRUG_PROGRAM_BLOCK",
+          severity: "hard_block",
+          message: `Driver is dispatch-blocked due to latest drug program result: ${drugResult}.`,
+        });
+      }
+
       const hardBlocks = warnings.filter((w) => w.severity === "hard_block");
       const acknowledged = new Set((input.acknowledged_warnings ?? []).map((value) => String(value)));
       const allHardBlocksAcknowledged = hardBlocks.every((warning) => acknowledged.has(warning.code));

@@ -111,6 +111,9 @@ jobs:
       - name: Verify safety random pool determinism
         run: npm run verify:safety-random-pool-determinism
 
+      - name: Verify SAF drug program contract
+        run: npm run verify:drug-program
+
       - name: Verify safety reports coverage
         run: npm run verify:safety-reports-coverage
 

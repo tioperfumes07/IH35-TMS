@@ -118,6 +118,10 @@ function canOverrideHos(role: string) {
   return ["Owner", "Administrator", "Manager"].includes(role);
 }
 
+function isDrugDispatchBlocked(result: string | null | undefined) {
+  return ["positive", "refusal", "adulterated", "substituted"].includes(String(result ?? "").toLowerCase());
+}
+
 function toMdataStatus(status: DispatchStatus): string {
   if (status === "unassigned") return "draft";
   if (status === "assigned_not_dispatched") return "assigned_not_dispatched";
@@ -158,6 +162,40 @@ async function optionalQuery<T = Record<string, unknown>>(
     await client.query(`RELEASE SAVEPOINT ${savepoint}`).catch(() => undefined);
     return [] as T[];
   }
+}
+
+async function collectAssignedDriverIdsForDrugGate(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: BookLoadInput
+) {
+  const ids = new Set<string>();
+  if (input.assigned_primary_driver_id) ids.add(input.assigned_primary_driver_id);
+  if (input.assigned_secondary_driver_id) ids.add(input.assigned_secondary_driver_id);
+
+  if (input.team_id) {
+    const teamRows = await optionalQuery<{
+      primary_driver_id: string;
+      secondary_driver_id: string;
+      is_active: boolean;
+    }>(
+      client,
+      `
+        SELECT primary_driver_id, secondary_driver_id, is_active
+        FROM mdata.driver_teams
+        WHERE id = $1
+          AND operating_company_id = $2
+        LIMIT 1
+      `,
+      [input.team_id, input.operating_company_id]
+    );
+    const team = teamRows[0];
+    if (team?.is_active !== false) {
+      if (team?.primary_driver_id) ids.add(String(team.primary_driver_id));
+      if (team?.secondary_driver_id) ids.add(String(team.secondary_driver_id));
+    }
+  }
+
+  return Array.from(ids);
 }
 
 export async function createDriverBillArtifacts(
@@ -570,6 +608,63 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
             }),
           ]
         );
+      }
+    }
+
+    const hasDrugTestTable = await relationExists(client, "safety.drug_test");
+    if (hasDrugTestTable) {
+      const assignedDriverIds = await collectAssignedDriverIdsForDrugGate(client, input);
+      if (assignedDriverIds.length > 0) {
+        const latestDrugRows = await optionalQuery<{
+          driver_id: string;
+          result: string;
+          test_date: string;
+        }>(
+          client,
+          `
+            SELECT DISTINCT ON (driver_id)
+              driver_id::text,
+              result::text,
+              test_date::text
+            FROM safety.drug_test
+            WHERE operating_company_id = $1
+              AND driver_id = ANY($2::uuid[])
+              AND voided_at IS NULL
+            ORDER BY driver_id, test_date DESC, created_at DESC
+          `,
+          [input.operating_company_id, assignedDriverIds]
+        );
+        const blocked = latestDrugRows.find((row) => isDrugDispatchBlocked(row.result));
+        if (blocked) {
+          await appendCrudAudit(
+            client,
+            input.requestingUserUuid,
+            "dispatch.book_load_blocked_by_drug_program",
+            {
+              operating_company_id: input.operating_company_id,
+              driver_id: blocked.driver_id,
+              latest_result: blocked.result,
+              latest_test_date: blocked.test_date,
+              block_code: "E_DRIVER_DRUG_DISPATCH_BLOCKED",
+            },
+            "warning",
+            "P7-SAF-DRUG-PROGRAM"
+          );
+          return {
+            kind: "error",
+            status: 422,
+            payload: {
+              error: "E_DRIVER_DRUG_DISPATCH_BLOCKED",
+              message: `Driver is dispatch-blocked due to latest drug program result: ${blocked.result}.`,
+              details: {
+                driver_id: blocked.driver_id,
+                latest_result: blocked.result,
+                latest_test_date: blocked.test_date,
+              },
+              wf_044_maintenance_warnings: wf044Warnings,
+            },
+          };
+        }
       }
     }
 
