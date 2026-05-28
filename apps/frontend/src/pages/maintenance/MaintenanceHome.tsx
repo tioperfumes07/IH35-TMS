@@ -196,9 +196,9 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
       />
 
       <MaintKpiRows kpis={kpis} />
+      <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
       {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} /> : null}
       {companyId ? <DtcAutoWorkOrdersCard operatingCompanyId={companyId} /> : null}
-      <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
 
       {tab === "active_wos" ? (
         <WorkOrdersTable

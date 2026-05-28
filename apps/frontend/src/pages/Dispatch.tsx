@@ -73,6 +73,19 @@ function serializeFilters(params: URLSearchParams, filters: DispatchFilterState)
   return next;
 }
 
+function customerMatchReason(search: string, customer: { name: string; customer_code: string | null }): string | null {
+  const term = search.trim().toLowerCase();
+  if (!term) return null;
+  const code = String(customer.customer_code ?? "");
+  if (code.toLowerCase().includes(term)) {
+    return `matched: customer_code = ${code}`;
+  }
+  if (customer.name.toLowerCase().includes(term)) {
+    return `matched: customer_name = ${customer.name}`;
+  }
+  return null;
+}
+
 export function DispatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { companies, selectedCompanyId } = useCompanyContext();
@@ -167,9 +180,9 @@ export function DispatchPage() {
       (customerLookup.data?.customers ?? []).map((customer) => ({
         id: customer.id,
         label: customer.name,
-        sublabel: customer.customer_code ?? undefined,
+        sublabel: customerMatchReason(filters.search, customer) ?? customer.customer_code ?? undefined,
       })),
-    [customerLookup.data]
+    [customerLookup.data, filters.search]
   );
   const drivers = useMemo(
     () =>
