@@ -18,6 +18,7 @@
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
+    "verify:drug-program",
     "verify:rtd-statemachine",
     "verify:dispatch-gate"
   ],
