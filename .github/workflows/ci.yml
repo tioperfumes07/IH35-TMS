@@ -102,6 +102,9 @@ jobs:
       - name: Verify safety tab coverage
         run: npm run verify:safety-tab-coverage
 
+      - name: Verify safety driver DQF contract
+        run: npm run verify:safety-driver-dqf
+
       - name: Verify ELD foundation coverage
         run: npm run verify:eld-foundation-coverage
 

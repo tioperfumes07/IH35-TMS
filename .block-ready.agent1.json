@@ -1,20 +1,18 @@
 {
-  "block_id": "ACCT-11-PSE-ENFORCE",
-  "phase": "Corrective Addendum",
-  "task": "ACCT-11-PSE-ENFORCE",
+  "block_id": "P7-SAF-DRIVER-DQF",
+  "phase": "Dispatch 2",
+  "task": "P7-SAF-DRIVER-DQF",
   "allowed_files": [
-    "db/migrations/0266_acct11_pse_enforce.sql",
-    "apps/backend/src/accounting/pse-mirror.service.ts",
-    "apps/backend/src/accounting/pse-mirror.routes.ts",
-    "apps/backend/src/accounting/pse-enforce.middleware.ts",
-    "apps/backend/src/accounting/posting-engine.routes.ts",
-    "scripts/verify-pse-enforce.mjs",
-    ".github/workflows/ci.yml",
+    "db/migrations/0267_safety_driver_dqf.sql",
+    "apps/backend/src/safety/driver-qualification.routes.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-safety-driver-dqf.mjs",
     "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:pse-enforce"
+    "verify:safety-driver-dqf"
   ],
   "runtime_path": "src",
   "db_required": true,
