@@ -121,6 +121,7 @@ import { registerMaintenanceDriversRoutes } from "./maintenance/drivers.routes.j
 import { registerMaintenancePartsRoutes } from "./maintenance/parts.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
+import { registerAssetsRoutes } from "./assets/assets.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
 import { registerDriverReturningDetectionRoutes } from "./mdata/driver-returning-detection.routes.js";
 import { registerDriverSafetyEventsRoutes } from "./mdata/driver-safety-events.routes.js";
@@ -383,6 +384,7 @@ async function main() {
   await registerUserPreferencesRoutes(app);
   await registerWorkflowRoutes(app);
   await registerMdataRoutes(app);
+  await registerAssetsRoutes(app);
   await registerQboAutocompleteRoutes(app);
   await registerQboMasterWriteRoutes(app);
   await registerDriverProfileRoutes(app);
