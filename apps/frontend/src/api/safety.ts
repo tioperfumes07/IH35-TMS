@@ -275,6 +275,29 @@ export function getDriverDispatchEligibility(driverId: string, companyId: string
   );
 }
 
+export type SafetyReminderRow = {
+  id: string;
+  operating_company_id?: string;
+  driver_id: string;
+  driver_name?: string | null;
+  item_name: string;
+  due_date: string;
+  days_to_expiry: number;
+  severity: "warning" | "critical" | "expired";
+  status: "open" | "dismissed" | "resolved";
+  source_type: string;
+};
+
+export function listSafetyReminders(companyId: string) {
+  return apiRequest<{ reminders: SafetyReminderRow[] }>(`/api/v1/safety/reminders?${q(companyId)}&status=open`);
+}
+
+export function acknowledgeSafetyReminder(reminderId: string, companyId: string) {
+  return apiRequest<{ id: string; status: string }>(`/api/v1/safety/reminders/${encodeURIComponent(reminderId)}?${q(companyId)}`, {
+    method: "PATCH",
+    body: { status: "dismissed" },
+  });
+}
 export function getLatestCsa(companyId: string) {
   return apiRequest<{ latest: Record<string, unknown> | null }>(`/api/v1/safety/csa/latest?${q(companyId)}`);
 }
