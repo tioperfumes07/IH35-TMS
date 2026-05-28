@@ -4,6 +4,7 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const MIGRATION_FILE = path.join(ROOT, "db/migrations/0262_asset_registry.sql");
+const DAMAGE_MIGRATION_FILE = path.join(ROOT, "db/migrations/0263_asset_damage.sql");
 const ROUTES_FILE = path.join(ROOT, "apps/backend/src/assets/assets.routes.ts");
 
 function fail(message) {
@@ -16,9 +17,11 @@ function requirePattern(text, pattern, message) {
 }
 
 if (!fs.existsSync(MIGRATION_FILE)) fail("missing migration db/migrations/0262_asset_registry.sql");
+if (!fs.existsSync(DAMAGE_MIGRATION_FILE)) fail("missing migration db/migrations/0263_asset_damage.sql");
 if (!fs.existsSync(ROUTES_FILE)) fail("missing routes file apps/backend/src/assets/assets.routes.ts");
 
 const migration = fs.readFileSync(MIGRATION_FILE, "utf8");
+const damageMigration = fs.readFileSync(DAMAGE_MIGRATION_FILE, "utf8");
 const routes = fs.readFileSync(ROUTES_FILE, "utf8");
 
 requirePattern(migration, /CREATE TABLE IF NOT EXISTS mdata\.assets/i, "migration must create mdata.assets");
@@ -36,12 +39,18 @@ requirePattern(
 );
 requirePattern(migration, /UNIQUE\s*\(\s*tenant_id\s*,\s*unit_code\s*\)/i, "must enforce tenant/unit_code uniqueness");
 requirePattern(migration, /INSERT INTO mdata\.assets[\s\S]*FROM mdata\.units/i, "migration must backfill from mdata.units");
+requirePattern(damageMigration, /ALTER TABLE mdata\.assets[\s\S]*repair_estimate_cents/i, "damage migration must extend mdata.assets damage fields");
+requirePattern(damageMigration, /CREATE TABLE IF NOT EXISTS mdata\.asset_status_history/i, "damage migration must create mdata.asset_status_history");
 
 requirePattern(routes, /app\.get\("\/api\/v1\/assets"/, "routes must define GET /api/v1/assets");
 requirePattern(routes, /app\.get\("\/api\/v1\/assets\/:id"/, "routes must define GET /api/v1/assets/:id");
 requirePattern(routes, /app\.post\("\/api\/v1\/assets"/, "routes must define POST /api/v1/assets");
 requirePattern(routes, /app\.patch\("\/api\/v1\/assets\/:id"/, "routes must define PATCH /api/v1/assets/:id");
+requirePattern(routes, /app\.patch\("\/api\/v1\/assets\/:id\/status"/, "routes must define PATCH /api/v1/assets/:id/status");
+requirePattern(routes, /app\.get\("\/api\/v1\/assets\/:id\/status-history"/, "routes must define GET /api/v1/assets/:id/status-history");
+requirePattern(routes, /app\.get\("\/api\/v1\/assets\/summary"/, "routes must define GET /api/v1/assets/summary");
 requirePattern(routes, /tenant_id = \$1|AND tenant_id = \$2/, "routes must scope queries by tenant_id");
 requirePattern(routes, /resolveOperatingCompanyId|assertCompanyMembership/, "routes must resolve + enforce company scope");
+requirePattern(routes, /INSERT INTO mdata\.asset_status_history/i, "status endpoint must record history rows");
 
 console.log("verify:asset-registry — OK");
