@@ -159,6 +159,9 @@ jobs:
       - name: Verify no internal user-facing strings
         run: npm run verify:no-internal-strings
 
+      - name: Verify tail cosmetic internal string guard
+        run: npm run verify:tail-cosmetic-no-internal-string
+
       - name: Verify no qbo_archive runtime reads
         run: npm run verify:no-qbo-archive-runtime-reads
 

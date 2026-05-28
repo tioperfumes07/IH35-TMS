@@ -4,7 +4,7 @@ import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as homeApi from "../../../api/home";
-import { WOStatusPieChart } from "./WOStatusPieChart";
+import { WOStatusPieChart, formatWoStatusLabel } from "./WOStatusPieChart";
 
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="responsive-pie">{children}</div>,
@@ -34,5 +34,11 @@ describe("WOStatusPieChart", () => {
     ]);
     render(wrap(<WOStatusPieChart operatingCompanyId="c1" />));
     await waitFor(() => expect(screen.getByTestId("pie-chart")).toBeInTheDocument());
+  });
+
+  it("formats missing legend labels as Unknown", () => {
+    expect(formatWoStatusLabel(undefined)).toBe("Unknown");
+    expect(formatWoStatusLabel("")).toBe("Unknown");
+    expect(formatWoStatusLabel("in_progress")).toBe("in progress");
   });
 });

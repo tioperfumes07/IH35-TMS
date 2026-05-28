@@ -342,9 +342,14 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       const filters: string[] = [];
       if (status === "active") filters.push("deactivated_at IS NULL");
       if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
+      let searchContainsIdx: number | null = null;
+      let searchPrefixIdx: number | null = null;
       if (search) {
         values.push(`%${search}%`);
-        const idx = values.length;
+        searchContainsIdx = values.length;
+        values.push(`${search}%`);
+        searchPrefixIdx = values.length;
+        const idx = searchContainsIdx;
         filters.push(
           `(customer_name ILIKE $${idx} OR customer_code ILIKE $${idx} OR mc_number ILIKE $${idx} OR dot_number ILIKE $${idx} OR billing_email ILIKE $${idx} OR status::text ILIKE $${idx})`
         );
@@ -354,12 +359,26 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       values.push(limit);
       values.push(offset);
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      const orderClause =
+        searchContainsIdx && searchPrefixIdx
+          ? `
+          ORDER BY
+            CASE
+              WHEN customer_code ILIKE $${searchPrefixIdx} THEN 400
+              WHEN customer_name ILIKE $${searchPrefixIdx} THEN 300
+              WHEN customer_code ILIKE $${searchContainsIdx} THEN 250
+              WHEN customer_name ILIKE $${searchContainsIdx} THEN 200
+              ELSE 100
+            END DESC,
+            created_at DESC
+          `
+          : "ORDER BY created_at DESC";
       const res = await client.query(
         `
           SELECT ${CUSTOMER_SELECT_COLUMNS}
           FROM mdata.customers
           ${whereClause}
-          ORDER BY created_at DESC
+          ${orderClause}
           LIMIT $${values.length - 1}
           OFFSET $${values.length}
         `,

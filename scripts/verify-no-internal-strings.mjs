@@ -6,6 +6,7 @@ import ts from "typescript";
 const ROOT = process.cwd();
 const FRONTEND_ROOT = path.join(ROOT, "apps/frontend/src");
 const BASE_RE = /qbo_archive|^undefined$|version=dev/i;
+const QBO_ARCHIVE_SNAPSHOT_RE = /qbo_archive\.entities_snapshot/i;
 const SNAKE_RE = /^[a-z]+_[a-z_]+$/;
 
 function walk(dir) {
@@ -36,7 +37,15 @@ for (const file of walk(FRONTEND_ROOT)) {
         return;
       }
       const snakeHit = SNAKE_RE.test(text) && ["h1", "h2", "h3", "label", "th"].includes(tag);
-      if (BASE_RE.test(text) || snakeHit) {
+      if (BASE_RE.test(text) || QBO_ARCHIVE_SNAPSHOT_RE.test(text) || snakeHit) {
+        const pos = sf.getLineAndCharacterOfPosition(node.getStart(sf));
+        violations.push(`${path.relative(ROOT, file)}:${pos.line + 1} internal string "${text}"`);
+      }
+    }
+
+    if (ts.isStringLiteralLike(node)) {
+      const text = node.text.trim();
+      if (QBO_ARCHIVE_SNAPSHOT_RE.test(text)) {
         const pos = sf.getLineAndCharacterOfPosition(node.getStart(sf));
         violations.push(`${path.relative(ROOT, file)}:${pos.line + 1} internal string "${text}"`);
       }

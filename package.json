@@ -167,6 +167,7 @@
     "verify:no-seed-data-in-prod-fixtures": "node scripts/verify-no-seed-data-in-prod-fixtures.mjs",
     "verify:sidebar-route-resolution": "node scripts/verify-sidebar-route-resolution.mjs",
     "verify:no-internal-strings": "node scripts/verify-no-internal-strings.mjs",
+    "verify:tail-cosmetic-no-internal-string": "node scripts/verify-tail-cosmetic-no-internal-string.mjs",
     "verify:applied-migrations-immutable": "node scripts/verify-applied-migrations-immutable.mjs",
     "verify:content-drift-check": "node scripts/verify-content-drift-check.mjs",
     "verify:google-oauth-lazy-env": "node scripts/verify-google-oauth-lazy-env.mjs",

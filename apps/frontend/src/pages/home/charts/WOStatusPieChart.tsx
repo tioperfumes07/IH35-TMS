@@ -11,10 +11,24 @@ const STATUS_COLORS: Record<HomeWoStatusCount["status"], string> = {
   completed: "#1A7A3C",
   cancelled: "#dc2626",
 };
+const UNKNOWN_STATUS_COLOR = "#64748b";
+
+export function formatWoStatusLabel(value: unknown): string {
+  if (typeof value !== "string") return "Unknown";
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return "Unknown";
+  if (normalized === "unknown") return "Unknown";
+  return normalized.replace(/_/g, " ");
+}
+
+function isKnownStatus(value: unknown): value is HomeWoStatusCount["status"] {
+  return value === "draft" || value === "approved" || value === "in_progress" || value === "completed" || value === "cancelled";
+}
 
 type Props = {
   operatingCompanyId: string | null | undefined;
 };
+type ChartStatus = HomeWoStatusCount["status"] | "unknown";
 
 export function WOStatusPieChart({ operatingCompanyId }: Props) {
   const cid = operatingCompanyId ?? "";
@@ -40,7 +54,13 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
 
   const rows = query.data ?? [];
   const total = rows.reduce((s, r) => s + r.count, 0);
-  const data = total === 0 ? [{ status: "draft" as const, count: 0 }] : rows.filter((r) => r.count > 0);
+  const data: Array<{ status: ChartStatus; count: number }> =
+    total === 0
+      ? [{ status: "unknown", count: 0 }]
+      : rows.filter((r) => r.count > 0).map((r) => ({
+          status: isKnownStatus((r as { status?: unknown }).status) ? r.status : "unknown",
+          count: r.count,
+        }));
 
   return (
     <div className="home-recharts-print w-full">
@@ -59,8 +79,8 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
           >
             {data.map((entry) => (
               <Cell
-                key={entry.status}
-                fill={total === 0 ? "#e2e8f0" : STATUS_COLORS[entry.status]}
+                key={`${entry.status}-${entry.count}`}
+                fill={total === 0 ? "#e2e8f0" : isKnownStatus(entry.status) ? STATUS_COLORS[entry.status] : UNKNOWN_STATUS_COLOR}
                 stroke="#fff"
                 strokeWidth={1}
               />
@@ -73,11 +93,11 @@ export function WOStatusPieChart({ operatingCompanyId }: Props) {
               return [`${count} (${pct}%)`, "Count"];
             }}
             labelFormatter={(_, payload) => {
-              const st = payload?.[0]?.payload as HomeWoStatusCount | undefined;
-              return st ? String(st.status).replace(/_/g, " ") : "";
+              const st = payload?.[0]?.payload as { status?: unknown } | undefined;
+              return formatWoStatusLabel(st?.status);
             }}
           />
-          <Legend verticalAlign="middle" align="right" layout="vertical" formatter={(value) => String(value).replace(/_/g, " ")} />
+          <Legend verticalAlign="middle" align="right" layout="vertical" formatter={(value) => formatWoStatusLabel(value)} />
         </PieChart>
       </ResponsiveContainer>
     </div>

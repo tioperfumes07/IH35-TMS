@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { enqueueTmsVendorPushRequested } from "../qbo/tms-vendor-push-chain.service.js";
 
 const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);
+const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -68,6 +69,31 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 
 function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Accountant";
+}
+
+function scrubVendorProjectionSource(row: Record<string, unknown>) {
+  const notesRaw = typeof row.notes === "string" ? row.notes : null;
+  if (!notesRaw || !QBO_ARCHIVE_PROJECTION_SOURCE_RE.test(notesRaw)) return row;
+  QBO_ARCHIVE_PROJECTION_SOURCE_RE.lastIndex = 0;
+
+  const projectionSources = Array.from(notesRaw.matchAll(QBO_ARCHIVE_PROJECTION_SOURCE_RE))
+    .map((match) => match[0]?.trim())
+    .filter((value): value is string => Boolean(value));
+
+  const cleanedNotes = notesRaw.replace(QBO_ARCHIVE_PROJECTION_SOURCE_RE, "").replace(/\n{3,}/g, "\n\n").trim();
+  const existingMeta =
+    row._internal_meta && typeof row._internal_meta === "object" && !Array.isArray(row._internal_meta)
+      ? (row._internal_meta as Record<string, unknown>)
+      : {};
+
+  return {
+    ...row,
+    notes: cleanedNotes.length > 0 ? cleanedNotes : null,
+    _internal_meta: {
+      ...existingMeta,
+      projection_source: projectionSources,
+    },
+  };
 }
 
 async function resolveOperatingCompanyId(
@@ -158,7 +184,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return res.rows.map((row) => scrubVendorProjectionSource(row as Record<string, unknown>));
     });
     return { vendors };
   });

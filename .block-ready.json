@@ -1,31 +1,25 @@
 {
-  "block_id": "P7-AUDIT-P0-2-HOTFIX-2B",
+  "block_id": "P7-FIX-TAIL-COSMETIC",
   "phase": "Phase 7 Stabilization",
-  "task": "P7-AUDIT-P0-2-HOTFIX-2B",
+  "task": "P7-FIX-TAIL-COSMETIC",
   "allowed_files": [
-    "apps/backend/src/auth/db.ts",
-    "apps/backend/src/auth/routes.ts",
-    "apps/backend/src/cron/geofence-breach-detector.cron.ts",
-    "apps/backend/src/driver/driver-jwt.ts",
-    "apps/backend/src/email/render.ts",
-    "apps/backend/src/identity/password-reset.routes.ts",
-    "apps/backend/src/index.ts",
-    "apps/backend/src/integrations/qbo/forensic-import.service.ts",
-    "apps/backend/src/legal/contracts.service.ts",
-    "apps/backend/src/legal/matters.service.ts",
-    "apps/backend/src/legal/templates.service.ts",
-    "apps/backend/src/middleware/rate-limit.ts",
-    "apps/backend/src/services/push-notification.service.ts",
-    "apps/backend/src/storage/r2-client.ts",
-    "apps/backend/src/__tests__/env-guards/**",
-    "scripts/verify-no-boot-throwing-env-checks.mjs",
+    "apps/backend/src/mdata/customers.routes.ts",
+    "apps/backend/src/mdata/vendors.routes.ts",
+    "apps/frontend/src/pages/Dispatch.tsx",
+    "apps/frontend/src/pages/home/charts/WOStatusPieChart.tsx",
+    "apps/frontend/src/pages/home/charts/WOStatusPieChart.test.tsx",
+    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+    "scripts/verify-tail-cosmetic-no-internal-string.mjs",
+    "scripts/verify-no-internal-strings.mjs",
+    ".github/workflows/ci.yml",
+    "package.json",
     ".block-ready.json"
   ],
   "extra_gates": [
-    "verify:no-boot-throwing-env-checks",
-    "build:backend"
+    "verify:no-internal-strings",
+    "verify:tail-cosmetic-no-internal-string"
   ],
-  "runtime_path": "backend",
+  "runtime_path": "src",
   "db_required": false,
   "guard_required": true
 }
