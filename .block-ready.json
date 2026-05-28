@@ -1,22 +1,21 @@
 {
-  "block_id": "P7-DOCS-FOUNDATION",
+  "block_id": "P7-ELD-FOUNDATION",
   "phase": "Phase 7",
-  "task": "P7-DOCS-FOUNDATION",
+  "task": "P7-ELD-FOUNDATION",
   "allowed_files": [
-    "apps/backend/src/docs/docs.routes.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/api/docs.ts",
-    "apps/frontend/src/pages/docs/DocsHomePage.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-docs-routes-bootstrapped.mjs",
-    "scripts/verify-docs-tenant-scope.mjs",
+    "apps/frontend/src/pages/eld/EldPage.tsx",
+    "apps/frontend/src/pages/eld/ELD_TABS_CONFIG.ts",
+    "scripts/verify-eld-foundation-coverage.mjs",
+    "scripts/__tests__/verify-eld-foundation-coverage.test.mjs",
+    "scripts/__tests__/fixtures/verify-eld-foundation-coverage/**",
+    "scripts/verify-steps/41-verify-eld-foundation-coverage.mjs",
+    "scripts/verify-guards/129-verify-eld-foundation-coverage.mjs",
     ".github/workflows/ci.yml",
     "package.json",
     ".block-ready.json"
   ],
   "extra_gates": [
-    "verify:docs-tenant-scope",
-    "verify:docs-routes-bootstrapped"
+    "verify:eld-foundation-coverage"
   ],
   "runtime_path": "src",
   "db_required": false,
