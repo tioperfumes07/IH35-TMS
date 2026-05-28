@@ -9,7 +9,6 @@
     "apps/frontend/src/components/allocation/types.ts",
     "apps/frontend/src/components/allocation/index.ts",
     "apps/frontend/src/pages/accounting/BillsPage.tsx",
-    "apps/frontend/src/pages/accounting/BillsPage.test.tsx",
     "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
     ".block-ready.json"
   ],
