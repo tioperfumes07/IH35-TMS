@@ -1,18 +1,20 @@
 {
-  "block_id": "P7-MAINT-WO-AP",
-  "phase": "Dispatch 2",
-  "task": "P7-MAINT-WO-AP",
+  "block_id": "P7-INS-SCHEMA",
+  "phase": "Dispatch 3",
+  "task": "P7-INS-SCHEMA",
   "allowed_files": [
-    "db/migrations/0273_maint_wo_ap_posting.sql",
-    "apps/backend/src/maint/wo-ap.shared.ts",
-    "apps/backend/src/maint/wo-ap-posting.service.ts",
-    "apps/backend/src/maint/wo-ap.routes.ts",
-    "apps/backend/src/maint/__tests__/wo-ap.shared.test.ts",
+    "db/migrations/0274_insurance.sql",
+    "apps/backend/src/insurance/policy.shared.ts",
+    "apps/backend/src/insurance/policy.routes.ts",
     "apps/backend/src/index.ts",
+    "scripts/verify-insurance-schema.mjs",
+    "scripts/verify-guards/130-verify-insurance-schema.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [],
+  "extra_gates": ["verify:insurance-schema"],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": false
+  "guard_required": true
 }
