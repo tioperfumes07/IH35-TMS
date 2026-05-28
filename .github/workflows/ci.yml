@@ -117,6 +117,9 @@ jobs:
       - name: Verify SAF RTD state machine contract
         run: npm run verify:rtd-statemachine
 
+      - name: Verify SAF dispatch eligibility gate contract
+        run: npm run verify:dispatch-gate
+
       - name: Verify safety reports coverage
         run: npm run verify:safety-reports-coverage
 

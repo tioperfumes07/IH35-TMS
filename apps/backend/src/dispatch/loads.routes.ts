@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { bookLoad } from "./book-load.service.js";
+import { loadDriverEligibility } from "./eligibility.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
 import { cancelLoadIdReservation, reserveNextLoadId } from "./load-id-reservation.service.js";
 import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction-pending.service.js";
@@ -716,6 +717,33 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         latest_random_pool: latestPoolRes.rows[0] ?? null,
         latest_clearinghouse_query: latestClearinghouseRes.rows[0] ?? null,
       };
+    });
+
+    if (!payload) return reply.code(404).send({ error: "driver_not_found" });
+    return payload;
+  });
+
+  app.get("/api/v1/dispatch/drivers/:driver_id/eligibility", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const params = dispatchDriverIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    const payload = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
+      const driverRes = await client.query<{ id: string }>(
+        `
+          SELECT id::text AS id
+          FROM mdata.drivers
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [params.data.driver_id, operatingCompanyId]
+      );
+      if (!driverRes.rows[0]) return null;
+      return loadDriverEligibility(client, operatingCompanyId, params.data.driver_id);
     });
 
     if (!payload) return reply.code(404).send({ error: "driver_not_found" });

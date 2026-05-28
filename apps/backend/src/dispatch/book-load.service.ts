@@ -7,6 +7,7 @@ import {
   consumeLoadNumberReservation,
   reserveNextLoadId,
 } from "./load-id-reservation.service.js";
+import { loadDriverEligibility } from "./eligibility.js";
 
 type DispatchStatus =
   | "unassigned"
@@ -660,6 +661,45 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
                 driver_id: blocked.driver_id,
                 latest_result: blocked.result,
                 latest_test_date: blocked.test_date,
+              },
+              wf_044_maintenance_warnings: wf044Warnings,
+            },
+          };
+        }
+      }
+    }
+
+    const hasRtdCaseTable = await relationExists(client, "safety.rtd_case");
+    const hasDqfTable = await relationExists(client, "safety.driver_qualification_files");
+    if (hasDrugTestTable || hasRtdCaseTable || hasDqfTable) {
+      const assignedDriverIds = await collectAssignedDriverIdsForDrugGate(client, input);
+      for (const driverId of assignedDriverIds) {
+        const eligibility = await loadDriverEligibility(client, input.operating_company_id, driverId);
+        if (!eligibility.eligible) {
+          await appendCrudAudit(
+            client,
+            input.requestingUserUuid,
+            "dispatch.book_load_blocked_by_eligibility_gate",
+            {
+              operating_company_id: input.operating_company_id,
+              driver_id: driverId,
+              reasons: eligibility.reasons,
+              details: eligibility.details,
+              block_code: "E_DRIVER_DISPATCH_INELIGIBLE",
+            },
+            "warning",
+            "P7-SAF-DISPATCH-GATE"
+          );
+          return {
+            kind: "error",
+            status: 422,
+            payload: {
+              error: "E_DRIVER_DISPATCH_INELIGIBLE",
+              message: `Driver is not dispatch-eligible: ${eligibility.reasons.join(", ")}`,
+              details: {
+                driver_id: driverId,
+                reasons: eligibility.reasons,
+                ...eligibility.details,
               },
               wf_044_maintenance_warnings: wf044Warnings,
             },

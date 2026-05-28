@@ -1,19 +1,26 @@
 {
-  "block_id": "P7-SAF-RTD-SAP",
+  "block_id": "P7-SAF-DISPATCH-GATE",
   "phase": "Dispatch 2",
-  "task": "P7-SAF-RTD-SAP",
+  "task": "P7-SAF-DISPATCH-GATE",
   "allowed_files": [
     "db/migrations/0271_safety_rtd_sap.sql",
     "apps/backend/src/safety/rtd.routes.ts",
     "apps/backend/src/safety/rtd.shared.ts",
+    "apps/backend/src/safety/safety.routes.ts",
+    "apps/backend/src/dispatch/eligibility.ts",
+    "apps/backend/src/dispatch/book-load.service.ts",
+    "apps/backend/src/dispatch/loads.routes.ts",
     "apps/backend/src/index.ts",
     "scripts/verify-rtd-statemachine.mjs",
+    "scripts/verify-dispatch-gate.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:rtd-statemachine"
+    "verify:drug-program",
+    "verify:rtd-statemachine",
+    "verify:dispatch-gate"
   ],
   "runtime_path": "src",
   "db_required": true,
