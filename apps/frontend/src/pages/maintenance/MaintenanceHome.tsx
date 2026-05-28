@@ -8,6 +8,8 @@ import {
   getMaintenanceRecentActivity,
   getMaintenanceRmStatus,
   getWorkOrder,
+  listMaintParts,
+  listMaintPmDue,
   listPartsInventory,
   listWorkOrdersFiltered,
   transitionWorkOrder,
@@ -28,6 +30,7 @@ import { DtcAutoWorkOrdersCard } from "./components/DtcAutoWorkOrdersCard";
 import { InTransitTriageBand } from "./components/InTransitTriageBand";
 import { IntegrationsStrip } from "./components/IntegrationsStrip";
 import { MaintKpiRows } from "./components/MaintKpiRows";
+import { MaintenancePmCountdownCards } from "./components/MaintenancePmCountdownCards";
 import { MaintenanceAlertsCard } from "./components/MaintenanceAlertsCard";
 import { PartsInventoryTable } from "./components/PartsInventoryTable";
 import { QuickActionsBar } from "./components/QuickActionsBar";
@@ -115,6 +118,18 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
     queryFn: () => apiRequest<{ total_parts: number; low_stock_count: number; total_inventory_value: number }>(`/api/v1/maintenance/parts-inventory/kpis?operating_company_id=${encodeURIComponent(companyId)}`),
     enabled: Boolean(companyId),
   });
+  const pmDueQuery = useQuery({
+    queryKey: ["maintenance", "maint-pm-due", companyId],
+    queryFn: () => listMaintPmDue(companyId),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
+  const maintPartsQuery = useQuery({
+    queryKey: ["maintenance", "maint-parts", companyId],
+    queryFn: () => listMaintParts(companyId),
+    enabled: Boolean(companyId),
+    retry: false,
+  });
   const statusMutation = useMutation({
     mutationFn: (args: { id: string; status: "in_progress" | "waiting_parts" | "complete" }) =>
       transitionWorkOrder(args.id, companyId, { new_status: args.status }),
@@ -196,6 +211,7 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
       />
 
       <MaintKpiRows kpis={kpis} />
+      {companyId ? <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} /> : null}
       <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
       {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} /> : null}
       {companyId ? <DtcAutoWorkOrdersCard operatingCompanyId={companyId} /> : null}
@@ -286,6 +302,57 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
             </div>
           </div>
           <PartsInventoryTable companyId={companyId} rows={partsInventoryRowsQuery.data ?? []} />
+          <div className="rounded border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Maint Parts Reorder Flags</h3>
+              <div className="text-xs text-gray-500">From MAINT-12 list contract</div>
+            </div>
+            {maintPartsQuery.isLoading ? <div className="text-xs text-gray-500">Loading reorder list...</div> : null}
+            {maintPartsQuery.isError ? (
+              <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                Reorder list endpoint unavailable in this environment.
+              </div>
+            ) : null}
+            {!maintPartsQuery.isLoading && !maintPartsQuery.isError ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-xs">
+                  <thead>
+                    <tr className="text-left text-gray-500">
+                      <th className="px-2 py-1">SKU</th>
+                      <th className="px-2 py-1">Part</th>
+                      <th className="px-2 py-1">On Hand</th>
+                      <th className="px-2 py-1">Reorder Point</th>
+                      <th className="px-2 py-1">Flag</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(maintPartsQuery.data?.rows ?? []).map((part) => (
+                      <tr key={part.id} className="border-t border-gray-100">
+                        <td className="px-2 py-1">{part.sku}</td>
+                        <td className="px-2 py-1">{part.name}</td>
+                        <td className="px-2 py-1">{part.qty_on_hand}</td>
+                        <td className="px-2 py-1">{part.reorder_point}</td>
+                        <td className="px-2 py-1">
+                          {part.needs_reorder ? (
+                            <span className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
+                          ) : (
+                            <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">OK</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {(maintPartsQuery.data?.rows ?? []).length === 0 ? (
+                      <tr>
+                        <td className="px-2 py-2 text-gray-500" colSpan={5}>
+                          No maint parts found.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
