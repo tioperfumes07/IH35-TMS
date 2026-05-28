@@ -126,6 +126,7 @@ import { registerMaintenanceDriversRoutes } from "./maintenance/drivers.routes.j
 import { registerMaintenancePartsRoutes } from "./maintenance/parts.routes.js";
 import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
+import { registerMaintWoApRoutes } from "./maint/wo-ap.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerAssetsRoutes } from "./assets/assets.routes.js";
@@ -515,6 +516,7 @@ async function main() {
   await registerMaintenancePartsRoutes(app);
   await registerMaintPartsRoutes(app);
   await registerMaintPmRoutes(app);
+  await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
   await registerListsHubRoutes(app);
   await registerAccountingRoutes(app);
