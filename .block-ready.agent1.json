@@ -1,19 +1,24 @@
 {
-  "block_id": "P7-SAF-RTD-SAP",
+  "block_id": "P7-MAINT-PARTS-PM",
   "phase": "Dispatch 2",
-  "task": "P7-SAF-RTD-SAP",
+  "task": "P7-MAINT-PARTS-PM",
   "allowed_files": [
-    "db/migrations/0271_safety_rtd_sap.sql",
-    "apps/backend/src/safety/rtd.routes.ts",
-    "apps/backend/src/safety/rtd.shared.ts",
+    "db/migrations/0272_maint_parts_pm.sql",
+    "apps/backend/src/maint/parts.routes.ts",
+    "apps/backend/src/maint/pm.routes.ts",
+    "apps/backend/src/maint/pm-due.shared.ts",
+    "apps/backend/src/maint/__tests__/pm-due.shared.test.ts",
     "apps/backend/src/index.ts",
-    "scripts/verify-rtd-statemachine.mjs",
+    "scripts/verify-maint-pm.mjs",
+    "scripts/__tests__/verify-maint-pm.test.mjs",
+    "scripts/verify-guards/129-verify-maint-pm.mjs",
+    "scripts/verify-steps/42-verify-maint-pm.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:rtd-statemachine"
+    "verify:maint-pm"
   ],
   "runtime_path": "src",
   "db_required": true,
