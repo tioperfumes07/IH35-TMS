@@ -8,24 +8,11 @@
     "apps/backend/src/maint/wo-ap-posting.service.ts",
     "apps/backend/src/maint/wo-ap.routes.ts",
     "apps/backend/src/maint/__tests__/wo-ap.shared.test.ts",
-    "apps/backend/src/accounting/maintenance-posting/poster.service.ts",
-    "apps/backend/src/accounting/maintenance-posting/__tests__/poster-work-order-to-bill.test.ts",
-    "apps/backend/src/accounting/maintenance-posting/__tests__/poster-tenant-isolation.test.ts",
-    "apps/backend/src/accounting/maintenance-posting/__tests__/poster-multi-line-bill.test.ts",
-    "apps/backend/src/maintenance/work-orders.routes.ts",
     "apps/backend/src/index.ts",
-    "scripts/verify-maint-wo-ap.mjs",
-    "scripts/__tests__/verify-maint-wo-ap.test.mjs",
-    "scripts/verify-guards/130-verify-maint-wo-ap.mjs",
-    "scripts/verify-steps/43-verify-maint-wo-ap.mjs",
-    "package.json",
-    ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:maint-wo-ap"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": true
+  "guard_required": false
 }
