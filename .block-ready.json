@@ -1,23 +1,22 @@
 {
-  "block_id": "P7-FIX-TAIL-COSMETIC",
-  "phase": "Phase 7 Stabilization",
-  "task": "P7-FIX-TAIL-COSMETIC",
+  "block_id": "P7-DOCS-FOUNDATION",
+  "phase": "Phase 7",
+  "task": "P7-DOCS-FOUNDATION",
   "allowed_files": [
-    "apps/backend/src/mdata/customers.routes.ts",
-    "apps/backend/src/mdata/vendors.routes.ts",
-    "apps/frontend/src/pages/Dispatch.tsx",
-    "apps/frontend/src/pages/home/charts/WOStatusPieChart.tsx",
-    "apps/frontend/src/pages/home/charts/WOStatusPieChart.test.tsx",
-    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    "scripts/verify-tail-cosmetic-no-internal-string.mjs",
-    "scripts/verify-no-internal-strings.mjs",
+    "apps/backend/src/docs/docs.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/docs.ts",
+    "apps/frontend/src/pages/docs/DocsHomePage.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-docs-routes-bootstrapped.mjs",
+    "scripts/verify-docs-tenant-scope.mjs",
     ".github/workflows/ci.yml",
     "package.json",
     ".block-ready.json"
   ],
   "extra_gates": [
-    "verify:no-internal-strings",
-    "verify:tail-cosmetic-no-internal-string"
+    "verify:docs-tenant-scope",
+    "verify:docs-routes-bootstrapped"
   ],
   "runtime_path": "src",
   "db_required": false,

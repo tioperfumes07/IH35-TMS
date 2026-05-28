@@ -159,6 +159,12 @@ jobs:
       - name: Verify no internal user-facing strings
         run: npm run verify:no-internal-strings
 
+      - name: Verify docs tenant scope
+        run: npm run verify:docs-tenant-scope
+
+      - name: Verify docs routes bootstrapped
+        run: npm run verify:docs-routes-bootstrapped
+
       - name: Verify tail cosmetic internal string guard
         run: npm run verify:tail-cosmetic-no-internal-string
 

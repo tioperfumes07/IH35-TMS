@@ -38,6 +38,7 @@ import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellation-reasons.routes.js";
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerSafetyCatalogRoutes } from "./catalogs/safety/index.js";
+import { registerDocsFoundationRoutes } from "./docs/docs.routes.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerAttachmentsRoutes } from "./documents/attachments.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
@@ -411,6 +412,7 @@ async function main() {
   // ─── End Safety catalog routes ───
   await registerCatalogsWorkflowRoutes(app);
   await registerFileCategoriesRoutes(app);
+  await registerDocsFoundationRoutes(app);
   await registerDocsFilesRoutes(app);
   await registerAttachmentsRoutes(app);
   await registerDispatchLoadRoutes(app);
