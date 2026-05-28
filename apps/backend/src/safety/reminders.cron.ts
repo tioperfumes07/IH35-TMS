@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
+import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 let initialized = false;
@@ -113,6 +114,33 @@ const REFRESH_SQL = `
 export async function refreshSafetyReminders() {
   const refreshStartedAt = new Date().toISOString();
   await withLuciaBypass(async (client) => {
+    const companyRes = await client.query<{ operating_company_id: string }>(
+      `
+        WITH companies AS (
+          SELECT DISTINCT operating_company_id::text AS operating_company_id
+          FROM safety.driver_qualification_files
+          WHERE voided_at IS NULL
+          UNION
+          SELECT DISTINCT operating_company_id::text AS operating_company_id
+          FROM safety.medical_cards
+          WHERE voided_at IS NULL
+          UNION
+          SELECT DISTINCT operating_company_id::text AS operating_company_id
+          FROM safety.background_checks
+          WHERE voided_at IS NULL
+          UNION
+          SELECT DISTINCT operating_company_id::text AS operating_company_id
+          FROM safety.training_records
+          WHERE voided_at IS NULL
+        )
+        SELECT operating_company_id
+        FROM companies
+      `
+    );
+    for (const row of companyRes.rows) {
+      assertTenantContext(String(row.operating_company_id ?? ""), "safety.reminders_cron");
+    }
+
     await client.query(REFRESH_SQL);
     await client.query(
       `

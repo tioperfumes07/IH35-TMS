@@ -3,11 +3,18 @@
   "phase": "Dispatch 2",
   "task": "P7-SAF-REMINDERS",
   "allowed_files": [
+    "db/migrations/0267_safety_driver_dqf.sql",
+    "db/migrations/0268_safety_medical_cards_dispatch2.sql",
     "db/migrations/0269_safety_reminders.sql",
+    "apps/backend/src/safety/driver-qualification.routes.ts",
+    "apps/backend/src/safety/medical-cards.routes.ts",
     "apps/backend/src/safety/reminders.cron.ts",
     "apps/backend/src/safety/reminders.routes.ts",
     "apps/backend/src/index.ts",
+    "scripts/verify-safety-driver-dqf.mjs",
+    "scripts/verify-safety-medical-cards.mjs",
     "scripts/verify-safety-reminders.mjs",
+    "docs/trackers/dispatch-2-kickoff.md",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
