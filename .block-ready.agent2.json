@@ -1,23 +1,19 @@
 {
-  "block_id": "P7-BANK-BULK-FIX",
-  "phase": "Phase 7",
-  "task": "P7-BANK-BULK-FIX",
+  "block_id": "P7-SAF-DRIVER-UI",
+  "phase": "Dispatch 2",
+  "task": "P7-SAF-DRIVER-UI",
   "allowed_files": [
-    "apps/backend/src/banking/bulk-transactions.ts",
-    "apps/backend/src/banking/bulk-transactions.test.ts",
-    "apps/backend/src/banking/categorization.routes.ts",
-    "apps/backend/src/banking/banking.routes.ts",
-    "scripts/verify-bank-bulk.mjs",
-    "scripts/verify-banking-bulk-contract.mjs",
-    ".github/workflows/ci.yml",
-    "package.json",
+    "apps/frontend/src/lib/driverDqf.ts",
+    "apps/frontend/src/lib/__tests__/driverDqf.test.ts",
+    "apps/frontend/src/pages/drivers/**",
+    "apps/frontend/src/pages/Drivers.tsx",
+    "apps/frontend/src/pages/safety/tabs/DriverFilesTab.tsx",
+    "apps/frontend/src/api/safety.ts",
+    "apps/frontend/src/routes/manifest.tsx",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [
-    "verify:bank-bulk",
-    "build:backend"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }

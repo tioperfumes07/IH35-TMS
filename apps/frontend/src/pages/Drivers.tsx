@@ -46,6 +46,7 @@ import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors } from "../design/tokens";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { DriversListPage } from "./drivers/DriversListPage";
 
 const statusOptions = ["All", "Probation", "Active", "Inactive", "Terminated", "OnLeave"] as const;
 const statusFieldComboboxOptions = statusOptions
@@ -974,21 +975,7 @@ export function DriversPage() {
               {permitExpirationRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No permit/document expirations in the next 60 days.</p> : null}
             </DataPanel>
           ) : null}
-          {subnavTab === "profiles" ? (
-            <DataPanel title="Active Drivers · Movement" accentColor={colors.info.strong}>
-              {activeDriverLoadRows.map((row) => (
-                <DataPanelRow key={`${row.driver_name}-${row.route}`}>
-                  <span>{row.driver_name} · {row.stage} · {row.route}</span>
-                  <span>{row.eta}</span>
-                </DataPanelRow>
-              ))}
-              {activeDriverLoadRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No active driver movement from dispatch feed.</p> : null}
-              <DataPanelRow>
-                <span className="font-semibold">Samsara status</span>
-                <span className="font-semibold">{samsaraHealthQuery.data?.last_health_status ?? "unknown"}</span>
-              </DataPanelRow>
-            </DataPanel>
-          ) : null}
+          {subnavTab === "profiles" ? <DriversListPage /> : null}
           {subnavTab === "leave" ? (
             <DataPanel title="Leave Overview" accentColor={colors.warn.strong}>
               <DataPanelRow>
