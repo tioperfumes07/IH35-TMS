@@ -1,15 +1,10 @@
 {
-  "block_id": "P7-ALLOC-UI",
+  "block_id": "P7-ACCT-TB-HUB",
   "phase": "Phase 7",
-  "task": "P7-ALLOC-UI",
+  "task": "P7-ACCT-TB-HUB",
   "allowed_files": [
-    "apps/frontend/src/components/allocation/AllocationMethodPicker.tsx",
-    "apps/frontend/src/components/allocation/AllocationPreviewTable.tsx",
-    "apps/frontend/src/components/allocation/BillAllocationPanel.tsx",
-    "apps/frontend/src/components/allocation/types.ts",
-    "apps/frontend/src/components/allocation/index.ts",
-    "apps/frontend/src/pages/accounting/BillsPage.tsx",
     "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    "apps/frontend/src/pages/accounting/AccountingHubPage.test.tsx",
     ".block-ready.json"
   ],
   "extra_gates": [

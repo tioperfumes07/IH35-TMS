@@ -10,6 +10,7 @@ import {
 } from "../../api/accounting";
 import { getQboSyncQueue, getQboSyncQueueStats } from "../../api/banking";
 import { listSettlements } from "../../api/driverFinance";
+import { getTrialBalanceReport } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -56,6 +57,14 @@ const CREATE_MENU: Array<{ label: string; to: string }> = [
 function monthStartIso(date = new Date()) {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
   return d.toISOString().slice(0, 10);
+}
+
+function currentQuarterRange(date = new Date()) {
+  const q = Math.floor(date.getUTCMonth() / 3);
+  const startMonth = q * 3;
+  const start = new Date(Date.UTC(date.getUTCFullYear(), startMonth, 1));
+  const end = new Date(Date.UTC(date.getUTCFullYear(), startMonth + 3, 0));
+  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
 function isIsoOnOrAfter(left: string | null | undefined, right: string) {
@@ -138,6 +147,7 @@ export function AccountingHubPage() {
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const mtdStart = monthStartIso();
+  const quarterRange = useMemo(() => currentQuarterRange(), []);
 
   useEffect(() => {
     const onDown = (event: MouseEvent) => {
@@ -150,7 +160,7 @@ export function AccountingHubPage() {
     return () => document.removeEventListener("mousedown", onDown);
   }, []);
 
-  const [billsQ, billPaymentsQ, paymentsQ, settlementsQ, invoicesQ, qboStatsQ, qboQueueQ] = useQueries({
+  const [billsQ, billPaymentsQ, paymentsQ, settlementsQ, invoicesQ, qboStatsQ, qboQueueQ, trialBalanceQ] = useQueries({
     queries: [
       {
         queryKey: ["accounting-proto", "bills", companyId],
@@ -186,6 +196,18 @@ export function AccountingHubPage() {
         queryKey: ["accounting-proto", "qbo-sync-queue", companyId],
         queryFn: () => getQboSyncQueue(companyId, { limit: 50 }),
         enabled: Boolean(companyId),
+      },
+      {
+        queryKey: ["accounting-hub", "trial-balance", companyId, quarterRange.start, quarterRange.end],
+        queryFn: () =>
+          getTrialBalanceReport({
+            operating_company_id: companyId,
+            from_date: quarterRange.start,
+            to_date: quarterRange.end,
+            basis: "accrual",
+          }),
+        enabled: Boolean(companyId),
+        retry: false,
       },
     ],
   });
@@ -285,6 +307,41 @@ export function AccountingHubPage() {
     muted: relativeRetry(item.next_attempt_at),
   }));
 
+  const trialBalanceRows: AmountRow[] = useMemo(() => {
+    if (trialBalanceQ.isError) {
+      return [
+        {
+          key: "tb-stub",
+          left: "Ledger snapshot",
+          right: "Contract stub",
+          muted: "endpoint pending",
+        },
+      ];
+    }
+    if (trialBalanceQ.isLoading || !trialBalanceQ.data) {
+      return [{ key: "tb-loading", left: "Ledger snapshot", right: "Loading…" }];
+    }
+    const { summary, rows } = trialBalanceQ.data;
+    return [
+      {
+        key: "tb-debits",
+        left: "Grand debits",
+        right: money.format(summary.grand_total_debits / 100),
+      },
+      {
+        key: "tb-credits",
+        left: "Grand credits",
+        right: money.format(summary.grand_total_credits / 100),
+      },
+      {
+        key: "tb-balanced",
+        left: "Balance check",
+        right: summary.balanced ? "Balanced" : "Out of balance",
+        muted: `${rows.length} accounts`,
+      },
+    ];
+  }, [trialBalanceQ.data, trialBalanceQ.isError, trialBalanceQ.isLoading]);
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -368,6 +425,16 @@ export function AccountingHubPage() {
             "Open queue"
           )}
           {homePanel(
+            "Bill form (Block 05 foundation)",
+            [
+              { key: "billform-layout", left: "12x6 + cost breakdown", right: "UI ready", muted: "locked layout" },
+              { key: "billform-lines", left: "Line persistence", right: "Contract stub", muted: "until multi-line API" },
+            ],
+            "Vendor bill create uses the locked bill form shell.",
+            "/accounting/bills/vendor",
+            "Create bill"
+          )}
+          {homePanel(
             "Bill allocation (Block 06 foundation)",
             [
               { key: "alloc-preview", left: "Allocation panel", right: "UI ready", muted: "contract stub allowed" },
@@ -376,6 +443,15 @@ export function AccountingHubPage() {
             "Bill allocation UI is not configured yet.",
             "/accounting/bills",
             "Open bills"
+          )}
+          {homePanel(
+            "Trial balance (Block 10 foundation)",
+            trialBalanceRows,
+            trialBalanceQ.isError
+              ? "Trial balance snapshot uses contract stub until ledger endpoint is reachable."
+              : `Quarter-to-date ${quarterRange.start} → ${quarterRange.end}.`,
+            "/reports/trial-balance",
+            "Open trial balance"
           )}
           {homePanel(
             "Assets (Block 04 foundation)",
