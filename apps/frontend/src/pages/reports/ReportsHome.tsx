@@ -167,7 +167,7 @@ export function ReportsHomePage() {
                   ["cash-flow-overview", "Cash flow overview"],
                   ["settlement-summary", "Settlement summary"],
                   ["customer-profitability", "Customer profitability"],
-                  ["profit-per-truck", "Profit per truck"],
+                  ["profit-per-truck", "Per-truck CPM dashboard"],
                   ["fuel-reconciliation", "Fuel reconciliation"],
                   ["maintenance-cost-per-unit", "Maintenance cost per unit"],
                   ["geofence-dwell", "Geofence dwell report"],

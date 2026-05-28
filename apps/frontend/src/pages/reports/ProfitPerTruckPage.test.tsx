@@ -96,6 +96,13 @@ const samplePayload: reportsApi.ProfitPerTruckResponse = {
 };
 
 describe("ProfitPerTruckPage", () => {
+  it("renders CPM dashboard header", async () => {
+    vi.spyOn(reportsApi, "getProfitPerTruck").mockResolvedValue(samplePayload);
+    render(wrap(<ProfitPerTruckPage />));
+    expect(await screen.findByText("Per-truck CPM dashboard")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Fleet avg CPM")).toBeInTheDocument());
+  });
+
   it("renders flag chips", async () => {
     vi.spyOn(reportsApi, "getProfitPerTruck").mockResolvedValue(samplePayload);
     render(wrap(<ProfitPerTruckPage />));
@@ -123,5 +130,15 @@ describe("ProfitPerTruckPage", () => {
     await waitFor(() => expect(screen.getByText("101")).toBeInTheDocument());
     await user.click(screen.getByText("101"));
     expect(mockNavigate).toHaveBeenCalledWith("/fleet/units/u1?tab=financial");
+  });
+
+  it("filters rows by search term", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(reportsApi, "getProfitPerTruck").mockResolvedValue(samplePayload);
+    render(wrap(<ProfitPerTruckPage />));
+    await waitFor(() => expect(screen.getByText("101")).toBeInTheDocument());
+    await user.type(screen.getByPlaceholderText("e.g. 102 or Pat"), "102");
+    expect(screen.queryByText("101")).not.toBeInTheDocument();
+    expect(screen.getByText("102")).toBeInTheDocument();
   });
 });

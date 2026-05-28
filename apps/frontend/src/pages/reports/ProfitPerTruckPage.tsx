@@ -34,6 +34,7 @@ const FLAG_UI: Record<ProfitPerTruckFlag, { emoji: string; className: string; la
 };
 
 type SortKey = keyof ProfitPerTruckRow;
+type FlagFilter = "all" | ProfitPerTruckFlag;
 
 export function ProfitPerTruckPage() {
   const navigate = useNavigate();
@@ -43,6 +44,8 @@ export function ProfitPerTruckPage() {
   const [applied, setApplied] = useState(currentQuarterRange);
   const [sortKey, setSortKey] = useState<SortKey>("net_profit_cents");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [search, setSearch] = useState("");
+  const [flagFilter, setFlagFilter] = useState<FlagFilter>("all");
 
   const query = useQuery({
     queryKey: ["reports", "profit-per-truck", companyId, applied.start, applied.end],
@@ -56,8 +59,22 @@ export function ProfitPerTruckPage() {
     retry: false,
   });
 
-  const sorted = useMemo(() => {
+  const filteredRows = useMemo(() => {
     const rows = query.data?.by_truck ?? [];
+    const term = search.trim().toLowerCase();
+    return rows.filter((row) => {
+      const matchesSearch =
+        term.length === 0 ||
+        row.unit_number.toLowerCase().includes(term) ||
+        row.truck_type.toLowerCase().includes(term) ||
+        (row.primary_driver_name ?? "").toLowerCase().includes(term);
+      const matchesFlag = flagFilter === "all" || row.flags.includes(flagFilter);
+      return matchesSearch && matchesFlag;
+    });
+  }, [flagFilter, query.data?.by_truck, search]);
+
+  const sorted = useMemo(() => {
+    const rows = filteredRows;
     const mul = sortDir === "asc" ? 1 : -1;
     const copy = [...rows];
     copy.sort((a, b) => {
@@ -80,16 +97,18 @@ export function ProfitPerTruckPage() {
       return 0;
     });
     return copy;
-  }, [query.data?.by_truck, sortKey, sortDir]);
+  }, [filteredRows, sortKey, sortDir]);
 
   const perMileChart = useMemo(() => {
-    const rows = [...(query.data?.by_truck ?? [])];
+    const rows = [...filteredRows];
     rows.sort((a, b) => b.profit_per_mile_cents - a.profit_per_mile_cents);
     return rows.slice(0, 10).map((r) => ({
       name: r.unit_number.length > 10 ? `${r.unit_number.slice(0, 8)}…` : r.unit_number,
+      revenuePerMile: r.revenue_per_mile_cents,
+      costPerMile: r.cost_per_mile_cents,
       profitPerMile: r.profit_per_mile_cents,
     }));
-  }, [query.data?.by_truck]);
+  }, [filteredRows]);
 
   function toggleSort(k: SortKey) {
     if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -142,6 +161,13 @@ export function ProfitPerTruckPage() {
   }
 
   const t = query.data?.totals;
+  const fleetMiles = useMemo(() => sorted.reduce((sum, row) => sum + row.miles_driven, 0), [sorted]);
+  const fleetRevenuePerMile = fleetMiles > 0 && t ? Math.round(t.revenue_cents / fleetMiles) : 0;
+  const fleetCostPerMile = fleetMiles > 0 && t ? Math.round((t.driver_pay_cents + t.fuel_cost_cents + t.maintenance_cost_cents + t.depreciation_cents + t.other_direct_cost_cents) / fleetMiles) : 0;
+  const fleetProfitPerMile = fleetMiles > 0 && t ? Math.round(t.net_profit_cents / fleetMiles) : 0;
+  const cpmSorted = useMemo(() => [...sorted].sort((a, b) => a.cost_per_mile_cents - b.cost_per_mile_cents), [sorted]);
+  const bestCpmTruck = cpmSorted[0] ?? null;
+  const worstCpmTruck = cpmSorted[cpmSorted.length - 1] ?? null;
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -150,8 +176,8 @@ export function ProfitPerTruckPage() {
       `}</style>
       <ReportsSubNav />
       <PageHeader
-        title="Profit per truck"
-        subtitle="Revenue, costs, and margin by fleet unit"
+        title="Per-truck CPM dashboard"
+        subtitle="Real cost-per-mile, revenue-per-mile, and margin by fleet unit"
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>
@@ -194,6 +220,29 @@ export function ProfitPerTruckPage() {
         >
           Apply
         </Button>
+        <label className="text-xs text-gray-600">
+          Search truck/driver
+          <input
+            className="mt-1 block h-9 w-52 rounded border border-gray-300 px-2"
+            value={search}
+            placeholder="e.g. 102 or Pat"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+        <label className="text-xs text-gray-600">
+          Flag
+          <select
+            className="mt-1 block h-9 rounded border border-gray-300 px-2"
+            value={flagFilter}
+            onChange={(event) => setFlagFilter(event.target.value as FlagFilter)}
+          >
+            <option value="all">All</option>
+            <option value="most_profitable">Most profitable</option>
+            <option value="least_profitable">Least profitable</option>
+            <option value="high_maintenance">High maintenance</option>
+            <option value="underutilized">Underutilized</option>
+          </select>
+        </label>
       </div>
 
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
@@ -210,6 +259,11 @@ export function ProfitPerTruckPage() {
               ["Other", money(t.other_direct_cost_cents)],
               ["Net profit", money(t.net_profit_cents)],
               ["Truck count", String(t.truck_count)],
+              ["Fleet avg CPM", money(fleetCostPerMile)],
+              ["Fleet avg RPM", money(fleetRevenuePerMile)],
+              ["Fleet avg PPM", money(fleetProfitPerMile)],
+              ["Best CPM", bestCpmTruck ? `${bestCpmTruck.unit_number} (${money(bestCpmTruck.cost_per_mile_cents)})` : "—"],
+              ["Worst CPM", worstCpmTruck ? `${worstCpmTruck.unit_number} (${money(worstCpmTruck.cost_per_mile_cents)})` : "—"],
             ] as const
           ).map(([label, val]) => (
             <div key={label} className="rounded border border-gray-200 bg-white px-2 py-2">
@@ -259,8 +313,14 @@ export function ProfitPerTruckPage() {
                   <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("margin_pct")}>
                     Margin
                   </th>
+                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("revenue_per_mile_cents")}>
+                    Rev/mi
+                  </th>
+                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("cost_per_mile_cents")}>
+                    Cost/mi
+                  </th>
                   <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("profit_per_mile_cents")}>
-                    $/Mile
+                    Profit/mi
                   </th>
                   <th className="px-2 py-2">Flags</th>
                 </tr>
@@ -283,6 +343,8 @@ export function ProfitPerTruckPage() {
                     <td className="px-2 py-2 text-right">{money(r.maintenance_cents)}</td>
                     <td className="px-2 py-2 text-right">{money(r.net_profit_cents)}</td>
                     <td className="px-2 py-2 text-right">{pct(r.margin_pct)}</td>
+                    <td className="px-2 py-2 text-right">{money(r.revenue_per_mile_cents)}</td>
+                    <td className="px-2 py-2 text-right">{money(r.cost_per_mile_cents)}</td>
                     <td className="px-2 py-2 text-right">{money(r.profit_per_mile_cents)}</td>
                     <td className="px-2 py-2">
                       <div className="flex flex-wrap gap-1">
@@ -300,10 +362,13 @@ export function ProfitPerTruckPage() {
                 ))}
               </tbody>
             </table>
+            {sorted.length === 0 ? (
+              <div className="px-3 py-4 text-sm text-gray-500">No trucks match the current filters for this period.</div>
+            ) : null}
           </div>
 
           <div className="rounded border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-semibold">Top 10 trucks by profit per mile (cents)</div>
+            <div className="mb-2 text-sm font-semibold">Top 10 trucks by per-mile metrics</div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={perMileChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -312,6 +377,8 @@ export function ProfitPerTruckPage() {
                   <YAxis tickFormatter={(v) => money(Number(v))} width={72} tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(v: number) => money(Number(v))} />
                   <Legend />
+                  <Bar dataKey="revenuePerMile" name="Revenue / mi" fill="#2563eb" />
+                  <Bar dataKey="costPerMile" name="Cost / mi" fill="#f59e0b" />
                   <Bar dataKey="profitPerMile" name="Profit / mi" fill="#6366f1" />
                 </BarChart>
               </ResponsiveContainer>

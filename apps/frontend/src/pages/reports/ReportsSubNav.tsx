@@ -15,7 +15,7 @@ const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
   { id: "cash-flow-overview", label: "Cash flow overview" },
   { id: "settlement-summary", label: "Settlement summary" },
   { id: "customer-profitability", label: "Customer profitability" },
-  { id: "profit-per-truck", label: "Profit per truck" },
+  { id: "profit-per-truck", label: "Per-truck CPM dashboard" },
   { id: "fuel-reconciliation", label: "Fuel reconciliation" },
   { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
   { id: "geofence-dwell", label: "Geofence dwell report" },
