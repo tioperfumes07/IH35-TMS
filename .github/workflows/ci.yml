@@ -168,6 +168,9 @@ jobs:
       - name: Verify docs routes bootstrapped
         run: npm run verify:docs-routes-bootstrapped
 
+      - name: Verify asset registry contract
+        run: npm run verify:asset-registry
+
       - name: Verify tail cosmetic internal string guard
         run: npm run verify:tail-cosmetic-no-internal-string
 
