@@ -514,6 +514,8 @@ export async function buildAccountingOutboundPayload(
 
     case "bill_payment": {
       const loaded = await client.query<{
+        payment_id: string;
+        payment_group_id: string;
         payment_date: string;
         amount_cents: number;
         memo: string | null;
@@ -526,7 +528,9 @@ export async function buildAccountingOutboundPayload(
         qbo_sync_token: string | null;
       }>(
         `
-          SELECT bp.payment_date::text, bp.amount_cents::int, bp.memo,
+          SELECT bp.id::text AS payment_id,
+                 COALESCE(bp.payment_batch_id, bp.id)::text AS payment_group_id,
+                 bp.payment_date::text, bp.amount_cents::int, bp.memo,
                  b.id::text AS bill_id, b.qbo_bill_id,
                  trim(b.vendor_uuid)::text AS vendor_uuid,
                  bp.payment_method::text, bp.from_bank_account_id::text,
@@ -538,34 +542,92 @@ export async function buildAccountingOutboundPayload(
         `,
         [entityId, oc]
       );
-      const row = loaded.rows[0];
-      if (!row || !row.qbo_bill_id || !row.vendor_uuid) throw new Error("bill_payment_unresolved_prereq");
+      const anchor = loaded.rows[0];
+      if (!anchor) throw new Error("bill_payment_unresolved_prereq");
 
-      const vendorQbo = await resolveVendorQboId(client, oc, row.vendor_uuid);
+      const grouped = await client.query<{
+        payment_id: string;
+        payment_date: string;
+        amount_cents: number;
+        memo: string | null;
+        bill_id: string;
+        qbo_bill_id: string | null;
+        vendor_uuid: string | null;
+        payment_method: string | null;
+        from_bank_account_id: string | null;
+        qbo_bill_payment_id: string | null;
+        qbo_sync_token: string | null;
+      }>(
+        `
+          SELECT bp.id::text AS payment_id,
+                 bp.payment_date::text,
+                 bp.amount_cents::int,
+                 bp.memo,
+                 b.id::text AS bill_id,
+                 b.qbo_bill_id,
+                 trim(b.vendor_uuid)::text AS vendor_uuid,
+                 bp.payment_method::text,
+                 bp.from_bank_account_id::text,
+                 bp.qbo_bill_payment_id,
+                 bp.qbo_sync_token
+          FROM accounting.bill_payments bp
+          JOIN accounting.bills b ON b.id = bp.bill_id
+          WHERE bp.operating_company_id = $1::uuid
+            AND COALESCE(bp.payment_batch_id, bp.id) = $2::uuid
+          ORDER BY bp.created_at ASC, bp.id ASC
+          FOR UPDATE OF bp
+        `,
+        [oc, anchor.payment_group_id]
+      );
+      const rows = grouped.rows;
+      if (rows.length === 0) throw new Error("bill_payment_unresolved_prereq");
+
+      const first = rows[0];
+      if (!first?.vendor_uuid) throw new Error("bill_payment_unresolved_prereq");
+      const mixedVendor = rows.some((row) => row.vendor_uuid !== first.vendor_uuid);
+      if (mixedVendor) throw new Error("bill_payment_batch_vendor_mismatch");
+      if (rows.some((row) => !row.qbo_bill_id)) throw new Error("bill_payment_unresolved_prereq");
+
+      const payType: BillPaymentPayKind =
+        first.payment_method === "credit_card" ? "CreditCard" : first.payment_method === "cash" ? "Cash" : "Check";
+      const mixedPayProfile = rows.some(
+        (row) =>
+          row.payment_method !== first.payment_method ||
+          row.from_bank_account_id !== first.from_bank_account_id ||
+          row.payment_date !== first.payment_date
+      );
+      if (mixedPayProfile) throw new Error("bill_payment_batch_payment_profile_mismatch");
+
+      const vendorQbo = await resolveVendorQboId(client, oc, first.vendor_uuid);
       if (!vendorQbo) throw new Error("vendor_qbo_id_unresolved");
 
       const bankQbo =
-        row.from_bank_account_id != null
-          ? await resolveAccountQboId(client, oc, row.from_bank_account_id)
+        first.from_bank_account_id != null
+          ? await resolveAccountQboId(client, oc, first.from_bank_account_id)
           : null;
 
-      const payType: BillPaymentPayKind =
-        row.payment_method === "credit_card" ? "CreditCard" : row.payment_method === "cash" ? "Cash" : "Check";
+      const existingQboIds = [...new Set(rows.map((row) => row.qbo_bill_payment_id).filter(Boolean))];
+      if (existingQboIds.length > 1) throw new Error("bill_payment_batch_qbo_id_mismatch");
+      const existingQboSync = rows.find((row) => row.qbo_bill_payment_id && row.qbo_sync_token)?.qbo_sync_token ?? null;
+
+      const totalCents = rows.reduce((sum, row) => sum + row.amount_cents, 0);
+      const memo = rows.map((row) => row.memo?.trim()).find((value) => Boolean(value)) ?? null;
+      const allocations = rows.map((row) => ({ billQboId: row.qbo_bill_id as string, amountCents: row.amount_cents }));
 
       const body = buildQboBillPaymentPayload({
         vendorQboId: vendorQbo,
-        txnDate: row.payment_date,
-        memo: row.memo,
-        totalCents: row.amount_cents,
+        txnDate: first.payment_date,
+        memo,
+        totalCents,
         payType,
         bankAccountQboId: payType === "Check" || payType === "Cash" ? bankQbo : null,
         ccAccountQboId: payType === "CreditCard" ? bankQbo : null,
-        qbo_bill_payment_id: row.qbo_bill_payment_id,
-        qbo_sync_token: row.qbo_sync_token,
-        allocations: [{ billQboId: row.qbo_bill_id, amountCents: row.amount_cents }],
+        qbo_bill_payment_id: existingQboIds[0] ?? null,
+        qbo_sync_token: existingQboSync,
+        allocations,
       });
 
-      const isPatch = Boolean(row.qbo_bill_payment_id && row.qbo_sync_token);
+      const isPatch = Boolean(existingQboIds[0] && existingQboSync);
       return {
         entityPath: "billpayment",
         method: isPatch ? "PATCH" : "POST",
@@ -577,39 +639,43 @@ export async function buildAccountingOutboundPayload(
             syncToken: bp?.SyncToken != null ? String(bp.SyncToken) : null,
           };
         },
-        applySuccess: async ({ client: c, oc: occ, entityId: eid, qboId, syncToken }) => {
+        applySuccess: async ({ client: c, oc: occ, qboId, syncToken }) => {
+          const paymentIds = rows.map((row) => row.payment_id);
           await c.query(
             `
               UPDATE accounting.bill_payments
-              SET qbo_bill_payment_id = $3,
-                  qbo_sync_token = COALESCE($4, qbo_sync_token),
+              SET qbo_bill_payment_id = $2,
+                  qbo_sync_token = COALESCE($3, qbo_sync_token),
                   last_qbo_synced_at = now(),
                   version_int = COALESCE(version_int, 1) + 1,
                   updated_at = now()
-              WHERE id = $1::uuid AND operating_company_id = $2::uuid
+              WHERE operating_company_id = $1::uuid
+                AND id = ANY($4::uuid[])
             `,
-            [eid, occ, qboId, syncToken]
+            [occ, qboId, syncToken, paymentIds]
           );
           const mappingExists = await c.query(`SELECT to_regclass('qbo.bill_payment_mappings') IS NOT NULL AS ok`);
-          if (mappingExists.rows[0]?.ok && row.qbo_bill_id) {
-            await c.query(
-              `
-                INSERT INTO qbo.bill_payment_mappings (
-                  operating_company_id,
-                  payment_id,
-                  qbo_bill_payment_id,
-                  bill_id,
-                  qbo_bill_id,
-                  amount_cents
-                )
-                SELECT $1, $2::uuid, $3, $4::uuid, $5, $6::int
-                WHERE NOT EXISTS (
-                  SELECT 1 FROM qbo.bill_payment_mappings m
-                  WHERE m.payment_id = $2::uuid AND m.qbo_bill_payment_id = $3
-                )
-              `,
-              [occ, eid, qboId, row.bill_id, row.qbo_bill_id, row.amount_cents]
-            );
+          if (mappingExists.rows[0]?.ok) {
+            for (const row of rows) {
+              await c.query(
+                `
+                  INSERT INTO qbo.bill_payment_mappings (
+                    operating_company_id,
+                    payment_id,
+                    qbo_bill_payment_id,
+                    bill_id,
+                    qbo_bill_id,
+                    amount_cents
+                  )
+                  SELECT $1, $2::uuid, $3, $4::uuid, $5, $6::int
+                  WHERE NOT EXISTS (
+                    SELECT 1 FROM qbo.bill_payment_mappings m
+                    WHERE m.payment_id = $2::uuid AND m.qbo_bill_payment_id = $3
+                  )
+                `,
+                [occ, row.payment_id, qboId, row.bill_id, row.qbo_bill_id, row.amount_cents]
+              );
+            }
           }
         },
       };
