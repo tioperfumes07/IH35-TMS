@@ -132,6 +132,9 @@ jobs:
       - name: Verify maint parts + PM due contract
         run: npm run verify:maint-pm
 
+      - name: Verify insurance policy schema contract
+        run: npm run verify:insurance-schema
+
       - name: Verify maintenance reports coverage guard
         run: npm run verify:maintenance-reports-coverage
 
