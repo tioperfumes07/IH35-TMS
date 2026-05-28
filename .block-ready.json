@@ -1,16 +1,20 @@
 {
-  "block_id": "P7-ACCT-PL-HUB",
+  "block_id": "P7-PSE-MIRROR",
   "phase": "Phase 7",
-  "task": "P7-ACCT-PL-HUB",
+  "task": "P7-PSE-MIRROR",
   "allowed_files": [
-    "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
-    "apps/frontend/src/pages/accounting/AccountingHubPage.test.tsx",
+    "db/migrations/0265_ps_mirror.sql",
+    "apps/backend/src/accounting/pse-mirror.service.ts",
+    "apps/backend/src/accounting/pse-mirror.routes.ts",
+    "scripts/verify-pse-mirror.mjs",
+    ".github/workflows/ci.yml",
+    "package.json",
     ".block-ready.json"
   ],
   "extra_gates": [
-    "build:frontend"
+    "verify:pse-mirror"
   ],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }
