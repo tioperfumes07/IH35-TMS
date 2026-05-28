@@ -57,6 +57,27 @@ export type DocsFile = {
   links?: DocsFileLink[];
 };
 
+export type DocsFoundationKpis = {
+  total_docs: number;
+  expiring_30_days: number;
+  missing_required: number;
+  recent_uploads: number;
+};
+
+export type DocsFoundationRow = {
+  id: string;
+  original_filename: string;
+  mime_type: string;
+  size_bytes: string;
+  category_id: string | null;
+  type: string | null;
+  type_label: string | null;
+  expiration_date: string | null;
+  upload_completed_at: string | null;
+  created_at: string;
+  links: Array<{ entity_type: FileEntityType; entity_id: string }>;
+};
+
 export function requestUploadUrl(payload: {
   original_filename: string;
   mime_type: string;
@@ -112,6 +133,39 @@ export function listFiles(filters: Partial<{
   if (filters.offset !== undefined) query.set("offset", String(filters.offset));
   const qs = query.toString();
   return apiRequest<{ files: DocsFile[]; total: number; limit: number; offset: number }>(`/api/v1/docs/files${qs ? `?${qs}` : ""}`);
+}
+
+export function getDocsFoundationKpis(operatingCompanyId?: string | null) {
+  const query = new URLSearchParams();
+  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
+  const qs = query.toString();
+  return apiRequest<DocsFoundationKpis>(`/api/v1/docs/kpis${qs ? `?${qs}` : ""}`);
+}
+
+export function listDocsFoundation(filters: Partial<{
+  type: string;
+  entity: FileEntityType;
+  expires_before: string;
+  page: number;
+  limit: number;
+  operating_company_id: string;
+}> = {}) {
+  const query = new URLSearchParams();
+  if (filters.type) query.set("type", filters.type);
+  if (filters.entity) query.set("entity", filters.entity);
+  if (filters.expires_before) query.set("expires_before", filters.expires_before);
+  if (filters.page) query.set("page", String(filters.page));
+  if (filters.limit) query.set("limit", String(filters.limit));
+  if (filters.operating_company_id) query.set("operating_company_id", filters.operating_company_id);
+  const qs = query.toString();
+  return apiRequest<{ total: number; page: number; limit: number; rows: DocsFoundationRow[] }>(`/api/v1/docs${qs ? `?${qs}` : ""}`);
+}
+
+export function getDocsFoundationDetail(id: string, operatingCompanyId?: string | null) {
+  const query = new URLSearchParams();
+  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
+  const qs = query.toString();
+  return apiRequest<DocsFile>(`/api/v1/docs/${id}${qs ? `?${qs}` : ""}`);
 }
 
 export function getFile(fileId: string) {
