@@ -4,6 +4,16 @@ export const INSURANCE_COVERAGE_TYPES = [
   "cargo",
   "general_liability",
   "workers_comp",
+  "trailer_interchange",
+  "bobtail",
+  "non_trucking_liability",
+  "umbrella",
+  "excess_liability",
+  "occupational_accident",
+  "garage_keepers",
+  "reefer_breakdown",
+  "pollution",
+  "cyber_liability",
 ] as const;
 
 export const INSURANCE_POLICY_STATUSES = ["active", "expired", "cancelled", "pending"] as const;
