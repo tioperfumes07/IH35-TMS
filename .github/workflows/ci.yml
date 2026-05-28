@@ -171,6 +171,9 @@ jobs:
       - name: Verify asset registry contract
         run: npm run verify:asset-registry
 
+      - name: Verify allocation integrity contract
+        run: npm run verify:allocation-integrity
+
       - name: Verify tail cosmetic internal string guard
         run: npm run verify:tail-cosmetic-no-internal-string
 
