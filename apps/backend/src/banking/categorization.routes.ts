@@ -1,9 +1,14 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import {
+  BULK_TXN_MAX,
+  bulkCategorizeTransactions,
+  bulkPostTransactionsAsBills,
+} from "./bulk-transactions.js";
 
 const transactionIdParamsSchema = z.object({
   id: z.string().uuid(),
@@ -51,6 +56,33 @@ const skipBodySchema = z.object({
 const investigateBodySchema = z.object({
   note: z.string().trim().min(1).max(4000),
 });
+
+const bulkCategorizeSpecBodySchema = z.object({
+  txn_ids: z.array(z.string().uuid()).min(1).max(BULK_TXN_MAX),
+  ps_category: z.string().trim().min(1).max(120),
+  ps_item: z.string().trim().min(1).max(200),
+  qbo_account_id: z.union([z.coerce.number(), z.string().trim().min(1).max(40)]),
+});
+
+const bulkPostAsBillsBodySchema = z.object({
+  txn_ids: z.array(z.string().uuid()).min(1).max(BULK_TXN_MAX),
+  vendor_id: z.string().uuid().optional(),
+  ps_category: z.string().trim().min(1).max(120),
+  ps_item: z.string().trim().min(1).max(200),
+});
+
+function mapBulkError(reply: FastifyReply, message: string) {
+  if (message === "bulk_txn_limit_exceeded") return reply.code(400).send({ error: message, max: BULK_TXN_MAX });
+  if (message === "bulk_txn_cross_tenant_or_missing") return reply.code(403).send({ error: message });
+  if (message === "qbo_account_not_found") return reply.code(400).send({ error: message });
+  if (message === "bulk_categorize_not_all_pending" || message === "bulk_post_not_all_pending") {
+    return reply.code(409).send({ error: message });
+  }
+  if (message === "bulk_post_vendor_required" || message === "bulk_post_amount_invalid") {
+    return reply.code(400).send({ error: message });
+  }
+  return null;
+}
 
 function pendingStatusesSql(): string {
   return `(bt.status = 'pending_categorization' OR bt.status = 'uncategorized')`;
@@ -497,5 +529,65 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
 
     if (!res.ok) return reply.code(404).send({ error: "transaction_not_found" });
     return { ok: true };
+  });
+
+  app.post("/api/v1/banking/transactions/bulk-categorize", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = bulkCategorizeSpecBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    try {
+      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+        bulkCategorizeTransactions(client, {
+          operatingCompanyId: query.data.operating_company_id,
+          txnIds: body.data.txn_ids,
+          psCategory: body.data.ps_category,
+          psItem: body.data.ps_item,
+          qboAccountId: body.data.qbo_account_id,
+        })
+      );
+      return { ok: true, updated_count: result.updated_count };
+    } catch (error) {
+      const message = String((error as Error)?.message ?? "bulk_categorize_failed");
+      const mapped = mapBulkError(reply, message);
+      if (mapped) return mapped;
+      throw error;
+    }
+  });
+
+  app.post("/api/v1/banking/transactions/bulk-post-as-bills", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = bulkPostAsBillsBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    try {
+      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+        bulkPostTransactionsAsBills(
+          client,
+          {
+            operatingCompanyId: query.data.operating_company_id,
+            txnIds: body.data.txn_ids,
+            vendorId: body.data.vendor_id,
+            psCategory: body.data.ps_category,
+            psItem: body.data.ps_item,
+          },
+          user.uuid
+        )
+      );
+      return { ok: true, bill_ids: result.bill_ids, created_count: result.bill_ids.length };
+    } catch (error) {
+      const message = String((error as Error)?.message ?? "bulk_post_failed");
+      const mapped = mapBulkError(reply, message);
+      if (mapped) return mapped;
+      throw error;
+    }
   });
 }

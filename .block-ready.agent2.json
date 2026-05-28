@@ -1,18 +1,20 @@
 {
-  "block_id": "P7-PSE-MIRROR",
+  "block_id": "P7-BANK-BULK-FIX",
   "phase": "Phase 7",
-  "task": "P7-PSE-MIRROR",
+  "task": "P7-BANK-BULK-FIX",
   "allowed_files": [
-    "db/migrations/0265_ps_mirror.sql",
-    "apps/backend/src/accounting/pse-mirror.service.ts",
-    "apps/backend/src/accounting/pse-mirror.routes.ts",
-    "scripts/verify-pse-mirror.mjs",
+    "apps/backend/src/banking/bulk-transactions.ts",
+    "apps/backend/src/banking/bulk-transactions.test.ts",
+    "apps/backend/src/banking/categorization.routes.ts",
+    "apps/backend/src/banking/banking.routes.ts",
+    "scripts/verify-bank-bulk.mjs",
     ".github/workflows/ci.yml",
     "package.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:pse-mirror"
+    "verify:bank-bulk",
+    "build:backend"
   ],
   "runtime_path": "src",
   "db_required": false,

@@ -177,6 +177,9 @@ jobs:
       - name: Verify PSE mirror contract
         run: npm run verify:pse-mirror
 
+      - name: Verify bank bulk contract
+        run: npm run verify:bank-bulk
+
       - name: Verify tail cosmetic internal string guard
         run: npm run verify:tail-cosmetic-no-internal-string
 
