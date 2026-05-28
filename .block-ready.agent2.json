@@ -1,10 +1,9 @@
 {
-  "block_id": "P7-SAF-DRUG-UI",
+  "block_id": "P7-SAF-REMINDERS-UI",
   "phase": "Dispatch 2",
-  "task": "P7-SAF-DRUG-UI",
+  "task": "P7-SAF-REMINDERS-UI",
   "allowed_files": [
-    "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
-    "apps/frontend/src/pages/safety/components/DrugAlcoholTable.tsx",
+    "apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx",
     "apps/frontend/src/api/safety.ts",
     ".block-ready.agent2.json"
   ],
