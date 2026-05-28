@@ -1,11 +1,14 @@
 {
-  "block_id": "P7-ACCT-BILLFORM-FIX",
+  "block_id": "P7-ALLOC-UI",
   "phase": "Phase 7",
-  "task": "P7-ACCT-BILLFORM-FIX",
+  "task": "P7-ALLOC-UI",
   "allowed_files": [
-    "apps/frontend/src/components/accounting/VendorBillForm.tsx",
-    "apps/frontend/src/pages/accounting/VendorBillCreatePage.tsx",
-    "apps/frontend/src/pages/accounting/VendorBillCreatePage.test.tsx",
+    "apps/frontend/src/components/allocation/AllocationMethodPicker.tsx",
+    "apps/frontend/src/components/allocation/AllocationPreviewTable.tsx",
+    "apps/frontend/src/components/allocation/BillAllocationPanel.tsx",
+    "apps/frontend/src/components/allocation/types.ts",
+    "apps/frontend/src/components/allocation/index.ts",
+    "apps/frontend/src/pages/accounting/BillsPage.tsx",
     "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
     ".block-ready.json"
   ],

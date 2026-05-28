@@ -368,14 +368,14 @@ export function AccountingHubPage() {
             "Open queue"
           )}
           {homePanel(
-            "Bill form (Block 05 foundation)",
+            "Bill allocation (Block 06 foundation)",
             [
-              { key: "billform-layout", left: "12x6 + cost breakdown", right: "UI ready", muted: "locked layout" },
-              { key: "billform-lines", left: "Line persistence", right: "Contract stub", muted: "until multi-line API" },
+              { key: "alloc-preview", left: "Allocation panel", right: "UI ready", muted: "contract stub allowed" },
+              { key: "alloc-next", left: "Next integration", right: "Live allocate endpoint", muted: "after Block 03 merge" },
             ],
-            "Vendor bill create uses the locked bill form shell.",
-            "/accounting/bills/vendor",
-            "Create bill"
+            "Bill allocation UI is not configured yet.",
+            "/accounting/bills",
+            "Open bills"
           )}
           {homePanel(
             "Assets (Block 04 foundation)",
