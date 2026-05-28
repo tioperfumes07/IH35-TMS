@@ -1,10 +1,15 @@
 {
-  "block_id": "P7-SAF-DRIVER-DQF-UI",
+  "block_id": "P7-SAF-DRIVER-UI",
   "phase": "Dispatch 2",
-  "task": "P7-SAF-DRIVER-DQF-UI",
+  "task": "P7-SAF-DRIVER-UI",
   "allowed_files": [
+    "apps/frontend/src/lib/driverDqf.ts",
+    "apps/frontend/src/lib/__tests__/driverDqf.test.ts",
+    "apps/frontend/src/pages/drivers/**",
+    "apps/frontend/src/pages/Drivers.tsx",
     "apps/frontend/src/pages/safety/tabs/DriverFilesTab.tsx",
     "apps/frontend/src/api/safety.ts",
+    "apps/frontend/src/routes/manifest.tsx",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [],

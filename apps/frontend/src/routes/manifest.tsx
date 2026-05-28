@@ -7,6 +7,7 @@ import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
 import { ListsHubPage } from "../pages/lists/ListsHubPage";
 import { DriverDetailPage } from "../pages/DriverDetail";
+import { DriverProfilePage } from "../pages/drivers/DriverProfilePage";
 import { DriverHosDetailPage } from "../pages/drivers/DriverHosDetailPage";
 import { DriverLoadStatusesPage } from "../pages/DriverLoadStatusesPage";
 import { DriversPage } from "../pages/Drivers";
@@ -2030,6 +2031,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriverDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/:id/profile"
+          element={
+            <ProtectedRoute>
+              <DriverProfilePage />
             </ProtectedRoute>
           }
         />
