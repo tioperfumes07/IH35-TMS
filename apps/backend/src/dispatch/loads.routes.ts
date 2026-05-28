@@ -630,6 +630,98 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return payload;
   });
 
+  app.get("/api/v1/dispatch/drivers/:driver_id/drug-status", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const params = dispatchDriverIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+
+    const payload = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
+      const driverRes = await client.query<{ id: string }>(
+        `
+          SELECT id::text AS id
+          FROM mdata.drivers
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [params.data.driver_id, operatingCompanyId]
+      );
+      if (!driverRes.rows[0]) return null;
+
+      const latestTestRes = await client.query<{
+        id: string;
+        result: string;
+        test_type: string;
+        test_date: string;
+        created_at: string;
+      }>(
+        `
+          SELECT id::text, result::text, test_type, test_date::text, created_at::text
+          FROM safety.drug_test
+          WHERE operating_company_id = $1
+            AND driver_id = $2
+            AND voided_at IS NULL
+          ORDER BY test_date DESC, created_at DESC
+          LIMIT 1
+        `,
+        [operatingCompanyId, params.data.driver_id]
+      );
+
+      const latestPoolRes = await client.query<{
+        id: string;
+        status: string;
+        selection_period: string;
+        selected_at: string;
+      }>(
+        `
+          SELECT id::text, status::text, selection_period, selected_at::text
+          FROM safety.random_pool
+          WHERE operating_company_id = $1
+            AND driver_id = $2
+            AND voided_at IS NULL
+          ORDER BY selected_at DESC, created_at DESC
+          LIMIT 1
+        `,
+        [operatingCompanyId, params.data.driver_id]
+      );
+
+      const latestClearinghouseRes = await client.query<{
+        id: string;
+        query_status: string;
+        queried_at: string;
+      }>(
+        `
+          SELECT id::text, query_status::text, queried_at::text
+          FROM safety.clearinghouse_query
+          WHERE operating_company_id = $1
+            AND driver_id = $2
+            AND voided_at IS NULL
+          ORDER BY queried_at DESC, created_at DESC
+          LIMIT 1
+        `,
+        [operatingCompanyId, params.data.driver_id]
+      );
+
+      const latestTest = latestTestRes.rows[0] ?? null;
+      const blockedResults = new Set(["positive", "refusal", "adulterated", "substituted"]);
+      const isBlocked = latestTest ? blockedResults.has(String(latestTest.result)) : false;
+      return {
+        driver_id: params.data.driver_id,
+        is_blocked: isBlocked,
+        block_reason: isBlocked ? `drug_test_${String(latestTest?.result ?? "unknown")}` : null,
+        latest_test: latestTest,
+        latest_random_pool: latestPoolRes.rows[0] ?? null,
+        latest_clearinghouse_query: latestClearinghouseRes.rows[0] ?? null,
+      };
+    });
+
+    if (!payload) return reply.code(404).send({ error: "driver_not_found" });
+    return payload;
+  });
+
   app.post("/api/v1/dispatch/loads", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
