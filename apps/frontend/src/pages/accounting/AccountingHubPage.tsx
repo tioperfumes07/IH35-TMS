@@ -367,6 +367,16 @@ export function AccountingHubPage() {
             "/banking/qbo-sync-queue",
             "Open queue"
           )}
+          {homePanel(
+            "Assets (Block 04 foundation)",
+            [
+              { key: "assets-preview", left: "Asset workspace", right: "UI ready", muted: "contract stub allowed" },
+              { key: "assets-next", left: "Next integration", right: "Live endpoint", muted: "after Block 01 merge" },
+            ],
+            "Asset workspace is not configured yet.",
+            "/maintenance/vehicles",
+            "Open vehicles"
+          )}
         </div>
       ) : (
         <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-700">
