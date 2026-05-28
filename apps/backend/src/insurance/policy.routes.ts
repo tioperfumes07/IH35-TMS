@@ -108,6 +108,7 @@ function policySelectColumns() {
     insurer_name,
     policy_number,
     coverage_type,
+    coverage_type_id::text,
     effective_date::text,
     expiry_date::text,
     total_premium_cents::bigint,
@@ -211,6 +212,19 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const created = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+      const coverageTypeRes = await client.query<{ id: string }>(
+        `
+          SELECT id::text
+          FROM insurance.type_catalog
+          WHERE tenant_id = $1::uuid
+            AND code = $2
+            AND active = true
+          LIMIT 1
+        `,
+        [body.operating_company_id, body.coverage_type]
+      );
+      if (!coverageTypeRes.rows[0]) return null;
+
       const result = await client.query(
         `
           INSERT INTO insurance.policy (
@@ -218,6 +232,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
             insurer_name,
             policy_number,
             coverage_type,
+            coverage_type_id,
             effective_date,
             expiry_date,
             total_premium_cents,
@@ -231,7 +246,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
             status
           )
           VALUES (
-            $1::uuid, $2, $3, $4, $5::date, $6::date, $7, $8, $9, $10, $11, $12, $13, $14, $15
+            $1::uuid, $2, $3, $4, $5::uuid, $6::date, $7::date, $8, $9, $10, $11, $12, $13, $14, $15, $16
           )
           RETURNING ${policySelectColumns()}
         `,
@@ -240,6 +255,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           body.insurer_name,
           body.policy_number,
           body.coverage_type,
+          coverageTypeRes.rows[0].id,
           body.effective_date,
           body.expiry_date,
           body.total_premium_cents,
@@ -260,6 +276,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       return result.rows[0];
     });
 
+    if (!created) return reply.code(400).send({ error: "coverage_type_not_found" });
     return reply.code(201).send(created);
   });
 
@@ -276,6 +293,23 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     const body = bodyParsed.data;
 
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      let coverageTypeId: string | null = null;
+      if (body.coverage_type !== undefined) {
+        const coverageTypeRes = await client.query<{ id: string }>(
+          `
+            SELECT id::text
+            FROM insurance.type_catalog
+            WHERE tenant_id = $1::uuid
+              AND code = $2
+              AND active = true
+            LIMIT 1
+          `,
+          [query.data.operating_company_id, body.coverage_type]
+        );
+        if (!coverageTypeRes.rows[0]) return { kind: "coverage_type_not_found" as const };
+        coverageTypeId = coverageTypeRes.rows[0].id;
+      }
+
       const assignments: string[] = [];
       const values: unknown[] = [query.data.operating_company_id, params.data.id];
       const setField = (column: string, value: unknown, cast = "") => {
@@ -284,7 +318,10 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       };
       if (body.insurer_name !== undefined) setField("insurer_name", body.insurer_name);
       if (body.policy_number !== undefined) setField("policy_number", body.policy_number);
-      if (body.coverage_type !== undefined) setField("coverage_type", body.coverage_type);
+      if (body.coverage_type !== undefined) {
+        setField("coverage_type", body.coverage_type);
+        setField("coverage_type_id", coverageTypeId, "::uuid");
+      }
       if (body.effective_date !== undefined) setField("effective_date", body.effective_date, "::date");
       if (body.expiry_date !== undefined) setField("expiry_date", body.expiry_date, "::date");
       if (body.total_premium_cents !== undefined) setField("total_premium_cents", body.total_premium_cents);
@@ -306,16 +343,17 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         `,
         values
       );
-      if (!result.rows[0]) return null;
+      if (!result.rows[0]) return { kind: "policy_not_found" as const };
       await appendCrudAudit(client, user.uuid, "insurance.policy.updated", {
         resource_id: params.data.id,
         operating_company_id: query.data.operating_company_id,
       });
-      return result.rows[0];
+      return { kind: "ok" as const, row: result.rows[0] };
     });
 
-    if (!updated) return reply.code(404).send({ error: "policy_not_found" });
-    return updated;
+    if (updated.kind === "coverage_type_not_found") return reply.code(400).send({ error: "coverage_type_not_found" });
+    if (updated.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
+    return updated.row;
   });
 
   app.delete("/api/v1/insurance/policies/:id", async (req, reply) => {
