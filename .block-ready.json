@@ -1,21 +1,21 @@
 {
-  "block_id": "P7-ASSET-UI",
+  "block_id": "P7-ALLOC-ENGINE",
   "phase": "Phase 7",
-  "task": "P7-ASSET-UI",
+  "task": "P7-ALLOC-ENGINE",
   "allowed_files": [
-    "apps/frontend/src/components/assets/AssetFiltersBar.tsx",
-    "apps/frontend/src/components/assets/AssetListTable.tsx",
-    "apps/frontend/src/components/assets/AssetSummaryCards.tsx",
-    "apps/frontend/src/components/assets/types.ts",
-    "apps/frontend/src/pages/assets/AssetsWorkspacePage.tsx",
-    "apps/frontend/src/pages/assets/index.ts",
-    "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    "db/migrations/0264_bill_unit_allocation.sql",
+    "apps/backend/src/accounting/allocation.ts",
+    "apps/backend/src/accounting/allocation.test.ts",
+    "apps/backend/src/accounting/bills.routes.ts",
+    "scripts/verify-allocation-integrity.mjs",
+    ".github/workflows/ci.yml",
+    "package.json",
     ".block-ready.json"
   ],
   "extra_gates": [
-    "build:frontend"
+    "verify:allocation-integrity"
   ],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }
