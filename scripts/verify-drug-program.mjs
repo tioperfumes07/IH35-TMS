@@ -5,7 +5,7 @@ import path from "node:path";
 const ROOT = process.env.VERIFY_DRUG_PROGRAM_ROOT ?? process.cwd();
 const failures = [];
 
-const migrationPath = path.resolve(ROOT, "db/migrations/0267_safety_drug_program.sql");
+const migrationPath = path.resolve(ROOT, "db/migrations/0270_safety_drug_program.sql");
 const dispatchRoutesPath = path.resolve(ROOT, "apps/backend/src/dispatch/loads.routes.ts");
 const dispatchBookPath = path.resolve(ROOT, "apps/backend/src/dispatch/book-load.service.ts");
 const safetyRoutesPath = path.resolve(ROOT, "apps/backend/src/safety/drug-program.routes.ts");
@@ -15,7 +15,7 @@ function readIfExists(filePath) {
 }
 
 const migration = readIfExists(migrationPath);
-if (!migration) failures.push("missing_migration_0267_safety_drug_program");
+if (!migration) failures.push("missing_migration_0270_safety_drug_program");
 if (!migration.includes("CREATE TABLE IF NOT EXISTS safety.drug_test")) failures.push("missing_drug_test_table");
 if (!migration.includes("CREATE TABLE IF NOT EXISTS safety.random_pool")) failures.push("missing_random_pool_table");
 if (!migration.includes("CREATE TABLE IF NOT EXISTS safety.clearinghouse_query"))
