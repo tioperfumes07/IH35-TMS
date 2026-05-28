@@ -6,13 +6,10 @@
     "db/migrations/0271_safety_rtd_sap.sql",
     "apps/backend/src/safety/rtd.routes.ts",
     "apps/backend/src/safety/rtd.shared.ts",
-<<<<<<< HEAD
-=======
     "apps/backend/src/safety/safety.routes.ts",
     "apps/backend/src/dispatch/eligibility.ts",
     "apps/backend/src/dispatch/book-load.service.ts",
     "apps/backend/src/dispatch/loads.routes.ts",
->>>>>>> 669603d (feat(safety): P7-SAF-DISPATCH-GATE driver eligibility gate (SAF-08))
     "apps/backend/src/index.ts",
     "scripts/verify-rtd-statemachine.mjs",
     "scripts/verify-dispatch-gate.mjs",
@@ -21,13 +18,8 @@
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-<<<<<<< HEAD
-    "verify:rtd-statemachine"
-=======
-    "verify:drug-program",
     "verify:rtd-statemachine",
     "verify:dispatch-gate"
->>>>>>> 669603d (feat(safety): P7-SAF-DISPATCH-GATE driver eligibility gate (SAF-08))
   ],
   "runtime_path": "src",
   "db_required": true,
