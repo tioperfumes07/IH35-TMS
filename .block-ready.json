@@ -1,15 +1,19 @@
 {
-  "block_id": "P7-ASSET-DAMAGE",
+  "block_id": "P7-ASSET-UI",
   "phase": "Phase 7",
-  "task": "P7-ASSET-DAMAGE",
+  "task": "P7-ASSET-UI",
   "allowed_files": [
-    "db/migrations/0263_asset_damage.sql",
-    "apps/backend/src/assets/assets.routes.ts",
-    "scripts/verify-asset-registry.mjs",
+    "apps/frontend/src/components/assets/AssetFiltersBar.tsx",
+    "apps/frontend/src/components/assets/AssetListTable.tsx",
+    "apps/frontend/src/components/assets/AssetSummaryCards.tsx",
+    "apps/frontend/src/components/assets/types.ts",
+    "apps/frontend/src/pages/assets/AssetsWorkspacePage.tsx",
+    "apps/frontend/src/pages/assets/index.ts",
+    "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
     ".block-ready.json"
   ],
   "extra_gates": [
-    "verify:asset-registry"
+    "build:frontend"
   ],
   "runtime_path": "src",
   "db_required": false,
