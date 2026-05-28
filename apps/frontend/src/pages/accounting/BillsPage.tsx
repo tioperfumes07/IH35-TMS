@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
+import { BillAllocationPanel } from "../../components/allocation";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -23,6 +24,7 @@ export function BillsPage() {
   const companyId = selectedCompanyId ?? "";
   const [status, setStatus] = useState<"" | BillStatus | "unpaid">("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [allocationBillId, setAllocationBillId] = useState<string | null>(null);
 
   const billsQuery = useQuery({
     queryKey: ["accounting", "bills", companyId, status],
@@ -44,6 +46,7 @@ export function BillsPage() {
   const rows = billsQuery.data?.rows ?? [];
 
   const expandedBill = useMemo(() => rows.find((b) => b.id === expandedId) ?? null, [rows, expandedId]);
+  const allocationBill = useMemo(() => rows.find((b) => b.id === allocationBillId) ?? null, [rows, allocationBillId]);
 
   function toggleExpand(bill: VendorBill) {
     if (bill.status !== "partial") return;
@@ -79,19 +82,20 @@ export function BillsPage() {
               <th className="px-3 py-2 text-right">Paid</th>
               <th className="px-3 py-2 text-right">Balance</th>
               <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Allocate</th>
             </tr>
           </thead>
           <tbody>
             {billsQuery.isLoading ? (
               <tr>
-                <td colSpan={8} className="px-3 py-4 text-gray-500">
+                <td colSpan={9} className="px-3 py-4 text-gray-500">
                   Loading…
                 </td>
               </tr>
             ) : null}
             {!billsQuery.isLoading && rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-4 text-gray-500">
+                <td colSpan={9} className="px-3 py-4 text-gray-500">
                   No bills found.
                 </td>
               </tr>
@@ -119,10 +123,27 @@ export function BillsPage() {
                     <td className="px-3 py-2">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(bill.status)}`}>{bill.status}</span>
                     </td>
+                    <td className="px-3 py-2">
+                      {bill.status === "voided" ? (
+                        "—"
+                      ) : (
+                        <button
+                          type="button"
+                          className={`rounded border px-2 py-0.5 text-[11px] font-medium ${
+                            allocationBillId === bill.id
+                              ? "border-sky-600 bg-sky-50 text-sky-800"
+                              : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+                          }`}
+                          onClick={() => setAllocationBillId((current) => (current === bill.id ? null : bill.id))}
+                        >
+                          {allocationBillId === bill.id ? "Selected" : "Allocate"}
+                        </button>
+                      )}
+                    </td>
                   </tr>
                   {expand && open ? (
                     <tr key={`${bill.id}-sub`} className="bg-gray-50">
-                      <td colSpan={8} className="px-3 py-2">
+                      <td colSpan={9} className="px-3 py-2">
                         {paymentsQuery.isLoading && expandedBill?.id === bill.id ? (
                           <div className="text-xs text-gray-500">Loading payments…</div>
                         ) : (
@@ -156,6 +177,15 @@ export function BillsPage() {
           </tbody>
         </table>
       </div>
+
+      {allocationBill && companyId ? (
+        <BillAllocationPanel
+          companyId={companyId}
+          billId={allocationBill.id}
+          billLabel={`${allocationBill.vendor_name || allocationBill.vendor_id || "Vendor"} · ${allocationBill.bill_number || allocationBill.id.slice(0, 8)}`}
+          billAmountCents={allocationBill.amount_cents}
+        />
+      ) : null}
     </div>
   );
 }

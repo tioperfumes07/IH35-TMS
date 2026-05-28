@@ -88,4 +88,15 @@ describe("BillsPage", () => {
     await waitFor(() => expect(accountingApi.listPaymentsForBill).toHaveBeenCalledWith("bill-partial-1", "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"));
     expect(await screen.findByText("REF-9")).toBeInTheDocument();
   });
+
+  it("opens bill allocation panel from allocate action", async () => {
+    const user = userEvent.setup();
+    render(wrap(<BillsPage />));
+
+    await waitFor(() => expect(accountingApi.listBills).toHaveBeenCalled());
+    await user.click(await screen.findByRole("button", { name: "Allocate" }));
+
+    expect(await screen.findByText("Bill unit allocation")).toBeInTheDocument();
+    expect(screen.getByText(/Vendor One · B-100/)).toBeInTheDocument();
+  });
 });
