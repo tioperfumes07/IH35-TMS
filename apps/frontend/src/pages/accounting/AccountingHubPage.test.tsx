@@ -65,7 +65,26 @@ describe("AccountingHubPage", () => {
     render(wrap(<AccountingHubPage />));
 
     await waitFor(() => expect(reportsApi.getTrialBalanceReport).toHaveBeenCalled());
-    expect(await screen.findByText("Contract stub")).toBeInTheDocument();
+    await waitFor(() => expect(reportsApi.getProfitLossReport).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getAllByText("Contract stub").length).toBeGreaterThanOrEqual(2));
     expect(accountingApi.listBills).toHaveBeenCalled();
+  });
+
+  it("shows profit and loss hub snapshot when ledger report loads", async () => {
+    vi.mocked(reportsApi.getTrialBalanceReport).mockRejectedValue(new Error("503"));
+    vi.mocked(reportsApi.getProfitLossReport).mockResolvedValue({
+      revenue: { lines: [], total: 500_000 },
+      cogs: { lines: [], total: 100_000 },
+      gross_profit: 400_000,
+      operating_expenses: { lines: [], total: 150_000 },
+      net_income: 250_000,
+    });
+
+    render(wrap(<AccountingHubPage />));
+
+    await waitFor(() => expect(reportsApi.getProfitLossReport).toHaveBeenCalled());
+    expect(await screen.findByText("Profit & loss (Block 12 foundation)")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("$2,500.00")).toBeInTheDocument());
+    expect(screen.getByRole("link", { name: /Open profit & loss/i })).toHaveAttribute("href", "/reports/profit-loss");
   });
 });
