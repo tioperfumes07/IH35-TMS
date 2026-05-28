@@ -368,6 +368,16 @@ export function AccountingHubPage() {
             "Open queue"
           )}
           {homePanel(
+            "Bill form (Block 05 foundation)",
+            [
+              { key: "billform-layout", left: "12x6 + cost breakdown", right: "UI ready", muted: "locked layout" },
+              { key: "billform-lines", left: "Line persistence", right: "Contract stub", muted: "until multi-line API" },
+            ],
+            "Vendor bill create uses the locked bill form shell.",
+            "/accounting/bills/vendor",
+            "Create bill"
+          )}
+          {homePanel(
             "Assets (Block 04 foundation)",
             [
               { key: "assets-preview", left: "Asset workspace", right: "UI ready", muted: "contract stub allowed" },
