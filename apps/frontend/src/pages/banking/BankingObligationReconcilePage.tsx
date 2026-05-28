@@ -67,7 +67,7 @@ export function BankingObligationReconcilePage() {
   });
 
   const bulkMutation = useMutation({
-    mutationFn: (args: { bank_transaction_ids: string[]; action: "mark_reviewed" | "categorize_fuel" | "categorize_insurance" }) =>
+    mutationFn: (args: { bank_transaction_ids: string[]; action: "mark_reviewed" | "categorize_fuel" | "categorize_insurance" | "categorize_transfer" }) =>
       bulkReconcileAction(companyId, args),
     onSuccess: async () => {
       pushToast("Bulk update applied", "success");
