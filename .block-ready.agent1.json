@@ -1,0 +1,20 @@
+{
+  "block_id": "BLOCKREADY-SPLIT",
+  "phase": "Corrective Addendum",
+  "task": "BLOCKREADY-SPLIT",
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready.agent2.json",
+    "scripts/block-ready-agent-manifest.mjs",
+    "scripts/block-ready.mjs",
+    "scripts/verify-pre-commit.mjs",
+    "scripts/sync.mjs",
+    "scripts/__tests__/block-ready.test.mjs"
+  ],
+  "extra_gates": [
+    "block-ready:test"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
