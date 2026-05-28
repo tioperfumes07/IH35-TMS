@@ -196,6 +196,85 @@ export function getDrugAlcoholTests(companyId: string) {
   return apiRequest<{ tests: Array<Record<string, unknown>> }>(`/api/v1/safety/drug-alcohol/tests?${q(companyId)}`);
 }
 
+export type DrugProgramTest = {
+  id: string;
+  driver_id: string;
+  test_type: string;
+  result: string;
+  test_date: string;
+  lab_name?: string | null;
+  mro_name?: string | null;
+  notes?: string | null;
+};
+
+export type RtdCase = {
+  id: string;
+  driver_id: string;
+  stage: string;
+  next_stage?: string | null;
+  dispatch_blocked?: boolean;
+  follow_up_tests_completed: number;
+  follow_up_tests_required?: number | null;
+  clearinghouse_updated?: boolean;
+};
+
+export function listDrugProgramTests(companyId: string) {
+  return apiRequest<{ tests: DrugProgramTest[] }>(`/api/v1/safety/drug-program/tests?${q(companyId)}`);
+}
+
+export function createDrugProgramTest(
+  companyId: string,
+  body: { driver_id: string; test_type: string; result: string; test_date: string; lab_name?: string; mro_name?: string; notes?: string }
+) {
+  return apiRequest<DrugProgramTest>(`/api/v1/safety/drug-program/tests?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function listRandomPoolEntries(companyId: string) {
+  return apiRequest<{ random_pools: Array<Record<string, unknown>> }>(`/api/v1/safety/drug-program/random-pools?${q(companyId)}`).then(
+    (payload) => ({ entries: payload.random_pools ?? [] })
+  );
+}
+
+export function listClearinghouseQueries(companyId: string) {
+  return apiRequest<{ clearinghouse_queries: Array<Record<string, unknown>> }>(
+    `/api/v1/safety/drug-program/clearinghouse-queries?${q(companyId)}`
+  ).then((payload) => ({ queries: payload.clearinghouse_queries ?? [] }));
+}
+
+export function getDriverDrugProgramStatus(driverId: string, companyId: string) {
+  return apiRequest<{ driver_id: string; is_blocked: boolean; block_reason: string | null; latest_test: Record<string, unknown> | null }>(
+    `/api/v1/safety/drug-program/drivers/${encodeURIComponent(driverId)}/drug-status?${q(companyId)}`
+  );
+}
+
+export function getDriverRtdCase(driverId: string, companyId: string) {
+  return apiRequest<{ case: RtdCase | null }>(`/api/v1/safety/rtd/drivers/${encodeURIComponent(driverId)}/case?${q(companyId)}`);
+}
+
+export function createRtdCase(companyId: string, body: { driver_id: string; triggered_by_test_id?: string }) {
+  return apiRequest<RtdCase>(`/api/v1/safety/rtd/cases?${q(companyId)}`, { method: "POST", body });
+}
+
+export function advanceRtdCase(
+  caseId: string,
+  companyId: string,
+  body: { target_stage: string; rtd_test_id?: string; clearinghouse_updated?: boolean }
+) {
+  return apiRequest<RtdCase>(`/api/v1/safety/rtd/cases/${encodeURIComponent(caseId)}/advance?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function getDriverDispatchEligibility(driverId: string, companyId: string) {
+  return apiRequest<{ eligible: boolean; reasons: string[]; details: Record<string, unknown> }>(
+    `/api/v1/dispatch/drivers/${encodeURIComponent(driverId)}/eligibility?${q(companyId)}`
+  );
+}
+
 export function getLatestCsa(companyId: string) {
   return apiRequest<{ latest: Record<string, unknown> | null }>(`/api/v1/safety/csa/latest?${q(companyId)}`);
 }
