@@ -2,8 +2,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
 import { companyQuerySchema, validationError, withCompanyScope } from "../accounting/shared.js";
+import { mapMaintWoApHttpError, processMaintWorkOrderApPosting } from "../maint/wo-ap-posting.service.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
@@ -846,11 +846,17 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     if (row.kind === "unavailable") return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if (row.kind === "missing") return reply.code(404).send({ error: "work_order_not_found" });
     if (row.kind === "blocked") return reply.code(409).send({ error: "work_order_not_completable" });
-    await processMaintenanceWorkOrderClose({
-      operating_company_id: query.data.operating_company_id,
-      work_order_id: params.data.id,
-      actor_user_id: user.uuid,
-    });
+    try {
+      await processMaintWorkOrderApPosting({
+        operating_company_id: query.data.operating_company_id,
+        work_order_id: params.data.id,
+        actor_user_id: user.uuid,
+      });
+    } catch (error) {
+      const mapped = mapMaintWoApHttpError(error);
+      if (mapped) return reply.code(mapped.statusCode).send(mapped.body);
+      throw error;
+    }
     return { work_order: row.wo };
   });
 
