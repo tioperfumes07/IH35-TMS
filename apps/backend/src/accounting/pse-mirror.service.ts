@@ -99,3 +99,186 @@ export async function syncPseMirror(userId: string, operatingCompanyId: string) 
     );
   });
 }
+
+export type PseEnforcementInput = {
+  psCategoryQboId: string;
+  psItemQboId: string;
+  qboAccountId?: string | number | null;
+};
+
+export type VendorSubtypeSuggestionInput = {
+  vendorSubtype?: string | null;
+  vendorId?: string | null;
+};
+
+export async function enforcePseSelection(userId: string, operatingCompanyId: string, input: PseEnforcementInput) {
+  const normalizedCategory = input.psCategoryQboId.trim().toLowerCase();
+  const normalizedItem = input.psItemQboId.trim().toLowerCase();
+  const rawQboAccount = input.qboAccountId == null ? "" : String(input.qboAccountId);
+  const normalizedQboAccount = rawQboAccount.replace(/[^\d]/g, "");
+  const qboAccountNumeric = normalizedQboAccount ? Number(normalizedQboAccount) : null;
+
+  return withCompanyScope(userId, operatingCompanyId, async (client) => {
+    const categoryRes = await client.query(
+      `
+        SELECT qbo_id, coa_account_id::text, active
+        FROM accounting.ps_category
+        WHERE tenant_id = $1::uuid
+          AND lower(qbo_id) = $2
+        LIMIT 1
+      `,
+      [operatingCompanyId, normalizedCategory]
+    );
+    const category = categoryRes.rows[0] as { qbo_id: string; coa_account_id: string | null; active: boolean } | undefined;
+    if (!category || !category.active) throw new Error("pse_category_not_found");
+
+    const itemRes = await client.query(
+      `
+        SELECT qbo_id, category_qbo_id, coa_account_id::text, active
+        FROM accounting.ps_item
+        WHERE tenant_id = $1::uuid
+          AND lower(qbo_id) = $2
+        LIMIT 1
+      `,
+      [operatingCompanyId, normalizedItem]
+    );
+    const item = itemRes.rows[0] as
+      | { qbo_id: string; category_qbo_id: string; coa_account_id: string | null; active: boolean }
+      | undefined;
+    if (!item || !item.active) throw new Error("pse_item_not_found");
+    if (String(item.category_qbo_id ?? "").trim().toLowerCase() !== normalizedCategory) {
+      throw new Error("pse_item_category_mismatch");
+    }
+
+    let account: { id: string; qbo_id: string; active: boolean } | null = null;
+    if (qboAccountNumeric != null && Number.isFinite(qboAccountNumeric)) {
+      const accountRes = await client.query(
+        `
+          SELECT id::text, qbo_id::text, active
+          FROM accounting.coa_account
+          WHERE tenant_id = $1::uuid
+            AND qbo_id = $2::numeric
+          LIMIT 1
+        `,
+        [operatingCompanyId, qboAccountNumeric]
+      );
+      account = (accountRes.rows[0] as { id: string; qbo_id: string; active: boolean } | undefined) ?? null;
+      if (!account || !account.active) throw new Error("pse_account_not_found");
+    }
+
+    const expectedAccountId = item.coa_account_id ?? category.coa_account_id ?? null;
+    if (account && expectedAccountId && account.id !== expectedAccountId) {
+      throw new Error("pse_account_mismatch");
+    }
+
+    return {
+      ps_category_qbo_id: category.qbo_id,
+      ps_item_qbo_id: item.qbo_id,
+      qbo_account_id: account?.qbo_id ?? (qboAccountNumeric != null ? String(qboAccountNumeric) : null),
+      category_coa_account_id: category.coa_account_id,
+      item_coa_account_id: item.coa_account_id,
+      resolved_coa_account_id: expectedAccountId,
+    };
+  });
+}
+
+export async function suggestPseSelectionByVendorSubtype(
+  userId: string,
+  operatingCompanyId: string,
+  input: VendorSubtypeSuggestionInput
+) {
+  const initialSubtype = String(input.vendorSubtype ?? "").trim();
+  return withCompanyScope(userId, operatingCompanyId, async (client) => {
+    let normalizedSubtype = initialSubtype.toLowerCase();
+    if (!normalizedSubtype && input.vendorId) {
+      const vendorRes = await client.query(
+        `
+          SELECT
+            NULLIF(trim(coalesce(v.vendor_category, '')), '') AS vendor_category,
+            NULLIF(trim(coalesce(v.vendor_type, '')), '') AS vendor_type
+          FROM mdata.vendors v
+          WHERE v.id = $1::uuid
+            AND v.operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [input.vendorId, operatingCompanyId]
+      );
+      const vendor = vendorRes.rows[0] as { vendor_category: string | null; vendor_type: string | null } | undefined;
+      const fallbackSubtype = vendor?.vendor_category ?? vendor?.vendor_type ?? "";
+      normalizedSubtype = String(fallbackSubtype).trim().toLowerCase();
+    }
+    if (!normalizedSubtype) throw new Error("vendor_subtype_required");
+
+    const mappedRes = await client.query(
+      `
+        SELECT
+          vendor_subtype,
+          ps_category_qbo_id,
+          ps_item_qbo_id,
+          qbo_account_id::text
+        FROM accounting.vendor_subtype_pse_map
+        WHERE tenant_id = $1::uuid
+          AND lower(vendor_subtype) = $2
+          AND active = true
+        LIMIT 1
+      `,
+      [operatingCompanyId, normalizedSubtype]
+    );
+    const mapped = mappedRes.rows[0] as
+      | { vendor_subtype: string; ps_category_qbo_id: string; ps_item_qbo_id: string; qbo_account_id: string | null }
+      | undefined;
+
+    if (mapped) {
+      const enforced = await enforcePseSelection(userId, operatingCompanyId, {
+        psCategoryQboId: mapped.ps_category_qbo_id,
+        psItemQboId: mapped.ps_item_qbo_id,
+        qboAccountId: mapped.qbo_account_id,
+      });
+      return {
+        source: "vendor_subtype_map",
+        vendor_subtype: mapped.vendor_subtype,
+        ...enforced,
+      };
+    }
+
+    const fallbackRes = await client.query(
+      `
+        SELECT
+          c.qbo_id AS ps_category_qbo_id,
+          i.qbo_id AS ps_item_qbo_id,
+          COALESCE(i.coa_account_id::text, c.coa_account_id::text) AS qbo_account_hint
+        FROM accounting.ps_item i
+        JOIN accounting.ps_category c
+          ON c.tenant_id = i.tenant_id
+         AND lower(c.qbo_id) = lower(i.category_qbo_id)
+        WHERE i.tenant_id = $1::uuid
+          AND i.active = true
+          AND c.active = true
+          AND (
+            lower(i.name) = $2
+            OR lower(c.name) = $2
+            OR lower(c.qbo_id) = $2
+          )
+        ORDER BY i.name ASC
+        LIMIT 1
+      `,
+      [operatingCompanyId, normalizedSubtype]
+    );
+    const fallback = fallbackRes.rows[0] as
+      | { ps_category_qbo_id: string; ps_item_qbo_id: string; qbo_account_hint: string | null }
+      | undefined;
+    if (!fallback) throw new Error("pse_vendor_subtype_suggestion_not_found");
+
+    const enforced = await enforcePseSelection(userId, operatingCompanyId, {
+      psCategoryQboId: fallback.ps_category_qbo_id,
+      psItemQboId: fallback.ps_item_qbo_id,
+      qboAccountId: null,
+    });
+
+    return {
+      source: "name_fallback",
+      vendor_subtype: normalizedSubtype,
+      ...enforced,
+    };
+  });
+}

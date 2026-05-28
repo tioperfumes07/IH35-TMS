@@ -9,6 +9,7 @@ import {
   runPostingEngineMvpBackfill,
   type PostingSourceType,
 } from "./posting-engine.service.js";
+import { enforcePsePostingOnBillPost } from "./pse-enforce.middleware.js";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
@@ -66,6 +67,9 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const body = postBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+
+    const pseOk = await enforcePsePostingOnBillPost(req, reply);
+    if (!pseOk) return;
 
     try {
       const result = await postSourceTransaction(
