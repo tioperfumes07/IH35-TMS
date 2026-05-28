@@ -1,26 +1,18 @@
 {
-  "block_id": "P7-MAINT-PARTS-PM",
+  "block_id": "P7-MAINT-WO-AP",
   "phase": "Dispatch 2",
-  "task": "P7-MAINT-PARTS-PM",
+  "task": "P7-MAINT-WO-AP",
   "allowed_files": [
-    "db/migrations/0272_maint_parts_pm.sql",
-    "apps/backend/src/maint/parts.routes.ts",
-    "apps/backend/src/maint/pm.routes.ts",
-    "apps/backend/src/maint/pm-due.shared.ts",
-    "apps/backend/src/maint/__tests__/pm-due.shared.test.ts",
+    "db/migrations/0273_maint_wo_ap_posting.sql",
+    "apps/backend/src/maint/wo-ap.shared.ts",
+    "apps/backend/src/maint/wo-ap-posting.service.ts",
+    "apps/backend/src/maint/wo-ap.routes.ts",
+    "apps/backend/src/maint/__tests__/wo-ap.shared.test.ts",
     "apps/backend/src/index.ts",
-    "scripts/verify-maint-pm.mjs",
-    "scripts/__tests__/verify-maint-pm.test.mjs",
-    "scripts/verify-guards/129-verify-maint-pm.mjs",
-    "scripts/verify-steps/42-verify-maint-pm.mjs",
-    "package.json",
-    ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:maint-pm"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": true
+  "guard_required": false
 }
