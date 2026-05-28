@@ -188,6 +188,7 @@
     "verify:safety-expiry-tracking-coverage": "node scripts/verify-safety-expiry-tracking-coverage.mjs",
     "verify:safety-random-pool-determinism": "node scripts/verify-safety-random-pool-determinism.mjs",
     "verify:drug-program": "node scripts/verify-drug-program.mjs",
+    "verify:rtd-statemachine": "node scripts/verify-rtd-statemachine.mjs",
     "verify:safety-reports-coverage": "node scripts/verify-safety-reports-coverage.mjs",
     "verify:safety-medical-cards": "node scripts/verify-safety-medical-cards.mjs",
     "verify:safety-reminders": "node scripts/verify-safety-reminders.mjs",

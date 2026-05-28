@@ -114,6 +114,9 @@ jobs:
       - name: Verify SAF drug program contract
         run: npm run verify:drug-program
 
+      - name: Verify SAF RTD state machine contract
+        run: npm run verify:rtd-statemachine
+
       - name: Verify safety reports coverage
         run: npm run verify:safety-reports-coverage
 
