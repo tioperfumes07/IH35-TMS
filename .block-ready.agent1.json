@@ -1,18 +1,19 @@
 {
-  "block_id": "P7-SAF-DRIVER-MED",
+  "block_id": "P7-SAF-REMINDERS",
   "phase": "Dispatch 2",
-  "task": "P7-SAF-DRIVER-MED",
+  "task": "P7-SAF-REMINDERS",
   "allowed_files": [
-    "db/migrations/0268_safety_medical_cards_dispatch2.sql",
-    "apps/backend/src/safety/medical-cards.routes.ts",
+    "db/migrations/0269_safety_reminders.sql",
+    "apps/backend/src/safety/reminders.cron.ts",
+    "apps/backend/src/safety/reminders.routes.ts",
     "apps/backend/src/index.ts",
-    "scripts/verify-safety-medical-cards.mjs",
+    "scripts/verify-safety-reminders.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:safety-medical-cards"
+    "verify:safety-reminders"
   ],
   "runtime_path": "src",
   "db_required": true,
