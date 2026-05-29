@@ -46,13 +46,17 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
   return req.user!;
 }
 
+type Queryable = {
+  query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
+};
+
 function validationError(reply: FastifyReply, err: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: err.flatten() });
 }
 
-async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
+async function withCompany<T>(userId: string, companyId: string, fn: (client: Queryable) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SET LOCAL app.operating_company_id = '${companyId}'`);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     return fn(client);
   });
 }

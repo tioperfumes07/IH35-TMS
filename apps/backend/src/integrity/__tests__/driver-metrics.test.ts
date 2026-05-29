@@ -11,31 +11,36 @@ import {
 } from "../driver-metrics.service.js";
 import { registerDriverMetricsRoutes } from "../driver-metrics.routes.js";
 
+const queryMock = vi.fn(async () => ({
+  rows: [
+    {
+      driver_id: "11111111-1111-4111-8111-111111111111",
+      driver_name: "Test Driver",
+      fuel_spend: 500,
+      gallons: 100,
+      odometer_delta: 1000,
+      wo_count: 2,
+      accident_count: 0,
+      tire_lines: 1,
+      battery_lines: 0,
+      airbag_lines: 0,
+      brake_lines: 0,
+      avg_repair_cost: 250,
+    },
+  ],
+}));
+
 vi.mock("../../auth/session-middleware.js", () => ({
   requireAuth: () => true,
 }));
 
 vi.mock("../../auth/db.js", () => ({
-  withCurrentUser: async (_userId: string, fn: (client: { query: () => Promise<{ rows: unknown[] }> }) => Promise<unknown>) =>
+  withCurrentUser: async (
+    _userId: string,
+    fn: (client: { query: typeof queryMock }) => Promise<unknown>
+  ) =>
     fn({
-      query: async () => ({
-        rows: [
-          {
-            driver_id: "11111111-1111-4111-8111-111111111111",
-            driver_name: "Test Driver",
-            fuel_spend: 500,
-            gallons: 100,
-            odometer_delta: 1000,
-            wo_count: 2,
-            accident_count: 0,
-            tire_lines: 1,
-            battery_lines: 0,
-            airbag_lines: 0,
-            brake_lines: 0,
-            avg_repair_cost: 250,
-          },
-        ],
-      }),
+      query: queryMock,
     }),
 }));
 
@@ -78,6 +83,10 @@ describe("resolvePeriodBounds", () => {
       period_end: "2026-05-29",
       months_active: 5,
     });
+  });
+
+  it("rejects impossible calendar dates", () => {
+    expect(() => resolvePeriodBounds("monthly", "2026-02-31")).toThrow("invalid_asof");
   });
 });
 
@@ -152,15 +161,16 @@ describe("driver metrics routes", () => {
 
   afterEach(async () => {
     await Promise.all(apps.splice(0).map((app) => app.close()));
+    queryMock.mockClear();
   });
 
-  async function buildApp() {
+  async function buildApp(role = "Owner") {
     const app = Fastify();
     apps.push(app);
     app.addHook("preHandler", async (req) => {
       (req as { user?: { uuid: string; role: string } }).user = {
         uuid: "22222222-2222-4222-8222-222222222222",
-        role: "Owner",
+        role,
       };
     });
     await registerDriverMetricsRoutes(app);
@@ -178,6 +188,10 @@ describe("driver metrics routes", () => {
     const body = response.json() as { driver: { driver_id: string }; period: { period: string } };
     expect(body.driver.driver_id).toBe("11111111-1111-4111-8111-111111111111");
     expect(body.period.period).toBe("monthly");
+    expect(queryMock).toHaveBeenCalledWith(
+      "SELECT set_config('app.operating_company_id', $1, true)",
+      ["33333333-3333-4333-8333-333333333333"]
+    );
   });
 
   it("returns sorted leaderboard rows", async () => {
@@ -191,5 +205,27 @@ describe("driver metrics routes", () => {
     const body = response.json() as { rows: Array<{ rank: number; driver_id: string }> };
     expect(body.rows).toHaveLength(1);
     expect(body.rows[0]?.rank).toBe(1);
+  });
+
+  it("returns 400 for impossible as-of date values", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/integrity/driver-metrics?operating_company_id=33333333-3333-4333-8333-333333333333&driver_id=11111111-1111-4111-8111-111111111111&period=monthly&asof=2026-02-31",
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: "invalid_asof" });
+  });
+
+  it("returns 403 for non-privileged roles", async () => {
+    const app = await buildApp("Dispatcher");
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/integrity/driver-metrics?operating_company_id=33333333-3333-4333-8333-333333333333&driver_id=11111111-1111-4111-8111-111111111111&period=monthly&asof=2026-05-31",
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ error: "forbidden" });
   });
 });
