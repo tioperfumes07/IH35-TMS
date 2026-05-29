@@ -127,6 +127,7 @@ import { registerMaintenancePartsRoutes } from "./maintenance/parts.routes.js";
 import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
 import { registerMaintWoApRoutes } from "./maint/wo-ap.routes.js";
+import { registerInsuranceDispersalRoutes } from "./insurance/dispersal.routes.js";
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
 import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
@@ -519,6 +520,7 @@ async function main() {
   await registerMaintenancePartsRoutes(app);
   await registerMaintPartsRoutes(app);
   await registerInsurancePolicyRoutes(app);
+  await registerInsuranceDispersalRoutes(app);
   await registerInsuranceTypeCatalogRoutes(app);
   await registerAuditRoutes(app);
   await registerMaintPmRoutes(app);

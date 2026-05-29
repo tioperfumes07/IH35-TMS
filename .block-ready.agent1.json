@@ -1,25 +1,16 @@
 {
-  "block_id": "P7-INS-SCHEMA",
-  "phase": "Dispatch 3",
-  "task": "P7-INS-SCHEMA",
+  "block_id": "INS-02",
+  "phase": "Dispatch 4",
+  "task": "INS-02 dispersal engine",
   "allowed_files": [
-    "db/migrations/0274_insurance.sql",
-    "apps/backend/src/insurance/policy.shared.ts",
-    "apps/backend/src/insurance/policy.routes.ts",
+    "apps/backend/src/insurance/dispersal.service.ts",
+    "apps/backend/src/insurance/dispersal.routes.ts",
+    "apps/backend/src/insurance/__tests__/dispersal.service.test.ts",
     "apps/backend/src/index.ts",
-    "scripts/verify-insurance-schema.mjs",
-    "scripts/verify-guards/130-verify-insurance-schema.mjs",
-    "package.json",
-    ".github/workflows/ci.yml",
-    "db/migrations/0276_audit_triggers.sql",
-    "apps/backend/src/audit/audit.service.ts",
-    "apps/backend/src/audit/audit.routes.ts",
-    "apps/backend/src/audit/__tests__/audit.service.test.ts",
-    "scripts/verify-audit-coverage.mjs",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": ["verify:insurance-schema", "verify:audit-coverage"],
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "db_required": false,
+  "guard_required": false
 }
