@@ -10,7 +10,7 @@ Inputs are pulled from `integrations.samsara_vehicles.raw_payload` and used to:
 - Seed `maint.part` with `>=100` categorized templates.
 - Seed `maint.pm_schedule` with the required `15` PM types and calibrated intervals for `12,000` miles/month (`~400` miles/day) using both `interval_miles` and `interval_days`.
 
-Migration path: `db/migrations/0275_mnt5_parts_catalog_seed.sql`
+Migration path: `db/migrations/0277_mnt5_parts_catalog_seed.sql`
 
 ## Fleet Data Source and Coverage
 
