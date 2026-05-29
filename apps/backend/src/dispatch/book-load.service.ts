@@ -2,6 +2,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
 import { effectiveTeamPercentsFromRow, splitTotalCents } from "../driver-finance/settlement-engine.js";
+import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import {
   claimReservation,
   consumeLoadNumberReservation,
@@ -116,6 +117,11 @@ function canOverrideUnitBlock(role: string) {
 
 function canOverrideHos(role: string) {
   return ["Owner", "Administrator", "Manager"].includes(role);
+}
+
+function isInsuranceDispatchGateEnabled() {
+  const raw = String(process.env.DISPATCH_INSURANCE_GATE ?? "on").trim().toLowerCase();
+  return !["0", "off", "false", "disabled"].includes(raw);
 }
 
 function isDrugDispatchBlocked(result: string | null | undefined) {
@@ -416,6 +422,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
 
     const wf044Warnings: Array<Record<string, unknown>> = [];
+    const insuranceCoverageWarnings: Array<Record<string, unknown>> = [];
 
     if (input.assigned_unit_id) {
       const unitRows = await optionalQuery(
@@ -462,6 +469,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
               message: `Unit ${String(unit.display_id ?? "")} is dispatch-blocked: ${String(unit.dispatch_block_reason ?? "major defect reported")}`,
               details: { unit_id: unit.id, unit_display_id: unit.display_id, block_reason: unit.dispatch_block_reason },
               wf_044_maintenance_warnings: wf044Warnings,
+              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
             },
           };
         }
@@ -515,6 +523,59 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           ]
         );
       }
+
+      const coverage = await detectAssetCoverageGap(client, {
+        operatingCompanyId: input.operating_company_id,
+        assetId: input.assigned_unit_id,
+      });
+      if (!coverage.asset_exists) {
+        return {
+          kind: "error",
+          status: 400,
+          payload: { error: "invalid_unit_for_company" },
+        };
+      }
+
+      if (!coverage.is_covered) {
+        const warning = {
+          unit_id: input.assigned_unit_id,
+          as_of_date: coverage.as_of_date,
+          required_types: coverage.required_types,
+          covered_types: coverage.covered_types,
+          gap_types: coverage.gap_types,
+        };
+        insuranceCoverageWarnings.push(warning);
+        const insuranceGateEnabled = isInsuranceDispatchGateEnabled();
+        if (insuranceGateEnabled) {
+          await appendCrudAudit(
+            client,
+            input.requestingUserUuid,
+            "dispatch.book_load_blocked_by_insurance_coverage_gap",
+            {
+              operating_company_id: input.operating_company_id,
+              unit_id: input.assigned_unit_id,
+              block_code: "E_UNIT_INSURANCE_COVERAGE_GAP",
+              required_types: coverage.required_types,
+              covered_types: coverage.covered_types,
+              gap_types: coverage.gap_types,
+              as_of_date: coverage.as_of_date,
+            },
+            "warning",
+            "INS-03-COVERAGE-GAP-GATE"
+          );
+          return {
+            kind: "error",
+            status: 422,
+            payload: {
+              error: "E_UNIT_INSURANCE_COVERAGE_GAP",
+              message: "Assigned unit has insurance coverage gaps for dispatch-required policy types.",
+              details: warning,
+              wf_044_maintenance_warnings: wf044Warnings,
+              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+            },
+          };
+        }
+      }
     }
 
     if (input.assigned_primary_driver_id) {
@@ -557,6 +618,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
                 hos_badge_color: hos.hos_badge_color,
               },
               wf_044_maintenance_warnings: wf044Warnings,
+              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
             },
           };
         }
@@ -662,6 +724,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
                 latest_test_date: blocked.test_date,
               },
               wf_044_maintenance_warnings: wf044Warnings,
+              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
             },
           };
         }
@@ -952,6 +1015,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       );
     }
 
-    return { kind: "ok", row: { ...load, wf_044_maintenance_warnings: wf044Warnings } };
+    return {
+      kind: "ok",
+      row: {
+        ...load,
+        wf_044_maintenance_warnings: wf044Warnings,
+        insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+      },
+    };
   });
 }

@@ -195,6 +195,7 @@
     "verify:pm-due-soon-calculation": "node scripts/verify-pm-due-soon-calculation.mjs",
     "verify:maint-pm": "node scripts/verify-maint-pm.mjs",
     "verify:insurance-schema": "node scripts/verify-insurance-schema.mjs",
+    "verify:dispatch-insurance-coverage-gate": "node scripts/verify-dispatch-insurance-coverage-gate.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",
