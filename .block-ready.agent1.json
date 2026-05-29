@@ -1,13 +1,13 @@
 {
-  "block_id": "CLEANUP-3",
+  "block_id": "CLEANUP-4",
   "phase": "Dispatch 5",
-  "task": "CLEANUP-3",
+  "task": "CLEANUP-4",
   "allowed_files": [
-    "apps/backend/src/admin/migration-status.routes.ts",
-    "apps/backend/src/index.ts",
-    "apps/backend/src/lib/migration-status.ts",
-    "apps/backend/src/lib/migration-status.test.ts",
-    "apps/frontend/src/pages/admin/MigrationStatus.tsx",
+    ".husky/pre-push",
+    "docs/runbooks/migration-orphan-cleanup.md",
+    "package.json",
+    "scripts/verify-guards/1000-verify-no-orphan-migration-ledger-entries.mjs",
+    "scripts/verify-no-orphan-migration-ledger-entries.mjs",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
