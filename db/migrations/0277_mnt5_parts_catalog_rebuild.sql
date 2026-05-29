@@ -346,11 +346,13 @@ pm_inserts AS (
     pt.interval_days
   FROM fleet_assets fa
   CROSS JOIN pm_templates pt
-  ON CONFLICT (tenant_id, asset_id, pm_type)
-  DO UPDATE SET
-    interval_miles = EXCLUDED.interval_miles,
-    interval_days = EXCLUDED.interval_days,
-    updated_at = NOW()
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM maint.pm_schedule s
+    WHERE s.tenant_id = fa.tenant_id
+      AND s.asset_id = fa.asset_id
+      AND s.pm_type = pt.pm_type
+  )
   RETURNING id
 ),
 required_pm_types AS (
