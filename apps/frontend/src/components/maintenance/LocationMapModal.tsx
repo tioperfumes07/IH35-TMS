@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "../Modal";
-import { POS_DICT } from "../../lib/positions";
+import { POS_DICT, type PositionMeta } from "../../lib/positions";
 
 type MapNode = { code: string; x: number; y: number };
 
@@ -50,12 +50,23 @@ const MAP_NODES: MapNode[] = [
 type Props = {
   open: boolean;
   selectedCodes: string[];
+  allowedCodes?: string[];
+  positionMetaByCode?: Record<string, PositionMeta>;
   onClose: () => void;
   onApply: (codes: string[]) => void;
   multiSelect?: boolean;
 };
 
-export function LocationMapModal({ open, selectedCodes, onClose, onApply, multiSelect = true }: Props) {
+export function LocationMapModal({
+  open,
+  selectedCodes,
+  allowedCodes,
+  positionMetaByCode,
+  onClose,
+  onApply,
+  multiSelect = true,
+}: Props) {
+  const effectiveMeta = positionMetaByCode ?? POS_DICT;
   const [draft, setDraft] = useState<string[]>(selectedCodes);
   const [infoCode, setInfoCode] = useState<string>(selectedCodes[0] ?? "STEER-L");
 
@@ -65,8 +76,24 @@ export function LocationMapModal({ open, selectedCodes, onClose, onApply, multiS
     setInfoCode(selectedCodes[0] ?? "STEER-L");
   }, [open, selectedCodes]);
 
-  const info = POS_DICT[infoCode] ?? { name: "Unknown Position", group: "Unknown Group", side: "center" as const };
-  const nodes = useMemo(() => MAP_NODES.filter((node) => POS_DICT[node.code]), []);
+  const allowedSet = useMemo(() => new Set(allowedCodes ?? Object.keys(effectiveMeta)), [allowedCodes, effectiveMeta]);
+  const fallbackInfoCode = useMemo(() => {
+    const firstAllowed = [...allowedSet][0];
+    return firstAllowed ?? "STEER-L";
+  }, [allowedSet]);
+  const info = effectiveMeta[infoCode] ?? { name: "Unknown Position", group: "Unknown Group", side: "center" as const };
+  const nodes = useMemo(
+    () => MAP_NODES.filter((node) => allowedSet.has(node.code) && effectiveMeta[node.code]),
+    [allowedSet, effectiveMeta]
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    if (allowedSet.size === 0) return;
+    if (!allowedSet.has(infoCode)) {
+      setInfoCode(fallbackInfoCode);
+    }
+  }, [allowedSet, fallbackInfoCode, infoCode, open]);
 
   const toggleCode = (code: string) => {
     setDraft((current) => {
@@ -160,6 +187,7 @@ export function LocationMapModal({ open, selectedCodes, onClose, onApply, multiS
           ))}
           {draft.length === 0 ? <span className="text-[11px] text-slate-500">No locations selected</span> : null}
         </div>
+        {nodes.length === 0 ? <div className="text-[11px] text-amber-700">No catalog positions available for this company.</div> : null}
 
         <div className="flex items-center justify-between">
           <button type="button" onClick={onClose} className="rounded border border-gray-300 px-2 py-1 text-xs">
