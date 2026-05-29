@@ -13,6 +13,7 @@ import { notifyAbandonedLoadStakeholders } from "../notifications/dispatcher.js"
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
 import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
+import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 
 const dispatchStatusSchema = z.enum([
   "unassigned",
@@ -54,6 +55,10 @@ const dispatchUnitIdParamsSchema = z.object({
 });
 const dispatchDriverIdParamsSchema = z.object({
   driver_id: z.string().uuid(),
+});
+const dispatchUnitInsuranceQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  as_of_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 const dispatchPreferenceBodySchema = z.object({
@@ -590,6 +595,32 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       block_reason: row.dispatch_block_reason,
       has_pm_due: Boolean(row.has_open_pm_due_wo),
       open_wo_count: Number(row.open_wo_count ?? 0),
+    };
+  });
+
+  app.get("/api/v1/dispatch/units/:unit_id/insurance-status", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const params = dispatchUnitIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const query = dispatchUnitInsuranceQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
+
+    const payload = await withCompanyScope(authUser.uuid, query.data.operating_company_id, async (client) => {
+      const coverage = await detectAssetCoverageGap(client, {
+        operatingCompanyId: query.data.operating_company_id,
+        assetId: params.data.unit_id,
+        asOfDate: query.data.as_of_date,
+      });
+      return coverage;
+    });
+
+    if (!payload.asset_exists) return reply.code(404).send({ error: "unit_not_found" });
+    return {
+      unit_id: params.data.unit_id,
+      is_dispatch_eligible: payload.is_covered,
+      block_code: payload.is_covered ? null : "E_UNIT_INSURANCE_COVERAGE_GAP",
+      ...payload,
     };
   });
 
