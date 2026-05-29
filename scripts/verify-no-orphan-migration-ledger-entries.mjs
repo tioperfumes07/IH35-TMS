@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import pg from 'pg';
 import fs from 'node:fs';
+import pgConnectionOptions from './lib/pg-connection-options.cjs';
 const { Pool } = pg;
+const { buildPgPoolConfig } = pgConnectionOptions;
 const MIG_DIR = 'db/migrations';
 const GRACE_HOURS = 24;
 async function main() {
@@ -9,10 +11,7 @@ async function main() {
     console.error('DATABASE_URL not set');
     process.exit(1);
   }
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  });
+  const pool = new Pool(buildPgPoolConfig(process.env.DATABASE_URL));
   const onDisk = new Set(fs.readdirSync(MIG_DIR).filter(f => f.endsWith('.sql')));
   console.log(`Files on disk: ${onDisk.size}`);
   const { rows: c } = await pool.query(`
