@@ -8,7 +8,6 @@ import {
   findMigrationDrift,
   getMigrationLedgerSnapshot,
   listExpectedMigrations,
-  skipMigrationVerificationEnabled,
 } from "../lib/migration-status.js";
 
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
@@ -51,7 +50,7 @@ export async function registerMigrationStatusRoutes(app: FastifyInstance) {
         ok: drift.missingInDB.length === 0,
       };
 
-      if (!skipMigrationVerificationEnabled() && drift.missingInDB.length > 0) {
+      if (drift.missingInDB.length > 0) {
         return reply.code(503).send(payload);
       }
       return reply.code(200).send(payload);
