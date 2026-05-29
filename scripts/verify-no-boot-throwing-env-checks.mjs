@@ -6,6 +6,7 @@ import ts from "typescript";
 
 const ROOT = process.cwd();
 const DIST_ROOT = fs.existsSync(path.join(ROOT, "apps/backend/dist")) ? path.join(ROOT, "apps/backend/dist") : path.join(ROOT, "dist");
+const SOURCE_ROOT = path.join(ROOT, "apps/backend/src");
 
 if (!fs.existsSync(DIST_ROOT)) {
   console.error(`verify:no-boot-throwing-env-checks failed: dist root not found at ${DIST_ROOT}`);
@@ -16,12 +17,12 @@ const KNOWN_OFFENDERS_DEBT = [];
 
 const KNOWN_THROWING_CONSTRUCTORS = new Set(["Twilio", "Google"]);
 
-function collectFiles(root) {
+function collectFiles(root, allowedExts) {
   const out = [];
   for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
     const p = path.join(root, entry.name);
-    if (entry.isDirectory()) out.push(...collectFiles(p));
-    else if (entry.isFile() && entry.name.endsWith(".js")) out.push(p);
+    if (entry.isDirectory()) out.push(...collectFiles(p, allowedExts));
+    else if (entry.isFile() && allowedExts.some((ext) => entry.name.endsWith(ext))) out.push(p);
   }
   return out;
 }
@@ -29,6 +30,10 @@ function collectFiles(root) {
 function relativeDistPath(absPath) {
   const rel = path.relative(ROOT, absPath).replace(/\\/g, "/");
   return rel.startsWith("apps/backend/dist/") ? rel.replace("apps/backend/", "") : rel;
+}
+
+function relativeSourcePath(absPath) {
+  return path.relative(ROOT, absPath).replace(/\\/g, "/");
 }
 
 function isFunctionLike(node) {
@@ -113,44 +118,60 @@ if (KNOWN_OFFENDERS_DEBT.length > 0) {
   process.exit(1);
 }
 
-const violations = [];
-for (const file of collectFiles(DIST_ROOT)) {
-  const relDist = relativeDistPath(file);
-  const source = fs.readFileSync(file, "utf8");
-  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, true, ts.ScriptKind.JS);
+function collectViolations(files, scriptKind, relativePathResolver) {
+  const violations = [];
+  for (const file of files) {
+    const relPath = relativePathResolver(file);
+    const source = fs.readFileSync(file, "utf8");
+    const sf = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, true, scriptKind);
 
-  for (const statement of sf.statements) {
-    if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) {
-      continue;
-    }
-    const envs = [...collectEnvNames(statement)];
-    if (envs.length === 0) continue;
-
-    const violationNode = findFirstViolationNode(statement);
-    if (!violationNode) continue;
-    const isThrowViolation = ts.isThrowStatement(violationNode);
-    if (isThrowViolation && envs.some((envName) => allowlist.has(envName))) {
-      continue;
-    }
-
-    for (const envName of envs) {
-      if (allowlist.has(envName)) continue;
-      const debt = debtIndex.get(`${relDist}:${envName}`);
-      if (debt) {
-        console.log(`DEBT (exempt until ${debt.tracker}): ${relDist}:${envName}`);
+    for (const statement of sf.statements) {
+      if (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) {
         continue;
       }
-      const { line } = sf.getLineAndCharacterOfPosition(violationNode.getStart(sf));
-      violations.push({ file: relDist, line: line + 1, env: envName });
+      const envs = [...collectEnvNames(statement)];
+      if (envs.length === 0) continue;
+
+      const violationNode = findFirstViolationNode(statement);
+      if (!violationNode) continue;
+      const isThrowViolation = ts.isThrowStatement(violationNode);
+      if (isThrowViolation && envs.some((envName) => allowlist.has(envName))) {
+        continue;
+      }
+
+      for (const envName of envs) {
+        if (allowlist.has(envName)) continue;
+        const debt = debtIndex.get(`${relPath}:${envName}`);
+        if (debt) {
+          console.log(`DEBT (exempt until ${debt.tracker}): ${relPath}:${envName}`);
+          continue;
+        }
+        const { line } = sf.getLineAndCharacterOfPosition(violationNode.getStart(sf));
+        violations.push({ file: relPath, line: line + 1, env: envName });
+      }
     }
   }
+  return violations;
+}
+
+const distViolations = collectViolations(collectFiles(DIST_ROOT, [".js"]), ts.ScriptKind.JS, relativeDistPath);
+const sourceViolations = fs.existsSync(SOURCE_ROOT)
+  ? collectViolations(collectFiles(SOURCE_ROOT, [".ts"]), ts.ScriptKind.TS, relativeSourcePath)
+  : [];
+const dedupedViolations = [];
+const seen = new Set();
+for (const violation of [...distViolations, ...sourceViolations]) {
+  const key = `${violation.file}:${violation.line}:${violation.env}`;
+  if (seen.has(key)) continue;
+  seen.add(key);
+  dedupedViolations.push(violation);
 }
 
 console.log("verify:no-boot-throwing-env-checks: debt exemptions disabled.");
 
-if (violations.length > 0) {
+if (dedupedViolations.length > 0) {
   console.error("verify:no-boot-throwing-env-checks failed");
-  for (const v of violations) {
+  for (const v of dedupedViolations) {
     console.error(`${v.file}:${v.line} env=${v.env}`);
   }
   process.exit(1);
