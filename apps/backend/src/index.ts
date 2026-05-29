@@ -131,6 +131,7 @@ import { registerInsuranceDispersalRoutes } from "./insurance/dispersal.routes.j
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
 import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
+import { registerDriverMetricsRoutes } from "./integrity/driver-metrics.routes.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerAssetsRoutes } from "./assets/assets.routes.js";
@@ -523,6 +524,7 @@ async function main() {
   await registerInsuranceDispersalRoutes(app);
   await registerInsuranceTypeCatalogRoutes(app);
   await registerAuditRoutes(app);
+  await registerDriverMetricsRoutes(app);
   await registerMaintPmRoutes(app);
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
