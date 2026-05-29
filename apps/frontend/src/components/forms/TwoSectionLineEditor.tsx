@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { tirePositionsCatalogClient } from "../../api/catalogs-fleet";
 import { getWoCostContext } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { POS_DICT, type PositionMeta } from "../../lib/positions";
 import {
   CostBreakdownBox,
   type CategoryLine,
@@ -57,6 +59,17 @@ export function TwoSectionLineEditor({
     enabled: Boolean(operatingCompanyId),
     staleTime: 30_000,
   });
+  const tirePositionsQuery = useQuery({
+    queryKey: ["catalogs", "fleet", "tire-positions", operatingCompanyId, "active"],
+    queryFn: () =>
+      tirePositionsCatalogClient.list({
+        operating_company_id: operatingCompanyId,
+        is_active: "true",
+        limit: 500,
+      }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
 
   const updateLines = (next: TwoSectionLine[]) => {
     setLines(next);
@@ -111,6 +124,29 @@ export function TwoSectionLineEditor({
   const defaultIncomeAccountQboId = useMemo(
     () => String((costContextQuery.data?.expense_categories ?? []).find((row) => Boolean(row.qbo_id))?.qbo_id ?? ""),
     [costContextQuery.data?.expense_categories]
+  );
+  const positionMetaByCode = useMemo<Record<string, PositionMeta>>(() => {
+    const catalogRows = tirePositionsQuery.data?.rows ?? [];
+    if (catalogRows.length === 0) return POS_DICT;
+    const out: Record<string, PositionMeta> = {};
+    for (const row of catalogRows) {
+      const code = String(row.code ?? "").trim();
+      if (!code) continue;
+      const metadata = row.metadata ?? {};
+      const sideRaw = String(metadata.side ?? "").toLowerCase();
+      const side: PositionMeta["side"] = sideRaw === "left" || sideRaw === "right" || sideRaw === "center" ? sideRaw : "center";
+      const fallback = POS_DICT[code];
+      out[code] = {
+        name: String(metadata.name ?? row.display_name ?? fallback?.name ?? code),
+        group: String(metadata.group ?? fallback?.group ?? "Catalog"),
+        side,
+      };
+    }
+    return Object.keys(out).length > 0 ? out : POS_DICT;
+  }, [tirePositionsQuery.data?.rows]);
+  const allowedPositionCodes = useMemo<string[]>(
+    () => Object.keys(positionMetaByCode),
+    [positionMetaByCode]
   );
 
   const selectedLocationCodes =
@@ -182,6 +218,8 @@ export function TwoSectionLineEditor({
       <PartLocationMapDialog
         open={Boolean(locationTarget)}
         selectedCodes={selectedLocationCodes}
+        allowedCodes={allowedPositionCodes}
+        positionMetaByCode={positionMetaByCode}
         onClose={() => setLocationTarget(null)}
         onApply={(codes) => {
           if (locationTarget) {
