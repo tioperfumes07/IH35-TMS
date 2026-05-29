@@ -57,6 +57,21 @@ fleet_make_model_years AS (
     regexp_replace(UPPER(fp.model), '[^A-Z0-9]+', '_', 'g') AS model_slug
   FROM fleet_profiles fp
 ),
+supersede_tenants AS (
+  SELECT tenant_id FROM fleet_tenants
+  UNION
+  SELECT DISTINCT p.tenant_id
+  FROM maint.part p
+  WHERE p.tenant_id IS NOT NULL
+    AND p.sku LIKE ANY (ARRAY['CAT-%', 'UNI-%', 'MK-%', 'MMY-%'])
+),
+purge_seed_parts AS (
+  DELETE FROM maint.part p
+  USING supersede_tenants st
+  WHERE p.tenant_id = st.tenant_id
+    AND p.sku LIKE ANY (ARRAY['CAT-%', 'UNI-%', 'MK-%', 'MMY-%'])
+  RETURNING p.id
+),
 upsert_assets AS (
   INSERT INTO mdata.assets (
     tenant_id,
@@ -283,17 +298,36 @@ pm_templates AS (
       ('wheel bearing service', 72000, 180)
   ) AS t(pm_type, interval_miles, interval_days)
 ),
-pm_updates AS (
-  UPDATE maint.pm_schedule s
-  SET
-    interval_miles = pt.interval_miles,
-    interval_days = pt.interval_days,
-    updated_at = NOW()
-  FROM fleet_assets fa
-  CROSS JOIN pm_templates pt
+purge_pm_seed_rows AS (
+  DELETE FROM maint.pm_schedule s
+  USING fleet_assets fa
   WHERE s.tenant_id = fa.tenant_id
     AND s.asset_id = fa.asset_id
-    AND s.pm_type = pt.pm_type
+    AND s.pm_type = ANY (
+      ARRAY[
+        'oil',
+        'tires',
+        'dot_inspection',
+        'brake',
+        'transmission',
+        'coolant',
+        'oil change',
+        'tire rotation',
+        'brake inspection',
+        'DOT annual',
+        'air filter',
+        'fuel filter',
+        'coolant flush',
+        'transmission service',
+        'differential service',
+        'A/C service',
+        'cabin air filter',
+        'DEF system check',
+        'belts + hoses inspection',
+        'battery test',
+        'wheel bearing service'
+      ]::TEXT[]
+    )
   RETURNING s.id
 ),
 pm_inserts AS (
@@ -312,13 +346,11 @@ pm_inserts AS (
     pt.interval_days
   FROM fleet_assets fa
   CROSS JOIN pm_templates pt
-  WHERE NOT EXISTS (
-    SELECT 1
-    FROM maint.pm_schedule s
-    WHERE s.tenant_id = fa.tenant_id
-      AND s.asset_id = fa.asset_id
-      AND s.pm_type = pt.pm_type
-  )
+  ON CONFLICT (tenant_id, asset_id, pm_type)
+  DO UPDATE SET
+    interval_miles = EXCLUDED.interval_miles,
+    interval_days = EXCLUDED.interval_days,
+    updated_at = NOW()
   RETURNING id
 ),
 required_pm_types AS (
@@ -347,10 +379,11 @@ SELECT
   (SELECT COUNT(*) FROM part_templates) AS part_template_count,
   (SELECT COUNT(DISTINCT category) FROM part_templates) AS part_category_count,
   (SELECT COUNT(*) FROM pm_templates) AS pm_template_count,
+  (SELECT COUNT(*) FROM purge_seed_parts) AS legacy_part_rows_purged,
   (SELECT COUNT(*) FROM upsert_parts) AS parts_seeded_or_updated,
   (SELECT COUNT(*) FROM upsert_assets) AS assets_upserted,
-  (SELECT COUNT(*) FROM pm_updates) AS pm_rows_updated,
-  (SELECT COUNT(*) FROM pm_inserts) AS pm_rows_inserted,
+  (SELECT COUNT(*) FROM purge_pm_seed_rows) AS legacy_pm_rows_purged,
+  (SELECT COUNT(*) FROM pm_inserts) AS pm_rows_seeded,
   (SELECT bool_and(pt.pm_type = ANY(r.pm_types))
      FROM pm_templates pt
      CROSS JOIN required_pm_types r
