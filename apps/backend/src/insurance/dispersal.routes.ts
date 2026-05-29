@@ -1,12 +1,14 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { PoolClient } from "pg";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { createBill } from "../accounting/bills.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { bulkPostTransactionsAsBills } from "../banking/bulk-transactions.js";
 import {
   buildInsuranceGenerateBillsResponse,
   computeInsuranceDispersal,
+  INSURANCE_PS_CATEGORY,
   type InsuranceDispersalBill,
   type InsuranceDispersalPolicy,
   type InsuranceDispersalUnit,
@@ -22,7 +24,6 @@ const policyIdParamsSchema = z.object({
 
 const generateBillsBodySchema = z.object({
   dry_run: z.boolean().optional().default(false),
-  vendor_id: z.string().trim().min(1),
 });
 
 type Queryable = {
@@ -94,27 +95,134 @@ function normalizePolicyRow(row: Record<string, unknown>): InsuranceDispersalPol
 export async function persistInsuranceDispersalBills(input: {
   userId: string;
   operatingCompanyId: string;
-  vendorId: string;
+  policyId: string;
   policyNumber: string;
+  insurerName: string;
   bills: InsuranceDispersalBill[];
 }) {
-  const created: Array<{ bill_id: string; sequence: number; amount_cents: number }> = [];
+  if (!input.bills.length) return [];
 
-  for (const bill of input.bills) {
-    const createdBill = await createBill(
+  return withCompanyScope(input.userId, input.operatingCompanyId, async (client) => {
+    const vendorRes = await client.query<{ id: string }>(
+      `
+        SELECT id::text
+        FROM mdata.vendors
+        WHERE operating_company_id = $1
+          AND deactivated_at IS NULL
+          AND lower(trim(vendor_name)) = lower(trim($2))
+        ORDER BY created_at ASC
+        LIMIT 1
+      `,
+      [input.operatingCompanyId, input.insurerName]
+    );
+    const vendorId = vendorRes.rows[0]?.id;
+    if (!vendorId) throw new Error("insurance_vendor_not_found");
+
+    const bankAccountRes = await client.query<{ id: string }>(
+      `
+        SELECT id::text
+        FROM banking.bank_accounts
+        WHERE operating_company_id = $1
+          AND is_active = true
+        ORDER BY created_at ASC
+        LIMIT 1
+      `,
+      [input.operatingCompanyId]
+    );
+    const bankAccountId = bankAccountRes.rows[0]?.id;
+    if (!bankAccountId) throw new Error("insurance_seed_bank_account_not_found");
+
+    const seeded: Array<{ transaction_id: string; bill: InsuranceDispersalBill }> = [];
+    for (const bill of input.bills) {
+      const insertRes = await client.query<{ id: string }>(
+        `
+          INSERT INTO banking.bank_transactions (
+            bank_account_id,
+            operating_company_id,
+            transaction_date,
+            posted_date,
+            amount_cents,
+            description,
+            merchant_name,
+            status,
+            category,
+            category_kind,
+            notes
+          )
+          VALUES ($1, $2, $3::date, $3::date, $4, $5, $6, 'pending_categorization', NULL, NULL, $7)
+          RETURNING id::text
+        `,
+        [
+          bankAccountId,
+          input.operatingCompanyId,
+          bill.due_date,
+          Math.abs(bill.amount_cents),
+          `Insurance dispersal ${input.policyNumber} #${String(bill.sequence).padStart(2, "0")}`,
+          input.insurerName,
+          JSON.stringify({
+            source: "insurance_dispersal_seed",
+            policy_id: input.policyId,
+            policy_number: input.policyNumber,
+            sequence: bill.sequence,
+            due_date: bill.due_date,
+          }),
+        ]
+      );
+      const transactionId = insertRes.rows[0]?.id;
+      if (!transactionId) throw new Error("insurance_seed_transaction_insert_failed");
+      seeded.push({ transaction_id: transactionId, bill });
+    }
+
+    const postResult = await bulkPostTransactionsAsBills(
+      client as unknown as PoolClient,
       {
         operatingCompanyId: input.operatingCompanyId,
-        vendorId: input.vendorId,
-        billNumber: `${input.policyNumber}-INS-${String(bill.sequence).padStart(2, "0")}`,
-        billDate: bill.due_date,
-        dueDate: bill.due_date,
-        amountCents: bill.amount_cents,
-        memo: bill.memo,
+        txnIds: seeded.map((row) => row.transaction_id),
+        vendorId,
+        psCategory: INSURANCE_PS_CATEGORY,
+        psItem: seeded[0]?.bill.ps_item ?? "Insurance Premium",
       },
       input.userId
     );
+    if (postResult.bill_ids.length !== seeded.length) {
+      throw new Error("insurance_bulk_post_bill_count_mismatch");
+    }
 
-    await withCompanyScope(input.userId, input.operatingCompanyId, async (client) => {
+    const linkedRes = await client.query<{ transaction_id: string; bill_id: string | null }>(
+      `
+        SELECT id::text AS transaction_id, linked_entity_id::text AS bill_id
+        FROM banking.bank_transactions
+        WHERE operating_company_id = $1
+          AND id = ANY($2::uuid[])
+      `,
+      [input.operatingCompanyId, seeded.map((row) => row.transaction_id)]
+    );
+    const billIdByTransaction = new Map(linkedRes.rows.map((row) => [row.transaction_id, row.bill_id]));
+
+    const created: Array<{ bill_id: string; sequence: number; amount_cents: number }> = [];
+    for (let index = 0; index < seeded.length; index += 1) {
+      const seededRow = seeded[index]!;
+      const bill = seededRow.bill;
+      const createdBillId = billIdByTransaction.get(seededRow.transaction_id) ?? postResult.bill_ids[index] ?? null;
+      if (!createdBillId) throw new Error("insurance_created_bill_not_found");
+
+      await client.query(
+        `
+          UPDATE accounting.bills
+          SET bill_number = $3,
+              memo = $4,
+              updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $2
+        `,
+        [
+          createdBillId,
+          input.operatingCompanyId,
+          `${input.policyNumber}-INS-${String(bill.sequence).padStart(2, "0")}`,
+          bill.memo,
+        ]
+      );
+
       for (const allocation of bill.allocations) {
         await client.query(
           `
@@ -130,7 +238,7 @@ export async function persistInsuranceDispersalBills(input: {
           `,
           [
             input.operatingCompanyId,
-            createdBill.id,
+            createdBillId,
             allocation.asset_id,
             allocation.allocation_method,
             allocation.allocation_pct,
@@ -138,16 +246,16 @@ export async function persistInsuranceDispersalBills(input: {
           ]
         );
       }
-    });
 
-    created.push({
-      bill_id: createdBill.id,
-      sequence: bill.sequence,
-      amount_cents: bill.amount_cents,
-    });
-  }
+      created.push({
+        bill_id: createdBillId,
+        sequence: bill.sequence,
+        amount_cents: bill.amount_cents,
+      });
+    }
 
-  return created;
+    return created.sort((a, b) => a.sequence - b.sequence);
+  });
 }
 
 export async function registerInsuranceDispersalRoutes(app: FastifyInstance) {
@@ -217,13 +325,29 @@ export async function registerInsuranceDispersalRoutes(app: FastifyInstance) {
       };
     }
 
-    const created = await persistInsuranceDispersalBills({
-      userId: user.uuid,
-      operatingCompanyId: query.data.operating_company_id,
-      vendorId: body.data.vendor_id,
-      policyNumber: loaded.policy.policy_number,
-      bills: dispersal.bills,
-    });
+    let created: Array<{ bill_id: string; sequence: number; amount_cents: number }>;
+    try {
+      created = await persistInsuranceDispersalBills({
+        userId: user.uuid,
+        operatingCompanyId: query.data.operating_company_id,
+        policyId: loaded.policy.id,
+        policyNumber: loaded.policy.policy_number,
+        insurerName: loaded.policy.insurer_name,
+        bills: dispersal.bills,
+      });
+    } catch (error) {
+      const message = String((error as Error)?.message ?? "insurance_generate_bills_failed");
+      if (
+        message === "insurance_vendor_not_found" ||
+        message === "insurance_seed_bank_account_not_found" ||
+        message === "insurance_seed_transaction_insert_failed" ||
+        message === "insurance_bulk_post_bill_count_mismatch" ||
+        message === "insurance_created_bill_not_found"
+      ) {
+        return reply.code(409).send({ error: message });
+      }
+      throw error;
+    }
 
     await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       await appendCrudAudit(client, user.uuid, "insurance.policy.generate_bills", {
