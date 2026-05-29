@@ -314,22 +314,18 @@ async function main() {
     driftConn.release();
   }
 
-  if (process.env.SKIP_MIGRATION_VERIFICATION !== "true") {
-    try {
-      await Promise.race([
-        verifyMigrationsOnStartup(repoRoot),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("migration_verification_timeout_10s")), 10000)
-        ),
-      ]);
-    } catch (error) {
-      app.log.error(
-        { err: error },
-        "[STARTUP] migration verification failed or timed out — continuing without it"
-      );
-    }
-  } else {
-    app.log.info("[STARTUP] migration verification skipped via SKIP_MIGRATION_VERIFICATION=true");
+  try {
+    await Promise.race([
+      verifyMigrationsOnStartup(repoRoot),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("migration_verification_timeout_10s")), 10000)
+      ),
+    ]);
+  } catch (error) {
+    app.log.error(
+      { err: error },
+      "[STARTUP] migration verification failed or timed out — continuing without it"
+    );
   }
   setAppReady(true);
 

@@ -88,7 +88,7 @@ export function MigrationStatusPage() {
             <span className="text-xs text-gray-600">HTTP {query.data.status}</span>
             {query.data.status === 503 ? (
               <span className="text-xs text-amber-700">
-                Service unavailable until drift is cleared (or SKIP_MIGRATION_VERIFICATION is enabled server-side).
+                Service unavailable until migration drift is cleared.
               </span>
             ) : null}
           </div>

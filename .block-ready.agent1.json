@@ -1,12 +1,13 @@
 {
-  "block_id": "P7-INT-2-DRIVER-METRICS",
-  "phase": "Dispatch 4",
-  "task": "INT-2",
+  "block_id": "CLEANUP-3",
+  "phase": "Dispatch 5",
+  "task": "CLEANUP-3",
   "allowed_files": [
-    "apps/backend/src/integrity/driver-metrics.service.ts",
-    "apps/backend/src/integrity/driver-metrics.routes.ts",
-    "apps/backend/src/integrity/__tests__/driver-metrics.test.ts",
+    "apps/backend/src/admin/migration-status.routes.ts",
     "apps/backend/src/index.ts",
+    "apps/backend/src/lib/migration-status.ts",
+    "apps/backend/src/lib/migration-status.test.ts",
+    "apps/frontend/src/pages/admin/MigrationStatus.tsx",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],

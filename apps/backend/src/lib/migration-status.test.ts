@@ -81,7 +81,7 @@ describe("migration-status", () => {
     expect(drift.extraInDB).toEqual([]);
   });
 
-  it("boot guard logs (does not throw) when SKIP_MIGRATION_VERIFICATION=true and drift exists", async () => {
+  it("boot guard throws when drift exists", async () => {
     const repoRoot = tmpRepoWithMigrations(["0002_b.sql"]);
     tmpRoots.push(repoRoot);
 
@@ -95,17 +95,14 @@ describe("migration-status", () => {
       return { rows: [] };
     });
 
-    const prev = process.env.SKIP_MIGRATION_VERIFICATION;
-    process.env.SKIP_MIGRATION_VERIFICATION = "true";
-
     const logError = vi.fn();
-    await assertMigrationDriftBootGuard({
-      repoRoot,
-      client: { query } as never,
-      logError,
-    });
-
-    expect(logError).toHaveBeenCalled();
-    process.env.SKIP_MIGRATION_VERIFICATION = prev;
+    await expect(
+      assertMigrationDriftBootGuard({
+        repoRoot,
+        client: { query } as never,
+        logError,
+      })
+    ).rejects.toThrow("[boot] migration drift detected: missing in DB: 0002_b.sql");
+    expect(logError).not.toHaveBeenCalled();
   });
 });

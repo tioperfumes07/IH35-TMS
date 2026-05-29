@@ -120,10 +120,6 @@ export async function getMigrationLedgerSnapshot(client: pg.PoolClient, repoRoot
   };
 }
 
-export function skipMigrationVerificationEnabled(): boolean {
-  return process.env.SKIP_MIGRATION_VERIFICATION === "true";
-}
-
 export async function assertMigrationDriftBootGuard(opts: {
   repoRoot: string;
   client: pg.PoolClient;
@@ -136,9 +132,5 @@ export async function assertMigrationDriftBootGuard(opts: {
   if (drift.missingInDB.length === 0) return;
 
   const msg = `[boot] migration drift detected: missing in DB: ${drift.missingInDB.join(", ")}`;
-  if (skipMigrationVerificationEnabled()) {
-    opts.logError({ drift }, `${msg} — continuing because SKIP_MIGRATION_VERIFICATION=true`);
-    return;
-  }
   throw new Error(msg);
 }
