@@ -11,6 +11,7 @@
     "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
     "apps/frontend/src/api/insurance.ts",
     "apps/frontend/src/routes/manifest.tsx",
+    "docs/locked-ui-surface.json",
     ".gitignore",
     ".block-ready.agent1.json"
   ],
