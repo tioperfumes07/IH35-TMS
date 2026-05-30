@@ -224,7 +224,7 @@
     "verify:no-demo-rows-in-safety": "node scripts/verify-no-demo-rows-in-safety.mjs",
     "verify:no-internal-payload-in-notes": "node scripts/verify-no-internal-payload-in-notes.mjs",
     "verify:no-orphan-route-aliases": "node scripts/verify-no-orphan-route-aliases.mjs",
-    "verify:driver-repair-guard": "node --env-file=.env scripts/verify-driver-repair-guard.mjs",
+    "verify:driver-repair-guard": "node --env-file-if-exists=.env scripts/verify-driver-repair-guard.mjs",
     "verify:eld-foundation-coverage": "node scripts/verify-eld-foundation-coverage.mjs",
     "verify:no-orphan-migration-ledger-entries": "node --env-file=.env scripts/verify-no-orphan-migration-ledger-entries.mjs",
     "verify:integrity-anomaly-tenant-scope": "node scripts/verify-integrity-anomaly-tenant-scope.mjs"
