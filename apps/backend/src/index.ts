@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
+import cron from "node-cron";
 import { registerPhoneAuthRoutes } from "./auth/phone-routes.js";
 import { registerEmailAuthRoutes } from "./auth/email-routes.js";
 import { registerOfficeLoginRoutes } from "./auth/office-login.routes.js";
@@ -132,6 +133,8 @@ import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
 import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
 import { registerDriverMetricsRoutes } from "./integrity/driver-metrics.routes.js";
+import { registerAnomalyStatusRoutes } from "./integrity/anomaly-status.routes.js";
+import { runAnomalyDetectionForTenant } from "./integrity/anomaly-detector.service.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerAssetsRoutes } from "./assets/assets.routes.js";
@@ -211,7 +214,7 @@ import { setAppReady } from "./lib/startup-ready.js";
 import { assertNoDuplicateFastifyRoutes } from "./lib/fastify-route-duplicates.js";
 import { assertMigrationDriftBootGuard } from "./lib/migration-status.js";
 import { attachHttpErrorMonitor } from "./lib/error-monitor-hooks.js";
-import { pool } from "./auth/db.js";
+import { pool, withLuciaBypass } from "./auth/db.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
 import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js";
@@ -521,6 +524,7 @@ async function main() {
   await registerInsuranceTypeCatalogRoutes(app);
   await registerAuditRoutes(app);
   await registerDriverMetricsRoutes(app);
+  await registerAnomalyStatusRoutes(app);
   await registerMaintPmRoutes(app);
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
@@ -638,6 +642,31 @@ async function main() {
     app.log.info("[STARTUP] geofence-breach-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] geofence-breach-cron failed");
+  }
+
+  try {
+    cron.schedule(
+      "*/30 * * * *",
+      async () => {
+        await withLuciaBypass(async (client) => {
+          const companies = await client.query<{ id: string }>(
+            `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
+          );
+          for (const company of companies.rows) {
+            await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+            const result = await runAnomalyDetectionForTenant(client, company.id);
+            app.log.info(
+              { operating_company_id: company.id, scanned: result.scanned, inserted: result.inserted },
+              "[STARTUP] anomaly detector run complete"
+            );
+          }
+        });
+      },
+      { timezone: "America/Chicago" }
+    );
+    app.log.info("[STARTUP] anomaly-detector-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] anomaly-detector-cron failed");
   }
 
   try {

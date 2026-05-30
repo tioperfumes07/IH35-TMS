@@ -504,6 +504,62 @@ export function resolveIntegrityAlert(id: string, companyId: string, body: Recor
   });
 }
 
+export type SafetyAnomalySeverity = "low" | "medium" | "high" | "critical";
+export type SafetyAnomalyStatus = "new" | "acknowledged" | "resolved" | "dismissed";
+export type SafetyAnomalySubjectType = "driver" | "unit" | "customer" | "invoice";
+
+export type SafetyAnomaly = {
+  id: string;
+  tenant_id: string;
+  anomaly_type: string;
+  severity: SafetyAnomalySeverity;
+  subject_type: SafetyAnomalySubjectType;
+  subject_id: string;
+  detected_at: string;
+  detector_version: string;
+  evidence: Record<string, unknown>;
+  status: SafetyAnomalyStatus;
+  status_changed_at: string | null;
+  status_changed_by: string | null;
+  resolution_note: string | null;
+};
+
+export function listAnomalies(
+  companyId: string,
+  params: { status?: SafetyAnomalyStatus; severity?: SafetyAnomalySeverity; subject?: SafetyAnomalySubjectType } = {}
+) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (params.status) qs.set("status", params.status);
+  if (params.severity) qs.set("severity", params.severity);
+  if (params.subject) qs.set("subject", params.subject);
+  return apiRequest<{ anomalies: SafetyAnomaly[] }>(`/api/v1/integrity/anomalies?${qs.toString()}`);
+}
+
+export function getAnomaly(id: string, companyId: string) {
+  return apiRequest<{ anomaly: SafetyAnomaly }>(`/api/v1/integrity/anomalies/${encodeURIComponent(id)}?${q(companyId)}`);
+}
+
+export function ackAnomaly(id: string, companyId: string) {
+  return apiRequest<{ anomaly: SafetyAnomaly }>(`/api/v1/integrity/anomalies/${encodeURIComponent(id)}/acknowledge`, {
+    method: "POST",
+    body: { operating_company_id: companyId },
+  });
+}
+
+export function resolveAnomaly(id: string, companyId: string, resolution_note: string) {
+  return apiRequest<{ anomaly: SafetyAnomaly }>(`/api/v1/integrity/anomalies/${encodeURIComponent(id)}/resolve`, {
+    method: "POST",
+    body: { operating_company_id: companyId, resolution_note },
+  });
+}
+
+export function dismissAnomaly(id: string, companyId: string, resolution_note: string) {
+  return apiRequest<{ anomaly: SafetyAnomaly }>(`/api/v1/integrity/anomalies/${encodeURIComponent(id)}/dismiss`, {
+    method: "POST",
+    body: { operating_company_id: companyId, resolution_note },
+  });
+}
+
 export function getSafetySettings(companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/safety/settings?${q(companyId)}`);
 }

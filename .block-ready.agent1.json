@@ -1,17 +1,26 @@
 {
-  "block_id": "CLEANUP-4",
+  "block_id": "INT-3",
   "phase": "Dispatch 5",
-  "task": "CLEANUP-4",
+  "task": "INT-3",
   "allowed_files": [
-    ".husky/pre-push",
-    "docs/runbooks/migration-orphan-cleanup.md",
-    "package.json",
-    "scripts/verify-guards/1000-verify-no-orphan-migration-ledger-entries.mjs",
-    "scripts/verify-no-orphan-migration-ledger-entries.mjs",
-    ".block-ready.agent1.json"
+    "db/migrations/0280_integrity_anomaly.sql",
+    "apps/backend/src/integrity/anomaly-detector.service.ts",
+    "apps/backend/src/integrity/anomaly-detector.service.test.ts",
+    "apps/backend/src/integrity/anomaly-status.routes.ts",
+    "apps/backend/src/integrity/anomaly-status.routes.test.ts",
+    "apps/backend/src/integrity/anomaly.shared.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/safety.ts",
+    "apps/frontend/src/pages/safety/tabs/AnomaliesTab.tsx",
+    "apps/frontend/src/pages/safety/tabs/AnomalyDetailDrawer.tsx",
+    "scripts/verify-guards/1001-verify-integrity-anomaly-tenant-scope.mjs",
+    "scripts/verify-integrity-anomaly-tenant-scope.mjs",
+    ".block-ready.agent1.json",
+    ".github/workflows/ci.yml",
+    "package.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": false
+  "guard_required": true
 }
