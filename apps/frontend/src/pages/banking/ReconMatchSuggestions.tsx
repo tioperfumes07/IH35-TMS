@@ -63,8 +63,9 @@ export function ReconMatchSuggestions(props: {
 function FactoringSuggestionChip(props: { suggestion: ReconcileSuggestion; disabled?: boolean; onApply: () => void }) {
   return (
     <div className="flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-1 py-[1px] text-[10px] text-blue-900">
-      <span className="rounded bg-blue-700 px-1 text-[9px] font-semibold uppercase tracking-wide text-white">Factoring</span>
-      <span>{props.suggestion.batch_number ?? props.suggestion.label}</span>
+      <span className="rounded bg-blue-700 px-1 text-[9px] font-semibold uppercase tracking-wide text-white">
+        Factoring ({props.suggestion.batch_number ?? "batch"})
+      </span>
       <span>({Math.round(props.suggestion.confidence * 100)}%)</span>
       <button
         type="button"

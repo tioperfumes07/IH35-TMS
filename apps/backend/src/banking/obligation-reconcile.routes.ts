@@ -415,10 +415,12 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     if (!companyHeader.success) return sendValidationError(reply, companyHeader.error);
     const companyId = companyHeader.data.operating_company_id;
 
-    const ok = await withCompanyScope(user.uuid, companyId, async (client) => {
-      await client.query("BEGIN");
-      try {
-        const lockRes = await client.query<{ id: string }>(
+    let ok: boolean | "transaction_mismatch";
+    try {
+      ok = await withCompanyScope(user.uuid, companyId, async (client) => {
+        await client.query("BEGIN");
+        try {
+          const lockRes = await client.query<{ id: string }>(
           `
             SELECT id FROM banking.bank_transactions
             WHERE id = $1::uuid AND operating_company_id = $2::uuid
@@ -426,51 +428,51 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           `,
           [body.data.bank_transaction_id, companyId]
         );
-        if (!lockRes.rows[0]) {
-          await client.query("ROLLBACK");
-          return false;
-        }
-
-        if (body.data.obligation_type === "factoring_batch") {
-          const applied = await applyMatch(body.data.obligation_id, companyId, { client });
-          if (applied.bank_txn_id !== body.data.bank_transaction_id) {
+          if (!lockRes.rows[0]) {
             await client.query("ROLLBACK");
-            return "transaction_mismatch" as const;
+            return false;
           }
 
-          await appendCrudAudit(
-            client,
-            user.uuid,
-            "banking.obligation_reconcile.applied",
-            {
-              resource_type: "banking.bank_transactions",
-              resource_id: body.data.bank_transaction_id,
-              obligation_type: body.data.obligation_type,
-              obligation_id: applied.batch_id,
-              bank_match_suggestion_id: body.data.obligation_id,
-            },
-            "info",
-            "P7-BLOCK-K-RECON"
-          );
-          await client.query("COMMIT");
-          return true;
-        }
+          if (body.data.obligation_type === "factoring_batch") {
+            const applied = await applyMatch(body.data.obligation_id, companyId, { client });
+            if (applied.bank_txn_id !== body.data.bank_transaction_id) {
+              await client.query("ROLLBACK");
+              return "transaction_mismatch" as const;
+            }
 
-        let loadId: string | null = null;
-        let billId: string | null = null;
-        let settlementId: string | null = null;
-        let linkedId: string | null = null;
-        let categoryKind: string | null = null;
+            await appendCrudAudit(
+              client,
+              user.uuid,
+              "banking.obligation_reconcile.applied",
+              {
+                resource_type: "banking.bank_transactions",
+                resource_id: body.data.bank_transaction_id,
+                obligation_type: body.data.obligation_type,
+                obligation_id: applied.batch_id,
+                bank_match_suggestion_id: body.data.obligation_id,
+              },
+              "info",
+              "P7-BLOCK-K-RECON"
+            );
+            await client.query("COMMIT");
+            return true;
+          }
 
-        if (body.data.obligation_type === "load") loadId = body.data.obligation_id;
-        if (body.data.obligation_type === "bill") billId = body.data.obligation_id;
-        if (body.data.obligation_type === "settlement") settlementId = body.data.obligation_id;
-        if (body.data.obligation_type === "fuel" || body.data.obligation_type === "work_order" || body.data.obligation_type === "ar_invoice") {
-          linkedId = body.data.obligation_id;
-          categoryKind = body.data.obligation_type === "ar_invoice" ? "invoice" : body.data.obligation_type;
-        }
+          let loadId: string | null = null;
+          let billId: string | null = null;
+          let settlementId: string | null = null;
+          let linkedId: string | null = null;
+          let categoryKind: string | null = null;
 
-        await client.query(
+          if (body.data.obligation_type === "load") loadId = body.data.obligation_id;
+          if (body.data.obligation_type === "bill") billId = body.data.obligation_id;
+          if (body.data.obligation_type === "settlement") settlementId = body.data.obligation_id;
+          if (body.data.obligation_type === "fuel" || body.data.obligation_type === "work_order" || body.data.obligation_type === "ar_invoice") {
+            linkedId = body.data.obligation_id;
+            categoryKind = body.data.obligation_type === "ar_invoice" ? "invoice" : body.data.obligation_type;
+          }
+
+          await client.query(
           `
             UPDATE banking.bank_transactions
             SET
@@ -496,7 +498,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           ]
         );
 
-        await appendCrudAudit(
+          await appendCrudAudit(
           client,
           user.uuid,
           "banking.obligation_reconcile.applied",
@@ -509,22 +511,23 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           "info",
           "P7-BLOCK-K-RECON"
         );
-        await client.query("COMMIT");
-        return true;
-      } catch (e) {
-        await client.query("ROLLBACK");
-        throw e;
+          await client.query("COMMIT");
+          return true;
+        } catch (e) {
+          await client.query("ROLLBACK");
+          throw e;
+        }
+      });
+    } catch (error) {
+      if (error instanceof FactoringBankMatchError) {
+        return reply.code(error.statusCode).send({ error: error.code });
       }
-    });
+      throw error;
+    }
 
     if (ok === "transaction_mismatch") return reply.code(409).send({ error: "suggestion_transaction_mismatch" });
     if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
     return { ok: true };
-  }).setErrorHandler((error, _req, reply) => {
-    if (error instanceof FactoringBankMatchError) {
-      return reply.code(error.statusCode).send({ error: error.code });
-    }
-    return reply.send(error);
   });
 
   app.post("/api/v1/banking/reconcile/bulk", async (req, reply) => {

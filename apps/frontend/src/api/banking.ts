@@ -910,22 +910,17 @@ export function reconcileBankTransaction(
   return apiRequest<{ ok: true }>(`/api/v1/banking/reconcile?${q}`, { method: "POST", body });
 }
 
-export function applyFactoringBankMatch(operatingCompanyId: string, suggestionId: string) {
-  return apiRequest<{ ok: true; applied: { id: string; bank_txn_id: string; batch_id: string; applied_at: string } }>(
-    `/api/v1/banking/reconcile/factoring/apply`,
-    {
-      method: "POST",
-      body: {
-        operating_company_id: operatingCompanyId,
-        suggestion_id: suggestionId,
-      },
-    }
-  );
+export function applyFactoringBankMatch(operatingCompanyId: string, bankTransactionId: string, suggestionId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ ok: true }>(`/api/v1/banking/reconcile?${q}`, {
+    method: "POST",
+    body: {
+      bank_transaction_id: bankTransactionId,
+      obligation_type: "factoring_batch",
+      obligation_id: suggestionId,
+    },
+  });
 }
-
-export const bankMatch = {
-  applyMatch: applyFactoringBankMatch,
-};
 
 export function bulkReconcileAction(
   operatingCompanyId: string,
