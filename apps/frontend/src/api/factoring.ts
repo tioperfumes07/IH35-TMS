@@ -175,6 +175,73 @@ export function getReserveMovements(batchId: string, companyId: string) {
   );
 }
 
+export type FactoringReserveBalance = {
+  tenant_id: string;
+  factor_id: string;
+  balance_cents: number;
+  last_movement_at: string | null;
+  movement_count: number;
+};
+
+export type FactoringReserveBalanceHistoryEntry = FactoringReserveMovement & {
+  signed_amount_cents: number;
+  running_balance_cents: number;
+};
+
+export type FactoringReserveBalanceHistoryPage = {
+  movements: FactoringReserveBalanceHistoryEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type FactoringReserveReleaseForecastPoint = {
+  release_date: string;
+  projected_release_cents: number;
+  source_movement_count: number;
+};
+
+export type FactoringReserveReleaseForecast = {
+  factor_id: string;
+  as_of: string;
+  hold_period_days: number;
+  lookahead_days: number;
+  starting_balance_cents: number;
+  total_projected_release_cents: number;
+  schedule: FactoringReserveReleaseForecastPoint[];
+};
+
+export function getReserveBalances(companyId: string) {
+  return apiRequest<{ balances: FactoringReserveBalance[] }>(`/api/v1/factoring/reserves/balances?${q(companyId)}`);
+}
+
+export function getReserveBalanceHistory(
+  factorId: string,
+  companyId: string,
+  options: { fromDate?: string; toDate?: string; limit?: number; offset?: number } = {}
+) {
+  const qs = query({
+    operating_company_id: companyId,
+    from_date: options.fromDate,
+    to_date: options.toDate,
+    limit: options.limit ? String(options.limit) : undefined,
+    offset: options.offset ? String(options.offset) : undefined,
+  });
+  return apiRequest<FactoringReserveBalanceHistoryPage>(
+    `/api/v1/factoring/reserves/${encodeURIComponent(factorId)}/history?${qs}`
+  );
+}
+
+export function getReserveReleaseForecast(factorId: string, companyId: string, lookaheadDays?: number) {
+  const qs = query({
+    operating_company_id: companyId,
+    lookahead_days: lookaheadDays ? String(lookaheadDays) : undefined,
+  });
+  return apiRequest<FactoringReserveReleaseForecast>(
+    `/api/v1/factoring/reserves/${encodeURIComponent(factorId)}/forecast?${qs}`
+  );
+}
+
 export type Factor = {
   id: string;
   tenant_id: string;

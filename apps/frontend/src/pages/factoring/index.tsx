@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { BatchWizard } from "./BatchWizard";
 import { FactorAdmin } from "./FactorAdmin";
+import { ReserveDashboard } from "./ReserveDashboard";
 
 const SUBNAV = [
   { id: "batch_wizard", label: "Batch Wizard" },
   { id: "factors", label: "Factors" },
+  { id: "reserves", label: "Reserves" },
 ] as const;
 
 export function FactoringIndexPage() {
@@ -29,6 +31,7 @@ export function FactoringIndexPage() {
 
       {tab === "batch_wizard" ? <BatchWizard /> : null}
       {tab === "factors" ? <FactorAdmin /> : null}
+      {tab === "reserves" ? <ReserveDashboard /> : null}
     </div>
   );
 }
