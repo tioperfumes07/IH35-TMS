@@ -1,20 +1,21 @@
 {
-  "block_id": "INS-04",
+  "block_id": "INS-05",
   "phase": "Dispatch 5",
-  "task": "INS-04",
+  "task": "INS-05",
   "allowed_files": [
-    "db/migrations/0283_insurance_coi.sql",
-    "apps/backend/src/insurance/coi-request.routes.ts",
-    "apps/backend/src/insurance/coi-request.routes.test.ts",
-    "apps/backend/src/insurance/coi.service.ts",
-    "apps/backend/src/insurance/coi.shared.ts",
+    "db/migrations/0284_insurance_payment_schedule.sql",
+    "apps/backend/src/insurance/payment-schedule.routes.ts",
+    "apps/backend/src/insurance/payment-schedule.routes.test.ts",
+    "apps/backend/src/insurance/payment-reminder.service.ts",
+    "apps/backend/src/insurance/payment-reminder.service.test.ts",
+    "apps/backend/src/insurance/late-fee.service.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/customers/CustomerCOITab.tsx",
+    "apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx",
     "apps/frontend/src/api/insurance.ts",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": true
+  "guard_required": false
 }

@@ -132,6 +132,8 @@ import { registerMaintPmRoutes } from "./maint/pm.routes.js";
 import { registerMaintWoApRoutes } from "./maint/wo-ap.routes.js";
 import { registerInsuranceCoiRequestRoutes } from "./insurance/coi-request.routes.js";
 import { registerInsuranceDispersalRoutes } from "./insurance/dispersal.routes.js";
+import { initializeInsurancePaymentReminderCron } from "./insurance/payment-reminder.service.js";
+import { registerInsurancePaymentScheduleRoutes } from "./insurance/payment-schedule.routes.js";
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
 import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
@@ -525,6 +527,7 @@ async function main() {
   await registerMaintenancePartsRoutes(app);
   await registerMaintPartsRoutes(app);
   await registerInsurancePolicyRoutes(app);
+  await registerInsurancePaymentScheduleRoutes(app);
   await registerInsuranceDispersalRoutes(app);
   await registerInsuranceCoiRequestRoutes(app);
   await registerInsuranceTypeCatalogRoutes(app);
@@ -680,6 +683,13 @@ async function main() {
     app.log.info("[STARTUP] legal-matters-reminder-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] legal-matters-reminder-cron failed");
+  }
+
+  try {
+    initializeInsurancePaymentReminderCron(app);
+    app.log.info("[STARTUP] insurance-payment-reminder-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] insurance-payment-reminder-cron failed");
   }
 
   try {
