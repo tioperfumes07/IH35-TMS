@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { bankMatch, getReconcileSuggestions, type ObligationType, type ReconcileSuggestion } from "../../api/banking";
+import { applyFactoringBankMatch, getReconcileSuggestions, type ObligationType, type ReconcileSuggestion } from "../../api/banking";
 import { useToast } from "../../components/Toast";
 
 export function ReconMatchSuggestions(props: {
@@ -17,7 +17,7 @@ export function ReconMatchSuggestions(props: {
   });
 
   const applyFactoringMutation = useMutation({
-    mutationFn: async (suggestionId: string) => bankMatch.applyMatch(props.companyId, suggestionId),
+    mutationFn: async (suggestionId: string) => applyFactoringBankMatch(props.companyId, props.bankTransactionId, suggestionId),
     onSuccess: () => {
       pushToast("Factoring match applied", "success");
       props.onFactoringApplied();
