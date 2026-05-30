@@ -1,5 +1,13 @@
-import { SafetyTabPlaceholder } from "./SafetyTabPlaceholder";
+import { ClaimsTab } from "../../insurance/ClaimsTab";
+import { LawsuitsTab } from "../../insurance/LawsuitsTab";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 export function InsuranceTab() {
-  return <SafetyTabPlaceholder title="Insurance" />;
+  const { selectedCompanyId } = useCompanyContext();
+  return (
+    <div className="space-y-3">
+      <ClaimsTab operatingCompanyId={selectedCompanyId ?? undefined} />
+      <LawsuitsTab operatingCompanyId={selectedCompanyId ?? undefined} />
+    </div>
+  );
 }

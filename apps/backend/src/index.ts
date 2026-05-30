@@ -131,7 +131,9 @@ import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
 import { registerMaintWoApRoutes } from "./maint/wo-ap.routes.js";
 import { registerInsuranceCoiRequestRoutes } from "./insurance/coi-request.routes.js";
+import { registerInsuranceClaimRoutes } from "./insurance/claim.routes.js";
 import { registerInsuranceDispersalRoutes } from "./insurance/dispersal.routes.js";
+import { registerInsuranceLawsuitRoutes } from "./insurance/lawsuit.routes.js";
 import { initializeInsurancePaymentReminderCron } from "./insurance/payment-reminder.service.js";
 import { registerInsurancePaymentScheduleRoutes } from "./insurance/payment-schedule.routes.js";
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
@@ -527,6 +529,8 @@ async function main() {
   await registerMaintenancePartsRoutes(app);
   await registerMaintPartsRoutes(app);
   await registerInsurancePolicyRoutes(app);
+  await registerInsuranceClaimRoutes(app);
+  await registerInsuranceLawsuitRoutes(app);
   await registerInsurancePaymentScheduleRoutes(app);
   await registerInsuranceDispersalRoutes(app);
   await registerInsuranceCoiRequestRoutes(app);
