@@ -1,4 +1,5 @@
 import type { BatchInvoiceLite, BatchTotals, FactoringBatchStatus } from "./batch.shared.js";
+import { autoPostOverageOnSettle } from "./reserve.service.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -38,7 +39,8 @@ export class FactoringBatchError extends Error {
       | "invoice_not_eligible"
       | "batch_not_found"
       | "invalid_status_transition"
-      | "batch_already_submitted",
+      | "batch_already_submitted"
+      | "batch_already_funded",
     readonly statusCode: number,
     readonly details?: Record<string, unknown>
   ) {
@@ -210,6 +212,7 @@ export async function submitBatch(
   const currentRow = current.rows[0];
   if (!currentRow) throw new FactoringBatchError("batch_not_found", 404);
   if (String(currentRow.status) === "submitted") throw new FactoringBatchError("batch_already_submitted", 409);
+  if (String(currentRow.status) === "funded") throw new FactoringBatchError("batch_already_funded", 409);
   if (String(currentRow.status) !== "draft") {
     throw new FactoringBatchError("invalid_status_transition", 409, {
       from: String(currentRow.status),
@@ -230,6 +233,50 @@ export async function submitBatch(
   );
 
   if (!updated.rows[0]) throw new FactoringBatchError("batch_not_found", 404);
+  return mapBatchRow(updated.rows[0]);
+}
+
+export async function fundBatch(
+  batchId: string,
+  actualFundedCents: number,
+  tenantId: string,
+  deps: { client: Queryable }
+): Promise<FactoringBatchRow> {
+  const current = await deps.client.query<Record<string, unknown>>(
+    `
+      SELECT id::text, status
+      FROM factoring.batch
+      WHERE id = $1::uuid
+        AND tenant_id = $2::uuid
+      LIMIT 1
+    `,
+    [batchId, tenantId]
+  );
+
+  const currentRow = current.rows[0];
+  if (!currentRow) throw new FactoringBatchError("batch_not_found", 404);
+  if (String(currentRow.status) === "funded") throw new FactoringBatchError("batch_already_funded", 409);
+  if (String(currentRow.status) !== "submitted") {
+    throw new FactoringBatchError("invalid_status_transition", 409, {
+      from: String(currentRow.status),
+      to: "funded",
+    });
+  }
+
+  const updated = await deps.client.query<Record<string, unknown>>(
+    `
+      UPDATE factoring.batch
+      SET status = 'funded',
+          funded_at = now()
+      WHERE id = $1::uuid
+        AND tenant_id = $2::uuid
+      RETURNING *
+    `,
+    [batchId, tenantId]
+  );
+
+  if (!updated.rows[0]) throw new FactoringBatchError("batch_not_found", 404);
+  await autoPostOverageOnSettle(batchId, actualFundedCents, tenantId, { client: deps.client });
   return mapBatchRow(updated.rows[0]);
 }
 

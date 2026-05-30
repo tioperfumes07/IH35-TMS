@@ -2,11 +2,11 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createFactoringBatchDraft,
-  getFactoringBatchDetail,
   listFactoringBatchCandidateInvoices,
   submitFactoringBatch,
   type FactoringBatch,
 } from "../../api/factoring";
+import { BatchDetail } from "./BatchDetail";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -42,12 +42,6 @@ export function BatchWizard() {
   const submitMutation = useMutation({
     mutationFn: (batchId: string) => submitFactoringBatch(batchId, companyId),
     onError: (error) => pushToast(String((error as Error).message || "Failed to submit batch"), "error"),
-  });
-
-  const detailQuery = useQuery({
-    queryKey: ["factoring", "batch-wizard", "detail", companyId, submittedBatchId],
-    queryFn: () => getFactoringBatchDetail(String(submittedBatchId), companyId),
-    enabled: Boolean(companyId && submittedBatchId),
   });
 
   const selectedCount = selectedInvoiceIds.length;
@@ -214,18 +208,7 @@ export function BatchWizard() {
           <div className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-800">
             Step 4 complete. Batch submitted successfully.
           </div>
-          {detailQuery.data ? (
-            <div className="rounded border border-gray-200 p-3 text-sm">
-              <div className="font-semibold text-gray-900">{detailQuery.data.batch.batch_number}</div>
-              <div className="text-gray-700">
-                Status: {detailQuery.data.batch.status} · Face: {asMoney(detailQuery.data.batch.total_face_cents)} · Advance:{" "}
-                {asMoney(detailQuery.data.batch.expected_advance_cents)} · Fee: {asMoney(detailQuery.data.batch.expected_fee_cents)}
-              </div>
-              <div className="mt-2 text-xs text-gray-600">Included invoices: {detailQuery.data.invoices.length}</div>
-            </div>
-          ) : (
-            <div className="text-sm text-gray-500">Loading submitted batch detail...</div>
-          )}
+          {submittedBatchId && companyId ? <BatchDetail batchId={submittedBatchId} companyId={companyId} /> : null}
         </div>
       ) : null}
     </div>

@@ -98,6 +98,19 @@ export type FactoringBatchInvoice = {
   total_cents: number;
 };
 
+export type FactoringReserveMovementDirection = "credit" | "debit";
+
+export type FactoringReserveMovement = {
+  id: string;
+  tenant_id: string;
+  batch_id: string | null;
+  factor_id: string | null;
+  direction: FactoringReserveMovementDirection;
+  amount_cents: number;
+  reason: string;
+  created_at: string;
+};
+
 export function getFactoringSummary(companyId: string) {
   return apiRequest<FactoringSummary>(`/api/v1/factoring/summary?${q(companyId)}`);
 }
@@ -153,5 +166,11 @@ export function submitFactoringBatch(batchId: string, companyId: string) {
 export function getFactoringBatchDetail(batchId: string, companyId: string) {
   return apiRequest<{ batch: FactoringBatch; invoices: FactoringBatchInvoice[] }>(
     `/api/v1/factoring/batches/${encodeURIComponent(batchId)}?${q(companyId)}`
+  );
+}
+
+export function getReserveMovements(batchId: string, companyId: string) {
+  return apiRequest<{ movements: FactoringReserveMovement[] }>(
+    `/api/v1/factoring/batches/${encodeURIComponent(batchId)}/reserve-movements?${q(companyId)}`
   );
 }

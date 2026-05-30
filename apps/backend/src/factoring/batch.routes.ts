@@ -15,6 +15,7 @@ import {
   listCandidateInvoices,
   submitBatch,
 } from "./batch.service.js";
+import { listReserveMovementsForBatch } from "./reserve.service.js";
 
 function canMutate(role: string) {
   const normalized = String(role || "").toLowerCase();
@@ -107,6 +108,20 @@ export async function registerFactoringBatchRoutes(app: FastifyInstance) {
     );
     if (!detail) return reply.code(404).send({ error: "batch_not_found" });
     return detail;
+  });
+
+  app.get("/api/v1/factoring/batches/:id/reserve-movements", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = factoringBatchIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = factoringBatchCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const movements = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      listReserveMovementsForBatch(params.data.id, query.data.operating_company_id, { client })
+    );
+    return { movements };
   });
 }
 
