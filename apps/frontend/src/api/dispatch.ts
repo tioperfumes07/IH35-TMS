@@ -322,15 +322,26 @@ export function cancelDispatchLoad(
   id: string,
   body: {
     operating_company_id: string;
-    reason_code: string;
-    cancellation_notes: string;
+    cancel_reason?: string;
+    cancel_reason_code?: string;
+    reason_code?: string;
+    cancellation_notes?: string;
     billable_to_customer?: boolean;
     cancellation_charge_cents?: number;
   }
 ) {
+  const normalizedReason = String(body.cancel_reason ?? body.cancellation_notes ?? "").trim();
+  const normalizedReasonCode = String(body.cancel_reason_code ?? body.reason_code ?? "").trim();
+
   return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/loads/${id}/cancel`, {
     method: "POST",
-    body,
+    body: {
+      ...body,
+      cancel_reason: normalizedReason,
+      cancel_reason_code: normalizedReasonCode,
+      reason_code: normalizedReasonCode || body.reason_code,
+      cancellation_notes: String(body.cancellation_notes ?? normalizedReason).trim(),
+    },
   });
 }
 
