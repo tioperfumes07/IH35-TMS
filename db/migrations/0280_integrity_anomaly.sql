@@ -27,7 +27,13 @@ CREATE INDEX IF NOT EXISTS idx_integrity_anomalies_tenant_severity_detected
 CREATE INDEX IF NOT EXISTS idx_integrity_anomalies_tenant_subject
   ON integrity.anomalies (tenant_id, subject_type, subject_id);
 
-GRANT SELECT, INSERT, UPDATE ON integrity.anomalies TO neondb_owner;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'neondb_owner') THEN
+    GRANT SELECT, INSERT, UPDATE ON integrity.anomalies TO neondb_owner;
+  END IF;
+END
+$$;
 
 ALTER TABLE integrity.anomalies ENABLE ROW LEVEL SECURITY;
 
@@ -45,7 +51,5 @@ CREATE POLICY anomalies_tenant_scope
     identity.is_lucia_bypass()
     OR tenant_id::text = current_setting('app.operating_company_id', true)
   );
-
-GRANT SELECT, INSERT, UPDATE ON integrity.anomalies TO neondb_owner;
 
 COMMIT;
