@@ -15,3 +15,6 @@ docs/design/approved-screens/
 
 # Production CSV overrides (never commit real PII)
 db/seeds/local/
+
+# Local preservation artifacts (created by recovery scripts)
+recovery-artifacts/

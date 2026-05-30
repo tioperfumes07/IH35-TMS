@@ -566,6 +566,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="escrow-record" element={<EscrowRecordTab />} />
           <Route path="geofence-alerts" element={<GeofenceBreachesTab />} />
           <Route path="insurance" element={<InsuranceTab />} />
+          <Route path="insurance/*" element={<InsuranceTab />} />
           <Route path="permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />
           {/* Block K (Driver Scheduler): canonical paths under /safety/* — see IH35_UNIFIED_BLUEPRINT_ADDITIONS.md §14 */}

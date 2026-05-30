@@ -1,21 +1,22 @@
 {
-  "block_id": "INS-05",
+  "block_id": "INS-07",
   "phase": "Dispatch 5",
-  "task": "INS-05",
+  "task": "INS-07",
   "allowed_files": [
-    "db/migrations/0284_insurance_payment_schedule.sql",
-    "apps/backend/src/insurance/payment-schedule.routes.ts",
-    "apps/backend/src/insurance/payment-schedule.routes.test.ts",
-    "apps/backend/src/insurance/payment-reminder.service.ts",
-    "apps/backend/src/insurance/payment-reminder.service.test.ts",
-    "apps/backend/src/insurance/late-fee.service.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/insurance/PaymentScheduleTab.tsx",
+    "apps/frontend/src/pages/insurance/InsuranceLanding.tsx",
+    "apps/frontend/src/pages/insurance/PoliciesList.tsx",
+    "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
+    "apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx",
+    "apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx",
+    "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
     "apps/frontend/src/api/insurance.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "docs/locked-ui-surface.json",
+    ".gitignore",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": false
 }
