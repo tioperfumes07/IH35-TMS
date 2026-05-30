@@ -80,6 +80,13 @@ export type UnitsWithoutLoad = {
   hours_since_last_delivery: number | null;
 };
 
+export type DriverLoadAvailability = {
+  ok: boolean;
+  blocker?: string;
+  work_order_id?: string | null;
+  asset_id?: string | null;
+};
+
 export type DispatchLoadListQuery = {
   operating_company_id: string;
   view: DispatchV2View;
@@ -286,6 +293,7 @@ export function quickAssignDispatchLoad(
     driver_id: string;
     unit_id?: string;
     trailer_id?: string;
+    override_repair_block?: boolean;
     assignment_method?: "quicksave" | "drag_drop";
     acknowledged_warnings?: string[];
   }
@@ -294,6 +302,12 @@ export function quickAssignDispatchLoad(
     method: "POST",
     body,
   });
+}
+
+export function getDriverLoadAvailability(driverId: string, operatingCompanyId: string) {
+  return apiRequest<DriverLoadAvailability>(
+    `/api/v1/dispatch/drivers/${encodeURIComponent(driverId)}/load-availability?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
 }
 
 export function completeQuicksaveDispatchLoad(

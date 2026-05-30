@@ -218,6 +218,9 @@ jobs:
       - name: Verify integrity anomaly tenant scope
         run: npm run verify:integrity-anomaly-tenant-scope
 
+      - name: Verify driver repair guard
+        run: npm run verify:driver-repair-guard
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
