@@ -48,6 +48,20 @@ function tierClass(severity: string) {
   return "bg-blue-50 text-blue-800";
 }
 
+function sourceLabel(sourceType: string) {
+  if (sourceType === "driver_qualification") return "DQ File";
+  if (sourceType === "medical_card") return "Medical Card";
+  if (sourceType === "background_check") return "Background / MVR";
+  if (sourceType === "training_record") return "Training";
+  return sourceType;
+}
+
+function severityWeight(severity: string) {
+  if (severity === "expired") return 0;
+  if (severity === "critical") return 1;
+  return 2;
+}
+
 export function DOTComplianceTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -71,14 +85,23 @@ export function DOTComplianceTab() {
   }
 
   const reminders = remindersQ.data ?? [];
+  const orderedReminders = useMemo(
+    () =>
+      [...reminders].sort((a, b) => {
+        const sevDiff = severityWeight(a.severity) - severityWeight(b.severity);
+        if (sevDiff !== 0) return sevDiff;
+        return a.days_to_expiry - b.days_to_expiry;
+      }),
+    [reminders]
+  );
   const sourceCounters = useMemo(() => {
     const counters = new Map<string, number>();
-    for (const row of reminders) {
+    for (const row of orderedReminders) {
       const source = String(row.source_type ?? "");
       counters.set(source, (counters.get(source) ?? 0) + 1);
     }
     return counters;
-  }, [reminders]);
+  }, [orderedReminders]);
 
   return (
     <div className="space-y-4">
@@ -88,8 +111,14 @@ export function DOTComplianceTab() {
             <h2 className="text-sm font-semibold text-slate-900">Compliance Reminders Panel</h2>
             <p className="mt-1 text-xs text-slate-600">Open reminders generated from DQF, medical cards, and related compliance records.</p>
           </div>
-          <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {reminders.length}</span>
+          <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {orderedReminders.length}</span>
         </div>
+        {remindersQ.isLoading ? (
+          <p className="mt-3 text-xs text-slate-500">Loading reminders...</p>
+        ) : null}
+        {remindersQ.error ? (
+          <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">Could not load reminders. Try again.</p>
+        ) : null}
         <div className="mt-3 overflow-x-auto">
           <table className="min-w-[860px] w-full text-left text-xs">
             <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
@@ -104,7 +133,7 @@ export function DOTComplianceTab() {
               </tr>
             </thead>
             <tbody>
-              {reminders.map((row) => (
+              {orderedReminders.map((row) => (
                 <tr key={row.id} className="border-t border-gray-100">
                   <td className="px-2 py-1">{row.driver_name ?? row.driver_id.slice(0, 8)}</td>
                   <td className="px-2 py-1">{row.item_name}</td>
@@ -113,12 +142,12 @@ export function DOTComplianceTab() {
                   <td className="px-2 py-1">
                     <span className={`rounded px-2 py-0.5 ${tierClass(row.severity)}`}>{row.severity}</span>
                   </td>
-                  <td className="px-2 py-1">{row.source_type}</td>
+                  <td className="px-2 py-1">{sourceLabel(row.source_type)}</td>
                   <td className="px-2 py-1">
                     <button
                       type="button"
                       className="rounded border border-slate-300 px-2 py-0.5 text-[11px] disabled:opacity-50"
-                      disabled={acknowledgeMutation.isPending}
+                      disabled={acknowledgeMutation.isPending || remindersQ.isLoading}
                       onClick={() => acknowledgeMutation.mutate(row.id)}
                     >
                       Dismiss
@@ -126,7 +155,7 @@ export function DOTComplianceTab() {
                   </td>
                 </tr>
               ))}
-              {reminders.length === 0 ? (
+              {!remindersQ.isLoading && orderedReminders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
                     No open reminders.
