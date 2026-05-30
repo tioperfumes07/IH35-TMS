@@ -1,22 +1,20 @@
 {
-  "block_id": "INS-07",
+  "block_id": "FACT-1",
   "phase": "Dispatch 5",
-  "task": "INS-07",
+  "task": "FACT-1",
   "allowed_files": [
-    "apps/frontend/src/pages/insurance/InsuranceLanding.tsx",
-    "apps/frontend/src/pages/insurance/PoliciesList.tsx",
-    "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
-    "apps/frontend/src/pages/insurance/TypeCatalogAdmin.tsx",
-    "apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx",
-    "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
-    "apps/frontend/src/api/insurance.ts",
-    "apps/frontend/src/routes/manifest.tsx",
-    "docs/locked-ui-surface.json",
-    ".gitignore",
+    "db/migrations/0286_factoring_batch.sql",
+    "apps/backend/src/factoring/batch.routes.ts",
+    "apps/backend/src/factoring/batch.routes.test.ts",
+    "apps/backend/src/factoring/batch.service.ts",
+    "apps/backend/src/factoring/batch.shared.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/factoring/BatchWizard.tsx",
+    "apps/frontend/src/api/factoring.ts",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": false
 }

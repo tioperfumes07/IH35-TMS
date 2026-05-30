@@ -105,6 +105,7 @@ import { registerBankingReconciliationRoutes } from "./banking/reconciliation.ro
 import { registerBankingP7Wave2Routes } from "./banking/p7-wave2.routes.js";
 import { registerBankingObligationReconcileRoutes } from "./banking/obligation-reconcile.routes.js";
 import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
+import { registerFactoringBatchRoutes } from "./factoring/batch.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js";
@@ -504,6 +505,7 @@ async function main() {
   await registerBankingP7Wave2Routes(app);
   await registerBankingObligationReconcileRoutes(app);
   await registerFactoringRoutes(app);
+  await registerFactoringBatchRoutes(app);
   await registerDataInfrastructureRoutes(app);
   await registerOcrRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
