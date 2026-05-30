@@ -8,6 +8,7 @@ import {
   CarFront,
   CircleHelp,
   FileText,
+  Fuel as FuelIcon,
   Home,
   ListChecks,
   Radio,
@@ -15,6 +16,7 @@ import {
   ShieldCheck,
   SquareStack,
   Truck,
+  Users,
   UserCog,
 } from "lucide-react";
 import type { UserRole } from "../../types/api";
@@ -27,8 +29,10 @@ export const SIDEBAR_ITEM_IDS = [
   "dispatch",
   "drivers",
   "safety",
+  "drivers",
   "accounting",
   "bank",
+  "fuel",
   "factoring",
   "customers",
   "vendors",
@@ -75,8 +79,10 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   dispatch: { id: "dispatch", label: "DISPATCH", Icon: Truck, to: "/dispatch", dataTour: "tour-nav-dispatch" },
   drivers: { id: "drivers", label: "DRIVERS", Icon: Truck, to: "/drivers" },
   safety: { id: "safety", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
+  drivers: { id: "drivers", label: "DRIVERS", Icon: Users, to: "/drivers" },
   accounting: { id: "accounting", label: "ACCTG", Icon: Calculator, to: "/accounting" },
   bank: { id: "bank", label: "BANK", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
+  fuel: { id: "fuel", label: "FUEL", Icon: FuelIcon, to: "/fuel" },
   factoring: { id: "factoring", label: "FACT", Icon: Calculator, to: "/accounting/factoring" },
   customers: { id: "customers", label: "CUSTOMERS", Icon: Building2, to: "/customers", dataTour: "tour-nav-customers" },
   vendors: { id: "vendors", label: "VENDORS", Icon: Building2, to: "/vendors" },
@@ -139,7 +145,7 @@ export function resolveSidebarOrder(role: UserRole, preferences: Record<string, 
   return [...SIDEBAR_DEFAULT_ORDER];
 }
 
-/** Flyout targets — Fuel + fleet routes live under existing modules (no top-level FUEL / DRIVERS). */
+/** Flyout targets for sidebar hover menus. */
 export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): SidebarFlyoutLink[] {
   switch (id) {
     case "accounting":
@@ -181,9 +187,12 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Geofencing", to: "/dispatch/geofencing" },
         { label: "Alerts", to: "/dispatch/alerts" },
         { label: "Daily Tasks", to: "/daily-tasks" },
-        { label: "Drivers", to: "/drivers" },
         { label: "Settlements", to: "/driver-finance/settlements" },
       ];
+    case "drivers":
+      return [{ label: "Drivers", to: "/drivers" }];
+    case "fuel":
+      return [{ label: "Fuel Planner", to: "/fuel" }];
     case "legal":
       return [
         { label: "Contracts", to: "/legal/contracts" },
