@@ -1,4 +1,5 @@
 import type { BatchInvoiceLite, BatchTotals, FactoringBatchStatus } from "./batch.shared.js";
+import { getFactorForCustomer } from "./factor.service.js";
 import { autoPostOverageOnSettle } from "./reserve.service.js";
 
 type Queryable = {
@@ -37,6 +38,7 @@ export class FactoringBatchError extends Error {
     readonly code:
       | "invoice_ids_required"
       | "invoice_not_eligible"
+      | "mixed_factors_not_allowed"
       | "batch_not_found"
       | "invalid_status_transition"
       | "batch_already_submitted"
@@ -113,6 +115,8 @@ export async function createDraftBatch(
     `
       SELECT
         i.id::text,
+        i.customer_id::text,
+        COALESCE(i.issue_date::text, i.due_date::text, now()::date::text) AS factor_as_of_date,
         i.total_cents::bigint
       FROM accounting.invoices i
       WHERE i.operating_company_id = $1::uuid
@@ -134,6 +138,38 @@ export async function createDraftBatch(
   if (missingIds.length > 0) {
     throw new FactoringBatchError("invoice_not_eligible", 400, { invoice_ids: missingIds });
   }
+
+  const customerResolution = new Map<string, { factor_id: string | null; factor_name: string | null }>();
+
+  for (const invoice of invoiceRes.rows) {
+    const customerId = invoice.customer_id ? String(invoice.customer_id) : null;
+    if (!customerId || customerResolution.has(customerId)) continue;
+    const factor = await getFactorForCustomer(
+      tenantId,
+      customerId,
+      String(invoice.factor_as_of_date ?? new Date().toISOString().slice(0, 10)),
+      { client: deps.client }
+    );
+    customerResolution.set(customerId, {
+      factor_id: factor?.id ?? null,
+      factor_name: factor?.name ?? null,
+    });
+  }
+
+  const factorPairs = Array.from(customerResolution.entries())
+    .map(([customer_id, factor]) => ({
+      customer_id,
+      factor_id: factor.factor_id,
+      factor_name: factor.factor_name,
+    }))
+    .sort((a, b) => a.customer_id.localeCompare(b.customer_id));
+
+  const uniqueFactorIds = new Set(factorPairs.map((pair) => pair.factor_id ?? "__NULL_FACTOR__"));
+  if (uniqueFactorIds.size > 1) {
+    throw new FactoringBatchError("mixed_factors_not_allowed", 400, { customer_factors: factorPairs });
+  }
+
+  const resolvedFactorId = factorPairs[0]?.factor_id ?? null;
 
   const advanceRate = deps.advanceRate ?? 0.95;
   const feeRate = deps.feeRate ?? 0.025;
@@ -174,7 +210,7 @@ export async function createDraftBatch(
         $8::bigint,
         NULL,
         NULL,
-        NULL
+        $9::uuid
       )
       RETURNING *
     `,
@@ -187,6 +223,7 @@ export async function createDraftBatch(
       totals.expected_advance_cents,
       feeRate,
       totals.expected_fee_cents,
+      resolvedFactorId,
     ]
   );
 
@@ -398,4 +435,3 @@ export async function getBatchDetail(
     })),
   };
 }
-

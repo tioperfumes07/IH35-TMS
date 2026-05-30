@@ -174,3 +174,121 @@ export function getReserveMovements(batchId: string, companyId: string) {
     `/api/v1/factoring/batches/${encodeURIComponent(batchId)}/reserve-movements?${q(companyId)}`
   );
 }
+
+export type Factor = {
+  id: string;
+  tenant_id: string;
+  name: string;
+  advance_rate: number;
+  fee_rate: number;
+  reserve_rate: number;
+  recourse_days: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CustomerFactorAssignment = {
+  id: string;
+  tenant_id: string;
+  customer_id: string;
+  factor_id: string;
+  factor_name: string;
+  effective_from: string;
+  effective_to: string | null;
+  created_at: string;
+};
+
+export type FactorBatchHistoryRow = {
+  id: string;
+  batch_number: string;
+  status: string;
+  submitted_at: string | null;
+  funded_at: string | null;
+  total_face_cents: number;
+  expected_advance_cents: number;
+  expected_fee_cents: number;
+};
+
+export function listFactors(companyId: string, options: { active_only?: boolean } = {}) {
+  return apiRequest<{ factors: Factor[] }>(
+    `/api/v1/factoring/factors?${query({ operating_company_id: companyId, active_only: options.active_only ? "true" : undefined })}`
+  );
+}
+
+export function createFactor(
+  companyId: string,
+  body: {
+    name: string;
+    advance_rate: number;
+    fee_rate: number;
+    reserve_rate: number;
+    recourse_days: number;
+    active?: boolean;
+  }
+) {
+  return apiRequest<Factor>("/api/v1/factoring/factors", {
+    method: "POST",
+    body: {
+      operating_company_id: companyId,
+      ...body,
+    },
+  });
+}
+
+export function updateFactor(
+  factorId: string,
+  companyId: string,
+  body: Partial<{
+    name: string;
+    advance_rate: number;
+    fee_rate: number;
+    reserve_rate: number;
+    recourse_days: number;
+    active: boolean;
+  }>
+) {
+  return apiRequest<Factor>(`/api/v1/factoring/factors/${encodeURIComponent(factorId)}`, {
+    method: "PATCH",
+    body: {
+      operating_company_id: companyId,
+      ...body,
+    },
+  });
+}
+
+export function deactivateFactor(factorId: string, companyId: string) {
+  return apiRequest<Factor>(`/api/v1/factoring/factors/${encodeURIComponent(factorId)}?${q(companyId)}`, {
+    method: "DELETE",
+  });
+}
+
+export function getCustomerFactor(customerId: string, companyId: string, asOfDate?: string) {
+  const qs = query({
+    operating_company_id: companyId,
+    as_of_date: asOfDate,
+  });
+  return apiRequest<{
+    factor: (Factor & { assignment_id: string; effective_from: string; effective_to: string | null }) | null;
+    assignments: CustomerFactorAssignment[];
+    batches: FactorBatchHistoryRow[];
+    as_of_date: string;
+  }>(`/api/v1/customers/${encodeURIComponent(customerId)}/factor?${qs}`);
+}
+
+export function assignCustomerFactor(
+  customerId: string,
+  companyId: string,
+  body: {
+    factor_id: string;
+    effective_from: string;
+  }
+) {
+  return apiRequest<CustomerFactorAssignment>(`/api/v1/customers/${encodeURIComponent(customerId)}/factor`, {
+    method: "POST",
+    body: {
+      operating_company_id: companyId,
+      ...body,
+    },
+  });
+}
