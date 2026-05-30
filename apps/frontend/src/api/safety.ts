@@ -288,8 +288,14 @@ export type SafetyReminderRow = {
   source_type: string;
 };
 
-export function listSafetyReminders(companyId: string) {
-  return apiRequest<{ reminders: SafetyReminderRow[] }>(`/api/v1/safety/reminders?${q(companyId)}&status=open`);
+export type SafetyReminderStatus = "open" | "dismissed" | "resolved";
+
+export function listSafetyReminders(companyId: string, status: SafetyReminderStatus = "open") {
+  const qs = new URLSearchParams({
+    operating_company_id: companyId,
+    status,
+  });
+  return apiRequest<{ reminders: SafetyReminderRow[] }>(`/api/v1/safety/reminders?${qs.toString()}`);
 }
 
 export function acknowledgeSafetyReminder(reminderId: string, companyId: string) {
