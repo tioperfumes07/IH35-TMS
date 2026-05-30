@@ -44,6 +44,7 @@ import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificatio
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
+import { CustomerCOITab } from "./customers/CustomerCOITab";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -53,7 +54,7 @@ import { StatusBadge } from "../components/layout/StatusBadge";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { useCompanyContext } from "../contexts/CompanyContext";
 
-const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "Contracts"] as const;
+const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI Requests", "Contracts"] as const;
 type CustomerTab = (typeof tabs)[number];
 
 const customerSchema = z.object({
@@ -1331,6 +1332,14 @@ export function CustomerDetailPage() {
             You do not have permission to view customer documents.
           </div>
         )
+      ) : null}
+
+      {activeTab === "COI Requests" ? (
+        <CustomerCOITab
+          customerId={customer.id}
+          customerName={customer.name}
+          operatingCompanyId={operatingCompanyId ?? undefined}
+        />
       ) : null}
 
       {activeTab === "Contracts" ? (
