@@ -565,6 +565,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="complaints" element={<ComplaintsTab />} />
           <Route path="escrow-record" element={<EscrowRecordTab />} />
           <Route path="geofence-alerts" element={<GeofenceBreachesTab />} />
+          <Route path="insurance" element={<InsuranceTab />} />
           <Route path="insurance/*" element={<InsuranceTab />} />
           <Route path="permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />
