@@ -96,163 +96,206 @@ function key(parts) {
   return parts.join(".");
 }
 
-const client = new pg.Client({ connectionString });
 const verifyContent = process.argv.includes("--verify-content");
 
-try {
-  await client.connect();
+// Transient connection drops (common with serverless Postgres) should be
+// retried rather than treated as a content failure. Real drift/missing-object
+// failures are NOT in this set and continue to fail fast.
+const TRANSIENT_CONNECTION_ERROR_PATTERNS = [
+  /connection terminated/i,
+  /econnreset/i,
+  /etimedout/i,
+  /timeout/i,
+  /terminating connection/i,
+  /server closed the connection/i,
+  /connection error/i,
+  /socket hang up/i,
+];
 
-  const tableRows = await client.query(`
-    SELECT table_schema, table_name
-    FROM information_schema.tables
-    WHERE table_type = 'BASE TABLE';
-  `);
-  const existingTables = new Set(tableRows.rows.map((row) => key([row.table_schema, row.table_name])));
+function isTransientConnectionError(error) {
+  const message = String(error?.message || error);
+  return TRANSIENT_CONNECTION_ERROR_PATTERNS.some((pattern) => pattern.test(message));
+}
 
-  const missingTables = REQUIRED_TABLES.filter(([schema, table]) => !existingTables.has(key([schema, table])));
-  if (missingTables.length > 0) {
-    for (const [schema, table] of missingTables) {
-      console.error(`FAIL: missing table ${schema}.${table}`);
-    }
-    process.exit(1);
-  }
-  console.log(`PASS: required tables present (${REQUIRED_TABLES.length})`);
+async function runVerification() {
+  const client = new pg.Client({ connectionString });
+  // Attach an error listener so a mid-query connection drop surfaces as a
+  // catchable rejection instead of an unhandled 'error' event that crashes
+  // the process before it can be classified and retried.
+  client.on("error", () => {});
 
-  const viewRows = await client.query(`
-    SELECT table_schema, table_name
-    FROM information_schema.views;
-  `);
-  const existingViews = new Set(viewRows.rows.map((row) => key([row.table_schema, row.table_name])));
-  const missingViews = REQUIRED_VIEWS.filter(([schema, view]) => !existingViews.has(key([schema, view])));
-  if (missingViews.length > 0) {
-    for (const [schema, view] of missingViews) {
-      console.error(`FAIL: missing view ${schema}.${view}`);
-    }
-    process.exit(1);
-  }
-  console.log(`PASS: required views present (${REQUIRED_VIEWS.length})`);
+  try {
+    await client.connect();
 
-  const colRows = await client.query(`
-    SELECT table_schema, table_name, column_name
-    FROM information_schema.columns;
-  `);
-  const existingColumns = new Set(colRows.rows.map((row) => key([row.table_schema, row.table_name, row.column_name])));
-  const missingColumns = REQUIRED_COLUMNS.filter(
-    ([schema, table, column]) => !existingColumns.has(key([schema, table, column]))
-  );
-  if (missingColumns.length > 0) {
-    for (const [schema, table, column] of missingColumns) {
-      console.error(`FAIL: missing column ${schema}.${table}.${column}`);
-    }
-    process.exit(1);
-  }
-  console.log(`PASS: required columns present (${REQUIRED_COLUMNS.length})`);
-
-  // Content-drift verification runs on fresh CI databases with no seeded users.
-  // Keep owner-role enforcement for runtime checks, but skip it when verify-content is requested.
-  if (!verifyContent) {
-    const ownerRes = await client.query(`
-      SELECT count(*)::int AS owner_count
-      FROM identity.users
-      WHERE role = 'Owner'::identity.role_enum;
+    const tableRows = await client.query(`
+      SELECT table_schema, table_name
+      FROM information_schema.tables
+      WHERE table_type = 'BASE TABLE';
     `);
-    const ownerCount = ownerRes.rows[0]?.owner_count ?? 0;
-    if (ownerCount < 1) {
-      console.error("FAIL: expected at least 1 Owner in identity.users");
+    const existingTables = new Set(tableRows.rows.map((row) => key([row.table_schema, row.table_name])));
+
+    const missingTables = REQUIRED_TABLES.filter(([schema, table]) => !existingTables.has(key([schema, table])));
+    if (missingTables.length > 0) {
+      for (const [schema, table] of missingTables) {
+        console.error(`FAIL: missing table ${schema}.${table}`);
+      }
       process.exit(1);
     }
-    console.log(`PASS: owner count is ${ownerCount}`);
-  } else {
-    console.log("PASS: owner-count runtime check skipped during --verify-content");
-  }
+    console.log(`PASS: required tables present (${REQUIRED_TABLES.length})`);
 
-  const missingSchemaUsage = [];
-  for (const schema of REQUIRED_SCHEMA_USAGE) {
-    const usageRes = await client.query(
-      `
-        SELECT has_schema_privilege('ih35_app', $1, 'USAGE') AS has_usage;
-      `,
-      [schema]
+    const viewRows = await client.query(`
+      SELECT table_schema, table_name
+      FROM information_schema.views;
+    `);
+    const existingViews = new Set(viewRows.rows.map((row) => key([row.table_schema, row.table_name])));
+    const missingViews = REQUIRED_VIEWS.filter(([schema, view]) => !existingViews.has(key([schema, view])));
+    if (missingViews.length > 0) {
+      for (const [schema, view] of missingViews) {
+        console.error(`FAIL: missing view ${schema}.${view}`);
+      }
+      process.exit(1);
+    }
+    console.log(`PASS: required views present (${REQUIRED_VIEWS.length})`);
+
+    const colRows = await client.query(`
+      SELECT table_schema, table_name, column_name
+      FROM information_schema.columns;
+    `);
+    const existingColumns = new Set(colRows.rows.map((row) => key([row.table_schema, row.table_name, row.column_name])));
+    const missingColumns = REQUIRED_COLUMNS.filter(
+      ([schema, table, column]) => !existingColumns.has(key([schema, table, column]))
     );
-    if (!usageRes.rows[0]?.has_usage) {
-      missingSchemaUsage.push(schema);
+    if (missingColumns.length > 0) {
+      for (const [schema, table, column] of missingColumns) {
+        console.error(`FAIL: missing column ${schema}.${table}.${column}`);
+      }
+      process.exit(1);
     }
-  }
-  if (missingSchemaUsage.length > 0) {
-    for (const schema of missingSchemaUsage) {
-      console.error(`FAIL: ih35_app missing USAGE on schema ${schema}`);
+    console.log(`PASS: required columns present (${REQUIRED_COLUMNS.length})`);
+
+    // Content-drift verification runs on fresh CI databases with no seeded users.
+    // Keep owner-role enforcement for runtime checks, but skip it when verify-content is requested.
+    if (!verifyContent) {
+      const ownerRes = await client.query(`
+        SELECT count(*)::int AS owner_count
+        FROM identity.users
+        WHERE role = 'Owner'::identity.role_enum;
+      `);
+      const ownerCount = ownerRes.rows[0]?.owner_count ?? 0;
+      if (ownerCount < 1) {
+        console.error("FAIL: expected at least 1 Owner in identity.users");
+        process.exit(1);
+      }
+      console.log(`PASS: owner count is ${ownerCount}`);
+    } else {
+      console.log("PASS: owner-count runtime check skipped during --verify-content");
     }
-    process.exit(1);
-  }
-  console.log(`PASS: ih35_app schema USAGE present (${REQUIRED_SCHEMA_USAGE.length})`);
 
-  const tableGrantRows = await client.query(
-    `
-      SELECT table_schema, table_name, privilege_type
-      FROM information_schema.role_table_grants
-      WHERE grantee = 'ih35_app'
-        AND privilege_type = 'SELECT';
-    `
-  );
-  const tableSelectGrants = new Set(tableGrantRows.rows.map((row) => key([row.table_schema, row.table_name])));
-  const missingTableSelect = REQUIRED_TABLE_SELECT_FOR_ROLE.filter(
-    ([schema, table]) => !tableSelectGrants.has(key([schema, table]))
-  );
-  if (missingTableSelect.length > 0) {
-    for (const [schema, table] of missingTableSelect) {
-      console.error(`FAIL: ih35_app missing SELECT on ${schema}.${table}`);
-    }
-    process.exit(1);
-  }
-  console.log(`PASS: ih35_app table SELECT present (${REQUIRED_TABLE_SELECT_FOR_ROLE.length})`);
-
-  if (verifyContent) {
-    const contentReport = await verifyMigrationContent({
-      client,
-      migrationsDirectory: path.resolve("db/migrations"),
-      minNumber: 1,
-      maxNumber: Number.MAX_SAFE_INTEGER,
-    });
-
-    for (const migration of contentReport.report) {
-      for (const skipped of migration.skipped ?? []) {
-        console.log(
-          `${skipped.reason}: migration ${migration.filename} declares ${skipped.kind}:${skipped.object} (${skipped.trace})`
-        );
+    const missingSchemaUsage = [];
+    for (const schema of REQUIRED_SCHEMA_USAGE) {
+      const usageRes = await client.query(
+        `
+          SELECT has_schema_privilege('ih35_app', $1, 'USAGE') AS has_usage;
+        `,
+        [schema]
+      );
+      if (!usageRes.rows[0]?.has_usage) {
+        missingSchemaUsage.push(schema);
       }
     }
+    if (missingSchemaUsage.length > 0) {
+      for (const schema of missingSchemaUsage) {
+        console.error(`FAIL: ih35_app missing USAGE on schema ${schema}`);
+      }
+      process.exit(1);
+    }
+    console.log(`PASS: ih35_app schema USAGE present (${REQUIRED_SCHEMA_USAGE.length})`);
 
-    if (contentReport.totalMissing > 0) {
+    const tableGrantRows = await client.query(
+      `
+        SELECT table_schema, table_name, privilege_type
+        FROM information_schema.role_table_grants
+        WHERE grantee = 'ih35_app'
+          AND privilege_type = 'SELECT';
+      `
+    );
+    const tableSelectGrants = new Set(tableGrantRows.rows.map((row) => key([row.table_schema, row.table_name])));
+    const missingTableSelect = REQUIRED_TABLE_SELECT_FOR_ROLE.filter(
+      ([schema, table]) => !tableSelectGrants.has(key([schema, table]))
+    );
+    if (missingTableSelect.length > 0) {
+      for (const [schema, table] of missingTableSelect) {
+        console.error(`FAIL: ih35_app missing SELECT on ${schema}.${table}`);
+      }
+      process.exit(1);
+    }
+    console.log(`PASS: ih35_app table SELECT present (${REQUIRED_TABLE_SELECT_FOR_ROLE.length})`);
+
+    if (verifyContent) {
+      const contentReport = await verifyMigrationContent({
+        client,
+        migrationsDirectory: path.resolve("db/migrations"),
+        minNumber: 1,
+        maxNumber: Number.MAX_SAFE_INTEGER,
+      });
+
       for (const migration of contentReport.report) {
-        for (const missing of migration.missing) {
-          const declaredObject =
-            missing.fqcn ||
-            missing.fqtn ||
-            missing.fqvn ||
-            missing.fqmvn ||
-            missing.fqin ||
-            missing.fqfn ||
-            missing.key ||
-            missing.fqtt ||
-            JSON.stringify(missing);
-          console.error(
-            `DRIFT: migration ${migration.filename} declares ${missing.kind}:${declaredObject} but object not present in schema`
+        for (const skipped of migration.skipped ?? []) {
+          console.log(
+            `${skipped.reason}: migration ${migration.filename} declares ${skipped.kind}:${skipped.object} (${skipped.trace})`
           );
         }
       }
-      console.error(`FAIL: db-verify-critical-runtime --verify-content (missing=${contentReport.totalMissing})`);
-      process.exit(1);
+
+      if (contentReport.totalMissing > 0) {
+        for (const migration of contentReport.report) {
+          for (const missing of migration.missing) {
+            const declaredObject =
+              missing.fqcn ||
+              missing.fqtn ||
+              missing.fqvn ||
+              missing.fqmvn ||
+              missing.fqin ||
+              missing.fqfn ||
+              missing.key ||
+              missing.fqtt ||
+              JSON.stringify(missing);
+            console.error(
+              `DRIFT: migration ${migration.filename} declares ${missing.kind}:${declaredObject} but object not present in schema`
+            );
+          }
+        }
+        console.error(`FAIL: db-verify-critical-runtime --verify-content (missing=${contentReport.totalMissing})`);
+        process.exit(1);
+      }
+
+      console.log(
+        `PASS: migration content verified (${contentReport.migrationCount} files, missing=${contentReport.totalMissing}, skipped=${contentReport.totalSkipped ?? 0})`
+      );
     }
 
-    console.log(
-      `PASS: migration content verified (${contentReport.migrationCount} files, missing=${contentReport.totalMissing}, skipped=${contentReport.totalSkipped ?? 0})`
-    );
+    console.log("PASS: db-verify-critical-runtime");
+  } finally {
+    await client.end().catch(() => {});
   }
+}
 
-  console.log("PASS: db-verify-critical-runtime");
-} catch (error) {
-  console.error(`FAIL: db-verify-critical-runtime -> ${String(error.message || error)}`);
-  process.exit(1);
-} finally {
-  await client.end();
+const MAX_ATTEMPTS = 3;
+for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+  try {
+    await runVerification();
+    break;
+  } catch (error) {
+    if (isTransientConnectionError(error) && attempt < MAX_ATTEMPTS) {
+      console.warn(
+        `WARN: db-verify-critical-runtime transient connection error (attempt ${attempt}/${MAX_ATTEMPTS}): ${String(
+          error.message || error
+        )} -- retrying`
+      );
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      continue;
+    }
+    console.error(`FAIL: db-verify-critical-runtime -> ${String(error.message || error)}`);
+    process.exit(1);
+  }
 }
