@@ -45,6 +45,7 @@ import { registerAttachmentsRoutes } from "./documents/attachments.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
 import { registerDispatchCancelLoadRoutes } from "./dispatch/cancel-load.routes.js";
 import { registerDispatchSheetHtmlRoutes } from "./dispatch/dispatch-sheet.routes.js";
+import { registerDispatchLoadAssignRoutes } from "./dispatch/load-assign.routes.js";
 import { registerDispatchQuicksaveRoutes } from "./dispatch/quicksave.routes.js";
 import { registerDispatchCancellationRoutes } from "./dispatch/cancellation.routes.js";
 import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinements.routes.js";
@@ -434,6 +435,7 @@ async function main() {
   await registerDispatchLoadRoutes(app);
   await registerDispatchCancelLoadRoutes(app);
   await registerDispatchSheetHtmlRoutes(app);
+  await registerDispatchLoadAssignRoutes(app);
   await registerDispatchQuicksaveRoutes(app);
   await registerDispatchCancellationRoutes(app);
   await registerDispatchRefinementsRoutes(app);

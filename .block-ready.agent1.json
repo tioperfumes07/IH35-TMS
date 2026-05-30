@@ -1,19 +1,23 @@
 {
-  "block_id": "INT-4",
+  "block_id": "INT-5",
   "phase": "Dispatch 5",
-  "task": "INT-4",
+  "task": "INT-5",
   "allowed_files": [
-    "db/migrations/0281_dispatch_cancel_reason.sql",
-    "apps/backend/src/dispatch/cancel-load.routes.ts",
-    "apps/backend/src/dispatch/cancel-load.routes.test.ts",
-    "apps/backend/src/dispatch/load.shared.ts",
+    "db/migrations/0282_driver_repair_link.sql",
+    "apps/backend/src/dispatch/driver-availability.service.ts",
+    "apps/backend/src/dispatch/driver-availability.service.test.ts",
+    "apps/backend/src/dispatch/load-assign.routes.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/dispatch/CancelLoadModal.tsx",
+    "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx",
     "apps/frontend/src/api/dispatch.ts",
+    "scripts/verify-driver-repair-guard.mjs",
+    "scripts/verify-guards/1002-verify-driver-repair-guard.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": false
+  "guard_required": true
 }
