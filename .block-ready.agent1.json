@@ -1,15 +1,14 @@
 {
-  "block_id": "FACT-1",
+  "block_id": "FACT-2",
   "phase": "Dispatch 5",
-  "task": "FACT-1",
+  "task": "FACT-2",
   "allowed_files": [
-    "db/migrations/0286_factoring_batch.sql",
-    "apps/backend/src/factoring/batch.routes.ts",
-    "apps/backend/src/factoring/batch.routes.test.ts",
+    "db/migrations/0287_factoring_reserve_movement.sql",
+    "apps/backend/src/factoring/reserve.service.ts",
+    "apps/backend/src/factoring/reserve.service.test.ts",
     "apps/backend/src/factoring/batch.service.ts",
-    "apps/backend/src/factoring/batch.shared.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/factoring/BatchWizard.tsx",
+    "apps/frontend/src/pages/factoring/BatchDetail.tsx",
     "apps/frontend/src/api/factoring.ts",
     ".block-ready.agent1.json"
   ],
