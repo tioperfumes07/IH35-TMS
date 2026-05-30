@@ -1,15 +1,15 @@
 {
-  "block_id": "FACT-2",
+  "block_id": "FACT-3",
   "phase": "Dispatch 5",
-  "task": "FACT-2",
+  "task": "FACT-3",
   "allowed_files": [
-    "db/migrations/0287_factoring_reserve_movement.sql",
-    "apps/backend/src/factoring/reserve.service.ts",
-    "apps/backend/src/factoring/reserve.service.test.ts",
-    "apps/backend/src/factoring/batch.service.ts",
+    "db/migrations/0288_factoring_bank_match.sql",
+    "apps/backend/src/factoring/bank-match.service.ts",
+    "apps/backend/src/factoring/bank-match.service.test.ts",
+    "apps/backend/src/banking/recon.service.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/factoring/BatchDetail.tsx",
-    "apps/frontend/src/api/factoring.ts",
+    "apps/frontend/src/pages/banking/ReconMatchSuggestions.tsx",
+    "apps/frontend/src/api/banking.ts",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],

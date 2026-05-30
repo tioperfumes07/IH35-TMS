@@ -5,6 +5,8 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { normalizeBankTransactionDescription } from "./bank-tx-dedup.js";
 import { suggestionConfidence } from "./obligation-reconcile.logic.js";
+import { appendFactoringSuggestions } from "./recon.service.js";
+import { FactoringBankMatchError, applyMatch } from "../factoring/bank-match.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({
@@ -29,7 +31,7 @@ const suggestionsQuerySchema = companyQuerySchema.extend({
 
 const reconcileBodySchema = z.object({
   bank_transaction_id: z.string().uuid(),
-  obligation_type: z.enum(["load", "settlement", "fuel", "work_order", "ar_invoice", "bill"]),
+  obligation_type: z.enum(["load", "settlement", "fuel", "work_order", "ar_invoice", "bill", "factoring_batch"]),
   obligation_id: z.string().uuid(),
 });
 
@@ -371,7 +373,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
         [txn.description, txn.merchant_name].filter(Boolean).join(" ") || "transaction"
       );
       const candidates = await loadObligationCandidates(client, q.data.operating_company_id);
-      const scored: Array<ObligationRow & { confidence: number; lev: number }> = [];
+      const scored: Array<ObligationRow & { confidence: number; lev: number; suggestion_source: "obligation" }> = [];
       for (const c of candidates) {
         const oblDesc = normalizeBankTransactionDescription(c.label);
         const { passes, score, lev } = suggestionConfidence({
@@ -383,10 +385,16 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           descObl: oblDesc,
         });
         if (!passes) continue;
-        scored.push({ ...c, confidence: score, lev });
+        scored.push({ ...c, confidence: score, lev, suggestion_source: "obligation" });
       }
       scored.sort((a, b) => b.confidence - a.confidence);
-      return { suggestions: scored.slice(0, 3) };
+      const suggestions = await appendFactoringSuggestions({
+        client,
+        operating_company_id: q.data.operating_company_id,
+        bank_transaction_id: q.data.bank_transaction_id,
+        baseSuggestions: scored.slice(0, 3),
+      });
+      return { suggestions };
     });
 
     if ("error" in payload && payload.error === "not_found") return reply.code(404).send({ error: "transaction_not_found" });
@@ -421,6 +429,31 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
         if (!lockRes.rows[0]) {
           await client.query("ROLLBACK");
           return false;
+        }
+
+        if (body.data.obligation_type === "factoring_batch") {
+          const applied = await applyMatch(body.data.obligation_id, companyId, { client });
+          if (applied.bank_txn_id !== body.data.bank_transaction_id) {
+            await client.query("ROLLBACK");
+            return "transaction_mismatch" as const;
+          }
+
+          await appendCrudAudit(
+            client,
+            user.uuid,
+            "banking.obligation_reconcile.applied",
+            {
+              resource_type: "banking.bank_transactions",
+              resource_id: body.data.bank_transaction_id,
+              obligation_type: body.data.obligation_type,
+              obligation_id: applied.batch_id,
+              bank_match_suggestion_id: body.data.obligation_id,
+            },
+            "info",
+            "P7-BLOCK-K-RECON"
+          );
+          await client.query("COMMIT");
+          return true;
         }
 
         let loadId: string | null = null;
@@ -484,8 +517,14 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
       }
     });
 
+    if (ok === "transaction_mismatch") return reply.code(409).send({ error: "suggestion_transaction_mismatch" });
     if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
     return { ok: true };
+  }).setErrorHandler((error, _req, reply) => {
+    if (error instanceof FactoringBankMatchError) {
+      return reply.code(error.statusCode).send({ error: error.code });
+    }
+    return reply.send(error);
   });
 
   app.post("/api/v1/banking/reconcile/bulk", async (req, reply) => {
