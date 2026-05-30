@@ -43,6 +43,7 @@ import { registerDocsFoundationRoutes } from "./docs/docs.routes.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerAttachmentsRoutes } from "./documents/attachments.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
+import { registerDispatchCancelLoadRoutes } from "./dispatch/cancel-load.routes.js";
 import { registerDispatchSheetHtmlRoutes } from "./dispatch/dispatch-sheet.routes.js";
 import { registerDispatchQuicksaveRoutes } from "./dispatch/quicksave.routes.js";
 import { registerDispatchCancellationRoutes } from "./dispatch/cancellation.routes.js";
@@ -431,6 +432,7 @@ async function main() {
   await registerDocsFilesRoutes(app);
   await registerAttachmentsRoutes(app);
   await registerDispatchLoadRoutes(app);
+  await registerDispatchCancelLoadRoutes(app);
   await registerDispatchSheetHtmlRoutes(app);
   await registerDispatchQuicksaveRoutes(app);
   await registerDispatchCancellationRoutes(app);
