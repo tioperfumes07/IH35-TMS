@@ -5,6 +5,8 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { normalizeBankTransactionDescription } from "./bank-tx-dedup.js";
 import { suggestionConfidence } from "./obligation-reconcile.logic.js";
+import { appendFactoringSuggestions } from "./recon.service.js";
+import { FactoringBankMatchError, applyMatch } from "../factoring/bank-match.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const companyQuerySchema = z.object({
@@ -29,7 +31,7 @@ const suggestionsQuerySchema = companyQuerySchema.extend({
 
 const reconcileBodySchema = z.object({
   bank_transaction_id: z.string().uuid(),
-  obligation_type: z.enum(["load", "settlement", "fuel", "work_order", "ar_invoice", "bill"]),
+  obligation_type: z.enum(["load", "settlement", "fuel", "work_order", "ar_invoice", "bill", "factoring_batch"]),
   obligation_id: z.string().uuid(),
 });
 
@@ -371,7 +373,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
         [txn.description, txn.merchant_name].filter(Boolean).join(" ") || "transaction"
       );
       const candidates = await loadObligationCandidates(client, q.data.operating_company_id);
-      const scored: Array<ObligationRow & { confidence: number; lev: number }> = [];
+      const scored: Array<ObligationRow & { confidence: number; lev: number; suggestion_source: "obligation" }> = [];
       for (const c of candidates) {
         const oblDesc = normalizeBankTransactionDescription(c.label);
         const { passes, score, lev } = suggestionConfidence({
@@ -383,10 +385,16 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           descObl: oblDesc,
         });
         if (!passes) continue;
-        scored.push({ ...c, confidence: score, lev });
+        scored.push({ ...c, confidence: score, lev, suggestion_source: "obligation" });
       }
       scored.sort((a, b) => b.confidence - a.confidence);
-      return { suggestions: scored.slice(0, 3) };
+      const suggestions = await appendFactoringSuggestions({
+        client,
+        operating_company_id: q.data.operating_company_id,
+        bank_transaction_id: q.data.bank_transaction_id,
+        baseSuggestions: scored.slice(0, 3),
+      });
+      return { suggestions };
     });
 
     if ("error" in payload && payload.error === "not_found") return reply.code(404).send({ error: "transaction_not_found" });
@@ -407,10 +415,12 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     if (!companyHeader.success) return sendValidationError(reply, companyHeader.error);
     const companyId = companyHeader.data.operating_company_id;
 
-    const ok = await withCompanyScope(user.uuid, companyId, async (client) => {
-      await client.query("BEGIN");
-      try {
-        const lockRes = await client.query<{ id: string }>(
+    let ok: boolean | "transaction_mismatch";
+    try {
+      ok = await withCompanyScope(user.uuid, companyId, async (client) => {
+        await client.query("BEGIN");
+        try {
+          const lockRes = await client.query<{ id: string }>(
           `
             SELECT id FROM banking.bank_transactions
             WHERE id = $1::uuid AND operating_company_id = $2::uuid
@@ -418,26 +428,51 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           `,
           [body.data.bank_transaction_id, companyId]
         );
-        if (!lockRes.rows[0]) {
-          await client.query("ROLLBACK");
-          return false;
-        }
+          if (!lockRes.rows[0]) {
+            await client.query("ROLLBACK");
+            return false;
+          }
 
-        let loadId: string | null = null;
-        let billId: string | null = null;
-        let settlementId: string | null = null;
-        let linkedId: string | null = null;
-        let categoryKind: string | null = null;
+          if (body.data.obligation_type === "factoring_batch") {
+            const applied = await applyMatch(body.data.obligation_id, companyId, { client });
+            if (applied.bank_txn_id !== body.data.bank_transaction_id) {
+              await client.query("ROLLBACK");
+              return "transaction_mismatch" as const;
+            }
 
-        if (body.data.obligation_type === "load") loadId = body.data.obligation_id;
-        if (body.data.obligation_type === "bill") billId = body.data.obligation_id;
-        if (body.data.obligation_type === "settlement") settlementId = body.data.obligation_id;
-        if (body.data.obligation_type === "fuel" || body.data.obligation_type === "work_order" || body.data.obligation_type === "ar_invoice") {
-          linkedId = body.data.obligation_id;
-          categoryKind = body.data.obligation_type === "ar_invoice" ? "invoice" : body.data.obligation_type;
-        }
+            await appendCrudAudit(
+              client,
+              user.uuid,
+              "banking.obligation_reconcile.applied",
+              {
+                resource_type: "banking.bank_transactions",
+                resource_id: body.data.bank_transaction_id,
+                obligation_type: body.data.obligation_type,
+                obligation_id: applied.batch_id,
+                bank_match_suggestion_id: body.data.obligation_id,
+              },
+              "info",
+              "P7-BLOCK-K-RECON"
+            );
+            await client.query("COMMIT");
+            return true;
+          }
 
-        await client.query(
+          let loadId: string | null = null;
+          let billId: string | null = null;
+          let settlementId: string | null = null;
+          let linkedId: string | null = null;
+          let categoryKind: string | null = null;
+
+          if (body.data.obligation_type === "load") loadId = body.data.obligation_id;
+          if (body.data.obligation_type === "bill") billId = body.data.obligation_id;
+          if (body.data.obligation_type === "settlement") settlementId = body.data.obligation_id;
+          if (body.data.obligation_type === "fuel" || body.data.obligation_type === "work_order" || body.data.obligation_type === "ar_invoice") {
+            linkedId = body.data.obligation_id;
+            categoryKind = body.data.obligation_type === "ar_invoice" ? "invoice" : body.data.obligation_type;
+          }
+
+          await client.query(
           `
             UPDATE banking.bank_transactions
             SET
@@ -463,7 +498,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           ]
         );
 
-        await appendCrudAudit(
+          await appendCrudAudit(
           client,
           user.uuid,
           "banking.obligation_reconcile.applied",
@@ -476,14 +511,21 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
           "info",
           "P7-BLOCK-K-RECON"
         );
-        await client.query("COMMIT");
-        return true;
-      } catch (e) {
-        await client.query("ROLLBACK");
-        throw e;
+          await client.query("COMMIT");
+          return true;
+        } catch (e) {
+          await client.query("ROLLBACK");
+          throw e;
+        }
+      });
+    } catch (error) {
+      if (error instanceof FactoringBankMatchError) {
+        return reply.code(error.statusCode).send({ error: error.code });
       }
-    });
+      throw error;
+    }
 
+    if (ok === "transaction_mismatch") return reply.code(409).send({ error: "suggestion_transaction_mismatch" });
     if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
     return { ok: true };
   });

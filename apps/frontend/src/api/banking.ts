@@ -831,6 +831,20 @@ export function uploadBankStatementCsv(file: File, bankAccountId: string) {
 }
 
 export type ObligationType = "load" | "settlement" | "fuel" | "work_order" | "ar_invoice" | "bill";
+export type ReconcileSuggestionType = ObligationType | "factoring_batch";
+
+export type ReconcileSuggestion = {
+  obligation_type: ReconcileSuggestionType;
+  obligation_id: string;
+  label: string;
+  amount_cents: number;
+  event_date: string;
+  confidence: number;
+  lev: number;
+  suggestion_source?: "obligation" | "factoring";
+  bank_match_suggestion_id?: string;
+  batch_number?: string;
+};
 
 export type UnmatchedBankTxnRow = {
   id: string;
@@ -884,15 +898,7 @@ export function listReconcileObligations(operatingCompanyId: string) {
 export function getReconcileSuggestions(operatingCompanyId: string, bankTransactionId: string) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId, bank_transaction_id: bankTransactionId });
   return apiRequest<{
-    suggestions: Array<{
-      obligation_type: ObligationType;
-      obligation_id: string;
-      label: string;
-      amount_cents: number;
-      event_date: string;
-      confidence: number;
-      lev: number;
-    }>;
+    suggestions: ReconcileSuggestion[];
   }>(`/api/v1/banking/reconcile/suggestions?${q}`);
 }
 
@@ -903,6 +909,23 @@ export function reconcileBankTransaction(
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ ok: true }>(`/api/v1/banking/reconcile?${q}`, { method: "POST", body });
 }
+
+export function applyFactoringBankMatch(operatingCompanyId: string, suggestionId: string) {
+  return apiRequest<{ ok: true; applied: { id: string; bank_txn_id: string; batch_id: string; applied_at: string } }>(
+    `/api/v1/banking/reconcile/factoring/apply`,
+    {
+      method: "POST",
+      body: {
+        operating_company_id: operatingCompanyId,
+        suggestion_id: suggestionId,
+      },
+    }
+  );
+}
+
+export const bankMatch = {
+  applyMatch: applyFactoringBankMatch,
+};
 
 export function bulkReconcileAction(
   operatingCompanyId: string,

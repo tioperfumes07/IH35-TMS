@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import {
   bulkReconcileAction,
   getPlaidBankAccounts,
-  getReconcileSuggestions,
   listReconcileObligations,
   listUnmatchedReconcileTransactions,
   reconcileBankTransaction,
@@ -18,6 +17,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReconMatchSuggestions } from "./ReconMatchSuggestions";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -208,7 +208,7 @@ export function BankingObligationReconcilePage() {
                   <div className="text-xs text-slate-600">
                     {row.transaction_date} · {row.description ?? row.merchant_name ?? "—"}
                   </div>
-                  <SuggestionChips
+                  <ReconMatchSuggestions
                     companyId={companyId}
                     bankTransactionId={row.id}
                     disabled={reconcileMutation.isPending}
@@ -219,6 +219,9 @@ export function BankingObligationReconcilePage() {
                         obligation_id,
                       })
                     }
+                    onFactoringApplied={() => {
+                      void queryClient.invalidateQueries({ queryKey: ["banking", "reconcile-unmatched"] });
+                    }}
                   />
                 </div>
               </article>
@@ -259,37 +262,6 @@ export function BankingObligationReconcilePage() {
           </div>
         </section>
       </div>
-    </div>
-  );
-}
-
-function SuggestionChips(props: {
-  companyId: string;
-  bankTransactionId: string;
-  disabled?: boolean;
-  onAccept: (obligation_type: ObligationType, obligation_id: string) => void;
-}) {
-  const q = useQuery({
-    queryKey: ["banking", "reconcile-suggestions", props.companyId, props.bankTransactionId],
-    queryFn: () => getReconcileSuggestions(props.companyId, props.bankTransactionId),
-    enabled: Boolean(props.companyId && props.bankTransactionId),
-  });
-  const sug = q.data?.suggestions ?? [];
-  if (sug.length === 0) return null;
-  return (
-    <div className="mt-1 flex flex-wrap gap-1">
-      {sug.map((s) => (
-        <button
-          key={`${s.obligation_id}-${s.obligation_type}`}
-          type="button"
-          disabled={props.disabled}
-          title="Apply this match"
-          onClick={() => props.onAccept(s.obligation_type, s.obligation_id)}
-          className="rounded bg-amber-50 px-1 text-[10px] text-amber-900 enabled:hover:bg-amber-100 disabled:opacity-50"
-        >
-          {s.label} ({Math.round(s.confidence * 100)}%)
-        </button>
-      ))}
     </div>
   );
 }
