@@ -215,6 +215,8 @@ jobs:
 
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
+      - name: Verify integrity anomaly tenant scope
+        run: npm run verify:integrity-anomaly-tenant-scope
 
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
