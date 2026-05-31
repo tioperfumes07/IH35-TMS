@@ -1,1 +1,17 @@
-{"block_id":"FACT-5","phase":"Dispatch 5","task":"FACT-5","allowed_files":["db/migrations/0290_factoring_reserve_running_balance.sql","apps/backend/src/factoring/reserve.service.ts","apps/backend/src/factoring/reserve.service.test.ts","apps/backend/src/factoring/reserve.routes.ts","apps/backend/src/factoring/index.ts","apps/backend/src/index.ts","apps/frontend/src/pages/factoring/ReserveDashboard.tsx","apps/frontend/src/pages/factoring/index.tsx","apps/frontend/src/api/factoring.ts","docs/locked-ui-surface.json",".block-ready.agent1.json"],"extra_gates":[],"runtime_path":"src","db_required":true,"guard_required":false}
+{
+  "block_id": "P8-P0-LOADS",
+  "phase": "Phase 8 P0",
+  "task": "P8-P0-LOADS",
+  "allowed_files": [
+    "apps/backend/src/mdata/loads.routes.ts",
+    "apps/backend/src/mdata/loads.routes.test.ts",
+    "apps/backend/src/mdata/index.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-no-empty-string-uuid-bind.mjs",
+    ".block-ready.agent1.json"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}

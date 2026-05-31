@@ -30,6 +30,8 @@ const stopStatusSchema = z.enum(["pending", "arrived", "departed", "cancelled"])
 const isoDatetimeSchema = z.string().datetime({ offset: true });
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+const optionalUuidQueryFilter = z.preprocess((value) => (value === "" ? undefined : value), z.string().uuid().optional());
+
 const listLoadsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -40,12 +42,22 @@ const listLoadsQuerySchema = z.object({
       return undefined;
     }, z.array(loadStatusSchema).max(20).optional())
     .optional(),
-  customer_id: z.string().uuid().optional(),
-  driver_id: z.string().uuid().optional(),
+  customer_id: optionalUuidQueryFilter,
+  driver_id: optionalUuidQueryFilter,
   operating_company_id: z
     .preprocess((value) => {
-      if (Array.isArray(value)) return value;
-      if (typeof value === "string") return value.split(",").map((entry) => entry.trim()).filter(Boolean);
+      if (Array.isArray(value)) {
+        const entries = value
+          .map((entry) => (entry === "" ? undefined : entry))
+          .filter((entry): entry is string => typeof entry === "string")
+          .map((entry) => entry.trim())
+          .filter(Boolean);
+        return entries.length > 0 ? entries : undefined;
+      }
+      if (typeof value === "string") {
+        const entries = value.split(",").map((entry) => entry.trim()).filter(Boolean);
+        return entries.length > 0 ? entries : undefined;
+      }
       return undefined;
     }, z.array(z.string().uuid()).max(20).optional())
     .optional(),
