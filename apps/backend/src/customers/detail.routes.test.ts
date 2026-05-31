@@ -53,6 +53,17 @@ describeIntegration("customer detail routes", () => {
     expect(body.customer?.id).toBe("integration-customer");
     expect(body.customer?.name).toBe("Integration Customer");
   });
+
+  it("returns 400 when :id is not a UUID", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/customers/not-a-uuid/detail?operating_company_id=${randomUUID()}`,
+      headers: testAuthHeaders(undefined, "Owner"),
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: "invalid_customer_id" });
+  });
 });
 
 describe("customer detail routes (always-on smoke)", () => {

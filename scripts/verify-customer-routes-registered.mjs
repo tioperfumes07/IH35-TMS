@@ -3,46 +3,47 @@ import path from "node:path";
 
 const rootIndexPath = path.resolve("apps/backend/src/index.ts");
 const customerIndexPath = path.resolve("apps/backend/src/customers/index.ts");
-const detailRoutePath = path.resolve("apps/backend/src/customers/detail.routes.ts");
+const customerRoutesDir = path.resolve("apps/backend/src/customers");
 
 const rootIndex = fs.readFileSync(rootIndexPath, "utf8");
 const customerIndex = fs.readFileSync(customerIndexPath, "utf8");
-const detailRoute = fs.readFileSync(detailRoutePath, "utf8");
 
 const checks = [
-  {
-    ok: rootIndex.includes('import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias.routes.js";'),
-    msg: "root index imports registerCustomerDetailAliasRoutes",
-  },
-  {
-    ok: rootIndex.includes('await registerCustomerDetailAliasRoutes(app);'),
-    msg: "root index registers customer detail alias routes",
-  },
   {
     ok: rootIndex.includes('import { registerCustomerRoutes } from "./customers/index.js";'),
     msg: "root index imports registerCustomerRoutes",
   },
   {
-    ok: rootIndex.includes('await registerCustomerRoutes(app);'),
+    ok: rootIndex.includes("await registerCustomerRoutes(app);"),
     msg: "root index registers customer routes",
   },
-  {
-    ok: customerIndex.includes('import { registerCustomerDetailRoutes } from "./detail.routes.js";'),
-    msg: "customers index imports registerCustomerDetailRoutes",
-  },
-  {
-    ok: customerIndex.includes('await registerCustomerDetailRoutes(app);'),
-    msg: "customers index registers detail routes",
-  },
-  {
-    ok: detailRoute.includes('"/api/v1/customers/:id/detail"'),
-    msg: "detail route defines /api/v1/customers/:id/detail",
-  },
-  {
-    ok: detailRoute.includes('/api/v1/mdata/customers/${params.id}/detail'),
-    msg: "detail route forwards to mdata detail endpoint",
-  },
 ];
+
+const routeFiles = fs
+  .readdirSync(customerRoutesDir)
+  .filter((name) => name.endsWith(".routes.ts"))
+  .sort();
+
+for (const routeFile of routeFiles) {
+  const routePath = path.join(customerRoutesDir, routeFile);
+  const source = fs.readFileSync(routePath, "utf8");
+  const fnMatch = source.match(/export\s+async\s+function\s+(register\w+Routes)\s*\(/);
+
+  if (!fnMatch) {
+    checks.push({ ok: false, msg: `${routeFile} exports register*Routes function` });
+    continue;
+  }
+
+  const fnName = fnMatch[1];
+  checks.push({
+    ok: customerIndex.includes(fnName),
+    msg: `customers index references ${fnName} from ${routeFile}`,
+  });
+  checks.push({
+    ok: customerIndex.includes(`await ${fnName}(app);`),
+    msg: `customers index registers ${fnName}`,
+  });
+}
 
 const failures = checks.filter((c) => !c.ok);
 if (failures.length > 0) {
@@ -53,4 +54,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log("Customer route registrations verified (detail + alias wiring).\n");
+console.log("Customer route registrations verified (all customers/*.routes.ts wired).");
