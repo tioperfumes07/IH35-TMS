@@ -126,16 +126,6 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
         title="Request New COI"
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => createMutation.mutate()} loading={createMutation.isPending}>
-              Submit Request
-            </Button>
-          </div>
-        }
       >
         <div className="grid gap-2">
           <label className="text-xs font-semibold text-gray-600">
@@ -169,6 +159,14 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
               placeholder="Optional details for the request"
             />
           </label>
+        </div>
+        <div className="mt-3 flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => createMutation.mutate()} loading={createMutation.isPending}>
+            Submit Request
+          </Button>
         </div>
       </Modal>
     </DataPanel>
