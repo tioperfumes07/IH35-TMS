@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { createCoiRequest as createInsuranceCoiRequest, listCoiRequests as listInsuranceCoiRequests, type CoiRequestStatus } from "./insurance";
 
 export type RecordCustomerPaymentPayload = {
   date: string;
@@ -41,4 +42,18 @@ export function unapplyCustomerPayment(customerId: string, paymentId: string) {
   return apiRequest<{ ok: boolean }>(`/api/v1/customers/${customerId}/payments/${paymentId}/unapply`, {
     method: "POST",
   });
+}
+
+
+export function listCoiRequests(customerId: string, params: { operating_company_id: string; status?: CoiRequestStatus }) {
+  return listInsuranceCoiRequests(customerId, params);
+}
+
+export function createCoiRequest(customerId: string, payload: {
+  operating_company_id: string;
+  policy_id?: string | null;
+  notes?: string | null;
+  expires_at?: string | null;
+}) {
+  return createInsuranceCoiRequest(customerId, payload);
 }

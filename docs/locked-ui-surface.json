@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-31T21:22:08.474Z",
+  "generatedAt": "2026-05-31T21:42:26.840Z",
   "source": {
-    "branch": "feat/fact-wire-ui",
-    "commit": "ce937ee3a1fe32bcad9eab8cc77221b14112972a"
+    "branch": "feat/ins-04-wire-ui",
+    "commit": "7f0fe29a5f7bc0c25fb1485d4642672921f9cd11"
   },
   "routes": [
     "*",

@@ -555,3 +555,26 @@ export function createInsuranceLawsuit(payload: CreateInsuranceLawsuitPayload) {
 export function updateInsuranceLawsuit(id: string, operatingCompanyId: string, payload: UpdateInsuranceLawsuitPayload) {
   return insuranceLawsuitsApi.update(id, operatingCompanyId, payload);
 }
+
+export function listCoiRequests(customerId: string, params: { operating_company_id: string; status?: CoiRequestStatus }) {
+  return listInsuranceCoiRequests({
+    operating_company_id: params.operating_company_id,
+    customer_id: customerId,
+    status: params.status,
+  });
+}
+
+export function createCoiRequest(customerId: string, payload: {
+  operating_company_id: string;
+  policy_id?: string | null;
+  notes?: string | null;
+  expires_at?: string | null;
+}) {
+  return createInsuranceCoiRequest({
+    operating_company_id: payload.operating_company_id,
+    customer_id: customerId,
+    policy_id: payload.policy_id ?? null,
+    notes: payload.notes ?? null,
+    expires_at: payload.expires_at ?? null,
+  });
+}
