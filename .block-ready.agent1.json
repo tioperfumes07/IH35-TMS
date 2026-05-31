@@ -1,17 +1,16 @@
 {
-  "block_id": "P8-P0-LOADS",
+  "block_id": "P8-P0-TELEMETRY",
   "phase": "Phase 8 P0",
-  "task": "P8-P0-LOADS",
+  "task": "P8-P0-TELEMETRY",
   "allowed_files": [
-    "apps/backend/src/mdata/loads.routes.ts",
-    "apps/backend/src/mdata/loads.routes.test.ts",
-    "apps/backend/src/mdata/index.ts",
-    "apps/backend/src/index.ts",
-    "scripts/verify-no-empty-string-uuid-bind.mjs",
+    "apps/backend/src/telematics/positions.routes.ts",
+    "apps/backend/src/telematics/positions.routes.test.ts",
+    "scripts/verify-telematics-schema-references.mjs",
+    "package.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }
