@@ -70,6 +70,10 @@ import { MaintenanceReportsPage } from "../pages/maintenance/reports/Maintenance
 import { Compliance425CPage } from "../pages/maintenance/compliance/Compliance425CPage";
 import { CashAdvancesHomePage } from "../pages/cash-advances/CashAdvancesHome";
 import { FactoringHomePage } from "../pages/factoring/FactoringHome";
+import { BatchWizard } from "../pages/factoring/BatchWizard";
+import { BatchDetail } from "../pages/factoring/BatchDetail";
+import { FactorAdmin } from "../pages/factoring/FactorAdmin";
+import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
 import { AssetProfilePage } from "../pages/fleet/AssetProfilePage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
@@ -782,6 +786,38 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/batches/new"
+          element={
+            <ProtectedRoute>
+              <BatchWizard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/batches/:id"
+          element={
+            <ProtectedRoute>
+              <BatchDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/factors"
+          element={
+            <ProtectedRoute>
+              <FactorAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/reserves"
+          element={
+            <ProtectedRoute>
+              <ReserveDashboard />
             </ProtectedRoute>
           }
         />

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-30T19:30:25.101Z",
+  "generatedAt": "2026-05-31T21:22:08.474Z",
   "source": {
-    "branch": "feat/ins-07-insurance-module-ui",
-    "commit": "3d1dd3246e13a662c11758a99391f52c2e79a660"
+    "branch": "feat/fact-wire-ui",
+    "commit": "ce937ee3a1fe32bcad9eab8cc77221b14112972a"
   },
   "routes": [
     "*",
@@ -93,8 +93,12 @@
     "/drivers/settlements",
     "/eld",
     "/factoring",
+    "/factoring/batches/:id",
+    "/factoring/batches/new",
     "/factoring/equipment-loans",
+    "/factoring/factors",
     "/factoring/faro-imports",
+    "/factoring/reserves",
     "/factoring/vendor-merges",
     "/fleet/units/:id",
     "/form-425c",
