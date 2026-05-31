@@ -1,7 +1,8 @@
 import React from "react";
-import { Navigate, Route } from "react-router-dom";
+import { Navigate, Route, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
+import { useCompanyContext } from "../contexts/CompanyContext";
 import { Shell } from "../components/Shell";
 import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
@@ -306,6 +307,17 @@ function HomeRoute() {
 
 function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
   return <MaintenanceHomePage initialTab={tabId} />;
+}
+
+function FactoringBatchDetailRoute() {
+  const { id } = useParams<{ id: string }>();
+  const { selectedCompanyId } = useCompanyContext();
+
+  if (!id || !selectedCompanyId) {
+    return <div className="text-sm text-gray-500">Batch detail unavailable.</div>;
+  }
+
+  return <BatchDetail batchId={id} companyId={selectedCompanyId} />;
 }
 
 // Locked UI-surface sentinel paths verified by architecture guard.
@@ -801,7 +813,7 @@ export const ROUTES = React.Children.toArray(
           path="/factoring/batches/:id"
           element={
             <ProtectedRoute>
-              <BatchDetail />
+              <FactoringBatchDetailRoute />
             </ProtectedRoute>
           }
         />
