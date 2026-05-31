@@ -52,9 +52,9 @@ export async function registerTelematicsPositionsRoutes(app: FastifyInstance) {
           FROM telematics.vehicle_latest_position p
           JOIN mdata.units u
             ON u.id = p.unit_id
-           AND u.operating_company_id = p.operating_company_id
+           AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = p.operating_company_id
           WHERE p.operating_company_id = $1::uuid
-            AND u.active = true
+            AND u.deactivated_at IS NULL
           ORDER BY p.captured_at DESC
         `,
         [query.data.operating_company_id]

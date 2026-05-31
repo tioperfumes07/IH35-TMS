@@ -227,7 +227,8 @@
     "verify:driver-repair-guard": "node scripts/verify-driver-repair-guard.mjs",
     "verify:eld-foundation-coverage": "node scripts/verify-eld-foundation-coverage.mjs",
     "verify:no-orphan-migration-ledger-entries": "node --env-file=.env scripts/verify-no-orphan-migration-ledger-entries.mjs",
-    "verify:integrity-anomaly-tenant-scope": "node scripts/verify-integrity-anomaly-tenant-scope.mjs"
+    "verify:integrity-anomaly-tenant-scope": "node scripts/verify-integrity-anomaly-tenant-scope.mjs",
+    "verify:telematics-schema-references": "node scripts/verify-telematics-schema-references.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
