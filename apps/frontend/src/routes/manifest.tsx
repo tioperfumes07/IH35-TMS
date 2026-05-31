@@ -1,7 +1,8 @@
 import React from "react";
-import { Navigate, Route } from "react-router-dom";
+import { Navigate, Route, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
+import { useCompanyContext } from "../contexts/CompanyContext";
 import { Shell } from "../components/Shell";
 import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
@@ -70,6 +71,10 @@ import { MaintenanceReportsPage } from "../pages/maintenance/reports/Maintenance
 import { Compliance425CPage } from "../pages/maintenance/compliance/Compliance425CPage";
 import { CashAdvancesHomePage } from "../pages/cash-advances/CashAdvancesHome";
 import { FactoringHomePage } from "../pages/factoring/FactoringHome";
+import { BatchWizard } from "../pages/factoring/BatchWizard";
+import { BatchDetail } from "../pages/factoring/BatchDetail";
+import { FactorAdmin } from "../pages/factoring/FactorAdmin";
+import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
 import { AssetProfilePage } from "../pages/fleet/AssetProfilePage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
@@ -302,6 +307,17 @@ function HomeRoute() {
 
 function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
   return <MaintenanceHomePage initialTab={tabId} />;
+}
+
+function FactoringBatchDetailRoute() {
+  const { id } = useParams<{ id: string }>();
+  const { selectedCompanyId } = useCompanyContext();
+
+  if (!id || !selectedCompanyId) {
+    return <div className="text-sm text-gray-500">Batch detail unavailable.</div>;
+  }
+
+  return <BatchDetail batchId={id} companyId={selectedCompanyId} />;
 }
 
 // Locked UI-surface sentinel paths verified by architecture guard.
@@ -782,6 +798,38 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/batches/new"
+          element={
+            <ProtectedRoute>
+              <BatchWizard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/batches/:id"
+          element={
+            <ProtectedRoute>
+              <FactoringBatchDetailRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/factors"
+          element={
+            <ProtectedRoute>
+              <FactorAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/reserves"
+          element={
+            <ProtectedRoute>
+              <ReserveDashboard />
             </ProtectedRoute>
           }
         />
