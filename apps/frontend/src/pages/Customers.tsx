@@ -11,6 +11,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { CustomerCOITab } from "./customers/CustomerCOITab";
 
 type CustomerTabId =
   | "transaction_list"
@@ -23,7 +24,8 @@ type CustomerTabId =
   | "notes"
   | "tasks"
   | "opportunities"
-  | "conversations";
+  | "conversations"
+  | "coi_requests";
 
 const CUSTOMER_TABS: Array<{ id: CustomerTabId; label: string }> = [
   { id: "transaction_list", label: "Transaction List" },
@@ -37,6 +39,7 @@ const CUSTOMER_TABS: Array<{ id: CustomerTabId; label: string }> = [
   { id: "tasks", label: "Tasks" },
   { id: "opportunities", label: "Opportunities" },
   { id: "conversations", label: "Conversations" },
+  { id: "coi_requests", label: "COI Requests" },
 ];
 
 type ColumnKey =
@@ -461,6 +464,12 @@ export function CustomersPage() {
                     </div>
                   </div>
                 </div>
+              ) : activeTab === "coi_requests" ? (
+                <CustomerCOITab
+                  customerId={selectedCustomer.id}
+                  customerName={selectedCustomer.name}
+                  operatingCompanyId={companyId || undefined}
+                />
               ) : (
                 <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">No rows for this tab yet.</div>
               )}
