@@ -1,12 +1,11 @@
 {
-  "block_id": "MAINT-JUMP-TO-TAB-REMOVE",
-  "branch": "fix/maint-jump-to-tab-remove",
+  "block_id": "ELD-TAB-STYLE-NORMALIZE",
+  "branch": "fix/eld-tab-style-normalize",
   "phase": "Phase A",
-  "task": "MAINT-JUMP-TO-TAB-REMOVE",
+  "task": "ELD-TAB-STYLE-NORMALIZE",
   "allowed_files": [
-    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    "apps/frontend/src/components/_archived/JumpToTab.tsx",
-    "scripts/verify-maint-jump-to-tab-removed.mjs",
+    "apps/frontend/src/pages/eld/EldPage.tsx",
+    "scripts/verify-eld-tabs-canonical.mjs",
     "package.json",
     ".block-ready.agent1.json"
   ],
