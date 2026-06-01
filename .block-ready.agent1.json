@@ -1,12 +1,12 @@
 {
-  "block_id": "INS-07-FOLLOWUP-CREATE-MODAL",
-  "branch": "feat/ins-07-followup-create-modal",
+  "block_id": "INS-07-FOLLOWUP-DETAIL-EDIT",
+  "branch": "feat/ins-07-followup-detail-edit",
   "phase": "Dispatch 3 Follow-up",
-  "task": "INS-07-FOLLOWUP-CREATE-MODAL",
+  "task": "INS-07-FOLLOWUP-DETAIL-EDIT",
   "allowed_files": [
-    "apps/frontend/src/pages/insurance/*",
-    "apps/frontend/src/components/insurance/*",
-    "scripts/verify-insurance-policy-create-button.mjs",
+    "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
+    "apps/frontend/src/pages/insurance/PolicyDetail.edit-archive.test.tsx",
+    "apps/frontend/src/api/insurance.ts",
     "package.json",
     ".block-ready.agent1.json"
   ],

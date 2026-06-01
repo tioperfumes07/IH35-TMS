@@ -467,6 +467,12 @@ export function updateInsurancePolicy(id: string, operatingCompanyId: string, pa
   return insurancePoliciesApi.update(id, operatingCompanyId, payload);
 }
 
+export function archiveInsurancePolicy(id: string, operatingCompanyId: string) {
+  return apiRequest<void>(`/api/v1/insurance/policies/${id}?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}`, {
+    method: "DELETE",
+  });
+}
+
 export function listInsuranceTypeCatalog(params: { operating_company_id: string; include_inactive?: boolean }) {
   return insuranceTypesApi.list(params);
 }
