@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   listInsurancePolicies,
@@ -7,6 +7,9 @@ import {
   type InsurancePolicy,
   type InsurancePolicyStatus,
 } from "../../api/insurance";
+import { useAuth } from "../../auth/useAuth";
+import { Button } from "../../components/Button";
+import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function formatMoney(cents: number) {
@@ -28,13 +31,17 @@ function statusBadge(status: InsurancePolicyStatus) {
 }
 
 export function PoliciesList() {
+  const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const companyId = selectedCompanyId ?? "";
+  const [createOpen, setCreateOpen] = useState(false);
 
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<"" | InsurancePolicyStatus>("");
   const [expiringSoonOnly, setExpiringSoonOnly] = useState(false);
+  const canCreatePolicy = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Accountant";
 
   const policiesQuery = useQuery({
     queryKey: ["insurance", "policies", companyId, typeFilter || "all", statusFilter || "all"],
@@ -69,8 +76,17 @@ export function PoliciesList() {
   return (
     <div className="space-y-4">
       <header className="rounded border border-gray-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Policies</h2>
-        <p className="mt-1 text-xs text-slate-600">Filter and review insurance policies. Click any row to open policy details.</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Policies</h2>
+            <p className="mt-1 text-xs text-slate-600">Filter and review insurance policies. Click any row to open policy details.</p>
+          </div>
+          {canCreatePolicy ? (
+            <Button type="button" onClick={() => setCreateOpen(true)}>
+              + Policy
+            </Button>
+          ) : null}
+        </div>
       </header>
 
       <section className="rounded border border-gray-200 bg-white p-3">
@@ -164,6 +180,16 @@ export function PoliciesList() {
           </tbody>
         </table>
       </div>
+
+      <PolicyCreateModal
+        open={createOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={async () => {
+          setCreateOpen(false);
+          await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", companyId] });
+        }}
+      />
     </div>
   );
 }
