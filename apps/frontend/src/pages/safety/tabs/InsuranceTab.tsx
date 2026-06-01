@@ -1,6 +1,6 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
-import { ClaimsTab } from "../../insurance/ClaimsTab";
 import { CoverageGapDashboard } from "../../insurance/CoverageGapDashboard";
+import { ClaimsTab } from "../../insurance/ClaimsTab";
 import { InsuranceLanding } from "../../insurance/InsuranceLanding";
 import { LawsuitsTab } from "../../insurance/LawsuitsTab";
 import { PoliciesList } from "../../insurance/PoliciesList";
