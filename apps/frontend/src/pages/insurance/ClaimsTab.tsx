@@ -1,8 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { listInsuranceClaims, type InsuranceClaim, type InsuranceClaimStatus } from "../../api/insurance";
+import { Button } from "../../components/Button";
+import { ClaimCreateModal } from "../../components/insurance/ClaimCreateModal";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { StatusBadge } from "../../components/layout/StatusBadge";
+import { useCompanyContext } from "../../contexts/CompanyContext";
 
 type Props = {
   operatingCompanyId?: string;
@@ -32,18 +36,23 @@ function formatMoney(cents: number): string {
 }
 
 export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
+  const { selectedCompanyId } = useCompanyContext();
+  const queryClient = useQueryClient();
+  const companyId = operatingCompanyId ?? selectedCompanyId ?? "";
+  const [createOpen, setCreateOpen] = useState(false);
+
   const query = useQuery({
-    queryKey: ["insurance-claims", operatingCompanyId ?? "none", policyId ?? "all", assetId ?? "all"],
+    queryKey: ["insurance-claims", companyId || "none", policyId ?? "all", assetId ?? "all"],
     queryFn: () =>
       listInsuranceClaims({
-        operating_company_id: operatingCompanyId!,
+        operating_company_id: companyId,
         policy_id: policyId,
         asset_id: assetId,
       }).then((result) => result.claims),
-    enabled: Boolean(operatingCompanyId),
+    enabled: Boolean(companyId),
   });
 
-  if (!operatingCompanyId) {
+  if (!companyId) {
     return (
       <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
         Select an operating company to view claims.
@@ -55,10 +64,13 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
 
   return (
     <DataPanel title="Claims">
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <span className="text-xs font-semibold text-gray-600">
           Statuses: {CLAIM_STATUS_FILTERS.filter((option) => option.value).map((option) => option.label).join(", ")}
         </span>
+        <Button type="button" size="sm" onClick={() => setCreateOpen((prev) => !prev)}>
+          {createOpen ? "Cancel" : "+ Claim"}
+        </Button>
       </div>
 
       {query.isLoading ? <div className="text-sm text-gray-500">Loading claims...</div> : null}
@@ -87,6 +99,16 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           </table>
         </div>
       ) : null}
+      <ClaimCreateModal
+        open={createOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={async () => {
+          setCreateOpen(false);
+          await queryClient.invalidateQueries({ queryKey: ["insurance-claims", companyId] });
+          await queryClient.invalidateQueries({ queryKey: ["insurance", "landing", "claims", companyId] });
+        }}
+      />
     </DataPanel>
   );
 }

@@ -1,13 +1,16 @@
 {
-  "block_id": "INS-07-FOLLOWUP-DETAIL-EDIT",
-  "branch": "feat/ins-07-followup-detail-edit",
+  "block_id": "INS-07-FOLLOWUP-CLAIMS-LAWSUITS-TABS",
+  "branch": "feat/ins-07-followup-claims-lawsuits-tabs",
   "phase": "Dispatch 3 Follow-up",
-  "task": "INS-07-FOLLOWUP-DETAIL-EDIT",
+  "task": "INS-07-FOLLOWUP-CLAIMS-LAWSUITS-TABS",
   "allowed_files": [
-    "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
-    "apps/frontend/src/pages/insurance/PolicyDetail.edit-archive.test.tsx",
-    "apps/frontend/src/api/insurance.ts",
-    "package.json",
+    "apps/frontend/src/pages/safety/tabs/InsuranceTab.tsx",
+    "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
+    "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
+    "apps/frontend/src/components/insurance/ClaimCreateModal.tsx",
+    "apps/frontend/src/components/insurance/LawsuitCreateModal.tsx",
+    "apps/frontend/src/pages/insurance/ClaimsTab.create-modal.test.tsx",
+    "apps/frontend/src/pages/insurance/LawsuitsTab.create-modal.test.tsx",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
