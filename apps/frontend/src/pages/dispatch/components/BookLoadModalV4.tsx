@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type UseFormSetValue } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
@@ -227,6 +227,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
     }
     finalizeBookLoadClose();
   }, [finalizeBookLoadClose, isDirty, overrideReason]);
+
+  const handleBookLoadHeaderClose = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      attemptBookLoadClose();
+    },
+    [attemptBookLoadClose]
+  );
 
   useEscapeKey(attemptBookLoadClose, open);
 
@@ -496,7 +505,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
             <button
               type="button"
               className="h-6 w-6 rounded text-sm text-gray-200 hover:bg-[#2e3c5a]"
-              onClick={attemptBookLoadClose}
+              onClick={handleBookLoadHeaderClose}
             >
               ×
             </button>
