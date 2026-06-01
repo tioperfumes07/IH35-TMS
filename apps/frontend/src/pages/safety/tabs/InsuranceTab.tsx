@@ -1,6 +1,8 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { CoverageGapDashboard } from "../../insurance/CoverageGapDashboard";
+import { ClaimsTab } from "../../insurance/ClaimsTab";
 import { InsuranceLanding } from "../../insurance/InsuranceLanding";
+import { LawsuitsTab } from "../../insurance/LawsuitsTab";
 import { PoliciesList } from "../../insurance/PoliciesList";
 import { PolicyDetail } from "../../insurance/PolicyDetail";
 import { TypeCatalogAdmin } from "../../insurance/TypeCatalogAdmin";
@@ -24,6 +26,12 @@ export function InsuranceTab() {
         <NavLink to="/safety/insurance/coverage-gaps" className={navClassName}>
           Coverage Gaps
         </NavLink>
+        <NavLink to="/safety/insurance/claims" className={navClassName}>
+          Claims
+        </NavLink>
+        <NavLink to="/safety/insurance/lawsuits" className={navClassName}>
+          Lawsuits
+        </NavLink>
       </nav>
 
       <Routes>
@@ -32,6 +40,8 @@ export function InsuranceTab() {
         <Route path="policies/:policyId" element={<PolicyDetail />} />
         <Route path="type-catalog" element={<TypeCatalogAdmin />} />
         <Route path="coverage-gaps" element={<CoverageGapDashboard />} />
+        <Route path="claims" element={<ClaimsTab />} />
+        <Route path="lawsuits" element={<LawsuitsTab />} />
         <Route path="*" element={<Navigate to="/safety/insurance" replace />} />
       </Routes>
     </div>
