@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  archiveInsurancePolicy,
   getInsurancePolicy,
   listInsuranceClaims,
   listInsuranceCoiRequests,
@@ -74,6 +75,16 @@ export function PolicyDetail() {
     onError: () => pushToast("Failed to update policy", "error"),
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: () => archiveInsurancePolicy(policyId!, companyId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", companyId] });
+      pushToast("Policy archived", "success");
+      navigate("/safety/insurance/policies");
+    },
+    onError: () => pushToast("Failed to archive policy", "error"),
+  });
+
   const claims = claimsQuery.data ?? [];
   const claimIds = useMemo(() => new Set(claims.map((claim) => claim.id)), [claims]);
   const coiRows = useMemo(() => (coiQuery.data ?? []).filter((row) => row.policy_id === policyId), [coiQuery.data, policyId]);
@@ -107,6 +118,13 @@ export function PolicyDetail() {
     setEditing(true);
   };
 
+  const handleArchive = () => {
+    if (!policyId || archiveMutation.isPending) return;
+    const confirmed = window.confirm("Archive this policy? This action cannot be undone.");
+    if (!confirmed) return;
+    archiveMutation.mutate();
+  };
+
   return (
     <div className="space-y-4">
       <header className="rounded border border-gray-200 bg-white p-4">
@@ -120,9 +138,14 @@ export function PolicyDetail() {
               {policy.insurer_name} · {policy.coverage_type} · {policy.status}
             </p>
           </div>
-          <Button size="sm" variant="secondary" onClick={openEditPanel}>
-            Edit / Update
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={openEditPanel}>
+              Edit / Update
+            </Button>
+            <Button size="sm" variant="tertiary" loading={archiveMutation.isPending} onClick={handleArchive}>
+              Archive
+            </Button>
+          </div>
         </div>
 
         {editing ? (
