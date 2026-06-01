@@ -1,1 +1,17 @@
-{"block_id":"INS-04-WIRE-UI","phase":"Phase 8 P0","task":"INS-04-WIRE-UI","allowed_files":["apps/frontend/src/pages/CustomerDetail.tsx","apps/frontend/src/pages/customers/tabs/CoiRequestsTab.tsx","apps/frontend/src/api/insurance.ts","apps/frontend/src/api/customers.ts","docs/locked-ui-surface.json",".block-ready.agent1.json"],"extra_gates":[],"runtime_path":"src","db_required":false,"guard_required":false}
+{
+  "block_id": "INS-07-FOLLOWUP-CREATE-MODAL",
+  "branch": "feat/ins-07-followup-create-modal",
+  "phase": "Dispatch 3 Follow-up",
+  "task": "INS-07-FOLLOWUP-CREATE-MODAL",
+  "allowed_files": [
+    "apps/frontend/src/pages/insurance/*",
+    "apps/frontend/src/components/insurance/*",
+    "scripts/verify-insurance-policy-create-button.mjs",
+    "package.json",
+    ".block-ready.agent1.json"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
