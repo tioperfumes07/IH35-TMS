@@ -16,7 +16,6 @@ import {
 } from "../../api/maintenance";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
-import { HoverDropdown } from "../../components/shared/HoverDropdown";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -175,24 +174,6 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
         subtitle="Approved May 2 rebuild + Day 3 triage band"
         actions={
           <div className="flex items-center gap-2">
-            <HoverDropdown
-              trigger={<button className="rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700">Jump to tab</button>}
-              align="right"
-              minWidth={220}
-            >
-              <div className="space-y-1">
-                {SUBNAV.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="block w-full rounded px-2 py-1 text-left text-xs hover:bg-slate-100"
-                    onClick={() => setTab(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </HoverDropdown>
             <QuickActionsBar
               onCreate={(type) => {
                 setCreateWoType(type);

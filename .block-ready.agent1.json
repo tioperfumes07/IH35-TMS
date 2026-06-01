@@ -1,14 +1,13 @@
 {
-  "block_id": "HOME-BOOK-LOAD-MODAL-X-CLOSE",
-  "branch": "fix/home-book-load-modal-x-close",
-  "phase": "Packet 2",
-  "task": "HOME-BOOK-LOAD-MODAL-X-CLOSE",
+  "block_id": "MAINT-JUMP-TO-TAB-REMOVE",
+  "branch": "fix/maint-jump-to-tab-remove",
+  "phase": "Phase A",
+  "task": "MAINT-JUMP-TO-TAB-REMOVE",
   "allowed_files": [
-    "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
-    "scripts/verify-book-load-modal-x-dismissible.mjs",
-    "scripts/verify-postgres-ssl-explicit.mjs",
+    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+    "apps/frontend/src/components/_archived/JumpToTab.tsx",
+    "scripts/verify-maint-jump-to-tab-removed.mjs",
     "package.json",
-    ".env.example",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
