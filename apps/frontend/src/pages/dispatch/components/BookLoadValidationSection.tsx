@@ -5,7 +5,7 @@ type Props = {
 export function BookLoadValidationSection({ issues }: Props) {
   const checks = issues.map((issue, index) => ({
     text: issue,
-    code: index < 4 ? "WF-044" : "advisory",
+    code: index < 4 ? "pm_check" : "advisory",
     advisory: index === issues.length - 1,
   }));
   const passCount = checks.filter((check) => !check.advisory).length;

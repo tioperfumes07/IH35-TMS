@@ -87,7 +87,7 @@ export function OwnerApprovalPortalPage() {
       <div className="mx-auto max-w-4xl space-y-4">
         <div className="rounded border border-slate-200 bg-white p-4 shadow-sm">
           <h1 className="text-lg font-semibold">Owner approval — cash advance request</h1>
-          <p className="mt-1 text-sm text-slate-600">WF-064: documented decision required (minimum 30 characters).</p>
+          <p className="mt-1 text-sm text-slate-600">Documented decision required (minimum 30 characters).</p>
         </div>
 
         {loading ? <p className="text-sm text-slate-600">Loading…</p> : null}
@@ -169,7 +169,7 @@ export function OwnerApprovalPortalPage() {
                 rows={5}
                 value={ownerNotes}
                 onChange={(e) => setOwnerNotes(e.target.value)}
-                placeholder="Document the business justification or denial rationale for audit (WF-064)."
+                placeholder="Document the business justification or denial rationale for audit."
               />
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button

@@ -162,7 +162,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
 
         <div className="mt-3 rounded border border-blue-200 bg-blue-50 p-2">
           <div className="mb-1 flex items-center justify-between">
-            <div className="font-semibold">WF-057 Bill Payment Linkage</div>
+            <div className="font-semibold">Bill Payment Linkage</div>
             <label className="inline-flex items-center gap-1">
               <input type="checkbox" checked={linkedBillEnabled} onChange={(e) => setLinkedBillEnabled(e.target.checked)} />
               Apply this advance directly to a vendor bill
@@ -259,7 +259,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
                 return;
               }
               if (linkedBillEnabled && !linkedBillId) {
-                pushToast("Select an unpaid bill for WF-057 linkage", "error");
+                pushToast("Select an unpaid bill to link this advance to", "error");
                 return;
               }
               if (Number(amount) <= 0) {

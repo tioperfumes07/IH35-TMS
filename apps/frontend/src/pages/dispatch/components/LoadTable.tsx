@@ -45,7 +45,7 @@ export function LoadTable({ rows, selectedLoadId, onRowClick, onDriverStatusClic
               <td className="truncate px-2 py-1">
                 <span className="inline-flex items-center gap-1">
                   {row.unit_number ?? "-"}
-                  {row.has_open_pm_due_wo ? <span title="PM-due advisory (WF-044)">⚡</span> : null}
+                  {row.has_open_pm_due_wo ? <span title="PM-due advisory">⚡</span> : null}
                   {row.is_dispatch_blocked ? <span title={row.dispatch_block_reason ?? "Dispatch blocked"}>🔒</span> : null}
                 </span>
               </td>

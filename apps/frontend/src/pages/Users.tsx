@@ -9,6 +9,7 @@ import {
   createIdentityWorkflow,
   createUser,
   deactivateUser,
+  IDENTITY_ROLE_CHANGE_ACTION_CODE,
   listUsers,
   type ReturningDispatcherDetectionResult,
 } from "../api/identity";
@@ -543,7 +544,7 @@ export function UsersPage() {
             if (!roleModalUser) return;
             try {
               await roleWorkflowMutation.mutateAsync({
-                action_code: "WF-064-IDENT-002",
+                action_code: IDENTITY_ROLE_CHANGE_ACTION_CODE,
                 target_user: roleModalUser.id,
                 payload: {
                   new_role: roleChangeRole,

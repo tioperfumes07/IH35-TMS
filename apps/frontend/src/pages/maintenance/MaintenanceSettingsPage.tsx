@@ -27,7 +27,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">PM Intervals</h3>
           <label className="mt-2 block text-xs text-gray-600">Default PM interval (days)</label>
           <input className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-sm" value={String(settings?.pm_interval_days_default ?? 30)} readOnly />
-          <div className="mt-1 text-[11px] text-gray-500">Read-only foundation in this block.</div>
+          <div className="mt-1 text-[11px] text-gray-500">View-only settings.</div>
         </section>
 
         <section className="rounded border border-gray-200 p-2">

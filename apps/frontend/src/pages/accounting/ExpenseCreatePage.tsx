@@ -61,7 +61,7 @@ export function ExpenseCreatePage() {
 
   return (
     <div className="space-y-4 p-4">
-      <PageHeader title="Create expense" subtitle="Uses vendor bills API today with QuickBooks vendor + account reference fields." />
+      <PageHeader title="Create expense" subtitle="Record a vendor expense or bill payment" />
       {!companyId ? <div className="text-sm text-red-600">Select an operating company in the shell header.</div> : null}
       <form className="mx-auto max-w-3xl space-y-3 rounded border border-gray-200 bg-white p-4" onSubmit={onSubmit}>
         <label className="text-xs font-semibold text-gray-700">

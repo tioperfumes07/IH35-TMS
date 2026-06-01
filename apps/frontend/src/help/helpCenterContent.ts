@@ -29,7 +29,7 @@ const HELP_MANIFEST: HelpArticleMeta[] = [
   { slug: "reports-hub", title: "Reports hub navigation", category: "Reports" },
   { slug: "scheduled-reports", title: "Scheduled reports", category: "Reports" },
   { slug: "account-security", title: "Account security and passwords", category: "Account & Billing" },
-  { slug: "data-import-wizard", title: "Production data import (admin)", category: "Account & Billing" },
+  { slug: "data-import-wizard", title: "Bulk data import", category: "Account & Billing" },
 ];
 
 function resolveBody(slug: string): string {

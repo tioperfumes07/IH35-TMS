@@ -331,8 +331,8 @@ export function AccountingHubPage() {
         {
           key: "tb-stub",
           left: "Ledger snapshot",
-          right: "Contract stub",
-          muted: "endpoint pending",
+          right: "Unavailable",
+          muted: "service unavailable",
         },
       ];
     }
@@ -366,8 +366,8 @@ export function AccountingHubPage() {
         {
           key: "pl-stub",
           left: "P&L snapshot",
-          right: "Contract stub",
-          muted: "endpoint pending",
+          right: "Unavailable",
+          muted: "service unavailable",
         },
       ];
     }
@@ -478,50 +478,50 @@ export function AccountingHubPage() {
             "Open queue"
           )}
           {homePanel(
-            "Bill form (Block 05 foundation)",
+            "BILL FORM",
             [
               { key: "billform-layout", left: "12x6 + cost breakdown", right: "UI ready", muted: "locked layout" },
-              { key: "billform-lines", left: "Line persistence", right: "Contract stub", muted: "until multi-line API" },
+              { key: "billform-lines", left: "Line persistence", right: "In progress", muted: "API integration pending" },
             ],
             "Vendor bill create uses the locked bill form shell.",
             "/accounting/bills/vendor",
             "Create bill"
           )}
           {homePanel(
-            "Bill allocation (Block 06 foundation)",
+            "BILL ALLOCATION",
             [
-              { key: "alloc-preview", left: "Allocation panel", right: "UI ready", muted: "contract stub allowed" },
-              { key: "alloc-next", left: "Next integration", right: "Live allocate endpoint", muted: "after Block 03 merge" },
+              { key: "alloc-preview", left: "Allocation panel", right: "UI ready", muted: "available" },
+              { key: "alloc-next", left: "Next integration", right: "Live allocate endpoint", muted: "integration pending" },
             ],
-            "Bill allocation UI is not configured yet.",
+            "Bill allocation is available in bills.",
             "/accounting/bills",
             "Open bills"
           )}
           {homePanel(
-            "Trial balance (Block 10 foundation)",
+            "TRIAL BALANCE",
             trialBalanceRows,
             trialBalanceQ.isError
-              ? "Trial balance snapshot uses contract stub until ledger endpoint is reachable."
+              ? "Trial balance snapshot is temporarily unavailable."
               : `Quarter-to-date ${quarterRange.start} → ${quarterRange.end}.`,
             "/reports/trial-balance",
             "Open trial balance"
           )}
           {homePanel(
-            "Profit & loss (Block 12 foundation)",
+            "PROFIT & LOSS",
             profitLossRows,
             profitLossQ.isError
-              ? "P&L snapshot uses contract stub until ledger endpoint is reachable."
+              ? "P&L snapshot is temporarily unavailable."
               : `Month-to-date ${monthRange.start} → ${monthRange.end}.`,
             "/reports/profit-loss",
             "Open profit & loss"
           )}
           {homePanel(
-            "Assets (Block 04 foundation)",
+            "ASSETS",
             [
-              { key: "assets-preview", left: "Asset workspace", right: "UI ready", muted: "contract stub allowed" },
-              { key: "assets-next", left: "Next integration", right: "Live endpoint", muted: "after Block 01 merge" },
+              { key: "assets-preview", left: "Asset workspace", right: "UI ready", muted: "available" },
+              { key: "assets-next", left: "Next integration", right: "Live endpoint", muted: "integration pending" },
             ],
-            "Asset workspace is not configured yet.",
+            "Asset workspace is available in vehicles.",
             "/maintenance/vehicles",
             "Open vehicles"
           )}
