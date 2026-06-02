@@ -16,9 +16,11 @@ const port = process.env.BOOT_AGGREGATE_SMOKE_PORT ?? process.env.BOOT_SMOKE_POR
 const baseUrl = process.env.IH35_SMOKE_BASE_URL?.replace(/\/$/, "") ?? `http://127.0.0.1:${port}`;
 const spawnServer = !process.env.IH35_SMOKE_BASE_URL;
 const testOwnerUserId = process.env.IH35_SMOKE_USER_ID ?? "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+const testOwnerEmail = process.env.IH35_SMOKE_USER_EMAIL ?? "integration.owner@test.invalid";
+const testOwnerGoogleId = process.env.IH35_SMOKE_USER_GOOGLE_ID ?? "integration-google-user-id";
 
 function buildTestAuthHeader(userId = testOwnerUserId, role = "Owner") {
-  return Buffer.from(JSON.stringify({ id: userId, role, email: "aggregate-smoke@test.invalid" }), "utf8").toString(
+  return Buffer.from(JSON.stringify({ id: userId, role, email: testOwnerEmail }), "utf8").toString(
     "base64url"
   );
 }
@@ -56,13 +58,23 @@ async function withPg(url, fn) {
   }
 }
 
-async function ensureTranspCompany(client) {
+async function withLuciaBypass(client, fn) {
   await client.query("SET ROLE ih35_app");
   await client.query("BEGIN");
-  await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+  try {
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    const result = await fn();
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  }
+}
+
+async function ensureTranspCompany(client) {
   const existing = await client.query("SELECT id::text AS id FROM org.companies WHERE code = 'TRANSP' LIMIT 1");
   if (existing.rows[0]?.id) {
-    await client.query("COMMIT");
     return String(existing.rows[0].id);
   }
   const inserted = await client.query(
@@ -74,8 +86,34 @@ async function ensureTranspCompany(client) {
   );
   const id = inserted.rows[0]?.id;
   if (!id) throw new Error("aggregate_smoke_setup: TRANSP company insert returned no id");
-  await client.query("COMMIT");
   return String(id);
+}
+
+async function ensureSmokeOwnerUser(client, companyId) {
+  await client.query(
+    `UPDATE identity.users SET google_user_id = NULL WHERE google_user_id = $1 AND id <> $2::uuid`,
+    [testOwnerGoogleId, testOwnerUserId]
+  );
+  await client.query(
+    `
+      INSERT INTO identity.users (id, email, google_user_id, role, preferred_language)
+      VALUES ($1::uuid, $2, $3, 'Owner', 'en')
+      ON CONFLICT (id) DO UPDATE
+        SET email = EXCLUDED.email,
+            role = EXCLUDED.role,
+            google_user_id = EXCLUDED.google_user_id,
+            preferred_language = EXCLUDED.preferred_language
+    `,
+    [testOwnerUserId, testOwnerEmail, testOwnerGoogleId]
+  );
+  await client.query(
+    `
+      INSERT INTO org.user_company_access (user_id, company_id)
+      VALUES ($1::uuid, $2::uuid)
+      ON CONFLICT (user_id, company_id) DO NOTHING
+    `,
+    [testOwnerUserId, companyId]
+  );
 }
 
 async function ensureSmokeUnit(client, companyId) {
@@ -118,20 +156,27 @@ async function resolveUnitAndCompany() {
   }
 
   return withPg(url, async (client) => {
-    if (unitId && !companyId) {
-      const res = await client.query(
-        `
-          SELECT COALESCE(currently_leased_to_company_id, owner_company_id)::text AS company_id
-          FROM mdata.units WHERE id = $1::uuid LIMIT 1
-        `,
-        [unitId]
-      );
-      const cid = res.rows[0]?.company_id;
-      if (!cid) throw new Error(`unit not found: ${unitId}`);
-      return { unitId, companyId: String(cid) };
-    }
-    const transpId = await ensureTranspCompany(client);
-    return ensureSmokeUnit(client, transpId);
+    if (unitId && companyId) return { unitId, companyId };
+
+    return withLuciaBypass(client, async () => {
+      if (unitId && !companyId) {
+        const res = await client.query(
+          `
+            SELECT COALESCE(currently_leased_to_company_id, owner_company_id)::text AS company_id
+            FROM mdata.units WHERE id = $1::uuid LIMIT 1
+          `,
+          [unitId]
+        );
+        const cid = res.rows[0]?.company_id;
+        if (!cid) throw new Error(`unit not found: ${unitId}`);
+        await ensureSmokeOwnerUser(client, cid);
+        return { unitId, companyId: String(cid) };
+      }
+
+      const transpId = await ensureTranspCompany(client);
+      await ensureSmokeOwnerUser(client, transpId);
+      return ensureSmokeUnit(client, transpId);
+    });
   });
 }
 
