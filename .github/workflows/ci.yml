@@ -285,18 +285,6 @@ jobs:
       - name: verify:compliance-severity-thresholds
         run: npm run verify:compliance-severity-thresholds
 
-      - name: verify:compliance-dashboard-aggregate-sources
-        run: npm run verify:compliance-dashboard-aggregate-sources
-
-      - name: verify:compliance-notification-rules-rls
-        run: npm run verify:compliance-notification-rules-rls
-
-      - name: verify:compliance-reminder-job-registered
-        run: npm run verify:compliance-reminder-job-registered
-
-      - name: verify:compliance-severity-thresholds
-        run: npm run verify:compliance-severity-thresholds
-
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

@@ -59,6 +59,7 @@
     { "path": "/maintenance/work-orders", "reason": "Redirect alias to /maintenance" },
     { "path": "/fleet/units/:id", "reason": "Fleet unit profile dynamic route from in-app links" },
     { "path": "/fleet/trailers/:id", "reason": "Trailer profile dynamic route from in-app links (Block 15)" },
+    { "path": "/compliance", "reason": "Master compliance dashboard — Safety flyout deep link (Block 16)" },
     { "path": "/cash-advances", "reason": "Legacy cash advances home — separate from driver-finance requests" },
     { "path": "/attorney-review/:token", "reason": "Tokenized attorney review deep link — Block 43" },
     { "path": "/catalogs", "reason": "Legacy catalogs index — Block 43 lists migration" },
