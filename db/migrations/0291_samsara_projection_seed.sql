@@ -4,63 +4,10 @@ WITH vehicle_source AS (
   SELECT
     sv.operating_company_id,
     sv.samsara_vehicle_id,
-    sv.raw_payload,
-    sv.updated_at,
-    COALESCE(NULLIF(TRIM(sv.raw_payload->>'name'), ''), sv.samsara_vehicle_id) AS computed_unit_number,
-    COALESCE(NULLIF(TRIM(sv.raw_payload->>'vin'), ''), CONCAT('SMS-', sv.samsara_vehicle_id)) AS computed_vin,
-    NULLIF(TRIM(sv.raw_payload->>'make'), '') AS computed_make,
-    NULLIF(TRIM(sv.raw_payload->>'model'), '') AS computed_model,
-    CASE
-      WHEN NULLIF(TRIM(sv.raw_payload->>'year'), '') ~ '^[0-9]{4}$' THEN (sv.raw_payload->>'year')::integer
-      ELSE NULL
-    END AS computed_year,
-    NULLIF(TRIM(sv.raw_payload->>'licensePlate'), '') AS computed_license_plate
+    sv.raw_payload
   FROM integrations.samsara_vehicles sv
   WHERE sv.operating_company_id = '91e0bf0a-133f-4ce8-a734-2586cfa66d96'::uuid
     AND sv.local_unit_id IS NULL
-),
-vehicle_deduped_by_vin AS (
-  SELECT DISTINCT ON (vs.computed_vin)
-    vs.operating_company_id,
-    vs.samsara_vehicle_id,
-    vs.updated_at,
-    vs.computed_unit_number,
-    vs.computed_vin,
-    vs.computed_make,
-    vs.computed_model,
-    vs.computed_year,
-    vs.computed_license_plate
-  FROM vehicle_source vs
-  ORDER BY
-    vs.computed_vin,
-    vs.updated_at DESC NULLS LAST,
-    vs.samsara_vehicle_id
-),
-vehicle_ranked_unit_numbers AS (
-  SELECT
-    vdv.operating_company_id,
-    vdv.samsara_vehicle_id,
-    vdv.computed_vin,
-    vdv.computed_make,
-    vdv.computed_model,
-    vdv.computed_year,
-    vdv.computed_license_plate,
-    CASE
-      WHEN ROW_NUMBER() OVER (
-        PARTITION BY vdv.computed_unit_number
-        ORDER BY vdv.updated_at DESC NULLS LAST, vdv.samsara_vehicle_id
-      ) = 1
-        THEN vdv.computed_unit_number
-      ELSE CONCAT(
-        vdv.computed_unit_number,
-        '-',
-        ROW_NUMBER() OVER (
-          PARTITION BY vdv.computed_unit_number
-          ORDER BY vdv.updated_at DESC NULLS LAST, vdv.samsara_vehicle_id
-        )
-      )
-    END AS resolved_unit_number
-  FROM vehicle_deduped_by_vin vdv
 ),
 vehicle_upsert AS (
   INSERT INTO mdata.units (
@@ -77,18 +24,21 @@ vehicle_upsert AS (
     updated_at
   )
   SELECT
-    vr.resolved_unit_number,
-    vr.computed_vin,
-    vr.computed_make,
-    vr.computed_model,
-    vr.computed_year,
-    vr.computed_license_plate,
-    vr.samsara_vehicle_id,
-    vr.operating_company_id,
+    COALESCE(NULLIF(TRIM(vs.raw_payload->>'name'), ''), vs.samsara_vehicle_id),
+    COALESCE(NULLIF(TRIM(vs.raw_payload->>'vin'), ''), CONCAT('SMS-', vs.samsara_vehicle_id)),
+    NULLIF(TRIM(vs.raw_payload->>'make'), ''),
+    NULLIF(TRIM(vs.raw_payload->>'model'), ''),
+    CASE
+      WHEN NULLIF(TRIM(vs.raw_payload->>'year'), '') ~ '^[0-9]{4}$' THEN (vs.raw_payload->>'year')::integer
+      ELSE NULL
+    END,
+    NULLIF(TRIM(vs.raw_payload->>'licensePlate'), ''),
+    vs.samsara_vehicle_id,
+    vs.operating_company_id,
     'InService'::mdata.unit_status,
     NOW(),
     NOW()
-  FROM vehicle_ranked_unit_numbers vr
+  FROM vehicle_source vs
   ON CONFLICT ((COALESCE(currently_leased_to_company_id, owner_company_id)), samsara_vehicle_id)
     WHERE samsara_vehicle_id IS NOT NULL
   DO UPDATE SET
@@ -99,16 +49,14 @@ vehicle_upsert AS (
     year = EXCLUDED.year,
     license_plate = EXCLUDED.license_plate,
     updated_at = NOW()
-  RETURNING id
+  RETURNING id, samsara_vehicle_id
 )
 UPDATE integrations.samsara_vehicles sv
-SET local_unit_id = u.id,
+SET local_unit_id = vu.id,
     updated_at = NOW()
-FROM mdata.units u
-WHERE sv.operating_company_id = '91e0bf0a-133f-4ce8-a734-2586cfa66d96'::uuid
-  AND sv.local_unit_id IS NULL
-  AND COALESCE(NULLIF(TRIM(sv.raw_payload->>'vin'), ''), CONCAT('SMS-', sv.samsara_vehicle_id)) = u.vin
-  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = sv.operating_company_id;
+FROM vehicle_upsert vu
+WHERE sv.samsara_vehicle_id = vu.samsara_vehicle_id
+  AND sv.operating_company_id = '91e0bf0a-133f-4ce8-a734-2586cfa66d96'::uuid;
 
 WITH driver_source AS (
   SELECT

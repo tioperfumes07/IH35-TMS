@@ -74,7 +74,7 @@ Optional: if your admin/maintenance database is not `postgres`, set `PGMAINTENAN
 3. **Manual Deploy** → select that commit on `main` (or redeploy from branch).
 4. **Follow-through:**
    - Re-verify env vars (migrations may have run forward only — pair with §4 if schema mismatch).
-   - Hit `/health` (or equivalent) and a read-only API smoke.
+   - Hit `/api/v1/health` (or equivalent) and a read-only API smoke.
 5. Roll back **workers / cron** services to the **same** commit if they share schema assumptions.
 
 ## 6. Frontend (office) — static deploy
@@ -110,4 +110,4 @@ cd apps/frontend && npx playwright test --config=playwright-iphone.config.ts || 
 
 ### Cycle 6 — deploy outage (May 2026) — learning summary
 
-During the **cycle 6 release window**, production briefly returned errors after a deploy that combined a **forward-only database migration** with an **API build** that assumed the new schema, while a **frontend bundle** from an earlier step still targeted the previous API contract. Users saw intermittent **500s** and **failed logins** until the team **rolled Render back** to the last healthy deploy and **paused follow-up migrations** on the main branch. Service was restored by aligning **API, worker, and static asset** versions on a single commit, then re-applying the migration in a **narrow maintenance window** after validating against staging. **What we would do differently:** use a **single release checklist** (migration status + API + frontend SHA + env diff), add **/health** alerting on Render, and create a **Neon restore branch** before each risky migration so PITR swap is routine instead of improvised.
+During the **cycle 6 release window**, production briefly returned errors after a deploy that combined a **forward-only database migration** with an **API build** that assumed the new schema, while a **frontend bundle** from an earlier step still targeted the previous API contract. Users saw intermittent **500s** and **failed logins** until the team **rolled Render back** to the last healthy deploy and **paused follow-up migrations** on the main branch. Service was restored by aligning **API, worker, and static asset** versions on a single commit, then re-applying the migration in a **narrow maintenance window** after validating against staging. **What we would do differently:** use a **single release checklist** (migration status + API + frontend SHA + env diff), add **`/api/v1/health`** alerting on Render, and create a **Neon restore branch** before each risky migration so PITR swap is routine instead of improvised.

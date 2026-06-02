@@ -275,7 +275,7 @@ export function gatherSyncState() {
     branch: branchState.branch,
     head: branchState.head,
     workingTree: branchState.workingTree,
-    mainHead: `${branchState.mainHead} (${renderState.deploy}, /health ${health})`,
+    mainHead: `${branchState.mainHead} (${renderState.deploy}, /api/v1/health ${health})`,
     branchVsMain: `${branchState.ahead} ahead, ${branchState.behind} behind, ${branchState.mergeCommits} merge commits`,
     openPr: githubState.openPr,
     env: envStatus,
