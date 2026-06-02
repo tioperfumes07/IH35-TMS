@@ -1,12 +1,11 @@
 {
-  "block_id": "BLOCK-7-FLEET-CLICKABLE-COUNTERS",
-  "branch": "fix/fleet-clickable-rows-and-counters",
+  "block_id": "BLOCK-8-SERVICE-LOCATION-ALIGNMENT",
+  "branch": "fix/service-location-alignment",
   "phase": "Phase B",
-  "task": "FLEET-CLICKABLE-COUNTERS",
+  "task": "SERVICE-LOCATION-ALIGNMENT",
   "allowed_files": [
-    "apps/frontend/src/pages/maintenance/FleetTablePage.tsx",
-    "scripts/verify-fleet-table-rows-clickable.mjs",
-    "scripts/verify-fleet-counters-match-rows.mjs",
+    "apps/backend/src/maintenance/dashboard.routes.ts",
+    "scripts/verify-service-location-buckets-wired.mjs",
     "package.json",
     ".block-ready.agent1.json"
   ],

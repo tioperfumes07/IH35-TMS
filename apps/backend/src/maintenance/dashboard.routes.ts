@@ -347,13 +347,31 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT
-            COUNT(*) FILTER (WHERE COALESCE(bucket, 'in_house') = 'in_house')::int AS in_house_count,
-            COUNT(*) FILTER (WHERE bucket = 'external')::int AS external_count,
-            COUNT(*) FILTER (WHERE bucket = 'roadside')::int AS roadside_count,
+            COUNT(*) FILTER (WHERE COALESCE(bucket::text,
+              CASE
+                WHEN repair_location = 'mobile_roadside' THEN 'roadside'
+                WHEN repair_location = 'in_house' THEN 'in_house'
+                ELSE 'external'
+              END
+            ) = 'in_house')::int AS in_house_count,
+            COUNT(*) FILTER (WHERE COALESCE(bucket::text,
+              CASE
+                WHEN repair_location = 'mobile_roadside' THEN 'roadside'
+                WHEN repair_location = 'in_house' THEN 'in_house'
+                ELSE 'external'
+              END
+            ) = 'external')::int AS external_count,
+            COUNT(*) FILTER (WHERE COALESCE(bucket::text,
+              CASE
+                WHEN repair_location = 'mobile_roadside' THEN 'roadside'
+                WHEN repair_location = 'in_house' THEN 'in_house'
+                ELSE 'external'
+              END
+            ) = 'roadside')::int AS roadside_count,
             COUNT(DISTINCT NULLIF(trim(COALESCE(repair_location, '')), ''))::int AS unique_locations
           FROM maintenance.work_orders
           WHERE operating_company_id = $1::uuid
-            AND status IN ('open', 'in_progress', 'waiting_parts')
+            AND status NOT IN ('complete', 'cancelled')
         `,
         [companyId]
       );
@@ -375,11 +393,17 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         `
           SELECT
             COALESCE(NULLIF(trim(repair_location), ''), 'unspecified') AS service_location,
-            COALESCE(bucket, 'in_house') AS bucket,
+            COALESCE(bucket::text,
+              CASE
+                WHEN repair_location = 'mobile_roadside' THEN 'roadside'
+                WHEN repair_location = 'in_house' THEN 'in_house'
+                ELSE 'external'
+              END
+            ) AS bucket,
             COUNT(*)::int AS open_work_orders
           FROM maintenance.work_orders
           WHERE operating_company_id = $1::uuid
-            AND status IN ('open', 'in_progress', 'waiting_parts')
+            AND status NOT IN ('complete', 'cancelled')
           GROUP BY 1, 2
           ORDER BY open_work_orders DESC, service_location ASC
           LIMIT 250
