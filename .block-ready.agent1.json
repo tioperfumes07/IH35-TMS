@@ -33,6 +33,7 @@
     "scripts/verify-shipper-portal-session-cookie-secure.mjs",
     "scripts/verify-shipper-portal-rls-policies.mjs",
     "scripts/verify-shipper-portal-no-internal-auth-confusion.mjs",
+    "scripts/nav-integrity-allowlist.json",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "docs/specs/SECURITY-MODEL.md",
