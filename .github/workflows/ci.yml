@@ -213,6 +213,18 @@ jobs:
       - name: Verify mdata routes are local-first
         run: npm run verify:mdata-routes-local-first
 
+      - name: verify:vehicle-profile-sections-complete
+        run: npm run verify:vehicle-profile-sections-complete
+
+      - name: verify:vehicle-profile-plates-multi-jurisdiction
+        run: npm run verify:vehicle-profile-plates-multi-jurisdiction
+
+      - name: verify:vehicle-profile-driver-dual-tracking
+        run: npm run verify:vehicle-profile-driver-dual-tracking
+
+      - name: verify:vehicle-profile-audit-coverage
+        run: npm run verify:vehicle-profile-audit-coverage
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

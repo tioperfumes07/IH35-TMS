@@ -793,6 +793,20 @@ This fallback removes local false-negative failures while preserving CI behavior
 
 ---
 
+## Vehicle Profile Part 1 (Block 11, locked 2026-06-02)
+
+Source: Jorge + Cursor execution order Block 11  
+Status: LOCKED (Part 1); Part 2 = Block 12 (sections 7–11)  
+Relevant block: Phase C — VEHICLE-PROFILE-PART-1
+
+- Migration `0295_vehicle_profile_part1.sql`: `Damaged`/`Transferred` statuses; status-context + border/IRP/insurance columns on `mdata.units`; `mdata.unit_plates`; `mdata.unit_border_crossings`; `is_default` on `telematics.vehicle_driver_assignments`.
+- API: `GET /api/v1/mdata/units/:id?operating_company_id=` returns full aggregate; plates CRUD; default-driver endpoints; quick-availability POST.
+- Audit: `appendCrudAudit` only (no `audit.events` DB trigger).
+- UI: `VehicleProfilePage` six sections + maintenance alerts banner + quick avail toggle; route unchanged `/fleet/units/:id`.
+- Measured `block-ready` baseline after Block 10 C5 dedupe: ~487s.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:

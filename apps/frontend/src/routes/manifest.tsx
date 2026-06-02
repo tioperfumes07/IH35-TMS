@@ -75,7 +75,7 @@ import { BatchWizard } from "../pages/factoring/BatchWizard";
 import { BatchDetail } from "../pages/factoring/BatchDetail";
 import { FactorAdmin } from "../pages/factoring/FactorAdmin";
 import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
-import { AssetProfilePage } from "../pages/fleet/AssetProfilePage";
+import { VehicleProfilePage } from "../pages/fleet/VehicleProfilePage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
 import { LoginPage } from "../pages/Login";
@@ -2131,7 +2131,7 @@ export const ROUTES = React.Children.toArray(
           path="/fleet/units/:id"
           element={
             <ProtectedRoute>
-              <AssetProfilePage />
+              <VehicleProfilePage />
             </ProtectedRoute>
           }
         />

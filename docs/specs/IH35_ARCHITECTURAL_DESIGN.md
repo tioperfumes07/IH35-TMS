@@ -863,6 +863,24 @@ Workflow expectations for CAP-13 remain locked:
 
 Seed geography and threshold tuning are implementation-managed, not hardcoded further in canonical architecture text.
 
+## Vehicle Profile (Maintenance module) — Part 1 (locked 2026-06-02)
+
+Route: `/fleet/units/:id` renders `VehicleProfilePage` with six sections (identity/status, live telemetry, driver assignment, current load, maintenance snapshot, compliance). Sections 7–11 are Block 12.
+
+**Status enum (5 lifecycle + maintenance):** `InService` (Active), `OutOfService` (OOS), `InMaintenance`, `Sold`, `Damaged`, `Transferred`. Legacy `Totaled` migrates to `Damaged`. Status changes are **additive** (archive via `deactivated_at`, never hard-delete units).
+
+**Quick availability** (`available` | `booked` | `holding`) is independent of lifecycle status and toggled via `POST /api/v1/mdata/units/:id/quick-availability`.
+
+**Dual-driver tracking** uses existing `telematics.vehicle_driver_assignments`: `is_default=true` manual default vs `source='samsara_webhook'` current driver from webhooks (`processVehicleDriverPairingWebhookEvent`). No parallel `mdata` assignment table.
+
+**Multi-plate** support: `mdata.unit_plates` with US state/territory + MX Federal/32-state validation.
+
+**Samsara refresh:** React Query `staleTime`/`refetchInterval` 30s on telemetry blocks; aggregate reads `integrations.samsara_vehicles`, `telematics.vehicle_latest_position`, parsed odometer/faults from `raw_payload`.
+
+**Audit:** App-layer `appendCrudAudit` on `PATCH /api/v1/mdata/units/:id` — action `mdata.unit.status_changed` when `status` changes; profile context fields included in payload. No DB trigger on `audit.events`.
+
+**Maintenance alerts banner:** Server-built `maintenance_alerts[]` (high/medium/low); dismissible per session in UI.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
