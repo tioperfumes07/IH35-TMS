@@ -821,6 +821,19 @@ Relevant block: Phase C — VEHICLE-PROFILE-PART-2
 
 ---
 
+## Driver Profile Part 1 (Block 13, locked 2026-06-01)
+
+Source: Jorge + Cursor execution order Block 13  
+Status: LOCKED (Part 1)  
+Relevant block: Phase D — DRIVER-PROFILE-PART-1
+
+- Migration `0297_driver_profile_part1.sql`: endorsements + identity columns on `mdata.drivers` (CDL/medical/drug remain on driver row + `safety.medical_cards` / `safety.drug_test` / `safety.random_pool`).
+- API: `GET /api/v1/mdata/drivers/:id?operating_company_id=` returns aggregate (license, medical, drug, HOS via `getCurrentClocks`, current assignment); default-truck POST/clear mirrors unit default-driver on `telematics.vehicle_driver_assignments`.
+- UI: `DriverProfilePage` sections 1–6 at `/drivers/:id/profile` with 30s HOS refetch; DQF panel retained below.
+- CI: four `verify:driver-profile-*` guards with explicit `ci.yml` steps.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:

@@ -895,6 +895,18 @@ Sections 7–11 on `VehicleProfilePage`: reefer (conditional), financial P&amp;L
 
 **PDF export:** Puppeteer HTML → `page.pdf()` (same pattern as settlement PDF renderer). `GET /api/v1/mdata/units/:id/export.pdf`.
 
+## Driver Profile (People module) — Part 1 (locked 2026-06-01)
+
+Route: `/drivers/:id/profile` renders `DriverProfilePage` with six sections (identity, license/endorsements, medical card, drug program, HOS, current assignment). Full driver record remains at `/drivers/:id` (`DriverDetailPage`).
+
+**License:** `mdata.drivers` CDL fields + six endorsement booleans (`0297`). Medical prefers `safety.medical_cards` with fallback to `dot_medical_expires_at`.
+
+**Drug:** Latest `safety.drug_test`; random pool from `safety.random_pool` open rows.
+
+**HOS:** `hos.duty_status_events` + `getCurrentClocks` (not hardcoded). UI refetch 30s on section 5.
+
+**Default truck:** Symmetric to unit default-driver — `POST /api/v1/mdata/drivers/:id/default-truck` and `clear-default-truck` on `telematics.vehicle_driver_assignments.is_default`.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

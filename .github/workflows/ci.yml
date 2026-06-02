@@ -237,6 +237,18 @@ jobs:
       - name: verify:vehicle-profile-photos-documents-pattern
         run: npm run verify:vehicle-profile-photos-documents-pattern
 
+      - name: verify:driver-profile-sections-complete
+        run: npm run verify:driver-profile-sections-complete
+
+      - name: verify:driver-profile-license-endorsements
+        run: npm run verify:driver-profile-license-endorsements
+
+      - name: verify:driver-profile-hos-source
+        run: npm run verify:driver-profile-hos-source
+
+      - name: verify:driver-profile-default-truck-symmetry
+        run: npm run verify:driver-profile-default-truck-symmetry
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope
