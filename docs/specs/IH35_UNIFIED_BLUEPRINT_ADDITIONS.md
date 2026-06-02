@@ -873,6 +873,22 @@ Relevant block: Phase E — COMPLIANCE-DASHBOARD
 
 ---
 
+## Shipper Portal MVP (Block 18, locked 2026-06-02)
+
+Source: Jorge + Cursor execution order Block 18 (map option B approved)  
+Status: LOCKED  
+Relevant block: Phase G — SHIPPER-PORTAL-MVP
+
+- Migration `0306_shipper_portal_mvp.sql`: `shipper_portal.portal_users`, `portal_sessions`, `load_milestones`, password reset tokens.
+- Separate portal auth (`portal_session` cookie) + `/portal/*` UI (login, dashboard, load detail, profile).
+- Load detail: text GPS + milestone timeline (no tile map package in Block 18).
+- Internal admin: `PortalUsersTab` on customer profile; API `/api/v1/customers/:id/portal-users`.
+- Milestone emails: `portal-dispatched`, `portal-arrived-pickup`, `portal-delivered`, `portal-pod-available` templates.
+- CI: five `verify:shipper-portal-*` guards.
+- Security reference: `docs/specs/SECURITY-MODEL.md`.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:

@@ -931,6 +931,16 @@ Route: `/compliance` renders `ComplianceDashboardPage` — master view of expiri
 
 **Reminders:** Daily cron at 06:00 America/Chicago (`compliance-reminder.job.ts`); rules CRUD under `/api/v1/compliance/notification-rules`.
 
+## Shipper Portal (Customers module) — Block 18 (locked 2026-06-02)
+
+Route prefix: `/portal/*` — separate customer-facing auth (`portal_session` cookie) scoped to one `mdata.customers` record per portal user.
+
+**V1 tracking (option B):** No tile map library. Load detail shows lat/lng text, relative location label, last GPS update age, and a vertical milestone timeline. Positions read server-side from `telematics.vehicle_latest_position`.
+
+**API:** `/api/v1/portal/auth/*`, `/api/v1/portal/loads`, load detail/documents/SSE tracking, profile prefs. Internal admin manages portal logins on customer profile (`Portal Users` tab) via `/api/v1/customers/:id/portal-users`.
+
+**Milestones + email:** `shipper_portal.load_milestones` synced from load status; milestone emails use `portal-*.eta` templates when portal user notification prefs allow.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

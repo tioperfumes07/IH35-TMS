@@ -285,6 +285,21 @@ jobs:
       - name: verify:compliance-severity-thresholds
         run: npm run verify:compliance-severity-thresholds
 
+      - name: verify:shipper-portal-tenant-isolation
+        run: npm run verify:shipper-portal-tenant-isolation
+
+      - name: verify:shipper-portal-no-internal-data-leak
+        run: npm run verify:shipper-portal-no-internal-data-leak
+
+      - name: verify:shipper-portal-session-cookie-secure
+        run: npm run verify:shipper-portal-session-cookie-secure
+
+      - name: verify:shipper-portal-rls-policies
+        run: npm run verify:shipper-portal-rls-policies
+
+      - name: verify:shipper-portal-no-internal-auth-confusion
+        run: npm run verify:shipper-portal-no-internal-auth-confusion
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

@@ -45,6 +45,7 @@ import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
 import { CoiRequestsTab } from "./customers/tabs/CoiRequestsTab";
+import { PortalUsersTab } from "./customers/components/PortalUsersTab";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -54,7 +55,7 @@ import { StatusBadge } from "../components/layout/StatusBadge";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { useCompanyContext } from "../contexts/CompanyContext";
 
-const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts"] as const;
+const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users"] as const;
 type CustomerTab = (typeof tabs)[number];
 
 const customerSchema = z.object({
@@ -1357,6 +1358,10 @@ export function CustomerDetailPage() {
             You do not have permission to view customer contracts.
           </div>
         )
+      ) : null}
+
+      {activeTab === "Portal Users" ? (
+        <PortalUsersTab customerId={customer.id} operatingCompanyId={operatingCompanyId ?? undefined} />
       ) : null}
 
       {activeTab === "Contacts" ? (

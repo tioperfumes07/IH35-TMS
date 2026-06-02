@@ -18,6 +18,12 @@ import { DispatchAlertsPage } from "../pages/dispatch/DispatchAlertsPage";
 import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
 import { CashAdvanceRequestsPage } from "../pages/driver-finance/CashAdvanceRequestsPage";
 import { OwnerApprovalPortalPage } from "../pages/driver-finance/OwnerApprovalPortalPage";
+import { PortalLayout } from "../portal/PortalLayout";
+import { PortalLoginPage } from "../portal/PortalLoginPage";
+import { PortalDashboardPage } from "../portal/PortalDashboardPage";
+import { PortalLoadDetailPage } from "../portal/PortalLoadDetailPage";
+import { PortalProfilePage } from "../portal/PortalProfilePage";
+import { PortalRouteGuard } from "../portal/PortalRouteGuard";
 import { FuelPlannerHomePage } from "../pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "../pages/banking/BankingHome";
 import { TransfersListPage } from "../pages/banking/TransfersListPage";
@@ -338,6 +344,20 @@ export const ROUTES = React.Children.toArray(
         <Route path="/sign/:token" element={<LegalSignPage />} />
         <Route path="/attorney-review/:token" element={<LegalAttorneyReviewPortalPage />} />
         <Route path="/owner-approval/:token" element={<OwnerApprovalPortalPage />} />
+        <Route path="/portal/login" element={<PortalLoginPage />} />
+        <Route
+          path="/portal"
+          element={
+            <PortalRouteGuard>
+              <PortalLayout />
+            </PortalRouteGuard>
+          }
+        >
+          <Route index element={<Navigate to="/portal/dashboard" replace />} />
+          <Route path="dashboard" element={<PortalDashboardPage />} />
+          <Route path="loads/:id" element={<PortalLoadDetailPage />} />
+          <Route path="profile" element={<PortalProfilePage />} />
+        </Route>
         <Route
           path="/home"
           element={
