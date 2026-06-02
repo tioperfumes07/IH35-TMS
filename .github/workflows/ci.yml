@@ -354,6 +354,18 @@ jobs:
       - name: verify:fault-auto-wo-24h-dedup
         run: npm run verify:fault-auto-wo-24h-dedup
 
+      - name: verify:fleet-bulk-select-checkbox-column
+        run: npm run verify:fleet-bulk-select-checkbox-column
+
+      - name: verify:bulk-action-bar-mounted
+        run: npm run verify:bulk-action-bar-mounted
+
+      - name: verify:bulk-update-route-mounted
+        run: npm run verify:bulk-update-route-mounted
+
+      - name: verify:bulk-update-rls-where
+        run: npm run verify:bulk-update-rls-where
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope
