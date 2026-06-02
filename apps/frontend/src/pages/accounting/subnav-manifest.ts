@@ -4,11 +4,12 @@ import { COLLECTIONS_SUBNAV_ITEM } from "./subnav-collections";
 export type AccountingSubNavItem = {
   label: string;
   path: string;
-  section: "bills" | "settings" | "direct";
+  section: "bills" | "settlements" | "settings" | "direct";
 };
 
 const GROUP_LABELS: Record<Exclude<AccountingSubNavItem["section"], "direct">, string> = {
   bills: "Bills",
+  settlements: "Settlements",
   settings: "Settings",
 };
 
@@ -32,6 +33,8 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Invoices", path: "/accounting/invoices", section: "direct" },
   { label: "Multi-entity", path: "/accounting/multi-entity", section: "direct" },
   { label: "Receive Payment", path: "/accounting/payments", section: "direct" },
+  { label: "Dispute queue", path: "/accounting/dispute-queue", section: "settlements" },
+  { label: "Abandonment queue", path: "/accounting/abandonment-queue", section: "settlements" },
   { label: "Factoring", path: "/accounting/factoring", section: "direct" },
   { label: "Factor reconciliation", path: "/accounting/factor-reconciliation", section: "direct" },
   { label: "Sales tax", path: "/accounting/sales-tax", section: "direct" },
@@ -56,6 +59,10 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   {
     label: GROUP_LABELS.bills,
     children: bySection("bills").map((item) => ({ label: item.label, href: item.path })),
+  },
+  {
+    label: GROUP_LABELS.settlements,
+    children: bySection("settlements").map((item) => ({ label: item.label, href: item.path })),
   },
   ...bySection("direct").map((item) => ({ label: item.label, href: item.path })),
   {

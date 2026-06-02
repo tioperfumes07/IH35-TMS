@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
@@ -72,6 +72,9 @@ const DRIVERS_SUBNAV = [
   { id: "leave", label: "Leave" },
 ] as const;
 
+/** Module nav paths for nav-integrity guard (query subtabs stay on /drivers). */
+export const DRIVERS_MODULE_NAV_PATHS = ["/drivers", "/driver-finance/cash-advance-requests"] as const;
+
 function parseDriverListStatus(searchParams: URLSearchParams): DriverListStatusId {
   const raw = (searchParams.get("status") ?? "all").toLowerCase();
   return (DRIVER_LIST_STATUS_IDS as readonly string[]).includes(raw) ? (raw as DriverListStatusId) : "all";
@@ -82,6 +85,21 @@ function parseDriverSubnav(searchParams: URLSearchParams): (typeof DRIVERS_SUBNA
   return (DRIVERS_SUBNAV as readonly { id: string; label: string }[]).some((tab) => tab.id === raw)
     ? (raw as (typeof DRIVERS_SUBNAV)[number]["id"])
     : "drivers";
+}
+
+function DriversCashAdvanceRequestsLink() {
+  const { pathname } = useLocation();
+  const active = pathname.startsWith("/driver-finance/cash-advance-requests");
+  return (
+    <Link
+      to="/driver-finance/cash-advance-requests"
+      className={`rounded border px-2 py-1 text-xs font-medium ${
+        active ? "border-sky-600 bg-sky-50 text-sky-800" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+      }`}
+    >
+      Cash advance requests
+    </Link>
+  );
 }
 
 function driverMatchesListSegment(status: string, segment: DriverListStatusId): boolean {
@@ -793,22 +811,25 @@ export function DriversPage() {
         <KpiCard label="Escrow" number={formatMoney(escrowTotal)} accent={colors.fleet.strong} />
       </KpiStrip>
 
-      <SecondaryNavTabs
-        tabs={DRIVERS_SUBNAV.map((tab) => ({ id: tab.id, label: tab.label }))}
-        activeId={subnavTab}
-        onChange={(next) => {
-          const nextTab = next as (typeof DRIVERS_SUBNAV)[number]["id"];
-          setSearchParams(
-            (prev) => {
-              const nextParams = new URLSearchParams(prev);
-              if (nextTab === "drivers") nextParams.delete("subtab");
-              else nextParams.set("subtab", nextTab);
-              return nextParams;
-            },
-            { replace: false }
-          );
-        }}
-      />
+      <div className="flex flex-wrap items-center gap-3">
+        <SecondaryNavTabs
+          tabs={DRIVERS_SUBNAV.map((tab) => ({ id: tab.id, label: tab.label }))}
+          activeId={subnavTab}
+          onChange={(next) => {
+            const nextTab = next as (typeof DRIVERS_SUBNAV)[number]["id"];
+            setSearchParams(
+              (prev) => {
+                const nextParams = new URLSearchParams(prev);
+                if (nextTab === "drivers") nextParams.delete("subtab");
+                else nextParams.set("subtab", nextTab);
+                return nextParams;
+              },
+              { replace: false }
+            );
+          }}
+        />
+        <DriversCashAdvanceRequestsLink />
+      </div>
 
       {activeTab === "teams" ? (
         <div className="space-y-3">

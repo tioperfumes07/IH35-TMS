@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
 import { BillAllocationPanel } from "../../components/allocation";
@@ -7,6 +8,9 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+
+export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
+export type BillListCategory = (typeof BILL_LIST_CATEGORIES)[number];
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -19,15 +23,30 @@ function statusBadgeClass(status: BillStatus) {
   return "bg-red-50 text-red-800";
 }
 
+function parseBillCategory(raw: string | null): BillListCategory | "" {
+  if (!raw) return "";
+  return (BILL_LIST_CATEGORIES as readonly string[]).includes(raw) ? (raw as BillListCategory) : "";
+}
+
+function billMatchesCategory(bill: VendorBill, category: BillListCategory): boolean {
+  const hay = `${bill.memo ?? ""} ${bill.bill_number ?? ""} ${bill.vendor_name ?? ""}`.toLowerCase();
+  if (category === "maintenance") return /maint|shop|pm\b|work.?order/.test(hay);
+  if (category === "repair") return /repair|roadside|breakdown/.test(hay);
+  if (category === "fuel") return /fuel|diesel|loves|def\b/.test(hay);
+  return /driver|settlement|advance|payroll|escrow/.test(hay);
+}
+
 export function BillsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const category = parseBillCategory(searchParams.get("category"));
   const [status, setStatus] = useState<"" | BillStatus | "unpaid">("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [allocationBillId, setAllocationBillId] = useState<string | null>(null);
 
   const billsQuery = useQuery({
-    queryKey: ["accounting", "bills", companyId, status],
+    queryKey: ["accounting", "bills", companyId, status, category],
     queryFn: () =>
       listBills(companyId, {
         include_balance: true,
@@ -43,10 +62,26 @@ export function BillsPage() {
     enabled: Boolean(companyId && expandedId),
   });
 
-  const rows = billsQuery.data?.rows ?? [];
+  const rows = useMemo(() => {
+    const all = billsQuery.data?.rows ?? [];
+    if (!category) return all;
+    return all.filter((bill) => billMatchesCategory(bill, category));
+  }, [billsQuery.data?.rows, category]);
 
   const expandedBill = useMemo(() => rows.find((b) => b.id === expandedId) ?? null, [rows, expandedId]);
   const allocationBill = useMemo(() => rows.find((b) => b.id === allocationBillId) ?? null, [rows, allocationBillId]);
+
+  function setCategory(next: BillListCategory | "") {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (!next) params.delete("category");
+        else params.set("category", next);
+        return params;
+      },
+      { replace: false }
+    );
+  }
 
   function toggleExpand(bill: VendorBill) {
     if (bill.status !== "partial") return;
@@ -58,6 +93,29 @@ export function BillsPage() {
       <PageHeader title="Bills" subtitle="Vendor bills with paid balance and partial payment history" />
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
+
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-gray-600">Category:</span>
+        <button
+          type="button"
+          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${!category ? "border-sky-600 bg-sky-50 text-sky-800" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
+          onClick={() => setCategory("")}
+        >
+          All
+        </button>
+        {BILL_LIST_CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${
+              category === cat ? "border-sky-600 bg-sky-50 text-sky-800" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+            onClick={() => setCategory(cat)}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-gray-600">Status:</span>

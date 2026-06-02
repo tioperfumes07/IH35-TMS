@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InTransitIssue, WorkOrderType } from "../../api/maintenance";
 import {
@@ -16,6 +18,7 @@ import {
 } from "../../api/maintenance";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -184,6 +187,8 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
           </div>
         }
       />
+
+      <MaintenanceSubNav />
 
       <SecondaryNavTabs
         tabs={SUBNAV.map((item) => ({ id: item.id, label: item.label }))}
@@ -402,6 +407,66 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
           ]);
         }}
       />
+    </div>
+  );
+}
+
+export const MAINTENANCE_OPERATION_LINKS: { label: string; path: string }[] = [
+  { label: "Dashboard", path: "/maintenance" },
+  { label: "Active WOs", path: "/maintenance/active-wos" },
+  { label: "Fleet Table", path: "/maintenance/fleet-table" },
+  { label: "R&M Status Board", path: "/maintenance/rm-status-board" },
+  { label: "Service / Location", path: "/maintenance/service-location" },
+  { label: "Arriving Soon", path: "/maintenance/arriving-soon" },
+  { label: "In-Transit Issues", path: "/maintenance/in-transit-issues" },
+  { label: "Damage Reports", path: "/maintenance/damage-reports" },
+  { label: "Severe Repairs", path: "/maintenance/severe-repairs" },
+  { label: "Parts Inventory", path: "/maintenance/parts-inventory" },
+  { label: "Settings", path: "/maintenance/settings" },
+];
+
+export const MAINTENANCE_MASTER_DATA_LINKS: { label: string; path: string }[] = [
+  { label: "Vehicles", path: "/maintenance/vehicles" },
+  { label: "Parts", path: "/maintenance/parts" },
+  { label: "PM Schedule", path: "/maintenance/pm-schedule" },
+  { label: "Inspections", path: "/maintenance/inspections" },
+  { label: "Vendors", path: "/maintenance/vendors" },
+  { label: "Reports", path: "/maintenance/reports" },
+  { label: "Compliance", path: "/maintenance/compliance" },
+];
+
+function maintenanceSubNavActiveHref(pathname: string): string {
+  const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  const all = [...MAINTENANCE_OPERATION_LINKS, ...MAINTENANCE_MASTER_DATA_LINKS];
+  const exact = all.find((item) => item.path === norm);
+  if (exact) return exact.path;
+  if (norm === "/maintenance/in-transit" || norm === "/maintenance/triage") return "/maintenance/in-transit-issues";
+  if (norm.startsWith("/maintenance/work-orders")) return "/maintenance";
+  return "/maintenance";
+}
+
+const MAINTENANCE_MODULE_NAV_ITEMS: NavItem[] = [
+  {
+    label: "Master Data",
+    children: MAINTENANCE_MASTER_DATA_LINKS.map((item) => ({ label: item.label, href: item.path })),
+  },
+];
+
+export function MaintenanceSubNav() {
+  const { pathname } = useLocation();
+  return (
+    <HoverDropdownNav
+      items={MAINTENANCE_MODULE_NAV_ITEMS}
+      activeHref={maintenanceSubNavActiveHref(pathname)}
+    />
+  );
+}
+
+export function MaintenanceShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <MaintenanceSubNav />
+      {children}
     </div>
   );
 }
