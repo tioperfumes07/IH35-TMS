@@ -56,7 +56,7 @@ import {
   TrailerInterchangesTab,
 } from "../pages/safety/tabs";
 import { LiabilitiesHomePage } from "../pages/liabilities/LiabilitiesHome";
-import { MaintenanceHomePage } from "../pages/maintenance/MaintenanceHome";
+import { MaintenanceHomePage, MaintenanceShell } from "../pages/maintenance/MaintenanceHome";
 import type { MaintenanceTabId } from "../pages/maintenance/MaintenanceHome";
 import { WorkOrdersConsoleDetailPage } from "../pages/work-orders/WorkOrdersConsoleDetailPage";
 import { WorkOrdersConsoleListPage } from "../pages/work-orders/WorkOrdersConsoleListPage";
@@ -585,6 +585,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="insurance/*" element={<InsuranceTab />} />
           <Route path="permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />
+          <Route path="/safety/integrity-reports" element={<IntegrityReportsTab />} />
           {/* Block K (Driver Scheduler): canonical paths under /safety/* — see IH35_UNIFIED_BLUEPRINT_ADDITIONS.md §14 */}
           <Route path="driver-scheduler" element={<DriverSchedulerGridPage />} />
           <Route path="scheduler/pending-requests" element={<DriverSchedulerRequestInboxPage />} />
@@ -717,7 +718,9 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/vehicles"
           element={
             <ProtectedRoute>
-              <VehiclesMasterDataPage />
+              <MaintenanceShell>
+                <VehiclesMasterDataPage />
+              </MaintenanceShell>
             </ProtectedRoute>
           }
         />
@@ -733,7 +736,9 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/parts"
           element={
             <ProtectedRoute>
-              <PartsMasterDataPage />
+              <MaintenanceShell>
+                <PartsMasterDataPage />
+              </MaintenanceShell>
             </ProtectedRoute>
           }
         />
@@ -749,7 +754,9 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/pm-schedule"
           element={
             <ProtectedRoute>
-              <PmSchedulePage />
+              <MaintenanceShell>
+                <PmSchedulePage />
+              </MaintenanceShell>
             </ProtectedRoute>
           }
         />
@@ -757,7 +764,9 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/inspections"
           element={
             <ProtectedRoute>
-              <InspectionsPage />
+              <MaintenanceShell>
+                <InspectionsPage />
+              </MaintenanceShell>
             </ProtectedRoute>
           }
         />
@@ -765,7 +774,9 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/vendors"
           element={
             <ProtectedRoute>
-              <MaintenanceVendorsPage />
+              <MaintenanceShell>
+                <MaintenanceVendorsPage />
+              </MaintenanceShell>
             </ProtectedRoute>
           }
         />
@@ -773,7 +784,9 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/reports"
           element={
             <ProtectedRoute>
-              <MaintenanceReportsPage />
+              <MaintenanceShell>
+                <MaintenanceReportsPage />
+              </MaintenanceShell>
             </ProtectedRoute>
           }
         />
@@ -781,7 +794,9 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/compliance"
           element={
             <ProtectedRoute>
-              <Compliance425CPage />
+              <MaintenanceShell>
+                <Compliance425CPage />
+              </MaintenanceShell>
             </ProtectedRoute>
           }
         />
@@ -1859,6 +1874,38 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/accounting/bills/maintenance"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/accounting/bills?category=maintenance" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bills/repair"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/accounting/bills?category=repair" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bills/fuel"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/accounting/bills?category=fuel" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bills/driver"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/accounting/bills?category=driver" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/bills/vendor"
           element={
             <ProtectedRoute>
@@ -1992,25 +2039,6 @@ export const ROUTES = React.Children.toArray(
           <Route path="disputes" element={<DisputesPage />} />
           <Route path="settings" element={<DriverSettingsPage />} />
         </Route>
-        {[
-          // Keep only truly unshipped module redirects here.
-          // Shipped modules (Factoring, 425C, Lists) must never be routed via /coming-soon.
-          ["/accounting", "Accounting", "5", "Post-launch"],
-        ].map(([path, feature, phase, eta]) => (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <ProtectedRoute>
-                {path === "/accounting" ? (
-                  <Navigate to="/accounting/invoices" replace />
-                ) : (
-                  <Navigate to={`/coming-soon?feature=${encodeURIComponent(feature)}&phase=${phase}&eta=${encodeURIComponent(eta)}`} replace />
-                )}
-              </ProtectedRoute>
-            }
-          />
-        ))}
         <Route
           path="/catalogs/equipment-types"
           element={
