@@ -161,14 +161,21 @@ export function parseManifest(manifestPath) {
   return { manifest: parsed, absolutePath };
 }
 
-function readVerifyMeta() {
-  const verifyMetaPath = path.resolve(ROOT, "scripts/verify-meta.json");
+export function readVerifyMeta(rootDir = ROOT) {
+  const verifyMetaPath = path.resolve(rootDir, "scripts/verify-meta.json");
   if (!fs.existsSync(verifyMetaPath)) {
-    return { db_gated_verify_scripts: [] };
+    return { db_gated_verify_scripts: [], block_ready_c5_skip_after_c4: [] };
   }
   const data = JSON.parse(fs.readFileSync(verifyMetaPath, "utf8"));
   const list = Array.isArray(data.db_gated_verify_scripts) ? data.db_gated_verify_scripts : [];
-  return { db_gated_verify_scripts: list };
+  const skipAfterC4 = Array.isArray(data.block_ready_c5_skip_after_c4) ? data.block_ready_c5_skip_after_c4 : [];
+  return { db_gated_verify_scripts: list, block_ready_c5_skip_after_c4: skipAfterC4 };
+}
+
+/** C4 already runs verify:arch-design (full meta-chain). Skip those scripts in C5. */
+export function shouldSkipC5VerifyScript(name, verifyMeta) {
+  const skipAfterC4 = new Set(verifyMeta.block_ready_c5_skip_after_c4 ?? []);
+  return skipAfterC4.has(name);
 }
 
 function getChangedFiles(range) {
@@ -374,13 +381,18 @@ function runCheckC4() {
   }
 }
 
-function runCheckC5(dbGatedVerifyScripts) {
+function runCheckC5(verifyMeta) {
   const pkg = JSON.parse(fs.readFileSync(path.resolve(ROOT, "package.json"), "utf8"));
   const verifyScriptNames = Object.keys(pkg.scripts).filter((name) => name.startsWith("verify:"));
+  const dbGatedVerifyScripts = verifyMeta.db_gated_verify_scripts ?? [];
   let passed = 0;
   for (const name of verifyScriptNames) {
     if (dbGatedVerifyScripts.includes(name)) {
       console.log(`[C5] SKIP ${name} (db-gated)`);
+      continue;
+    }
+    if (shouldSkipC5VerifyScript(name, verifyMeta)) {
+      console.log(`[C5] SKIP ${name} (already run in C4)`);
       continue;
     }
     const res = runCommand(`npm run ${name}`, "C5");
@@ -517,7 +529,7 @@ function main() {
 
   runCheckC3();
   runCheckC4();
-  const verifyCount = runCheckC5(verifyMeta.db_gated_verify_scripts);
+  const verifyCount = runCheckC5(verifyMeta);
   const extraCount = runCheckC6(manifest.extra_gates);
   runCheckC7(manifest);
 
