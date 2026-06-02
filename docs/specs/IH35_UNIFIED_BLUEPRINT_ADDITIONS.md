@@ -948,3 +948,18 @@ Status: LOCKED
 Relevant block: BLOCK-20-DEADHEAD-OPTIMIZATION
 
 Per-truck deadhead tracking (% empty miles) with weekly cache refresh and backhaul suggestions sourced from lane-profitability cache (Block 19 dependency). Report at `/reports/deadhead`; widget on vehicle profile when truck is available without active load.
+
+---
+
+## Border Crossing Wizard (Block 21, locked 2026-06-02)
+
+Source: Block 21 spec (Phase F)  
+Status: LOCKED  
+Relevant block: BLOCK-21-BORDER-CROSSING-WIZARD
+
+- Migration `0313_border_crossing_wizard.sql`: wizard columns on `mdata.unit_border_crossings`; `reference.ports_of_entry` + `reference.cbp_wait_times_cache`.
+- API: wizard POST, ports-of-entry, CBP wait times, customs brokers (`vendor_category = customs_broker`), history, eManifest PDF (V1 printable only).
+- UI: 6-step wizard at `/dispatch/border-crossing`; history page; `CbpWaitTimesWidget` on Dispatch home + wizard.
+- FAST card expiration check from driver profile (Block 14 dependency).
+- Note: ACE/eManifest production API (V2) requires CBP enrollment + partner like BorderConnect.
+- CI: four `verify:border-crossing-*` guards.

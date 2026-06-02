@@ -6,6 +6,8 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { registerComplianceRoutes } from "./compliance.routes.js";
 import { generateForm425CPdf } from "./form-425c-pdf.js";
 import { registerShipperPortalRoutes } from "../shipper-portal/portal-auth.routes.js";
+import { registerBorderCrossingHistoryRoutes } from "../border-crossing/border-crossing-history.routes.js";
+import { registerBorderCrossingWizardRoutes } from "../border-crossing/border-crossing-wizard.routes.js";
 import { registerDeadheadRoutes } from "../reports/deadhead.routes.js";
 
 const COMPANY_QUERY = z.object({
@@ -277,6 +279,8 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
   await registerComplianceRoutes(app);
   await registerShipperPortalRoutes(app);
   await registerDeadheadRoutes(app);
+  await registerBorderCrossingWizardRoutes(app);
+  await registerBorderCrossingHistoryRoutes(app);
   app.get("/api/v1/form-425c", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;

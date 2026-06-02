@@ -330,6 +330,18 @@ jobs:
       - name: verify:lane-profitability-refresh-job-registered
         run: npm run verify:lane-profitability-refresh-job-registered
 
+      - name: verify:border-crossing-wizard-fields-complete
+        run: npm run verify:border-crossing-wizard-fields-complete
+
+      - name: verify:border-crossing-fast-card-check
+        run: npm run verify:border-crossing-fast-card-check
+
+      - name: verify:border-crossing-cbp-wait-cache-rls
+        run: npm run verify:border-crossing-cbp-wait-cache-rls
+
+      - name: verify:border-crossing-emanifest-pdf-puppeteer
+        run: npm run verify:border-crossing-emanifest-pdf-puppeteer
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

@@ -22,6 +22,8 @@
     { "path": "/dispatch/loads", "reason": "ComingSoon stub; canonical loads via /dispatch?view=loads" },
     { "path": "/dispatch/factoring-packets", "reason": "ComingSoon stub — Block 43" },
     { "path": "/dispatch/incidents", "reason": "ComingSoon stub — Block 43" },
+    { "path": "/dispatch/border-crossing", "reason": "Border crossing wizard — linked from Dispatch home + wizard CTA (Block 21)" },
+    { "path": "/dispatch/border-crossing/history", "reason": "Border crossing history — deep link from wizard (Block 21)" },
     { "path": "/fuel/planner", "reason": "ComingSoon stub; fuel tabs on /fuel" },
     { "path": "/fuel/settings", "reason": "ComingSoon stub; fuel tabs on /fuel" },
     { "path": "/fuel/inbox", "reason": "ComingSoon stub; fuel tabs on /fuel" },

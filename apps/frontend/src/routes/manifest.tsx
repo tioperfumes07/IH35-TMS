@@ -15,6 +15,8 @@ import { DriversPage } from "../pages/Drivers";
 import { DispatchPage } from "../pages/Dispatch";
 import { GeofencesPage } from "../pages/operations/GeofencesPage";
 import { DispatchAlertsPage } from "../pages/dispatch/DispatchAlertsPage";
+import { BorderCrossingWizardPage } from "../pages/dispatch/BorderCrossingWizardPage";
+import { BorderCrossingHistoryPage } from "../pages/dispatch/BorderCrossingHistoryPage";
 import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
 import { CashAdvanceRequestsPage } from "../pages/driver-finance/CashAdvanceRequestsPage";
 import { OwnerApprovalPortalPage } from "../pages/driver-finance/OwnerApprovalPortalPage";
@@ -470,6 +472,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DispatchAlertsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/border-crossing/history"
+          element={
+            <ProtectedRoute>
+              <BorderCrossingHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/border-crossing"
+          element={
+            <ProtectedRoute>
+              <BorderCrossingWizardPage />
             </ProtectedRoute>
           }
         />

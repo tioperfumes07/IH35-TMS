@@ -21,6 +21,7 @@ import { FilterBar, type DispatchFilterState } from "../components/dispatch/Filt
 import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
 import { BookLoadModal } from "./dispatch/components/BookLoadModal";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
+import { CbpWaitTimesWidget } from "../components/border-crossing/CbpWaitTimesWidget";
 
 type ViewMode = "list" | "kanban";
 type DispatchSubTabId = "load_board" | "book_load" | "assignments" | "settlements" | "pre_settlements";
@@ -304,6 +305,10 @@ export function DispatchPage() {
           <p className="text-xl font-semibold text-gray-900">{kpis.bookedToday}</p>
           <p className="text-xs text-gray-500">new loads</p>
         </div>
+      </div>
+
+      <div className="max-w-sm">
+        <CbpWaitTimesWidget title="Border wait times (Dispatch home)" />
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
