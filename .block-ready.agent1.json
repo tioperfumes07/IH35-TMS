@@ -29,6 +29,7 @@
     "scripts/verify-trailer-profile-type-enum.mjs",
     "scripts/verify-trailer-profile-plates-multi-jurisdiction.mjs",
     "scripts/verify-trailer-profile-reefer-conditional.mjs",
+    "scripts/nav-integrity-allowlist.json",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
