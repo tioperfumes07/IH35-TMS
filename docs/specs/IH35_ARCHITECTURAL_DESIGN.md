@@ -941,6 +941,18 @@ Route prefix: `/portal/*` — separate customer-facing auth (`portal_session` co
 
 **Milestones + email:** `shipper_portal.load_milestones` synced from load status; milestone emails use `portal-*.eta` templates when portal user notification prefs allow.
 
+## Deadhead Optimization (Reports module) — Block 20 (locked 2026-06-02)
+
+Route: `/reports/deadhead` renders `DeadheadReportPage` — fleet deadhead %, miles, estimated cost, per-truck ranking, weekly trend drill-down.
+
+**Data:** `mdata.loads` columns `loaded_miles`, `deadhead_miles_to_pickup`, `deadhead_miles_calculation_method` (`samsara` | `manual` | `estimated`) plus legacy `miles_deadhead`. Weekly cache in `reports.deadhead_cache` (migration `0308`).
+
+**API:** `GET /api/v1/reports/deadhead?period=last_4_weeks|last_12_weeks|YTD`, `GET /api/v1/reports/deadhead/suggestions/:unit_id` (queries `reports.lane_profitability_cache` from Block 19 for profitable backhauls near last delivery city).
+
+**Jobs:** Weekly refresh Monday 03:00 America/Chicago (`deadhead-refresh.job.ts`).
+
+**Vehicle profile:** `BackhaulSuggestionsWidget` embeds when `quick_availability = available` and no active load.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

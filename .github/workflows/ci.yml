@@ -300,6 +300,15 @@ jobs:
       - name: verify:shipper-portal-no-internal-auth-confusion
         run: npm run verify:shipper-portal-no-internal-auth-confusion
 
+      - name: verify:deadhead-calculation-method
+        run: npm run verify:deadhead-calculation-method
+
+      - name: verify:deadhead-cache-rls
+        run: npm run verify:deadhead-cache-rls
+
+      - name: verify:deadhead-uses-lane-profitability-for-suggestions
+        run: npm run verify:deadhead-uses-lane-profitability-for-suggestions
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

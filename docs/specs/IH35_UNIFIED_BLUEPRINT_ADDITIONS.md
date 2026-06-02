@@ -914,3 +914,13 @@ Branch operations are standardized through project scripts:
 - `branch:cleanup-stale` prunes merged local branches while preserving unique work and recent `wip/*`/`tmp/*`.
 
 Pre-push is locked to `npm run branch:precheck-push` via husky. Pushes that bypass the scripted precheck are non-compliant with Phase 7 stabilization process.
+
+---
+
+## 2026-06-02 — Block 20 Deadhead optimization
+
+Source: Block 20 spec (Phase H)  
+Status: LOCKED  
+Relevant block: BLOCK-20-DEADHEAD-OPTIMIZATION
+
+Per-truck deadhead tracking (% empty miles) with weekly cache refresh and backhaul suggestions sourced from lane-profitability cache (Block 19 dependency). Report at `/reports/deadhead`; widget on vehicle profile when truck is available without active load.
