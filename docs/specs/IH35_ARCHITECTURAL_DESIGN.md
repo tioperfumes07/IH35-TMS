@@ -975,6 +975,22 @@ Route: `/notifications` renders `NotificationCenterPage`; bell icon with unread 
 
 **Sources wired V1:** compliance reminder cron (`in_app` channel) and maintenance PM alert creation (`maintenance-predictor.service.ts`).
 
+## Border Crossing Wizard (Dispatch module) — Block 21 (locked 2026-06-02)
+
+Route: `/dispatch/border-crossing` renders `BorderCrossingWizardPage` (6-step wizard); history at `/dispatch/border-crossing/history`.
+
+**Data:** extends `mdata.unit_border_crossings` (migration `0313`) with wizard fields; `reference.ports_of_entry` (Laredo-region seed); `reference.cbp_wait_times_cache` (5-min TTL).
+
+**API:** `POST /api/v1/border-crossing/wizard`, `GET /api/v1/border-crossing/ports-of-entry`, `GET /api/v1/border-crossing/wait-times?cbp_port_code=`, `GET /api/v1/border-crossing/customs-brokers`, `GET /api/v1/border-crossing/history`, `GET /api/v1/border-crossing/:id/emanifest.pdf`.
+
+**FAST card:** wizard reads `mdata.drivers.fast_card_expiration` (Block 14) and warns when missing/expired; persists `driver_fast_card_verified`.
+
+**eManifest V1:** printable PDF via puppeteer (`emanifest-pdf-renderer.service.ts`). ACE API integration (V2) requires CBP enrollment + partner like BorderConnect.
+
+**Jobs:** CBP wait times refresh every 5 min during 06:00–22:00 America/Chicago (`cbp-wait-times-refresh.job.ts`).
+
+**UI:** `CbpWaitTimesWidget` on Dispatch home and wizard sidebar; customs broker selector uses `mdata.vendors` with `vendor_category = 'customs_broker'`.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
