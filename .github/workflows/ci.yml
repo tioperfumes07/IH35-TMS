@@ -309,6 +309,18 @@ jobs:
       - name: verify:deadhead-uses-lane-profitability-for-suggestions
         run: npm run verify:deadhead-uses-lane-profitability-for-suggestions
 
+      - name: verify:notification-center-bell-in-nav
+        run: npm run verify:notification-center-bell-in-nav
+
+      - name: verify:notification-center-rls-per-user
+        run: npm run verify:notification-center-rls-per-user
+
+      - name: verify:notification-center-compliance-wired
+        run: npm run verify:notification-center-compliance-wired
+
+      - name: verify:notification-center-maintenance-wired
+        run: npm run verify:notification-center-maintenance-wired
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

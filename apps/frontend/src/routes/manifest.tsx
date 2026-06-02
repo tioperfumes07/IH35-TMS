@@ -84,6 +84,7 @@ import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
 import { VehicleProfilePage } from "../pages/fleet/VehicleProfilePage";
 import { TrailerProfilePage } from "../pages/fleet/TrailerProfilePage";
 import { ComplianceDashboardPage } from "../pages/compliance/ComplianceDashboardPage";
+import { NotificationCenterPage } from "../pages/notifications/NotificationCenterPage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
 import { LoginPage } from "../pages/Login";
@@ -580,6 +581,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ComplianceDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationCenterPage />
             </ProtectedRoute>
           }
         />
@@ -2187,6 +2196,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ComplianceDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationCenterPage />
             </ProtectedRoute>
           }
         />
