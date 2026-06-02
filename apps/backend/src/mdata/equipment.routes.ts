@@ -3,8 +3,19 @@ import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { buildEquipmentAggregate } from "./equipment-aggregate.service.js";
+import { registerEquipmentPdfExportRoutes } from "./equipment-pdf-export.routes.js";
+import { registerEquipmentPlatesRoutes } from "./equipment-plates.routes.js";
 
-const equipmentStatusSchema = z.enum(["InService", "OutOfService", "InMaintenance", "Sold", "Lost"]);
+const equipmentStatusSchema = z.enum([
+  "InService",
+  "OutOfService",
+  "InMaintenance",
+  "Sold",
+  "Lost",
+  "Damaged",
+  "Transferred",
+]);
 const equipmentTypeSchema = z.enum([
   "DryVan",
   "Reefer",
@@ -14,6 +25,9 @@ const equipmentTypeSchema = z.enum([
   "Chassis",
   "StepDeck",
   "Lowboy",
+  "Conestoga",
+  "RGN",
+  "Other",
 ]);
 
 const listQuerySchema = z.object({
@@ -25,6 +39,12 @@ const listQuerySchema = z.object({
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+const aggregateQuerySchema = z.object({ operating_company_id: z.string().uuid() });
+
+const statusChangeBodySchema = z.object({
+  status: equipmentStatusSchema,
+  reason: z.string().trim().min(1).max(2000),
+});
 
 const createEquipmentBodySchema = z.object({
   equipment_number: z.string().trim().min(1).max(100),
@@ -118,6 +138,9 @@ async function resolveAssetCompanyIds(
 }
 
 export async function registerEquipmentRoutes(app: FastifyInstance) {
+  await registerEquipmentPlatesRoutes(app);
+  await registerEquipmentPdfExportRoutes(app);
+
   app.get("/api/v1/mdata/equipment", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -275,6 +298,15 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
+    const parsedAggregateQuery = aggregateQuerySchema.safeParse(req.query ?? {});
+    if (parsedAggregateQuery.success) {
+      const aggregate = await withCurrentUser(authUser.uuid, async (client) =>
+        buildEquipmentAggregate(client, parsedParams.data.id, parsedAggregateQuery.data.operating_company_id)
+      );
+      if (!aggregate) return reply.code(404).send({ error: "mdata_equipment_not_found" });
+      return aggregate;
+    }
+
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(
         `
@@ -310,6 +342,46 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
 
     if (!row) return reply.code(404).send({ error: "mdata_equipment_not_found" });
     return row;
+  });
+
+  app.post("/api/v1/mdata/equipment/:id/status-change", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    const query = aggregateQuerySchema.safeParse(req.query ?? {});
+    const body = statusChangeBodySchema.safeParse(req.body ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    if (!query.success) return sendValidationError(reply, query.error);
+    if (!body.success) return sendValidationError(reply, body.error);
+    const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      const res = await client.query(
+        `
+          UPDATE mdata.equipment
+          SET status = $3::mdata.equipment_status,
+              status_changed_at = now(),
+              status_change_reason = $4,
+              updated_by_user_id = $5
+          WHERE id = $1::uuid
+            AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+          RETURNING id, status, status_changed_at::text, status_change_reason
+        `,
+        [parsedParams.data.id, query.data.operating_company_id, body.data.status, body.data.reason, authUser.uuid]
+      );
+      const row = res.rows[0];
+      if (row) {
+        await appendCrudAudit(client, authUser.uuid, "mdata.equipment.status_changed", {
+          resource_id: row.id,
+          resource_type: "mdata.equipment",
+          status: body.data.status,
+          reason: body.data.reason,
+        });
+      }
+      return row ?? null;
+    });
+    if (!updated) return reply.code(404).send({ error: "mdata_equipment_not_found" });
+    return updated;
   });
 
   app.patch("/api/v1/mdata/equipment/:id", async (req, reply) => {

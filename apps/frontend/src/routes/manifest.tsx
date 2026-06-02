@@ -76,6 +76,7 @@ import { BatchDetail } from "../pages/factoring/BatchDetail";
 import { FactorAdmin } from "../pages/factoring/FactorAdmin";
 import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
 import { VehicleProfilePage } from "../pages/fleet/VehicleProfilePage";
+import { TrailerProfilePage } from "../pages/fleet/TrailerProfilePage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
 import { LoginPage } from "../pages/Login";
@@ -2132,6 +2133,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <VehicleProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fleet/trailers/:id"
+          element={
+            <ProtectedRoute>
+              <TrailerProfilePage />
             </ProtectedRoute>
           }
         />

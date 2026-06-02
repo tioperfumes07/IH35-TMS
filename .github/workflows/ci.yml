@@ -261,6 +261,18 @@ jobs:
       - name: verify:driver-profile-pdf-export-puppeteer
         run: npm run verify:driver-profile-pdf-export-puppeteer
 
+      - name: verify:trailer-profile-sections-complete
+        run: npm run verify:trailer-profile-sections-complete
+
+      - name: verify:trailer-profile-type-enum
+        run: npm run verify:trailer-profile-type-enum
+
+      - name: verify:trailer-profile-plates-multi-jurisdiction
+        run: npm run verify:trailer-profile-plates-multi-jurisdiction
+
+      - name: verify:trailer-profile-reefer-conditional
+        run: npm run verify:trailer-profile-reefer-conditional
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope
