@@ -837,6 +837,91 @@ export async function getProfitPerTruck(params: {
   );
 }
 
+export type LaneProfitabilityPeriod = "YTD" | "quarter" | "month" | "custom";
+
+export type LaneProfitabilityLane = {
+  origin_city: string;
+  origin_state: string;
+  destination_city: string;
+  destination_state: string;
+  load_count: number;
+  total_revenue_cents: number;
+  total_fuel_cost_cents: number;
+  total_driver_pay_cents: number;
+  total_maintenance_cost_cents: number;
+  total_miles: number;
+  gross_profit_cents: number;
+  profit_per_mile_cents: number | null;
+  profit_per_load_cents: number | null;
+  margin_pct: number | null;
+  avg_deadhead_pct: number | null;
+  last_load_date: string | null;
+};
+
+export type LaneProfitabilityResponse = {
+  period: { start: string; end: string; label: string };
+  totals: {
+    load_count: number;
+    total_revenue_cents: number;
+    gross_profit_cents: number;
+    lane_count: number;
+  };
+  most_profitable_lane: LaneProfitabilityLane | null;
+  least_profitable_lane: LaneProfitabilityLane | null;
+  lanes: LaneProfitabilityLane[];
+  source: "cache" | "computed";
+  computed_at: string | null;
+};
+
+export type LaneProfitabilityLoadDetail = {
+  load_id: string;
+  load_number: string | null;
+  created_at: string;
+  revenue_cents: number;
+  driver_pay_cents: number;
+  fuel_cost_cents: number;
+  maintenance_cost_cents: number;
+  gross_profit_cents: number;
+  miles: number;
+  margin_pct: number | null;
+};
+
+export async function getLaneProfitability(params: {
+  operating_company_id: string;
+  period: LaneProfitabilityPeriod;
+  start?: string;
+  end?: string;
+}): Promise<LaneProfitabilityResponse> {
+  const q = new URLSearchParams({ period: params.period });
+  if (params.start) q.set("start", params.start);
+  if (params.end) q.set("end", params.end);
+  return apiRequest<LaneProfitabilityResponse>(
+    withCompany(`/api/v1/reports/lane-profitability?${q.toString()}`, params.operating_company_id),
+  );
+}
+
+export async function getLaneProfitabilityLoads(params: {
+  operating_company_id: string;
+  period_start: string;
+  period_end: string;
+  origin_city: string;
+  origin_state: string;
+  destination_city: string;
+  destination_state: string;
+}): Promise<LaneProfitabilityLoadDetail[]> {
+  const q = new URLSearchParams({
+    period_start: params.period_start,
+    period_end: params.period_end,
+    origin_city: params.origin_city,
+    origin_state: params.origin_state,
+    destination_city: params.destination_city,
+    destination_state: params.destination_state,
+  });
+  return apiRequest<LaneProfitabilityLoadDetail[]>(
+    withCompany(`/api/v1/reports/lane-profitability/loads?${q.toString()}`, params.operating_company_id),
+  );
+}
+
 // —— Block V / W (P6-T11199 / P6-T11200): fuel reconciliation + maintenance cost per unit
 
 export type FuelReconciliationFlag = "over_reported" | "under_reported" | "unmatched";

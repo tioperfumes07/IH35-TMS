@@ -321,6 +321,15 @@ jobs:
       - name: verify:notification-center-maintenance-wired
         run: npm run verify:notification-center-maintenance-wired
 
+      - name: verify:lane-profitability-cte-pattern
+        run: npm run verify:lane-profitability-cte-pattern
+
+      - name: verify:lane-profitability-cache-rls
+        run: npm run verify:lane-profitability-cache-rls
+
+      - name: verify:lane-profitability-refresh-job-registered
+        run: npm run verify:lane-profitability-refresh-job-registered
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

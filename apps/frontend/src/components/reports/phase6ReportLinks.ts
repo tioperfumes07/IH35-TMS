@@ -8,6 +8,7 @@ export const PHASE_6_REPORT_HREFS: Record<string, string> = {
   "settlement-summary": "/reports/settlement-summary",
   "customer-profitability": "/reports/customer-profitability",
   "profit-per-truck": "/reports/profit-per-truck",
+  "lane-profitability": "/reports/lane-profitability",
   "fuel-reconciliation": "/reports/fuel-reconciliation",
   "maintenance-cost-per-unit": "/reports/maintenance-cost-per-unit",
   "geofence-dwell": "/reports/geofence-dwell",
