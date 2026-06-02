@@ -860,6 +860,19 @@ Relevant block: Phase D — TRAILER-PROFILE-PART-1
 
 ---
 
+## Compliance Dashboard (Block 16, locked 2026-06-02)
+
+Source: Jorge + Cursor execution order Block 16  
+Status: LOCKED  
+Relevant block: Phase E — COMPLIANCE-DASHBOARD
+
+- Migration `0304_compliance_dashboard.sql`: notification rules/log tables + carrier credential columns on `org.companies`.
+- API: compliance aggregate dashboard, summary, notification rules CRUD, notification log, daily reminder cron.
+- UI: `ComplianceDashboardPage` at `/compliance` (Safety flyout link).
+- CI: four `verify:compliance-*` guards.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:
