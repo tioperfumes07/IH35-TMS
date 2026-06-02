@@ -834,6 +834,19 @@ Relevant block: Phase D — DRIVER-PROFILE-PART-1
 
 ---
 
+## Driver Profile Part 2 (Block 14, locked 2026-06-02)
+
+Source: Jorge + Cursor execution order Block 14  
+Status: LOCKED (Part 2)  
+Relevant block: Phase D — DRIVER-PROFILE-PART-2
+
+- Migration `0302_driver_profile_part2.sql`: border credential columns on `mdata.drivers` + `mdata.driver_profile_messages`.
+- API: aggregate extended with performance, settlements, training, border creds, documents; training CRUD; PDF export; message recording endpoint.
+- UI: `DriverProfilePage` sections 7–12 + sticky `ActionBar`.
+- CI: four additional `verify:driver-profile-*` part-2 guards.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:

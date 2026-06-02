@@ -45,6 +45,11 @@ const profileFixture = {
     eld_device_status: "connected",
   },
   current_assignment: { default_truck: null, currently_driving_truck: null, current_load: null },
+  performance_scorecard: { score: 92, total_events: 3, harsh_braking: 1, speeding: 1, distracted: 1, fleet_avg_score: 88, rank_in_fleet: 2 },
+  settlements: { ytd_gross: 100000, ytd_deductions: 10000, ytd_net: 90000, lifetime_with_company: 500000, last_4_weeks: [] },
+  training_records: [],
+  border_credentials: { fast_card: {}, sentri: {}, twic: {}, passport: {}, mexican_license: {}, visa_b1: {} },
+  documents: [],
 };
 
 function renderPage() {
@@ -75,5 +80,15 @@ describe("DriverProfilePage", () => {
     expect(screen.getByTestId("dp-section-4-drug")).toBeTruthy();
     expect(screen.getByTestId("dp-section-5-hos")).toBeTruthy();
     expect(screen.getByTestId("dp-section-6-assignment")).toBeTruthy();
+  });
+
+  it("renders part 2 profile sections", async () => {
+    renderPage();
+    expect(await screen.findByTestId("dp-section-7-performance")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-8-settlements")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-9-training")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-10-border")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-11-documents")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-12-action-bar")).toBeTruthy();
   });
 });

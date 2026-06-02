@@ -907,6 +907,14 @@ Route: `/drivers/:id/profile` renders `DriverProfilePage` with six sections (ide
 
 **Default truck:** Symmetric to unit default-driver — `POST /api/v1/mdata/drivers/:id/default-truck` and `clear-default-truck` on `telematics.vehicle_driver_assignments.is_default`.
 
+## Driver Profile (People module) — Part 2 (locked 2026-06-02)
+
+Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorecard (`safety.harsh_events` + fleet rank), settlements (`payroll.driver_settlements`), training (`safety.training_records` CRUD under `/api/v1/mdata/drivers/:id/training`), border credentials (FAST/SENTRI/TWIC/passport/MX license/B1 on `mdata.drivers` migration `0302`), documents (`docs.file_links` entity_type `driver`), sticky action bar (edit, assign truck, message, map, PDF, suspend/terminate).
+
+**PDF export:** `GET /api/v1/mdata/drivers/:id/export.pdf` via Puppeteer (`driver-profile-pdf-renderer.service.ts`).
+
+**Messages V1:** `POST /api/v1/mdata/drivers/:id/messages` persists to `mdata.driver_profile_messages` (delivery integration deferred).
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

@@ -3,12 +3,18 @@ import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { getDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
+import { ActionBar } from "../../components/driver-profile/ActionBar";
+import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
 import { CurrentAssignmentSection } from "../../components/driver-profile/CurrentAssignmentSection";
+import { DocumentsSection } from "../../components/driver-profile/DocumentsSection";
 import { DrugProgramSection } from "../../components/driver-profile/DrugProgramSection";
 import { HOSStatusSection } from "../../components/driver-profile/HOSStatusSection";
 import { IdentityHeader } from "../../components/driver-profile/IdentityHeader";
 import { LicenseSection } from "../../components/driver-profile/LicenseSection";
 import { MedicalCardSection } from "../../components/driver-profile/MedicalCardSection";
+import { PerformanceScorecardSection } from "../../components/driver-profile/PerformanceScorecardSection";
+import { SettlementsSection } from "../../components/driver-profile/SettlementsSection";
+import { TrainingRecordsSection } from "../../components/driver-profile/TrainingRecordsSection";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -26,6 +32,11 @@ export type DriverProfileAggregate = {
   drug_program: Record<string, unknown>;
   hos: Record<string, unknown> | null;
   current_assignment: Record<string, unknown>;
+  performance_scorecard?: Record<string, unknown> | null;
+  settlements?: Record<string, unknown>;
+  training_records?: Array<Record<string, unknown>>;
+  border_credentials?: Record<string, unknown>;
+  documents?: Array<Record<string, unknown>>;
 };
 
 function fetchDriverProfile(driverId: string, operatingCompanyId: string) {
@@ -153,6 +164,32 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         />
       </div>
 
+      <div data-testid="dp-section-7-performance">
+        <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} />
+      </div>
+      <div data-testid="dp-section-8-settlements">
+        <SettlementsSection settlements={aggregate.settlements ?? {}} driverId={id} />
+      </div>
+      <div data-testid="dp-section-9-training">
+        <TrainingRecordsSection records={aggregate.training_records ?? []} />
+      </div>
+      <div data-testid="dp-section-10-border">
+        <BorderCredentialsSection border={aggregate.border_credentials ?? {}} />
+      </div>
+      <div data-testid="dp-section-11-documents">
+        <DocumentsSection
+          driverId={id}
+          companyId={companyId}
+          documents={(aggregate.documents ?? []) as Array<{
+            file_id: string;
+            name: string;
+            category?: string | null;
+            expiration_date?: string | null;
+            uploaded_at?: string | null;
+          }>}
+        />
+      </div>
+
       <KpiStrip>
         <KpiCard label="Checklist items" number={String(summary.itemCount)} accent={colors.drivers.strong} />
         <KpiCard label="Present" number={String(summary.presentCount)} accent={colors.positive.strong} />
@@ -169,6 +206,10 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <h2 className="mb-3 text-sm font-semibold text-slate-900">DQF checklist</h2>
         <DriverDqfPanel companyId={companyId} driverId={id} editable />
       </section>
+
+      <div data-testid="dp-section-12-action-bar">
+        <ActionBar driverId={id} companyId={companyId} driverName={displayName} />
+      </div>
     </div>
   );
 }

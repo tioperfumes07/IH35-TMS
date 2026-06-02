@@ -9,6 +9,9 @@ import { enqueueEmail } from "../email/queue.service.js";
 import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
 import { buildDriverAggregate } from "./driver-aggregate.service.js";
 import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.js";
+import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
+import { registerDriverPdfExportRoutes } from "./driver-pdf-export.routes.js";
+import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
 
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
 const cdlClassSchema = z.enum(["A", "B", "C"]);
@@ -801,6 +804,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
   });
 
   await registerDriverDefaultTruckRoutes(app);
+  await registerDriverTrainingRoutes(app);
+  await registerDriverMessagesRoutes(app);
+  await registerDriverPdfExportRoutes(app);
 
   app.get("/api/v1/mdata/drivers/:id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
