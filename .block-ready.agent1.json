@@ -5,6 +5,7 @@
   "task": "SHIPPER-PORTAL-MVP",
   "allowed_files": [
     "db/migrations/0306_shipper_portal_mvp.sql",
+    "db/migrations/0307_shipper_portal_schema_grant.sql",
     "apps/backend/src/shipper-portal/portal-auth.routes.ts",
     "apps/backend/src/shipper-portal/portal-api.routes.ts",
     "apps/backend/src/shipper-portal/portal-users-admin.routes.ts",
