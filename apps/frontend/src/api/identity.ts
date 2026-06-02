@@ -135,8 +135,11 @@ export function listIdentityWorkflows() {
   return apiRequest<{ workflow_requests: IdentityWorkflowRequest[] }>("/api/v1/identity/workflow-requests");
 }
 
+// API contract action code for identity role-change approvals.
+export const IDENTITY_ROLE_CHANGE_ACTION_CODE = "WF-064-IDENT-002" as const;
+
 export function createIdentityWorkflow(body: {
-  action_code: "WF-064-IDENT-002";
+  action_code: typeof IDENTITY_ROLE_CHANGE_ACTION_CODE;
   target_user: string;
   payload: Record<string, unknown>;
 }) {

@@ -171,7 +171,7 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
     <div className="space-y-3">
       <PageHeader
         title="Maintenance"
-        subtitle="Approved May 2 rebuild + Day 3 triage band"
+        subtitle="Work orders, fleet maintenance, parts inventory, and PM scheduling"
         actions={
           <div className="flex items-center gap-2">
             <QuickActionsBar

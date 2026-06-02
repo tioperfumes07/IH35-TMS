@@ -53,7 +53,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
         </div>
 
         <div className="mt-2 rounded border border-gray-200 p-2">
-          <div className="font-semibold">Linked Bill (WF-057)</div>
+          <div className="font-semibold">Linked Bill</div>
           {advance.linked_bill_id ? (
             <>
               <div>

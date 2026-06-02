@@ -184,7 +184,7 @@ export function FactoringHomePage() {
           <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(summary?.chargeback_balance)}</div>
         </div>
         <div className="rounded border border-gray-200 bg-white p-3 text-sm">
-          <div className="text-xs uppercase tracking-wide text-gray-500">Recourse Days (WF-051)</div>
+          <div className="text-xs uppercase tracking-wide text-gray-500">Recourse Days</div>
           <div className="mt-1 font-semibold text-gray-900">{Number(summary?.recourse_days ?? 90)}</div>
         </div>
       </div>
@@ -330,7 +330,7 @@ export function FactoringHomePage() {
       {tab === "chargebacks_fees" ? (
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="rounded border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-sm font-medium text-gray-900">WF-049 Chargebacks + fee history</div>
+            <div className="mb-2 text-sm font-medium text-gray-900">Chargebacks + fee history</div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 text-xs">
                 <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
@@ -397,7 +397,7 @@ export function FactoringHomePage() {
       {tab === "statements_settings" ? (
         <div className="space-y-3">
           <div className="rounded border border-gray-200 bg-white p-3 text-sm">
-            <div className="font-medium text-gray-900">WF-017 Single-factor invariant status</div>
+            <div className="font-medium text-gray-900">Single-factor invariant status</div>
             <div className="mt-1 text-gray-700">
               Active factors: {Number(settingsQuery.data?.current?.active_factor_count ?? 0)} · Status:{" "}
               <span className={settingsQuery.data?.current?.single_factor_invariant_ok ? "text-green-700" : "text-red-700"}>

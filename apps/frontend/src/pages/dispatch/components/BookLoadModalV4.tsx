@@ -304,8 +304,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
 
   const validationIssues = useMemo(
     () => [
-      "Unit PM up-to-date check (WF-044)",
-      "DVIR / dispatch block (WF-050)",
+      "Unit PM up-to-date check",
+      "DVIR / dispatch block",
       "Trailer inspection check (stub)",
       "Customer quality flag warning (stub)",
       "FMCSA broker authority cache check (stub)",
