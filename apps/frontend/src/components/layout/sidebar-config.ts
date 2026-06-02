@@ -172,6 +172,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "safety":
       return [
         { label: "Driver Files", to: "/safety/driver-files" },
+        { label: "Compliance Dashboard", to: "/compliance" },
         { label: "DOT Inspections", to: "/safety/dot-inspections" },
       ];
     case "dispatch":

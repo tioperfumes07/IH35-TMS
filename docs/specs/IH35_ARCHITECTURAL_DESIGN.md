@@ -923,6 +923,14 @@ Route: `/fleet/trailers/:id` renders `TrailerProfilePage` with eight sections (i
 
 **PDF:** `GET /api/v1/mdata/equipment/:id/export.pdf` via Puppeteer.
 
+## Compliance Dashboard (Safety module) — Block 16 (locked 2026-06-02)
+
+Route: `/compliance` renders `ComplianceDashboardPage` — master view of expiring credentials across units, trailers, drivers, plates, and carrier-level fields.
+
+**Aggregate:** `GET /api/v1/compliance/dashboard` and `/summary` via `compliance-aggregate.service.ts` (migration `0304`: `compliance.notification_rules`, `compliance.notification_log`).
+
+**Reminders:** Daily cron at 06:00 America/Chicago (`compliance-reminder.job.ts`); rules CRUD under `/api/v1/compliance/notification-rules`.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

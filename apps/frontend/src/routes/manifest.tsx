@@ -77,6 +77,7 @@ import { FactorAdmin } from "../pages/factoring/FactorAdmin";
 import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
 import { VehicleProfilePage } from "../pages/fleet/VehicleProfilePage";
 import { TrailerProfilePage } from "../pages/fleet/TrailerProfilePage";
+import { ComplianceDashboardPage } from "../pages/compliance/ComplianceDashboardPage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
 import { LoginPage } from "../pages/Login";
@@ -550,6 +551,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <BankAccountDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compliance"
+          element={
+            <ProtectedRoute>
+              <ComplianceDashboardPage />
             </ProtectedRoute>
           }
         />
@@ -2141,6 +2150,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <TrailerProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compliance"
+          element={
+            <ProtectedRoute>
+              <ComplianceDashboardPage />
             </ProtectedRoute>
           }
         />

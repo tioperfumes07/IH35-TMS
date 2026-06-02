@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { registerComplianceRoutes } from "./compliance.routes.js";
 import { generateForm425CPdf } from "./form-425c-pdf.js";
 
 const COMPANY_QUERY = z.object({
@@ -271,6 +272,7 @@ const REPORT_COLUMNS = [
 ] as const;
 
 export async function registerForm425CRoutes(app: FastifyInstance) {
+  await registerComplianceRoutes(app);
   app.get("/api/v1/form-425c", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
