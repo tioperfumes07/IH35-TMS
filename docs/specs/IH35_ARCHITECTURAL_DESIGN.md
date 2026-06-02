@@ -941,6 +941,18 @@ Route prefix: `/portal/*` — separate customer-facing auth (`portal_session` co
 
 **Milestones + email:** `shipper_portal.load_milestones` synced from load status; milestone emails use `portal-*.eta` templates when portal user notification prefs allow.
 
+## Lane Profitability Heatmap (Reports module) — Block 19 (locked 2026-06-02)
+
+Route: `/reports/lane-profitability` renders `LaneProfitabilityPage` — corridor P&L by origin/destination city-state with color-coded margin table, profit/mile bar chart, CSV export, and lane drill-down modal (last 20 loads).
+
+**Data:** `mdata.loads` joined to first pickup / last delivery `mdata.load_stops`; costs from `driver_finance.driver_bills`, `maintenance.work_orders`, and `fuel.fuel_transactions` by `load_id`. Cached in `reports.lane_profitability_cache`; monthly rollup materialized view `reports.lane_metrics_monthly` (migration `0311`).
+
+**API:** `GET /api/v1/reports/lane-profitability?period=YTD|quarter|month|custom&start=&end=`, `GET /api/v1/reports/lane-profitability/loads?...` for lane drill-down.
+
+**Jobs:** Nightly refresh 02:00 America/Chicago (`lane-profitability-refresh.job.ts`) for trailing 12 months.
+
+**Downstream:** Block 20 deadhead backhaul suggestions read `reports.lane_profitability_cache`.
+
 ## Deadhead Optimization (Reports module) — Block 20 (locked 2026-06-02)
 
 Route: `/reports/deadhead` renders `DeadheadReportPage` — fleet deadhead %, miles, estimated cost, per-truck ranking, weekly trend drill-down.

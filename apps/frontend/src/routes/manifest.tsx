@@ -125,6 +125,7 @@ import { CashFlowOverviewPage } from "../pages/reports/CashFlowOverviewPage";
 import { SettlementSummaryPage } from "../pages/reports/SettlementSummaryPage";
 import { CustomerProfitabilityPage } from "../pages/reports/CustomerProfitabilityPage";
 import { ProfitPerTruckPage } from "../pages/reports/ProfitPerTruckPage";
+import { LaneProfitabilityPage } from "../pages/reports/LaneProfitabilityPage";
 import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage";
 import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
 import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
@@ -1542,6 +1543,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ProfitPerTruckPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/lane-profitability"
+          element={
+            <ProtectedRoute>
+              <LaneProfitabilityPage />
             </ProtectedRoute>
           }
         />

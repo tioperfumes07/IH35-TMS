@@ -931,6 +931,16 @@ Pre-push is locked to `npm run branch:precheck-push` via husky. Pushes that bypa
 
 ---
 
+## 2026-06-02 — Block 19 Lane profitability heatmap
+
+Source: Block 19 spec (Phase H)  
+Status: LOCKED  
+Relevant block: BLOCK-19-LANE-PROFITABILITY-HEATMAP
+
+Per-corridor P&L aggregated by pickup/delivery city-state pair with nightly cache refresh and `/reports/lane-profitability` heatmap/table UI. Feeds Block 20 deadhead backhaul suggestions via `reports.lane_profitability_cache`.
+
+---
+
 ## 2026-06-02 — Block 20 Deadhead optimization
 
 Source: Block 20 spec (Phase H)  
