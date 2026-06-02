@@ -10,6 +10,7 @@ import { colors, spacing, typography } from "../design/tokens";
 import { companyOperatingChipClasses } from "../lib/company-branding";
 import type { AuthMeResponse } from "../types/api";
 import { CompanySwitcher } from "./CompanySwitcher";
+import { NotificationBell } from "./notifications/NotificationBell";
 import { PageHelpLink } from "./PageHelpLink";
 import { useToast } from "./Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -240,6 +241,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
 
       <div className="relative flex items-center justify-end gap-2 text-sm text-gray-700">
         {office ? <PageHelpLink /> : null}
+        {office ? <NotificationBell /> : null}
         <span style={{ fontSize: typography.pageSubtitle, color: colors.sidebarTextMuted }}>{dateLabel}</span>
         <button
           type="button"

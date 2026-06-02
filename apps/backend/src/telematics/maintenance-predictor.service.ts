@@ -1,3 +1,8 @@
+import {
+  createNotification,
+  listCompanyNotifyUserIds,
+} from "../notifications/notification.service.js";
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -129,7 +134,27 @@ export async function processMaintenancePredictorForOdometer(
       `,
       [input.operating_company_id, input.unit_id, schedule.id, nextDueOdometer, input.occurred_at]
     );
-    if (insertRes.rows.length > 0) alertsCreated += 1;
+    if (insertRes.rows.length > 0) {
+      alertsCreated += 1;
+      const userIds = await listCompanyNotifyUserIds(client, input.operating_company_id);
+      for (const userId of userIds) {
+        await createNotification(
+          {
+            operating_company_id: input.operating_company_id,
+            user_id: userId,
+            type: "maintenance_alert",
+            severity: "medium",
+            title: "Preventive maintenance due",
+            body: `Unit PM schedule is due at ${nextDueOdometer} mi (current ${input.odometer_mi} mi).`,
+            action_link: `/fleet/units/${input.unit_id}`,
+            entity_type: "unit",
+            entity_id: input.unit_id,
+            source_block: "maintenance_pm",
+          },
+          client
+        );
+      }
+    }
   }
 
   return {

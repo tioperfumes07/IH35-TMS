@@ -9,6 +9,7 @@ import {
 } from "./compliance-aggregate.service.js";
 import { registerComplianceNotificationRulesRoutes } from "./compliance-notification-rules.routes.js";
 import { registerComplianceSchedulerJobs } from "../scheduler/jobs.index.js";
+import { registerNotificationRoutes } from "../notifications/notifications.routes.js";
 
 const dashboardQuery = z.object({
   operating_company_id: z.string().uuid(),
@@ -30,6 +31,7 @@ let cronRegistered = false;
 
 export async function registerComplianceRoutes(app: FastifyInstance) {
   await registerComplianceNotificationRulesRoutes(app);
+  await registerNotificationRoutes(app);
 
   if (!cronRegistered) {
     registerComplianceSchedulerJobs(app);

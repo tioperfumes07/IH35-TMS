@@ -4,6 +4,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { sendEmail } from "../notifications/email.service.js";
+import { createNotification } from "../notifications/notification.service.js";
 import { buildComplianceCredentials } from "./compliance-aggregate.service.js";
 
 let initialized = false;
@@ -17,9 +18,10 @@ export async function runComplianceReminderTick(operatingCompanyId: string) {
       notify_days_before: number[];
       channel: string[];
       recipient_emails: string[] | null;
+      recipient_user_ids: string[] | null;
     }>(
       `
-        SELECT id::text, credential_type, notify_days_before, channel, recipient_emails
+        SELECT id::text, credential_type, notify_days_before, channel, recipient_emails, recipient_user_ids
         FROM compliance.notification_rules
         WHERE operating_company_id = $1::uuid AND active = true
       `,
@@ -51,6 +53,36 @@ export async function runComplianceReminderTick(operatingCompanyId: string) {
                 });
               } catch {
                 status = "failed";
+              }
+            }
+            if (channel === "in_app") {
+              const userIds = (rule.recipient_user_ids ?? []).filter(Boolean);
+              const notifType =
+                cred.days_until_expiration !== null && cred.days_until_expiration <= 0
+                  ? "compliance_expired"
+                  : "compliance_expiring";
+              const severity =
+                cred.days_until_expiration !== null && cred.days_until_expiration <= 7 ? "high" : "medium";
+              for (const userId of userIds) {
+                try {
+                  await createNotification(
+                    {
+                      operating_company_id: operatingCompanyId,
+                      user_id: userId,
+                      type: notifType,
+                      severity,
+                      title: `Compliance: ${cred.label}`,
+                      body: `${cred.label} for ${cred.owner_name} expires ${cred.expiration_date ?? "soon"}.`,
+                      action_link: cred.action_link ?? `/compliance`,
+                      entity_type: cred.owner_type,
+                      entity_id: cred.owner_id,
+                      source_block: "compliance_reminder",
+                    },
+                    client
+                  );
+                } catch {
+                  status = "failed";
+                }
               }
             }
             await client.query(

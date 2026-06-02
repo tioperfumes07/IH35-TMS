@@ -889,6 +889,20 @@ Relevant block: Phase G — SHIPPER-PORTAL-MVP
 
 ---
 
+## Notification Center (Block 17, locked 2026-06-02)
+
+Source: Jorge + Cursor execution order Block 17  
+Status: LOCKED  
+Relevant block: Phase E — NOTIFICATION-CENTER
+
+- Migration `0309_notification_center.sql`: `notifications.user_notifications` + `notifications.user_notification_preferences` (per-user RLS).
+- API: notification list/unread/read/dismiss/mark-all-read, preferences GET/PATCH, SSE stream optional.
+- UI: `NotificationBell` in top nav, `NotificationDropdown`, `NotificationCenterPage` at `/notifications`.
+- Wired sources: compliance reminder `in_app` channel, maintenance PM alert creation.
+- CI: four `verify:notification-center-*` guards.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:

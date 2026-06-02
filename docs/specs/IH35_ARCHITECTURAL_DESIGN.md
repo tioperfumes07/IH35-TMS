@@ -953,6 +953,16 @@ Route: `/reports/deadhead` renders `DeadheadReportPage` — fleet deadhead %, mi
 
 **Vehicle profile:** `BackhaulSuggestionsWidget` embeds when `quick_availability = available` and no active load.
 
+## Notification Center (Operations module) — Block 17 (locked 2026-06-02)
+
+Route: `/notifications` renders `NotificationCenterPage`; bell icon with unread badge in top nav (`NotificationBell` in `Topbar`).
+
+**Storage:** migration `0309_notification_center.sql` — `notifications.user_notifications` (per-user RLS) + `notifications.user_notification_preferences`.
+
+**API:** `/api/v1/notifications` (list, unread count, read, dismiss, mark-all-read), `/api/v1/notifications/preferences`, optional SSE `/api/v1/notifications/stream`.
+
+**Sources wired V1:** compliance reminder cron (`in_app` channel) and maintenance PM alert creation (`maintenance-predictor.service.ts`).
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
