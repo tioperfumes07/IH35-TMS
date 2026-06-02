@@ -7,6 +7,8 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import { enqueueEmail } from "../email/queue.service.js";
 import { findReturningDriverMatches } from "./driver-returning-detection.routes.js";
+import { buildDriverAggregate } from "./driver-aggregate.service.js";
+import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.js";
 
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
 const cdlClassSchema = z.enum(["A", "B", "C"]);
@@ -29,6 +31,10 @@ const listQuerySchema = z.object({
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
+
+const driverAggregateQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+});
 
 const createDriverBodySchema = z.object({
   identity_user_id: z.string().uuid().optional(),
@@ -794,11 +800,22 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     }
   });
 
+  await registerDriverDefaultTruckRoutes(app);
+
   app.get("/api/v1/mdata/drivers/:id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+
+    const parsedAggregateQuery = driverAggregateQuerySchema.safeParse(req.query ?? {});
+    if (parsedAggregateQuery.success) {
+      const aggregate = await withCurrentUser(authUser.uuid, async (client) =>
+        buildDriverAggregate(client, parsedParams.data.id, parsedAggregateQuery.data.operating_company_id)
+      );
+      if (!aggregate) return reply.code(404).send({ error: "mdata_driver_not_found" });
+      return aggregate;
+    }
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(

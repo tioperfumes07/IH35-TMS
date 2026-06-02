@@ -1,7 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
+import { apiRequest } from "../../api/client";
 import { getDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
+import { CurrentAssignmentSection } from "../../components/driver-profile/CurrentAssignmentSection";
+import { DrugProgramSection } from "../../components/driver-profile/DrugProgramSection";
+import { HOSStatusSection } from "../../components/driver-profile/HOSStatusSection";
+import { IdentityHeader } from "../../components/driver-profile/IdentityHeader";
+import { LicenseSection } from "../../components/driver-profile/LicenseSection";
+import { MedicalCardSection } from "../../components/driver-profile/MedicalCardSection";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -11,6 +18,21 @@ import { colors } from "../../design/tokens";
 import { driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import { DriverDqfPanel } from "./components/DriverDqfPanel";
+
+export type DriverProfileAggregate = {
+  driver: Record<string, unknown>;
+  license: Record<string, unknown>;
+  medical_card: Record<string, unknown>;
+  drug_program: Record<string, unknown>;
+  hos: Record<string, unknown> | null;
+  current_assignment: Record<string, unknown>;
+};
+
+function fetchDriverProfile(driverId: string, operatingCompanyId: string) {
+  return apiRequest<DriverProfileAggregate>(
+    `/api/v1/mdata/drivers/${driverId}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
 
 type DriverProfilePageProps = {
   driverId?: string;
@@ -29,6 +51,21 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     queryFn: () => getDriver(id),
   });
 
+  const profileQ = useQuery({
+    queryKey: ["driver-profile", id, companyId],
+    queryFn: () => fetchDriverProfile(id, companyId),
+    enabled: Boolean(id && companyId),
+    staleTime: 30_000,
+  });
+
+  const hosQ = useQuery({
+    queryKey: ["driver-profile-hos", id, companyId],
+    queryFn: () => fetchDriverProfile(id, companyId),
+    enabled: Boolean(id && companyId),
+    refetchInterval: 30_000,
+    staleTime: 30_000,
+  });
+
   const itemsQ = useQuery({
     queryKey: ["safety", "driver-dqf", companyId, id],
     enabled: Boolean(companyId && id),
@@ -37,16 +74,18 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
   const summary = summarizeDriverDqf(itemsQ.data);
   const driver = driverQ.data;
+  const aggregate = profileQ.data;
+  const hos = hosQ.data?.hos ?? aggregate?.hos ?? null;
 
   if (!companyId) {
     return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
-  if (driverQ.isLoading) {
+  if (driverQ.isLoading || profileQ.isLoading) {
     return <div className="rounded border border-gray-200 bg-white p-4 text-sm text-slate-600">Loading driver profile…</div>;
   }
 
-  if (!driver) {
+  if (!driver || !aggregate) {
     return (
       <div className="space-y-2 rounded border border-gray-200 bg-white p-4 text-sm text-slate-600">
         <p>Driver not found.</p>
@@ -64,12 +103,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   }
 
   const displayName = driverDisplayName(driver.first_name, driver.last_name, driver.id);
+  const profileDriver = aggregate.driver;
 
   return (
     <div className="space-y-4">
       <PageHeader
         title={displayName}
-        subtitle="Driver qualification file (DQF) profile"
+        subtitle="Driver profile · qualification file (DQF)"
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <DriverDqfComplianceChip summary={summary} />
@@ -90,6 +130,29 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         }
       />
 
+      <div data-testid="dp-section-1-identity">
+        <IdentityHeader driver={profileDriver} />
+      </div>
+      <div data-testid="dp-section-2-license">
+        <LicenseSection license={aggregate.license} />
+      </div>
+      <div data-testid="dp-section-3-medical">
+        <MedicalCardSection medical={aggregate.medical_card} />
+      </div>
+      <div data-testid="dp-section-4-drug">
+        <DrugProgramSection drug={aggregate.drug_program} />
+      </div>
+      <div data-testid="dp-section-5-hos">
+        <HOSStatusSection hos={hos} />
+      </div>
+      <div data-testid="dp-section-6-assignment">
+        <CurrentAssignmentSection
+          assignment={aggregate.current_assignment}
+          companyId={companyId}
+          driverId={id}
+        />
+      </div>
+
       <KpiStrip>
         <KpiCard label="Checklist items" number={String(summary.itemCount)} accent={colors.drivers.strong} />
         <KpiCard label="Present" number={String(summary.presentCount)} accent={colors.positive.strong} />
@@ -101,33 +164,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           accent={colors.info.strong}
         />
       </KpiStrip>
-
-      <section className="rounded border border-gray-200 bg-white p-4">
-        <h2 className="mb-1 text-sm font-semibold text-slate-900">Compliance summary</h2>
-        <p className="mb-3 text-xs text-slate-600">
-          Profile readiness combines master-data credentials with DQF checklist rows from the Block 01 driver-qualification API.
-          File status: <span className="font-medium text-slate-800">{summary.label}</span>.
-        </p>
-        <div className="mb-3">
-          <DriverDqfComplianceChip summary={summary} />
-        </div>
-        <div className="grid gap-2 text-xs text-slate-700 md:grid-cols-3">
-          <div className="rounded border border-gray-100 bg-gray-50 px-3 py-2">
-            <div className="font-semibold text-slate-800">CDL</div>
-            <div>{driver.cdl_number ?? "—"} · {driver.cdl_state ?? "—"}</div>
-            <div>Expires {driver.cdl_expires_at ?? "—"}</div>
-          </div>
-          <div className="rounded border border-gray-100 bg-gray-50 px-3 py-2">
-            <div className="font-semibold text-slate-800">Medical card</div>
-            <div>Expires {driver.dot_medical_expires_at ?? "—"}</div>
-          </div>
-          <div className="rounded border border-gray-100 bg-gray-50 px-3 py-2">
-            <div className="font-semibold text-slate-800">Contact</div>
-            <div>{driver.phone ?? "—"}</div>
-            <div>{driver.email ?? "—"}</div>
-          </div>
-        </div>
-      </section>
 
       <section className="rounded border border-gray-200 bg-white p-4">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">DQF checklist</h2>
