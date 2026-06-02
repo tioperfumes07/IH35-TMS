@@ -1,3 +1,4 @@
+import { withSavepoint } from "../auth/db.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 
 export type FinancialPeriod = "YTD" | "quarter" | "month";
@@ -125,9 +126,12 @@ async function queryUnitFinancialRow(
     [operatingCompanyId, unitId, periodStart, periodEnd]
   );
 
-  const fuelRes = await client
-    .query<{ fuel_cents: string }>(
-      `
+  const fuelRes = await withSavepoint(
+    client,
+    "unit_financial_fuel",
+    () =>
+      client.query<{ fuel_cents: string }>(
+        `
         SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::text AS fuel_cents
         FROM fuel.fuel_transactions ft
         JOIN mdata.loads l ON l.id = ft.load_id
@@ -136,9 +140,10 @@ async function queryUnitFinancialRow(
           AND l.soft_deleted_at IS NULL
           AND l.created_at::date BETWEEN $3::date AND $4::date
       `,
-      [operatingCompanyId, unitId, periodStart, periodEnd]
-    )
-    .catch(() => ({ rows: [{ fuel_cents: "0" }] }));
+        [operatingCompanyId, unitId, periodStart, periodEnd]
+      ),
+    { rows: [{ fuel_cents: "0" }] }
+  );
 
   const row = baseRes.rows[0] ?? {
     revenue_cents: "0",

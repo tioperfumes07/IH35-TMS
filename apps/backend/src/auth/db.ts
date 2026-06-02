@@ -123,6 +123,29 @@ export async function withLuciaBypass<T>(
   }
 }
 
+export type SavepointQueryClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
+/** Optional query inside withCurrentUser: failed SQL must not abort the outer transaction. */
+export async function withSavepoint<T>(
+  client: SavepointQueryClient,
+  name: string,
+  fn: () => Promise<T>,
+  fallback: T
+): Promise<T> {
+  const safe = name.replace(/[^a-z0-9_]/gi, "_");
+  await client.query(`SAVEPOINT ${safe}`);
+  try {
+    const out = await fn();
+    await client.query(`RELEASE SAVEPOINT ${safe}`);
+    return out;
+  } catch {
+    await client.query(`ROLLBACK TO SAVEPOINT ${safe}`).catch(() => {});
+    return fallback;
+  }
+}
+
 export async function withCurrentUser<T>(
   userUuid: string,
   fn: (client: pg.PoolClient) => Promise<T>

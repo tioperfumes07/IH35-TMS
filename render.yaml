@@ -7,7 +7,7 @@ services:
     runtime: node
     plan: starter
     buildCommand: npm install && npm run build:backend
-    preDeployCommand: npm run db:migrate && npm run db:verify:critical-runtime && npm run db:verify:critical-runtime -- --verify-content
+    preDeployCommand: npm run db:migrate && npm run db:verify:critical-runtime && npm run db:verify:critical-runtime -- --verify-content && npm run ci:boot-api-smoke && IH35_TEST_AUTH_BYPASS=1 npm run ci:boot-aggregate-smoke
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
