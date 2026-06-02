@@ -1,3 +1,4 @@
+import { withSavepoint } from "../auth/db.js";
 import { getComparableMetrics, getUnitFinancialYTD } from "./unit-financial.service.js";
 
 type DbClient = {
@@ -550,16 +551,22 @@ export async function buildUnitAggregate(
     [unitId, operatingCompanyId]
   );
 
-  const assetRes = await client.query(
-    `
+  const assetRes = await withSavepoint(
+    client,
+    "unit_aggregate_assets",
+    () =>
+      client.query<{ acquisition_cost_cents: string | null }>(
+        `
       SELECT acquisition_cost_cents
       FROM mdata.assets
       WHERE tenant_id = $2::uuid
         AND samsara_unit_id = $3
       LIMIT 1
     `,
-    [unitId, operatingCompanyId, unit.samsara_vehicle_id ?? null]
-  ).catch(() => ({ rows: [] as Array<{ acquisition_cost_cents: string | null }> }));
+        [unitId, operatingCompanyId, unit.samsara_vehicle_id ?? null]
+      ),
+    { rows: [] as Array<{ acquisition_cost_cents: string | null }> }
+  );
 
   const lifetimeMaintRes = await client.query(
     `
@@ -569,17 +576,21 @@ export async function buildUnitAggregate(
     `,
     [unitId, operatingCompanyId]
   );
-  const lifetimeFuelRes = await client
-    .query(
-      `
+  const lifetimeFuelRes = await withSavepoint(
+    client,
+    "unit_aggregate_lifetime_fuel",
+    () =>
+      client.query<{ cents: string }>(
+        `
         SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS cents
         FROM fuel.fuel_transactions ft
         JOIN mdata.loads l ON l.id = ft.load_id
         WHERE l.assigned_unit_id = $1::uuid AND ft.operating_company_id = $2::uuid
       `,
-      [unitId, operatingCompanyId]
-    )
-    .catch(() => ({ rows: [{ cents: "0" }] }));
+        [unitId, operatingCompanyId]
+      ),
+    { rows: [{ cents: "0" }] }
+  );
 
   const purchase_price_cents = assetRes.rows[0]?.acquisition_cost_cents != null ? Number(assetRes.rows[0].acquisition_cost_cents) : null;
   const lifetime_maintenance_cents = Number(lifetimeMaintRes.rows[0]?.cents ?? 0);

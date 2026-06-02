@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { withCurrentUser } from "../auth/db.js";
+import { withCurrentUser, withSavepoint } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { normalizeBankTransactionDescription } from "./bank-tx-dedup.js";
 import { suggestionConfidence } from "./obligation-reconcile.logic.js";
@@ -82,9 +82,12 @@ async function loadObligationCandidates(
 ): Promise<ObligationRow[]> {
   const out: ObligationRow[] = [];
 
-  const loads = await client
-    .query<{ id: string; load_number: string | null; rate_total_cents: number | null; created_at: string }>(
-      `
+  const loads = await withSavepoint(
+    client,
+    "obligation_reconcile_loads",
+    () =>
+      client.query<{ id: string; load_number: string | null; rate_total_cents: number | null; created_at: string }>(
+        `
         SELECT id, load_number, rate_total_cents, created_at::text
         FROM mdata.loads
         WHERE operating_company_id = $1
@@ -92,9 +95,10 @@ async function loadObligationCandidates(
         ORDER BY created_at DESC
         LIMIT 400
       `,
-      [companyId]
-    )
-    .catch(() => ({ rows: [] }));
+        [companyId]
+      ),
+    { rows: [] }
+  );
   for (const r of loads.rows) {
     out.push({
       obligation_type: "load",
@@ -105,18 +109,22 @@ async function loadObligationCandidates(
     });
   }
 
-  const st = await client
-    .query<{ id: string; net_settlement_cents: number | null; created_at: string }>(
-      `
+  const st = await withSavepoint(
+    client,
+    "obligation_reconcile_settlements",
+    () =>
+      client.query<{ id: string; net_settlement_cents: number | null; created_at: string }>(
+        `
         SELECT id, net_settlement_cents, created_at::text
         FROM driver_finance.driver_settlements
         WHERE operating_company_id = $1
         ORDER BY created_at DESC
         LIMIT 200
       `,
-      [companyId]
-    )
-    .catch(() => ({ rows: [] }));
+        [companyId]
+      ),
+    { rows: [] }
+  );
   for (const r of st.rows) {
     out.push({
       obligation_type: "settlement",
@@ -127,18 +135,22 @@ async function loadObligationCandidates(
     });
   }
 
-  const fuel = await client
-    .query<{ id: string; total_cost: unknown; purchased_at: string | null }>(
-      `
+  const fuel = await withSavepoint(
+    client,
+    "obligation_reconcile_fuel",
+    () =>
+      client.query<{ id: string; total_cost: unknown; purchased_at: string | null }>(
+        `
         SELECT id, total_cost, purchased_at::text
         FROM fuel.fuel_transactions
         WHERE operating_company_id = $1
         ORDER BY purchased_at DESC NULLS LAST
         LIMIT 200
       `,
-      [companyId]
-    )
-    .catch(() => ({ rows: [] }));
+        [companyId]
+      ),
+    { rows: [] }
+  );
   for (const r of fuel.rows) {
     const cents = Math.round(Number(r.total_cost ?? 0) * 100);
     out.push({
@@ -150,18 +162,22 @@ async function loadObligationCandidates(
     });
   }
 
-  const wos = await client
-    .query<{ id: string; description: string | null; total_actual_cost: unknown; opened_at: string | null }>(
-      `
+  const wos = await withSavepoint(
+    client,
+    "obligation_reconcile_work_orders",
+    () =>
+      client.query<{ id: string; description: string | null; total_actual_cost: unknown; opened_at: string | null }>(
+        `
         SELECT id, description, total_actual_cost, opened_at::text
         FROM maintenance.work_orders
         WHERE operating_company_id = $1
         ORDER BY opened_at DESC NULLS LAST
         LIMIT 200
       `,
-      [companyId]
-    )
-    .catch(() => ({ rows: [] }));
+        [companyId]
+      ),
+    { rows: [] }
+  );
   for (const r of wos.rows) {
     const cents = Math.round(Number(r.total_actual_cost ?? 0) * 100);
     out.push({
@@ -173,9 +189,12 @@ async function loadObligationCandidates(
     });
   }
 
-  const inv = await client
-    .query<{ id: string; display_id: string; total_cents: number | null; issue_date: string }>(
-      `
+  const inv = await withSavepoint(
+    client,
+    "obligation_reconcile_invoices",
+    () =>
+      client.query<{ id: string; display_id: string; total_cents: number | null; issue_date: string }>(
+        `
         SELECT id, display_id, total_cents, issue_date::text
         FROM accounting.invoices
         WHERE operating_company_id = $1
@@ -183,9 +202,10 @@ async function loadObligationCandidates(
         ORDER BY issue_date DESC
         LIMIT 200
       `,
-      [companyId]
-    )
-    .catch(() => ({ rows: [] }));
+        [companyId]
+      ),
+    { rows: [] }
+  );
   for (const r of inv.rows) {
     out.push({
       obligation_type: "ar_invoice",
@@ -196,9 +216,12 @@ async function loadObligationCandidates(
     });
   }
 
-  const bills = await client
-    .query<{ id: string; bill_number: string | null; memo: string | null; amount_cents: number | null; bill_date: string }>(
-      `
+  const bills = await withSavepoint(
+    client,
+    "obligation_reconcile_bills",
+    () =>
+      client.query<{ id: string; bill_number: string | null; memo: string | null; amount_cents: number | null; bill_date: string }>(
+        `
         SELECT id, bill_number, memo, amount_cents, bill_date::text
         FROM accounting.bills
         WHERE operating_company_id = $1
@@ -206,9 +229,10 @@ async function loadObligationCandidates(
         ORDER BY bill_date DESC NULLS LAST
         LIMIT 200
       `,
-      [companyId]
-    )
-    .catch(() => ({ rows: [] }));
+        [companyId]
+      ),
+    { rows: [] }
+  );
   for (const r of bills.rows) {
     out.push({
       obligation_type: "bill",
