@@ -342,6 +342,18 @@ jobs:
       - name: verify:border-crossing-emanifest-pdf-puppeteer
         run: npm run verify:border-crossing-emanifest-pdf-puppeteer
 
+      - name: verify:fault-auto-wo-idempotency
+        run: npm run verify:fault-auto-wo-idempotency
+
+      - name: verify:fault-auto-wo-rls
+        run: npm run verify:fault-auto-wo-rls
+
+      - name: verify:fault-auto-wo-notification-wired
+        run: npm run verify:fault-auto-wo-notification-wired
+
+      - name: verify:fault-auto-wo-24h-dedup
+        run: npm run verify:fault-auto-wo-24h-dedup
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

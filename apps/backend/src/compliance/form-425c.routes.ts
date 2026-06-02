@@ -9,6 +9,9 @@ import { registerShipperPortalRoutes } from "../shipper-portal/portal-auth.route
 import { registerBorderCrossingHistoryRoutes } from "../border-crossing/border-crossing-history.routes.js";
 import { registerBorderCrossingWizardRoutes } from "../border-crossing/border-crossing-wizard.routes.js";
 import { registerDeadheadRoutes } from "../reports/deadhead.routes.js";
+import { registerFaultRulesRoutes } from "../maintenance/fault-auto-wo/fault-rules.routes.js";
+import { registerFaultHistoryRoutes } from "../maintenance/fault-auto-wo/fault-history.routes.js";
+import { registerAutoWoDraftsRoutes } from "../maintenance/fault-auto-wo/auto-wo-drafts.routes.js";
 
 const COMPANY_QUERY = z.object({
   operating_company_id: z.string().uuid(),
@@ -281,6 +284,9 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
   await registerDeadheadRoutes(app);
   await registerBorderCrossingWizardRoutes(app);
   await registerBorderCrossingHistoryRoutes(app);
+  await registerFaultRulesRoutes(app);
+  await registerFaultHistoryRoutes(app);
+  await registerAutoWoDraftsRoutes(app);
   app.get("/api/v1/form-425c", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;

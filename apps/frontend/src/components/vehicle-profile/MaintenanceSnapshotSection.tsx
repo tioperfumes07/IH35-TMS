@@ -6,11 +6,15 @@ export function MaintenanceSnapshotSection({
   nextPmDue,
   lastService,
   unitId,
+  activeFaultCount = 0,
+  pendingFaultDraftCount = 0,
 }: {
   openWoCount: { in_house: number; external: number; roadside: number; total: number };
   nextPmDue: Record<string, unknown>;
   lastService: Record<string, unknown> | null;
   unitId: string;
+  activeFaultCount?: number;
+  pendingFaultDraftCount?: number;
 }) {
   const pmEntries = Object.entries(nextPmDue ?? {}).slice(0, 4);
   return (
@@ -20,6 +24,18 @@ export function MaintenanceSnapshotSection({
         Open WOs: in-house {openWoCount.in_house} · external {openWoCount.external} · roadside {openWoCount.roadside} (
         {openWoCount.total} total)
       </p>
+      {activeFaultCount > 0 || pendingFaultDraftCount > 0 ? (
+        <p className="mt-1 text-xs text-amber-800">
+          {activeFaultCount} active fault code{activeFaultCount === 1 ? "" : "s"}
+          {pendingFaultDraftCount > 0
+            ? ` — ${pendingFaultDraftCount} auto-WO draft${pendingFaultDraftCount === 1 ? "" : "s"} pending review`
+            : ""}
+          {" · "}
+          <Link to={`/maintenance/fault-drafts?unit_id=${unitId}`} className="underline">
+            View fault history
+          </Link>
+        </p>
+      ) : null}
       <Link to="/maintenance" className="text-xs text-blue-700 underline">
         Open maintenance console
       </Link>

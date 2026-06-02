@@ -83,3 +83,43 @@ export async function listCompanyNotifyUserIds(
   );
   return res.rows.map((row) => row.id);
 }
+
+export type PredictiveAutoWoNotificationInput = {
+  operating_company_id: string;
+  unit_label: string;
+  fault_description: string;
+  severity: string;
+  work_order_id: string;
+};
+
+/** Block 22: in-app alerts when fault-driven draft work orders are auto-created. */
+export async function emitPredictiveAutoWoNotifications(
+  client: DbClient,
+  input: PredictiveAutoWoNotificationInput
+): Promise<void> {
+  const userIds = await listCompanyNotifyUserIds(client, input.operating_company_id, [
+    "Owner",
+    "Administrator",
+    "Manager",
+  ]);
+  const notifSeverity: NotificationSeverity =
+    input.severity === "critical" ? "critical" : input.severity === "high" ? "high" : "medium";
+
+  for (const userId of userIds) {
+    await createNotification(
+      {
+        operating_company_id: input.operating_company_id,
+        user_id: userId,
+        type: "maintenance_alert",
+        severity: notifSeverity,
+        title: `Auto-created draft WO for ${input.unit_label}: ${input.fault_description} (${input.severity})`,
+        body: `Review and assign shop for fault-driven draft work order.`,
+        action_link: `/maintenance/work-orders/${input.work_order_id}`,
+        entity_type: "work_order",
+        entity_id: input.work_order_id,
+        source_block: "predictive_auto_wo",
+      },
+      client
+    );
+  }
+}
