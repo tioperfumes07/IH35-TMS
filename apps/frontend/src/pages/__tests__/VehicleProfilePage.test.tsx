@@ -30,6 +30,28 @@ const profileFixture = {
   last_service: null,
   compliance: { us_insurance: { expiration: null, days_until_expiration: null, color: "gray" }, mx_insurance: { color: "gray" }, registration_plates: [] },
   maintenance_alerts: [{ severity: "medium", message: "PM due soon", source: "maintenance", created_at: "2026-06-01T00:00:00Z" }],
+  reefer: null,
+  financial_ytd: {
+    revenue_cents: 100000,
+    total_operating_cost_cents: 60000,
+    gross_profit_cents: 40000,
+    profit_per_mile_cents: 120,
+    profit_per_day_cents: 500,
+    utilization_pct: 72,
+    fleet_avg: { revenue_cents: 90000, cost_cents: 55000, profit_per_mile_cents: 100 },
+    period: "YTD",
+  },
+  recent_activity: { loads: [], status_changes: [], work_orders: [] },
+  photos: [],
+  documents: [],
+  total_ownership_cost: { purchase_price_cents: 5000000, total_cost_to_date_cents: 8000000, months_owned: 24, cost_per_month_cents: 333333 },
+  comparable_metrics: {
+    fleet_avg_maintenance_per_mile_cents: 15,
+    this_unit_maintenance_per_mile_cents: 20,
+    deviation_pct: 20,
+    rank_in_fleet: 5,
+    total_units_in_fleet: 10,
+  },
 };
 
 vi.mock("../../api/client", () => ({
@@ -74,7 +96,7 @@ describe("VehicleProfilePage", () => {
     vi.mocked(accountingApi.listClassesForJe).mockResolvedValue({ classes: [] });
   });
 
-  it("renders all six profile sections", async () => {
+  it("renders all eleven profile sections", async () => {
     render(wrap(<VehicleProfilePage />));
     expect(await screen.findByTestId("vp-section-1-identity")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-2-telemetry")).toBeInTheDocument();
@@ -82,6 +104,22 @@ describe("VehicleProfilePage", () => {
     expect(screen.getByTestId("vp-section-4-load")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-5-maintenance")).toBeInTheDocument();
     expect(screen.getByTestId("vp-section-6-compliance")).toBeInTheDocument();
+    expect(screen.getByTestId("vp-section-7-reefer")).toBeInTheDocument();
+    expect(screen.getByTestId("vp-section-8-financial")).toBeInTheDocument();
+    expect(screen.getByTestId("vp-section-9-activity")).toBeInTheDocument();
+    expect(screen.getByTestId("vp-section-10-documents")).toBeInTheDocument();
+    expect(screen.getByTestId("vp-section-11-action-bar")).toBeInTheDocument();
+  });
+
+  it("shows comparable banner when deviation above 15%", async () => {
+    render(wrap(<VehicleProfilePage />));
+    expect(await screen.findByTestId("vp-comparable-banner")).toBeInTheDocument();
+  });
+
+  it("exports PDF link on action bar", async () => {
+    render(wrap(<VehicleProfilePage />));
+    const link = await screen.findByTestId("vp-export-pdf");
+    expect(link.getAttribute("href")).toContain("export.pdf");
   });
 
   it("shows maintenance alerts banner when alerts present", async () => {

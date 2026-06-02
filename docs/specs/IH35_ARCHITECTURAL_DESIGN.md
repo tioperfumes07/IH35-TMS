@@ -881,6 +881,20 @@ Route: `/fleet/units/:id` renders `VehicleProfilePage` with six sections (identi
 
 **Maintenance alerts banner:** Server-built `maintenance_alerts[]` (high/medium/low); dismissible per session in UI.
 
+## Vehicle Profile (Maintenance module) — Part 2 (locked 2026-06-02)
+
+Sections 7–11 on `VehicleProfilePage`: reefer (conditional), financial P&amp;L, recent activity, documents, action bar. Recommendations: PDF export, trip cost calculator, photo gallery, ownership cost meter, comparable units widget.
+
+**Reefer:** Trailer-level only — `mdata.equipment` reefer columns (migration `0296`); Section 7 when `equipment_type = 'Reefer'` and `current_unit_id` = unit. Not on `mdata.units`.
+
+**Documents:** Reuse `docs.files` + `docs.file_links` (`entity_type='unit'`). No `mdata.unit_documents`. Upload via existing docs module; profile lists via `GET /api/v1/mdata/units/:id/documents`.
+
+**Photos:** `mdata.unit_photos` for driver-app gallery; web read-only V1.
+
+**Financial:** `unit-financial.service.ts` reuses profit-per-truck CTE joins (`assigned_unit_id`, `driver_finance.driver_bills`, `fuel.fuel_transactions` via `load_id`, `maintenance.work_orders`). In-memory 5min TTL cache. `GET /api/v1/mdata/units/:id/financial?period=YTD|quarter|month`.
+
+**PDF export:** Puppeteer HTML → `page.pdf()` (same pattern as settlement PDF renderer). `GET /api/v1/mdata/units/:id/export.pdf`.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

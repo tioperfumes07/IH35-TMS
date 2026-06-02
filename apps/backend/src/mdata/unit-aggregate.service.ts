@@ -1,3 +1,5 @@
+import { getComparableMetrics, getUnitFinancialYTD } from "./unit-financial.service.js";
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -394,6 +396,202 @@ export async function buildUnitAggregate(
     }
   }
 
+  const reeferRes = await client.query(
+    `
+      SELECT
+        e.id::text AS attached_trailer_id,
+        e.equipment_number,
+        e.vin,
+        e.reefer_year,
+        e.reefer_brand,
+        e.reefer_model,
+        e.reefer_setpoint_temp_f,
+        e.reefer_fuel_capacity_gal,
+        e.reefer_service_interval_hours,
+        e.reefer_last_service_hours,
+        e.reefer_last_service_date::text,
+        e.reefer_notes
+      FROM mdata.equipment e
+      WHERE e.current_unit_id = $1::uuid
+        AND e.equipment_type = 'Reefer'
+        AND e.deactivated_at IS NULL
+      ORDER BY e.updated_at DESC
+      LIMIT 1
+    `,
+    [unitId]
+  );
+  const reeferRow = reeferRes.rows[0];
+  const engineHours = samsara?.raw_payload_parsed?.engine_hours ?? null;
+  const serviceInterval = reeferRow?.reefer_service_interval_hours != null ? Number(reeferRow.reefer_service_interval_hours) : 2000;
+  const lastServiceHours = reeferRow?.reefer_last_service_hours != null ? Number(reeferRow.reefer_last_service_hours) : null;
+  const hoursUntilService =
+    engineHours != null && lastServiceHours != null ? Math.max(0, serviceInterval - (engineHours - lastServiceHours)) : null;
+  const reefer = reeferRow
+    ? {
+        attached_trailer_id: reeferRow.attached_trailer_id,
+        equipment_number: reeferRow.equipment_number,
+        vin: reeferRow.vin,
+        year: reeferRow.reefer_year,
+        brand: reeferRow.reefer_brand,
+        model: reeferRow.reefer_model,
+        setpoint_temp_f: reeferRow.reefer_setpoint_temp_f,
+        fuel_capacity_gal: reeferRow.reefer_fuel_capacity_gal,
+        service_interval_hours: serviceInterval,
+        last_service_hours: reeferRow.reefer_last_service_hours,
+        last_service_date: reeferRow.reefer_last_service_date,
+        current_hours_from_samsara: engineHours,
+        hours_until_service: hoursUntilService,
+        cargo_temp_f_current: null,
+        notes: reeferRow.reefer_notes,
+      }
+    : null;
+
+  const financial_ytd = await getUnitFinancialYTD(client, unitId, operatingCompanyId, "YTD");
+  const comparable_metrics = await getComparableMetrics(client, unitId, operatingCompanyId, "YTD");
+
+  const recentLoadsRes = await client.query(
+    `
+      SELECT
+        l.id::text AS load_id,
+        l.load_number,
+        l.created_at::text AS date,
+        (
+          SELECT NULLIF(TRIM(CONCAT_WS(', ', ls.city, ls.state)), '')
+          FROM mdata.load_stops ls WHERE ls.load_id = l.id ORDER BY ls.sequence_number ASC LIMIT 1
+        ) AS origin,
+        (
+          SELECT NULLIF(TRIM(CONCAT_WS(', ', ls.city, ls.state)), '')
+          FROM mdata.load_stops ls WHERE ls.load_id = l.id ORDER BY ls.sequence_number DESC LIMIT 1
+        ) AS dest,
+        l.rate_total_cents AS revenue_cents,
+        l.status::text AS status
+      FROM mdata.loads l
+      WHERE l.assigned_unit_id = $1::uuid
+        AND l.operating_company_id = $2::uuid
+        AND l.soft_deleted_at IS NULL
+      ORDER BY l.created_at DESC
+      LIMIT 10
+    `,
+    [unitId, operatingCompanyId]
+  );
+
+  const statusChangesRes = await client.query(
+    `
+      SELECT uuid::text AS id, created_at::text, event_class, payload
+      FROM audit.audit_events
+      WHERE (
+        (payload->>'resource_type' = 'mdata.units' AND payload->>'resource_id' = $1)
+        OR (payload->>'entity_type' = 'unit' AND payload->>'entity_id' = $1)
+      )
+      ORDER BY created_at DESC
+      LIMIT 10
+    `,
+    [unitId]
+  );
+
+  const recentWoRes = await client.query(
+    `
+      SELECT
+        w.id::text AS wo_id,
+        w.display_id,
+        w.status,
+        w.opened_at::text,
+        w.total_actual_cost,
+        w.description
+      FROM maintenance.work_orders w
+      WHERE w.unit_id = $1::uuid
+        AND w.operating_company_id = $2::uuid
+      ORDER BY COALESCE(w.updated_at, w.opened_at) DESC NULLS LAST
+      LIMIT 10
+    `,
+    [unitId, operatingCompanyId]
+  );
+
+  const photosRes = await client.query(
+    `
+      SELECT
+        p.id::text,
+        p.photo_url AS url,
+        p.photo_type AS type,
+        p.caption,
+        p.taken_at::text,
+        NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name
+      FROM mdata.unit_photos p
+      LEFT JOIN mdata.drivers d ON d.id = p.uploaded_by_driver_id
+      WHERE p.unit_id = $1::uuid
+        AND p.operating_company_id = $2::uuid
+        AND p.archived_at IS NULL
+      ORDER BY p.taken_at DESC NULLS LAST, p.created_at DESC
+      LIMIT 20
+    `,
+    [unitId, operatingCompanyId]
+  );
+
+  const documentsRes = await client.query(
+    `
+      SELECT
+        f.id::text AS file_id,
+        f.original_filename AS name,
+        fc.code AS category,
+        f.expiration_date::text AS expiration_date,
+        f.created_at::text AS uploaded_at,
+        f.r2_key AS url
+      FROM docs.file_links fl
+      JOIN docs.files f ON f.id = fl.file_id
+      LEFT JOIN catalogs.file_categories fc ON fc.id = f.category_id
+      WHERE fl.entity_type = 'unit'
+        AND fl.entity_id = $1::uuid
+        AND fl.deleted_at IS NULL
+        AND f.deleted_at IS NULL
+        AND f.upload_completed_at IS NOT NULL
+        AND f.operating_company_id = $2::uuid
+      ORDER BY f.created_at DESC
+    `,
+    [unitId, operatingCompanyId]
+  );
+
+  const assetRes = await client.query(
+    `
+      SELECT acquisition_cost_cents
+      FROM mdata.assets
+      WHERE tenant_id = $2::uuid
+        AND samsara_unit_id = $3
+      LIMIT 1
+    `,
+    [unitId, operatingCompanyId, unit.samsara_vehicle_id ?? null]
+  ).catch(() => ({ rows: [] as Array<{ acquisition_cost_cents: string | null }> }));
+
+  const lifetimeMaintRes = await client.query(
+    `
+      SELECT COALESCE(SUM(ROUND(COALESCE(total_actual_cost, 0)::numeric * 100)), 0)::bigint AS cents
+      FROM maintenance.work_orders
+      WHERE unit_id = $1::uuid AND operating_company_id = $2::uuid
+    `,
+    [unitId, operatingCompanyId]
+  );
+  const lifetimeFuelRes = await client
+    .query(
+      `
+        SELECT COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS cents
+        FROM fuel.fuel_transactions ft
+        JOIN mdata.loads l ON l.id = ft.load_id
+        WHERE l.assigned_unit_id = $1::uuid AND ft.operating_company_id = $2::uuid
+      `,
+      [unitId, operatingCompanyId]
+    )
+    .catch(() => ({ rows: [{ cents: "0" }] }));
+
+  const purchase_price_cents = assetRes.rows[0]?.acquisition_cost_cents != null ? Number(assetRes.rows[0].acquisition_cost_cents) : null;
+  const lifetime_maintenance_cents = Number(lifetimeMaintRes.rows[0]?.cents ?? 0);
+  const lifetime_fuel_cents = Number(lifetimeFuelRes.rows[0]?.cents ?? 0);
+  const acquired = unit.acquired_date ? new Date(String(unit.acquired_date)) : unit.created_at ? new Date(String(unit.created_at)) : null;
+  const months_owned =
+    acquired && !Number.isNaN(acquired.getTime())
+      ? Math.max(1, Math.round((Date.now() - acquired.getTime()) / (30 * 24 * 60 * 60 * 1000)))
+      : null;
+  const total_cost_to_date_cents =
+    (purchase_price_cents ?? 0) + lifetime_maintenance_cents + lifetime_fuel_cents;
+
   return {
     unit,
     plates: platesRes.rows,
@@ -407,5 +605,42 @@ export async function buildUnitAggregate(
     last_service,
     compliance,
     maintenance_alerts,
+    reefer,
+    financial_ytd,
+    recent_activity: {
+      loads: recentLoadsRes.rows,
+      status_changes: statusChangesRes.rows,
+      work_orders: recentWoRes.rows,
+    },
+    photos: photosRes.rows,
+    documents: documentsRes.rows,
+    insurance_summary: {
+      us_policy: unit.us_insurance_policy_number
+        ? {
+            number: unit.us_insurance_policy_number,
+            carrier: unit.us_insurance_carrier,
+            expiration: unit.us_insurance_expiration,
+            monthly_premium: null,
+          }
+        : null,
+      mx_policy: unit.mx_insurance_policy_number
+        ? {
+            number: unit.mx_insurance_policy_number,
+            carrier: unit.mx_insurance_carrier,
+            expiration: unit.mx_insurance_expiration,
+            monthly_premium: null,
+          }
+        : null,
+    },
+    total_ownership_cost: {
+      purchase_price_cents,
+      lifetime_maintenance_cents,
+      lifetime_fuel_cents,
+      lifetime_insurance_cents: 0,
+      total_cost_to_date_cents,
+      months_owned,
+      cost_per_month_cents: months_owned ? Math.round(total_cost_to_date_cents / months_owned) : null,
+    },
+    comparable_metrics,
   };
 }

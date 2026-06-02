@@ -225,6 +225,18 @@ jobs:
       - name: verify:vehicle-profile-audit-coverage
         run: npm run verify:vehicle-profile-audit-coverage
 
+      - name: verify:vehicle-profile-part2-sections-complete
+        run: npm run verify:vehicle-profile-part2-sections-complete
+
+      - name: verify:vehicle-profile-financial-aggregation-pattern
+        run: npm run verify:vehicle-profile-financial-aggregation-pattern
+
+      - name: verify:vehicle-profile-pdf-export-puppeteer
+        run: npm run verify:vehicle-profile-pdf-export-puppeteer
+
+      - name: verify:vehicle-profile-photos-documents-pattern
+        run: npm run verify:vehicle-profile-photos-documents-pattern
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

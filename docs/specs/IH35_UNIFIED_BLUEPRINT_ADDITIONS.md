@@ -807,6 +807,20 @@ Relevant block: Phase C — VEHICLE-PROFILE-PART-1
 
 ---
 
+## Vehicle Profile Part 2 (Block 12, locked 2026-06-02)
+
+Source: Jorge + Cursor execution order Block 12  
+Status: LOCKED (Part 2)  
+Relevant block: Phase C — VEHICLE-PROFILE-PART-2
+
+- Migration `0296_vehicle_profile_part2.sql`: reefer columns on `mdata.equipment`; `mdata.unit_photos` (RLS + grants). No unit_documents table.
+- API: extended unit aggregate (reefer, financial_ytd, recent_activity, photos, documents, insurance_summary, total_ownership_cost, comparable_metrics); financial endpoint; photos CRUD; documents facade; trip-cost POST; PDF export.
+- UI: sections 7–11 + trip cost widget + photo gallery + ownership meter + comparable units widget.
+- CI: four new verify guards with explicit `ci.yml` steps (Block 11 lesson).
+- Measured `block-ready` baseline from Block 11: ~542s.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:
