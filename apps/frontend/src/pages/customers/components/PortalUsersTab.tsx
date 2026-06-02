@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { apiRequest } from "../../api/client";
-import { Button } from "../../components/Button";
-import { DataPanel } from "../../components/layout/DataPanel";
-import { Modal } from "../../components/Modal";
-import { useToast } from "../../components/Toast";
+import { apiRequest } from "../../../api/client";
+import { Button } from "../../../components/Button";
+import { DataPanel } from "../../../components/layout/DataPanel";
+import { Modal } from "../../../components/Modal";
+import { useToast } from "../../../components/Toast";
 
 type PortalUserRow = {
   id: string;
@@ -35,7 +35,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
     queryFn: () =>
       apiRequest<{ portal_users: PortalUserRow[] }>(
         `/api/v1/customers/${customerId}/portal-users?operating_company_id=${encodeURIComponent(operatingCompanyId!)}`
-      ).then((r) => r.portal_users),
+      ).then((r: { portal_users: PortalUserRow[] }) => r.portal_users),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -51,14 +51,14 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
         },
       }),
     onSuccess: async () => {
-      pushToast({ title: "Portal user created", tone: "success" });
+      pushToast("Portal user created", "success");
       setOpen(false);
       setEmail("");
       setPassword("");
       setFullName("");
       await queryClient.invalidateQueries({ queryKey: ["portal-users", operatingCompanyId ?? "none", customerId] });
     },
-    onError: () => pushToast({ title: "Could not create portal user", tone: "error" }),
+    onError: () => pushToast("Could not create portal user", "error"),
   });
 
   const archiveMutation = useMutation({
@@ -68,7 +68,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
         { method: "POST" }
       ),
     onSuccess: async () => {
-      pushToast({ title: "Portal user archived", tone: "success" });
+      pushToast("Portal user archived", "success");
       await queryClient.invalidateQueries({ queryKey: ["portal-users", operatingCompanyId ?? "none", customerId] });
     },
   });

@@ -84,8 +84,8 @@ export function PortalLoadDetailPage() {
           <div className="rounded border border-slate-200 bg-white p-4">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-xl font-semibold">Load {detail.load.load_number}</h1>
-              <StatusBadge label={detail.load.status.replace(/_/g, " ")} variant="neutral" />
-              <StatusBadge label={detail.load.progress_status ?? "unknown"} variant="info" />
+              <StatusBadge variant="neutral">{detail.load.status.replace(/_/g, " ")}</StatusBadge>
+              <StatusBadge variant="info">{detail.load.progress_status ?? "unknown"}</StatusBadge>
             </div>
             {detail.load.progress_eta_delta_minutes != null ? (
               <p className="mt-2 text-sm text-slate-600">ETA delta vs schedule: {detail.load.progress_eta_delta_minutes} min</p>

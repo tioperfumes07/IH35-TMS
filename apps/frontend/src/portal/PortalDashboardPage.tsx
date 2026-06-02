@@ -54,7 +54,7 @@ export function PortalDashboardPage() {
                 </td>
                 <td className="px-4 py-3 capitalize">{load.status.replace(/_/g, " ")}</td>
                 <td className="px-4 py-3">
-                  <StatusBadge label={load.progress_status ?? "unknown"} variant="neutral" />
+                  <StatusBadge variant="neutral">{load.progress_status ?? "unknown"}</StatusBadge>
                 </td>
               </tr>
             ))}
