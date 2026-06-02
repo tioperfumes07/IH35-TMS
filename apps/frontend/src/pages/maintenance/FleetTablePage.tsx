@@ -1,8 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 
 type Props = {
   operatingCompanyId: string;
+};
+
+type FleetRow = {
+  id: string;
+  status?: string;
+  unit_number?: string;
+  vin?: string;
+  make?: string;
+  model?: string;
+  year?: string | number;
+  is_oos?: boolean;
 };
 
 function KpiCard({ label, value }: { label: string; value: string | number }) {
@@ -15,6 +28,7 @@ function KpiCard({ label, value }: { label: string; value: string | number }) {
 }
 
 export function FleetTablePage({ operatingCompanyId }: Props) {
+  const navigate = useNavigate();
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "kpis", operatingCompanyId],
     queryFn: () =>
@@ -30,7 +44,7 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
   const rowsQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId],
     queryFn: () =>
-      apiRequest<{ rows: Array<Record<string, unknown>> }>(
+      apiRequest<{ rows: FleetRow[] }>(
         `/api/v1/maintenance/fleet-table/rows?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
       ),
     enabled: Boolean(operatingCompanyId),
@@ -44,14 +58,23 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
     avg_age_years: 0,
   };
   const rows = rowsQuery.data?.rows ?? [];
+  const counters = useMemo(() => {
+    const sourceRows = rowsQuery.data?.rows ?? [];
+    return {
+      total: sourceRows.length,
+      active: sourceRows.filter((r) => r.status === "InService").length,
+      inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
+      outOfService: sourceRows.filter((r) => r.status === "OutOfService").length,
+    };
+  }, [rowsQuery.data?.rows]);
 
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
-        <KpiCard label="Total Units" value={kpis.total_units} />
-        <KpiCard label="Active" value={kpis.active_units} />
-        <KpiCard label="In-Shop" value={kpis.in_shop_units} />
-        <KpiCard label="Out-of-Service" value={kpis.out_of_service_units} />
+        <KpiCard label="Total Units" value={counters.total} />
+        <KpiCard label="Active" value={counters.active} />
+        <KpiCard label="In-Shop" value={counters.inShop} />
+        <KpiCard label="Out-of-Service" value={counters.outOfService} />
         <KpiCard label="Avg Age" value={`${Number(kpis.avg_age_years ?? 0).toFixed(1)} y`} />
       </div>
 
@@ -78,7 +101,11 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={String(row.id)} className="border-t border-gray-100">
+                <tr
+                  key={row.id}
+                  className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
+                  onClick={() => navigate(`/fleet/units/${row.id}`)}
+                >
                   <td className="px-2 py-1">{String(row.unit_number ?? row.id ?? "—")}</td>
                   <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td>
                   <td className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>
