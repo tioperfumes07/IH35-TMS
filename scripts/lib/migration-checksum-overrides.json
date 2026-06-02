@@ -158,5 +158,13 @@
     "reason": "Production ledger drift reconciled during P0 migration recovery; allow deterministic replay without reapplying historical DDL.",
     "added_at": "2026-05-16",
     "added_in_pr": "P0-PHASE1-CHECKSUM-OVERRIDES"
+  },
+  {
+    "filename": "0299_grant_aggregate_schemas.sql",
+    "ledger_checksum": "8da2fd99607837d645b4628c5f58a0dc1d02ca1c5c181985413bce526a463bbf",
+    "disk_checksum": "41f5b735378791e51d291547ec29e0dc41702e166eed0394b3937e495343cd5f",
+    "reason": "PR365 CI: ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner fails on GitHub Postgres; prod already applied prior checksum.",
+    "added_at": "2026-06-02",
+    "added_in_pr": "365"
   }
 ]

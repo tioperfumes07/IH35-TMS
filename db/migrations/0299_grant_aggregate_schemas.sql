@@ -32,10 +32,18 @@ BEGIN
     IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = s) THEN
       EXECUTE format('GRANT USAGE ON SCHEMA %I TO ih35_app', s);
       EXECUTE format('GRANT SELECT ON ALL TABLES IN SCHEMA %I TO ih35_app', s);
+      -- CI/local Postgres (verify user): session-owner default privileges (see 0116).
       EXECUTE format(
-        'ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA %I GRANT SELECT ON TABLES TO ih35_app',
+        'ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT SELECT ON TABLES TO ih35_app',
         s
       );
+      -- Neon prod: objects are often created by neondb_owner.
+      IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'neondb_owner') THEN
+        EXECUTE format(
+          'ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA %I GRANT SELECT ON TABLES TO ih35_app',
+          s
+        );
+      END IF;
     END IF;
   END LOOP;
 END
