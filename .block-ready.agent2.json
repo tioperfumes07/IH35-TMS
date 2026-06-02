@@ -31,6 +31,7 @@
     "scripts/verify-border-crossing-fast-card-check.mjs",
     "scripts/verify-border-crossing-cbp-wait-cache-rls.mjs",
     "scripts/verify-border-crossing-emanifest-pdf-puppeteer.mjs",
+    "scripts/nav-integrity-allowlist.json",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
