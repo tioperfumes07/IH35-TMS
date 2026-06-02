@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title><%= it.title %></title>
+  </head>
+  <body style="font-family: system-ui, sans-serif; color: #1f2937;">
+    <p style="font-size: 18px; font-weight: 600;"><%= it.title %></p>
+    <p>Proof of delivery is now available for load <strong><%= it.loadNumber %></strong>.</p>
+    <p>Route: <%= it.route %></p>
+    <p><a href="<%= it.trackingUrl %>">Download POD from the portal</a></p>
+  </body>
+</html>

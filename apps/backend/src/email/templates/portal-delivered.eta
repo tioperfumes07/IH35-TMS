@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title><%= it.title %></title>
+  </head>
+  <body style="font-family: system-ui, sans-serif; color: #1f2937;">
+    <p style="font-size: 18px; font-weight: 600;"><%= it.title %></p>
+    <p>Load <strong><%= it.loadNumber %></strong> has been delivered.</p>
+    <p>Route: <%= it.route %></p>
+    <p><a href="<%= it.trackingUrl %>">Open load details</a></p>
+  </body>
+</html>
