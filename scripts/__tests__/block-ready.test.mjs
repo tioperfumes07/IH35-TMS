@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 import {
   computeDbGatePlan,
@@ -7,6 +11,8 @@ import {
   matchesAnyAllowedFile,
   parseArgs,
   parseManifest,
+  readVerifyMeta,
+  shouldSkipC5VerifyScript,
   validateManifest,
 } from "../block-ready.mjs";
 import { resolveBlockReadyManifest } from "../block-ready-agent-manifest.mjs";
@@ -106,4 +112,23 @@ test("resolveBlockReadyManifest infers AGENT from worktree path", () => {
 test("parseArgs defaults to resolved manifest", () => {
   const args = parseArgs([], { agentEnv: "agent1", worktreePath: "/tmp/IH35-TMS-agent1" });
   assert.equal(args.manifest, ".block-ready.agent1.json");
+});
+
+test("readVerifyMeta returns db_gated and c5_skip_after_c4 lists", () => {
+  const meta = readVerifyMeta(REPO_ROOT);
+  assert.ok(Array.isArray(meta.db_gated_verify_scripts));
+  assert.ok(meta.db_gated_verify_scripts.includes("verify:pre-commit"));
+  assert.ok(Array.isArray(meta.block_ready_c5_skip_after_c4));
+  assert.ok(meta.block_ready_c5_skip_after_c4.includes("verify:arch-design"));
+});
+
+test("C5 honors block_ready_c5_skip_after_c4 for verify:arch-design", () => {
+  const meta = readVerifyMeta(REPO_ROOT);
+  assert.equal(shouldSkipC5VerifyScript("verify:arch-design", meta), true);
+});
+
+test("C5 still runs verify scripts not in skip-after-c4 set", () => {
+  const meta = readVerifyMeta(REPO_ROOT);
+  assert.equal(shouldSkipC5VerifyScript("verify:nav-integrity", meta), false);
+  assert.equal(shouldSkipC5VerifyScript("verify:fixture-other", meta), false);
 });

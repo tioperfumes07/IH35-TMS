@@ -44,17 +44,13 @@ function runStep(command, label, root) {
   return { ok: false, tail: tailLines(merged, 30), label };
 }
 
-export function buildPrecheckSteps(root, verifyMeta) {
-  const steps = [
-    { label: "clean-backend-dist", command: "rm -rf apps/backend/dist" },
+export function buildPrecheckSteps(root) {
+  void root;
+  return [
     { label: "build-backend", command: "npm run build:backend" },
     { label: "frontend-tsc", command: "cd apps/frontend && npx tsc -b && cd ../.." },
+    { label: "block-ready", command: "npm run block-ready" },
   ];
-  for (const scriptName of discoverVerifyScripts(root, verifyMeta)) {
-    steps.push({ label: scriptName, command: `npm run ${scriptName}` });
-  }
-  steps.push({ label: "block-ready", command: "npm run block-ready" });
-  return steps;
 }
 
 export function runPrecheckPush(options = {}) {
@@ -84,7 +80,7 @@ export function runPrecheckPush(options = {}) {
     options.steps ??
     (process.env.BRANCH_PRECHECK_STEPS_JSON
       ? JSON.parse(process.env.BRANCH_PRECHECK_STEPS_JSON)
-      : buildPrecheckSteps(root, readVerifyMeta(root)));
+      : buildPrecheckSteps(root));
   for (const step of steps) {
     const result = runStep(step.command, step.label, root);
     if (!result.ok) {

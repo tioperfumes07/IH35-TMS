@@ -35,11 +35,9 @@ Behavior:
 - Refuses outside feature-style branches.
 - Refuses when branch is behind `origin/main`.
 - Runs required chain in order:
-  - clean backend dist
   - backend build
   - frontend TypeScript build
-  - every `verify:*` package script (auto-discovered)
-  - `npm run block-ready`
+  - `npm run block-ready` (includes C4/C5 verify chain; see C5 Dedupe section below)
 - Halts on first failure and prints failing step plus output tail.
 - Prints `READY TO PUSH: <branch> at <sha>` on success.
 
@@ -152,3 +150,43 @@ git push --force-with-lease origin <feature-branch>
 - Refuse switch during merge/rebase/cherry-pick.
 - Refuse excessive checkout churn in reflog (30-minute window).
 - Never auto-push from rebuild script.
+
+## C5 Dedupe + Pre-Push Slim (locked 2026-06-01)
+
+### Why this exists
+
+`block-ready` C4 runs `npm run verify:arch-design` (~215s). C5 used to re-run every `verify:*` script including `verify:arch-design` again. The husky pre-push hook (`branch:precheck-push`) also looped all non–db-gated `verify:*` scripts before `block-ready`, tripling work on every push. Cursor IDE agent shells often timed out around 600–700s on that stack.
+
+Block 9 measured full `block-ready` at **702s**. Block 10 removes the duplicate arch-design pass in C5 and drops the pre-push verify loop so push precheck is build + `block-ready` only. Target after Block 10: **~487s** per `block-ready` run (~215s saved).
+
+### How `block_ready_c5_skip_after_c4` works
+
+`scripts/verify-meta.json` lists script names C4 already executed. In C5, `block-ready.mjs` skips those with:
+
+`[C5] SKIP <name> (already run in C4)`
+
+Today the list is only `verify:arch-design` (C4 runs it explicitly).
+
+### How to add a script to the skip list
+
+1. Ensure the script runs in C4 (or another check before C5) so skipping C5 does not drop coverage.
+2. Add the `verify:*` name to `block_ready_c5_skip_after_c4` in `scripts/verify-meta.json`.
+3. Extend `scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs` if the guard should assert the new name.
+4. Add a test in `scripts/__tests__/block-ready.test.mjs` for `shouldSkipC5VerifyScript`.
+
+### Pre-push hook (slim)
+
+`npm run branch:precheck-push` now runs in order:
+
+1. `npm run build:backend`
+2. `cd apps/frontend && npx tsc -b`
+3. `npm run block-ready`
+
+No per-script `verify:*` loop before `block-ready`. After Block 10 merges, feature pushes can use normal `git push` (no `--no-verify`) when local `block-ready` completes within the IDE window.
+
+### Measured baseline
+
+| Milestone | `block-ready` wall time |
+| --- | --- |
+| Block 9 (before C5 dedupe) | 702s |
+| Block 10 (target after C5 dedupe + pre-push slim) | ~487s |
