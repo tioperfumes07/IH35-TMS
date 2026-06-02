@@ -16,8 +16,15 @@ import { IdentityStatusHeader } from "../../components/vehicle-profile/IdentityS
 import { LiveTelemetrySection } from "../../components/vehicle-profile/LiveTelemetrySection";
 import { DriverAssignmentSection } from "../../components/vehicle-profile/DriverAssignmentSection";
 import { CurrentLoadSection } from "../../components/vehicle-profile/CurrentLoadSection";
+import { TripCostCalculator } from "../../components/vehicle-profile/TripCostCalculator";
 import { MaintenanceSnapshotSection } from "../../components/vehicle-profile/MaintenanceSnapshotSection";
 import { ComplianceSection } from "../../components/vehicle-profile/ComplianceSection";
+import { ReeferSection } from "../../components/vehicle-profile/ReeferSection";
+import { FinancialUnitPLSection } from "../../components/vehicle-profile/FinancialUnitPLSection";
+import { RecentActivitySection } from "../../components/vehicle-profile/RecentActivitySection";
+import { DocumentsSection } from "../../components/vehicle-profile/DocumentsSection";
+import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
+import { ActionBar } from "../../components/vehicle-profile/ActionBar";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -32,6 +39,18 @@ export type UnitProfileAggregate = {
   last_service: Record<string, unknown> | null;
   compliance: Record<string, unknown>;
   maintenance_alerts: Array<{ severity: string; message: string; source: string; created_at: string }>;
+  reefer?: Record<string, unknown> | null;
+  financial_ytd?: Record<string, unknown>;
+  recent_activity?: {
+    loads: Array<Record<string, unknown>>;
+    status_changes: Array<Record<string, unknown>>;
+    work_orders: Array<Record<string, unknown>>;
+  };
+  photos?: Array<Record<string, unknown>>;
+  documents?: Array<Record<string, unknown>>;
+  insurance_summary?: Record<string, unknown>;
+  total_ownership_cost?: Record<string, unknown>;
+  comparable_metrics?: Record<string, unknown>;
 };
 
 function fetchUnitProfile(unitId: string, operatingCompanyId: string) {
@@ -54,7 +73,6 @@ export function VehicleProfilePage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-
   const [qboVendorId, setQboVendorId] = useState<string | null>(null);
   const [qboVendorLabel, setQboVendorLabel] = useState("");
   const [qboClassTmsId, setQboClassTmsId] = useState("");
@@ -82,6 +100,7 @@ export function VehicleProfilePage() {
 
   const profile = profileQuery.data;
   const unit = profile?.unit;
+  const unitNumber = String(unit?.unit_number ?? id.slice(0, 8));
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -115,13 +134,11 @@ export function VehicleProfilePage() {
   });
 
   const telemetry = telemetryQuery.data ?? profile;
+  const financial = profile?.financial_ytd as Record<string, unknown> | undefined;
 
   return (
-    <div className="space-y-3 p-4">
-      <PageHeader
-        title={`Unit ${String(unit?.unit_number ?? id.slice(0, 8))}`}
-        subtitle="Vehicle profile · fleet unit"
-      />
+    <div className="space-y-3 p-4 pb-24">
+      <PageHeader title={`Unit ${unitNumber}`} subtitle="Vehicle profile · fleet unit" />
       {profileQuery.isError ? <ListErrorBanner onRetry={() => void profileQuery.refetch()} /> : null}
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
 
@@ -152,6 +169,7 @@ export function VehicleProfilePage() {
           </div>
           <div data-testid="vp-section-4-load">
             <CurrentLoadSection currentLoad={profile.current_load} unitId={id} />
+            <TripCostCalculator unitId={id} companyId={companyId} />
           </div>
           <div data-testid="vp-section-5-maintenance">
             <MaintenanceSnapshotSection
@@ -164,7 +182,55 @@ export function VehicleProfilePage() {
           <div data-testid="vp-section-6-compliance">
             <ComplianceSection compliance={profile.compliance} />
           </div>
-          <p className="text-xs text-gray-500">Sections 7–11 deferred to Block 12.</p>
+          <div data-testid="vp-section-7-reefer">
+            {profile.reefer ? (
+              <ReeferSection reefer={profile.reefer as Parameters<typeof ReeferSection>[0]["reefer"]} />
+            ) : (
+              <p className="text-xs text-gray-500">No attached reefer trailer.</p>
+            )}
+          </div>
+          <div data-testid="vp-section-8-financial">
+            <FinancialUnitPLSection
+              unitId={id}
+              companyId={companyId}
+              unitNumber={unitNumber}
+              initial={
+                (financial ?? {
+                  revenue_cents: 0,
+                  total_operating_cost_cents: 0,
+                  gross_profit_cents: 0,
+                  profit_per_mile_cents: null,
+                  profit_per_day_cents: null,
+                  utilization_pct: null,
+                  fleet_avg: { revenue_cents: 0, cost_cents: 0, profit_per_mile_cents: null },
+                  period: "YTD",
+                }) as Parameters<typeof FinancialUnitPLSection>[0]["initial"]
+              }
+              ownership={(profile.total_ownership_cost ?? {}) as Record<string, unknown>}
+              comparable={(profile.comparable_metrics ?? {}) as Record<string, unknown>}
+            />
+          </div>
+          <div data-testid="vp-section-9-activity">
+            {profile.recent_activity ? (
+              <RecentActivitySection activity={profile.recent_activity as Parameters<typeof RecentActivitySection>[0]["activity"]} />
+            ) : null}
+          </div>
+          <div data-testid="vp-section-10-documents">
+          <DocumentsSection
+            unitId={id}
+            companyId={companyId}
+            documents={(profile.documents ?? []) as Parameters<typeof DocumentsSection>[0]["documents"]}
+            photosSlot={<PhotoGallery photos={(profile.photos ?? []) as Parameters<typeof PhotoGallery>[0]["photos"]} />}
+          />
+          </div>
+          <div data-testid="vp-section-11-action-bar">
+            <ActionBar
+              unitId={id}
+              companyId={companyId}
+              unitNumber={unitNumber}
+              onChangeStatus={() => document.getElementById("vp-section-1-identity")?.scrollIntoView({ behavior: "smooth" })}
+            />
+          </div>
         </>
       ) : null}
 

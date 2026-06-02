@@ -5,7 +5,12 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { buildUnitAggregate } from "./unit-aggregate.service.js";
 import { registerUnitDefaultDriverRoutes } from "./unit-default-driver.routes.js";
+import { registerUnitDocumentsRoutes } from "./unit-documents.routes.js";
+import { registerUnitPdfExportRoutes } from "./unit-pdf-export.routes.js";
+import { registerUnitPhotosRoutes } from "./unit-photos.routes.js";
 import { registerUnitPlatesRoutes } from "./unit-plates.routes.js";
+import { registerUnitTripCostRoutes } from "./unit-trip-cost.routes.js";
+import { getUnitFinancialYTD, type FinancialPeriod } from "./unit-financial.service.js";
 
 export const unitStatusSchema = z.enum([
   "InService",
@@ -375,6 +380,30 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     return aggregate;
   });
 
+  app.get("/api/v1/mdata/units/:id/financial", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = unitAggregateQuerySchema
+      .extend({ period: z.enum(["YTD", "quarter", "month"]).default("YTD") })
+      .safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const financial = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [
+        parsedQuery.data.operating_company_id,
+      ]);
+      return getUnitFinancialYTD(
+        client,
+        parsedParams.data.id,
+        parsedQuery.data.operating_company_id,
+        parsedQuery.data.period as FinancialPeriod
+      );
+    });
+    return financial;
+  });
+
   app.patch("/api/v1/mdata/units/:id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -539,4 +568,8 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
 
   await registerUnitPlatesRoutes(app);
   await registerUnitDefaultDriverRoutes(app);
+  await registerUnitPhotosRoutes(app);
+  await registerUnitDocumentsRoutes(app);
+  await registerUnitTripCostRoutes(app);
+  await registerUnitPdfExportRoutes(app);
 }
