@@ -915,6 +915,14 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **Messages V1:** `POST /api/v1/mdata/drivers/:id/messages` persists to `mdata.driver_profile_messages` (delivery integration deferred).
 
+## Trailer Profile (Fleet module) — Part 1 (locked 2026-06-02)
+
+Route: `/fleet/trailers/:id` renders `TrailerProfilePage` with eight sections (identity/status, type specs, assignment, conditional reefer telemetry, maintenance, compliance/plates, documents, action bar). Parallel to Vehicle Profile; data on `mdata.equipment` + `mdata.equipment_plates` (migration `0303`).
+
+**Aggregate:** `GET /api/v1/mdata/equipment/:id?operating_company_id=` returns full trailer profile envelope.
+
+**PDF:** `GET /api/v1/mdata/equipment/:id/export.pdf` via Puppeteer.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

@@ -847,6 +847,19 @@ Relevant block: Phase D — DRIVER-PROFILE-PART-2
 
 ---
 
+## Trailer Profile Part 1 (Block 15, locked 2026-06-02)
+
+Source: Jorge + Cursor execution order Block 15  
+Status: LOCKED (Part 1)  
+Relevant block: Phase D — TRAILER-PROFILE-PART-1
+
+- Migration `0303_trailer_profile_part1.sql`: equipment status extension, specs/compliance columns, `mdata.equipment_plates`.
+- API: aggregate GET on equipment, plates CRUD, status-change POST, PDF export.
+- UI: `TrailerProfilePage` at `/fleet/trailers/:id` with conditional reefer section.
+- CI: four `verify:trailer-profile-*` guards.
+
+---
+
 ## END OF UNIFIED ADDITIONS
 
 Append new entries with:
