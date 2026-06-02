@@ -128,6 +128,7 @@ import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage"
 import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
 import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
+import { DeadheadReportPage } from "../pages/reports/DeadheadReportPage";
 import { QboSyncDetailPage } from "../pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "../pages/accounting/InvoicesListPage";
 import { MultiEntityAccountingPage } from "../pages/accounting/MultiEntityAccountingPage";
@@ -1564,6 +1565,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <GeofenceDwellReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/deadhead"
+          element={
+            <ProtectedRoute>
+              <DeadheadReportPage />
             </ProtectedRoute>
           }
         />

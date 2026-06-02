@@ -25,6 +25,7 @@ import { RecentActivitySection } from "../../components/vehicle-profile/RecentAc
 import { DocumentsSection } from "../../components/vehicle-profile/DocumentsSection";
 import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
 import { ActionBar } from "../../components/vehicle-profile/ActionBar";
+import { BackhaulSuggestionsWidget } from "../../components/reports/BackhaulSuggestionsWidget";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -135,6 +136,8 @@ export function VehicleProfilePage() {
 
   const telemetry = telemetryQuery.data ?? profile;
   const financial = profile?.financial_ytd as Record<string, unknown> | undefined;
+  const quickAvailability = (unit?.quick_availability as string | null) ?? null;
+  const showBackhaul = quickAvailability === "available" && !profile?.current_load;
 
   return (
     <div className="space-y-3 p-4 pb-24">
@@ -169,6 +172,11 @@ export function VehicleProfilePage() {
           </div>
           <div data-testid="vp-section-4-load">
             <CurrentLoadSection currentLoad={profile.current_load} unitId={id} />
+            {showBackhaul ? (
+              <div className="mt-3">
+                <BackhaulSuggestionsWidget unitId={id} companyId={companyId} unitNumber={unitNumber} />
+              </div>
+            ) : null}
             <TripCostCalculator unitId={id} companyId={companyId} />
           </div>
           <div data-testid="vp-section-5-maintenance">
