@@ -178,7 +178,6 @@
     "verify:session-create-updates-last-login": "node scripts/verify-session-create-updates-last-login.mjs",
     "verify:driver-listing-excludes-pseudo-users": "node scripts/verify-driver-listing-excludes-pseudo-users.mjs",
     "verify:qbo-shared-rate-limit-ceiling": "node scripts/verify-qbo-shared-rate-limit-ceiling.mjs",
-
     "verify:service-location-buckets-wired": "node scripts/verify-service-location-buckets-wired.mjs",
     "verify:startup-migration-drift-guard": "node scripts/verify-startup-migration-drift-guard.mjs",
     "verify:no-unledgered-migrations": "node scripts/verify-no-unledgered-migrations.mjs",
@@ -328,7 +327,8 @@
     "verify:aggregate-shape-route": "node scripts/verify-aggregate-shape-route.mjs",
     "verify:aggregate-savepoints": "node scripts/verify-aggregate-savepoints.mjs",
     "verify:aggregate-schema-grants": "node scripts/verify-aggregate-schema-grants.mjs",
-    "verify:referenced-tables-exist": "node scripts/verify-referenced-tables-exist.mjs"
+    "verify:referenced-tables-exist": "node scripts/verify-referenced-tables-exist.mjs",
+    "verify:loves-cron-registered": "node scripts/verify-loves-cron-registered.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

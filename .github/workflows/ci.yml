@@ -442,6 +442,9 @@ jobs:
       - name: verify:samsara-positions-cron-registered
         run: npm run verify:samsara-positions-cron-registered
 
+      - name: verify:loves-cron-registered
+        run: npm run verify:loves-cron-registered
+
       - name: verify:positions-latest-rls
         run: npm run verify:positions-latest-rls
 

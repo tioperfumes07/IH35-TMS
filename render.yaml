@@ -32,3 +32,13 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+
+  - type: cron
+    name: loves-card-import
+    runtime: node
+    schedule: "0 6 * * *"
+    buildCommand: npm install && npm run build:backend
+    startCommand: node dist/sync/run-loves-card-import.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22

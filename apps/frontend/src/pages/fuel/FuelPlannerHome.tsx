@@ -4,6 +4,7 @@ import {
   getFuelActiveRoutes,
   getFuelComplianceSummary,
   getFuelDashboard,
+  getLovesSyncStatus,
   getFuelPlannerSettings,
   getFuelRecommendationDetail,
   getFuelSavingsSummary,
@@ -49,6 +50,13 @@ export function FuelPlannerHomePage() {
     queryKey: ["fuel", "planner", "dashboard", companyId],
     queryFn: () => getFuelDashboard(companyId),
     enabled: Boolean(companyId),
+  });
+
+  const lovesSyncQuery = useQuery({
+    queryKey: ["fuel", "loves-sync", "status", companyId],
+    queryFn: () => getLovesSyncStatus(companyId),
+    enabled: Boolean(companyId),
+    refetchInterval: 60_000,
   });
   const activeRoutesQuery = useQuery({
     queryKey: ["fuel", "planner", "active-routes", companyId],
@@ -138,7 +146,7 @@ export function FuelPlannerHomePage() {
         onChange={(next) => setTab(next as (typeof SUBNAV)[number]["id"])}
       />
 
-      <FuelKpiRow dashboard={dashboardQuery.data} />
+      <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
       <ActiveTripStrip route={activeRoute} />
       <HosRulesBox
         maxMilesPerShift={Number(settingsQuery.data?.max_miles_per_shift ?? 720)}
