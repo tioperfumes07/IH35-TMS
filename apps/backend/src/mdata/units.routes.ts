@@ -11,6 +11,7 @@ import { registerUnitPhotosRoutes } from "./unit-photos.routes.js";
 import { registerUnitPlatesRoutes } from "./unit-plates.routes.js";
 import { registerUnitTripCostRoutes } from "./unit-trip-cost.routes.js";
 import { getUnitFinancialYTD, type FinancialPeriod } from "./unit-financial.service.js";
+import { fetchUnifiedFleetList } from "./units-unified-list.service.js";
 
 export const unitStatusSchema = z.enum([
   "InService",
@@ -41,11 +42,12 @@ const quickAvailabilitySchema = z.enum(["available", "booked", "holding"]).nulla
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const listQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(200).default(50),
+  limit: z.coerce.number().int().min(1).max(500).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   status: unitStatusSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
   operating_company_id: z.string().uuid().optional(),
+  include: z.enum(["trailers"]).optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -250,7 +252,23 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
-    const { limit, offset, status, search, operating_company_id } = parsedQuery.data;
+    const { limit, offset, status, search, operating_company_id, include } = parsedQuery.data;
+
+    if (include === "trailers") {
+      const units = await withCurrentUser(authUser.uuid, async (client) => {
+        if (operating_company_id) {
+          await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
+        }
+        return fetchUnifiedFleetList(client, {
+          limit,
+          offset,
+          status,
+          search,
+          operating_company_id,
+        });
+      });
+      return { units };
+    }
 
     const units = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];

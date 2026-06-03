@@ -7,6 +7,11 @@ type Props = {
   operatingCompanyId: string;
 };
 
+type UnifiedUnitRow = FleetRow & {
+  kind: "truck" | "trailer";
+  type: string;
+};
+
 function KpiCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded border border-gray-200 bg-white px-2 py-1 text-[11px]">
@@ -31,10 +36,12 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
   });
   const rowsQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId],
-    queryFn: () =>
-      apiRequest<{ rows: FleetRow[] }>(
-        `/api/v1/maintenance/fleet-table/rows?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
-      ),
+    queryFn: async () => {
+      const payload = await apiRequest<{ units: UnifiedUnitRow[] }>(
+        `/api/v1/mdata/units?include=trailers&operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=500`
+      );
+      return { rows: payload.units ?? [] };
+    },
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -45,11 +52,15 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
     out_of_service_units: 0,
     avg_age_years: 0,
   };
-  const rows = rowsQuery.data?.rows ?? [];
+  const rows: FleetRow[] = rowsQuery.data?.rows ?? [];
   const counters = useMemo(() => {
     const sourceRows = rowsQuery.data?.rows ?? [];
+    const trucks = sourceRows.filter((r) => r.kind === "truck");
+    const trailers = sourceRows.filter((r) => r.kind === "trailer");
     return {
       total: sourceRows.length,
+      trucks: trucks.length,
+      trailers: trailers.length,
       active: sourceRows.filter((r) => r.status === "InService").length,
       inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
       outOfService: sourceRows.filter((r) => r.status === "OutOfService").length,
@@ -58,6 +69,10 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-2">
+      <div className="text-xs text-gray-700">
+        Total Fleet: {counters.total} · Trucks: {counters.trucks} · Trailers: {counters.trailers}
+      </div>
+
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
         <KpiCard label="Total Units" value={counters.total} />
         <KpiCard label="Active" value={counters.active} />
@@ -69,7 +84,7 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
       {rows.length === 0 ? (
         <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           <div className="font-semibold">No fleet rows yet</div>
-          <div className="mt-1 text-xs">Units appear here once they are assigned to this operating company.</div>
+          <div className="mt-1 text-xs">Trucks and trailers appear here once assigned to this operating company.</div>
           <button type="button" className="mt-2 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700">
             + Create
           </button>
