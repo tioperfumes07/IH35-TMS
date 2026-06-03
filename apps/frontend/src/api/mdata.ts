@@ -1,7 +1,13 @@
 import { apiRequest } from "./client";
+import { filterHumanDrivers } from "../lib/driver-pseudo-user";
 import type { CreateDriverInput, CustomerType, Driver, DriverOnboardingCreateResponse, MilesBasis, UpdateDriverInput } from "../types/api";
 
-export function listDrivers(params: { status?: string; search?: string; operating_company_id?: string | null }) {
+export function listDrivers(params: {
+  status?: string;
+  search?: string;
+  operating_company_id?: string | null;
+  include_system?: boolean;
+}) {
   const query = new URLSearchParams();
   if (params.status && params.status !== "All") {
     const statusValue = params.status === "Suspended" ? "Inactive" : params.status;
@@ -9,8 +15,11 @@ export function listDrivers(params: { status?: string; search?: string; operatin
   }
   if (params.search) query.set("search", params.search);
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
+  if (params.include_system) query.set("include_system", "true");
   const qs = query.toString();
-  return apiRequest<{ drivers: Driver[] }>(`/api/v1/mdata/drivers${qs ? `?${qs}` : ""}`);
+  return apiRequest<{ drivers: Driver[] }>(`/api/v1/mdata/drivers${qs ? `?${qs}` : ""}`).then((payload) => ({
+    drivers: params.include_system ? payload.drivers : filterHumanDrivers(payload.drivers),
+  }));
 }
 
 export type DriverTeamSplitMethod = "50_50" | "60_40" | "70_30" | "mileage_prorated" | "hours_prorated" | "custom";

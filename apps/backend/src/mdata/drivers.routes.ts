@@ -12,6 +12,7 @@ import { registerDriverDefaultTruckRoutes } from "./driver-default-truck.routes.
 import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
 import { registerDriverPdfExportRoutes } from "./driver-pdf-export.routes.js";
 import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
+import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "./driver-pseudo-user.js";
 
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
 const cdlClassSchema = z.enum(["A", "B", "C"]);
@@ -31,6 +32,7 @@ const listQuerySchema = z.object({
   status: driverStatusSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
   operating_company_id: z.string().uuid().optional(),
+  include_system: z.coerce.boolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -216,10 +218,18 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, operating_company_id } = parsedQuery.data;
+    const { limit, offset, status, search, operating_company_id, include_system } = parsedQuery.data;
+    if (include_system && !isOwnerOrAdmin(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
     const drivers = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
+      if (!include_system) {
+        // Exclude system pseudo-users from human listings. They are required by referential integrity for system-
+        // generated events and must NOT be deleted.
+        filters.push(EXCLUDE_PSEUDO_DRIVERS_SQL);
+      }
       if (status) {
         values.push(status);
         filters.push(`status = $${values.length}`);
