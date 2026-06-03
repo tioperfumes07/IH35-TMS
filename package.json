@@ -191,6 +191,7 @@
     "verify:qbo-webhook-fail-closed": "node scripts/verify-qbo-webhook-fail-closed.mjs",
     "verify:no-boot-throwing-env-checks": "node scripts/verify-no-boot-throwing-env-checks.mjs",
     "verify:no-duplicate-modal-headers": "node scripts/verify-no-duplicate-modal-headers.mjs",
+    "verify:modal-no-doubled-header": "node scripts/verify-modal-no-doubled-header.mjs",
     "verify:no-stub-strings": "node scripts/verify-no-stub-strings.mjs",
     "verify:no-seed-data-in-prod-fixtures": "node scripts/verify-no-seed-data-in-prod-fixtures.mjs",
     "verify:sidebar-route-resolution": "node scripts/verify-sidebar-route-resolution.mjs",
