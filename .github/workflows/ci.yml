@@ -131,6 +131,9 @@ jobs:
       - name: verify:drivers-count-nav-integrity
         run: npm run verify:drivers-count-nav-integrity
 
+      - name: verify:drivers-profile-action-bar
+        run: npm run verify:drivers-profile-action-bar
+
       - name: Verify dispatch coming-soon triage
         run: npm run verify:dispatch-coming-soon-triage
 

@@ -17,6 +17,7 @@
     "scripts/verify-steps/45-verify-drivers-profile-action-bar.mjs",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
