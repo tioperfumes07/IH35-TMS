@@ -30,11 +30,20 @@ function resolveBaseSha() {
     process.env.GITHUB_BASE_SHA || process.env.BRANCH_FRESH_BASE_SHA || process.env.PR_BASE_SHA;
   if (fromEnv) return fromEnv.trim();
 
-  runGit(["fetch", "origin", "main", "--depth", "1"]);
-  const originMain = runGit(["rev-parse", "origin/main"]);
+  const baseRef = (process.env.GITHUB_BASE_REF || "main").trim();
+  runGit(["fetch", "origin", `${baseRef}:refs/remotes/origin/${baseRef}`, "--depth", "1"]);
+
+  const remoteRef = `origin/${baseRef}`;
+  const mergeBase = runGit(["merge-base", "HEAD", remoteRef]);
+  if (mergeBase.status === 0 && mergeBase.stdout.trim()) {
+    return mergeBase.stdout.trim();
+  }
+
+  const originMain = runGit(["rev-parse", remoteRef]);
   if (originMain.status === 0 && originMain.stdout.trim()) {
     return originMain.stdout.trim();
   }
+
   return null;
 }
 
