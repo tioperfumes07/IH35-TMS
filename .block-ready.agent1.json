@@ -1,21 +1,21 @@
 {
-  "block_id": "BLOCK-A13-BANK-DRIVER-ESCROW-COUNTER-CLARIFY",
-  "branch": "fix/bank-driver-escrow-counter-clarify",
+  "block_id": "BLOCK-A14-HOME-RECORD-EXPENSE-MODAL",
+  "branch": "fix/home-record-expense-modal-consistency",
   "phase": "Phase I",
-  "task": "BANK-DRIVER-ESCROW-COUNTER-CLARIFY",
+  "task": "HOME-RECORD-EXPENSE-MODAL",
   "allowed_files": [
-    "apps/frontend/src/pages/banking/BankingHome.tsx",
-    "apps/frontend/src/pages/banking/BankingHome.test.tsx",
-    "apps/backend/src/banking/driver-escrow-counts.ts",
-    "apps/backend/__tests__/banking/driver-escrow-counts.test.ts",
-    "scripts/verify-no-active-drivers-mislabel.mjs",
-    "scripts/__tests__/verify-no-active-drivers-mislabel.test.mjs",
+    "apps/frontend/src/components/expenses/**",
+    "apps/frontend/src/pages/home/QuickActionsBar.tsx",
+    "apps/frontend/src/pages/home/QuickActionsBar.test.tsx",
+    "apps/frontend/src/pages/accounting/ExpenseCreatePage.tsx",
+    "scripts/verify-home-record-expense-modal.mjs",
+    "scripts/__tests__/verify-home-record-expense-modal.test.mjs",
     ".github/workflows/ci.yml",
     "package.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:no-active-drivers-mislabel"
+    "verify:home-record-expense-modal"
   ],
   "runtime_path": "src",
   "db_required": false,

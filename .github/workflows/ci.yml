@@ -189,6 +189,9 @@ jobs:
       - name: verify:no-active-drivers-mislabel
         run: npm run verify:no-active-drivers-mislabel
 
+      - name: verify:home-record-expense-modal
+        run: npm run verify:home-record-expense-modal
+
       - name: Verify no stub strings
         run: npm run verify:no-stub-strings
 

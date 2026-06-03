@@ -20,6 +20,10 @@ vi.mock("../accounting/modals/ManualInvoiceModal", () => ({
   ManualInvoiceModal: (props: { open: boolean }) => (props.open ? <div data-testid="inv-modal-mock">inv-open</div> : null),
 }));
 
+vi.mock("../../components/expenses/RecordExpenseModal", () => ({
+  RecordExpenseModal: (props: { open: boolean }) => (props.open ? <div data-testid="expense-modal-mock">expense-open</div> : null),
+}));
+
 function wrap(ui: ReactElement) {
   return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -43,5 +47,8 @@ describe("QuickActionsBar", () => {
 
     await user.click(screen.getByRole("button", { name: /\+ Create Invoice/i }));
     await waitFor(() => expect(screen.getByTestId("inv-modal-mock")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: /\+ Record Expense/i }));
+    await waitFor(() => expect(screen.getByTestId("expense-modal-mock")).toBeInTheDocument());
   });
 });

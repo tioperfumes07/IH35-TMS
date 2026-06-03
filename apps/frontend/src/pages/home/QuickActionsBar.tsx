@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
 import { ManualInvoiceModal } from "../accounting/modals/ManualInvoiceModal";
 import { BookLoadModalV4 } from "../dispatch/components/BookLoadModalV4";
 import { CreateWorkOrderModal } from "../maintenance/components/CreateWorkOrderModal";
@@ -17,6 +18,7 @@ export function QuickActionsBar({ operatingCompanyId }: Props) {
   const [bookOpen, setBookOpen] = useState(false);
   const [woOpen, setWoOpen] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [expenseOpen, setExpenseOpen] = useState(false);
 
   const cid = operatingCompanyId ?? "";
 
@@ -69,7 +71,7 @@ export function QuickActionsBar({ operatingCompanyId }: Props) {
           className="w-full justify-center sm:w-auto"
           onClick={() => {
             if (!requireCompany()) return;
-            navigate("/accounting/expenses");
+            setExpenseOpen(true);
           }}
         >
           <CircleDollarSign className="h-4 w-4 shrink-0" aria-hidden />
@@ -89,6 +91,12 @@ export function QuickActionsBar({ operatingCompanyId }: Props) {
               setInvoiceOpen(false);
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
+          />
+          <RecordExpenseModal
+            open={expenseOpen}
+            operatingCompanyId={cid}
+            onClose={() => setExpenseOpen(false)}
+            onCreated={() => setExpenseOpen(false)}
           />
         </>
       ) : null}
