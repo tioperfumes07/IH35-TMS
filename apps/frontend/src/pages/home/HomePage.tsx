@@ -10,6 +10,7 @@ import {
   fetchHomeOpenLoadsCount,
   fetchHomeQboSyncHealth,
   fetchHomeQboCustomersPushStatus,
+  fetchHomeQboVendorsPushStatus,
   fetchHomeVendorMappingIntegrity,
   fetchHomeTodayRevenue,
   fetchHomeWosOpenCount,
@@ -110,6 +111,13 @@ export function HomePage({ auth }: Props) {
   const qboCustomersPushStatusQuery = useQuery({
     queryKey: ["home", "qbo-customers-push-status", selectedCompanyId],
     queryFn: () => fetchHomeQboCustomersPushStatus(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+    refetchInterval: 60_000,
+  });
+
+  const qboVendorsPushStatusQuery = useQuery({
+    queryKey: ["home", "qbo-vendors-push-status", selectedCompanyId],
+    queryFn: () => fetchHomeQboVendorsPushStatus(selectedCompanyId!),
     enabled: Boolean(selectedCompanyId),
     refetchInterval: 60_000,
   });
@@ -394,11 +402,13 @@ export function HomePage({ auth }: Props) {
             <QboSyncHealthCard
               data={qboSyncHealthQuery.data}
               pushStatus={qboCustomersPushStatusQuery.data}
+              vendorsPushStatus={qboVendorsPushStatusQuery.data}
               isLoading={qboSyncHealthQuery.isLoading}
               isError={qboSyncHealthQuery.isError}
               onRetry={() => {
                 void qboSyncHealthQuery.refetch();
                 void qboCustomersPushStatusQuery.refetch();
+                void qboVendorsPushStatusQuery.refetch();
               }}
             />
             <VendorMappingIntegrityCard

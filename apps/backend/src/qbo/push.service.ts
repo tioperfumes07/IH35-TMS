@@ -53,6 +53,30 @@ function asPayloadJson(row: Record<string, unknown>): Record<string, unknown> {
   return {};
 }
 
+function vendorPushExtras(row: Record<string, unknown>): Record<string, unknown> {
+  const payload = asPayloadJson(row);
+  const extras: Record<string, unknown> = {};
+  const eligible1099 = row.eligible_1099 ?? payload.eligible_1099 ?? payload.Vendor1099;
+  if (eligible1099 !== undefined && eligible1099 !== null) {
+    extras.Vendor1099 = Boolean(eligible1099);
+  }
+  const termRef =
+    row.payment_terms_qbo_id ??
+    payload.payment_terms_qbo_id ??
+    (payload.TermRef && typeof payload.TermRef === "object" && !Array.isArray(payload.TermRef)
+      ? (payload.TermRef as Record<string, unknown>).value
+      : undefined);
+  if (termRef) extras.TermRef = { value: String(termRef) };
+  const apAccountRef =
+    row.default_ap_account_qbo_id ??
+    payload.default_ap_account_qbo_id ??
+    (payload.APAccountRef && typeof payload.APAccountRef === "object" && !Array.isArray(payload.APAccountRef)
+      ? (payload.APAccountRef as Record<string, unknown>).value
+      : undefined);
+  if (apAccountRef) extras.APAccountRef = { value: String(apAccountRef) };
+  return extras;
+}
+
 export async function deliverQboMasterEntityPush(payload: QboMasterPushPayload, ctx: OutboxHandlerContext) {
   await applyBypass(ctx.client, payload.operating_company_id);
 
@@ -97,6 +121,7 @@ async function deliverVendor(payload: QboMasterPushPayload, client: PoolClient) 
     const phone = phoneNumber(row.primary_phone as string | null);
     if (email) body.PrimaryEmailAddr = email;
     if (phone) body.PrimaryPhone = phone;
+    Object.assign(body, vendorPushExtras(row));
 
     const resp = await qboPostMasterJson(payload.operating_company_id, "vendor", body, "create");
     const entity = unwrapIntuitEntity(resp);
@@ -136,6 +161,7 @@ async function deliverVendor(payload: QboMasterPushPayload, client: PoolClient) 
   const phone = phoneNumber(row.primary_phone as string | null);
   if (email) sparseBody.PrimaryEmailAddr = email;
   if (phone) sparseBody.PrimaryPhone = phone;
+  Object.assign(sparseBody, vendorPushExtras(row));
 
   const resp = await qboPostMasterJson(payload.operating_company_id, "vendor", sparseBody, "update");
   const entity = unwrapIntuitEntity(resp);
