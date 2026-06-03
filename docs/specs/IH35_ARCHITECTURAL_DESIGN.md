@@ -877,9 +877,9 @@ Route: `/fleet/units/:id` renders `VehicleProfilePage` with six sections (identi
 
 **Samsara refresh:** React Query `staleTime`/`refetchInterval` 30s on telemetry blocks; aggregate reads `integrations.samsara_vehicles`, `telematics.vehicle_latest_position`, parsed odometer/faults from `raw_payload`.
 
-**Live GPS poll (B6):** `samsara-positions-cron.ts` polls `GET /fleet/vehicles/locations` every 5 minutes per enabled tenant, upserts append-only rows into `telematics.vehicle_locations` with `operating_company_id` from tenant context and `unit_id` resolved via `integrations.samsara_vehicles.local_unit_id` or `mdata.units.samsara_vehicle_id`. Webhook projector remains the real-time path; cron backstops stale feeds when webhooks lag. `GET /api/v1/telematics/positions/latest` reads `telematics.vehicle_latest_position` under `withCurrentUser` + 24h freshness filter.
-
 **Audit:** App-layer `appendCrudAudit` on `PATCH /api/v1/mdata/units/:id` — action `mdata.unit.status_changed` when `status` changes; profile context fields included in payload. No DB trigger on `audit.events`.
+
+**Edit Vehicle modal (Block A6):** Fleet Table row **Edit** opens `EditVehicleModal` with eight tabs — Identity, Insurance, IRP / Plates, Reefer (conditional on trailer linkage), Financial, Lifecycle (Sold / Transferred / Damaged / OOS sub-sections by status), Quick-availability, Documents. Surfaces 50+ `mdata.units` columns via reusable `FormField` / `FieldSet`; diff-only PATCH with Owner RBAC on sale/transfer/damage-cost fields; schema allowlist in `unit-update-schema.ts` (58 patchable columns derived from information_schema).
 
 **Maintenance alerts banner:** Server-built `maintenance_alerts[]` (high/medium/low); dismissible per session in UI.
 
