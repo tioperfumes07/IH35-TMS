@@ -200,6 +200,7 @@
     "verify:modal-no-doubled-header": "node scripts/verify-modal-no-doubled-header.mjs",
     "verify:no-underscore-canonical-routes": "node scripts/verify-no-underscore-canonical-routes.mjs",
     "verify:equipment-types-no-collision": "node scripts/verify-equipment-types-no-collision.mjs",
+    "verify:no-hardcoded-list-counts": "node scripts/verify-no-hardcoded-list-counts.mjs",
     "verify:no-stub-strings": "node scripts/verify-no-stub-strings.mjs",
     "verify:no-seed-data-in-prod-fixtures": "node scripts/verify-no-seed-data-in-prod-fixtures.mjs",
     "verify:sidebar-route-resolution": "node scripts/verify-sidebar-route-resolution.mjs",

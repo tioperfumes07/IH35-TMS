@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ListsInventoryRow } from "../../../api/listsHub";
 import { DomainFlyout } from "./DomainFlyout";
-import { DomainTab } from "./DomainTab";
+import { DomainModuleTab } from "./DomainModuleTab";
 
 const DOMAIN_ORDER = ["safety", "maintenance", "dispatch", "fuel", "drivers", "fleet", "accounting", "names_master"] as const;
 
@@ -48,13 +48,12 @@ export function DomainRibbon({ inventory, onCatalogClick }: Props) {
       <div className="flex flex-wrap gap-1">
         {DOMAIN_ORDER.map((domain) => {
           const rows = byDomain[domain] ?? [];
-          const count = rows.length;
           const isActive = openDomain === domain;
           return (
             <div key={domain} className="relative">
-              <DomainTab
+              <DomainModuleTab
+                domain={domain}
                 label={DOMAIN_LABELS[domain]}
-                count={count}
                 isActive={isActive}
                 onMouseEnter={() => setOpenDomain(domain)}
                 onClick={() => setOpenDomain((prev) => (prev === domain ? null : domain))}

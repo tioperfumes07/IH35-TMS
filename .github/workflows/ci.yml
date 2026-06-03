@@ -183,6 +183,9 @@ jobs:
       - name: verify:equipment-types-no-collision
         run: npm run verify:equipment-types-no-collision
 
+      - name: verify:no-hardcoded-list-counts
+        run: npm run verify:no-hardcoded-list-counts
+
       - name: Verify no stub strings
         run: npm run verify:no-stub-strings
 
