@@ -254,7 +254,14 @@ export function BankingHomePage() {
               <div className="border-b border-emerald-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">Driver escrow visualizer</div>
               <div className="space-y-1 px-3 py-2 text-sm">
                 <div className="flex justify-between"><span>Total escrow held</span><span>{money.format(escrowFeed)}</span></div>
-                <div className="flex justify-between"><span>Active drivers</span><span>{(plaidAccountsQuery.data?.accounts ?? []).length}</span></div>
+                <div className="flex justify-between">
+                  <span>Drivers with escrow balance</span>
+                  <span>{Number(kpiQuery.data?.drivers_with_escrow_balance ?? 0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Active drivers</span>
+                  <span>{Number(kpiQuery.data?.active_drivers ?? 0)}</span>
+                </div>
                 <div className="flex justify-between"><span>Contributions MTD</span><span>{money.format(0)}</span></div>
                 <div className="flex justify-between"><span>Deductions MTD</span><span>{money.format(0)}</span></div>
                 <button type="button" onClick={() => setActiveTab("driver_escrow")} className="pt-1 text-xs text-emerald-700 hover:underline">

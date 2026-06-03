@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listCustomers, listDrivers } from "../api/mdata";
+import { getDispatchDashboard } from "../api/dispatch";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
 import { listSettlements } from "../api/driverFinance";
 import { listGeofenceBreaches } from "../api/safetyGeofence";
@@ -112,6 +113,12 @@ export function DispatchPage() {
   }, [companies, selectedCompanyId]);
   const filters = useMemo(() => parseFilters(searchParams, defaultCompanyIds), [defaultCompanyIds, searchParams]);
 
+  const dispatchDashboardQuery = useQuery({
+    queryKey: ["dispatch", "dashboard", defaultCompanyIds[0] ?? ""],
+    queryFn: () => getDispatchDashboard(defaultCompanyIds[0] ?? ""),
+    enabled: Boolean(defaultCompanyIds[0]),
+    refetchInterval: 60_000,
+  });
   const loadsQuery = useLoadsList({
     limit,
     offset,
@@ -205,17 +212,17 @@ export function DispatchPage() {
   }, [geofenceBreachesQuery.data?.events]);
   const totalCount = loadsQuery.data?.total_count ?? 0;
   const kpis = useMemo(() => {
-    const activeLoads = loads.filter((load) =>
-      ["booked", "planned", "assigned", "dispatched", "at_pickup", "in_transit", "at_delivery"].includes(load.status)
-    ).length;
-    const awaitingPod = loads.filter((load) => load.status === "delivered").length;
+    const dashboard = dispatchDashboardQuery.data;
+    const activeLoads = Number(dashboard?.active_loads ?? 0);
+    const inTransit = Number(dashboard?.in_transit ?? 0);
+    const awaitingPod = Number(dashboard?.delivered ?? loads.filter((load) => load.status === "delivered").length);
     const onLoadDriverIds = new Set(loads.map((load) => load.assigned_primary_driver_id).filter(Boolean));
     const activeDrivers = allActiveDriversQuery.data?.drivers ?? [];
     const availableUnits = Math.max(activeDrivers.length - onLoadDriverIds.size, 0);
     const today = new Date().toISOString().slice(0, 10);
     const bookedToday = loads.filter((load) => String(load.created_at).slice(0, 10) === today).length;
-    return { activeLoads, awaitingPod, availableUnits, bookedToday };
-  }, [loads, allActiveDriversQuery.data?.drivers]);
+    return { activeLoads, inTransit, awaitingPod, availableUnits, bookedToday };
+  }, [dispatchDashboardQuery.data, loads, allActiveDriversQuery.data?.drivers]);
 
   const setFilterState = (nextFilters: DispatchFilterState) => {
     setSearchParams(serializeFilters(searchParams, nextFilters));
@@ -288,7 +295,7 @@ export function DispatchPage() {
         <div className="rounded border border-gray-200 bg-white p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active loads</p>
           <p className="text-xl font-semibold text-gray-900">{kpis.activeLoads}</p>
-          <p className="text-xs text-gray-500">14 in transit</p>
+          <p className="text-xs text-gray-500">{kpis.inTransit} in transit</p>
         </div>
         <div className="rounded border border-gray-200 bg-white p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Awaiting POD</p>

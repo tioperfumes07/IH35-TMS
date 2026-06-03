@@ -62,6 +62,7 @@ export type DispatchLoad = {
 };
 
 export type DispatchKpis = {
+  active_loads: number;
   dispatched: number;
   need_load: number;
   delivered: number;

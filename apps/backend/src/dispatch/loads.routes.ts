@@ -14,6 +14,7 @@ import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
 import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
+import { countActiveDispatchLoads, countInTransitDispatchLoads } from "./active-loads-count.js";
 
 const dispatchStatusSchema = z.enum([
   "unassigned",
@@ -922,51 +923,46 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const metrics = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
-      const dispatchedRes = await client.query<{ count: number }>(
-        `
-          SELECT count(*)::int AS count
-          FROM mdata.loads
-          WHERE operating_company_id = $1
-            AND soft_deleted_at IS NULL
-            AND status IN ('dispatched'::mdata.load_status_enum, 'in_transit'::mdata.load_status_enum)
-        `,
-        [operatingCompanyId]
-      );
-      const deliveredRes = await client.query<{ count: number }>(
-        `
-          SELECT count(*)::int AS count
-          FROM mdata.loads
-          WHERE operating_company_id = $1
-            AND soft_deleted_at IS NULL
-            AND status = 'delivered_pending_docs'::mdata.load_status_enum
-        `,
-        [operatingCompanyId]
-      );
-      const transitRes = await client.query<{ count: number }>(
-        `
-          SELECT count(*)::int AS count
-          FROM mdata.loads
-          WHERE operating_company_id = $1
-            AND soft_deleted_at IS NULL
-            AND status = 'in_transit'::mdata.load_status_enum
-        `,
-        [operatingCompanyId]
-      );
-      const projectedRes = await client.query<{ amount: number }>(
-        `
-          SELECT COALESCE(sum(rate_total_cents), 0)::bigint AS amount
-          FROM mdata.loads
-          WHERE operating_company_id = $1
-            AND date_trunc('week', created_at) = date_trunc('week', now())
-            AND soft_deleted_at IS NULL
-        `,
-        [operatingCompanyId]
-      );
+      const [activeLoads, inTransit, dispatchedRes, deliveredRes, projectedRes] = await Promise.all([
+        countActiveDispatchLoads(client, operatingCompanyId),
+        countInTransitDispatchLoads(client, operatingCompanyId),
+        client.query<{ count: number }>(
+          `
+            SELECT count(*)::int AS count
+            FROM mdata.loads
+            WHERE operating_company_id = $1
+              AND soft_deleted_at IS NULL
+              AND status IN ('dispatched'::mdata.load_status_enum, 'in_transit'::mdata.load_status_enum)
+          `,
+          [operatingCompanyId]
+        ),
+        client.query<{ count: number }>(
+          `
+            SELECT count(*)::int AS count
+            FROM mdata.loads
+            WHERE operating_company_id = $1
+              AND soft_deleted_at IS NULL
+              AND status = 'delivered_pending_docs'::mdata.load_status_enum
+          `,
+          [operatingCompanyId]
+        ),
+        client.query<{ amount: number }>(
+          `
+            SELECT COALESCE(sum(rate_total_cents), 0)::bigint AS amount
+            FROM mdata.loads
+            WHERE operating_company_id = $1
+              AND date_trunc('week', created_at) = date_trunc('week', now())
+              AND soft_deleted_at IS NULL
+          `,
+          [operatingCompanyId]
+        ),
+      ]);
       return {
+        active_loads: activeLoads,
         dispatched: Number(dispatchedRes.rows[0]?.count ?? 0),
         need_load: 0,
         delivered: Number(deliveredRes.rows[0]?.count ?? 0),
-        in_transit: Number(transitRes.rows[0]?.count ?? 0),
+        in_transit: inTransit,
         proj_inv_wk_cents: Number(projectedRes.rows[0]?.amount ?? 0),
         deadhead_pct: 0,
         mpg: 0,
