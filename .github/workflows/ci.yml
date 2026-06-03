@@ -134,6 +134,9 @@ jobs:
       - name: Verify dispatch coming-soon triage
         run: npm run verify:dispatch-coming-soon-triage
 
+      - name: Verify maint nav count reconcile
+        run: npm run verify:maint-nav-count-reconcile
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 

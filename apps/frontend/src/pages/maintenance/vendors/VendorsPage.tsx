@@ -15,9 +15,6 @@ export function VendorsPage() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold text-gray-900">Maintenance Vendors</h2>
-        <button type="button" className="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
-          CSV Import
-        </button>
       </div>
       <div className="rounded border border-gray-200 bg-white p-3">
         <table className="w-full text-left text-xs">

@@ -18,6 +18,7 @@ import {
   UserCog,
 } from "lucide-react";
 import type { UserRole } from "../../types/api";
+import { MAINTENANCE_MODULE_NAV_LINKS } from "../maintenance/MAINTENANCE_NAV_CONFIG";
 
 /** Canonical sidebar ids (locked; single source for order + prefs overrides). */
 export const SIDEBAR_ITEM_IDS = [
@@ -150,18 +151,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Factoring", to: "/accounting/factoring" },
       ];
     case "maintenance":
-      return [
-        { label: "Dashboard", to: "/maintenance" },
-        { label: "Vehicles", to: "/maintenance/vehicles" },
-        { label: "Drivers", to: "/maintenance/drivers" },
-        { label: "Parts", to: "/maintenance/parts" },
-        { label: "Severe Repairs", to: "/maintenance/severe-repairs" },
-        { label: "PM Schedule", to: "/maintenance/pm-schedule" },
-        { label: "Inspections", to: "/maintenance/inspections" },
-        { label: "Vendors", to: "/maintenance/vendors" },
-        { label: "Reports", to: "/maintenance/reports" },
-        { label: "Compliance", to: "/maintenance/compliance" },
-      ];
+      return MAINTENANCE_MODULE_NAV_LINKS.map((item) => ({ label: item.label, to: item.path }));
     case "bank":
       return [
         { label: "Overview", to: "/banking" },

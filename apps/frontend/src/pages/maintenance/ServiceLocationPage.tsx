@@ -51,9 +51,6 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
         <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
           <div className="font-semibold">No service-location rows yet</div>
           <div className="mt-1 text-xs">Active work orders grouped by service location will render here.</div>
-          <button type="button" className="mt-2 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700">
-            + Create
-          </button>
         </div>
       ) : (
         <div className="overflow-hidden rounded border border-gray-200 bg-white">
