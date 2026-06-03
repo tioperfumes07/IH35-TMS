@@ -1087,6 +1087,19 @@ Five driver sub-catalogs under `/lists/drivers/*` (plural) read from `reference.
 
 Frontend canonical pages reuse `DriversReferenceCatalogPage` with Code / Label / Sort Order / Archived columns, search, archive filter, and **+ Create** modal. Pay catalogs remain on `/lists/driver/*` (singular, non-deprecated). **CI:** `verify:drivers-reference-catalogs-wired`, `verify:a17-deprecation-comments`.
 
+## Names Master — cross-module navigator (Block A18, locked 2026-06-03)
+
+**Pattern:** read-only aggregated search hub at `/lists/names` — not a catalog clone. No new tables and no write endpoints under `/api/v1/lists/names/*`.
+
+`GET /api/v1/lists/names/search` unions `mdata.customers`, `mdata.vendors`, `mdata.drivers`, `mdata.customer_contacts`, accessible `org.companies`, and unlinked `mdata.qbo_*` mirrors (deduped when `qbo_*_id` already links mdata). Default filter hides archived/deactivated rows; `?include_archived=true` includes them. Each result returns `link_to_module_page` for click-through (`/customers/{id}`, `/vendors/{id}`, `/drivers/{id}`, etc.). **No + Create** on the hub — authoring stays in canonical module UIs.
+
+**CI:** `verify:names-master-readonly`, `verify:names-master-no-new-tables`.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
+
+
+## Names Master — Cross-Module Navigator (A18)
+
+Names Master (`/lists/names`) is a **read-only hub** that searches existing party records across modules (customers, vendors, drivers, customer contacts, and accessible org companies / unlinked QBO mirrors). It does **not** introduce new tables or write APIs; results deep-link to canonical module pages (`/customers/:id`, `/vendors/:id`, `/drivers/:id`, etc.). This pattern is distinct from catalog CRUD (A17 `reference.*` + `archived_at`).
