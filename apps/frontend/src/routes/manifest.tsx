@@ -196,6 +196,13 @@ import { DriverPayTypesListPage } from "../pages/lists/driver/DriverPayTypesList
 import { DriverTeamsPage } from "../pages/lists/driver/DriverTeamsPage";
 import { EscrowTypesListPage } from "../pages/lists/driver/EscrowTypesListPage";
 import { PayRateTemplatesListPage } from "../pages/lists/driver/PayRateTemplatesListPage";
+import {
+  CdlEndorsementsListPage,
+  CdlRestrictionsListPage,
+  EmploymentStatusesListPage,
+  LicenseClassesListPage,
+  MedicalCardStatusesListPage,
+} from "../pages/lists/driver/deprecated-subcatalog-pages";
 import { Catalog as DriversLicenseClassesCatalog } from "../pages/lists/drivers/license-classes/Catalog";
 import { Catalog as DriversEndorsementsCatalog } from "../pages/lists/drivers/endorsements/Catalog";
 import { Catalog as DriversRestrictionsCatalog } from "../pages/lists/drivers/restrictions/Catalog";
@@ -1060,6 +1067,46 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <EscrowTypesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/license-classes"
+          element={
+            <ProtectedRoute>
+              <LicenseClassesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/endorsements"
+          element={
+            <ProtectedRoute>
+              <CdlEndorsementsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/restrictions"
+          element={
+            <ProtectedRoute>
+              <CdlRestrictionsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/medical-card-status"
+          element={
+            <ProtectedRoute>
+              <MedicalCardStatusesListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/driver/employment-status"
+          element={
+            <ProtectedRoute>
+              <EmploymentStatusesListPage />
             </ProtectedRoute>
           }
         />
