@@ -303,6 +303,7 @@
     "verify:dispatch-insurance-coverage-gate": "node scripts/verify-dispatch-insurance-coverage-gate.mjs",
     "verify:dispatch-coming-soon-triage": "node scripts/verify-dispatch-coming-soon-triage.mjs",
     "verify:maint-nav-count-reconcile": "node scripts/verify-maint-nav-count-reconcile.mjs",
+    "verify:dispatch-arch-tab-parity": "node scripts/verify-dispatch-arch-tab-parity.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",

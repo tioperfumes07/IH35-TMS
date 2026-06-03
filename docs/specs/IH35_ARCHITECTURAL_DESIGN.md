@@ -494,15 +494,15 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 | **Board (Kanban)** | Pending Assignment / Assigned / In Transit / Delivered / Completed | Phase 3 ✅ |
 | **Board (List)** | Same data, table format with sortable columns | Phase 3 ✅ |
 | **Planner (Calendar)** | Week-at-a-glance per dispatcher (T5.5 pending) | Phase 3 — T5.5 |
-| **In-Transit Issues** | Driver-reported issues queue (WF-005, WF-048) | Phase 3 ✅ |
+| **In-Transit Issues** | Driver-reported issues queue (WF-005, WF-048) | Phase 3 ✅ — `/dispatch/in-transit-issues` (B21-D2) |
 | **Border Routing Decisions** | Loads needing routing decision (yellow band) | Phase 3 ✅ |
 | **Detention Tracking** | Stops with detention accruing | Phase 3 ✅ |
 | **OCR Queue** | Rate cons auto-parsed from email (T9+T10 pending — credentials live) | Phase 3 — T9+T10 |
-| **Assignment History** | Audit trail of assignments (T4 pending) | Phase 3 — T4 |
-| **At-Risk Loads** | Late >2h OR HOS warning OR maintenance due | Phase 3 ✅ |
+| **Assignment History** | Audit trail of assignments | Phase 3 ✅ — `/dispatch/assignment-history` (B21-D2) |
+| **At-Risk Loads** | Late >2h OR HOS warning OR maintenance due | Phase 3 ✅ — `/dispatch/at-risk` (B21-D2) |
 | **Settings** | Dispatcher assignments · Default lanes · Auto-routing rules | Owner only |
 
-**Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes Border Crossing + Border History + Factoring Packets per triage.
+**Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes At-Risk Queue, In-Transit Issues, Assignment History (B21-D2), Border Crossing + Border History + Factoring Packets per triage. **CI:** `verify:dispatch-arch-tab-parity`.
 
 **Maintenance module nav counts (B24):** Canonical surfaces in `MAINTENANCE_NAV_CONFIG.ts` — 10 sidebar flyout links, 10 dashboard operational tabs, 8 Master Data hover links (includes `/maintenance/drivers`), 9 Lists maintenance catalogs. HOME quick-jump uses `MAINTENANCE_HOME_QUICK_JUMP_COUNT` (10). Dead stub CTAs removed from parts-inventory dashboard band, fleet-table empty state, service-location empty state, and vendors CSV Import.
 

@@ -16,6 +16,9 @@ import { DriversPage } from "../pages/Drivers";
 import { DispatchPage } from "../pages/Dispatch";
 import { GeofencesPage } from "../pages/operations/GeofencesPage";
 import { DispatchAlertsPage } from "../pages/dispatch/DispatchAlertsPage";
+import { AtRiskQueuePage } from "../pages/dispatch/AtRiskQueuePage";
+import { InTransitIssuesPage } from "../pages/dispatch/InTransitIssuesPage";
+import { AssignmentHistoryPage } from "../pages/dispatch/AssignmentHistoryPage";
 import { BorderCrossingWizardPage } from "../pages/dispatch/BorderCrossingWizardPage";
 import { BorderCrossingHistoryPage } from "../pages/dispatch/BorderCrossingHistoryPage";
 import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
@@ -502,6 +505,30 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <EldPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/at-risk"
+          element={
+            <ProtectedRoute>
+              <AtRiskQueuePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/in-transit-issues"
+          element={
+            <ProtectedRoute>
+              <InTransitIssuesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/assignment-history"
+          element={
+            <ProtectedRoute>
+              <AssignmentHistoryPage />
             </ProtectedRoute>
           }
         />

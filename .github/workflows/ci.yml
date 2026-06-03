@@ -137,6 +137,9 @@ jobs:
       - name: Verify dispatch coming-soon triage
         run: npm run verify:dispatch-coming-soon-triage
 
+      - name: verify:dispatch-arch-tab-parity
+        run: npm run verify:dispatch-arch-tab-parity
+
       - name: Verify maint nav count reconcile
         run: npm run verify:maint-nav-count-reconcile
 
