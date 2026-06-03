@@ -1,3 +1,8 @@
+/**
+ * @deprecated Sunset 2026-09-01 — legacy v5 Safety shell superseded by `/safety/*` tab routes.
+ * Accident workflow canonical home: `AccidentsPage` at `/safety/accidents` (Block A23-3).
+ * ARCHIVE-not-DELETE: retained for reference; no active manifest imports.
+ */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDrugAlcoholTests, getLatestCsa, getSafetyAccidents, getSafetyEventsFiltered, getSafetyKpis, getTrainingCompletions } from "../../api/safety";
@@ -10,7 +15,7 @@ import { ComplaintsPage } from "./ComplaintsPage";
 import { DotInspectionsPage } from "./DotInspectionsPage";
 import { FinesPage } from "./FinesPage";
 import { InternalFinesPage } from "./InternalFinesPage";
-import { AccidentReportDrawer } from "./components/AccidentReportDrawer";
+import { AccidentReportDrawer } from "../../components/safety/AccidentReportDrawer";
 import { CSAScoreCard } from "./components/CSAScoreCard";
 import { DrugAlcoholTable } from "./components/DrugAlcoholTable";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";

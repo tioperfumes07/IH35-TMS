@@ -1,10 +1,12 @@
 export type TabBadge = "new" | "renamed" | null;
+export type TabSurfaceStatus = "Stub" | "Live";
 
 export interface SafetyTab {
   id: string;
   label: string;
   route: string;
   badge: TabBadge;
+  status?: TabSurfaceStatus;
 }
 
 export interface SafetyGroup {
@@ -47,7 +49,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     label: "Incidents & Claims",
     tabs: [
       { id: "safety-events", label: "Safety Events", route: "/safety/safety-events", badge: "new" },
-      { id: "accidents", label: "Accidents & Incidents", route: "/safety/accidents", badge: null },
+      { id: "accidents", label: "Accidents & Incidents", route: "/safety/accidents", badge: null, status: "Live" },
       { id: "damage-reports", label: "Damage Reports", route: "/safety/damage-reports", badge: null },
       { id: "trailer-interchanges", label: "Trailer Interchanges", route: "/safety/trailer-interchanges", badge: null },
       { id: "cargo-claims", label: "Cargo Claims", route: "/safety/cargo-claims", badge: null },

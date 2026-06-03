@@ -369,6 +369,19 @@ Eleven backend route modules under `apps/backend/src/safety/` existed as code bu
 
 **Frontend wiring (manifest.tsx):** `/safety/hos/exceptions`, `/safety/training/programs`, `/safety/integrity-alerts`, `/safety/audit-425c`, `/safety/reports`, `/safety/driver-profiles/:driverId`. Drug & Alcohol Pool page left unwired because `drug-pool.routes.ts` was deprecated.
 
+### A23-3 — Accidents & Incidents wire-up (2026-06-03)
+
+`/safety/accidents` previously rendered `SafetyTabPlaceholder`. The functional `AccidentReportDrawer` and `GET /api/v1/safety/accidents` API existed but were orphaned in deprecated `SafetyHome.tsx`.
+
+| Surface | Path | Disposition |
+|---|---|---|
+| `AccidentsPage` | `/safety/accidents` | **Live** — list + `+ Create Accident` opens shared drawer |
+| `AccidentReportDrawer` | `components/safety/AccidentReportDrawer.tsx` | **Moved** from `pages/safety/components/` |
+| `SafetyHome.tsx` | (unrouted legacy shell) | **Deprecated** — ARCHIVE-not-DELETE |
+| `SAFETY_TABS_CONFIG` accidents tab | `/safety/accidents` | **Live** status marker |
+
+Drawer actions wired to existing endpoints: status PATCH, photo upload POST, Spawn Liability, Spawn WO (maintenance `source_type='AC'`).
+
 ---
 
 ## MODULE 7 — DRIVERS
