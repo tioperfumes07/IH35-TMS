@@ -968,6 +968,15 @@ Route: `/fleet/trailers/:id` renders `TrailerProfilePage` with eight sections (i
 
 **PDF:** `GET /api/v1/mdata/equipment/:id/export.pdf` via Puppeteer.
 
+## Trailer Profile (Fleet module) — Part 2 gap-fill (B16, 2026-06-03)
+
+No migration. UX and API hardening on Part 1 data layer.
+
+- **Status change:** `PUT /api/v1/fleet/trailers/:id/status` with reason, optional note/effective date, lifecycle fields (sold/transfer/damage/OOS). Validated by `apps/backend/src/fleet/trailer-status-state-machine.ts` (terminal `Sold`/`Transferred`/`Lost`; `Sold→InService` only with Owner `admin_override`). Audits `fleet.trailer.status_changed`.
+- **Edit:** `PATCH /api/v1/fleet/trailers/:id` via `EditTrailerModal` (identity, specs, insurance, notes). Audits `fleet.trailer.updated` with before/after diff.
+- **UI:** `StatusChangeModal`, status badge dropdown on `IdentityStatusHeader`, `TrailerReeferSection` A19 stub (conditional `equipment_type=Reefer`), `TrailerRecentActivitySection` (equipment log, docs files, WO list via attached unit).
+- **CI:** `verify:trailer-status-state-machine-coverage`, `verify:trailer-profile-no-stub-sections`.
+
 ## Compliance Dashboard (Safety module) — Block 16 (locked 2026-06-02)
 
 Route: `/compliance` renders `ComplianceDashboardPage` — master view of expiring credentials across units, trailers, drivers, plates, and carrier-level fields.

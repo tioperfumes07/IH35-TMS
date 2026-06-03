@@ -16,4 +16,8 @@ if (!section.includes("if (!reefer) return null")) {
   console.error("verify:trailer-profile-reefer-conditional FAIL: ReeferTelemetrySection must return null without reefer");
   process.exit(1);
 }
+if (!page.includes("TrailerReeferSection")) {
+  console.error("verify:trailer-profile-reefer-conditional FAIL: A19 reefer slot component missing");
+  process.exit(1);
+}
 console.log("verify:trailer-profile-reefer-conditional PASS");

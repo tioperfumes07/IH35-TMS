@@ -49,5 +49,18 @@ describe("TrailerProfilePage", () => {
     expect(screen.getByTestId("tp-section-6-compliance")).toBeTruthy();
     expect(screen.getByTestId("tp-section-7-documents")).toBeTruthy();
     expect(screen.getByTestId("tp-section-8-action-bar")).toBeTruthy();
+    expect(screen.getByTestId("tp-section-9-activity")).toBeTruthy();
+    expect(screen.getByTestId("tp-reefer-a19-slot")).toBeTruthy();
+  });
+
+  it("does not render reefer A19 slot for dry van", async () => {
+    vi.spyOn(clientApi, "apiRequest").mockResolvedValue({
+      ...aggregateFixture,
+      equipment: { ...aggregateFixture.equipment, equipment_type: "DryVan" },
+      reefer: null,
+    } as never);
+    renderPage();
+    await screen.findByTestId("tp-section-1-identity");
+    expect(screen.queryByTestId("tp-reefer-a19-slot")).toBeNull();
   });
 });

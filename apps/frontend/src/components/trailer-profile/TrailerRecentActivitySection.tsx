@@ -1,0 +1,87 @@
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "../../api/client";
+import { listDocsFiles } from "../../api/docs";
+
+type Props = {
+  equipmentId: string;
+  companyId: string;
+  attachedUnitId?: string | null;
+};
+
+export function TrailerRecentActivitySection({ equipmentId, companyId, attachedUnitId }: Props) {
+  const logQ = useQuery({
+    queryKey: ["trailer-equipment-log", equipmentId],
+    queryFn: () =>
+      apiRequest<{ equipment_log: Array<Record<string, unknown>> }>(
+        `/api/v1/mdata/equipment-log?equipment_id=${encodeURIComponent(equipmentId)}&limit=10`
+      ),
+    enabled: Boolean(equipmentId),
+  });
+
+  const docsQ = useQuery({
+    queryKey: ["trailer-docs", equipmentId, companyId],
+    queryFn: () =>
+      listDocsFiles({
+        entity_type: "equipment",
+        entity_id: equipmentId,
+        limit: 10,
+      }),
+    enabled: Boolean(equipmentId && companyId),
+  });
+
+  const woQ = useQuery({
+    queryKey: ["trailer-work-orders", attachedUnitId, companyId],
+    queryFn: () =>
+      apiRequest<{ work_orders: Array<Record<string, unknown>>; total_count: number }>(
+        `/api/v1/maintenance/work-orders?operating_company_id=${encodeURIComponent(companyId)}&limit=10`
+      ),
+    enabled: Boolean(companyId && attachedUnitId),
+    select: (data) => ({
+      work_orders: data.work_orders.filter((w) => String(w.unit_id) === String(attachedUnitId)).slice(0, 10),
+    }),
+  });
+
+  const logRows = logQ.data?.equipment_log ?? [];
+  const docRows = docsQ.data?.files ?? [];
+  const woRows = woQ.data?.work_orders ?? [];
+
+  return (
+    <section className="rounded border border-gray-200 bg-white p-4" data-testid="tp-section-9-activity">
+      <h2 className="text-sm font-semibold text-gray-800">Recent activity</h2>
+      <div className="mt-3 grid gap-4 md:grid-cols-3">
+        <div>
+          <h3 className="text-xs font-medium text-gray-600">Equipment log</h3>
+          <ul className="mt-1 space-y-1 text-xs text-gray-800">
+            {logRows.length === 0 ? <li className="text-gray-500">No log events.</li> : null}
+            {logRows.map((r) => (
+              <li key={String(r.id)}>
+                {String(r.event_type)} · {String(r.event_at ?? "").slice(0, 10)}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="text-xs font-medium text-gray-600">Documents</h3>
+          <ul className="mt-1 space-y-1 text-xs text-gray-800">
+            {docRows.length === 0 ? <li className="text-gray-500">No files.</li> : null}
+            {docRows.map((f) => (
+              <li key={f.id}>{f.original_filename ?? f.id}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="text-xs font-medium text-gray-600">Work orders (power unit)</h3>
+          <ul className="mt-1 space-y-1 text-xs text-gray-800">
+            {!attachedUnitId ? <li className="text-gray-500">No truck attached.</li> : null}
+            {attachedUnitId && woRows.length === 0 ? <li className="text-gray-500">No work orders.</li> : null}
+            {woRows.map((w) => (
+              <li key={String(w.id)}>
+                {String(w.display_id ?? w.id)} · {String(w.status ?? "—")}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
