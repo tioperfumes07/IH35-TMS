@@ -1,10 +1,16 @@
 import { useState } from "react";
-import type { DriversReferenceCatalogCreateBody } from "../../../api/lists-drivers-catalogs";
+import type {
+  DriversReferenceCatalogCreateBody,
+  DriversReferenceCatalogListResponse,
+  DriversReferenceCatalogRow,
+} from "../../../api/lists-drivers-catalogs";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 
 export type DriversReferenceCatalogClient = {
+  list: (filters?: { search?: string; include_archived?: boolean }) => Promise<DriversReferenceCatalogListResponse>;
   create: (body: DriversReferenceCatalogCreateBody) => Promise<unknown>;
+  setArchived: (id: string, archived: boolean) => Promise<DriversReferenceCatalogRow>;
 };
 
 type Props = {
