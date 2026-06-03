@@ -9,6 +9,9 @@ const customerMigrationPath = path.join(ROOT, "db/migrations/0319_qbo_customers_
 const vendorPushPath = path.join(ROOT, "apps/backend/src/sync/qbo-vendors-push.ts");
 const vendorStatusPath = path.join(ROOT, "apps/backend/src/sync/qbo-vendors-status.routes.ts");
 const vendorMigrationPath = path.join(ROOT, "db/migrations/0321_qbo_vendors_push_sync_status.sql");
+const accountsPushPath = path.join(ROOT, "apps/backend/src/sync/qbo-accounts-push.ts");
+const accountsStatusPath = path.join(ROOT, "apps/backend/src/sync/qbo-accounts-status.routes.ts");
+const accountsMigrationPath = path.join(ROOT, "db/migrations/0323_qbo_accounts_sync_state.sql");
 
 function fail(message) {
   console.error(`verify:qbo-push-rls-tenant-scope — FAILED\n- ${message}`);
@@ -22,6 +25,9 @@ for (const file of [
   vendorPushPath,
   vendorStatusPath,
   vendorMigrationPath,
+  accountsPushPath,
+  accountsStatusPath,
+  accountsMigrationPath,
 ]) {
   if (!fs.existsSync(file)) fail(`${file.replace(`${ROOT}/`, "")} not found`);
 }
@@ -32,6 +38,9 @@ const customerMigrationText = fs.readFileSync(customerMigrationPath, "utf8");
 const vendorPushText = fs.readFileSync(vendorPushPath, "utf8");
 const vendorStatusText = fs.readFileSync(vendorStatusPath, "utf8");
 const vendorMigrationText = fs.readFileSync(vendorMigrationPath, "utf8");
+const accountsPushText = fs.readFileSync(accountsPushPath, "utf8");
+const accountsStatusText = fs.readFileSync(accountsStatusPath, "utf8");
+const accountsMigrationText = fs.readFileSync(accountsMigrationPath, "utf8");
 
 function assertPushScheduler(pushText, tableName) {
   if (!pushText.includes("app.operating_company_id")) {
@@ -64,6 +73,7 @@ function assertStatusRoute(statusText, routePath, tableName, migrationText, poli
 
 assertPushScheduler(customerPushText, "customers");
 assertPushScheduler(vendorPushText, "vendors");
+assertPushScheduler(accountsPushText, "accounts");
 assertStatusRoute(
   customerStatusText,
   "/api/v1/sync/qbo-customers/status",
@@ -78,9 +88,19 @@ assertStatusRoute(
   vendorMigrationText,
   "qbo_vendors_accounting_tenant_scope"
 );
+assertStatusRoute(
+  accountsStatusText,
+  "/api/v1/sync/qbo-accounts/status",
+  "qbo_accounts",
+  accountsMigrationText,
+  "qbo_accounts_accounting_tenant_scope"
+);
 
 if (!vendorStatusText.includes("withCurrentUser")) {
   fail("vendors status route must scope reads with withCurrentUser");
+}
+if (!accountsStatusText.includes("withCurrentUser")) {
+  fail("accounts status route must scope reads with withCurrentUser");
 }
 
 console.log("verify:qbo-push-rls-tenant-scope — OK");

@@ -1,4 +1,4 @@
-/** Shared rolling 60s window for B8 customers + B9 vendors QBO master push schedulers. */
+/** Shared rolling 60s window for B8 customers + B9 vendors + B10 accounts QBO master push schedulers. */
 export const QBO_MASTER_PUSH_RATE_LIMIT_PER_MIN = 100;
 
 const pushTimestamps: number[] = [];

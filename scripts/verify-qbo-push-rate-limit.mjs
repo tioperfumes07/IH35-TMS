@@ -6,19 +6,21 @@ const ROOT = process.cwd();
 const SHARED = path.join(ROOT, "apps/backend/src/sync/qbo-master-push-rate-limit.ts");
 const CUSTOMERS = path.join(ROOT, "apps/backend/src/sync/qbo-customers-push.ts");
 const VENDORS = path.join(ROOT, "apps/backend/src/sync/qbo-vendors-push.ts");
+const ACCOUNTS = path.join(ROOT, "apps/backend/src/sync/qbo-accounts-push.ts");
 
 function fail(message) {
   console.error(`verify:qbo-push-rate-limit — FAILED\n- ${message}`);
   process.exit(1);
 }
 
-for (const file of [SHARED, CUSTOMERS, VENDORS]) {
+for (const file of [SHARED, CUSTOMERS, VENDORS, ACCOUNTS]) {
   if (!fs.existsSync(file)) fail(`${file.replace(`${ROOT}/`, "")} not found`);
 }
 
 const sharedText = fs.readFileSync(SHARED, "utf8");
 const customersText = fs.readFileSync(CUSTOMERS, "utf8");
 const vendorsText = fs.readFileSync(VENDORS, "utf8");
+const accountsText = fs.readFileSync(ACCOUNTS, "utf8");
 
 if (!sharedText.includes("QBO_MASTER_PUSH_RATE_LIMIT_PER_MIN = 100")) {
   fail("shared rate limiter must declare QBO_MASTER_PUSH_RATE_LIMIT_PER_MIN = 100");
@@ -54,6 +56,18 @@ if (!customersText.includes("QBO_CUSTOMERS_PUSH_INTERVAL_MS = 60_000")) {
 }
 if (!vendorsText.includes("QBO_VENDORS_PUSH_INTERVAL_MS = 60_000")) {
   fail("vendors scheduler must run every 60 seconds");
+}
+if (!accountsText.includes("qbo-master-push-rate-limit.js")) {
+  fail("accounts push scheduler must import shared qbo-master-push-rate-limit");
+}
+if (!accountsText.includes("recordQboMasterPushAttempt")) {
+  fail("accounts push scheduler must record attempts via shared rate limiter");
+}
+if (!accountsText.includes("QBO_ACCOUNTS_PUSH_BATCH_SIZE = 100")) {
+  fail("accounts scheduler must declare QBO_ACCOUNTS_PUSH_BATCH_SIZE = 100");
+}
+if (!accountsText.includes("QBO_ACCOUNTS_PUSH_INTERVAL_MS = 60_000")) {
+  fail("accounts scheduler must run every 60 seconds");
 }
 
 console.log("verify:qbo-push-rate-limit — OK");

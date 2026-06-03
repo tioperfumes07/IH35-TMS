@@ -384,6 +384,18 @@ async function deliverAccount(payload: QboMasterPushPayload, client: PoolClient)
       typeof hints.acct_num === "string" && hints.acct_num.trim().length > 0
         ? hints.acct_num.trim().slice(0, 32)
         : undefined;
+    const parentRef =
+      hints.parent_qbo_id ??
+      (hints.ParentRef && typeof hints.ParentRef === "object" && !Array.isArray(hints.ParentRef)
+        ? (hints.ParentRef as Record<string, unknown>).value
+        : undefined);
+    const description =
+      typeof hints.description === "string" && hints.description.trim().length > 0
+        ? hints.description.trim().slice(0, 4000)
+        : typeof hints.Description === "string" && hints.Description.trim().length > 0
+          ? hints.Description.trim().slice(0, 4000)
+          : undefined;
+    const currencyRefRaw = hints.currency_ref ?? hints.CurrencyRef;
 
     const body: Record<string, unknown> = {
       Name: name,
@@ -393,6 +405,13 @@ async function deliverAccount(payload: QboMasterPushPayload, client: PoolClient)
     if (accountSubType) body.AccountSubType = accountSubType;
     if (classification) body.Classification = classification;
     if (acctNum) body.AcctNum = acctNum;
+    if (parentRef) body.ParentRef = { value: String(parentRef) };
+    if (description) body.Description = description;
+    if (currencyRefRaw && typeof currencyRefRaw === "object" && !Array.isArray(currencyRefRaw)) {
+      body.CurrencyRef = currencyRefRaw;
+    } else if (currencyRefRaw) {
+      body.CurrencyRef = { value: String(currencyRefRaw) };
+    }
 
     const resp = await qboPostMasterJson(payload.operating_company_id, "account", body, "create");
     const entity = unwrapIntuitEntity(resp);

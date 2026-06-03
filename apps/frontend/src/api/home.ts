@@ -162,6 +162,12 @@ export type HomeQboCustomersPushStatus = {
 
 export type HomeQboVendorsPushStatus = HomeQboCustomersPushStatus;
 
+export type HomeQboAccountsPushStatus = HomeQboCustomersPushStatus & {
+  root_synced: number;
+  children_synced: number;
+  blocked_by_parent: number;
+};
+
 export async function fetchHomeQboCustomersPushStatus(companyId: string): Promise<HomeQboCustomersPushStatus> {
   const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/sync/qbo-customers/status", companyId));
   return {
@@ -183,6 +189,21 @@ export async function fetchHomeQboVendorsPushStatus(companyId: string): Promise<
     pushing: num(raw.pushing),
     failed: num(raw.failed),
     dead_letter: num(raw.dead_letter),
+  };
+}
+
+export async function fetchHomeQboAccountsPushStatus(companyId: string): Promise<HomeQboAccountsPushStatus> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/sync/qbo-accounts/status", companyId));
+  return {
+    total_local: num(raw.total_local),
+    synced: num(raw.synced),
+    unsynced: num(raw.unsynced),
+    pushing: num(raw.pushing),
+    failed: num(raw.failed),
+    dead_letter: num(raw.dead_letter),
+    root_synced: num(raw.root_synced),
+    children_synced: num(raw.children_synced),
+    blocked_by_parent: num(raw.blocked_by_parent),
   };
 }
 
