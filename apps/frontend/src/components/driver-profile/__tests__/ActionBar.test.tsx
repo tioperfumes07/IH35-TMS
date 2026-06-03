@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -53,7 +54,7 @@ describe("ActionBar", () => {
   it("opens send message modal and submits", async () => {
     renderBar();
     fireEvent.click(screen.getByTestId("dp-action-send-message"));
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Please call dispatch" } });
+    fireEvent.change(screen.getByTestId("send-message-body"), { target: { value: "Please call dispatch" } });
     fireEvent.click(screen.getByTestId("send-message-submit"));
     await waitFor(() => {
       expect(mdataApi.sendDriverProfileMessage).toHaveBeenCalledWith("d-1", "c-1", {

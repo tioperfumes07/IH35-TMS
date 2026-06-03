@@ -70,6 +70,7 @@ export function SendMessageModal({ open, driverId, companyId, driverName, onClos
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Message</label>
           <textarea
+            data-testid="send-message-body"
             value={message}
             onChange={(event) => setMessage(event.target.value)}
             className="rounded border border-gray-300 px-2 py-2 text-sm"
