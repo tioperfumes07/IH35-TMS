@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildReeferSummary, displayTypeForTrailer, fetchUnifiedFleetList } from "./units-unified-list.service.js";
+import { FLEET_TYPE_FILTER_VALUES } from "./fleet-type-filter.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const unitsRoutes = fs.readFileSync(path.join(here, "units.routes.ts"), "utf8");
@@ -75,5 +76,42 @@ describe("units unified list", () => {
     expect(rows).toHaveLength(2);
     expect(rows.find((r) => r.id === "truck-1")?.kind).toBe("truck");
     expect(rows.find((r) => r.id === "trailer-1")?.type).toBe("Reefer (2019 Thermo King)");
+  });
+
+  it("GET /api/v1/mdata/units accepts ?type= query param with nine fleet types", () => {
+    expect(unitsRoutes).toMatch(/type: fleetTypeFilterSchema\.optional\(\)/);
+    expect(unitsRoutes).toMatch(/type,/);
+    expect(FLEET_TYPE_FILTER_VALUES).toHaveLength(9);
+  });
+
+  it("fetchUnifiedFleetList filters by type=Reefer (trailers only)", async () => {
+    const queries: string[] = [];
+    const client = {
+      query: async (sql: string) => {
+        queries.push(sql);
+        if (sql.includes("mdata.units")) return { rows: [] };
+        return {
+          rows: [
+            {
+              id: "trailer-1",
+              equipment_number: "T-55",
+              equipment_type: "Reefer",
+              status: "InService",
+            },
+          ],
+        };
+      },
+    };
+
+    const rows = await fetchUnifiedFleetList(client, {
+      limit: 500,
+      offset: 0,
+      type: "Reefer",
+    });
+
+    expect(queries.some((sql) => sql.includes("mdata.units") && sql.includes("FALSE"))).toBe(true);
+    expect(queries.some((sql) => sql.includes("mdata.equipment") && sql.includes("equipment_type = $1"))).toBe(true);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.kind).toBe("trailer");
   });
 });

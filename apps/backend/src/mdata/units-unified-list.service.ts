@@ -1,3 +1,6 @@
+import type { FleetTypeFilter } from "./fleet-type-filter.js";
+import { trailerTypeSqlFilter, truckTypeSqlFilter } from "./fleet-type-filter.js";
+
 type PgClient = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 };
@@ -52,12 +55,16 @@ export async function fetchUnifiedFleetList(
     operating_company_id?: string;
     status?: string;
     search?: string;
+    type?: FleetTypeFilter;
     limit: number;
     offset: number;
   }
 ): Promise<UnifiedFleetRow[]> {
   const truckValues: unknown[] = [];
   const truckFilters: string[] = ["deactivated_at IS NULL"];
+  if (options.type) {
+    truckFilters.push(truckTypeSqlFilter(options.type));
+  }
   if (options.status) {
     truckValues.push(options.status);
     truckFilters.push(`status = $${truckValues.length}`);
@@ -75,6 +82,9 @@ export async function fetchUnifiedFleetList(
 
   const trailerValues: unknown[] = [];
   const trailerFilters: string[] = ["deactivated_at IS NULL"];
+  if (options.type) {
+    trailerFilters.push(trailerTypeSqlFilter(options.type, trailerValues));
+  }
   if (options.status) {
     trailerValues.push(options.status);
     trailerFilters.push(`status = $${trailerValues.length}`);

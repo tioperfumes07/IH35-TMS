@@ -1013,3 +1013,11 @@ Status: LOCKED
 Relevant block: BLOCK-B4-F2-FLEET-TRAILERS-JOINED-UNIFIED-LIST
 
 Fleet Table lists trucks and trailers together via `GET /api/v1/mdata/units?include=trailers` (`kind` discriminator, Type column, kind-based profile navigation). Trailer bulk actions use RLS-scoped `POST /api/v1/mdata/equipment/bulk-update` mirroring A5 truck bulk-update.
+
+## 2026-06-02 · Block B5 · Fleet type filters
+
+Source: Block B5 spec (#64-FAULT-F5)  
+Status: LOCKED  
+Relevant block: BLOCK-B5-FAULT-F5-FLEET-TYPE-FILTERS
+
+Fleet Table adds a type filter dropdown above the table (All · Truck · Tractor · Reefer · DryVan · Flatbed · Stepdeck · Lowboy · Tanker · Custom). Backend filters via `GET /api/v1/mdata/units?type=<TYPE>` combined AND with `include=trailers` and `status=`. UI syncs `?type=Reefer` in the URL, shows "Showing X of Y vehicles", and Clear filters resets all query params.

@@ -11,6 +11,7 @@ import { registerUnitPhotosRoutes } from "./unit-photos.routes.js";
 import { registerUnitPlatesRoutes } from "./unit-plates.routes.js";
 import { registerUnitTripCostRoutes } from "./unit-trip-cost.routes.js";
 import { getUnitFinancialYTD, type FinancialPeriod } from "./unit-financial.service.js";
+import { fleetTypeFilterSchema, truckTypeSqlFilter } from "./fleet-type-filter.js";
 import { fetchUnifiedFleetList } from "./units-unified-list.service.js";
 import {
   applyUnitPatchFields,
@@ -45,6 +46,7 @@ const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(50),
   offset: z.coerce.number().int().min(0).default(0),
   status: unitStatusSchema.optional(),
+  type: fleetTypeFilterSchema.optional(),
   search: z.string().trim().min(1).max(100).optional(),
   operating_company_id: z.string().uuid().optional(),
   include: z.enum(["trailers"]).optional(),
@@ -142,7 +144,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
-    const { limit, offset, status, search, operating_company_id, include } = parsedQuery.data;
+    const { limit, offset, status, type, search, operating_company_id, include } = parsedQuery.data;
 
     if (include === "trailers") {
       const units = await withCurrentUser(authUser.uuid, async (client) => {
@@ -153,6 +155,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           limit,
           offset,
           status,
+          type,
           search,
           operating_company_id,
         });
@@ -163,6 +166,9 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const units = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
+      if (type) {
+        filters.push(truckTypeSqlFilter(type));
+      }
       if (status) {
         values.push(status);
         filters.push(`status = $${values.length}`);
