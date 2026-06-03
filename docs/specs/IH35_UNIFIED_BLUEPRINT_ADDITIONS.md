@@ -931,6 +931,16 @@ Pre-push is locked to `npm run branch:precheck-push` via husky. Pushes that bypa
 
 ---
 
+## 2026-06-02 · Block A5 · Fleet bulk-select checkbox
+
+Source: Block A5 spec (#66-F1)  
+Status: LOCKED  
+Relevant block: BLOCK-A5-FLEET-BULK-SELECT-CHECKBOX
+
+Fleet Table gains a left-column bulk-select checkbox with sticky BulkActionBar (Change Status / Change Type / Clear). Backend exposes RLS-scoped `POST /api/v1/mdata/units/bulk-update` with one `unit.bulk_update` audit row per affected unit and a 100-unit rate limit.
+
+---
+
 ## 2026-06-02 — Block 19 Lane profitability heatmap
 
 Source: Block 19 spec (Phase H)  
@@ -973,3 +983,13 @@ Status: LOCKED
 Relevant block: BLOCK-22-PREDICTIVE-AUTO-WO-FROM-FAULTS
 
 Samsara fault webhook → draft WO automation with configurable severity rules, fault history audit, 24h dedupe, and Block 17 notification wiring. Routes bootstrapped via `form-425c.routes.ts` (no `index.ts` edit). Initial rule set empty — users configure via `/maintenance/fault-rules`.
+
+---
+
+## 2026-06-02 · Block A5 · Fleet bulk-select checkbox
+
+Source: Block A5 spec (#66-F1)  
+Status: LOCKED  
+Relevant block: BLOCK-A5-FLEET-BULK-SELECT-CHECKBOX
+
+Fleet Table gains a left-column bulk-select checkbox with sticky BulkActionBar (Change Status / Change Type / Clear). Backend exposes RLS-scoped `POST /api/v1/mdata/units/bulk-update` with one `unit.bulk_update` audit row per affected unit and a 100-unit rate limit.

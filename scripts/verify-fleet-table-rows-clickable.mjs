@@ -4,7 +4,7 @@ import path from "node:path";
 import process from "node:process";
 
 const repoRoot = process.cwd();
-const targetFile = path.join(repoRoot, "apps/frontend/src/pages/maintenance/FleetTablePage.tsx");
+const targetFile = path.join(repoRoot, "apps/frontend/src/components/FleetTable.tsx");
 const source = fs.readFileSync(targetFile, "utf8");
 
 if (!source.includes("onClick={() => navigate(`/fleet/units/${row.id}`)}")) {

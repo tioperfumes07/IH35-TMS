@@ -110,7 +110,7 @@ Every page renders inside a 3-zone shell:
 | Tab | What it shows | Notes |
 |-----|---------------|-------|
 | **Active WOs** | All open + in-progress WOs in table view | Default view |
-| **Fleet Table** | Fleet-oriented maintenance table by unit | Phase 3 shell |
+| **Fleet Table** | Fleet-oriented maintenance table by unit | Phase 3 shell; bulk-select checkbox column (Block A5) with sticky BulkActionBar for Change Status (Active · Sold · Transferred · Damaged · OOS) and Change Type; POST `/api/v1/mdata/units/bulk-update` is RLS-scoped and emits one `unit.bulk_update` audit row per affected unit |
 | **R&M Status Board** | Kanban: Open / Awaiting Parts / In Progress / Awaiting Vendor / Completed | Drag-to-transition |
 | **Service / Location** | Service location board and queue split by location | Phase 3 shell |
 | **Arriving Soon Needs Service** ← NEW T11.6.2 | Cards of units arriving at yard with open in-transit issues + ETA | Phase 3 ships UI; Phase 4 wires live Samsara ETA |

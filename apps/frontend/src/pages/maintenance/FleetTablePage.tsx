@@ -1,21 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
+import { FleetTable, type FleetRow } from "../../components/FleetTable";
 
 type Props = {
   operatingCompanyId: string;
-};
-
-type FleetRow = {
-  id: string;
-  status?: string;
-  unit_number?: string;
-  vin?: string;
-  make?: string;
-  model?: string;
-  year?: string | number;
-  is_oos?: boolean;
 };
 
 function KpiCard({ label, value }: { label: string; value: string | number }) {
@@ -28,7 +17,6 @@ function KpiCard({ label, value }: { label: string; value: string | number }) {
 }
 
 export function FleetTablePage({ operatingCompanyId }: Props) {
-  const navigate = useNavigate();
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "kpis", operatingCompanyId],
     queryFn: () =>
@@ -87,36 +75,7 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
           </button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded border border-gray-200 bg-white">
-          <table className="w-full table-fixed text-left text-xs">
-            <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-              <tr>
-                <th className="px-2 py-1">Unit</th>
-                <th className="px-2 py-1">VIN</th>
-                <th className="px-2 py-1">Make/Model</th>
-                <th className="px-2 py-1">Year</th>
-                <th className="px-2 py-1">Status</th>
-                <th className="px-2 py-1">DOT O/O</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
-                  onClick={() => navigate(`/fleet/units/${row.id}`)}
-                >
-                  <td className="px-2 py-1">{String(row.unit_number ?? row.id ?? "—")}</td>
-                  <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td>
-                  <td className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>
-                  <td className="px-2 py-1">{String(row.year ?? "—")}</td>
-                  <td className="px-2 py-1">{String(row.status ?? "—")}</td>
-                  <td className="px-2 py-1">{row.is_oos ? "Yes" : "No"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <FleetTable operatingCompanyId={operatingCompanyId} rows={rows} />
       )}
     </div>
   );
