@@ -778,6 +778,16 @@ and persists it on the queue row so retries reuse the same `Idempotency-Key` HTT
 
 **Removed gaps (this branch):** Bill preview IDs, journal-only recurring enqueue, and `unsupported_entity_type_*` throws for the Wave 2 accounting entities are eliminated—the dispatcher + translators own live POST/PATCH with conflict recording (`integrations.qbo_sync_conflicts`).
 
+### Local QBO customer push scheduler (B8 — 2026-06)
+
+**Problem:** ~2,655 TMS-origin customers exist in `accounting.qbo_customers` (cloned from `mdata.qbo_customers`) with `qbo_id IS NULL`.
+
+**Schema (`0319`):** `accounting.qbo_customers` gains `sync_status` (`unsynced|pushing|synced|failed`), `qbo_push_attempts`, `qbo_last_push_at`, `qbo_last_error`, partial index on `(sync_status, qbo_push_attempts) WHERE qbo_id IS NULL`, tenant RLS, and `audit.row_changes.action` for `qbo_push` attempt rows.
+
+**Worker:** `apps/backend/src/sync/qbo-customers-push.ts` ticks every **60s**, claims up to **100** rows (`FOR UPDATE SKIP LOCKED`), enforces **100/min** rolling rate limit per process, dead-letters after **5** failed attempts, mirrors row into `mdata.qbo_customers`, then reuses `deliverQboMasterEntityPush` (`entity=customer`, `operation=create|update`).
+
+**Observability:** `GET /api/v1/sync/qbo-customers/status?operating_company_id=` returns `{ total_local, synced, unsynced, pushing, failed, dead_letter }`; Office HOME QBO Sync Health card surfaces pending/synced customer counts.
+
 ---
 
 ## ADDENDUM — 2026-05-21 Data Sovereignty + Telematics capability architecture

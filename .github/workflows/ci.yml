@@ -393,6 +393,12 @@ jobs:
       - name: verify:type-filter-query-param
         run: npm run verify:type-filter-query-param
 
+      - name: verify:qbo-push-rate-limit
+        run: npm run verify:qbo-push-rate-limit
+
+      - name: verify:qbo-push-rls-tenant-scope
+        run: npm run verify:qbo-push-rls-tenant-scope
+
 
       - name: verify:samsara-positions-cron-registered
         run: npm run verify:samsara-positions-cron-registered

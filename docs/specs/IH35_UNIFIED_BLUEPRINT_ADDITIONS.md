@@ -1031,3 +1031,11 @@ Status: LOCKED
 Relevant block: BLOCK-A8-FAULT-F4-CUSTOMER-P0-BACKEND-FIXES
 
 `GET /api/v1/mdata/customers/:id/detail` and `GET /api/v1/mdata/customers/:customer_id/billing-summary` are tenant-scoped (TRANSP `app.operating_company_id`), audit-logged on read, and return 404 (not 500) for unknown customers. Billing summary joins `catalogs.payment_terms.days_until_due` (not `days_due`). Canonical aliases remain at `/api/v1/customers/:id/detail` and `/api/v1/customers/:customer_id/billing-summary`. CI guards: `verify:customer-detail-route`, `verify:billing-summary-route`.
+
+## 2026-06-02 · Block B8 · QBO local customer push scheduler
+
+Source: Block B8 spec (#71-FAULT-S1)  
+Status: LOCKED  
+Relevant block: BLOCK-B8-FAULT-S1-QBO-CUSTOMERS-SYNC-PUSH
+
+Migration `0319` tracks push state on `accounting.qbo_customers` (`sync_status`, `qbo_push_attempts`, `qbo_last_push_at`, `qbo_last_error`). Scheduler `qbo-customers-push.ts` runs every 60s, batch 100, 100/min rate limit, dead-letter at 5 attempts, audit `row_changes.action='qbo_push'`. Status endpoint `GET /api/v1/sync/qbo-customers/status` feeds Office HOME QBO sync card counts.

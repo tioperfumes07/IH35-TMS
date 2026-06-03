@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import type { HomeQboSyncHealth } from "../../api/home";
+import type { HomeQboSyncHealth, HomeQboCustomersPushStatus } from "../../api/home";
 import { Button } from "../Button";
 
 type Props = {
   data?: HomeQboSyncHealth;
+  pushStatus?: HomeQboCustomersPushStatus;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
@@ -41,7 +42,7 @@ function formatRelative(iso: string | null | undefined): string {
   return `${d}d ago`;
 }
 
-export function QboSyncHealthCard({ data, isLoading, isError, onRetry }: Props) {
+export function QboSyncHealthCard({ data, pushStatus, isLoading, isError, onRetry }: Props) {
   if (isLoading) {
     return (
       <section className="rounded border border-slate-200 bg-white">
@@ -90,6 +91,18 @@ export function QboSyncHealthCard({ data, isLoading, isError, onRetry }: Props) 
           <span className="text-slate-600">Failed events</span>
           <span className="font-semibold text-slate-800">{data?.failed_outbox_count ?? 0}</span>
         </div>
+        {pushStatus ? (
+          <>
+            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+              <span className="text-slate-600">Local customers pending</span>
+              <span className="font-semibold text-slate-800">{pushStatus.unsynced + pushStatus.failed}</span>
+            </div>
+            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+              <span className="text-slate-600">Customers synced to QBO</span>
+              <span className="font-semibold text-slate-800">{pushStatus.synced}</span>
+            </div>
+          </>
+        ) : null}
       </div>
       <div className="border-t border-slate-100 px-3 py-2">
         <Link className="text-xs font-medium text-blue-700 hover:underline" to="/qbo/sync-dashboard">
