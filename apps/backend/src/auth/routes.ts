@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { generateState, generateCodeVerifier, OAuth2RequestError } from "arctic";
-import { lucia, getGoogleOAuthClient } from "./lucia.js";
+import { getGoogleOAuthClient, lucia } from "./lucia.js";
+import { createSessionWithLastLogin } from "./session-create.js";
 import { withLuciaBypass } from "./db.js";
 import { oauthPkceCookieOptions, setLuciaSessionCookie, clearSessionCookieOptions } from "./session-cookie-policy.js";
 
@@ -115,7 +116,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
           return reply.code(400).send({ error: "missing_userinfo_fields" });
         }
         const userUuid = await findOrCreateUser(email, googleUserId);
-        const session = await lucia.createSession(userUuid, {});
+        const session = await createSessionWithLastLogin(userUuid, {});
         const sessionCookie = lucia.createSessionCookie(session.id);
         setLuciaSessionCookie(reply, sessionCookie);
         reply.clearCookie(STATE_COOKIE, { path: "/" });

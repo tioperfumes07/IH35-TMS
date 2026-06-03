@@ -26,6 +26,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { SaveDropdown } from "../components/forms/SaveDropdown";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
+import { formatLastLoginAt } from "../lib/formatLastLoginAt";
 import { dataTableErrorState } from "../lib/tableError";
 import { colors } from "../design/tokens";
 import type { IdentityUser, UserRole } from "../types/api";
@@ -370,7 +371,7 @@ export function UsersPage() {
           {
             key: "last_login",
             label: "Last Login",
-            render: () => "—",
+            render: (row) => formatLastLoginAt(row.last_login_at),
           },
           {
             key: "actions",

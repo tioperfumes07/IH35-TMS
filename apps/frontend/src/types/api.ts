@@ -18,6 +18,7 @@ export type IdentityUser = {
   role: UserRole;
   auth_method?: "Google" | "Password" | "Google + Password" | "Invite pending" | string;
   default_company_id?: string | null;
+  last_login_at?: string | null;
   created_at: string;
   deactivated_at: string | null;
   onboarding_completed_at?: string | null;

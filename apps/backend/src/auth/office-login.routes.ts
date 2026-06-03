@@ -3,6 +3,7 @@ import { Argon2id } from "oslo/password";
 import { z } from "zod";
 import { withLuciaBypass } from "./db.js";
 import { lucia } from "./lucia.js";
+import { createSessionWithLastLogin } from "./session-create.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
 import { enforceOfficePasswordLoginLimits } from "../middleware/rate-limit.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -108,7 +109,7 @@ export async function registerOfficeLoginRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: "invalid_credentials" });
     }
 
-    const session = await lucia.createSession(user.id, {});
+    const session = await createSessionWithLastLogin(user.id, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
     setLuciaSessionCookie(reply, sessionCookie);
     await withLuciaBypass(async (client) => {

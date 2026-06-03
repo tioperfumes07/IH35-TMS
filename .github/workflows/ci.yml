@@ -420,6 +420,9 @@ jobs:
       - name: verify:qbo-accounts-parent-first
         run: npm run verify:qbo-accounts-parent-first
 
+      - name: verify:session-create-updates-last-login
+        run: npm run verify:session-create-updates-last-login
+
       - name: verify:qbo-shared-rate-limit-ceiling
         run: npm run verify:qbo-shared-rate-limit-ceiling
 
