@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { getDriver } from "../../api/mdata";
@@ -55,6 +55,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const id = driverIdProp ?? routeId;
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const queryClient = useQueryClient();
+
+  const refreshDriver = () => {
+    void queryClient.invalidateQueries({ queryKey: ["driver", id] });
+    void queryClient.invalidateQueries({ queryKey: ["driver-profile", id, companyId] });
+    void queryClient.invalidateQueries({ queryKey: ["drivers"] });
+  };
 
   const driverQ = useQuery({
     queryKey: ["driver", id],
@@ -208,7 +215,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       </section>
 
       <div data-testid="dp-section-12-action-bar">
-        <ActionBar driverId={id} companyId={companyId} driverName={displayName} />
+        <ActionBar
+          driverId={id}
+          companyId={companyId}
+          driverName={displayName}
+          driverStatus={driver.status}
+          onActionComplete={refreshDriver}
+        />
       </div>
     </div>
   );
