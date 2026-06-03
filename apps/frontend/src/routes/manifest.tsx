@@ -132,6 +132,8 @@ import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage"
 import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
 import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
+import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
+import { FaultRulesPage } from "../pages/maintenance/FaultRulesPage";
 import { DeadheadReportPage } from "../pages/reports/DeadheadReportPage";
 import { QboSyncDetailPage } from "../pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "../pages/accounting/InvoicesListPage";
@@ -855,6 +857,26 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <MaintenanceShell>
                 <Compliance425CPage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/fault-drafts"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <FaultDraftsPage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/fault-rules"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <FaultRulesPage />
               </MaintenanceShell>
             </ProtectedRoute>
           }

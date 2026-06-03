@@ -963,3 +963,13 @@ Relevant block: BLOCK-21-BORDER-CROSSING-WIZARD
 - FAST card expiration check from driver profile (Block 14 dependency).
 - Note: ACE/eManifest production API (V2) requires CBP enrollment + partner like BorderConnect.
 - CI: four `verify:border-crossing-*` guards.
+
+---
+
+## 2026-06-02 — Block 22 Predictive auto-WO from faults
+
+Source: Block 22 spec (Phase I)  
+Status: LOCKED  
+Relevant block: BLOCK-22-PREDICTIVE-AUTO-WO-FROM-FAULTS
+
+Samsara fault webhook → draft WO automation with configurable severity rules, fault history audit, 24h dedupe, and Block 17 notification wiring. Routes bootstrapped via `form-425c.routes.ts` (no `index.ts` edit). Initial rule set empty — users configure via `/maintenance/fault-rules`.

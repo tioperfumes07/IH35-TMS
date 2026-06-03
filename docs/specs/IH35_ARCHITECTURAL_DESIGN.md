@@ -991,6 +991,18 @@ Route: `/dispatch/border-crossing` renders `BorderCrossingWizardPage` (6-step wi
 
 **UI:** `CbpWaitTimesWidget` on Dispatch home and wizard sidebar; customs broker selector uses `mdata.vendors` with `vendor_category = 'customs_broker'`.
 
+## Predictive Auto-WO from Faults (Maintenance module) — Block 22 (locked 2026-06-02)
+
+High-severity Samsara fault codes can auto-create **draft** work orders when `maintenance.fault_code_severity_rules.auto_create_wo = true` and severity is `high` or `critical`. Fleet managers review drafts at `/maintenance/fault-drafts`; rules CRUD at `/maintenance/fault-rules`.
+
+**Webhook path:** `vehicle-projector.ts` → `fault-code-processor.service.ts` parses `faultCodes` / `dtc_codes` from Samsara payload, writes `maintenance.samsara_fault_code_history` (idempotent on `raw_event_id`), creates `maintenance.work_orders` with `origin = fault_auto`, `status = draft`. 24h dedupe prevents duplicate WOs for the same unresolved code on the same unit.
+
+**Notifications:** Block 17 `emitPredictiveAutoWoNotifications` → `maintenance_alert` to Owner/Administrator/Manager with link `/maintenance/work-orders/:id` (`source_block = predictive_auto_wo`).
+
+**Initial rule set is empty** — users build their own based on operational experience. Future block: seed industry-standard J1939 DTC severity database.
+
+**Migration:** `0310_predictive_auto_wo.sql` — `fault_code_severity_rules`, `samsara_fault_code_history`, WO origin columns.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

@@ -7,6 +7,7 @@ import { processGeofenceDetectionsForGpsPoint } from "../../../telematics/geofen
 import { processMaintenancePredictorForOdometer } from "../../../telematics/maintenance-predictor.service.js";
 import { deriveEngineState, ingestVehicleLocationEvent } from "../../../telematics/vehicle-locations.service.js";
 import { processVehicleDriverPairingWebhookEvent } from "../../../telematics/vehicle-driver-lookup.service.js";
+import { processVehicleFaultCodeWebhookEvent } from "../fault-code-processor.service.js";
 import { processHarshEventsFromVehiclePayload } from "../../../safety/harsh-events-ingestion.service.js";
 import { notifyDriverWebPush } from "../../../services/push-notification.service.js";
 
@@ -264,6 +265,8 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
       samsara_event_id: event.samsara_event_id,
       payload: event.payload,
     });
+
+    await processVehicleFaultCodeWebhookEvent(client, event, localUnitId);
   }
   await processVehicleDriverPairingWebhookEvent(client, event, vehicleId);
   return { success: true };
