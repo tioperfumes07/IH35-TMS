@@ -405,9 +405,9 @@ export function EquipmentTypesPage() {
               await createEquipmentMutation.mutateAsync(parsed.data);
             } catch (error) {
               if (error instanceof ApiError && error.status === 409) {
-                const body = error.body as { error?: string } | undefined;
+                const payload = error.data as { error?: string } | undefined;
                 pushToast(
-                  body?.error === "equipment_type_name_collision"
+                  payload?.error === "equipment_type_name_collision"
                     ? "Equipment type name already exists (duplicate formatting)"
                     : "Equipment type code already exists",
                   "error"
