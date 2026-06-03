@@ -261,6 +261,12 @@ import { DriverSchedulerGridPage } from "../pages/safety/driver-scheduler/Driver
 import { DriverSchedulerRequestInboxPage } from "../pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { DriverSchedulerRequestDetailPage } from "../pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage";
 import { DriverLeaveBalancesPage } from "../pages/safety/driver-scheduler/DriverLeaveBalancesPage";
+import Audit425cPage from "../pages/safety/audit-425c/Audit425cPage";
+import HosExceptionsPage from "../pages/safety/hos/HosExceptionsPage";
+import TrainingProgramsPage from "../pages/safety/training/TrainingProgramsPage";
+import SafetyReportsPage from "../pages/safety/reports/SafetyReportsPage";
+import DriverSafetyProfilePage from "../pages/safety/driver-safety/DriverSafetyProfilePage";
+import { IntegrityAlertsPage } from "../pages/safety/IntegrityAlertsPage";
 import { DailyTasksPage } from "../pages/daily-tasks/DailyTasksPage";
 import { VendorMappingResolutionPage } from "../pages/samsara-vendor-mapping/VendorMappingResolutionPage";
 
@@ -350,6 +356,16 @@ function FactoringBatchDetailRoute() {
 }
 
 // Locked UI-surface sentinel paths verified by architecture guard.
+function IntegrityAlertsTab() {
+  const { selectedCompanyId } = useCompanyContext();
+  return <IntegrityAlertsPage operatingCompanyId={selectedCompanyId ?? ""} />;
+}
+
+function DriverSafetyProfileTab() {
+  const { driverId } = useParams();
+  return <DriverSafetyProfilePage key={driverId} />;
+}
+
 const LOCKED_SAFETY_TAB_PATHS = ["/safety/driver-files", "/safety/idvr"];
 void LOCKED_SAFETY_TAB_PATHS;
 
@@ -639,7 +655,9 @@ export const ROUTES = React.Children.toArray(
           <Route path="driver-files" element={<DriverFilesTab />} />
           <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
           <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
+          <Route path="/safety/training/programs" element={<TrainingProgramsPage />} />
           <Route path="hos" element={<HoursOfServiceTab />} />
+          <Route path="/safety/hos/exceptions" element={<HosExceptionsPage />} />
           <Route path="hos-violations" element={<HOSViolationsTab />} />
           <Route path="idvr" element={<IDVRTab />} />
           <Route path="dot-inspections" element={<DOTInspectionsTab />} />
@@ -661,6 +679,10 @@ export const ROUTES = React.Children.toArray(
           <Route path="permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />
           <Route path="/safety/integrity-reports" element={<IntegrityReportsTab />} />
+          <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
+          <Route path="/safety/audit-425c" element={<Audit425cPage />} />
+          <Route path="/safety/reports" element={<SafetyReportsPage />} />
+          <Route path="/safety/driver-profiles/:driverId" element={<DriverSafetyProfileTab />} />
           {/* Block K (Driver Scheduler): canonical paths under /safety/* — see IH35_UNIFIED_BLUEPRINT_ADDITIONS.md §14 */}
           <Route path="driver-scheduler" element={<DriverSchedulerGridPage />} />
           <Route path="scheduler/pending-requests" element={<DriverSchedulerRequestInboxPage />} />
@@ -2210,14 +2232,6 @@ export const ROUTES = React.Children.toArray(
             }
           />
         ))}
-        <Route
-          path="/safety/integrity-alerts"
-          element={
-            <ProtectedRoute>
-              <Navigate to="/safety/integrity-reports" replace />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/reports/run/:reportId"
           element={

@@ -17,8 +17,9 @@ export function verifyNoOrphanRouteAliases() {
 
   const hasAliasPath = text.includes('path="/safety/integrity-alerts"');
   const hasAliasRedirect = text.includes('<Navigate to="/safety/integrity-reports" replace />');
-  if (!hasAliasPath || !hasAliasRedirect) {
-    throw new Error("missing integrity-alerts alias redirect to /safety/integrity-reports");
+  const hasCanonicalPage = text.includes("<IntegrityAlertsTab />") || text.includes("<IntegrityAlertsPage");
+  if (!hasAliasPath || (!hasAliasRedirect && !hasCanonicalPage)) {
+    throw new Error("missing integrity-alerts route (redirect alias or IntegrityAlerts page)");
   }
 }
 

@@ -1,3 +1,6 @@
+// DEPRECATED 2026-06-03 — superseded by drug-program random-pools (/api/v1/safety/drug-program/random-pools).
+// Do not mount in index.ts; retained for audit trail per ARCHIVE-not-DELETE policy.
+
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -35,8 +38,18 @@ async function withCompanyScope<T>(userId: string, companyId: string, fn: (clien
   });
 }
 
+export const SAFETY_DRUG_POOL_DEPRECATED = true;
+export const SAFETY_DRUG_POOL_SUNSET = "2026-09-01";
+export const SAFETY_DRUG_POOL_DEPRECATION_HEADERS = {
+  Deprecation: "true",
+  Sunset: SAFETY_DRUG_POOL_SUNSET,
+  Link: '</api/v1/safety/drug-program/random-pools>; rel="successor-version"',
+} as const;
+
 export async function registerSafetyDrugPoolRoutes(app: FastifyInstance) {
   app.post("/api/v1/safety/drug-pool/selections", async (req, reply) => {
+    app.log.warn("[safety] drug-pool/selections is deprecated; use drug-program/random-pools");
+    reply.headers(SAFETY_DRUG_POOL_DEPRECATION_HEADERS);
     const user = authUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

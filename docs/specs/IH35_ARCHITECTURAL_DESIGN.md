@@ -347,6 +347,28 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 - `/safety` redirects to `/safety/driver-files`.
 - Legacy bookmark route `/safety/vehicle-inspections` redirects to `/safety/idvr`.
 
+### A23-1 — Safety route registration gap (2026-06-03)
+
+Eleven backend route modules under `apps/backend/src/safety/` existed as code but were not mounted in `apps/backend/src/index.ts`, leaving Settings, Integrity Alerts, Training, HOS exceptions, Background Checks, Driver Safety Profile, and Safety Reports dark in the UI.
+
+| Module | Path | Disposition | Rationale |
+|---|---|---|---|
+| `settings.routes.ts` | `/api/v1/safety/settings` | **Mounted** | Settings tab Save was 404 |
+| `integrity-alerts.routes.ts` | `/api/v1/safety/integrity-alerts/*` | **Mounted** | Orphan Integrity Alerts page |
+| `training-programs.routes.ts` | `/api/v1/safety/training-programs` | **Mounted** | Orphan Training Programs page |
+| `training-records.routes.ts` | `/api/v1/safety/training-records` | **Mounted** | Training records had no backend wiring |
+| `hos.routes.ts` | `/api/v1/safety/hos/exceptions` | **Mounted** | Orphan HOS Exceptions page (distinct from CAP-11 ELD clocks) |
+| `drug-pool.routes.ts` | `/api/v1/safety/drug-pool/selections` | **Deprecated** | Superseded by `drug-program/random-pools` (`safety.random_pool` table) |
+| `audit-425c.routes.ts` | `/api/v1/safety/audit-425c` | **Mounted** | Safety-side 425C audit interface (425C internals untouched) |
+| `background-checks.routes.ts` | `/api/v1/safety/background-checks` | **Mounted** | Driver profile DQF partial |
+| `driver-profile.routes.ts` | `/api/v1/safety/driver-profiles/:driver_id` | **Mounted** | Orphan Driver Safety Profile page |
+| `driver-documents.routes.ts` | `/api/v1/safety/driver-documents` | **Mounted** | Safety-scoped compliance uploads (`safety.driver_documents`); no Drivers module overlap |
+| `reports/safety-reports.routes.ts` | `/api/v1/safety/reports/*` | **Mounted** | Orphan Safety Reports export page |
+
+**CI guard:** `scripts/verify-safety-route-coverage.mjs` asserts every `*.routes.ts` under `apps/backend/src/safety/` (and `reports/`) is either registered in `index.ts` or marked `// DEPRECATED`.
+
+**Frontend wiring (manifest.tsx):** `/safety/hos/exceptions`, `/safety/training/programs`, `/safety/integrity-alerts`, `/safety/audit-425c`, `/safety/reports`, `/safety/driver-profiles/:driverId`. Drug & Alcohol Pool page left unwired because `drug-pool.routes.ts` was deprecated.
+
 ---
 
 ## MODULE 7 — DRIVERS
