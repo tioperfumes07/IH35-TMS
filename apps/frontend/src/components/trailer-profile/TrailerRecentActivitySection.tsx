@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
-import { listDocsFiles } from "../../api/docs";
+import { listFiles, type DocsFile } from "../../api/docs";
 
 type Props = {
   equipmentId: string;
@@ -21,7 +21,7 @@ export function TrailerRecentActivitySection({ equipmentId, companyId, attachedU
   const docsQ = useQuery({
     queryKey: ["trailer-docs", equipmentId, companyId],
     queryFn: () =>
-      listDocsFiles({
+      listFiles({
         entity_type: "equipment",
         entity_id: equipmentId,
         limit: 10,
@@ -64,7 +64,7 @@ export function TrailerRecentActivitySection({ equipmentId, companyId, attachedU
           <h3 className="text-xs font-medium text-gray-600">Documents</h3>
           <ul className="mt-1 space-y-1 text-xs text-gray-800">
             {docRows.length === 0 ? <li className="text-gray-500">No files.</li> : null}
-            {docRows.map((f) => (
+            {docRows.map((f: DocsFile) => (
               <li key={f.id}>{f.original_filename ?? f.id}</li>
             ))}
           </ul>

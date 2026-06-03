@@ -110,7 +110,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
     <Modal open={open} title="Edit trailer" onClose={onClose}>
       <div className="max-h-[70vh] space-y-3 overflow-y-auto text-sm" data-testid="tp-edit-trailer-modal">
         {profileQuery.isLoading ? <p>Loading…</p> : null}
-        <FieldSet legend="Identity">
+        <FieldSet title="Identity">
           <FormField label="Trailer #" name="equipment_number">
             <input id="equipment_number" className={inputClass} value={draft.equipment_number ?? ""} onChange={(e) => set("equipment_number", e.target.value)} />
           </FormField>
@@ -136,7 +136,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
             </select>
           </FormField>
         </FieldSet>
-        <FieldSet legend="Specs">
+        <FieldSet title="Specs">
           <FormField label="Length (ft)" name="length_ft">
             <input id="length_ft" type="number" className={inputClass} value={draft.length_ft ?? ""} onChange={(e) => set("length_ft", e.target.value)} />
           </FormField>
@@ -147,7 +147,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
             <input id="axle_count" type="number" className={inputClass} value={draft.axle_count ?? ""} onChange={(e) => set("axle_count", e.target.value)} />
           </FormField>
         </FieldSet>
-        <FieldSet legend="Registration (primary plate)">
+        <FieldSet title="Registration (primary plate)">
           <FormField label="Plate" name="plate_number">
             <input id="plate_number" className={inputClass} value={draft.plate_number ?? ""} onChange={(e) => set("plate_number", e.target.value)} readOnly />
           </FormField>
@@ -159,7 +159,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
           </FormField>
           <p className="text-xs text-gray-500">Edit plates in the Compliance section (multi-jurisdiction).</p>
         </FieldSet>
-        <FieldSet legend="Insurance">
+        <FieldSet title="Insurance">
           <FormField label="US policy reference" name="us_insurance_policy_number">
             <input
               id="us_insurance_policy_number"
