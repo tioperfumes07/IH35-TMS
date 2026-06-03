@@ -31,6 +31,7 @@ import { WeeklyRevenueChart } from "./charts/WeeklyRevenueChart";
 import { WOStatusPieChart } from "./charts/WOStatusPieChart";
 import { formatShortDate, formatUsdFromCents, HomeKpiCard } from "./HomeKpiCard";
 import { QuickActionsBar } from "./QuickActionsBar";
+import { SAFETY_CANONICAL_TAB_COUNT } from "../../components/safety/SAFETY_TABS_CONFIG";
 import "./home-print.css";
 
 const QUICK_JUMPS = [
@@ -38,7 +39,7 @@ const QUICK_JUMPS = [
   { title: "Accounting", subtitle: "Bills, Expenses, Bill payment", count: 38, to: "/accounting/invoices" },
   { title: "Banking", subtitle: "Categorize, Reconcile, Transfer", count: 22, to: "/banking" },
   { title: "Fuel", subtitle: "Relay inbox, Settings, Planner", count: 19, to: "/fuel" },
-  { title: "Safety", subtitle: "HOS, Antidoping, Accidents, DOT", count: 6, to: "/safety" },
+  { title: "Safety", subtitle: "HOS, Antidoping, Accidents, DOT", count: SAFETY_CANONICAL_TAB_COUNT, to: "/safety" },
   { title: "Drivers", subtitle: "Profiles, Settlements, Permits", count: 3, to: "/drivers" },
   { title: "Dispatch", subtitle: "Loads, Settlements, Geofencing", count: 27, to: "/dispatch" },
   { title: "Lists & Catalogs", subtitle: "Eight catalog sets grouped by domain", count: null, to: "/lists" },

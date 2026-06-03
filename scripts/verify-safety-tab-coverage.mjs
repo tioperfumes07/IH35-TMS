@@ -10,6 +10,9 @@ const backendPath =
   process.env.VERIFY_SAFETY_TAB_BACKEND_PATH ??
   path.join(ROOT, "apps/backend/src/safety/foundation-kpis.routes.ts");
 
+const EXPECTED_GROUP_COUNT = 9;
+const EXPECTED_TAB_COUNT = 27;
+
 const groups = [
   "Driver Files & Training",
   "Hours & Fatigue",
@@ -18,6 +21,7 @@ const groups = [
   "Fines & Discipline",
   "Driver Financial Safety",
   "Compliance Docs & Monitoring",
+  "Workforce Planning",
   "Settings",
 ];
 
@@ -29,8 +33,10 @@ const tabs = [
   ["hours-fatigue", "hos-violations"],
   ["inspections-fmcsa", "idvr"],
   ["inspections-fmcsa", "dot-inspections"],
+  ["inspections-fmcsa", "driver-scoring"],
   ["inspections-fmcsa", "csa-score"],
   ["inspections-fmcsa", "dot-compliance"],
+  ["incidents-claims", "safety-events"],
   ["incidents-claims", "accidents"],
   ["incidents-claims", "damage-reports"],
   ["incidents-claims", "trailer-interchanges"],
@@ -39,9 +45,13 @@ const tabs = [
   ["fines-discipline", "external-fines"],
   ["fines-discipline", "complaints"],
   ["driver-financial", "escrow-record"],
+  ["compliance-monitoring", "geofence-alerts"],
   ["compliance-monitoring", "insurance"],
   ["compliance-monitoring", "permits"],
   ["compliance-monitoring", "integrity-reports"],
+  ["workforce-planning", "driver-scheduler"],
+  ["workforce-planning", "leave-requests"],
+  ["workforce-planning", "leave-balances"],
   ["settings", "settings"],
 ];
 
@@ -55,8 +65,22 @@ function main() {
   const backend = read(backendPath);
   const failures = [];
 
+  const isFixture = Boolean(process.env.VERIFY_SAFETY_TAB_CONFIG_PATH);
+  if (!isFixture) {
+    if (!config.includes(`SAFETY_CANONICAL_GROUP_COUNT = ${EXPECTED_GROUP_COUNT}`)) {
+      failures.push(`canonical_group_count_not_${EXPECTED_GROUP_COUNT}`);
+    }
+    if (!config.includes(`SAFETY_CANONICAL_TAB_COUNT = ${EXPECTED_TAB_COUNT}`)) {
+      failures.push(`canonical_tab_count_not_${EXPECTED_TAB_COUNT}`);
+    }
+  }
+
   for (const group of groups) {
     if (!config.includes(group)) failures.push(`missing_group:${group}`);
+  }
+
+  if (tabs.length !== EXPECTED_TAB_COUNT) {
+    failures.push(`tabs_fixture_count:${tabs.length}`);
   }
 
   for (const [group, tab] of tabs) {
@@ -70,7 +94,7 @@ function main() {
     process.exit(1);
   }
 
-  console.log("verify:safety-tab-coverage OK");
+  console.log(`verify:safety-tab-coverage OK (${EXPECTED_TAB_COUNT} tabs / ${EXPECTED_GROUP_COUNT} groups)`);
 }
 
 main();

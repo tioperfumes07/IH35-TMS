@@ -319,19 +319,19 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 - Header includes back-arrow, breadcrumb `Modules > Safety > {group}`, page title `Safety`, and descriptor text.
 - Driver filter strip defaults to **Active 7-10 days** and is visible on all safety routes.
 
-### Grouped top navigation (24 tabs across 9 groups)
+### Grouped top navigation (27 tabs across 9 groups)
 
-### Sub-nav tabs (24 — V6.4 top hover-dropdown + Block K workforce)
+### Sub-nav tabs (27 — V6.4 top hover-dropdown + Block K workforce)
 
 | Group | Tabs |
 |---|---|
 | Driver Files & Training | Driver Files, Drug & Alcohol, Safety Meetings |
 | Hours & Fatigue | Hours of Service, HOS Violations |
-| Inspections & FMCSA | Vehicle Inspections-IDVR, DOT Inspections, CSA Score, DOT Compliance |
-| Incidents & Claims | Accidents & Incidents, Damage Reports, Trailer Interchanges, Cargo Claims |
+| Inspections & FMCSA | Vehicle Inspections-IDVR, DOT Inspections, Driver Scoring, CSA Score, DOT Compliance |
+| Incidents & Claims | Safety Events, Accidents & Incidents, Damage Reports, Trailer Interchanges, Cargo Claims |
 | Fines & Discipline | Internal Fines, External Fines, Complaints |
 | Driver Financial Safety | Escrow Record |
-| Compliance Docs & Monitoring | Insurance, Permits, Integrity Reports |
+| Compliance Docs & Monitoring | Geofence Alerts, Insurance, Permits, Integrity Reports |
 | Workforce Planning (Block K) | Driver Scheduler, Leave Requests, Leave Balances |
 | Settings | Settings |
 
@@ -368,6 +368,12 @@ Eleven backend route modules under `apps/backend/src/safety/` existed as code bu
 **CI guard:** `scripts/verify-safety-route-coverage.mjs` asserts every `*.routes.ts` under `apps/backend/src/safety/` (and `reports/`) is either registered in `index.ts` or marked `// DEPRECATED`.
 
 **Frontend wiring (manifest.tsx):** `/safety/hos/exceptions`, `/safety/training/programs`, `/safety/integrity-alerts`, `/safety/audit-425c`, `/safety/reports`, `/safety/driver-profiles/:driverId`. Drug & Alcohol Pool page left unwired because `drug-pool.routes.ts` was deprecated.
+
+### A23-2 — Safety count / nav integrity (2026-06-03)
+
+Canonical inventory is **27 tabs / 9 groups**, exported from `SAFETY_TABS_CONFIG.ts` as `SAFETY_CANONICAL_TAB_COUNT`, `SAFETY_CANONICAL_GROUP_COUNT`, and `SAFETY_CANONICAL_TAB_KEYS`. Home quick-jump badge reads `SAFETY_CANONICAL_TAB_COUNT` (replaces stale hardcoded `6`). Safety module sidebar flyout links only under `/safety/*` (DOT Compliance → `/safety/dot-compliance`; global `/compliance` dashboard remains reachable from other modules). `foundation-kpis.routes.ts` KPI route allowlist matches all 27 tab keys.
+
+**CI guards:** `verify:safety-tab-coverage` (config ↔ backend KPI pairs), `verify:safety-count-nav-integrity` (Home + sidebar + arch doc + canonical constants).
 
 ### A23-3 — Accidents & Incidents wire-up (2026-06-03)
 
