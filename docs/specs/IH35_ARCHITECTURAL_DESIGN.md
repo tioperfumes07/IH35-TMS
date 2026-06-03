@@ -1050,6 +1050,10 @@ Legacy bookmarked URLs that use underscores in path segments (for example `/list
 
 **CI:** `verify:no-underscore-canonical-routes` scans `manifest.tsx` + `apps/frontend/src/pages/**` and fails if any canonical route path is registered with underscores (legacy redirect maps in `ListsHubPage` are allowlisted).
 
+## Equipment types catalog deduplication — Block A11 (locked 2026-06-02)
+
+Duplicate `catalogs.equipment_types` rows from mixed seed conventions (for example `DRY-VAN` vs `DRY_VAN`, `OVERSIZE` vs `OVERSIZED`) are merged in migration `0318`: FK references repointed, duplicates archived via `deactivated_at` (ledger table `equipment_types_dedup_ledger_0318` preserves rollback mapping). POST equipment types rejects normalized code/name collisions (409). Office list UI never renders archived rows. **CI:** `verify:equipment-types-no-collision` queries active rows and fails on duplicate normalized keys.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

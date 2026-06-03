@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { normalizeEquipmentTypeKey } from "./equipment-type-normalize.js";
 
 const lineItemUnitSchema = z.enum([
   "per_loaded_mile",
@@ -106,7 +107,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT
-            et.id, et.code, et.name, et.description, et.is_active, et.sort_order,
+            et.id, et.code, et.name, et.description, et.is_active, et.sort_order, et.deactivated_at,
             COALESCE(
               json_agg(
                 json_build_object(
@@ -143,7 +144,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT
-            et.id, et.code, et.name, et.description, et.is_active, et.sort_order,
+            et.id, et.code, et.name, et.description, et.is_active, et.sort_order, et.deactivated_at,
             COALESCE(
               json_agg(
                 json_build_object(
@@ -183,6 +184,33 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     }
 
     return withCurrentUser(user.uuid, async (client) => {
+      const normalizedCode = normalizeEquipmentTypeKey(parsed.data.code);
+      const normalizedName = normalizeEquipmentTypeKey(parsed.data.name);
+      const collisionRes = await client.query<{ id: string }>(
+        `
+          SELECT id
+          FROM catalogs.equipment_types et
+          WHERE et.deactivated_at IS NULL
+            AND (
+              regexp_replace(
+                lower(trim(replace(replace(et.code, '_', '-'), '  ', ' '))),
+                'd$',
+                ''
+              ) = $1
+              OR regexp_replace(
+                lower(trim(replace(replace(et.name, '_', '-'), '  ', ' '))),
+                'd$',
+                ''
+              ) = $2
+            )
+          LIMIT 1
+        `,
+        [normalizedCode, normalizedName]
+      );
+      if (collisionRes.rows.length > 0) {
+        return reply.code(409).send({ error: "equipment_type_name_collision" });
+      }
+
       try {
         const insertEq = await client.query(
           `

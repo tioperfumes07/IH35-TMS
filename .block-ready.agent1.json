@@ -1,19 +1,19 @@
 {
-  "block_id": "BLOCK-A10-URL-ROUTING-NORMALIZE",
-  "branch": "feat/url-routing-normalize-underscore-hyphen",
-  "phase": "Phase H",
-  "task": "URL-ROUTING-NORMALIZE",
+  "block_id": "BLOCK-A11-EQUIPMENT-TYPES-DEDUP",
+  "branch": "fix/equipment-types-dedup",
+  "phase": "Phase J",
+  "task": "EQUIPMENT-TYPES-DEDUP",
   "allowed_files": [
-    "apps/backend/src/middleware/url-canonicalize.ts",
-    "apps/backend/src/middleware/url-canonicalize.test.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/App.tsx",
-    "apps/frontend/src/routes/url-canonicalize.ts",
-    "apps/frontend/src/__tests__/url-canonicalize.test.tsx",
-    "apps/frontend/src/types/raw-markdown.d.ts",
-    "scripts/verify-no-underscore-canonical-routes.mjs",
-    "scripts/__tests__/verify-no-underscore-canonical-routes.test.mjs",
-    "scripts/verify-guards/145-verify-no-underscore-canonical-routes.mjs",
+    "db/migrations/0318_equipment_types_canonical_dedup.sql",
+    "apps/backend/src/catalogs/equipment-type-normalize.ts",
+    "apps/backend/src/catalogs/equipment-types.routes.ts",
+    "apps/backend/src/catalogs/equipment-types.routes.test.ts",
+    "apps/frontend/src/api/catalogs.ts",
+    "apps/frontend/src/pages/EquipmentTypesPage.tsx",
+    "apps/frontend/src/pages/EquipmentTypesPage.test.tsx",
+    "scripts/verify-equipment-types-no-collision.mjs",
+    "scripts/__tests__/verify-equipment-types-no-collision.test.mjs",
+    "scripts/verify-guards/146-verify-equipment-types-no-collision.mjs",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
@@ -21,9 +21,9 @@
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:no-underscore-canonical-routes"
+    "verify:equipment-types-no-collision"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
