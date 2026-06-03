@@ -429,6 +429,9 @@ jobs:
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 
+      - name: verify:driver-listing-excludes-pseudo-users
+        run: npm run verify:driver-listing-excludes-pseudo-users
+
       - name: verify:qbo-shared-rate-limit-ceiling
         run: npm run verify:qbo-shared-rate-limit-ceiling
 
