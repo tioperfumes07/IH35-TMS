@@ -16,7 +16,6 @@
     "apps/frontend/src/pages/lists/components/DomainModuleTab.tsx",
     "scripts/verify-no-hardcoded-list-counts.mjs",
     "scripts/__tests__/verify-no-hardcoded-list-counts.test.mjs",
-    "scripts/verify-guards/147-verify-no-hardcoded-list-counts.mjs",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
