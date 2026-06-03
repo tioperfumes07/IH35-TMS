@@ -1014,6 +1014,8 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **Messages V1:** `POST /api/v1/mdata/drivers/:id/messages` persists to `mdata.driver_profile_messages` (delivery integration deferred).
 
+**Action bar wiring (A24-3, 2026-06-03):** Sticky action bar buttons are live — Edit navigates to `/drivers/:id`; Send Message opens modal → `POST /api/v1/mdata/drivers/:id/messages`; Suspend PATCHes `Inactive` + incident safety event; Terminate creates termination safety event (status → Terminated); Export PDF unchanged; View on Map links `/fleet/map?driver=:id`. **CI:** `verify:drivers-profile-action-bar`.
+
 ## Trailer Profile (Fleet module) — Part 1 (locked 2026-06-02)
 
 Route: `/fleet/trailers/:id` renders `TrailerProfilePage` with eight sections (identity/status, type specs, assignment, conditional reefer telemetry, maintenance, compliance/plates, documents, action bar). Parallel to Vehicle Profile; data on `mdata.equipment` + `mdata.equipment_plates` (migration `0303`).

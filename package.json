@@ -182,6 +182,7 @@
     "verify:a17-deprecation-comments": "node scripts/verify-a17-deprecation-comments.mjs",
     "verify:drivers-fk-wired": "node scripts/verify-drivers-fk-wired.mjs",
     "verify:drivers-count-nav-integrity": "node scripts/verify-drivers-count-nav-integrity.mjs",
+    "verify:drivers-profile-action-bar": "node scripts/verify-drivers-profile-action-bar.mjs",
     "verify:oem-parts-no-touch-existing-parts-surfaces": "node scripts/verify-oem-parts-no-touch-existing-parts-surfaces.mjs",
     "seed:reference-oem-parts": "node scripts/seed-reference-oem-parts.mjs",
     "verify:names-master-readonly": "node scripts/verify-names-master-readonly.mjs",

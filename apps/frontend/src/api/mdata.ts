@@ -101,6 +101,17 @@ export function updateDriver(id: string, body: UpdateDriverInput) {
   return apiRequest<Driver>(`/api/v1/mdata/drivers/${id}`, { method: "PATCH", body });
 }
 
+export function sendDriverProfileMessage(
+  driverId: string,
+  operatingCompanyId: string,
+  body: { message: string; channel: "sms" | "email" | "in_app"; urgency?: string }
+) {
+  return apiRequest<{ id: string; channel: string; urgency: string | null; created_at: string }>(
+    `/api/v1/mdata/drivers/${driverId}/messages?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body }
+  );
+}
+
 export function deactivateDriver(id: string) {
   return apiRequest<{ id: string; deactivated_at: string | null; was_already_deactivated: boolean }>(
     `/api/v1/mdata/drivers/${id}/deactivate`,
