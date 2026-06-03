@@ -40,7 +40,7 @@ import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { RecentActivityRow } from "./components/RecentActivityRow";
 import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
-import { WODetailDrawer } from "./components/WODetailDrawer";
+import { WorkOrderDetailModal } from "../../components/work-orders/WorkOrderDetailModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
 
 const SUBNAV = [
@@ -376,7 +376,7 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
         }}
       />
 
-      <WODetailDrawer
+      <WorkOrderDetailModal
         open={Boolean(selectedWorkOrderId)}
         workOrder={(workOrderDetailQuery.data ?? null) as Record<string, unknown> | null}
         onClose={() => setSelectedWorkOrderId(null)}

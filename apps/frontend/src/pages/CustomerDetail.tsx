@@ -40,6 +40,7 @@ import {
 import { useAuth } from "../auth/useAuth";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
+import { CustomerEditModal, type CustomerEditFormValues } from "../components/customers/CustomerEditModal";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -301,6 +302,7 @@ export function CustomerDetailPage() {
     }
   }, [searchParams]);
   const [editMode, setEditMode] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<CustomerContact | null>(null);
@@ -833,7 +835,7 @@ export function CustomerDetailPage() {
         subtitle={customer.customer_code ?? "No code"}
         actions={
           !editMode ? (
-            <Button onClick={() => setEditMode(true)}>Edit</Button>
+            <Button onClick={() => setEditModalOpen(true)}>Edit</Button>
           ) : (
             <Button onClick={() => void saveCustomer()} loading={updateCustomerMutation.isPending}>
               Save
@@ -2182,6 +2184,41 @@ export function CustomerDetailPage() {
           ) : null}
         </div>
       </Modal>
+
+      <CustomerEditModal
+        open={editModalOpen}
+        customer={customer}
+        saving={updateCustomerMutation.isPending}
+        onClose={() => setEditModalOpen(false)}
+        onSave={async (values: CustomerEditFormValues) => {
+          const parsed = customerSchema.safeParse({ ...hydratedForm, ...values });
+          if (!parsed.success) {
+            pushToast(parsed.error.issues[0]?.message ?? "Please correct the form", "error");
+            return;
+          }
+          setForm((current) => ({ ...current, ...values }));
+          try {
+            await updateCustomer(id, {
+              operating_company_id: selectedCompanyId ?? operatingCompanyId ?? undefined,
+              name: values.name,
+              customer_code: values.customer_code || null,
+              email: values.email || null,
+              phone: values.phone || null,
+              dot_number: values.dot_number || null,
+              mc_number: values.mc_number || null,
+              tax_id: values.tax_id || null,
+              billing_state: values.billing_state || null,
+              status: values.status,
+            });
+            pushToast("Customer updated", "success");
+            setEditModalOpen(false);
+            await queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
+            await queryClient.invalidateQueries({ queryKey: ["customers"] });
+          } catch {
+            pushToast("Failed to update customer", "error");
+          }
+        }}
+      />
 
       <FMCSAVerificationModal
         open={fmcsaModalOpen}

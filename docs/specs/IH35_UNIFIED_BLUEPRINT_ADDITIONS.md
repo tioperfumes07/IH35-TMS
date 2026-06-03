@@ -951,6 +951,16 @@ Edit Vehicle modal on Fleet Table: eight-tab layout (Identity / Insurance / IRP 
 
 ---
 
+## 2026-06-02 · Block A9 · Modal doubling pattern fix
+
+Source: Block A9 spec (#67-FAULT-P1-MODAL-DOUBLING)  
+Status: LOCKED  
+Relevant block: BLOCK-A9-MODAL-DOUBLING-PATTERN-FIX
+
+P1 visual-audit fixes: `WorkOrderDetailModal` uses shared `Modal` title only (no inner `<h2>`); `CustomerEditModal` uses named inputs only (no ghost fields). CI guard `verify-modal-no-doubled-header.mjs` rejects `*Modal.tsx` files that combine shared `Modal` + inner heading tags.
+
+---
+
 ## 2026-06-02 — Block 19 Lane profitability heatmap
 
 Source: Block 19 spec (Phase H)  

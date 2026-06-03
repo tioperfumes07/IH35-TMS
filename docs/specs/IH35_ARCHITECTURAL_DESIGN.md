@@ -890,6 +890,8 @@ Route: `/fleet/units/:id` renders `VehicleProfilePage` with six sections (identi
 
 **Edit Vehicle modal (Block A6):** Fleet Table row **Edit** opens `EditVehicleModal` with eight tabs — Identity, Insurance, IRP / Plates, Reefer (conditional on trailer linkage), Financial, Lifecycle (Sold / Transferred / Damaged / OOS sub-sections by status), Quick-availability, Documents. Surfaces 50+ `mdata.units` columns via reusable `FormField` / `FieldSet`; diff-only PATCH with Owner RBAC on sale/transfer/damage-cost fields; schema allowlist in `unit-update-schema.ts` (58 patchable columns derived from information_schema).
 
+**Modal doubling guard (Block A9):** Shared `Modal` renders the sole `<h2>` title. Feature modals (`WorkOrderDetailModal`, `CustomerEditModal`, etc.) MUST NOT add inner `<h1–h3>` headings that duplicate the `title` prop. `CustomerEditModal` inputs require `name` attributes (no ghost fields). Enforced by `verify-modal-no-doubled-header.mjs` + vitest.
+
 **Maintenance alerts banner:** Server-built `maintenance_alerts[]` (high/medium/low); dismissible per session in UI.
 
 ## Vehicle Profile (Maintenance module) — Part 2 (locked 2026-06-02)

@@ -174,6 +174,9 @@ jobs:
       - name: Verify no duplicate modal headers
         run: npm run verify:no-duplicate-modal-headers
 
+      - name: Verify modal no doubled header
+        run: npm run verify:modal-no-doubled-header
+
       - name: Verify no stub strings
         run: npm run verify:no-stub-strings
 
