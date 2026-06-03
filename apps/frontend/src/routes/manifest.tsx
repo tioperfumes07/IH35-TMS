@@ -655,9 +655,9 @@ export const ROUTES = React.Children.toArray(
           <Route path="driver-files" element={<DriverFilesTab />} />
           <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
           <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
-          <Route path="training/programs" element={<TrainingProgramsPage />} />
+          <Route path="/safety/training/programs" element={<TrainingProgramsPage />} />
           <Route path="hos" element={<HoursOfServiceTab />} />
-          <Route path="hos/exceptions" element={<HosExceptionsPage />} />
+          <Route path="/safety/hos/exceptions" element={<HosExceptionsPage />} />
           <Route path="hos-violations" element={<HOSViolationsTab />} />
           <Route path="idvr" element={<IDVRTab />} />
           <Route path="dot-inspections" element={<DOTInspectionsTab />} />
@@ -679,10 +679,10 @@ export const ROUTES = React.Children.toArray(
           <Route path="permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />
           <Route path="/safety/integrity-reports" element={<IntegrityReportsTab />} />
-          <Route path="integrity-alerts" element={<IntegrityAlertsTab />} />
-          <Route path="audit-425c" element={<Audit425cPage />} />
-          <Route path="reports" element={<SafetyReportsPage />} />
-          <Route path="driver-profiles/:driverId" element={<DriverSafetyProfileTab />} />
+          <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
+          <Route path="/safety/audit-425c" element={<Audit425cPage />} />
+          <Route path="/safety/reports" element={<SafetyReportsPage />} />
+          <Route path="/safety/driver-profiles/:driverId" element={<DriverSafetyProfileTab />} />
           {/* Block K (Driver Scheduler): canonical paths under /safety/* — see IH35_UNIFIED_BLUEPRINT_ADDITIONS.md §14 */}
           <Route path="driver-scheduler" element={<DriverSchedulerGridPage />} />
           <Route path="scheduler/pending-requests" element={<DriverSchedulerRequestInboxPage />} />
