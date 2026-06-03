@@ -1073,3 +1073,11 @@ Status: LOCKED
 Relevant block: BLOCK-A11-EQUIPMENT-TYPES-DEDUP
 
 Migration `0318` archives duplicate `catalogs.equipment_types` rows (hyphen vs underscore codes, singular vs plural names), repoints `mdata.driver_equipment_qualifications` and line-item templates, and resets monotonic `sort_order`. POST `/api/v1/catalogs/equipment-types` rejects normalized name/code collisions with 409. Office equipment types page hides `deactivated_at` rows. CI guard `verify:equipment-types-no-collision` fails when any two active rows share a normalized key.
+
+## 2026-06-02 · Block B10 · QBO chart of accounts push scheduler
+
+Source: Block B10 spec (#83-FAULT-S3)  
+Status: LOCKED  
+Relevant block: BLOCK-B10-FAULT-S3-QBO-COA-SYNC-PUSH
+
+Migration `0323` tracks push state on `accounting.qbo_accounts` (`sync_status`, `qbo_push_attempts`, `qbo_last_push_at`, `qbo_last_error`, `parent_synced`, `parent_id`). Scheduler `qbo-accounts-push.ts` runs every 60s, batch 100, **parent-first** two-pass claim (roots then children with synced parents), shares **100/min** rolling budget with B8+B9 via `qbo-master-push-rate-limit.ts`, dead-letter at 5 attempts. Status endpoint `GET /api/v1/sync/qbo-accounts/status` returns hierarchy counts (`root_synced`, `children_synced`, `blocked_by_parent`); Office HOME QBO sync card surfaces account pending/synced counts.

@@ -798,6 +798,16 @@ and persists it on the queue row so retries reuse the same `Idempotency-Key` HTT
 
 **Observability:** `GET /api/v1/sync/qbo-vendors/status?operating_company_id=` (withCurrentUser-scoped) returns the same count JSON; Office HOME QBO Sync Health card surfaces pending/synced vendor counts alongside customers.
 
+### Local QBO chart of accounts push scheduler (B10 — 2026-06)
+
+**Problem:** ~1,282 TMS-origin chart-of-accounts rows exist in `accounting.qbo_accounts` (cloned from `mdata.qbo_accounts`) with `qbo_id IS NULL`.
+
+**Schema (`0323`):** `accounting.qbo_accounts` gains `sync_status`, `qbo_push_attempts`, `qbo_last_push_at`, `qbo_last_error`, `parent_synced`, `parent_id`, partial index on `(sync_status, qbo_push_attempts) WHERE qbo_id IS NULL`, tenant RLS, and `audit.row_changes.action='qbo_push'` attempt rows.
+
+**Worker:** `apps/backend/src/sync/qbo-accounts-push.ts` ticks every **60s**, runs **parent-first** two-pass claims (roots with `parent_id IS NULL`, then children whose parent has `qbo_id`), batch up to **100** per pass, shares the **100/min** rolling rate budget with B8+B9 via `qbo-master-push-rate-limit.ts`, dead-letters after **5** failed attempts, mirrors row into `mdata.qbo_accounts` with `ParentRef`, then reuses `deliverQboMasterEntityPush` (`entity=account`, `operation=create|update`).
+
+**Observability:** `GET /api/v1/sync/qbo-accounts/status?operating_company_id=` returns `{ total_local, synced, unsynced, pushing, failed, dead_letter, root_synced, children_synced, blocked_by_parent }`; Office HOME QBO Sync Health card surfaces pending/synced account counts.
+
 ---
 
 ## ADDENDUM — 2026-05-21 Data Sovereignty + Telematics capability architecture

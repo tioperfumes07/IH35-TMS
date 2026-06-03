@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import type { HomeQboSyncHealth, HomeQboCustomersPushStatus, HomeQboVendorsPushStatus } from "../../api/home";
+import type { HomeQboSyncHealth, HomeQboCustomersPushStatus, HomeQboVendorsPushStatus, HomeQboAccountsPushStatus } from "../../api/home";
 import { Button } from "../Button";
 
 type Props = {
   data?: HomeQboSyncHealth;
   pushStatus?: HomeQboCustomersPushStatus;
   vendorsPushStatus?: HomeQboVendorsPushStatus;
+  accountsPushStatus?: HomeQboAccountsPushStatus;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
@@ -43,7 +44,7 @@ function formatRelative(iso: string | null | undefined): string {
   return `${d}d ago`;
 }
 
-export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, isLoading, isError, onRetry }: Props) {
+export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, accountsPushStatus, isLoading, isError, onRetry }: Props) {
   if (isLoading) {
     return (
       <section className="rounded border border-slate-200 bg-white">
@@ -114,6 +115,24 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, isLoadi
               <span className="text-slate-600">Vendors synced to QBO</span>
               <span className="font-semibold text-slate-800">{vendorsPushStatus.synced}</span>
             </div>
+          </>
+        ) : null}
+        {accountsPushStatus ? (
+          <>
+            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+              <span className="text-slate-600">Local accounts pending</span>
+              <span className="font-semibold text-slate-800">{accountsPushStatus.unsynced + accountsPushStatus.failed}</span>
+            </div>
+            <div className="flex items-center justify-between rounded bg-slate-50 px-2 py-1.5 text-xs">
+              <span className="text-slate-600">Accounts synced to QBO</span>
+              <span className="font-semibold text-slate-800">{accountsPushStatus.synced}</span>
+            </div>
+            {accountsPushStatus.blocked_by_parent > 0 ? (
+              <div className="flex items-center justify-between rounded bg-amber-50 px-2 py-1.5 text-xs">
+                <span className="text-amber-700">Blocked by parent</span>
+                <span className="font-semibold text-amber-800">{accountsPushStatus.blocked_by_parent}</span>
+              </div>
+            ) : null}
           </>
         ) : null}
       </div>

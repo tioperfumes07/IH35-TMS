@@ -214,6 +214,8 @@ import { registerQboCustomersPushStatusRoutes } from "./sync/qbo-customers-statu
 import { initializeQboCustomersPushScheduler, stopQboCustomersPushScheduler } from "./sync/qbo-customers-push.js";
 import { registerQboVendorsPushStatusRoutes } from "./sync/qbo-vendors-status.routes.js";
 import { initializeQboVendorsPushScheduler, stopQboVendorsPushScheduler } from "./sync/qbo-vendors-push.js";
+import { registerQboAccountsPushStatusRoutes } from "./sync/qbo-accounts-status.routes.js";
+import { initializeQboAccountsPushScheduler, stopQboAccountsPushScheduler } from "./sync/qbo-accounts-push.js";
 import { registerQboSyncEventLogRoutes } from "./qbo/sync-event-log.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
@@ -296,6 +298,7 @@ async function shutdown(signal: string) {
     stopQboOutboxDispatcher();
     stopQboCustomersPushScheduler();
     stopQboVendorsPushScheduler();
+    stopQboAccountsPushScheduler();
     stopQboInboundSyncCron();
     stopDailyTaskAlertsCron();
     stopAdminJobsWorker();
@@ -395,6 +398,7 @@ async function main() {
   await registerQboSyncHealthRoutes(app);
   await registerQboCustomersPushStatusRoutes(app);
   await registerQboVendorsPushStatusRoutes(app);
+  await registerQboAccountsPushStatusRoutes(app);
   await registerQboSyncEventLogRoutes(app);
   await registerEmailRoutes(app);
   await registerEmailQueueAdminRoutes(app);
@@ -797,6 +801,13 @@ async function main() {
     app.log.info("[STARTUP] qbo-vendors-push scheduler initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] qbo-vendors-push scheduler failed");
+  }
+
+  try {
+    initializeQboAccountsPushScheduler(app);
+    app.log.info("[STARTUP] qbo-accounts-push scheduler initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-accounts-push scheduler failed");
   }
 
   try {

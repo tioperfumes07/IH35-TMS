@@ -11,6 +11,7 @@ import {
   fetchHomeQboSyncHealth,
   fetchHomeQboCustomersPushStatus,
   fetchHomeQboVendorsPushStatus,
+  fetchHomeQboAccountsPushStatus,
   fetchHomeVendorMappingIntegrity,
   fetchHomeTodayRevenue,
   fetchHomeWosOpenCount,
@@ -118,6 +119,13 @@ export function HomePage({ auth }: Props) {
   const qboVendorsPushStatusQuery = useQuery({
     queryKey: ["home", "qbo-vendors-push-status", selectedCompanyId],
     queryFn: () => fetchHomeQboVendorsPushStatus(selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId),
+    refetchInterval: 60_000,
+  });
+
+  const qboAccountsPushStatusQuery = useQuery({
+    queryKey: ["home", "qbo-accounts-push-status", selectedCompanyId],
+    queryFn: () => fetchHomeQboAccountsPushStatus(selectedCompanyId!),
     enabled: Boolean(selectedCompanyId),
     refetchInterval: 60_000,
   });
@@ -403,12 +411,14 @@ export function HomePage({ auth }: Props) {
               data={qboSyncHealthQuery.data}
               pushStatus={qboCustomersPushStatusQuery.data}
               vendorsPushStatus={qboVendorsPushStatusQuery.data}
+              accountsPushStatus={qboAccountsPushStatusQuery.data}
               isLoading={qboSyncHealthQuery.isLoading}
               isError={qboSyncHealthQuery.isError}
               onRetry={() => {
                 void qboSyncHealthQuery.refetch();
                 void qboCustomersPushStatusQuery.refetch();
                 void qboVendorsPushStatusQuery.refetch();
+                void qboAccountsPushStatusQuery.refetch();
               }}
             />
             <VendorMappingIntegrityCard
