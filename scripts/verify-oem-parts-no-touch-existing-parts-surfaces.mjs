@@ -21,10 +21,27 @@ function fail(message) {
   process.exit(1);
 }
 
-const diff = spawnSync("git", ["diff", "origin/main..HEAD", "--name-only"], {
-  cwd: ROOT,
-  encoding: "utf8",
-});
+function runGit(args) {
+  return spawnSync("git", args, { cwd: ROOT, encoding: "utf8" });
+}
+
+function resolveBaseSha() {
+  const fromEnv =
+    process.env.GITHUB_BASE_SHA || process.env.BRANCH_FRESH_BASE_SHA || process.env.PR_BASE_SHA;
+  if (fromEnv) return fromEnv.trim();
+
+  runGit(["fetch", "origin", "main", "--depth", "1"]);
+  const originMain = runGit(["rev-parse", "origin/main"]);
+  if (originMain.status === 0 && originMain.stdout.trim()) {
+    return originMain.stdout.trim();
+  }
+  return null;
+}
+
+const baseSha = resolveBaseSha();
+const diffRange = baseSha ? `${baseSha}..HEAD` : "HEAD~1..HEAD";
+
+const diff = runGit(["diff", diffRange, "--name-only"]);
 
 if (diff.status !== 0) {
   fail(diff.stderr || diff.stdout || "git diff failed");
@@ -36,7 +53,7 @@ const changedFiles = diff.stdout
   .filter(Boolean);
 
 if (changedFiles.length === 0) {
-  console.log("verify:oem-parts-no-touch-existing-parts-surfaces PASS (no diff vs origin/main)");
+  console.log("verify:oem-parts-no-touch-existing-parts-surfaces PASS (no diff in range)");
   process.exit(0);
 }
 
