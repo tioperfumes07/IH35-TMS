@@ -11,6 +11,16 @@ export type SamsaraConfig = {
 
 export type SamsaraDriver = { id: string; raw: Record<string, unknown> };
 export type SamsaraVehicle = { id: string; raw: Record<string, unknown> };
+export type SamsaraVehicleLocation = {
+  id: string;
+  latitude: number;
+  longitude: number;
+  captured_at: string;
+  speed_mph: number | null;
+  heading_deg: number | null;
+  engine_on: boolean | null;
+  raw: Record<string, unknown>;
+};
 export type HosLog = Record<string, unknown>;
 export type SamsaraRemoteEntityType = "drivers" | "vehicles";
 export type DashcamFacing = "road" | "in_cab" | "both";
@@ -72,6 +82,118 @@ function parsePagination(json: Record<string, unknown>): { hasNextPage: boolean;
   }
   const after = typeof json.after === "string" && json.after.trim() ? json.after : null;
   return { hasNextPage: Boolean(after), cursor: after };
+}
+
+function asObject(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function parseVehicleLocationRow(row: Record<string, unknown>): SamsaraVehicleLocation | null {
+  const id = typeof row.id === "string" && row.id.trim().length > 0 ? row.id.trim() : null;
+  if (!id) return null;
+
+  const locationCandidates = [
+    asObject(row.location),
+    asObject(row.gps),
+    asObject(row.position),
+  ].filter((v): v is Record<string, unknown> => Boolean(v));
+
+  for (const location of locationCandidates) {
+    const latRaw = location.latitude ?? location.lat;
+    const lngRaw = location.longitude ?? location.lng ?? location.lon;
+    const latitude = Number(latRaw);
+    const longitude = Number(lngRaw);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+
+    const timeRaw =
+      location.time ??
+      location.timestamp ??
+      location.recorded_at ??
+      location.recordedAt ??
+      location.occurred_at ??
+      row.time ??
+      row.timestamp;
+    const captured_at =
+      typeof timeRaw === "string" && timeRaw.trim().length > 0
+        ? new Date(timeRaw).toISOString()
+        : new Date().toISOString();
+
+    const speedCandidates = [location.speed_mph, location.speedMph, location.speed];
+    let speed_mph: number | null = null;
+    for (const raw of speedCandidates) {
+      const value = Number(raw);
+      if (Number.isFinite(value) && value >= 0) {
+        speed_mph = value;
+        break;
+      }
+    }
+
+    const headingCandidates = [location.heading_deg, location.heading, location.bearing];
+    let heading_deg: number | null = null;
+    for (const raw of headingCandidates) {
+      const value = Number(raw);
+      if (!Number.isFinite(value)) continue;
+      heading_deg = Number((((value % 360) + 360) % 360).toFixed(2));
+      break;
+    }
+
+    const engineRaw = row.engine_on ?? row.engineOn ?? row.is_engine_on ?? asObject(row.engine)?.on;
+    let engine_on: boolean | null = null;
+    if (typeof engineRaw === "boolean") engine_on = engineRaw;
+    else if (typeof engineRaw === "string") {
+      const lowered = engineRaw.toLowerCase();
+      if (lowered === "on" || lowered === "true") engine_on = true;
+      if (lowered === "off" || lowered === "false") engine_on = false;
+    }
+
+    return {
+      id,
+      latitude,
+      longitude,
+      captured_at,
+      speed_mph,
+      heading_deg,
+      engine_on,
+      raw: row,
+    };
+  }
+
+  return null;
+}
+
+async function fetchSamsaraLocationsPage(token: string, after: string | null): Promise<{
+  data: SamsaraVehicleLocation[];
+  hasNextPage: boolean;
+  cursor: string | null;
+}> {
+  const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/locations`);
+  url.searchParams.set("limit", "512");
+  if (after) url.searchParams.set("after", after);
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: bearerHeaders(token) });
+  } catch (error) {
+    throw new SamsaraApiError(
+      `samsara_network_error:${String((error as Error)?.message ?? error)}`,
+      null,
+      null,
+      true
+    );
+  }
+  if (!res.ok) {
+    const body = await readJsonResponse(res);
+    const retryable = res.status === 429 || res.status >= 500;
+    throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable);
+  }
+  const json = await readJsonResponse(res);
+  const rows = Array.isArray(json.data)
+    ? json.data.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object"))
+    : [];
+  const data = rows
+    .map((row) => parseVehicleLocationRow(row))
+    .filter((row): row is SamsaraVehicleLocation => Boolean(row));
+  const { hasNextPage, cursor } = parsePagination(json);
+  return { data, hasNextPage, cursor };
 }
 
 async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fleet/vehicles", after: string | null): Promise<{
@@ -148,6 +270,20 @@ export class SamsaraClient {
       }
     } catch {
       return [];
+    }
+    return out;
+  }
+
+  async listVehicleLocations(): Promise<SamsaraVehicleLocation[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: SamsaraVehicleLocation[] = [];
+    let after: string | null = null;
+    for (let page = 0; page < 50; page += 1) {
+      const { data, hasNextPage, cursor } = await fetchSamsaraLocationsPage(token, after);
+      out.push(...data);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
     }
     return out;
   }

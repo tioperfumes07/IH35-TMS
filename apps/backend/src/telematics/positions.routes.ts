@@ -54,6 +54,7 @@ export async function registerTelematicsPositionsRoutes(app: FastifyInstance) {
             ON u.id = p.unit_id
            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = p.operating_company_id
           WHERE p.operating_company_id = $1::uuid
+            AND p.captured_at > now() - interval '24 hours'
             AND u.deactivated_at IS NULL
           ORDER BY p.captured_at DESC
         `,
