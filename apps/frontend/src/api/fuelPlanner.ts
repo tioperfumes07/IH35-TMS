@@ -1,5 +1,11 @@
 import { apiRequest } from "./client";
 
+export type LovesSyncStatus = {
+  last_synced_at: string | null;
+  rows_imported_24h: number;
+  status: "ok" | "stale" | "error" | "disabled" | "never";
+};
+
 export type FuelDashboard = {
   active_plans: number;
   mtd_spend: number;
@@ -66,6 +72,10 @@ function q(companyId: string) {
 
 export function getFuelDashboard(companyId: string) {
   return apiRequest<FuelDashboard>(`/api/v1/fuel/planner/dashboard?${q(companyId)}`);
+}
+
+export function getLovesSyncStatus(companyId: string) {
+  return apiRequest<LovesSyncStatus>(`/api/v1/sync/loves/status?${q(companyId)}`);
 }
 
 export function getFuelActiveRoutes(companyId: string) {

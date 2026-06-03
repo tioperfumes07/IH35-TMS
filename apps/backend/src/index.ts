@@ -217,6 +217,8 @@ import { registerQboVendorsPushStatusRoutes } from "./sync/qbo-vendors-status.ro
 import { initializeQboVendorsPushScheduler, stopQboVendorsPushScheduler } from "./sync/qbo-vendors-push.js";
 import { registerQboAccountsPushStatusRoutes } from "./sync/qbo-accounts-status.routes.js";
 import { initializeQboAccountsPushScheduler, stopQboAccountsPushScheduler } from "./sync/qbo-accounts-push.js";
+import { registerLovesSyncStatusRoutes } from "./sync/loves-status.routes.js";
+import { initializeLovesCardImportCron } from "./cron/loves-card-import.cron.js";
 import { registerQboSyncEventLogRoutes } from "./qbo/sync-event-log.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
@@ -400,6 +402,7 @@ async function main() {
   await registerQboCustomersPushStatusRoutes(app);
   await registerQboVendorsPushStatusRoutes(app);
   await registerQboAccountsPushStatusRoutes(app);
+  await registerLovesSyncStatusRoutes(app);
   await registerQboSyncEventLogRoutes(app);
   await registerEmailRoutes(app);
   await registerEmailQueueAdminRoutes(app);
@@ -680,6 +683,13 @@ async function main() {
     app.log.info("[STARTUP] fuel-gps-match-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] fuel-gps-match-cron failed");
+  }
+
+  try {
+    initializeLovesCardImportCron(app);
+    app.log.info("[STARTUP] loves-card-import-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] loves-card-import-cron failed");
   }
 
   try {
