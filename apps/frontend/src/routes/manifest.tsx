@@ -366,6 +366,12 @@ function DriverSafetyProfileTab() {
   return <DriverSafetyProfilePage key={driverId} />;
 }
 
+function DispatchLoadDetailRedirect() {
+  const { id } = useParams<{ id: string }>();
+  if (!id) return <Navigate to="/dispatch?view=loads" replace />;
+  return <Navigate to={`/dispatch?load_id=${encodeURIComponent(id)}`} replace />;
+}
+
 const LOCKED_SAFETY_TAB_PATHS = ["/safety/driver-files", "/safety/idvr"];
 void LOCKED_SAFETY_TAB_PATHS;
 
@@ -536,6 +542,38 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <GeofencesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/loads/:id"
+          element={
+            <ProtectedRoute>
+              <DispatchLoadDetailRedirect />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/loads"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/dispatch?view=loads" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/incidents"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/dispatch/alerts" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/factoring-packets"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/accounting/factoring" replace />
             </ProtectedRoute>
           }
         />
@@ -2207,9 +2245,6 @@ export const ROUTES = React.Children.toArray(
           }
         />
         {[
-          "/dispatch/loads",
-          "/dispatch/factoring-packets",
-          "/dispatch/incidents",
           "/fuel/planner",
           "/fuel/settings",
           "/fuel/inbox",

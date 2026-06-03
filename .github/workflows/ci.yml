@@ -126,6 +126,9 @@ jobs:
       - name: Verify safety accidents wire-up
         run: npm run verify:safety-accidents-wire-up
 
+      - name: Verify dispatch coming-soon triage
+        run: npm run verify:dispatch-coming-soon-triage
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
