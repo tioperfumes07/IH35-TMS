@@ -1,6 +1,6 @@
 {
   "block_id": "BLOCK-B4-F2-FLEET-TRAILERS-JOINED-UNIFIED-LIST",
-  "branch": "feat/fleet-trailers-joined-unified-list",
+  "branch": "feat/fleet-trailers-joined-into-fleet-table",
   "phase": "Phase 3",
   "task": "FLEET-TRAILERS-JOINED-UNIFIED-LIST",
   "allowed_files": [
