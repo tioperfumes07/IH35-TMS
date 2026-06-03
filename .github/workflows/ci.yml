@@ -387,6 +387,12 @@ jobs:
       - name: verify:unit-update-zod-allowlist-67
         run: npm run verify:unit-update-zod-allowlist-67
 
+      - name: verify:fleet-type-filter-dropdown
+        run: npm run verify:fleet-type-filter-dropdown
+
+      - name: verify:type-filter-query-param
+        run: npm run verify:type-filter-query-param
+
 
       - name: verify:samsara-positions-cron-registered
         run: npm run verify:samsara-positions-cron-registered

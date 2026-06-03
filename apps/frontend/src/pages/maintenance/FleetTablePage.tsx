@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { FleetTable, type FleetRow } from "../../components/FleetTable";
+import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
 
 type Props = {
   operatingCompanyId: string;
@@ -21,7 +23,20 @@ function KpiCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+function buildUnitsUrl(operatingCompanyId: string, typeFilter: string): string {
+  const params = new URLSearchParams({
+    include: "trailers",
+    operating_company_id: operatingCompanyId,
+    limit: "500",
+  });
+  if (typeFilter) params.set("type", typeFilter);
+  return `/api/v1/mdata/units?${params.toString()}`;
+}
+
 export function FleetTablePage({ operatingCompanyId }: Props) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const typeFilter = parseFleetTypeFilter(searchParams);
+
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "kpis", operatingCompanyId],
     queryFn: () =>
@@ -34,12 +49,20 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
       }>(`/api/v1/maintenance/fleet-table/kpis?operating_company_id=${encodeURIComponent(operatingCompanyId)}`),
     enabled: Boolean(operatingCompanyId),
   });
-  const rowsQuery = useQuery({
-    queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId],
+
+  const totalRowsQuery = useQuery({
+    queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId, "all"],
     queryFn: async () => {
-      const payload = await apiRequest<{ units: UnifiedUnitRow[] }>(
-        `/api/v1/mdata/units?include=trailers&operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=500`
-      );
+      const payload = await apiRequest<{ units: UnifiedUnitRow[] }>(buildUnitsUrl(operatingCompanyId, ""));
+      return { rows: payload.units ?? [] };
+    },
+    enabled: Boolean(operatingCompanyId) && typeFilter !== "",
+  });
+
+  const rowsQuery = useQuery({
+    queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId, typeFilter || "all"],
+    queryFn: async () => {
+      const payload = await apiRequest<{ units: UnifiedUnitRow[] }>(buildUnitsUrl(operatingCompanyId, typeFilter));
       return { rows: payload.units ?? [] };
     },
     enabled: Boolean(operatingCompanyId),
@@ -53,8 +76,13 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
     avg_age_years: 0,
   };
   const rows: FleetRow[] = rowsQuery.data?.rows ?? [];
+  const totalVehicleCount =
+    typeFilter !== "" ? (totalRowsQuery.data?.rows.length ?? 0) : (rowsQuery.data?.rows.length ?? 0);
+  const filteredCount = rows.length;
+  const hasActiveFilter = typeFilter !== "";
+
   const counters = useMemo(() => {
-    const sourceRows = rowsQuery.data?.rows ?? [];
+    const sourceRows = typeFilter !== "" ? (totalRowsQuery.data?.rows ?? []) : (rowsQuery.data?.rows ?? []);
     const trucks = sourceRows.filter((r) => r.kind === "truck");
     const trailers = sourceRows.filter((r) => r.kind === "trailer");
     return {
@@ -65,7 +93,30 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
       inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
       outOfService: sourceRows.filter((r) => r.status === "OutOfService").length,
     };
-  }, [rowsQuery.data?.rows]);
+  }, [totalRowsQuery.data?.rows, rowsQuery.data?.rows, typeFilter]);
+
+  const setTypeFilter = (nextType: string) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (!nextType) params.delete("type");
+        else params.set("type", nextType);
+        return params;
+      },
+      { replace: true }
+    );
+  };
+
+  const clearFilters = () => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("type");
+        return params;
+      },
+      { replace: true }
+    );
+  };
 
   return (
     <div className="space-y-2">
@@ -81,13 +132,50 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
         <KpiCard label="Avg Age" value={`${Number(kpis.avg_age_years ?? 0).toFixed(1)} y`} />
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white px-2 py-1.5 text-xs">
+        <label htmlFor="fleet-type-filter" className="font-semibold text-gray-700">
+          Type
+        </label>
+        <select
+          id="fleet-type-filter"
+          aria-label="Filter fleet by type"
+          className="rounded border border-gray-300 bg-white px-2 py-1 text-xs"
+          value={typeFilter}
+          onChange={(event) => setTypeFilter(event.target.value)}
+        >
+          {FLEET_TYPE_FILTER_OPTIONS.map((option) => (
+            <option key={option.label} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <span className="text-gray-600">
+          Showing {filteredCount} of {totalVehicleCount} vehicles
+        </span>
+        {hasActiveFilter ? (
+          <button
+            type="button"
+            className="rounded border border-gray-300 bg-white px-2 py-0.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+            onClick={clearFilters}
+          >
+            Clear filters
+          </button>
+        ) : null}
+      </div>
+
       {rows.length === 0 ? (
         <div className="rounded border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-700">
-          <div className="font-semibold">No fleet rows yet</div>
-          <div className="mt-1 text-xs">Trucks and trailers appear here once assigned to this operating company.</div>
-          <button type="button" className="mt-2 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700">
-            + Create
-          </button>
+          <div className="font-semibold">{hasActiveFilter ? "No fleet rows match this filter" : "No fleet rows yet"}</div>
+          <div className="mt-1 text-xs">
+            {hasActiveFilter
+              ? "Try another type or clear filters to see all vehicles."
+              : "Trucks and trailers appear here once assigned to this operating company."}
+          </div>
+          {!hasActiveFilter ? (
+            <button type="button" className="mt-2 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700">
+              + Create
+            </button>
+          ) : null}
         </div>
       ) : (
         <FleetTable operatingCompanyId={operatingCompanyId} rows={rows} />
