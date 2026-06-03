@@ -1077,15 +1077,15 @@ Duplicate `catalogs.equipment_types` rows from mixed seed conventions (for examp
 
 LISTS hub domain ribbon header counts derive from `GET /api/v1/lists/<module>/count`, summing active catalog rows with the same default filters as each sub-page listing (not catalog-cardinality from `views.catalogs_inventory`). Frontend `useModuleCount()` uses TanStack Query with 60s `staleTime`. **CI:** `verify:no-hardcoded-list-counts` fails on hardcoded header badge integers in hub ribbon components.
 
-## Drivers reference catalogs — Block A17 (locked 2026-06-03)
+## Driver Catalogs — Canonical Pattern (A17 + A17.2, locked 2026-06-03)
 
 **Canonical pattern:** global `reference.*` lookup tables with `archived_at` soft-archive (same convention as migrations 0318, 0320, 0325). No company scope; additive archive only (never delete rows).
 
-Five driver sub-catalogs under `/lists/drivers/*` read from `reference.license_classes`, `reference.cdl_endorsements`, `reference.cdl_restrictions`, `reference.medical_card_statuses`, and `reference.employment_statuses` (migration `0340_reference_driver_lookups.sql`). Backend routes: `GET|POST /api/v1/lists/drivers/<subcatalog>`, `PATCH /:id` (update), `POST /:id/archive`, `POST /:id/restore`. List default filter: `archived_at IS NULL`; `?include_archived=true` shows archived rows.
+Five driver sub-catalogs under `/lists/drivers/*` (plural) read from `reference.license_classes`, `reference.cdl_endorsements`, `reference.cdl_restrictions`, `reference.medical_card_statuses`, and `reference.employment_statuses` (migration `0340_reference_driver_lookups.sql`). Backend routes: `GET|POST /api/v1/lists/drivers/<subcatalog>`, `PATCH /:id` (update), `POST /:id/archive`, `POST /:id/restore`. List default filter: `archived_at IS NULL`; `?include_archived=true` shows archived rows.
 
-Orphan `catalogs.*` driver lookup tables (e.g. `catalogs.driver_license_classes`, `catalogs.license_classes`) are **deprecated in place** with SQL comments — empty in production, preserved per ARCHIVE-not-DELETE policy for archaeology. Driver FK wiring to these reference tables is deferred to block **A17.1-DRIVER-FK-WIRE**.
+**Deprecated (A17.2):** PR #403 `catalogs.driver_*` tables and `/api/v1/catalogs/driver/<subcatalog>` factory routes remain for ledger only. Tables receive `COMMENT ON TABLE` via `db/scripts/a17-2-deprecate-catalogs-driver-tables.sql` (idempotent, no migration). Factory responses emit `Deprecation`, `Link` (successor `/api/v1/lists/drivers/<subcatalog>`), and `Sunset: Wed, 03 Sep 2026`. Singular `/lists/driver/<subcatalog>` pages show a deprecation banner and are not advertised in hub navigation; canonical UI is `/lists/drivers/*`. `scripts/seed-driver-subcatalogs.mjs` is archived — do not run on new environments. Driver FK wiring to `reference.*` is deferred to block **A17.1-DRIVER-FK-WIRE**.
 
-Frontend pages reuse `DriversReferenceCatalogPage` with Code / Label / Sort Order / Archived columns, search, archive filter, and **+ Create** modal. Pay catalogs remain on `/lists/driver/*` (singular). **CI:** `verify:drivers-reference-catalogs-wired` asserts each page references real `reference.*` endpoints and contains no stub strings.
+Frontend canonical pages reuse `DriversReferenceCatalogPage` with Code / Label / Sort Order / Archived columns, search, archive filter, and **+ Create** modal. Pay catalogs remain on `/lists/driver/*` (singular, non-deprecated). **CI:** `verify:drivers-reference-catalogs-wired`, `verify:a17-deprecation-comments`.
 
 ## END OF ARCHITECTURAL DESIGN
 

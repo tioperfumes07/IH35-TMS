@@ -447,6 +447,9 @@ jobs:
       - name: verify:drivers-reference-catalogs-wired
         run: npm run verify:drivers-reference-catalogs-wired
 
+      - name: verify:a17-deprecation-comments
+        run: npm run verify:a17-deprecation-comments
+
       - name: verify:qbo-shared-rate-limit-ceiling
         run: npm run verify:qbo-shared-rate-limit-ceiling
 

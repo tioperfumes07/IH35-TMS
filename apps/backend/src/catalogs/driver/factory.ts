@@ -1,7 +1,8 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { isCatalogWriteRole } from "../../auth/role-helpers.js";
+import { applyDriverCatalogDeprecation } from "./deprecation.js";
 import { companyQuerySchema, currentAuthUser, idParamSchema, listQuerySchema, validationError, withCompanyScope } from "./shared.js";
 
 type CatalogFactoryConfig = {
@@ -10,7 +11,16 @@ type CatalogFactoryConfig = {
   routePrefix: string;
   displayName: string;
   codeRegex: RegExp;
+  deprecation?: {
+    navSegment: string;
+    successorListsSegment: string;
+  };
 };
+
+function maybeMarkDeprecated(reply: FastifyReply, config: CatalogFactoryConfig) {
+  if (!config.deprecation) return;
+  applyDriverCatalogDeprecation(reply, config.deprecation.navSegment, config.deprecation.successorListsSegment);
+}
 
 const tableNameGuard = /^[a-z_]+$/;
 const urlSegmentGuard = /^[a-z-]+$/;
@@ -45,6 +55,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
     .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
   app.get(basePath, async (req, reply) => {
+    maybeMarkDeprecated(reply, config);
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -96,6 +107,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   });
 
   app.get(`${basePath}/:id`, async (req, reply) => {
+    maybeMarkDeprecated(reply, config);
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -132,6 +144,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   });
 
   app.post(basePath, async (req, reply) => {
+    maybeMarkDeprecated(reply, config);
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -197,6 +210,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   });
 
   app.patch(`${basePath}/:id`, async (req, reply) => {
+    maybeMarkDeprecated(reply, config);
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -277,6 +291,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
   });
 
   app.delete(`${basePath}/:id`, async (req, reply) => {
+    maybeMarkDeprecated(reply, config);
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
