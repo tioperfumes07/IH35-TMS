@@ -5,7 +5,7 @@
 
 export const DRIVER_ESCROW_KPI_LABELS = {
   escrow_balance_dip: "Escrow Balance (DIP virtual)",
-  drivers_with_escrow_balance: "Drivers with Escrow Balance",
+  drivers_with_escrow_balance: "Drivers with escrow",
   active_drivers: "Active Drivers",
 } as const;
 
@@ -32,11 +32,11 @@ export async function countDriverEscrowKpis(client: Queryable, operatingCompanyI
   );
   const withBalanceRes = await client.query<{ count: number }>(
     `
-      SELECT count(*)::int AS count
+      SELECT count(DISTINCT id)::int AS count
       FROM mdata.drivers
       WHERE operating_company_id = $1
         AND deactivated_at IS NULL
-        AND COALESCE(escrow_balance, 0) > 0
+        AND COALESCE(escrow_balance, 0) <> 0
     `,
     [operatingCompanyId]
   );

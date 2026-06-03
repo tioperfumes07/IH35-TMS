@@ -152,4 +152,28 @@ describe("BankingHomePage accounts summary", () => {
     expect(screen.getByText("Business Checking ••••3500")).toBeInTheDocument();
     expect(screen.queryByText("No accounts yet.")).not.toBeInTheDocument();
   });
+
+  it('labels escrow visualizer count as "Drivers with escrow:"', async () => {
+    vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
+      total_cash: 1000,
+      dip_operating: 200,
+      dip_payroll: 300,
+      total_uncategorized: 0,
+      factoring_reserve: 50,
+      driver_escrow: 20,
+      drivers_with_escrow_balance: 5,
+      active_drivers: 50,
+    });
+    vi.mocked(bankingApi.getBankingTiles).mockResolvedValue({ tiles: [] });
+    vi.mocked(bankingApi.getBankingUncategorized).mockResolvedValue({ transactions: [], meta: { uncategorized_count: 0 } });
+    vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
+    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
+    vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
+
+    render(wrap(<BankingHomePage />));
+
+    expect(await screen.findByText("Drivers with escrow:")).toBeInTheDocument();
+    expect(await screen.findByText("5")).toBeInTheDocument();
+    expect(screen.queryByText("Active drivers")).not.toBeInTheDocument();
+  });
 });

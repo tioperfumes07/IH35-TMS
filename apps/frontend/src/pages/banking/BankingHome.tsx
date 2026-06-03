@@ -255,12 +255,13 @@ export function BankingHomePage() {
               <div className="space-y-1 px-3 py-2 text-sm">
                 <div className="flex justify-between"><span>Total escrow held</span><span>{money.format(escrowFeed)}</span></div>
                 <div className="flex justify-between">
-                  <span>Drivers with escrow balance</span>
+                  <span
+                    title="Count of drivers whose escrow balance is currently non-zero."
+                    className="cursor-help border-b border-dotted border-emerald-400"
+                  >
+                    Drivers with escrow:
+                  </span>
                   <span>{Number(kpiQuery.data?.drivers_with_escrow_balance ?? 0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Active drivers</span>
-                  <span>{Number(kpiQuery.data?.active_drivers ?? 0)}</span>
                 </div>
                 <div className="flex justify-between"><span>Contributions MTD</span><span>{money.format(0)}</span></div>
                 <div className="flex justify-between"><span>Deductions MTD</span><span>{money.format(0)}</span></div>
