@@ -330,7 +330,9 @@
     "verify:aggregate-schema-grants": "node scripts/verify-aggregate-schema-grants.mjs",
     "verify:referenced-tables-exist": "node scripts/verify-referenced-tables-exist.mjs",
     "verify:loves-cron-registered": "node scripts/verify-loves-cron-registered.mjs",
-    "verify:no-bulk-default-classifications": "node scripts/verify-no-bulk-default-classifications.mjs"
+    "verify:no-bulk-default-classifications": "node scripts/verify-no-bulk-default-classifications.mjs",
+    "verify:plaid-status-derived-from-state": "node scripts/verify-plaid-status-derived-from-state.mjs",
+    "verify:plaid-cron-registered": "node scripts/verify-plaid-cron-registered.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
