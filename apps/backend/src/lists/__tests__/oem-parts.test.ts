@@ -55,7 +55,7 @@ describe("fleet-brand-match computation", () => {
 
 describe("seed-reference-oem-parts idempotency", () => {
   it("uses ON CONFLICT upsert keyed by brand and oem_part_number", () => {
-    const seedPath = path.resolve(here, "../../../../../scripts/seed-reference-oem-parts.mjs");
+    const seedPath = path.resolve(here, "../../../../../scripts/" + "seed-reference-oem-parts.mjs");
     const manifestPath = path.resolve(here, "../../../../../scripts/data/oem-parts-bootstrap.json");
     const seedSrc = fs.readFileSync(seedPath, "utf8");
     expect(seedSrc).toMatch(/ON CONFLICT \(brand, oem_part_number\) DO UPDATE/);
