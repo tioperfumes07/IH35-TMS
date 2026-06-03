@@ -1049,3 +1049,11 @@ Status: LOCKED
 Relevant block: BLOCK-B8-FAULT-S1-QBO-CUSTOMERS-SYNC-PUSH
 
 Migration `0319` tracks push state on `accounting.qbo_customers` (`sync_status`, `qbo_push_attempts`, `qbo_last_push_at`, `qbo_last_error`). Scheduler `qbo-customers-push.ts` runs every 60s, batch 100, 100/min rate limit, dead-letter at 5 attempts, audit `row_changes.action='qbo_push'`. Status endpoint `GET /api/v1/sync/qbo-customers/status` feeds Office HOME QBO sync card counts.
+
+## 2026-06-02 · Block A10 · URL routing normalize (underscore → hyphen)
+
+Source: Block A10 spec (#68-Block-H)  
+Status: LOCKED  
+Relevant block: BLOCK-A10-URL-ROUTING-NORMALIZE
+
+Legacy underscore URLs (for example `/lists/driver/pay_rate_templates`) redirected 301 (backend) or client-replaced (frontend) to hyphen canonical routes (for example `/lists/driver/pay-rate-templates`). Catch-all stub routes no longer serve real catalog pages for underscore variants. CI guard `verify:no-underscore-canonical-routes` blocks new underscore canonical route registrations.

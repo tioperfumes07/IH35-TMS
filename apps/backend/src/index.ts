@@ -229,6 +229,7 @@ import { assertNoDuplicateFastifyRoutes } from "./lib/fastify-route-duplicates.j
 import { assertMigrationDriftBootGuard } from "./lib/migration-status.js";
 import { attachHttpErrorMonitor } from "./lib/error-monitor-hooks.js";
 import { pool, withLuciaBypass } from "./auth/db.js";
+import { registerUrlCanonicalizeMiddleware } from "./middleware/url-canonicalize.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
 import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js";
@@ -320,6 +321,7 @@ async function main() {
   }
 
   registerSentryFastifyErrorHandler(app);
+  await registerUrlCanonicalizeMiddleware(app);
   await registerHealthRoutes(app);
 
   const driftConn = await pool.connect();
