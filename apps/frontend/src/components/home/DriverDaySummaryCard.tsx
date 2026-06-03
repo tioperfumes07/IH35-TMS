@@ -15,6 +15,12 @@ function compareRows(a: HomeDriverDaySummaryRow, b: HomeDriverDaySummaryRow, sor
   return Number(b[sortKey]) - Number(a[sortKey]);
 }
 
+function formatDisplayDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) return isoDate;
+  return `${month}/${day}/${year}`;
+}
+
 export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
   const [date, setDate] = useState(TODAY);
   const [sortKey, setSortKey] = useState<SortKey>("miles");
@@ -25,9 +31,9 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
   });
 
   const rows = useMemo(() => {
-    const base = query.data ?? [];
+    const base = query.data?.rows ?? [];
     return [...base].sort((a, b) => compareRows(a, b, sortKey));
-  }, [query.data, sortKey]);
+  }, [query.data?.rows, sortKey]);
 
   return (
     <section className="rounded border border-slate-200 bg-white">
@@ -46,9 +52,21 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
       {query.isLoading ? (
         <div className="px-3 py-3 text-xs text-slate-500">Loading driver day summary...</div>
       ) : query.isError ? (
-        <div className="px-3 py-3 text-xs text-red-700">Unable to load day summary for selected date.</div>
-      ) : rows.length === 0 ? (
-        <div className="px-3 py-3 text-xs text-slate-500">No active driver activity found for this date.</div>
+        <div className="px-3 py-3 text-xs">
+          <p className="text-red-700">Couldn't load summary right now.</p>
+          <button
+            type="button"
+            onClick={() => void query.refetch()}
+            className="mt-2 rounded border border-red-300 px-2 py-1 text-red-700 hover:bg-red-50"
+          >
+            Retry
+          </button>
+        </div>
+      ) : query.data?.has_data === false ? (
+        <div className="px-3 py-3 text-xs text-slate-500">
+          No HOS data recorded for drivers on {formatDisplayDate(date)}. Select another date or check the Samsara
+          connection.
+        </div>
       ) : (
         <div className="overflow-x-auto px-2 py-2">
           <table className="min-w-full text-left text-xs">
