@@ -132,6 +132,9 @@ jobs:
       - name: Verify maint parts + PM due contract
         run: npm run verify:maint-pm
 
+      - name: Verify KPI sources-of-truth doc
+        run: npm run verify:kpi-sources-of-truth-exists
+
       - name: Verify insurance policy schema contract
         run: npm run verify:insurance-schema
 

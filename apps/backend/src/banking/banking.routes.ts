@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -136,6 +137,11 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           [companyId]
         )
         .catch(() => ({ rows: [{ count: 0 }] }));
+      const escrowCounts = await countDriverEscrowKpis(client, companyId).catch(() => ({
+        active_drivers: 0,
+        drivers_with_escrow_balance: 0,
+        drivers_with_active_escrow_account: 0,
+      }));
       return {
         ...(kpiRes.rows[0] ?? {
           operating_company_id: companyId,
@@ -148,6 +154,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           total_uncategorized: 0,
         }),
         pending_bills: Number(pendingBillsRes.rows[0]?.count ?? 0),
+        ...escrowCounts,
       };
     });
     return payload;

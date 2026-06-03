@@ -8,7 +8,7 @@ export function BankingKpiRow({ kpis }: Props) {
     ["DIP Operating", Number(kpis?.dip_operating ?? 0)],
     ["DIP Payroll", Number(kpis?.dip_payroll ?? 0)],
     ["Factoring Reserve", Number(kpis?.factoring_reserve ?? 0)],
-    ["Driver Escrow", Number(kpis?.driver_escrow ?? 0)],
+    ["Escrow Balance (DIP)", Number(kpis?.driver_escrow ?? 0)],
     ["Uncategorized", Number(kpis?.total_uncategorized ?? 0)],
     ["Pending Bills", Number(kpis?.pending_bills ?? 0)],
   ] as const;
