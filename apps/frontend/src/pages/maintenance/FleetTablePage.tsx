@@ -36,10 +36,12 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
   });
   const rowsQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId],
-    queryFn: () =>
-      apiRequest<{ units: UnifiedUnitRow[] }>(
+    queryFn: async () => {
+      const payload = await apiRequest<{ units: UnifiedUnitRow[] }>(
         `/api/v1/mdata/units?include=trailers&operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=500`
-      ),
+      );
+      return { rows: payload.units ?? [] };
+    },
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -50,9 +52,9 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
     out_of_service_units: 0,
     avg_age_years: 0,
   };
-  const rows: FleetRow[] = rowsQuery.data?.units ?? [];
-  const breakdown = useMemo(() => {
-    const sourceRows = rowsQuery.data?.units ?? [];
+  const rows: FleetRow[] = rowsQuery.data?.rows ?? [];
+  const counters = useMemo(() => {
+    const sourceRows = rowsQuery.data?.rows ?? [];
     const trucks = sourceRows.filter((r) => r.kind === "truck");
     const trailers = sourceRows.filter((r) => r.kind === "trailer");
     return {
@@ -63,19 +65,19 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
       inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
       outOfService: sourceRows.filter((r) => r.status === "OutOfService").length,
     };
-  }, [rowsQuery.data?.units]);
+  }, [rowsQuery.data?.rows]);
 
   return (
     <div className="space-y-2">
       <div className="text-xs text-gray-700">
-        Total Fleet: {breakdown.total} · Trucks: {breakdown.trucks} · Trailers: {breakdown.trailers}
+        Total Fleet: {counters.total} · Trucks: {counters.trucks} · Trailers: {counters.trailers}
       </div>
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
-        <KpiCard label="Total Units" value={breakdown.total} />
-        <KpiCard label="Active" value={breakdown.active} />
-        <KpiCard label="In-Shop" value={breakdown.inShop} />
-        <KpiCard label="Out-of-Service" value={breakdown.outOfService} />
+        <KpiCard label="Total Units" value={counters.total} />
+        <KpiCard label="Active" value={counters.active} />
+        <KpiCard label="In-Shop" value={counters.inShop} />
+        <KpiCard label="Out-of-Service" value={counters.outOfService} />
         <KpiCard label="Avg Age" value={`${Number(kpis.avg_age_years ?? 0).toFixed(1)} y`} />
       </div>
 
