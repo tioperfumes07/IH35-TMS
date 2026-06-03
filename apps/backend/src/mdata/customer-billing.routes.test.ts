@@ -5,6 +5,7 @@ import { testAuthHeaders } from "../../test-helpers/auth-fixture.js";
 import { ensureIntegrationPrerequisites, getOperatingCompanyId } from "../../test-helpers/db-fixture.js";
 import { createIntegrationApp } from "../../test-helpers/http-app.js";
 import { registerCustomerBillingRoutes } from "./customer-billing.routes.js";
+import { registerCustomerRoutes } from "./customers.routes.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -16,6 +17,7 @@ describeIntegration("customer billing summary routes", () => {
     await ensureIntegrationPrerequisites();
     companyId = getOperatingCompanyId();
     app = await createIntegrationApp(async (a) => {
+      await registerCustomerRoutes(a);
       await registerCustomerBillingRoutes(a);
     });
   });
