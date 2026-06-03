@@ -3,9 +3,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 describe("dispatch arch tabs routes (B21-D2)", () => {
-  const routesPath = resolve(import.meta.dirname, "arch-tabs.routes.ts");
-  const servicePath = resolve(import.meta.dirname, "arch-tabs.service.ts");
-  const indexPath = resolve(import.meta.dirname, "../index.ts");
+  const routesPath = resolve(import.meta.dirname, "../arch-tabs.routes.ts");
+  const servicePath = resolve(import.meta.dirname, "../arch-tabs.service.ts");
+  const indexPath = resolve(import.meta.dirname, "../../index.ts");
 
   it("registers at-risk, intransit list, assignment history, and resolve routes", () => {
     const src = readFileSync(routesPath, "utf8");
