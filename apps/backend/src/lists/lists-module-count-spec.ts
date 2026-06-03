@@ -1,9 +1,10 @@
-export type ActiveFilter = "is_active" | "deactivated_at" | "none";
+export type ActiveFilter = "is_active" | "deactivated_at" | "archived_at" | "none";
 
 export type ModuleCountTableSpec = {
   table: string;
   activeFilter: ActiveFilter;
   companyScoped: boolean;
+  schema?: "catalogs" | "reference";
 };
 
 /** Live catalog tables per LISTS hub domain — default list filter (active only, no search). */
@@ -24,6 +25,11 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "driver_deduction_types", activeFilter: "is_active", companyScoped: true },
     { table: "driver_pay_types", activeFilter: "is_active", companyScoped: true },
     { table: "escrow_types", activeFilter: "is_active", companyScoped: true },
+    { table: "license_classes", activeFilter: "is_active", companyScoped: true },
+    { table: "cdl_endorsements", activeFilter: "is_active", companyScoped: true },
+    { table: "cdl_restrictions", activeFilter: "is_active", companyScoped: true },
+    { table: "medical_card_statuses", activeFilter: "is_active", companyScoped: true },
+    { table: "employment_statuses", activeFilter: "is_active", companyScoped: true },
   ],
   maintenance: [
     { table: "maintenance_failure_codes", activeFilter: "is_active", companyScoped: true },
@@ -94,13 +100,15 @@ export function buildModuleCountQuery(specs: ModuleCountTableSpec[]): string {
     if (!TABLE_NAME_GUARD.test(spec.table)) {
       throw new Error(`invalid_table_name_for_module_count: ${spec.table}`);
     }
+    const schema = spec.schema ?? "catalogs";
     const alias = "t";
     const filters: string[] = [];
     if (spec.companyScoped) filters.push(`${alias}.operating_company_id = $1`);
     if (spec.activeFilter === "is_active") filters.push(`${alias}.is_active = true`);
     if (spec.activeFilter === "deactivated_at") filters.push(`${alias}.deactivated_at IS NULL`);
+    if (spec.activeFilter === "archived_at") filters.push(`${alias}.archived_at IS NULL`);
     const where = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
-    return `(SELECT COUNT(*)::int FROM catalogs.${spec.table} ${alias} ${where})`;
+    return `(SELECT COUNT(*)::int FROM ${schema}.${spec.table} ${alias} ${where})`;
   });
 
   return `SELECT (${parts.join(" + ")})::int AS count`;

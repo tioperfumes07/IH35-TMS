@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createCatalogRoutes } from "./factory.js";
+import { DRIVER_SUBCATALOG_CODE_REGEX, DRIVER_SUBCATALOG_CONFIGS } from "./subcatalog-config.js";
 
 export async function registerDriverCatalogRoutes(app: FastifyInstance) {
   createCatalogRoutes(app, {
@@ -33,4 +34,14 @@ export async function registerDriverCatalogRoutes(app: FastifyInstance) {
     displayName: "Escrow Types",
     codeRegex: /^[A-Z][A-Z0-9-]+$/,
   });
+
+  for (const config of DRIVER_SUBCATALOG_CONFIGS) {
+    createCatalogRoutes(app, {
+      tableName: config.tableName,
+      urlSegment: config.urlSegment,
+      routePrefix: "/api/v1/catalogs/driver",
+      displayName: config.displayName,
+      codeRegex: DRIVER_SUBCATALOG_CODE_REGEX,
+    });
+  }
 }
