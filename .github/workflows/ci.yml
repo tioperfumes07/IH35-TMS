@@ -438,6 +438,9 @@ jobs:
       - name: verify:no-test-seed-in-prod-listings
         run: npm run verify:no-test-seed-in-prod-listings
 
+      - name: verify:drivers-catalogs-no-stub
+        run: npm run verify:drivers-catalogs-no-stub
+
       - name: verify:qbo-shared-rate-limit-ceiling
         run: npm run verify:qbo-shared-rate-limit-ceiling
 

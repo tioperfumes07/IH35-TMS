@@ -1068,6 +1068,10 @@ Duplicate `catalogs.equipment_types` rows from mixed seed conventions (for examp
 
 LISTS hub domain ribbon header counts derive from `GET /api/v1/lists/<module>/count`, summing active catalog rows with the same default filters as each sub-page listing (not catalog-cardinality from `views.catalogs_inventory`). Frontend `useModuleCount()` uses TanStack Query with 60s `staleTime`. **CI:** `verify:no-hardcoded-list-counts` fails on hardcoded header badge integers in hub ribbon components.
 
+## Drivers reference catalogs wire — Block A17 (locked 2026-06-03)
+
+Five driver sub-catalogs under `/lists/drivers/*` read global lookup rows from `reference.license_classes`, `reference.cdl_endorsements`, `reference.cdl_restrictions`, `reference.medical_card_statuses`, and `reference.employment_statuses` (migration `0340`). Backend routes live at `GET|POST /api/v1/lists/drivers/<subcatalog>` plus `PATCH /:id` archive toggle (`archived_at`; additive only). Frontend pages reuse `DriversReferenceCatalogPage` with Code / Label / Sort Order / Archived columns, search, archive filter, and **+ Create** modal. Pay catalogs remain on `/lists/driver/*` (singular). **CI:** `verify:drivers-catalogs-no-stub` fails if any catalog page contains stub markers.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

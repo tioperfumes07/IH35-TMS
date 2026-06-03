@@ -57,6 +57,11 @@ import { WorkOrderStatusesListPage } from "../pages/lists/maintenance/WorkOrderS
 import { CivilFineTypesListPage } from "../pages/lists/safety/CivilFineTypesListPage";
 import { CompanyViolationTypesListPage } from "../pages/lists/safety/CompanyViolationTypesListPage";
 import { InternalFineReasonsListPage } from "../pages/lists/safety/InternalFineReasonsListPage";
+import { Catalog as DriversLicenseClassesCatalog } from "../pages/lists/drivers/license-classes/Catalog";
+import { Catalog as DriversEndorsementsCatalog } from "../pages/lists/drivers/endorsements/Catalog";
+import { Catalog as DriversRestrictionsCatalog } from "../pages/lists/drivers/restrictions/Catalog";
+import { Catalog as DriversMedicalCardStatusCatalog } from "../pages/lists/drivers/medical-card-status/Catalog";
+import { Catalog as DriversEmploymentStatusCatalog } from "../pages/lists/drivers/employment-status/Catalog";
 
 vi.mock("../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({
@@ -128,6 +133,11 @@ const LIST_ROUTES = [
   row("/lists/safety/internal-fine-reasons", <InternalFineReasonsListPage />, /internal fine reasons/i),
   row("/lists/safety/civil-fine-types", <CivilFineTypesListPage />, /civil fine types/i),
   row("/lists/safety/company-violation-types", <CompanyViolationTypesListPage />, /company violation types/i),
+  row("/lists/drivers/license-classes", <DriversLicenseClassesCatalog />, /license classes/i),
+  row("/lists/drivers/endorsements", <DriversEndorsementsCatalog />, /cdl endorsements/i),
+  row("/lists/drivers/restrictions", <DriversRestrictionsCatalog />, /cdl restrictions/i),
+  row("/lists/drivers/medical-card-status", <DriversMedicalCardStatusCatalog />, /medical card status/i),
+  row("/lists/drivers/employment-status", <DriversEmploymentStatusCatalog />, /employment status/i),
 ];
 
 describe("lists catalog routing smoke", () => {
