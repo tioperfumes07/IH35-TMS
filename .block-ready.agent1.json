@@ -1,21 +1,25 @@
 {
-  "block_id": "BLOCK-A14-HOME-RECORD-EXPENSE-MODAL",
-  "branch": "fix/home-record-expense-modal-consistency",
+  "block_id": "BLOCK-A15-GENERIC-MODAL-X-CLOSE-AUDIT",
+  "branch": "chore/generic-modal-x-close-audit",
   "phase": "Phase I",
-  "task": "HOME-RECORD-EXPENSE-MODAL",
+  "task": "GENERIC-MODAL-X-CLOSE-AUDIT",
   "allowed_files": [
-    "apps/frontend/src/components/expenses/**",
-    "apps/frontend/src/pages/home/QuickActionsBar.tsx",
-    "apps/frontend/src/pages/home/QuickActionsBar.test.tsx",
-    "apps/frontend/src/pages/accounting/ExpenseCreatePage.tsx",
-    "scripts/verify-home-record-expense-modal.mjs",
-    "scripts/__tests__/verify-home-record-expense-modal.test.mjs",
+    "apps/frontend/src/**/*Modal.tsx",
+    "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    "apps/frontend/src/components/Modal.tsx",
+    "apps/frontend/src/components/ModalCloseButton.tsx",
+    "apps/frontend/src/components/__tests__/modal-x-close-audit.test.tsx",
+    "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx",
+    "scripts/verify-all-modals-have-x-close.mjs",
+    "scripts/__tests__/verify-all-modals-have-x-close.test.mjs",
+    "scripts/verify-guards/149-verify-all-modals-have-x-close.mjs",
     ".github/workflows/ci.yml",
     "package.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent1.json",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"
   ],
   "extra_gates": [
-    "verify:home-record-expense-modal"
+    "verify:all-modals-have-x-close"
   ],
   "runtime_path": "src",
   "db_required": false,

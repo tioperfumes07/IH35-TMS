@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, type UseFormSetValue } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { listVendors } from "../../../api/mdata";
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
+import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";
@@ -227,15 +228,6 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
     }
     finalizeBookLoadClose();
   }, [finalizeBookLoadClose, isDirty, overrideReason]);
-
-  const handleBookLoadHeaderClose = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-      attemptBookLoadClose();
-    },
-    [attemptBookLoadClose]
-  );
 
   useEscapeKey(attemptBookLoadClose, open);
 
@@ -502,13 +494,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
           </div>
           <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9aa6ba" }}>
             <span>{headerTime}</span>
-            <button
-              type="button"
+            <ModalCloseButton
+              title="Book load"
+              onClose={attemptBookLoadClose}
               className="h-6 w-6 rounded text-sm text-gray-200 hover:bg-[#2e3c5a]"
-              onClick={handleBookLoadHeaderClose}
-            >
-              ×
-            </button>
+            />
           </div>
         </header>
 

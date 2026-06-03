@@ -3,6 +3,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { createCashAdvance, listUnpaidBills, type CashAdvanceMethod, type CashAdvancePurpose } from "../../../api/cashAdvances";
 import { listDrivers } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
+import { ModalCloseButton } from "../../../components/ModalCloseButton";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -93,6 +95,8 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
     },
   });
 
+  useEscapeKey(onClose, open);
+
   if (!open) return null;
 
   return (
@@ -101,9 +105,7 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
       <div className="fixed inset-x-0 top-8 z-50 mx-auto w-full max-w-3xl rounded border border-gray-200 bg-white p-4 text-xs shadow-xl">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Create Advance</h3>
-          <button type="button" className="text-gray-500 underline" onClick={onClose}>
-            Close
-          </button>
+          <ModalCloseButton title="Create Advance" onClose={onClose} />
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">

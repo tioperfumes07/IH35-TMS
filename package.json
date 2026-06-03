@@ -200,6 +200,7 @@
     "verify:no-boot-throwing-env-checks": "node scripts/verify-no-boot-throwing-env-checks.mjs",
     "verify:no-duplicate-modal-headers": "node scripts/verify-no-duplicate-modal-headers.mjs",
     "verify:modal-no-doubled-header": "node scripts/verify-modal-no-doubled-header.mjs",
+    "verify:all-modals-have-x-close": "node scripts/verify-all-modals-have-x-close.mjs",
     "verify:no-underscore-canonical-routes": "node scripts/verify-no-underscore-canonical-routes.mjs",
     "verify:equipment-types-no-collision": "node scripts/verify-equipment-types-no-collision.mjs",
     "verify:no-hardcoded-list-counts": "node scripts/verify-no-hardcoded-list-counts.mjs",

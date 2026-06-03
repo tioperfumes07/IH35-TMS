@@ -7,6 +7,7 @@ import { colors, typography } from "../design/tokens";
 import { useEscapeKey } from "../hooks/useEscapeKey";
 import { MODAL_MIN_BY_PRESET, readModalSizeFromPrefs, persistModalSize, type ModalSizePreset } from "../lib/modal-size-prefs";
 import { ConfirmDiscardDialog } from "./dialogs/ConfirmDiscardDialog";
+import { ModalCloseButton } from "./ModalCloseButton";
 import { ResizeHandle } from "./ui/ResizeHandle";
 
 type ModalProps = {
@@ -160,9 +161,7 @@ export function Modal({
             >
               {title}
             </h2>
-            <button className="text-[11px] text-gray-500 hover:text-gray-700" onClick={attemptClose} type="button">
-              Close
-            </button>
+            <ModalCloseButton title={title} onClose={attemptClose} />
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">{children}</div>
           {resizeEnabled ? (

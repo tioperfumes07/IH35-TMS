@@ -1,3 +1,4 @@
+// @ModalNoX — inline repair-block panel, not a dismissible overlay dialog
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDriverLoadAvailability } from "../../api/dispatch";

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { recordLoadAbandonment } from "../../api/abandonment";
 import { Button } from "../../components/Button";
+import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 
 type Props = {
@@ -40,56 +41,45 @@ export function AbandonmentReportModal({ loadId, operatingCompanyId, defaultDriv
   });
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-3">
-      <div className="w-full max-w-lg rounded-lg bg-white p-4 shadow-xl">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="text-base font-semibold text-slate-900">Report load abandonment</div>
-            <div className="text-xs text-slate-500">Creates a chargeback line and marks the load abandoned.</div>
-          </div>
-          <button type="button" className="text-sm text-slate-500 hover:text-slate-800" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-
-        <div className="mt-4 space-y-3 text-sm">
+    <Modal open title="Report load abandonment" onClose={onClose}>
+      <p className="mb-3 text-xs text-slate-500">Creates a chargeback line and marks the load abandoned.</p>
+      <div className="space-y-3 text-sm">
+        <label className="block text-xs font-semibold text-slate-600">
+          Driver ID (uuid)
+          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2 font-mono text-[12px]" value={driverId} onChange={(e) => setDriverId(e.target.value)} />
+        </label>
+        <label className="block text-xs font-semibold text-slate-600">
+          Abandonment time (local)
+          <input type="datetime-local" className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={abandonmentEventAt} onChange={(e) => setAbandonmentEventAt(e.target.value)} />
+        </label>
+        <label className="block text-xs font-semibold text-slate-600">
+          Location (optional)
+          <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={location} onChange={(e) => setLocation(e.target.value)} />
+        </label>
+        <div className="grid grid-cols-2 gap-2">
           <label className="block text-xs font-semibold text-slate-600">
-            Driver ID (uuid)
-            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2 font-mono text-[12px]" value={driverId} onChange={(e) => setDriverId(e.target.value)} />
+            Towing (¢ override)
+            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={towing} onChange={(e) => setTowing(e.target.value.replace(/[^\d]/g, ""))} />
           </label>
           <label className="block text-xs font-semibold text-slate-600">
-            Abandonment time (local)
-            <input type="datetime-local" className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={abandonmentEventAt} onChange={(e) => setAbandonmentEventAt(e.target.value)} />
-          </label>
-          <label className="block text-xs font-semibold text-slate-600">
-            Location (optional)
-            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={location} onChange={(e) => setLocation(e.target.value)} />
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="block text-xs font-semibold text-slate-600">
-              Towing (¢ override)
-              <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={towing} onChange={(e) => setTowing(e.target.value.replace(/[^\d]/g, ""))} />
-            </label>
-            <label className="block text-xs font-semibold text-slate-600">
-              Deadhead miles
-              <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={deadheadMiles} onChange={(e) => setDeadheadMiles(e.target.value)} />
-            </label>
-          </div>
-          <label className="block text-xs font-semibold text-slate-600">
-            Notes
-            <textarea className="mt-1 w-full rounded border border-gray-300 px-2 py-2" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            Deadhead miles
+            <input className="mt-1 w-full rounded border border-gray-300 px-2 py-2" value={deadheadMiles} onChange={(e) => setDeadheadMiles(e.target.value)} />
           </label>
         </div>
-
-        <div className="mt-4 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={() => void mut.mutateAsync()} loading={mut.isPending} disabled={!driverId.trim()}>
-            Submit
-          </Button>
-        </div>
+        <label className="block text-xs font-semibold text-slate-600">
+          Notes
+          <textarea className="mt-1 w-full rounded border border-gray-300 px-2 py-2" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </label>
       </div>
-    </div>
+
+      <div className="mt-4 flex justify-end gap-2">
+        <Button type="button" variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="button" onClick={() => void mut.mutateAsync()} loading={mut.isPending} disabled={!driverId.trim()}>
+          Submit
+        </Button>
+      </div>
+    </Modal>
   );
 }
