@@ -1,44 +1,36 @@
 import Fastify from "fastify";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { registerDriverCatalogRoutes } from "../index.js";
-import { DRIVER_SUBCATALOG_CONFIGS } from "../subcatalog-config.js";
-
-const companyId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+import { DRIVERS_REFERENCE_CONFIGS } from "../drivers-reference.shared.js";
+import { registerDriversReferenceRoutes } from "../drivers-reference.routes.js";
 
 const sampleRow = {
   id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-  operating_company_id: companyId,
   code: "A",
-  display_name: "Class A",
-  description: null,
-  metadata: {},
-  is_active: true,
+  label: "Class A",
   sort_order: 10,
+  archived_at: null,
   created_at: "2026-06-03T00:00:00.000Z",
   updated_at: "2026-06-03T00:00:00.000Z",
 };
 
 const queryMock = vi.fn(async (sql: string) => {
   if (sql.includes("SET LOCAL")) return { rows: [] };
-  if (sql.includes("count(*)")) return { rows: [{ total: "1" }] };
-  if (sql.includes("INSERT INTO catalogs.")) return { rows: [sampleRow] };
+  if (sql.includes("count(*)")) {
+    return { rows: [{ total_count: "1", archived_count: "0" }] };
+  }
   return { rows: [sampleRow] };
 });
 
-vi.mock("../../../auth/session-middleware.js", () => ({
+vi.mock("../../auth/session-middleware.js", () => ({
   requireAuth: () => true,
 }));
 
-vi.mock("../../../auth/db.js", () => ({
+vi.mock("../../auth/db.js", () => ({
   withCurrentUser: async (_userId: string, fn: (client: { query: typeof queryMock }) => Promise<unknown>) =>
     fn({ query: queryMock }),
 }));
 
-vi.mock("../../../audit/crud-audit.js", () => ({
-  appendCrudAudit: vi.fn(async () => undefined),
-}));
-
-describe("driver sub-catalog factory routes", () => {
+describe("GET /api/v1/lists/drivers/* reference endpoints", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
 
   afterEach(async () => {
@@ -55,20 +47,24 @@ describe("driver sub-catalog factory routes", () => {
         role: "Owner",
       };
     });
-    await registerDriverCatalogRoutes(app);
+    await registerDriversReferenceRoutes(app);
     return app;
   }
 
-  for (const config of DRIVER_SUBCATALOG_CONFIGS) {
-    it(`GET /api/v1/catalogs/driver/${config.urlSegment} returns factory rows payload`, async () => {
+  for (const config of DRIVERS_REFERENCE_CONFIGS) {
+    it(`GET /api/v1/lists/drivers/${config.urlSegment} returns rows payload`, async () => {
       const app = await buildApp();
       const response = await app.inject({
         method: "GET",
-        url: `/api/v1/catalogs/driver/${config.urlSegment}?operating_company_id=${companyId}`,
+        url: `/api/v1/lists/drivers/${config.urlSegment}`,
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toEqual({ rows: [sampleRow], total: 1 });
+      expect(response.json()).toEqual({
+        rows: [sampleRow],
+        total_count: 1,
+        archived_count: 0,
+      });
     });
   }
 });

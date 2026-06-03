@@ -1082,4 +1082,16 @@ Relevant block: BLOCK-B10-FAULT-S3-QBO-COA-SYNC-PUSH
 
 Migration `0323` tracks push state on `accounting.qbo_accounts` (`sync_status`, `qbo_push_attempts`, `qbo_last_push_at`, `qbo_last_error`, `parent_synced`, `parent_id`). Scheduler `qbo-accounts-push.ts` runs every 60s, batch 100, **parent-first** two-pass claim (roots then children with synced parents), shares **100/min** rolling budget with B8+B9 via `qbo-master-push-rate-limit.ts`, dead-letter at 5 attempts. Status endpoint `GET /api/v1/sync/qbo-accounts/status` returns hierarchy counts (`root_synced`, `children_synced`, `blocked_by_parent`); Office HOME QBO sync card surfaces account pending/synced counts.
 
-Block A12 (#77-Block-I): LISTS hub ribbon counts come from live `GET /api/v1/lists/<module>/count` endpoints (sum of active catalog rows per domain, matching sub-page list defaults). Frontend hook `useModuleCount()` with 60s staleTime. CI guard `verify:no-hardcoded-list-counts` blocks hardcoded badge integers in hub header components.
+Block A12 (#77-Block-I): LISTS hub ribbon counts come from live `GET /api/v1/lists/<module>/count` endpoints (sum of active catalog rows per domain, matching sub-page list defaults). Frontend hook `useModuleCount()` with 60s `staleTime`. CI guard `verify:no-hardcoded-list-counts` blocks hardcoded badge integers in hub header components.
+
+## 2026-06-03 · Block A17 · Drivers reference catalogs (canonical reference.*)
+
+Source: Block A17 corrected spec  
+Status: LOCKED  
+Relevant block: BLOCK-A17-DRIVERS-REFERENCE-CANONICAL
+
+Migration `0340_reference_driver_lookups.sql` seeds five global `reference.*` driver lookup tables with canonical codes and additive archive via `archived_at`. Orphan `catalogs.*` driver tables receive deprecation comments only (no drops). API: `GET|POST /api/v1/lists/drivers/<subcatalog>`, `PATCH /:id`, `POST /:id/archive`, `POST /:id/restore`. UI at `/lists/drivers/*` with shared table page, search, archive filter, and **+ Create**. Pay catalogs unchanged on `/lists/driver/*`. CI guard `verify:drivers-reference-catalogs-wired`.
+
+## Tracker queue · A17.1-DRIVER-FK-WIRE (deferred)
+
+Migrate `mdata.drivers` inline enums and free-text columns to FKs against `reference.*` driver lookup tables. Requires RBC + careful migration plan. Deferred from A17 canonical catalog wire.

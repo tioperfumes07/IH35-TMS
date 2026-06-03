@@ -66,6 +66,20 @@ export function ListsHubPage() {
         return;
       }
     }
+    if (domain === "drivers") {
+      const driversReferenceRouteMap: Record<string, string> = {
+        "license-classes": "/lists/drivers/license-classes",
+        endorsements: "/lists/drivers/endorsements",
+        restrictions: "/lists/drivers/restrictions",
+        "medical-card-status": "/lists/drivers/medical-card-status",
+        "employment-status": "/lists/drivers/employment-status",
+      };
+      const driversReferencePath = driversReferenceRouteMap[catalogKey];
+      if (driversReferencePath) {
+        navigate(driversReferencePath);
+        return;
+      }
+    }
     navigate(`/lists/${routeDomain}/${catalogKey}`);
   }
 

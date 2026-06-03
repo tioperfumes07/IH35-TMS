@@ -196,11 +196,11 @@ import { DriverPayTypesListPage } from "../pages/lists/driver/DriverPayTypesList
 import { DriverTeamsPage } from "../pages/lists/driver/DriverTeamsPage";
 import { EscrowTypesListPage } from "../pages/lists/driver/EscrowTypesListPage";
 import { PayRateTemplatesListPage } from "../pages/lists/driver/PayRateTemplatesListPage";
-import { CdlEndorsementsListPage } from "../pages/lists/driver/CdlEndorsementsListPage";
-import { CdlRestrictionsListPage } from "../pages/lists/driver/CdlRestrictionsListPage";
-import { EmploymentStatusesListPage } from "../pages/lists/driver/EmploymentStatusesListPage";
-import { LicenseClassesListPage } from "../pages/lists/driver/LicenseClassesListPage";
-import { MedicalCardStatusesListPage } from "../pages/lists/driver/MedicalCardStatusesListPage";
+import { Catalog as DriversLicenseClassesCatalog } from "../pages/lists/drivers/license-classes/Catalog";
+import { Catalog as DriversEndorsementsCatalog } from "../pages/lists/drivers/endorsements/Catalog";
+import { Catalog as DriversRestrictionsCatalog } from "../pages/lists/drivers/restrictions/Catalog";
+import { Catalog as DriversMedicalCardStatusCatalog } from "../pages/lists/drivers/medical-card-status/Catalog";
+import { Catalog as DriversEmploymentStatusCatalog } from "../pages/lists/drivers/employment-status/Catalog";
 import { ConditionCodesListPage } from "../pages/lists/fleet/ConditionCodesListPage";
 import { AssetLocationsListPage } from "../pages/lists/fleet/AssetLocationsListPage";
 import { AssetStatusesListPage } from "../pages/lists/fleet/AssetStatusesListPage";
@@ -1064,42 +1064,42 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/lists/driver/license-classes"
+          path="/lists/drivers/license-classes"
           element={
             <ProtectedRoute>
-              <LicenseClassesListPage />
+              <DriversLicenseClassesCatalog />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/lists/driver/endorsements"
+          path="/lists/drivers/endorsements"
           element={
             <ProtectedRoute>
-              <CdlEndorsementsListPage />
+              <DriversEndorsementsCatalog />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/lists/driver/restrictions"
+          path="/lists/drivers/restrictions"
           element={
             <ProtectedRoute>
-              <CdlRestrictionsListPage />
+              <DriversRestrictionsCatalog />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/lists/driver/medical-card-status"
+          path="/lists/drivers/medical-card-status"
           element={
             <ProtectedRoute>
-              <MedicalCardStatusesListPage />
+              <DriversMedicalCardStatusCatalog />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/lists/driver/employment-status"
+          path="/lists/drivers/employment-status"
           element={
             <ProtectedRoute>
-              <EmploymentStatusesListPage />
+              <DriversEmploymentStatusCatalog />
             </ProtectedRoute>
           }
         />
