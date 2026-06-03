@@ -444,8 +444,8 @@ jobs:
       - name: verify:no-test-seed-in-prod-listings
         run: npm run verify:no-test-seed-in-prod-listings
 
-      - name: verify:drivers-subcatalogs-wired
-        run: npm run verify:drivers-subcatalogs-wired
+      - name: verify:drivers-reference-catalogs-wired
+        run: npm run verify:drivers-reference-catalogs-wired
 
       - name: verify:qbo-shared-rate-limit-ceiling
         run: npm run verify:qbo-shared-rate-limit-ceiling
