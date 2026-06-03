@@ -141,7 +141,7 @@ const subnavPaths = new Set([
   ...extractQuotedPaths(read("apps/frontend/src/components/layout/sidebar-config.ts"), ["to"]),
 ]);
 
-const driversNavMatch = read("apps/frontend/src/pages/Drivers.tsx").match(
+const driversNavMatch = read("apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts").match(
   /export const DRIVERS_MODULE_NAV_PATHS = (\[[^\]]+\])/
 );
 if (driversNavMatch) {
