@@ -17,6 +17,7 @@ import {
   type PlaidLinkAccountType,
 } from "./link-token-config.js";
 import { getPlaidClient, getPlaidEnvForAudit } from "./plaid-client.js";
+import { markPlaidItemSyncSucceeded } from "./plaid-sync-state.js";
 
 type SyncCounts = {
   added: number;
@@ -644,6 +645,8 @@ export async function syncTransactions(itemId: string) {
       }
     });
   }
+
+  await markPlaidItemSyncSucceeded(itemId);
 
   await appendSystemAudit(
     "banking.transaction.imported",

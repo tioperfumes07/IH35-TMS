@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePlaidLink } from "react-plaid-link";
-import { createPlaidUpdateLinkToken, exchangePlaidPublicToken, type PlaidBankAccount } from "../../../api/banking";
+import { createPlaidUpdateLinkToken, exchangePlaidPublicToken } from "../../../api/banking";
 import { useAuth } from "../../../auth/useAuth";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
+
+export { plaidItemBadgeClasses, plaidItemBadgeLabel } from "./plaid-item-display";
 
 type Props = {
   operatingCompanyId: string;
@@ -81,49 +83,4 @@ export function PlaidReconnectButton({ operatingCompanyId, plaidItemId, onComple
       {loading || busy ? "Working…" : "Reconnect"}
     </ActionButton>
   );
-}
-
-export function plaidItemBadgeLabel(accounts: PlaidBankAccount[]): string {
-  let worst: PlaidBankAccount["sync_status"] | null = null;
-  let rank = -1;
-  for (const a of accounts) {
-    const r = syncRank(a.sync_status);
-    if (r > rank) {
-      rank = r;
-      worst = a.sync_status;
-    }
-  }
-  if (worst === "active") return "Healthy";
-  if (worst === "needs_reauth") return "Login Required";
-  if (worst === "error") return "Error";
-  if (worst === "pending") return "Pending";
-  if (worst === "disconnected") return "Disconnected";
-  return "Unknown";
-}
-
-export function plaidItemBadgeClasses(accounts: PlaidBankAccount[]): string {
-  const label = plaidItemBadgeLabel(accounts);
-  if (label === "Healthy") return "bg-green-100 text-green-800";
-  if (label === "Login Required") return "bg-amber-100 text-amber-800";
-  if (label === "Error") return "bg-red-100 text-red-800";
-  if (label === "Pending") return "bg-gray-100 text-gray-700";
-  if (label === "Disconnected") return "bg-gray-200 text-gray-600";
-  return "bg-gray-100 text-gray-700";
-}
-
-function syncRank(s: PlaidBankAccount["sync_status"]): number {
-  switch (s) {
-    case "error":
-      return 4;
-    case "needs_reauth":
-      return 3;
-    case "pending":
-      return 2;
-    case "active":
-      return 1;
-    case "disconnected":
-      return 0;
-    default:
-      return 0;
-  }
 }

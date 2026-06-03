@@ -4,7 +4,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { getPlaidClient } from "../integrations/plaid/plaid-client.js";
-import { syncTransactions } from "../integrations/plaid/plaid.service.js";
+import { handleItemError, syncTransactions } from "../integrations/plaid/plaid.service.js";
+import { plaidManualSyncErrorResponse } from "../integrations/plaid/plaid-sync-state.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 function officeRole(role: string) {
@@ -228,8 +229,10 @@ export async function registerPlaidBankingItemsRoutes(app: FastifyInstance) {
     } catch (error) {
       req.log.error({ err: error }, "plaid_item_sync_failed");
       const plaidErr = extractPlaidApiError(error);
-      if (plaidErr?.code === "ITEM_LOGIN_REQUIRED") {
-        return reply.code(409).send({ error: "item_login_required", reconnect_required: true });
+      if (plaidErr?.code) {
+        await handleItemError(params.data.itemId, plaidErr.code);
+        const mapped = plaidManualSyncErrorResponse(plaidErr.code);
+        if (mapped) return reply.code(mapped.statusCode).send(mapped.body);
       }
       if (plaidErr?.code) {
         return reply.code(502).send({

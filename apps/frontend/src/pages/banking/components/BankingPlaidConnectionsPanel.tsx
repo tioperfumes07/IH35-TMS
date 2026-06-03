@@ -12,7 +12,9 @@ import {
 import { ApiError } from "../../../api/client";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useAuth } from "../../../auth/useAuth";
-import { PlaidReconnectButton, plaidItemBadgeClasses, plaidItemBadgeLabel } from "./PlaidReconnectButton";
+import { PlaidReconnectButton } from "./PlaidReconnectButton";
+import { PlaidItemCard } from "./PlaidItemCard";
+import { derivePlaidConnectionBadgeLabel } from "./plaid-item-display";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
 import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
@@ -143,43 +145,17 @@ export function BankingPlaidConnectionsPanel({
           const institution = lead.institution_name || "Institution";
           const itemId = g.itemId.startsWith("noid:") ? null : g.itemId;
           const needsReauth = g.accounts.some((a) => a.sync_status === "needs_reauth");
-          const lastSync = g.accounts
-            .map((a) => (a.last_synced_at ? new Date(a.last_synced_at).getTime() : 0))
-            .reduce((a, b) => Math.max(a, b), 0);
-          const badgeLabel = plaidItemBadgeLabel(g.accounts);
-          const badgeClass = plaidItemBadgeClasses(g.accounts);
+          const badgeLabel = derivePlaidConnectionBadgeLabel(g.accounts);
+          const showReconnectCta = needsReauth || badgeLabel === "Never synced" || badgeLabel === "Out of sync";
           return (
-            <div key={g.itemId} className="rounded border border-gray-100 p-3">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="flex min-w-0 gap-2">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-gray-100 text-xs font-bold text-gray-700" aria-hidden>
-                    {institution.slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900">{institution}</p>
-                    <p className="text-xs text-gray-600">
-                      Accounts:{" "}
-                      {g.accounts.map((a) => (
-                        <span key={a.id} className="mr-2 inline-block">
-                          <Link className="text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600" to={`/banking/accounts/${a.id}`}>
-                            {(a.account_name || "Account") + (a.account_mask ? ` ••••${a.account_mask}` : "")}
-                          </Link>
-                        </span>
-                      ))}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Last sync: {lastSync ? new Date(lastSync).toLocaleString() : "—"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${badgeClass}`}>{badgeLabel}</span>
-                  {canConnect && itemId ? (
+            <div key={g.itemId} className="space-y-2">
+              <PlaidItemCard
+                institution={institution}
+                accounts={g.accounts}
+                actions={
+                  canConnect && itemId ? (
                     <div className="flex flex-wrap justify-end gap-2">
                       <div className="flex flex-col items-end gap-1">
-                        {needsReauth ? (
-                          <span className="text-[10px] font-semibold uppercase text-amber-800">Reconnect required</span>
-                        ) : null}
                         <div
                           className={
                             reconnectHighlightItemId === itemId
@@ -223,8 +199,23 @@ export function BankingPlaidConnectionsPanel({
                         </ActionButton>
                       ) : null}
                     </div>
-                  ) : null}
-                </div>
+                  ) : null
+                }
+              />
+              <div className="rounded border border-gray-100 px-3 pb-3 pt-0">
+                <p className="text-xs text-gray-600">
+                  Accounts:{" "}
+                  {g.accounts.map((a) => (
+                    <span key={a.id} className="mr-2 inline-block">
+                      <Link className="text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600" to={`/banking/accounts/${a.id}`}>
+                        {(a.account_name || "Account") + (a.account_mask ? ` ••••${a.account_mask}` : "")}
+                      </Link>
+                    </span>
+                  ))}
+                </p>
+                {showReconnectCta && itemId ? (
+                  <p className="mt-1 text-[10px] font-semibold uppercase text-amber-800">Reconnect needed</p>
+                ) : null}
               </div>
             </div>
           );
