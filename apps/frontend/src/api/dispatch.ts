@@ -490,3 +490,88 @@ export function listLoadTemplates(operatingCompanyId: string) {
 export function createLoadTemplate(body: { operating_company_id: string; name: string; template_json: Record<string, unknown> }) {
   return apiRequest<{ template: LoadTemplateRow }>(`/api/v1/load-templates`, { method: "POST", body });
 }
+
+export type AtRiskLoadRow = {
+  id: string;
+  load_number: string;
+  status: string;
+  customer_name: string | null;
+  unit_number: string | null;
+  driver_name: string | null;
+  latest_eta_prediction: Record<string, unknown> | null;
+  next_stop_scheduled_at: string | null;
+  delivery_city: string | null;
+  delivery_state: string | null;
+};
+
+export function listAtRiskDispatchLoads(operatingCompanyId: string) {
+  return apiRequest<{ loads: AtRiskLoadRow[] }>(
+    `/api/v1/dispatch/at-risk-loads?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export type DispatchIntransitIssueRow = {
+  id: string;
+  load_id: string | null;
+  driver_id: string | null;
+  unit_id: string | null;
+  issue_category: string;
+  issue_description: string;
+  severity: string;
+  status: string;
+  reported_at: string;
+  load_number: string | null;
+  unit_number: string | null;
+  driver_name: string | null;
+};
+
+export function listDispatchIntransitIssues(operatingCompanyId: string, status?: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (status) q.set("status", status);
+  return apiRequest<{ issues: DispatchIntransitIssueRow[] }>(`/api/v1/dispatch/intransit-issues?${q.toString()}`);
+}
+
+export function createDispatchIntransitIssue(body: {
+  operating_company_id: string;
+  load_id: string;
+  issue_category: string;
+  issue_description: string;
+  severity: "info" | "warning" | "severe";
+  driver_id?: string;
+  unit_id?: string;
+}) {
+  return apiRequest<{ id: string; reported_at: string }>(`/api/v1/dispatch/intransit-issues/office`, { method: "POST", body });
+}
+
+export function resolveDispatchIntransitIssue(issueId: string, body: { operating_company_id: string; notes?: string }) {
+  return apiRequest<{ id: string; status: string }>(`/api/v1/dispatch/intransit-issues/${issueId}/resolve`, {
+    method: "POST",
+    body,
+  });
+}
+
+export type DispatchAssignmentHistoryRow = {
+  id: string;
+  load_id: string;
+  assignment_method: string;
+  reason_code: string | null;
+  notes: string | null;
+  assigned_at: string;
+  load_number: string | null;
+  previous_driver_name: string | null;
+  new_driver_name: string | null;
+  previous_unit_number: string | null;
+  new_unit_number: string | null;
+};
+
+export function listDispatchAssignmentHistory(
+  operatingCompanyId: string,
+  filters?: { driver_id?: string; from?: string; to?: string; reason?: string }
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (filters?.driver_id) q.set("driver_id", filters.driver_id);
+  if (filters?.from) q.set("from", filters.from);
+  if (filters?.to) q.set("to", filters.to);
+  if (filters?.reason) q.set("reason", filters.reason);
+  return apiRequest<{ rows: DispatchAssignmentHistoryRow[] }>(`/api/v1/dispatch/assignment-history?${q.toString()}`);
+}
