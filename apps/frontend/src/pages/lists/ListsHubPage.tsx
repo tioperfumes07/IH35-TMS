@@ -66,6 +66,10 @@ export function ListsHubPage() {
         return;
       }
     }
+    if (domain === "names_master") {
+      navigate("/lists/names");
+      return;
+    }
     if (domain === "drivers") {
       const driversReferenceRouteMap: Record<string, string> = {
         "license-classes": "/lists/drivers/license-classes",

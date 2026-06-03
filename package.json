@@ -182,6 +182,8 @@
     "verify:a17-deprecation-comments": "node scripts/verify-a17-deprecation-comments.mjs",
     "verify:oem-parts-no-touch-existing-parts-surfaces": "node scripts/verify-oem-parts-no-touch-existing-parts-surfaces.mjs",
     "seed:reference-oem-parts": "node scripts/seed-reference-oem-parts.mjs",
+    "verify:names-master-readonly": "node scripts/verify-names-master-readonly.mjs",
+    "verify:names-master-no-new-tables": "node scripts/verify-names-master-no-new-tables.mjs",
     "verify:qbo-shared-rate-limit-ceiling": "node scripts/verify-qbo-shared-rate-limit-ceiling.mjs",
     "verify:service-location-buckets-wired": "node scripts/verify-service-location-buckets-wired.mjs",
     "verify:startup-migration-drift-guard": "node scripts/verify-startup-migration-drift-guard.mjs",

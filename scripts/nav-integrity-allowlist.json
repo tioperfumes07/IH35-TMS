@@ -41,7 +41,7 @@
     { "path": "/lists/drivers", "reason": "Lists domain hub hits ComingSoon catch-all — Block 43" },
     { "path": "/lists/fleet", "reason": "Lists domain hub hits ComingSoon catch-all — Block 43" },
     { "path": "/lists/accounting", "reason": "Lists domain hub hits ComingSoon catch-all — Block 43" },
-    { "path": "/lists/names_master", "reason": "Lists domain hub hits ComingSoon catch-all — Block 43" },
+    { "path": "/lists/names", "reason": "Names Master cross-module navigator (A18) — dedicated route before catch-all" },
     { "path": "/legal/privacy", "reason": "Public legal page — not in module subnav" },
     { "path": "/legal/terms", "reason": "Public legal page — not in module subnav" },
     { "path": "/legal/matters/new", "reason": "Legal workflow create — deep link only" },

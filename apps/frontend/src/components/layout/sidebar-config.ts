@@ -185,6 +185,11 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Drivers", to: "/drivers" },
         { label: "Settlements", to: "/driver-finance/settlements" },
       ];
+    case "lists":
+      return [
+        { label: "Lists & Catalogs", to: "/lists" },
+        { label: "Names Master", to: "/lists/names" },
+      ];
     case "legal":
       return [
         { label: "Contracts", to: "/legal/contracts" },

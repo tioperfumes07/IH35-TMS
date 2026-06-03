@@ -1104,6 +1104,19 @@ These layers are complementary. Future blocks may link inventory rows to an OEM 
 
 Backend routes: `GET|POST /api/v1/lists/oem-parts`, `PATCH /:id`, `POST /:id/archive`, `POST /:id/restore`, `GET /brands`. List default filter: `archived_at IS NULL`; `?fleet_only=true` (default) filters to brands present in fleet (`mdata.units.make`, `mdata.equipment.make`, `mdata.equipment.reefer_brand`). Bootstrap: `scripts/seed-reference-oem-parts.mjs` + `scripts/data/oem-parts-bootstrap.json` (idempotent upsert). Migration `0342_reference_oem_parts.sql`. Frontend: `/lists/maintenance/oem-parts-reference` — **OEM Parts Reference** page with brand/category/search filters and **+ Create** modal. **CI:** `verify:oem-parts-no-touch-existing-parts-surfaces` asserts the four inventory surfaces are untouched.
 
+## Names Master — cross-module navigator (Block A18, locked 2026-06-03)
+
+**Pattern:** read-only aggregated search hub at `/lists/names` — not a catalog clone. No new tables and no write endpoints under `/api/v1/lists/names/*`.
+
+`GET /api/v1/lists/names/search` unions `mdata.customers`, `mdata.vendors`, `mdata.drivers`, `mdata.customer_contacts`, accessible `org.companies`, and unlinked `mdata.qbo_*` mirrors (deduped when `qbo_*_id` already links mdata). Default filter hides archived/deactivated rows; `?include_archived=true` includes them. Each result returns `link_to_module_page` for click-through (`/customers/{id}`, `/vendors/{id}`, `/drivers/{id}`, etc.). **No + Create** on the hub — authoring stays in canonical module UIs.
+
+**CI:** `verify:names-master-readonly`, `verify:names-master-no-new-tables`.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
+
+
+## Names Master — Cross-Module Navigator (A18)
+
+Names Master (`/lists/names`) is a **read-only hub** that searches existing party records across modules (customers, vendors, drivers, customer contacts, and accessible org companies / unlinked QBO mirrors). It does **not** introduce new tables or write APIs; results deep-link to canonical module pages (`/customers/:id`, `/vendors/:id`, `/drivers/:id`, etc.). This pattern is distinct from catalog CRUD (A17 `reference.*` + `archived_at`).

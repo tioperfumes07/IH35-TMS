@@ -453,6 +453,12 @@ jobs:
       - name: verify:oem-parts-no-touch-existing-parts-surfaces
         run: npm run verify:oem-parts-no-touch-existing-parts-surfaces
 
+      - name: verify:names-master-readonly
+        run: npm run verify:names-master-readonly
+
+      - name: verify:names-master-no-new-tables
+        run: npm run verify:names-master-no-new-tables
+
       - name: verify:qbo-shared-rate-limit-ceiling
         run: npm run verify:qbo-shared-rate-limit-ceiling
 

@@ -7,6 +7,7 @@ import { Shell } from "../components/Shell";
 import { CustomersPage } from "../pages/Customers";
 import { CustomerDetailPage } from "../pages/CustomerDetail";
 import { ListsHubPage } from "../pages/lists/ListsHubPage";
+import { NamesMasterHub } from "../pages/lists/names/NamesMasterHub";
 import { DriverDetailPage } from "../pages/DriverDetail";
 import { DriverProfilePage } from "../pages/drivers/DriverProfilePage";
 import { DriverHosDetailPage } from "../pages/drivers/DriverHosDetailPage";
@@ -996,6 +997,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ListsHubPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/names"
+          element={
+            <ProtectedRoute>
+              <NamesMasterHub />
             </ProtectedRoute>
           }
         />
