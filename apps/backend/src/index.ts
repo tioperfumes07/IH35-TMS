@@ -150,6 +150,7 @@ import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerListsCountsRoutes } from "./lists/lists-counts.routes.js";
 import { registerDriverCatalogDeprecatedRoutes } from "./lists/driver-catalogs.routes.js";
+import { registerNamesMasterRoutes } from "./lists/names-master.routes.js";
 import { registerDriversReferenceRoutes } from "./lists/drivers-reference.routes.js";
 import { registerAssetsRoutes } from "./assets/assets.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
@@ -577,6 +578,7 @@ async function main() {
   await registerListsHubRoutes(app);
   await registerListsCountsRoutes(app);
   await registerDriversReferenceRoutes(app);
+  await registerNamesMasterRoutes(app);
   await registerAccountingRoutes(app);
   await registerCompanyRoutes(app);
   await registerLegalTemplateRoutes(app);
