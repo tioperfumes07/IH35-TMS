@@ -49,6 +49,7 @@ import { MpgBandsListPage } from "../pages/lists/fuel/MpgBandsListPage";
 import { MaintenanceFailureCodesListPage } from "../pages/lists/maintenance/MaintenanceFailureCodesListPage";
 import { MaintenanceLaborCodesListPage } from "../pages/lists/maintenance/MaintenanceLaborCodesListPage";
 import { MaintenancePartsListPage } from "../pages/lists/maintenance/MaintenancePartsListPage";
+import { OemPartsCatalog } from "../pages/lists/maintenance/OemPartsCatalog";
 import { MaintenancePriorityLevelsListPage } from "../pages/lists/maintenance/MaintenancePriorityLevelsListPage";
 import { MaintenanceServiceTasksListPage } from "../pages/lists/maintenance/MaintenanceServiceTasksListPage";
 import { MaintenanceShopLocationsListPage } from "../pages/lists/maintenance/MaintenanceShopLocationsListPage";
@@ -90,6 +91,7 @@ const LIST_ROUTES = [
   row("/lists/maintenance/failure-codes", <MaintenanceFailureCodesListPage />, /maintenance failure codes/i),
   row("/lists/maintenance/labor-codes", <MaintenanceLaborCodesListPage />, /maintenance labor codes/i),
   row("/lists/maintenance/parts", <MaintenancePartsListPage />, /maintenance parts/i),
+  row("/lists/maintenance/oem-parts-reference", <OemPartsCatalog />, /oem parts reference/i),
   row("/lists/maintenance/priority-levels", <MaintenancePriorityLevelsListPage />, /maintenance priority levels/i),
   row("/lists/maintenance/service-tasks", <MaintenanceServiceTasksListPage />, /maintenance service tasks/i),
   row("/lists/maintenance/shop-locations", <MaintenanceShopLocationsListPage />, /maintenance shop locations/i),

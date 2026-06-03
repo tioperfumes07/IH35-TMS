@@ -1,0 +1,64 @@
+{
+  "parts": [
+    { "brand": "Freightliner", "oem_part_number": "A0000905251", "part_name": "Engine Oil Filter", "category": "filters", "sub_category": "oil", "unit_cost_usd_typical": 18.5, "default_supplier": "Detroit Diesel" },
+    { "brand": "Freightliner", "oem_part_number": "A0000902051", "part_name": "Fuel Filter", "category": "filters", "sub_category": "fuel", "unit_cost_usd_typical": 42.0, "default_supplier": "Detroit Diesel" },
+    { "brand": "Freightliner", "oem_part_number": "A0000901551", "part_name": "Air Filter Primary", "category": "filters", "sub_category": "air", "unit_cost_usd_typical": 65.0, "default_supplier": "Detroit Diesel" },
+    { "brand": "Freightliner", "oem_part_number": "A06-75203-000", "part_name": "Front Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 185.0, "default_supplier": "Bendix" },
+    { "brand": "Freightliner", "oem_part_number": "A06-75204-000", "part_name": "Rear Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 175.0, "default_supplier": "Bendix" },
+    { "brand": "Freightliner", "oem_part_number": "A06-30781-000", "part_name": "Headlight Bulb H4656", "category": "electrical", "sub_category": "lighting", "unit_cost_usd_typical": 12.0, "default_supplier": "Philips" },
+    { "brand": "Freightliner", "oem_part_number": "A0014461169", "part_name": "Coolant Concentrate 1 Gal", "category": "fluids", "sub_category": "coolant", "unit_cost_usd_typical": 22.0, "default_supplier": "Fleetguard" },
+    { "brand": "Freightliner", "oem_part_number": "29545776", "part_name": "DEF Filter", "category": "filters", "sub_category": "def", "unit_cost_usd_typical": 38.0, "default_supplier": "Detroit Diesel" },
+
+    { "brand": "Peterbilt", "oem_part_number": "P27-6036", "part_name": "Engine Oil Filter", "category": "filters", "sub_category": "oil", "unit_cost_usd_typical": 19.0, "default_supplier": "PACCAR" },
+    { "brand": "Peterbilt", "oem_part_number": "P27-6040", "part_name": "Fuel Filter", "category": "filters", "sub_category": "fuel", "unit_cost_usd_typical": 44.0, "default_supplier": "PACCAR" },
+    { "brand": "Peterbilt", "oem_part_number": "P27-6038", "part_name": "Air Filter", "category": "filters", "sub_category": "air", "unit_cost_usd_typical": 58.0, "default_supplier": "PACCAR" },
+    { "brand": "Peterbilt", "oem_part_number": "P27-1001", "part_name": "Front Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 195.0, "default_supplier": "Bendix" },
+    { "brand": "Peterbilt", "oem_part_number": "P27-1002", "part_name": "Rear Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 188.0, "default_supplier": "Bendix" },
+    { "brand": "Peterbilt", "oem_part_number": "P27-2001", "part_name": "Headlight Assembly", "category": "electrical", "sub_category": "lighting", "unit_cost_usd_typical": 145.0, "default_supplier": "Truck-Lite" },
+    { "brand": "Peterbilt", "oem_part_number": "P27-3001", "part_name": "Coolant 50/50 Premix", "category": "fluids", "sub_category": "coolant", "unit_cost_usd_typical": 18.0, "default_supplier": "Fleetguard" },
+
+    { "brand": "Kenworth", "oem_part_number": "K061-055", "part_name": "Engine Oil Filter", "category": "filters", "sub_category": "oil", "unit_cost_usd_typical": 17.5, "default_supplier": "PACCAR" },
+    { "brand": "Kenworth", "oem_part_number": "K061-056", "part_name": "Fuel Filter", "category": "filters", "sub_category": "fuel", "unit_cost_usd_typical": 41.0, "default_supplier": "PACCAR" },
+    { "brand": "Kenworth", "oem_part_number": "K061-057", "part_name": "Air Filter", "category": "filters", "sub_category": "air", "unit_cost_usd_typical": 62.0, "default_supplier": "PACCAR" },
+    { "brand": "Kenworth", "oem_part_number": "K065-101", "part_name": "Front Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 180.0, "default_supplier": "Bendix" },
+    { "brand": "Kenworth", "oem_part_number": "K065-102", "part_name": "Rear Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 172.0, "default_supplier": "Bendix" },
+    { "brand": "Kenworth", "oem_part_number": "K070-201", "part_name": "Marker Light LED", "category": "electrical", "sub_category": "lighting", "unit_cost_usd_typical": 24.0, "default_supplier": "Truck-Lite" },
+    { "brand": "Kenworth", "oem_part_number": "K080-301", "part_name": "Power Steering Fluid", "category": "fluids", "sub_category": "steering", "unit_cost_usd_typical": 14.0, "default_supplier": "Fleetguard" },
+
+    { "brand": "Volvo", "oem_part_number": "20532237", "part_name": "Engine Oil Filter", "category": "filters", "sub_category": "oil", "unit_cost_usd_typical": 21.0, "default_supplier": "Volvo" },
+    { "brand": "Volvo", "oem_part_number": "20514524", "part_name": "Fuel Filter", "category": "filters", "sub_category": "fuel", "unit_cost_usd_typical": 48.0, "default_supplier": "Volvo" },
+    { "brand": "Volvo", "oem_part_number": "20405837", "part_name": "Air Filter", "category": "filters", "sub_category": "air", "unit_cost_usd_typical": 72.0, "default_supplier": "Volvo" },
+    { "brand": "Volvo", "oem_part_number": "20522933", "part_name": "Front Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 210.0, "default_supplier": "Volvo" },
+    { "brand": "Volvo", "oem_part_number": "20522934", "part_name": "Rear Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 198.0, "default_supplier": "Volvo" },
+    { "brand": "Volvo", "oem_part_number": "20476049", "part_name": "Headlight Bulb", "category": "electrical", "sub_category": "lighting", "unit_cost_usd_typical": 15.0, "default_supplier": "Volvo" },
+    { "brand": "Volvo", "oem_part_number": "20440388", "part_name": "Coolant Concentrate", "category": "fluids", "sub_category": "coolant", "unit_cost_usd_typical": 26.0, "default_supplier": "Volvo" },
+
+    { "brand": "Mack", "oem_part_number": "25168262", "part_name": "Engine Oil Filter", "category": "filters", "sub_category": "oil", "unit_cost_usd_typical": 20.0, "default_supplier": "Mack" },
+    { "brand": "Mack", "oem_part_number": "25168263", "part_name": "Fuel Filter", "category": "filters", "sub_category": "fuel", "unit_cost_usd_typical": 46.0, "default_supplier": "Mack" },
+    { "brand": "Mack", "oem_part_number": "25168264", "part_name": "Air Filter", "category": "filters", "sub_category": "air", "unit_cost_usd_typical": 68.0, "default_supplier": "Mack" },
+    { "brand": "Mack", "oem_part_number": "25168265", "part_name": "Front Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 192.0, "default_supplier": "Bendix" },
+    { "brand": "Mack", "oem_part_number": "25168266", "part_name": "Rear Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 184.0, "default_supplier": "Bendix" },
+    { "brand": "Mack", "oem_part_number": "25168267", "part_name": "Turn Signal Lamp", "category": "electrical", "sub_category": "lighting", "unit_cost_usd_typical": 18.0, "default_supplier": "Truck-Lite" },
+
+    { "brand": "International", "oem_part_number": "1842620C1", "part_name": "Engine Oil Filter", "category": "filters", "sub_category": "oil", "unit_cost_usd_typical": 19.5, "default_supplier": "Navistar" },
+    { "brand": "International", "oem_part_number": "1842621C1", "part_name": "Fuel Filter", "category": "filters", "sub_category": "fuel", "unit_cost_usd_typical": 43.0, "default_supplier": "Navistar" },
+    { "brand": "International", "oem_part_number": "1842622C1", "part_name": "Air Filter", "category": "filters", "sub_category": "air", "unit_cost_usd_typical": 64.0, "default_supplier": "Navistar" },
+    { "brand": "International", "oem_part_number": "1842623C1", "part_name": "Front Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 178.0, "default_supplier": "Bendix" },
+    { "brand": "International", "oem_part_number": "1842624C1", "part_name": "Rear Brake Pad Set", "category": "brakes", "sub_category": "pads", "unit_cost_usd_typical": 170.0, "default_supplier": "Bendix" },
+    { "brand": "International", "oem_part_number": "1842625C1", "part_name": "Headlight Bulb", "category": "electrical", "sub_category": "lighting", "unit_cost_usd_typical": 11.0, "default_supplier": "Navistar" },
+
+    { "brand": "Carrier", "oem_part_number": "12-00328-00", "part_name": "Reefer Oil Filter", "category": "reefer", "sub_category": "filters", "unit_cost_usd_typical": 28.0, "default_supplier": "Carrier Transicold" },
+    { "brand": "Carrier", "oem_part_number": "12-00329-00", "part_name": "Reefer Fuel Filter", "category": "reefer", "sub_category": "filters", "unit_cost_usd_typical": 32.0, "default_supplier": "Carrier Transicold" },
+    { "brand": "Carrier", "oem_part_number": "12-00441-00", "part_name": "Reefer Belt", "category": "reefer", "sub_category": "belts", "unit_cost_usd_typical": 45.0, "default_supplier": "Carrier Transicold" },
+    { "brand": "Carrier", "oem_part_number": "12-00502-00", "part_name": "Reefer Compressor Clutch", "category": "reefer", "sub_category": "compressor", "unit_cost_usd_typical": 385.0, "default_supplier": "Carrier Transicold" },
+    { "brand": "Carrier", "oem_part_number": "12-00601-00", "part_name": "Reefer Condenser Fan Motor", "category": "reefer", "sub_category": "electrical", "unit_cost_usd_typical": 265.0, "default_supplier": "Carrier Transicold" },
+    { "brand": "Carrier", "oem_part_number": "12-00701-00", "part_name": "Reefer Refrigerant R404A", "category": "reefer", "sub_category": "fluids", "unit_cost_usd_typical": 95.0, "default_supplier": "Carrier Transicold" },
+
+    { "brand": "Thermo King", "oem_part_number": "11-6186", "part_name": "Reefer Oil Filter", "category": "reefer", "sub_category": "filters", "unit_cost_usd_typical": 26.0, "default_supplier": "Thermo King" },
+    { "brand": "Thermo King", "oem_part_number": "11-6187", "part_name": "Reefer Fuel Filter", "category": "reefer", "sub_category": "filters", "unit_cost_usd_typical": 30.0, "default_supplier": "Thermo King" },
+    { "brand": "Thermo King", "oem_part_number": "11-9297", "part_name": "Reefer Belt", "category": "reefer", "sub_category": "belts", "unit_cost_usd_typical": 42.0, "default_supplier": "Thermo King" },
+    { "brand": "Thermo King", "oem_part_number": "11-9932", "part_name": "Reefer Compressor Clutch", "category": "reefer", "sub_category": "compressor", "unit_cost_usd_typical": 395.0, "default_supplier": "Thermo King" },
+    { "brand": "Thermo King", "oem_part_number": "11-5941", "part_name": "Reefer Evaporator Fan Motor", "category": "reefer", "sub_category": "electrical", "unit_cost_usd_typical": 275.0, "default_supplier": "Thermo King" },
+    { "brand": "Thermo King", "oem_part_number": "11-6101", "part_name": "Reefer Refrigerant R404A", "category": "reefer", "sub_category": "fluids", "unit_cost_usd_typical": 92.0, "default_supplier": "Thermo King" }
+  ]
+}

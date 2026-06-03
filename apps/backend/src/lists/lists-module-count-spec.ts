@@ -35,6 +35,7 @@ export const LISTS_MODULE_COUNT_SPECS: Record<string, ModuleCountTableSpec[]> = 
     { table: "maintenance_failure_codes", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_labor_codes", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_parts", activeFilter: "is_active", companyScoped: true },
+    { table: "oem_parts", activeFilter: "archived_at", companyScoped: false, schema: "reference" },
     { table: "maintenance_priority_levels", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_service_tasks", activeFilter: "is_active", companyScoped: true },
     { table: "maintenance_shop_locations", activeFilter: "is_active", companyScoped: true },

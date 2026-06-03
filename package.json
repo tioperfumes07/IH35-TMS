@@ -180,6 +180,8 @@
     "verify:no-test-seed-in-prod-listings": "node scripts/verify-no-test-seed-in-prod-listings.mjs",
     "verify:drivers-reference-catalogs-wired": "node scripts/verify-drivers-reference-catalogs-wired.mjs",
     "verify:a17-deprecation-comments": "node scripts/verify-a17-deprecation-comments.mjs",
+    "verify:oem-parts-no-touch-existing-parts-surfaces": "node scripts/verify-oem-parts-no-touch-existing-parts-surfaces.mjs",
+    "seed:reference-oem-parts": "node scripts/seed-reference-oem-parts.mjs",
     "verify:qbo-shared-rate-limit-ceiling": "node scripts/verify-qbo-shared-rate-limit-ceiling.mjs",
     "verify:service-location-buckets-wired": "node scripts/verify-service-location-buckets-wired.mjs",
     "verify:startup-migration-drift-guard": "node scripts/verify-startup-migration-drift-guard.mjs",
