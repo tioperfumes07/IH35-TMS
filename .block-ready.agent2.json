@@ -1,30 +1,26 @@
 {
-  "block_id": "BLOCK-B13-Block-AM-fuel-loves-sync-restore",
-  "branch": "fix/fuel-loves-sync-restore-v2",
-  "phase": "Phase B13",
-  "task": "FUEL-LOVES-SYNC-RESTORE",
+  "block_id": "BLOCK-B14-Block-O-customer-vendor-default-classifications",
+  "branch": "fix/customer-vendor-default-classifications",
+  "phase": "Phase B14",
+  "task": "CUSTOMER-VENDOR-DEFAULT-CLASSIFICATIONS",
   "allowed_files": [
-    "apps/backend/src/sync/loves-card-import.ts",
-    "apps/backend/src/sync/run-loves-card-import.ts",
-    "apps/backend/src/sync/loves-status.routes.ts",
-    "apps/backend/src/sync/__tests__/loves-card-import.test.ts",
-    "apps/backend/src/sync/__tests__/loves-status.routes.test.ts",
-    "apps/backend/src/cron/loves-card-import.cron.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/api/fuelPlanner.ts",
-    "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
-    "apps/frontend/src/pages/fuel/components/FuelKpiRow.tsx",
-    "render.yaml",
-    "scripts/verify-loves-cron-registered.mjs",
-    "scripts/__tests__/verify-loves-cron-registered.test.mjs",
+    "db/migrations/0325_clear_default_classifications.sql",
+    "apps/backend/src/mdata/classification-queries.ts",
+    "apps/backend/src/mdata/customers.routes.ts",
+    "apps/backend/src/mdata/vendors.routes.ts",
+    "apps/backend/src/mdata/__tests__/classification-queries.test.ts",
+    "apps/backend/src/mdata/__tests__/clear-default-classifications.migration.test.ts",
+    "apps/backend/src/seed/csv-seed-import.ts",
+    "scripts/verify-no-bulk-default-classifications.mjs",
+    "scripts/__tests__/verify-no-bulk-default-classifications.test.mjs",
     ".github/workflows/ci.yml",
     "package.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:loves-cron-registered"
+    "verify:no-bulk-default-classifications"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }

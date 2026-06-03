@@ -4,6 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { enqueueTmsVendorPushRequested } from "../qbo/tms-vendor-push-chain.service.js";
+import { listActiveVendorClassifications } from "./classification-queries.js";
 
 const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);
 const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
@@ -490,5 +491,38 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     });
     if (!deactivated) return reply.code(404).send({ error: "mdata_vendor_not_found" });
     return deactivated;
+  });
+
+  app.get("/api/v1/mdata/vendors/:id/classifications", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const classifications = await withCurrentUser(authUser.uuid, async (client) => {
+      const operatingCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
+      if (!operatingCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      const vendorRes = await client.query(
+        `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.id, operatingCompanyId]
+      );
+      if (vendorRes.rows.length === 0) return undefined;
+      return listActiveVendorClassifications(client, parsedParams.data.id, operatingCompanyId);
+    });
+
+    if (classifications === null) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+    if (classifications === undefined) {
+      return reply.code(404).send({ error: "mdata_vendor_not_found" });
+    }
+    return reply.send({ classifications });
   });
 }

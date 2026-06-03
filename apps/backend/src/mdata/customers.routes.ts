@@ -7,6 +7,7 @@ import { verifyCustomerWithSafer } from "../integrations/fmcsa/safer.service.js"
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
 import { enqueueTmsCustomerPushRequested } from "../qbo/tms-customer-push-chain.service.js";
+import { listActiveCustomerClassifications } from "./classification-queries.js";
 import { searchCustomersForAutocomplete } from "./customer-autocomplete.shared.js";
 
 const listQuerySchema = z.object({
@@ -856,6 +857,39 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     });
     if (!result.customer) return reply.code(404).send({ error: "mdata_customer_not_found" });
     return reply.send({ customer: mapCustomerRow(result.customer as Record<string, unknown>, canReadTaxId(authUser.role)) });
+  });
+
+  app.get("/api/v1/mdata/customers/:id/classifications", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const classifications = await withCurrentUser(authUser.uuid, async (client) => {
+      const operatingCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
+      if (!operatingCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      const customerRes = await client.query(
+        `SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.id, operatingCompanyId]
+      );
+      if (customerRes.rows.length === 0) return undefined;
+      return listActiveCustomerClassifications(client, parsedParams.data.id, operatingCompanyId);
+    });
+
+    if (classifications === null) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+    if (classifications === undefined) {
+      return reply.code(404).send({ error: "mdata_customer_not_found" });
+    }
+    return reply.send({ classifications });
   });
 
   app.post("/api/v1/mdata/customers/:id/deactivate", async (req, reply) => {

@@ -1,6 +1,10 @@
 import pg from "pg";
 import { normalizeBankTransactionDescription } from "../banking/transaction-ingestion.js";
 
+// NEVER bulk-apply default classification tags (Late-pay, FMCSA: Not verified, Medium)
+// to real customer/vendor rows during seed import. Classifications require explicit
+// per-row human attribution (applied_by_user_id + applied_at) or per-entity opt-in.
+
 export type SeedType = "drivers" | "customers" | "vendors" | "assets" | "loads" | "bank_accounts" | "bank_transactions";
 export type CompanyCode = "TRK" | "TRANSP";
 
