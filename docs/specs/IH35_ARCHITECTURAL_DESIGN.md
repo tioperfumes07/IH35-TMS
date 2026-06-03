@@ -493,6 +493,8 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 | **At-Risk Loads** | Late >2h OR HOS warning OR maintenance due | Phase 3 ✅ |
 | **Settings** | Dispatcher assignments · Default lanes · Auto-routing rules | Owner only |
 
+**Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes Border Crossing + Border History + Factoring Packets per triage.
+
 ### KPI row — 6 cards
 Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Settle · MTD Revenue
 
