@@ -435,6 +435,9 @@ jobs:
       - name: verify:driver-listing-excludes-pseudo-users
         run: npm run verify:driver-listing-excludes-pseudo-users
 
+      - name: verify:no-test-seed-in-prod-listings
+        run: npm run verify:no-test-seed-in-prod-listings
+
       - name: verify:qbo-shared-rate-limit-ceiling
         run: npm run verify:qbo-shared-rate-limit-ceiling
 

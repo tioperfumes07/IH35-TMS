@@ -1,27 +1,30 @@
 {
-  "block_id": "BLOCK-A15-GENERIC-MODAL-X-CLOSE-AUDIT",
-  "branch": "chore/generic-modal-x-close-audit",
+  "block_id": "BLOCK-A16-TEST-SEED-DATA-ARCHIVE",
+  "branch": "fix/test-seed-data-archive",
   "phase": "Phase I",
-  "task": "GENERIC-MODAL-X-CLOSE-AUDIT",
+  "task": "TEST-SEED-DATA-ARCHIVE",
   "allowed_files": [
-    "apps/frontend/src/**/*Modal.tsx",
-    "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
-    "apps/frontend/src/components/Modal.tsx",
-    "apps/frontend/src/components/ModalCloseButton.tsx",
-    "apps/frontend/src/components/__tests__/modal-x-close-audit.test.tsx",
-    "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx",
-    "scripts/verify-all-modals-have-x-close.mjs",
-    "scripts/__tests__/verify-all-modals-have-x-close.test.mjs",
-    "scripts/verify-guards/149-verify-all-modals-have-x-close.mjs",
+    "db/migrations/0320_*",
+    "apps/backend/src/mdata/drivers.routes.ts",
+    "apps/backend/src/mdata/test-seed-archive.ts",
+    "apps/backend/src/mdata/__tests__/drivers-test-seed-archive-list.test.ts",
+    "apps/backend/src/mdata/__tests__/test-seed-archive.test.ts",
+    "apps/backend/src/accounting/qbo-master-read.routes.ts",
+    "apps/backend/src/accounting/__tests__/qbo-customers-test-seed-archive-list.test.ts",
+    "apps/backend/src/identity/users.routes.ts",
+    "apps/backend/src/identity/__tests__/users-test-seed-archive-list.test.ts",
+    "apps/backend/src/__tests__/migrations/0320-archive-test-seed-data.test.ts",
+    "scripts/verify-no-test-seed-in-prod-listings.mjs",
+    "scripts/__tests__/verify-no-test-seed-in-prod-listings.test.mjs",
+    "scripts/verify-guards/150-verify-no-test-seed-in-prod-listings.mjs",
     ".github/workflows/ci.yml",
     "package.json",
-    ".block-ready.agent1.json",
-    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:all-modals-have-x-close"
+    "verify:no-test-seed-in-prod-listings"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }

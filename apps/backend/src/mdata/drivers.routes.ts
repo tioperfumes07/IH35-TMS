@@ -13,6 +13,7 @@ import { registerDriverMessagesRoutes } from "./driver-messages.routes.js";
 import { registerDriverPdfExportRoutes } from "./driver-pdf-export.routes.js";
 import { registerDriverTrainingRoutes } from "./driver-training.routes.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "./driver-pseudo-user.js";
+import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "./test-seed-archive.js";
 
 const driverStatusSchema = z.enum(["Active", "Probation", "Inactive", "Terminated", "OnLeave"]);
 const cdlClassSchema = z.enum(["A", "B", "C"]);
@@ -224,7 +225,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     }
     const drivers = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
-      const filters: string[] = [];
+      const filters: string[] = [EXCLUDE_ARCHIVED_DRIVERS_SQL];
       if (!include_system) {
         // Exclude system pseudo-users from human listings. They are required by referential integrity for system-
         // generated events and must NOT be deleted.

@@ -177,6 +177,7 @@
     "verify:qbo-accounts-parent-first": "node scripts/verify-qbo-accounts-parent-first.mjs",
     "verify:session-create-updates-last-login": "node scripts/verify-session-create-updates-last-login.mjs",
     "verify:driver-listing-excludes-pseudo-users": "node scripts/verify-driver-listing-excludes-pseudo-users.mjs",
+    "verify:no-test-seed-in-prod-listings": "node scripts/verify-no-test-seed-in-prod-listings.mjs",
     "verify:qbo-shared-rate-limit-ceiling": "node scripts/verify-qbo-shared-rate-limit-ceiling.mjs",
     "verify:service-location-buckets-wired": "node scripts/verify-service-location-buckets-wired.mjs",
     "verify:startup-migration-drift-guard": "node scripts/verify-startup-migration-drift-guard.mjs",
