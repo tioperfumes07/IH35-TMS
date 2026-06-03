@@ -184,6 +184,7 @@ import { initializeSamsaraHealthCheckCron } from "./cron/samsara-health-cron.js"
 import { initializeSamsaraWebhookProjectionCron } from "./cron/samsara-webhook-projection.cron.js";
 import { initializeSamsaraRemoteCountCollectorCron } from "./cron/samsara-remote-count-collector.cron.js";
 import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron.js";
+import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
@@ -638,6 +639,13 @@ async function main() {
     app.log.info("[STARTUP] samsara-remote-count-collector-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] samsara-remote-count-collector-cron failed");
+  }
+
+  try {
+    initializeSamsaraPositionsCron(app);
+    app.log.info("[STARTUP] samsara-positions-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] samsara-positions-cron failed");
   }
 
   try {

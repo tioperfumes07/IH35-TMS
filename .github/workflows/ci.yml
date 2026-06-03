@@ -366,6 +366,12 @@ jobs:
       - name: verify:bulk-update-rls-where
         run: npm run verify:bulk-update-rls-where
 
+      - name: verify:samsara-positions-cron-registered
+        run: npm run verify:samsara-positions-cron-registered
+
+      - name: verify:positions-latest-rls
+        run: npm run verify:positions-latest-rls
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

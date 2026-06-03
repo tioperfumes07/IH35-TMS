@@ -238,6 +238,8 @@
     "verify:fault-auto-wo-rls": "node scripts/verify-fault-auto-wo-rls.mjs",
     "verify:fault-auto-wo-notification-wired": "node scripts/verify-fault-auto-wo-notification-wired.mjs",
     "verify:fault-auto-wo-24h-dedup": "node scripts/verify-fault-auto-wo-24h-dedup.mjs",
+    "verify:samsara-positions-cron-registered": "node scripts/verify-samsara-positions-cron-registered.mjs",
+    "verify:positions-latest-rls": "node scripts/verify-positions-latest-rls.mjs",
     "verify:master-data-write-routes": "node scripts/verify-master-data-write-routes.mjs",
     "verify:csv-import-gated-for-projected-entities": "node scripts/verify-csv-import-gated-for-projected-entities.mjs",
     "verify:safety-tab-coverage": "node scripts/verify-safety-tab-coverage.mjs",
