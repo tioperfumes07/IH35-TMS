@@ -55,7 +55,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
         </div>
         {createMode ? (
           <div className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-900">
-            Office intake uses this form layout. Persisted reports arrive from Driver PWA Report Accident (WF-005) or maintenance accident WO conversion.
+            Office intake uses this form layout. Persisted reports also arrive from the driver mobile app or maintenance work order conversion.
           </div>
         ) : null}
         <div className="space-y-2 rounded border border-gray-200 bg-white p-2">
