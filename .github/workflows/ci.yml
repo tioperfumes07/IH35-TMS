@@ -461,6 +461,9 @@ jobs:
       - name: verify:a17-deprecation-comments
         run: npm run verify:a17-deprecation-comments
 
+      - name: verify:drivers-fk-wired
+        run: npm run verify:drivers-fk-wired
+
       - name: verify:oem-parts-no-touch-existing-parts-surfaces
         run: npm run verify:oem-parts-no-touch-existing-parts-surfaces
 

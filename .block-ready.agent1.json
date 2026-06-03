@@ -1,29 +1,27 @@
 {
-  "block_id": "BLOCK-A23-2-SAFETY-COUNT-NAV-INTEGRITY",
-  "branch": "feat/safety-count-nav-integrity",
-  "phase": "Phase A23",
-  "task": "A23-2-SAFETY-COUNT-NAV-INTEGRITY",
+  "block_id": "BLOCK-A17-1-DRIVERS-FK-WIRE",
+  "branch": "feat/drivers-fk-wire-reference",
+  "phase": "Phase A17.1",
+  "task": "A17-1-DRIVERS-FK-WIRE",
   "allowed_files": [
-    "apps/backend/src/safety/foundation-kpis.routes.ts",
-    "apps/frontend/src/components/layout/sidebar-config.ts",
-    "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
-    "apps/frontend/src/pages/home/HomePage.tsx",
+    "db/migrations/0343_*",
+    "apps/backend/src/mdata/driver-reference-fk.service.ts",
+    "apps/backend/src/mdata/driver-aggregate.service.ts",
+    "apps/backend/src/mdata/__tests__/driver-reference-fk.test.ts",
+    "apps/backend/src/__tests__/migrations/0343-*",
+    "scripts/verify-drivers-fk-wired.mjs",
+    "scripts/__tests__/verify-drivers-fk-wired.test.mjs",
+    "scripts/verify-guards/158-verify-drivers-fk-wired.mjs",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
-    ".block-ready.agent1.json",
+    "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
     ".github/workflows/ci.yml",
     "package.json",
-    "scripts/__tests__/fixtures/safety-tab-coverage/complete/**",
-    "scripts/__tests__/verify-safety-count-nav-integrity.test.mjs",
-    "scripts/verify-guards/157-verify-safety-count-nav-integrity.mjs",
-    "scripts/verify-safety-count-nav-integrity.mjs",
-    "scripts/verify-safety-tab-coverage.mjs",
-    "scripts/verify-steps/38-verify-safety-count-nav-integrity.mjs"
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:safety-count-nav-integrity",
-    "verify:safety-tab-coverage"
+    "verify:drivers-fk-wired"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }

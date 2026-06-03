@@ -180,6 +180,7 @@
     "verify:no-test-seed-in-prod-listings": "node scripts/verify-no-test-seed-in-prod-listings.mjs",
     "verify:drivers-reference-catalogs-wired": "node scripts/verify-drivers-reference-catalogs-wired.mjs",
     "verify:a17-deprecation-comments": "node scripts/verify-a17-deprecation-comments.mjs",
+    "verify:drivers-fk-wired": "node scripts/verify-drivers-fk-wired.mjs",
     "verify:oem-parts-no-touch-existing-parts-surfaces": "node scripts/verify-oem-parts-no-touch-existing-parts-surfaces.mjs",
     "seed:reference-oem-parts": "node scripts/seed-reference-oem-parts.mjs",
     "verify:names-master-readonly": "node scripts/verify-names-master-readonly.mjs",
