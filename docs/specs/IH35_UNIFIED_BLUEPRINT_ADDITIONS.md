@@ -1095,3 +1095,11 @@ Migration `0340_reference_driver_lookups.sql` seeds five global `reference.*` dr
 ## Tracker queue · A17.1-DRIVER-FK-WIRE (deferred)
 
 Migrate `mdata.drivers` inline enums and free-text columns to FKs against `reference.*` driver lookup tables. Requires RBC + careful migration plan. Deferred from A17 canonical catalog wire.
+
+## 2026-06-03 · Block A17.1 · Drivers FK wire (mdata.drivers → reference.*)
+
+Source: A24 RBC audit + master queue  
+Status: LOCKED  
+Relevant block: BLOCK-A17-1-DRIVERS-FK-WIRE
+
+Migration `0343_drivers_reference_fk_wire.sql` wires `mdata.drivers` to `reference.*`: FK columns for license class, operational employment status, and medical card status; junction tables for CDL endorsements and restrictions. Triggers backfill/sync from legacy inline columns on write. `driver-aggregate.service.ts` joins reference catalogs for profile display. **CI:** `verify:drivers-fk-wired`.

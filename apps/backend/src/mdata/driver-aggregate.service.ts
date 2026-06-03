@@ -1,6 +1,7 @@
 import { withSavepoint } from "../auth/db.js";
 import { computeDriverScoreFromCounts } from "../safety/driver-scoring.service.js";
 import { getCurrentClocks, type HosDutyStatus } from "../telematics/hos-clocks.service.js";
+import { loadDriverReferenceFkEnrichment } from "./driver-reference-fk.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -56,14 +57,18 @@ export async function buildDriverAggregate(
   const driver = driverRes.rows[0];
   if (!driver) return null;
 
+  const referenceFk = await loadDriverReferenceFkEnrichment(client, driverId);
   const cdlExpiration = driver.cdl_expires_at as string | null;
   const license = {
     cdl_number: driver.cdl_number,
-    class: driver.cdl_class,
+    class: referenceFk.license_class_code ?? driver.cdl_class,
+    class_label: referenceFk.license_class_label,
+    license_class_id: driver.license_class_id ?? null,
     state: driver.cdl_state,
     expiration: cdlExpiration,
     days_until_expiration: daysUntil(cdlExpiration),
-    restrictions: driver.cdl_restrictions,
+    restrictions: referenceFk.restriction_codes.length > 0 ? referenceFk.restriction_codes.join(", ") : driver.cdl_restrictions,
+    restriction_codes: referenceFk.restriction_codes,
     endorsements: {
       h: Boolean(driver.endorsement_h),
       n: Boolean(driver.endorsement_n),
@@ -72,6 +77,9 @@ export async function buildDriverAggregate(
       t: Boolean(driver.endorsement_t),
       x: Boolean(driver.endorsement_x),
     },
+    endorsement_codes: referenceFk.endorsement_codes,
+    driver_employment_status_code: referenceFk.driver_employment_status_code,
+    driver_employment_status_label: referenceFk.driver_employment_status_label,
   };
 
   const medicalRes = await withSavepoint(
@@ -101,6 +109,9 @@ export async function buildDriverAggregate(
     examiner: medRow?.notes ?? null,
     restrictions: null,
     color_status: complianceColor(medDays),
+    status_code: referenceFk.medical_card_status_code,
+    status_label: referenceFk.medical_card_status_label,
+    medical_card_status_id: driver.medical_card_status_id ?? null,
   };
 
   const drugRes = await withSavepoint(
