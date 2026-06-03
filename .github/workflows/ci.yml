@@ -134,6 +134,9 @@ jobs:
       - name: verify:drivers-profile-action-bar
         run: npm run verify:drivers-profile-action-bar
 
+      - name: verify:drivers-create-vocab
+        run: npm run verify:drivers-create-vocab
+
       - name: Verify dispatch coming-soon triage
         run: npm run verify:dispatch-coming-soon-triage
 
