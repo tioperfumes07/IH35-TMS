@@ -24,13 +24,8 @@ function KpiCard({ label, value }: { label: string; value: string | number }) {
 }
 
 function buildUnitsUrl(operatingCompanyId: string, typeFilter: string): string {
-  const params = new URLSearchParams({
-    include: "trailers",
-    operating_company_id: operatingCompanyId,
-    limit: "500",
-  });
-  if (typeFilter) params.set("type", typeFilter);
-  return `/api/v1/mdata/units?${params.toString()}`;
+  const typeParam = typeFilter ? `&type=${encodeURIComponent(typeFilter)}` : "";
+  return `/api/v1/mdata/units?include=trailers&operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=500${typeParam}`;
 }
 
 export function FleetTablePage({ operatingCompanyId }: Props) {
