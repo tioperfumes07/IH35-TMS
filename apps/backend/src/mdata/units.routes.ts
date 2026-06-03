@@ -12,15 +12,15 @@ import { registerUnitPlatesRoutes } from "./unit-plates.routes.js";
 import { registerUnitTripCostRoutes } from "./unit-trip-cost.routes.js";
 import { getUnitFinancialYTD, type FinancialPeriod } from "./unit-financial.service.js";
 import { fetchUnifiedFleetList } from "./units-unified-list.service.js";
+import {
+  applyUnitPatchFields,
+  ownerOnlyPatchViolation,
+  unitStatusSchema,
+  updateUnitBodySchema,
+} from "./unit-update-schema.js";
 
-export const unitStatusSchema = z.enum([
-  "InService",
-  "OutOfService",
-  "InMaintenance",
-  "Sold",
-  "Damaged",
-  "Transferred",
-]);
+
+export { unitStatusSchema, updateUnitBodySchema, UNIT_PATCHABLE_FIELD_KEYS } from "./unit-update-schema.js";
 
 export const UNIT_PROFILE_AUDIT_FIELD_KEYS = [
   "status",
@@ -67,62 +67,6 @@ const createUnitBodySchema = z.object({
   acquired_date: isoDateSchema.optional(),
   notes: z.string().trim().max(2000).optional(),
 });
-
-const updateUnitBodySchema = z
-  .object({
-    unit_number: z.string().trim().min(1).max(100).optional(),
-    vin: z.string().trim().min(1).max(100).optional(),
-    make: z.string().trim().max(100).nullable().optional(),
-    model: z.string().trim().max(100).nullable().optional(),
-    year: z.number().int().min(1980).max(2100).nullable().optional(),
-    license_plate: z.string().trim().max(50).nullable().optional(),
-    license_state: z.string().trim().max(50).nullable().optional(),
-    status: unitStatusSchema.optional(),
-    assigned_driver_id: z.string().uuid().nullable().optional(),
-    owner_company_id: z.string().uuid().optional(),
-    currently_leased_to_company_id: z.string().uuid().nullable().optional(),
-    acquired_date: isoDateSchema.nullable().optional(),
-    disposed_date: isoDateSchema.nullable().optional(),
-    notes: z.string().trim().max(2000).nullable().optional(),
-    deactivated_at: isoDateSchema.nullable().optional(),
-    qbo_vendor_id: z.string().trim().max(120).nullable().optional(),
-    qbo_class_id: z.string().trim().max(120).nullable().optional(),
-    status_change_reason: z.string().trim().max(2000).nullable().optional(),
-    sold_date: isoDateSchema.nullable().optional(),
-    sold_to: z.string().trim().max(200).nullable().optional(),
-    sold_price: z.number().nonnegative().nullable().optional(),
-    transferred_date: isoDateSchema.nullable().optional(),
-    transferred_to_entity: z.enum(["TRK", "TRANSP", "USMCA"]).nullable().optional(),
-    damage_date: isoDateSchema.nullable().optional(),
-    damage_description: z.string().trim().max(4000).nullable().optional(),
-    repair_estimate: z.number().nonnegative().nullable().optional(),
-    oos_date: isoDateSchema.nullable().optional(),
-    oos_reason: z.string().trim().max(2000).nullable().optional(),
-    quick_availability: quickAvailabilitySchema.optional(),
-    texas_irp_number: z.string().trim().max(120).nullable().optional(),
-    irp_account_number: z.string().trim().max(120).nullable().optional(),
-    irp_registered_jurisdictions: z.record(z.string(), z.unknown()).nullable().optional(),
-    irp_expiration: isoDateSchema.nullable().optional(),
-    irp_registered_weight_lbs: z.number().int().nonnegative().nullable().optional(),
-    operation_country: z.enum(["US", "MX", "cross_border"]).nullable().optional(),
-    sct_permit_number: z.string().trim().max(120).nullable().optional(),
-    sct_permit_expiration: isoDateSchema.nullable().optional(),
-    pita_status: z.string().trim().max(120).nullable().optional(),
-    pita_permit_number: z.string().trim().max(120).nullable().optional(),
-    pita_expiration: isoDateSchema.nullable().optional(),
-    ctpat_status: z.string().trim().max(120).nullable().optional(),
-    oea_status: z.string().trim().max(120).nullable().optional(),
-    hazmat_endorsement: z.boolean().optional(),
-    us_insurance_policy_number: z.string().trim().max(120).nullable().optional(),
-    us_insurance_carrier: z.string().trim().max(200).nullable().optional(),
-    us_insurance_expiration: isoDateSchema.nullable().optional(),
-    mx_insurance_policy_number: z.string().trim().max(120).nullable().optional(),
-    mx_insurance_carrier: z.string().trim().max(200).nullable().optional(),
-    mx_insurance_expiration: isoDateSchema.nullable().optional(),
-    title_status: z.enum(["owned", "financed", "leased"]).nullable().optional(),
-    lien_holder: z.string().trim().max(200).nullable().optional(),
-  })
-  .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
 const unitAggregateQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -191,60 +135,6 @@ async function resolveAssetCompanyIds(
 }
 
 const ARCHIVE_STATUSES = new Set(["Sold", "Transferred", "Damaged"]);
-
-function applyUnitPatchFields(b: z.infer<typeof updateUnitBodySchema>, add: (col: string, val: unknown) => void) {
-  if ("unit_number" in b) add("unit_number", b.unit_number ?? null);
-  if ("vin" in b) add("vin", b.vin ?? null);
-  if ("make" in b) add("make", b.make ?? null);
-  if ("model" in b) add("model", b.model ?? null);
-  if ("year" in b) add("year", b.year ?? null);
-  if ("license_plate" in b) add("license_plate", b.license_plate ?? null);
-  if ("license_state" in b) add("license_state", b.license_state ?? null);
-  if ("status" in b) add("status", b.status ?? null);
-  if ("assigned_driver_id" in b) add("assigned_driver_id", b.assigned_driver_id ?? null);
-  if ("owner_company_id" in b) add("owner_company_id", b.owner_company_id ?? null);
-  if ("currently_leased_to_company_id" in b) add("currently_leased_to_company_id", b.currently_leased_to_company_id ?? null);
-  if ("acquired_date" in b) add("acquired_date", b.acquired_date ?? null);
-  if ("disposed_date" in b) add("disposed_date", b.disposed_date ?? null);
-  if ("notes" in b) add("notes", b.notes ?? null);
-  if ("qbo_vendor_id" in b) add("qbo_vendor_id", b.qbo_vendor_id ?? null);
-  if ("qbo_class_id" in b) add("qbo_class_id", b.qbo_class_id ?? null);
-  if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
-  if ("status_change_reason" in b) add("status_change_reason", b.status_change_reason ?? null);
-  if ("sold_date" in b) add("sold_date", b.sold_date ?? null);
-  if ("sold_to" in b) add("sold_to", b.sold_to ?? null);
-  if ("sold_price" in b) add("sold_price", b.sold_price ?? null);
-  if ("transferred_date" in b) add("transferred_date", b.transferred_date ?? null);
-  if ("transferred_to_entity" in b) add("transferred_to_entity", b.transferred_to_entity ?? null);
-  if ("damage_date" in b) add("damage_date", b.damage_date ?? null);
-  if ("damage_description" in b) add("damage_description", b.damage_description ?? null);
-  if ("repair_estimate" in b) add("repair_estimate", b.repair_estimate ?? null);
-  if ("oos_date" in b) add("oos_date", b.oos_date ?? null);
-  if ("oos_reason" in b) add("oos_reason", b.oos_reason ?? null);
-  if ("quick_availability" in b) add("quick_availability", b.quick_availability ?? null);
-  if ("texas_irp_number" in b) add("texas_irp_number", b.texas_irp_number ?? null);
-  if ("irp_account_number" in b) add("irp_account_number", b.irp_account_number ?? null);
-  if ("irp_registered_jurisdictions" in b) add("irp_registered_jurisdictions", b.irp_registered_jurisdictions ?? null);
-  if ("irp_expiration" in b) add("irp_expiration", b.irp_expiration ?? null);
-  if ("irp_registered_weight_lbs" in b) add("irp_registered_weight_lbs", b.irp_registered_weight_lbs ?? null);
-  if ("operation_country" in b) add("operation_country", b.operation_country ?? null);
-  if ("sct_permit_number" in b) add("sct_permit_number", b.sct_permit_number ?? null);
-  if ("sct_permit_expiration" in b) add("sct_permit_expiration", b.sct_permit_expiration ?? null);
-  if ("pita_status" in b) add("pita_status", b.pita_status ?? null);
-  if ("pita_permit_number" in b) add("pita_permit_number", b.pita_permit_number ?? null);
-  if ("pita_expiration" in b) add("pita_expiration", b.pita_expiration ?? null);
-  if ("ctpat_status" in b) add("ctpat_status", b.ctpat_status ?? null);
-  if ("oea_status" in b) add("oea_status", b.oea_status ?? null);
-  if ("hazmat_endorsement" in b) add("hazmat_endorsement", b.hazmat_endorsement ?? false);
-  if ("us_insurance_policy_number" in b) add("us_insurance_policy_number", b.us_insurance_policy_number ?? null);
-  if ("us_insurance_carrier" in b) add("us_insurance_carrier", b.us_insurance_carrier ?? null);
-  if ("us_insurance_expiration" in b) add("us_insurance_expiration", b.us_insurance_expiration ?? null);
-  if ("mx_insurance_policy_number" in b) add("mx_insurance_policy_number", b.mx_insurance_policy_number ?? null);
-  if ("mx_insurance_carrier" in b) add("mx_insurance_carrier", b.mx_insurance_carrier ?? null);
-  if ("mx_insurance_expiration" in b) add("mx_insurance_expiration", b.mx_insurance_expiration ?? null);
-  if ("title_status" in b) add("title_status", b.title_status ?? null);
-  if ("lien_holder" in b) add("lien_holder", b.lien_holder ?? null);
-}
 
 export async function registerUnitsRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/units", async (req, reply) => {
@@ -431,6 +321,10 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const parsedBody = updateUnitBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+    const ownerViolation = ownerOnlyPatchViolation(authUser.role, b as Record<string, unknown>);
+    if (ownerViolation) {
+      return reply.code(403).send({ error: "owner_only_field", field: ownerViolation });
+    }
 
     const setParts: string[] = [];
     const values: unknown[] = [];
@@ -439,7 +333,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       setParts.push(`${col} = $${values.length}`);
     };
     applyUnitPatchFields(b, add);
-    if ("status" in b && b.status && ARCHIVE_STATUSES.has(b.status)) {
+    if ("status" in b && typeof b.status === "string" && ARCHIVE_STATUSES.has(b.status)) {
       add("deactivated_at", new Date().toISOString().slice(0, 10));
     }
     if ("status" in b) {

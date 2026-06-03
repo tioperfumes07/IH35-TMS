@@ -162,6 +162,10 @@
     "verify:fleet-unified-includes-trailers": "node scripts/verify-fleet-unified-includes-trailers.mjs",
     "verify:fleet-table-type-column-present": "node scripts/verify-fleet-table-type-column-present.mjs",
     "verify:equipment-bulk-update-rls-where": "node scripts/verify-equipment-bulk-update-rls-where.mjs",
+    "verify:edit-vehicle-modal-tabs-complete": "node scripts/verify-edit-vehicle-modal-tabs-complete.mjs",
+    "verify:edit-vehicle-modal-rbac-fields": "node scripts/verify-edit-vehicle-modal-rbac-fields.mjs",
+    "verify:unit-update-zod-allowlist-67": "node scripts/verify-unit-update-zod-allowlist-67.mjs",
+
     "verify:service-location-buckets-wired": "node scripts/verify-service-location-buckets-wired.mjs",
     "verify:startup-migration-drift-guard": "node scripts/verify-startup-migration-drift-guard.mjs",
     "verify:no-unledgered-migrations": "node scripts/verify-no-unledgered-migrations.mjs",

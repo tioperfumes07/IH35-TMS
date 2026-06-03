@@ -375,6 +375,16 @@ jobs:
       - name: verify:equipment-bulk-update-rls-where
         run: npm run verify:equipment-bulk-update-rls-where
 
+      - name: verify:edit-vehicle-modal-tabs-complete
+        run: npm run verify:edit-vehicle-modal-tabs-complete
+
+      - name: verify:edit-vehicle-modal-rbac-fields
+        run: npm run verify:edit-vehicle-modal-rbac-fields
+
+      - name: verify:unit-update-zod-allowlist-67
+        run: npm run verify:unit-update-zod-allowlist-67
+
+
       - name: verify:samsara-positions-cron-registered
         run: npm run verify:samsara-positions-cron-registered
 

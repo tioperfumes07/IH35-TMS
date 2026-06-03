@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
 import { useToast } from "./Toast";
 import { BulkActionBar, type BulkApplyPayload } from "./fleet/BulkActionBar";
+import { EditVehicleModal } from "./fleet/EditVehicleModal";
 
 export type FleetRow = {
   id: string;
@@ -50,6 +51,8 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
+  const [editingRow, setEditingRow] = useState<FleetRow | null>(null);
 
   const visibleIds = useMemo(() => rows.map((row) => row.id), [rows]);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
@@ -190,6 +193,7 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
               <th className="px-2 py-1">Year</th>
               <th className="px-2 py-1">Status</th>
               <th className="px-2 py-1">DOT O/O</th>
+              <th className="w-14 px-2 py-1">Edit</th>
             </tr>
           </thead>
           <tbody>
@@ -214,11 +218,37 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
                 <td className="px-2 py-1">{String(row.year ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.status ?? "—")}</td>
                 <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
+                <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"
+                    aria-label={`Edit unit ${row.unit_number ?? row.id}`}
+                    onClick={() => {
+                      setEditingUnitId(row.id);
+                      setEditingRow(row);
+                    }}
+                  >
+                    Edit
+                  </button>
+                </td>
+
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <EditVehicleModal
+        open={editingUnitId !== null}
+        unitId={editingUnitId}
+        operatingCompanyId={operatingCompanyId}
+        rowPreview={editingRow}
+        onClose={() => {
+          setEditingUnitId(null);
+          setEditingRow(null);
+        }}
+        onSaved={() => pushToast("Unit updated", "success")}
+      />
     </div>
   );
 }

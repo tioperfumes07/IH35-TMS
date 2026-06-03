@@ -941,6 +941,16 @@ Fleet Table gains a left-column bulk-select checkbox with sticky BulkActionBar (
 
 ---
 
+## 2026-06-02 · Block A6 · Edit vehicle modal expanded columns
+
+Source: Block A6 spec (#68-F4)  
+Status: LOCKED  
+Relevant block: BLOCK-A6-EDIT-VEHICLE-MODAL-EXPAND-67-COLUMNS
+
+Edit Vehicle modal on Fleet Table: eight-tab layout (Identity / Insurance / IRP / Reefer / Financial / Lifecycle / Quick-availability / Documents) surfacing 50+ unit columns. Backend `unit-update-schema.ts` allowlist (58 patchable cols) with Owner RBAC on sale/transfer/repair fields; three CI guards + backend/frontend tests.
+
+---
+
 ## 2026-06-02 — Block 19 Lane profitability heatmap
 
 Source: Block 19 spec (Phase H)  
