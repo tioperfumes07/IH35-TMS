@@ -186,6 +186,9 @@ jobs:
       - name: verify:no-hardcoded-list-counts
         run: npm run verify:no-hardcoded-list-counts
 
+      - name: verify:no-active-drivers-mislabel
+        run: npm run verify:no-active-drivers-mislabel
+
       - name: Verify no stub strings
         run: npm run verify:no-stub-strings
 

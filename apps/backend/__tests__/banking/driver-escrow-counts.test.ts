@@ -14,15 +14,21 @@ describe("banking driver-escrow-counts", () => {
   it("distinguishes active drivers from drivers with escrow balance", () => {
     assert.match(countModule, /active_drivers/);
     assert.match(countModule, /drivers_with_escrow_balance/);
-    assert.match(countModule, /escrow_balance, 0\) > 0/);
+    assert.match(countModule, /count\(DISTINCT id\)/i);
+    assert.match(countModule, /COALESCE\(escrow_balance, 0\) <> 0/);
+  });
+
+  it("counts only drivers with non-zero escrow balance", () => {
+    assert.doesNotMatch(countModule, /is_active\s*=\s*true/i);
+    assert.match(countModule, /deactivated_at IS NULL/);
   });
 
   it("labels match canonical SoT doc and Banking UI copy", () => {
-    assert.match(countModule, /Drivers with Escrow Balance/);
+    assert.match(countModule, /Drivers with escrow/);
     assert.match(kpiRow, /Escrow Balance \(DIP\)/);
-    assert.match(bankingHome, /Drivers with escrow balance/);
+    assert.match(bankingHome, /Drivers with escrow:/);
     assert.match(bankingHome, /drivers_with_escrow_balance/);
-    assert.match(bankingHome, /kpiQuery\.data\?\.active_drivers/);
+    assert.doesNotMatch(bankingHome, /driver escrow visualizer[\s\S]{0,2500}Active drivers/i);
   });
 
   it("banking dashboard kpis spreads escrow count fields", () => {
