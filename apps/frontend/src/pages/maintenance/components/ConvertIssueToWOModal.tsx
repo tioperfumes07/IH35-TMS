@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { convertIssueToWo, type ArrivingSoonCard } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
+import { ModalCloseButton } from "../../../components/ModalCloseButton";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -35,6 +37,8 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
     onError: (error) => pushToast(String((error as Error).message || "Failed to convert issue"), "error"),
   });
 
+  useEscapeKey(onClose, open);
+
   if (!open || !card) return null;
 
   return (
@@ -43,9 +47,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
       <div className="fixed inset-x-0 top-20 z-50 mx-auto w-full max-w-xl rounded border border-gray-200 bg-white p-4 text-xs shadow-xl">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Convert Issue to WO</h3>
-          <button type="button" className="text-gray-500 underline" onClick={onClose}>
-            Close
-          </button>
+          <ModalCloseButton title="Convert Issue to WO" onClose={onClose} />
         </div>
 
         <div className="space-y-2">

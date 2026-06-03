@@ -92,7 +92,7 @@ export function TrailerProfilePage() {
           onChangeStatus={() => setStatusModalOpen(true)}
         />
       </div>
-      <StatusChangeModal open={statusModalOpen} />
+      <StatusChangeModal open={statusModalOpen} onClose={() => setStatusModalOpen(false)} />
     </div>
   );
 }

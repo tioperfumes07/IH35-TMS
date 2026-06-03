@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { submitDriverReport } from "../../api/driver";
+import { ModalCloseButton } from "../../components/ModalCloseButton";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { useEscapeKey } from "../../hooks/useEscapeKey";
 
 type Props = {
   open: boolean;
@@ -32,6 +34,10 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
   const [voice, setVoice] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const modalTitle = t("driver.report_modal_title");
+
+  useEscapeKey(onClose, open);
 
   if (!open) return null;
 
@@ -84,9 +90,18 @@ export function ReportIssueModal({ open, loadId, onClose, onSubmitted }: Props) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-lg border border-gray-200 bg-white p-4 shadow-lg sm:rounded-lg">
-        <h3 className="mb-2 text-base font-semibold">{t("driver.report_modal_title")}</h3>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
+      onMouseDown={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-lg border border-gray-200 bg-white p-4 shadow-lg sm:rounded-lg"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <h3 className="text-base font-semibold">{modalTitle}</h3>
+          <ModalCloseButton title={modalTitle} onClose={onClose} />
+        </div>
         <label className="block text-xs text-gray-600">{t("driver.report_type")}</label>
         <SelectCombobox
           className="mb-2 mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"

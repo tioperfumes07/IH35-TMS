@@ -922,6 +922,8 @@ Route: `/fleet/units/:id` renders `VehicleProfilePage` with six sections (identi
 
 **Modal doubling guard (Block A9):** Shared `Modal` renders the sole `<h2>` title. Feature modals (`WorkOrderDetailModal`, `CustomerEditModal`, etc.) MUST NOT add inner `<h1–h3>` headings that duplicate the `title` prop. `CustomerEditModal` inputs require `name` attributes (no ghost fields). Enforced by `verify-modal-no-doubled-header.mjs` + vitest.
 
+**Modal X-close audit (Block A15):** Every `*Modal.tsx` must expose a top-right **×** close control with `role="button"` and `aria-label` beginning with `Close ` plus the modal title (via shared `Modal`, `ModalCloseButton`, or equivalent). Clicking ×, Escape, and backdrop (when applicable) must invoke `onClose`. Opt-out overlays declare `// @ModalNoX` (e.g. inline panels that are not dismissible dialogs). Inventory (2026-06): 73 `*Modal.tsx` files under `apps/frontend/src`; custom overlays refactored to shared `Modal` or `ModalCloseButton` include `BookLoadModalV4`, `FaultRuleModal`, `LaneDetailModal`, `AbandonmentReportModal`, cash-advance dialogs, and driver `ReportIssueModal`. Guards: `verify-all-modals-have-x-close.mjs` + `modal-x-close-audit.test.tsx`.
+
 **Maintenance alerts banner:** Server-built `maintenance_alerts[]` (high/medium/low); dismissible per session in UI.
 
 ## Vehicle Profile (Maintenance module) — Part 2 (locked 2026-06-02)

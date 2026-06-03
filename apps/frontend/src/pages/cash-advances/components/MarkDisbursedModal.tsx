@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { markCashAdvanceDisbursed, type CashAdvanceMethod } from "../../../api/cashAdvances";
 import { Button } from "../../../components/Button";
+import { ModalCloseButton } from "../../../components/ModalCloseButton";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -37,6 +39,8 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, onClos
     onError: (error) => pushToast(String((error as Error).message || "Failed"), "error"),
   });
 
+  useEscapeKey(onClose, open);
+
   if (!open || !advanceId) return null;
 
   return (
@@ -45,9 +49,7 @@ export function MarkDisbursedModal({ open, operatingCompanyId, advanceId, onClos
       <div className="fixed inset-x-0 top-20 z-50 mx-auto w-full max-w-lg rounded border border-gray-200 bg-white p-4 text-xs shadow-xl">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Mark Disbursed</h3>
-          <button type="button" className="text-gray-500 underline" onClick={onClose}>
-            Close
-          </button>
+          <ModalCloseButton title="Mark Disbursed" onClose={onClose} />
         </div>
 
         <div className="grid gap-2">

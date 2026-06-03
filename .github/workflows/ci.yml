@@ -177,6 +177,9 @@ jobs:
       - name: Verify modal no doubled header
         run: npm run verify:modal-no-doubled-header
 
+      - name: verify:all-modals-have-x-close
+        run: npm run verify:all-modals-have-x-close
+
       - name: verify:no-underscore-canonical-routes
         run: npm run verify:no-underscore-canonical-routes
 
