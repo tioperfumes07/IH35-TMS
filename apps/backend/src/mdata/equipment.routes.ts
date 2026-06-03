@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { buildEquipmentAggregate } from "./equipment-aggregate.service.js";
 import { registerEquipmentPdfExportRoutes } from "./equipment-pdf-export.routes.js";
 import { registerEquipmentPlatesRoutes } from "./equipment-plates.routes.js";
+import { validateTrailerStatusTransition } from "../fleet/trailer-status-state-machine.js";
 
 const equipmentStatusSchema = z.enum([
   "InService",
@@ -356,6 +357,24 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      const oldRes = await client.query<{ status: string }>(
+        `
+          SELECT status::text AS status
+          FROM mdata.equipment
+          WHERE id = $1::uuid
+            AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+          LIMIT 1
+        `,
+        [parsedParams.data.id, query.data.operating_company_id]
+      );
+      const oldRow = oldRes.rows[0];
+      if (!oldRow) return null;
+      const transitionError = validateTrailerStatusTransition(oldRow.status, body.data.status, {
+        actorRole: authUser.role,
+      });
+      if (transitionError) {
+        return { illegal: transitionError } as const;
+      }
       const res = await client.query(
         `
           UPDATE mdata.equipment
@@ -374,12 +393,16 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         await appendCrudAudit(client, authUser.uuid, "mdata.equipment.status_changed", {
           resource_id: row.id,
           resource_type: "mdata.equipment",
+          before_status: oldRow.status,
           status: body.data.status,
           reason: body.data.reason,
         });
       }
       return row ?? null;
     });
+    if (updated && typeof updated === "object" && "illegal" in updated) {
+      return reply.code(422).send(updated.illegal);
+    }
     if (!updated) return reply.code(404).send({ error: "mdata_equipment_not_found" });
     return updated;
   });

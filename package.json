@@ -241,6 +241,8 @@
     "verify:trailer-profile-type-enum": "node scripts/verify-trailer-profile-type-enum.mjs",
     "verify:trailer-profile-plates-multi-jurisdiction": "node scripts/verify-trailer-profile-plates-multi-jurisdiction.mjs",
     "verify:trailer-profile-reefer-conditional": "node scripts/verify-trailer-profile-reefer-conditional.mjs",
+    "verify:trailer-status-state-machine-coverage": "node scripts/verify-trailer-status-state-machine-coverage.mjs",
+    "verify:trailer-profile-no-stub-sections": "node scripts/verify-trailer-profile-no-stub-sections.mjs",
     "verify:compliance-dashboard-aggregate-sources": "node scripts/verify-compliance-dashboard-aggregate-sources.mjs",
     "verify:compliance-notification-rules-rls": "node scripts/verify-compliance-notification-rules-rls.mjs",
     "verify:compliance-reminder-job-registered": "node scripts/verify-compliance-reminder-job-registered.mjs",

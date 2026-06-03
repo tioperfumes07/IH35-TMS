@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EditTrailerModal } from "../../components/fleet/EditTrailerModal";
 import { ActionBar } from "../../components/trailer-profile/ActionBar";
 import { ComplianceSection } from "../../components/trailer-profile/ComplianceSection";
 import { CurrentAssignmentSection } from "../../components/trailer-profile/CurrentAssignmentSection";
@@ -12,6 +13,8 @@ import { IdentityStatusHeader } from "../../components/trailer-profile/IdentityS
 import { MaintenanceSnapshotSection } from "../../components/trailer-profile/MaintenanceSnapshotSection";
 import { ReeferTelemetrySection } from "../../components/trailer-profile/ReeferTelemetrySection";
 import { StatusChangeModal } from "../../components/trailer-profile/StatusChangeModal";
+import { TrailerReeferSection } from "../../components/trailer-profile/TrailerReeferSection";
+import { TrailerRecentActivitySection } from "../../components/trailer-profile/TrailerRecentActivitySection";
 import { TypeSpecsSection } from "../../components/trailer-profile/TypeSpecsSection";
 
 export type TrailerProfileAggregate = {
@@ -36,13 +39,19 @@ export function TrailerProfilePage() {
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const queryClient = useQueryClient();
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const profileQ = useQuery({
     queryKey: ["trailer-profile", id, companyId],
     queryFn: () => fetchTrailerProfile(id, companyId),
     enabled: Boolean(id && companyId),
   });
+
+  const invalidateProfile = () => {
+    void queryClient.invalidateQueries({ queryKey: ["trailer-profile", id, companyId] });
+  };
 
   if (!companyId) {
     return <div className="rounded border bg-white p-4 text-sm">Select an operating company.</div>;
@@ -57,12 +66,19 @@ export function TrailerProfilePage() {
   const aggregate = profileQ.data;
   const equipment = aggregate.equipment;
   const isReefer = String(equipment.equipment_type) === "Reefer";
+  const attachedUnit = aggregate.current_assignment?.attached_to_unit as Record<string, unknown> | null;
+  const attachedUnitId = attachedUnit?.unit_id ? String(attachedUnit.unit_id) : null;
 
   return (
     <div className="space-y-4 pb-20">
       <PageHeader title={String(equipment.equipment_number ?? "Trailer")} subtitle="Trailer profile" />
       <div data-testid="tp-section-1-identity">
-        <IdentityStatusHeader equipment={equipment} />
+        <IdentityStatusHeader
+          equipment={equipment}
+          onChangeStatus={(next) => {
+            if (next === "__change__") setStatusModalOpen(true);
+          }}
+        />
       </div>
       <div data-testid="tp-section-2-specs">
         <TypeSpecsSection specs={aggregate.type_specs} />
@@ -71,9 +87,12 @@ export function TrailerProfilePage() {
         <CurrentAssignmentSection assignment={aggregate.current_assignment} />
       </div>
       {isReefer ? (
-        <div data-testid="tp-section-4-reefer">
-          <ReeferTelemetrySection reefer={aggregate.reefer} telemetry={aggregate.samsara_telemetry} />
-        </div>
+        <>
+          <div data-testid="tp-section-4-reefer">
+            <ReeferTelemetrySection reefer={aggregate.reefer} telemetry={aggregate.samsara_telemetry} />
+          </div>
+          <TrailerReeferSection trailerId={id} />
+        </>
       ) : null}
       <div data-testid="tp-section-5-maintenance">
         <MaintenanceSnapshotSection maintenance={aggregate.maintenance} />
@@ -84,15 +103,31 @@ export function TrailerProfilePage() {
       <div data-testid="tp-section-7-documents">
         <DocumentsSection equipmentId={id} companyId={companyId} documents={aggregate.documents} />
       </div>
+      <TrailerRecentActivitySection equipmentId={id} companyId={companyId} attachedUnitId={attachedUnitId} />
       <div data-testid="tp-section-8-action-bar">
         <ActionBar
           equipmentId={id}
           companyId={companyId}
           equipmentNumber={String(equipment.equipment_number ?? id)}
+          onEdit={() => setEditModalOpen(true)}
           onChangeStatus={() => setStatusModalOpen(true)}
         />
       </div>
-      <StatusChangeModal open={statusModalOpen} onClose={() => setStatusModalOpen(false)} />
+      <StatusChangeModal
+        open={statusModalOpen}
+        trailerId={id}
+        companyId={companyId}
+        currentStatus={String(equipment.status ?? "")}
+        onClose={() => setStatusModalOpen(false)}
+        onSaved={invalidateProfile}
+      />
+      <EditTrailerModal
+        open={editModalOpen}
+        trailerId={id}
+        operatingCompanyId={companyId}
+        onClose={() => setEditModalOpen(false)}
+        onSaved={invalidateProfile}
+      />
     </div>
   );
 }

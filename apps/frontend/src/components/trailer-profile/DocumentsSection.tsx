@@ -20,9 +20,15 @@ export function DocumentsSection({
       </div>
       <ul className="mt-2 space-y-1 text-xs text-gray-700">
         {documents.length === 0 ? (
-          <li>No documents linked.</li>
+          <li className="text-gray-500">No documents on file.</li>
         ) : (
-          documents.map((d) => <li key={String(d.file_id)}>{String(d.name)}</li>)
+          documents.map((d) => (
+            <li key={String(d.file_id)}>
+              {String(d.name ?? d.file_id)}
+              {d.category ? ` · ${String(d.category)}` : ""}
+              {d.expiration_date ? ` · exp ${String(d.expiration_date)}` : ""}
+            </li>
+          ))
         )}
       </ul>
     </section>
