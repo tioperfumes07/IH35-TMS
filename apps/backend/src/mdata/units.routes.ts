@@ -333,7 +333,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       setParts.push(`${col} = $${values.length}`);
     };
     applyUnitPatchFields(b, add);
-    if ("status" in b && b.status && ARCHIVE_STATUSES.has(b.status)) {
+    if ("status" in b && typeof b.status === "string" && ARCHIVE_STATUSES.has(b.status)) {
       add("deactivated_at", new Date().toISOString().slice(0, 10));
     }
     if ("status" in b) {
