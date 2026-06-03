@@ -1030,6 +1030,16 @@ High-severity Samsara fault codes can auto-create **draft** work orders when `ma
 
 The `/home` **Driver day-summaries** card calls `GET /api/v1/telematics/driver-day-summary?operating_company_id=<uuid>&date=YYYY-MM-DD`. The API returns `{ date, has_data, rows[] }` where `has_data === false` means no telematics/HOS activity for that date (HTTP 200, zero-shaped rows). The widget renders a neutral gray empty state for `has_data:false` — never red. Red styling and a **Retry** button appear only for true fetch failures (network or HTTP 5xx).
 
+## URL routing normalize (underscore → hyphen) — Block A10 (locked 2026-06-02)
+
+Legacy bookmarked URLs that use underscores in path segments (for example `/lists/driver/pay_rate_templates`) previously matched the catch-all `/lists/:domain/:catalogKey` stub route. Canonical catalog routes use hyphens only (for example `/lists/driver/pay-rate-templates`).
+
+**Backend:** `apps/backend/src/middleware/url-canonicalize.ts` — on GET/HEAD, when the request path contains `_` and the hyphen equivalent matches a registered static route, respond **301** with `Location` preserving query string. Intentional underscore paths such as `/api/v1/_healthcheck` are exempt.
+
+**Frontend:** `App.tsx` wraps routes with `useUrlCanonicalize()` — on pathname change, replace `_` with `-` and `navigate(..., { replace: true })` when the hyphen path exists in the manifest static route set.
+
+**CI:** `verify:no-underscore-canonical-routes` scans `manifest.tsx` + `apps/frontend/src/pages/**` and fails if any canonical route path is registered with underscores (legacy redirect maps in `ListsHubPage` are allowlisted).
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
