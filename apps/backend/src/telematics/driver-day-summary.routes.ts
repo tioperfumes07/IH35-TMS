@@ -3,10 +3,30 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  date: z.string().regex(ISO_DATE),
 });
+
+export const driverDaySummaryRowSchema = z.object({
+  driver_id: z.string().uuid(),
+  driver_name: z.string(),
+  miles: z.number(),
+  hours_on_duty: z.number(),
+  fuel_stops: z.number(),
+  on_time_arrivals: z.number(),
+  late_arrivals: z.number(),
+});
+
+export const driverDaySummaryResponseSchema = z.object({
+  date: z.string().regex(ISO_DATE),
+  has_data: z.boolean(),
+  rows: z.array(driverDaySummaryRowSchema),
+});
+
+export type DriverDaySummaryResponse = z.infer<typeof driverDaySummaryResponseSchema>;
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -17,26 +37,12 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
-export async function registerDriverDaySummaryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/telematics/driver-day-summary", async (req, reply) => {
-    const user = currentUser(req, reply);
-    if (!user) return;
-    const query = querySchema.safeParse(req.query ?? {});
-    if (!query.success) return validationError(reply, query.error);
-    const serviceDate = query.data.date ?? new Date().toISOString().slice(0, 10);
+function toNumber(value: unknown, fallback = 0): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
 
-    const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
-      const res = await client.query<{
-        driver_id: string;
-        driver_name: string;
-        miles: number;
-        hours_on_duty: number;
-        fuel_stops: number;
-        on_time_arrivals: number;
-        late_arrivals: number;
-      }>(
-        `
+const DRIVER_DAY_SUMMARY_SQL = `
           WITH bounds AS (
             SELECT
               $2::date::timestamptz AS day_start,
@@ -153,12 +159,59 @@ export async function registerDriverDaySummaryRoutes(app: FastifyInstance) {
           LEFT JOIN fuel_stops fs ON fs.driver_id = ad.driver_id
           LEFT JOIN arrivals ar ON ar.driver_id = ad.driver_id
           ORDER BY miles DESC, driver_name ASC
-        `,
-        [query.data.operating_company_id, serviceDate]
-      );
-      return res.rows;
-    });
+        `;
 
-    return { date: serviceDate, rows };
+export async function registerDriverDaySummaryRoutes(app: FastifyInstance) {
+  app.get("/api/v1/telematics/driver-day-summary", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+
+    const query = querySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const { operating_company_id: operatingCompanyId, date: serviceDate } = query.data;
+
+    try {
+      const rows = await withCurrentUser(user.uuid, async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+        const res = await client.query<{
+          driver_id: string;
+          driver_name: string;
+          miles: number;
+          hours_on_duty: number;
+          fuel_stops: number;
+          on_time_arrivals: number;
+          late_arrivals: number;
+        }>(DRIVER_DAY_SUMMARY_SQL, [operatingCompanyId, serviceDate]);
+        return res.rows;
+      });
+
+      const normalizedRows = rows.map((row) => ({
+        driver_id: row.driver_id,
+        driver_name: row.driver_name.trim() || "Unknown driver",
+        miles: toNumber(row.miles),
+        hours_on_duty: toNumber(row.hours_on_duty),
+        fuel_stops: toNumber(row.fuel_stops),
+        on_time_arrivals: toNumber(row.on_time_arrivals),
+        late_arrivals: toNumber(row.late_arrivals),
+      }));
+
+      const payload: DriverDaySummaryResponse = {
+        date: serviceDate,
+        has_data: normalizedRows.length > 0,
+        rows: normalizedRows,
+      };
+
+      const parsed = driverDaySummaryResponseSchema.safeParse(payload);
+      if (!parsed.success) {
+        req.log.error({ err: parsed.error.flatten() }, "driver-day-summary response shape mismatch");
+        return reply.code(500).send({ error: "internal_error", message: "Unexpected response shape" });
+      }
+
+      return parsed.data;
+    } catch (err) {
+      req.log.error({ err }, "driver-day-summary query failed");
+      return reply.code(500).send({ error: "internal_error", message: "Failed to load driver day summary" });
+    }
   });
 }

@@ -157,6 +157,8 @@
     "verify:bulk-action-bar-mounted": "node scripts/verify-bulk-action-bar-mounted.mjs",
     "verify:bulk-update-route-mounted": "node scripts/verify-bulk-update-route-mounted.mjs",
     "verify:bulk-update-rls-where": "node scripts/verify-bulk-update-rls-where.mjs",
+    "verify:driver-day-summary-empty-state-not-red": "node scripts/verify-driver-day-summary-empty-state-not-red.mjs",
+    "verify:driver-day-summary-route-mounted": "node scripts/verify-driver-day-summary-route-mounted.mjs",
     "verify:service-location-buckets-wired": "node scripts/verify-service-location-buckets-wired.mjs",
     "verify:startup-migration-drift-guard": "node scripts/verify-startup-migration-drift-guard.mjs",
     "verify:no-unledgered-migrations": "node scripts/verify-no-unledgered-migrations.mjs",

@@ -1005,6 +1005,10 @@ High-severity Samsara fault codes can auto-create **draft** work orders when `ma
 
 **Migration:** `0310_predictive_auto_wo.sql` — `fault_code_severity_rules`, `samsara_fault_code_history`, WO origin columns.
 
+## Home Driver Day Summaries empty-state pattern — Block A7 (locked 2026-06-02)
+
+The `/home` **Driver day-summaries** card calls `GET /api/v1/telematics/driver-day-summary?operating_company_id=<uuid>&date=YYYY-MM-DD`. The API returns `{ date, has_data, rows[] }` where `has_data === false` means no telematics/HOS activity for that date (HTTP 200, zero-shaped rows). The widget renders a neutral gray empty state for `has_data:false` — never red. Red styling and a **Retry** button appear only for true fetch failures (network or HTTP 5xx).
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

@@ -372,6 +372,12 @@ jobs:
       - name: verify:positions-latest-rls
         run: npm run verify:positions-latest-rls
 
+      - name: verify:driver-day-summary-empty-state-not-red
+        run: npm run verify:driver-day-summary-empty-state-not-red
+
+      - name: verify:driver-day-summary-route-mounted
+        run: npm run verify:driver-day-summary-route-mounted
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

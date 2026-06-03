@@ -25,6 +25,7 @@
  * Same JSON as reports. **404** → falls back to `GET /api/v1/reports/home-fleet-snapshot`.
  */
 
+import { z } from "zod";
 import { apiRequest, ApiError } from "./client";
 import { getHomeAttentionList, getHomeFleetSnapshot, type HomeFleetSnapshot } from "./reports";
 
@@ -246,6 +247,28 @@ export type HomeDriverDaySummaryRow = {
   late_arrivals: number;
 };
 
+export type HomeDriverDaySummaryResult = {
+  date: string;
+  has_data: boolean;
+  rows: HomeDriverDaySummaryRow[];
+};
+
+const homeDriverDaySummaryRowSchema = z.object({
+  driver_id: z.string().uuid(),
+  driver_name: z.string(),
+  miles: z.number(),
+  hours_on_duty: z.number(),
+  fuel_stops: z.number(),
+  on_time_arrivals: z.number(),
+  late_arrivals: z.number(),
+});
+
+const homeDriverDaySummaryResponseSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  has_data: z.boolean(),
+  rows: z.array(homeDriverDaySummaryRowSchema),
+});
+
 function num(raw: unknown, fallback = 0): number {
   const n = Number(raw);
   return Number.isFinite(n) ? n : fallback;
@@ -371,23 +394,40 @@ export async function fetchHomeFleetUtilization(companyId: string): Promise<Home
   };
 }
 
-export async function fetchDriverDaySummary(companyId: string, date: string): Promise<HomeDriverDaySummaryRow[]> {
+export async function fetchDriverDaySummary(companyId: string, date: string): Promise<HomeDriverDaySummaryResult> {
   const path = withCompany(`/api/v1/telematics/driver-day-summary?date=${encodeURIComponent(date)}`, companyId);
-  const raw = await apiRequest<{ rows?: unknown }>(path);
-  const rows = Array.isArray(raw.rows) ? raw.rows : [];
-  return rows
-    .map((entry) => {
-      if (!entry || typeof entry !== "object") return null;
-      const row = entry as Record<string, unknown>;
-      return {
-        driver_id: String(row.driver_id ?? ""),
-        driver_name: String(row.driver_name ?? "Unknown driver"),
-        miles: num(row.miles),
-        hours_on_duty: num(row.hours_on_duty),
-        fuel_stops: num(row.fuel_stops),
-        on_time_arrivals: num(row.on_time_arrivals),
-        late_arrivals: num(row.late_arrivals),
-      };
-    })
-    .filter((row): row is HomeDriverDaySummaryRow => Boolean(row?.driver_id));
+  const raw = await apiRequest<unknown>(path);
+  const parsed = homeDriverDaySummaryResponseSchema.safeParse(raw);
+  if (parsed.success) {
+    return parsed.data;
+  }
+
+  if (raw && typeof raw === "object") {
+    const legacy = raw as { date?: unknown; rows?: unknown };
+    const rows = Array.isArray(legacy.rows) ? legacy.rows : [];
+    const normalizedRows = rows
+      .map((entry) => {
+        if (!entry || typeof entry !== "object") return null;
+        const row = entry as Record<string, unknown>;
+        const driverId = String(row.driver_id ?? "");
+        if (!driverId) return null;
+        return {
+          driver_id: driverId,
+          driver_name: String(row.driver_name ?? "Unknown driver"),
+          miles: num(row.miles),
+          hours_on_duty: num(row.hours_on_duty),
+          fuel_stops: num(row.fuel_stops),
+          on_time_arrivals: num(row.on_time_arrivals),
+          late_arrivals: num(row.late_arrivals),
+        };
+      })
+      .filter((row): row is HomeDriverDaySummaryRow => Boolean(row));
+    return {
+      date: typeof legacy.date === "string" ? legacy.date : date,
+      has_data: normalizedRows.length > 0,
+      rows: normalizedRows,
+    };
+  }
+
+  throw new ApiError(500, { error: "invalid_response", message: "Driver day summary response shape mismatch" });
 }
