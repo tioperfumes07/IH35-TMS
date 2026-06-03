@@ -993,3 +993,13 @@ Status: LOCKED
 Relevant block: BLOCK-A5-FLEET-BULK-SELECT-CHECKBOX
 
 Fleet Table gains a left-column bulk-select checkbox with sticky BulkActionBar (Change Status / Change Type / Clear). Backend exposes RLS-scoped `POST /api/v1/mdata/units/bulk-update` with one `unit.bulk_update` audit row per affected unit and a 100-unit rate limit.
+
+---
+
+## 2026-06-02 · Block B4 · Fleet trailers joined unified list
+
+Source: Block B4 spec (#67-F2)  
+Status: LOCKED  
+Relevant block: BLOCK-B4-F2-FLEET-TRAILERS-JOINED-UNIFIED-LIST
+
+Fleet Table lists trucks and trailers together via `GET /api/v1/mdata/units?include=trailers` (`kind` discriminator, Type column, kind-based profile navigation). Trailer bulk actions use RLS-scoped `POST /api/v1/mdata/equipment/bulk-update` mirroring A5 truck bulk-update.
