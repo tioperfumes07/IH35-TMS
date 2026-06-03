@@ -1,5 +1,7 @@
-import { SafetyTabPlaceholder } from "./SafetyTabPlaceholder";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { AccidentsPage } from "../AccidentsPage";
 
 export function AccidentsIncidentsTab() {
-  return <SafetyTabPlaceholder title="Accidents & Incidents" />;
+  const { selectedCompanyId } = useCompanyContext();
+  return <AccidentsPage operatingCompanyId={selectedCompanyId ?? ""} />;
 }
