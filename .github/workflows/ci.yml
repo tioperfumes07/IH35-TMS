@@ -406,6 +406,12 @@ jobs:
       - name: verify:driver-day-summary-route-mounted
         run: npm run verify:driver-day-summary-route-mounted
 
+      - name: verify:customer-detail-route
+        run: npm run verify:customer-detail-route
+
+      - name: verify:billing-summary-route
+        run: npm run verify:billing-summary-route
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

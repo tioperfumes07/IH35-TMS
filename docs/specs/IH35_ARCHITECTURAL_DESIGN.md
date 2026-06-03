@@ -415,6 +415,15 @@ Active Drivers · Drivers w/ Debt · MTD Settlements Run · Pending Acks · Avg 
 ### KPI row — 5 cards
 Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 
+### Customer detail read APIs (Block A8)
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/v1/mdata/customers/:id/detail` | Full profile + contacts JSON; TRANSP-scoped; audits `mdata.customers.detail_viewed` |
+| `GET /api/v1/mdata/customers/:customer_id/billing-summary` | AR aging buckets + factoring/layover config; audits `mdata.customers.billing_summary_viewed` |
+| `GET /api/v1/customers/:id/detail` | 307 alias to mdata detail (validated UUID + `operating_company_id`) |
+| `GET /api/v1/customers/:customer_id/billing-summary` | 307 alias to mdata billing summary |
+
 ---
 
 ## MODULE 9 — DISPATCH

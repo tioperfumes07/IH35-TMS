@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { requireAuth } from "../auth/session-middleware.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { requireAuth } from "../auth/session-middleware.js";
 
 const paramsSchema = z.object({
   customer_id: z.string().uuid(),
@@ -34,7 +35,7 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
       const operatingCompanyId = parsedQuery.data.operating_company_id;
       const customerId = parsedParams.data.customer_id;
 
-      await client.query(`SET LOCAL app.operating_company_id = '${operatingCompanyId}'`);
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
       const customerRes = await client.query(
         `
           SELECT
@@ -56,12 +57,11 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
             c.layover_notes,
             c.free_time_pickup_minutes,
             c.free_time_delivery_minutes,
-            pt.days_due AS credit_terms_days
+            pt.days_until_due AS credit_terms_days
           FROM mdata.customers c
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
           WHERE c.id = $1
             AND c.operating_company_id = $2
-            AND c.deactivated_at IS NULL
           LIMIT 1
         `,
         [customerId, operatingCompanyId]
@@ -92,9 +92,10 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
           SELECT MAX(payment_date) AS last_payment_at
           FROM accounting.payments
           WHERE customer_id = $1
+            AND operating_company_id = $2
             AND voided_at IS NULL
         `,
-        [customerId]
+        [customerId, operatingCompanyId]
       );
 
       const agingRow = (agingRes.rows[0] ??
@@ -117,6 +118,12 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
       };
 
       const lastPaymentAt = ((lastPaymentRes.rows[0] as { last_payment_at?: string | null } | undefined)?.last_payment_at ?? null) as string | null;
+
+      await appendCrudAudit(client, authUser.uuid, "mdata.customers.billing_summary_viewed", {
+        resource_id: customerId,
+        resource_type: "mdata.customers",
+        operating_company_id: operatingCompanyId,
+      });
 
       return {
         ar_email: customer.ar_email ?? null,
