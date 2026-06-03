@@ -8,6 +8,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { findReturningDispatcherMatches } from "../mdata/dispatcher-safety-events.routes.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { officePasswordSchema } from "./office-password-policy.js";
+import { EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL } from "../mdata/test-seed-archive.js";
 
 const roleSchema = z.enum([
   "Owner",
@@ -204,6 +205,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
 
     const users = await withCurrentUser(authUser.uuid, async (client) => {
       const filters: string[] = [
+        EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL,
         `(u.default_company_id IN (SELECT org.user_accessible_company_ids()) OR EXISTS (
             SELECT 1
             FROM org.user_company_access uca

@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
+import { EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL } from "../mdata/test-seed-archive.js";
 
 const listQuerySchema = companyQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -79,6 +80,7 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
           FROM mdata.qbo_customers qc
           WHERE qc.operating_company_id = $1::uuid
             AND qc.active = true
+            AND ${EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL}
             ${cursorSql}
           ORDER BY qc.mirrored_at DESC, qc.id DESC
           LIMIT $${limIdx}
@@ -124,7 +126,7 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
         `
           SELECT id, qbo_id, display_name, active AS is_active, mirrored_at AS last_synced_at
           FROM mdata.qbo_customers
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND active = true
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND active = true AND archived_at IS NULL
           LIMIT 1
         `,
         [params.data.id, q.data.operating_company_id]
