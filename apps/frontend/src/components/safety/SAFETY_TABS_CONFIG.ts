@@ -134,3 +134,10 @@ export function findSafetyTab(tabId: string) {
   }
   return null;
 }
+
+/** Canonical inventory for count/nav integrity guards (Block A23-2). */
+export const SAFETY_CANONICAL_GROUP_COUNT = 9;
+export const SAFETY_CANONICAL_TAB_COUNT = 27;
+export const SAFETY_CANONICAL_TAB_KEYS = SAFETY_GROUPS.flatMap((group) =>
+  group.tabs.map((tab) => [group.id, tab.id] as const)
+);

@@ -1,27 +1,28 @@
 {
-  "block_id": "BLOCK-A23-3-SAFETY-ACCIDENTS-WIRE-UP",
-  "branch": "feat/safety-accidents-wire-up",
+  "block_id": "BLOCK-A23-2-SAFETY-COUNT-NAV-INTEGRITY",
+  "branch": "feat/safety-count-nav-integrity",
   "phase": "Phase A23",
-  "task": "A23-3-SAFETY-ACCIDENTS-WIRE-UP",
+  "task": "A23-2-SAFETY-COUNT-NAV-INTEGRITY",
   "allowed_files": [
-    "apps/frontend/src/pages/safety/AccidentsPage.tsx",
-    "apps/frontend/src/pages/safety/__tests__/AccidentsPage.test.tsx",
-    "apps/frontend/src/pages/safety/tabs/AccidentsIncidentsTab.tsx",
-    "apps/frontend/src/pages/safety/SafetyHome.tsx",
-    "apps/frontend/src/pages/safety/components/AccidentReportDrawer.tsx",
-    "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
+    "apps/backend/src/safety/foundation-kpis.routes.ts",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
     "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
+    "apps/frontend/src/pages/home/HomePage.tsx",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.agent1.json",
     ".github/workflows/ci.yml",
     "package.json",
-    "scripts/verify-safety-accidents-wire-up.mjs",
-    "scripts/__tests__/verify-safety-accidents-wire-up.test.mjs",
-    "scripts/__tests__/fixtures/safety-accidents-wire-up/**",
-    "scripts/verify-guards/156-verify-safety-accidents-wire-up.mjs",
-    "scripts/verify-steps/37-verify-safety-accidents-wire-up.mjs"
+    "scripts/__tests__/fixtures/safety-tab-coverage/complete/**",
+    "scripts/__tests__/verify-safety-count-nav-integrity.test.mjs",
+    "scripts/verify-guards/157-verify-safety-count-nav-integrity.mjs",
+    "scripts/verify-safety-count-nav-integrity.mjs",
+    "scripts/verify-safety-tab-coverage.mjs",
+    "scripts/verify-steps/38-verify-safety-count-nav-integrity.mjs"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:safety-count-nav-integrity",
+    "verify:safety-tab-coverage"
+  ],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": true

@@ -290,6 +290,7 @@
     "verify:safety-reports-coverage": "node scripts/verify-safety-reports-coverage.mjs",
     "verify:safety-route-coverage": "node scripts/verify-safety-route-coverage.mjs",
     "verify:safety-accidents-wire-up": "node scripts/verify-safety-accidents-wire-up.mjs",
+    "verify:safety-count-nav-integrity": "node scripts/verify-safety-count-nav-integrity.mjs",
     "verify:safety-medical-cards": "node scripts/verify-safety-medical-cards.mjs",
     "verify:safety-reminders": "node scripts/verify-safety-reminders.mjs",
     "verify:pm-due-soon-calculation": "node scripts/verify-pm-due-soon-calculation.mjs",
