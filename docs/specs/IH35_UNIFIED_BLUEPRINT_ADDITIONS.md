@@ -1021,3 +1021,13 @@ Status: LOCKED
 Relevant block: BLOCK-B5-FAULT-F5-FLEET-TYPE-FILTERS
 
 Fleet Table adds a type filter dropdown above the table (All · Truck · Tractor · Reefer · DryVan · Flatbed · Stepdeck · Lowboy · Tanker · Custom). Backend filters via `GET /api/v1/mdata/units?type=<TYPE>` combined AND with `include=trailers` and `status=`. UI syncs `?type=Reefer` in the URL, shows "Showing X of Y vehicles", and Clear filters resets all query params.
+
+---
+
+## 2026-06-02 · Block A8 · Customer detail + billing summary API fix
+
+Source: Block A8 spec (#63-FAULT-F4)  
+Status: LOCKED  
+Relevant block: BLOCK-A8-FAULT-F4-CUSTOMER-P0-BACKEND-FIXES
+
+`GET /api/v1/mdata/customers/:id/detail` and `GET /api/v1/mdata/customers/:customer_id/billing-summary` are tenant-scoped (TRANSP `app.operating_company_id`), audit-logged on read, and return 404 (not 500) for unknown customers. Billing summary joins `catalogs.payment_terms.days_until_due` (not `days_due`). Canonical aliases remain at `/api/v1/customers/:id/detail` and `/api/v1/customers/:customer_id/billing-summary`. CI guards: `verify:customer-detail-route`, `verify:billing-summary-route`.

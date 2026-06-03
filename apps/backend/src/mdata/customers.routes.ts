@@ -280,6 +280,11 @@ const CUSTOMER_SELECT_COLUMNS = `
   updated_by_user_id
 `;
 
+const CUSTOMER_C_SELECT_COLUMNS = CUSTOMER_SELECT_COLUMNS.replace(
+  /^(\s*)([a-z_][a-z0-9_]*)/gim,
+  "$1c.$2"
+);
+
 function mapCustomerRow(row: Record<string, unknown>, includeTaxId: boolean) {
   let taxId: string | null = null;
   if (includeTaxId && row.tax_id_encrypted) {
@@ -569,7 +574,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           SELECT
-            ${CUSTOMER_SELECT_COLUMNS},
+            ${CUSTOMER_C_SELECT_COLUMNS},
             (
               SELECT v.vendor_name
               FROM mdata.vendors v
@@ -607,6 +612,13 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         `,
         [parsedParams.data.id, resolvedOperatingCompanyId]
       );
+      if (res.rows[0]) {
+        await appendCrudAudit(client, authUser.uuid, "mdata.customers.detail_viewed", {
+          resource_id: parsedParams.data.id,
+          resource_type: "mdata.customers",
+          operating_company_id: resolvedOperatingCompanyId,
+        });
+      }
       return res.rows[0] ?? null;
     });
     if (!row) return reply.code(404).send({ error: "mdata_customer_not_found" });
