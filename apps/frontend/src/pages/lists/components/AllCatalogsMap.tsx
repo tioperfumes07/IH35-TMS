@@ -63,6 +63,7 @@ const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "Maintenance Failure Codes", description: "Failure code taxonomy for diagnostics", live: true, catalogKey: "failure-codes" },
       { name: "Maintenance Labor Codes", description: "Labor operation and billing codes", live: true, catalogKey: "labor-codes" },
       { name: "Maintenance Parts", description: "Parts master with optional SKU metadata", live: true, catalogKey: "parts" },
+      { name: "OEM Parts Reference", description: "Universal OEM part templates by brand (not company inventory)", live: true, catalogKey: "oem-parts-reference" },
       { name: "Maintenance Priority Levels", description: "Priority/severity ladder for work orders", live: true, catalogKey: "priority-levels" },
       { name: "Maintenance Service Tasks", description: "Standard PM and repair task templates", live: true, catalogKey: "service-tasks" },
       { name: "Maintenance Shop Locations", description: "Internal and vendor repair location set", live: true, catalogKey: "shop-locations" },

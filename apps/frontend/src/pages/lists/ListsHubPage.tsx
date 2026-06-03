@@ -84,6 +84,16 @@ export function ListsHubPage() {
         return;
       }
     }
+    if (domain === "maintenance") {
+      const maintenanceRouteMap: Record<string, string> = {
+        "oem-parts-reference": "/lists/maintenance/oem-parts-reference",
+      };
+      const maintenancePath = maintenanceRouteMap[catalogKey];
+      if (maintenancePath) {
+        navigate(maintenancePath);
+        return;
+      }
+    }
     navigate(`/lists/${routeDomain}/${catalogKey}`);
   }
 

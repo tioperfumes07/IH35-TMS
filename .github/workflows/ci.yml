@@ -450,6 +450,9 @@ jobs:
       - name: verify:a17-deprecation-comments
         run: npm run verify:a17-deprecation-comments
 
+      - name: verify:oem-parts-no-touch-existing-parts-surfaces
+        run: npm run verify:oem-parts-no-touch-existing-parts-surfaces
+
       - name: verify:names-master-readonly
         run: npm run verify:names-master-readonly
 

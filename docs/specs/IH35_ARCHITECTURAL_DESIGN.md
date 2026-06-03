@@ -1087,6 +1087,23 @@ Five driver sub-catalogs under `/lists/drivers/*` (plural) read from `reference.
 
 Frontend canonical pages reuse `DriversReferenceCatalogPage` with Code / Label / Sort Order / Archived columns, search, archive filter, and **+ Create** modal. Pay catalogs remain on `/lists/driver/*` (singular, non-deprecated). **CI:** `verify:drivers-reference-catalogs-wired`, `verify:a17-deprecation-comments`.
 
+## OEM parts reference templates — Block B17 (locked 2026-06-03)
+
+**Canonical pattern:** global `reference.oem_parts` table with `archived_at` soft-archive (same convention as Block A17 driver reference lookups). No company scope; additive archive only (never delete rows).
+
+`reference.oem_parts` stores universal OEM part templates — brand, optional OEM part number, category, typical cost, and default supplier. This is **world knowledge**, not company inventory.
+
+**Distinct from company inventory layers (do not unify):**
+
+| Layer | Tables / surfaces | Purpose |
+|-------|-------------------|---------|
+| OEM templates | `reference.oem_parts` | Universal brand part numbers and reference pricing |
+| Company inventory | `catalogs.maintenance_parts`, `catalogs.parts`, `maintenance.parts_inventory`, `maint.part` | What we own, stock, and use |
+
+These layers are complementary. Future blocks may link inventory rows to an OEM template via `oem_part_id` FK — out of scope for B17.
+
+Backend routes: `GET|POST /api/v1/lists/oem-parts`, `PATCH /:id`, `POST /:id/archive`, `POST /:id/restore`, `GET /brands`. List default filter: `archived_at IS NULL`; `?fleet_only=true` (default) filters to brands present in fleet (`mdata.units.make`, `mdata.equipment.make`, `mdata.equipment.reefer_brand`). Bootstrap: `scripts/seed-reference-oem-parts.mjs` + `scripts/data/oem-parts-bootstrap.json` (idempotent upsert). Migration `0342_reference_oem_parts.sql`. Frontend: `/lists/maintenance/oem-parts-reference` — **OEM Parts Reference** page with brand/category/search filters and **+ Create** modal. **CI:** `verify:oem-parts-no-touch-existing-parts-surfaces` asserts the four inventory surfaces are untouched.
+
 ## Names Master — cross-module navigator (Block A18, locked 2026-06-03)
 
 **Pattern:** read-only aggregated search hub at `/lists/names` — not a catalog clone. No new tables and no write endpoints under `/api/v1/lists/names/*`.

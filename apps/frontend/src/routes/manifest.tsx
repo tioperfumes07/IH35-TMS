@@ -234,6 +234,7 @@ import { MpgBandsListPage } from "../pages/lists/fuel/MpgBandsListPage";
 import { MaintenanceFailureCodesListPage } from "../pages/lists/maintenance/MaintenanceFailureCodesListPage";
 import { MaintenanceLaborCodesListPage } from "../pages/lists/maintenance/MaintenanceLaborCodesListPage";
 import { MaintenancePartsListPage } from "../pages/lists/maintenance/MaintenancePartsListPage";
+import { OemPartsCatalog } from "../pages/lists/maintenance/OemPartsCatalog";
 import { MaintenancePriorityLevelsListPage } from "../pages/lists/maintenance/MaintenancePriorityLevelsListPage";
 import { MaintenanceServiceTasksListPage } from "../pages/lists/maintenance/MaintenanceServiceTasksListPage";
 import { MaintenanceShopLocationsListPage } from "../pages/lists/maintenance/MaintenanceShopLocationsListPage";
@@ -1180,6 +1181,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <MaintenancePartsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/oem-parts-reference"
+          element={
+            <ProtectedRoute>
+              <OemPartsCatalog />
             </ProtectedRoute>
           }
         />
