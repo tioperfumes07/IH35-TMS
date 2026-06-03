@@ -366,6 +366,15 @@ jobs:
       - name: verify:bulk-update-rls-where
         run: npm run verify:bulk-update-rls-where
 
+      - name: verify:fleet-unified-includes-trailers
+        run: npm run verify:fleet-unified-includes-trailers
+
+      - name: verify:fleet-table-type-column-present
+        run: npm run verify:fleet-table-type-column-present
+
+      - name: verify:equipment-bulk-update-rls-where
+        run: npm run verify:equipment-bulk-update-rls-where
+
       - name: verify:samsara-positions-cron-registered
         run: npm run verify:samsara-positions-cron-registered
 
