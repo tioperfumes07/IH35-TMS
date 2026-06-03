@@ -172,6 +172,8 @@
     "verify:type-filter-query-param": "node scripts/verify-type-filter-query-param.mjs",
     "verify:qbo-push-rate-limit": "node scripts/verify-qbo-push-rate-limit.mjs",
     "verify:qbo-push-rls-tenant-scope": "node scripts/verify-qbo-push-rls-tenant-scope.mjs",
+    "verify:qbo-vendors-push-fields": "node scripts/verify-qbo-vendors-push-fields.mjs",
+    "verify:qbo-vendors-push-shared-rate": "node scripts/verify-qbo-vendors-push-shared-rate.mjs",
 
     "verify:service-location-buckets-wired": "node scripts/verify-service-location-buckets-wired.mjs",
     "verify:startup-migration-drift-guard": "node scripts/verify-startup-migration-drift-guard.mjs",

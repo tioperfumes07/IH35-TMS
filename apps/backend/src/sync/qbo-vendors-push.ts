@@ -6,17 +6,16 @@ import { deliverQboMasterEntityPush } from "../qbo/push.service.js";
 import {
   QBO_MASTER_PUSH_RATE_LIMIT_PER_MIN,
   canPushWithinMasterRateLimit,
-  getQboMasterPushRateWindowCount,
   recordQboMasterPushAttempt,
   resetQboMasterPushRateLimiterForTests,
 } from "./qbo-master-push-rate-limit.js";
 
-export const QBO_CUSTOMERS_PUSH_INTERVAL_MS = 60_000;
-export const QBO_CUSTOMERS_PUSH_BATCH_SIZE = 100;
-export const QBO_CUSTOMERS_PUSH_RATE_LIMIT_PER_MIN = QBO_MASTER_PUSH_RATE_LIMIT_PER_MIN;
-export const QBO_CUSTOMERS_PUSH_DEAD_LETTER_AFTER = 5;
+export const QBO_VENDORS_PUSH_INTERVAL_MS = 60_000;
+export const QBO_VENDORS_PUSH_BATCH_SIZE = 100;
+export const QBO_VENDORS_PUSH_RATE_LIMIT_PER_MIN = QBO_MASTER_PUSH_RATE_LIMIT_PER_MIN;
+export const QBO_VENDORS_PUSH_DEAD_LETTER_AFTER = 5;
 
-export type QboCustomerPushRow = {
+export type QboVendorPushRow = {
   id: string;
   operating_company_id: string;
   qbo_id: string | null;
@@ -24,36 +23,43 @@ export type QboCustomerPushRow = {
   company_name: string | null;
   primary_email: string | null;
   primary_phone: string | null;
-  mc_number: string | null;
   active: boolean;
   qbo_sync_token: string | null;
   payload_json: Record<string, unknown> | null;
   sync_status: string;
   qbo_push_attempts: number;
+  eligible_1099: boolean;
+  payment_terms_qbo_id: string | null;
+  default_ap_account_qbo_id: string | null;
 };
 
 type PushAttemptResult = "success" | "failure" | "skipped";
 
-export function resetQboCustomersPushRateLimiterForTests() {
+export function resetQboVendorsPushRateLimiterForTests() {
   resetQboMasterPushRateLimiterForTests();
 }
 
-export function getQboCustomersPushRateWindowCount(nowMs = Date.now()): number {
-  return getQboMasterPushRateWindowCount(nowMs);
+function vendorPayloadJson(row: QboVendorPushRow): Record<string, unknown> {
+  const base =
+    row.payload_json && typeof row.payload_json === "object" && !Array.isArray(row.payload_json)
+      ? { ...row.payload_json }
+      : {};
+  return {
+    ...base,
+    eligible_1099: row.eligible_1099,
+    Vendor1099: row.eligible_1099,
+    payment_terms_qbo_id: row.payment_terms_qbo_id,
+    default_ap_account_qbo_id: row.default_ap_account_qbo_id,
+    ...(row.payment_terms_qbo_id ? { TermRef: { value: row.payment_terms_qbo_id } } : {}),
+    ...(row.default_ap_account_qbo_id ? { APAccountRef: { value: row.default_ap_account_qbo_id } } : {}),
+  };
 }
 
-export function recordQboCustomersPushAttempt(nowMs = Date.now()) {
-  recordQboMasterPushAttempt(nowMs);
-}
-
-export function canPushWithinRateLimit(nowMs = Date.now()): boolean {
-  return canPushWithinMasterRateLimit(nowMs);
-}
-
-async function ensureMdataMirror(client: PoolClient, row: QboCustomerPushRow) {
+async function ensureMdataMirror(client: PoolClient, row: QboVendorPushRow) {
+  const payload = vendorPayloadJson(row);
   await client.query(
     `
-      INSERT INTO mdata.qbo_customers (
+      INSERT INTO mdata.qbo_vendors (
         id,
         operating_company_id,
         qbo_id,
@@ -62,7 +68,6 @@ async function ensureMdataMirror(client: PoolClient, row: QboCustomerPushRow) {
         company_name,
         primary_email,
         primary_phone,
-        mc_number,
         active,
         created_in_tms,
         payload_json
@@ -77,9 +82,8 @@ async function ensureMdataMirror(client: PoolClient, row: QboCustomerPushRow) {
         $7,
         $8,
         $9,
-        $10,
         true,
-        COALESCE($11::jsonb, '{}'::jsonb)
+        $10::jsonb
       )
       ON CONFLICT (id) DO UPDATE
       SET
@@ -87,7 +91,6 @@ async function ensureMdataMirror(client: PoolClient, row: QboCustomerPushRow) {
         company_name = EXCLUDED.company_name,
         primary_email = EXCLUDED.primary_email,
         primary_phone = EXCLUDED.primary_phone,
-        mc_number = EXCLUDED.mc_number,
         active = EXCLUDED.active,
         payload_json = EXCLUDED.payload_json,
         mirrored_at = now(),
@@ -102,16 +105,15 @@ async function ensureMdataMirror(client: PoolClient, row: QboCustomerPushRow) {
       row.company_name ?? row.display_name,
       row.primary_email,
       row.primary_phone,
-      row.mc_number,
       row.active,
-      row.payload_json ? JSON.stringify(row.payload_json) : "{}",
+      JSON.stringify(payload),
     ]
   );
 }
 
 async function auditQboPushAttempt(
   client: PoolClient,
-  row: QboCustomerPushRow,
+  row: QboVendorPushRow,
   outcome: PushAttemptResult,
   detail: Record<string, unknown>
 ) {
@@ -130,7 +132,7 @@ async function auditQboPushAttempt(
       VALUES (
         $1::uuid,
         'accounting',
-        'qbo_customers',
+        'qbo_vendors',
         'UPDATE',
         $2,
         $3::jsonb,
@@ -145,6 +147,9 @@ async function auditQboPushAttempt(
         sync_status: row.sync_status,
         qbo_push_attempts: row.qbo_push_attempts,
         qbo_id: row.qbo_id,
+        eligible_1099: row.eligible_1099,
+        payment_terms_qbo_id: row.payment_terms_qbo_id,
+        default_ap_account_qbo_id: row.default_ap_account_qbo_id,
       }),
       JSON.stringify({
         outcome,
@@ -154,10 +159,10 @@ async function auditQboPushAttempt(
   );
 }
 
-async function markPushSuccess(client: PoolClient, row: QboCustomerPushRow, qboId: string, syncToken: string | null) {
+async function markPushSuccess(client: PoolClient, row: QboVendorPushRow, qboId: string, syncToken: string | null) {
   await client.query(
     `
-      UPDATE accounting.qbo_customers
+      UPDATE accounting.qbo_vendors
       SET
         qbo_id = $3,
         qbo_sync_token = $4,
@@ -172,7 +177,7 @@ async function markPushSuccess(client: PoolClient, row: QboCustomerPushRow, qboI
   );
   await client.query(
     `
-      UPDATE mdata.qbo_customers
+      UPDATE mdata.qbo_vendors
       SET
         qbo_id = $3,
         qbo_sync_token = $4,
@@ -186,11 +191,11 @@ async function markPushSuccess(client: PoolClient, row: QboCustomerPushRow, qboI
   );
 }
 
-async function markPushFailure(client: PoolClient, row: QboCustomerPushRow, errorMessage: string) {
+async function markPushFailure(client: PoolClient, row: QboVendorPushRow, errorMessage: string) {
   const nextAttempts = row.qbo_push_attempts + 1;
   await client.query(
     `
-      UPDATE accounting.qbo_customers
+      UPDATE accounting.qbo_vendors
       SET
         sync_status = 'failed',
         qbo_push_attempts = $3,
@@ -204,14 +209,14 @@ async function markPushFailure(client: PoolClient, row: QboCustomerPushRow, erro
   );
 }
 
-export async function claimQboCustomersPushBatch(client: PoolClient, batchSize: number): Promise<QboCustomerPushRow[]> {
-  const res = await client.query<QboCustomerPushRow>(
+export async function claimQboVendorsPushBatch(client: PoolClient, batchSize: number): Promise<QboVendorPushRow[]> {
+  const res = await client.query<QboVendorPushRow>(
     `
-      UPDATE accounting.qbo_customers
+      UPDATE accounting.qbo_vendors
       SET sync_status = 'pushing', updated_at = now()
       WHERE id IN (
         SELECT id
-        FROM accounting.qbo_customers
+        FROM accounting.qbo_vendors
         WHERE qbo_id IS NULL
           AND sync_status IN ('unsynced', 'failed')
           AND qbo_push_attempts < $2
@@ -227,27 +232,29 @@ export async function claimQboCustomersPushBatch(client: PoolClient, batchSize: 
         company_name,
         primary_email,
         primary_phone,
-        mc_number,
         active,
         qbo_sync_token,
         payload_json,
         sync_status,
-        qbo_push_attempts
+        qbo_push_attempts,
+        eligible_1099,
+        payment_terms_qbo_id,
+        default_ap_account_qbo_id
     `,
-    [batchSize, QBO_CUSTOMERS_PUSH_DEAD_LETTER_AFTER]
+    [batchSize, QBO_VENDORS_PUSH_DEAD_LETTER_AFTER]
   );
   return res.rows;
 }
 
-export async function pushSingleQboCustomer(
+export async function pushSingleQboVendor(
   client: PoolClient,
-  row: QboCustomerPushRow,
+  row: QboVendorPushRow,
   nowMs = Date.now()
 ): Promise<PushAttemptResult> {
-  if (!canPushWithinRateLimit(nowMs)) {
+  if (!canPushWithinMasterRateLimit(nowMs)) {
     await client.query(
       `
-        UPDATE accounting.qbo_customers
+        UPDATE accounting.qbo_vendors
         SET sync_status = 'unsynced', updated_at = now()
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND sync_status = 'pushing'
       `,
@@ -261,23 +268,23 @@ export async function pushSingleQboCustomer(
 
   try {
     await ensureMdataMirror(client, row);
-    recordQboCustomersPushAttempt(nowMs);
+    recordQboMasterPushAttempt(nowMs);
 
     const operation = row.qbo_id && row.qbo_sync_token ? "update" : "create";
     const result = await deliverQboMasterEntityPush(
       {
         operating_company_id: row.operating_company_id,
         mirror_row_id: row.id,
-        entity: "customer",
+        entity: "vendor",
         operation,
       },
-      { client, eventId: `qbo-customers-push:${row.id}`, instanceId: "qbo-customers-push", log: () => {} }
+      { client, eventId: `qbo-vendors-push:${row.id}`, instanceId: "qbo-vendors-push", log: () => {} }
     );
 
     const qboRes = await client.query<{ qbo_id: string | null; qbo_sync_token: string | null }>(
       `
         SELECT qbo_id, qbo_sync_token
-        FROM mdata.qbo_customers
+        FROM mdata.qbo_vendors
         WHERE id = $1::uuid AND operating_company_id = $2::uuid
         LIMIT 1
       `,
@@ -287,7 +294,7 @@ export async function pushSingleQboCustomer(
     const syncToken = qboRes.rows[0]?.qbo_sync_token ?? null;
 
     if (!qboId) {
-      throw new Error(String(result?.message ?? "customer_push_missing_qbo_id"));
+      throw new Error(String(result?.message ?? "vendor_push_missing_qbo_id"));
     }
 
     await markPushSuccess(client, row, qboId, syncToken);
@@ -301,20 +308,20 @@ export async function pushSingleQboCustomer(
   }
 }
 
-export async function processQboCustomersPushBatch(batchSize = QBO_CUSTOMERS_PUSH_BATCH_SIZE): Promise<{
+export async function processQboVendorsPushBatch(batchSize = QBO_VENDORS_PUSH_BATCH_SIZE): Promise<{
   claimed: number;
   success: number;
   failure: number;
   skipped: number;
 }> {
   return withLuciaBypass(async (client) => {
-    const rows = await claimQboCustomersPushBatch(client, batchSize);
+    const rows = await claimQboVendorsPushBatch(client, batchSize);
     let success = 0;
     let failure = 0;
     let skipped = 0;
 
     for (const row of rows) {
-      const outcome = await pushSingleQboCustomer(client, row);
+      const outcome = await pushSingleQboVendor(client, row);
       if (outcome === "success") success += 1;
       else if (outcome === "failure") failure += 1;
       else skipped += 1;
@@ -326,9 +333,9 @@ export async function processQboCustomersPushBatch(batchSize = QBO_CUSTOMERS_PUS
 
 let timer: ReturnType<typeof setInterval> | undefined;
 
-export function initializeQboCustomersPushScheduler(app: FastifyInstance) {
-  if ((process.env.QBO_CUSTOMERS_PUSH_SCHEDULER_ENABLED ?? "true").trim() === "false") {
-    app.log.info("[STARTUP] qbo-customers-push scheduler disabled");
+export function initializeQboVendorsPushScheduler(app: FastifyInstance) {
+  if ((process.env.QBO_VENDORS_PUSH_SCHEDULER_ENABLED ?? "true").trim() === "false") {
+    app.log.info("[STARTUP] qbo-vendors-push scheduler disabled");
     return;
   }
 
@@ -336,20 +343,20 @@ export function initializeQboCustomersPushScheduler(app: FastifyInstance) {
 
   timer = setInterval(async () => {
     await wrapBackgroundJobTick(
-      "sync.qbo_customers_push",
+      "sync.qbo_vendors_push",
       async () => {
-        await processQboCustomersPushBatch();
+        await processQboVendorsPushBatch();
       },
       app.log
     );
-  }, QBO_CUSTOMERS_PUSH_INTERVAL_MS);
+  }, QBO_VENDORS_PUSH_INTERVAL_MS);
 
   app.log.info(
-    `[STARTUP] qbo-customers-push scheduler armed (${QBO_CUSTOMERS_PUSH_INTERVAL_MS}ms, batch ${QBO_CUSTOMERS_PUSH_BATCH_SIZE}, rate ${QBO_CUSTOMERS_PUSH_RATE_LIMIT_PER_MIN}/min)`
+    `[STARTUP] qbo-vendors-push scheduler armed (${QBO_VENDORS_PUSH_INTERVAL_MS}ms, batch ${QBO_VENDORS_PUSH_BATCH_SIZE}, shared rate ${QBO_VENDORS_PUSH_RATE_LIMIT_PER_MIN}/min)`
   );
 }
 
-export function stopQboCustomersPushScheduler() {
+export function stopQboVendorsPushScheduler() {
   if (timer) clearInterval(timer);
   timer = undefined;
 }

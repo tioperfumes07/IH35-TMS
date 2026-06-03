@@ -160,8 +160,22 @@ export type HomeQboCustomersPushStatus = {
   dead_letter: number;
 };
 
+export type HomeQboVendorsPushStatus = HomeQboCustomersPushStatus;
+
 export async function fetchHomeQboCustomersPushStatus(companyId: string): Promise<HomeQboCustomersPushStatus> {
   const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/sync/qbo-customers/status", companyId));
+  return {
+    total_local: num(raw.total_local),
+    synced: num(raw.synced),
+    unsynced: num(raw.unsynced),
+    pushing: num(raw.pushing),
+    failed: num(raw.failed),
+    dead_letter: num(raw.dead_letter),
+  };
+}
+
+export async function fetchHomeQboVendorsPushStatus(companyId: string): Promise<HomeQboVendorsPushStatus> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/sync/qbo-vendors/status", companyId));
   return {
     total_local: num(raw.total_local),
     synced: num(raw.synced),

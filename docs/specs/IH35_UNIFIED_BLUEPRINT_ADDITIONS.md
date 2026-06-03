@@ -1057,3 +1057,11 @@ Status: LOCKED
 Relevant block: BLOCK-A10-URL-ROUTING-NORMALIZE
 
 Legacy underscore URLs (for example `/lists/driver/pay_rate_templates`) redirected 301 (backend) or client-replaced (frontend) to hyphen canonical routes (for example `/lists/driver/pay-rate-templates`). Catch-all stub routes no longer serve real catalog pages for underscore variants. CI guard `verify:no-underscore-canonical-routes` blocks new underscore canonical route registrations.
+
+## 2026-06-02 · Block B9 · QBO local vendor push scheduler
+
+Source: Block B9 spec (#72-FAULT-S2)  
+Status: LOCKED  
+Relevant block: BLOCK-B9-FAULT-S2-QBO-VENDORS-SYNC-PUSH
+
+Migration `0321` tracks push state on `accounting.qbo_vendors` plus vendor fields (`eligible_1099`, `payment_terms_qbo_id`, `default_ap_account_qbo_id`). Scheduler `qbo-vendors-push.ts` runs every 60s, batch 100, shares **100/min** rolling budget with B8 via `qbo-master-push-rate-limit.ts`, dead-letter at 5 attempts, audit `row_changes.action='qbo_push'`. Status endpoint `GET /api/v1/sync/qbo-vendors/status` (withCurrentUser) extends Office HOME QBO sync card vendor counts.

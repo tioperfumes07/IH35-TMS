@@ -788,6 +788,16 @@ and persists it on the queue row so retries reuse the same `Idempotency-Key` HTT
 
 **Observability:** `GET /api/v1/sync/qbo-customers/status?operating_company_id=` returns `{ total_local, synced, unsynced, pushing, failed, dead_letter }`; Office HOME QBO Sync Health card surfaces pending/synced customer counts.
 
+### Local QBO vendor push scheduler (B9 — 2026-06)
+
+**Problem:** ~2,744 TMS-origin vendors exist in `accounting.qbo_vendors` (cloned from `mdata.qbo_vendors`) with `qbo_id IS NULL`.
+
+**Schema (`0321`):** `accounting.qbo_vendors` gains `sync_status`, `qbo_push_attempts`, `qbo_last_push_at`, `qbo_last_error`, vendor push fields (`eligible_1099`, `payment_terms_qbo_id`, `default_ap_account_qbo_id`), partial index on `(sync_status, qbo_push_attempts) WHERE qbo_id IS NULL`, tenant RLS, and `audit.row_changes.action='qbo_push'` attempt rows.
+
+**Worker:** `apps/backend/src/sync/qbo-vendors-push.ts` ticks every **60s**, claims up to **100** rows, shares the **100/min** rolling rate budget with B8 via `qbo-master-push-rate-limit.ts`, dead-letters after **5** failed attempts, mirrors row into `mdata.qbo_vendors` (1099 / payment terms / default AP account in payload), then reuses `deliverQboMasterEntityPush` (`entity=vendor`, `operation=create|update`).
+
+**Observability:** `GET /api/v1/sync/qbo-vendors/status?operating_company_id=` (withCurrentUser-scoped) returns the same count JSON; Office HOME QBO Sync Health card surfaces pending/synced vendor counts alongside customers.
+
 ---
 
 ## ADDENDUM — 2026-05-21 Data Sovereignty + Telematics capability architecture
