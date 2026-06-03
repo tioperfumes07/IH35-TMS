@@ -77,7 +77,7 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
   const hasActiveFilter = typeFilter !== "";
 
   const counters = useMemo(() => {
-    const sourceRows = typeFilter !== "" ? (totalRowsQuery.data?.rows ?? []) : (rowsQuery.data?.rows ?? []);
+    const sourceRows = rowsQuery.data?.rows ?? [];
     const trucks = sourceRows.filter((r) => r.kind === "truck");
     const trailers = sourceRows.filter((r) => r.kind === "trailer");
     return {
@@ -88,7 +88,7 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
       inShop: sourceRows.filter((r) => r.status === "InMaintenance").length,
       outOfService: sourceRows.filter((r) => r.status === "OutOfService").length,
     };
-  }, [totalRowsQuery.data?.rows, rowsQuery.data?.rows, typeFilter]);
+  }, [rowsQuery.data?.rows]);
 
   const setTypeFilter = (nextType: string) => {
     setSearchParams(
