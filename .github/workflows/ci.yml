@@ -445,6 +445,9 @@ jobs:
       - name: verify:loves-cron-registered
         run: npm run verify:loves-cron-registered
 
+      - name: verify:no-bulk-default-classifications
+        run: npm run verify:no-bulk-default-classifications
+
       - name: verify:positions-latest-rls
         run: npm run verify:positions-latest-rls
 
