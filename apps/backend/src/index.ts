@@ -147,6 +147,7 @@ import { registerAnomalyStatusRoutes } from "./integrity/anomaly-status.routes.j
 import { runAnomalyDetectionForTenant } from "./integrity/anomaly-detector.service.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
+import { registerListsCountsRoutes } from "./lists/lists-counts.routes.js";
 import { registerAssetsRoutes } from "./assets/assets.routes.js";
 import { registerDriverProfileRoutes } from "./mdata/driver-profile.routes.js";
 import { registerDriverReturningDetectionRoutes } from "./mdata/driver-returning-detection.routes.js";
@@ -565,6 +566,7 @@ async function main() {
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
   await registerListsHubRoutes(app);
+  await registerListsCountsRoutes(app);
   await registerAccountingRoutes(app);
   await registerCompanyRoutes(app);
   await registerLegalTemplateRoutes(app);

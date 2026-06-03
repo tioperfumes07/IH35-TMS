@@ -1064,6 +1064,8 @@ Legacy bookmarked URLs that use underscores in path segments (for example `/list
 
 Duplicate `catalogs.equipment_types` rows from mixed seed conventions (for example `DRY-VAN` vs `DRY_VAN`, `OVERSIZE` vs `OVERSIZED`) are merged in migration `0318`: FK references repointed, duplicates archived via `deactivated_at` (ledger table `equipment_types_dedup_ledger_0318` preserves rollback mapping). POST equipment types rejects normalized code/name collisions (409). Office list UI never renders archived rows. **CI:** `verify:equipment-types-no-collision` queries active rows and fails on duplicate normalized keys.
 
+LISTS hub domain ribbon header counts derive from `GET /api/v1/lists/<module>/count`, summing active catalog rows with the same default filters as each sub-page listing (not catalog-cardinality from `views.catalogs_inventory`). Frontend `useModuleCount()` uses TanStack Query with 60s `staleTime`. **CI:** `verify:no-hardcoded-list-counts` fails on hardcoded header badge integers in hub ribbon components.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

@@ -1081,3 +1081,5 @@ Status: LOCKED
 Relevant block: BLOCK-B10-FAULT-S3-QBO-COA-SYNC-PUSH
 
 Migration `0323` tracks push state on `accounting.qbo_accounts` (`sync_status`, `qbo_push_attempts`, `qbo_last_push_at`, `qbo_last_error`, `parent_synced`, `parent_id`). Scheduler `qbo-accounts-push.ts` runs every 60s, batch 100, **parent-first** two-pass claim (roots then children with synced parents), shares **100/min** rolling budget with B8+B9 via `qbo-master-push-rate-limit.ts`, dead-letter at 5 attempts. Status endpoint `GET /api/v1/sync/qbo-accounts/status` returns hierarchy counts (`root_synced`, `children_synced`, `blocked_by_parent`); Office HOME QBO sync card surfaces account pending/synced counts.
+
+Block A12 (#77-Block-I): LISTS hub ribbon counts come from live `GET /api/v1/lists/<module>/count` endpoints (sum of active catalog rows per domain, matching sub-page list defaults). Frontend hook `useModuleCount()` with 60s staleTime. CI guard `verify:no-hardcoded-list-counts` blocks hardcoded badge integers in hub header components.

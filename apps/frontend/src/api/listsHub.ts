@@ -48,3 +48,17 @@ export function postForceListsQboSync(companyId: string) {
   });
 }
 
+export type ListsModule =
+  | "SAFETY"
+  | "DISPATCH"
+  | "DRIVERS"
+  | "MAINTENANCE"
+  | "FUEL"
+  | "FLEET"
+  | "ACCOUNTING"
+  | "NAMES_MASTER";
+
+export function getListsModuleCount(moduleSlug: string, companyId: string) {
+  return apiRequest<{ count: number }>(`/api/v1/lists/${encodeURIComponent(moduleSlug)}/count?${q(companyId)}`);
+}
+
