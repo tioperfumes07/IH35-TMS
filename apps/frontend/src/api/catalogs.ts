@@ -27,6 +27,7 @@ export type EquipmentType = {
   description: string | null;
   is_active: boolean;
   sort_order: number;
+  deactivated_at?: string | null;
   line_items: EquipmentLineItemTemplate[];
 };
 

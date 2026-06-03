@@ -1065,3 +1065,11 @@ Status: LOCKED
 Relevant block: BLOCK-B9-FAULT-S2-QBO-VENDORS-SYNC-PUSH
 
 Migration `0321` tracks push state on `accounting.qbo_vendors` plus vendor fields (`eligible_1099`, `payment_terms_qbo_id`, `default_ap_account_qbo_id`). Scheduler `qbo-vendors-push.ts` runs every 60s, batch 100, shares **100/min** rolling budget with B8 via `qbo-master-push-rate-limit.ts`, dead-letter at 5 attempts, audit `row_changes.action='qbo_push'`. Status endpoint `GET /api/v1/sync/qbo-vendors/status` (withCurrentUser) extends Office HOME QBO sync card vendor counts.
+
+## 2026-06-02 · Block A11 · Equipment types deduplication
+
+Source: Block A11 spec (#76-Block-J)  
+Status: LOCKED  
+Relevant block: BLOCK-A11-EQUIPMENT-TYPES-DEDUP
+
+Migration `0318` archives duplicate `catalogs.equipment_types` rows (hyphen vs underscore codes, singular vs plural names), repoints `mdata.driver_equipment_qualifications` and line-item templates, and resets monotonic `sort_order`. POST `/api/v1/catalogs/equipment-types` rejects normalized name/code collisions with 409. Office equipment types page hides `deactivated_at` rows. CI guard `verify:equipment-types-no-collision` fails when any two active rows share a normalized key.

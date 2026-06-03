@@ -215,7 +215,10 @@ export function EquipmentTypesPage() {
     },
   });
 
-  const rows = useMemo(() => equipmentTypesQuery.data ?? [], [equipmentTypesQuery.data]);
+  const rows = useMemo(
+    () => (equipmentTypesQuery.data ?? []).filter((typeRow) => typeRow.deactivated_at == null),
+    [equipmentTypesQuery.data]
+  );
 
   function toggleExpanded(id: string) {
     setExpandedIds((current) => (current.includes(id) ? current.filter((value) => value !== id) : [...current, id]));
@@ -402,7 +405,13 @@ export function EquipmentTypesPage() {
               await createEquipmentMutation.mutateAsync(parsed.data);
             } catch (error) {
               if (error instanceof ApiError && error.status === 409) {
-                pushToast("Equipment type code already exists", "error");
+                const body = error.body as { error?: string } | undefined;
+                pushToast(
+                  body?.error === "equipment_type_name_collision"
+                    ? "Equipment type name already exists (duplicate formatting)"
+                    : "Equipment type code already exists",
+                  "error"
+                );
                 return;
               }
               pushToast("Failed to create equipment type", "error");

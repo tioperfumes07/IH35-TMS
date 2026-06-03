@@ -180,6 +180,9 @@ jobs:
       - name: verify:no-underscore-canonical-routes
         run: npm run verify:no-underscore-canonical-routes
 
+      - name: verify:equipment-types-no-collision
+        run: npm run verify:equipment-types-no-collision
+
       - name: Verify no stub strings
         run: npm run verify:no-stub-strings
 
