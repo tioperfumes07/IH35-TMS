@@ -210,6 +210,8 @@ import { registerQboSyncConflictDetectionRoutes } from "./qbo/sync-conflict-dete
 import { registerQboUnlinkedEntitiesRoutes } from "./qbo/unlinked-entities.routes.js";
 import { registerQboBulkLinkRoutes } from "./qbo/bulk-link.routes.js";
 import { registerQboSyncHealthRoutes } from "./qbo/sync-health.routes.js";
+import { registerQboCustomersPushStatusRoutes } from "./sync/qbo-customers-status.routes.js";
+import { initializeQboCustomersPushScheduler, stopQboCustomersPushScheduler } from "./sync/qbo-customers-push.js";
 import { registerQboSyncEventLogRoutes } from "./qbo/sync-event-log.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
@@ -289,6 +291,7 @@ async function shutdown(signal: string) {
   try {
     stopQboSyncWorker();
     stopQboOutboxDispatcher();
+    stopQboCustomersPushScheduler();
     stopQboInboundSyncCron();
     stopDailyTaskAlertsCron();
     stopAdminJobsWorker();
@@ -385,6 +388,7 @@ async function main() {
   await registerQboUnlinkedEntitiesRoutes(app);
   await registerQboBulkLinkRoutes(app);
   await registerQboSyncHealthRoutes(app);
+  await registerQboCustomersPushStatusRoutes(app);
   await registerQboSyncEventLogRoutes(app);
   await registerEmailRoutes(app);
   await registerEmailQueueAdminRoutes(app);
@@ -773,6 +777,13 @@ async function main() {
     app.log.info("[STARTUP] admin-jobs-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] admin-jobs-worker failed");
+  }
+
+  try {
+    initializeQboCustomersPushScheduler(app);
+    app.log.info("[STARTUP] qbo-customers-push scheduler initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-customers-push scheduler failed");
   }
 
   try {

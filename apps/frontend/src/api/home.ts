@@ -151,6 +151,27 @@ export type HomeVendorMappingIntegrity = {
   };
 };
 
+export type HomeQboCustomersPushStatus = {
+  total_local: number;
+  synced: number;
+  unsynced: number;
+  pushing: number;
+  failed: number;
+  dead_letter: number;
+};
+
+export async function fetchHomeQboCustomersPushStatus(companyId: string): Promise<HomeQboCustomersPushStatus> {
+  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/sync/qbo-customers/status", companyId));
+  return {
+    total_local: num(raw.total_local),
+    synced: num(raw.synced),
+    unsynced: num(raw.unsynced),
+    pushing: num(raw.pushing),
+    failed: num(raw.failed),
+    dead_letter: num(raw.dead_letter),
+  };
+}
+
 export async function fetchHomeQboSyncHealth(companyId: string): Promise<HomeQboSyncHealth> {
   const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/qbo/sync-health", companyId));
   const latestRunRaw =

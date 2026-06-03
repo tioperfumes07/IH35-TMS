@@ -170,6 +170,8 @@
     "verify:unit-update-zod-allowlist-67": "node scripts/verify-unit-update-zod-allowlist-67.mjs",
     "verify:fleet-type-filter-dropdown": "node scripts/verify-fleet-type-filter-dropdown.mjs",
     "verify:type-filter-query-param": "node scripts/verify-type-filter-query-param.mjs",
+    "verify:qbo-push-rate-limit": "node scripts/verify-qbo-push-rate-limit.mjs",
+    "verify:qbo-push-rls-tenant-scope": "node scripts/verify-qbo-push-rls-tenant-scope.mjs",
 
     "verify:service-location-buckets-wired": "node scripts/verify-service-location-buckets-wired.mjs",
     "verify:startup-migration-drift-guard": "node scripts/verify-startup-migration-drift-guard.mjs",
