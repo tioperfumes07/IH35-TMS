@@ -69,6 +69,7 @@ type IdentityUserRow = {
   default_company_id: string | null;
   created_at: string;
   deactivated_at: string | null;
+  last_login_at?: string | null;
   onboarding_completed_at?: string | null;
 };
 
@@ -110,6 +111,7 @@ function mapIdentityUser(row: IdentityUserRow) {
     default_company_id: row.default_company_id ?? null,
     created_at: row.created_at,
     deactivated_at: row.deactivated_at,
+    last_login_at: row.last_login_at ?? null,
     onboarding_completed_at: row.onboarding_completed_at ?? null,
   };
 }
@@ -229,7 +231,8 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
       const offsetIdx = values.length;
       const res = await client.query<IdentityUserRow>(
         `
-          SELECT u.id, u.email, u.role, u.first_name, u.last_name, u.google_user_id, u.password_hash, u.default_company_id, u.created_at, u.deactivated_at
+          SELECT u.id, u.email, u.role, u.first_name, u.last_name, u.google_user_id, u.password_hash, u.default_company_id, u.created_at, u.deactivated_at,
+            u.last_login_at::text AS last_login_at
           FROM identity.users u
           ${whereClause}
           ORDER BY u.created_at DESC

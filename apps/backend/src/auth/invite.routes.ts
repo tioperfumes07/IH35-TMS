@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withLuciaBypass } from "./db.js";
 import { lucia } from "./lucia.js";
+import { touchUserLastLoginAt } from "./session-create.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
 
 const redeemInviteBodySchema = z.object({
@@ -75,6 +76,7 @@ export async function registerInviteAuthRoutes(app: FastifyInstance) {
       if (!user) return { error: "invalid_or_expired_invite" as const };
 
       const session = await lucia.createSession(invite.identity_user_id, {});
+      await touchUserLastLoginAt(client, invite.identity_user_id);
       const markUsedRes = await client.query(
         `
           UPDATE identity.driver_invites
