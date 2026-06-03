@@ -120,6 +120,9 @@ jobs:
       - name: Verify safety reports coverage
         run: npm run verify:safety-reports-coverage
 
+      - name: Verify safety route coverage
+        run: npm run verify:safety-route-coverage
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
