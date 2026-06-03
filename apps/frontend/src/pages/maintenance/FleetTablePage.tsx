@@ -166,11 +166,6 @@ export function FleetTablePage({ operatingCompanyId }: Props) {
               ? "Try another type or clear filters to see all vehicles."
               : "Trucks and trailers appear here once assigned to this operating company."}
           </div>
-          {!hasActiveFilter ? (
-            <button type="button" className="mt-2 rounded border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700">
-              + Create
-            </button>
-          ) : null}
         </div>
       ) : (
         <FleetTable operatingCompanyId={operatingCompanyId} rows={rows} />

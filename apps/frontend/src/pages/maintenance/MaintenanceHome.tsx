@@ -42,6 +42,12 @@ import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
 import { WorkOrderDetailModal } from "../../components/work-orders/WorkOrderDetailModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
+import {
+  MAINTENANCE_MASTER_DATA_LINKS,
+  MAINTENANCE_OPERATION_LINKS,
+} from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
+
+export { MAINTENANCE_MASTER_DATA_LINKS, MAINTENANCE_OPERATION_LINKS } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 
 const SUBNAV = [
   { id: "active_wos", label: "Active WOs" },
@@ -277,16 +283,6 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
               </div>
             </div>
           </div>
-          <div className="flex justify-end">
-            <div className="flex gap-2">
-              <button type="button" className="rounded border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700">
-                CSV Import
-              </button>
-              <button type="button" className="rounded border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700">
-                + Create
-              </button>
-            </div>
-          </div>
           <PartsInventoryTable companyId={companyId} rows={partsInventoryRowsQuery.data ?? []} />
           <div className="rounded border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
@@ -410,30 +406,6 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
     </div>
   );
 }
-
-export const MAINTENANCE_OPERATION_LINKS: { label: string; path: string }[] = [
-  { label: "Dashboard", path: "/maintenance" },
-  { label: "Active WOs", path: "/maintenance/active-wos" },
-  { label: "Fleet Table", path: "/maintenance/fleet-table" },
-  { label: "R&M Status Board", path: "/maintenance/rm-status-board" },
-  { label: "Service / Location", path: "/maintenance/service-location" },
-  { label: "Arriving Soon", path: "/maintenance/arriving-soon" },
-  { label: "In-Transit Issues", path: "/maintenance/in-transit-issues" },
-  { label: "Damage Reports", path: "/maintenance/damage-reports" },
-  { label: "Severe Repairs", path: "/maintenance/severe-repairs" },
-  { label: "Parts Inventory", path: "/maintenance/parts-inventory" },
-  { label: "Settings", path: "/maintenance/settings" },
-];
-
-export const MAINTENANCE_MASTER_DATA_LINKS: { label: string; path: string }[] = [
-  { label: "Vehicles", path: "/maintenance/vehicles" },
-  { label: "Parts", path: "/maintenance/parts" },
-  { label: "PM Schedule", path: "/maintenance/pm-schedule" },
-  { label: "Inspections", path: "/maintenance/inspections" },
-  { label: "Vendors", path: "/maintenance/vendors" },
-  { label: "Reports", path: "/maintenance/reports" },
-  { label: "Compliance", path: "/maintenance/compliance" },
-];
 
 function maintenanceSubNavActiveHref(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;

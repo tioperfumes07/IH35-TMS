@@ -32,10 +32,16 @@ import { WOStatusPieChart } from "./charts/WOStatusPieChart";
 import { formatShortDate, formatUsdFromCents, HomeKpiCard } from "./HomeKpiCard";
 import { QuickActionsBar } from "./QuickActionsBar";
 import { SAFETY_CANONICAL_TAB_COUNT } from "../../components/safety/SAFETY_TABS_CONFIG";
+import { MAINTENANCE_HOME_QUICK_JUMP_COUNT } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 import "./home-print.css";
 
 const QUICK_JUMPS = [
-  { title: "Maintenance", subtitle: "Work orders, R&M, Severe Repair", count: 14, to: "/maintenance" },
+  {
+    title: "Maintenance",
+    subtitle: "Work orders, R&M, Severe Repair",
+    count: MAINTENANCE_HOME_QUICK_JUMP_COUNT,
+    to: "/maintenance",
+  },
   { title: "Accounting", subtitle: "Bills, Expenses, Bill payment", count: 38, to: "/accounting/invoices" },
   { title: "Banking", subtitle: "Categorize, Reconcile, Transfer", count: 22, to: "/banking" },
   { title: "Fuel", subtitle: "Relay inbox, Settings, Planner", count: 19, to: "/fuel" },
