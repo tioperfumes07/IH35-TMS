@@ -38,7 +38,7 @@ services:
     runtime: node
     schedule: "0 6 * * *"
     buildCommand: npm install && npm run build:backend
-    startCommand: node apps/backend/dist/sync/run-loves-card-import.js
+    startCommand: node dist/sync/run-loves-card-import.js
     envVars:
       - key: NODE_VERSION
         value: 22
