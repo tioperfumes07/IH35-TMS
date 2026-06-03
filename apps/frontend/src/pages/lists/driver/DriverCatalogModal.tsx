@@ -4,7 +4,7 @@ import type { DriverCatalogCreateBody, DriverCatalogRow, DriverCatalogUpdateBody
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 
-const CODE_REGEX = /^[A-Z][A-Z0-9-]+$/;
+const CODE_REGEX = /^[A-Z0-9-]+$/;
 
 export type DriverCatalogClient = {
   create: (operating_company_id: string, body: DriverCatalogCreateBody) => Promise<DriverCatalogRow>;

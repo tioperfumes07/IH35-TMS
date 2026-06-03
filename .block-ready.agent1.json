@@ -1,30 +1,30 @@
 {
-  "block_id": "BLOCK-A16-TEST-SEED-DATA-ARCHIVE",
-  "branch": "fix/test-seed-data-archive",
+  "block_id": "BLOCK-A17-DRIVERS-SUBCATALOGS-WIRE",
+  "branch": "feat/drivers-subcatalogs-wire-existing-factory",
   "phase": "Phase I",
-  "task": "TEST-SEED-DATA-ARCHIVE",
+  "task": "DRIVERS-SUBCATALOGS-WIRE",
   "allowed_files": [
-    "db/migrations/0320_*",
-    "apps/backend/src/mdata/drivers.routes.ts",
-    "apps/backend/src/mdata/test-seed-archive.ts",
-    "apps/backend/src/mdata/__tests__/drivers-test-seed-archive-list.test.ts",
-    "apps/backend/src/mdata/__tests__/test-seed-archive.test.ts",
-    "apps/backend/src/accounting/qbo-master-read.routes.ts",
-    "apps/backend/src/accounting/__tests__/qbo-customers-test-seed-archive-list.test.ts",
-    "apps/backend/src/identity/users.routes.ts",
-    "apps/backend/src/identity/__tests__/users-test-seed-archive-list.test.ts",
-    "apps/backend/src/__tests__/migrations/0320-archive-test-seed-data.test.ts",
-    "scripts/verify-no-test-seed-in-prod-listings.mjs",
-    "scripts/__tests__/verify-no-test-seed-in-prod-listings.test.mjs",
-    "scripts/verify-guards/150-verify-no-test-seed-in-prod-listings.mjs",
+    "apps/backend/src/catalogs/driver/**",
+    "apps/backend/src/lists/lists-module-count-spec.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/catalogs-driver.ts",
+    "apps/frontend/src/pages/lists/driver/**",
+    "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx",
+    "apps/frontend/src/pages/lists/ListsHubPage.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/__tests__/lists-routing.test.tsx",
+    "scripts/seed-driver-subcatalogs.mjs",
+    "scripts/verify-drivers-subcatalogs-wired.mjs",
+    "scripts/__tests__/verify-drivers-subcatalogs-wired.test.mjs",
+    "scripts/verify-guards/151-verify-drivers-subcatalogs-wired.mjs",
     ".github/workflows/ci.yml",
     "package.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:no-test-seed-in-prod-listings"
+    "verify:drivers-subcatalogs-wired"
   ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }
