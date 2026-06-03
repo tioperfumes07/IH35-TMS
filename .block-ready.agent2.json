@@ -18,6 +18,7 @@
     "scripts/verify-kpi-sources-of-truth-exists.mjs",
     "scripts/verify-guards/139-verify-kpi-sources-of-truth-exists.mjs",
     "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.agent2.json"
   ],
   "extra_gates": ["verify:kpi-sources-of-truth-exists"],
