@@ -405,6 +405,12 @@ jobs:
       - name: verify:qbo-push-rls-tenant-scope
         run: npm run verify:qbo-push-rls-tenant-scope
 
+      - name: verify:qbo-vendors-push-fields
+        run: npm run verify:qbo-vendors-push-fields
+
+      - name: verify:qbo-vendors-push-shared-rate
+        run: npm run verify:qbo-vendors-push-shared-rate
+
 
       - name: verify:samsara-positions-cron-registered
         run: npm run verify:samsara-positions-cron-registered
