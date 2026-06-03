@@ -12,7 +12,14 @@
     "apps/frontend/src/components/safety/AccidentReportDrawer.tsx",
     "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
-    ".block-ready.agent1.json"
+    ".block-ready.agent1.json",
+    ".github/workflows/ci.yml",
+    "package.json",
+    "scripts/verify-safety-accidents-wire-up.mjs",
+    "scripts/__tests__/verify-safety-accidents-wire-up.test.mjs",
+    "scripts/__tests__/fixtures/safety-accidents-wire-up/**",
+    "scripts/verify-guards/156-verify-safety-accidents-wire-up.mjs",
+    "scripts/verify-steps/37-verify-safety-accidents-wire-up.mjs"
   ],
   "extra_gates": [],
   "runtime_path": "src",
