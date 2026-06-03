@@ -400,23 +400,32 @@ Drawer actions wired to existing endpoints: status PATCH, photo upload POST, Spa
 ### Top action button
 **+ Create Driver**
 
-### Sub-nav tabs (10 — locked design)
+### Sub-nav tabs (9 query-synced subtabs on `/drivers?subtab=` — locked design, Block A24-2)
 
-| Tab | What it shows | Phase |
-|-----|---------------|-------|
-| **All Drivers** | Active driver list + filters | Phase 1 ✅ |
-| **Driver Detail** (per row) | Full profile + safety file + settlements + liabilities + advances | Phase 1 ✅ |
-| **Active** | Currently dispatched | Phase 1 ✅ |
-| **Inactive** | Off-duty / leave / pending | Phase 1 ✅ |
-| **Rehires** | Reapplications with state machine | Phase 1 ✅ |
-| **Settlements** | All settlements + debt-alert + escrow visualizer | Phase 3 ✅ T11.7 |
-| **Liabilities** | All driver_liabilities + ack status + forfeiture | Phase 3 ✅ T11.10 |
-| **Cash Advances** | All cash advances + WF-057 bill linkage | Phase 3 ✅ T11.11 |
-| **Pay Plans** | Per-driver pay code overrides | Phase 3 (T11.14 catalog) |
-| **Settings** | Default escrow % · Settlement period · Ack channels | Owner only |
+Canonical config: `apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts` (`DRIVERS_CANONICAL_SUBNAV_COUNT = 9`).
 
-### KPI row — 6 cards
-Active Drivers · Drivers w/ Debt · MTD Settlements Run · Pending Acks · Avg Net Pay (last settlement) · Drivers w/ Active Advance
+| Subtab id | Label | What it shows | Phase |
+|-----------|-------|---------------|-------|
+| `drivers` | Drivers | Driver list + 5 status filters (`?status=`) | Phase 1 ✅ |
+| `profiles` | Profiles | Driver profile index (`DriversListPage`) | Phase 1 ✅ |
+| `settlements` | Settlements ▾ | Settlements-ready panel | Phase 3 ✅ T11.7 |
+| `pre_settlements` | Pre-settlements | Pre-settlement queue panel | Phase 3 ✅ |
+| `cash_advances` | Cash advances | Debt-alert panel (advances + liabilities) | Phase 3 ✅ T11.11 |
+| `permits` | Permits | Permit/document expirations | Phase 1 ✅ |
+| `pay_rate_templates` | Pay rate templates | Pointer to Lists pay templates | Phase 3 (T11.14) |
+| `deductions` | Deductions | Debt-alert panel (shared with cash advances) | Phase 3 ✅ |
+| `leave` | Leave | On-leave / available summary | Phase 1 ✅ |
+
+**Module nav surfaces (2):** `/drivers` hub + `/driver-finance/cash-advance-requests` (linked from module subnav and sidebar flyout).
+
+**Deferred (not subtabs):** Rehires queue UI, owner Settings subtab, deep Driver Detail tabs — tracked separately.
+
+Per-driver **Driver Detail** (`/drivers/:id`) remains a separate route with its own deep tabs.
+
+### KPI row — 7 cards (data-backed on `/drivers`, Block A24-2)
+Active · On Loads · Available · On Leave · Settle Due · Drivers Owe · Escrow
+
+**CI guards:** `verify:nav-integrity` (module nav paths), `verify:drivers-count-nav-integrity` (Home quick-jump + sidebar flyout + arch doc + canonical constants).
 
 ### Driver Detail page (deep tabs within driver record)
 - Profile (DOT info · CDL · medical · contact)

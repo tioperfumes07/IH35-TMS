@@ -1103,3 +1103,11 @@ Status: LOCKED
 Relevant block: BLOCK-A17-1-DRIVERS-FK-WIRE
 
 Migration `0343_drivers_reference_fk_wire.sql` wires `mdata.drivers` to `reference.*`: FK columns for license class, operational employment status, and medical card status; junction tables for CDL endorsements and restrictions. Triggers backfill/sync from legacy inline columns on write. `driver-aggregate.service.ts` joins reference catalogs for profile display. **CI:** `verify:drivers-fk-wired`.
+
+## 2026-06-03 · Block A24.2 · Drivers tab/nav parity
+
+Source: A24 RBC audit + master queue  
+Status: LOCKED  
+Relevant block: BLOCK-A24-2-DRIVERS-TAB-NAV-PARITY
+
+Canonical `DRIVERS_TABS_CONFIG.ts` (9 query-synced subtabs, 5 list-status filters, 7 KPI cards, 2 module nav paths). Home quick-jump and DRIVERS sidebar flyout use canonical counts; arch doc aligned. **CI:** `verify:drivers-count-nav-integrity`, `verify:nav-integrity`.

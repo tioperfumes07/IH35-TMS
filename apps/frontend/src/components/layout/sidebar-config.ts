@@ -175,6 +175,15 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "DOT Compliance", to: "/safety/dot-compliance" },
         { label: "DOT Inspections", to: "/safety/dot-inspections" },
       ];
+    case "drivers":
+      return [
+        { label: "Drivers Home", to: "/drivers" },
+        { label: "Profiles", to: "/drivers?subtab=profiles" },
+        { label: "Settlements", to: "/drivers?subtab=settlements" },
+        { label: "Cash Advances", to: "/drivers?subtab=cash_advances" },
+        { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },
+        { label: "Permits", to: "/drivers?subtab=permits" },
+      ];
     case "dispatch":
       return [
         { label: "Dispatch Home", to: "/dispatch" },

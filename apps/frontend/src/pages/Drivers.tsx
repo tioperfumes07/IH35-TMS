@@ -47,6 +47,16 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 import { colors } from "../design/tokens";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { DriversListPage } from "./drivers/DriversListPage";
+import {
+  DRIVERS_LIST_STATUS_TABS,
+  DRIVERS_MODULE_NAV_PATHS,
+  DRIVERS_SUBNAV,
+  parseDriverListStatus,
+  parseDriverSubnav,
+  type DriversListStatusId,
+} from "../components/drivers/DRIVERS_TABS_CONFIG";
+
+export { DRIVERS_MODULE_NAV_PATHS };
 
 const statusOptions = ["All", "Probation", "Active", "Inactive", "Terminated", "OnLeave"] as const;
 const statusFieldComboboxOptions = statusOptions
@@ -58,34 +68,7 @@ const payBasisComboboxOptions = [
   { value: "practical_miles", label: "Practical Miles" },
 ];
 
-const DRIVER_LIST_STATUS_IDS = ["all", "active", "inactive", "on_leave", "terminated"] as const;
-type DriverListStatusId = (typeof DRIVER_LIST_STATUS_IDS)[number];
-const DRIVERS_SUBNAV = [
-  { id: "drivers", label: "Drivers" },
-  { id: "profiles", label: "Profiles" },
-  { id: "settlements", label: "Settlements ▾" },
-  { id: "pre_settlements", label: "Pre-settlements" },
-  { id: "cash_advances", label: "Cash advances" },
-  { id: "permits", label: "Permits" },
-  { id: "pay_rate_templates", label: "Pay rate templates" },
-  { id: "deductions", label: "Deductions" },
-  { id: "leave", label: "Leave" },
-] as const;
-
-/** Module nav paths for nav-integrity guard (query subtabs stay on /drivers). */
-export const DRIVERS_MODULE_NAV_PATHS = ["/drivers", "/driver-finance/cash-advance-requests"] as const;
-
-function parseDriverListStatus(searchParams: URLSearchParams): DriverListStatusId {
-  const raw = (searchParams.get("status") ?? "all").toLowerCase();
-  return (DRIVER_LIST_STATUS_IDS as readonly string[]).includes(raw) ? (raw as DriverListStatusId) : "all";
-}
-
-function parseDriverSubnav(searchParams: URLSearchParams): (typeof DRIVERS_SUBNAV)[number]["id"] {
-  const raw = (searchParams.get("subtab") ?? "drivers").toLowerCase();
-  return (DRIVERS_SUBNAV as readonly { id: string; label: string }[]).some((tab) => tab.id === raw)
-    ? (raw as (typeof DRIVERS_SUBNAV)[number]["id"])
-    : "drivers";
-}
+const DRIVER_LIST_STATUS_IDS = DRIVERS_LIST_STATUS_TABS.map((tab) => tab.id);
 
 function DriversCashAdvanceRequestsLink() {
   const { pathname } = useLocation();
@@ -102,7 +85,7 @@ function DriversCashAdvanceRequestsLink() {
   );
 }
 
-function driverMatchesListSegment(status: string, segment: DriverListStatusId): boolean {
+function driverMatchesListSegment(status: string, segment: DriversListStatusId): boolean {
   if (segment === "all") return true;
   if (segment === "active") return status === "Active";
   if (segment === "inactive") return status === "Inactive";
@@ -774,7 +757,7 @@ export function DriversPage() {
     [escrowBalancesQuery.data?.drivers]
   );
 
-  const setDriverListStatus = (next: DriverListStatusId) => {
+  const setDriverListStatus = (next: DriversListStatusId) => {
     setSearchParams(
       (prev) => {
         const nextParams = new URLSearchParams(prev);
@@ -903,7 +886,7 @@ export function DriversPage() {
             className="-mx-2"
             activeId={driverListStatus}
             onChange={(id) => {
-              if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriverListStatusId);
+              if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriversListStatusId);
             }}
             tabs={[
               { id: "all", label: `All (${driverListTabCounts.all})` },

@@ -80,8 +80,8 @@ const SUB_NAV_SOURCES: SubNavSource[] = [
   },
   {
     module: "drivers",
-    file: "apps/frontend/src/pages/Drivers.tsx",
-    startToken: "const DRIVERS_SUBNAV = [",
+    file: "apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts",
+    startToken: "export const DRIVERS_SUBNAV = [",
     valueField: "label",
   },
   {
