@@ -75,7 +75,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     tabs: [
       { id: "geofence-alerts", label: "Geofence Alerts", route: "/safety/geofence-alerts", badge: "new" },
       { id: "insurance", label: "Insurance", route: "/safety/insurance", badge: null },
-      { id: "permits", label: "Permits", route: "/safety/permits", badge: null },
+      { id: "permits", label: "Permits", route: "/safety/permits", badge: null, status: "Live" },
       { id: "integrity-reports", label: "Integrity Reports", route: "/safety/integrity-reports", badge: "new" },
     ],
   },

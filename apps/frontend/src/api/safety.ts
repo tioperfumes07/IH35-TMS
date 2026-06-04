@@ -836,3 +836,63 @@ export async function uploadSafetyIncidentPhoto(id: string, companyId: string, f
   if (!response.ok) throw new Error(payload?.error ?? "Upload failed");
   return payload;
 }
+
+export type SafetyPermitType =
+  | "state_operating_authority"
+  | "ifta_sticker"
+  | "oversize_overweight"
+  | "hazmat"
+  | "other";
+
+export function getSafetyPermits(
+  companyId: string,
+  params: { include_archived?: boolean; permit_type?: SafetyPermitType } = {}
+) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (params.include_archived) qs.set("include_archived", "true");
+  if (params.permit_type) qs.set("permit_type", params.permit_type);
+  return apiRequest<{
+    permits: Array<Record<string, unknown>>;
+    renewal_alerts: Array<Record<string, unknown>>;
+    renewal_reminder: Record<string, unknown>;
+  }>(`/api/v1/safety/permits?${qs.toString()}`);
+}
+
+export function createSafetyPermit(_companyId: string, body: Record<string, unknown>) {
+  return apiRequest<{ permit: Record<string, unknown> }>("/api/v1/safety/permits", {
+    method: "POST",
+    body,
+  });
+}
+
+export function updateSafetyPermit(id: string, companyId: string, body: Record<string, unknown>) {
+  return apiRequest<{ permit: Record<string, unknown> }>(`/api/v1/safety/permits/${id}?${q(companyId)}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function archiveSafetyPermit(id: string, companyId: string) {
+  return apiRequest<{ permit: Record<string, unknown> }>(`/api/v1/safety/permits/${id}/archive?${q(companyId)}`, {
+    method: "POST",
+  });
+}
+
+export function restoreSafetyPermit(id: string, companyId: string) {
+  return apiRequest<{ permit: Record<string, unknown> }>(`/api/v1/safety/permits/${id}/restore?${q(companyId)}`, {
+    method: "POST",
+  });
+}
+
+export function updatePermitRenewalReminder(
+  companyId: string,
+  body: { days_before_expiry?: number; enabled?: boolean }
+) {
+  return apiRequest<{ renewal_reminder: Record<string, unknown> }>(
+    `/api/v1/safety/permits/renewal-reminder?${q(companyId)}`,
+    {
+      method: "PATCH",
+      body,
+    }
+  );
+}
