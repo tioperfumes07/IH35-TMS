@@ -1,7 +1,7 @@
 {
   "block_id": "BULK-6",
   "branch": "feat/bulk-6-audit-filter-permission-ci-guard",
-  "phase": "BULK cluster — WAVE 1 Lane A",
+  "phase": "BULK cluster \u2014 WAVE 1 Lane A",
   "task": "Audit log bulk filter + permission gate + CI coverage guard (CLOSURE)",
   "allowed_files": [
     "apps/backend/src/audit/audit-events-list.routes.ts",
@@ -20,7 +20,8 @@
     "package.json",
     ".github/workflows/ci.yml",
     "docs/specs/BULK-OPS-DESIGN.md",
-    ".block-ready.agent1.json"
+    ".block-ready.agent1.json",
+    ".block-ready.json"
   ],
   "extra_gates": [
     "verify:bulk-coverage"
