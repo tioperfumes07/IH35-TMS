@@ -25,6 +25,7 @@ import { DetentionBoardPage } from "../pages/dispatch/DetentionBoardPage";
 import { OcrQueuePage } from "../pages/dispatch/OcrQueuePage";
 import { NotifyPreferencesPage } from "../pages/dispatch/NotifyPreferencesPage";
 import { PodReviewPage } from "../pages/dispatch/PodReviewPage";
+import { DispatchSettingsPage } from "../pages/dispatch/DispatchSettingsPage";
 import { BorderCrossingWizardPage } from "../pages/dispatch/BorderCrossingWizardPage";
 import { BorderCrossingHistoryPage } from "../pages/dispatch/BorderCrossingHistoryPage";
 import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
@@ -577,6 +578,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <PodReviewPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/settings"
+          element={
+            <ProtectedRoute>
+              <DispatchSettingsPage />
             </ProtectedRoute>
           }
         />
