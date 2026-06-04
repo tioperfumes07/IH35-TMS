@@ -219,6 +219,122 @@ export function getTrainingCompletions(companyId: string) {
   );
 }
 
+export type TrainingProgramCategory = "entry_level" | "refresher" | "remedial" | "hazmat" | "other";
+export type TrainingProgramFrequency = "one_time" | "annual" | "n_month";
+
+export function createTrainingProgram(
+  companyId: string,
+  body: {
+    name: string;
+    category: TrainingProgramCategory;
+    frequency: TrainingProgramFrequency;
+    passing_grade?: string;
+  }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/training-programs?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function createSafetyTrainingRecord(
+  companyId: string,
+  body: {
+    driver_id: string;
+    training_name: string;
+    completed_at: string;
+    expiry_date?: string;
+    notes?: string;
+  }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/training-records?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export type SafetyMeetingRow = SafetyEventLogRow & {
+  required_attendees?: string[];
+  attendance?: Record<string, boolean>;
+};
+
+function parseMeetingMeta(description: string | null | undefined) {
+  if (!description) return { required_attendees: [] as string[], attendance: {} as Record<string, boolean> };
+  try {
+    const parsed = JSON.parse(description) as { required_attendees?: string[]; attendance?: Record<string, boolean> };
+    return {
+      required_attendees: parsed.required_attendees ?? [],
+      attendance: parsed.attendance ?? {},
+    };
+  } catch {
+    return { required_attendees: [] as string[], attendance: {} as Record<string, boolean> };
+  }
+}
+
+export async function listSafetyMeetings(companyId: string) {
+  const payload = await listSafetyEventLog(companyId);
+  const meetings = payload.events
+    .filter((event) => event.event_type === "safety_meeting")
+    .map((event) => {
+      const meta = parseMeetingMeta(event.description);
+      return { ...event, ...meta };
+    });
+  const attendanceEvents = payload.events.filter((event) => event.event_type === "safety_meeting_attendance");
+  for (const meeting of meetings) {
+    for (const attendance of attendanceEvents) {
+      if (!attendance.subject_driver_id) continue;
+      let meetingId = meeting.id;
+      try {
+        const parsed = JSON.parse(attendance.description ?? "{}") as { meeting_id?: string };
+        if (parsed.meeting_id) meetingId = parsed.meeting_id;
+      } catch {
+        // ignore malformed attendance payloads
+      }
+      if (meetingId !== meeting.id) continue;
+      meeting.attendance = { ...(meeting.attendance ?? {}), [attendance.subject_driver_id]: true };
+    }
+  }
+  return { meetings };
+}
+
+export function createSafetyMeeting(
+  companyId: string,
+  body: { topic: string; meeting_date: string; required_attendees: string[] }
+) {
+  return createSafetyEvent({
+    operating_company_id: companyId,
+    event_type: "safety_meeting",
+    severity: "low",
+    status: "open",
+    kpi_bucket: "commendations",
+    subject_type: "company",
+    occurred_at: new Date(`${body.meeting_date}T12:00:00`).toISOString(),
+    title: body.topic,
+    description: JSON.stringify({
+      required_attendees: body.required_attendees,
+      attendance: {},
+    }),
+  });
+}
+
+export function syncSafetyMeetingAttendance(
+  companyId: string,
+  body: { meeting_id: string; meeting_title: string; driver_id: string; attended: boolean }
+) {
+  return createSafetyEvent({
+    operating_company_id: companyId,
+    event_type: "safety_meeting_attendance",
+    severity: "low",
+    status: body.attended ? "closed" : "open",
+    kpi_bucket: "commendations",
+    subject_type: "driver",
+    subject_driver_id: body.driver_id,
+    occurred_at: new Date().toISOString(),
+    title: body.attended ? `Attended: ${body.meeting_title}` : `Absent: ${body.meeting_title}`,
+    description: JSON.stringify({ meeting_id: body.meeting_id, attended: body.attended }),
+  });
+}
+
 export function getDrugAlcoholTests(companyId: string) {
   return apiRequest<{ tests: Array<Record<string, unknown>> }>(`/api/v1/safety/drug-alcohol/tests?${q(companyId)}`);
 }

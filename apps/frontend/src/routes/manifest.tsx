@@ -266,7 +266,8 @@ import { DriverSchedulerRequestDetailPage } from "../pages/safety/driver-schedul
 import { DriverLeaveBalancesPage } from "../pages/safety/driver-scheduler/DriverLeaveBalancesPage";
 import Audit425cPage from "../pages/safety/audit-425c/Audit425cPage";
 import HosExceptionsPage from "../pages/safety/hos/HosExceptionsPage";
-import TrainingProgramsPage from "../pages/safety/training/TrainingProgramsPage";
+import TrainingProgramsTab from "../pages/safety/tabs/TrainingProgramsTab";
+import { TrainingRecordsTab } from "../pages/safety/tabs/TrainingRecordsTab";
 import SafetyReportsPage from "../pages/safety/reports/SafetyReportsPage";
 import DriverSafetyProfilePage from "../pages/safety/driver-safety/DriverSafetyProfilePage";
 import { IntegrityAlertsPage } from "../pages/safety/IntegrityAlertsPage";
@@ -720,7 +721,8 @@ export const ROUTES = React.Children.toArray(
           <Route path="driver-files" element={<DriverFilesTab />} />
           <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
           <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
-          <Route path="/safety/training/programs" element={<TrainingProgramsPage />} />
+          <Route path="/safety/training/programs" element={<TrainingProgramsTab />} />
+          <Route path="/safety/training/records" element={<TrainingRecordsTab />} />
           <Route path="hos" element={<HoursOfServiceTab />} />
           <Route path="/safety/hos/exceptions" element={<HosExceptionsPage />} />
           <Route path="hos-violations" element={<HOSViolationsTab />} />
