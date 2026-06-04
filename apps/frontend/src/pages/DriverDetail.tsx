@@ -3,6 +3,7 @@ import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
+import { AuditHistoryTab } from "../components/drivers/AuditHistoryTab";
 import { EarningsTab } from "../components/drivers/EarningsTab";
 import { useAuth } from "../auth/useAuth";
 import { listEquipmentTypes, listMexicoStates, listUsStates } from "../api/catalogs";
@@ -1250,10 +1251,8 @@ export function DriverDetailPage() {
         </div>
       ) : null}
 
-      {activeTab === "Audit History" ? (
-        <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-          Audit history viewer placeholder. Full drill-down ships in a later phase.
-        </div>
+      {activeTab === "Audit History" && driverQuery.data?.operating_company_id ? (
+        <AuditHistoryTab driverId={id} operatingCompanyId={String(driverQuery.data.operating_company_id)} />
       ) : null}
 
       {activeTab === "Profile" ? (
