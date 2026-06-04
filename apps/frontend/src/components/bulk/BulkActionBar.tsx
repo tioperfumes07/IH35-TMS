@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useBulkPermission } from "../../hooks/useBulkPermission";
 
 export type BulkActionItem = {
   id: string;
@@ -7,6 +8,8 @@ export type BulkActionItem = {
   destructive?: boolean;
   danger?: boolean;
   disabled?: boolean;
+  /** Permission key checked against bulk role matrix when set. */
+  action?: string;
   onClick: () => void;
 };
 
@@ -18,6 +21,10 @@ export type BulkActionBarProps = {
   /** Optional slot for entity-specific controls (e.g. Fleet status/type dropdowns). */
   children?: ReactNode;
   selectedLabel?: string;
+  /** When false, skip permission hook (Storybook/tests). Default true. */
+  permissionGate?: boolean;
+  /** Actions treated as Owner/Admin-only when item.action is set. */
+  destructiveActions?: readonly string[];
 };
 
 export function BulkActionBar({
@@ -27,8 +34,26 @@ export function BulkActionBar({
   applying = false,
   children,
   selectedLabel,
+  permissionGate = true,
+  destructiveActions,
 }: BulkActionBarProps) {
+  const bulkPermission = useBulkPermission(destructiveActions);
+
   if (selectedCount <= 0) {
+    return null;
+  }
+
+  if (permissionGate && !bulkPermission.canUseBulkOps) {
+    return null;
+  }
+
+  const visibleActions = actions.filter((action) => {
+    if (!permissionGate) return true;
+    if (!action.action) return true;
+    return bulkPermission.isActionAllowed(action.action, destructiveActions);
+  });
+
+  if (visibleActions.length === 0 && !children) {
     return null;
   }
 
@@ -44,7 +69,7 @@ export function BulkActionBar({
         {countLabel}
       </span>
       {children}
-      {actions.map((action) => {
+      {visibleActions.map((action) => {
         const isDanger = action.destructive ?? action.danger ?? false;
         return (
           <button

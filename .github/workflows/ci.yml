@@ -531,6 +531,9 @@ jobs:
       - name: verify:bulk-5-accounting-dispatch-routes
         run: npm run verify:bulk-5-accounting-dispatch-routes
 
+      - name: verify:bulk-coverage
+        run: npm run verify:bulk-coverage
+
       - name: verify:fleet-unified-includes-trailers
         run: npm run verify:fleet-unified-includes-trailers
 
