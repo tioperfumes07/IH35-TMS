@@ -1,7 +1,7 @@
 -- P5-T25: QBO Payroll link table + sync state (Option B aggregation)
 CREATE TABLE IF NOT EXISTS integrations.qbo_payroll_links (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id uuid NOT NULL REFERENCES mdata.operating_companies(id),
+  operating_company_id uuid NOT NULL REFERENCES org.companies(id),
   qbo_payroll_run_id text NOT NULL,
   qbo_payroll_run_name text NULL,
   pay_period_start date NULL,
