@@ -69,6 +69,11 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
     [rows, selection.selectedIds]
   );
 
+  const hasTrailerSelection = useMemo(
+    () => selectedRows.some((row) => row.kind === "trailer"),
+    [selectedRows]
+  );
+
   const truckBulkMutation = useMutation({
     mutationFn: (args: { unitIds: string[]; patch: BulkApplyPayload }) =>
       apiRequest<{ affected_count: number }>(
@@ -115,7 +120,9 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
       if (trailers.length > 0) {
         const trailerPatch: { status?: BulkApplyPayload["status"]; equipment_type?: string } = {};
         if (patch.status) trailerPatch.status = patch.status;
-        if (patch.vehicle_type) {
+        if (patch.equipment_type) {
+          trailerPatch.equipment_type = patch.equipment_type;
+        } else if (patch.vehicle_type) {
           const normalized = patch.vehicle_type.replace(/\s+/g, "");
           const allowed = [
             "DryVan",
@@ -158,7 +165,12 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
         applying={bulkApplying}
         onClear={selection.clear}
       >
-        <FleetBulkControls vehicleTypes={vehicleTypes} onApply={applyBulk} applying={bulkApplying} />
+        <FleetBulkControls
+          vehicleTypes={vehicleTypes}
+          showTrailerTypeCatalog={hasTrailerSelection}
+          onApply={applyBulk}
+          applying={bulkApplying}
+        />
       </BulkActionBar>
 
       <TableSelection

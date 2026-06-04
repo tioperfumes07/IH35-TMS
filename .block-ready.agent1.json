@@ -1,23 +1,24 @@
 {
-  "block_id": "P0-USERS-FIX",
-  "branch": "fix/p0-users-fix",
-  "phase": "P0",
-  "task": "P0-USERS-FIX",
+  "block_id": "BULK-4",
+  "branch": "feat/bulk-4-drivers-fleet",
+  "phase": "BULK cluster — WAVE 1 Lane A",
+  "task": "Drivers bulk-update routes + fleet UI wiring",
   "allowed_files": [
-    "db/migrations/0369_archive_identity_debug_test_users.sql",
-    "apps/frontend/src/pages/Users.tsx",
-    "apps/frontend/src/pages/Users.test.tsx",
-    "scripts/verify-backend-column-references.mjs",
-    "scripts/__tests__/verify-backend-column-references.test.mjs",
-    "scripts/verify-guards/183-verify-backend-column-references.mjs",
+    "apps/backend/src/drivers/drivers-bulk.routes.ts",
+    "apps/backend/src/drivers/__tests__/drivers-bulk.routes.test.ts",
+    "apps/backend/src/mdata/index.ts",
+    "apps/frontend/src/components/FleetTable.tsx",
+    "apps/frontend/src/components/fleet/BulkActionBar.tsx",
     "package.json",
-    ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:backend-column-references"
+    "verify:bulk-update-route-mounted",
+    "verify:bulk-audit-per-id",
+    "verify:bulk-action-bar-mounted",
+    "verify:fleet-bulk-select-checkbox-column"
   ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }
