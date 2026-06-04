@@ -7,14 +7,22 @@ function statusClass(status: string | undefined) {
 
 export function TrainingRecordsSection({
   records,
+  onAddTraining,
 }: {
   records: Array<Record<string, unknown>>;
+  onAddTraining?: () => void;
 }) {
   return (
     <section className="rounded border border-gray-200 bg-white p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-800">Training records</h2>
-        <button type="button" className="text-xs text-blue-700 underline" data-testid="dp-add-training">
+        <button
+          type="button"
+          className="text-xs text-blue-700 underline disabled:cursor-not-allowed disabled:text-gray-400"
+          data-testid="dp-add-training"
+          onClick={onAddTraining}
+          disabled={!onAddTraining}
+        >
           + Add training
         </button>
       </div>

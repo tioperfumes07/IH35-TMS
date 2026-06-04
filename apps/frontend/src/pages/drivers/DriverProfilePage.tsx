@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
@@ -15,6 +16,7 @@ import { MedicalCardSection } from "../../components/driver-profile/MedicalCardS
 import { PerformanceScorecardSection } from "../../components/driver-profile/PerformanceScorecardSection";
 import { SettlementsSection } from "../../components/driver-profile/SettlementsSection";
 import { TrainingRecordsSection } from "../../components/driver-profile/TrainingRecordsSection";
+import { AddTrainingModal } from "../../components/drivers/AddTrainingModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -56,6 +58,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [addTrainingOpen, setAddTrainingOpen] = useState(false);
 
   const refreshDriver = () => {
     void queryClient.invalidateQueries({ queryKey: ["driver", id] });
@@ -178,8 +181,19 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <SettlementsSection settlements={aggregate.settlements ?? {}} driverId={id} />
       </div>
       <div data-testid="dp-section-9-training">
-        <TrainingRecordsSection records={aggregate.training_records ?? []} />
+        <TrainingRecordsSection
+          records={aggregate.training_records ?? []}
+          onAddTraining={() => setAddTrainingOpen(true)}
+        />
       </div>
+      <AddTrainingModal
+        open={addTrainingOpen}
+        driverId={id}
+        companyId={companyId}
+        driverName={displayName}
+        onClose={() => setAddTrainingOpen(false)}
+        onCreated={refreshDriver}
+      />
       <div data-testid="dp-section-10-border">
         <BorderCredentialsSection border={aggregate.border_credentials ?? {}} />
       </div>
