@@ -13,6 +13,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { formatChartLegendLabel } from "../../lib/chartLegend";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -232,7 +233,7 @@ export function MaintenanceCostPerUnitPage() {
                     ))}
                   </Pie>
                   <Tooltip formatter={(value: number) => money(value)} />
-                  <Legend formatter={(value, _entry, i) => `${value} · ${money(pieData[i]?.value ?? 0)}`} />
+                  <Legend formatter={(value, _entry, i) => `${formatChartLegendLabel(value)} · ${money(pieData[i]?.value ?? 0)}`} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

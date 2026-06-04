@@ -3,6 +3,7 @@ import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recha
 import { fetchHomeWoStatusCounts, type HomeWoStatusCount } from "../../../api/home";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { formatWoStatusLabel } from "../../../lib/chartLegend";
 
 const STATUS_COLORS: Record<HomeWoStatusCount["status"], string> = {
   draft: "#94a3b8",
@@ -12,14 +13,6 @@ const STATUS_COLORS: Record<HomeWoStatusCount["status"], string> = {
   cancelled: "#dc2626",
 };
 const UNKNOWN_STATUS_COLOR = "#64748b";
-
-export function formatWoStatusLabel(value: unknown): string {
-  if (typeof value !== "string") return "Unknown";
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return "Unknown";
-  if (normalized === "unknown") return "Unknown";
-  return normalized.replace(/_/g, " ");
-}
 
 function isKnownStatus(value: unknown): value is HomeWoStatusCount["status"] {
   return value === "draft" || value === "approved" || value === "in_progress" || value === "completed" || value === "cancelled";

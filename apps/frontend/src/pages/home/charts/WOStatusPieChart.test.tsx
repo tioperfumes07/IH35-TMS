@@ -4,7 +4,8 @@ import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as homeApi from "../../../api/home";
-import { WOStatusPieChart, formatWoStatusLabel } from "./WOStatusPieChart";
+import { formatWoStatusLabel } from "../../../lib/chartLegend";
+import { WOStatusPieChart } from "./WOStatusPieChart";
 
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="responsive-pie">{children}</div>,
