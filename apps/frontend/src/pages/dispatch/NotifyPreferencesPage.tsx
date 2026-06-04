@@ -128,7 +128,7 @@ export function NotifyPreferencesPage() {
             <option value="">Select customer</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.customer_name ?? c.id}
+                {c.name ?? c.id}
               </option>
             ))}
           </select>
