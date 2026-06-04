@@ -30,7 +30,8 @@ describe("unit bulk-update route", () => {
 
   it("emits unit.bulk_update audit rows per affected unit", () => {
     expect(routes).toMatch(/unit\.bulk_update/);
-    expect(routes).toMatch(/appendCrudAudit/);
+    expect(routes).toMatch(/appendLegacyFleetBulkAudit/);
+    expect(routes).toMatch(/bulk-update\.factory/);
     expect(index).toMatch(/registerUnitBulkUpdateRoutes/);
   });
 });

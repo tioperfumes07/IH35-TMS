@@ -1,8 +1,12 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
-import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
+import { buildPatchChanges } from "../audit/crud-audit.js";
+import {
+  appendLegacyFleetBulkAudit,
+  FLEET_BULK_MAX_IDS,
+  withLegacyBulkRequest,
+} from "../bulk/bulk-update.factory.js";
 import { withCurrentUser } from "../auth/db.js";
-import { requireAuth } from "../auth/session-middleware.js";
 import { unitStatusSchema } from "./units.routes.js";
 
 const bulkStatusInputSchema = z.enum(["Active", "Sold", "Transferred", "Damaged", "OOS"]);
@@ -29,17 +33,8 @@ const bulkUpdateBodySchema = z.object({
     .refine((v) => Object.keys(v).length > 0, { message: "patch must include at least one field" }),
 });
 
-function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
-  return req.user;
-}
-
 function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
-}
-
-function isWriteRole(role: string): boolean {
-  return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
 async function unitTableHasColumn(
@@ -63,25 +58,21 @@ async function unitTableHasColumn(
 
 export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
   app.post("/api/v1/mdata/units/bulk-update", async (req, reply) => {
-    const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
-    if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+    return withLegacyBulkRequest(req, reply, async ({ authUser, bulkCallId }) => {
+      const parsedQuery = bulkUpdateQuerySchema.safeParse(req.query ?? {});
+      if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const parsedQuery = bulkUpdateQuerySchema.safeParse(req.query ?? {});
-    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+      const parsedBody = bulkUpdateBodySchema.safeParse(req.body ?? {});
+      if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
-    const parsedBody = bulkUpdateBodySchema.safeParse(req.body ?? {});
-    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+      const { unit_ids, patch } = parsedBody.data;
+      if (unit_ids.length > FLEET_BULK_MAX_IDS) {
+        return reply.code(400).send({ error: "too_many_unit_ids", max: FLEET_BULK_MAX_IDS });
+      }
 
-    const { unit_ids, patch } = parsedBody.data;
-    if (unit_ids.length > 100) {
-      return reply.code(400).send({ error: "too_many_unit_ids", max: 100 });
-    }
+      const operating_company_id = parsedQuery.data.operating_company_id;
+      const dbStatus = patch.status ? bulkStatusToDb[patch.status] : undefined;
 
-    const operating_company_id = parsedQuery.data.operating_company_id;
-    const dbStatus = patch.status ? bulkStatusToDb[patch.status] : undefined;
-
-    try {
       const payload = await withCurrentUser(authUser.uuid, async (client) => {
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
 
@@ -154,12 +145,18 @@ export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
             oldRow,
             row
           );
-          await appendCrudAudit(client, authUser.uuid, "unit.bulk_update", {
-            resource_id: row.id,
-            resource_type: "mdata.units",
-            operating_company_id,
-            changes,
-            patch,
+          await appendLegacyFleetBulkAudit({
+            client,
+            actorUserId: authUser.uuid,
+            eventClass: "unit.bulk_update",
+            bulkCallId,
+            payload: {
+              resource_id: row.id,
+              resource_type: "mdata.units",
+              operating_company_id,
+              changes,
+              patch,
+            },
           });
         }
 
@@ -167,8 +164,6 @@ export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
       });
 
       return payload;
-    } catch (err) {
-      throw err;
-    }
+    });
   });
 }
