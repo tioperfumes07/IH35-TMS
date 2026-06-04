@@ -165,6 +165,9 @@ jobs:
       - name: verify:trailer-wo-equipment-id
         run: npm run verify:trailer-wo-equipment-id
 
+      - name: verify:dispatch-late-arrivals-alerts
+        run: npm run verify:dispatch-late-arrivals-alerts
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
