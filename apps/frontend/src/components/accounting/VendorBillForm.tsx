@@ -254,7 +254,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
       <TotalsStack subtotal={subtotal} taxRate={taxRate} onTaxRateChange={setTaxRate} grandLabel="Bill Total = A + B" />
 
       <div className="rounded border border-sky-100 bg-sky-50 px-3 py-2 text-[11px] text-sky-900">
-        Line-level bill persistence uses contract stub until multi-line bill API ships; totals post via vendor bill create.
+        Line-level bill persistence posts a single vendor bill total until multi-line bill API ships.
       </div>
 
       <UploadZone

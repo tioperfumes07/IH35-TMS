@@ -132,7 +132,7 @@ export function ReconciliationWorkspacePage() {
         subtitle={effectiveBankAccountId ? `Account ${effectiveBankAccountId.slice(0, 8)}...` : ""}
         actions={
           <ActionButton disabled>
-            Auto-Match Suggestions (Phase 6)
+            Auto-Match Suggestions
           </ActionButton>
         }
       />

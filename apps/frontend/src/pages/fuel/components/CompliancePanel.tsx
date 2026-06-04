@@ -13,8 +13,8 @@ export function CompliancePanel({ sentToDriverAt, fleetPct, fleetTotalRecommenda
       <Row label="Recommendations followed YTD (driver)" value={`${driverPct.toFixed(1)}%`} />
       <Row label="Recommendations followed YTD (fleet)" value={`${fleetPct.toFixed(1)}%`} />
       <Row label="Fleet recommendations tracked" value={`${fleetTotalRecommendations}`} />
-      <Row label="Last week non-compliance count" value="Phase 3 stub" />
-      <Row label="Top non-compliance reason" value="Phase 3 stub" />
+      <Row label="Last week non-compliance count" value="Not available yet" />
+      <Row label="Top non-compliance reason" value="Not available yet" />
       <div className="mt-2 rounded bg-blue-50 px-2 py-1 text-[11px] text-blue-700">Relay match confidence: high when station+timestamp+unit align.</div>
     </div>
   );

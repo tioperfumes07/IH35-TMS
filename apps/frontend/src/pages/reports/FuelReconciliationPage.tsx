@@ -314,7 +314,7 @@ export function FuelReconciliationPage() {
               setMatchNote("");
             }}
           >
-            Save link (stub)
+            Save link
           </Button>
         </div>
       </Modal>

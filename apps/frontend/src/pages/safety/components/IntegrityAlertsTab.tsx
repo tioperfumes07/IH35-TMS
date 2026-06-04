@@ -53,7 +53,7 @@ export function IntegrityAlertsTab({ unitRows, driverRows, vendorRows, baselineR
   return (
     <div className="space-y-2">
       <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-        Phase 6 will add real-time alert generation. This Phase 3 view shows the raw aggregate data the alert engine will use.
+        Real-time alert generation is being prepared. This view shows aggregate inputs the alert engine will use.
       </div>
       <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
         <RowTable

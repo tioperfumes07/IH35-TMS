@@ -1,3 +1,5 @@
+import { CATALOG_IN_PREPARATION } from "../../../lib/prodEmptyStateCopy";
+
 type CatalogItem = {
   name: string;
   description: string;
@@ -168,7 +170,7 @@ export function AllCatalogsMap({ onCatalogClick }: Props) {
                       </button>
                     ) : (
                       <div className="font-semibold text-slate-500">
-                        {catalog.name} <span className="text-[10px] uppercase tracking-wide">(coming soon)</span>
+                        {catalog.name} <span className="text-[10px] uppercase tracking-wide">({CATALOG_IN_PREPARATION})</span>
                       </div>
                     )}
                     <div className="text-[11px] text-slate-500">{catalog.description}</div>

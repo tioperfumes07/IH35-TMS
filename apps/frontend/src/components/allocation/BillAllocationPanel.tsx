@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { OFFLINE_PREVIEW_BANNER } from "../../lib/prodEmptyStateCopy";
 import { AllocationMethodPicker } from "./AllocationMethodPicker";
 import { AllocationPreviewTable } from "./AllocationPreviewTable";
 import type {
@@ -166,7 +167,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
     } catch {
       setPreviewRows(previewEqual(billAmountCents, selectedAssets));
       setSourceMode("fallback");
-      setMessage("Contract stub mode: allocate endpoint unavailable; showing deterministic preview only.");
+      setMessage("Allocation service unavailable; showing a local preview only.");
     } finally {
       setIsSubmitting(false);
     }
@@ -193,7 +194,7 @@ export function BillAllocationPanel({ companyId, billId, billLabel, billAmountCe
 
       {sourceMode === "fallback" ? (
         <p className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
-          Contract stub mode: allocation endpoint unavailable, using deterministic local preview rows.
+          {OFFLINE_PREVIEW_BANNER}
         </p>
       ) : null}
       {message ? <p className="text-sm text-gray-700">{message}</p> : null}
