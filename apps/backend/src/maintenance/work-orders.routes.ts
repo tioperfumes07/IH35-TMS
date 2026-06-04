@@ -25,6 +25,7 @@ const listQuerySchema = z.object({
   wo_type: z.string().optional(),
   source_type: z.string().optional(),
   external_vendor_id: z.string().uuid().optional(),
+  equipment_id: z.string().uuid().optional(),
   search: z.string().trim().max(120).optional(),
 });
 
@@ -41,6 +42,7 @@ const createWorkOrderSchema = z.object({
   source_type: z.enum(["IS", "ES", "AC", "ET", "RT", "IT", "RS"]),
   status: workOrderStatusSchema.default("open"),
   unit_id: z.string().uuid(),
+  equipment_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
   service_date: z.string().optional(),
@@ -107,6 +109,7 @@ const createWorkOrderV5Schema = z.object({
     source_type: z.enum(["IS", "ES", "AC", "ET", "RT", "IT", "RS"]),
     status: workOrderStatusSchema.default("open"),
     unit_id: z.string().uuid(),
+    equipment_id: z.string().uuid().optional(),
     driver_id: z.string().uuid().optional(),
     load_id: z.string().uuid().optional(),
     load_exemption_reason: z.string().trim().min(20).optional(),
@@ -271,6 +274,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         values.push(q.external_vendor_id);
         where.push(`w.external_vendor_id = $${values.length}`);
       }
+      if (q.equipment_id) {
+        values.push(q.equipment_id);
+        where.push(`w.equipment_id = $${values.length}`);
+      }
       if (q.search) {
         values.push(`%${q.search}%`);
         where.push(`(COALESCE(w.display_id, '') ILIKE $${values.length} OR COALESCE(w.description, '') ILIKE $${values.length})`);
@@ -395,6 +402,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           await client.query("BEGIN");
           try {
             const created = await createWorkOrderWithLines(client as never, user.uuid, body.header, body.sectionA, body.sectionB);
+            if (body.header.equipment_id) {
+              await client.query(
+                `UPDATE maintenance.work_orders SET equipment_id = $2::uuid, updated_at = now() WHERE id = $1::uuid`,
+                [created.woUuid, body.header.equipment_id]
+              );
+            }
             if (body.header.bucket === "roadside") {
               await appendCrudAudit(
                 client,
@@ -520,15 +533,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       const woRes = await client.query(
         `
           INSERT INTO maintenance.work_orders (
-            operating_company_id, wo_type, status, unit_id, driver_id, load_id, opened_at,
+            operating_company_id, wo_type, status, unit_id, equipment_id, driver_id, load_id, opened_at,
             repair_location, vendor_id, external_vendor_invoice_number, description,
             source_type, external_vendor_id, external_vendor_wo_number,
             display_id, unit_sequence,
             bucket, roadside_callout_at, roadside_arrived_at, roadside_provider_vendor_id, roadside_location, roadside_breakdown_load_id
           )
           VALUES (
-            $1,$2,$3,$4,$5,$6,COALESCE($7::timestamptz, now()),$8,$9,$10,$11,
-            $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22
+            $1,$2,$3,$4,$5,$6,$7,COALESCE($8::timestamptz, now()),$9,$10,$11,$12,
+            $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23
           )
           RETURNING *
         `,
@@ -537,6 +550,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.wo_type,
           body.status,
           body.unit_id,
+          body.equipment_id ?? null,
           body.driver_id ?? null,
           body.load_id ?? null,
           body.service_date ?? null,

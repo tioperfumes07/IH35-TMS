@@ -66,8 +66,6 @@ export function TrailerProfilePage() {
   const aggregate = profileQ.data;
   const equipment = aggregate.equipment;
   const isReefer = String(equipment.equipment_type) === "Reefer";
-  const attachedUnit = aggregate.current_assignment?.attached_to_unit as Record<string, unknown> | null;
-  const attachedUnitId = attachedUnit?.unit_id ? String(attachedUnit.unit_id) : null;
 
   return (
     <div className="space-y-4 pb-20">
@@ -103,7 +101,7 @@ export function TrailerProfilePage() {
       <div data-testid="tp-section-7-documents">
         <DocumentsSection equipmentId={id} companyId={companyId} documents={aggregate.documents} />
       </div>
-      <TrailerRecentActivitySection equipmentId={id} companyId={companyId} attachedUnitId={attachedUnitId} />
+      <TrailerRecentActivitySection equipmentId={id} companyId={companyId} />
       <div data-testid="tp-section-8-action-bar">
         <ActionBar
           equipmentId={id}
