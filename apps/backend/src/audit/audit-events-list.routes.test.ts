@@ -88,8 +88,7 @@ describe("audit events list routes (BULK-6)", () => {
       url: `/api/v1/audit/events-list?operating_company_id=${COMPANY}&bulk_call_id=${BULK_CALL}`,
     });
     expect(res.statusCode).toBe(200);
-    const sqlCalls = mockQuery.mock.calls.map((call) => String(call[0] ?? ""));
-    const auditSql = sqlCalls.find((sql) => sql.includes("FROM audit.events")) ?? "";
+    const auditSql = String(mockQuery.mock.calls.at(-1)?.[0] ?? "");
     expect(auditSql).toContain("payload->>'bulk_call_id'");
   });
 
