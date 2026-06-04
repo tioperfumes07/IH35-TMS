@@ -345,6 +345,8 @@
     "verify:maint-tire-program:test": "node --test scripts/__tests__/verify-maint-tire-program.test.mjs",
     "verify:maint-warranty-claims": "node scripts/verify-maint-warranty-claims.mjs",
     "verify:maint-warranty-claims:test": "node --test scripts/__tests__/verify-maint-warranty-claims.test.mjs",
+    "verify:maint-mech-labor-ux": "node scripts/verify-maint-mech-labor-ux.mjs",
+    "verify:maint-mech-labor-ux:test": "node --test scripts/__tests__/verify-maint-mech-labor-ux.test.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",

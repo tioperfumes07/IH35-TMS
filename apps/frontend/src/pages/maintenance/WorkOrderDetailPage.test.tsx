@@ -15,6 +15,8 @@ vi.mock("../../contexts/CompanyContext", () => ({
   }),
 }));
 
+vi.mock("../../components/maintenance/LaborTracker", () => ({ LaborTracker: () => <div data-testid="maint-labor-tracker-stub">Labor tracker</div> }));
+
 const getWorkOrder = vi.fn((_id: string, _operatingCompanyId: string) =>
   Promise.resolve({
     id: "wo-pilot-id",

@@ -18,6 +18,7 @@ export async function startWoTimeEntry(
     actor_user_id?: string | null;
     actor_employee_id?: string | null;
     wo_task_id?: string | null;
+    labor_code_id?: string | null;
     labor_rate_cents_per_hour?: number | null;
     notes?: string | null;
   }
@@ -43,6 +44,7 @@ export async function createWoTimeEntryManual(body: {
   actor_user_id?: string | null;
   actor_employee_id?: string | null;
   wo_task_id?: string | null;
+  labor_code_id?: string | null;
   labor_rate_cents_per_hour?: number | null;
   notes?: string | null;
   started_at: string;

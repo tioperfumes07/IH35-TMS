@@ -234,6 +234,9 @@ jobs:
       - name: verify:maint-warranty-claims
         run: npm run verify:maint-warranty-claims
 
+      - name: verify:maint-mech-labor-ux
+        run: npm run verify:maint-mech-labor-ux
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
