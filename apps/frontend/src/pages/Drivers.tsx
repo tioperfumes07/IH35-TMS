@@ -776,8 +776,9 @@ export function DriversPage() {
         subtitle={`${newDriversInLast3Days} new in last 3 days`}
         actions={
           <div className="flex items-center gap-2">
+            {/* ARCHIVE-not-DELETE (A24-4): former label "+ Driver" → canonical "+ Create Driver" per locked vocabulary */}
             <Button type="button" onClick={openDriverCreate}>
-              + Driver
+              + Create Driver
             </Button>
             <ActionButton onClick={() => void queryClient.invalidateQueries({ queryKey: ["drivers"] })}>Refresh</ActionButton>
           </div>
