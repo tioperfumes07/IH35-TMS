@@ -22,6 +22,15 @@ import { LiveLoadIdBar } from "./book-load-v4/LiveLoadIdBar";
 import { MilesStrip } from "./book-load-v4/MilesStrip";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
 import { LoadTemplatePicker, applyLoadTemplateToBookForm, type MinimalBookForm } from "../LoadTemplateLibrary";
+import { AccessorialEditor } from "../../../components/dispatch/AccessorialEditor";
+import {
+  buildBookLoadChargeLines,
+  computeBookLoadSectionTotalCents,
+  computeDetentionAccrualCents,
+  rowFromLegacyAccessorialCents,
+  sumAccessorialCents,
+  type AccessorialRow,
+} from "../../../components/dispatch/accessorial-editor-lib";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -74,7 +83,7 @@ type FormValues = BookLoadFormValues & {
   cash_advance_cents: number;
   fuel_advance_cents: number;
   factoring_company_summary: string;
-  accessorial_charge_code: string;
+  accessorial_rows: AccessorialRow[];
   stops: Array<{
     stop_type: "pickup" | "delivery";
     sequence_number: number;
@@ -205,7 +214,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
       cash_advance_cents: 0,
       fuel_advance_cents: 0,
       factoring_company_summary: "",
-      accessorial_charge_code: "detention",
+      accessorial_rows: [],
       stops: [
         { stop_type: "pickup", sequence_number: 1, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
         { stop_type: "delivery", sequence_number: 2, city: "", state: "", country: "USA", address_line1: "", scheduled_arrival_at: "", time_window_type: "appointment" },
@@ -246,7 +255,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
 
   const linehaul = form.watch("linehaul_cents");
   const fuel = form.watch("fuel_surcharge_cents");
-  const accessorial = form.watch("accessorial_cents");
+  const accessorialRows = form.watch("accessorial_rows");
   const customerQboId = form.watch("customer_qbo_id");
   const customerName = form.watch("customer_name");
   const loadType = form.watch("load_type");
@@ -270,7 +279,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
     [factoringVendorsQuery.data?.vendors]
   );
 
-  const sectionTotal = useMemo(() => (linehaul || 0) + (fuel || 0) + (accessorial || 0), [accessorial, fuel, linehaul]);
+  const sectionTotal = useMemo(
+    () => computeBookLoadSectionTotalCents(linehaul || 0, fuel || 0, accessorialRows ?? []),
+    [accessorialRows, fuel, linehaul]
+  );
+
+  useEffect(() => {
+    const sum = sumAccessorialCents(accessorialRows ?? []);
+    if (form.getValues("accessorial_cents") !== sum) {
+      form.setValue("accessorial_cents", sum, { shouldDirty: false });
+    }
+  }, [accessorialRows, form]);
   const driverBillPreview = useMemo(() => {
     const miles = Number(milesShortest || 0);
     const rate = Number(driverPayRatePerMile || 0);
@@ -388,11 +407,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
         charges:
           saveMode === "draft"
             ? []
-            : [
-                { code: "linehaul", amount_cents: Number(values.linehaul_cents || 0) },
-                { code: "fuel_surcharge", amount_cents: Number(values.fuel_surcharge_cents || 0) },
-                { code: "accessorial", amount_cents: Number(values.accessorial_cents || 0) },
-              ],
+            : buildBookLoadChargeLines({
+                linehaul_cents: Number(values.linehaul_cents || 0),
+                fuel_surcharge_cents: Number(values.fuel_surcharge_cents || 0),
+                accessorial_rows: values.accessorial_rows ?? [],
+              }),
         stops: values.stops.map((stop, index) => ({
           stop_type: stop.stop_type,
           sequence_number: index + 1,
@@ -610,7 +629,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                   <LoadTemplatePicker
                     operatingCompanyId={operatingCompanyId}
                     onSelectTemplate={(row) => {
-                      applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, row.template_json as Record<string, unknown>);
+                      const json = row.template_json as Record<string, unknown>;
+                      applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, json);
+                      if (typeof json.accessorial_cents === "number" && json.accessorial_cents > 0) {
+                        form.setValue("accessorial_rows", rowFromLegacyAccessorialCents(json.accessorial_cents), { shouldDirty: true });
+                      }
                       pushToast("Template applied", "success");
                     }}
                   />
@@ -699,8 +722,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                         </tr>
                         <tr className="border-b border-gray-100">
                           <td className="px-2 py-1.5">Accessorial</td>
-                          <td className="px-2 py-1.5 text-right">
-                            <input type="number" min="0" step="1" {...form.register("accessorial_cents", { valueAsNumber: true })} className="h-7 w-28 rounded border border-gray-300 px-2 text-right text-xs" />
+                          <td className="px-2 py-1.5 text-right font-mono text-gray-800">
+                            {money.format(sumAccessorialCents(accessorialRows ?? []) / 100)}
                           </td>
                         </tr>
                         <tr className="bg-[#f7f8fa] font-semibold">
@@ -710,21 +733,31 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
                       </tbody>
                     </table>
                   </div>
-                  <button type="button" className="text-[10.5px] font-semibold text-[#16203a] hover:underline">
-                    + Add charge · detention · layover · accessorial
-                  </button>
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                      Charge row type
-                      <SelectCombobox {...form.register("accessorial_charge_code")} className="mt-0.5 h-7 w-full text-xs">
-                        <option value="detention">Detention</option>
-                        <option value="layover">Layover</option>
-                        <option value="tonu">TONU</option>
-                        <option value="lumper">Lumper</option>
-                        <option value="misc_accessorial">Misc accessorial</option>
-                      </SelectCombobox>
-                    </label>
-                  </div>
+                  {/* ARCHIVE-not-DELETE: B21 RBC dead + Add charge / orphan charge-type select — replaced by AccessorialEditor (B21-D3). Sunset: 2026-09. */}
+                  <AccessorialEditor
+                    operatingCompanyId={operatingCompanyId}
+                    rows={accessorialRows ?? []}
+                    onRowsChange={(rows) => form.setValue("accessorial_rows", rows, { shouldDirty: true })}
+                    onDetentionSeed={() => {
+                      form.setValue("detention_expected_y_n", true, { shouldDirty: true });
+                      setShowExpectedAdjustments(true);
+                      const accrual = computeDetentionAccrualCents(
+                        form.getValues("detention_expected_hours"),
+                        form.getValues("detention_bill_customer_per_hour_cents")
+                      );
+                      if (accrual <= 0) return;
+                      const rows = form.getValues("accessorial_rows") ?? [];
+                      const last = rows[rows.length - 1];
+                      if (last?.code === "DETENTION") {
+                        form.setValue(
+                          "accessorial_rows",
+                          rows.map((row, index) => (index === rows.length - 1 ? { ...row, amount_cents: accrual } : row)),
+                          { shouldDirty: true }
+                        );
+                      }
+                    }}
+                  />
+                  <input type="hidden" {...form.register("accessorial_cents", { valueAsNumber: true })} />
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">

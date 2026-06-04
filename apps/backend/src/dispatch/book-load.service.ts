@@ -3,6 +3,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-number.js";
 import { effectiveTeamPercentsFromRow, splitTotalCents } from "../driver-finance/settlement-engine.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
+import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
 import {
   claimReservation,
   consumeLoadNumberReservation,
@@ -222,7 +223,7 @@ export async function createDriverBillArtifacts(
     if (!stop.lumper_required) return sum;
     return stop.lumper_paid_by === "carrier" ? sum + Number(stop.lumper_amount_cents ?? 0) : sum;
   }, 0);
-  const basePayCents = input.charges.reduce((sum, c) => sum + Number(c.amount_cents ?? 0), 0);
+  const basePayCents = bookLoadRateTotalCents(input.charges);
   const totalBillCents = basePayCents + extraStopBonusCents + tarpPayCents + driverLumperCents;
 
   const resolvedLoadNumber = String(load.load_number ?? loadNumber);
@@ -786,7 +787,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         loadNumber,
         input.customer_id,
         statusForInsert,
-        input.charges.reduce((sum, item) => sum + item.amount_cents, 0),
+        bookLoadRateTotalCents(input.charges),
         input.assigned_unit_id ?? null,
         input.team_id ? null : (input.assigned_primary_driver_id ?? null),
         input.team_id ? null : (input.assigned_secondary_driver_id ?? null),
