@@ -2,6 +2,11 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import {
+  countOpenMaintenanceWorkOrders,
+  countPastDueMaintenanceWorkOrders,
+  countPmDueAlerts,
+} from "../kpi/canonical-kpis.js";
 import { shouldUseDevFixturesForMaintenance, triageDevFixtures } from "./dev-fixtures.js";
 import { listWorkOrdersByBucket } from "./work-orders.service.js";
 
@@ -70,18 +75,17 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         [companyId]
       );
       const fleet = fleetRes.rows[0] ?? {};
+      const openWoCount = await countOpenMaintenanceWorkOrders(client, companyId);
       const openRes = await client.query(
         `
-          SELECT
-            COUNT(*)::int AS open_wos,
-            COALESCE(SUM(COALESCE(total_actual_cost, 0)), 0)::numeric AS open_cost
+          SELECT COALESCE(SUM(COALESCE(total_actual_cost, 0)), 0)::numeric AS open_cost
           FROM maintenance.work_orders
           WHERE operating_company_id = $1::uuid
             AND status IN ('open', 'in_progress', 'waiting_parts')
         `,
         [companyId]
       );
-      const open = openRes.rows[0] ?? {};
+      const open = { open_wos: openWoCount, open_cost: openRes.rows[0]?.open_cost ?? 0 };
       const avgCloseRes = await client.query(
         `
           SELECT COALESCE(AVG(duration_seconds) FILTER (WHERE duration_seconds IS NOT NULL), 0)::numeric AS avg_seconds
@@ -104,21 +108,13 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         [companyId]
       );
       const tire = tireRes.rows[0] ?? {};
-      const pmDueRes = await client.query(
-        `
-          SELECT COUNT(*)::int AS pm_due
-          FROM maintenance.pm_alerts
-          WHERE operating_company_id = $1::uuid
-            AND state IN ('open', 'acknowledged')
-        `,
-        [companyId]
-      );
-      const pmDue = pmDueRes.rows[0] ?? {};
+      const pmDueCount = await countPmDueAlerts(client, companyId);
+      const pastDueCount = await countPastDueMaintenanceWorkOrders(client, companyId);
 
       return {
         open_wos: Number(open.open_wos ?? base.open_wos ?? 0),
         in_shop: Number(base.in_shop ?? 0),
-        past_due_pm: Number(pmDue.pm_due ?? 0),
+        past_due_pm: pastDueCount,
         out_of_service: 0,
         open_damage: 0,
         avg_wo_age_days: Number(base.avg_wo_age_days ?? 0),
@@ -129,11 +125,11 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         top_failure: null,
         pending_qbo: 0,
         // Maintenance-home PNG KPI row (7-card canonical set).
-        past_due: Number(pmDue.pm_due ?? 0),
+        past_due: pastDueCount,
         avg_close_days: Number(avgClose.avg_seconds ?? 0) / 86400,
         open_dollars: Number(open.open_cost ?? 0),
         tire_alerts: Number(tire.tire_alerts ?? 0),
-        pm_due: Number(pmDue.pm_due ?? 0),
+        pm_due: pmDueCount,
         dot_oos: Number(fleet.dot_oos ?? 0),
         total_units: Number(fleet.total_units ?? 0),
         active_units: Number(fleet.active_units ?? 0),

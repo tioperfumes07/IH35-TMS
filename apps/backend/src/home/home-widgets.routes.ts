@@ -2,6 +2,11 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import {
+  countActiveDispatchLoads,
+  countDriversOnActiveLoads,
+  countOpenMaintenanceWorkOrders,
+} from "../kpi/canonical-kpis.js";
 
 function officeRole(role: string) {
   return role !== "Driver";
@@ -177,17 +182,8 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
       try {
         const rel = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
         if (!rel.rows[0]?.ok) return { count: 0 };
-
-        const res = await client.query(
-          `
-            SELECT COUNT(*)::text AS c
-            FROM mdata.loads
-            WHERE operating_company_id = $1::uuid
-              AND status::text IN ('assigned_not_dispatched','dispatched','in_transit','delivered_pending_docs')
-          `,
-          [parsed.data.operating_company_id]
-        );
-        return { count: Number(res.rows[0]?.c ?? 0) };
+        const count = await countActiveDispatchLoads(client, parsed.data.operating_company_id);
+        return { count };
       } catch {
         return { count: 0 };
       }
@@ -205,19 +201,8 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
       try {
         const rel = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
         if (!rel.rows[0]?.ok) return { count: 0 };
-
-        const res = await client.query(
-          `
-            SELECT COUNT(DISTINCT assigned_primary_driver_id)::text AS c
-            FROM mdata.loads
-            WHERE operating_company_id = $1::uuid
-              AND assigned_primary_driver_id IS NOT NULL
-              AND status::text IN ('dispatched','in_transit','delivered_pending_docs')
-              AND updated_at::date = CURRENT_DATE
-          `,
-          [parsed.data.operating_company_id]
-        );
-        return { count: Number(res.rows[0]?.c ?? 0) };
+        const count = await countDriversOnActiveLoads(client, parsed.data.operating_company_id);
+        return { count };
       } catch {
         return { count: 0 };
       }
@@ -235,17 +220,8 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
       try {
         const rel = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
         if (!rel.rows[0]?.ok) return { count: 0 };
-
-        const res = await client.query(
-          `
-            SELECT COUNT(*)::text AS c
-            FROM maintenance.work_orders
-            WHERE operating_company_id = $1::uuid
-              AND status::text NOT IN ('complete','cancelled','completed')
-          `,
-          [parsed.data.operating_company_id]
-        );
-        return { count: Number(res.rows[0]?.c ?? 0) };
+        const count = await countOpenMaintenanceWorkOrders(client, parsed.data.operating_company_id);
+        return { count };
       } catch {
         return { count: 0 };
       }
