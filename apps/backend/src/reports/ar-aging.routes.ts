@@ -33,7 +33,7 @@ type ArAgingPayload = {
 
 const cache = createTtlCache<ArAgingPayload>();
 
-export async function registerArAgingRoutes(app: FastifyInstance) {
+export async function registerReportsArAgingRoutes(app: FastifyInstance) {
   app.get("/api/v1/reports/ar-aging", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;

@@ -77,7 +77,7 @@ for (const reportId of ["profit-per-truck", "driver-settlement", "ar-aging", "ma
 }
 
 const indexSource = read("apps/backend/src/reports/index.ts");
-for (const register of ["registerArAgingRoutes", "registerDispatchMarginRoutes"]) {
+for (const register of ["registerReportsArAgingRoutes", "registerDispatchMarginRoutes"]) {
   if (!indexSource.includes(register)) {
     failures.push(`reports index missing ${register}`);
   }

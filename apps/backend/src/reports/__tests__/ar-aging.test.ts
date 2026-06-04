@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import Fastify from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { registerArAgingRoutes } from "../ar-aging.routes.js";
+import { registerReportsArAgingRoutes } from "../ar-aging.routes.js";
 
 const companyId = "44444444-4444-4444-8444-444444444444";
 
