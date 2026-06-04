@@ -858,7 +858,7 @@ export function getSafetyPermits(
   }>(`/api/v1/safety/permits?${qs.toString()}`);
 }
 
-export function createSafetyPermit(companyId: string, body: Record<string, unknown>) {
+export function createSafetyPermit(_companyId: string, body: Record<string, unknown>) {
   return apiRequest<{ permit: Record<string, unknown> }>("/api/v1/safety/permits", {
     method: "POST",
     body,
