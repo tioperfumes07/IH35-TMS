@@ -571,6 +571,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Tire program tracking (B32, 2026-06-04):** `/maintenance/tires` CRUD reads/writes `maintenance.tire_brands`, `maintenance.tire_records`, and `maintenance.tire_events` (migration **0363**; GO reserved 0362 taken by B30 inspections). Per-vehicle steer/drive/trailer axle layout, rotation + replacement quick actions, manual tread depth audits with low-tread alerts. Optional WO cross-link via `work_order_id` only (WO internals untouched). Legacy tire WO type remains; no tire program existed before B32. **CI:** `verify:maint-tire-program`.
 
+**Warranty parts + claims (B33, 2026-06-04):** `/maintenance/warranty-claims` CRUD reads/writes `maintenance.parts_warranty` and `maintenance.warranty_claims` (migration **0365**; GO reserved 0363 taken by B32 tire program). Parts warranty coverage registry, draft→filed→reimbursed claim workflow, vendor select, WO line auto-detect for eligible parts (`detect-from-wo`). ARCHIVE-not-DELETE on claims and warranty rows. Optional links to `parts_inventory`, `work_orders`, and `mdata.vendors` only. **CI:** `verify:maint-warranty-claims`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`
