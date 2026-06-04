@@ -9,7 +9,7 @@ import {
   stopWoTimeEntry,
   type WoTimeEntryRow,
 } from "../../api/woTimeEntries";
-import { listMaintenanceLaborCodes, type MaintenanceLaborCodeRow } from "../../api/maintenance";
+import { listMaintenanceLaborCodes } from "../../api/maintenance";
 import { Button } from "../Button";
 import { useToast } from "../Toast";
 import { useAuth } from "../../auth/useAuth";
@@ -28,15 +28,20 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
   const auth = useAuth();
 
   const [actorKind, setActorKind] = useState<(typeof ACTORS)[number]>("internal_mechanic");
+  const [laborCodeId, setLaborCodeId] = useState("");
   const [laborRate, setLaborRate] = useState("");
   const [notes, setNotes] = useState("");
   const [manualStart, setManualStart] = useState("");
   const [manualEnd, setManualEnd] = useState("");
   const [tick, setTick] = useState(0);
 
-  const laborCodesQuery = useQuery({ queryKey: ["maintenance", "labor-codes", operatingCompanyId], queryFn: () => listMaintenanceLaborCodes(operatingCompanyId), enabled: Boolean(operatingCompanyId),
+  const laborCodesQuery = useQuery({
+    queryKey: ["maintenance", "labor-codes", operatingCompanyId],
+    queryFn: () => listMaintenanceLaborCodes(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
   });
   const laborCodes = laborCodesQuery.data?.labor_codes ?? [];
+
   const entriesQuery = useQuery({
     queryKey: ["wo-time-entries", workOrderId, operatingCompanyId],
     queryFn: () => listWoTimeEntries(workOrderId, operatingCompanyId),
@@ -45,11 +50,20 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
 
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: ["wo-time-entries", workOrderId, operatingCompanyId] });
 
+  useEffect(() => {
+    if (!laborCodeId) return;
+    const selected = laborCodes.find((row) => row.id === laborCodeId);
+    if (selected?.rate_cents_per_hour != null) {
+      setLaborRate(String(selected.rate_cents_per_hour));
+    }
+  }, [laborCodeId, laborCodes]);
+
   const startMut = useMutation({
     mutationFn: () =>
       startWoTimeEntry(workOrderId, {
         operating_company_id: operatingCompanyId,
         actor_kind: actorKind,
+        labor_code_id: laborCodeId || null,
         labor_rate_cents_per_hour: laborRate.trim() ? Number(laborRate) : null,
         notes: notes.trim() || null,
       }),
@@ -75,6 +89,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         operating_company_id: operatingCompanyId,
         work_order_id: workOrderId,
         actor_kind: actorKind,
+        labor_code_id: laborCodeId || null,
         labor_rate_cents_per_hour: laborRate.trim() ? Number(laborRate) : null,
         notes: notes.trim() || null,
         started_at: manualStart.trim(),
@@ -120,7 +135,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
 
   const runningLabel = openEntry?.started_at
     ? `Running: ${Math.max(0, Math.floor((Date.now() - Date.parse(String(openEntry.started_at))) / 1000))}s`
-    : null;
+    : "No running timer";
   void tick;
 
   const isOwnerAdmin = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
@@ -176,7 +191,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Mechanic labor</div>
       <p className="mt-1 text-xs text-slate-600">Start/stop timers or add manual ranges. Rates drive computed labor cost.</p>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-3">
+      <div className="mt-3 grid gap-2 md:grid-cols-4">
         <label className="text-xs text-slate-600">
           Actor kind
           <SelectCombobox
@@ -192,6 +207,22 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
           </SelectCombobox>
         </label>
         <label className="text-xs text-slate-600">
+          Labor code
+          <SelectCombobox
+            className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]"
+            value={laborCodeId}
+            onChange={(e) => setLaborCodeId(e.target.value)}
+            data-testid="maint-labor-code-select"
+          >
+            <option value="">Select labor code</option>
+            {laborCodes.map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.code} — {row.display_name}
+              </option>
+            ))}
+          </SelectCombobox>
+        </label>
+        <label className="text-xs text-slate-600">
           Labor rate (¢/hr)
           <input
             className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]"
@@ -200,7 +231,7 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
             placeholder="optional"
           />
         </label>
-        <label className="text-xs text-slate-600 md:col-span-1">
+        <label className="text-xs text-slate-600">
           Notes
           <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-[13px]" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
@@ -232,7 +263,14 @@ export function LaborTracker({ workOrderId, operatingCompanyId }: Props) {
         </div>
       </div>
 
-      <div className="mt-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm" data-testid="maint-labor-running-timer">Running timer</div><div className="mt-4 overflow-auto" data-testid="maint-labor-entries-table">
+      <div
+        className={`mt-3 rounded border px-3 py-2 text-sm ${openEntry ? "border-amber-200 bg-amber-50 text-amber-900" : "border-gray-200 bg-gray-50 text-gray-700"}`}
+        data-testid="maint-labor-running-timer"
+      >
+        {runningLabel}
+      </div>
+
+      <div className="mt-4 overflow-auto" data-testid="maint-labor-entries-table">
         <table className="min-w-full border-collapse text-left">
           <thead className="text-[11px] uppercase tracking-wide text-slate-500">
             <tr>
