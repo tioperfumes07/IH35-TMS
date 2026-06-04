@@ -78,7 +78,7 @@
     "/dispatch/factoring-packets",
     "/dispatch/geofencing",
     "/dispatch/incidents",
-    "/dispatch/loads",
+    "/dispatch/planner",
     "/docs",
     "/documents",
     "/driver",

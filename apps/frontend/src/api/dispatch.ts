@@ -595,3 +595,46 @@ export function listDispatchAssignmentHistory(
   if (filters?.reason) q.set("reason", filters.reason);
   return apiRequest<{ rows: DispatchAssignmentHistoryRow[] }>(`/api/v1/dispatch/assignment-history?${q.toString()}`);
 }
+
+export type PlannerDriverRow = {
+  id: string;
+  name: string;
+  unit_number: string | null;
+  hos_status: "ok" | "warning_1hr" | "warning_15min" | "violation";
+  blackouts: Array<{ start_at: string; end_at: string; reason: string }>;
+};
+
+export type PlannerLoadEvent = {
+  id: string;
+  load_number: string;
+  driver_id: string;
+  customer_name: string | null;
+  status: string;
+  start_at: string;
+  end_at: string | null;
+  pickup_city: string | null;
+  pickup_state: string | null;
+};
+
+export type PlannerWeekPayload = {
+  week_start: string;
+  week_end: string;
+  drivers: PlannerDriverRow[];
+  loads: PlannerLoadEvent[];
+};
+
+export function getDispatchPlannerWeek(operatingCompanyId: string, weekStart?: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (weekStart) q.set("week_start", weekStart);
+  return apiRequest<PlannerWeekPayload>(`/api/v1/dispatch/planner/week?${q.toString()}`);
+}
+
+export function patchDispatchPlannerLoadStartAt(
+  loadId: string,
+  body: { operating_company_id: string; start_at: string; driver_id?: string }
+) {
+  return apiRequest<PlannerLoadEvent>(`/api/v1/dispatch/planner/loads/${loadId}/start_at`, {
+    method: "PATCH",
+    body,
+  });
+}

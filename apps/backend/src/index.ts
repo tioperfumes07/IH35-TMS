@@ -52,6 +52,7 @@ import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinemen
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
+import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
 import { registerDashcamOnDemandRoutes } from "./telematics/dashcam-on-demand.routes.js";
@@ -492,6 +493,7 @@ async function main() {
   await registerIntransitIssuesRoutes(app);
   await registerDispatchArchTabsRoutes(app);
   await registerDispatchAlertsRoutes(app);
+  await registerDispatchPlannerRoutes(app);
   await registerDriverRoutes(app);
   await registerGeofencesRoutes(app);
   await registerDriverDaySummaryRoutes(app);

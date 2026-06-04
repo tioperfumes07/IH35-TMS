@@ -168,6 +168,9 @@ jobs:
       - name: verify:dispatch-late-arrivals-alerts
         run: npm run verify:dispatch-late-arrivals-alerts
 
+      - name: verify:dispatch-planner-calendar
+        run: npm run verify:dispatch-planner-calendar
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 

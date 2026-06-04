@@ -501,7 +501,7 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 **Route:** `/dispatch`
 **Approved screen:** `8-Dispatch-Home.png`
 **Phase 3 task:** T11.5 (`e013abe`) + T11.5.1 Auth Gates (`5604c31`)
-**Pending:** T4 (assignment history), T5.5 (planner calendar), T9+T10 (OCR + email)
+**Pending:** T9+T10 (OCR + email)
 **Purpose:** Load lifecycle from booking through delivery + invoice handoff
 
 ### Top action button
@@ -513,7 +513,7 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 |-----|---------------|-------|
 | **Board (Kanban)** | Pending Assignment / Assigned / In Transit / Delivered / Completed | Phase 3 ✅ |
 | **Board (List)** | Same data, table format with sortable columns | Phase 3 ✅ |
-| **Planner (Calendar)** | Week-at-a-glance per dispatcher (T5.5 pending) | Phase 3 — T5.5 |
+| **Planner (Calendar)** | Week-at-a-glance per dispatcher with drag-drop reschedule + HOS overlay | Phase 3 ✅ — `/dispatch/planner` (B21-D4) |
 | **In-Transit Issues** | Driver-reported issues queue (WF-005, WF-048) | Phase 3 ✅ — `/dispatch/in-transit-issues` (B21-D2) |
 | **Border Routing Decisions** | Loads needing routing decision (yellow band) | Phase 3 ✅ |
 | **Detention Tracking** | Stops with detention accruing | Phase 3 ✅ |
@@ -522,7 +522,7 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 | **At-Risk Loads** | Late >2h OR HOS warning OR maintenance due | Phase 3 ✅ — `/dispatch/at-risk` (B21-D2) |
 | **Settings** | Dispatcher assignments · Default lanes · Auto-routing rules | Owner only |
 
-**Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes At-Risk Queue, In-Transit Issues, Assignment History (B21-D2), Border Crossing + Border History + Factoring Packets per triage. **CI:** `verify:dispatch-arch-tab-parity`.
+**Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes At-Risk Queue, In-Transit Issues, Assignment History (B21-D2), Planner Calendar (B21-D4), Border Crossing + Border History + Factoring Packets per triage. **CI:** `verify:dispatch-arch-tab-parity`, `verify:dispatch-planner-calendar`.
 
 **Maintenance module nav counts (B24):** Canonical surfaces in `MAINTENANCE_NAV_CONFIG.ts` — 10 sidebar flyout links, 10 dashboard operational tabs, 8 Master Data hover links (includes `/maintenance/drivers`), 9 Lists maintenance catalogs. HOME quick-jump uses `MAINTENANCE_HOME_QUICK_JUMP_COUNT` (10). Dead stub CTAs removed from parts-inventory dashboard band, fleet-table empty state, service-location empty state, and vendors CSV Import.
 
@@ -539,6 +539,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 **Accessorial UX (B21-D3, 2026-06-03):** `BookLoadModalV4` mounts `AccessorialEditor` — multi-row charges with catalog codes, detention/lumper/layover seeds, totals roll into section total via `buildBookLoadChargeLines`. Canonical CTA **+ Create charge** (replaces dead + Add charge). ARCHIVE-not-DELETE comment at prior stub. **CI:** `verify:book-load-accessorial`.
 
 **Late arrivals alerts (B21-D6, 2026-06-03):** `GET /api/v1/dispatch/alerts/late-arrivals` compares telematics `latest_eta_prediction.predicted_arrival_at` to the next open stop `scheduled_arrival_at` plus `DISPATCH_LATE_ARRIVAL_GRACE_MINUTES` (default 30). `DispatchAlertsPage` shows live count; drill-down at `/dispatch/alerts/late-arrivals`. **CI:** `verify:dispatch-late-arrivals-alerts`.
+
+**Planner calendar (B21-D4, 2026-06-03):** `/dispatch/planner` week grid (driver rows × day columns) reads assigned loads from `mdata.loads` + first pickup stop `scheduled_arrival_at` as `start_at`. Drag-drop PATCH `/api/v1/dispatch/planner/loads/:id/start_at` reschedules pickup; conflict detection blocks overlapping drops; HOS overlay from `hos.duty_status_events` rest periods + live clocks. No migration 0352 — computed view only. **CI:** `verify:dispatch-planner-calendar`.
 
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
