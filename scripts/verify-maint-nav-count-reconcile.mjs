@@ -110,8 +110,11 @@ function main() {
   if (/>\s*\+\s*Create\s*<\//.test(serviceLocation)) {
     failures.push("ServiceLocationPage empty state must not expose dead + Create button");
   }
-  if (/CSV Import/.test(vendorsPage)) {
-    failures.push("VendorsPage must not expose dead CSV Import button");
+  if (!/CSV Import/.test(vendorsPage)) {
+    failures.push("VendorsPage must expose functional CSV Import button (B29)");
+  }
+  if (!/\+ Create Vendor/.test(vendorsPage)) {
+    failures.push("VendorsPage must expose + Create Vendor action (B29)");
   }
   if (/CSV Import[\s\S]{0,120}\+\s*Create/.test(maintenanceHome.match(/parts_inventory[\s\S]*?PartsInventoryTable/)?.[0] ?? "")) {
     failures.push("MaintenanceHome parts_inventory tab must not expose dead CSV Import / + Create buttons");

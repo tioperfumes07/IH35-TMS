@@ -332,6 +332,8 @@
     "verify:maint-dvir-defect-intake": "node scripts/verify-maint-dvir-defect-intake.mjs",
     "verify:maint-pm-auto-wo-engine": "node scripts/verify-maint-pm-auto-wo-engine.mjs",
     "verify:maint-pm-auto-wo-engine:test": "node --test scripts/__tests__/verify-maint-pm-auto-wo-engine.test.mjs",
+    "verify:maint-vendor-master-unify": "node scripts/verify-maint-vendor-master-unify.mjs",
+    "verify:maint-vendor-master-unify:test": "node --test scripts/__tests__/verify-maint-vendor-master-unify.test.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",
