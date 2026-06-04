@@ -1,23 +1,24 @@
 {
-  "block_id": "BLOCK-A24-5-DRIVERDETAIL-EARNINGS-DEBT-TAB",
-  "branch": "feat/drivers-earnings-debt-tab",
-  "phase": "Phase A24.5",
-  "task": "A24-5-DRIVERDETAIL-EARNINGS-DEBT-TAB",
+  "block_id": "BLOCK-A23-6-SAFETY-HOS-DASHBOARD",
+  "branch": "feat/safety-hos-dashboard",
+  "phase": "Phase A23.6",
+  "task": "A23-6-SAFETY-HOS-DASHBOARD",
   "allowed_files": [
-    "apps/frontend/src/components/drivers/EarningsTab.tsx",
-    "apps/frontend/src/components/drivers/__tests__/EarningsTab.test.tsx",
-    "apps/frontend/src/pages/DriverDetail.tsx",
-    "scripts/verify-drivers-earnings-debt-tab.mjs",
-    "scripts/__tests__/verify-drivers-earnings-debt-tab.test.mjs",
-    "scripts/__tests__/fixtures/drivers-earnings-debt-tab/**",
-    "scripts/verify-guards/164-verify-drivers-earnings-debt-tab.mjs",
-    "scripts/verify-steps/49-verify-drivers-earnings-debt-tab.mjs",
+    "apps/frontend/src/pages/safety/HoursOfServicePage.tsx",
+    "apps/frontend/src/pages/safety/__tests__/HoursOfServiceDashboard.test.tsx",
+    "apps/frontend/src/pages/safety/hos/HosExceptionsPage.tsx",
+    "apps/frontend/src/pages/safety/tabs/HoursOfServiceTab.tsx",
+    "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
+    "scripts/verify-safety-hos-dashboard-wire.mjs",
+    "scripts/__tests__/verify-safety-hos-dashboard-wire.test.mjs",
+    "scripts/verify-guards/165-verify-safety-hos-dashboard-wire.mjs",
+    "scripts/verify-steps/49-verify-safety-hos-dashboard-wire.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:drivers-earnings-debt-tab"
+    "verify:safety-hos-dashboard-wire"
   ],
   "runtime_path": "src",
   "db_required": false,

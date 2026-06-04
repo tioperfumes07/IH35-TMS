@@ -296,6 +296,7 @@
     "verify:safety-route-coverage": "node scripts/verify-safety-route-coverage.mjs",
     "verify:safety-accidents-wire-up": "node scripts/verify-safety-accidents-wire-up.mjs",
     "verify:safety-meetings-training-wire": "node scripts/verify-safety-meetings-training-wire.mjs",
+    "verify:safety-hos-dashboard-wire": "node scripts/verify-safety-hos-dashboard-wire.mjs",
     "verify:dvir-schema-presence": "node scripts/verify-dvir-schema-presence.mjs",
     "verify:safety-count-nav-integrity": "node scripts/verify-safety-count-nav-integrity.mjs",
     "verify:safety-medical-cards": "node scripts/verify-safety-medical-cards.mjs",
