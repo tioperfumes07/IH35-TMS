@@ -719,14 +719,79 @@ export function generateMaintenancePmWorkOrder(id: string, operatingCompanyId: s
   );
 }
 
-export function listMaintenanceInspections(operatingCompanyId: string) {
-  return apiRequest<{ rows: Array<Record<string, unknown>> }>(
-    `/api/v1/maintenance/inspections?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
-  );
+export type MaintenanceInspectionType = "annual_dot" | "pre_trip" | "post_trip" | "custom";
+export type MaintenanceInspectionStatus = "scheduled" | "in_progress" | "completed" | "archived";
+export type MaintenanceInspectionOutcome = "pass" | "fail" | "pending";
+
+export type MaintenanceInspectionRow = {
+  id: string;
+  operating_company_id?: string;
+  unit_id: string;
+  unit_number?: string | null;
+  inspection_type: MaintenanceInspectionType;
+  inspection_type_label?: string;
+  status: MaintenanceInspectionStatus;
+  scheduled_date?: string | null;
+  inspection_date?: string | null;
+  inspector_name?: string | null;
+  mileage?: number | null;
+  outcome?: MaintenanceInspectionOutcome | null;
+  notes?: string;
+  defects?: string[];
+  dvir_submission_id?: string | null;
+  dvir_type?: string | null;
+  dvir_submitted_at?: string | null;
+  is_ad_hoc?: boolean;
+  archived_at?: string | null;
+  archive_reason?: string | null;
+  photo_count?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export function listMaintenanceInspections(
+  operatingCompanyId: string,
+  params: { include_archived?: boolean; unit_id?: string } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
+  if (params.unit_id) q.set("unit_id", params.unit_id);
+  return apiRequest<{ rows: MaintenanceInspectionRow[] }>(`/api/v1/maintenance/inspections?${q.toString()}`);
+}
+
+export function getMaintenanceInspectionDetail(id: string, operatingCompanyId: string) {
+  return apiRequest<{
+    inspection: MaintenanceInspectionRow;
+    photos: Array<Record<string, unknown>>;
+  }>(`/api/v1/maintenance/inspections/${encodeURIComponent(id)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
 }
 
 export function createMaintenanceInspection(body: Record<string, unknown>) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/inspections`, { method: "POST", body });
+  return apiRequest<MaintenanceInspectionRow>(`/api/v1/maintenance/inspections`, { method: "POST", body });
+}
+
+export function updateMaintenanceInspection(id: string, body: Record<string, unknown>) {
+  return apiRequest<MaintenanceInspectionRow>(`/api/v1/maintenance/inspections/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function archiveMaintenanceInspection(id: string, operatingCompanyId: string, archiveReason: string) {
+  return apiRequest<{ ok: boolean; id: string }>(`/api/v1/maintenance/inspections/${encodeURIComponent(id)}/archive`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, archive_reason: archiveReason },
+  });
+}
+
+export function attachMaintenanceInspectionPhoto(
+  id: string,
+  body: { operating_company_id: string; docs_file_id: string; caption?: string; sort_order?: number }
+) {
+  return apiRequest<{ photo: Record<string, unknown> }>(
+    `/api/v1/maintenance/inspections/${encodeURIComponent(id)}/photos`,
+    { method: "POST", body }
+  );
 }
 
 export function listMaintenanceVendors(

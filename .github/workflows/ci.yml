@@ -216,6 +216,9 @@ jobs:
       - name: verify:maint-vendor-master-unify
         run: npm run verify:maint-vendor-master-unify
 
+      - name: verify:maint-inspections-crud
+        run: npm run verify:maint-inspections-crud
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
