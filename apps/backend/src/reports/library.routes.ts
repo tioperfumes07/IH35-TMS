@@ -1,5 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import {
+  countDriversOnActiveLoads,
+  countPastDueMaintenanceWorkOrders,
+} from "../kpi/canonical-kpis.js";
 import { REPORT_LIBRARY, companyQuerySchema, currentAuthUser, getCurrentQuarterInfo, validationError, withCompanyScope } from "./shared.js";
 
 const frequentlyRunQuerySchema = z.object({
@@ -181,36 +185,16 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id]
       );
-      const assignedWorkingRes = await client.query(
-        `
-          SELECT CASE
-            WHEN to_regclass('mdata.loads') IS NULL THEN 0
-            ELSE (
-              SELECT count(*)::bigint
-              FROM mdata.loads l
-              WHERE l.operating_company_id = $1
-                AND COALESCE(l.status::text, '') NOT IN ('draft', 'delivered', 'invoiced', 'paid', 'closed', 'cancelled')
-            )
-          END AS total
-        `,
-        [query.data.operating_company_id]
-      );
-      const maintPastDueRes = await client.query(
-        `
-          SELECT CASE
-            WHEN to_regclass('maintenance.work_orders') IS NULL THEN 0
-            ELSE (
-              SELECT count(*)::bigint
-              FROM maintenance.work_orders w
-              WHERE w.operating_company_id = $1
-                AND w.status NOT IN ('complete', 'cancelled')
-                AND w.due_date IS NOT NULL
-                AND w.due_date < CURRENT_DATE
-            )
-          END AS total
-        `,
-        [query.data.operating_company_id]
-      );
+      const loadsRel = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
+      const assignedWorking =
+        loadsRel.rows[0]?.ok === true
+          ? await countDriversOnActiveLoads(client, query.data.operating_company_id)
+          : 0;
+      const woRel = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
+      const maintPastDue =
+        woRel.rows[0]?.ok === true
+          ? await countPastDueMaintenanceWorkOrders(client, query.data.operating_company_id)
+          : 0;
       const openDamageRes = await client.query(
         `
           SELECT CASE
@@ -270,8 +254,8 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         run_last_7d: Number(((runRes.rows[0] as { cnt?: string } | undefined)?.cnt ?? 0)),
         outstanding_ar_cents: Number(((arSumRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
         tracked_assets: Number(((trackedAssetsRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
-        assigned_working: Number(((assignedWorkingRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
-        maint_past_due: Number(((maintPastDueRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
+        assigned_working: assignedWorking,
+        maint_past_due: maintPastDue,
         open_damage: Number(((openDamageRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
         pending_qbo_sync: Number(((pendingQboSyncRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),
         live_units: Number(((liveUnitsRes.rows[0] as { total?: string | number | bigint } | undefined)?.total ?? 0)),

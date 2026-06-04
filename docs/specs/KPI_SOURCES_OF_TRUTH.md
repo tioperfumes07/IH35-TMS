@@ -21,15 +21,27 @@ Canonical definitions for dashboard tile counts. Any UI label must match the que
 2. **Dispatch map GPS positions** — Resolved by Block B6 (`listLatestPositions` on Dispatch page). K2 verified in B7; no duplicate stale endpoint.
 3. **Banking Driver Escrow vs active drivers** — Visualizer showed Plaid account count as "Active drivers". Fixed: escrow balance count + `active_drivers` from `mdata.drivers`; DIP tile relabeled "Escrow Balance (DIP)".
 
-## Follow-up (document only, not fixed in B7)
+## Resolved drifts (P8-AUDIT-KPI-DRIFTS, 2026-06-04)
+
+| KPI | Drift | Fix |
+| --- | --- | --- |
+| HOME Active Loads | `open-loads-count` omitted `at_pickup` / `at_delivery` and `soft_deleted_at` | `countActiveDispatchLoads` via `apps/backend/src/kpi/canonical-kpis.ts` |
+| HOME Open WOs | Broader `NOT IN (complete,…)` than maintenance open WOs | `countOpenMaintenanceWorkOrders` |
+| HOME Drivers on duty | Today-only + narrow statuses vs assigned drivers on active loads | `countDriversOnActiveLoads` |
+| HOME Assigned / Working | Reports counted non-active load statuses | Same canonical driver-on-active-load count |
+| Maint PM Due vs Past Due | Both used `pm_alerts` count | `countPmDueAlerts` vs `countPastDueMaintenanceWorkOrders` |
+| Reports Maint Past Due | Inline SQL diverged from maintenance past-due | Shared `countPastDueMaintenanceWorkOrders` |
+| Banking Pending Bills | Inline duplicate query | `countPendingBills` |
+| Dispatch In Transit | Already B7/B6 canonical | Re-exported from `canonical-kpis.ts` for audit parity |
+
+## Follow-up (document only)
 
 | Area | Observation |
 | --- | --- |
-| HOME | `open-loads-count` uses a subset of active-load statuses; align with dispatch canonical set in a future block. |
-| MAINT | `MaintKpiRows` maps `pm_due` and `past_due` from overlapping backend fields — confirm distinct definitions. |
 | ACCOUNTING | No single "Open Receivables" home tile; AR spread across invoices list and 425C. |
 
 ## Implementation references
 
+- `apps/backend/src/kpi/canonical-kpis.ts`
 - `apps/backend/src/dispatch/active-loads-count.ts`
 - `apps/backend/src/banking/driver-escrow-counts.ts`

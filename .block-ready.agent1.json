@@ -1,24 +1,23 @@
 {
-  "block_id": "BULK-4",
-  "branch": "feat/bulk-4-drivers-fleet",
-  "phase": "BULK cluster — WAVE 1 Lane A",
-  "task": "Drivers bulk-update routes + fleet UI wiring",
+  "block_id": "P8-AUDIT-KPI-DRIFTS",
+  "branch": "fix/audit-kpi-drifts",
+  "phase": "Tier 2",
+  "task": "P8-AUDIT-KPI-DRIFTS",
   "allowed_files": [
-    "apps/backend/src/drivers/drivers-bulk.routes.ts",
-    "apps/backend/src/drivers/__tests__/drivers-bulk.routes.test.ts",
-    "apps/backend/src/mdata/index.ts",
-    "apps/frontend/src/components/FleetTable.tsx",
-    "apps/frontend/src/components/fleet/BulkActionBar.tsx",
-    "package.json",
+    "apps/backend/src/kpi/*.ts",
+    "apps/backend/src/kpi/**/*.ts",
+    "apps/backend/src/home/home-widgets.routes.ts",
+    "apps/backend/src/maintenance/dashboard.routes.ts",
+    "apps/backend/src/reports/library.routes.ts",
+    "apps/backend/src/banking/banking.routes.ts",
+    "docs/specs/KPI_SOURCES_OF_TRUTH.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:bulk-update-route-mounted",
-    "verify:bulk-audit-per-id",
-    "verify:bulk-action-bar-mounted",
-    "verify:fleet-bulk-select-checkbox-column"
+    "verify:kpi-sources-of-truth-exists"
   ],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }

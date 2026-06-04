@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { countPendingBills } from "../kpi/canonical-kpis.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 
 const companyQuerySchema = z.object({
@@ -126,17 +127,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      const pendingBillsRes = await client
-        .query<{ count: number }>(
-          `
-            SELECT COUNT(*)::int AS count
-            FROM accounting.bills
-            WHERE operating_company_id = $1
-              AND status IN ('open','partially_paid')
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ count: 0 }] }));
+      const pendingBills = await countPendingBills(client, companyId).catch(() => 0);
       const escrowCounts = await countDriverEscrowKpis(client, companyId).catch(() => ({
         active_drivers: 0,
         drivers_with_escrow_balance: 0,
@@ -153,7 +144,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           driver_escrow: 0,
           total_uncategorized: 0,
         }),
-        pending_bills: Number(pendingBillsRes.rows[0]?.count ?? 0),
+        pending_bills: pendingBills,
         ...escrowCounts,
       };
     });
