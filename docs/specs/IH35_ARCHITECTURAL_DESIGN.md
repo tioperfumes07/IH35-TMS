@@ -1338,3 +1338,5 @@ This document is the canonical reference. When in doubt about what a screen cont
 ## Names Master — Cross-Module Navigator (A18)
 
 Names Master (`/lists/names`) is a **read-only hub** that searches existing party records across modules (customers, vendors, drivers, customer contacts, and accessible org companies / unlinked QBO mirrors). It does **not** introduce new tables or write APIs; results deep-link to canonical module pages (`/customers/:id`, `/vendors/:id`, `/drivers/:id`, etc.). This pattern is distinct from catalog CRUD (A17 `reference.*` + `archived_at`).
+
+- **P5-T2 (shipped):** Accounting reconciliation workspace at `/accounting/reconciliation` with match/unmatch API aliases.

@@ -1391,3 +1391,77 @@ export function getComparisonReport(
   if (params.basis) query.set("basis", params.basis);
   return apiRequest<ComparisonReportResponse>(`/api/v1/accounting/comparison-report?${query.toString()}`);
 }
+
+export type AccountingReconciliationWorkspace = {
+  unreconciled_bank_transactions: Array<{
+    id: string;
+    transaction_date: string;
+    amount_cents: number;
+    description: string | null;
+    merchant_name: string | null;
+    is_credit: boolean;
+  }>;
+  candidate_ledger_entries: Array<{
+    id: string;
+    transaction_date: string;
+    amount_cents: number;
+    description: string | null;
+    merchant_name: string | null;
+    is_credit: boolean;
+    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";
+    ledger_entry_id: string;
+    match_score: number;
+    match_state: string;
+  }>;
+  variance_resolved_entries: Array<{
+    journal_entry_id: string;
+    entry_date: string;
+    reference_no: string | null;
+    variance_cents: number;
+  }>;
+  progress: {
+    total_transactions: number;
+    matched_or_skipped_transactions: number;
+    percent: number;
+  };
+};
+
+export function getAccountingReconciliationWorkspace(
+  operatingCompanyId: string,
+  params: { account_id: string; period_start: string; period_end: string }
+) {
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    account_id: params.account_id,
+    period_start: params.period_start,
+    period_end: params.period_end,
+  });
+  return apiRequest<AccountingReconciliationWorkspace>(
+    `/api/v1/accounting/reconciliation/workspace?${query.toString()}`
+  );
+}
+
+export function matchAccountingReconciliation(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+  ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";
+  ledger_entry_id: string;
+  variance_account_id?: string;
+}) {
+  return apiRequest<{ ok: boolean; result: Record<string, unknown> }>(
+    `/api/v1/accounting/reconciliation/match`,
+    { method: "POST", body: JSON.stringify(input) }
+  );
+}
+
+export function unmatchAccountingReconciliation(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+  ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je";
+  ledger_entry_id: string;
+}) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/accounting/reconciliation/unmatch`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
