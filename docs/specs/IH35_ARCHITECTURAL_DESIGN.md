@@ -565,6 +565,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Vendor master unify (B29, 2026-06-04):** `/maintenance/vendors` CRUD reads/writes canonical `catalogs.maintenance_vendors` (metadata holds contact/address/terms; ARCHIVE-not-DELETE via `is_active=false`). CSV import + template endpoints; vendor detail page shows WO and invoice history linked by metadata IDs or repair location. Lists hub `/lists/maintenance/vendors` links to the maintenance vendors hub. **CI:** `verify:maint-vendor-master-unify`.
 
+**Inspections CRUD + DVIR linkage (B30, 2026-06-04):** `/maintenance/inspections` CRUD reads/writes `maintenance.inspections` + `maintenance.inspection_photos` (migration **0362**; GO reserved 0361 taken by A24-8 onboarding). Types: Annual DOT, Pre-trip, Post-trip (optional `dvir_submission_id` → `safety.dvir_submissions`), Custom. Photo upload via docs module presigned URL + attach endpoint. Legacy read-only `maintenance.dot_inspection_events` stub ARCHIVE-not-DELETE. **CI:** `verify:maint-inspections-crud`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`
