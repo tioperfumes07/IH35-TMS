@@ -16,12 +16,19 @@ export function getSafetyEvents(companyId: string) {
   }>(`/api/v1/safety/events?${q(companyId)}&filter=active`);
 }
 
-export function getSafetyEventsFiltered(companyId: string, filter: "active" | "resolved" | "all") {
+export function getSafetyEventsFiltered(
+  companyId: string,
+  filter: "active" | "resolved" | "all",
+  window: "7d" | "10d" | "30d" | "90d" | "all" = "7d"
+) {
   return apiRequest<{
     events: Array<Record<string, unknown>>;
     counters: { active_count: number; resolved_count: number; total_count: number };
     filter: "active" | "resolved" | "all";
-  }>(`/api/v1/safety/events?${q(companyId)}&filter=${encodeURIComponent(filter)}`);
+    window: "7d" | "10d" | "30d" | "90d" | "all";
+  }>(
+    `/api/v1/safety/events?${q(companyId)}&filter=${encodeURIComponent(filter)}&window=${encodeURIComponent(window)}`
+  );
 }
 
 

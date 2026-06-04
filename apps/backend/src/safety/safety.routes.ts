@@ -12,6 +12,7 @@ const companyQuerySchema = z.object({
 const eventsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   filter: z.enum(["active", "resolved", "all"]).default("active"),
+  window: z.enum(["7d", "10d", "30d", "90d", "all"]).default("7d"),
   event_type: z.string().optional(),
   severity: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(100),
