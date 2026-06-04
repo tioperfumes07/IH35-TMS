@@ -40,7 +40,7 @@ import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { RecentActivityRow } from "./components/RecentActivityRow";
 import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
-import { WorkOrderDetailModal } from "../../components/work-orders/WorkOrderDetailModal";
+import { WorkOrderDetailModal } from "../../components/maintenance/WorkOrderDetailModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
 import { partNeedsReorder } from "./parts-low-stock";
 import {

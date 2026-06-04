@@ -9,6 +9,9 @@ import { FineDetailDrawer } from "../../pages/safety/components/FineDetailDrawer
 import { CompanyViolationDetailDrawer } from "../../pages/safety/components/CompanyViolationDetailDrawer";
 import { IntegrityAlertDetailDrawer } from "../../pages/safety/components/IntegrityAlertDetailDrawer";
 import { AnomalyDetailDrawer } from "../../pages/safety/tabs/AnomalyDetailDrawer";
+import { WorkOrderDetailModal } from "../maintenance/WorkOrderDetailModal";
+import { CustomerDrillModal } from "../customers/CustomerDrillModal";
+import type { Customer } from "../../api/mdata";
 
 function wrap(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -120,6 +123,42 @@ describe("modal x-close audit", () => {
       )
     );
     fireEvent.click(screen.getByRole("button", { name: "Close Integrity Alert Detail" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("WorkOrderDetailModal: clicking X calls onClose", () => {
+    const onClose = vi.fn();
+    render(
+      wrap(
+        <WorkOrderDetailModal
+          open
+          workOrder={{ display_id: "WO-1", source_type: "IS", status: "open" }}
+          onClose={onClose}
+        />
+      )
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close Work Order Details · WO-1" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("CustomerDrillModal: clicking X calls onClose", () => {
+    const onClose = vi.fn();
+    const customer = {
+      id: "cust-1",
+      operating_company_id: "oc-1",
+      name: "Acme Freight",
+      customer_code: "ACME",
+      status: "active",
+      quality_overall_flag: "standard",
+      factoring_eligible: false,
+      free_time_pickup_minutes: 120,
+      free_time_delivery_minutes: 120,
+      detention_rate_per_hour: "0",
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    } as Customer;
+    render(wrap(<CustomerDrillModal open customer={customer} onClose={onClose} />));
+    fireEvent.click(screen.getByRole("button", { name: "Close Customer · Acme Freight" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

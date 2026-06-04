@@ -26,4 +26,12 @@ describe("WorkOrderDetailModal", () => {
     renderModal();
     expect(document.body.querySelectorAll("h2")).toHaveLength(1);
   });
+
+  it("does not wrap body in nested card chrome (no inner modal frame)", () => {
+    renderModal();
+    const panel = document.body.querySelector("[class*='shadow-xl']");
+    expect(panel).toBeTruthy();
+    const nestedFrames = panel?.querySelectorAll(".rounded.border.border-gray-200.bg-gray-50");
+    expect(nestedFrames?.length ?? 0).toBe(0);
+  });
 });
