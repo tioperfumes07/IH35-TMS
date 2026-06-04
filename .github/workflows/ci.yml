@@ -594,6 +594,9 @@ jobs:
       - name: verify:redis-resilient-config
         run: npm run verify:redis-resilient-config
 
+      - name: verify:shared-types-consumer-parity
+        run: npm run verify:shared-types-consumer-parity
+
 
       - name: verify:samsara-positions-cron-registered
         run: npm run verify:samsara-positions-cron-registered

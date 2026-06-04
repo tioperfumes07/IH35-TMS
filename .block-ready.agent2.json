@@ -1,15 +1,22 @@
 {
-  "block_id": "BLOCK-P8-AUDIT-BACKEND-VERSION",
-  "branch": "fix/audit-backend-version-tag",
-  "phase": "Tier 2 — P8 Audit",
-  "task": "P8-AUDIT-BACKEND-VERSION",
+  "block_id": "BLOCK-INFRA-3-PWA-STOP-TYPE",
+  "branch": "fix/pwa-stop-type-rename",
+  "phase": "Tier 0 — INFRA",
+  "task": "INFRA-3",
   "allowed_files": [
-    "apps/backend/src/health/health.routes.ts",
-    "apps/backend/src/health/__tests__/health.test.ts",
+    "apps/driver-pwa/src/pages/StopAction.tsx",
+    "apps/driver-pwa/src/pages/__tests__/StopAction.test.ts",
+    "scripts/verify-shared-types-consumer-parity.mjs",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    ".github/workflows/ci.yml",
+    "package.json",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [],
-  "runtime_path": "src",
+  "extra_gates": [
+    "npm run verify:shared-types-consumer-parity",
+    "cd apps/driver-pwa && npm run build"
+  ],
+  "runtime_path": "apps/driver-pwa",
   "db_required": false,
   "guard_required": false
 }

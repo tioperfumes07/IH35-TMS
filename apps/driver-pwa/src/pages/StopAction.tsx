@@ -70,13 +70,13 @@ export function StopActionPage() {
           {status === "pending" ? (
             <PwaButton className="w-full" onClick={() => void handleArrive()}>{t("stop.mark_arrived")}</PwaButton>
           ) : null}
-          {status === "arrived" && !hasDoc && resolvedStop.stop_type === "delivery" && !podOpen ? (
+          {status === "arrived" && !hasDoc && resolvedStop.type === "delivery" && !podOpen ? (
             <PwaButton className="w-full" onClick={() => setPodOpen(true)}>{t("pod.capture_cta")}</PwaButton>
           ) : null}
-          {status === "arrived" && !hasDoc && resolvedStop.stop_type !== "delivery" ? (
+          {status === "arrived" && !hasDoc && resolvedStop.type !== "delivery" ? (
             <PwaButton className="w-full" onClick={() => setUploadOpen(true)}>{t("stop.upload_bol_pod")}</PwaButton>
           ) : null}
-          {status === "arrived" && podOpen && resolvedStop.stop_type === "delivery" ? (
+          {status === "arrived" && podOpen && resolvedStop.type === "delivery" ? (
             <PodCapture
               loadId={resolvedLoad.id}
               stopId={resolvedStop.id}
