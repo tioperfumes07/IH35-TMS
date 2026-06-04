@@ -106,11 +106,13 @@ export function MaintKpiDashboardPage() {
 
   const drilldownQ = useQuery({
     queryKey: ["maintenance", "kpi-dashboard", "drilldown", activeKpi, companyId, periodStart, periodEnd, unitId],
-    queryFn: () => {
+    queryFn: async () => {
       if (activeKpi === "pm_compliance") {
-        return getMaintenanceKpiPmCompliance(companyId, periodStart, periodEnd, unitId || undefined);
+        const pm = await getMaintenanceKpiPmCompliance(companyId, periodStart, periodEnd, unitId || undefined);
+        return { kind: "pm_compliance" as const, rows: pm.rows as Record<string, unknown>[] };
       }
-      return getMaintenanceKpiDrilldown(activeKpi, companyId, periodStart, periodEnd, unitId || undefined);
+      const res = await getMaintenanceKpiDrilldown(activeKpi, companyId, periodStart, periodEnd, unitId || undefined);
+      return { kind: res.kind, rows: res.rows };
     },
     enabled: Boolean(companyId),
   });
@@ -158,10 +160,7 @@ export function MaintKpiDashboardPage() {
     [summary]
   );
 
-  const drillRows =
-    activeKpi === "pm_compliance"
-      ? ((drilldownQ.data as { rows?: Record<string, unknown>[] } | undefined)?.rows ?? [])
-      : ((drilldownQ.data as { rows?: Record<string, unknown>[] } | undefined)?.rows ?? []);
+  const drillRows = drilldownQ.data?.rows ?? [];
 
   return (
     <div className="space-y-4" data-testid="maint-kpi-dashboard">
