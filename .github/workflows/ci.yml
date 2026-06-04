@@ -157,6 +157,9 @@ jobs:
       - name: verify:drivers-document-expiry-alerts
         run: npm run verify:drivers-document-expiry-alerts
 
+      - name: verify:drivers-application-portal
+        run: npm run verify:drivers-application-portal
+
       - name: verify:drivers-create-vocab
         run: npm run verify:drivers-create-vocab
 

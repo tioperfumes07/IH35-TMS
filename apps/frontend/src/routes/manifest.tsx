@@ -14,6 +14,8 @@ import { DriverHosDetailPage } from "../pages/drivers/DriverHosDetailPage";
 import { MessagesInboxPage } from "../pages/drivers/MessagesInboxPage";
 import { DocumentAlertsPage } from "../pages/alerts/DocumentAlertsPage";
 import { OnboardingWizardPage } from "../pages/drivers/OnboardingWizardPage";
+import { ApplicantsPipelinePage } from "../pages/drivers/ApplicantsPipelinePage";
+import { ApplicationPage } from "../pages/public/ApplicationPage";
 import { DriverLoadStatusesPage } from "../pages/DriverLoadStatusesPage";
 import { DriversPage } from "../pages/Drivers";
 import { DispatchPage } from "../pages/Dispatch";
@@ -406,6 +408,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/sign/:token" element={<LegalSignPage />} />
         <Route path="/attorney-review/:token" element={<LegalAttorneyReviewPortalPage />} />
         <Route path="/owner-approval/:token" element={<OwnerApprovalPortalPage />} />
+        <Route path="/apply/:token" element={<ApplicationPage />} />
         <Route path="/portal/login" element={<PortalLoginPage />} />
         <Route
           path="/portal"
@@ -2520,6 +2523,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriverDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/applicants"
+          element={
+            <ProtectedRoute>
+              <ApplicantsPipelinePage />
             </ProtectedRoute>
           }
         />

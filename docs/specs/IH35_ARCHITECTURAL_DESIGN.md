@@ -1073,6 +1073,8 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **PWA live data parity (A24-11, 2026-06-04):** Driver PWA `/home` replaces Phase 1 placeholder cards with live HOS clocks, assigned load, and recent fuel transactions via `/api/v1/driver-pwa/hos-clocks`, `/api/v1/driver/loads`, and `/api/v1/driver-pwa/recent-fuel-transactions`; `/equipment` shows assigned truck + trailer from telematics pairing; bottom nav adds HOS + Documents shortcuts. No migration. **CI:** `verify:drivers-pwa-live-data`.
 
+**Pre-hire application portal (A24-12, 2026-06-04):** Public token-protected apply form at `/apply/:token` → office review pipeline at `/drivers/applicants` (new/screening/interview/offer/hired); `identity.driver_applicants` + `identity.applicant_documents` (migration **0363** — GO reserved 0351, slots through 0362 taken); FCRA + minimum-age-21 validation on intake; convert-to-driver creates `mdata.drivers` row + kicks off A24-8 onboarding wizard session. **CI:** `verify:drivers-application-portal`.
+
 **Driver audit history tab (A24-6, 2026-06-04):** `DriverDetail` Audit History tab drills into `audit.audit_events` via `GET /api/v1/audit/events?entity_type=driver&entity_id=:id` (tenant-scoped through `mdata.drivers` join); date range + event type filters; expandable payload diff. **CI:** `verify:drivers-audit-history-tab`.
 
 **Driver profile training CRUD (A24-7, 2026-06-04):** `DriverProfilePage` wires `+ Add training` to `AddTrainingModal`; creates records via `POST /api/v1/mdata/drivers/:id/training` (program select from A23-5 completions + completion date + notes); profile query refresh on success. **CI:** `verify:drivers-training-crud-on-profile`.

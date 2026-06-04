@@ -190,6 +190,7 @@
     "verify:drivers-onboarding-wizard": "node scripts/verify-drivers-onboarding-wizard.mjs",
     "verify:drivers-document-expiry-alerts": "node scripts/verify-drivers-document-expiry-alerts.mjs",
     "verify:drivers-pwa-live-data": "node scripts/verify-drivers-pwa-live-data.mjs",
+    "verify:drivers-application-portal": "node scripts/verify-drivers-application-portal.mjs",
     "verify:drivers-create-vocab": "node scripts/verify-drivers-create-vocab.mjs",
     "verify:drivers-earnings-debt-tab": "node scripts/verify-drivers-earnings-debt-tab.mjs",
     "verify:oem-parts-no-touch-existing-parts-surfaces": "node scripts/verify-oem-parts-no-touch-existing-parts-surfaces.mjs",
