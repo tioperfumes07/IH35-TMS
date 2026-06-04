@@ -3,6 +3,10 @@ export const EXCLUDE_ARCHIVED_DRIVERS_SQL = "archived_at IS NULL";
 
 export const EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL = "qc.archived_at IS NULL";
 
+export const EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL = "archived_at IS NULL";
+
+export const EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_ALIAS_SQL = "c.archived_at IS NULL";
+
 export const EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL = "u.archived_at IS NULL";
 
 /** Patterns mirrored by migration 0320 and CI guard. */
