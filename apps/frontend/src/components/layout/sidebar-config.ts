@@ -183,6 +183,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Assignment History", to: "/dispatch/assignment-history" },
         { label: "Planner Calendar", to: "/dispatch/planner" },
         { label: "Detention Board", to: "/dispatch/detention" },
+        { label: "OCR Queue", to: "/dispatch/ocr-queue" },
         { label: "Geofencing", to: "/dispatch/geofencing" },
         { label: "Alerts", to: "/dispatch/alerts" },
         { label: "Border Crossing", to: "/dispatch/border-crossing" },

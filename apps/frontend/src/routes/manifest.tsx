@@ -22,6 +22,7 @@ import { InTransitIssuesPage } from "../pages/dispatch/InTransitIssuesPage";
 import { AssignmentHistoryPage } from "../pages/dispatch/AssignmentHistoryPage";
 import { PlannerCalendarPage } from "../pages/dispatch/PlannerCalendarPage";
 import { DetentionBoardPage } from "../pages/dispatch/DetentionBoardPage";
+import { OcrQueuePage } from "../pages/dispatch/OcrQueuePage";
 import { BorderCrossingWizardPage } from "../pages/dispatch/BorderCrossingWizardPage";
 import { BorderCrossingHistoryPage } from "../pages/dispatch/BorderCrossingHistoryPage";
 import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
@@ -550,6 +551,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DetentionBoardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/ocr-queue"
+          element={
+            <ProtectedRoute>
+              <OcrQueuePage />
             </ProtectedRoute>
           }
         />

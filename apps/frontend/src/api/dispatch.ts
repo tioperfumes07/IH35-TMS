@@ -696,3 +696,46 @@ export function notifyDetentionCustomer(eventId: string, body: { operating_compa
     { method: "POST", body }
   );
 }
+
+export type OcrIntakeExtractedFields = {
+  customer_name_raw?: string;
+  customer_id?: string | null;
+  origin_city?: string;
+  origin_state?: string;
+  destination_city?: string;
+  destination_state?: string;
+  pickup_date?: string;
+  delivery_date?: string;
+  rate_cents?: number;
+  load_number_external?: string;
+  confidence_score?: number;
+  ocr_source_pdf_r2_key?: string;
+};
+
+export type OcrIntakeQueueItem = {
+  id: string;
+  operating_company_id: string;
+  status: string;
+  source: string;
+  email_from: string | null;
+  email_subject: string | null;
+  source_pdf_r2_key: string;
+  attachment_filename: string | null;
+  extracted_fields: OcrIntakeExtractedFields;
+  confidence_score: number | null;
+  error_message: string | null;
+  created_at: string;
+};
+
+export function getOcrIntakeQueue(operatingCompanyId: string) {
+  return apiRequest<{ items: OcrIntakeQueueItem[] }>(
+    `/api/v1/dispatch/ocr-intake/queue?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function convertOcrIntakeToBookLoad(itemId: string, body: { operating_company_id: string }) {
+  return apiRequest<{ item: OcrIntakeQueueItem; book_load_prefill: Record<string, unknown> }>(
+    `/api/v1/dispatch/ocr-intake/items/${itemId}/convert`,
+    { method: "POST", body }
+  );
+}
