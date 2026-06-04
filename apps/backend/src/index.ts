@@ -213,6 +213,7 @@ import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { initializeSafetyRemindersCron } from "./safety/reminders.cron.js";
+import { initializeIntegrityAlertEngineCron } from "./safety/integrity-alert-engine.cron.js";
 import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
 import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
@@ -795,6 +796,9 @@ async function main() {
   try {
     initializeSafetyRemindersCron(app);
     app.log.info("[STARTUP] safety-reminders-cron initialized");
+
+    initializeIntegrityAlertEngineCron(app);
+    app.log.info("[STARTUP] integrity-alert-engine-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] safety-reminders-cron failed");
   }

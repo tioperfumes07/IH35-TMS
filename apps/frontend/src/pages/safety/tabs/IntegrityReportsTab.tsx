@@ -9,8 +9,9 @@ import {
   getIntegrityWoCostOutliers,
   reviewIntegrityObservation,
 } from "../../../api/safetyV64";
+import { IntegrityAlertsPage } from "../IntegrityAlertsPage";
 
-type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern";
+type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "active-alerts";
 
 export function IntegrityReportsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -66,10 +67,37 @@ export function IntegrityReportsTab() {
     return map;
   }, [observationsQuery.data?.observations]);
 
+  if (subTab === "active-alerts") {
+    return (
+      <div className="space-y-3" data-testid="integrity-reports-active-alerts">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: "wo-cost", label: "WO Cost Outliers" },
+            { id: "fuel-mpg", label: "Fuel MPG Anomalies" },
+            { id: "driver-dwell", label: "Driver Dwell Outliers" },
+            { id: "hos-pattern", label: "HOS Pattern Breaks" },
+            { id: "active-alerts", label: "Active Alerts" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className="rounded border px-3 py-1 text-xs font-semibold"
+              style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
+              onClick={() => setSubTab(tab.id as SubTab)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <IntegrityAlertsPage operatingCompanyId={companyId} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <div className="rounded border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
-        Foundation views - alert engine ships in Phase 6 (P6-T-INTEGRITY).
+        Foundation outlier views (Phase 3). Active alerts tab runs the A23-12 rule engine inbox.
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -78,6 +106,7 @@ export function IntegrityReportsTab() {
           { id: "fuel-mpg", label: "Fuel MPG Anomalies" },
           { id: "driver-dwell", label: "Driver Dwell Outliers" },
           { id: "hos-pattern", label: "HOS Pattern Breaks" },
+          { id: "active-alerts", label: "Active Alerts" },
         ].map((tab) => (
           <button
             key={tab.id}

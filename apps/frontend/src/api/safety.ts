@@ -653,6 +653,40 @@ export function resolveIntegrityAlert(id: string, companyId: string, body: Recor
   });
 }
 
+export function snoozeIntegrityAlert(id: string, companyId: string, snoozeHours = 24) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/integrity-alerts/${id}/snooze?${q(companyId)}`, {
+    method: "POST",
+    body: { snooze_hours: snoozeHours },
+  });
+}
+
+export function getIntegrityAlertRules(companyId: string) {
+  return apiRequest<{ integrity_alert_rules: Array<Record<string, unknown>> }>(
+    `/api/v1/safety/integrity-alert-rules?${q(companyId)}`
+  );
+}
+
+export function createIntegrityAlertRule(companyId: string, body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/integrity-alert-rules?${q(companyId)}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function updateIntegrityAlertRule(id: string, companyId: string, body: Record<string, unknown>) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/safety/integrity-alert-rules/${id}?${q(companyId)}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function evaluateIntegrityAlerts(companyId: string) {
+  return apiRequest<{ rules_scanned: number; events_inserted: number; alerts_inserted: number }>(
+    `/api/v1/safety/integrity-alerts/evaluate?${q(companyId)}`,
+    { method: "POST" }
+  );
+}
+
 export type SafetyAnomalySeverity = "low" | "medium" | "high" | "critical";
 export type SafetyAnomalyStatus = "new" | "acknowledged" | "resolved" | "dismissed";
 export type SafetyAnomalySubjectType = "driver" | "unit" | "customer" | "invoice";
