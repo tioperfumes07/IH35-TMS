@@ -133,6 +133,7 @@ const updateDriverBodySchema = z
     qbo_vendor_id: z.string().trim().max(120).nullable().optional(),
     qbo_class_id: z.string().trim().max(120).nullable().optional(),
     operating_company_id: z.string().uuid().nullable().optional(),
+    settlement_auto_pay_enabled: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -1029,6 +1030,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("qbo_vendor_id" in b) add("qbo_vendor_id", b.qbo_vendor_id ?? null);
     if ("qbo_class_id" in b) add("qbo_class_id", b.qbo_class_id ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
+    if ("settlement_auto_pay_enabled" in b) add("settlement_auto_pay_enabled", b.settlement_auto_pay_enabled);
     add("updated_by_user_id", authUser.uuid);
 
     values.push(parsedParams.data.id);

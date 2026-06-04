@@ -98,6 +98,7 @@ export type Driver = {
   qbo_vendor_linked_at: string | null;
   qbo_vendor_linked_by_user_id: string | null;
   qbo_class_id?: string | null;
+  settlement_auto_pay_enabled?: boolean;
   status: DriverStatus;
   notes: string | null;
   prior_driver_id: string | null;
@@ -198,5 +199,6 @@ export type UpdateDriverInput = Partial<
     | "deactivated_at"
     | "qbo_vendor_id"
     | "qbo_class_id"
+    | "settlement_auto_pay_enabled"
   >
 >;

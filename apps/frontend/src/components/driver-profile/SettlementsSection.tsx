@@ -6,15 +6,25 @@ function cents(n: unknown) {
 export function SettlementsSection({
   settlements,
   driverId,
+  autoPayEnabled = false,
+  autoPaySaving = false,
+  onAutoPayChange,
 }: {
   settlements: Record<string, unknown>;
   driverId: string;
+  autoPayEnabled?: boolean;
+  autoPaySaving?: boolean;
+  onAutoPayChange?: (enabled: boolean) => void;
 }) {
   const weeks = (settlements.last_4_weeks as Array<Record<string, unknown>>) ?? [];
   return (
     <section className="rounded border border-gray-200 bg-white p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-gray-800">Settlements</h2>
+        <label className="flex items-center gap-2 text-xs text-gray-700">
+          <input type="checkbox" checked={autoPayEnabled} disabled={!onAutoPayChange || autoPaySaving} onChange={(e) => onAutoPayChange?.(e.target.checked)} />
+          Auto-pay on payday
+        </label>
         <a href={`/settlements?driver_id=${driverId}`} className="text-xs text-blue-700 underline">
           Full settlements
         </a>

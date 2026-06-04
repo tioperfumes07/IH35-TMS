@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { getDriver } from "../../api/mdata";
+import { getDriver, updateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
@@ -59,6 +59,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [addTrainingOpen, setAddTrainingOpen] = useState(false);
+  const [autoPaySaving, setAutoPaySaving] = useState(false);
 
   const refreshDriver = () => {
     void queryClient.invalidateQueries({ queryKey: ["driver", id] });
@@ -178,7 +179,21 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} />
       </div>
       <div data-testid="dp-section-8-settlements">
-        <SettlementsSection settlements={aggregate.settlements ?? {}} driverId={id} />
+        <SettlementsSection
+          settlements={aggregate.settlements ?? {}}
+          driverId={id}
+          autoPayEnabled={Boolean((aggregate.driver as Record<string, unknown>).settlement_auto_pay_enabled)}
+          autoPaySaving={autoPaySaving}
+          onAutoPayChange={async (enabled) => {
+            setAutoPaySaving(true);
+            try {
+              await updateDriver(id, { settlement_auto_pay_enabled: enabled });
+              await queryClient.invalidateQueries({ queryKey: ["driver-profile", id, companyId] });
+            } finally {
+              setAutoPaySaving(false);
+            }
+          }}
+        />
       </div>
       <div data-testid="dp-section-9-training">
         <TrainingRecordsSection
