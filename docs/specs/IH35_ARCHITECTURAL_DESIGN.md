@@ -532,6 +532,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 4. **WF-038 HOS check** — driver HOS violation → 422 + Manager+ override + warning audit + WF-064
 5. INSERT load + audit event
 
+**Accessorial UX (B21-D3, 2026-06-03):** `BookLoadModalV4` mounts `AccessorialEditor` — multi-row charges with catalog codes, detention/lumper/layover seeds, totals roll into section total via `buildBookLoadChargeLines`. Canonical CTA **+ Create charge** (replaces dead + Add charge). ARCHIVE-not-DELETE comment at prior stub. **CI:** `verify:book-load-accessorial`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`

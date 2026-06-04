@@ -25,7 +25,9 @@ try {
   assertNotIncludes(bookLoadEquipment, "<select", "Book load equipment section contains raw <select>");
   assertNotIncludes(bookLoadStops, "<select", "Book load stops section contains raw <select>");
   assertNotIncludes(timeWindow, "<select", "Book load time window control contains raw <select>");
-  assertIncludes(bookLoadModal, "Charge row type", "Book load section A is missing charge row combobox");
+  const accessorialEditor = read("apps/frontend/src/components/dispatch/AccessorialEditor.tsx");
+  assertIncludes(bookLoadModal, "AccessorialEditor", "Book load section A is missing AccessorialEditor (B21-D3)");
+  assertIncludes(accessorialEditor, "+ Create charge", "Book load accessorial CTA must use + Create charge");
   assertIncludes(bookLoadModal, "Factoring company", "Book load factoring company combobox missing");
 
   const customers = read("apps/frontend/src/pages/Customers.tsx");

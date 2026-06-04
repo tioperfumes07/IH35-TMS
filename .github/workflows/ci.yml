@@ -151,6 +151,9 @@ jobs:
       - name: verify:parts-canonical-source
         run: npm run verify:parts-canonical-source
 
+      - name: verify:book-load-accessorial
+        run: npm run verify:book-load-accessorial
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
