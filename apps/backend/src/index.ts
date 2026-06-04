@@ -162,6 +162,7 @@ import { registerMaintenancePartsRoutes } from "./maintenance/parts.routes.js";
 import { registerMaintenanceDefectsRoutes } from "./maintenance/defects.routes.js";
 import { registerMaintenancePmAutoEngineRoutes } from "./maintenance/pm-auto-engine.service.js";
 import { registerMaintenanceServiceTimelineRoutes } from "./maintenance/service-timeline.service.js";
+import { registerMaintenanceKpiRoutes } from "./maintenance/kpi.routes.js";
 import { initializePmAutoEngineCron } from "./maintenance/pm-auto-engine.cron.js";
 import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
@@ -626,6 +627,7 @@ async function main() {
   await registerMaintenanceDefectsRoutes(app);
   await registerMaintenancePmAutoEngineRoutes(app);
   await registerMaintenanceServiceTimelineRoutes(app);
+  await registerMaintenanceKpiRoutes(app);
   await registerMaintPartsRoutes(app);
   await registerInsurancePolicyRoutes(app);
   await registerInsuranceClaimRoutes(app);

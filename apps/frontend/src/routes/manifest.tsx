@@ -93,6 +93,7 @@ import { DriversMasterDataPage } from "../pages/maintenance/drivers/DriversMaste
 import { PartsMasterDataPage } from "../pages/maintenance/parts/PartsMasterDataPage";
 import { PmSchedulePage } from "../pages/maintenance/pm-schedule/PmSchedulePage";
 import { PmAutoEnginePage } from "../pages/maintenance/PmAutoEnginePage";
+import { MaintKpiDashboardPage } from "../pages/maintenance/MaintKpiDashboardPage";
 import { InspectionsPage } from "../pages/maintenance/inspections/InspectionsPage";
 import { TireProgramPage } from "../pages/maintenance/TireProgramPage";
 import { WarrantyClaimsPage } from "../pages/maintenance/WarrantyClaimsPage";
@@ -1034,6 +1035,16 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <MaintenanceShell>
                 <PmAutoEnginePage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/kpi-dashboard"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <MaintKpiDashboardPage />
               </MaintenanceShell>
             </ProtectedRoute>
           }

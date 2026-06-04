@@ -237,6 +237,9 @@ jobs:
       - name: verify:maint-mech-labor-ux
         run: npm run verify:maint-mech-labor-ux
 
+      - name: verify:maint-kpi-dashboard
+        run: npm run verify:maint-kpi-dashboard
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
