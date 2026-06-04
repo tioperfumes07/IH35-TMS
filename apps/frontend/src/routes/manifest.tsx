@@ -16,6 +16,7 @@ import { DriversPage } from "../pages/Drivers";
 import { DispatchPage } from "../pages/Dispatch";
 import { GeofencesPage } from "../pages/operations/GeofencesPage";
 import { DispatchAlertsPage } from "../pages/dispatch/DispatchAlertsPage";
+import { LateArrivalsPage } from "../pages/dispatch/LateArrivalsPage";
 import { AtRiskQueuePage } from "../pages/dispatch/AtRiskQueuePage";
 import { InTransitIssuesPage } from "../pages/dispatch/InTransitIssuesPage";
 import { AssignmentHistoryPage } from "../pages/dispatch/AssignmentHistoryPage";
@@ -539,6 +540,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DispatchAlertsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/alerts/late-arrivals"
+          element={
+            <ProtectedRoute>
+              <LateArrivalsPage />
             </ProtectedRoute>
           }
         />

@@ -510,6 +510,26 @@ export function listAtRiskDispatchLoads(operatingCompanyId: string) {
   );
 }
 
+export type LateArrivalLoadRow = {
+  id: string;
+  load_number: string;
+  status: string;
+  customer_name: string | null;
+  unit_number: string | null;
+  driver_name: string | null;
+  latest_eta_prediction: Record<string, unknown> | null;
+  next_stop_scheduled_at: string | null;
+  next_stop_city: string | null;
+  next_stop_state: string | null;
+  next_stop_type: string | null;
+};
+
+export function listLateArrivalDispatchLoads(operatingCompanyId: string) {
+  return apiRequest<{ count: number; grace_minutes: number; loads: LateArrivalLoadRow[] }>(
+    `/api/v1/dispatch/alerts/late-arrivals?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export type DispatchIntransitIssueRow = {
   id: string;
   load_id: string | null;

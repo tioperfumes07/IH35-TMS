@@ -74,6 +74,7 @@
     "/daily-tasks",
     "/dispatch",
     "/dispatch/alerts",
+    "/dispatch/alerts/late-arrivals",
     "/dispatch/factoring-packets",
     "/dispatch/geofencing",
     "/dispatch/incidents",
