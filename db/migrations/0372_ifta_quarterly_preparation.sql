@@ -73,14 +73,14 @@ ALTER TABLE ifta.state_gallons_by_quarter ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS samsara_vehicle_state_miles_company ON samsara.vehicle_state_miles;
 CREATE POLICY samsara_vehicle_state_miles_company ON samsara.vehicle_state_miles
   FOR ALL TO ih35_app
-  USING (identity.is_lucia_bypass() OR operating_company_id = current_setting('app.operating_company_id', true)::uuid)
-  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = current_setting('app.operating_company_id', true)::uuid);
+  USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
 DROP POLICY IF EXISTS ifta_quarterly_preparations_company ON ifta.quarterly_preparations;
 CREATE POLICY ifta_quarterly_preparations_company ON ifta.quarterly_preparations
   FOR ALL TO ih35_app
-  USING (identity.is_lucia_bypass() OR operating_company_id = current_setting('app.operating_company_id', true)::uuid)
-  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = current_setting('app.operating_company_id', true)::uuid);
+  USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid)
+  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
 DROP POLICY IF EXISTS ifta_state_miles_company ON ifta.state_miles_by_quarter;
 CREATE POLICY ifta_state_miles_company ON ifta.state_miles_by_quarter
@@ -90,7 +90,7 @@ CREATE POLICY ifta_state_miles_company ON ifta.state_miles_by_quarter
     OR EXISTS (
       SELECT 1 FROM ifta.quarterly_preparations qp
       WHERE qp.id = preparation_id
-        AND qp.operating_company_id = current_setting('app.operating_company_id', true)::uuid
+        AND qp.operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
     )
   )
   WITH CHECK (
@@ -98,7 +98,7 @@ CREATE POLICY ifta_state_miles_company ON ifta.state_miles_by_quarter
     OR EXISTS (
       SELECT 1 FROM ifta.quarterly_preparations qp
       WHERE qp.id = preparation_id
-        AND qp.operating_company_id = current_setting('app.operating_company_id', true)::uuid
+        AND qp.operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
     )
   );
 
@@ -110,7 +110,7 @@ CREATE POLICY ifta_state_gallons_company ON ifta.state_gallons_by_quarter
     OR EXISTS (
       SELECT 1 FROM ifta.quarterly_preparations qp
       WHERE qp.id = preparation_id
-        AND qp.operating_company_id = current_setting('app.operating_company_id', true)::uuid
+        AND qp.operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
     )
   )
   WITH CHECK (
@@ -118,7 +118,7 @@ CREATE POLICY ifta_state_gallons_company ON ifta.state_gallons_by_quarter
     OR EXISTS (
       SELECT 1 FROM ifta.quarterly_preparations qp
       WHERE qp.id = preparation_id
-        AND qp.operating_company_id = current_setting('app.operating_company_id', true)::uuid
+        AND qp.operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
     )
   );
 
