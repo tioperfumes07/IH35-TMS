@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { OFFLINE_PREVIEW_BANNER } from "../../lib/prodEmptyStateCopy";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AssetFiltersBar } from "../../components/assets/AssetFiltersBar";
@@ -116,7 +117,7 @@ export function AssetsWorkspacePage() {
     <div className="space-y-3">
       <PageHeader
         title="Assets"
-        subtitle="Asset lifecycle visibility with fallback stubs until endpoint contracts are merged."
+        subtitle="Asset lifecycle visibility across fleet units."
         actions={
           <div className="flex items-center gap-2">
             <Link
@@ -137,7 +138,7 @@ export function AssetsWorkspacePage() {
 
       {sourceMode === "fallback" ? (
         <p className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
-          Contract stub mode: asset endpoint unavailable, showing deterministic local rows.
+          {OFFLINE_PREVIEW_BANNER}
         </p>
       ) : null}
 

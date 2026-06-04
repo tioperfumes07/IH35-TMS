@@ -14,8 +14,8 @@ export function SavingsPanel({ driverSavings, fleetSavings, lostSavings, topDriv
       <Row label="Savings YTD (fleet)" value={`$${fleetSavings.toFixed(2)}`} />
       <Row label="Highest-saver driver" value={`${topDriverName} ($${topDriverAmount.toFixed(2)})`} />
       <Row label="Lost savings YTD from non-compliance" value={`$${lostSavings.toFixed(2)}`} valueClass="text-red-700" />
-      <Row label="Q4 fuel-purchase bonus pool" value="Phase 3 stub" />
-      <Row label="Driver-of-quarter note" value="Phase 3 stub" />
+      <Row label="Q4 fuel-purchase bonus pool" value="Not available yet" />
+      <Row label="Driver-of-quarter note" value="Not available yet" />
     </div>
   );
 }

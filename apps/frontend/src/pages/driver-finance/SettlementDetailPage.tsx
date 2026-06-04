@@ -270,7 +270,7 @@ export function SettlementDetailPage() {
         proposedDeductions={summary.deductionTotal}
         isRefreshing={debt.isStale}
         onOpenBreakdown={() => setLiabilityOpen(true)}
-        onOpenEscrow={() => pushToast("Escrow timeline drawer stub; see side card action.", "info")}
+        onOpenEscrow={() => pushToast("Open the escrow card on the right for timeline details.", "info")}
       />
       <PendingAckNotice pendingAckCount={debt.debt?.pending_ack_count ?? 0} />
       {teamSplitQuery.data && Array.isArray((teamSplitQuery.data as Record<string, unknown>).splits) ? (

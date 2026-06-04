@@ -381,7 +381,7 @@ export function UserDetailPage() {
                       Related:{" "}
                       {event.related_customer_id ? <Link to={`/customers/${event.related_customer_id}`} className="text-sky-700">Customer</Link> : "Customer —"} |{" "}
                       {event.related_driver_id ? <Link to={`/drivers/${event.related_driver_id}`} className="text-sky-700">Driver</Link> : "Driver —"} | Load:{" "}
-                      {event.related_load_id ?? "Phase 3 placeholder"}
+                      {event.related_load_id ?? "Load link pending"}
                     </div>
                     {event.voided_at ? (
                       <div className="font-semibold">
@@ -397,7 +397,7 @@ export function UserDetailPage() {
         </div>
       ) : null}
 
-      {tab === "activity" ? <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">Audit history coming in Phase 6.</div> : null}
+      {tab === "activity" ? <div className="rounded border border-gray-200 bg-white p-3 text-sm text-gray-500">User activity history will appear here once audit exports are enabled.</div> : null}
 
       <Modal open={addEventOpen} onClose={() => setAddEventOpen(false)} title="Create Dispatcher Safety Event">
         <form
@@ -563,7 +563,7 @@ export function UserDetailPage() {
               <div className="mt-2 space-y-2">
                 <Combobox options={customerOptions} value={relatedCustomerId} onChange={setRelatedCustomerId} placeholder="Related customer" loading={customersQuery.isLoading} />
                 <Combobox options={driverOptions} value={relatedDriverId} onChange={setRelatedDriverId} placeholder="Related driver" loading={driversQuery.isLoading} />
-                <div className="text-xs text-gray-500">Related load: Phase 3 placeholder when loads module exists.</div>
+                <div className="text-xs text-gray-500">Related load: optional until dispatch load linking is enabled.</div>
               </div>
             ) : null}
           </div>

@@ -77,7 +77,7 @@ export function CSAScoreTab() {
         <button type="button" className="rounded border border-gray-300 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate()}>
           Pull from FMCSA SAFER
         </button>
-        {saferMutation.isError ? <span className="text-xs text-amber-700">FMCSA SAFER pull returns 501 (Phase 6 stub).</span> : null}
+        {saferMutation.isError ? <span className="text-xs text-amber-700">FMCSA SAFER lookup is not available yet (service returned an error).</span> : null}
       </div>
 
       <div className="grid gap-2 rounded border border-gray-200 bg-white p-3 md:grid-cols-2">
