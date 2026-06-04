@@ -173,6 +173,9 @@ jobs:
       - name: verify:dispatch-planner-calendar
         run: npm run verify:dispatch-planner-calendar
 
+      - name: verify:dispatch-detention-board
+        run: npm run verify:dispatch-detention-board
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 

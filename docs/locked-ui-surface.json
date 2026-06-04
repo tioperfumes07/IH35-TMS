@@ -79,6 +79,7 @@
     "/dispatch/geofencing",
     "/dispatch/incidents",
     "/dispatch/planner",
+    "/dispatch/detention",
     "/docs",
     "/documents",
     "/driver",

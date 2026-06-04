@@ -516,13 +516,13 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 | **Planner (Calendar)** | Week-at-a-glance per dispatcher with drag-drop reschedule + HOS overlay | Phase 3 ✅ — `/dispatch/planner` (B21-D4) |
 | **In-Transit Issues** | Driver-reported issues queue (WF-005, WF-048) | Phase 3 ✅ — `/dispatch/in-transit-issues` (B21-D2) |
 | **Border Routing Decisions** | Loads needing routing decision (yellow band) | Phase 3 ✅ |
-| **Detention Tracking** | Stops with detention accruing | Phase 3 ✅ |
+| **Detention Board** | Live accrual from stop arrivals + billing bridge | Phase 3 ✅ — `/dispatch/detention` (B21-D5) |
 | **OCR Queue** | Rate cons auto-parsed from email (T9+T10 pending — credentials live) | Phase 3 — T9+T10 |
 | **Assignment History** | Audit trail of assignments | Phase 3 ✅ — `/dispatch/assignment-history` (B21-D2) |
 | **At-Risk Loads** | Late >2h OR HOS warning OR maintenance due | Phase 3 ✅ — `/dispatch/at-risk` (B21-D2) |
 | **Settings** | Dispatcher assignments · Default lanes · Auto-routing rules | Owner only |
 
-**Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes At-Risk Queue, In-Transit Issues, Assignment History (B21-D2), Planner Calendar (B21-D4), Border Crossing + Border History + Factoring Packets per triage. **CI:** `verify:dispatch-arch-tab-parity`, `verify:dispatch-planner-calendar`.
+**Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes At-Risk Queue, In-Transit Issues, Assignment History (B21-D2), Planner Calendar (B21-D4), Detention Board (B21-D5), Border Crossing + Border History + Factoring Packets per triage. **CI:** `verify:dispatch-arch-tab-parity`, `verify:dispatch-planner-calendar`, `verify:dispatch-detention-board`.
 
 **Maintenance module nav counts (B24):** Canonical surfaces in `MAINTENANCE_NAV_CONFIG.ts` — 10 sidebar flyout links, 10 dashboard operational tabs, 8 Master Data hover links (includes `/maintenance/drivers`), 9 Lists maintenance catalogs. HOME quick-jump uses `MAINTENANCE_HOME_QUICK_JUMP_COUNT` (10). Dead stub CTAs removed from parts-inventory dashboard band, fleet-table empty state, service-location empty state, and vendors CSV Import.
 
@@ -541,6 +541,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 **Late arrivals alerts (B21-D6, 2026-06-03):** `GET /api/v1/dispatch/alerts/late-arrivals` compares telematics `latest_eta_prediction.predicted_arrival_at` to the next open stop `scheduled_arrival_at` plus `DISPATCH_LATE_ARRIVAL_GRACE_MINUTES` (default 30). `DispatchAlertsPage` shows live count; drill-down at `/dispatch/alerts/late-arrivals`. **CI:** `verify:dispatch-late-arrivals-alerts`.
 
 **Planner calendar (B21-D4, 2026-06-03):** `/dispatch/planner` week grid (driver rows × day columns) reads assigned loads from `mdata.loads` + first pickup stop `scheduled_arrival_at` as `start_at`. Drag-drop PATCH `/api/v1/dispatch/planner/loads/:id/start_at` reschedules pickup; conflict detection blocks overlapping drops; HOS overlay from `hos.duty_status_events` rest periods + live clocks. No migration 0352 — computed view only. **CI:** `verify:dispatch-planner-calendar`.
+
+**Detention board (B21-D5, 2026-06-03):** `/dispatch/detention` lists `dispatch.detention_events` synced from confirmed `dispatch.stop_arrivals` (migration **0353**). Live billable minutes and accrual use customer free-time + load/customer hourly rate; POST close → billing bridge appends `DETENTION` rows into `mdata.loads.quicksave_pending_fields.accessorial_bridge_rows` (D3 accessorial path, not accounting internals). Customer notify at `DISPATCH_DETENTION_NOTIFY_THRESHOLD_MINUTES` via `ar_email`. **CI:** `verify:dispatch-detention-board`.
 
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
