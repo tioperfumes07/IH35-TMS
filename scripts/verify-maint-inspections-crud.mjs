@@ -68,7 +68,7 @@ function main() {
   if (!page.includes("maint-inspections-page")) failures.push("InspectionsPage must expose test id");
   if (!page.includes("+ Create Inspection")) failures.push("InspectionsPage must expose + Create Inspection");
   if (!page.includes("requestUploadUrl")) failures.push("InspectionsPage must upload photos via docs module");
-  if (!page.includes("listSafetyDvirSubmissions")) failures.push("InspectionsPage must wire DVIR linkage");
+  if (!page.includes("getSafetyDvirSubmissions")) failures.push("InspectionsPage must wire DVIR linkage");
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) {
     failures.push("InspectionsPage.test must include at least 3 vitest cases");
   }

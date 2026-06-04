@@ -10,7 +10,7 @@ import {
   updateMaintenanceInspection,
 } from "../../../api/maintenance";
 import { listUnits } from "../../../api/mdata";
-import { listSafetyDvirSubmissions } from "../../../api/safety";
+import { getSafetyDvirSubmissions } from "../../../api/safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
@@ -92,7 +92,7 @@ export function InspectionsPage() {
   const dvirQ = useQuery({
     queryKey: ["safety", "dvir", companyId, draft.unit_id],
     queryFn: () =>
-      listSafetyDvirSubmissions(companyId, {
+      getSafetyDvirSubmissions(companyId, {
         unit_id: draft.unit_id || undefined,
         limit: 50,
       }),
@@ -309,7 +309,7 @@ export function InspectionsPage() {
                 onChange={(e) => setDraft((d) => ({ ...d, dvir_submission_id: e.target.value }))}
               >
                 <option value="">No DVIR link</option>
-                {(dvirQ.data?.submissions ?? []).map((sub) => (
+                {(dvirQ.data?.submissions ?? []).map((sub: Record<string, unknown>) => (
                   <option key={String(sub.id)} value={String(sub.id)}>
                     {String(sub.type ?? "dvir")} · {String(sub.submitted_at ?? sub.id)}
                   </option>
@@ -362,7 +362,7 @@ export function InspectionsPage() {
               <span className="text-xs text-gray-600">Outcome</span>
               <select
                 className="mt-1 w-full rounded border border-gray-300 px-2 py-1"
-                value={draft.outcome}
+                value={draft.outcome ?? ""}
                 onChange={(e) => setDraft((d) => ({ ...d, outcome: e.target.value as InspectionDraft["outcome"] }))}
               >
                 <option value="">—</option>

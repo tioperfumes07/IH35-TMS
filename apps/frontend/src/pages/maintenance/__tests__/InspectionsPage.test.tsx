@@ -11,7 +11,7 @@ const updateMaintenanceInspection = vi.fn();
 const archiveMaintenanceInspection = vi.fn();
 const attachMaintenanceInspectionPhoto = vi.fn();
 const listUnits = vi.fn();
-const listSafetyDvirSubmissions = vi.fn();
+const getSafetyDvirSubmissions = vi.fn();
 const requestUploadUrl = vi.fn();
 const confirmUpload = vi.fn();
 
@@ -31,7 +31,7 @@ vi.mock("../../../api/safety", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../api/safety")>();
   return {
     ...actual,
-    listSafetyDvirSubmissions: (...args: unknown[]) => listSafetyDvirSubmissions(...args),
+    getSafetyDvirSubmissions: (...args: unknown[]) => getSafetyDvirSubmissions(...args),
   };
 });
 
@@ -70,7 +70,7 @@ describe("Maintenance InspectionsPage (B30)", () => {
     archiveMaintenanceInspection.mockReset();
     attachMaintenanceInspectionPhoto.mockReset();
     listUnits.mockReset();
-    listSafetyDvirSubmissions.mockReset();
+    getSafetyDvirSubmissions.mockReset();
     requestUploadUrl.mockReset();
     confirmUpload.mockReset();
 
@@ -92,7 +92,7 @@ describe("Maintenance InspectionsPage (B30)", () => {
       ],
     });
     listUnits.mockResolvedValue({ units: [{ id: "unit-1", unit_number: "T-101" }] });
-    listSafetyDvirSubmissions.mockResolvedValue({
+    getSafetyDvirSubmissions.mockResolvedValue({
       submissions: [{ id: "dvir-1", type: "pre_trip", submitted_at: "2026-06-04T08:00:00Z" }],
     });
   });
