@@ -538,6 +538,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Accessorial UX (B21-D3, 2026-06-03):** `BookLoadModalV4` mounts `AccessorialEditor` — multi-row charges with catalog codes, detention/lumper/layover seeds, totals roll into section total via `buildBookLoadChargeLines`. Canonical CTA **+ Create charge** (replaces dead + Add charge). ARCHIVE-not-DELETE comment at prior stub. **CI:** `verify:book-load-accessorial`.
 
+**Late arrivals alerts (B21-D6, 2026-06-03):** `GET /api/v1/dispatch/alerts/late-arrivals` compares telematics `latest_eta_prediction.predicted_arrival_at` to the next open stop `scheduled_arrival_at` plus `DISPATCH_LATE_ARRIVAL_GRACE_MINUTES` (default 30). `DispatchAlertsPage` shows live count; drill-down at `/dispatch/alerts/late-arrivals`. **CI:** `verify:dispatch-late-arrivals-alerts`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`

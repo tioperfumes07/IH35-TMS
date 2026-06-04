@@ -1,6 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
+import { listLateArrivalDispatchLoads } from "../../api/dispatch";
 import { getIntransitTriageQueue } from "../../api/maintenance";
 import { getSafetyAccidents } from "../../api/safety";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -29,7 +30,7 @@ export function DispatchAlertsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
-  const [accidentsQ, cashQ, intransitQ] = useQueries({
+  const [accidentsQ, cashQ, lateQ, intransitQ] = useQueries({
     queries: [
       {
         queryKey: ["dispatch-alerts", "accidents", companyId],
@@ -39,6 +40,11 @@ export function DispatchAlertsPage() {
       {
         queryKey: ["dispatch-alerts", "cash-advances", companyId],
         queryFn: () => cashAdvanceRequestsOfficeApi.list(companyId, "pending"),
+        enabled: Boolean(companyId),
+      },
+      {
+        queryKey: ["dispatch-alerts", "late-arrivals", companyId],
+        queryFn: () => listLateArrivalDispatchLoads(companyId),
         enabled: Boolean(companyId),
       },
       {
@@ -55,7 +61,8 @@ export function DispatchAlertsPage() {
   const cashCount =
     !companyId || cashQ.isLoading ? null : cashQ.isError ? null : (cashQ.data?.requests.length ?? null);
 
-  const lateCount: number | null = null;
+  const lateCount =
+    !companyId || lateQ.isLoading ? null : lateQ.isError ? null : (lateQ.data?.count ?? null);
 
   const intransitCount =
     !companyId || intransitQ.isLoading ? null : intransitQ.isError ? null : (intransitQ.data?.issues.length ?? null);
@@ -76,8 +83,8 @@ export function DispatchAlertsPage() {
     {
       title: "Late arrivals",
       count: lateCount,
-      to: "/dispatch?view=loads",
-      subtitle: "No list endpoint with late=true yet",
+      to: "/dispatch/alerts/late-arrivals",
+      subtitle: "ETA past schedule + grace · drill-down list",
     },
     {
       title: "In-transit issues",
@@ -88,7 +95,7 @@ export function DispatchAlertsPage() {
   ] as const;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="dispatch-alerts-page">
       <PageHeader title="Dispatch alerts" subtitle="Live counts where endpoints exist · placeholders show —" />
       {!companyId ? <p className="text-sm text-amber-800">Select an operating company to load counts.</p> : null}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

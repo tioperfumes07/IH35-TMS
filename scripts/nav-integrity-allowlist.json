@@ -22,6 +22,7 @@
     { "path": "/dispatch/loads", "reason": "Legacy alias redirect → /dispatch?view=loads (B21-D1)" },
     { "path": "/dispatch/factoring-packets", "reason": "Legacy alias redirect → /accounting/factoring (B21-D1)" },
     { "path": "/dispatch/incidents", "reason": "Legacy alias redirect → /dispatch/alerts (B21-D1)" },
+    { "path": "/dispatch/alerts/late-arrivals", "reason": "Late arrivals drill-down from Dispatch alerts hub (B21-D6)" },
     { "path": "/dispatch/loads/:id", "reason": "Load detail deep-link alias → /dispatch?load_id= (B21-D1)" },
     { "path": "/fuel/planner", "reason": "ComingSoon stub; fuel tabs on /fuel" },
     { "path": "/fuel/settings", "reason": "ComingSoon stub; fuel tabs on /fuel" },

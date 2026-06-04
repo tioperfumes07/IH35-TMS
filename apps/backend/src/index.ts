@@ -51,6 +51,7 @@ import { registerDispatchCancellationRoutes } from "./dispatch/cancellation.rout
 import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinements.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
+import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
 import { registerDashcamOnDemandRoutes } from "./telematics/dashcam-on-demand.routes.js";
@@ -490,6 +491,7 @@ async function main() {
   await registerDispatchRefinementsRoutes(app);
   await registerIntransitIssuesRoutes(app);
   await registerDispatchArchTabsRoutes(app);
+  await registerDispatchAlertsRoutes(app);
   await registerDriverRoutes(app);
   await registerGeofencesRoutes(app);
   await registerDriverDaySummaryRoutes(app);
