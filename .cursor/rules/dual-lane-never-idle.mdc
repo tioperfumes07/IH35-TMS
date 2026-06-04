@@ -1,0 +1,59 @@
+---
+description: IH35 dual-lane — mandatory dispatch on every turn; never idle or stale
+alwaysApply: true
+---
+
+# Dual-Lane — Never Idle, Never Stale (HARD)
+
+Applies to **coordinator** sessions for IH35-TMS (Lane A + Lane B in parallel).
+
+## Queue sources (in order)
+
+1. **Active batch:** `/Users/jorgemunoz/Downloads/abb/00-TIER-2-3-DISPATCH-INDEX.txt` + `block-*.txt` in same folder
+2. **52-block archive (only if abb empty / explicit Jorge):** `/Users/jorgemunoz/Downloads/ab/00-MASTER-QUEUE-INDEX-52-BLOCKS.txt`
+3. **In-flight GOs:** `/Users/jorgemunoz/Downloads/sdf/`
+
+| Lane | Worktree |
+|------|----------|
+| A (CURSOR-A) | `/Users/jorgemunoz/Documents/GitHub/IH35-TMS` |
+| B (CURSOR-B) | `/Users/jorgemunoz/Documents/GitHub/IH35-TMS-agent2` |
+
+**Never dispatch:** A23-11, A23-14, B19, B20 unless Jorge explicitly greenlights.
+
+## Never idle (coordinator MUST obey)
+
+**Forbidden end states** for any coordinator turn:
+
+- Both lanes idle with eligible abb blocks remaining
+- Ending after a subagent notification **without** starting/resuming work on every lane that is not blocked
+- Leaving local implement+ship **unpushed >30 min** when branch exists
+
+**On every subagent success notification** (same turn, before replying):
+
+1. Lane that finished → **resume** or **new background worker** for **next strict block** on that lane
+2. Other lane → if idle (no running worker, no PR CI wait) → **dispatch** its next abb block **in parallel**
+3. Only skip dispatch if: open PR + CI running (monitor/merge worker OK), or Jorge ON HOLD, or lane worker **already running**
+
+**Multitask Mode:** Background workers do **not** replace coordinator duty. When notified a worker finished, **immediately** launch the next worker(s). Do **not** reply with only "completed" and stop.
+
+**User says "idle" / "stale":** P0 — `git fetch` both worktrees, dual STATUS, parallel dispatch both lanes within the same turn.
+
+## Never stale (every STATUS)
+
+Include per lane: branch, ahead/behind `origin/main`, block id, open PR URL or `none`, CI state, **Live ETA to SHIPPED** (gate + push + PR + ~6m CI — not GO doc hours).
+
+Warn if tracker xlsx is **>3 blocks** behind `origin/main` — use **git/gh** for dispatch, not xlsx.
+
+## Ship discipline
+
+- **SHIPPED** = squash merge on `origin/main` + branch deleted + CI green
+- One active implement+ship worker **per lane**; no duplicate `block-ready` on same lane
+- Rebase onto `origin/main` before PR; verify migration tail (no duplicate numbers)
+
+## Watchdog (optional)
+
+```
+/loop 10m STATUS both lanes — abb queue, live ETAs, dispatch if idle >5m
+```
+
+If loop stopped, re-arm on idle complaint.

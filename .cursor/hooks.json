@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "subagentStop": [
+      {
+        "command": ".cursor/hooks/dual-lane-on-subagent-stop.sh",
+        "timeout": 5
+      }
+    ]
+  }
+}
