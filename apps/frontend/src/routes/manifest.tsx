@@ -182,6 +182,7 @@ import { ManualJEListPage } from "../pages/accounting/ManualJEListPage";
 import { BillPaymentsListPage } from "../pages/accounting/BillPaymentsListPage";
 import { JournalEntryDetailPage } from "../pages/accounting/journal-entries/JournalEntryDetailPage";
 import { AccountingPreSettlementsPage } from "../pages/accounting/AccountingPreSettlementsPage";
+import { PayrollAggregatedPage } from "../pages/accounting/PayrollAggregatedPage";
 import { ExpenseCategoryMapPage } from "../pages/accounting/ExpenseCategoryMapPage";
 import { CoaRolesPage } from "../pages/accounting/CoaRolesPage";
 import { SalesTaxPage } from "../pages/accounting/SalesTaxPage";
@@ -2332,6 +2333,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AccountingPreSettlementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/payroll"
+          element={
+            <ProtectedRoute>
+              <PayrollAggregatedPage />
             </ProtectedRoute>
           }
         />
