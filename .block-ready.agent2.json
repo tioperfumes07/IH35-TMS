@@ -1,24 +1,27 @@
 {
-  "block_id": "BLOCK-INFRA-2-RLS-UUID-CAST-DEFENSIVE",
-  "branch": "fix/rls-uuid-cast-defensive",
-  "phase": "Phase INFRA",
-  "task": "INFRA-2-RLS-UUID-CAST-DEFENSIVE",
+  "block_id": "BLOCK-B21-D7-OCR-QUEUE-PAGE",
+  "branch": "feat/dispatch-ocr-queue",
+  "phase": "Phase 3",
+  "task": "B21-D7-OCR-QUEUE-PAGE",
   "allowed_files": [
-    "db/migrations/0359_rls_uuid_cast_defensive.sql",
-    "apps/backend/src/auth/db.ts",
-    "apps/backend/src/auth/db.test.ts",
-    "scripts/verify-rls-uuid-cast-nullif.mjs",
-    "scripts/__tests__/verify-rls-uuid-cast-nullif.test.mjs",
-    "scripts/verify-steps/52-verify-rls-uuid-cast-nullif.mjs",
+    "db/migrations/0354_dispatch_ocr_intake.sql",
+    "apps/backend/src/dispatch/ocr-intake.routes.ts",
+    "apps/backend/src/dispatch/ocr-intake.lib.ts",
+    "apps/backend/src/dispatch/ocr-processor.service.ts",
+    "apps/backend/src/dispatch/__tests__/ocr-intake.routes.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/dispatch/OcrQueuePage.tsx",
+    "apps/frontend/src/pages/dispatch/ocr-book-load-prefill.ts",
+    "apps/frontend/src/pages/dispatch/__tests__/OcrQueuePage.test.tsx",
+    "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    "apps/frontend/src/api/dispatch.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
-    "package.json",
-    ".github/workflows/ci.yml",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [
-    "verify:rls-uuid-cast-nullif"
-  ],
-  "runtime_path": "src",
+  "extra_gates": [],
+  "runtime_path": "both",
   "db_required": true,
   "guard_required": true
 }

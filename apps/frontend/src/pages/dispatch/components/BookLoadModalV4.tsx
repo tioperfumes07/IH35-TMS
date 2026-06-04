@@ -112,6 +112,8 @@ type Props = {
   operatingCompanyId: string;
   onClose: () => void;
   onCreated: () => void;
+  /** B21-D7 OCR queue convert — applies template JSON at modal open (integration seam only). */
+  templatePrefillJson?: Record<string, unknown> | null;
 };
 
 function numOrUndef(v: unknown): number | undefined {
@@ -134,7 +136,7 @@ const BOOK_LOAD_CORRECT_DESIGN_CSS = `
 .blw-note{font-size:9.5px;color:#8a93a1}
 `;
 
-export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }: Props) {
+export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, templatePrefillJson }: Props) {
   const auth = useAuth();
   const { pushToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -223,6 +225,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated }
   });
 
   const { isDirty } = form.formState;
+
+  useEffect(() => {
+    if (!open || !templatePrefillJson) return;
+    applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, templatePrefillJson);
+    const ocrKey = templatePrefillJson.ocr_source_pdf_r2_key;
+    if (typeof ocrKey === "string" && ocrKey) {
+      form.setValue("ocr_source_pdf_r2_key", ocrKey, { shouldDirty: true });
+    }
+  }, [open, templatePrefillJson, form]);
 
   const finalizeBookLoadClose = useCallback(() => {
     setShowDiscardConfirm(false);

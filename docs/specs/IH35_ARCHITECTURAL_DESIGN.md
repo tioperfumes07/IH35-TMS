@@ -517,7 +517,7 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 | **In-Transit Issues** | Driver-reported issues queue (WF-005, WF-048) | Phase 3 ✅ — `/dispatch/in-transit-issues` (B21-D2) |
 | **Border Routing Decisions** | Loads needing routing decision (yellow band) | Phase 3 ✅ |
 | **Detention Board** | Live accrual from stop arrivals + billing bridge | Phase 3 ✅ — `/dispatch/detention` (B21-D5) |
-| **OCR Queue** | Rate cons auto-parsed from email (T9+T10 pending — credentials live) | Phase 3 — T9+T10 |
+| **OCR Queue** | `/dispatch/ocr-queue` — email webhook intake → R2 PDF → async OCR → review → convert to Book Load (B21-D7, mig 0354) | **Live** |
 | **Assignment History** | Audit trail of assignments | Phase 3 ✅ — `/dispatch/assignment-history` (B21-D2) |
 | **At-Risk Loads** | Late >2h OR HOS warning OR maintenance due | Phase 3 ✅ — `/dispatch/at-risk` (B21-D2) |
 | **Settings** | Dispatcher assignments · Default lanes · Auto-routing rules | Owner only |
