@@ -573,7 +573,9 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Warranty parts + claims (B33, 2026-06-04):** `/maintenance/warranty-claims` CRUD reads/writes `maintenance.parts_warranty` and `maintenance.warranty_claims` (migration **0365**; GO reserved 0363 taken by B32 tire program). Parts warranty coverage registry, draft→filed→reimbursed claim workflow, vendor select, WO line auto-detect for eligible parts (`detect-from-wo`). ARCHIVE-not-DELETE on claims and warranty rows. Optional links to `parts_inventory`, `work_orders`, and `mdata.vendors` only. **CI:** `verify:maint-warranty-claims`.
 
-**Mechanic labor UX (B34, 2026-06-04):** WO detail mounts `LaborTracker` for clock in/out against `maintenance.wo_time_entries` with `catalogs.maintenance_labor_codes` rate auto-fill and running-timer labor cost (rate × hours). Canonical routes in `labor.routes.ts`; legacy `time-entries.routes.ts` ARCHIVE-not-DELETE re-export only. **Migration:** none (0364 reserved for B35 warranty). **CI:** `verify:maint-mech-labor-ux`.
+**Mechanic labor UX (B34, 2026-06-04):** WO detail mounts `LaborTracker` for clock in/out against `maintenance.wo_time_entries` with `catalogs.maintenance_labor_codes` rate auto-fill and running-timer labor cost (rate × hours). Canonical routes in `labor.routes.ts`; legacy `time-entries.routes.ts` ARCHIVE-not-DELETE re-export only. **Migration:** none (**0364 reserved for B35 KPI dashboard**). **CI:** `verify:maint-mech-labor-ux`.
+
+**Maintenance KPI dashboard (B35, 2026-06-04):** `/maintenance/kpi-dashboard` aggregates downtime hours, MTBF (repair WO spacing), CPM, cost-per-truck, and PM compliance % with per-KPI sparklines, date/unit filters, drill-down tables, and PM compliance hub links (`/maintenance/pm-auto-engine`, `/maintenance/pm-schedule`). Canonical routes in `kpi.routes.ts`; cross-link only to `/reports/maintenance-cost-per-unit` (reports module untouched). **Migration:** none — **0364** reserved; live SQL aggregation sufficient. **CI:** `verify:maint-kpi-dashboard`.
 
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs

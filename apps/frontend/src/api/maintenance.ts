@@ -257,6 +257,67 @@ export function getMaintenanceKpis(companyId: string) {
   return apiRequest<MaintenanceKpis>(`/api/v1/maintenance/dashboard/kpis?${query(companyId)}`);
 }
 
+export type MaintKpiSparkPoint = { day: string; value: number };
+
+export type MaintKpiSummary = {
+  period: { start: string; end: string };
+  unit_id: string | null;
+  downtime_hours: number;
+  mtbf_hours: number | null;
+  cpm_cents: number | null;
+  cost_per_truck_cents: number;
+  pm_compliance_pct: number;
+  sparklines: {
+    downtime: MaintKpiSparkPoint[];
+    mtbf: MaintKpiSparkPoint[];
+    cpm: MaintKpiSparkPoint[];
+    cost_per_truck: MaintKpiSparkPoint[];
+    pm_compliance: MaintKpiSparkPoint[];
+  };
+};
+
+export type MaintKpiDrilldownKind = "downtime" | "mtbf" | "cpm" | "cost_per_truck";
+
+function maintKpiQuery(companyId: string, periodStart: string, periodEnd: string, unitId?: string) {
+  const q = new URLSearchParams({
+    operating_company_id: companyId,
+    period_start: periodStart,
+    period_end: periodEnd,
+  });
+  if (unitId) q.set("unit_id", unitId);
+  return q.toString();
+}
+
+export function getMaintenanceKpiSummary(companyId: string, periodStart: string, periodEnd: string, unitId?: string) {
+  return apiRequest<MaintKpiSummary>(`/api/v1/maintenance/kpi/summary?${maintKpiQuery(companyId, periodStart, periodEnd, unitId)}`);
+}
+
+export function getMaintenanceKpiDrilldown(
+  kind: MaintKpiDrilldownKind,
+  companyId: string,
+  periodStart: string,
+  periodEnd: string,
+  unitId?: string
+) {
+  return apiRequest<{ kind: string; rows: Record<string, unknown>[]; report_cross_link?: string }>(
+    `/api/v1/maintenance/kpi/${kind}?${maintKpiQuery(companyId, periodStart, periodEnd, unitId)}`
+  );
+}
+
+export function getMaintenanceKpiPmCompliance(companyId: string, periodStart: string, periodEnd: string, unitId?: string) {
+  return apiRequest<{
+    rows: Array<{
+      schedule_id: string;
+      schedule_label: string;
+      unit_number: string;
+      unit_id: string;
+      compliance_status: string;
+      next_due_odometer: number | null;
+    }>;
+    hub_links: { pm_auto_engine: string; pm_schedule: string };
+  }>(`/api/v1/maintenance/kpi/pm-compliance?${maintKpiQuery(companyId, periodStart, periodEnd, unitId)}`);
+}
+
 export function listMaintenancePmAlerts(companyId: string) {
   return apiRequest<{ alerts: MaintenancePmAlert[] }>(`/api/v1/maintenance/pm-alerts?${query(companyId)}`);
 }
