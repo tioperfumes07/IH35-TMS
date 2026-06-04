@@ -388,6 +388,22 @@ Canonical inventory is **27 tabs / 9 groups**, exported from `SAFETY_TABS_CONFIG
 
 Drawer actions wired to existing endpoints: status PATCH, photo upload POST, Spawn Liability, Spawn WO (maintenance `source_type='AC'`).
 
+### A23-4 — iDVIR / DVIR foundation (2026-06-03)
+
+Migration `0344_safety_dvir.sql` introduces canonical `safety.dvir_submissions` + `safety.dvir_defects` (append-only defects; submissions allow follow-up WO linkage only). Legacy `maintenance.dvir_submissions` / `maintenance.defects` remain with `@deprecated` comments (ARCHIVE-not-DELETE).
+
+| Surface | Path | Disposition |
+|---|---|---|
+| `IdvrPage` | `/safety/idvr` | **Live** — office queue with date/driver/unit filters |
+| Driver `DvirPage` | `/dvir/pre/:loadId`, `/dvir/post/:loadId` | **Live** — PWA checklist + signature + photos (max 5/defect) |
+| `registerSafetyDvirRoutes` | `GET/POST /api/v1/safety/dvir` | Office list/detail + shared submit |
+| `registerDriverDvirRoutes` | `POST /api/v1/driver/dvir` | Driver submit delegates to `dvir-submit.service.ts` |
+| `SAFETY_TABS_CONFIG` idvr tab | `/safety/idvr` | **Live** status marker |
+
+Defects auto-spawn `maintenance.work_orders` with `origin='dvir'` and `source_type='DV'`. Major defects invoke `safety.set_unit_dispatch_block()` (WF-050).
+
+**CI guard:** `verify:dvir-schema-presence`.
+
 ---
 
 ## MODULE 7 — DRIVERS

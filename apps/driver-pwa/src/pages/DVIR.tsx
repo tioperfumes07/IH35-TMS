@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { createEmptyInspectionItems, submitDvir } from "../api/dvir";
-import { DvirItemRow } from "../components/DvirItemRow";
+import { DvirItemRow, MAX_DVIR_DEFECT_PHOTOS } from "../components/DvirItemRow";
 import { SignaturePad } from "../components/SignaturePad";
 import { UploadDocumentModal } from "../components/UploadDocumentModal";
 import { PwaButton } from "../components/PwaButton";
@@ -58,7 +58,7 @@ export function DvirPage() {
   }
 
   return (
-    <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary">
+    <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary" data-testid={isPostTrip ? "dvir-post-page" : "dvir-pre-page"}>
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-28">
         <PwaCard title={isPostTrip ? t("dvir.title_post") : t("dvir.title_pre")} subtitle={`Load ${loadId}`}>
           <div className="grid gap-2">
@@ -112,11 +112,11 @@ export function DvirPage() {
         onClose={() => setPhotoModalOpen(false)}
         onQueued={() => {
           setItems((current) =>
-            current.map((candidate, cIdx) =>
-              cIdx === activePhotoItem
-                ? { ...candidate, photo_keys: [...candidate.photo_keys, `queued-photo-${Date.now()}`] }
-                : candidate
-            )
+            current.map((candidate, cIdx) => {
+              if (cIdx !== activePhotoItem) return candidate;
+              if (candidate.photo_keys.length >= MAX_DVIR_DEFECT_PHOTOS) return candidate;
+              return { ...candidate, photo_keys: [...candidate.photo_keys, `queued-photo-${Date.now()}`] };
+            })
           );
         }}
         defaultEntityType="standalone"

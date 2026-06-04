@@ -16,6 +16,7 @@ import { registerSafetyReportsRoutes } from "../reports/safety-reports.routes.js
 import { registerSafetySettingsRoutes } from "../settings.routes.js";
 import { registerSafetyTrainingProgramsRoutes } from "../training-programs.routes.js";
 import { registerSafetyTrainingRecordsRoutes } from "../training-records.routes.js";
+import { registerSafetyDvirRoutes } from "../dvir.routes.js";
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
 const DRIVER = "22222222-2222-4222-8222-222222222222";
@@ -126,6 +127,12 @@ const mountedRoutes: RouteCase[] = [
     register: registerSafetyReportsRoutes,
     method: "GET",
     url: `/api/v1/safety/reports/summary?operating_company_id=${COMPANY}`,
+  },
+  {
+    name: "dvir",
+    register: registerSafetyDvirRoutes,
+    method: "GET",
+    url: `/api/v1/safety/dvir?operating_company_id=${COMPANY}`,
   },
 ];
 

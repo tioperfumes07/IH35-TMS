@@ -39,15 +39,24 @@ export function LoadDetailPage() {
           <div className="mt-1 text-xs text-pwa-text-secondary">
             {load.pickup_location} → {load.delivery_location}
           </div>
-          {load.lifecycle_stage === "unloaded" || load.lifecycle_stage === "off_duty" ? (
+          <div className="mt-3 grid gap-2">
             <button
               type="button"
-              className="mt-2 min-h-11 rounded border border-pwa-border px-3 text-xs font-semibold text-pwa-text-secondary"
+              data-testid="dvir-pre-trip-card"
+              className="min-h-11 rounded border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
+              onClick={() => navigate(`/dvir/pre/${load.id}`)}
+            >
+              Pre-trip DVIR
+            </button>
+            <button
+              type="button"
+              data-testid="dvir-post-trip-card"
+              className="min-h-11 rounded border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
               onClick={() => navigate(`/dvir/post/${load.id}`)}
             >
               Post-trip DVIR
             </button>
-          ) : null}
+          </div>
         </PwaCard>
 
         <div className="overflow-x-auto border-b border-pwa-border bg-pwa-card px-2 py-1">
