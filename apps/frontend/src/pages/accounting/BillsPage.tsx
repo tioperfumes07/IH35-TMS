@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
@@ -8,6 +8,16 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import {
+  BulkActionBar,
+  BulkActionModal,
+  BulkProgressDialog,
+  TableSelection,
+  TableSelectionHeader,
+  useBulkSelection,
+} from "../../components/bulk";
+import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
+import { useToast } from "../../components/Toast";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
 export type BillListCategory = (typeof BILL_LIST_CATEGORIES)[number];
@@ -38,6 +48,15 @@ function billMatchesCategory(bill: VendorBill, category: BillListCategory): bool
 
 export function BillsPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const queryClient = useQueryClient();
+  const { pushToast } = useToast();
+  const bulk = useEntityBulkAction();
+  const selection = useBulkSelection({
+    cap: 200,
+    onCapExceeded: (error) => pushToast(error.message, "error"),
+  });
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState("");
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const category = parseBillCategory(searchParams.get("category"));
@@ -67,6 +86,38 @@ export function BillsPage() {
     if (!category) return all;
     return all.filter((bill) => billMatchesCategory(bill, category));
   }, [billsQuery.data?.rows, category]);
+  const pageRowIds = useMemo(() => rows.map((bill) => bill.id), [rows]);
+
+  const runScheduleBulk = async () => {
+    if (!companyId) {
+      pushToast("Select an operating company before bulk updates.", "error");
+      return;
+    }
+    if (!scheduledDate) {
+      pushToast("Choose a scheduled payment date.", "error");
+      return;
+    }
+    setScheduleModalOpen(false);
+    try {
+      await bulk.runBulk(
+        {
+          domain: "accounting",
+          resource: "bills",
+          ids: Array.from(selection.selectedIds),
+          action: "mark_scheduled",
+          payload: { scheduled_date: scheduledDate },
+          operatingCompanyId: companyId,
+          invalidateKeys: [["accounting", "bills", companyId]],
+        },
+        () => {
+          selection.clear();
+          void queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] });
+        }
+      );
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : "Bulk bill update failed", "error");
+    }
+  };
 
   const expandedBill = useMemo(() => rows.find((b) => b.id === expandedId) ?? null, [rows, expandedId]);
   const allocationBill = useMemo(() => rows.find((b) => b.id === allocationBillId) ?? null, [rows, allocationBillId]);
@@ -128,10 +179,33 @@ export function BillsPage() {
         </SelectCombobox>
       </div>
 
+      <BulkActionBar
+        selectedCount={selection.count}
+        actions={[{ id: "mark-scheduled", label: "Mark scheduled", onClick: () => setScheduleModalOpen(true) }]}
+        onClear={selection.clear}
+      />
+
+      <TableSelection
+        rows={rows}
+        getId={(bill) => bill.id}
+        selectedIds={selection.selectedIds}
+        onSelectionChange={selection.setSelectedIds}
+        pageRowIds={pageRowIds}
+        onCapExceeded={(message) => pushToast(message, "error")}
+      >
+        {(selectCtx) => (
       <div className="overflow-auto rounded border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>
+              <th className="px-3 py-2 w-8">
+                <TableSelectionHeader
+                  selectedIds={selection.selectedIds}
+                  pageRowIds={pageRowIds}
+                  onSelectionChange={selection.setSelectedIds}
+                  onCapExceeded={(message) => pushToast(message, "error")}
+                />
+              </th>
               <th className="px-3 py-2 w-8" />
               <th className="px-3 py-2">Vendor</th>
               <th className="px-3 py-2">Bill #</th>
@@ -146,14 +220,14 @@ export function BillsPage() {
           <tbody>
             {billsQuery.isLoading ? (
               <tr>
-                <td colSpan={9} className="px-3 py-4 text-gray-500">
+                <td colSpan={10} className="px-3 py-4 text-gray-500">
                   Loading…
                 </td>
               </tr>
             ) : null}
             {!billsQuery.isLoading && rows.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-3 py-4 text-gray-500">
+                <td colSpan={10} className="px-3 py-4 text-gray-500">
                   No bills found.
                 </td>
               </tr>
@@ -165,6 +239,14 @@ export function BillsPage() {
               return (
                 <Fragment key={bill.id}>
                   <tr className="border-b border-gray-100">
+                    <td className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select bill ${bill.bill_number || bill.id}`}
+                        checked={selectCtx.isSelected(bill.id)}
+                        onChange={() => selectCtx.toggle(bill.id)}
+                      />
+                    </td>
                     <td className="px-3 py-2">
                       {expand ? (
                         <button type="button" className="text-gray-700" onClick={() => toggleExpand(bill)} aria-label={open ? "Collapse payments" : "Expand payments"}>
@@ -201,7 +283,7 @@ export function BillsPage() {
                   </tr>
                   {expand && open ? (
                     <tr key={`${bill.id}-sub`} className="bg-gray-50">
-                      <td colSpan={9} className="px-3 py-2">
+                      <td colSpan={10} className="px-3 py-2">
                         {paymentsQuery.isLoading && expandedBill?.id === bill.id ? (
                           <div className="text-xs text-gray-500">Loading payments…</div>
                         ) : (
@@ -235,6 +317,39 @@ export function BillsPage() {
           </tbody>
         </table>
       </div>
+        )}
+      </TableSelection>
+
+      <BulkActionModal
+        open={scheduleModalOpen}
+        actionLabel="Mark scheduled"
+        affectedCount={selection.count}
+        description="Set a scheduled payment date on selected open bills."
+        payloadFields={
+          <label className="block text-sm text-gray-700">
+            Scheduled date
+            <input
+              type="date"
+              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              value={scheduledDate}
+              onChange={(event) => setScheduledDate(event.target.value)}
+            />
+          </label>
+        }
+        onCancel={() => setScheduleModalOpen(false)}
+        onConfirm={() => void runScheduleBulk()}
+      />
+
+      <BulkProgressDialog
+        open={bulk.progressOpen}
+        loading={bulk.progressLoading}
+        requested={bulk.progress.requested}
+        succeeded={bulk.progress.succeeded}
+        failed={bulk.progress.failed}
+        bulk_call_id={bulk.progress.bulk_call_id}
+        onClose={() => bulk.setProgressOpen(false)}
+        resolveRowHref={(id) => `/accounting/bills?bill_id=${encodeURIComponent(id)}`}
+      />
 
       {allocationBill && companyId ? (
         <BillAllocationPanel

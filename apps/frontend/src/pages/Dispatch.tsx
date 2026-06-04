@@ -450,6 +450,8 @@ export function DispatchPage() {
         view === "list" ? (
           <DispatchBoard
             loads={loads}
+            operatingCompanyId={defaultCompanyIds[0] ?? ""}
+            onBulkComplete={() => void loadsQuery.refetch()}
             activeGeofenceBreachVehicleIds={activeGeofenceBreachVehicleIds}
             totalCount={totalCount}
             loading={loadsQuery.isLoading}
