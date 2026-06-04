@@ -827,6 +827,141 @@ export function attachMaintenanceInspectionPhoto(
   );
 }
 
+export type MaintenanceTireRecordRow = {
+  id: string;
+  unit_id?: string | null;
+  equipment_id?: string | null;
+  unit_number?: string | null;
+  equipment_number?: string | null;
+  position_code: string;
+  position_group: "steer" | "drive" | "trailer";
+  position_label?: string;
+  brand_id?: string | null;
+  brand_name?: string;
+  serial_number?: string;
+  size?: string;
+  tread_depth_32nds: number;
+  tread_low_threshold_32nds: number;
+  is_low_tread?: boolean;
+  installed_at?: string | null;
+  status?: string;
+  work_order_id?: string | null;
+};
+
+export type MaintenanceTireEventRow = {
+  id: string;
+  tire_record_id: string;
+  event_type: "rotation" | "replacement" | "tread_audit";
+  event_type_label?: string;
+  from_position_code?: string | null;
+  to_position_code?: string | null;
+  tread_depth_32nds?: number | null;
+  brand_name?: string;
+  serial_number?: string;
+  notes?: string;
+  is_low_tread_alert?: boolean;
+  created_at?: string;
+};
+
+export type MaintenanceTireBrandRow = {
+  id: string;
+  name: string;
+  manufacturer?: string;
+  tread_warranty_32nds?: number | null;
+  is_active?: boolean;
+  sort_order?: number;
+};
+
+export function listMaintenanceTireBrands(operatingCompanyId: string) {
+  return apiRequest<{ rows: MaintenanceTireBrandRow[] }>(
+    `/api/v1/maintenance/tires/brands?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function createMaintenanceTireBrand(body: {
+  operating_company_id: string;
+  name: string;
+  manufacturer?: string;
+  tread_warranty_32nds?: number;
+}) {
+  return apiRequest<MaintenanceTireBrandRow>(`/api/v1/maintenance/tires/brands`, { method: "POST", body });
+}
+
+export function getMaintenanceTireLayout(
+  operatingCompanyId: string,
+  params: { unit_id?: string; equipment_id?: string }
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.unit_id) q.set("unit_id", params.unit_id);
+  if (params.equipment_id) q.set("equipment_id", params.equipment_id);
+  return apiRequest<{
+    positions: Array<{
+      code: string;
+      group: string;
+      label: string;
+      record: MaintenanceTireRecordRow | null;
+    }>;
+  }>(`/api/v1/maintenance/tires/layout?${q.toString()}`);
+}
+
+export function listMaintenanceTireRecords(
+  operatingCompanyId: string,
+  params: { unit_id?: string; equipment_id?: string; include_archived?: boolean } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.unit_id) q.set("unit_id", params.unit_id);
+  if (params.equipment_id) q.set("equipment_id", params.equipment_id);
+  if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
+  return apiRequest<{ rows: MaintenanceTireRecordRow[] }>(`/api/v1/maintenance/tires/records?${q.toString()}`);
+}
+
+export function createMaintenanceTireRecord(body: Record<string, unknown>) {
+  return apiRequest<MaintenanceTireRecordRow>(`/api/v1/maintenance/tires/records`, { method: "POST", body });
+}
+
+export function rotateMaintenanceTire(body: {
+  operating_company_id: string;
+  tire_record_id: string;
+  to_position_code: string;
+  notes?: string;
+  work_order_id?: string;
+}) {
+  return apiRequest<{ record: MaintenanceTireRecordRow }>(`/api/v1/maintenance/tires/rotate`, { method: "POST", body });
+}
+
+export function replaceMaintenanceTire(body: Record<string, unknown>) {
+  return apiRequest<{ record: MaintenanceTireRecordRow }>(`/api/v1/maintenance/tires/replace`, { method: "POST", body });
+}
+
+export function auditMaintenanceTireTread(body: {
+  operating_company_id: string;
+  tire_record_id: string;
+  tread_depth_32nds: number;
+  notes?: string;
+}) {
+  return apiRequest<{ record: MaintenanceTireRecordRow; is_low_tread_alert: boolean }>(
+    `/api/v1/maintenance/tires/tread-audit`,
+    { method: "POST", body }
+  );
+}
+
+export function listMaintenanceTireEvents(
+  operatingCompanyId: string,
+  params: { unit_id?: string; equipment_id?: string; tire_record_id?: string } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.unit_id) q.set("unit_id", params.unit_id);
+  if (params.equipment_id) q.set("equipment_id", params.equipment_id);
+  if (params.tire_record_id) q.set("tire_record_id", params.tire_record_id);
+  return apiRequest<{ rows: MaintenanceTireEventRow[] }>(`/api/v1/maintenance/tires/events?${q.toString()}`);
+}
+
+export function listMaintenanceTireAlerts(operatingCompanyId: string) {
+  return apiRequest<{ rows: MaintenanceTireRecordRow[]; count: number }>(
+    `/api/v1/maintenance/tires/alerts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function listMaintenanceVendors(
   operatingCompanyId: string,
   params: { search?: string; include_archived?: boolean } = {}

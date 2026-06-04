@@ -340,6 +340,8 @@
     "verify:maint-inspections-crud:test": "node --test scripts/__tests__/verify-maint-inspections-crud.test.mjs",
     "verify:maint-service-history-timeline": "node scripts/verify-maint-service-history-timeline.mjs",
     "verify:maint-service-history-timeline:test": "node --test scripts/__tests__/verify-maint-service-history-timeline.test.mjs",
+    "verify:maint-tire-program": "node scripts/verify-maint-tire-program.mjs",
+    "verify:maint-tire-program:test": "node --test scripts/__tests__/verify-maint-tire-program.test.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",

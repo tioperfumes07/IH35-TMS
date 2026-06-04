@@ -225,6 +225,9 @@ jobs:
       - name: verify:maint-service-history-timeline
         run: npm run verify:maint-service-history-timeline
 
+      - name: verify:maint-tire-program
+        run: npm run verify:maint-tire-program
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
