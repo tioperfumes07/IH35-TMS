@@ -145,6 +145,9 @@ jobs:
       - name: verify:drivers-comm-center
         run: npm run verify:drivers-comm-center
 
+      - name: verify:drivers-audit-history-tab
+        run: npm run verify:drivers-audit-history-tab
+
       - name: verify:drivers-create-vocab
         run: npm run verify:drivers-create-vocab
 

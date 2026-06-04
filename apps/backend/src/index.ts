@@ -165,6 +165,7 @@ import { registerInsurancePaymentScheduleRoutes } from "./insurance/payment-sche
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
 import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
+import { registerDriverAuditEventsRoutes } from "./audit/driver-events.routes.js";
 import { registerDriverMetricsRoutes } from "./integrity/driver-metrics.routes.js";
 import { registerAnomalyStatusRoutes } from "./integrity/anomaly-status.routes.js";
 import { runAnomalyDetectionForTenant } from "./integrity/anomaly-detector.service.js";
@@ -616,6 +617,7 @@ async function main() {
   await registerInsuranceCoiRequestRoutes(app);
   await registerInsuranceTypeCatalogRoutes(app);
   await registerAuditRoutes(app);
+  await registerDriverAuditEventsRoutes(app);
   await registerDriverMetricsRoutes(app);
   await registerAnomalyStatusRoutes(app);
   await registerMaintPmRoutes(app);

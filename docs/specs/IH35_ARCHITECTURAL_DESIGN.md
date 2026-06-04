@@ -1063,6 +1063,8 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **Communication center (A24-10, 2026-06-04):** Office inbox at `/drivers/messages` (threaded per driver); driver PWA `/messages` read + reply; GET inbox/unread/thread + PATCH read receipts on `mdata.driver_profile_messages` (migration `0349`); SMS bridge via `notifications/sms-bridge.service.ts` + email via Resend on outbound POST; in-app delivery immediate. **CI:** `verify:drivers-comm-center`.
 
+**Driver audit history tab (A24-6, 2026-06-04):** `DriverDetail` Audit History tab drills into `audit.audit_events` via `GET /api/v1/audit/events?entity_type=driver&entity_id=:id` (tenant-scoped through `mdata.drivers` join); date range + event type filters; expandable payload diff. **CI:** `verify:drivers-audit-history-tab`.
+
 **Create vocabulary (A24-4, 2026-06-03):** Drivers hub header CTA standardized to **+ Create Driver** (replaces non-canonical "+ Driver"). Locked "+ Create" / "+ Book" rule applies module-wide; ARCHIVE-not-DELETE comment retained at source. **CI:** `verify:drivers-create-vocab`.
 
 ## Trailer Profile (Fleet module) — Part 1 (locked 2026-06-02)
