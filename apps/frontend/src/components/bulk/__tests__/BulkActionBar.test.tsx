@@ -2,6 +2,17 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { BulkActionBar } from "../BulkActionBar";
 
+vi.mock("../../../hooks/useBulkPermission", () => ({
+  useBulkPermission: vi.fn(() => ({
+    role: "Owner",
+    canUseBulkOps: true,
+    canRunDestructiveBulk: true,
+    isActionAllowed: () => true,
+  })),
+}));
+
+import { useBulkPermission } from "../../../hooks/useBulkPermission";
+
 describe("BulkActionBar", () => {
   it("renders nothing when selectedCount is 0", () => {
     const { container } = render(
@@ -25,5 +36,22 @@ describe("BulkActionBar", () => {
     expect(onAction).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
     expect(onClear).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders null when bulk permission denies write role", () => {
+    vi.mocked(useBulkPermission).mockReturnValueOnce({
+      role: null,
+      canUseBulkOps: false,
+      canRunDestructiveBulk: false,
+      isActionAllowed: () => false,
+    });
+    const { container } = render(
+      <BulkActionBar
+        selectedCount={2}
+        actions={[{ id: "status", label: "Status", onClick: vi.fn() }]}
+        onClear={vi.fn()}
+      />
+    );
+    expect(container.firstChild).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { registerAuditEventsListRoutes } from "./audit-events-list.routes.js";
 import { listAuditRowChanges } from "./audit.service.js";
 
 const querySchema = z.object({
@@ -25,6 +26,8 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerAuditRoutes(app: FastifyInstance) {
+  await registerAuditEventsListRoutes(app);
+
   app.get("/api/v1/audit/row-changes", async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;

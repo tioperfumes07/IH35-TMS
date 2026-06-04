@@ -193,6 +193,7 @@ import { PeriodComparisonPage } from "../pages/accounting/PeriodComparisonPage";
 import { COLLECTIONS_ROUTE } from "./collections.routes";
 import { ForensicReviewPage } from "../pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "../pages/admin/ActivityLogPage";
+import AuditEventsList from "../pages/audit/AuditEventsList";
 import { MigrationStatusPage } from "../pages/admin/MigrationStatus";
 import { ErrorMonitorPage } from "../pages/admin/ErrorMonitor";
 import { IntegrityAdminPage } from "../pages/admin/IntegrityAdminPage";
@@ -2098,6 +2099,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <OwnerSuperAdminRoute>
               <ActivityLogPage />
+            </OwnerSuperAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/audit-events"
+          element={
+            <OwnerSuperAdminRoute>
+              <AuditEventsList />
             </OwnerSuperAdminRoute>
           }
         />

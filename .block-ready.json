@@ -1,13 +1,31 @@
 {
-  "block_id": "BULK-RBC",
-  "phase": "RBC",
-  "task": "BULK-RBC investigation",
+  "block_id": "BULK-6",
+  "branch": "feat/bulk-6-audit-filter-permission-ci-guard",
+  "phase": "BULK cluster — WAVE 1 Lane A",
+  "task": "Audit log bulk filter + permission gate + CI coverage guard (CLOSURE)",
   "allowed_files": [
+    "apps/backend/src/audit/audit-events-list.routes.ts",
+    "apps/backend/src/audit/audit-events-list.routes.test.ts",
+    "apps/backend/src/audit/audit.routes.ts",
+    "apps/frontend/src/pages/audit/AuditEventsList.tsx",
+    "apps/frontend/src/pages/audit/AuditEventsList.test.tsx",
+    "apps/frontend/src/components/shared/BulkActionBar.tsx",
+    "apps/frontend/src/components/bulk/BulkActionBar.tsx",
+    "apps/frontend/src/components/bulk/__tests__/BulkActionBar.test.tsx",
+    "apps/frontend/src/hooks/useBulkPermission.ts",
+    "apps/frontend/src/api/audit.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-bulk-coverage.mjs",
+    "scripts/nav-integrity-allowlist.json",
+    "package.json",
+    ".github/workflows/ci.yml",
     "docs/specs/BULK-OPS-DESIGN.md",
-    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
-    ".block-ready.json"
+    ".block-ready.json",
+    ".block-ready.agent1.json"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:bulk-coverage"
+  ],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": false

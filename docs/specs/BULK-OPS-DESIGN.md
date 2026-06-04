@@ -527,3 +527,19 @@ ls apps/frontend/src/components/shared/
 ---
 
 **End of BULK-OPS-DESIGN.md**
+
+---
+
+## Cluster status — CLOSED 2026-06-04
+
+All 6 blocks shipped:
+
+- BULK-RBC (PR #465) — design doc
+- BULK-1 (PR #472) — shared UI components
+- BULK-2 (PR #474) — backend factory
+- BULK-3 (PR #478) — customers + vendors
+- BULK-4 (PR #479) — drivers + vehicles + trailers
+- BULK-5 (PR #__) — loads + invoices + bills
+- BULK-6 (PR #__) — audit filter + permission gate + CI coverage guard
+
+The bulk-update.factory.ts is the canonical entry point. The CI guard verify-bulk-coverage.mjs enforces this. The audit-events-list now supports filtering by bulk_call_id for forensic review.
