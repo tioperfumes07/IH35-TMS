@@ -173,6 +173,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Cash Advances", to: "/drivers?subtab=cash_advances" },
         { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },
         { label: "Permits", to: "/drivers?subtab=permits" },
+        { label: "Messages", to: "/drivers/messages" },
       ];
     case "dispatch":
       return [

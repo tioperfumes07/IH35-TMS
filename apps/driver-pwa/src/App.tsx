@@ -20,6 +20,7 @@ import { LoadDetailPage } from "./pages/LoadDetail";
 import { LoginPage } from "./pages/Login";
 import { MyDocumentsPage } from "./pages/MyDocuments";
 import { MyDisputesPage } from "./pages/MyDisputes";
+import { MessagesPage } from "./pages/Messages";
 import { ProfilePage } from "./pages/Profile";
 import { SchedulerHomePage } from "./pages/SchedulerHome";
 import { StopActionPage } from "./pages/StopAction";
@@ -78,6 +79,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <MessagesPage />
           </ProtectedRoute>
         }
       />

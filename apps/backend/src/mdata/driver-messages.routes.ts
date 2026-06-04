@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { deliverDriverProfileMessage } from "../drivers/messages.service.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const driverParamsSchema = z.object({ id: z.string().uuid() });
@@ -55,7 +56,16 @@ export async function registerDriverMessagesRoutes(app: FastifyInstance) {
         driver_id: params.data.id,
         channel: body.data.channel,
       });
-      return res.rows[0];
+      const inserted = res.rows[0] as { id: string; channel: string; urgency: string | null; created_at: string };
+      const delivery = await deliverDriverProfileMessage(client, {
+        messageId: inserted.id,
+        operatingCompanyId: query.data.operating_company_id,
+        driverId: params.data.id,
+        channel: body.data.channel,
+        message: body.data.message,
+        actorUserId: authUser.uuid,
+      });
+      return { ...inserted, delivery_status: delivery.delivery_status, delivery_ref: delivery.delivery_ref };
     });
     return reply.code(201).send(row);
   });
