@@ -1,0 +1,14 @@
+{
+  "block_id": "BULK-RBC",
+  "phase": "RBC",
+  "task": "BULK-RBC investigation",
+  "allowed_files": [
+    "docs/specs/BULK-OPS-DESIGN.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    ".block-ready.json"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}

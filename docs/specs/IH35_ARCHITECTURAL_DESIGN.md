@@ -1316,6 +1316,10 @@ operating_company_id = NULLIF(current_setting('app.operating_company_id', true),
 
 **CI:** `verify:shared-types-consumer-parity` — asserts shared-types `DriverStop` uses `type`, scans driver-pwa for forbidden `stop_type`, and requires ARCH doc + vitest coverage.
 
+## Bulk Operations (BULK cluster)
+
+Cross-module bulk select / multi-edit design: see [BULK-OPS-DESIGN.md](./BULK-OPS-DESIGN.md) (BULK-RBC investigation, 2026-06-04).
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
