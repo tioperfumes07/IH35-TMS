@@ -1,23 +1,18 @@
 {
-  "block_id": "P5-T25",
-  "branch": "feat/phase5-tms-qbo-payroll-integration",
-  "phase": "Tier 3 — Phase 5H",
-  "task": "TMS↔QBO Payroll integration Option B aggregation page",
+  "block_id": "P5-T24",
+  "branch": "feat/phase5-trk-qbo-migration-runbook",
+  "phase": "Tier 3 — Phase 5G",
+  "task": "TRK QBO migration runbook execution (read-only verify)",
   "allowed_files": [
-    "db/migrations/0371_qbo_payroll_links.sql",
-    "apps/backend/src/payroll/aggregated.routes.ts",
-    "apps/backend/src/payroll/__tests__/aggregated.test.ts",
+    "apps/backend/src/integrations/qbo/trk-migration.ts",
+    "apps/backend/src/integrations/qbo/__tests__/trk-migration.test.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/api/payrollAggregated.ts",
-    "apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx",
-    "apps/frontend/src/pages/accounting/PayrollAggregatedPage.test.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    ".block-ready.agent2.json",
+    "docs/runbooks/trk-qbo-migration-execution.md",
     ".block-ready.json",
     "package.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": false
 }

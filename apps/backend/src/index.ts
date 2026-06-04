@@ -19,6 +19,7 @@ import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/sams
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
+import { registerTrkMigrationRoutes } from "./integrations/qbo/trk-migration.js";
 import { registerIdentityRoutes } from "./identity/users.routes.js";
 import { registerCompanyContextRoutes } from "./identity/company-context.routes.js";
 import { registerPasswordResetRoutes } from "./identity/password-reset.routes.js";
@@ -438,6 +439,7 @@ async function main() {
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
+  await registerTrkMigrationRoutes(app);
   await registerMasterDataSyncRoutes(app);
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);
