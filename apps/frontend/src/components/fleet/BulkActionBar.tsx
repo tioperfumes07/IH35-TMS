@@ -9,15 +9,14 @@ export type BulkApplyPayload = {
   vehicle_type?: string;
 };
 
-type Props = {
-  selectedCount: number;
+type FleetBulkControlsProps = {
   vehicleTypes: string[];
   onApply: (payload: BulkApplyPayload) => void | Promise<void>;
-  onClear: () => void;
   applying?: boolean;
 };
 
-export function BulkActionBar({ selectedCount, vehicleTypes, onApply, onClear, applying = false }: Props) {
+/** Fleet-specific status/type dropdowns — rendered inside shared BulkActionBar children slot. */
+export function FleetBulkControls({ vehicleTypes, onApply, applying = false }: FleetBulkControlsProps) {
   const [status, setStatus] = useState<FleetBulkStatus | "">("");
   const [vehicleType, setVehicleType] = useState("");
 
@@ -26,13 +25,8 @@ export function BulkActionBar({ selectedCount, vehicleTypes, onApply, onClear, a
     [vehicleTypes]
   );
 
-  if (selectedCount <= 0) {
-    return null;
-  }
-
   return (
-    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded border border-blue-200 bg-blue-50 p-2 text-xs">
-      <span className="font-semibold text-blue-900">Selected: {selectedCount} units</span>
+    <>
       <label className="flex items-center gap-1">
         <span className="text-blue-800">Change Status</span>
         <select
@@ -78,6 +72,28 @@ export function BulkActionBar({ selectedCount, vehicleTypes, onApply, onClear, a
       >
         Apply
       </button>
+    </>
+  );
+}
+
+type LegacyProps = {
+  selectedCount: number;
+  vehicleTypes: string[];
+  onApply: (payload: BulkApplyPayload) => void | Promise<void>;
+  onClear: () => void;
+  applying?: boolean;
+};
+
+/** @deprecated Use shared BulkActionBar + FleetBulkControls in FleetTable. Kept for existing tests. */
+export function BulkActionBar({ selectedCount, vehicleTypes, onApply, onClear, applying = false }: LegacyProps) {
+  if (selectedCount <= 0) {
+    return null;
+  }
+
+  return (
+    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded border border-blue-200 bg-blue-50 p-2 text-xs">
+      <span className="font-semibold text-blue-900">Selected: {selectedCount} units</span>
+      <FleetBulkControls vehicleTypes={vehicleTypes} onApply={onApply} applying={applying} />
       <button type="button" className="text-blue-700 underline" onClick={onClear}>
         Clear selection
       </button>

@@ -117,6 +117,7 @@ import { LoginPage } from "../pages/Login";
 import { LoginResetRequestPage } from "../pages/LoginResetRequestPage";
 import { LoginResetConfirmPage } from "../pages/LoginResetConfirmPage";
 import { ComingSoonPage } from "../pages/ComingSoonPage";
+import { BulkDemoPage } from "../pages/dev/BulkDemoPage";
 import { SamsaraIntegrationPage } from "../pages/integrations/SamsaraIntegrationPage";
 import { DriverAppLandingPage } from "../pages/DriverAppLandingPage";
 import { DisputesPage } from "../pages/driver/DisputesPage";
@@ -2628,6 +2629,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <NotificationCenterPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dev/bulk-demo"
+          element={
+            <ProtectedRoute>
+              <BulkDemoPage />
             </ProtectedRoute>
           }
         />
