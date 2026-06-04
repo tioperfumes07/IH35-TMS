@@ -1057,6 +1057,8 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **Action bar wiring (A24-3, 2026-06-03):** Sticky action bar buttons are live — Edit navigates to `/drivers/:id`; Send Message opens modal → `POST /api/v1/mdata/drivers/:id/messages`; Suspend PATCHes `Inactive` + incident safety event; Terminate creates termination safety event (status → Terminated); Export PDF unchanged; View on Map links `/fleet/map?driver=:id`. **CI:** `verify:drivers-profile-action-bar`.
 
+**Communication center (A24-10, 2026-06-04):** Office inbox at `/drivers/messages` (threaded per driver); driver PWA `/messages` read + reply; GET inbox/unread/thread + PATCH read receipts on `mdata.driver_profile_messages` (migration `0349`); SMS bridge via `notifications/sms-bridge.service.ts` + email via Resend on outbound POST; in-app delivery immediate. **CI:** `verify:drivers-comm-center`.
+
 **Create vocabulary (A24-4, 2026-06-03):** Drivers hub header CTA standardized to **+ Create Driver** (replaces non-canonical "+ Driver"). Locked "+ Create" / "+ Book" rule applies module-wide; ARCHIVE-not-DELETE comment retained at source. **CI:** `verify:drivers-create-vocab`.
 
 ## Trailer Profile (Fleet module) — Part 1 (locked 2026-06-02)

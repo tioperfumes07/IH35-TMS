@@ -142,6 +142,9 @@ jobs:
       - name: verify:drivers-profile-action-bar
         run: npm run verify:drivers-profile-action-bar
 
+      - name: verify:drivers-comm-center
+        run: npm run verify:drivers-comm-center
+
       - name: verify:drivers-create-vocab
         run: npm run verify:drivers-create-vocab
 

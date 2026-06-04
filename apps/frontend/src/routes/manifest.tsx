@@ -11,6 +11,7 @@ import { NamesMasterHub } from "../pages/lists/names/NamesMasterHub";
 import { DriverDetailPage } from "../pages/DriverDetail";
 import { DriverProfilePage } from "../pages/drivers/DriverProfilePage";
 import { DriverHosDetailPage } from "../pages/drivers/DriverHosDetailPage";
+import { MessagesInboxPage } from "../pages/drivers/MessagesInboxPage";
 import { DriverLoadStatusesPage } from "../pages/DriverLoadStatusesPage";
 import { DriversPage } from "../pages/Drivers";
 import { DispatchPage } from "../pages/Dispatch";
@@ -2465,6 +2466,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriverDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/messages"
+          element={
+            <ProtectedRoute>
+              <MessagesInboxPage />
             </ProtectedRoute>
           }
         />
