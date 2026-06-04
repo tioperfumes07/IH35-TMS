@@ -1,22 +1,19 @@
 {
-  "block_id": "P5-T2",
-  "branch": "feat/phase5-reconciliation-workspace",
-  "phase": "Tier 3 \u2014 Phase 5C",
-  "task": "Reconciliation workspace UI (accounting namespace)",
+  "block_id": "CUST-BILLING-500",
+  "branch": "fix/cust-billing-500-closure",
+  "phase": "Tier 2 P8 Audit — CLOSURE",
+  "task": "Customer billing 500 — investigate + fix + CI guard",
   "allowed_files": [
-    "apps/backend/src/accounting/reconciliation.routes.ts",
-    "apps/backend/src/accounting/__tests__/reconciliation-workspace-routes.test.ts",
-    "apps/frontend/src/pages/accounting/ReconciliationWorkspacePage.tsx",
-    "apps/frontend/src/pages/accounting/ReconciliationWorkspacePage.test.tsx",
-    "apps/frontend/src/api/accounting.ts",
-    "apps/frontend/src/routes/manifest.tsx",
-    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
-    ".block-ready.agent1.json",
-    ".block-ready.json",
-    "package.json"
+    "apps/backend/src/mdata/customer-billing.routes.ts",
+    "apps/backend/src/mdata/customer-billing.routes.test.ts",
+    "apps/frontend/src/pages/CustomerDetail.tsx",
+    "scripts/verify-customer-billing-endpoints.mjs",
+    ".github/workflows/ci.yml",
+    "package.json",
+    ".block-ready.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }
