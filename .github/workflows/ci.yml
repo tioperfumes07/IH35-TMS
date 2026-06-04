@@ -148,6 +148,9 @@ jobs:
       - name: verify:drivers-audit-history-tab
         run: npm run verify:drivers-audit-history-tab
 
+      - name: verify:drivers-training-crud-on-profile
+        run: npm run verify:drivers-training-crud-on-profile
+
       - name: verify:drivers-create-vocab
         run: npm run verify:drivers-create-vocab
 

@@ -1065,6 +1065,8 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **Driver audit history tab (A24-6, 2026-06-04):** `DriverDetail` Audit History tab drills into `audit.audit_events` via `GET /api/v1/audit/events?entity_type=driver&entity_id=:id` (tenant-scoped through `mdata.drivers` join); date range + event type filters; expandable payload diff. **CI:** `verify:drivers-audit-history-tab`.
 
+**Driver profile training CRUD (A24-7, 2026-06-04):** `DriverProfilePage` wires `+ Add training` to `AddTrainingModal`; creates records via `POST /api/v1/mdata/drivers/:id/training` (program select from A23-5 completions + completion date + notes); profile query refresh on success. **CI:** `verify:drivers-training-crud-on-profile`.
+
 **Create vocabulary (A24-4, 2026-06-03):** Drivers hub header CTA standardized to **+ Create Driver** (replaces non-canonical "+ Driver"). Locked "+ Create" / "+ Book" rule applies module-wide; ARCHIVE-not-DELETE comment retained at source. **CI:** `verify:drivers-create-vocab`.
 
 ## Trailer Profile (Fleet module) — Part 1 (locked 2026-06-02)
