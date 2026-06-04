@@ -1,25 +1,20 @@
 {
-  "block_id": "BULK-2",
-  "branch": "feat/bulk-2-backend-framework",
+  "block_id": "BULK-3",
+  "branch": "feat/bulk-3-vendors-customers",
   "phase": "BULK cluster — WAVE 1 Lane B",
-  "task": "Backend bulk-update factory + audit + rate-limit",
+  "task": "Vendor and customer bulk-update routes",
   "allowed_files": [
-    "apps/backend/src/bulk/**",
-    "apps/backend/src/mdata/unit-bulk-update.routes.ts",
-    "apps/backend/src/mdata/unit-bulk-update.test.ts",
-    "apps/backend/src/mdata/equipment-bulk-update.routes.ts",
-    "apps/backend/src/mdata/equipment-bulk-update.test.ts",
-    "scripts/verify-bulk-audit-per-id.mjs",
-    "scripts/verify-guards/*-verify-bulk-audit-per-id.mjs",
+    "apps/backend/src/mdata/customers-bulk.routes.ts",
+    "apps/backend/src/mdata/vendors-bulk.routes.ts",
+    "apps/backend/src/mdata/__tests__/customers-bulk.routes.test.ts",
+    "apps/backend/src/mdata/__tests__/vendors-bulk.routes.test.ts",
+    "apps/backend/src/mdata/index.ts",
     "package.json",
-    ".github/workflows/ci.yml",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:bulk-audit-per-id",
     "verify:bulk-update-route-mounted",
-    "verify:bulk-update-rls-where",
-    "verify:equipment-bulk-update-rls-where"
+    "verify:bulk-audit-per-id"
   ],
   "runtime_path": "src",
   "db_required": false,

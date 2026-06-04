@@ -12,8 +12,10 @@ import { registerMdataItemsRoutes } from "./items.routes.js";
 import { registerLocationRoutes } from "./locations.routes.js";
 import { registerLoadRoutes } from "./loads.routes.js";
 import { registerLoadAbandonmentRoutes } from "./load-abandonment.routes.js";
+import { registerCustomerBulkRoutes } from "./customers-bulk.routes.js";
 import { registerEquipmentBulkUpdateRoutes } from "./equipment-bulk-update.routes.js";
 import { registerUnitBulkUpdateRoutes } from "./unit-bulk-update.routes.js";
+import { registerVendorBulkRoutes } from "./vendors-bulk.routes.js";
 import { registerUnitsRoutes } from "./units.routes.js";
 import { registerVendorRoutes } from "./vendors.routes.js";
 
@@ -27,8 +29,10 @@ export async function registerMdataRoutes(app: FastifyInstance) {
   await registerUnitBulkUpdateRoutes(app);
   await registerEquipmentBulkUpdateRoutes(app);
   await registerCustomerRoutes(app);
+  await registerCustomerBulkRoutes(app);
   await registerCustomerFinancialSummaryRoutes(app);
   await registerVendorRoutes(app);
+  await registerVendorBulkRoutes(app);
   await registerLocationRoutes(app);
   await registerLoadRoutes(app);
   await registerLoadAbandonmentRoutes(app);
