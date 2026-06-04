@@ -1,22 +1,16 @@
 {
-  "block_id": "BLOCK-P8-AUDIT-NESTED-MODALS",
-  "branch": "fix/audit-nested-modals",
-  "phase": "Tier 2",
-  "task": "P8-AUDIT-NESTED-MODALS",
+  "block_id": "CHORE-DUAL-LANE-NEVER-IDLE",
+  "branch": "chore/cherry-pick-never-idle-187bd531",
+  "phase": "Dual-Lane",
+  "task": "dual-lane-never-idle-hooks",
   "allowed_files": [
-    "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
-    "apps/frontend/src/components/maintenance/__tests__/WorkOrderDetailModal.test.tsx",
-    "apps/frontend/src/components/work-orders/WorkOrderDetailModal.tsx",
-    "apps/frontend/src/components/customers/CustomerDrillModal.tsx",
-    "apps/frontend/src/components/customers/__tests__/CustomerDrillModal.test.tsx",
-    "apps/frontend/src/components/__tests__/modal-x-close-audit.test.tsx",
-    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    ".cursor/rules/dual-lane-never-idle.mdc",
+    ".cursor/hooks.json",
+    ".cursor/hooks/dual-lane-on-subagent-stop.sh",
+    "AGENTS.md",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:modal-no-doubled-header"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": false
