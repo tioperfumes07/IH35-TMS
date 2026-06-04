@@ -392,6 +392,9 @@ jobs:
       - name: verify:deadhead-cache-rls
         run: npm run verify:deadhead-cache-rls
 
+      - name: verify:rls-uuid-cast-nullif
+        run: npm run verify:rls-uuid-cast-nullif
+
       - name: verify:deadhead-uses-lane-profitability-for-suggestions
         run: npm run verify:deadhead-uses-lane-profitability-for-suggestions
 
