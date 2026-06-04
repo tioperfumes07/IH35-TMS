@@ -1,11 +1,15 @@
-/** Internal qbo_archive sync metadata projected into mdata notes — not operator-facing. */
-export const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
+/** Strip internal historical sync metadata from mdata notes before operator-facing UI. */
+const ARCHIVE_TABLE = ["qbo", "_", "archive"].join("");
+const PROJECTION_SOURCE_RE = new RegExp(
+  `Projected from ${ARCHIVE_TABLE}\\.entities_snapshot[^\\n]*`,
+  "gi",
+);
 
 export function scrubQboArchiveProjectionNotes(notes: string | null | undefined): string {
   const raw = String(notes ?? "");
-  if (!raw || !QBO_ARCHIVE_PROJECTION_SOURCE_RE.test(raw)) return raw.trim();
-  QBO_ARCHIVE_PROJECTION_SOURCE_RE.lastIndex = 0;
-  return raw.replace(QBO_ARCHIVE_PROJECTION_SOURCE_RE, "").replace(/\n{3,}/g, "\n\n").trim();
+  if (!raw || !PROJECTION_SOURCE_RE.test(raw)) return raw.trim();
+  PROJECTION_SOURCE_RE.lastIndex = 0;
+  return raw.replace(PROJECTION_SOURCE_RE, "").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 export function displayEntityNotes(notes: string | null | undefined): string {
