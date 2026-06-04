@@ -4,6 +4,8 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { resolveDriverIdForUser } from "../driver-finance/settlement-dispute.service.js";
 import {
+  ackDropoffTransfer,
+  ackPickupTransfer,
   confirmTransfer,
   initiateTransfer,
   listTransfers,
@@ -53,6 +55,11 @@ function mapServiceError(error: unknown) {
       "E_TRANSFER_NOT_PENDING",
       "E_TRANSFER_EXPIRED",
       "E_REJECTION_REASON_MIN_10",
+      "E_TRANSFER_DUAL_ACK_INCOMPLETE",
+      "E_TRANSFER_NOT_FROM_DRIVER",
+      "E_DROPOFF_ALREADY_ACKED",
+      "E_DROPOFF_ACK_REQUIRED",
+      "E_PICKUP_ALREADY_ACKED",
     ].includes(code)
   ) {
     return { status: 422, payload: { error: code } };
@@ -147,6 +154,21 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     }
   });
 
+  app.get("/api/v1/driver-pwa/my-outbound-transfers", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const driverId = await resolveDriverIdForUser(user.uuid);
+    if (!driverId) return reply.code(404).send({ error: "driver_not_found_for_user" });
+    const operatingCompanyId = await resolveOperatingCompanyForUser(user.uuid);
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+    const payload = await listTransfers(user.uuid, { operating_company_id: operatingCompanyId, status: "pending_to_confirm" });
+    const rows = payload.rows.filter(
+      (row) =>
+        row.from_driver_id === driverId && row.dual_ack?.pending_dropoff_ack === true,
+    );
+    return { rows };
+  });
+
   app.get("/api/v1/driver-pwa/my-pending-transfers", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
@@ -156,6 +178,50 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
       status: "pending_to_confirm",
       to_driver_id: driverId,
     });
+  });
+
+  app.post("/api/v1/driver-pwa/transfers/:id/ack-dropoff", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = transferIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const driverId = await resolveDriverIdForUser(user.uuid);
+    if (!driverId) return reply.code(404).send({ error: "driver_not_found_for_user" });
+    const operatingCompanyId = await resolveOperatingCompanyForUser(user.uuid);
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+    try {
+      return await ackDropoffTransfer(user.uuid, {
+        operating_company_id: operatingCompanyId,
+        transfer_id: params.data.id,
+        from_driver_id: driverId,
+      });
+    } catch (error) {
+      const mapped = mapServiceError(error);
+      if (mapped) return reply.code(mapped.status).send(mapped.payload);
+      throw error;
+    }
+  });
+
+  app.post("/api/v1/driver-pwa/transfers/:id/ack-pickup", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = transferIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const driverId = await resolveDriverIdForUser(user.uuid);
+    if (!driverId) return reply.code(404).send({ error: "driver_not_found_for_user" });
+    const operatingCompanyId = await resolveOperatingCompanyForUser(user.uuid);
+    if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+    try {
+      return await ackPickupTransfer(user.uuid, {
+        operating_company_id: operatingCompanyId,
+        transfer_id: params.data.id,
+        to_driver_id: driverId,
+      });
+    } catch (error) {
+      const mapped = mapServiceError(error);
+      if (mapped) return reply.code(mapped.status).send(mapped.payload);
+      throw error;
+    }
   });
 
   app.post("/api/v1/driver-pwa/transfers/:id/confirm", async (req, reply) => {

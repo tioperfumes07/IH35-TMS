@@ -109,6 +109,7 @@ import { FactorAdmin } from "../pages/factoring/FactorAdmin";
 import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
 import { VehicleProfilePage } from "../pages/fleet/VehicleProfilePage";
 import { TrailerProfilePage } from "../pages/fleet/TrailerProfilePage";
+import { TransfersInProgressPage } from "../pages/fleet/TransfersInProgressPage";
 import { ComplianceDashboardPage } from "../pages/compliance/ComplianceDashboardPage";
 import { NotificationCenterPage } from "../pages/notifications/NotificationCenterPage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
@@ -2624,6 +2625,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriverHosDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fleet/transfers-in-progress"
+          element={
+            <ProtectedRoute>
+              <TransfersInProgressPage />
             </ProtectedRoute>
           }
         />
