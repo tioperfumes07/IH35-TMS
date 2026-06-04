@@ -200,6 +200,128 @@ export function getEscrowTimeline(driverId: string, companyId: string) {
   );
 }
 
+export type EscrowRecordRow = {
+  id: string;
+  driver_name: string;
+  current_balance: number;
+  pre_clause_total: number;
+  post_clause_total: number;
+  accumulation_rate_pct: number;
+  forfeiture_history_count: number;
+  has_signed_clause: boolean;
+};
+
+export type EscrowForfeitAttempt = {
+  id: string;
+  driver_name: string;
+  amount: number;
+  reason: string;
+  linked_liability_id?: string;
+  status: "success" | "blocked";
+  created_at: string;
+};
+
+const ESCROW_TARGET_DEFAULT = 1000;
+
+function isForfeitEntry(entryType: unknown) {
+  return String(entryType ?? "")
+    .toLowerCase()
+    .includes("forfeit");
+}
+
+function timelineToAttempts(
+  driverName: string,
+  timeline: Array<Record<string, unknown>>
+): EscrowForfeitAttempt[] {
+  return timeline
+    .filter((row) => isForfeitEntry(row.entry_type))
+    .map((row) => ({
+      id: String(row.id ?? `${driverName}-${row.created_at ?? ""}`),
+      driver_name: driverName,
+      amount: Math.abs(Number(row.amount ?? 0)),
+      reason: String(row.memo ?? row.reason ?? "Escrow forfeiture"),
+      linked_liability_id: row.linked_liability_id ? String(row.linked_liability_id) : undefined,
+      status: String(row.status ?? "success").toLowerCase() === "blocked" ? "blocked" : "success",
+      created_at: String(row.created_at ?? row.posted_at ?? new Date().toISOString()),
+    }));
+}
+
+/** Company escrow roster for Safety Escrow Record tab (A23-8). */
+export async function listEscrowRecords(companyId: string) {
+  const primary = await apiRequest<{ records?: EscrowRecordRow[]; forfeit_attempts?: EscrowForfeitAttempt[] }>(
+    `/api/v1/driver-finance/escrow?${q(companyId)}`
+  ).catch(() => null);
+  if (primary?.records) {
+    return {
+      records: primary.records,
+      forfeit_attempts: primary.forfeit_attempts ?? [],
+    };
+  }
+
+  const { getEscrowDriverBalances, getEscrowDriverTimeline } = await import("./banking");
+  const { drivers } = await getEscrowDriverBalances(companyId);
+  const forfeitAttempts: EscrowForfeitAttempt[] = [];
+  const records: EscrowRecordRow[] = [];
+
+  for (const driver of drivers) {
+    const driverId = String(driver.driver_id ?? "");
+    const driverName = String(driver.driver_name ?? "Unknown driver");
+    if (!driverId) continue;
+
+    const [debt, timelinePayload] = await Promise.all([
+      getDebtSummary(driverId, companyId).catch(() => null),
+      getEscrowDriverTimeline(companyId, driverId).catch(() => ({ timeline: [] as Array<Record<string, unknown>> })),
+    ]);
+    const timeline = timelinePayload.timeline ?? [];
+    forfeitAttempts.push(...timelineToAttempts(driverName, timeline));
+
+    const preClause = Number(debt?.escrow_pre_clause ?? 0);
+    const postClause = Number(debt?.escrow_post_clause ?? 0);
+    const currentBalance = Number(driver.escrow_balance ?? preClause + postClause);
+    const forfeitCount = timeline.filter((row) => isForfeitEntry(row.entry_type)).length;
+    const hasSignedClause =
+      postClause > 0 || timeline.some((row) => String(row.bucket ?? "").toLowerCase() === "post_clause");
+
+    records.push({
+      id: driverId,
+      driver_name: driverName,
+      current_balance: currentBalance,
+      pre_clause_total: preClause,
+      post_clause_total: postClause,
+      accumulation_rate_pct: Math.max(0, Math.min(100, (currentBalance / ESCROW_TARGET_DEFAULT) * 100)),
+      forfeiture_history_count: forfeitCount,
+      has_signed_clause: hasSignedClause,
+    });
+  }
+
+  forfeitAttempts.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return { records, forfeit_attempts: forfeitAttempts };
+}
+
+export function forfeitEscrow(
+  driverId: string,
+  payload: {
+    operating_company_id: string;
+    amount: number;
+    reason: string;
+    linked_liability_id?: string;
+  }
+) {
+  return apiRequest<{ ok: boolean; status?: "success" | "blocked"; audit_id?: string }>(
+    `/api/v1/driver-finance/escrow/${encodeURIComponent(driverId)}/forfeit`,
+    {
+      method: "POST",
+      body: {
+        operating_company_id: payload.operating_company_id,
+        driver_uuid: driverId,
+        amount: payload.amount,
+        reason: payload.reason,
+        linked_liability_id: payload.linked_liability_id,
+      },
+    }
+  );
+}
+
 export function listPendingEscrowDeductions(companyId: string) {
   return apiRequest<{ data: EscrowPendingDeduction[] }>(
     `/api/v1/driver-finance/escrow-deductions-pending?${q(companyId)}`

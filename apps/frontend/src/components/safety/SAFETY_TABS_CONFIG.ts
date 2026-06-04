@@ -67,7 +67,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
   {
     id: "driver-financial",
     label: "Driver Financial Safety",
-    tabs: [{ id: "escrow-record", label: "Escrow Record", route: "/safety/escrow-record", badge: "new" }],
+    tabs: [{ id: "escrow-record", label: "Escrow Record", route: "/safety/escrow-record", badge: "new", status: "Live" }],
   },
   {
     id: "compliance-monitoring",

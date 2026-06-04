@@ -1,24 +1,18 @@
 {
-  "block_id": "BLOCK-INFRA-1-REDIS-RESILIENT-IOREDIS-CONFIG",
-  "branch": "fix/redis-resilient-ioredis-config",
-  "phase": "Infrastructure",
-  "task": "INFRA-1",
+  "block_id": "BLOCK-A23-8-SAFETY-ESCROW-WIRE",
+  "branch": "feat/safety-escrow-wire",
+  "phase": "Safety",
+  "task": "A23-8",
   "allowed_files": [
-    "apps/backend/src/lib/redis.client.ts",
-    "apps/backend/src/lib/__tests__/redis.test.ts",
-    "apps/backend/src/health/health.routes.ts",
-    "apps/backend/src/health/__tests__/health.test.ts",
-    "scripts/verify-redis-resilient-config.mjs",
-    "scripts/__tests__/verify-redis-resilient-config.test.mjs",
-    ".github/workflows/ci.yml",
-    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
-    "package.json",
+    "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
+    "apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx",
+    "apps/frontend/src/pages/safety/__tests__/EscrowRecordTab.test.tsx",
+    "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
+    "apps/frontend/src/api/driverFinance.ts",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:redis-resilient-config"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }
