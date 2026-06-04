@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Bill of Lading — {{loadNumber}}</title>
+    <style>
+      body { font-family: Arial, sans-serif; color: #0f172a; margin: 24px; font-size: 12px; }
+      h1 { margin: 0 0 4px; font-size: 22px; }
+      h2 { margin: 16px 0 6px; font-size: 14px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
+      .meta { font-size: 11px; color: #475569; margin-bottom: 16px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+      .box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; }
+      .label { color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+      .value { font-weight: 600; margin-top: 2px; }
+      .stop { margin-bottom: 8px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; }
+      .footer { margin-top: 20px; font-size: 10px; color: #64748b; }
+    </style>
+  </head>
+  <body>
+    <h1>Bill of Lading</h1>
+    <div class="meta">Load {{loadNumber}} · Generated {{generatedAt}} · {{templateVersion}}</div>
+
+    <div class="grid">
+      <div class="box">
+        <div class="label">Shipper / Carrier</div>
+        <div class="value">{{carrierName}}</div>
+        <div>{{carrierAddress}}</div>
+      </div>
+      <div class="box">
+        <div class="label">Customer / Consignee</div>
+        <div class="value">{{customerName}}</div>
+        <div>{{customerAddress}}</div>
+      </div>
+    </div>
+
+    <h2>Load Details</h2>
+    <div class="grid">
+      <div><span class="label">Commodity</span><div class="value">{{commodity}}</div></div>
+      <div><span class="label">Weight</span><div class="value">{{weight}}</div></div>
+      <div><span class="label">Pieces</span><div class="value">{{pieces}}</div></div>
+      <div><span class="label">Reference</span><div class="value">{{referenceNumber}}</div></div>
+      <div><span class="label">Driver</span><div class="value">{{driverName}}</div></div>
+      <div><span class="label">Unit</span><div class="value">{{unitDisplay}}</div></div>
+    </div>
+
+    <h2>Stops</h2>
+    {{#each stops}}
+      <div class="stop">
+        <div><strong>{{this.stopType}}</strong> #{{this.sequence}}</div>
+        <div>{{this.locationName}}</div>
+        <div>{{this.address}}</div>
+        <div>{{this.cityState}} · {{this.scheduledWindow}}</div>
+      </div>
+    {{/each}}
+
+    <div class="footer">
+      This BOL was generated from load data in IH35 Dispatch. Original signed POD may be attached separately.
+    </div>
+  </body>
+</html>

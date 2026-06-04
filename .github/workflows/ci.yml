@@ -186,6 +186,9 @@ jobs:
       - name: verify:dispatch-customer-eta-notify
         run: npm run verify:dispatch-customer-eta-notify
 
+      - name: verify:dispatch-pod-bol-workflow
+        run: npm run verify:dispatch-pod-bol-workflow
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 

@@ -844,3 +844,70 @@ export function syncCustomerNotify(operatingCompanyId: string) {
     { method: "POST", body: { operating_company_id: operatingCompanyId } }
   );
 }
+
+export type PodDocumentSummary = {
+  id: string;
+  load_id: string;
+  load_number: string | null;
+  stop_id: string;
+  driver_id: string;
+  driver_name: string | null;
+  photo_r2_key: string | null;
+  signature_r2_key: string | null;
+  recipient_name: string | null;
+  notes: string | null;
+  status: string;
+  reviewed_at: string | null;
+  review_notes: string | null;
+  created_at: string;
+};
+
+export type BolDocumentSummary = {
+  id: string;
+  pdf_r2_key: string;
+  sha256: string | null;
+  generated_at: string;
+  template_version: string;
+};
+
+export function getPodDocuments(
+  operatingCompanyId: string,
+  opts?: { load_id?: string; status?: string; limit?: number }
+) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (opts?.load_id) params.set("load_id", opts.load_id);
+  if (opts?.status) params.set("status", opts.status);
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  return apiRequest<{ documents: PodDocumentSummary[]; count: number }>(
+    `/api/v1/dispatch/pod-documents?${params.toString()}`
+  );
+}
+
+export function reviewPodDocument(
+  podId: string,
+  body: { operating_company_id: string; status: "approved" | "rejected"; review_notes?: string }
+) {
+  return apiRequest<{ pod: Record<string, unknown> }>(`/api/v1/dispatch/pod-documents/${encodeURIComponent(podId)}/review`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function getLoadPodBolSummary(loadId: string, operatingCompanyId: string) {
+  return apiRequest<{ pods: PodDocumentSummary[]; bols: BolDocumentSummary[] }>(
+    `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/pod-bol?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function generateLoadBol(loadId: string, operatingCompanyId: string) {
+  return apiRequest<{ bol: BolDocumentSummary & { filename?: string } }>(
+    `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol/generate`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId } }
+  );
+}
+
+export function downloadBolDocument(bolId: string, operatingCompanyId: string) {
+  return apiRequest<{ download_url: string; expires_in_seconds: number }>(
+    `/api/v1/dispatch/bol-documents/${encodeURIComponent(bolId)}/download?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}

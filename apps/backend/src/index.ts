@@ -56,6 +56,7 @@ import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js";
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
 import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify.routes.js";
+import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
 import { registerDashcamOnDemandRoutes } from "./telematics/dashcam-on-demand.routes.js";
@@ -501,6 +502,7 @@ async function main() {
   await registerDispatchDetentionRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
+  await registerDispatchPodBolRoutes(app);
   await registerDriverRoutes(app);
   await registerGeofencesRoutes(app);
   await registerDriverDaySummaryRoutes(app);
