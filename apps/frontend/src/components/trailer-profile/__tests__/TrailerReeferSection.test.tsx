@@ -14,6 +14,7 @@ const snapshotFixture = {
     reefer_brand: "Carrier",
     service_interval_hours: 2000,
     last_service_hours: 2500,
+    last_service_date: "2026-01-01",
     current_hours: 4400,
     hours_until_service: 100,
     pm_status: "near_due" as const,
