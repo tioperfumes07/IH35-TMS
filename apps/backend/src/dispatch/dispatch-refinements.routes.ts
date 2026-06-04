@@ -12,6 +12,7 @@ import {
   replaceLoadStopsRefined,
   type LoadStopInput,
 } from "./dispatch-refinements.service.js";
+import { listOptimalDriversForLoad } from "./driver-optimizer.service.js";
 
 const loadIdParams = z.object({ loadId: z.string().uuid() });
 const companyQ = z.object({ operating_company_id: z.string().uuid() });
@@ -49,6 +50,18 @@ const availableDriversQuery = z.object({
   operating_company_id: z.string().uuid(),
   load_id: z.string().uuid(),
   for_pickup_at: z.string().datetime({ offset: true }).optional(),
+});
+
+const optimalDriversQuery = z.object({
+  operating_company_id: z.string().uuid(),
+  for_pickup_at: z.string().datetime({ offset: true }).optional(),
+  preview_pickup_city: z.string().trim().max(120).optional(),
+  preview_pickup_state: z.string().trim().max(120).optional(),
+  preview_hazmat: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((v) => v === true || v === "true"),
+  preview_trailer_type: z.string().trim().max(80).optional(),
 });
 
 const templateCreateBody = z.object({
@@ -127,6 +140,29 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     const q = availableDriversQuery.safeParse(req.query ?? {});
     if (!q.success) return sendZodValidation(reply, q.error);
     return listAvailableDriversForDispatch(user.uuid, q.data.operating_company_id, q.data.load_id, q.data.for_pickup_at);
+  });
+
+  app.get("/api/v1/dispatch/loads/:loadId/optimal-drivers", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = loadIdParams.safeParse(req.params ?? {});
+    if (!params.success) return sendZodValidation(reply, params.error);
+    const q = optimalDriversQuery.safeParse(req.query ?? {});
+    if (!q.success) return sendZodValidation(reply, q.error);
+    try {
+      return await listOptimalDriversForLoad(user.uuid, {
+        operating_company_id: q.data.operating_company_id,
+        load_id: params.data.loadId,
+        for_pickup_at: q.data.for_pickup_at,
+        preview_pickup_city: q.data.preview_pickup_city,
+        preview_pickup_state: q.data.preview_pickup_state,
+        preview_hazmat: q.data.preview_hazmat,
+        preview_trailer_type: q.data.preview_trailer_type,
+      });
+    } catch (e) {
+      if (String((e as Error).message) === "E_LOAD_NOT_FOUND") return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
+      throw e;
+    }
   });
 
   app.get("/api/v1/dispatch/loads/:loadId/eta", async (req, reply) => {

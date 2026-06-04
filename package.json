@@ -320,6 +320,7 @@
     "verify:dispatch-planner-calendar": "node scripts/verify-dispatch-planner-calendar.mjs",
     "verify:dispatch-detention-board": "node scripts/verify-dispatch-detention-board.mjs",
     "verify:dispatch-ocr-queue": "node scripts/verify-dispatch-ocr-queue.mjs",
+    "verify:dispatch-assignment-optimizer": "node scripts/verify-dispatch-assignment-optimizer.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",

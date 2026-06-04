@@ -378,6 +378,8 @@ export async function listAvailableDriversForDispatch(
       };
     });
     drivers.sort((a, b) => {
+      // ARCHIVE-not-DELETE (B21-D8): legacy HOS+proximity sort for dropdown fallback.
+      // Ranked optimizer: GET /api/v1/dispatch/loads/:id/optimal-drivers + OptimalDriversPanel.
       if (a.hos_safe !== b.hos_safe) return a.hos_safe ? -1 : 1;
       return a.distance_to_pickup_miles - b.distance_to_pickup_miles;
     });
