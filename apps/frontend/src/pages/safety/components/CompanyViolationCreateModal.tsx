@@ -38,6 +38,7 @@ export function CompanyViolationCreateModal({ open, operatingCompanyId, onClose,
     <Modal open={open} onClose={onClose} title="Create Company Violation">
       <form
         className="space-y-3"
+        data-testid="company-violation-create-modal"
         onSubmit={(event) => {
           event.preventDefault();
           mutation.mutate();

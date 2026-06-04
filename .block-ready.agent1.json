@@ -1,14 +1,13 @@
 {
-  "block_id": "BLOCK-A23-8-SAFETY-ESCROW-WIRE",
-  "branch": "feat/safety-escrow-wire",
+  "block_id": "BLOCK-A23-9-SAFETY-COMPANY-VIOLATIONS",
+  "branch": "feat/safety-company-violations",
   "phase": "Safety",
-  "task": "A23-8",
+  "task": "A23-9",
   "allowed_files": [
-    "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
-    "apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx",
-    "apps/frontend/src/pages/safety/__tests__/EscrowRecordTab.test.tsx",
-    "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
-    "apps/frontend/src/api/driverFinance.ts",
+    "apps/frontend/src/pages/safety/CompanyViolationsPage.tsx",
+    "apps/frontend/src/pages/safety/FinesPage.tsx",
+    "apps/frontend/src/pages/safety/components/CompanyViolationCreateModal.tsx",
+    "apps/frontend/src/pages/safety/__tests__/FinesPage.test.tsx",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],

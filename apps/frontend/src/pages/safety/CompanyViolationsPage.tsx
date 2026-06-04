@@ -20,12 +20,13 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
   });
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="company-violations-page">
       <div className="flex justify-end">
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
           className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white"
+          data-testid="company-violation-create-btn"
         >
           + Create Company Violation
         </button>

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { convertFineToLiability, getSafetyFines } from "../../api/safety";
+import { CompanyViolationsPage } from "./CompanyViolationsPage";
 import { FineCreateModal } from "./components/FineCreateModal";
 import { FineDetailDrawer } from "./components/FineDetailDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -9,8 +10,12 @@ type Props = {
   operatingCompanyId: string;
 };
 
+/** A23-9: merged company violations into External Fines via record-type filter (RBC option a). */
+type RecordTypeFilter = "driver-fine" | "company-violation";
+
 export function FinesPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
+  const [recordTypeFilter, setRecordTypeFilter] = useState<RecordTypeFilter>("driver-fine");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [subjectTypeFilter, setSubjectTypeFilter] = useState<string>("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -46,10 +51,40 @@ export function FinesPage({ operatingCompanyId }: Props) {
 
   const rows = useMemo(() => finesQuery.data?.fines ?? [], [finesQuery.data?.fines]);
 
+  if (recordTypeFilter === "company-violation") {
+    return (
+      <div className="space-y-3" data-testid="external-fines-page">
+        <div className="flex flex-wrap items-center gap-2">
+          <div data-testid="fines-record-type-filter">
+            <SelectCombobox
+              value={recordTypeFilter}
+              onChange={(event) => setRecordTypeFilter(event.target.value as RecordTypeFilter)}
+              className="rounded border border-gray-300 px-2 py-1 text-xs"
+            >
+              <option value="driver-fine">Driver Fine</option>
+              <option value="company-violation">Company Violation</option>
+            </SelectCombobox>
+          </div>
+        </div>
+        <CompanyViolationsPage operatingCompanyId={operatingCompanyId} />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="external-fines-page">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
+          <div data-testid="fines-record-type-filter">
+            <SelectCombobox
+              value={recordTypeFilter}
+              onChange={(event) => setRecordTypeFilter(event.target.value as RecordTypeFilter)}
+              className="rounded border border-gray-300 px-2 py-1 text-xs"
+            >
+              <option value="driver-fine">Driver Fine</option>
+              <option value="company-violation">Company Violation</option>
+            </SelectCombobox>
+          </div>
           <SelectCombobox
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
