@@ -783,3 +783,64 @@ export function convertOcrIntakeToBookLoad(itemId: string, body: { operating_com
     { method: "POST", body }
   );
 }
+
+export type CustomerNotifyPreferences = {
+  customer_id: string;
+  opt_in: boolean;
+  notify_sms: boolean;
+  notify_email: boolean;
+  notify_on_departed: boolean;
+  notify_on_arrived: boolean;
+  notify_on_near_arrival: boolean;
+  notify_on_delayed: boolean;
+};
+
+export type CustomerNotifyLogEntry = {
+  id: string;
+  load_id: string;
+  load_number: string | null;
+  customer_id: string;
+  customer_name: string | null;
+  stop_id: string | null;
+  milestone_type: string;
+  channel: string;
+  recipient: string;
+  template_key: string;
+  subject: string | null;
+  provider_id: string | null;
+  status: string;
+  error_message: string | null;
+  sent_at: string | null;
+  created_at: string;
+};
+
+export function getCustomerNotifyLog(operatingCompanyId: string, customerId?: string) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (customerId) params.set("customer_id", customerId);
+  return apiRequest<{ entries: CustomerNotifyLogEntry[]; count: number }>(
+    `/api/v1/dispatch/customer-notify/log?${params.toString()}`
+  );
+}
+
+export function getCustomerNotifyPreferences(customerId: string, operatingCompanyId: string) {
+  return apiRequest<{ preferences: CustomerNotifyPreferences }>(
+    `/api/v1/dispatch/customer-notify/preferences/${encodeURIComponent(customerId)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function updateCustomerNotifyPreferences(
+  customerId: string,
+  body: { operating_company_id: string } & Partial<Omit<CustomerNotifyPreferences, "customer_id">>
+) {
+  return apiRequest<{ preferences: CustomerNotifyPreferences }>(
+    `/api/v1/dispatch/customer-notify/preferences/${encodeURIComponent(customerId)}`,
+    { method: "PUT", body }
+  );
+}
+
+export function syncCustomerNotify(operatingCompanyId: string) {
+  return apiRequest<{ arrivals_processed: number; eta_processed: number; sent: number }>(
+    `/api/v1/dispatch/customer-notify/sync`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId } }
+  );
+}

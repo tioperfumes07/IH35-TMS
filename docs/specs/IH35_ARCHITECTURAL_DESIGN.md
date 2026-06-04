@@ -518,11 +518,12 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 | **Border Routing Decisions** | Loads needing routing decision (yellow band) | Phase 3 ✅ |
 | **Detention Board** | Live accrual from stop arrivals + billing bridge | Phase 3 ✅ — `/dispatch/detention` (B21-D5) |
 | **OCR Queue** | `/dispatch/ocr-queue` — email webhook intake → R2 PDF → async OCR → review → convert to Book Load (B21-D7, mig 0354) | **Live** |
+| **Customer ETA Notify** | `/dispatch/notify-preferences` — milestone SMS/email + delivery log (B21-D9, mig 0355) | **Live** |
 | **Assignment History** | Audit trail of assignments | Phase 3 ✅ — `/dispatch/assignment-history` (B21-D2) |
 | **At-Risk Loads** | Late >2h OR HOS warning OR maintenance due | Phase 3 ✅ — `/dispatch/at-risk` (B21-D2) |
 | **Settings** | Dispatcher assignments · Default lanes · Auto-routing rules | Owner only |
 
-**Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes At-Risk Queue, In-Transit Issues, Assignment History (B21-D2), Planner Calendar (B21-D4), Detention Board (B21-D5), OCR Queue (B21-D7), Border Crossing + Border History + Factoring Packets per triage. **CI:** `verify:dispatch-arch-tab-parity`, `verify:dispatch-planner-calendar`, `verify:dispatch-detention-board`, `verify:dispatch-ocr-queue`, `verify:dispatch-assignment-optimizer`.
+**Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes At-Risk Queue, In-Transit Issues, Assignment History (B21-D2), Planner Calendar (B21-D4), Detention Board (B21-D5), OCR Queue (B21-D7), Customer ETA Notify (B21-D9), Border Crossing + Border History + Factoring Packets per triage. **CI:** `verify:dispatch-arch-tab-parity`, `verify:dispatch-planner-calendar`, `verify:dispatch-detention-board`, `verify:dispatch-ocr-queue`, `verify:dispatch-assignment-optimizer`, `verify:dispatch-customer-eta-notify`.
 
 **Maintenance module nav counts (B24):** Canonical surfaces in `MAINTENANCE_NAV_CONFIG.ts` — 10 sidebar flyout links, 10 dashboard operational tabs, 8 Master Data hover links (includes `/maintenance/drivers`), 9 Lists maintenance catalogs. HOME quick-jump uses `MAINTENANCE_HOME_QUICK_JUMP_COUNT` (10). Dead stub CTAs removed from parts-inventory dashboard band, fleet-table empty state, service-location empty state, and vendors CSV Import.
 
@@ -547,6 +548,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 **OCR queue (B21-D7, 2026-06-03):** `/dispatch/ocr-queue` lists `dispatch.ocr_intake_queue` (migration **0354**). Email forward webhook stores PDF in R2 (`dispatch/ocr/{company}/{uuid}.pdf`), async filename/OCR heuristic fills `extracted_fields`, review UI converts to Book Load via `templatePrefillJson` seam. Book Load dropzone remains for ad-hoc uploads (ARCHIVE-not-DELETE). **CI:** `verify:dispatch-ocr-queue`.
 
 **Driver assignment optimizer (B21-D8, 2026-06-03):** `GET /api/v1/dispatch/loads/:id/optimal-drivers` ranks top 10 drivers by multi-factor score (HOS remaining, proximity, CDL/equipment eligibility, recent performance, deadhead penalty). `OptimalDriversPanel` surfaces score breakdown + manual override in `LoadReassignModal` and Book Load equipment step. Legacy `available-drivers` HOS-only sort retained for dropdown fallback (ARCHIVE-not-DELETE). No migration. **CI:** `verify:dispatch-assignment-optimizer`.
+
+**Customer ETA notify (B21-D9, 2026-06-03):** `/dispatch/notify-preferences` configures per-customer opt-in + SMS/email channels + milestone toggles (departed, arrived, near-arrival, delayed). `customer-notify.service` subscribes to confirmed `dispatch.stop_arrivals` + `latest_eta_prediction` updates, renders portal milestone templates (plus near-arrival/delayed templates), dispatches via Twilio SMS + Resend email, and logs delivery confirmations in `dispatch.notify_log` (migration **0355**). **CI:** `verify:dispatch-customer-eta-notify`.
 
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
