@@ -120,6 +120,22 @@
     "lumper_receipt": "Lumper Receipt",
     "damage_photo": "Damage Photo"
   },
+  "pod": {
+    "capture_cta": "Capture POD",
+    "instructions": "Capture delivery proof with photo and receiver signature.",
+    "capture_photo": "Capture delivery photo",
+    "retake_photo": "Retake photo",
+    "recipient_name": "Recipient name",
+    "recipient_placeholder": "Who signed?",
+    "signature": "Receiver signature",
+    "notes": "Delivery notes",
+    "notes_placeholder": "Optional notes",
+    "submit": "Submit POD",
+    "submitting": "Submitting…",
+    "submitted": "POD submitted for review",
+    "submit_failed": "Unable to submit POD",
+    "signature_required": "Signature is required"
+  },
   "acceptance": {
     "title": "Accept Load {{display_id}}",
     "scroll_to_bottom": "Scroll to the bottom to continue",

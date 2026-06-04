@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { getLoadDetail, markStopArrived, markStopDeparted } from "../api/loads";
+import { PodCapture } from "../components/PodCapture";
 import { UploadDocumentModal } from "../components/UploadDocumentModal";
 import { PwaButton } from "../components/PwaButton";
 import { PwaCard } from "../components/PwaCard";
@@ -14,6 +15,7 @@ export function StopActionPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [podOpen, setPodOpen] = useState(false);
   const [hasDoc, setHasDoc] = useState(false);
   const [stopStatus, setStopStatus] = useState<"pending" | "arrived" | "loading" | "loaded" | "departed" | null>(null);
 
@@ -68,8 +70,22 @@ export function StopActionPage() {
           {status === "pending" ? (
             <PwaButton className="w-full" onClick={() => void handleArrive()}>{t("stop.mark_arrived")}</PwaButton>
           ) : null}
-          {status === "arrived" && !hasDoc ? (
+          {status === "arrived" && !hasDoc && resolvedStop.stop_type === "delivery" && !podOpen ? (
+            <PwaButton className="w-full" onClick={() => setPodOpen(true)}>{t("pod.capture_cta")}</PwaButton>
+          ) : null}
+          {status === "arrived" && !hasDoc && resolvedStop.stop_type !== "delivery" ? (
             <PwaButton className="w-full" onClick={() => setUploadOpen(true)}>{t("stop.upload_bol_pod")}</PwaButton>
+          ) : null}
+          {status === "arrived" && podOpen && resolvedStop.stop_type === "delivery" ? (
+            <PodCapture
+              loadId={resolvedLoad.id}
+              stopId={resolvedStop.id}
+              onCaptured={() => {
+                setHasDoc(true);
+                setPodOpen(false);
+              }}
+              onCancel={() => setPodOpen(false)}
+            />
           ) : null}
           {status === "arrived" && hasDoc ? (
             <PwaButton className="w-full" onClick={() => void handleDepart()}>{t("stop.mark_departed")}</PwaButton>

@@ -120,6 +120,22 @@
     "lumper_receipt": "Recibo de descargue",
     "damage_photo": "Foto de daño"
   },
+  "pod": {
+    "capture_cta": "Capturar POD",
+    "instructions": "Capture la prueba de entrega con foto y firma del receptor.",
+    "capture_photo": "Tomar foto de entrega",
+    "retake_photo": "Repetir foto",
+    "recipient_name": "Nombre del receptor",
+    "recipient_placeholder": "¿Quién firmó?",
+    "signature": "Firma del receptor",
+    "notes": "Notas de entrega",
+    "notes_placeholder": "Notas opcionales",
+    "submit": "Enviar POD",
+    "submitting": "Enviando…",
+    "submitted": "POD enviado para revisión",
+    "submit_failed": "No se pudo enviar el POD",
+    "signature_required": "La firma es obligatoria"
+  },
   "acceptance": {
     "title": "Aceptar carga {{display_id}}",
     "scroll_to_bottom": "Desplázate al final para continuar",

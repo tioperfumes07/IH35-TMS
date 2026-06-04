@@ -24,6 +24,7 @@ import { PlannerCalendarPage } from "../pages/dispatch/PlannerCalendarPage";
 import { DetentionBoardPage } from "../pages/dispatch/DetentionBoardPage";
 import { OcrQueuePage } from "../pages/dispatch/OcrQueuePage";
 import { NotifyPreferencesPage } from "../pages/dispatch/NotifyPreferencesPage";
+import { PodReviewPage } from "../pages/dispatch/PodReviewPage";
 import { BorderCrossingWizardPage } from "../pages/dispatch/BorderCrossingWizardPage";
 import { BorderCrossingHistoryPage } from "../pages/dispatch/BorderCrossingHistoryPage";
 import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
@@ -568,6 +569,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <NotifyPreferencesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/pod-review"
+          element={
+            <ProtectedRoute>
+              <PodReviewPage />
             </ProtectedRoute>
           }
         />

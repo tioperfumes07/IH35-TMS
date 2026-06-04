@@ -312,13 +312,38 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
 
       const res = await client.query(
         `
-          SELECT id::text, category, filename, content_type, uploaded_at::text AS uploaded_at
+          SELECT id::text, category, filename, content_type, uploaded_at::text AS uploaded_at, 'attachment'::text AS source
           FROM documents.attachments
           WHERE operating_company_id = $1::uuid
             AND entity_type = 'load'
             AND entity_id = $2::uuid
             AND is_deleted = false
             AND category IN ('pod', 'bol', 'rate_confirmation')
+          UNION ALL
+          SELECT
+            ('pod:' || p.id::text) AS id,
+            'pod'::text AS category,
+            COALESCE('POD-' || p.recipient_name, 'Proof of delivery') AS filename,
+            'image/png'::text AS content_type,
+            p.created_at::text AS uploaded_at,
+            'dispatch_pod'::text AS source
+          FROM dispatch.pod_documents p
+          WHERE p.operating_company_id = $1::uuid
+            AND p.load_id = $2::uuid
+            AND p.archived_at IS NULL
+            AND p.status = 'approved'
+          UNION ALL
+          SELECT
+            ('bol:' || b.id::text) AS id,
+            'bol'::text AS category,
+            'Bill of Lading'::text AS filename,
+            'application/pdf'::text AS content_type,
+            b.generated_at::text AS uploaded_at,
+            'dispatch_bol'::text AS source
+          FROM dispatch.bol_documents b
+          WHERE b.operating_company_id = $1::uuid
+            AND b.load_id = $2::uuid
+            AND b.archived_at IS NULL
           ORDER BY uploaded_at DESC
         `,
         [portalUser.operating_company_id, params.data.id]
@@ -333,7 +358,7 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
   app.get("/api/v1/portal/loads/:id/documents/:attachment_id/download", async (req, reply) => {
     const portalUser = await requirePortalSession(req, reply);
     if (!portalUser) return;
-    const params = z.object({ id: z.string().uuid(), attachment_id: z.string().uuid() }).safeParse(req.params ?? {});
+    const params = z.object({ id: z.string().uuid(), attachment_id: z.string().min(1) }).safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
 
     const signed = await withPortalScope(portalUser, async (client) => {
@@ -350,6 +375,48 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
         [params.data.id, portalUser.customer_id, portalUser.operating_company_id]
       );
       if (!loadRes.rows[0]) return null;
+
+      const attachmentId = params.data.attachment_id;
+      if (attachmentId.startsWith("pod:")) {
+        const podId = attachmentId.slice(4);
+        const podRes = await client.query<{ photo_r2_key: string | null; signature_r2_key: string | null }>(
+          `
+            SELECT photo_r2_key, signature_r2_key
+            FROM dispatch.pod_documents
+            WHERE id = $1::uuid
+              AND load_id = $2::uuid
+              AND operating_company_id = $3::uuid
+              AND archived_at IS NULL
+              AND status = 'approved'
+            LIMIT 1
+          `,
+          [podId, params.data.id, portalUser.operating_company_id]
+        );
+        const pod = podRes.rows[0];
+        const key = pod?.signature_r2_key ?? pod?.photo_r2_key ?? null;
+        if (!key) return undefined;
+        const url = await generatePresignedDownloadUrl(key, 900);
+        return { download_url: url.url, expires_in_seconds: 900 };
+      }
+      if (attachmentId.startsWith("bol:")) {
+        const bolId = attachmentId.slice(4);
+        const bolRes = await client.query<{ pdf_r2_key: string }>(
+          `
+            SELECT pdf_r2_key
+            FROM dispatch.bol_documents
+            WHERE id = $1::uuid
+              AND load_id = $2::uuid
+              AND operating_company_id = $3::uuid
+              AND archived_at IS NULL
+            LIMIT 1
+          `,
+          [bolId, params.data.id, portalUser.operating_company_id]
+        );
+        const bol = bolRes.rows[0];
+        if (!bol) return undefined;
+        const url = await generatePresignedDownloadUrl(bol.pdf_r2_key, 900);
+        return { download_url: url.url, expires_in_seconds: 900 };
+      }
 
       const attRes = await client.query<{ r2_object_key: string; id: string }>(
         `
