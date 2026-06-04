@@ -1,20 +1,21 @@
 {
-  "block_id": "BLOCK-BULK-1-SHARED-COMPONENTS",
-  "branch": "feat/bulk-1-shared-components",
-  "phase": "Phase I",
-  "task": "BULK-1",
+  "block_id": "SMS-FIX-2-WEBHOOKS",
+  "branch": "fix/samsara-webhooks-investigation",
+  "phase": "Tier 2 — P8 Audit",
+  "task": "SMS-FIX-2-WEBHOOKS",
   "allowed_files": [
-    "apps/frontend/src/api/__tests__/bulk.test.ts",
-    "apps/frontend/src/api/bulk.ts",
-    "apps/frontend/src/components/FleetTable.tsx",
-    "apps/frontend/src/components/bulk/**",
-    "apps/frontend/src/components/fleet/BulkActionBar.tsx",
-    "apps/frontend/src/pages/dev/BulkDemoPage.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/nav-integrity-allowlist.json",
+    "apps/backend/src/integrations/samsara/samsara-webhook.routes.ts",
+    "apps/backend/src/integrations/samsara/samsara-webhook-verify.ts",
+    "apps/backend/src/integrations/samsara/samsara-webhook-verify.test.ts",
+    "apps/backend/src/integrations/samsara/samsara.service.ts",
+    "apps/backend/src/integrations/samsara/__tests__/samsara-webhook.routes.test.ts",
+    "scripts/verify-samsara-webhook-route-mounted.mjs",
+    "package.json",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:samsara-webhook-route-mounted"
+  ],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": false

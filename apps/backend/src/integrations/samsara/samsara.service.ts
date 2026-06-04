@@ -56,6 +56,25 @@ export async function getSamsaraConfigForCompany(client: PgClient, operatingComp
   return res.rows[0] ?? null;
 }
 
+export async function resolveSamsaraWebhookSigningSecret(
+  client: PgClient,
+  operatingCompanyId: string
+): Promise<string | undefined> {
+  const row = await getSamsaraConfigForCompany(client, operatingCompanyId);
+  const encRaw = row?.webhook_secret_encrypted;
+  if (Buffer.isBuffer(encRaw) && encRaw.length > 0) {
+    try {
+      const decrypted = decryptSamsaraSecret(encRaw);
+      const plain = decrypted?.trim();
+      if (plain) return plain;
+    } catch {
+      /* fall through to env */
+    }
+  }
+  const env = process.env.SAMSARA_WEBHOOK_SECRET?.trim();
+  return env || undefined;
+}
+
 export async function upsertSamsaraConfig(
   client: PgClient,
   operatingCompanyId: string,
