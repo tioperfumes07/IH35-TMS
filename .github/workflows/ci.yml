@@ -141,6 +141,9 @@ jobs:
       - name: verify:drivers-create-vocab
         run: npm run verify:drivers-create-vocab
 
+      - name: verify:drivers-earnings-debt-tab
+        run: npm run verify:drivers-earnings-debt-tab
+
       - name: Verify dispatch coming-soon triage
         run: npm run verify:dispatch-coming-soon-triage
 

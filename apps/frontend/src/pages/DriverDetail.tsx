@@ -3,7 +3,7 @@ import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
-import { getSafetyFines } from "../api/safety";
+import { EarningsTab } from "../components/drivers/EarningsTab";
 import { useAuth } from "../auth/useAuth";
 import { listEquipmentTypes, listMexicoStates, listUsStates } from "../api/catalogs";
 import { listMyCompanies } from "../api/org";
@@ -262,17 +262,6 @@ export function DriverDetailPage() {
     queryFn: () => listSafetyEvents(id, showVoidedSafetyEvents).then((result) => result.events),
     enabled: Boolean(id) && canViewSafetyFile && activeTab === "Safety File",
   });
-  const finesSummaryQuery = useQuery({
-    queryKey: ["driver-fines-summary", id, driver?.operating_company_id],
-    queryFn: () =>
-      getSafetyFines(String(driver?.operating_company_id ?? ""), {
-        status: "open",
-        subject_type: "driver",
-        subject_driver_id: id,
-      }),
-    enabled: Boolean(driver?.operating_company_id) && activeTab === "Earnings & Debt",
-  });
-
   const terminationReasonsQuery = useQuery({
     queryKey: ["driver-termination-reasons"],
     queryFn: () => listTerminationReasons(false).then((result) => result.reasons),
@@ -1137,19 +1126,7 @@ export function DriverDetailPage() {
       ) : null}
 
       {activeTab === "Earnings & Debt" ? (
-        <div className="space-y-3">
-          <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            Open Fines: {finesSummaryQuery.data?.fines?.length ?? 0} · Open Liabilities from Fines: $
-            {(
-              (finesSummaryQuery.data?.fines ?? [])
-                .filter((row) => Boolean(row.converted_to_liability_id))
-                .reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0) / 100
-            ).toFixed(2)}
-          </div>
-          <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-            Earnings and debt settlement workspace is coming in a subsequent phase.
-          </div>
-        </div>
+        <EarningsTab driverId={id} operatingCompanyId={String(driver?.operating_company_id ?? "")} />
       ) : null}
 
       {activeTab === "Safety File" ? (
