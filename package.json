@@ -188,6 +188,7 @@
     "verify:drivers-audit-history-tab": "node scripts/verify-drivers-audit-history-tab.mjs",
     "verify:drivers-training-crud-on-profile": "node scripts/verify-drivers-training-crud-on-profile.mjs",
     "verify:drivers-onboarding-wizard": "node scripts/verify-drivers-onboarding-wizard.mjs",
+    "verify:drivers-document-expiry-alerts": "node scripts/verify-drivers-document-expiry-alerts.mjs",
     "verify:drivers-create-vocab": "node scripts/verify-drivers-create-vocab.mjs",
     "verify:drivers-earnings-debt-tab": "node scripts/verify-drivers-earnings-debt-tab.mjs",
     "verify:oem-parts-no-touch-existing-parts-surfaces": "node scripts/verify-oem-parts-no-touch-existing-parts-surfaces.mjs",

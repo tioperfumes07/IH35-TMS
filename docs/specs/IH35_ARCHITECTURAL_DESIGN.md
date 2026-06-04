@@ -1075,6 +1075,8 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **Driver onboarding wizard (A24-8, 2026-06-04):** Multi-step wizard at `/drivers/onboarding/:session_id` (identity → CDL → medical → DQF → signatures → I-9 → vehicle); partial progress in `safety.onboarding_sessions` (migration **0361** — 0349 reserved for A24-10 comm center, 0360 for B28 PM auto-WO); docs uploads via `/api/v1/docs/files/upload-url`; admin override with reason. **CI:** `verify:drivers-onboarding-wizard`.
 
+**Document expiry alert engine (A24-9, 2026-06-04):** Central rules + events in `safety.document_alert_rules` / `safety.document_alert_events` (migration **0350**); daily evaluator cron scans CDL, medical, training, DQF, uploaded docs, permits, hazmat at 90/60/30/7-day thresholds; email + in-app notifications; office inbox at `/drivers/alerts` with per-type rule editor. Legacy permit panel + DQF expiry chips remain (ARCHIVE-not-DELETE). **CI:** `verify:drivers-document-expiry-alerts`.
+
 **Create vocabulary (A24-4, 2026-06-03):** Drivers hub header CTA standardized to **+ Create Driver** (replaces non-canonical "+ Driver"). Locked "+ Create" / "+ Book" rule applies module-wide; ARCHIVE-not-DELETE comment retained at source. **CI:** `verify:drivers-create-vocab`.
 
 ## Trailer Profile (Fleet module) — Part 1 (locked 2026-06-02)

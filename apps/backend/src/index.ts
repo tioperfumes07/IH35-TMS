@@ -59,6 +59,8 @@ import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify
 import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriversMessagesRoutes } from "./drivers/messages.routes.js";
+import { registerDriversDocumentAlertsRoutes } from "./drivers/document-alerts.routes.js";
+import { initializeDocumentAlertEngineCron } from "./drivers/document-alerts.cron.js";
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
 import { registerDashcamOnDemandRoutes } from "./telematics/dashcam-on-demand.routes.js";
 import { registerTelematicsPositionsRoutes } from "./telematics/positions.routes.js";
@@ -513,6 +515,7 @@ async function main() {
   await registerDispatchPodBolRoutes(app);
   await registerDriverRoutes(app);
   await registerDriversMessagesRoutes(app);
+  await registerDriversDocumentAlertsRoutes(app);
   await registerGeofencesRoutes(app);
   await registerDriverDaySummaryRoutes(app);
   await registerTelematicsHeatmapRoutes(app);
@@ -814,6 +817,9 @@ async function main() {
 
     initializeIntegrityAlertEngineCron(app);
     app.log.info("[STARTUP] integrity-alert-engine-cron initialized");
+
+    initializeDocumentAlertEngineCron(app);
+    app.log.info("[STARTUP] document-alert-engine-cron initialized");
 
     initializePmAutoEngineCron(app);
     app.log.info("[STARTUP] pm-auto-engine-cron initialized");

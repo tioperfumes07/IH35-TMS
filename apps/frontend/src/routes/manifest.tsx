@@ -12,6 +12,7 @@ import { DriverDetailPage } from "../pages/DriverDetail";
 import { DriverProfilePage } from "../pages/drivers/DriverProfilePage";
 import { DriverHosDetailPage } from "../pages/drivers/DriverHosDetailPage";
 import { MessagesInboxPage } from "../pages/drivers/MessagesInboxPage";
+import { DocumentAlertsPage } from "../pages/alerts/DocumentAlertsPage";
 import { OnboardingWizardPage } from "../pages/drivers/OnboardingWizardPage";
 import { DriverLoadStatusesPage } from "../pages/DriverLoadStatusesPage";
 import { DriversPage } from "../pages/Drivers";
@@ -2527,6 +2528,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <MessagesInboxPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/alerts"
+          element={
+            <ProtectedRoute>
+              <DocumentAlertsPage />
             </ProtectedRoute>
           }
         />
