@@ -1,3 +1,5 @@
+import { scrubQboArchiveProjectionNotes } from "./qboArchiveNotes.js";
+
 export const VENDOR_PROFILE_META_PREFIX = "IH35_VENDOR_PROFILE_V1::";
 
 export type VendorQualityRating = "good" | "medium" | "bad";
@@ -65,7 +67,7 @@ export function emptyVendorProfileMeta(): VendorProfileMeta {
 }
 
 export function parseVendorNotes(notes: string | null | undefined): { publicNotes: string; meta: VendorProfileMeta } {
-  const raw = String(notes ?? "");
+  const raw = scrubQboArchiveProjectionNotes(notes);
   if (!raw.startsWith(VENDOR_PROFILE_META_PREFIX)) {
     return { publicNotes: raw, meta: emptyVendorProfileMeta() };
   }
