@@ -177,6 +177,7 @@
     "verify:qbo-vendors-push-shared-rate": "node scripts/verify-qbo-vendors-push-shared-rate.mjs",
     "verify:qbo-accounts-parent-first": "node scripts/verify-qbo-accounts-parent-first.mjs",
     "verify:session-create-updates-last-login": "node scripts/verify-session-create-updates-last-login.mjs",
+    "verify:identity-users-last-login-at-column": "node scripts/verify-identity-users-last-login-at-column.mjs",
     "verify:driver-listing-excludes-pseudo-users": "node scripts/verify-driver-listing-excludes-pseudo-users.mjs",
     "verify:no-test-seed-in-prod-listings": "node scripts/verify-no-test-seed-in-prod-listings.mjs",
     "verify:drivers-reference-catalogs-wired": "node scripts/verify-drivers-reference-catalogs-wired.mjs",
