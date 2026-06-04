@@ -158,6 +158,7 @@
     "verify:bulk-action-bar-mounted": "node scripts/verify-bulk-action-bar-mounted.mjs",
     "verify:bulk-update-route-mounted": "node scripts/verify-bulk-update-route-mounted.mjs",
     "verify:bulk-update-rls-where": "node scripts/verify-bulk-update-rls-where.mjs",
+    "verify:bulk-audit-per-id": "node scripts/verify-bulk-audit-per-id.mjs",
     "verify:driver-day-summary-empty-state-not-red": "node scripts/verify-driver-day-summary-empty-state-not-red.mjs",
     "verify:driver-day-summary-route-mounted": "node scripts/verify-driver-day-summary-route-mounted.mjs",
     "verify:kpi-sources-of-truth-exists": "node scripts/verify-kpi-sources-of-truth-exists.mjs",

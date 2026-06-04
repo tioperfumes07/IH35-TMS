@@ -525,6 +525,9 @@ jobs:
       - name: verify:bulk-update-rls-where
         run: npm run verify:bulk-update-rls-where
 
+      - name: verify:bulk-audit-per-id
+        run: npm run verify:bulk-audit-per-id
+
       - name: verify:fleet-unified-includes-trailers
         run: npm run verify:fleet-unified-includes-trailers
 

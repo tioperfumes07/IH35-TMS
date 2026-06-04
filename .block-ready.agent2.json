@@ -1,19 +1,27 @@
 {
-  "block_id": "P0-USERS-500",
-  "branch": "fix/identity-users-last-login-at-column",
-  "phase": "P0",
-  "task": "P0-USERS-500",
+  "block_id": "BULK-2",
+  "branch": "feat/bulk-2-backend-framework",
+  "phase": "BULK cluster — WAVE 1 Lane B",
+  "task": "Backend bulk-update factory + audit + rate-limit",
   "allowed_files": [
-    "db/migrations/0368_identity_users_last_login_at.sql",
-    "apps/backend/src/identity/users.routes.test.ts",
-    "scripts/verify-identity-users-last-login-at-column.mjs",
-    "scripts/verify-guards/182-verify-identity-users-last-login-at-column.mjs",
+    "apps/backend/src/bulk/**",
+    "apps/backend/src/mdata/unit-bulk-update.routes.ts",
+    "apps/backend/src/mdata/unit-bulk-update.test.ts",
+    "apps/backend/src/mdata/equipment-bulk-update.routes.ts",
+    "apps/backend/src/mdata/equipment-bulk-update.test.ts",
+    "scripts/verify-bulk-audit-per-id.mjs",
+    "scripts/verify-guards/*-verify-bulk-audit-per-id.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:bulk-audit-per-id",
+    "verify:bulk-update-route-mounted",
+    "verify:bulk-update-rls-where",
+    "verify:equipment-bulk-update-rls-where"
+  ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }

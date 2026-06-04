@@ -30,7 +30,8 @@ describe("equipment bulk-update route", () => {
 
   it("emits equipment.bulk_update audit rows per affected trailer", () => {
     expect(routes).toMatch(/equipment\.bulk_update/);
-    expect(routes).toMatch(/appendCrudAudit/);
+    expect(routes).toMatch(/appendLegacyFleetBulkAudit/);
+    expect(routes).toMatch(/bulk-update\.factory/);
     expect(index).toMatch(/registerEquipmentBulkUpdateRoutes/);
   });
 });
