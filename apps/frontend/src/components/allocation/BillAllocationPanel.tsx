@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { OFFLINE_PREVIEW_BANNER } from "../../lib/prodEmptyStateCopy";
 import { AllocationMethodPicker } from "./AllocationMethodPicker";
 import { AllocationPreviewTable } from "./AllocationPreviewTable";
 import type {
