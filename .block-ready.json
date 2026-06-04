@@ -12,7 +12,8 @@
     "apps/backend/src/ap/payment-application.routes.test.ts",
     "apps/backend/src/index.ts",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
-    ".block-ready.json"
+    ".block-ready.json",
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
