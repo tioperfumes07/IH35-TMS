@@ -22,6 +22,7 @@ const snapshotFixture = {
   history: [
     {
       id: "log-1",
+      equipment_id: TRAILER,
       hours_reading: 4400,
       source: "samsara",
       source_label: "Samsara",
@@ -45,6 +46,7 @@ describe("TrailerReeferSection (A19)", () => {
     vi.spyOn(maintenanceApi, "fetchMaintenanceReeferHoursSnapshot").mockResolvedValue(snapshotFixture);
     vi.spyOn(maintenanceApi, "createMaintenanceReeferHoursLogEntry").mockResolvedValue({
       id: "log-2",
+      equipment_id: TRAILER,
       hours_reading: 4500,
       source: "manual",
       source_label: "Manual",
