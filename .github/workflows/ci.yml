@@ -647,6 +647,9 @@ jobs:
       - name: verify:billing-summary-route
         run: npm run verify:billing-summary-route
 
+      - name: verify:customer-billing-endpoints
+        run: npm run verify:customer-billing-endpoints
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

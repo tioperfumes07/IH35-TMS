@@ -21,6 +21,24 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
+async function relationExists(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ rel?: string | null }> }> },
+  qualifiedName: string
+) {
+  const res = await client.query(`SELECT to_regclass($1) AS rel`, [qualifiedName]);
+  return Boolean(res.rows[0]?.rel);
+}
+
+const EMPTY_AGING_ROW = {
+  current_cents: 0,
+  bucket_1_30_cents: 0,
+  bucket_31_60_cents: 0,
+  bucket_61_90_cents: 0,
+  bucket_91_plus_cents: 0,
+  total_open_cents: 0,
+  open_invoice_count: 0,
+};
+
 export async function registerCustomerBillingRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/customers/:customer_id/billing-summary", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -69,23 +87,26 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
       const customer = customerRes.rows[0];
       if (!customer) return reply.code(404).send({ error: "mdata_customer_not_found" });
 
-      const agingRes = await client.query(
-        `
-          SELECT
-            current_cents,
-            bucket_1_30_cents,
-            bucket_31_60_cents,
-            bucket_61_90_cents,
-            bucket_91_plus_cents,
-            total_open_cents,
-            open_invoice_count
-          FROM views.ar_aging
-          WHERE operating_company_id = $1
-            AND customer_id = $2
-          LIMIT 1
-        `,
-        [operatingCompanyId, customerId]
-      );
+      let agingRes: { rows: Array<Record<string, unknown>> } = { rows: [] };
+      if (await relationExists(client, "views.ar_aging")) {
+        agingRes = await client.query(
+          `
+            SELECT
+              current_cents,
+              bucket_1_30_cents,
+              bucket_31_60_cents,
+              bucket_61_90_cents,
+              bucket_91_plus_cents,
+              total_open_cents,
+              open_invoice_count
+            FROM views.ar_aging
+            WHERE operating_company_id = $1
+              AND customer_id = $2
+            LIMIT 1
+          `,
+          [operatingCompanyId, customerId]
+        );
+      }
 
       const lastPaymentRes = await client.query(
         `
@@ -98,16 +119,7 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
         [customerId, operatingCompanyId]
       );
 
-      const agingRow = (agingRes.rows[0] ??
-        {
-          current_cents: 0,
-          bucket_1_30_cents: 0,
-          bucket_31_60_cents: 0,
-          bucket_61_90_cents: 0,
-          bucket_91_plus_cents: 0,
-          total_open_cents: 0,
-          open_invoice_count: 0,
-        }) as {
+      const agingRow = (agingRes.rows[0] ?? EMPTY_AGING_ROW) as {
         current_cents: number | string | bigint;
         bucket_1_30_cents: number | string | bigint;
         bucket_31_60_cents: number | string | bigint;

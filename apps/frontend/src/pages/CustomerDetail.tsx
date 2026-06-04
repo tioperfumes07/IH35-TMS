@@ -47,6 +47,8 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
 import { CoiRequestsTab } from "./customers/tabs/CoiRequestsTab";
 import { PortalUsersTab } from "./customers/components/PortalUsersTab";
+import { parseApiErrorPayload } from "../components/forms/useFormValidation";
+import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -59,6 +61,19 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users"] as const;
 type CustomerTab = (typeof tabs)[number];
+
+function formatBillingSummaryError(error: unknown): string {
+  if (error instanceof ApiError) {
+    const parsed = parseApiErrorPayload(error.data);
+    const formError = parsed.message;
+    const fieldSummary = Object.entries(parsed.fieldErrors)
+      .map(([key, val]) => `${key}: ${val}`)
+      .join("; ");
+    return [formError, fieldSummary].filter(Boolean).join(" — ") || error.message;
+  }
+  if (error instanceof Error) return error.message;
+  return "Failed to load billing summary.";
+}
 
 const customerSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -1459,6 +1474,13 @@ export function CustomerDetailPage() {
       ) : null}
 
       {activeTab === "Billing & Receivables" ? (
+        <div className="space-y-3">
+          {billingSummaryQuery.isError ? (
+            <ListErrorBanner
+              message={formatBillingSummaryError(billingSummaryQuery.error)}
+              onRetry={() => void billingSummaryQuery.refetch()}
+            />
+          ) : null}
         <div className="grid gap-3 md:grid-cols-3">
           <DataPanel title="Factoring Config">
             <div className="space-y-1 text-sm text-gray-700">
@@ -1768,6 +1790,7 @@ export function CustomerDetailPage() {
               </table>
             </div>
           </div>
+        </div>
         </div>
       ) : null}
 
