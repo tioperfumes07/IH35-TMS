@@ -50,9 +50,9 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     tabs: [
       { id: "safety-events", label: "Safety Events", route: "/safety/safety-events", badge: "new" },
       { id: "accidents", label: "Accidents & Incidents", route: "/safety/accidents", badge: null, status: "Live" },
-      { id: "damage-reports", label: "Damage Reports", route: "/safety/damage-reports", badge: null },
-      { id: "trailer-interchanges", label: "Trailer Interchanges", route: "/safety/trailer-interchanges", badge: null },
-      { id: "cargo-claims", label: "Cargo Claims", route: "/safety/cargo-claims", badge: null },
+      { id: "damage-reports", label: "Damage Reports", route: "/safety/damage-reports", badge: null, status: "Live" },
+      { id: "trailer-interchanges", label: "Trailer Interchanges", route: "/safety/trailer-interchanges", badge: null, status: "Live" },
+      { id: "cargo-claims", label: "Cargo Claims", route: "/safety/cargo-claims", badge: null, status: "Live" },
     ],
   },
   {
