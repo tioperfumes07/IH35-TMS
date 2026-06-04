@@ -1,3 +1,5 @@
+import { EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_ALIAS_SQL } from "./test-seed-archive.js";
+
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, args?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -38,6 +40,7 @@ export async function searchCustomersForAutocomplete(
         (c.deactivated_at IS NULL) AS active
       FROM mdata.customers c
       WHERE c.operating_company_id = $1::uuid
+        AND ${EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_ALIAS_SQL}
         AND ($2::boolean = false OR c.deactivated_at IS NULL)
         AND (
           $3::text = ''

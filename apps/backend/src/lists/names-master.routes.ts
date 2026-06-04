@@ -1,7 +1,12 @@
 import type { FastifyInstance } from "fastify";
 import { withCurrentUser } from "../auth/db.js";
 import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
-import { EXCLUDE_ARCHIVED_DRIVERS_SQL, EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL } from "../mdata/test-seed-archive.js";
+import {
+  EXCLUDE_ARCHIVED_DRIVERS_SQL,
+  EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_ALIAS_SQL,
+  EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL,
+  EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL,
+} from "../mdata/test-seed-archive.js";
 import {
   buildArchivedFilter,
   currentAuthUser,
@@ -57,6 +62,7 @@ async function searchCustomers(
 ) {
   const values: unknown[] = [companyId];
   const archivedFilter = buildArchivedFilter(includeArchived, "c.deactivated_at");
+  const testSeedFilter = includeArchived ? "TRUE" : EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_ALIAS_SQL;
   const search = searchClause(q, ["c.customer_name", "c.billing_email", "c.billing_phone"], values);
   const res = await client.query(
     `
@@ -66,9 +72,10 @@ async function searchCustomers(
         c.billing_email AS primary_email,
         c.billing_phone AS primary_phone,
         c.qbo_customer_id AS qbo_id,
-        c.deactivated_at AS archived_at
+        COALESCE(c.archived_at, c.deactivated_at) AS archived_at
       FROM mdata.customers c
       WHERE c.operating_company_id = $1
+        AND ${testSeedFilter}
         AND ${archivedFilter}
         ${search.sql}
       ORDER BY c.customer_name ASC
@@ -335,7 +342,9 @@ export async function registerNamesMasterRoutes(app: FastifyInstance) {
     const parsed = namesCountsQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const { operating_company_id, include_archived } = parsed.data;
-    const archivedCustomers = buildArchivedFilter(include_archived, "deactivated_at");
+    const archivedCustomers = include_archived
+      ? "TRUE"
+      : `${EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL} AND deactivated_at IS NULL`;
     const archivedVendors = buildArchivedFilter(include_archived, "deactivated_at");
     const archivedContacts = buildArchivedFilter(include_archived, "cc.deactivated_at");
     const archivedDrivers = include_archived ? "TRUE" : "archived_at IS NULL AND deactivated_at IS NULL";

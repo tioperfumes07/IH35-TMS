@@ -1,17 +1,26 @@
 {
-  "block_id": "CHORE-DUAL-LANE-NEVER-IDLE",
-  "branch": "chore/cherry-pick-never-idle-187bd531",
-  "phase": "Dual-Lane",
-  "task": "dual-lane-never-idle-hooks",
+  "block_id": "BLOCK-P8-AUDIT-TEST-DATA",
+  "branch": "fix/audit-test-data-leak",
+  "phase": "Tier 2",
+  "task": "P8-AUDIT-TEST-DATA",
   "allowed_files": [
-    ".cursor/rules/dual-lane-never-idle.mdc",
-    ".cursor/hooks.json",
-    ".cursor/hooks/dual-lane-on-subagent-stop.sh",
-    "AGENTS.md",
+    "db/migrations/0367_*",
+    "apps/backend/src/mdata/test-seed-archive.ts",
+    "apps/backend/src/mdata/customers.routes.ts",
+    "apps/backend/src/mdata/customer-autocomplete.shared.ts",
+    "apps/backend/src/mdata/__tests__/customers-test-seed-archive-list.test.ts",
+    "apps/backend/src/mdata/__tests__/test-seed-archive.test.ts",
+    "apps/backend/src/lists/names-master.routes.ts",
+    "apps/backend/src/__tests__/migrations/0367-archive-mdata-customers-test-seed.test.ts",
+    "scripts/verify-no-test-seed-in-prod-listings.mjs",
+    "scripts/__tests__/verify-no-test-seed-in-prod-listings.test.mjs",
+    "package.json",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:no-test-seed-in-prod-listings"
+  ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": false
 }

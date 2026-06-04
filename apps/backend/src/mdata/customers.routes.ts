@@ -9,6 +9,7 @@ import { sendZodValidation } from "../lib/zod-http-error.js";
 import { enqueueTmsCustomerPushRequested } from "../qbo/tms-customer-push-chain.service.js";
 import { listActiveCustomerClassifications } from "./classification-queries.js";
 import { searchCustomersForAutocomplete } from "./customer-autocomplete.shared.js";
+import { EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL } from "./test-seed-archive.js";
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -345,7 +346,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const customers = await withCurrentUser(authUser.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       const values: unknown[] = [];
-      const filters: string[] = [];
+      const filters: string[] = [EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL];
       if (status === "active") filters.push("deactivated_at IS NULL");
       if (status === "inactive") filters.push("deactivated_at IS NOT NULL");
       let searchContainsIdx: number | null = null;
