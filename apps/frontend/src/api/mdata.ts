@@ -22,6 +22,18 @@ export function listDrivers(params: {
   }));
 }
 
+export function quicksaveEquipmentAssignment(payload: {
+  operating_company_id: string;
+  equipment_kind: "truck" | "trailer";
+  equipment_id: string;
+  driver_id: string;
+}) {
+  return apiRequest<{ ok: boolean; equipment_kind: string; equipment_id: string; driver_id: string }>(
+    "/api/v1/assignments/quicksave",
+    { method: "POST", body: payload }
+  );
+}
+
 export type DriverTeamSplitMethod = "50_50" | "60_40" | "70_30" | "mileage_prorated" | "hours_prorated" | "custom";
 
 export type DriverTeam = {

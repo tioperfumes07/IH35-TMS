@@ -200,6 +200,7 @@ import { registerCustomerBillingRoutes } from "./mdata/customer-billing.routes.j
 import { registerCustomerLanesRoutes } from "./mdata/customer-lanes.routes.js";
 import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias.routes.js";
 import { registerCustomerRoutes } from "./customers/index.js";
+import { registerAssignmentsQuicksaveRoutes } from "./assignments/quicksave.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.js";
 import { registerQboMasterWriteRoutes } from "./mdata/qbo-master-write.routes.js";
@@ -472,6 +473,7 @@ async function main() {
   await registerWorkflowRoutes(app);
   await registerIdentityApplicantRoutes(app);
   await registerMdataRoutes(app);
+  await registerAssignmentsQuicksaveRoutes(app);
   await registerFleetTrailerRoutes(app);
   await registerAssetsRoutes(app);
   await registerQboAutocompleteRoutes(app);

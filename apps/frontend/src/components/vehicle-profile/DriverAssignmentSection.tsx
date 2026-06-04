@@ -7,11 +7,13 @@ export function DriverAssignmentSection({
   companyId,
   defaultDriver,
   currentDriver,
+  onQuickAssign,
 }: {
   unitId: string;
   companyId: string;
   defaultDriver: Record<string, unknown> | null;
   currentDriver: Record<string, unknown> | null;
+  onQuickAssign?: () => void;
 }) {
   const qc = useQueryClient();
   const mismatch =
@@ -29,7 +31,14 @@ export function DriverAssignmentSection({
 
   return (
     <section className="rounded border border-gray-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-gray-800">Driver assignment</h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-gray-800">Driver assignment</h3>
+        {onQuickAssign ? (
+          <Button size="sm" onClick={onQuickAssign} data-testid="quick-assign-truck">
+            Quick assign
+          </Button>
+        ) : null}
+      </div>
       {mismatch ? <p className="mt-1 text-xs text-amber-700">Default driver differs from currently driving (Samsara).</p> : null}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="rounded border border-gray-100 p-3">

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
-import { patchUnit } from "../../api/mdata";
+import { patchUnit, quicksaveEquipmentAssignment } from "../../api/mdata";
+import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
 import { listClassesForJe } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -75,6 +76,7 @@ export function VehicleProfilePage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const [quickAssignOpen, setQuickAssignOpen] = useState(false);
   const [qboVendorId, setQboVendorId] = useState<string | null>(null);
   const [qboVendorLabel, setQboVendorLabel] = useState("");
   const [qboClassTmsId, setQboClassTmsId] = useState("");
@@ -179,6 +181,7 @@ export function VehicleProfilePage() {
               companyId={companyId}
               defaultDriver={profile.default_driver}
               currentDriver={profile.current_driver}
+              onQuickAssign={() => setQuickAssignOpen(true)}
             />
           </div>
           <div data-testid="vp-section-4-load">
@@ -293,6 +296,22 @@ export function VehicleProfilePage() {
           Save
         </Button>
       </div>
+      <QuickAssignModal
+        open={quickAssignOpen}
+        companyId={companyId}
+        target={{ equipmentKind: "truck", equipmentId: id, equipmentLabel: unitNumber }}
+        onClose={() => setQuickAssignOpen(false)}
+        onConfirm={async (driverId) => {
+          await quicksaveEquipmentAssignment({
+            operating_company_id: companyId,
+            equipment_kind: "truck",
+            equipment_id: id,
+            driver_id: driverId,
+          });
+          void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] });
+          pushToast("Driver assigned", "success");
+        }}
+      />
     </div>
   );
 }
