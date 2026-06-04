@@ -105,6 +105,8 @@ Every page renders inside a 3-zone shell:
 ### Top action button
 **+ Create Work Order** (opens CreateWOModal with source type selector)
 
+**Create vocabulary (B25, 2026-06-03):** Maintenance create CTAs standardized to **+ Create [Object]** — e.g. **+ Create Part**, **+ Create Rule**, **+ Create Work Order** (replaces **+ Create WO**, **+ Add rule**, bare **+ Create** on parts). Fleet vehicle ActionBar deep-links to `/maintenance/work-orders/new?unit_id=` via `WorkOrderNewPage`. ARCHIVE-not-DELETE comments at superseded labels. **CI:** `verify:maint-create-vocab`.
+
 ### Sub-nav tabs (10 total — UPDATED with locked design)
 
 | Tab | What it shows | Notes |

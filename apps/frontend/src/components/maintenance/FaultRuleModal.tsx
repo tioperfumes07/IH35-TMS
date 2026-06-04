@@ -32,7 +32,8 @@ const empty: FaultRuleFormValues = {
 
 export function FaultRuleModal({ initial, onClose, onSave, saving }: Props) {
   const [form, setForm] = useState<FaultRuleFormValues>(initial ?? empty);
-  const title = initial?.id ? "Edit fault rule" : "Add fault rule";
+  // ARCHIVE-not-DELETE (B25): prior create title "Add fault rule" — Sunset: 2026-09.
+  const title = initial?.id ? "Edit fault rule" : "Create Rule";
 
   useEffect(() => {
     setForm(initial ?? empty);

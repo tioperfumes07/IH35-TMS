@@ -24,8 +24,12 @@ export function ActionBar({
       <Button size="sm" variant="secondary" onClick={onChangeStatus}>
         Change Status
       </Button>
-      <a className={linkClass} href={`/maintenance/work-orders/new?unit_id=${unitId}`}>
-        + Create WO
+      <a
+        className={linkClass}
+        href={`/maintenance/work-orders/new?unit_id=${encodeURIComponent(unitId)}`}
+        data-testid="vp-create-work-order"
+      >
+        + Create Work Order
       </a>
       <a className={linkClass} href={`/fleet/map?unit=${unitId}`}>
         View on Map

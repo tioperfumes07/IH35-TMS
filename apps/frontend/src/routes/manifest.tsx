@@ -73,6 +73,7 @@ import type { MaintenanceTabId } from "../pages/maintenance/MaintenanceHome";
 import { WorkOrdersConsoleDetailPage } from "../pages/work-orders/WorkOrdersConsoleDetailPage";
 import { WorkOrdersConsoleListPage } from "../pages/work-orders/WorkOrdersConsoleListPage";
 import { WorkOrderDetailPage } from "../pages/maintenance/WorkOrderDetailPage";
+import { WorkOrderNewPage } from "../pages/maintenance/WorkOrderNewPage";
 import { VehiclesMasterDataPage } from "../pages/maintenance/vehicles/VehiclesMasterDataPage";
 import { DriversMasterDataPage } from "../pages/maintenance/drivers/DriversMasterDataPage";
 import { PartsMasterDataPage } from "../pages/maintenance/parts/PartsMasterDataPage";
@@ -761,6 +762,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <LiabilitiesHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/work-orders/new"
+          element={
+            <ProtectedRoute>
+              <WorkOrderNewPage />
             </ProtectedRoute>
           }
         />

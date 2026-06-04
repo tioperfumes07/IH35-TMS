@@ -131,7 +131,10 @@ export function PartsMasterDataPage() {
         </div>
         <div className="flex items-center gap-2">
           <input className="h-8 rounded border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parts" />
-          <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>+ Create</Button>
+          {/* ARCHIVE-not-DELETE (B25): prior header CTA "+ Create" — Sunset: 2026-09. Canonical: + Create Part. */}
+          <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
+            + Create Part
+          </Button>
         </div>
       </div>
 
