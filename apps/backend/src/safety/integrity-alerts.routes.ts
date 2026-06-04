@@ -56,7 +56,7 @@ const ruleUpsertBodySchema = z.object({
   source_view: z.string().min(1),
   alert_category: z.string().min(1),
   subject_type: z.enum(["driver", "unit", "vendor", "unit_driver_pair", "vendor_driver_pair"]),
-  threshold_config: z.record(z.unknown()).optional(),
+  threshold_config: z.record(z.string(), z.unknown()).optional(),
   severity: z.enum(["info", "warning", "critical"]).optional(),
   enabled: z.boolean().optional(),
 });
