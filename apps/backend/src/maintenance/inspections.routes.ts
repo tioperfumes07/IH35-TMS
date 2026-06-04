@@ -233,19 +233,20 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     if (!parsed.success) return validationError(reply, parsed.error);
     const body = parsed.data;
 
-    const created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
-      if (body.dvir_submission_id) {
-        const dvirRes = await client.query(
-          `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
-          [body.dvir_submission_id, body.operating_company_id]
-        );
-        if (!dvirRes.rows[0]) {
-          throw Object.assign(new Error("dvir_not_found"), { code: "dvir_not_found" });
+    try {
+      const created = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+        if (body.dvir_submission_id) {
+          const dvirRes = await client.query(
+            `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+            [body.dvir_submission_id, body.operating_company_id]
+          );
+          if (!dvirRes.rows[0]) {
+            throw Object.assign(new Error("dvir_not_found"), { code: "dvir_not_found" });
+          }
         }
-      }
 
-      const res = await client.query(
-        `
+        const res = await client.query(
+          `
           INSERT INTO maintenance.inspections (
             operating_company_id, unit_id, inspection_type, status, scheduled_date, inspection_date,
             inspector_name, mileage, outcome, notes, defects, dvir_submission_id, is_ad_hoc, created_by_user_id
@@ -254,45 +255,39 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
           )
           RETURNING id::text
         `,
-        [
-          body.operating_company_id,
-          body.unit_id,
-          body.inspection_type,
-          body.status,
-          body.scheduled_date ?? null,
-          body.inspection_date ?? null,
-          body.inspector_name ?? null,
-          body.mileage ?? null,
-          body.outcome ?? null,
-          body.notes,
-          body.defects,
-          body.dvir_submission_id ?? null,
-          body.is_ad_hoc,
-          user.uuid,
-        ]
-      );
-      const id = res.rows[0]?.id;
-      await appendCrudAudit(client, user.uuid, "maintenance.inspection.created", {
-        resource_id: id,
-        operating_company_id: body.operating_company_id,
-        inspection_type: body.inspection_type,
-        dvir_submission_id: body.dvir_submission_id ?? null,
+          [
+            body.operating_company_id,
+            body.unit_id,
+            body.inspection_type,
+            body.status,
+            body.scheduled_date ?? null,
+            body.inspection_date ?? null,
+            body.inspector_name ?? null,
+            body.mileage ?? null,
+            body.outcome ?? null,
+            body.notes,
+            body.defects,
+            body.dvir_submission_id ?? null,
+            body.is_ad_hoc,
+            user.uuid,
+          ]
+        );
+        const id = res.rows[0]?.id;
+        await appendCrudAudit(client, user.uuid, "maintenance.inspection.created", {
+          resource_id: id,
+          operating_company_id: body.operating_company_id,
+          inspection_type: body.inspection_type,
+          dvir_submission_id: body.dvir_submission_id ?? null,
+        });
+        const detail = await client.query(`${INSPECTION_SELECT} WHERE i.id = $1 LIMIT 1`, [id]);
+        return mapInspectionRow(detail.rows[0] ?? { id });
       });
-      const detail = await client.query(
-        `${INSPECTION_SELECT} WHERE i.id = $1 LIMIT 1`,
-        [id]
-      );
-      return mapInspectionRow(detail.rows[0] ?? { id });
-    }).catch((err: Error & { code?: string }) => {
-      if (err.code === "dvir_not_found") {
-        reply.code(400).send({ error: "dvir_not_found" });
-        return null;
-      }
+      return reply.code(201).send(created);
+    } catch (err) {
+      const coded = err as Error & { code?: string };
+      if (coded.code === "dvir_not_found") return reply.code(400).send({ error: "dvir_not_found" });
       throw err;
-    });
-
-    if (!created) return;
-    return reply.code(201).send(created);
+    }
   });
 
   app.patch("/api/v1/maintenance/inspections/:id", async (req, reply) => {
@@ -304,72 +299,72 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     if (!parsed.success) return validationError(reply, parsed.error);
     const body = parsed.data;
 
-    const updated = await withCompany(user.uuid, body.operating_company_id, async (client) => {
-      const existingRes = await client.query(
-        `SELECT * FROM maintenance.inspections WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL LIMIT 1`,
-        [params.data.id, body.operating_company_id]
-      );
-      const existing = existingRes.rows[0];
-      if (!existing) return null;
-
-      if (body.dvir_submission_id) {
-        const dvirRes = await client.query(
-          `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
-          [body.dvir_submission_id, body.operating_company_id]
+    try {
+      const updated = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+        const existingRes = await client.query(
+          `SELECT * FROM maintenance.inspections WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL LIMIT 1`,
+          [params.data.id, body.operating_company_id]
         );
-        if (!dvirRes.rows[0]) throw Object.assign(new Error("dvir_not_found"), { code: "dvir_not_found" });
-      }
+        const existing = existingRes.rows[0];
+        if (!existing) return null;
 
-      const fields: string[] = [];
-      const values: unknown[] = [];
-      const setField = (column: string, value: unknown) => {
-        values.push(value);
-        fields.push(`${column} = $${values.length}`);
-      };
+        if (body.dvir_submission_id) {
+          const dvirRes = await client.query(
+            `SELECT id FROM safety.dvir_submissions WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+            [body.dvir_submission_id, body.operating_company_id]
+          );
+          if (!dvirRes.rows[0]) throw Object.assign(new Error("dvir_not_found"), { code: "dvir_not_found" });
+        }
 
-      if (body.unit_id != null) setField("unit_id", body.unit_id);
-      if (body.inspection_type != null) setField("inspection_type", body.inspection_type);
-      if (body.status != null) setField("status", body.status);
-      if (body.scheduled_date !== undefined) setField("scheduled_date", body.scheduled_date);
-      if (body.inspection_date !== undefined) setField("inspection_date", body.inspection_date);
-      if (body.inspector_name !== undefined) setField("inspector_name", body.inspector_name);
-      if (body.mileage !== undefined) setField("mileage", body.mileage);
-      if (body.outcome !== undefined) setField("outcome", body.outcome);
-      if (body.notes !== undefined) setField("notes", body.notes);
-      if (body.defects !== undefined) setField("defects", body.defects);
-      if (body.dvir_submission_id !== undefined) setField("dvir_submission_id", body.dvir_submission_id);
-      if (body.is_ad_hoc !== undefined) setField("is_ad_hoc", body.is_ad_hoc);
+        const fields: string[] = [];
+        const values: unknown[] = [];
+        const setField = (column: string, value: unknown) => {
+          values.push(value);
+          fields.push(`${column} = $${values.length}`);
+        };
 
-      values.push(params.data.id, body.operating_company_id);
-      await client.query(
-        `
+        if (body.unit_id != null) setField("unit_id", body.unit_id);
+        if (body.inspection_type != null) setField("inspection_type", body.inspection_type);
+        if (body.status != null) setField("status", body.status);
+        if (body.scheduled_date !== undefined) setField("scheduled_date", body.scheduled_date);
+        if (body.inspection_date !== undefined) setField("inspection_date", body.inspection_date);
+        if (body.inspector_name !== undefined) setField("inspector_name", body.inspector_name);
+        if (body.mileage !== undefined) setField("mileage", body.mileage);
+        if (body.outcome !== undefined) setField("outcome", body.outcome);
+        if (body.notes !== undefined) setField("notes", body.notes);
+        if (body.defects !== undefined) setField("defects", body.defects);
+        if (body.dvir_submission_id !== undefined) setField("dvir_submission_id", body.dvir_submission_id);
+        if (body.is_ad_hoc !== undefined) setField("is_ad_hoc", body.is_ad_hoc);
+
+        values.push(params.data.id, body.operating_company_id);
+        await client.query(
+          `
           UPDATE maintenance.inspections
           SET ${fields.join(", ")}, updated_at = now()
           WHERE id = $${values.length - 1} AND operating_company_id = $${values.length}
         `,
-        values
-      );
+          values
+        );
 
-      const detail = await client.query(`${INSPECTION_SELECT} WHERE i.id = $1 LIMIT 1`, [params.data.id]);
-      const updatedRow = detail.rows[0] ?? existing;
+        const detail = await client.query(`${INSPECTION_SELECT} WHERE i.id = $1 LIMIT 1`, [params.data.id]);
+        const updatedRow = detail.rows[0] ?? existing;
 
-      await appendCrudAudit(client, user.uuid, "maintenance.inspection.updated", {
-        resource_id: params.data.id,
-        operating_company_id: body.operating_company_id,
-        changes: buildPatchChanges(body as Record<string, unknown>, existing, updatedRow),
+        await appendCrudAudit(client, user.uuid, "maintenance.inspection.updated", {
+          resource_id: params.data.id,
+          operating_company_id: body.operating_company_id,
+          changes: buildPatchChanges(body as Record<string, unknown>, existing, updatedRow),
+        });
+
+        return mapInspectionRow(updatedRow);
       });
 
-      return mapInspectionRow(updatedRow);
-    }).catch((err: Error & { code?: string }) => {
-      if (err.code === "dvir_not_found") {
-        reply.code(400).send({ error: "dvir_not_found" });
-        return null;
-      }
+      if (updated === null) return reply.code(404).send({ error: "not_found" });
+      return updated;
+    } catch (err) {
+      const coded = err as Error & { code?: string };
+      if (coded.code === "dvir_not_found") return reply.code(400).send({ error: "dvir_not_found" });
       throw err;
-    });
-
-    if (updated === null) return reply.code(404).send({ error: "not_found" });
-    return updated;
+    }
   });
 
   app.post("/api/v1/maintenance/inspections/:id/archive", async (req, reply) => {
@@ -411,51 +406,51 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
     const parsed = attachPhotoSchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    const photo = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
-      const inspectionRes = await client.query(
-        `SELECT id FROM maintenance.inspections WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL LIMIT 1`,
-        [params.data.id, parsed.data.operating_company_id]
-      );
-      if (!inspectionRes.rows[0]) return null;
+    try {
+      const photo = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
+        const inspectionRes = await client.query(
+          `SELECT id FROM maintenance.inspections WHERE id = $1 AND operating_company_id = $2 AND archived_at IS NULL LIMIT 1`,
+          [params.data.id, parsed.data.operating_company_id]
+        );
+        if (!inspectionRes.rows[0]) return null;
 
-      const fileRes = await client.query(
-        `SELECT id FROM docs.files WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
-        [parsed.data.docs_file_id, parsed.data.operating_company_id]
-      );
-      if (!fileRes.rows[0]) throw Object.assign(new Error("docs_file_not_found"), { code: "docs_file_not_found" });
+        const fileRes = await client.query(
+          `SELECT id FROM docs.files WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [parsed.data.docs_file_id, parsed.data.operating_company_id]
+        );
+        if (!fileRes.rows[0]) throw Object.assign(new Error("docs_file_not_found"), { code: "docs_file_not_found" });
 
-      const res = await client.query(
-        `
+        const res = await client.query(
+          `
           INSERT INTO maintenance.inspection_photos (
             operating_company_id, inspection_id, docs_file_id, caption, sort_order
           ) VALUES ($1, $2, $3, $4, $5)
           RETURNING id::text, docs_file_id::text, caption, sort_order, created_at::text
         `,
-        [
-          parsed.data.operating_company_id,
-          params.data.id,
-          parsed.data.docs_file_id,
-          parsed.data.caption ?? null,
-          parsed.data.sort_order,
-        ]
-      );
+          [
+            parsed.data.operating_company_id,
+            params.data.id,
+            parsed.data.docs_file_id,
+            parsed.data.caption ?? null,
+            parsed.data.sort_order,
+          ]
+        );
 
-      await appendCrudAudit(client, user.uuid, "maintenance.inspection.photo_attached", {
-        resource_id: params.data.id,
-        operating_company_id: parsed.data.operating_company_id,
-        docs_file_id: parsed.data.docs_file_id,
+        await appendCrudAudit(client, user.uuid, "maintenance.inspection.photo_attached", {
+          resource_id: params.data.id,
+          operating_company_id: parsed.data.operating_company_id,
+          docs_file_id: parsed.data.docs_file_id,
+        });
+
+        return res.rows[0];
       });
 
-      return res.rows[0];
-    }).catch((err: Error & { code?: string }) => {
-      if (err.code === "docs_file_not_found") {
-        reply.code(400).send({ error: "docs_file_not_found" });
-        return null;
-      }
+      if (photo === null) return reply.code(404).send({ error: "not_found" });
+      return reply.code(201).send({ photo });
+    } catch (err) {
+      const coded = err as Error & { code?: string };
+      if (coded.code === "docs_file_not_found") return reply.code(400).send({ error: "docs_file_not_found" });
       throw err;
-    });
-
-    if (photo === null) return reply.code(404).send({ error: "not_found" });
-    return reply.code(201).send({ photo });
+    }
   });
 }
