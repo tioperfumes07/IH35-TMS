@@ -1,19 +1,19 @@
 {
-  "block_id": "BLOCK-P8-AUDIT-UNDEFINED-LEGEND",
-  "branch": "fix/audit-undefined-legend",
-  "phase": "Tier 2 \u2014 P8 Audit",
-  "task": "P8-AUDIT-UNDEFINED-LEGEND",
+  "block_id": "P0-USERS-500",
+  "branch": "fix/identity-users-last-login-at-column",
+  "phase": "P0",
+  "task": "P0-USERS-500",
   "allowed_files": [
-    "apps/frontend/src/lib/chartLegend.ts",
-    "apps/frontend/src/lib/chartLegend.test.ts",
-    "apps/frontend/src/pages/home/charts/WOStatusPieChart.tsx",
-    "apps/frontend/src/pages/home/charts/WOStatusPieChart.test.tsx",
-    "apps/frontend/src/pages/reports/MaintenanceCostPerUnitPage.tsx",
-    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "db/migrations/0368_identity_users_last_login_at.sql",
+    "apps/backend/src/identity/users.routes.test.ts",
+    "scripts/verify-identity-users-last-login-at-column.mjs",
+    "scripts/verify-guards/182-verify-identity-users-last-login-at-column.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }
