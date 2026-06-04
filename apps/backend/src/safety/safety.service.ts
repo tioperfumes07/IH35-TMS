@@ -1,10 +1,12 @@
 import { withCurrentUser } from "../auth/db.js";
+import { safetyActivityWindowSql, type SafetyActivityWindow } from "./safety-activity-window.js";
 
 export async function listSafetyEvents(
   userId: string,
   input: {
     operating_company_id: string;
     filter?: "active" | "resolved" | "all";
+    window?: SafetyActivityWindow;
     event_type?: string;
     severity?: string;
     limit?: number;
@@ -27,6 +29,9 @@ export async function listSafetyEvents(
     if (normalizedFilter === "active") filters.push("is_active = true");
     if (normalizedFilter === "resolved") filters.push("is_active = false");
 
+    const windowSql = safetyActivityWindowSql(input.window);
+    if (windowSql) filters.push(windowSql);
+
     values.push(Math.max(1, Math.min(200, Number(input.limit ?? 100))));
     values.push(Math.max(0, Number(input.offset ?? 0)));
     const limitIdx = values.length - 1;
@@ -46,6 +51,8 @@ export async function listSafetyEvents(
       )
       .catch(() => ({ rows: [] as Record<string, unknown>[] }));
 
+    const countFilters = ["operating_company_id = $1"];
+    if (windowSql) countFilters.push(windowSql);
     const counts = await client
       .query<{ active_count: number; resolved_count: number; total_count: number }>(
         `
@@ -54,7 +61,7 @@ export async function listSafetyEvents(
             count(*) FILTER (WHERE is_active = false)::int AS resolved_count,
             count(*)::int AS total_count
           FROM safety.v_safety_events_with_active
-          WHERE operating_company_id = $1
+          WHERE ${countFilters.join(" AND ")}
         `,
         [input.operating_company_id]
       )
@@ -64,6 +71,7 @@ export async function listSafetyEvents(
       events: rows.rows,
       counters: counts.rows[0] ?? { active_count: 0, resolved_count: 0, total_count: 0 },
       filter: normalizedFilter,
+      window: input.window ?? "7d",
     };
   });
 }

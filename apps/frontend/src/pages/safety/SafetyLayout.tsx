@@ -5,12 +5,18 @@ import { ArrowLeft } from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getUserPreferences, patchUserPreferences } from "../../api/safety";
 import { SAFETY_GROUPS, findSafetyTab } from "../../components/safety/SAFETY_TABS_CONFIG";
-import { SafetyDashboardFilter, type SafetyDriverFilter } from "../../components/safety/SafetyDashboardFilter";
+import {
+  SafetyDashboardFilter,
+  type SafetyActivityWindow,
+  type SafetyDriverFilter,
+} from "../../components/safety/SafetyDashboardFilter";
 import { SafetyGroupNav } from "../../components/safety/SafetyGroupNav";
 
 type SafetyUiContextValue = {
   filter: SafetyDriverFilter;
   setFilter: (next: SafetyDriverFilter) => void;
+  activityWindow: SafetyActivityWindow;
+  setActivityWindow: (next: SafetyActivityWindow) => void;
   shownDrivers: number;
   totalDrivers: number;
   setDriverCounts: (shown: number, total: number) => void;
@@ -30,6 +36,7 @@ export function SafetyLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<SafetyDriverFilter>("active");
+  const [activityWindow, setActivityWindow] = useState<SafetyActivityWindow>("7d");
   const [shownDrivers, setShownDrivers] = useState(0);
   const [totalDrivers, setTotalDrivers] = useState(0);
   const prefsQuery = useQuery({
@@ -41,9 +48,12 @@ export function SafetyLayout() {
   });
 
   useEffect(() => {
-    const prefs = prefsQuery.data?.preferences as { safety?: { active_only?: boolean } } | undefined;
+    const prefs = prefsQuery.data?.preferences as {
+      safety?: { active_only?: boolean; activity_window?: SafetyActivityWindow };
+    } | undefined;
     if (!prefs?.safety) return;
     setFilter(prefs.safety.active_only === false ? "all" : "active");
+    if (prefs.safety.activity_window) setActivityWindow(prefs.safety.activity_window);
   }, [prefsQuery.data]);
 
   const activeTabId = useMemo(() => {
@@ -64,7 +74,14 @@ export function SafetyLayout() {
       setFilter: (next) => {
         setFilter(next);
         void prefsMutation.mutateAsync({
-          safety: { active_only: next === "active" },
+          safety: { active_only: next === "active", activity_window: activityWindow },
+        });
+      },
+      activityWindow,
+      setActivityWindow: (next) => {
+        setActivityWindow(next);
+        void prefsMutation.mutateAsync({
+          safety: { active_only: filter === "active", activity_window: next },
         });
       },
       shownDrivers,
@@ -74,7 +91,7 @@ export function SafetyLayout() {
         setTotalDrivers(total);
       },
     }),
-    [filter, shownDrivers, totalDrivers]
+    [filter, activityWindow, shownDrivers, totalDrivers]
   );
 
   return (
@@ -104,7 +121,14 @@ export function SafetyLayout() {
           <div className="text-xs text-slate-500">Compliance · inspections · discipline · liability · alerts</div>
         </div>
 
-        <SafetyDashboardFilter value={filter} onChange={setFilter} shown={shownDrivers} total={totalDrivers} />
+        <SafetyDashboardFilter
+          value={filter}
+          onChange={contextValue.setFilter}
+          activityWindow={activityWindow}
+          onActivityWindowChange={contextValue.setActivityWindow}
+          shown={shownDrivers}
+          total={totalDrivers}
+        />
         <SafetyGroupNav
           groups={SAFETY_GROUPS}
           activeTabId={activeTabId}
