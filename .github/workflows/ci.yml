@@ -183,6 +183,8 @@ jobs:
 
       - name: verify:dispatch-assignment-optimizer
         run: npm run verify:dispatch-assignment-optimizer
+      - name: verify:dispatch-customer-eta-notify
+        run: npm run verify:dispatch-customer-eta-notify
 
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
