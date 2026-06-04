@@ -236,6 +236,8 @@ Sub-nav routes show: "Available after accounting cutover (Phase 5)" — wired in
 **Driver settlement auto-pay (P5-T5, 2026-06-04):** Per-driver `settlement_auto_pay_enabled` on `mdata.drivers` (migration **0370**); Friday payday cron queues ACH via existing `queuePayment`; toggle on driver profile Settlements section. **CI:** `auto-pay.cron` vitest.
 **AP bill payment dropdown (P5-T8, 2026-06-04):** `GET /api/v1/accounting/bills?has_balance=true` filters bills with remaining balance; shared `BillSelect` uses the filter for vendor AP payment flows. **CI:** `BillSelect` + `bills-has-balance-filter` vitest.
 
+**AP bill payment sub-rows (P5-T9, 2026-06-04):** `BillPaymentModal` multi-row editor applies partial payments across multiple open bills per vendor; `POST /api/v1/ap/bill-payments` creates batched `accounting.bill_payments` rows with sum validation. **CI:** `BillPaymentModal` + `payment-application.routes` vitest.
+
 **Purpose:** All bank account activity + factoring + escrow + reconciliation
 
 ### Top action button
@@ -1341,3 +1343,5 @@ Names Master (`/lists/names`) is a **read-only hub** that searches existing part
 
 - **P5-T2 (shipped):** Accounting reconciliation workspace at `/accounting/reconciliation` with match/unmatch API aliases.
 - **P5-T1.3 (shipped):** PlaidLink wrapper + sync status panel + daily refresh cron alias.
+- **P5-T11 (shipped):** Manual JE 2-step modal (`ManualJEModal`) with balance enforcement; PR #489 · `584bf29c`.
+- **P5-T6 / P5-T7 (shipped):** Banking transfer + CC payment UI on main via P5 banking bundle (`TransferModal`, `RecordCCPaymentModal`, `/api/v1/banking/transfers`).
