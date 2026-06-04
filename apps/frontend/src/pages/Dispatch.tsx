@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listCustomers, listDrivers } from "../api/mdata";
 import { getDispatchDashboard } from "../api/dispatch";
@@ -21,6 +21,7 @@ import { DispatchBoard } from "./dispatch/DispatchBoard";
 import { FilterBar, type DispatchFilterState } from "../components/dispatch/FilterBar";
 import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
 import { BookLoadModal } from "./dispatch/components/BookLoadModal";
+import { AssignmentHistoryPage } from "./dispatch/AssignmentHistoryPage";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 import { CbpWaitTimesWidget } from "../components/border-crossing/CbpWaitTimesWidget";
 
@@ -289,7 +290,9 @@ export function DispatchPage() {
         }
       />
 
-      <SecondaryNavTabs tabs={DISPATCH_SUB_TABS} activeId={subTab} onChange={(id) => setSubTab(id as DispatchSubTabId)} />
+      <div data-testid="dispatch-secondary-nav">
+        <SecondaryNavTabs tabs={DISPATCH_SUB_TABS} activeId={subTab} onChange={(id) => setSubTab(id as DispatchSubTabId)} />
+      </div>
 
       <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
         <div className="rounded border border-gray-200 bg-white p-3">
@@ -335,8 +338,10 @@ export function DispatchPage() {
         </DataPanel>
         <DataPanel title="Assignments">
           <DataPanelRow>
-            <span className="text-sm text-gray-700">Truck / trailer / driver</span>
-            <span className="text-xs text-blue-700">open →</span>
+            <span className="text-sm text-gray-700">Assignment history audit trail (D2)</span>
+            <button className="text-xs text-blue-700" onClick={() => setSubTab("assignments")} type="button">
+              open →
+            </button>
           </DataPanelRow>
         </DataPanel>
         <DataPanel title="Dispatch map feed">
@@ -349,8 +354,10 @@ export function DispatchPage() {
         </DataPanel>
         <DataPanel title="Settlements">
           <DataPanelRow>
-            <span className="text-sm text-gray-700">Driver settlement integration</span>
-            <span className="text-xs text-blue-700">open →</span>
+            <span className="text-sm text-gray-700">Driver settlement runs in Driver Finance</span>
+            <Link to="/driver-finance/settlements" className="text-xs text-blue-700">
+              open →
+            </Link>
           </DataPanelRow>
         </DataPanel>
       </div>
@@ -495,22 +502,31 @@ export function DispatchPage() {
           </DataPanelRow>
         </DataPanel>
       ) : subTab === "assignments" ? (
-        <DataPanel title="Assignments">
-          <DataPanelRow>
-            <span className="text-sm text-gray-700">Active assignments are shown in the load board and load detail drawer.</span>
-          </DataPanelRow>
-        </DataPanel>
+        /* ARCHIVE B21-D12 Sunset 2026-06-04: assignments stub replaced by D2 AssignmentHistoryPage embed */
+        <div data-testid="dispatch-assignments-embed">
+          <AssignmentHistoryPage />
+        </div>
       ) : subTab === "pre_settlements" ? (
         <PreSettlementsPanel
           rows={(preSettlementsQuery.data?.settlements ?? []).filter((settlement) => ["presettle", "acked", "locked"].includes(String(settlement.status)))}
           loading={preSettlementsQuery.isLoading}
         />
       ) : (
-        <DataPanel title="Settlements">
-          <DataPanelRow>
-            <span className="text-sm text-gray-700">Settlements tie to delivered loads and accounting records.</span>
-          </DataPanelRow>
-        </DataPanel>
+        /* ARCHIVE B21-D12 Sunset 2026-06-04: settlements stub replaced by Driver Finance quick-link (A24-2 pattern) */
+        <div data-testid="dispatch-settlements-quicklink">
+          <DataPanel title="Settlements">
+            <DataPanelRow>
+              <span className="text-sm text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
+              <Link
+                to="/driver-finance/settlements"
+                className="text-xs text-blue-700 underline"
+                data-testid="dispatch-settlements-link"
+              >
+                View all settlements →
+              </Link>
+            </DataPanelRow>
+          </DataPanel>
+        </div>
       )}
 
       <LoadDetailDrawer
