@@ -1069,6 +1069,8 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **Driver profile training CRUD (A24-7, 2026-06-04):** `DriverProfilePage` wires `+ Add training` to `AddTrainingModal`; creates records via `POST /api/v1/mdata/drivers/:id/training` (program select from A23-5 completions + completion date + notes); profile query refresh on success. **CI:** `verify:drivers-training-crud-on-profile`.
 
+**Driver onboarding wizard (A24-8, 2026-06-04):** Multi-step wizard at `/drivers/onboarding/:session_id` (identity → CDL → medical → DQF → signatures → I-9 → vehicle); partial progress in `safety.onboarding_sessions` (migration **0361** — 0349 reserved for A24-10 comm center, 0360 for B28 PM auto-WO); docs uploads via `/api/v1/docs/files/upload-url`; admin override with reason. **CI:** `verify:drivers-onboarding-wizard`.
+
 **Create vocabulary (A24-4, 2026-06-03):** Drivers hub header CTA standardized to **+ Create Driver** (replaces non-canonical "+ Driver"). Locked "+ Create" / "+ Book" rule applies module-wide; ARCHIVE-not-DELETE comment retained at source. **CI:** `verify:drivers-create-vocab`.
 
 ## Trailer Profile (Fleet module) — Part 1 (locked 2026-06-02)

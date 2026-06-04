@@ -35,6 +35,7 @@
     { "path": "/safety/permits", "reason": "Duplicate ComingSoon stub; nested route wins" },
     { "path": "/safety/trailer-interchanges", "reason": "Duplicate ComingSoon stub; nested route wins" },
     { "path": "/drivers/settlements", "reason": "ComingSoon stub; canonical /driver-finance/settlements" },
+    { "path": "/drivers/onboarding/:session_id", "reason": "Multi-step onboarding wizard deep link from driver create (A24-8)" },
     { "path": "/factoring/faro-imports", "reason": "ComingSoon stub; tab on /factoring home" },
     { "path": "/factoring/equipment-loans", "reason": "ComingSoon stub; tab on /factoring home" },
     { "path": "/factoring/vendor-merges", "reason": "ComingSoon stub; tab on /factoring home" },

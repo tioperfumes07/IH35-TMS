@@ -151,6 +151,9 @@ jobs:
       - name: verify:drivers-training-crud-on-profile
         run: npm run verify:drivers-training-crud-on-profile
 
+      - name: verify:drivers-onboarding-wizard
+        run: npm run verify:drivers-onboarding-wizard
+
       - name: verify:drivers-create-vocab
         run: npm run verify:drivers-create-vocab
 
