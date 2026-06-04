@@ -1,22 +1,23 @@
 {
-  "block_id": "SMS-FIX-2-WEBHOOKS",
-  "branch": "fix/samsara-webhooks-investigation",
-  "phase": "Tier 2 — P8 Audit",
-  "task": "SMS-FIX-2-WEBHOOKS",
+  "block_id": "P0-USERS-FIX",
+  "branch": "fix/p0-users-fix",
+  "phase": "P0",
+  "task": "P0-USERS-FIX",
   "allowed_files": [
-    "apps/backend/src/integrations/samsara/samsara-webhook.routes.ts",
-    "apps/backend/src/integrations/samsara/samsara-webhook-verify.ts",
-    "apps/backend/src/integrations/samsara/samsara-webhook-verify.test.ts",
-    "apps/backend/src/integrations/samsara/samsara.service.ts",
-    "apps/backend/src/integrations/samsara/__tests__/samsara-webhook.routes.test.ts",
-    "scripts/verify-samsara-webhook-route-mounted.mjs",
+    "db/migrations/0369_archive_identity_debug_test_users.sql",
+    "apps/frontend/src/pages/Users.tsx",
+    "apps/frontend/src/pages/Users.test.tsx",
+    "scripts/verify-backend-column-references.mjs",
+    "scripts/__tests__/verify-backend-column-references.test.mjs",
+    "scripts/verify-guards/183-verify-backend-column-references.mjs",
     "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:samsara-webhook-route-mounted"
+    "verify:backend-column-references"
   ],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }
