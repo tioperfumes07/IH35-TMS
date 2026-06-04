@@ -141,6 +141,7 @@ import { Form425CHome } from "../pages/form425c/Form425CHome";
 import { HelpCenterPage } from "../pages/help/HelpCenterPage";
 import { HelpArticlePage } from "../pages/help/HelpArticlePage";
 import { ReportsHomePage } from "../pages/reports/ReportsHome";
+import IFTAPreparer from "../pages/reports/ifta/IFTAPreparer";
 import { ReportsRunnerPage } from "../pages/reports/ReportsRunner";
 import { ARAgingPage } from "../pages/reports/ARAgingPage";
 import { APAgingPage } from "../pages/reports/APAgingPage";
@@ -1862,6 +1863,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ReportsHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/ifta"
+          element={
+            <ProtectedRoute>
+              <IFTAPreparer />
             </ProtectedRoute>
           }
         />

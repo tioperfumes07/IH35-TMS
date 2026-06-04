@@ -407,6 +407,7 @@
     "verify:no-bulk-default-classifications": "node scripts/verify-no-bulk-default-classifications.mjs",
     "verify:plaid-status-derived-from-state": "node scripts/verify-plaid-status-derived-from-state.mjs",
     "verify:plaid-cron-registered": "node scripts/verify-plaid-cron-registered.mjs",
+    "verify:ifta-aggregator-determinism": "node scripts/verify-ifta-aggregator-determinism.mjs",
     "verify:samsara-webhook-route-mounted": "node scripts/verify-samsara-webhook-route-mounted.mjs"
   },
   "dependencies": {
