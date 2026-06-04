@@ -517,9 +517,9 @@ export const ROUTES = React.Children.toArray(
         <Route
           path="/docs"
           element={
-            <ProtectedRoute>
+            <OwnerAdminRoute>
               <DocsHomePage />
-            </ProtectedRoute>
+            </OwnerAdminRoute>
           }
         />
         <Route
