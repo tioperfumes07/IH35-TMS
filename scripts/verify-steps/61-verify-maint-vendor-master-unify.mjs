@@ -1,1 +1,8 @@
-export { default } from "../verify-guards/176-verify-maint-vendor-master-unify.mjs";
+export default {
+  name: "verify-maint-vendor-master-unify",
+  run(ctx) {
+    if (ctx.run("npm", ["run", "verify:maint-vendor-master-unify"]) !== 0) {
+      throw new Error("verify:maint-vendor-master-unify failed");
+    }
+  },
+};
