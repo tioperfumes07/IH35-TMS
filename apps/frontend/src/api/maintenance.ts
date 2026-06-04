@@ -1071,3 +1071,48 @@ export function triageMaintenanceDvirDefect(
     alreadyConverted?: boolean;
   }>(`/api/v1/maintenance/dvir-defects/${encodeURIComponent(id)}/triage`, { method: "POST", body });
 }
+
+export type PmAutoEngineRunRow = {
+  id: string;
+  started_at: string | null;
+  finished_at: string | null;
+  status: string;
+  schedules_evaluated: number;
+  work_orders_created: number;
+  alerts_created: number;
+  trigger_source?: string;
+  error_message?: string | null;
+};
+
+export type PmAutoEngineLogRow = {
+  id: string;
+  run_id?: string | null;
+  pm_schedule_id: string;
+  unit_id: string;
+  action: string;
+  work_order_id?: string | null;
+  schedule_label?: string | null;
+  unit_number?: string | null;
+  created_at?: string;
+};
+
+export function getMaintenancePmAutoEngineDashboard(operatingCompanyId: string, limit = 25) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, limit: String(limit) });
+  return apiRequest<{
+    runs: PmAutoEngineRunRow[];
+    recent_log: PmAutoEngineLogRow[];
+    settings: { is_paused: boolean; paused_at?: string | null };
+    lookahead_miles: number;
+  }>(`/api/v1/maintenance/pm-auto-engine/runs?${q.toString()}`);
+}
+
+export function updateMaintenancePmAutoEngineSettings(body: { operating_company_id: string; is_paused: boolean }) {
+  return apiRequest<{ is_paused: boolean }>("/api/v1/maintenance/pm-auto-engine/settings", { method: "POST", body });
+}
+
+export function runMaintenancePmAutoEngineNow(operatingCompanyId: string) {
+  return apiRequest<{ schedules_evaluated: number; work_orders_created: number; alerts_created: number }>(
+    "/api/v1/maintenance/pm-auto-engine/run-now",
+    { method: "POST", body: { operating_company_id: operatingCompanyId } }
+  );
+}

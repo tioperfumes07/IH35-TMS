@@ -561,6 +561,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **DVIR defect intake — maintenance side (B27, 2026-06-04):** `/maintenance/defects` inbox + `/maintenance/defects/:id` detail read canonical `safety.dvir_defects` / `safety.dvir_submissions` (A23-4). Triage actions (assign, escalate, close-no-action, convert-to-WO) persist via append-only `audit.audit_events` (`maintenance.dvir_defect.*`); WO conversion inserts `maintenance.work_orders` with `source_type='DV'` and links `safety.dvir_submissions.follow_up_wo_id`. Detail page pre-fills `CreateWorkOrderModal`. No migration. **CI:** `verify:maint-dvir-defect-intake`.
 
+**PM auto-WO engine (B28, 2026-06-04):** Migration `0360` adds `maintenance.pm_schedule_runs`, `maintenance.pm_auto_wo_log`, and `maintenance.pm_auto_engine_settings`. Hourly cron (`ENABLE_PM_AUTO_ENGINE_CRON`, default on at :05 CST) evaluates `maintenance.pm_schedules` against Samsara odometer projections: due schedules auto-insert PM work orders (`origin='pm_schedule'`); near-due schedules reuse the telematics PM predictor for alerts. Dashboard `/maintenance/pm-auto-engine` shows recent runs, action log, pause/resume, and manual run-now. **CI:** `verify:maint-pm-auto-wo-engine`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`

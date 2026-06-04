@@ -1,30 +1,31 @@
 {
-  "block_id": "BLOCK-B27-DVIR-DEFECT-INTAKE-MAINTENANCE-SIDE",
-  "branch": "feat/maint-dvir-defect-intake",
+  "block_id": "BLOCK-B28-PM-AUTO-WO-ENGINE",
+  "branch": "feat/maint-pm-auto-wo-engine",
   "phase": "Phase 3",
-  "task": "B27-DVIR-DEFECT-INTAKE-MAINTENANCE-SIDE",
+  "task": "B28-PM-AUTO-WO-ENGINE",
   "allowed_files": [
-    "apps/backend/src/maintenance/defects.routes.ts",
-    "apps/backend/src/maintenance/__tests__/defects.routes.test.ts",
+    "db/migrations/0360_maint_pm_auto_engine.sql",
+    "apps/backend/src/maintenance/pm-auto-engine.service.ts",
+    "apps/backend/src/maintenance/pm-auto-engine.cron.ts",
+    "apps/backend/src/maintenance/__tests__/pm-auto-engine.service.test.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx",
-    "apps/frontend/src/pages/maintenance/DefectDetailPage.tsx",
-    "apps/frontend/src/pages/maintenance/__tests__/DefectsInboxPage.test.tsx",
+    "apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx",
+    "apps/frontend/src/pages/maintenance/__tests__/PmAutoEnginePage.test.tsx",
     "apps/frontend/src/api/maintenance.ts",
     "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-maint-dvir-defect-intake.mjs",
-    "scripts/__tests__/verify-maint-dvir-defect-intake.test.mjs",
-    "scripts/verify-guards/174-verify-maint-dvir-defect-intake.mjs",
-    "scripts/verify-steps/59-verify-maint-dvir-defect-intake.mjs",
+    "scripts/verify-maint-pm-auto-wo-engine.mjs",
+    "scripts/__tests__/verify-maint-pm-auto-wo-engine.test.mjs",
+    "scripts/verify-guards/175-verify-maint-pm-auto-wo-engine.mjs",
+    "scripts/verify-steps/60-verify-maint-pm-auto-wo-engine.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:maint-dvir-defect-intake"
+    "verify:maint-pm-auto-wo-engine"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }

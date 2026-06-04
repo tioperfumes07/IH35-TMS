@@ -153,6 +153,8 @@ import { registerMaintenanceVehiclesRoutes } from "./maintenance/vehicles.routes
 import { registerMaintenanceDriversRoutes } from "./maintenance/drivers.routes.js";
 import { registerMaintenancePartsRoutes } from "./maintenance/parts.routes.js";
 import { registerMaintenanceDefectsRoutes } from "./maintenance/defects.routes.js";
+import { registerMaintenancePmAutoEngineRoutes } from "./maintenance/pm-auto-engine.service.js";
+import { initializePmAutoEngineCron } from "./maintenance/pm-auto-engine.cron.js";
 import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
 import { registerMaintWoApRoutes } from "./maint/wo-ap.routes.js";
@@ -608,6 +610,7 @@ async function main() {
   await registerMaintenanceDriversRoutes(app);
   await registerMaintenancePartsRoutes(app);
   await registerMaintenanceDefectsRoutes(app);
+  await registerMaintenancePmAutoEngineRoutes(app);
   await registerMaintPartsRoutes(app);
   await registerInsurancePolicyRoutes(app);
   await registerInsuranceClaimRoutes(app);
@@ -809,6 +812,9 @@ async function main() {
 
     initializeIntegrityAlertEngineCron(app);
     app.log.info("[STARTUP] integrity-alert-engine-cron initialized");
+
+    initializePmAutoEngineCron(app);
+    app.log.info("[STARTUP] pm-auto-engine-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] safety-reminders-cron failed");
   }
