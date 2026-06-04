@@ -9,6 +9,10 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
 }));
 
+vi.mock("../../../components/maintenance/ServiceTimeline", () => ({
+  ServiceTimeline: () => <div data-testid="service-timeline" />,
+}));
+
 const aggregateFixture = {
   equipment: { equipment_number: "T-100", equipment_type: "Reefer", status: "InService", vin: "VIN1" },
   type_specs: { length_ft: 53 },

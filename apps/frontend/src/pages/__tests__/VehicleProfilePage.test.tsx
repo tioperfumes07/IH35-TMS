@@ -17,6 +17,10 @@ vi.mock("../../components/forms/QboCombobox", () => ({
   QboCombobox: () => <div data-testid="qbo-vendor-combobox" />,
 }));
 
+vi.mock("../../components/maintenance/ServiceTimeline", () => ({
+  ServiceTimeline: () => <div data-testid="service-timeline" />,
+}));
+
 const profileFixture = {
   unit: { id: "unit-test-1", unit_number: "T-501", vin: "VIN1", status: "InService", quick_availability: null },
   plates: [],
