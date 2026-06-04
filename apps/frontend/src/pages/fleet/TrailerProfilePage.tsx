@@ -14,6 +14,7 @@ import { MaintenanceSnapshotSection } from "../../components/trailer-profile/Mai
 import { ReeferTelemetrySection } from "../../components/trailer-profile/ReeferTelemetrySection";
 import { StatusChangeModal } from "../../components/trailer-profile/StatusChangeModal";
 import { TrailerReeferSection } from "../../components/trailer-profile/TrailerReeferSection";
+import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
 import { TrailerRecentActivitySection } from "../../components/trailer-profile/TrailerRecentActivitySection";
 import { TypeSpecsSection } from "../../components/trailer-profile/TypeSpecsSection";
 
@@ -94,6 +95,9 @@ export function TrailerProfilePage() {
       ) : null}
       <div data-testid="tp-section-5-maintenance">
         <MaintenanceSnapshotSection maintenance={aggregate.maintenance} />
+        <div className="mt-3">
+          <ServiceTimeline companyId={companyId} equipmentId={id} showUnitEventTypes={false} />
+        </div>
       </div>
       <div data-testid="tp-section-6-compliance">
         <ComplianceSection compliance={aggregate.compliance} plates={aggregate.plates} />

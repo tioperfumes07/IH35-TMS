@@ -1,3 +1,4 @@
+/** @deprecated Sunset 2026-09-01 — trailer WO history canonical via ServiceTimeline (B31); equipment log + docs remain here. */
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { listFiles, type DocsFile } from "../../api/docs";

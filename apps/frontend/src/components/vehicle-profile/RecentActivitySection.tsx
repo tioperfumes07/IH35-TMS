@@ -1,3 +1,4 @@
+/** @deprecated Sunset 2026-09-01 — operational loads/status feed; service events use ServiceTimeline (B31). */
 import { useState } from "react";
 
 type Activity = {

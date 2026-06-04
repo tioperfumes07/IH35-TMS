@@ -567,6 +567,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Inspections CRUD + DVIR linkage (B30, 2026-06-04):** `/maintenance/inspections` CRUD reads/writes `maintenance.inspections` + `maintenance.inspection_photos` (migration **0362**; GO reserved 0361 taken by A24-8 onboarding). Types: Annual DOT, Pre-trip, Post-trip (optional `dvir_submission_id` → `safety.dvir_submissions`), Custom. Photo upload via docs module presigned URL + attach endpoint. Legacy read-only `maintenance.dot_inspection_events` stub ARCHIVE-not-DELETE. **CI:** `verify:maint-inspections-crud`.
 
+**Service history timeline (B31, 2026-06-04):** `GET /api/v1/maintenance/service-timeline` aggregates WOs, inspections, PM auto-log, fuel transactions, and accident reports per `unit_id` (vehicle) or `equipment_id` (trailer). Reusable `ServiceTimeline` on VehicleProfile + TrailerProfile with event-type and date-range filters and drill-down navigation. Legacy recent-activity stubs ARCHIVE-not-DELETE. **Migration:** none. **CI:** `verify:maint-service-history-timeline`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`

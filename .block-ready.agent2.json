@@ -1,28 +1,32 @@
 {
-  "block_id": "BLOCK-B30-INSPECTIONS-CRUD-DVIR",
-  "branch": "feat/maint-inspections-crud",
+  "block_id": "BLOCK-B31-SERVICE-HISTORY-TIMELINE",
+  "branch": "feat/maint-service-history-timeline",
   "phase": "Phase 3",
-  "task": "B30-INSPECTIONS-CRUD-DVIR",
+  "task": "B31-SERVICE-HISTORY-TIMELINE",
   "allowed_files": [
-    "db/migrations/0362_maint_inspections.sql",
-    "apps/backend/src/maintenance/inspections.routes.ts",
-    "apps/backend/src/maintenance/__tests__/inspections.routes.test.ts",
-    "apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx",
-    "apps/frontend/src/pages/maintenance/__tests__/InspectionsPage.test.tsx",
+    "apps/backend/src/maintenance/service-timeline.service.ts",
+    "apps/backend/src/maintenance/__tests__/service-timeline.service.test.ts",
+    "apps/frontend/src/components/maintenance/ServiceTimeline.tsx",
+    "apps/frontend/src/components/maintenance/__tests__/ServiceTimeline.test.tsx",
+    "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+    "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx",
+    "apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
+    "apps/frontend/src/components/trailer-profile/TrailerRecentActivitySection.tsx",
     "apps/frontend/src/api/maintenance.ts",
-    "scripts/verify-maint-inspections-crud.mjs",
-    "scripts/__tests__/verify-maint-inspections-crud.test.mjs",
-    "scripts/verify-guards/177-verify-maint-inspections-crud.mjs",
-    "scripts/verify-steps/62-verify-maint-inspections-crud.mjs",
+    "apps/backend/src/index.ts",
+    "scripts/verify-maint-service-history-timeline.mjs",
+    "scripts/__tests__/verify-maint-service-history-timeline.test.mjs",
+    "scripts/verify-guards/178-verify-maint-service-history-timeline.mjs",
+    "scripts/verify-steps/63-verify-maint-service-history-timeline.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:maint-inspections-crud"
+    "verify:maint-service-history-timeline"
   ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }

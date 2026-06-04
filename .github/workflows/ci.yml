@@ -219,6 +219,9 @@ jobs:
       - name: verify:maint-inspections-crud
         run: npm run verify:maint-inspections-crud
 
+      - name: verify:maint-service-history-timeline
+        run: npm run verify:maint-service-history-timeline
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 

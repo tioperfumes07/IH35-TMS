@@ -784,6 +784,39 @@ export function archiveMaintenanceInspection(id: string, operatingCompanyId: str
   });
 }
 
+export type ServiceTimelineEventType = "work_order" | "inspection" | "pm" | "fuel" | "accident";
+
+export type ServiceTimelineEvent = {
+  id: string;
+  event_type: ServiceTimelineEventType;
+  occurred_at: string;
+  title: string;
+  subtitle: string | null;
+  status: string | null;
+  detail_path: string;
+};
+
+export function getMaintenanceServiceTimeline(params: {
+  operating_company_id: string;
+  unit_id?: string;
+  equipment_id?: string;
+  event_types?: ServiceTimelineEventType[];
+  from_date?: string;
+  to_date?: string;
+  limit?: number;
+}) {
+  const q = new URLSearchParams({ operating_company_id: params.operating_company_id });
+  if (params.unit_id) q.set("unit_id", params.unit_id);
+  if (params.equipment_id) q.set("equipment_id", params.equipment_id);
+  if (params.event_types?.length) q.set("event_types", params.event_types.join(","));
+  if (params.from_date) q.set("from_date", params.from_date);
+  if (params.to_date) q.set("to_date", params.to_date);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  return apiRequest<{ events: ServiceTimelineEvent[]; filters: Record<string, unknown> }>(
+    `/api/v1/maintenance/service-timeline?${q.toString()}`
+  );
+}
+
 export function attachMaintenanceInspectionPhoto(
   id: string,
   body: { operating_company_id: string; docs_file_id: string; caption?: string; sort_order?: number }

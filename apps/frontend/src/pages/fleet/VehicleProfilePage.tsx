@@ -21,6 +21,7 @@ import { MaintenanceSnapshotSection } from "../../components/vehicle-profile/Mai
 import { ComplianceSection } from "../../components/vehicle-profile/ComplianceSection";
 import { ReeferSection } from "../../components/vehicle-profile/ReeferSection";
 import { FinancialUnitPLSection } from "../../components/vehicle-profile/FinancialUnitPLSection";
+import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
 import { RecentActivitySection } from "../../components/vehicle-profile/RecentActivitySection";
 import { DocumentsSection } from "../../components/vehicle-profile/DocumentsSection";
 import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
@@ -200,6 +201,9 @@ export function VehicleProfilePage() {
                 faultSummaryQuery.data?.items?.filter((row) => row.auto_wo_id != null).length ?? 0
               }
             />
+            <div className="mt-3">
+              <ServiceTimeline companyId={companyId} unitId={id} />
+            </div>
           </div>
           <div data-testid="vp-section-6-compliance">
             <ComplianceSection compliance={profile.compliance} />
