@@ -125,6 +125,8 @@ jobs:
 
       - name: Verify safety accidents wire-up
         run: npm run verify:safety-accidents-wire-up
+      - name: Verify safety meetings training wire-up
+        run: npm run verify:safety-meetings-training-wire
       - name: Verify DVIR schema presence
         run: npm run verify:dvir-schema-presence
       - name: verify:safety-count-nav-integrity

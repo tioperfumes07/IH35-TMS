@@ -22,7 +22,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     tabs: [
       { id: "driver-files", label: "Driver Files", route: "/safety/driver-files", badge: null },
       { id: "drug-alcohol", label: "Drug & Alcohol", route: "/safety/drug-alcohol", badge: null },
-      { id: "safety-meetings", label: "Safety Meetings", route: "/safety/safety-meetings", badge: null },
+      { id: "safety-meetings", label: "Safety Meetings", route: "/safety/safety-meetings", badge: null, status: "Live" },
     ],
   },
   {
