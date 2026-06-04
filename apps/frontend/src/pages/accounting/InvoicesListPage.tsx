@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowRightCircle } from "lucide-react";
 import { listInvoices, type InvoiceStatus } from "../../api/accounting";
@@ -16,6 +16,16 @@ import { ManualInvoiceModal } from "./modals/ManualInvoiceModal";
 import { VendorChargebackModal } from "./modals/VendorChargebackModal";
 import { AccountingSubNav } from "./AccountingSubNav";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import {
+  BulkActionBar,
+  BulkActionModal,
+  BulkProgressDialog,
+  TableSelection,
+  TableSelectionHeader,
+  useBulkSelection,
+} from "../../components/bulk";
+import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
+import { useToast } from "../../components/Toast";
 
 const STATUS_OPTIONS: Array<{ value: "" | InvoiceStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -33,7 +43,17 @@ function money(cents: number) {
 
 export function InvoicesListPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
+  const bulk = useEntityBulkAction();
+  const selection = useBulkSelection({
+    cap: 200,
+    onCapExceeded: (error) => pushToast(error.message, "error"),
+  });
+  const [sentModalOpen, setSentModalOpen] = useState(false);
+  const [factoredModalOpen, setFactoredModalOpen] = useState(false);
+  const [batchId, setBatchId] = useState("");
   const [status, setStatus] = useState<"" | InvoiceStatus>("");
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -54,6 +74,34 @@ export function InvoicesListPage() {
   });
 
   const invoices = query.data ?? [];
+  const pageRowIds = useMemo(() => invoices.map((invoice) => invoice.id), [invoices]);
+
+  const runInvoiceBulk = async (action: "mark_sent" | "mark_factored", payload?: Record<string, unknown>) => {
+    if (!selectedCompanyId) {
+      pushToast("Select an operating company before bulk updates.", "error");
+      return;
+    }
+    try {
+      await bulk.runBulk(
+        {
+          domain: "accounting",
+          resource: "invoices",
+          ids: Array.from(selection.selectedIds),
+          action,
+          payload,
+          operatingCompanyId: selectedCompanyId,
+          invalidateKeys: [["accounting", "invoices", selectedCompanyId]],
+        },
+        () => {
+          selection.clear();
+          void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
+        }
+      );
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : "Bulk invoice update failed", "error");
+    }
+  };
+
   const totals = useMemo(() => {
     return invoices.reduce(
       (acc, row) => {
@@ -131,10 +179,36 @@ export function InvoicesListPage() {
         </div>
       </DataPanel>
 
+      <BulkActionBar
+        selectedCount={selection.count}
+        actions={[
+          { id: "mark-sent", label: "Mark sent", onClick: () => setSentModalOpen(true) },
+          { id: "mark-factored", label: "Mark factored", onClick: () => setFactoredModalOpen(true) },
+        ]}
+        onClear={selection.clear}
+      />
+
+      <TableSelection
+        rows={invoices}
+        getId={(invoice) => invoice.id}
+        selectedIds={selection.selectedIds}
+        onSelectionChange={selection.setSelectedIds}
+        pageRowIds={pageRowIds}
+        onCapExceeded={(message) => pushToast(message, "error")}
+      >
+        {(selectCtx) => (
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50">
             <tr className="text-gray-600">
+              <th className="w-10 px-2 py-2">
+                <TableSelectionHeader
+                  selectedIds={selection.selectedIds}
+                  pageRowIds={pageRowIds}
+                  onSelectionChange={selection.setSelectedIds}
+                  onCapExceeded={(message) => pushToast(message, "error")}
+                />
+              </th>
               <th className="px-3 py-2 font-semibold">Invoice</th>
               <th className="px-3 py-2 font-semibold">Customer</th>
               <th className="px-3 py-2 font-semibold">Issue</th>
@@ -148,7 +222,7 @@ export function InvoicesListPage() {
           <tbody>
             {query.isError ? (
               <tr>
-                <td colSpan={8} className="p-0">
+                <td colSpan={9} className="p-0">
                   <ListErrorState
                     title="Couldn't load invoices"
                     {...formatQueryErrorDetail(query.error)}
@@ -159,14 +233,14 @@ export function InvoicesListPage() {
             ) : null}
             {query.isLoading ? (
               <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={8}>
+                <td className="px-3 py-3 text-gray-500" colSpan={9}>
                   Loading invoices...
                 </td>
               </tr>
             ) : null}
             {!query.isError && !query.isLoading && invoices.length === 0 ? (
               <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={8}>
+                <td className="px-3 py-3 text-gray-500" colSpan={9}>
                   No invoices found for the selected filters.
                 </td>
               </tr>
@@ -174,6 +248,14 @@ export function InvoicesListPage() {
             {!query.isError
               ? invoices.map((invoice) => (
               <tr key={invoice.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
+                <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    aria-label={`Select invoice ${invoice.display_id}`}
+                    checked={selectCtx.isSelected(invoice.id)}
+                    onChange={() => selectCtx.toggle(invoice.id)}
+                  />
+                </td>
                 <td className="code-cell px-3 py-2 text-gray-900">
                   <span className="inline-flex items-center gap-1">
                     {invoice.display_id}
@@ -210,6 +292,55 @@ export function InvoicesListPage() {
           </tbody>
         </table>
       </div>
+        )}
+      </TableSelection>
+
+      <BulkActionModal
+        open={sentModalOpen}
+        actionLabel="Mark sent"
+        affectedCount={selection.count}
+        description="Mark selected draft invoices as sent."
+        onCancel={() => setSentModalOpen(false)}
+        onConfirm={() => {
+          setSentModalOpen(false);
+          void runInvoiceBulk("mark_sent");
+        }}
+      />
+
+      <BulkActionModal
+        open={factoredModalOpen}
+        actionLabel="Mark factored"
+        affectedCount={selection.count}
+        description="Attach selected invoices to a factoring batch."
+        payloadFields={
+          <label className="block text-sm text-gray-700">
+            Factoring batch ID
+            <input
+              className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+              value={batchId}
+              onChange={(event) => setBatchId(event.target.value)}
+              placeholder="UUID of factoring advance batch"
+            />
+          </label>
+        }
+        onCancel={() => setFactoredModalOpen(false)}
+        onConfirm={() => {
+          setFactoredModalOpen(false);
+          void runInvoiceBulk("mark_factored", { batch_id: batchId.trim() });
+        }}
+      />
+
+      <BulkProgressDialog
+        open={bulk.progressOpen}
+        loading={bulk.progressLoading}
+        requested={bulk.progress.requested}
+        succeeded={bulk.progress.succeeded}
+        failed={bulk.progress.failed}
+        bulk_call_id={bulk.progress.bulk_call_id}
+        onClose={() => bulk.setProgressOpen(false)}
+        resolveRowHref={(id) => `/accounting/invoices/${encodeURIComponent(id)}`}
+      />
+
       {selectedCompanyId ? (
         <>
           <DriverDamageInvoiceModal

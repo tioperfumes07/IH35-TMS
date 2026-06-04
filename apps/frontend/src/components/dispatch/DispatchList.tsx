@@ -6,6 +6,7 @@ import { ListErrorState } from "../ListErrorState";
 import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents } from "./constants";
 import { InTransitEtaChip } from "./InTransitEtaChip";
 import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
+import { TableSelection, TableSelectionHeader } from "../bulk";
 
 type SortField = "created_at" | "load_number" | "status" | "rate_total_cents";
 type SortDirection = "asc" | "desc";
@@ -26,6 +27,14 @@ export type DispatchListProps = {
   listError?: DataTableErrorState;
   /** P6-T11191: poll backend ETA for in_transit rows */
   showEtaColumn?: boolean;
+  bulkSelection?: {
+    selectedIds: Set<string>;
+    onSelectionChange: (next: Set<string>) => void;
+    pageRowIds: string[];
+    onCapExceeded: (message: string) => void;
+  };
+  onExportSelectedCsv?: () => void;
+  selectedCount?: number;
 };
 
 function statusVariant(status: DispatchLoadRow["status"]) {
@@ -58,6 +67,9 @@ export function DispatchList({
   onExportCsv,
   listError,
   showEtaColumn = false,
+  bulkSelection,
+  onExportSelectedCsv,
+  selectedCount = 0,
 }: DispatchListProps) {
   const from = totalCount === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, totalCount);
@@ -100,15 +112,41 @@ export function DispatchList({
     <section className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600">Showing {from}-{to} of {totalCount}</div>
-        <Button type="button" variant="secondary" size="sm" onClick={onExportCsv}>
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedCount > 0 && onExportSelectedCsv ? (
+            <Button type="button" variant="secondary" size="sm" onClick={onExportSelectedCsv}>
+              Export Selected to CSV
+            </Button>
+          ) : null}
+          <Button type="button" variant="secondary" size="sm" onClick={onExportCsv}>
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       <div className="hidden overflow-x-auto rounded border border-gray-200 bg-white md:block">
+        <TableSelection
+          rows={loads}
+          getId={(load) => load.id}
+          selectedIds={bulkSelection?.selectedIds ?? new Set()}
+          onSelectionChange={bulkSelection?.onSelectionChange ?? (() => undefined)}
+          pageRowIds={bulkSelection?.pageRowIds ?? []}
+          onCapExceeded={bulkSelection?.onCapExceeded}
+        >
+          {(selectCtx) => (
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
             <tr>
+              {bulkSelection ? (
+                <th className="w-10 px-2 py-2">
+                  <TableSelectionHeader
+                    selectedIds={bulkSelection.selectedIds}
+                    pageRowIds={bulkSelection.pageRowIds}
+                    onSelectionChange={bulkSelection.onSelectionChange}
+                    onCapExceeded={bulkSelection.onCapExceeded}
+                  />
+                </th>
+              ) : null}
               <th className="px-3 py-2">Flag</th>
               {[
                 ["load_number", "Load #"],
@@ -141,7 +179,7 @@ export function DispatchList({
             {loading
               ? Array.from({ length: Math.max(4, limit / 10) }).map((_, idx) => (
                   <tr key={idx} className="border-b border-gray-100">
-                    <td colSpan={showEtaColumn ? 13 : 12} className="px-3 py-3 text-gray-400">
+                    <td colSpan={(showEtaColumn ? 13 : 12) + (bulkSelection ? 1 : 0)} className="px-3 py-3 text-gray-400">
                       Loading loads...
                     </td>
                   </tr>
@@ -152,6 +190,16 @@ export function DispatchList({
                     onClick={() => onRowClick(load.id)}
                     className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
                   >
+                    {bulkSelection ? (
+                      <td className="px-2 py-2" onClick={(event) => event.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Select load ${load.load_number}`}
+                          checked={selectCtx.isSelected(load.id)}
+                          onChange={() => selectCtx.toggle(load.id)}
+                        />
+                      </td>
+                    ) : null}
                     <td className="px-3 py-2">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</td>
                     <td className="code-cell px-3 py-2 font-medium text-gray-800">{load.load_number}</td>
                     <td className="min-w-0 max-w-[240px] px-3 py-2">
@@ -207,6 +255,8 @@ export function DispatchList({
                 ))}
           </tbody>
         </table>
+          )}
+        </TableSelection>
       </div>
 
       <div className="space-y-2 md:hidden">
