@@ -1,3 +1,7 @@
+/**
+ * ARCHIVE (Sunset 2026-09-01): Phase 3 aggregate preview — replaced by IntegrityAlertsPage (A23-12).
+ * Kept for reference; route wiring uses IntegrityAlertsPage via manifest IntegrityAlertsTab wrapper.
+ */
 type Props = {
   unitRows: Array<Record<string, unknown>>;
   driverRows: Array<Record<string, unknown>>;

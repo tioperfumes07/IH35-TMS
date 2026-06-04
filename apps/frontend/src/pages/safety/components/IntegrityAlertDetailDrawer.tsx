@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { acknowledgeIntegrityAlert, resolveIntegrityAlert } from "../../../api/safety";
+import { acknowledgeIntegrityAlert, resolveIntegrityAlert, snoozeIntegrityAlert } from "../../../api/safety";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 
@@ -26,6 +26,10 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
         resolution_status: "confirmed_action_taken",
         resolution_action: "Resolved in Safety UI",
       }),
+    onSuccess: onUpdated,
+  });
+  const snoozeMutation = useMutation({
+    mutationFn: () => snoozeIntegrityAlert(String(alert?.id ?? ""), operatingCompanyId, 24),
     onSuccess: onUpdated,
   });
 
@@ -99,6 +103,14 @@ export function IntegrityAlertDetailDrawer({ open, alert, operatingCompanyId, on
             onClick={() => resolveMutation.mutate()}
           >
             Resolve
+          </button>
+          <button
+            type="button"
+            className="rounded border border-slate-400 px-3 py-1 text-xs font-semibold text-slate-800"
+            data-testid="integrity-alert-snooze-btn"
+            onClick={() => snoozeMutation.mutate()}
+          >
+            Snooze 24h
           </button>
         </div>
       </aside>
