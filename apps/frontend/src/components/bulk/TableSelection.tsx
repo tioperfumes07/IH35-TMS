@@ -68,7 +68,7 @@ export type TableSelectionHeaderProps = {
 
 export function TableSelectionHeader({
   selectedIds,
-  pageRowIds: _pageRowIds,
+  pageRowIds,
   onSelectionChange,
   cap = DEFAULT_CAP,
   onCapExceeded,
