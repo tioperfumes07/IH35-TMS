@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
+import { BulkActionBar, TableSelection, TableSelectionHeader, useBulkSelection } from "./bulk";
 import { useToast } from "./Toast";
-import { BulkActionBar, type BulkApplyPayload } from "./fleet/BulkActionBar";
+import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
 
 export type FleetRow = {
@@ -25,6 +26,8 @@ type Props = {
   operatingCompanyId: string;
   rows: FleetRow[];
 };
+
+const FLEET_SELECTION_CAP = 100;
 
 function deriveVehicleType(row: FleetRow): string {
   if (row.kind === "trailer") {
@@ -50,17 +53,20 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
-  const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editingRow, setEditingRow] = useState<FleetRow | null>(null);
 
-  const visibleIds = useMemo(() => rows.map((row) => row.id), [rows]);
-  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
+  const pageRowIds = useMemo(() => rows.map((row) => row.id), [rows]);
   const vehicleTypes = useMemo(() => Array.from(new Set(rows.map(deriveVehicleType))), [rows]);
 
+  const selection = useBulkSelection({
+    cap: FLEET_SELECTION_CAP,
+    onCapExceeded: (error) => pushToast(error.message, "error"),
+  });
+
   const selectedRows = useMemo(
-    () => rows.filter((row) => selected.has(row.id)),
-    [rows, selected]
+    () => rows.filter((row) => selection.selectedIds.has(row.id)),
+    [rows, selection.selectedIds]
   );
 
   const truckBulkMutation = useMutation({
@@ -136,107 +142,101 @@ export function FleetTable({ operatingCompanyId, rows }: Props) {
         }
       }
       pushToast(`${affected} fleet assets updated`, "success");
-      setSelected(new Set());
+      selection.clear();
       void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
     } catch (error) {
       pushToast(error instanceof Error ? error.message : "Bulk update failed", "error");
     }
   };
 
-  const toggleRow = (unitId: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(unitId)) next.delete(unitId);
-      else next.add(unitId);
-      return next;
-    });
-  };
-
-  const toggleAllVisible = () => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (allVisibleSelected) {
-        for (const id of visibleIds) next.delete(id);
-      } else {
-        for (const id of visibleIds) next.add(id);
-      }
-      return next;
-    });
-  };
-
   return (
     <div className="space-y-2">
       <BulkActionBar
-        selectedCount={selected.size}
-        vehicleTypes={vehicleTypes}
+        selectedCount={selection.count}
+        selectedLabel={`Selected: ${selection.count} units`}
+        actions={[]}
         applying={bulkApplying}
-        onClear={() => setSelected(new Set())}
-        onApply={(patch) => void applyBulk(patch)}
-      />
+        onClear={selection.clear}
+      >
+        <FleetBulkControls vehicleTypes={vehicleTypes} onApply={applyBulk} applying={bulkApplying} />
+      </BulkActionBar>
 
-      <div className="overflow-hidden rounded border border-gray-200 bg-white">
-        <table className="w-full table-fixed text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="w-8 px-2 py-1">
-                <input
-                  type="checkbox"
-                  aria-label="Select all units on this page"
-                  checked={allVisibleSelected}
-                  onChange={toggleAllVisible}
-                />
-              </th>
-              <th className="px-2 py-1">Unit</th>
-              <th className="px-2 py-1">VIN</th>
-              <th className="px-2 py-1">Type</th>
-              <th className="px-2 py-1">Make/Model</th>
-              <th className="px-2 py-1">Year</th>
-              <th className="px-2 py-1">Status</th>
-              <th className="px-2 py-1">DOT O/O</th>
-              <th className="w-14 px-2 py-1">Edit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
-                onClick={() => navigate(fleetProfilePath(row))}
-              >
-                <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    aria-label={`Select unit ${row.unit_number ?? row.id}`}
-                    checked={selected.has(row.id)}
-                    onChange={() => toggleRow(row.id)}
-                  />
-                </td>
-                <td className="px-2 py-1">{String(row.unit_number ?? row.id ?? "—")}</td>
-                <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td>
-                <td className="truncate px-2 py-1">{displayType(row)}</td>
-                <td className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>
-                <td className="px-2 py-1">{String(row.year ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.status ?? "—")}</td>
-                <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
-                <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"
-                    aria-label={`Edit unit ${row.unit_number ?? row.id}`}
-                    onClick={() => {
-                      setEditingUnitId(row.id);
-                      setEditingRow(row);
-                    }}
+      <TableSelection
+        rows={rows}
+        getId={(row) => row.id}
+        selectedIds={selection.selectedIds}
+        onSelectionChange={selection.setSelectedIds}
+        pageRowIds={pageRowIds}
+        cap={FLEET_SELECTION_CAP}
+        onCapExceeded={(message) => pushToast(message, "error")}
+      >
+        {(selectCtx) => (
+          <div className="overflow-hidden rounded border border-gray-200 bg-white">
+            <table className="w-full table-fixed text-left text-xs">
+              <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
+                <tr>
+                  <th className="w-8 px-2 py-1">
+                    <TableSelectionHeader
+                      selectedIds={selection.selectedIds}
+                      pageRowIds={pageRowIds}
+                      onSelectionChange={selection.setSelectedIds}
+                      cap={FLEET_SELECTION_CAP}
+                      onCapExceeded={(message) => pushToast(message, "error")}
+                      ariaLabel="Select all units on this page"
+                    />
+                  </th>
+                  <th className="px-2 py-1">Unit</th>
+                  <th className="px-2 py-1">VIN</th>
+                  <th className="px-2 py-1">Type</th>
+                  <th className="px-2 py-1">Make/Model</th>
+                  <th className="px-2 py-1">Year</th>
+                  <th className="px-2 py-1">Status</th>
+                  <th className="px-2 py-1">DOT O/O</th>
+                  <th className="w-14 px-2 py-1">Edit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
+                    onClick={() => navigate(fleetProfilePath(row))}
                   >
-                    Edit
-                  </button>
-                </td>
-
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select unit ${row.unit_number ?? row.id}`}
+                        checked={selectCtx.isSelected(row.id)}
+                        onChange={() => selectCtx.toggle(row.id)}
+                      />
+                    </td>
+                    <td className="px-2 py-1">{String(row.unit_number ?? row.id ?? "—")}</td>
+                    <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td>
+                    <td className="truncate px-2 py-1">{displayType(row)}</td>
+                    <td className="truncate px-2 py-1">{`${String(row.make ?? "—")} ${String(row.model ?? "")}`.trim()}</td>
+                    <td className="px-2 py-1">{String(row.year ?? "—")}</td>
+                    <td className="px-2 py-1">{String(row.status ?? "—")}</td>
+                    <td className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>
+                    <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="rounded border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-gray-700 hover:bg-gray-50"
+                        aria-label={`Edit unit ${row.unit_number ?? row.id}`}
+                        onClick={() => {
+                          setEditingUnitId(row.id);
+                          setEditingRow(row);
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </TableSelection>
 
       <EditVehicleModal
         open={editingUnitId !== null}
