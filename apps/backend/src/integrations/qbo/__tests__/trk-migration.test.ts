@@ -5,6 +5,7 @@ const queryMock = vi.hoisted(() => vi.fn());
 vi.mock("../../../auth/db.js", () => ({
   withCurrentUser: async (_userId: string, fn: (client: { query: typeof queryMock }) => Promise<unknown>) =>
     fn({ query: queryMock }),
+  luciaPool: {},
 }));
 
 vi.mock("../../../_helpers/company-membership-guard.js", () => ({
