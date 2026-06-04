@@ -29,13 +29,16 @@ BEGIN
     new_qual := pol.qual;
     new_check := pol.with_check;
 
+    -- pg_get_expr() decompiles a function-call cast with wrapping parens, e.g.
+    --   (current_setting('app.operating_company_id'::text, true))::uuid
+    -- so the match/replace must target that exact shape. Already-wrapped
+    -- NULLIF(...) casts never match, keeping this migration idempotent.
     IF new_qual IS NOT NULL
-       AND new_qual ~ 'current_setting\([^)]+\)::uuid'
-       AND new_qual !~ 'NULLIF\s*\(\s*current_setting' THEN
+       AND new_qual ~ '\(current_setting\([^()]+\)\)::uuid' THEN
       new_qual := regexp_replace(
         new_qual,
-        'current_setting(\([^)]+\))::uuid',
-        'NULLIF(current_setting\1, '''')::uuid',
+        '\(current_setting\(([^()]+)\)\)::uuid',
+        '(NULLIF(current_setting(\1), ''''::text))::uuid',
         'g'
       );
       EXECUTE format(
@@ -46,12 +49,11 @@ BEGIN
     END IF;
 
     IF new_check IS NOT NULL
-       AND new_check ~ 'current_setting\([^)]+\)::uuid'
-       AND new_check !~ 'NULLIF\s*\(\s*current_setting' THEN
+       AND new_check ~ '\(current_setting\([^()]+\)\)::uuid' THEN
       new_check := regexp_replace(
         new_check,
-        'current_setting(\([^)]+\))::uuid',
-        'NULLIF(current_setting\1, '''')::uuid',
+        '\(current_setting\(([^()]+)\)\)::uuid',
+        '(NULLIF(current_setting(\1), ''''::text))::uuid',
         'g'
       );
       EXECUTE format(
