@@ -1,1 +1,8 @@
-export { default } from "../verify-guards/170-verify-dispatch-customer-eta-notify.mjs";
+export default {
+  name: "verify-dispatch-customer-eta-notify",
+  run(ctx) {
+    if (ctx.run("npm", ["run", "verify:dispatch-customer-eta-notify"]) !== 0) {
+      throw new Error("verify-dispatch-customer-eta-notify failed");
+    }
+  },
+};
