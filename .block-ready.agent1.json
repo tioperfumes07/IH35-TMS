@@ -11,6 +11,7 @@
     "apps/frontend/src/components/fleet/BulkActionBar.tsx",
     "apps/frontend/src/pages/dev/BulkDemoPage.tsx",
     "apps/frontend/src/routes/manifest.tsx",
+    "scripts/nav-integrity-allowlist.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
