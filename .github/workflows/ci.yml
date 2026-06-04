@@ -178,6 +178,9 @@ jobs:
       - name: verify:dispatch-detention-board
         run: npm run verify:dispatch-detention-board
 
+      - name: verify:dispatch-ocr-queue
+        run: npm run verify:dispatch-ocr-queue
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 

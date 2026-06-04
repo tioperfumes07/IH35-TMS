@@ -17,10 +17,18 @@
     "apps/frontend/src/api/dispatch.ts",
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts",
+    "scripts/verify-dispatch-ocr-queue.mjs",
+    "scripts/__tests__/verify-dispatch-ocr-queue.test.mjs",
+    "scripts/verify-guards/168-verify-dispatch-ocr-queue.mjs",
+    "scripts/verify-steps/53-verify-dispatch-ocr-queue.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:dispatch-ocr-queue"
+  ],
   "runtime_path": "both",
   "db_required": true,
   "guard_required": true
