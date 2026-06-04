@@ -5,6 +5,10 @@ import { Modal } from "../Modal";
 import { FaultRuleModal } from "../maintenance/FaultRuleModal";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
 import { ToastProvider } from "../Toast";
+import { FineDetailDrawer } from "../../pages/safety/components/FineDetailDrawer";
+import { CompanyViolationDetailDrawer } from "../../pages/safety/components/CompanyViolationDetailDrawer";
+import { IntegrityAlertDetailDrawer } from "../../pages/safety/components/IntegrityAlertDetailDrawer";
+import { AnomalyDetailDrawer } from "../../pages/safety/tabs/AnomalyDetailDrawer";
 
 function wrap(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -32,7 +36,7 @@ describe("modal x-close audit", () => {
         />
       )
     );
-    fireEvent.click(screen.getByRole("button", { name: "Close Add fault rule" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close Create Rule" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -51,6 +55,103 @@ describe("modal x-close audit", () => {
       )
     );
     fireEvent.click(screen.getByRole("button", { name: "Close Book load" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("SafetyEvents log modal: clicking X calls onClose", () => {
+    const onClose = vi.fn();
+    render(
+      wrap(
+        <Modal open onClose={onClose} title="Log Safety Event">
+          body
+        </Modal>
+      )
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close Log Safety Event" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("FineDetailDrawer: clicking X calls onClose", () => {
+    const onClose = vi.fn();
+    render(
+      wrap(
+        <FineDetailDrawer
+          open
+          fine={{ id: "fine-1", status: "open", amount_cents: 5000 }}
+          operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+          onClose={onClose}
+          onConvertToLiability={vi.fn()}
+          onUpdated={vi.fn()}
+        />
+      )
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close Fine Detail" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("CompanyViolationDetailDrawer: clicking X calls onClose", () => {
+    const onClose = vi.fn();
+    render(
+      wrap(
+        <CompanyViolationDetailDrawer
+          open
+          violation={{ id: "cv-1", status: "open" }}
+          operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+          onClose={onClose}
+          onUpdated={vi.fn()}
+        />
+      )
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close Company Violation Detail" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("IntegrityAlertDetailDrawer: clicking X calls onClose", () => {
+    const onClose = vi.fn();
+    render(
+      wrap(
+        <IntegrityAlertDetailDrawer
+          open
+          alert={{ id: "alert-1", severity: "high" }}
+          operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+          onClose={onClose}
+          onUpdated={vi.fn()}
+        />
+      )
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close Integrity Alert Detail" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("AnomalyDetailDrawer: clicking X calls onClose", () => {
+    const onClose = vi.fn();
+    render(
+      wrap(
+        <AnomalyDetailDrawer
+          open
+          anomalyId="anomaly-1"
+          operatingCompanyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
+          onClose={onClose}
+          onUpdated={vi.fn()}
+          initialAnomaly={{
+            id: "anomaly-1",
+            tenant_id: "tenant-1",
+            anomaly_type: "speed",
+            severity: "medium",
+            subject_type: "driver",
+            subject_id: "driver-1",
+            detected_at: "2026-06-01T12:00:00.000Z",
+            status: "new",
+            detector_version: "v1",
+            evidence: {},
+            status_changed_at: null,
+            status_changed_by: null,
+            resolution_note: null,
+          }}
+        />
+      )
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close Anomaly Detail" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
