@@ -4,6 +4,7 @@
   "phase": "Tier 2",
   "task": "P8-AUDIT-KPI-DRIFTS",
   "allowed_files": [
+    "apps/backend/src/kpi/*.ts",
     "apps/backend/src/kpi/**/*.ts",
     "apps/backend/src/home/home-widgets.routes.ts",
     "apps/backend/src/maintenance/dashboard.routes.ts",
