@@ -9,17 +9,17 @@ import {
   DispatchSettingsPage,
 } from "../DispatchSettingsPage";
 
-const updateDispatchPreferences = vi.fn(async (view: "home" | "loads") => ({
-  dispatch_default_view: view,
-}));
-
 vi.mock("../../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
 }));
 
+const updateDispatchPreferences = vi.fn(async (view: "home" | "loads") => ({
+  dispatch_default_view: view,
+}));
+
 vi.mock("../../../api/dispatch", () => ({
   getDispatchPreferences: vi.fn(async () => ({ dispatch_default_view: "home" as const })),
-  updateDispatchPreferences: (...args: unknown[]) => updateDispatchPreferences(...args),
+  updateDispatchPreferences: (view: "home" | "loads") => updateDispatchPreferences(view),
 }));
 
 function wrap(ui: ReactNode) {

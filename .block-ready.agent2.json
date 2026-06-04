@@ -21,7 +21,7 @@
   "extra_gates": [
     "verify:dispatch-settings-tab"
   ],
-  "runtime_path": "frontend",
+  "runtime_path": "src",
   "db_required": false,
   "guard_required": true
 }
