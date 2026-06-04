@@ -61,10 +61,33 @@ describe("maintenance create vocabulary (B25)", () => {
           card={{
             load_id: "load-1",
             load_display_id: "LD-1",
+            load_status: "in_transit",
+            unit_id: "unit-1",
             unit_number: "T169",
+            driver_id: null,
             driver_name: "Driver",
+            final_dest_name: null,
+            final_dest_city: null,
+            final_dest_state: null,
+            final_dest_is_yard: false,
+            predicted_yard_arrival_at: null,
+            hours_until_yard_arrival: null,
+            already_arrived: false,
+            eta_confidence: null,
             suggested_wo_source_type: "IS",
-            issues: [{ issue_id: "issue-1", description: "Brake", severity: "high" }],
+            severe_count: 1,
+            warning_count: 0,
+            info_count: 0,
+            total_open_issues: 1,
+            issues: [
+              {
+                issue_id: "issue-1",
+                issue_type: "mechanical",
+                description: "Brake",
+                severity: "severe",
+                reported_at: "2026-06-03T12:00:00Z",
+              },
+            ],
           }}
           onClose={() => undefined}
           onDone={() => undefined}
