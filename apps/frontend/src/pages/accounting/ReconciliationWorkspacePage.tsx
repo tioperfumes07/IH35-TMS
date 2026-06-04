@@ -29,7 +29,8 @@ function defaultPeriod() {
 }
 
 export function ReconciliationWorkspacePage() {
-  const { companyId } = useCompanyContext();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const period = useMemo(() => defaultPeriod(), []);
@@ -108,7 +109,7 @@ export function ReconciliationWorkspacePage() {
         title="Bank reconciliation workspace"
         subtitle="Match unreconciled bank transactions to ledger entries (±3 day / amount scoring)."
       />
-      {workspaceQuery.error ? <ListErrorBanner error={workspaceQuery.error as Error} /> : null}
+      {workspaceQuery.isError ? <ListErrorBanner onRetry={() => void workspaceQuery.refetch()} /> : null}
       <div className="filter-row" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
         <label>
           Account
