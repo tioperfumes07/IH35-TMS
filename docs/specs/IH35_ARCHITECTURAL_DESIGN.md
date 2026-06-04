@@ -559,6 +559,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Dispatch secondary nav depth (B21-D12, 2026-06-04):** `/dispatch` page-level secondary tabs — Assignments embeds D2 `AssignmentHistoryPage` (global audit trail); Settlements quick-links to canonical `/driver-finance/settlements` (A24-2 pattern); Load board, Book load, and Pre-settlements unchanged. Prior stub panels ARCHIVE-not-DELETE in `Dispatch.tsx`. No migration. **CI:** `verify:dispatch-secondary-nav-depth`.
 
+**DVIR defect intake — maintenance side (B27, 2026-06-04):** `/maintenance/defects` inbox + `/maintenance/defects/:id` detail read canonical `safety.dvir_defects` / `safety.dvir_submissions` (A23-4). Triage actions (assign, escalate, close-no-action, convert-to-WO) persist via append-only `audit.audit_events` (`maintenance.dvir_defect.*`); WO conversion inserts `maintenance.work_orders` with `source_type='DV'` and links `safety.dvir_submissions.follow_up_wo_id`. Detail page pre-fills `CreateWorkOrderModal`. No migration. **CI:** `verify:maint-dvir-defect-intake`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`

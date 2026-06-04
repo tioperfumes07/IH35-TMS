@@ -1,22 +1,28 @@
 {
-  "block_id": "BLOCK-B21-D12-DISPATCH-SECONDARY-NAV-DEPTH",
-  "branch": "feat/dispatch-secondary-nav-depth",
+  "block_id": "BLOCK-B27-DVIR-DEFECT-INTAKE-MAINTENANCE-SIDE",
+  "branch": "feat/maint-dvir-defect-intake",
   "phase": "Phase 3",
-  "task": "B21-D12-DISPATCH-SECONDARY-NAV-DEPTH",
+  "task": "B27-DVIR-DEFECT-INTAKE-MAINTENANCE-SIDE",
   "allowed_files": [
-    "apps/frontend/src/pages/Dispatch.tsx",
-    "apps/frontend/src/pages/__tests__/DispatchSecondaryNav.test.tsx",
-    "scripts/verify-dispatch-secondary-nav-depth.mjs",
-    "scripts/__tests__/verify-dispatch-secondary-nav-depth.test.mjs",
-    "scripts/verify-guards/173-verify-dispatch-secondary-nav-depth.mjs",
-    "scripts/verify-steps/58-verify-dispatch-secondary-nav-depth.mjs",
+    "apps/backend/src/maintenance/defects.routes.ts",
+    "apps/backend/src/maintenance/__tests__/defects.routes.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/maintenance/DefectsInboxPage.tsx",
+    "apps/frontend/src/pages/maintenance/DefectDetailPage.tsx",
+    "apps/frontend/src/pages/maintenance/__tests__/DefectsInboxPage.test.tsx",
+    "apps/frontend/src/api/maintenance.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-maint-dvir-defect-intake.mjs",
+    "scripts/__tests__/verify-maint-dvir-defect-intake.test.mjs",
+    "scripts/verify-guards/174-verify-maint-dvir-defect-intake.mjs",
+    "scripts/verify-steps/59-verify-maint-dvir-defect-intake.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:dispatch-secondary-nav-depth"
+    "verify:maint-dvir-defect-intake"
   ],
   "runtime_path": "src",
   "db_required": false,

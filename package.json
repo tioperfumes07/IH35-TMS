@@ -326,6 +326,7 @@
     "verify:dispatch-pod-bol-workflow": "node scripts/verify-dispatch-pod-bol-workflow.mjs",
     "verify:dispatch-settings-tab": "node scripts/verify-dispatch-settings-tab.mjs",
     "verify:dispatch-secondary-nav-depth": "node scripts/verify-dispatch-secondary-nav-depth.mjs",
+    "verify:maint-dvir-defect-intake": "node scripts/verify-maint-dvir-defect-intake.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",
