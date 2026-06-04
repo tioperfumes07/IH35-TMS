@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import { Redis } from "ioredis";
 import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3";
 import { withLuciaBypass } from "../auth/db.js";
 import { getAppReady } from "../lib/startup-ready.js";
+import { createResilientRedis, type RedisHealthStatus } from "../lib/redis.client.js";
 
 export type HealthCheck = {
   name: string;
@@ -10,6 +10,7 @@ export type HealthCheck = {
   tier: "critical" | "warning";
   duration_ms: number;
   error?: string;
+  status?: RedisHealthStatus;
 };
 
 async function promiseTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -74,12 +75,51 @@ async function checkMigrationLedger(): Promise<void> {
   });
 }
 
-async function checkRedisPing(): Promise<void> {
+const REDIS_HEALTH_TIMEOUT_MS = 3_000;
+
+async function checkRedisPing(): Promise<HealthCheck> {
+  const started = Date.now();
   const url = process.env.REDIS_URL?.trim();
-  if (!url) throw new Error("missing_redis_url");
-  const redis = new Redis(url, { maxRetriesPerRequest: 1, enableOfflineQueue: false });
+  if (!url) {
+    return {
+      name: "redis.ping",
+      ok: false,
+      tier: "critical",
+      duration_ms: Date.now() - started,
+      status: "down",
+      error: "missing_redis_url",
+    };
+  }
+
+  const redis = createResilientRedis(url);
   try {
-    await promiseTimeout(redis.ping(), 50);
+    await promiseTimeout(redis.ping(), REDIS_HEALTH_TIMEOUT_MS);
+    return {
+      name: "redis.ping",
+      ok: true,
+      tier: "critical",
+      duration_ms: Date.now() - started,
+      status: "ok",
+    };
+  } catch (error) {
+    const reconnecting = redis.status === "reconnecting" || redis.status === "connecting";
+    if (reconnecting) {
+      return {
+        name: "redis.ping",
+        ok: true,
+        tier: "critical",
+        duration_ms: Date.now() - started,
+        status: "reconnecting",
+      };
+    }
+    return {
+      name: "redis.ping",
+      ok: false,
+      tier: "critical",
+      duration_ms: Date.now() - started,
+      status: "down",
+      error: String((error as Error)?.message ?? error),
+    };
   } finally {
     redis.disconnect();
   }
@@ -194,7 +234,7 @@ export async function runDeepHealthChecks(): Promise<HealthCheck[]> {
   const criticalFns = [
     () => timed("postgres.select1", "critical", checkPostgres),
     () => timed("migrations.ledger", "critical", checkMigrationLedger),
-    () => timed("redis.ping", "critical", checkRedisPing),
+    () => checkRedisPing(),
     () => timed("r2.head_bucket", "critical", checkR2HeadBucket),
   ];
 

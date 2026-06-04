@@ -1243,6 +1243,18 @@ operating_company_id = NULLIF(current_setting('app.operating_company_id', true),
 
 **CI guard:** `verify:rls-uuid-cast-nullif` — migrations numbered ≥ 0359 must not introduce bare `current_setting(...)::uuid` (allow `-- ALLOW_BARE_UUID_CAST` escape hatch).
 
+## Redis Connection Resiliency — Block INFRA-1 (locked 2026-06-03)
+
+**Problem:** Render Ohio → Upstash Oregon cross-region latency and transient TCP blips caused `/api/v1/healthz` `redis.ping` failures with `Stream isn't writeable and enableOfflineQueue options is false` when ioredis used brittle inline options (`enableOfflineQueue: false`, `maxRetriesPerRequest: 1`).
+
+**Canonical client:** `apps/backend/src/lib/redis.client.ts` — `createResilientRedis(url)` centralizes resilient ioredis options for health probes (and future consumers). Key settings: `enableOfflineQueue: true`, `maxRetriesPerRequest: 20`, `connectTimeout: 10_000`, `commandTimeout: 5_000`, exponential `retryStrategy` capped at 2s, `reconnectOnError` for `READONLY`, `ECONNRESET`, and stream-not-writeable errors, `lazyConnect: false`, `enableReadyCheck: true`, `keepAlive: 30_000`, `family: 0`. **No explicit `tls` block** — `rediss://` URLs preserve Upstash TLS as before.
+
+**Observability:** INFO-level connection lifecycle logs (`connect`, `ready`, `error`, `reconnecting`, `end`) prefixed `[redis]`.
+
+**Health probe:** `GET /api/v1/healthz` `redis.ping` uses a **3s timeout** and reports `status`: `ok` | `reconnecting` | `down`. Transient reconnect states return `ok: true` with `status: reconnecting` so cross-region blips do not false-negative the critical tier.
+
+**CI:** `verify:redis-resilient-config` asserts resilient options, health-route wiring, and absence of explicit TLS overrides in the shared client.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
