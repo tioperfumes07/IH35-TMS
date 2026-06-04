@@ -107,6 +107,8 @@ Every page renders inside a 3-zone shell:
 
 **Create vocabulary (B25, 2026-06-03):** Maintenance create CTAs standardized to **+ Create [Object]** — e.g. **+ Create Part**, **+ Create Rule**, **+ Create Work Order** (replaces **+ Create WO**, **+ Add rule**, bare **+ Create** on parts). Fleet vehicle ActionBar deep-links to `/maintenance/work-orders/new?unit_id=` via `WorkOrderNewPage`. ARCHIVE-not-DELETE comments at superseded labels. **CI:** `verify:maint-create-vocab`.
 
+**Trailer WO history (B26, 2026-06-03):** `maintenance.work_orders.equipment_id` (migration `0358`, nullable FK → `mdata.equipment`) enables TrailerProfile WO panel to filter by trailer regardless of current truck attachment; vehicle profile keeps `unit_id` filter. Backfill from unambiguous `current_unit_id` match; orphan WOs remain `equipment_id IS NULL`. **CI:** `verify:trailer-wo-equipment-id`.
+
 ### Sub-nav tabs (10 total — UPDATED with locked design)
 
 | Tab | What it shows | Notes |
@@ -1052,8 +1054,8 @@ No migration. UX and API hardening on Part 1 data layer.
 
 - **Status change:** `PUT /api/v1/fleet/trailers/:id/status` with reason, optional note/effective date, lifecycle fields (sold/transfer/damage/OOS). Validated by `apps/backend/src/fleet/trailer-status-state-machine.ts` (terminal `Sold`/`Transferred`/`Lost`; `Sold→InService` only with Owner `admin_override`). Audits `fleet.trailer.status_changed`.
 - **Edit:** `PATCH /api/v1/fleet/trailers/:id` via `EditTrailerModal` (identity, specs, insurance, notes). Audits `fleet.trailer.updated` with before/after diff.
-- **UI:** `StatusChangeModal`, status badge dropdown on `IdentityStatusHeader`, `TrailerReeferSection` A19 stub (conditional `equipment_type=Reefer`), `TrailerRecentActivitySection` (equipment log, docs files, WO list via attached unit).
-- **CI:** `verify:trailer-status-state-machine-coverage`, `verify:trailer-profile-no-stub-sections`.
+- **UI:** `StatusChangeModal`, status badge dropdown on `IdentityStatusHeader`, `TrailerReeferSection` A19 stub (conditional `equipment_type=Reefer`), `TrailerRecentActivitySection` (equipment log, docs files, WO list filtered by `equipment_id`).
+- **CI:** `verify:trailer-status-state-machine-coverage`, `verify:trailer-profile-no-stub-sections`, `verify:trailer-wo-equipment-id` (B26).
 
 ## Compliance Dashboard (Safety module) — Block 16 (locked 2026-06-02)
 

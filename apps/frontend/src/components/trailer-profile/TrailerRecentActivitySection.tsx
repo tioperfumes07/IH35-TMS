@@ -5,10 +5,9 @@ import { listFiles, type DocsFile } from "../../api/docs";
 type Props = {
   equipmentId: string;
   companyId: string;
-  attachedUnitId?: string | null;
 };
 
-export function TrailerRecentActivitySection({ equipmentId, companyId, attachedUnitId }: Props) {
+export function TrailerRecentActivitySection({ equipmentId, companyId }: Props) {
   const logQ = useQuery({
     queryKey: ["trailer-equipment-log", equipmentId],
     queryFn: () =>
@@ -30,15 +29,12 @@ export function TrailerRecentActivitySection({ equipmentId, companyId, attachedU
   });
 
   const woQ = useQuery({
-    queryKey: ["trailer-work-orders", attachedUnitId, companyId],
+    queryKey: ["trailer-work-orders", equipmentId, companyId],
     queryFn: () =>
       apiRequest<{ work_orders: Array<Record<string, unknown>>; total_count: number }>(
-        `/api/v1/maintenance/work-orders?operating_company_id=${encodeURIComponent(companyId)}&limit=10`
+        `/api/v1/maintenance/work-orders?operating_company_id=${encodeURIComponent(companyId)}&equipment_id=${encodeURIComponent(equipmentId)}&limit=10`
       ),
-    enabled: Boolean(companyId && attachedUnitId),
-    select: (data) => ({
-      work_orders: data.work_orders.filter((w) => String(w.unit_id) === String(attachedUnitId)).slice(0, 10),
-    }),
+    enabled: Boolean(equipmentId && companyId),
   });
 
   const logRows = logQ.data?.equipment_log ?? [];
@@ -69,11 +65,10 @@ export function TrailerRecentActivitySection({ equipmentId, companyId, attachedU
             ))}
           </ul>
         </div>
-        <div>
-          <h3 className="text-xs font-medium text-gray-600">Work orders (power unit)</h3>
+        <div data-testid="tp-trailer-work-orders">
+          <h3 className="text-xs font-medium text-gray-600">Work orders</h3>
           <ul className="mt-1 space-y-1 text-xs text-gray-800">
-            {!attachedUnitId ? <li className="text-gray-500">No truck attached.</li> : null}
-            {attachedUnitId && woRows.length === 0 ? <li className="text-gray-500">No work orders.</li> : null}
+            {woRows.length === 0 ? <li className="text-gray-500">No work orders.</li> : null}
             {woRows.map((w) => (
               <li key={String(w.id)}>
                 {String(w.display_id ?? w.id)} · {String(w.status ?? "—")}

@@ -1,30 +1,28 @@
 {
-  "block_id": "BLOCK-B25-MAINT-VOCAB-CREATE",
-  "branch": "feat/maint-vocab-create",
-  "phase": "Phase B25",
-  "task": "B25-MAINT-WO-VOCABULARY-STANDARDIZE",
+  "block_id": "BLOCK-B26-TRAILER-WO-EQUIPMENT-ID",
+  "branch": "feat/maint-trailer-wo-by-equipment",
+  "phase": "Phase B26",
+  "task": "B26-TRAILER-WO-HISTORY-BY-EQUIPMENT-ID",
   "allowed_files": [
-    "apps/frontend/src/pages/maintenance/WorkOrderNewPage.tsx",
-    "apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx",
-    "apps/frontend/src/pages/maintenance/FaultRulesPage.tsx",
-    "apps/frontend/src/pages/maintenance/components/ConvertIssueToWOModal.tsx",
-    "apps/frontend/src/pages/maintenance/__tests__/maint-create-vocab.test.tsx",
-    "apps/frontend/src/components/vehicle-profile/ActionBar.tsx",
-    "apps/frontend/src/components/maintenance/FaultRuleModal.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-maint-create-vocab.mjs",
-    "scripts/__tests__/verify-maint-create-vocab.test.mjs",
-    "scripts/verify-steps/48-verify-maint-create-vocab.mjs",
-    "scripts/verify-guards/162-verify-maint-create-vocab.mjs",
+    "db/migrations/0358_work_orders_equipment_id.sql",
+    "apps/backend/src/maintenance/work-orders.routes.ts",
+    "apps/backend/src/maintenance/work-orders.routes.test.ts",
+    "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx",
+    "apps/frontend/src/components/trailer-profile/TrailerRecentActivitySection.tsx",
+    "apps/frontend/src/components/trailer-profile/__tests__/TrailerRecentActivitySection.test.tsx",
+    "scripts/verify-trailer-wo-equipment-id.mjs",
+    "scripts/__tests__/verify-trailer-wo-equipment-id.test.mjs",
+    "scripts/verify-steps/49-verify-trailer-wo-equipment-id.mjs",
+    "scripts/verify-guards/163-verify-trailer-wo-equipment-id.mjs",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:maint-create-vocab"
+    "verify:trailer-wo-equipment-id"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
