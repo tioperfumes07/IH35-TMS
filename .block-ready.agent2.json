@@ -1,29 +1,15 @@
 {
-  "block_id": "BLOCK-B35-MAINT-KPI-DASHBOARD",
-  "branch": "feat/maint-kpi-dashboard",
-  "phase": "Phase 3",
-  "task": "B35-MAINT-KPI-DASHBOARD",
+  "block_id": "BLOCK-P8-AUDIT-BACKEND-VERSION",
+  "branch": "fix/audit-backend-version-tag",
+  "phase": "Tier 2 — P8 Audit",
+  "task": "P8-AUDIT-BACKEND-VERSION",
   "allowed_files": [
-    "apps/backend/src/maintenance/kpi.routes.ts",
-    "apps/backend/src/maintenance/__tests__/kpi.routes.test.ts",
-    "apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx",
-    "apps/frontend/src/pages/maintenance/__tests__/MaintKpiDashboardPage.test.tsx",
-    "apps/frontend/src/api/maintenance.ts",
-    "apps/frontend/src/routes/manifest.tsx",
-    "apps/backend/src/index.ts",
-    "scripts/verify-maint-kpi-dashboard.mjs",
-    "scripts/__tests__/verify-maint-kpi-dashboard.test.mjs",
-    "scripts/verify-guards/181-verify-maint-kpi-dashboard.mjs",
-    "scripts/verify-steps/66-verify-maint-kpi-dashboard.mjs",
-    "package.json",
-    ".github/workflows/ci.yml",
-    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "apps/backend/src/health/health.routes.ts",
+    "apps/backend/src/health/__tests__/health.test.ts",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [
-    "verify:maint-kpi-dashboard"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }

@@ -230,6 +230,14 @@ async function checkBackgroundJobStaleness(): Promise<void> {
   });
 }
 
+export function resolveBackendVersion(): string {
+  const renderCommit = process.env.RENDER_GIT_COMMIT?.trim();
+  if (renderCommit) return renderCommit.slice(0, 7);
+  const githubSha = process.env.GITHUB_SHA?.trim();
+  if (githubSha) return githubSha.slice(0, 7);
+  return "dev";
+}
+
 export async function runDeepHealthChecks(): Promise<HealthCheck[]> {
   const criticalFns = [
     () => timed("postgres.select1", "critical", checkPostgres),
@@ -251,7 +259,11 @@ export async function runDeepHealthChecks(): Promise<HealthCheck[]> {
 
 export async function registerHealthRoutes(app: FastifyInstance) {
   app.get("/api/v1/healthz/shallow", async () => {
-    return { ok: true, uptime_seconds: Math.floor(process.uptime()) };
+    return {
+      ok: true,
+      uptime_seconds: Math.floor(process.uptime()),
+      version: resolveBackendVersion(),
+    };
   });
 
   app.get("/api/v1/healthz/readyz", async (_req, reply) => {
