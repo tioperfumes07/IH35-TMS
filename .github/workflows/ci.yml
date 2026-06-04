@@ -154,6 +154,9 @@ jobs:
       - name: verify:drivers-onboarding-wizard
         run: npm run verify:drivers-onboarding-wizard
 
+      - name: verify:drivers-document-expiry-alerts
+        run: npm run verify:drivers-document-expiry-alerts
+
       - name: verify:drivers-create-vocab
         run: npm run verify:drivers-create-vocab
 
