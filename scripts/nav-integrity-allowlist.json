@@ -26,6 +26,7 @@
     { "path": "/dispatch/detention", "reason": "Detention accrual board from DISPATCH flyout (B21-D5)" },
     { "path": "/dispatch/notify-preferences", "reason": "Customer ETA notify preferences + log from DISPATCH flyout (B21-D9)" },
     { "path": "/dispatch/pod-review", "reason": "POD review + BOL generation from DISPATCH flyout (B21-D10)" },
+    { "path": "/dispatch/settings", "reason": "Dispatcher defaults bound to dispatch preferences API (B21-D11)" },
     { "path": "/dispatch/loads/:id", "reason": "Load detail deep-link alias → /dispatch?load_id= (B21-D1)" },
     { "path": "/fuel/planner", "reason": "ComingSoon stub; fuel tabs on /fuel" },
     { "path": "/fuel/settings", "reason": "ComingSoon stub; fuel tabs on /fuel" },

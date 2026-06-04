@@ -186,6 +186,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "OCR Queue", to: "/dispatch/ocr-queue" },
         { label: "Customer ETA Notify", to: "/dispatch/notify-preferences" },
         { label: "POD Review + BOL", to: "/dispatch/pod-review" },
+        { label: "Dispatch Settings", to: "/dispatch/settings" },
         { label: "Geofencing", to: "/dispatch/geofencing" },
         { label: "Alerts", to: "/dispatch/alerts" },
         { label: "Border Crossing", to: "/dispatch/border-crossing" },

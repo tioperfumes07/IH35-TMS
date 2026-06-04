@@ -189,6 +189,9 @@ jobs:
       - name: verify:dispatch-pod-bol-workflow
         run: npm run verify:dispatch-pod-bol-workflow
 
+      - name: verify:dispatch-settings-tab
+        run: npm run verify:dispatch-settings-tab
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
