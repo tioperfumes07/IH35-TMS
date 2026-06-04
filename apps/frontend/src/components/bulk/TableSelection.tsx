@@ -38,11 +38,11 @@ function applyWithCap(
 }
 
 export function TableSelection<TRow>({
-  rows,
-  getId,
+  rows: _rows,
+  getId: _getId,
   selectedIds,
   onSelectionChange,
-  pageRowIds,
+  pageRowIds: _pageRowIds,
   cap = DEFAULT_CAP,
   onCapExceeded,
   children,
@@ -68,7 +68,7 @@ export type TableSelectionHeaderProps = {
 
 export function TableSelectionHeader({
   selectedIds,
-  pageRowIds,
+  pageRowIds: _pageRowIds,
   onSelectionChange,
   cap = DEFAULT_CAP,
   onCapExceeded,
