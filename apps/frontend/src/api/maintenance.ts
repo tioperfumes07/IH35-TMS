@@ -962,6 +962,118 @@ export function listMaintenanceTireAlerts(operatingCompanyId: string) {
   );
 }
 
+export type MaintenanceWarrantyPartRow = {
+  id: string;
+  operating_company_id: string;
+  parts_inventory_id?: string | null;
+  part_description: string;
+  vendor_id?: string | null;
+  vendor_name?: string | null;
+  warranty_months: number;
+  purchased_at: string;
+  expires_at: string;
+  is_expired?: boolean;
+  original_invoice_number?: string;
+  work_order_id?: string | null;
+  notes?: string;
+  archived_at?: string | null;
+  archive_reason?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type MaintenanceWarrantyClaimRow = {
+  id: string;
+  operating_company_id: string;
+  parts_warranty_id?: string | null;
+  work_order_id?: string | null;
+  vendor_id?: string | null;
+  vendor_name?: string | null;
+  claim_number?: string;
+  status: "draft" | "filed" | "pending" | "approved" | "denied" | "reimbursed";
+  status_label?: string;
+  part_description: string;
+  claim_amount_cents: number;
+  reimbursement_amount_cents?: number | null;
+  filed_at?: string | null;
+  reimbursement_received_at?: string | null;
+  notes?: string;
+  auto_detected?: boolean;
+  archived_at?: string | null;
+  archive_reason?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export function listMaintenanceWarrantyParts(
+  operatingCompanyId: string,
+  params: { work_order_id?: string; include_archived?: boolean } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.work_order_id) q.set("work_order_id", params.work_order_id);
+  if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
+  return apiRequest<{ rows: MaintenanceWarrantyPartRow[] }>(`/api/v1/maintenance/warranty/parts?${q.toString()}`);
+}
+
+export function createMaintenanceWarrantyPart(body: Record<string, unknown>) {
+  return apiRequest<MaintenanceWarrantyPartRow>(`/api/v1/maintenance/warranty/parts`, { method: "POST", body });
+}
+
+export function listMaintenanceWarrantyClaims(
+  operatingCompanyId: string,
+  params: { work_order_id?: string; status?: string; include_archived?: boolean } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.work_order_id) q.set("work_order_id", params.work_order_id);
+  if (params.status) q.set("status", params.status);
+  if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
+  return apiRequest<{ rows: MaintenanceWarrantyClaimRow[] }>(`/api/v1/maintenance/warranty/claims?${q.toString()}`);
+}
+
+export function createMaintenanceWarrantyClaim(body: Record<string, unknown>) {
+  return apiRequest<MaintenanceWarrantyClaimRow>(`/api/v1/maintenance/warranty/claims`, { method: "POST", body });
+}
+
+export function patchMaintenanceWarrantyClaim(id: string, body: Record<string, unknown>) {
+  return apiRequest<MaintenanceWarrantyClaimRow>(`/api/v1/maintenance/warranty/claims/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function fileMaintenanceWarrantyClaim(id: string, body: Record<string, unknown>) {
+  return apiRequest<MaintenanceWarrantyClaimRow>(
+    `/api/v1/maintenance/warranty/claims/${encodeURIComponent(id)}/file`,
+    { method: "POST", body }
+  );
+}
+
+export function reimburseMaintenanceWarrantyClaim(id: string, body: Record<string, unknown>) {
+  return apiRequest<MaintenanceWarrantyClaimRow>(
+    `/api/v1/maintenance/warranty/claims/${encodeURIComponent(id)}/reimburse`,
+    { method: "POST", body }
+  );
+}
+
+export function archiveMaintenanceWarrantyClaim(id: string, body: Record<string, unknown>) {
+  return apiRequest<{ ok: boolean; id: string }>(
+    `/api/v1/maintenance/warranty/claims/${encodeURIComponent(id)}/archive`,
+    { method: "POST", body }
+  );
+}
+
+export function detectMaintenanceWarrantyFromWorkOrder(body: {
+  operating_company_id: string;
+  work_order_id: string;
+  create_draft_claims?: boolean;
+}) {
+  return apiRequest<{
+    work_order_id: string;
+    eligible: Array<Record<string, unknown>>;
+    created_claims?: MaintenanceWarrantyClaimRow[];
+  }>(`/api/v1/maintenance/warranty/detect-from-wo`, { method: "POST", body });
+}
+
 export function listMaintenanceVendors(
   operatingCompanyId: string,
   params: { search?: string; include_archived?: boolean } = {}

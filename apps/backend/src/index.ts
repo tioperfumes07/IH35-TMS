@@ -151,6 +151,7 @@ import { registerWoCostContextRoutes } from "./maintenance/wo-cost-context.route
 import { registerMaintenancePmScheduleRoutes } from "./maintenance/pm-schedule.routes.js";
 import { registerMaintenanceInspectionsRoutes } from "./maintenance/inspections.routes.js";
 import { registerMaintenanceTiresRoutes } from "./maintenance/tires.routes.js";
+import { registerMaintenanceWarrantyRoutes } from "./maintenance/warranty.routes.js";
 import { registerMaintenanceVendorsRoutes } from "./maintenance/vendors.routes.js";
 import { registerMaintenanceReportsRoutes } from "./maintenance/reports.routes.js";
 import { registerMaintenanceComplianceRoutes } from "./maintenance/compliance.routes.js";
@@ -613,6 +614,7 @@ async function main() {
   await registerMaintenancePmScheduleRoutes(app);
   await registerMaintenanceInspectionsRoutes(app);
   await registerMaintenanceTiresRoutes(app);
+  await registerMaintenanceWarrantyRoutes(app);
   await registerMaintenanceVendorsRoutes(app);
   await registerMaintenanceReportsRoutes(app);
   await registerMaintenanceComplianceRoutes(app);

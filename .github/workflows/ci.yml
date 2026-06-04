@@ -231,6 +231,9 @@ jobs:
       - name: verify:maint-tire-program
         run: npm run verify:maint-tire-program
 
+      - name: verify:maint-warranty-claims
+        run: npm run verify:maint-warranty-claims
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
