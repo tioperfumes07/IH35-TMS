@@ -1,36 +1,23 @@
 {
-  "block_id": "BULK-5",
-  "branch": "feat/bulk-5-loads-invoices-bills",
-  "phase": "BULK cluster — WAVE 1 Lane B",
-  "task": "Loads + invoices + bills bulk wire-up",
+  "block_id": "P5-T8",
+  "branch": "feat/phase5-bills-balance-dropdown",
+  "phase": "Tier 3 — Phase 5D",
+  "task": "Bills-with-balance dropdown for AP payment",
   "allowed_files": [
-    "apps/backend/src/dispatch/loads-bulk.routes.ts",
-    "apps/backend/src/dispatch/load-state-machine.ts",
-    "apps/backend/src/dispatch/__tests__/loads-bulk.routes.test.ts",
-    "apps/backend/src/accounting/invoices-bulk.routes.ts",
-    "apps/backend/src/accounting/bills-bulk.routes.ts",
-    "apps/backend/src/accounting/__tests__/invoices-bulk.routes.test.ts",
-    "apps/backend/src/accounting/__tests__/bills-bulk.routes.test.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
-    "apps/frontend/src/pages/dispatch/components/LoadTable.tsx",
-    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
-    "apps/frontend/src/pages/accounting/BillsPage.tsx",
-    "apps/frontend/src/components/dispatch/DispatchList.tsx",
-    "apps/frontend/src/components/bulk/useEntityBulkAction.ts",
-    "apps/frontend/src/pages/Dispatch.tsx",
-    "scripts/verify-bulk-5-accounting-dispatch-routes.mjs",
-    "scripts/__tests__/verify-bulk-5-accounting-dispatch-routes.test.mjs",
-    "scripts/verify-guards/184-verify-bulk-5-accounting-dispatch-routes.mjs",
-    "package.json",
-    ".github/workflows/ci.yml",
-    ".block-ready.agent2.json"
+    "apps/backend/src/accounting/bills.routes.ts",
+    "apps/backend/src/accounting/bills.service.ts",
+    "apps/backend/src/accounting/__tests__/bills-has-balance-filter.test.ts",
+    "apps/frontend/src/components/ap/BillSelect.tsx",
+    "apps/frontend/src/components/ap/BillSelect.test.tsx",
+    "apps/frontend/src/api/accounting.ts",
+    "apps/frontend/src/pages/VendorDetail.tsx",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    ".block-ready.agent2.json",
+    ".block-ready.json",
+    "package.json"
   ],
-  "extra_gates": [
-    "verify:bulk-update-route-mounted",
-    "verify:bulk-audit-per-id"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }

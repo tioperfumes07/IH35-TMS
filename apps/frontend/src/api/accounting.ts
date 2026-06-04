@@ -424,6 +424,7 @@ export function listVendorBills(
     vendor_id: string;
     status?: BillStatus | "unpaid";
     include_balance?: boolean;
+    has_balance?: boolean;
     date_from?: string;
     date_to?: string;
     limit?: number;
@@ -434,6 +435,7 @@ export function listVendorBills(
   query.set("vendor_id", params.vendor_id);
   if (params.status) query.set("status", params.status);
   if (params.include_balance !== undefined) query.set("include_balance", String(params.include_balance));
+  if (params.has_balance) query.set("has_balance", "true");
   if (params.date_from) query.set("date_from", params.date_from);
   if (params.date_to) query.set("date_to", params.date_to);
   if (params.limit !== undefined) query.set("limit", String(params.limit));

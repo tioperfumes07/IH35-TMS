@@ -28,6 +28,7 @@ const listVendorBalancesQuerySchema = companyQuerySchema.extend({
 const listBillsQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().trim().min(1).optional(),
   include_balance: z.coerce.boolean().optional(),
+  has_balance: z.coerce.boolean().optional(),
   status: z.enum(["open", "partial", "paid", "voided", "unpaid"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -112,6 +113,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       toDate: query.data.date_to,
       limit: query.data.limit,
       offset: query.data.offset,
+      hasBalance: query.data.has_balance,
     });
     return { rows };
   });

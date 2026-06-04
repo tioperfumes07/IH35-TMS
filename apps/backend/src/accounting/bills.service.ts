@@ -39,6 +39,7 @@ type ListBillsOptions = {
   status?: BillStatus;
   fromDate?: string;
   toDate?: string;
+  hasBalance?: boolean;
   limit: number;
   offset: number;
 };
@@ -259,6 +260,9 @@ export async function listBillsByVendor(
     } else {
       where.push("b.revoked_at IS NULL");
     }
+    if (options.hasBalance) {
+      where.push("(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0");
+    }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
       `
@@ -301,6 +305,9 @@ export async function listAllBillsForCompany(
       if (options.status !== "voided") where.push("b.revoked_at IS NULL");
     } else {
       where.push("b.revoked_at IS NULL");
+    }
+    if (options.hasBalance) {
+      where.push("(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0");
     }
     values.push(options.limit, options.offset);
     const res = await client.query<BillRow>(
@@ -366,6 +373,7 @@ export async function listBills(
     status?: BillStatus;
     fromDate?: string;
     toDate?: string;
+    hasBalance?: boolean;
     limit: number;
     offset: number;
   }

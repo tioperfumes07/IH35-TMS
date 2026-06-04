@@ -234,6 +234,7 @@ Sub-nav routes show: "Available after accounting cutover (Phase 5)" — wired in
 **Phase 5 tasks:** P5-T1, P5-T2, P5-T3, P5-T9 (live integrations)
 
 **Driver settlement auto-pay (P5-T5, 2026-06-04):** Per-driver `settlement_auto_pay_enabled` on `mdata.drivers` (migration **0370**); Friday payday cron queues ACH via existing `queuePayment`; toggle on driver profile Settlements section. **CI:** `auto-pay.cron` vitest.
+**AP bill payment dropdown (P5-T8, 2026-06-04):** `GET /api/v1/accounting/bills?has_balance=true` filters bills with remaining balance; shared `BillSelect` uses the filter for vendor AP payment flows. **CI:** `BillSelect` + `bills-has-balance-filter` vitest.
 
 **Purpose:** All bank account activity + factoring + escrow + reconciliation
 
