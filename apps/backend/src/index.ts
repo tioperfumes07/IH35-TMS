@@ -101,6 +101,7 @@ import { registerSafetyRtdRoutes } from "./safety/rtd.routes.js";
 import { registerSafetySettingsRoutes } from "./safety/settings.routes.js";
 import { registerSafetyTrainingProgramsRoutes } from "./safety/training-programs.routes.js";
 import { registerSafetyTrainingRecordsRoutes } from "./safety/training-records.routes.js";
+import { registerSafetyDvirRoutes } from "./safety/dvir.routes.js";
 import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
 import { registerBankTxCategorizationRoutes } from "./banking/categorization.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
@@ -540,6 +541,7 @@ async function main() {
   await registerSafetySettingsRoutes(app);
   await registerSafetyTrainingProgramsRoutes(app);
   await registerSafetyTrainingRecordsRoutes(app);
+  await registerSafetyDvirRoutes(app);
   await registerLiabilitiesRoutes(app);
   await registerCashAdvancesRoutes(app);
   await registerBankTxCategorizationRoutes(app);

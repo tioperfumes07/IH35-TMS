@@ -375,7 +375,7 @@ function DispatchLoadDetailRedirect() {
   return <Navigate to={`/dispatch?load_id=${encodeURIComponent(id)}`} replace />;
 }
 
-const LOCKED_SAFETY_TAB_PATHS = ["/safety/driver-files", "/safety/idvr"];
+const LOCKED_SAFETY_TAB_PATHS = ["/safety/driver-files"];
 void LOCKED_SAFETY_TAB_PATHS;
 
 

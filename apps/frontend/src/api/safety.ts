@@ -159,6 +159,33 @@ export function patchUserPreferences(preferences: Record<string, unknown>) {
   });
 }
 
+export function getSafetyDvirSubmissions(
+  companyId: string,
+  filters: {
+    driver_id?: string;
+    unit_id?: string;
+    from?: string;
+    to?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (filters.driver_id) qs.set("driver_id", filters.driver_id);
+  if (filters.unit_id) qs.set("unit_id", filters.unit_id);
+  if (filters.from) qs.set("from", filters.from);
+  if (filters.to) qs.set("to", filters.to);
+  if (filters.limit != null) qs.set("limit", String(filters.limit));
+  if (filters.offset != null) qs.set("offset", String(filters.offset));
+  return apiRequest<{ submissions: Array<Record<string, unknown>> }>(`/api/v1/safety/dvir?${qs.toString()}`);
+}
+
+export function getSafetyDvirDetail(id: string, companyId: string) {
+  return apiRequest<{ submission: Record<string, unknown>; defects: Array<Record<string, unknown>> }>(
+    `/api/v1/safety/dvir/${encodeURIComponent(id)}?${q(companyId)}`
+  );
+}
+
 export function getSafetyAccidents(companyId: string) {
   return apiRequest<{ accidents: Array<Record<string, unknown>> }>(`/api/v1/safety/accidents?${q(companyId)}`);
 }

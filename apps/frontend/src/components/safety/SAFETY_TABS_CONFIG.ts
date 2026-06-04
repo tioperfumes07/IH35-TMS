@@ -37,7 +37,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     id: "inspections-fmcsa",
     label: "Inspections & FMCSA",
     tabs: [
-      { id: "idvr", label: "Vehicle Inspections-IDVR", route: "/safety/idvr", badge: "renamed" },
+      { id: "idvr", label: "Vehicle Inspections-IDVR", route: "/safety/idvr", badge: "renamed", status: "Live" },
       { id: "dot-inspections", label: "DOT Inspections", route: "/safety/dot-inspections", badge: "new" },
       { id: "driver-scoring", label: "Driver Scoring", route: "/safety/driver-scoring", badge: "new" },
       { id: "csa-score", label: "CSA Score", route: "/safety/csa-score", badge: "new" },

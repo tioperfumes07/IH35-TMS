@@ -1,5 +1,7 @@
 import type { DvirInspectionItem, DvirStatus } from "../api/dvir";
 
+export const MAX_DVIR_DEFECT_PHOTOS = 5;
+
 const STATUS_BUTTONS: Array<{ key: DvirStatus; bg: string; text: string }> = [
   { key: "pass", bg: "#14532d", text: "#4ade80" },
   { key: "minor", bg: "#92400e", text: "#fcd34d" },
@@ -49,7 +51,12 @@ export function DvirItemRow({
         className="mt-2 h-20 w-full rounded border border-pwa-border bg-[#101522] p-2 text-sm text-pwa-text-primary"
       />
       <div className="mt-2 flex items-center justify-between">
-        <button type="button" onClick={onAddPhoto} className="min-h-11 rounded border border-pwa-border px-3 text-xs font-semibold text-pwa-text-secondary">
+        <button
+          type="button"
+          disabled={item.photo_keys.length >= MAX_DVIR_DEFECT_PHOTOS}
+          onClick={onAddPhoto}
+          className="min-h-11 rounded border border-pwa-border px-3 text-xs font-semibold text-pwa-text-secondary disabled:opacity-40"
+        >
           + Photo
         </button>
         <div className="text-xs text-pwa-text-secondary">

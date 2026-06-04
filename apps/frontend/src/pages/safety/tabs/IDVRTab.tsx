@@ -1,5 +1,7 @@
-import { SafetyTabPlaceholder } from "./SafetyTabPlaceholder";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { IdvrPage } from "../IdvrPage";
 
 export function IDVRTab() {
-  return <SafetyTabPlaceholder title="Vehicle Inspections-IDVR" />;
+  const { selectedCompanyId } = useCompanyContext();
+  return <IdvrPage operatingCompanyId={selectedCompanyId ?? ""} />;
 }
