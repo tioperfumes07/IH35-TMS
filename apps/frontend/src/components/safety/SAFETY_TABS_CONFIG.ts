@@ -29,7 +29,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     id: "hours-fatigue",
     label: "Hours & Fatigue",
     tabs: [
-      { id: "hos", label: "Hours of Service", route: "/safety/hos", badge: null },
+      { id: "hos", label: "Hours of Service", route: "/safety/hos", badge: null, status: "Live" },
       { id: "hos-violations", label: "HOS Violations", route: "/safety/hos-violations", badge: "new" },
     ],
   },
