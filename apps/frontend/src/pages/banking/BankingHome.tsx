@@ -12,6 +12,8 @@ import {
 } from "../../api/banking";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { PlaidLinkButton } from "../../components/banking/PlaidLinkButton";
+import { PlaidLink } from "../../components/banking/PlaidLink";
+import { PlaidSyncStatusPanel } from "../../components/banking/PlaidSyncStatusPanel";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
@@ -191,6 +193,14 @@ export function BankingHomePage() {
         onChange={(id) => setActiveTab(id as (typeof BANKING_TABS)[number]["id"])}
       />
       {kpiQuery.isError || tilesQuery.isError || uncategorizedQuery.isError ? <ListErrorBanner onRetry={() => void uncategorizedQuery.refetch()} /> : null}
+      <PlaidSyncStatusPanel operatingCompanyId={companyId} />
+      <PlaidLink
+        operatingCompanyId={companyId}
+        onSuccess={() => {
+          void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
+        }}
+        label="Connect via PlaidLink"
+      />
       {activeTab === "accounts" ? (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
