@@ -262,6 +262,7 @@ import { initializeQboAccountsPushScheduler, stopQboAccountsPushScheduler } from
 import { registerLovesSyncStatusRoutes } from "./sync/loves-status.routes.js";
 import { initializeLovesCardImportCron } from "./cron/loves-card-import.cron.js";
 import { initializePlaidDailySyncCron } from "./cron/plaid-daily-sync.js";
+import { initializeDriverSettlementAutoPayCron } from "./driver-finance/auto-pay.cron.js";
 import { registerQboSyncEventLogRoutes } from "./qbo/sync-event-log.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
@@ -779,6 +780,13 @@ async function main() {
     app.log.info("[STARTUP] plaid-daily-sync-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] plaid-daily-sync-cron failed");
+  }
+
+  try {
+    initializeDriverSettlementAutoPayCron(app);
+    app.log.info("[STARTUP] driver-settlement-auto-pay-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] driver-settlement-auto-pay-cron failed");
   }
 
   try {

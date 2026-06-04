@@ -232,6 +232,9 @@ Sub-nav routes show: "Available after accounting cutover (Phase 5)" — wired in
 **Approved screen:** `4-Banking_Homepage.png`
 **Phase 3 task:** T11.9 (shipped at `85b5779`) · T11.12 Factoring detail (pending)
 **Phase 5 tasks:** P5-T1, P5-T2, P5-T3, P5-T9 (live integrations)
+
+**Driver settlement auto-pay (P5-T5, 2026-06-04):** Per-driver `settlement_auto_pay_enabled` on `mdata.drivers` (migration **0370**); Friday payday cron queues ACH via existing `queuePayment`; toggle on driver profile Settlements section. **CI:** `auto-pay.cron` vitest.
+
 **Purpose:** All bank account activity + factoring + escrow + reconciliation
 
 ### Top action button
