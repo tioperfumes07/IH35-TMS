@@ -1221,6 +1221,28 @@ Frontend: `/maintenance/parts` (master data CRUD), `/maintenance/parts-inventory
 
 **CI:** `verify:names-master-readonly`, `verify:names-master-no-new-tables`.
 
+## RLS Policy UUID Cast Convention (INFRA-2, locked 2026-06-03)
+
+**Problem:** PostgreSQL RLS evaluates every arm of a `USING`/`WITH CHECK` expression, including `::uuid` casts on `current_setting(...)`, before boolean short-circuit (`OR`) can skip the branch. When a session omits tenant context (for example `withLuciaBypass` health probes that only set `app.bypass_rls`), an empty string cast to uuid raises `invalid input syntax for type uuid: ''`.
+
+**Canonical pattern — wrap before cast:**
+
+```sql
+-- BEFORE (unsafe)
+operating_company_id = current_setting('app.operating_company_id', true)::uuid
+
+-- AFTER (defensive)
+operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+```
+
+`NULLIF(..., '')` turns empty session values into `NULL`; `NULL::uuid` is valid and simply fails equality checks instead of erroring.
+
+**Defense in depth:** `withLuciaBypass` (auth/db.ts) sets sentinel `app.active_company_id` and `app.operating_company_id` to `00000000-0000-0000-0000-000000000000` alongside `app.bypass_rls = 'lucia'`. Valid uuid syntax; matches no real tenant row.
+
+**Migration `0359_rls_uuid_cast_defensive.sql`:** scans live `pg_policy` expressions and `ALTER POLICY` (never `DROP POLICY`) to apply the NULLIF wrap everywhere `current_setting(...)::uuid` appears without it. Covers safety, dispatch, mdata, accounting, notifications, and other tenant-scoped tables.
+
+**CI guard:** `verify:rls-uuid-cast-nullif` — migrations numbered ≥ 0359 must not introduce bare `current_setting(...)::uuid` (allow `-- ALLOW_BARE_UUID_CAST` escape hatch).
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.

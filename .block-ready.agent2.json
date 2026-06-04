@@ -1,35 +1,24 @@
 {
-  "block_id": "BLOCK-B21-D5-DISPATCH-DETENTION-BOARD",
-  "branch": "feat/dispatch-detention-board",
-  "phase": "Phase B21",
-  "task": "B21-D5-DISPATCH-DETENTION-BOARD",
+  "block_id": "BLOCK-INFRA-2-RLS-UUID-CAST-DEFENSIVE",
+  "branch": "fix/rls-uuid-cast-defensive",
+  "phase": "Phase INFRA",
+  "task": "INFRA-2-RLS-UUID-CAST-DEFENSIVE",
   "allowed_files": [
-    "db/migrations/0353_dispatch_detention_events.sql",
-    "apps/backend/src/dispatch/detention.routes.ts",
-    "apps/backend/src/dispatch/detention.service.ts",
-    "apps/backend/src/dispatch/detention.lib.ts",
-    "apps/backend/src/dispatch/__tests__/detention.routes.test.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/api/dispatch.ts",
-    "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
-    "apps/frontend/src/pages/dispatch/__tests__/DetentionBoardPage.test.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    "apps/frontend/src/components/layout/sidebar-config.ts",
-    "docs/locked-ui-surface.json",
-    "scripts/nav-integrity-allowlist.json",
-    "scripts/verify-dispatch-detention-board.mjs",
-    "scripts/__tests__/verify-dispatch-detention-board.test.mjs",
-    "scripts/verify-steps/52-verify-dispatch-detention-board.mjs",
-    "scripts/verify-guards/167-verify-dispatch-detention-board.mjs",
+    "db/migrations/0359_rls_uuid_cast_defensive.sql",
+    "apps/backend/src/auth/db.ts",
+    "apps/backend/src/auth/db.test.ts",
+    "scripts/verify-rls-uuid-cast-nullif.mjs",
+    "scripts/__tests__/verify-rls-uuid-cast-nullif.test.mjs",
+    "scripts/verify-steps/52-verify-rls-uuid-cast-nullif.mjs",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:dispatch-detention-board"
+    "verify:rls-uuid-cast-nullif"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }

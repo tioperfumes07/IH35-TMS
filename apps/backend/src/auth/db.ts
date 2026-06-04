@@ -105,6 +105,9 @@ export function getLuciaPool(): pg.Pool {
 export const pool: pg.Pool = createLazyPool(getPool);
 export const luciaPool: pg.Pool = createLazyPool(getLuciaPool);
 
+/** All-zeros sentinel — valid uuid syntax; matches no real tenant row (defense-in-depth for RLS). */
+export const LUCIA_BYPASS_SENTINEL_COMPANY_ID = "00000000-0000-0000-0000-000000000000";
+
 export async function withLuciaBypass<T>(
   fn: (client: pg.PoolClient) => Promise<T>
 ): Promise<T> {
@@ -112,6 +115,12 @@ export async function withLuciaBypass<T>(
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query(
+      `SET LOCAL app.active_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`
+    );
+    await client.query(
+      `SET LOCAL app.operating_company_id = '${LUCIA_BYPASS_SENTINEL_COMPANY_ID}'`
+    );
     const result = await fn(client);
     await client.query("COMMIT");
     return result;
