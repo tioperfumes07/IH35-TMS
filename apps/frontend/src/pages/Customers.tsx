@@ -11,6 +11,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { displayEntityNotes } from "../lib/qboArchiveNotes";
 import { CustomerCOITab } from "./customers/CustomerCOITab";
 
 type CustomerTabId =
@@ -333,7 +334,7 @@ export function CustomersPage() {
                     <p><span className="font-semibold text-gray-600">Phone:</span> {selectedCustomer.phone ?? "—"}</p>
                     <p><span className="font-semibold text-gray-600">Billing address:</span> {selectedCustomer.billing_address ?? "—"}</p>
                     <p><span className="font-semibold text-gray-600">Shipping address:</span> —</p>
-                    <p><span className="font-semibold text-gray-600">Notes:</span> {selectedCustomer.notes ?? "—"}</p>
+                    <p><span className="font-semibold text-gray-600">Notes:</span> {displayEntityNotes(selectedCustomer.notes) || "—"}</p>
                     <p><span className="font-semibold text-gray-600">Custom fields:</span> —</p>
                   </div>
                 </section>

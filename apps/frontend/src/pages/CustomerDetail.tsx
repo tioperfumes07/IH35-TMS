@@ -54,6 +54,7 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { scrubQboArchiveProjectionNotes } from "../lib/qboArchiveNotes";
 import { useCompanyContext } from "../contexts/CompanyContext";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users"] as const;
@@ -480,7 +481,7 @@ export function CustomerDetailPage() {
       factoring_reserve_pct_override: customer.factoring_reserve_pct_override ? String(customer.factoring_reserve_pct_override) : "",
       factoring_recourse_type: customer.factoring_recourse_type ?? "",
       factoring_notes: customer.factoring_notes ?? "",
-      notes: customer.notes ?? "",
+      notes: scrubQboArchiveProjectionNotes(customer.notes),
     };
   }, [customer, form]);
 
