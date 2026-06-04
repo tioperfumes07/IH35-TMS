@@ -1,23 +1,22 @@
 {
-  "block_id": "P5-T25",
-  "branch": "feat/phase5-tms-qbo-payroll-integration",
-  "phase": "Tier 3 — Phase 5H",
-  "task": "TMS↔QBO Payroll integration Option B aggregation page",
+  "block_id": "P5-T9",
+  "branch": "feat/phase5-bill-payment-subrows",
+  "phase": "Tier 3 — Phase 5D",
+  "task": "Bill payment sub-rows for partial payments",
   "allowed_files": [
-    "db/migrations/0371_qbo_payroll_links.sql",
-    "apps/backend/src/payroll/aggregated.routes.ts",
-    "apps/backend/src/payroll/__tests__/aggregated.test.ts",
+    "apps/frontend/src/components/ap/BillPaymentModal.tsx",
+    "apps/frontend/src/components/ap/BillPaymentModal.test.tsx",
+    "apps/frontend/src/pages/accounting/VendorBalancesPage.tsx",
+    "apps/frontend/src/api/ap.ts",
+    "apps/backend/src/ap/payment-application.routes.ts",
+    "apps/backend/src/ap/payment-application.routes.test.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/api/payrollAggregated.ts",
-    "apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx",
-    "apps/frontend/src/pages/accounting/PayrollAggregatedPage.test.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    ".block-ready.agent2.json",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.json",
-    "package.json"
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": false
 }

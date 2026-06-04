@@ -207,6 +207,7 @@ import { registerQboMasterWriteRoutes } from "./mdata/qbo-master-write.routes.js
 import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.routes.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { initializeAccountingCrons, registerAccountingRoutes } from "./accounting/index.js";
+import { registerApPaymentApplicationRoutes } from "./ap/payment-application.routes.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
 import { registerCompanyRoutes } from "./org/companies.routes.js";
@@ -658,6 +659,7 @@ async function main() {
   await registerOemPartsRoutes(app);
   await registerNamesMasterRoutes(app);
   await registerAccountingRoutes(app);
+  await registerApPaymentApplicationRoutes(app);
   await registerCompanyRoutes(app);
   await registerLegalTemplateRoutes(app);
   await registerLegalContractRoutes(app);
