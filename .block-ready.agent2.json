@@ -19,6 +19,11 @@
     "apps/frontend/src/components/dispatch/DispatchList.tsx",
     "apps/frontend/src/components/bulk/useEntityBulkAction.ts",
     "apps/frontend/src/pages/Dispatch.tsx",
+    "scripts/verify-bulk-5-accounting-dispatch-routes.mjs",
+    "scripts/__tests__/verify-bulk-5-accounting-dispatch-routes.test.mjs",
+    "scripts/verify-guards/184-verify-bulk-5-accounting-dispatch-routes.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
