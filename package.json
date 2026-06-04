@@ -315,6 +315,7 @@
     "verify:dispatch-arch-tab-parity": "node scripts/verify-dispatch-arch-tab-parity.mjs",
     "verify:dispatch-late-arrivals-alerts": "node scripts/verify-dispatch-late-arrivals-alerts.mjs",
     "verify:dispatch-planner-calendar": "node scripts/verify-dispatch-planner-calendar.mjs",
+    "verify:dispatch-detention-board": "node scripts/verify-dispatch-detention-board.mjs",
     "verify:maintenance-reports-coverage": "node scripts/verify-maintenance-reports-coverage.mjs",
     "verify:create-wo-modal-contract": "node scripts/verify-create-wo-modal-contract.mjs",
     "verify:no-qbo-archive-runtime-reads": "node scripts/verify-no-qbo-archive-runtime-reads.mjs",

@@ -21,6 +21,7 @@ import { AtRiskQueuePage } from "../pages/dispatch/AtRiskQueuePage";
 import { InTransitIssuesPage } from "../pages/dispatch/InTransitIssuesPage";
 import { AssignmentHistoryPage } from "../pages/dispatch/AssignmentHistoryPage";
 import { PlannerCalendarPage } from "../pages/dispatch/PlannerCalendarPage";
+import { DetentionBoardPage } from "../pages/dispatch/DetentionBoardPage";
 import { BorderCrossingWizardPage } from "../pages/dispatch/BorderCrossingWizardPage";
 import { BorderCrossingHistoryPage } from "../pages/dispatch/BorderCrossingHistoryPage";
 import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
@@ -541,6 +542,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <PlannerCalendarPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/detention"
+          element={
+            <ProtectedRoute>
+              <DetentionBoardPage />
             </ProtectedRoute>
           }
         />

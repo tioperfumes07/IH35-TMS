@@ -638,3 +638,61 @@ export function patchDispatchPlannerLoadStartAt(
     body,
   });
 }
+
+export type DetentionBoardEvent = {
+  id: string;
+  load_id: string;
+  load_number: string;
+  customer_name: string | null;
+  stop_city: string | null;
+  stop_state: string | null;
+  stop_type: string | null;
+  driver_name: string | null;
+  status: string;
+  started_at: string;
+  stopped_at: string | null;
+  free_time_minutes: number;
+  rate_per_hour_cents: number;
+  billable_minutes: number;
+  live_accrued_amount_cents: number;
+  accrued_amount_cents: number;
+  notify_due: boolean;
+  customer_notified_at: string | null;
+};
+
+export function getDetentionBoard(operatingCompanyId: string) {
+  return apiRequest<{
+    count: number;
+    active_count: number;
+    notify_threshold_minutes: number;
+    events: DetentionBoardEvent[];
+  }>(`/api/v1/dispatch/detention/board?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+}
+
+export function syncDetentionFromArrivals(operatingCompanyId: string) {
+  return apiRequest<{ started: number; stopped: number }>(`/api/v1/dispatch/detention/sync`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+export function closeDetentionEvent(eventId: string, body: { operating_company_id: string; stopped_at?: string }) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/detention/events/${eventId}/close`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function bridgeDetentionBilling(eventId: string, body: { operating_company_id: string }) {
+  return apiRequest<{ event: Record<string, unknown>; bridge: Record<string, unknown> }>(
+    `/api/v1/dispatch/detention/events/${eventId}/bridge-billing`,
+    { method: "POST", body }
+  );
+}
+
+export function notifyDetentionCustomer(eventId: string, body: { operating_company_id: string }) {
+  return apiRequest<{ ok: boolean; notified_at?: string }>(
+    `/api/v1/dispatch/detention/events/${eventId}/notify-customer`,
+    { method: "POST", body }
+  );
+}
