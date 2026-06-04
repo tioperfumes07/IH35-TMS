@@ -835,6 +835,7 @@ export function createJournalEntry(
   payload: {
     entry_date: string;
     memo?: string;
+    reference_number?: string;
     source?: JournalEntrySource;
     postings: Array<{
       account_id: string;

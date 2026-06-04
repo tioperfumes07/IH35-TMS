@@ -1,1 +1,1 @@
-export { ManualJEModal } from "../banking/components/ManualJEModal";
+export { ManualJEModal } from "../../components/accounting/ManualJEModal";

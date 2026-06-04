@@ -26,6 +26,7 @@ const createJournalEntryBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   memo: z.string().trim().max(2000).nullable().optional(),
+  reference_number: z.string().trim().max(100).nullable().optional(),
   source: sourceSchema.optional().default("manual"),
   postings: z.array(postingSchema).min(2),
 });
@@ -59,7 +60,20 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     const body = createJournalEntryBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     try {
-      const created = await createJournalEntry(body.data, { userId: user.uuid, role: user.role });
+      const memoParts: string[] = [];
+      if (body.data.reference_number) memoParts.push(`Ref: ${body.data.reference_number}`);
+      if (body.data.memo) memoParts.push(body.data.memo);
+      const combinedMemo = memoParts.length > 0 ? memoParts.join(" · ") : null;
+      const created = await createJournalEntry(
+        {
+          operating_company_id: body.data.operating_company_id,
+          entry_date: body.data.entry_date,
+          memo: combinedMemo,
+          source: body.data.source,
+          postings: body.data.postings,
+        },
+        { userId: user.uuid, role: user.role }
+      );
       return reply.code(201).send(created);
     } catch (error) {
       const message = String((error as Error)?.message ?? "journal_entry_create_failed");
