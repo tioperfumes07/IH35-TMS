@@ -2,23 +2,45 @@ import { useMemo, useState } from "react";
 
 export const FLEET_BULK_STATUS_OPTIONS = ["Active", "Sold", "Transferred", "Damaged", "OOS"] as const;
 
+export const TRAILER_EQUIPMENT_TYPE_OPTIONS = [
+  "DryVan",
+  "Reefer",
+  "Flatbed",
+  "Tanker",
+  "Container",
+  "Chassis",
+  "StepDeck",
+  "Lowboy",
+  "Conestoga",
+  "RGN",
+  "Other",
+] as const;
+
 export type FleetBulkStatus = (typeof FLEET_BULK_STATUS_OPTIONS)[number];
 
 export type BulkApplyPayload = {
   status?: FleetBulkStatus;
   vehicle_type?: string;
+  equipment_type?: (typeof TRAILER_EQUIPMENT_TYPE_OPTIONS)[number];
 };
 
 type FleetBulkControlsProps = {
   vehicleTypes: string[];
+  showTrailerTypeCatalog?: boolean;
   onApply: (payload: BulkApplyPayload) => void | Promise<void>;
   applying?: boolean;
 };
 
 /** Fleet-specific status/type dropdowns — rendered inside shared BulkActionBar children slot. */
-export function FleetBulkControls({ vehicleTypes, onApply, applying = false }: FleetBulkControlsProps) {
+export function FleetBulkControls({
+  vehicleTypes,
+  showTrailerTypeCatalog = false,
+  onApply,
+  applying = false,
+}: FleetBulkControlsProps) {
   const [status, setStatus] = useState<FleetBulkStatus | "">("");
   const [vehicleType, setVehicleType] = useState("");
+  const [trailerType, setTrailerType] = useState<(typeof TRAILER_EQUIPMENT_TYPE_OPTIONS)[number] | "">("");
 
   const typeOptions = useMemo(
     () => vehicleTypes.filter((value) => value.trim().length > 0).sort((a, b) => a.localeCompare(b)),
@@ -59,14 +81,33 @@ export function FleetBulkControls({ vehicleTypes, onApply, applying = false }: F
           ))}
         </select>
       </label>
+      {showTrailerTypeCatalog ? (
+        <label className="flex items-center gap-1">
+          <span className="text-blue-800">Trailer TYPE</span>
+          <select
+            className="h-7 rounded border border-gray-300 bg-white px-1 text-xs"
+            aria-label="Trailer TYPE"
+            value={trailerType}
+            onChange={(e) => setTrailerType(e.target.value as (typeof TRAILER_EQUIPMENT_TYPE_OPTIONS)[number] | "")}
+          >
+            <option value="">—</option>
+            {TRAILER_EQUIPMENT_TYPE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <button
         type="button"
         className="rounded border border-blue-300 bg-white px-2 py-1 text-xs font-semibold text-blue-800 disabled:opacity-50"
-        disabled={applying || (!status && !vehicleType)}
+        disabled={applying || (!status && !vehicleType && !trailerType)}
         onClick={() => {
           const payload: BulkApplyPayload = {};
           if (status) payload.status = status;
           if (vehicleType) payload.vehicle_type = vehicleType;
+          if (trailerType) payload.equipment_type = trailerType;
           void onApply(payload);
         }}
       >
