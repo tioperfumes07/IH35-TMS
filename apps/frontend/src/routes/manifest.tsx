@@ -91,6 +91,7 @@ import { PmSchedulePage } from "../pages/maintenance/pm-schedule/PmSchedulePage"
 import { PmAutoEnginePage } from "../pages/maintenance/PmAutoEnginePage";
 import { InspectionsPage } from "../pages/maintenance/inspections/InspectionsPage";
 import { VendorsPage as MaintenanceVendorsPage } from "../pages/maintenance/vendors/VendorsPage";
+import { VendorDetailPage as MaintenanceVendorDetailPage } from "../pages/maintenance/VendorDetailPage";
 import { MaintenanceReportsPage } from "../pages/maintenance/reports/MaintenanceReportsPage";
 import { Compliance425CPage } from "../pages/maintenance/compliance/Compliance425CPage";
 import { CashAdvancesHomePage } from "../pages/cash-advances/CashAdvancesHome";
@@ -1046,6 +1047,16 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <MaintenanceShell>
                 <MaintenanceVendorsPage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/vendors/:vendorId"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <MaintenanceVendorDetailPage />
               </MaintenanceShell>
             </ProtectedRoute>
           }

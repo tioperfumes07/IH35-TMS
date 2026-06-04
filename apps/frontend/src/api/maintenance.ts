@@ -729,14 +729,72 @@ export function createMaintenanceInspection(body: Record<string, unknown>) {
   return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/inspections`, { method: "POST", body });
 }
 
-export function listMaintenanceVendors(operatingCompanyId: string) {
-  return apiRequest<{ rows: Array<Record<string, unknown>> }>(
-    `/api/v1/maintenance/vendors?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+export function listMaintenanceVendors(
+  operatingCompanyId: string,
+  params: { search?: string; include_archived?: boolean } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.search) q.set("search", params.search);
+  if (params.include_archived != null) q.set("include_archived", String(params.include_archived));
+  return apiRequest<{ rows: MaintenanceVendorRow[]; csv_import_enabled: boolean }>(
+    `/api/v1/maintenance/vendors?${q.toString()}`
   );
 }
 
+export type MaintenanceVendorRow = {
+  id: string;
+  code: string;
+  display_name: string;
+  name?: string;
+  description: string | null;
+  type: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  address: string | null;
+  payment_terms: string | null;
+  notes: string | null;
+  is_active: boolean;
+  active?: boolean;
+  archived_at?: string | null;
+  archive_reason?: string | null;
+};
+
+export function getMaintenanceVendorDetail(vendorId: string, operatingCompanyId: string) {
+  return apiRequest<{
+    vendor: MaintenanceVendorRow;
+    wo_history: Array<Record<string, unknown>>;
+    invoice_history: Array<Record<string, unknown>>;
+  }>(`/api/v1/maintenance/vendors/${encodeURIComponent(vendorId)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+}
+
 export function createMaintenanceVendor(body: Record<string, unknown>) {
-  return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/vendors`, { method: "POST", body });
+  return apiRequest<MaintenanceVendorRow>(`/api/v1/maintenance/vendors`, { method: "POST", body });
+}
+
+export function updateMaintenanceVendor(id: string, body: Record<string, unknown>) {
+  return apiRequest<MaintenanceVendorRow>(`/api/v1/maintenance/vendors/${encodeURIComponent(id)}`, { method: "PATCH", body });
+}
+
+export function archiveMaintenanceVendor(id: string, operatingCompanyId: string, archiveReason: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/maintenance/vendors/${encodeURIComponent(id)}/archive`, {
+    method: "PATCH",
+    body: { operating_company_id: operatingCompanyId, archive_reason: archiveReason },
+  });
+}
+
+export function importMaintenanceVendors(operatingCompanyId: string, file: File) {
+  const form = new FormData();
+  form.set("file", file);
+  return apiRequest<{ inserted_rows: number; invalid_rows: number; errors: Array<{ row: number; message: string }> }>(
+    `/api/v1/maintenance/vendors/import?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body: form }
+  );
+}
+
+export function getMaintenanceVendorsTemplateUrl(operatingCompanyId: string) {
+  return resolveApiUrl(
+    `/api/v1/maintenance/vendors/import-template?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
 }
 
 export function getMaintenanceReportRows(report: string, operatingCompanyId: string) {

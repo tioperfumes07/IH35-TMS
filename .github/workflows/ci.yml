@@ -210,6 +210,9 @@ jobs:
       - name: verify:maint-pm-auto-wo-engine
         run: npm run verify:maint-pm-auto-wo-engine
 
+      - name: verify:maint-vendor-master-unify
+        run: npm run verify:maint-vendor-master-unify
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 

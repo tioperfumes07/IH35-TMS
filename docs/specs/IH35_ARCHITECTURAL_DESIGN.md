@@ -563,6 +563,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **PM auto-WO engine (B28, 2026-06-04):** Migration `0360` adds `maintenance.pm_schedule_runs`, `maintenance.pm_auto_wo_log`, and `maintenance.pm_auto_engine_settings`. Hourly cron (`ENABLE_PM_AUTO_ENGINE_CRON`, default on at :05 CST) evaluates `maintenance.pm_schedules` against Samsara odometer projections: due schedules auto-insert PM work orders (`origin='pm_schedule'`); near-due schedules reuse the telematics PM predictor for alerts. Dashboard `/maintenance/pm-auto-engine` shows recent runs, action log, pause/resume, and manual run-now. **CI:** `verify:maint-pm-auto-wo-engine`.
 
+**Vendor master unify (B29, 2026-06-04):** `/maintenance/vendors` CRUD reads/writes canonical `catalogs.maintenance_vendors` (metadata holds contact/address/terms; ARCHIVE-not-DELETE via `is_active=false`). CSV import + template endpoints; vendor detail page shows WO and invoice history linked by metadata IDs or repair location. Lists hub `/lists/maintenance/vendors` links to the maintenance vendors hub. **CI:** `verify:maint-vendor-master-unify`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`

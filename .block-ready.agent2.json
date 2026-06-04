@@ -1,31 +1,32 @@
 {
-  "block_id": "BLOCK-B28-PM-AUTO-WO-ENGINE",
-  "branch": "feat/maint-pm-auto-wo-engine",
+  "block_id": "BLOCK-B29-VENDOR-MASTER-UNIFY",
+  "branch": "feat/maint-vendor-master-unify",
   "phase": "Phase 3",
-  "task": "B28-PM-AUTO-WO-ENGINE",
+  "task": "B29-VENDOR-MASTER-UNIFY",
   "allowed_files": [
-    "db/migrations/0360_maint_pm_auto_engine.sql",
-    "apps/backend/src/maintenance/pm-auto-engine.service.ts",
-    "apps/backend/src/maintenance/pm-auto-engine.cron.ts",
-    "apps/backend/src/maintenance/__tests__/pm-auto-engine.service.test.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/maintenance/PmAutoEnginePage.tsx",
-    "apps/frontend/src/pages/maintenance/__tests__/PmAutoEnginePage.test.tsx",
+    "apps/backend/src/maintenance/vendors.routes.ts",
+    "apps/backend/src/maintenance/__tests__/vendors.routes.test.ts",
+    "apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx",
+    "apps/frontend/src/pages/maintenance/VendorDetailPage.tsx",
+    "apps/frontend/src/pages/maintenance/__tests__/VendorsPage.test.tsx",
+    "apps/frontend/src/pages/maintenance/__tests__/VendorDetailPage.test.tsx",
+    "apps/frontend/src/pages/lists/maintenance/MaintenanceVendorsListPage.tsx",
     "apps/frontend/src/api/maintenance.ts",
     "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-maint-pm-auto-wo-engine.mjs",
-    "scripts/__tests__/verify-maint-pm-auto-wo-engine.test.mjs",
-    "scripts/verify-guards/175-verify-maint-pm-auto-wo-engine.mjs",
-    "scripts/verify-steps/60-verify-maint-pm-auto-wo-engine.mjs",
+    "scripts/verify-maint-vendor-master-unify.mjs",
+    "scripts/__tests__/verify-maint-vendor-master-unify.test.mjs",
+    "scripts/verify-guards/176-verify-maint-vendor-master-unify.mjs",
+    "scripts/verify-steps/61-verify-maint-vendor-master-unify.mjs",
+    "scripts/verify-maint-nav-count-reconcile.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:maint-pm-auto-wo-engine"
+    "verify:maint-vendor-master-unify"
   ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }
