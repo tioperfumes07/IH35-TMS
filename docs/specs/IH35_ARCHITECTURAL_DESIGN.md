@@ -1164,6 +1164,27 @@ These layers are complementary. Future blocks may link inventory rows to an OEM 
 
 Backend routes: `GET|POST /api/v1/lists/oem-parts`, `PATCH /:id`, `POST /:id/archive`, `POST /:id/restore`, `GET /brands`. List default filter: `archived_at IS NULL`; `?fleet_only=true` (default) filters to brands present in fleet (`mdata.units.make`, `mdata.equipment.make`, `mdata.equipment.reefer_brand`). Bootstrap: `scripts/seed-reference-oem-parts.mjs` + `scripts/data/oem-parts-bootstrap.json` (idempotent upsert). Migration `0342_reference_oem_parts.sql`. Frontend: `/lists/maintenance/oem-parts-reference` — **OEM Parts Reference** page with brand/category/search filters and **+ Create** modal. **CI:** `verify:oem-parts-no-touch-existing-parts-surfaces` asserts the four inventory surfaces are untouched.
 
+## Maintenance parts inventory unification — Block B23 (locked 2026-06-03)
+
+**Canonical company inventory:** `maintenance.parts_inventory` — single source of truth for stocked parts, purchases, and on-hand qty. Backend routes under `/api/v1/maintenance/parts*` and `/api/v1/maintenance/parts-inventory*` read/write this table only.
+
+**Deprecated (ARCHIVE-not-DELETE, migration `0357_maint_parts_unify_deprecation.sql`):**
+
+| Legacy surface | Status |
+|----------------|--------|
+| `catalogs.parts` | Deprecated — no new references |
+| `maint.part` | Deprecated — dashboard no longer reads this API |
+
+**Unchanged complementary layers:**
+
+| Layer | Tables / surfaces | Purpose |
+|-------|-------------------|---------|
+| Taxonomy / codes | `catalogs.maintenance_parts` | Parts catalog codes (lists) |
+| OEM templates | `reference.oem_parts` | World knowledge (B17) |
+| Company inventory | `maintenance.parts_inventory` | **Canonical** stocked parts |
+
+Frontend: `/maintenance/parts` (master data CRUD), `/maintenance/parts-inventory` (operational tab). Maintenance dashboard reorder panel reads `listMaintenanceParts` (canonical API). **CI:** `verify:parts-canonical-source`.
+
 ## Names Master — cross-module navigator (Block A18, locked 2026-06-03)
 
 **Pattern:** read-only aggregated search hub at `/lists/names` — not a catalog clone. No new tables and no write endpoints under `/api/v1/lists/names/*`.

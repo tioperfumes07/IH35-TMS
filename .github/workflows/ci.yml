@@ -146,6 +146,9 @@ jobs:
       - name: Verify maint nav count reconcile
         run: npm run verify:maint-nav-count-reconcile
 
+      - name: verify:parts-canonical-source
+        run: npm run verify:parts-canonical-source
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 

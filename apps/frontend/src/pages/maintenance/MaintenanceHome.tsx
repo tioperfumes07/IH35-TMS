@@ -10,7 +10,7 @@ import {
   getMaintenanceRecentActivity,
   getMaintenanceRmStatus,
   getWorkOrder,
-  listMaintParts,
+  listMaintenanceParts,
   listMaintPmDue,
   listPartsInventory,
   listWorkOrdersFiltered,
@@ -42,6 +42,7 @@ import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
 import { WorkOrderDetailModal } from "../../components/work-orders/WorkOrderDetailModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
+import { partNeedsReorder } from "./parts-low-stock";
 import {
   MAINTENANCE_MASTER_DATA_LINKS,
   MAINTENANCE_OPERATION_LINKS,
@@ -132,9 +133,9 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
     enabled: Boolean(companyId),
     retry: false,
   });
-  const maintPartsQuery = useQuery({
-    queryKey: ["maintenance", "maint-parts", companyId],
-    queryFn: () => listMaintParts(companyId),
+  const partsReorderQuery = useQuery({
+    queryKey: ["maintenance", "parts-reorder-flags", companyId],
+    queryFn: () => listMaintenanceParts(companyId),
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -286,47 +287,50 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
           <PartsInventoryTable companyId={companyId} rows={partsInventoryRowsQuery.data ?? []} />
           <div className="rounded border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Maint Parts Reorder Flags</h3>
-              <div className="text-xs text-gray-500">From MAINT-12 list contract</div>
+              <h3 className="text-sm font-semibold">Parts Inventory Reorder Flags</h3>
+              <div className="text-xs text-gray-500">Canonical: maintenance.parts_inventory</div>
             </div>
-            {maintPartsQuery.isLoading ? <div className="text-xs text-gray-500">Loading reorder list...</div> : null}
-            {maintPartsQuery.isError ? (
+            {partsReorderQuery.isLoading ? <div className="text-xs text-gray-500">Loading reorder list...</div> : null}
+            {partsReorderQuery.isError ? (
               <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
                 Reorder list endpoint unavailable in this environment.
               </div>
             ) : null}
-            {!maintPartsQuery.isLoading && !maintPartsQuery.isError ? (
+            {!partsReorderQuery.isLoading && !partsReorderQuery.isError ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-xs">
                   <thead>
                     <tr className="text-left text-gray-500">
-                      <th className="px-2 py-1">SKU</th>
+                      <th className="px-2 py-1">Part #</th>
                       <th className="px-2 py-1">Part</th>
                       <th className="px-2 py-1">On Hand</th>
-                      <th className="px-2 py-1">Reorder Point</th>
+                      <th className="px-2 py-1">Reorder Threshold</th>
                       <th className="px-2 py-1">Flag</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(maintPartsQuery.data?.rows ?? []).map((part) => (
+                    {(partsReorderQuery.data?.rows ?? []).map((part) => {
+                      const needsReorder = partNeedsReorder(part.qty_on_hand, part.reorder_threshold);
+                      return (
                       <tr key={part.id} className="border-t border-gray-100">
-                        <td className="px-2 py-1">{part.sku}</td>
+                        <td className="px-2 py-1">{part.part_number}</td>
                         <td className="px-2 py-1">{part.name}</td>
                         <td className="px-2 py-1">{part.qty_on_hand}</td>
-                        <td className="px-2 py-1">{part.reorder_point}</td>
+                        <td className="px-2 py-1">{part.reorder_threshold}</td>
                         <td className="px-2 py-1">
-                          {part.needs_reorder ? (
+                          {needsReorder ? (
                             <span className="rounded bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
                           ) : (
                             <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">OK</span>
                           )}
                         </td>
                       </tr>
-                    ))}
-                    {(maintPartsQuery.data?.rows ?? []).length === 0 ? (
+                    );
+                    })}
+                    {(partsReorderQuery.data?.rows ?? []).length === 0 ? (
                       <tr>
                         <td className="px-2 py-2 text-gray-500" colSpan={5}>
-                          No maint parts found.
+                          No parts inventory rows found.
                         </td>
                       </tr>
                     ) : null}

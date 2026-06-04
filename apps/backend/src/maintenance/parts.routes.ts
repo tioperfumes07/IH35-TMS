@@ -1,3 +1,4 @@
+/** B23 canonical company parts inventory — all routes read/write maintenance.parts_inventory. */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
