@@ -1,49 +1,66 @@
 import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { forfeitEscrow, listEscrowRecords, type EscrowRecordRow } from "../../../api/driverFinance";
 import { useAuth } from "../../../auth/useAuth";
-
-type EscrowRow = {
-  id: string;
-  driver_name: string;
-  current_balance: number;
-  pre_clause_total: number;
-  post_clause_total: number;
-  accumulation_rate_pct: number;
-  forfeiture_history_count: number;
-  has_signed_clause: boolean;
-};
-
-type Attempt = {
-  id: string;
-  driver_name: string;
-  amount: number;
-  reason: string;
-  linked_liability_id?: string;
-  status: "success" | "blocked";
-  created_at: string;
-};
-
-const DEFAULT_ROWS: EscrowRow[] = [];
+import { useToast } from "../../../components/Toast";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { EscrowForfeitModal } from "../components/EscrowForfeitModal";
 
 export function EscrowRecordTab() {
   const auth = useAuth();
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
+  const { selectedCompanyId } = useCompanyContext();
+  const operatingCompanyId = selectedCompanyId ?? "";
   const isOwner = auth.user?.role === "Owner";
-  const [rows, setRows] = useState<EscrowRow[]>(DEFAULT_ROWS);
-  const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const [selected, setSelected] = useState<EscrowRow | null>(null);
-  const [amount, setAmount] = useState(0);
-  const [reason, setReason] = useState("");
-  const [linkedLiabilityId, setLinkedLiabilityId] = useState("");
+  const [selected, setSelected] = useState<EscrowRecordRow | null>(null);
 
+  const escrowQuery = useQuery({
+    queryKey: ["safety", "escrow-records", operatingCompanyId],
+    queryFn: () => listEscrowRecords(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+  });
+
+  const forfeitMutation = useMutation({
+    mutationFn: (payload: { row: EscrowRecordRow; amount: number; reason: string; linked_liability_id?: string }) =>
+      forfeitEscrow(payload.row.id, {
+        operating_company_id: operatingCompanyId,
+        amount: payload.amount,
+        reason: payload.reason,
+        linked_liability_id: payload.linked_liability_id,
+      }),
+    onSuccess: (result) => {
+      pushToast(
+        result.status === "blocked" ? "Forfeiture blocked by agreement gate." : "Escrow forfeiture submitted.",
+        result.status === "blocked" ? "error" : "success"
+      );
+      void queryClient.invalidateQueries({ queryKey: ["safety", "escrow-records", operatingCompanyId] });
+      setSelected(null);
+    },
+    onError: () => {
+      pushToast("Forfeiture request failed.", "error");
+    },
+  });
+
+  const rows = escrowQuery.data?.records ?? [];
+  const attempts = escrowQuery.data?.forfeit_attempts ?? [];
   const totalForfeits = useMemo(() => attempts.filter((a) => a.status === "success").length, [attempts]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="escrow-record-tab">
       <div className="rounded border border-gray-200 bg-white p-3 text-xs text-slate-600">
         Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable.
       </div>
 
+      {escrowQuery.isLoading ? (
+        <div className="rounded border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading escrow records…</div>
+      ) : null}
+      {escrowQuery.isError ? (
+        <div className="rounded border border-red-200 bg-red-50 p-3 text-xs text-red-700">Unable to load escrow records.</div>
+      ) : null}
+
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
+        <table className="min-w-full text-xs" data-testid="escrow-record-table">
           <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
             <tr>
               <th className="px-2 py-1 text-left">Driver</th>
@@ -57,7 +74,7 @@ export function EscrowRecordTab() {
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
+              <tr key={row.id} className="border-t border-gray-100" data-testid={`escrow-record-row-${row.id}`}>
                 <td className="px-2 py-1">{row.driver_name}</td>
                 <td className="px-2 py-1">${row.current_balance.toFixed(2)}</td>
                 <td className="px-2 py-1">${row.pre_clause_total.toFixed(2)}</td>
@@ -66,7 +83,12 @@ export function EscrowRecordTab() {
                 <td className="px-2 py-1">{row.forfeiture_history_count}</td>
                 <td className="px-2 py-1">
                   {isOwner ? (
-                    <button type="button" className="text-[#1f2a44] underline" onClick={() => setSelected(row)}>
+                    <button
+                      type="button"
+                      className="text-[#1f2a44] underline"
+                      data-testid={`escrow-forfeit-btn-${row.id}`}
+                      onClick={() => setSelected(row)}
+                    >
                       Forfeit
                     </button>
                   ) : (
@@ -75,7 +97,7 @@ export function EscrowRecordTab() {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 ? (
+            {!escrowQuery.isLoading && rows.length === 0 ? (
               <tr className="border-t border-gray-100">
                 <td className="px-2 py-3 text-center text-slate-500" colSpan={7}>
                   No escrow records available for the selected company.
@@ -86,69 +108,31 @@ export function EscrowRecordTab() {
         </table>
       </div>
 
-      <div className="rounded border border-gray-200 bg-white p-3">
+      <div className="rounded border border-gray-200 bg-white p-3" data-testid="escrow-forfeit-audit">
         <h4 className="text-xs font-semibold text-slate-700">Forfeiture Audit</h4>
         <p className="mt-1 text-[11px] text-slate-500">Successful forfeitures: {totalForfeits}</p>
         <div className="mt-2 space-y-1 text-[11px]">
           {attempts.map((entry) => (
             <div key={entry.id} className={entry.status === "blocked" ? "text-red-700" : "text-slate-700"}>
-              {entry.created_at.slice(0, 16).replace("T", " ")} - {entry.driver_name} - ${entry.amount.toFixed(2)} - {entry.reason} ({entry.status})
+              {entry.created_at.slice(0, 16).replace("T", " ")} - {entry.driver_name} - ${entry.amount.toFixed(2)} - {entry.reason} (
+              {entry.status})
             </div>
           ))}
           {attempts.length === 0 ? <div className="text-slate-400">No forfeiture attempts yet.</div> : null}
         </div>
       </div>
 
-      {selected ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="w-full max-w-md rounded border border-gray-200 bg-white p-4">
-            <h4 className="text-sm font-semibold text-slate-800">Escrow Forfeit - {selected.driver_name}</h4>
-            <div className="mt-3 space-y-2">
-              <input className="w-full rounded border border-gray-300 px-2 py-1 text-xs" type="number" min={0} value={amount} onChange={(e) => setAmount(Number(e.target.value || 0))} placeholder="Amount" />
-              <input className="w-full rounded border border-gray-300 px-2 py-1 text-xs" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" />
-              <input className="w-full rounded border border-gray-300 px-2 py-1 text-xs" value={linkedLiabilityId} onChange={(e) => setLinkedLiabilityId(e.target.value)} placeholder="Linked liability_id (optional)" />
-            </div>
-            {!selected.has_signed_clause ? (
-              <p className="mt-2 text-xs text-red-700">Blocked: forfeiture requires a signed escrow clause (MUST 3.13.6.3.D).</p>
-            ) : null}
-            <div className="mt-3 flex justify-end gap-2">
-              <button type="button" className="rounded border border-gray-300 px-2 py-1 text-xs" onClick={() => setSelected(null)}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="rounded bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white"
-                onClick={() => {
-                  const blocked = !selected.has_signed_clause;
-                  setAttempts((prev) => [
-                    {
-                      id: `${Date.now()}-${Math.random()}`,
-                      driver_name: selected.driver_name,
-                      amount,
-                      reason,
-                      linked_liability_id: linkedLiabilityId || undefined,
-                      status: blocked ? "blocked" : "success",
-                      created_at: new Date().toISOString(),
-                    },
-                    ...prev,
-                  ]);
-                  if (!blocked) {
-                    setRows((prev) =>
-                      prev.map((row) => (row.id === selected.id ? { ...row, current_balance: Math.max(0, row.current_balance - amount), forfeiture_history_count: row.forfeiture_history_count + 1 } : row))
-                    );
-                  }
-                  setSelected(null);
-                  setAmount(0);
-                  setReason("");
-                  setLinkedLiabilityId("");
-                }}
-              >
-                Submit Forfeit
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {/* ARCHIVE-not-DELETE: legacy inline forfeit modal replaced by EscrowForfeitModal (A23-8). Sunset: Phase 4 driver-finance escrow API parity. */}
+      <EscrowForfeitModal
+        open={Boolean(selected)}
+        row={selected}
+        loading={forfeitMutation.isPending}
+        onClose={() => setSelected(null)}
+        onConfirm={(payload) => {
+          if (!selected) return;
+          forfeitMutation.mutate({ row: selected, ...payload });
+        }}
+      />
     </div>
   );
 }
