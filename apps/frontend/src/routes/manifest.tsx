@@ -172,6 +172,7 @@ import { PaymentDetailPage } from "../pages/accounting/PaymentDetailPage";
 import { FactoringListPage } from "../pages/accounting/FactoringListPage";
 import { FactoringDetailPage } from "../pages/accounting/FactoringDetailPage";
 import { FactorReconciliationPage } from "../pages/accounting/FactorReconciliationPage";
+import { ReconciliationWorkspacePage as AccountingReconciliationWorkspacePage } from "../pages/accounting/ReconciliationWorkspacePage";
 import { VendorBillCreatePage } from "../pages/accounting/VendorBillCreatePage";
 import { CreateMultipleBillsPage } from "../pages/accounting/CreateMultipleBillsPage";
 import { ExpenseCreatePage } from "../pages/accounting/ExpenseCreatePage";
@@ -2251,6 +2252,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactorReconciliationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/reconciliation"
+          element={
+            <ProtectedRoute>
+              <AccountingReconciliationWorkspacePage />
             </ProtectedRoute>
           }
         />
