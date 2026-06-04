@@ -31,7 +31,7 @@ const createSessionSchema = z.object({
 
 const saveStepSchema = z.object({
   step: z.number().int().min(1).max(7),
-  step_data: z.record(z.unknown()),
+  step_data: z.record(z.string(), z.unknown()),
   advance: z.boolean().optional(),
 });
 
