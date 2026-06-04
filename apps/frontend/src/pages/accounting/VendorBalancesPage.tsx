@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
+import { BillPaymentModal } from "../../components/ap/BillPaymentModal";
 import { PayBillModal } from "./PayBillModal";
 
 function money(cents: number) {
@@ -30,6 +31,7 @@ export function VendorBalancesPage() {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [selectedBillId, setSelectedBillId] = useState<string | null>(null);
   const [payModalOpen, setPayModalOpen] = useState(false);
+  const [multiPayModalOpen, setMultiPayModalOpen] = useState(false);
 
   const balancesQuery = useQuery({
     queryKey: ["accounting", "vendor-balances", companyId],
@@ -100,8 +102,15 @@ export function VendorBalancesPage() {
         </section>
 
         <section className="rounded border border-gray-200 bg-white">
-          <div className="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-            {selectedVendor ? `Bills · ${selectedVendor.vendor_name}` : "Bills"}
+          <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              {selectedVendor ? `Bills · ${selectedVendor.vendor_name}` : "Bills"}
+            </div>
+            {selectedVendor ? (
+              <Button size="sm" variant="secondary" onClick={() => setMultiPayModalOpen(true)}>
+                Pay multiple
+              </Button>
+            ) : null}
           </div>
           <div className="max-h-[65vh] overflow-auto">
             {!selectedVendor ? <p className="px-3 py-3 text-sm text-gray-500">Select a vendor to view bills.</p> : null}
@@ -200,6 +209,20 @@ export function VendorBalancesPage() {
           void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-bill-detail", companyId, selectedBillId] });
         }}
       />
+      {selectedVendor ? (
+        <BillPaymentModal
+          open={multiPayModalOpen}
+          operatingCompanyId={companyId}
+          vendorId={selectedVendor.vendor_id}
+          vendorName={selectedVendor.vendor_name}
+          onClose={() => setMultiPayModalOpen(false)}
+          onSaved={() => {
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-bills", companyId, selectedVendorId] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-bill-detail", companyId, selectedBillId] });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

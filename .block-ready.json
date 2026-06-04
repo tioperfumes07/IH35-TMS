@@ -9,7 +9,7 @@
     "apps/backend/src/index.ts",
     "docs/runbooks/trk-qbo-migration-execution.md",
     ".block-ready.json",
-    "package.json"
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
