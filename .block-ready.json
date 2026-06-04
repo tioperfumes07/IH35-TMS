@@ -1,19 +1,22 @@
 {
-  "block_id": "CUST-BILLING-500",
-  "branch": "fix/cust-billing-500-closure",
-  "phase": "Tier 2 P8 Audit — CLOSURE",
-  "task": "Customer billing 500 — investigate + fix + CI guard",
+  "block_id": "P5-T19",
+  "branch": "feat/phase5-assignments-quicksave",
+  "phase": "Tier 3 — Phase 5F",
+  "task": "Assignments quicksave on truck/trailer click",
   "allowed_files": [
-    "apps/backend/src/mdata/customer-billing.routes.ts",
-    "apps/backend/src/mdata/customer-billing.routes.test.ts",
-    "apps/frontend/src/pages/CustomerDetail.tsx",
-    "scripts/verify-customer-billing-endpoints.mjs",
-    ".github/workflows/ci.yml",
+    "apps/backend/src/assignments/quicksave.routes.ts",
+    "apps/backend/src/assignments/quicksave.routes.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/components/fleet/QuickAssignModal.tsx",
+    "apps/frontend/src/components/fleet/__tests__/QuickAssignModal.test.tsx",
+    "apps/frontend/src/components/vehicle-profile/DriverAssignmentSection.tsx",
+    "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+    "apps/frontend/src/api/mdata.ts",
     "package.json",
     ".block-ready.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }
