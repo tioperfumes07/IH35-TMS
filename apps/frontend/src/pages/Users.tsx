@@ -26,6 +26,8 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { SaveDropdown } from "../components/forms/SaveDropdown";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
+import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";
+import { parseApiErrorPayload } from "../components/forms/useFormValidation";
 import { formatLastLoginAt } from "../lib/formatLastLoginAt";
 import { dataTableErrorState } from "../lib/tableError";
 import { colors } from "../design/tokens";
@@ -84,6 +86,29 @@ function userRowCategory(user: IdentityUser): "active" | "pending" | "deactivate
 
 function userStatus(user: IdentityUser): "Active" | "Inactive" {
   return user.deactivated_at ? "Inactive" : "Active";
+}
+
+const PASSWORD_CHECKLIST = [
+  { key: "length", label: "At least 12 characters", test: (value: string) => value.length >= 12 },
+  { key: "lower", label: "Lowercase letter", test: (value: string) => /[a-z]/.test(value) },
+  { key: "upper", label: "Uppercase letter", test: (value: string) => /[A-Z]/.test(value) },
+  { key: "number", label: "Number", test: (value: string) => /[0-9]/.test(value) },
+  { key: "symbol", label: "Symbol", test: (value: string) => /[^A-Za-z0-9]/.test(value) },
+] as const;
+
+function PasswordChecklist({ password }: { password: string }) {
+  return (
+    <ul className="mt-2 space-y-1 text-xs" aria-live="polite">
+      {PASSWORD_CHECKLIST.map((item) => {
+        const met = item.test(password);
+        return (
+          <li key={item.key} className={met ? "text-green-700" : "text-gray-500"}>
+            {met ? "✓" : "○"} {item.label}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 export function UsersPage() {
@@ -171,6 +196,12 @@ export function UsersPage() {
       deactivated: allUsers.filter((u) => userRowCategory(u) === "deactivated").length,
     };
   }, [allUsers]);
+
+  const invitePasswordStrength = useMemo(
+    () => evaluatePasswordStrength(inviteInitialPassword),
+    [inviteInitialPassword]
+  );
+  const invitePasswordReady = provisionMode !== "set_password" || invitePasswordStrength.meetsPolicy;
 
   const filteredUsers = useMemo(() => {
     let list = [...allUsers];
@@ -297,6 +328,11 @@ export function UsersPage() {
         const body = error.data as { error?: string };
         if (body?.error === "initial_password_or_invite_required") {
           pushToast("Choose a password setup method", "error");
+          return;
+        }
+        if (body?.error === "validation_error") {
+          const parsed = parseApiErrorPayload(error.data);
+          pushToast(parsed.message ?? OFFICE_PASSWORD_HINT, "error");
           return;
         }
       }
@@ -494,7 +530,10 @@ export function UsersPage() {
                 autoComplete="new-password"
                 className="w-full rounded border border-gray-300 px-2 py-2 text-sm"
               />
-              <p className="mt-1 text-xs text-gray-500">Minimum 12 characters with upper, lower, number, and symbol.</p>
+              <PasswordChecklist password={inviteInitialPassword} />
+              {!invitePasswordReady ? (
+                <p className="mt-1 text-xs text-amber-700">{OFFICE_PASSWORD_HINT}</p>
+              ) : null}
             </div>
           ) : null}
           {checkingReturningDispatcher ? <div className="text-xs text-gray-500">Checking returning dispatcher history...</div> : null}
@@ -523,7 +562,7 @@ export function UsersPage() {
               storageKey="users-invite"
               primaryLabel={provisionMode === "send_invite" ? "Create and send invite" : "Create user"}
               loading={createUserMutation.isPending}
-              disabled={Boolean(returningDetection) && !overrideReturningWarning}
+              disabled={(Boolean(returningDetection) && !overrideReturningWarning) || !invitePasswordReady}
               onSave={() => submitInvite(false)}
               onSaveAndClose={() => submitInvite(true)}
             />

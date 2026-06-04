@@ -573,6 +573,9 @@ jobs:
       - name: verify:identity-users-last-login-at-column
         run: npm run verify:identity-users-last-login-at-column
 
+      - name: verify:backend-column-references
+        run: npm run verify:backend-column-references
+
       - name: verify:driver-listing-excludes-pseudo-users
         run: npm run verify:driver-listing-excludes-pseudo-users
 
