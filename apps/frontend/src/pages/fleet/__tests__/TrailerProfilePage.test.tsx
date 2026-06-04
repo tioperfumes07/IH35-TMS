@@ -13,6 +13,17 @@ vi.mock("../../../components/maintenance/ServiceTimeline", () => ({
   ServiceTimeline: () => <div data-testid="service-timeline" />,
 }));
 
+vi.mock("../../../api/maintenance", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/maintenance")>();
+  return {
+    ...actual,
+    fetchMaintenanceReeferHoursSnapshot: vi.fn().mockResolvedValue({
+      specs: { current_hours: 4400, reefer_brand: "Carrier", service_interval_hours: 2000, hours_until_service: 100, pm_status: "near_due" },
+      history: [],
+    }),
+  };
+});
+
 const aggregateFixture = {
   equipment: { equipment_number: "T-100", equipment_type: "Reefer", status: "InService", vin: "VIN1" },
   type_specs: { length_ft: 53 },
@@ -55,6 +66,7 @@ describe("TrailerProfilePage", () => {
     expect(screen.getByTestId("tp-section-8-action-bar")).toBeTruthy();
     expect(screen.getByTestId("tp-section-9-activity")).toBeTruthy();
     expect(screen.getByTestId("tp-reefer-a19-slot")).toBeTruthy();
+    expect(await screen.findByText("Reefer hours tracking")).toBeTruthy();
   });
 
   it("does not render reefer A19 slot for dry van", async () => {
