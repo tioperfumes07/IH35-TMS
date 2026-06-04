@@ -1071,6 +1071,8 @@ Extends aggregate + `DriverProfilePage` with sections 7–12: performance scorec
 
 **Communication center (A24-10, 2026-06-04):** Office inbox at `/drivers/messages` (threaded per driver); driver PWA `/messages` read + reply; GET inbox/unread/thread + PATCH read receipts on `mdata.driver_profile_messages` (migration `0349`); SMS bridge via `notifications/sms-bridge.service.ts` + email via Resend on outbound POST; in-app delivery immediate. **CI:** `verify:drivers-comm-center`.
 
+**PWA live data parity (A24-11, 2026-06-04):** Driver PWA `/home` replaces Phase 1 placeholder cards with live HOS clocks, assigned load, and recent fuel transactions via `/api/v1/driver-pwa/hos-clocks`, `/api/v1/driver/loads`, and `/api/v1/driver-pwa/recent-fuel-transactions`; `/equipment` shows assigned truck + trailer from telematics pairing; bottom nav adds HOS + Documents shortcuts. No migration. **CI:** `verify:drivers-pwa-live-data`.
+
 **Driver audit history tab (A24-6, 2026-06-04):** `DriverDetail` Audit History tab drills into `audit.audit_events` via `GET /api/v1/audit/events?entity_type=driver&entity_id=:id` (tenant-scoped through `mdata.drivers` join); date range + event type filters; expandable payload diff. **CI:** `verify:drivers-audit-history-tab`.
 
 **Driver profile training CRUD (A24-7, 2026-06-04):** `DriverProfilePage` wires `+ Add training` to `AddTrainingModal`; creates records via `POST /api/v1/mdata/drivers/:id/training` (program select from A23-5 completions + completion date + notes); profile query refresh on success. **CI:** `verify:drivers-training-crud-on-profile`.

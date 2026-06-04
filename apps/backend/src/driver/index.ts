@@ -12,6 +12,7 @@ import { registerDriverArrivalPromptsRoutes } from "./arrival-prompts.routes.js"
 import { registerDriverStatusSuggestionsRoutes } from "./status-suggestions.routes.js";
 
 import { registerDriverFuelReceiptRoutes } from "./fuel-receipt.routes.js";
+import { registerDriverPwaLiveRoutes } from "./pwa-live.routes.js";
 
 export async function registerDriverRoutes(app: FastifyInstance) {
   app.decorateRequest("driver", null);
@@ -27,4 +28,5 @@ export async function registerDriverRoutes(app: FastifyInstance) {
   await registerDriverStatusSuggestionsRoutes(app);
   await registerDriverReportsRoutes(app);
   await registerDriverFuelReceiptRoutes(app);
+  await registerDriverPwaLiveRoutes(app);
 }

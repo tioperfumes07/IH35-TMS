@@ -9,6 +9,7 @@ import { AcceptancePage } from "./pages/Acceptance";
 import { CashAdvanceListPage } from "./pages/CashAdvanceListPage";
 import { CashAdvanceNewPage } from "./pages/CashAdvanceNewPage";
 import { DvirPage } from "./pages/DVIR";
+import { EquipmentPage } from "./pages/Equipment";
 import { EarningsPage } from "./pages/Earnings";
 import { HomePage } from "./pages/Home";
 import { HosPage } from "./pages/HOS";
@@ -145,6 +146,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <AcceptancePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/equipment"
+        element={
+          <ProtectedRoute>
+            <EquipmentPage />
           </ProtectedRoute>
         }
       />
