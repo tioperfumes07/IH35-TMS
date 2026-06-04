@@ -1306,6 +1306,16 @@ operating_company_id = NULLIF(current_setting('app.operating_company_id', true),
 
 **CI:** `verify:redis-resilient-config` asserts resilient options, health-route wiring, and absence of explicit TLS overrides in the shared client.
 
+## Shared Types Consumer Parity — Block INFRA-3 (locked 2026-06-04)
+
+**Problem:** `packages/shared-types` `DriverStop` exposes stop kind as `type: StopType` (canonical). The Driver PWA `StopAction` page incorrectly read `stop_type`, so delivery vs pickup branching never matched API payloads — POD capture and BOL upload CTAs were wrong at runtime.
+
+**Canonical field:** `DriverStop.type` — values `"pickup" | "delivery" | "fuel" | "break"`. Dispatch/TMS frontend APIs retain DB column name `stop_type` on their own DTOs; only `@ih35/shared-types` consumers must use `type`.
+
+**Driver PWA rule:** `apps/driver-pwa/src/**` must not reference `stop_type`. `StopAction.tsx` branches on `resolvedStop.type === "delivery"` for POD capture vs document upload.
+
+**CI:** `verify:shared-types-consumer-parity` — asserts shared-types `DriverStop` uses `type`, scans driver-pwa for forbidden `stop_type`, and requires ARCH doc + vitest coverage.
+
 ## END OF ARCHITECTURAL DESIGN
 
 This document is the canonical reference. When in doubt about what a screen contains or what a button does, **this document wins**. Changes to scope require Jorge's explicit approval and an entry in the unified blueprint additions file.
