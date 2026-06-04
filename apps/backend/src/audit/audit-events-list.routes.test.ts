@@ -88,12 +88,16 @@ describe("audit events list routes (BULK-6)", () => {
       url: `/api/v1/audit/events-list?operating_company_id=${COMPANY}&bulk_call_id=${BULK_CALL}`,
     });
     expect(res.statusCode).toBe(200);
-    const sql = String(mockQuery.mock.calls[0]?.[0] ?? "");
-    expect(sql).toContain("payload->>'bulk_call_id'");
+    const sqlCalls = mockQuery.mock.calls.map((call) => String(call[0] ?? ""));
+    const auditSql = sqlCalls.find((sql) => sql.includes("FROM audit.events")) ?? "";
+    expect(auditSql).toContain("payload->>'bulk_call_id'");
   });
 
   it("returns 401 when requireAuth fails", async () => {
-    mockRequireAuth.mockReturnValue(false);
+    mockRequireAuth.mockImplementation((_req, reply) => {
+      reply.code(401).send({ error: "unauthorized" });
+      return false;
+    });
     const res = await app.inject({
       method: "GET",
       url: `/api/v1/audit/events-list?operating_company_id=${COMPANY}`,
