@@ -567,6 +567,9 @@ jobs:
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 
+      - name: verify:identity-users-last-login-at-column
+        run: npm run verify:identity-users-last-login-at-column
+
       - name: verify:driver-listing-excludes-pseudo-users
         run: npm run verify:driver-listing-excludes-pseudo-users
 
