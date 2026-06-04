@@ -1,13 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   completeCompanyViolationCorrectiveAction,
   escalateCompanyViolation,
   resolveCompanyViolation,
   updateCompanyViolation,
 } from "../../../api/safety";
-import { CompanyViolationCorrectiveActionForm } from "./CompanyViolationCorrectiveActionForm";
+import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
+import { CompanyViolationCorrectiveActionForm } from "./CompanyViolationCorrectiveActionForm";
 
 type Props = {
   open: boolean;
@@ -17,7 +19,10 @@ type Props = {
   onUpdated: () => void;
 };
 
+const DRAWER_TITLE = "Company Violation Detail";
+
 export function CompanyViolationDetailDrawer({ open, violation, operatingCompanyId, onClose, onUpdated }: Props) {
+  const panelRef = useRef<HTMLElement>(null);
   const [outcome, setOutcome] = useState<"warning" | "written_reprimand" | "monetary_fine" | "termination" | "dismissed">("warning");
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [fineOverrideCents, setFineOverrideCents] = useState("");
@@ -52,17 +57,54 @@ export function CompanyViolationDetailDrawer({ open, violation, operatingCompany
     },
   });
 
+  useEscapeKey(onClose, open && Boolean(violation));
+
+  useEffect(() => {
+    if (!open || !violation) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = panel.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, violation]);
+
+  useEffect(() => {
+    if (!open || !violation) return;
+    const firstInput = panelRef.current?.querySelector<HTMLElement>("button, input, select, textarea");
+    firstInput?.focus();
+  }, [open, violation]);
+
   if (!open || !violation) return null;
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-50 h-full w-[560px] max-w-full overflow-y-auto border-l border-gray-200 bg-white p-4">
+      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} aria-hidden="true" />
+      <aside
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={DRAWER_TITLE}
+        className="fixed right-0 top-0 z-50 h-full w-[560px] max-w-full overflow-y-auto border-l border-gray-200 bg-white p-4"
+        data-testid="company-violation-detail-drawer"
+      >
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">Company Violation Detail</h3>
-          <button type="button" className="text-xs text-gray-500" onClick={onClose}>
-            Close
-          </button>
+          <h3 className="text-sm font-semibold text-gray-900">{DRAWER_TITLE}</h3>
+          <ModalCloseButton title={DRAWER_TITLE} onClose={onClose} />
         </div>
         <div className="mt-3 space-y-2 text-sm">
           <div><strong>Status:</strong> {String(violation.status ?? "open")}</div>

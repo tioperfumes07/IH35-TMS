@@ -1,13 +1,15 @@
 {
-  "block_id": "BLOCK-A23-9-SAFETY-COMPANY-VIOLATIONS",
-  "branch": "feat/safety-company-violations",
+  "block_id": "BLOCK-A23-10-SAFETY-MODAL-A15-COMPLIANCE",
+  "branch": "feat/safety-modal-a15-compliance",
   "phase": "Safety",
-  "task": "A23-9",
+  "task": "A23-10",
   "allowed_files": [
-    "apps/frontend/src/pages/safety/CompanyViolationsPage.tsx",
-    "apps/frontend/src/pages/safety/FinesPage.tsx",
-    "apps/frontend/src/pages/safety/components/CompanyViolationCreateModal.tsx",
-    "apps/frontend/src/pages/safety/__tests__/FinesPage.test.tsx",
+    "apps/frontend/src/pages/safety/SafetyEventsPage.tsx",
+    "apps/frontend/src/pages/safety/components/FineDetailDrawer.tsx",
+    "apps/frontend/src/pages/safety/components/CompanyViolationDetailDrawer.tsx",
+    "apps/frontend/src/pages/safety/components/IntegrityAlertDetailDrawer.tsx",
+    "apps/frontend/src/pages/safety/tabs/AnomalyDetailDrawer.tsx",
+    "apps/frontend/src/components/__tests__/modal-x-close-audit.test.tsx",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],

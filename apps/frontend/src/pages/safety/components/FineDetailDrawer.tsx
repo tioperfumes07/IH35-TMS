@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ModalCloseButton } from "../../../components/ModalCloseButton";
+import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { FineConvertConfirmModal } from "./FineConvertConfirmModal";
 import { FinePaymentLinkBanner } from "./FinePaymentLinkBanner";
 
@@ -12,8 +14,44 @@ type Props = {
   onUpdated: () => void;
 };
 
+const DRAWER_TITLE = "Fine Detail";
+
 export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToLiability }: Props) {
+  const panelRef = useRef<HTMLElement>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  useEscapeKey(onClose, open && Boolean(fine));
+
+  useEffect(() => {
+    if (!open || !fine) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = panel.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, fine]);
+
+  useEffect(() => {
+    if (!open || !fine) return;
+    const firstInput = panelRef.current?.querySelector<HTMLElement>("button, input, select, textarea");
+    firstInput?.focus();
+  }, [open, fine]);
+
   if (!open || !fine) return null;
 
   const fineId = String(fine.id ?? "");
@@ -24,13 +62,18 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
-      <aside className="fixed right-0 top-0 z-50 h-full w-[560px] max-w-full overflow-y-auto border-l border-gray-200 bg-white p-4">
+      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} aria-hidden="true" />
+      <aside
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={DRAWER_TITLE}
+        className="fixed right-0 top-0 z-50 h-full w-[560px] max-w-full overflow-y-auto border-l border-gray-200 bg-white p-4"
+        data-testid="fine-detail-drawer"
+      >
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">Fine Detail</h3>
-          <button type="button" className="text-xs text-gray-500" onClick={onClose}>
-            Close
-          </button>
+          <h3 className="text-sm font-semibold text-gray-900">{DRAWER_TITLE}</h3>
+          <ModalCloseButton title={DRAWER_TITLE} onClose={onClose} />
         </div>
         <div className="mt-3 space-y-2 text-sm">
           <div><strong>Status:</strong> {String(fine.status ?? "open")}</div>

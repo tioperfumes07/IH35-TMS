@@ -8,6 +8,7 @@ import {
   listSafetyEventNotes,
   type SafetyEventLogRow,
 } from "../../api/safety";
+import { Modal } from "../../components/Modal";
 
 type Props = {
   operatingCompanyId: string;
@@ -99,6 +100,21 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   });
 
   const rows = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
+  const logModalDirty =
+    draft.title.trim() !== INITIAL_DRAFT.title.trim() ||
+    draft.event_type.trim() !== INITIAL_DRAFT.event_type.trim() ||
+    draft.description.trim() !== INITIAL_DRAFT.description.trim() ||
+    draft.subject_driver_id.trim() !== INITIAL_DRAFT.subject_driver_id.trim() ||
+    draft.subject_unit_id.trim() !== INITIAL_DRAFT.subject_unit_id.trim() ||
+    draft.severity !== INITIAL_DRAFT.severity ||
+    draft.status !== INITIAL_DRAFT.status ||
+    draft.kpi_bucket !== INITIAL_DRAFT.kpi_bucket ||
+    draft.subject_type !== INITIAL_DRAFT.subject_type;
+
+  const closeLogModal = () => {
+    setLogModalOpen(false);
+    setDraft(INITIAL_DRAFT);
+  };
 
   return (
     <div className="space-y-3">
@@ -224,100 +240,96 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         </div>
       ) : null}
 
-      {logModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3">
-          <div className="w-full max-w-lg rounded border border-gray-200 bg-white p-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900">Log Safety Event</h3>
-              <button type="button" className="text-xs text-gray-500" onClick={() => setLogModalOpen(false)}>
-                Close
-              </button>
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <input
-                value={draft.title}
-                onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
-                placeholder="Title"
-                className="rounded border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
-              />
-              <input
-                value={draft.event_type}
-                onChange={(event) => setDraft((prev) => ({ ...prev, event_type: event.target.value }))}
-                placeholder="Event type"
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
-              />
-              <select
-                value={draft.kpi_bucket}
-                onChange={(event) => setDraft((prev) => ({ ...prev, kpi_bucket: event.target.value as EventDraft["kpi_bucket"] }))}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="incidents">Incidents</option>
-                <option value="violations">Violations</option>
-                <option value="claims">Claims</option>
-                <option value="commendations">Commendations</option>
-              </select>
-              <select
-                value={draft.severity}
-                onChange={(event) => setDraft((prev) => ({ ...prev, severity: event.target.value as EventDraft["severity"] }))}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
-              </select>
-              <select
-                value={draft.status}
-                onChange={(event) => setDraft((prev) => ({ ...prev, status: event.target.value as EventDraft["status"] }))}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="open">Open</option>
-                <option value="acknowledged">Acknowledged</option>
-                <option value="closed">Closed</option>
-              </select>
-              <select
-                value={draft.subject_type}
-                onChange={(event) => setDraft((prev) => ({ ...prev, subject_type: event.target.value as EventDraft["subject_type"] }))}
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="company">Company</option>
-                <option value="driver">Driver</option>
-                <option value="unit">Unit</option>
-              </select>
-              <input
-                value={draft.subject_driver_id}
-                onChange={(event) => setDraft((prev) => ({ ...prev, subject_driver_id: event.target.value }))}
-                placeholder="Subject driver UUID (optional)"
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
-              />
-              <input
-                value={draft.subject_unit_id}
-                onChange={(event) => setDraft((prev) => ({ ...prev, subject_unit_id: event.target.value }))}
-                placeholder="Subject unit UUID (optional)"
-                className="rounded border border-gray-300 px-2 py-1 text-xs"
-              />
-              <textarea
-                value={draft.description}
-                onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
-                placeholder="Description"
-                className="rounded border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
-                rows={4}
-              />
-            </div>
-
-            <div className="mt-4 flex justify-end">
-              <button
-                type="button"
-                onClick={() => createMutation.mutate()}
-                disabled={createMutation.isPending || !draft.title.trim() || !draft.event_type.trim()}
-                className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
-              >
-                {createMutation.isPending ? "Saving..." : "Save event"}
-              </button>
-            </div>
-          </div>
+      <Modal
+        open={logModalOpen}
+        onClose={closeLogModal}
+        title="Log Safety Event"
+        confirmDiscardOnClose
+        isDirty={logModalDirty}
+      >
+        <div className="grid gap-2 sm:grid-cols-2" data-testid="safety-event-log-modal">
+          <input
+            value={draft.title}
+            onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
+            placeholder="Title"
+            className="rounded border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
+          />
+          <input
+            value={draft.event_type}
+            onChange={(event) => setDraft((prev) => ({ ...prev, event_type: event.target.value }))}
+            placeholder="Event type"
+            className="rounded border border-gray-300 px-2 py-1 text-xs"
+          />
+          <select
+            value={draft.kpi_bucket}
+            onChange={(event) => setDraft((prev) => ({ ...prev, kpi_bucket: event.target.value as EventDraft["kpi_bucket"] }))}
+            className="rounded border border-gray-300 px-2 py-1 text-xs"
+          >
+            <option value="incidents">Incidents</option>
+            <option value="violations">Violations</option>
+            <option value="claims">Claims</option>
+            <option value="commendations">Commendations</option>
+          </select>
+          <select
+            value={draft.severity}
+            onChange={(event) => setDraft((prev) => ({ ...prev, severity: event.target.value as EventDraft["severity"] }))}
+            className="rounded border border-gray-300 px-2 py-1 text-xs"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+          <select
+            value={draft.status}
+            onChange={(event) => setDraft((prev) => ({ ...prev, status: event.target.value as EventDraft["status"] }))}
+            className="rounded border border-gray-300 px-2 py-1 text-xs"
+          >
+            <option value="open">Open</option>
+            <option value="acknowledged">Acknowledged</option>
+            <option value="closed">Closed</option>
+          </select>
+          <select
+            value={draft.subject_type}
+            onChange={(event) => setDraft((prev) => ({ ...prev, subject_type: event.target.value as EventDraft["subject_type"] }))}
+            className="rounded border border-gray-300 px-2 py-1 text-xs"
+          >
+            <option value="company">Company</option>
+            <option value="driver">Driver</option>
+            <option value="unit">Unit</option>
+          </select>
+          <input
+            value={draft.subject_driver_id}
+            onChange={(event) => setDraft((prev) => ({ ...prev, subject_driver_id: event.target.value }))}
+            placeholder="Subject driver UUID (optional)"
+            className="rounded border border-gray-300 px-2 py-1 text-xs"
+          />
+          <input
+            value={draft.subject_unit_id}
+            onChange={(event) => setDraft((prev) => ({ ...prev, subject_unit_id: event.target.value }))}
+            placeholder="Subject unit UUID (optional)"
+            className="rounded border border-gray-300 px-2 py-1 text-xs"
+          />
+          <textarea
+            value={draft.description}
+            onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
+            placeholder="Description"
+            className="rounded border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
+            rows={4}
+          />
         </div>
-      ) : null}
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => createMutation.mutate()}
+            disabled={createMutation.isPending || !draft.title.trim() || !draft.event_type.trim()}
+            className="rounded bg-blue-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {createMutation.isPending ? "Saving..." : "Save event"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
