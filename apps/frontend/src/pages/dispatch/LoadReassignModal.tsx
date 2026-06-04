@@ -6,6 +6,7 @@ import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { AssignDriverDropdown, REASSIGN_REASON_CODES, type AssignDriverDropdownProps } from "./AssignDriverDropdown";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { OptimalDriversPanel } from "../../components/dispatch/OptimalDriversPanel";
 
 type Props = {
   open: boolean;
@@ -50,6 +51,12 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
           void mut.mutateAsync();
         }}
       >
+        <OptimalDriversPanel
+          loadId={loadId}
+          operatingCompanyId={operatingCompanyId}
+          selectedDriverId={driverId}
+          onSelectDriver={setDriverId}
+        />
         <AssignDriverDropdown
           loadId={loadId}
           operatingCompanyId={operatingCompanyId}

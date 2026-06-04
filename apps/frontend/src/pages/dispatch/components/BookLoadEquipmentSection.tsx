@@ -1,12 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import type { UseFormRegister, UseFormWatch } from "react-hook-form";
+import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listDrivers, listDriverTeams, listUnits } from "../../../api/mdata";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { OptimalDriversPanel } from "../../../components/dispatch/OptimalDriversPanel";
 
 type Props = {
   register: UseFormRegister<any>;
   watch?: UseFormWatch<any>;
+  setValue?: UseFormSetValue<any>;
   operatingCompanyId?: string;
+  /** Existing load id when editing; preview seam uses reservation uuid for new books. */
+  optimizerLoadId?: string;
 };
 
 type Option = { id: string; label: string };
@@ -40,8 +44,18 @@ function toDriverOption(row: unknown, index: number): Option {
   return { id, label: [fullName, shortName].filter(Boolean).join(" · ") || `Driver ${index + 1}` };
 }
 
-export function BookLoadEquipmentSection({ register, watch, operatingCompanyId }: Props) {
+export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId }: Props) {
   const assignmentMode = watch ? watch("assignment_mode") : "solo";
+  const primaryDriverId = watch ? String(watch("assigned_primary_driver_id") ?? "") : "";
+  const reservationUuid = watch ? String(watch("reservation_uuid") ?? "") : "";
+  const trailerType = watch ? String(watch("trailer_type") ?? "") : "";
+  const hazmat = watch ? Boolean(watch("hazmat")) : false;
+  const stops = watch ? (watch("stops") as Array<{ city?: string; state?: string }> | undefined) : undefined;
+  const pickupStop = stops?.find((s) => s) ?? stops?.[0];
+  const optimizerLoadKey =
+    optimizerLoadId ||
+    reservationUuid ||
+    "00000000-0000-4000-8000-000000000000";
   const unitsQuery = useQuery({
     queryKey: ["book-load-units", operatingCompanyId],
     queryFn: () => listUnits({ operating_company_id: operatingCompanyId }),
@@ -138,6 +152,20 @@ export function BookLoadEquipmentSection({ register, watch, operatingCompanyId }
           }
         />
       </div>
+      {operatingCompanyId && pickupStop?.city ? (
+        <OptimalDriversPanel
+          loadId={optimizerLoadKey}
+          operatingCompanyId={operatingCompanyId}
+          selectedDriverId={primaryDriverId}
+          onSelectDriver={(id) => setValue?.("assigned_primary_driver_id", id, { shouldDirty: true })}
+          preview={{
+            pickup_city: pickupStop.city,
+            pickup_state: pickupStop.state,
+            hazmat,
+            trailer_type: trailerType,
+          }}
+        />
+      ) : null}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto] md:items-center">
         <Field
           label="Assignment mode"

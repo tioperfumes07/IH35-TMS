@@ -824,7 +824,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     <span className="blw-sec-meta">Class <b>T120-SMITH</b></span>
                   </div>
                   <div className="space-y-2 p-3">
-                    <BookLoadEquipmentSection register={form.register} watch={form.watch} operatingCompanyId={operatingCompanyId} />
+                    <BookLoadEquipmentSection register={form.register} watch={form.watch} setValue={form.setValue} operatingCompanyId={operatingCompanyId} />
                     <div className={`blw-collapse ${showDriverInstructions ? "open" : ""}`}>
                       <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowDriverInstructions((openState) => !openState)}>
                         <span className="blw-collapse-plus">{showDriverInstructions ? "−" : "+"}</span>

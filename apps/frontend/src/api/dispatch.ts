@@ -396,6 +396,50 @@ export function getDispatchAvailableDrivers(params: {
   return apiRequest<{ drivers: AvailableDriverRow[] }>(`/api/v1/dispatch/available-drivers?${u.toString()}`);
 }
 
+export type OptimalDriverScoreBreakdown = {
+  hos_score: number;
+  proximity_score: number;
+  eligibility_score: number;
+  performance_score: number;
+  deadhead_penalty: number;
+};
+
+export type OptimalDriverRow = {
+  driver_id: string;
+  display_name: string;
+  display_id: string | null;
+  rank: number;
+  total_score: number;
+  breakdown: OptimalDriverScoreBreakdown;
+  hos_safe: boolean;
+  distance_to_pickup_miles: number;
+  eligible: boolean;
+  ineligible_reason: string | null;
+};
+
+export function getDispatchOptimalDrivers(params: {
+  operating_company_id: string;
+  load_id: string;
+  for_pickup_at?: string;
+  preview_pickup_city?: string;
+  preview_pickup_state?: string;
+  preview_hazmat?: boolean;
+  preview_trailer_type?: string;
+}) {
+  const u = new URLSearchParams();
+  u.set("operating_company_id", params.operating_company_id);
+  if (params.for_pickup_at) u.set("for_pickup_at", params.for_pickup_at);
+  if (params.preview_pickup_city) u.set("preview_pickup_city", params.preview_pickup_city);
+  if (params.preview_pickup_state) u.set("preview_pickup_state", params.preview_pickup_state);
+  if (params.preview_hazmat != null) u.set("preview_hazmat", String(params.preview_hazmat));
+  if (params.preview_trailer_type) u.set("preview_trailer_type", params.preview_trailer_type);
+  return apiRequest<{
+    drivers: OptimalDriverRow[];
+    weights: Record<string, number>;
+    load_context: Record<string, unknown>;
+  }>(`/api/v1/dispatch/loads/${encodeURIComponent(params.load_id)}/optimal-drivers?${u.toString()}`);
+}
+
 export type RefinedLoadStop = {
   id: string;
   load_id: string;

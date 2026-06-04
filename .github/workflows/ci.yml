@@ -181,6 +181,9 @@ jobs:
       - name: verify:dispatch-ocr-queue
         run: npm run verify:dispatch-ocr-queue
 
+      - name: verify:dispatch-assignment-optimizer
+        run: npm run verify:dispatch-assignment-optimizer
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
