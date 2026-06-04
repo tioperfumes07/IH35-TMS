@@ -569,6 +569,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Service history timeline (B31, 2026-06-04):** `GET /api/v1/maintenance/service-timeline` aggregates WOs, inspections, PM auto-log, fuel transactions, and accident reports per `unit_id` (vehicle) or `equipment_id` (trailer). Reusable `ServiceTimeline` on VehicleProfile + TrailerProfile with event-type and date-range filters and drill-down navigation. Legacy recent-activity stubs ARCHIVE-not-DELETE. **Migration:** none. **CI:** `verify:maint-service-history-timeline`.
 
+**Tire program tracking (B32, 2026-06-04):** `/maintenance/tires` CRUD reads/writes `maintenance.tire_brands`, `maintenance.tire_records`, and `maintenance.tire_events` (migration **0363**; GO reserved 0362 taken by B30 inspections). Per-vehicle steer/drive/trailer axle layout, rotation + replacement quick actions, manual tread depth audits with low-tread alerts. Optional WO cross-link via `work_order_id` only (WO internals untouched). Legacy tire WO type remains; no tire program existed before B32. **CI:** `verify:maint-tire-program`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`

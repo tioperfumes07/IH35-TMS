@@ -1,32 +1,30 @@
 {
-  "block_id": "BLOCK-B31-SERVICE-HISTORY-TIMELINE",
-  "branch": "feat/maint-service-history-timeline",
+  "block_id": "BLOCK-B32-TIRE-PROGRAM-TRACKING",
+  "branch": "feat/maint-tire-program",
   "phase": "Phase 3",
-  "task": "B31-SERVICE-HISTORY-TIMELINE",
+  "task": "B32-TIRE-PROGRAM-TRACKING",
   "allowed_files": [
-    "apps/backend/src/maintenance/service-timeline.service.ts",
-    "apps/backend/src/maintenance/__tests__/service-timeline.service.test.ts",
-    "apps/frontend/src/components/maintenance/ServiceTimeline.tsx",
-    "apps/frontend/src/components/maintenance/__tests__/ServiceTimeline.test.tsx",
-    "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
-    "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx",
-    "apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
-    "apps/frontend/src/components/trailer-profile/TrailerRecentActivitySection.tsx",
+    "db/migrations/0363_maint_tire_program.sql",
+    "apps/backend/src/maintenance/tires.routes.ts",
+    "apps/backend/src/maintenance/__tests__/tires.routes.test.ts",
+    "apps/frontend/src/pages/maintenance/TireProgramPage.tsx",
+    "apps/frontend/src/pages/maintenance/__tests__/TireProgramPage.test.tsx",
     "apps/frontend/src/api/maintenance.ts",
+    "apps/frontend/src/routes/manifest.tsx",
     "apps/backend/src/index.ts",
-    "scripts/verify-maint-service-history-timeline.mjs",
-    "scripts/__tests__/verify-maint-service-history-timeline.test.mjs",
-    "scripts/verify-guards/178-verify-maint-service-history-timeline.mjs",
-    "scripts/verify-steps/63-verify-maint-service-history-timeline.mjs",
+    "scripts/verify-maint-tire-program.mjs",
+    "scripts/__tests__/verify-maint-tire-program.test.mjs",
+    "scripts/verify-guards/179-verify-maint-tire-program.mjs",
+    "scripts/verify-steps/64-verify-maint-tire-program.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:maint-service-history-timeline"
+    "verify:maint-tire-program"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
