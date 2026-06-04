@@ -192,6 +192,9 @@ jobs:
       - name: verify:dispatch-settings-tab
         run: npm run verify:dispatch-settings-tab
 
+      - name: verify:dispatch-secondary-nav-depth
+        run: npm run verify:dispatch-secondary-nav-depth
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
