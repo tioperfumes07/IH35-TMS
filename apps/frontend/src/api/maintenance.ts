@@ -582,6 +582,16 @@ export async function updateDriverReportStatus(
   });
 }
 
+
+export type MaintenanceLaborCodeRow = {
+  id: string; code: string; display_name: string; description: string | null;
+  rate_cents_per_hour: number | null; metadata: Record<string, unknown>; is_active: boolean; sort_order: number;
+};
+export async function listMaintenanceLaborCodes(operatingCompanyId: string) {
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ labor_codes: MaintenanceLaborCodeRow[] }>(`/api/v1/maintenance/labor-codes?${qs.toString()}`);
+}
+
 export type WoCostContextPayload = {
   expense_categories: Array<Record<string, unknown>>;
   items: Array<Record<string, unknown>>;

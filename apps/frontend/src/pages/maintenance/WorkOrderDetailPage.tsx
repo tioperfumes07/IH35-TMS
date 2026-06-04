@@ -13,6 +13,7 @@ import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/form
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { UploadZone } from "../../components/UploadZone";
+import { LaborTracker } from "../../components/maintenance/LaborTracker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -325,6 +326,8 @@ export function WorkOrderDetailPage() {
             />
             <div className="mt-2 text-xs text-gray-500">Line updates are local preview until MAINT-11 save endpoint is available.</div>
           </div>
+
+          {id && companyId ? <LaborTracker workOrderId={id} operatingCompanyId={companyId} /> : null}
         </div>
 
         <div className="space-y-3">

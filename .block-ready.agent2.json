@@ -1,30 +1,33 @@
 {
-  "block_id": "BLOCK-B33-WARRANTY-TRACKING",
-  "branch": "feat/maint-warranty-claims",
+  "block_id": "BLOCK-B34-MECHANIC-LABOR-UX",
+  "branch": "feat/maint-mech-labor-ux",
   "phase": "Phase 3",
-  "task": "B33-WARRANTY-TRACKING",
+  "task": "B34-MECHANIC-LABOR-UX",
   "allowed_files": [
-    "db/migrations/0365_maint_warranty.sql",
-    "apps/backend/src/maintenance/warranty.routes.ts",
-    "apps/backend/src/maintenance/__tests__/warranty.routes.test.ts",
-    "apps/frontend/src/pages/maintenance/WarrantyClaimsPage.tsx",
-    "apps/frontend/src/pages/maintenance/__tests__/WarrantyClaimsPage.test.tsx",
+    "apps/backend/src/maintenance/labor.routes.ts",
+    "apps/backend/src/maintenance/time-entries.routes.ts",
+    "apps/backend/src/maintenance/__tests__/labor.routes.test.ts",
+    "apps/backend/src/maintenance/__tests__/wo-time-entries-range.test.ts",
+    "apps/frontend/src/components/maintenance/LaborTracker.tsx",
+    "apps/frontend/src/components/maintenance/__tests__/LaborTracker.test.tsx",
+    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.test.tsx",
     "apps/frontend/src/api/maintenance.ts",
-    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/api/woTimeEntries.ts",
     "apps/backend/src/index.ts",
-    "scripts/verify-maint-warranty-claims.mjs",
-    "scripts/__tests__/verify-maint-warranty-claims.test.mjs",
-    "scripts/verify-guards/180-verify-maint-warranty-claims.mjs",
-    "scripts/verify-steps/65-verify-maint-warranty-claims.mjs",
+    "scripts/verify-maint-mech-labor-ux.mjs",
+    "scripts/__tests__/verify-maint-mech-labor-ux.test.mjs",
+    "scripts/verify-guards/180-verify-maint-mech-labor-ux.mjs",
+    "scripts/verify-steps/65-verify-maint-mech-labor-ux.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:maint-warranty-claims"
+    "verify:maint-mech-labor-ux"
   ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }
