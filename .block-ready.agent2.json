@@ -1,0 +1,26 @@
+{
+  "block_id": "BLOCK-P5-T1.3-PLAID-FRONTEND-CRON",
+  "branch": "feat/p5-t1.3-plaid-frontend-cron",
+  "phase": "Phase 5 — Banking",
+  "task": "P5-T1.3",
+  "allowed_files": [
+    "apps/frontend/package.json",
+    "package-lock.json",
+    "apps/frontend/src/components/banking/PlaidLinkButton.tsx",
+    "apps/frontend/src/pages/banking/BankingHome.tsx",
+    "apps/frontend/src/pages/banking/BankingHome.test.tsx",
+    "apps/frontend/src/pages/banking/BankAccountDetail.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/backend/src/cron/plaid-daily-sync.ts",
+    "apps/backend/src/index.ts",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    ".block-ready.agent2.json"
+  ],
+  "extra_gates": [
+    "verify:plaid-cron-registered",
+    "verify:plaid-status-derived-from-state"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
