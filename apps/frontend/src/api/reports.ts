@@ -1046,3 +1046,46 @@ export async function getMaintenanceCostPerUnit(params: {
     throw e;
   }
 }
+
+export type DispatchMarginRow = {
+  load_id: string;
+  load_number: string | null;
+  customer_name: string | null;
+  revenue_cents: number;
+  driver_pay_cents: number;
+  fuel_cents: number;
+  tolls_cents: number;
+  chargebacks_cents: number;
+  direct_cost_cents: number;
+  margin_cents: number;
+  margin_pct: number;
+};
+
+export type DispatchMarginResponse = {
+  basis: "cash" | "accrual";
+  period: { start: string; end: string };
+  totals: {
+    revenue_cents: number;
+    direct_cost_cents: number;
+    margin_cents: number;
+    margin_pct: number;
+    load_count: number;
+  };
+  rows: DispatchMarginRow[];
+};
+
+export async function getDispatchMargin(params: {
+  operating_company_id: string;
+  from: string;
+  to: string;
+  basis?: "cash" | "accrual";
+}): Promise<DispatchMarginResponse> {
+  const q = new URLSearchParams({
+    from: params.from,
+    to: params.to,
+    basis: params.basis ?? "accrual",
+  });
+  return apiRequest<DispatchMarginResponse>(
+    withCompany(`/api/v1/reports/dispatch-margin?${q.toString()}`, params.operating_company_id),
+  );
+}

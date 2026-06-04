@@ -7,6 +7,10 @@ export const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+export const reportBasisSchema = z.enum(["cash", "accrual"]).optional().default("accrual");
+
+export type ReportBasis = z.infer<typeof reportBasisSchema>;
+
 export type ReportLibraryRow = {
   id: string;
   name: string;
@@ -89,6 +93,13 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     category: "fleet",
     description:
       "Work-order maintenance totals by truck over a date range with parts/labor/outsourced splits, per-mile cost, category rollup, and fleet reliability flags.",
+    status: "real",
+  },
+  {
+    id: "dispatch-margin",
+    name: "Dispatch margin",
+    category: "operations",
+    description: "Per-load revenue minus direct costs (driver pay, fuel, tolls, chargebacks) with accrual or cash basis.",
     status: "real",
   },
   {
