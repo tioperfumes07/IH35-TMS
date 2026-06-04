@@ -82,6 +82,7 @@ export function FaultRulesPage() {
             Fault-driven drafts
           </Link>
         </div>
+        {/* ARCHIVE-not-DELETE (B25): prior CTA "+ Add rule" — Sunset: 2026-09. Canonical: + Create Rule. */}
         <Button
           size="sm"
           onClick={() => {
@@ -89,7 +90,7 @@ export function FaultRulesPage() {
             setModalOpen(true);
           }}
         >
-          + Add rule
+          + Create Rule
         </Button>
       </div>
 

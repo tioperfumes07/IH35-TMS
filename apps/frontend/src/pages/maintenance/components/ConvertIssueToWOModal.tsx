@@ -90,7 +90,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
               mutation.mutate();
             }}
           >
-            + Create WO
+            + Create Work Order
           </Button>
         </div>
       </div>

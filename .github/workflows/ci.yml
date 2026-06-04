@@ -154,6 +154,9 @@ jobs:
       - name: verify:book-load-accessorial
         run: npm run verify:book-load-accessorial
 
+      - name: verify:maint-create-vocab
+        run: npm run verify:maint-create-vocab
+
       - name: Verify safety medical cards contract
         run: npm run verify:safety-medical-cards
 
