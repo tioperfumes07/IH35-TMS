@@ -12,6 +12,7 @@ import { DriverDetailPage } from "../pages/DriverDetail";
 import { DriverProfilePage } from "../pages/drivers/DriverProfilePage";
 import { DriverHosDetailPage } from "../pages/drivers/DriverHosDetailPage";
 import { MessagesInboxPage } from "../pages/drivers/MessagesInboxPage";
+import { OnboardingWizardPage } from "../pages/drivers/OnboardingWizardPage";
 import { DriverLoadStatusesPage } from "../pages/DriverLoadStatusesPage";
 import { DriversPage } from "../pages/Drivers";
 import { DispatchPage } from "../pages/Dispatch";
@@ -2491,6 +2492,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <Navigate to="/coming-soon?feature=Account%20Role%20Bindings&phase=5&eta=After%20accounting%20cutover" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/onboarding/:session_id"
+          element={
+            <ProtectedRoute>
+              <OnboardingWizardPage />
             </ProtectedRoute>
           }
         />
