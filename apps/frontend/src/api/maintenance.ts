@@ -1145,6 +1145,87 @@ export function detectMaintenanceWarrantyFromWorkOrder(body: {
   }>(`/api/v1/maintenance/warranty/detect-from-wo`, { method: "POST", body });
 }
 
+export type MaintenanceReeferHoursLogRow = {
+  id: string;
+  equipment_id: string;
+  hours_reading: number;
+  source: "samsara" | "manual" | string;
+  source_label: string;
+  recorded_at: string;
+  notes: string;
+  samsara_event_id?: string | null;
+};
+
+export type MaintenanceReeferSpecsRow = {
+  id: string;
+  equipment_id: string;
+  equipment_number?: string | null;
+  reefer_brand: string;
+  service_interval_hours: number;
+  last_service_hours: number | null;
+  last_service_date: string | null;
+  current_hours: number | null;
+  hours_until_service: number | null;
+  pm_status: "due" | "near_due" | "current";
+  notes?: string;
+};
+
+export function fetchMaintenanceReeferHoursSnapshot(operatingCompanyId: string, equipmentId: string, limit = 20) {
+  const q = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    equipment_id: equipmentId,
+    limit: String(limit),
+  });
+  return apiRequest<{ specs: MaintenanceReeferSpecsRow; history: MaintenanceReeferHoursLogRow[] }>(
+    `/api/v1/maintenance/reefer-hours/snapshot?${q.toString()}`
+  );
+}
+
+export function listMaintenanceReeferHoursLog(
+  operatingCompanyId: string,
+  params: { equipment_id?: string; limit?: number } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.equipment_id) q.set("equipment_id", params.equipment_id);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  return apiRequest<{ rows: MaintenanceReeferHoursLogRow[] }>(`/api/v1/maintenance/reefer-hours/log?${q.toString()}`);
+}
+
+export function createMaintenanceReeferHoursLogEntry(body: {
+  operating_company_id: string;
+  equipment_id: string;
+  hours_reading: number;
+  recorded_at?: string;
+  notes?: string;
+}) {
+  return apiRequest<MaintenanceReeferHoursLogRow>(`/api/v1/maintenance/reefer-hours/log`, { method: "POST", body });
+}
+
+export function updateMaintenanceReeferSpecs(body: {
+  operating_company_id: string;
+  equipment_id: string;
+  reefer_brand?: string;
+  service_interval_hours?: number;
+  last_service_hours?: number | null;
+  last_service_date?: string | null;
+  notes?: string;
+}) {
+  return apiRequest<MaintenanceReeferSpecsRow>(`/api/v1/maintenance/reefer-hours/specs`, { method: "PUT", body });
+}
+
+export function ingestMaintenanceReeferHoursFromSamsara(operatingCompanyId: string) {
+  return apiRequest<{ ingested: number; skipped: number }>(`/api/v1/maintenance/reefer-hours/ingest-samsara`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+export function listMaintenanceReeferHoursPmDue(operatingCompanyId: string) {
+  return apiRequest<{ rows: Array<Record<string, unknown>> }>(
+    `/api/v1/maintenance/reefer-hours/pm-due?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function listMaintenanceVendors(
   operatingCompanyId: string,
   params: { search?: string; include_archived?: boolean } = {}

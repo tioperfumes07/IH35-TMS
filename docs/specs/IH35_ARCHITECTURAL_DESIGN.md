@@ -573,6 +573,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Warranty parts + claims (B33, 2026-06-04):** `/maintenance/warranty-claims` CRUD reads/writes `maintenance.parts_warranty` and `maintenance.warranty_claims` (migration **0365**; GO reserved 0363 taken by B32 tire program). Parts warranty coverage registry, draft→filed→reimbursed claim workflow, vendor select, WO line auto-detect for eligible parts (`detect-from-wo`). ARCHIVE-not-DELETE on claims and warranty rows. Optional links to `parts_inventory`, `work_orders`, and `mdata.vendors` only. **CI:** `verify:maint-warranty-claims`.
 
+**Reefer hours separate tracking (A19, 2026-06-04):** Trailer profile `TrailerReeferSection` reads/writes `maintenance.reefer_hours_log` + `maintenance.reefer_specs` (migration **0366**; GO reserved 0359 taken by RLS defensive; **0364** reserved for B35 KPI dashboard). Per-trailer reefer engine hours log (Samsara ingest + manual fallback), live snapshot + history, hours-based PM due evaluation for B28 `interval_kind=hours` schedules (`GET /api/v1/maintenance/reefer-hours/pm-due`). ARCHIVE-not-DELETE on log rows. **CI:** `verify:maint-reefer-hours`.
+
 **Mechanic labor UX (B34, 2026-06-04):** WO detail mounts `LaborTracker` for clock in/out against `maintenance.wo_time_entries` with `catalogs.maintenance_labor_codes` rate auto-fill and running-timer labor cost (rate × hours). Canonical routes in `labor.routes.ts`; legacy `time-entries.routes.ts` ARCHIVE-not-DELETE re-export only. **Migration:** none (**0364 reserved for B35 KPI dashboard**). **CI:** `verify:maint-mech-labor-ux`.
 
 **Maintenance KPI dashboard (B35, 2026-06-04):** `/maintenance/kpi-dashboard` aggregates downtime hours, MTBF (repair WO spacing), CPM, cost-per-truck, and PM compliance % with per-KPI sparklines, date/unit filters, drill-down tables, and PM compliance hub links (`/maintenance/pm-auto-engine`, `/maintenance/pm-schedule`). Canonical routes in `kpi.routes.ts`; cross-link only to `/reports/maintenance-cost-per-unit` (reports module untouched). **Migration:** none — **0364** reserved; live SQL aggregation sufficient. **CI:** `verify:maint-kpi-dashboard`.
@@ -1107,7 +1109,7 @@ No migration. UX and API hardening on Part 1 data layer.
 
 - **Status change:** `PUT /api/v1/fleet/trailers/:id/status` with reason, optional note/effective date, lifecycle fields (sold/transfer/damage/OOS). Validated by `apps/backend/src/fleet/trailer-status-state-machine.ts` (terminal `Sold`/`Transferred`/`Lost`; `Sold→InService` only with Owner `admin_override`). Audits `fleet.trailer.status_changed`.
 - **Edit:** `PATCH /api/v1/fleet/trailers/:id` via `EditTrailerModal` (identity, specs, insurance, notes). Audits `fleet.trailer.updated` with before/after diff.
-- **UI:** `StatusChangeModal`, status badge dropdown on `IdentityStatusHeader`, `TrailerReeferSection` A19 stub (conditional `equipment_type=Reefer`), `TrailerRecentActivitySection` (equipment log, docs files, WO list filtered by `equipment_id`).
+- **UI:** `StatusChangeModal`, status badge dropdown on `IdentityStatusHeader`, `TrailerReeferSection` live reefer-hours UI (conditional `equipment_type=Reefer`; A19), `TrailerRecentActivitySection` (equipment log, docs files, WO list filtered by `equipment_id`).
 - **CI:** `verify:trailer-status-state-machine-coverage`, `verify:trailer-profile-no-stub-sections`, `verify:trailer-wo-equipment-id` (B26).
 
 ## Compliance Dashboard (Safety module) — Block 16 (locked 2026-06-02)

@@ -90,7 +90,7 @@ export function TrailerProfilePage() {
           <div data-testid="tp-section-4-reefer">
             <ReeferTelemetrySection reefer={aggregate.reefer} telemetry={aggregate.samsara_telemetry} />
           </div>
-          <TrailerReeferSection trailerId={id} />
+          <TrailerReeferSection trailerId={id} companyId={companyId} />
         </>
       ) : null}
       <div data-testid="tp-section-5-maintenance">
