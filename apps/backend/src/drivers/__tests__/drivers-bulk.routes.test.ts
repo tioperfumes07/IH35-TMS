@@ -9,7 +9,7 @@ const mdataIndex = fs.readFileSync(path.join(here, "..", "..", "mdata", "index.t
 
 describe("drivers bulk-update route", () => {
   it("exposes POST /api/v1/mdata/drivers/bulk-update via registerBulkRoute", () => {
-    expect(routes).toMatch(/registerBulkRoute\(/);
+    expect(routes).toMatch(/registerBulkRoute(?:<[^>]+>)?\(/);
     expect(routes).toMatch(/\/api\/v1\/mdata\/drivers\/bulk-update/);
     expect(routes).toMatch(/set_status: setStatusPayloadSchema/);
     expect(routes).toMatch(/set_oos_reason: setOosReasonPayloadSchema/);
