@@ -1016,3 +1016,58 @@ export function getMaintenancePartsTemplateUrl(operatingCompanyId: string) {
     `/api/v1/maintenance/parts/import-template?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
 }
+
+export type DvirDefectTriageStatus = "pending" | "assigned" | "escalated" | "converted" | "closed";
+
+export type DvirDefectInboxRow = {
+  id: string;
+  dvir_submission_id: string;
+  unit_id: string;
+  item_key: string;
+  severity: string;
+  notes: string;
+  photo_keys?: string[];
+  follow_up_wo_id?: string | null;
+  created_at: string;
+  dvir_type?: string;
+  submitted_at?: string;
+  driver_id?: string | null;
+  load_id?: string | null;
+  driver_name?: string | null;
+  unit_number?: string | null;
+  triage_status: DvirDefectTriageStatus;
+};
+
+export function listMaintenanceDvirDefects(
+  operatingCompanyId: string,
+  params: { status?: DvirDefectTriageStatus | "all" } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.status) q.set("status", params.status);
+  return apiRequest<{ defects: DvirDefectInboxRow[] }>(`/api/v1/maintenance/dvir-defects?${q.toString()}`);
+}
+
+export function getMaintenanceDvirDefect(id: string, operatingCompanyId: string) {
+  return apiRequest<{
+    defect: DvirDefectInboxRow & { odometer?: number; location?: string; load_id?: string | null };
+    triage_history: Array<{ event_class: string; created_at: string; payload: Record<string, unknown> }>;
+  }>(`/api/v1/maintenance/dvir-defects/${encodeURIComponent(id)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+}
+
+export function triageMaintenanceDvirDefect(
+  id: string,
+  body: {
+    operating_company_id: string;
+    action: "assign" | "escalate" | "close_no_action" | "convert_to_wo";
+    assignee_note?: string;
+    mechanic_notes?: string;
+    wo_type?: WorkOrderType;
+  }
+) {
+  return apiRequest<{
+    triage_status: DvirDefectTriageStatus;
+    work_order_id?: string;
+    display_id?: string | null;
+    alreadyConverted?: boolean;
+  }>(`/api/v1/maintenance/dvir-defects/${encodeURIComponent(id)}/triage`, { method: "POST", body });
+}
