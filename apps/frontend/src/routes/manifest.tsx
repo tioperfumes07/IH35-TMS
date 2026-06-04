@@ -525,9 +525,9 @@ export const ROUTES = React.Children.toArray(
         <Route
           path="/eld"
           element={
-            <ProtectedRoute>
+            <OwnerOnlyRoute>
               <EldPage />
-            </ProtectedRoute>
+            </OwnerOnlyRoute>
           }
         />
         <Route
