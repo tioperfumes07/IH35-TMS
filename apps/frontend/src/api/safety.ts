@@ -756,3 +756,49 @@ export async function addAccidentPhoto(id: string, companyId: string, file: File
   if (!response.ok) throw new Error(payload?.error ?? "Upload failed");
   return payload;
 }
+
+export type SafetyIncidentType = "damage_report" | "trailer_interchange" | "cargo_claim";
+
+export function listSafetyIncidents(companyId: string, incidentType: SafetyIncidentType) {
+  return apiRequest<{ incidents: Array<Record<string, unknown>> }>(
+    `/api/v1/safety/incidents?${q(companyId)}&incident_type=${encodeURIComponent(incidentType)}`
+  );
+}
+
+export function getSafetyIncident(id: string, companyId: string) {
+  return apiRequest<{ incident: Record<string, unknown> }>(`/api/v1/safety/incidents/${id}?${q(companyId)}`);
+}
+
+export function createSafetyIncident(body: {
+  operating_company_id: string;
+  incident_type: SafetyIncidentType;
+  incident_at?: string;
+  location?: string;
+  description?: string;
+  driver_id?: string | null;
+  unit_id?: string | null;
+  trailer_id?: string | null;
+  load_id?: string | null;
+  interchange_party?: string | null;
+  damage_amount_cents?: number;
+}) {
+  return apiRequest<{ incident: Record<string, unknown> }>("/api/v1/safety/incidents", {
+    method: "POST",
+    body,
+  });
+}
+
+export async function uploadSafetyIncidentPhoto(id: string, companyId: string, file: File) {
+  const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+  const url = `${base ? base.replace(/\/$/, "") : ""}/api/v1/safety/incidents/${id}/photos?${q(companyId)}`;
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch(url, {
+    method: "POST",
+    credentials: "include",
+    body: form,
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload?.error ?? "Upload failed");
+  return payload;
+}
