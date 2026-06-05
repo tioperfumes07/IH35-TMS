@@ -1,25 +1,17 @@
 {
-  "block_id": "P6-T3",
-  "branch": "feat/p6-t3-ifta-tax-calc-and-csv",
-  "phase": "Phase 6",
-  "task": "IFTA quarterly preparer Steps 3+4 (tax owed + CSV export)",
+  "block_id": "P5-T16",
+  "branch": "feat/phase5-oos-estimate-generation",
+  "phase": "Phase 5",
+  "task": "Severe repair OOS downtime estimate generation",
   "allowed_files": [
-    "apps/backend/src/ifta/ifta-tax-calculator.ts",
-    "apps/backend/src/ifta/ifta-csv-generator.ts",
-    "apps/backend/src/ifta/ifta-tax-rates.json",
-    "apps/backend/src/ifta/ifta-quarterly-preparer.routes.ts",
-    "apps/backend/src/ifta/ifta-quarterly-preparer.test.ts",
-    "db/migrations/0373_ifta_tax_calculations.sql",
-    "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx",
-    "apps/frontend/src/pages/reports/ifta/IFTAStepCSVExport.tsx",
-    "apps/frontend/src/pages/reports/ifta/IFTAPreparer.tsx",
-    "apps/frontend/src/api/ifta.ts",
-    "scripts/verify-ifta-tax-rates-current.mjs",
-    "package.json",
-    ".block-ready.json"
+    "apps/backend/src/maintenance/wo-oos-estimator.ts",
+    "apps/backend/src/maintenance/wo-oos-estimator.test.ts",
+    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    ".block-ready.json",
+    ".block-ready.agent1.json"
   ],
-  "extra_gates": ["verify:ifta-tax-rates-current"],
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "db_required": false,
+  "guard_required": false
 }
