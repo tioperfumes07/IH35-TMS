@@ -1,23 +1,23 @@
 {
-  "block_id": "AUDIT-FIX-8",
-  "branch": "audit-fix/audit-fix-8-wo-category-wire-complete",
+  "block_id": "AUDIT-FIX-11",
+  "branch": "audit-fix/audit-fix-11-qbo-sync-status-endpoints-fix",
   "phase": "AUDIT-FIX",
-  "task": "WO-CATEGORY-WIRE-COMPLETE — wire accounting category/item comboboxes (EXPANDED)",
+  "task": "QBO-SYNC-STATUS-ENDPOINTS-FIX — Unable to load sync status on /customers + /vendors",
   "allowed_files": [
-    "apps/frontend/src/pages/maintenance/WorkOrderCreateModal.tsx",
-    "apps/frontend/src/components/forms/TwoSectionLineEditor.tsx",
-    "apps/frontend/src/components/work-orders/CategoryCombobox.tsx",
-    "apps/frontend/src/components/work-orders/ItemCombobox.tsx",
-    "apps/frontend/src/hooks/useAccountingCategoriesQuery.ts",
-    "apps/frontend/src/hooks/useAccountingItemsQuery.ts",
-    "scripts/verify-wo-category-actually-fetches.mjs",
+    "apps/backend/src/qbo-sync/customers.routes.ts",
+    "apps/backend/src/qbo-sync/vendors.routes.ts",
+    "apps/backend/src/qbo-sync/chart-of-accounts.routes.ts",
+    "apps/backend/src/qbo-sync/items.routes.ts",
+    "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
+    "apps/frontend/src/pages/vendors/VendorsSyncPanel.tsx",
+    "scripts/verify-qbo-sync-status-endpoints-return-200.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:wo-category-actually-fetches"
+    "verify:qbo-sync-status-endpoints-return-200"
   ],
   "runtime_path": "src",
   "db_required": false,
