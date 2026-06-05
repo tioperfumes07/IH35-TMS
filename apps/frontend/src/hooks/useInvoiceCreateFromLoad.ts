@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createInvoiceFromLoad } from "../api/accounting";
-import { listLoads, type DispatchLoadRow } from "../api/loads";
+import { listLoads, type DispatchLoadRow, type LoadStatus } from "../api/loads";
 
 export type LoadStatusFilter = "all" | "delivered" | "in_transit";
 
@@ -9,11 +9,11 @@ export function useInvoiceCreateFromLoad(operatingCompanyId: string, options: { 
   const pageSize = options.pageSize ?? 25;
   const offset = (page - 1) * pageSize;
 
-  const status =
+  const status: LoadStatus[] | undefined =
     options.statusFilter === "delivered"
-      ? (["delivered"] as const)
+      ? ["delivered"]
       : options.statusFilter === "in_transit"
-        ? (["in_transit", "dispatched", "at_pickup", "loaded", "at_delivery"] as const)
+        ? ["in_transit", "dispatched", "at_pickup", "at_delivery"]
         : undefined;
 
   const loadsQuery = useQuery({
@@ -22,7 +22,7 @@ export function useInvoiceCreateFromLoad(operatingCompanyId: string, options: { 
       listLoads({
         operating_company_id: operatingCompanyId ? [operatingCompanyId] : undefined,
         search: options.search || undefined,
-        status: status ? [...status] : undefined,
+        status,
         limit: pageSize,
         offset,
         sort: "-pickup_date",
