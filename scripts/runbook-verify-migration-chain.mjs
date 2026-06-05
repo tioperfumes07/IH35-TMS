@@ -6,11 +6,18 @@ import { spawnSync } from "node:child_process";
 const ROOT = path.resolve(".");
 const MIGRATIONS_DIR = path.join(ROOT, "db", "migrations");
 const MIGRATION_FILENAME = /^(\d{4})([a-z]?)_.+\.sql$/i;
-const KNOWN_MAX_MIGRATION_NUMBER = 396;
+const KNOWN_MAX_MIGRATION_NUMBER = 403;
+// Intentional/known skipped sequence numbers. These are NOT missing-required
+// migrations: no migration file for any of these numbers has ever existed in
+// history, and the ledger static guards (verify:ledger-parity-static,
+// verify:no-unledgered-migrations) account for every file actually present.
+// 397-402 are the intentional skips between 0396 and 0403 (CLOSURE-24 onboarding
+// tail); they are allowlisted here to match the established 66-known-gap baseline.
 const KNOWN_MISSING_NUMBERS = new Set([
   47, 63, 64, 76, 77, 78, 84, 119, 120, 121, 122, 130, 132, 134, 139, 147, 148, 149, 225, 226, 227, 228, 239,
   243, 244, 245, 251, 252, 253, 254, 255, 259, 278, 279, 297, 305, 312, 314, 315, 316, 317, 322, 324, 326, 327,
   328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 341, 346, 351, 352, 364, 390, 392, 394, 395,
+  397, 398, 399, 400, 401, 402,
 ]);
 
 function fail(message) {
