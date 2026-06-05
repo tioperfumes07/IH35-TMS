@@ -241,6 +241,7 @@ import { initializeSafetyRemindersCron } from "./safety/reminders.cron.js";
 import { initializeIntegrityAlertEngineCron } from "./safety/integrity-alert-engine.cron.js";
 import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
+import { registerChartOfAccountsSyncRoutes } from "./qbo-sync/chart-of-accounts.routes.js";
 import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
 import { initializeQboRemoteCountCollectorCron } from "./cron/qbo-remote-count-collector.cron.js";
 import { initializeReconciliationWorkerCron } from "./cron/reconciliation-worker.cron.js";
@@ -446,6 +447,7 @@ async function main() {
   await registerQboVendorLinkageRoutes(app);
   await registerTrkMigrationRoutes(app);
   await registerMasterDataSyncRoutes(app);
+  await registerChartOfAccountsSyncRoutes(app);
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);
   await registerQboSyncConflictDetectionRoutes(app);

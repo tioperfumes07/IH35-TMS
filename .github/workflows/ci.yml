@@ -579,6 +579,9 @@ jobs:
       - name: verify:qbo-accounts-parent-first
         run: npm run verify:qbo-accounts-parent-first
 
+      - name: verify:qbo-sync-coa-no-orphans
+        run: npm run verify:qbo-sync-coa-no-orphans
+
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 
