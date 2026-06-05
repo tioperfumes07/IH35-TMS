@@ -693,6 +693,9 @@ jobs:
       - name: verify:list-cards-are-anchors
         run: npm run verify:list-cards-are-anchors
 
+      - name: verify:invoice-create-does-not-leave-accounting
+        run: npm run verify:invoice-create-does-not-leave-accounting
+
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 
