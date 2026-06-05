@@ -6,8 +6,8 @@
   "allowed_files": [
     "apps/driver-pwa/src/i18n/*",
     "apps/driver-pwa/src/lib/storage.ts",
-    "apps/driver-pwa/src/components/**/*",
-    "apps/driver-pwa/src/pages/**/*",
+    "apps/driver-pwa/src/components/**",
+    "apps/driver-pwa/src/pages/**",
     "scripts/verify-driver-pwa-i18n-coverage.mjs",
     "package.json",
     ".github/workflows/ci.yml",
