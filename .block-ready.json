@@ -28,6 +28,7 @@
     "apps/frontend/src/components/reports/phase6ReportLinks.ts",
     "scripts/verify-reports-no-stub-data.mjs",
     "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.json"
   ],
   "extra_gates": ["verify:reports-no-stub-data"],
