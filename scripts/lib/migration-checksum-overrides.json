@@ -166,5 +166,13 @@
     "reason": "PR365 CI: ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner fails on GitHub Postgres; prod already applied prior checksum.",
     "added_at": "2026-06-02",
     "added_in_pr": "365"
+  },
+  {
+    "filename": "0383_catalog_excel_upload_jobs.sql",
+    "ledger_checksum": "9fc1c1f68d11615ccb0fc06a83b7cd9777f54e670132fc5b95b0bcc7b67246bb",
+    "disk_checksum": "42ce4d1d30e9f1b2231f2e45e080736ad98e6e4cdff4f6b28fe30a36026f2296",
+    "reason": "CATALOG-1 (#514): prod applied an earlier 0383 variant before RLS/grants were finalized in repo; skip reapply and unblock Render preDeploy.",
+    "added_at": "2026-06-05",
+    "added_in_pr": "hotfix/render-0383-checksum-override"
   }
 ]
