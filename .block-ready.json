@@ -1,27 +1,11 @@
 {
-  "block_id": "P8-COMP-2",
-  "branch": "feat/p8-comp-2-drug-alcohol",
-  "phase": "Phase 8 Compliance",
-  "task": "Drug & Alcohol compliance program (random pool, results, RTD)",
-  "allowed_files": [
-    "apps/backend/src/compliance/drug-alcohol-pool.ts",
-    "apps/backend/src/compliance/drug-alcohol-results.ts",
-    "apps/backend/src/compliance/drug-alcohol.routes.ts",
-    "apps/backend/src/compliance/drug-alcohol.test.ts",
-    "apps/backend/src/compliance/form-425c.routes.ts",
-    "db/migrations/0380_drug_alcohol_program.sql",
-    "apps/frontend/src/pages/safety/DrugAlcoholDashboard.tsx",
-    "apps/frontend/src/pages/safety/RandomTestingPool.tsx",
-    "apps/frontend/src/pages/safety/ReturnToDuty.tsx",
-    "apps/frontend/src/pages/safety/tabs/DrugAlcoholTab.tsx",
-    "scripts/verify-drug-alcohol-fmcsa-clearinghouse-link.mjs",
-    "package.json",
-    ".github/workflows/ci.yml",
-    ".block-ready.json",
-    ".block-ready.agent2.json"
-  ],
-  "extra_gates": ["verify:drug-alcohol-fmcsa-clearinghouse-link"],
+  "block_id": "chore-never-idle-strengthen",
+  "branch": "chore/dual-lane-never-idle-strengthen-v2",
+  "phase": "chore",
+  "task": "Strengthen dual-lane never-idle rule on main",
+  "allowed_files": [".cursor/rules/dual-lane-never-idle.mdc", ".block-ready.json"],
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "db_required": false,
+  "guard_required": false
 }
