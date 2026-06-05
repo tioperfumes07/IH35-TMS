@@ -120,6 +120,12 @@ jobs:
       - name: Verify driver PWA i18n coverage
         run: npm run verify:driver-pwa-i18n-coverage
 
+      - name: Verify no stub catalog pages guard
+        run: npm run verify:no-stub-catalog-pages
+
+      - name: Verify header counts match actual guard
+        run: npm run verify:header-counts-match-actual
+
       - name: verify:drug-alcohol-fmcsa-clearinghouse-link
         run: npm run verify:drug-alcohol-fmcsa-clearinghouse-link
 

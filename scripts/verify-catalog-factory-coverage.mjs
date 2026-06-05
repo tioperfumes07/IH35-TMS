@@ -20,19 +20,7 @@ const EXCLUDED_TABLE_SUFFIXES = [
 ];
 
 /** Grandfathered catalog tables that exist in schema but are not yet on the generic factory. */
-const KNOWN_STUB_TABLES = [
-  "audit_event_types",
-  "cancellation_reasons",
-  "complaint_types",
-  "customer_quality_event_reasons",
-  "dispatcher_error_reasons",
-  "driver_leave_balances",
-  "driver_termination_reasons",
-  "labor_rates",
-  "leave_policies",
-  "maintenance_part_locations",
-  "parts",
-];
+const KNOWN_STUB_TABLES = [];
 
 function fail(message) {
   console.error(`verify:catalog-factory-coverage FAIL: ${message}`);

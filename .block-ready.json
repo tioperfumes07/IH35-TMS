@@ -1,21 +1,24 @@
 {
-  "block_id": "PWA-POLISH-1",
-  "branch": "feat/pwa-polish-1-i18n-itp",
-  "phase": "Phase 7 Driver PWA",
-  "task": "Driver PWA i18n EN/ES completion + iPhone Safari ITP storage fix",
+  "block_id": "CATALOG-3",
+  "branch": "feat/catalog-3-stub-purge",
+  "phase": "Phase 7 Catalogs",
+  "task": "Stub purge + header count corrections (Fleet 6→10, Fuel 7→12, Accounting 10→14)",
   "allowed_files": [
-    "apps/driver-pwa/src/i18n/*",
-    "apps/driver-pwa/src/lib/storage.ts",
-    "apps/driver-pwa/src/components/**",
-    "apps/driver-pwa/src/pages/**",
-    "scripts/verify-driver-pwa-i18n-coverage.mjs",
+    "apps/backend/src/catalogs/*.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/components/layout/ModuleHeader.tsx",
+    "apps/frontend/src/components/layout/SubNavCounts.tsx",
+    "db/migrations/0384_seed_remaining_catalogs.sql",
+    "scripts/verify-no-stub-catalog-pages.mjs",
+    "scripts/verify-header-counts-match-actual.mjs",
+    "scripts/verify-catalog-factory-coverage.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent1.json"
   ],
-  "extra_gates": ["verify:driver-pwa-i18n-coverage"],
+  "extra_gates": ["verify:no-stub-catalog-pages", "verify:header-counts-match-actual"],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }

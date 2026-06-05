@@ -31,6 +31,7 @@ import { registerAccountingCatalogRoutes } from "./catalogs/accounting/index.js"
 import { registerDriverCatalogRoutes } from "./catalogs/driver/index.js";
 import { registerFleetCatalogRoutes } from "./catalogs/fleet/index.js";
 import { registerGenericCatalogRoutes } from "./catalogs/generic-catalog.routes.js";
+import { registerStubCatalogPurgeRoutes } from "./catalogs/stub-catalog-purge.routes.js";
 import { registerFuelCatalogRoutes } from "./catalogs/fuel/index.js";
 import { registerCatalogsRoutes } from "./catalogs/index.js";
 import { registerCatalogRegistryRoutes } from "./catalogs/catalog-registry.routes.js";
@@ -520,6 +521,7 @@ async function main() {
   await registerFuelCatalogRoutes(app);
   await registerFleetCatalogRoutes(app);
   await registerGenericCatalogRoutes(app);
+  await registerStubCatalogPurgeRoutes(app);
   await registerAccountingCatalogRoutes(app);
   await registerCatalogRegistryRoutes(app);
   await registerEquipmentTypeRoutes(app);
