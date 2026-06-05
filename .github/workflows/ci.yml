@@ -476,6 +476,9 @@ jobs:
       - name: verify:trailer-profile-no-stub-sections
         run: npm run verify:trailer-profile-no-stub-sections
 
+      - name: verify:trailer-profile-mirrors-vehicle
+        run: npm run verify:trailer-profile-mirrors-vehicle
+
       - name: verify:compliance-dashboard-aggregate-sources
         run: npm run verify:compliance-dashboard-aggregate-sources
 
