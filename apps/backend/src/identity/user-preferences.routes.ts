@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { registerTableColumnPreferencesRoutes } from "../users/table-preferences.routes.js";
 import { getPrefs, updatePrefs } from "./user-preferences.service.js";
 
 const patchSchema = z.object({
@@ -17,6 +18,8 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerUserPreferencesRoutes(app: FastifyInstance) {
+  await registerTableColumnPreferencesRoutes(app);
+
   app.get("/api/v1/user/preferences", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;

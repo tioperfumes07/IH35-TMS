@@ -570,6 +570,9 @@ jobs:
       - name: verify:all-list-pages-have-bulk-select
         run: npm run verify:all-list-pages-have-bulk-select
 
+      - name: verify:tables-use-resizable-th
+        run: npm run verify:tables-use-resizable-th
+
       - name: verify:bulk-update-route-mounted
         run: npm run verify:bulk-update-route-mounted
 

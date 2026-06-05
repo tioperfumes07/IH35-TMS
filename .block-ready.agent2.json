@@ -1,23 +1,26 @@
 {
-  "block_id": "PWA-POLISH-2",
-  "branch": "feat/pwa-polish-2-web-push",
-  "phase": "Phase 7 Driver PWA",
-  "task": "Web Push notification completion (FCM + iOS Safari 16.4+)",
+  "block_id": "AUDIT-FIX-2",
+  "branch": "feat/audit-fix-2-column-resize",
+  "phase": "AUDIT-FIX",
+  "task": "COLUMN-RESIZE-FRAMEWORK — resizable column headers + per-user persistence",
   "allowed_files": [
-    "apps/driver-pwa/src/notifications/web-push-subscriber.ts",
-    "apps/driver-pwa/src/notifications/notification-handler.ts",
-    "apps/driver-pwa/src/service-worker.ts",
-    "apps/backend/src/notifications/web-push-dispatcher.ts",
-    "apps/backend/src/driver/push-subscriptions.routes.ts",
-    "db/migrations/0389_driver_pwa_push_subscriptions.sql",
-    "scripts/verify-web-push-vapid-keys-present.mjs",
+    "apps/frontend/src/components/shared/ResizableTh.tsx",
+    "apps/frontend/src/hooks/useColumnWidths.ts",
+    "apps/frontend/src/components/shared/ResizableTable.tsx",
+    "apps/backend/src/users/table-preferences.routes.ts",
+    "apps/backend/src/identity/user-preferences.routes.ts",
+    "apps/frontend/src/pages/reports/runners/RunnerTable.tsx",
+    "apps/frontend/src/pages/banking/BankingTransactionsTable.tsx",
+    "scripts/verify-tables-use-resizable-th.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": ["verify:web-push-vapid-keys-present"],
+  "extra_gates": [
+    "verify:tables-use-resizable-th"
+  ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }
