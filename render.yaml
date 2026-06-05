@@ -23,7 +23,7 @@ services:
 
   - type: static
     name: ih35-tms-driver
-    buildCommand: cd apps/driver-pwa && npm install && npm run build
+    buildCommand: npm install && npm run build:driver-pwa
     staticPublishPath: apps/driver-pwa/dist
     envVars:
       - key: VITE_API_BASE_URL
