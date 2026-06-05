@@ -46,6 +46,10 @@ function runFix(fix) {
 }
 
 function writeResults(rows) {
+  if (process.env.PASS7_WRITE_RESULTS !== "1") {
+    console.log("PASS7_WRITE_RESULTS not set — skipping results file write (gate-only run)");
+    return;
+  }
   fs.mkdirSync(path.dirname(resultsPath), { recursive: true });
   const passCount = rows.filter((r) => r.pass).length;
   const failCount = rows.length - passCount;

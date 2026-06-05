@@ -28,6 +28,8 @@ jobs:
         run: npm ci
 
       - name: Run PASS-7 smoke verification
+        env:
+          PASS7_WRITE_RESULTS: "1"
         run: npm run verify:pass-7-smoke
 
       - name: Upload PASS-7 results artifact
