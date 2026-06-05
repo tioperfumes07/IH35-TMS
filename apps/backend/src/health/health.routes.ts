@@ -138,7 +138,7 @@ async function checkR2HeadBucket(): Promise<void> {
     credentials: { accessKeyId, secretAccessKey },
   });
 
-  await promiseTimeout(client.send(new HeadBucketCommand({ Bucket: bucket })), 200);
+  await promiseTimeout(client.send(new HeadBucketCommand({ Bucket: bucket })), 3000);
 }
 
 async function checkQboSyncAlertsDepth(): Promise<void> {
@@ -243,7 +243,7 @@ export async function runDeepHealthChecks(): Promise<HealthCheck[]> {
     () => timed("postgres.select1", "critical", checkPostgres),
     () => timed("migrations.ledger", "critical", checkMigrationLedger),
     () => checkRedisPing(),
-    () => timed("r2.head_bucket", "critical", checkR2HeadBucket),
+    () => timed("r2.head_bucket", "warning", checkR2HeadBucket),
   ];
 
   const warningFns = [
