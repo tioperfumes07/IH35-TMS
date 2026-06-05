@@ -206,6 +206,7 @@ import { ErrorMonitorPage } from "../pages/admin/ErrorMonitor";
 import { IntegrityAdminPage } from "../pages/admin/IntegrityAdminPage";
 import { DataImportPage } from "../pages/admin/DataImportPage";
 import { CarrierBootstrapPage } from "../pages/admin/CarrierBootstrap";
+import { LaunchTogglesPage } from "../pages/admin/LaunchToggles";
 import { AccountRoleBindingsListPage } from "../pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "../pages/lists/accounting/ChartOfAccountsListPage";
 import { ChartOfAccountsSeedsListPage } from "../pages/lists/accounting/ChartOfAccountsSeedsListPage";
@@ -2123,6 +2124,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <OwnerAdminRoute>
               <CarrierBootstrapPage />
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/launch-toggles"
+          element={
+            <OwnerAdminRoute>
+              <LaunchTogglesPage />
             </OwnerAdminRoute>
           }
         />

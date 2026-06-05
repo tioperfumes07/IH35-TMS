@@ -135,6 +135,9 @@ jobs:
       - name: Verify USMCA seed completeness guard
         run: npm run verify:usmca-seed-completeness
 
+      - name: Verify launch toggle audit trail guard
+        run: npm run verify:launch-toggle-audit-trail
+
       - name: verify:drug-alcohol-fmcsa-clearinghouse-link
         run: npm run verify:drug-alcohol-fmcsa-clearinghouse-link
 

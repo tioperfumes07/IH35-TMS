@@ -9,6 +9,10 @@
       "reason": "Owner USMCA hidden-carrier bootstrap (Wave 19 USMCA-2)"
     },
     {
+      "path": "/admin/launch-toggles",
+      "reason": "Owner USMCA soft-launch toggle (Wave 20 USMCA-3)"
+    },
+    {
       "path": "/admin/forensic-review",
       "reason": "Owner forensic review; not in module subnav"
     },

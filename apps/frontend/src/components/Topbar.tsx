@@ -9,7 +9,7 @@ import { getIdentityCurrentCompany, signOut } from "../api/identity";
 import { colors, spacing, typography } from "../design/tokens";
 import { companyOperatingChipClasses } from "../lib/company-branding";
 import type { AuthMeResponse } from "../types/api";
-import { CompanySwitcher } from "./CompanySwitcher";
+import { CarrierSwitcher } from "./layout/CarrierSwitcher";
 import { NotificationBell } from "./notifications/NotificationBell";
 import { PageHelpLink } from "./PageHelpLink";
 import { useToast } from "./Toast";
@@ -236,7 +236,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             </>
           ) : null}
         </div>
-        <CompanySwitcher />
+        <CarrierSwitcher />
       </div>
 
       <div className="relative flex items-center justify-end gap-2 text-sm text-gray-700">
