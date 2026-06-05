@@ -102,6 +102,9 @@ jobs:
       - name: Verify safety tab coverage
         run: npm run verify:safety-tab-coverage
 
+      - name: Verify CSA pull recency guard
+        run: npm run verify:csa-score-pull-recency
+
       - name: Verify Form 2290 deadline guard
         run: npm run verify:form-2290-deadlines-current
 

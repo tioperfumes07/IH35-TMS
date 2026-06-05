@@ -1,11 +1,25 @@
 {
-  "block_id": "chore-never-idle-strengthen",
-  "branch": "chore/dual-lane-never-idle-strengthen-v2",
-  "phase": "chore",
-  "task": "Strengthen dual-lane never-idle rule on main",
-  "allowed_files": [".cursor/rules/dual-lane-never-idle.mdc", ".block-ready.json"],
-  "extra_gates": [],
+  "block_id": "P8-COMP-3",
+  "branch": "feat/p8-comp-3-csa-basic",
+  "phase": "Phase 8 Compliance",
+  "task": "CSA BASIC score automation (FMCSA pull + projection + mitigation queue)",
+  "allowed_files": [
+    "apps/backend/src/compliance/csa-basic-pull.ts",
+    "apps/backend/src/compliance/csa-basic-projection.ts",
+    "apps/backend/src/compliance/csa.routes.ts",
+    "apps/backend/src/compliance/csa.test.ts",
+    "apps/backend/src/compliance/form-425c.routes.ts",
+    "db/migrations/0381_csa_basic_scores.sql",
+    "apps/frontend/src/pages/safety/CSAScore.tsx",
+    "apps/frontend/src/pages/safety/CSAMitigationQueue.tsx",
+    "scripts/verify-csa-score-pull-recency.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
+    ".block-ready.json",
+    ".block-ready.agent1.json"
+  ],
+  "extra_gates": ["verify:csa-score-pull-recency"],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }
