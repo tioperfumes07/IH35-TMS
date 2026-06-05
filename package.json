@@ -304,6 +304,7 @@
     "verify:trailer-status-state-machine-coverage": "node scripts/verify-trailer-status-state-machine-coverage.mjs",
     "verify:trailer-profile-no-stub-sections": "node scripts/verify-trailer-profile-no-stub-sections.mjs",
     "verify:trailer-profile-mirrors-vehicle": "node scripts/verify-trailer-profile-mirrors-vehicle.mjs",
+    "verify:parts-catalog-seeded": "node scripts/verify-parts-catalog-seeded.mjs",
     "verify:compliance-dashboard-aggregate-sources": "node scripts/verify-compliance-dashboard-aggregate-sources.mjs",
     "verify:compliance-notification-rules-rls": "node scripts/verify-compliance-notification-rules-rls.mjs",
     "verify:compliance-reminder-job-registered": "node scripts/verify-compliance-reminder-job-registered.mjs",

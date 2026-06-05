@@ -2,23 +2,12 @@
   "block_id": "CLOSURE-10-MAINT-PARTS-CATALOG",
   "branch": "closure/maint-parts-catalog",
   "phase": "CLOSURE",
-  "task": "Maintenance Parts catalog by brand for owned fleet",
+  "task": "Maintenance Parts catalog gap-close CI guard (core shipped P3-T11.21.5a)",
   "agent": "B",
   "allowed_files": [
-    "apps/backend/src/catalogs/maintenance/parts.routes.ts",
-    "apps/backend/src/catalogs/maintenance/parts-seed.ts",
-    "apps/backend/src/catalogs/maintenance/parts.test.ts",
-    "apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx",
-    "apps/frontend/src/pages/lists/ListsPage.tsx",
-    "apps/frontend/src/hooks/useMaintenancePartsCatalog.ts",
-    "apps/backend/src/migrations/0399-maintenance-parts-catalog.sql",
-    "data/seeds/maintenance-parts/detroit-diesel.csv",
-    "data/seeds/maintenance-parts/cummins.csv",
-    "data/seeds/maintenance-parts/freightliner.csv",
-    "data/seeds/maintenance-parts/peterbilt.csv",
-    "data/seeds/maintenance-parts/kenworth.csv",
     "scripts/verify-parts-catalog-seeded.mjs",
     "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
@@ -26,6 +15,6 @@
     "verify:parts-catalog-seeded"
   ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }

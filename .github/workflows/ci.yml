@@ -479,6 +479,9 @@ jobs:
       - name: verify:trailer-profile-mirrors-vehicle
         run: npm run verify:trailer-profile-mirrors-vehicle
 
+      - name: verify:parts-catalog-seeded
+        run: npm run verify:parts-catalog-seeded
+
       - name: verify:compliance-dashboard-aggregate-sources
         run: npm run verify:compliance-dashboard-aggregate-sources
 
