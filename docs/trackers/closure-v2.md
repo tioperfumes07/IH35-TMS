@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 28 |
+| Shipped | 29 |
 | Forensic-skip | 2 |
 | In-flight | 0 |
-| Remaining | 2 |
+| Remaining | 1 |
 | ON HOLD | 4 (A23-11, A23-14, B19, B20 — triaged CLOSURE-17; do not dispatch) |
 
-**Pass:** 30/32 (28 shipped + 2 forensic-skip) · **wave C-13 COMPLETE (CLOSURE-24 [#582](https://github.com/tioperfumes07/IH35-TMS/pull/582) `07fdc1790` + CLOSURE-25 [#583](https://github.com/tioperfumes07/IH35-TMS/pull/583) `d4c86872a`)** · **wiring COMPLETE [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) `0f1f845ed`** · **CLOSURE-28 SHIPPED [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) `5fd0dd8a1`** · **CLOSURE-29 SHIPPED [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) `cbc2cccbb`** · **wave C-14 COMPLETE (CLOSURE-26 + CLOSURE-27)** · **CLOSURE-31 SHIPPED [#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`**
+**Pass:** **31 of 32** (29 shipped + 2 forensic-skip) · **CLOSURE-30 SHIPPED [#593](https://github.com/tioperfumes07/IH35-TMS/pull/593) `fa4a800ae`** · **wave C-13 COMPLETE (CLOSURE-24 [#582](https://github.com/tioperfumes07/IH35-TMS/pull/582) `07fdc1790` + CLOSURE-25 [#583](https://github.com/tioperfumes07/IH35-TMS/pull/583) `d4c86872a`)** · **wiring COMPLETE [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) `0f1f845ed`** · **CLOSURE-28 SHIPPED [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) `5fd0dd8a1`** · **CLOSURE-29 SHIPPED [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) `cbc2cccbb`** · **wave C-14 COMPLETE (CLOSURE-26 + CLOSURE-27)** · **CLOSURE-31 SHIPPED [#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`**
 
 > **Program expanded 30 → 32:** CLOSURE-31 (URGENT — customers/vendors restore) **SHIPPED** ([#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`); CLOSURE-32 deferred to end (gated on PASS-8 GO). Denominator is now `/32`.
 
@@ -51,9 +51,9 @@
 | CLOSURE-27 | B | C-14 | **SHIPPED** | [#585](https://github.com/tioperfumes07/IH35-TMS/pull/585) | Mobile/ultrawide edge breakpoint pack; merged `238681f35` 2026-06-05 |
 | CLOSURE-28 | A | C-15 | **SHIPPED** | [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) | Data migration runbooks + `verify:migration-chain-runbook` static gate; merged `5fd0dd8a1` 2026-06-05 |
 | CLOSURE-29 | B | C-15 | **SHIPPED** | [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) | AUDIT-FIX-18..25 slot materialization (docs/.txt + INDEX.md); merged `cbc2cccbb` 2026-06-05 |
-| CLOSURE-30 | A | C-16 | QUEUED | — | Final PASS-8; requires C-1…C-29 |
+| CLOSURE-30 | A | C-16 | **SHIPPED** | [#593](https://github.com/tioperfumes07/IH35-TMS/pull/593) | Final PASS-8; PASS-8 manifest verified + Jorge GO; merged `fa4a800ae` 2026-06-05 |
 | CLOSURE-31 | A | — | **SHIPPED** | [#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) | URGENT: restore /customers + /vendors default to prior master-detail design (regression from #531); list view kept opt-in + recurrence guard (`verify:customers-vendors-default-is-prior-design`); merged `73cba8836` 2026-06-05 |
-| CLOSURE-32 | — | — | DEFERRED | — | Deferred to end; gated on PASS-8 GO |
+| CLOSURE-32 | — | — | DEFERRED/PENDING | — | Deferred to end; expanded scope required before dispatch |
 
 ## Forensic Skip Evidence
 
@@ -104,6 +104,16 @@
 
 **Main:** `0f1f845ed` · **C-13 merges:** `07fdc1790` (CLOSURE-24 #582) · `d4c86872a` (CLOSURE-25 #583) · `0f1f845ed` (C-13 wiring #589) · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **C-14 merges:** `238681f35` (CLOSURE-27 #585) · `d46ddb446` (CLOSURE-26 #584) · **GAP:** PAUSED (user directive 2026-06-05)
 
+## Gate Ledger Updates (Jorge Directive)
+
+- Gate 8 = PASS-8 manifest verified + Jorge GO (this directive)
+- Gate 10 = CLOSURE-32 EXPANDED scope + Jorge approval of findings
+- Gate 11 (NEW) = PASS-8-RUNTIME shipped + Jorge second GO
+- Gate 12 = Pass-2 ingest
+- Gate 13 (NEW) = Claude `UNPAUSE GAP NOW` signal
+
+**Explicit note:** Do NOT auto-dispatch CLOSURE-32 until expanded TIER-1 spec is prepared and reviewed by Jorge.
+
 ## GAP De-Dup Plan (63 active blocks · 2026-06-05)
 
 **Authoritative overlay:** `/Users/jorgemunoz/Downloads/CURSOR-GAP-DEDUP-INSTRUCTIONS-2026-06-05.md`
@@ -122,4 +132,4 @@
 
 **CANCEL:** standalone GAP-2 dispatch (superseded by AUDIT-FIX-18 re-slot)
 
-**Next dispatch (CLOSURE only):** **CLOSURE-31 SHIPPED** ([#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`) → next **CLOSURE-30 final PASS-8**, then **CLOSURE-32** last (deferred, gated on PASS-8 GO). **Do not dispatch GAP** until Jorge clears CLOSURE gate.
+**Next dispatch (CLOSURE only):** **CLOSURE-30 SHIPPED** ([#593](https://github.com/tioperfumes07/IH35-TMS/pull/593) `fa4a800ae`) · **CLOSURE-32 remains deferred/pending** until expanded TIER-1 scope package is prepared and reviewed by Jorge. **Do not dispatch GAP** until Jorge clears CLOSURE gate.
