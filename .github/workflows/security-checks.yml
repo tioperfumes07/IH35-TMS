@@ -1,0 +1,129 @@
+name: security-checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: verify
+          POSTGRES_PASSWORD: verify
+          POSTGRES_DB: ih35_verify
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U verify"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://verify:verify@localhost:54329/ih35_verify
+      DATABASE_DIRECT_URL: postgres://verify:verify@localhost:54329/ih35_verify
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply migrations (RLS audit)
+        run: npm run db:migrate
+
+      - name: Build frontend bundles (secrets scan)
+        run: npm run build:frontend
+
+      - name: Build driver PWA bundles (secrets scan)
+        run: npm run build:driver-pwa
+
+      - name: RLS policy audit
+        run: node scripts/sec-audit-rls-policies.mjs
+
+      - name: Auth flow audit
+        run: node scripts/sec-audit-auth-flows.mjs
+
+      - name: Secrets scan (bundles)
+        run: node scripts/sec-audit-secrets-scan.mjs
+
+      - name: CI guard — no secrets in bundle
+        run: node scripts/verify-no-secrets-in-bundle.mjs
+
+      - name: Dependency CVE scan
+        id: cve_scan
+        run: |
+          node scripts/sec-audit-deps-cve-scan.mjs | tee /tmp/cve-report.json
+          node -e "
+            const fs = require('fs');
+            const text = fs.readFileSync('/tmp/cve-report.json','utf8');
+            const match = text.match(/\"totals\"\\s*:\\s*(\\{[^}]+\})/);
+            if (!match) process.exit(0);
+            const totals = JSON.parse(match[1].replace(/(\\w+):/g,'\"$1\":'));
+            const criticalHigh = (totals.critical||0) + (totals.high||0);
+            console.log('critical_high_total=' + criticalHigh);
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'critical_high=' + criticalHigh + '\\n');
+          "
+
+      - name: CORS / CSP header audit
+        run: node scripts/sec-audit-cors-csp.mjs
+
+      - name: Fail on new critical/high CVEs (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.sha }}"
+          git checkout "$BASE" --quiet
+          node scripts/sec-audit-deps-cve-scan.mjs > /tmp/cve-base.txt 2>&1 || true
+          git checkout "$HEAD" --quiet
+          node scripts/sec-audit-deps-cve-scan.mjs > /tmp/cve-head.txt 2>&1 || true
+          node -e "
+            function extractTotals(file) {
+              const text = require('fs').readFileSync(file,'utf8');
+              const m = text.match(/\"totals\"\\s*:\\s*\\{([^}]+)\\}/);
+              if (!m) return { critical: 0, high: 0 };
+              const obj = {};
+              for (const part of m[1].split(',')) {
+                const [k,v] = part.split(':').map(s => s.trim().replace(/\"/g,''));
+                if (k) obj[k] = Number(v)||0;
+              }
+              return obj;
+            }
+            const base = extractTotals('/tmp/cve-base.txt');
+            const head = extractTotals('/tmp/cve-head.txt');
+            const deltaCrit = (head.critical||0) - (base.critical||0);
+            const deltaHigh = (head.high||0) - (base.high||0);
+            console.log('CVE delta critical=' + deltaCrit + ' high=' + deltaHigh);
+            if (deltaCrit > 0 || deltaHigh > 0) {
+              console.error('FAIL: PR introduces new critical/high CVEs');
+              process.exit(1);
+            }
+          "
+
+      - name: Install gitleaks (optional history scan)
+        continue-on-error: true
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.2/gitleaks_8.24.2_linux_x64.tar.gz | tar xz
+          sudo mv gitleaks /usr/local/bin/
+
+      - name: Gitleaks history scan (informational)
+        continue-on-error: true
+        run: gitleaks detect --source . --verbose || true
