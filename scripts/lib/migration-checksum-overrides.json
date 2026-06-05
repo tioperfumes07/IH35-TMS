@@ -174,5 +174,13 @@
     "reason": "CATALOG-1 (#514): prod applied an earlier 0383 variant before RLS/grants were finalized in repo; skip reapply and unblock Render preDeploy.",
     "added_at": "2026-06-05",
     "added_in_pr": "hotfix/render-0383-checksum-override"
+  },
+  {
+    "filename": "0385_rls_audit_all_tables.sql",
+    "ledger_checksum": "2d2c7d1494b612450ba7107406f78a4de3a728a1ad8ffe6d0a73b354fd080116",
+    "disk_checksum": "379dee543af1ae1f329bce1e83613ec2398ad33c8b28a5a1942ce9095238bb18",
+    "reason": "USMCA-1 (#523): prod applied earlier 0385 variant before RLS audit finalized in repo.",
+    "added_at": "2026-06-05",
+    "added_in_pr": "hotfix/render-0385-checksum-override"
   }
 ]
