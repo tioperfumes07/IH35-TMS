@@ -1,26 +1,20 @@
 {
-  "block_id": "CLOSURE-15-DEEP-AUDIT-B",
-  "branch": "closure/deep-audit-b",
+  "block_id": "CLOSURE-17-ON-HOLD-TRIAGE",
+  "branch": "closure/on-hold-triage",
   "phase": "CLOSURE",
-  "task": "Deep audit B \u2014 Bell icon + invoices subnav + Driver PWA mobile",
+  "task": "ON HOLD blocks triage — A23-11, A23-14, B19, B20 scope review",
   "agent": "A",
   "allowed_files": [
-    "docs/audits/DEEP-AUDIT-B-BELL-ICON.md",
-    "docs/audits/DEEP-AUDIT-B-INVOICES-SUBNAV.md",
-    "docs/audits/DEEP-AUDIT-B-DRIVER-PWA-MOBILE.md",
-    "scripts/deep-audit-b-bell-icon.mjs",
-    "scripts/deep-audit-b-invoices-subnav.mjs",
-    "scripts/deep-audit-b-driver-pwa-375.mjs",
-    "docs/audits/DEEP-AUDIT-B-SUMMARY.md",
+    "docs/decisions/ON-HOLD-TRIAGE-2026-06-05.md",
+    "docs/decisions/A23-11-decision.md",
+    "docs/decisions/A23-14-decision.md",
+    "docs/decisions/B19-decision.md",
+    "docs/decisions/B20-decision.md",
     "package.json",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:deep-audit-b-bell-icon",
-    "verify:deep-audit-b-invoices-subnav",
-    "verify:deep-audit-b-driver-pwa-375"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": true
