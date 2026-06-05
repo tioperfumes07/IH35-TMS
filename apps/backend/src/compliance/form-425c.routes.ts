@@ -12,6 +12,7 @@ import { registerDeadheadRoutes } from "../reports/deadhead.routes.js";
 import { registerFaultRulesRoutes } from "../maintenance/fault-auto-wo/fault-rules.routes.js";
 import { registerFaultHistoryRoutes } from "../maintenance/fault-auto-wo/fault-history.routes.js";
 import { registerAutoWoDraftsRoutes } from "../maintenance/fault-auto-wo/auto-wo-drafts.routes.js";
+import { registerForm2290Routes } from "./form-2290.routes.js";
 
 const COMPANY_QUERY = z.object({
   operating_company_id: z.string().uuid(),
@@ -287,6 +288,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
   await registerFaultRulesRoutes(app);
   await registerFaultHistoryRoutes(app);
   await registerAutoWoDraftsRoutes(app);
+  await registerForm2290Routes(app);
   app.get("/api/v1/form-425c", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;

@@ -6,10 +6,15 @@
   "allowed_files": [
     "apps/backend/src/compliance/form-2290-generator.ts",
     "apps/backend/src/compliance/form-2290.routes.ts",
-    "apps/backend/migrations/0308_form_2290_filings.sql",
+    "apps/backend/src/compliance/form-425c.routes.ts",
+    "apps/backend/src/compliance/form-2290.test.ts",
+    "db/migrations/0378_form_2290_filings.sql",
     "apps/frontend/src/pages/compliance/Form2290Filings.tsx",
     "apps/frontend/src/pages/safety/Permits.tsx",
+    "apps/frontend/src/pages/safety/tabs/PermitsTab.tsx",
     "scripts/verify-form-2290-deadlines-current.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.json"
   ],
   "extra_gates": ["verify:form-2290-deadlines-current"],
