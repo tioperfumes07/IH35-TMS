@@ -36,6 +36,7 @@ import { registerCatalogRegistryRoutes } from "./catalogs/catalog-registry.route
 import { registerFileCategoriesRoutes } from "./catalogs/file-categories.routes.js";
 import { registerDriverLoadStatusRoutes } from "./catalogs/driver-load-statuses.routes.js";
 import { registerEquipmentTypeRoutes } from "./catalogs/equipment-types.routes.js";
+import { registerGenericCatalogRoutes } from "./catalogs/generic-catalog.routes.js";
 import { registerStatesRoutes } from "./catalogs/states.routes.js";
 import { registerCatalogsWorkflowRoutes } from "./catalogs/workflow-routes.js";
 import { registerLoadCancellationReasonRoutes } from "./catalogs/load-cancellation-reasons.routes.js";
@@ -518,6 +519,7 @@ async function main() {
   await registerDriverCatalogDeprecatedRoutes(app);
   await registerFuelCatalogRoutes(app);
   await registerFleetCatalogRoutes(app);
+  await registerGenericCatalogRoutes(app);
   await registerAccountingCatalogRoutes(app);
   await registerCatalogRegistryRoutes(app);
   await registerEquipmentTypeRoutes(app);
