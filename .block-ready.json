@@ -1,15 +1,24 @@
 {
-  "block_id": "RULES-POST-PASS4",
-  "branch": "chore/dual-lane-post-pass4-17-block-index",
-  "phase": "Coordinator rules",
-  "task": "POST-PASS4 17-block AUDIT-FIX queue index in dual-lane-never-idle.mdc",
+  "block_id": "USMCA-1",
+  "branch": "feat/usmca-1-multi-carrier-isolation",
+  "phase": "Phase 7 USMCA",
+  "task": "Multi-carrier isolation hardening (operating_company_id scoping audit)",
   "allowed_files": [
-    ".cursor/rules/dual-lane-never-idle.mdc",
+    "apps/backend/src/auth/operating-company-scope.ts",
+    "scripts/verify-rls-operating-company-scope.mjs",
+    "scripts/verify-no-cross-carrier-data-leak.mjs",
+    "db/migrations/0385_rls_audit_all_tables.sql",
+    "docs/specs/MULTI-CARRIER-ISOLATION.md",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:rls-operating-company-scope",
+    "verify:no-cross-carrier-data-leak"
+  ],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }
