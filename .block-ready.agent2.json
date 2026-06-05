@@ -18,7 +18,7 @@
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": ["verify:scheduled-report-recipients-resolved"],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true

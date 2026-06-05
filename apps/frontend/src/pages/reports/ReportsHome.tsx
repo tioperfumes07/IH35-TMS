@@ -5,9 +5,9 @@ import { BasisSelector, type AccountingBasis } from "../../components/accounting
 import { CategoryHoverNav } from "../../components/reports/CategoryHoverNav";
 import { PHASE_6_REPORT_HREFS } from "../../components/reports/phase6ReportLinks";
 import { FrequentlyRunTable } from "../../components/reports/FrequentlyRunTable";
-import { ScheduledReportsPanel } from "../../components/reports/ScheduledReportsPanel";
+import { ScheduledReportsPanel } from "./ScheduledReportsPanel";
+import { CustomReportBuilder } from "./CustomReportBuilder";
 import { IftaPreparerCard } from "../../components/reports/IftaPreparerCard";
-import { CustomReportBuilderCard } from "../../components/reports/CustomReportBuilderCard";
 import { getFrequentlyRun, getIftaStatus, getKpiSummary, getScheduledReports, type FrequentlyRunReport, type ReportCategory } from "../../api/reports";
 import { useMemo, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
