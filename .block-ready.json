@@ -1,27 +1,21 @@
 {
-  "block_id": "AUDIT-FIX-13",
-  "branch": "audit-fix/audit-fix-13-customers-vendors-pagination",
+  "block_id": "AUDIT-FIX-16",
+  "branch": "audit-fix/audit-fix-16-invoice-create-from-load-flow",
   "phase": "AUDIT-FIX",
-  "task": "CUSTOMERS-VENDORS-PAGINATION+ANCHORS — paginate rows + real anchors",
+  "task": "INVOICE-CREATE-FROM-LOAD-FLOW — + Create stays in accounting",
   "allowed_files": [
-    "apps/frontend/src/pages/customers/CustomerListSidebar.tsx",
-    "apps/frontend/src/pages/vendors/VendorListSidebar.tsx",
-    "apps/frontend/src/pages/Customers.tsx",
-    "apps/frontend/src/pages/Vendors.tsx",
-    "apps/frontend/src/components/shared/SidebarPagination.tsx",
-    "apps/frontend/src/components/shared/CardLink.tsx",
-    "apps/backend/src/customers/list.routes.ts",
-    "apps/backend/src/vendors/list.routes.ts",
-    "apps/backend/src/customers/index.ts",
-    "apps/backend/src/vendors/index.ts",
-    "scripts/verify-list-cards-are-anchors.mjs",
+    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx",
+    "apps/frontend/src/pages/accounting/InvoiceCreateBlankPage.tsx",
+    "apps/frontend/src/hooks/useInvoiceCreateFromLoad.ts",
+    "scripts/verify-invoice-create-does-not-leave-accounting.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:list-cards-are-anchors"
+    "verify:invoice-create-does-not-leave-accounting"
   ],
   "runtime_path": "src",
   "db_required": false,

@@ -14,6 +14,7 @@ import { DriverDamageInvoiceModal } from "./modals/DriverDamageInvoiceModal";
 import { DriverMiscInvoiceModal } from "./modals/DriverMiscInvoiceModal";
 import { ManualInvoiceModal } from "./modals/ManualInvoiceModal";
 import { VendorChargebackModal } from "./modals/VendorChargebackModal";
+import { InvoiceCreateModal } from "./InvoiceCreateModal";
 import { AccountingSubNav } from "./AccountingSubNav";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import {
@@ -60,6 +61,7 @@ export function InvoicesListPage() {
   const [toDate, setToDate] = useState("");
   const [createType, setCreateType] = useState<"driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual" | "from_load">("from_load");
   const [openModalType, setOpenModalType] = useState<null | "driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual">(null);
+  const [createFlowOpen, setCreateFlowOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ["accounting", "invoices", selectedCompanyId, status, search, fromDate, toDate],
@@ -136,7 +138,7 @@ export function InvoicesListPage() {
             <Button
               onClick={() => {
                 if (createType === "from_load") {
-                  navigate("/dispatch");
+                  setCreateFlowOpen(true);
                   return;
                 }
                 setOpenModalType(createType);
@@ -393,6 +395,7 @@ export function InvoicesListPage() {
               navigate(`/accounting/invoices/${invoiceId}`);
             }}
           />
+          <InvoiceCreateModal open={createFlowOpen} operatingCompanyId={selectedCompanyId} onClose={() => setCreateFlowOpen(false)} />
         </>
       ) : null}
     </div>
