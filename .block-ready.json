@@ -1,24 +1,14 @@
 {
-  "block_id": "CATALOG-2",
-  "branch": "feat/catalog-2-generic-frontend",
-  "phase": "Phase 7 Catalogs",
-  "task": "Generic Catalog Framework frontend (universal CRUD UI + Excel upload modal)",
+  "block_id": "HOTFIX-RENDER-0383",
+  "branch": "hotfix/render-0383-checksum-override",
+  "phase": "Deploy recovery",
+  "task": "Unblock Render preDeploy after 0383 migration checksum drift",
   "allowed_files": [
-    "apps/frontend/src/components/catalogs/CatalogTable.tsx",
-    "apps/frontend/src/components/catalogs/CatalogEditModal.tsx",
-    "apps/frontend/src/components/catalogs/CatalogExcelUploadModal.tsx",
-    "apps/frontend/src/hooks/useCatalogQuery.ts",
-    "apps/frontend/src/pages/lists/GenericCatalogPage.tsx",
-    "apps/frontend/src/pages/lists/CatalogIndex.tsx",
-    "scripts/verify-catalog-pages-use-generic-framework.mjs",
-    "scripts/__tests__/verify-catalog-pages-use-generic-framework.test.mjs",
-    "package.json",
-    ".github/workflows/ci.yml",
-    ".block-ready.json",
-    ".block-ready.agent2.json"
+    "scripts/lib/migration-checksum-overrides.json",
+    ".block-ready.json"
   ],
-  "extra_gates": ["verify:catalog-pages-use-generic-framework"],
-  "runtime_path": "src",
+  "extra_gates": [],
+  "runtime_path": "none",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }
