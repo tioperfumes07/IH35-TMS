@@ -79,6 +79,7 @@ import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deduction
 import { registerCashAdvanceRequestRoutes } from "./driver-finance/cash-advance-requests.routes.js";
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
+import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disputes.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerReportsScheduledCrudRoutes } from "./reports/scheduled-reports.routes.js";
@@ -566,6 +567,7 @@ async function main() {
   await registerTelematicsPositionsRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
   await registerWeeklyCloseRoutes(app);
+  await registerSettlementsDisputesRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);
   await registerDriverFinanceDriverBillsRoutes(app);
   await registerDriverFinanceDebtRoutes(app);
