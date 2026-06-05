@@ -1,24 +1,26 @@
 {
-  "block_id": "AUDIT-FIX-6",
-  "branch": "audit-fix/audit-fix-6-route-enumeration-ci-guard",
+  "block_id": "AUDIT-FIX-5",
+  "branch": "audit-fix/audit-fix-5-nested-box-removal",
   "phase": "AUDIT-FIX",
-  "task": "ROUTE-ENUMERATION-CI-GUARD — route manifest + deep-link fixes",
+  "task": "NESTED-BOX-REMOVAL — flatten detail page layouts with FlatFieldGrid",
   "allowed_files": [
-    "apps/frontend/src/router/route-manifest.ts",
-    "apps/frontend/src/pages/banking/BankingHome.tsx",
-    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    "apps/frontend/src/pages/Dispatch.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-no-silent-redirects.mjs",
-    "scripts/verify-route-manifest-completeness.mjs",
+    "apps/frontend/src/components/layout/FlatFieldGrid.tsx",
+    "apps/frontend/src/pages/factoring/FactoringProfilePanel.tsx",
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    "apps/frontend/src/pages/CustomerDetail.tsx",
+    "apps/frontend/src/pages/VendorDetail.tsx",
+    "apps/frontend/src/pages/DriverDetail.tsx",
+    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/BillDetailPanel.tsx",
+    "scripts/verify-no-nested-box-pattern.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:no-silent-redirects",
-    "verify:route-manifest-completeness"
+    "verify:no-nested-box-pattern"
   ],
   "runtime_path": "src",
   "db_required": false,

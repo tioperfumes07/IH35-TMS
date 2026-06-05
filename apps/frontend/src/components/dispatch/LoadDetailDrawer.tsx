@@ -7,6 +7,7 @@ import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHi
 import { resolveApiUrl } from "../../api/client";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
+import { FlatFieldGrid } from "../layout/FlatFieldGrid";
 import { DocumentsTab } from "../documents/DocumentsTab";
 import { listFiles } from "../../api/docs";
 import { CancelLoadModal } from "./CancelLoadModal";
@@ -203,14 +204,17 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
           {activeTab === "Overview" ? (
             load ? (
               <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-2 gap-2">
-                  <Field label="Customer" value={load.customer_name ?? "-"} />
-                  <Field label="Status" value={STATUS_LABEL[load.status]} />
-                  <Field label="Driver" value={load.assigned_primary_driver_name ?? "Unassigned"} />
-                  <Field label="Unit" value={load.assigned_unit_number ?? "-"} />
-                  <Field label="Rate" value={formatMoneyCents(load.rate_total_cents, load.currency_code)} />
-                  <Field label="Created" value={new Date(load.created_at).toLocaleString()} />
-                </div>
+                <FlatFieldGrid
+                  columns={2}
+                  fields={[
+                    { label: "Customer", value: load.customer_name ?? "-" },
+                    { label: "Status", value: STATUS_LABEL[load.status] },
+                    { label: "Driver", value: load.assigned_primary_driver_name ?? "Unassigned" },
+                    { label: "Unit", value: load.assigned_unit_number ?? "-" },
+                    { label: "Rate", value: formatMoneyCents(load.rate_total_cents, load.currency_code) },
+                    { label: "Created", value: new Date(load.created_at).toLocaleString() },
+                  ]}
+                />
 
                 {load.operating_company_id ? (
                   <div className="flex flex-wrap gap-2">
@@ -613,14 +617,5 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
         />
       ) : null}
     </>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded border border-gray-200 p-2">
-      <div className="text-xs uppercase text-gray-500">{label}</div>
-      <div className="text-sm font-medium text-gray-800">{value}</div>
-    </div>
   );
 }

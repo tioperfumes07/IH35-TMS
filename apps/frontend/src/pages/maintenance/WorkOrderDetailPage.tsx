@@ -12,6 +12,7 @@ import {
 import { Button } from "../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/forms/TwoSectionLineEditor";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
@@ -388,11 +389,14 @@ export function WorkOrderDetailPage() {
             ) : null}
             {previewQ.data ? (
               <div className="space-y-2 text-xs text-gray-700">
-                <div className="rounded border border-gray-100 bg-gray-50 p-2">
-                  <div>Total: {money.format((previewQ.data.total_cents ?? 0) / 100)}</div>
-                  <div>Currency: {previewQ.data.currency || "USD"}</div>
-                  <div>Lines: {previewQ.data.lines?.length ?? 0}</div>
-                </div>
+                <FlatFieldGrid
+                  columns={3}
+                  fields={[
+                    { label: "Total", value: money.format((previewQ.data.total_cents ?? 0) / 100) },
+                    { label: "Currency", value: previewQ.data.currency || "USD" },
+                    { label: "Lines", value: String(previewQ.data.lines?.length ?? 0) },
+                  ]}
+                />
                 <div className="max-h-60 overflow-auto rounded border border-gray-100">
                   <table className="min-w-full text-left text-[11px]">
                     <thead className="bg-gray-50">
