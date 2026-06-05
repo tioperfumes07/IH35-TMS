@@ -7,53 +7,84 @@ alwaysApply: true
 
 Applies to **coordinator** sessions for IH35-TMS (Lane A + Lane B in parallel).
 
-## Queue sources (in order)
+## Worktrees (authoritative)
 
-1. **Active batch:** `/Users/jorgemunoz/Downloads/abb/00-TIER-2-3-DISPATCH-INDEX.txt` + `block-*.txt` in same folder
-2. **52-block archive (only if abb empty / explicit Jorge):** `/Users/jorgemunoz/Downloads/ab/00-MASTER-QUEUE-INDEX-52-BLOCKS.txt`
-3. **In-flight GOs:** `/Users/jorgemunoz/Downloads/sdf/`
-
-| Lane | Worktree |
-|------|----------|
-| A (CURSOR-A) | `/Users/jorgemunoz/Documents/GitHub/IH35-TMS` |
-| B (CURSOR-B) | `/Users/jorgemunoz/Documents/GitHub/IH35-TMS-agent2` |
+| Lane | Panel | Worktree |
+|------|-------|----------|
+| A (CURSOR-A) | Lane A agent | `/private/tmp/IH35-lane-a` (fallback: `/Users/jorgemunoz/Documents/GitHub/IH35-TMS`) |
+| B (CURSOR-B) | Lane B agent | `/Users/jorgemunoz/Documents/GitHub/IH35-TMS-agent2` |
 
 **Never dispatch:** A23-11, A23-14, B19, B20 unless Jorge explicitly greenlights.
+
+## Queue sources (strict order)
+
+1. **Phase 2 (Wave 11+):** `/Users/jorgemunoz/Downloads/final/00-MASTER-DISPATCH-INDEX-PHASE-2-FINAL-21-BLOCKS-mvp-100pct.txt` + `block-*.txt`
+2. **Phase 1 (MVP closure):** `/Users/jorgemunoz/Downloads/20 blocks/00-MASTER-DISPATCH-INDEX-FINAL-20-BLOCKS-mvp-closure.txt` + `block-*.txt`
+3. **Active batch:** `/Users/jorgemunoz/Downloads/abb/00-TIER-2-3-DISPATCH-INDEX.txt` + `block-*.txt`
+4. **52-block archive (only if abb empty / explicit Jorge):** `/Users/jorgemunoz/Downloads/ab/00-MASTER-QUEUE-INDEX-52-BLOCKS.txt`
+5. **In-flight GOs:** `/Users/jorgemunoz/Downloads/sdf/`
+
+Use **git/gh** for dispatch truth; tracker xlsx is advisory only.
 
 ## Never idle (coordinator MUST obey)
 
 **Forbidden end states** for any coordinator turn:
 
-- Both lanes idle with eligible abb blocks remaining
-- Ending after a subagent notification **without** starting/resuming work on every lane that is not blocked
-- Leaving local implement+ship **unpushed >30 min** when branch exists
+- Either lane without: **active implement worker**, **open PR + CI babysit**, or **merge/rebase in progress**
+- Both lanes idle while eligible queue blocks remain
+- Ending after subagent stop / merge / connection failure **without** dispatching next block from authoritative queue
+- Local implement+ship **unpushed >30 min** when branch exists
 
 **On every subagent success notification** (same turn, before replying):
 
-1. Lane that finished → **resume** or **new background worker** for **next strict block** on that lane
-2. Other lane → if idle (no running worker, no PR CI wait) → **dispatch** its next abb block **in parallel**
-3. Only skip dispatch if: open PR + CI running (monitor/merge worker OK), or Jorge ON HOLD, or lane worker **already running**
+1. Finished lane → **resume** or **new background worker** for **next strict block** (disjoint scopes)
+2. Other lane → if idle → **dispatch** next block **in parallel**
+3. Only skip if: open PR + CI running (monitor/merge OK), Jorge ON HOLD, or worker **already running**
 
-**Multitask Mode:** Background workers do **not** replace coordinator duty. When notified a worker finished, **immediately** launch the next worker(s). Do **not** reply with only "completed" and stop.
+**Multitask Mode:** Background workers do **not** replace coordinator duty. On worker finish → **immediately** launch next worker(s). Never reply with only "completed" and stop.
 
-**User says "idle" / "stale":** P0 — `git fetch` both worktrees, dual STATUS, parallel dispatch both lanes within the same turn.
+**User says "idle" / "stale":** P0 — `git fetch origin main` both worktrees, dual STATUS, parallel dispatch both lanes **same turn**.
 
-## Never stale (every STATUS)
+## Never stale (auto-fix triggers)
 
-Include per lane: branch, ahead/behind `origin/main`, block id, open PR URL or `none`, CI state, **Live ETA to SHIPPED** (gate + push + PR + ~6m CI — not GO doc hours).
+Treat lane as **STALE** and auto-fix **before** replying when any:
 
-Warn if tracker xlsx is **>3 blocks** behind `origin/main` — use **git/gh** for dispatch, not xlsx.
+| Signal | Auto-fix |
+|--------|----------|
+| Branch behind `origin/main` **>1** commit, no open PR | `git fetch` + `git rebase origin/main`, push, open/update PR |
+| PR merged but lane not on `main` | `git checkout main && git pull origin main` → paste next GO from index |
+| Agent task completed, no follow-up | Dispatch next GO block for that lane |
+| `block-ready` / pre-push failed | Fix gate (scope, migration drift, nav allowlist), rerun `npm run block-ready`, push |
+| PR `mergeable: CONFLICTING` | Rebase onto `origin/main`, resolve, push, re-check CI |
+
+**Stale ≠ idle:** stale lanes get fixed first; then must return to **active** (implement or PR babysit).
 
 ## Ship discipline
 
-- **SHIPPED** = squash merge on `origin/main` + branch deleted + CI green
+- **SHIPPED** = squash merge on `origin/main` + branch deleted + CI green + forensic 5-point when block requires it
 - One active implement+ship worker **per lane**; no duplicate `block-ready` on same lane
 - Rebase onto `origin/main` before PR; verify migration tail (no duplicate numbers)
+- Phase 1 forensic gaps: ship missing CI guards / closure evidence before advancing wave
+
+## Mandatory STATUS template (every heartbeat)
+
+Coordinator replies include **exactly two lines** when both phases are in flight:
+
+```
+STATUS Phase1 | LaneA: <branch> <±N vs main> | <block-id> | PR: <url|none> | CI: <green|pending|red|conflict> | ETA-SHIP: <~Nm> | <active|babysit|implement>
+STATUS Phase2 | LaneB: <branch> <±N vs main> | <block-id> | PR: <url|none> | CI: <green|pending|red|conflict> | ETA-SHIP: <~Nm> | <active|babysit|implement>
+```
+
+Swap LaneA/LaneB labels if Jorge assigns blocks differently; **both lanes must be non-idle** in STATUS.
+
+**Live ETA to SHIPPED** = local gates + push + PR + ~6m CI (not GO doc hours).
+
+Warn if tracker xlsx **>3 blocks** behind `origin/main`.
 
 ## Watchdog (optional)
 
 ```
-/loop 10m STATUS both lanes — abb queue, live ETAs, dispatch if idle >5m
+/loop 10m STATUS both lanes — queue index, live ETAs, dispatch if idle >5m
 ```
 
 If loop stopped, re-arm on idle complaint.
