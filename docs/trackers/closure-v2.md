@@ -92,4 +92,24 @@
 | C-8 | CLOSURE-17 🔄 [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | CLOSURE-16 🔄 [#571](https://github.com/tioperfumes07/IH35-TMS/pull/571) |
 | … | per V2 index | per V2 index |
 
-**Main:** `e90f2aeb6` · **C-7 merges:** `b9ea2be20` (CLOSURE-14) · `e90f2aeb6` (CLOSURE-15)
+**Main:** `083c5b0e` · **C-7 merges:** `b9ea2be20` (CLOSURE-14) · `e90f2aeb6` (CLOSURE-15) · **tracker:** [#573](https://github.com/tioperfumes07/IH35-TMS/pull/573) `083c5b0e`
+
+## GAP De-Dup Plan (63 active blocks · 2026-06-05)
+
+**Authoritative overlay:** `/Users/jorgemunoz/Downloads/CURSOR-GAP-DEDUP-INSTRUCTIONS-2026-06-05.md`
+
+| Category | Count | Notes |
+|----------|-------|-------|
+| CLOSURE-16..30 | 15 | **active queue — CLOSURE ONLY** |
+| Standalone GAP (post de-dup) | 45 | dispatch **after** Jorge clears CLOSURE gate |
+| AUDIT-FIX re-slots (CLOSURE-29) | 3 | GAP-2→18, GAP-3→19, GAP-5→20 |
+
+**DO NOT RUN:** GAP-13, GAP-33 (full CLOSURE duplicates)
+
+**RE-SLOT:** GAP-2→AUDIT-FIX-18, GAP-3→AUDIT-FIX-19, GAP-5→AUDIT-FIX-20 — abandon `gap/hover-dropdown-nav` if exists
+
+**HOLD until CLOSURE-19 SEC:** GAP-47, GAP-50
+
+**CANCEL:** standalone GAP-2 dispatch (superseded by AUDIT-FIX-18 re-slot)
+
+**Next wave after C-8 merges:** C-10 CLOSURE-18 (Lane A PERF) + CLOSURE-19 (Lane B SEC) per V2 index

@@ -51,6 +51,13 @@ Applies to **coordinator** sessions for IH35-TMS (Lane A + Lane B in parallel).
    - **Hard deps:** CLOSURE-16 requires CLOSURE-12 + CLOSURE-2; CLOSURE-22 after CLOSURE-18+19; CLOSURE-30 requires C-1…C-29; CLOSURE-13 requires Jorge sign-off
    - **Forensic skip:** CLOSURE-2 (P5-T6) and CLOSURE-3 (P5-T7) may already be on main under different file paths — confirm before re-implementing; gap-close CI guards only if feature shipped
    - **ON HOLD unchanged:** A23-11, A23-14, B19, B20 (CLOSURE-17 triages only)
+8. **GAP queue (50 blocks · post-CLOSURE de-dup):** `/Users/jorgemunoz/Downloads/CURSOR-GAP-DEDUP-INSTRUCTIONS-2026-06-05.md` — **authoritative de-dup overlay**
+   - **Gate:** **CLOSURE ONLY** until Jorge clears — **no standalone GAP dispatch** while CLOSURE-16..30 in flight
+   - **63 active blocks total:** 15 CLOSURE-16..30 + 45 standalone GAP + 3 AUDIT-FIX re-slots (AUDIT-FIX-18..20)
+   - **DO NOT RUN:** GAP-13 (dup CLOSURE-20/27), GAP-33 (dup CLOSURE-26)
+   - **RE-SLOT → CLOSURE-29 AUDIT-FIX slots:** GAP-2→AUDIT-FIX-18, GAP-3→19, GAP-5→20 — abandon `gap/hover-dropdown-nav` if exists
+   - **HOLD until CLOSURE-19 SEC ships:** GAP-47, GAP-50 — re-scope after SEC audit findings
+   - **CANCEL:** standalone GAP-2 dispatch (local-only; superseded by AUDIT-FIX-18 re-slot per Jorge de-dup)
 
 
 ## Scope expansion — MUST-COMMUNICATE-AT-DISPATCH
