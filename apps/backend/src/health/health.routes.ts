@@ -58,7 +58,7 @@ function r2Configured(): boolean {
 
 async function checkPostgres(): Promise<void> {
   await withLuciaBypass(async (client) => {
-    await promiseTimeout(client.query(`SELECT 1 FROM org.companies LIMIT 1`), 50);
+    await promiseTimeout(client.query(`SELECT 1 FROM org.companies LIMIT 1`), 1000);
   });
 }
 
@@ -66,12 +66,12 @@ async function checkMigrationLedger(): Promise<void> {
   await withLuciaBypass(async (client) => {
     const exists = await promiseTimeout(
       client.query(`SELECT to_regclass('_system._schema_migrations') IS NOT NULL AS ok`),
-      50
+      1000
     );
     if (!exists.rows[0]?.ok) {
       throw new Error("migration_ledger_missing");
     }
-    await promiseTimeout(client.query(`SELECT COUNT(*)::bigint AS c FROM _system._schema_migrations`), 80);
+    await promiseTimeout(client.query(`SELECT COUNT(*)::bigint AS c FROM _system._schema_migrations`), 1000);
   });
 }
 
