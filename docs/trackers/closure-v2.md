@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 13 |
+| Shipped | 17 |
 | Forensic-skip | 2 |
-| In-flight | 2 |
-| Remaining | 13 |
-| ON HOLD | 0 (CLOSURE-17 triages A23-11, A23-14, B19, B20 only) |
+| In-flight | 0 |
+| Remaining | 11 |
+| ON HOLD | 4 (A23-11, A23-14, B19, B20 — triaged CLOSURE-17; do not dispatch) |
 
-**Pass:** 15/30 (13 shipped + 2 forensic-skip) · **wave C-8 active**
+**Pass:** 19/30 (17 shipped + 2 forensic-skip) · **wave C-10 COMPLETE** · **next: C-11 (CLOSURE-20 + CLOSURE-21) QUEUED**
 
 ## Block Status
 
@@ -35,12 +35,12 @@
 | CLOSURE-13 | A | C-6 | **SHIPPED** | [#564](https://github.com/tioperfumes07/IH35-TMS/pull/564) | USMCA July launch; merged `d6a6336d0` 2026-06-05 · **Jorge sign-off gate** |
 | CLOSURE-14 | B | C-7 | **SHIPPED** | [#565](https://github.com/tioperfumes07/IH35-TMS/pull/565) · [#570](https://github.com/tioperfumes07/IH35-TMS/pull/570) | Deep audit A; manifest `bf4d6e30c` + impl `b9ea2be20` |
 | CLOSURE-15 | A | C-7 | **SHIPPED** | [#568](https://github.com/tioperfumes07/IH35-TMS/pull/568) | Deep audit B; merged `e90f2aeb6` 2026-06-05 |
-| CLOSURE-16 | B | C-8 | **IN-FLIGHT** | [#571](https://github.com/tioperfumes07/IH35-TMS/pull/571) | `closure/deep-audit-c` · Deep audit C |
-| CLOSURE-17 | A | C-8 | **IN-FLIGHT** | [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | `closure/on-hold-triage` · ON-HOLD triage |
-| CLOSURE-18 | A | C-10 | QUEUED | — | |
-| CLOSURE-19 | B | C-10 | QUEUED | — | |
-| CLOSURE-20 | A | C-11 | QUEUED | — | |
-| CLOSURE-21 | B | C-11 | QUEUED | — | |
+| CLOSURE-16 | B | C-8 | **SHIPPED** | [#571](https://github.com/tioperfumes07/IH35-TMS/pull/571) | Deep audit C; merged `bfb56a9a4` 2026-06-05 |
+| CLOSURE-17 | A | C-8 | **SHIPPED** | [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | ON-HOLD triage; merged `ad58b2789` 2026-06-05 |
+| CLOSURE-18 | A | C-10 | **SHIPPED** | [#576](https://github.com/tioperfumes07/IH35-TMS/pull/576) | PERF audit; merged `1345ed75b` 2026-06-05 |
+| CLOSURE-19 | B | C-10 | **SHIPPED** | [#575](https://github.com/tioperfumes07/IH35-TMS/pull/575) | SEC audit; merged `b5f4a6c95` 2026-06-05 |
+| CLOSURE-20 | A | C-11 | QUEUED | — | A11Y — next dispatch lane A |
+| CLOSURE-21 | B | C-11 | QUEUED | — | Monitoring — next dispatch lane B |
 | CLOSURE-22 | A | C-12 | QUEUED | — | |
 | CLOSURE-23 | B | C-12 | QUEUED | — | |
 | CLOSURE-24 | A | C-13 | QUEUED | — | |
@@ -89,10 +89,12 @@
 | C-5 | CLOSURE-11 ✅ [#561](https://github.com/tioperfumes07/IH35-TMS/pull/561) | CLOSURE-10 ✅ [#560](https://github.com/tioperfumes07/IH35-TMS/pull/560) |
 | C-6 | CLOSURE-13 ✅ [#564](https://github.com/tioperfumes07/IH35-TMS/pull/564) | CLOSURE-12 ✅ [#563](https://github.com/tioperfumes07/IH35-TMS/pull/563) |
 | C-7 | CLOSURE-15 ✅ [#568](https://github.com/tioperfumes07/IH35-TMS/pull/568) | CLOSURE-14 ✅ [#570](https://github.com/tioperfumes07/IH35-TMS/pull/570) |
-| C-8 | CLOSURE-17 🔄 [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | CLOSURE-16 🔄 [#571](https://github.com/tioperfumes07/IH35-TMS/pull/571) |
+| C-8 | CLOSURE-17 ✅ [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | CLOSURE-16 ✅ [#571](https://github.com/tioperfumes07/IH35-TMS/pull/571) |
+| C-10 | CLOSURE-18 ✅ [#576](https://github.com/tioperfumes07/IH35-TMS/pull/576) | CLOSURE-19 ✅ [#575](https://github.com/tioperfumes07/IH35-TMS/pull/575) |
+| C-11 | CLOSURE-20 ⏳ A11Y | CLOSURE-21 ⏳ monitoring |
 | … | per V2 index | per V2 index |
 
-**Main:** `083c5b0e` · **C-7 merges:** `b9ea2be20` (CLOSURE-14) · `e90f2aeb6` (CLOSURE-15) · **tracker:** [#573](https://github.com/tioperfumes07/IH35-TMS/pull/573) `083c5b0e`
+**Main:** `1345ed75b` · **C-10 merges:** `b5f4a6c95` (CLOSURE-19) · `1345ed75b` (CLOSURE-18) · **GAP:** PAUSED (user directive 2026-06-05)
 
 ## GAP De-Dup Plan (63 active blocks · 2026-06-05)
 
@@ -112,4 +114,4 @@
 
 **CANCEL:** standalone GAP-2 dispatch (superseded by AUDIT-FIX-18 re-slot)
 
-**Next wave after C-8 merges:** C-10 CLOSURE-18 (Lane A PERF) + CLOSURE-19 (Lane B SEC) per V2 index
+**Next dispatch (CLOSURE only):** wave C-11 — CLOSURE-20 (Lane A A11Y) + CLOSURE-21 (Lane B monitoring). **Do not dispatch GAP** until Jorge clears CLOSURE gate.
