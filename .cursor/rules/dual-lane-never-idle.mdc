@@ -39,6 +39,13 @@ Use **git/gh** for dispatch truth; tracker xlsx is advisory only.
 - Both lanes idle while eligible queue blocks remain
 - Ending after subagent stop / merge / connection failure **without** dispatching next block from authoritative queue
 - Local implement+ship **unpushed >30 min** when branch exists
+- **Crash / subagent stop / connection drop:** next block dispatched **within 5 minutes** — no heartbeat-only replies
+
+**On crash, subagent stop, or connection failure** (same turn, before replying):
+
+1. `git fetch origin main` in both worktrees; finish in-flight rebase/merge if safe
+2. STATUS both lanes; identify stale lane(s) and auto-fix per table below
+3. Dispatch next strict queue block for any idle lane **within 5 min wall-clock**
 
 **On every subagent success notification** (same turn, before replying):
 
@@ -58,9 +65,13 @@ Treat lane as **STALE** and auto-fix **before** replying when any:
 |--------|----------|
 | Branch behind `origin/main` **>1** commit, no open PR | `git fetch` + `git rebase origin/main`, push, open/update PR |
 | PR merged but lane not on `main` | `git checkout main && git pull origin main` → paste next GO from index |
-| Agent task completed, no follow-up | Dispatch next GO block for that lane |
+| Agent task completed, no follow-up | Dispatch next GO block for that lane **within 5 min** |
+| Subagent crash / stop / connection drop | Recover git state → STATUS → dispatch next block **within 5 min** |
+| Interactive rebase stuck / conflicts fixed | `git rebase --continue` or abort + rebase clean, push |
+| Lane idle **>5 min** with eligible queue | Parallel dispatch both lanes same turn |
 | `block-ready` / pre-push failed | Fix gate (scope, migration drift, nav allowlist), rerun `npm run block-ready`, push |
 | PR `mergeable: CONFLICTING` | Rebase onto `origin/main`, resolve, push, re-check CI |
+| PR CI green, mergeable | Squash merge + delete branch → dispatch next block for that lane |
 
 **Stale ≠ idle:** stale lanes get fixed first; then must return to **active** (implement or PR babysit).
 
@@ -71,9 +82,11 @@ Treat lane as **STALE** and auto-fix **before** replying when any:
 - Rebase onto `origin/main` before PR; verify migration tail (no duplicate numbers)
 - Phase 1 forensic gaps: ship missing CI guards / closure evidence before advancing wave
 
-## Mandatory STATUS template (every heartbeat)
+## Mandatory STATUS template (every assistant reply)
 
-Coordinator replies include **2–5 STATUS lines** covering active phases:
+**Every assistant reply** (coordinator, lane worker, subagent handoff) includes **2–5 STATUS lines** with **lane activity** (`active|babysit|implement|rebase|idle`) — never omit both lanes:
+
+Coordinator heartbeats include **2–5 STATUS lines** covering active phases:
 
 ```
 STATUS Phase1 | LaneA: <branch> <±N vs main> | <block-id> | PR: <url|none> | CI: <green|pending|red|conflict> | ETA-SHIP: <~Nm> | <active|babysit|implement>
@@ -93,7 +106,7 @@ Warn if tracker xlsx **>3 blocks** behind `origin/main`.
 ## Watchdog (optional)
 
 ```
-/loop 10m STATUS both lanes — queue index, live ETAs, dispatch if idle >5m
+/loop 5m STATUS both lanes — queue index, live ETAs, dispatch if idle >5m
 ```
 
 If loop stopped, re-arm on idle complaint.
