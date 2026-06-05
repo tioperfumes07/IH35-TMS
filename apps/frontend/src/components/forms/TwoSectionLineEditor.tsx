@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { tirePositionsCatalogClient } from "../../api/catalogs-fleet";
 import { getWoCostContext } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useAccountingCategoriesQuery } from "../../hooks/useAccountingCategoriesQuery";
+import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
 import { POS_DICT, type PositionMeta } from "../../lib/positions";
 import {
   CostBreakdownBox,
@@ -52,6 +54,18 @@ export function TwoSectionLineEditor({
   const [lines, setLines] = useState<TwoSectionLine[]>(initialLines);
   const [locationTarget, setLocationTarget] = useState<{ lineId: string; subId: string } | null>(null);
   const [quickCreateTarget, setQuickCreateTarget] = useState<{ kind: QuickCreateKind; lineId?: string; subId?: string } | null>(null);
+  const [categoryFetchActive, setCategoryFetchActive] = useState(mode === "bill");
+  const [itemFetchActive, setItemFetchActive] = useState(mode === "bill");
+
+  const accountingCategoriesQuery = useAccountingCategoriesQuery({
+    operatingCompanyId,
+    enabled: Boolean(operatingCompanyId) && (mode === "bill" || categoryFetchActive),
+  });
+  const accountingItemsQuery = useAccountingItemsQuery({
+    operatingCompanyId,
+    kind: "service",
+    enabled: Boolean(operatingCompanyId) && (mode === "bill" || itemFetchActive),
+  });
 
   const costContextQuery = useQuery({
     queryKey: ["maintenance", "wo-cost-context", operatingCompanyId],
@@ -78,22 +92,28 @@ export function TwoSectionLineEditor({
 
   const sectionA = useMemo(() => lines.filter((line) => line.section === "A"), [lines]) as CategoryLine[];
   const sectionB = useMemo(() => lines.filter((line) => line.section === "B"), [lines]) as ItemLine[];
-  const expenseCategoryOptions = useMemo<CostContextOption[]>(
-    () =>
-      (costContextQuery.data?.expense_categories ?? []).map((entry) => ({
-        id: String(entry.id ?? ""),
-        label: String(entry.name ?? ""),
-      })),
-    [costContextQuery.data?.expense_categories]
-  );
-  const itemOptions = useMemo<CostContextOption[]>(
-    () =>
-      (costContextQuery.data?.items ?? []).map((entry) => ({
-        id: String(entry.id ?? ""),
-        label: String(entry.name ?? ""),
-      })),
-    [costContextQuery.data?.items]
-  );
+  const expenseCategoryOptions = useMemo<CostContextOption[]>(() => {
+    const fromAccounting = (accountingCategoriesQuery.data ?? []).map((entry) => ({
+      id: String(entry.id ?? ""),
+      label: `${entry.account_number ?? entry.qbo_id ?? ""} · ${entry.name ?? ""}`.trim(),
+    }));
+    if (fromAccounting.length > 0) return fromAccounting;
+    return (costContextQuery.data?.expense_categories ?? []).map((entry) => ({
+      id: String(entry.id ?? ""),
+      label: String(entry.name ?? ""),
+    }));
+  }, [accountingCategoriesQuery.data, costContextQuery.data?.expense_categories]);
+  const itemOptions = useMemo<CostContextOption[]>(() => {
+    const fromAccounting = (accountingItemsQuery.data ?? []).map((entry) => ({
+      id: String(entry.id ?? ""),
+      label: String(entry.name ?? ""),
+    }));
+    if (fromAccounting.length > 0) return fromAccounting;
+    return (costContextQuery.data?.items ?? []).map((entry) => ({
+      id: String(entry.id ?? ""),
+      label: String(entry.name ?? ""),
+    }));
+  }, [accountingItemsQuery.data, costContextQuery.data?.items]);
   const partOptions = useMemo<CostContextOption[]>(
     () =>
       (costContextQuery.data?.parts ?? []).map((entry) => ({
@@ -157,10 +177,12 @@ export function TwoSectionLineEditor({
           ?.sub_rows?.find((row) => row.id === locationTarget.subId)?.part_location_codes ?? [];
 
   const onSectionAChange = (nextSectionA: CategoryLine[]) => {
+    if (nextSectionA.length > 0) setCategoryFetchActive(true);
     updateLines([...nextSectionA.map((line) => ({ ...line, section: "A" as const })), ...sectionB.map((line) => ({ ...line, section: "B" as const }))]);
   };
 
   const onSectionBChange = (nextSectionB: ItemLine[]) => {
+    if (nextSectionB.length > 0) setItemFetchActive(true);
     updateLines([...sectionA.map((line) => ({ ...line, section: "A" as const })), ...nextSectionB.map((line) => ({ ...line, section: "B" as const }))]);
   };
 
