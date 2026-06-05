@@ -409,6 +409,7 @@
     "verify:plaid-cron-registered": "node scripts/verify-plaid-cron-registered.mjs",
     "verify:ifta-aggregator-determinism": "node scripts/verify-ifta-aggregator-determinism.mjs",
     "verify:ifta-tax-rates-current": "node scripts/verify-ifta-tax-rates-current.mjs",
+    "verify:scheduled-report-recipients-resolved": "node scripts/verify-scheduled-report-recipients-resolved.mjs",
     "verify:samsara-webhook-route-mounted": "node scripts/verify-samsara-webhook-route-mounted.mjs"
   },
   "dependencies": {

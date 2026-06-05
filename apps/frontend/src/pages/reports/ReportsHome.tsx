@@ -5,9 +5,9 @@ import { BasisSelector, type AccountingBasis } from "../../components/accounting
 import { CategoryHoverNav } from "../../components/reports/CategoryHoverNav";
 import { PHASE_6_REPORT_HREFS } from "../../components/reports/phase6ReportLinks";
 import { FrequentlyRunTable } from "../../components/reports/FrequentlyRunTable";
-import { ScheduledReportsPanel } from "../../components/reports/ScheduledReportsPanel";
+import { ScheduledReportsPanel } from "./ScheduledReportsPanel";
+import { CustomReportBuilder } from "./CustomReportBuilder";
 import { IftaPreparerCard } from "../../components/reports/IftaPreparerCard";
-import { CustomReportBuilderCard } from "../../components/reports/CustomReportBuilderCard";
 import { getFrequentlyRun, getIftaStatus, getKpiSummary, getScheduledReports, type FrequentlyRunReport, type ReportCategory } from "../../api/reports";
 import { useMemo, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -49,6 +49,7 @@ type ReportsKpi = {
 export function ReportsHomePage() {
   const [category, setCategory] = useState<ReportCategory>("all");
   const [basis, setBasis] = useState<AccountingBasis>("accrual");
+  const [showCustomBuilder, setShowCustomBuilder] = useState(false);
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const navigate = useNavigate();
@@ -127,7 +128,7 @@ export function ReportsHomePage() {
         subtitle="Hover a domain category, then open a report to run"
         actions={
           <div className="flex items-center gap-2">
-            <Button>+ Custom report</Button>
+            <Button onClick={() => setShowCustomBuilder((v) => !v)}>+ Custom report</Button>
             <Button variant="secondary" onClick={() => navigate("/reports/scheduled")}>
               Schedule
             </Button>
@@ -197,7 +198,13 @@ export function ReportsHomePage() {
 
       {iftaQuery.data ? <IftaPreparerCard status={iftaQuery.data} /> : null}
 
-      <CustomReportBuilderCard />
+      {showCustomBuilder ? <CustomReportBuilder /> : null}
+
+      {category === "saved" && !showCustomBuilder ? (
+        <section className="rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+          Open <strong>+ Custom report</strong> to build and save reports — saved definitions appear in the builder list.
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -468,6 +468,9 @@ jobs:
       - name: verify:reports-no-stub-data
         run: npm run verify:reports-no-stub-data
 
+      - name: verify:scheduled-report-recipients-resolved
+        run: npm run verify:scheduled-report-recipients-resolved
+
       - name: verify:deadhead-uses-lane-profitability-for-suggestions
         run: npm run verify:deadhead-uses-lane-profitability-for-suggestions
 

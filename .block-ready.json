@@ -1,17 +1,25 @@
 {
-  "block_id": "P5-T16",
-  "branch": "feat/phase5-oos-estimate-generation",
-  "phase": "Phase 5",
-  "task": "Severe repair OOS downtime estimate generation",
+  "block_id": "P6-T4",
+  "branch": "feat/p6-t4-scheduled-reports-custom-builder",
+  "phase": "Phase 6",
+  "task": "Scheduled reports auto-email per role + custom report builder UX",
   "allowed_files": [
-    "apps/backend/src/maintenance/wo-oos-estimator.ts",
-    "apps/backend/src/maintenance/wo-oos-estimator.test.ts",
-    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    "apps/backend/src/reports/scheduler.ts",
+    "apps/backend/src/reports/scheduled-reports.routes.ts",
+    "apps/backend/src/reports/custom-report-builder.routes.ts",
+    "db/migrations/0374_scheduled_reports_custom_definitions.sql",
+    "apps/frontend/src/pages/reports/ScheduledReportsPanel.tsx",
+    "apps/frontend/src/pages/reports/CustomReportBuilder.tsx",
+    "apps/frontend/src/pages/reports/ReportsHome.tsx",
+    "apps/backend/src/index.ts",
+    "scripts/verify-scheduled-report-recipients-resolved.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }

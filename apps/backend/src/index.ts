@@ -79,6 +79,9 @@ import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approv
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
+import { registerReportsScheduledCrudRoutes } from "./reports/scheduled-reports.routes.js";
+import { registerCustomReportBuilderRoutes } from "./reports/custom-report-builder.routes.js";
+import { initializeReportsRoleScheduler, stopReportsRoleScheduler } from "./reports/scheduler.js";
 import { registerIftaQuarterlyPreparerRoutes } from "./ifta/ifta-quarterly-preparer.routes.js";
 import { registerFleetTrailerRoutes } from "./fleet/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
@@ -552,6 +555,8 @@ async function main() {
   await registerHomeRoutes(app);
   await registerHomeWidgetRoutes(app);
   await registerReportsRoutes(app);
+  await registerReportsScheduledCrudRoutes(app);
+  await registerCustomReportBuilderRoutes(app);
   await registerIftaQuarterlyPreparerRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
@@ -896,6 +901,13 @@ async function main() {
     app.log.info("[STARTUP] email-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] email-cron failed");
+  }
+
+  try {
+    initializeReportsRoleScheduler(app);
+    app.log.info("[STARTUP] reports-role-scheduler initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] reports-role-scheduler failed");
   }
 
   try {
