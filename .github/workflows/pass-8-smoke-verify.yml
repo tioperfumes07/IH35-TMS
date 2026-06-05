@@ -27,6 +27,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Frontend build (match Render)
+        run: cd apps/frontend && npm run build
+
+      - name: Driver PWA build (match Render)
+        run: npm run build:driver-pwa
+
+      - name: Build
+        run: npm run build
+
       - name: Run PASS-8 orchestrator
         run: npm run verify:pass-8-smoke
 
