@@ -14,7 +14,7 @@
 | Remaining | 2 |
 | ON HOLD | 4 (A23-11, A23-14, B19, B20 — triaged CLOSURE-17; do not dispatch) |
 
-**Pass:** 30/32 (28 shipped + 2 forensic-skip) · **wave C-13 COMPLETE (CLOSURE-24 [#582](https://github.com/tioperfumes07/IH35-TMS/pull/582) `07fdc1790` + CLOSURE-25 [#583](https://github.com/tioperfumes07/IH35-TMS/pull/583) `d4c86872a`)** · wiring follow-up [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) · **CLOSURE-28 SHIPPED [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) `5fd0dd8a1`** · **CLOSURE-29 SHIPPED [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) `cbc2cccbb`** · **wave C-14 COMPLETE (CLOSURE-26 + CLOSURE-27)** · **CLOSURE-31 SHIPPED [#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`**
+**Pass:** 30/32 (28 shipped + 2 forensic-skip) · **wave C-13 COMPLETE (CLOSURE-24 [#582](https://github.com/tioperfumes07/IH35-TMS/pull/582) `07fdc1790` + CLOSURE-25 [#583](https://github.com/tioperfumes07/IH35-TMS/pull/583) `d4c86872a`)** · **wiring COMPLETE [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) `0f1f845ed`** · **CLOSURE-28 SHIPPED [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) `5fd0dd8a1`** · **CLOSURE-29 SHIPPED [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) `cbc2cccbb`** · **wave C-14 COMPLETE (CLOSURE-26 + CLOSURE-27)** · **CLOSURE-31 SHIPPED [#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`**
 
 > **Program expanded 30 → 32:** CLOSURE-31 (URGENT — customers/vendors restore) **SHIPPED** ([#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`); CLOSURE-32 deferred to end (gated on PASS-8 GO). Denominator is now `/32`.
 
@@ -45,8 +45,8 @@
 | CLOSURE-21 | B | C-11 | **SHIPPED** | [#579](https://github.com/tioperfumes07/IH35-TMS/pull/579) | Monitoring setup; merged `0df2bfa1c` 2026-06-05 |
 | CLOSURE-22 | A | C-12 | **SHIPPED** | [#580](https://github.com/tioperfumes07/IH35-TMS/pull/580) | CI hardening; merged `6b26405d0` 2026-06-05 |
 | CLOSURE-23 | B | C-12 | **SHIPPED** | [#581](https://github.com/tioperfumes07/IH35-TMS/pull/581) | DR backup; merged `f67c7ec61` 2026-06-05 |
-| CLOSURE-24 | A | C-13 | **SHIPPED** | [#582](https://github.com/tioperfumes07/IH35-TMS/pull/582) | Operator onboarding wizard + sample data + walkthroughs; merged `07fdc1790` 2026-06-05 · babysit: onboarding schema USAGE grant + db/migrations mirror · wiring [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) |
-| CLOSURE-25 | B | C-13 | **SHIPPED** | [#583](https://github.com/tioperfumes07/IH35-TMS/pull/583) | Operator runbooks + /help Runbooks index; merged `d4c86872a` 2026-06-05 · wiring [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) |
+| CLOSURE-24 | A | C-13 | **SHIPPED** | [#582](https://github.com/tioperfumes07/IH35-TMS/pull/582) | Operator onboarding wizard + sample data + walkthroughs; merged `07fdc1790` 2026-06-05 · babysit: onboarding schema USAGE grant + db/migrations mirror · wiring SHIPPED [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) `0f1f845ed` |
+| CLOSURE-25 | B | C-13 | **SHIPPED** | [#583](https://github.com/tioperfumes07/IH35-TMS/pull/583) | Operator runbooks + /help Runbooks index; merged `d4c86872a` 2026-06-05 · wiring SHIPPED [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) `0f1f845ed` |
 | CLOSURE-26 | A | C-14 | **SHIPPED** | [#584](https://github.com/tioperfumes07/IH35-TMS/pull/584) | i18n EN/ES foundation; merged `d46ddb446` 2026-06-05 · ES machine-translated, flagged for Jorge review (follow-up, not a merge gate) |
 | CLOSURE-27 | B | C-14 | **SHIPPED** | [#585](https://github.com/tioperfumes07/IH35-TMS/pull/585) | Mobile/ultrawide edge breakpoint pack; merged `238681f35` 2026-06-05 |
 | CLOSURE-28 | A | C-15 | **SHIPPED** | [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) | Data migration runbooks + `verify:migration-chain-runbook` static gate; merged `5fd0dd8a1` 2026-06-05 |
@@ -102,7 +102,7 @@
 | C-15 | CLOSURE-28 ✅ [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) | CLOSURE-29 ✅ [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) |
 | … | per V2 index | per V2 index |
 
-**Main:** `fb977b1cd` · **C-13 merges:** `07fdc1790` (CLOSURE-24 #582) · `d4c86872a` (CLOSURE-25 #583) · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **C-14 merges:** `238681f35` (CLOSURE-27 #585) · `d46ddb446` (CLOSURE-26 #584) · **GAP:** PAUSED (user directive 2026-06-05)
+**Main:** `0f1f845ed` · **C-13 merges:** `07fdc1790` (CLOSURE-24 #582) · `d4c86872a` (CLOSURE-25 #583) · `0f1f845ed` (C-13 wiring #589) · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **C-14 merges:** `238681f35` (CLOSURE-27 #585) · `d46ddb446` (CLOSURE-26 #584) · **GAP:** PAUSED (user directive 2026-06-05)
 
 ## GAP De-Dup Plan (63 active blocks · 2026-06-05)
 
