@@ -1,20 +1,27 @@
 {
-  "block_id": "AUDIT-FIX-12",
-  "branch": "audit-fix/audit-fix-12-accounting-bills-normalize",
+  "block_id": "AUDIT-FIX-13",
+  "branch": "audit-fix/audit-fix-13-customers-vendors-pagination",
   "phase": "AUDIT-FIX",
-  "task": "ACCOUNTING-BILLS-NORMALIZE — match /accounting + /invoices subnav + actions",
+  "task": "CUSTOMERS-VENDORS-PAGINATION+ANCHORS — paginate rows + real anchors",
   "allowed_files": [
-    "apps/frontend/src/pages/accounting/BillsPage.tsx",
-    "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx",
-    "apps/frontend/src/pages/accounting/index.ts",
-    "scripts/verify-accounting-subpages-have-subnav.mjs",
+    "apps/frontend/src/pages/customers/CustomerListSidebar.tsx",
+    "apps/frontend/src/pages/vendors/VendorListSidebar.tsx",
+    "apps/frontend/src/pages/Customers.tsx",
+    "apps/frontend/src/pages/Vendors.tsx",
+    "apps/frontend/src/components/shared/SidebarPagination.tsx",
+    "apps/frontend/src/components/shared/CardLink.tsx",
+    "apps/backend/src/customers/list.routes.ts",
+    "apps/backend/src/vendors/list.routes.ts",
+    "apps/backend/src/customers/index.ts",
+    "apps/backend/src/vendors/index.ts",
+    "scripts/verify-list-cards-are-anchors.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:accounting-subpages-have-subnav"
+    "verify:list-cards-are-anchors"
   ],
   "runtime_path": "src",
   "db_required": false,

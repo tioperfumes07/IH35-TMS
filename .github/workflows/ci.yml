@@ -690,6 +690,9 @@ jobs:
       - name: verify:accounting-subpages-have-subnav
         run: npm run verify:accounting-subpages-have-subnav
 
+      - name: verify:list-cards-are-anchors
+        run: npm run verify:list-cards-are-anchors
+
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 
