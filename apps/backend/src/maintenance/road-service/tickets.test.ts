@@ -29,6 +29,7 @@ import { registerRoadServiceTicketRoutes } from "./tickets.routes.js";
 describe("road service tickets routes (CLOSURE-7)", () => {
   let app: FastifyInstance;
   const companyId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const ticketId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 
   beforeEach(async () => {
     mocked.withCurrentUserMock.mockReset();
@@ -40,13 +41,13 @@ describe("road service tickets routes (CLOSURE-7)", () => {
       fn({
         query: vi.fn().mockImplementation(async (sql: string) => {
           if (sql.includes("INSERT INTO maintenance.road_service_tickets")) {
-            return { rows: [{ id: "ticket-1", status: "open", ticket_number: "RS-1001" }] };
+            return { rows: [{ id: ticketId, status: "open", ticket_number: "RS-1001" }] };
           }
           if (sql.includes("UPDATE maintenance.road_service_tickets") && sql.includes("work_performed")) {
-            return { rows: [{ id: "ticket-1", status: "completed", total_cost_cents: 25000 }] };
+            return { rows: [{ id: ticketId, status: "completed", total_cost_cents: 25000 }] };
           }
           if (sql.includes("FROM maintenance.road_service_tickets")) {
-            return { rows: [{ id: "ticket-1", status: "open", ticket_number: "RS-1001" }] };
+            return { rows: [{ id: ticketId, status: "open", ticket_number: "RS-1001" }] };
           }
           return { rows: [] };
         }),
@@ -93,7 +94,7 @@ describe("road service tickets routes (CLOSURE-7)", () => {
   it("completes ticket with cost", async () => {
     const res = await app.inject({
       method: "PATCH",
-      url: "/api/v1/road-service-tickets/ticket-1/complete",
+      url: `/api/v1/road-service-tickets/${ticketId}/complete`,
       payload: {
         operating_company_id: companyId,
         work_performed: "Replaced steer tire",
@@ -110,7 +111,7 @@ describe("road service tickets routes (CLOSURE-7)", () => {
   it("create-wo returns wo_id and bill_id", async () => {
     const res = await app.inject({
       method: "POST",
-      url: "/api/v1/road-service-tickets/ticket-1/create-wo",
+      url: `/api/v1/road-service-tickets/${ticketId}/create-wo`,
       payload: { operating_company_id: companyId },
     });
 
