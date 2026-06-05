@@ -1,5 +1,15 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import {
+  dualAckComplete,
+  encodeDualAckNotes,
+  enrichTransferRow,
+  initialDualAckState,
+  parseDualAckNotes,
+  stripDualAckNotes,
+  withDropoffAck,
+  withPickupAck,
+} from "../equipment/transfer-dual-confirm.js";
 
 type InitiateTransferInput = {
   operating_company_id: string;
@@ -72,7 +82,7 @@ export async function initiateTransfer(userId: string, input: InitiateTransferIn
           input.to_driver_id,
           input.transfer_location ?? null,
           userId,
-          input.notes ?? null,
+          encodeDualAckNotes(input.notes ?? null, initialDualAckState()),
         ]
       );
 
@@ -87,13 +97,20 @@ export async function initiateTransfer(userId: string, input: InitiateTransferIn
           equipment_id: input.equipment_id,
           from_driver_id: input.from_driver_id,
           to_driver_id: input.to_driver_id,
+          wf047_dual_ack: true,
         },
         "info",
         "P5-F5-EQUIPMENT-TRANSFER"
       );
 
       await client.query("COMMIT");
-      return { id: transfer.rows[0]?.id, status: "pending_to_confirm", expires_at: transfer.rows[0]?.expires_at };
+      const dualNotes = encodeDualAckNotes(input.notes ?? null, initialDualAckState());
+      return enrichTransferRow({
+        id: transfer.rows[0]?.id,
+        status: "pending_to_confirm",
+        expires_at: transfer.rows[0]?.expires_at,
+        notes: dualNotes,
+      });
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -130,6 +147,13 @@ export async function confirmTransfer(
       if (transfer.to_driver_id !== input.confirming_driver_id) throw new Error("E_TRANSFER_NOT_ASSIGNED_TO_DRIVER");
       if (transfer.status !== "pending_to_confirm") throw new Error("E_TRANSFER_NOT_PENDING");
       if (new Date(transfer.expires_at).getTime() < Date.now()) throw new Error("E_TRANSFER_EXPIRED");
+
+      const notesRes = await client.query<{ notes: string | null }>(
+        `SELECT notes FROM mdata.equipment_transfers WHERE id = $1`,
+        [input.transfer_id]
+      );
+      const dualAck = parseDualAckNotes(notesRes.rows[0]?.notes);
+      if (dualAck && !dualAckComplete(dualAck)) throw new Error("E_TRANSFER_DUAL_ACK_INCOMPLETE");
 
       await client.query(
         `
@@ -245,7 +269,116 @@ export async function listTransfers(
       `,
       values
     );
-    return { rows: rows.rows };
+    return { rows: rows.rows.map((row) => enrichTransferRow(row as Record<string, unknown>)) };
+  });
+}
+
+async function loadPendingTransfer(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> },
+  input: { operating_company_id: string; transfer_id: string }
+) {
+  const transferRes = await client.query(
+    `
+      SELECT id, equipment_id, from_driver_id, to_driver_id, status, expires_at::text, notes
+      FROM mdata.equipment_transfers
+      WHERE id = $1 AND operating_company_id = $2
+      FOR UPDATE
+    `,
+    [input.transfer_id, input.operating_company_id]
+  );
+  const transfer = transferRes.rows[0];
+  if (!transfer) throw new Error("E_NOT_FOUND");
+  if (transfer.status !== "pending_to_confirm") throw new Error("E_TRANSFER_NOT_PENDING");
+  if (new Date(String(transfer.expires_at)).getTime() < Date.now()) throw new Error("E_TRANSFER_EXPIRED");
+  return transfer;
+}
+
+async function finalizeDualAckTransfer(
+  client: Parameters<Parameters<typeof withCurrentUser>[1]>[0],
+  userId: string,
+  operatingCompanyId: string,
+  transfer: Record<string, unknown>,
+  receivingDriverId: string
+) {
+  await client.query(
+    `UPDATE mdata.equipment_transfers SET status = 'confirmed', confirmed_at = now(), updated_at = now() WHERE id = $1`,
+    [transfer.id]
+  );
+  await client.query(
+    `UPDATE mdata.equipment SET assigned_driver_id = $2, updated_at = now() WHERE id = $1`,
+    [transfer.equipment_id, receivingDriverId]
+  );
+  await appendCrudAudit(
+    client,
+    userId,
+    "mdata.equipment_transfer.confirmed",
+    {
+      resource_type: "mdata.equipment_transfers",
+      resource_id: transfer.id,
+      operating_company_id: operatingCompanyId,
+      equipment_id: transfer.equipment_id,
+      to_driver_id: receivingDriverId,
+      wf047_dual_ack: true,
+    },
+    "info",
+    "P5-F5-EQUIPMENT-TRANSFER"
+  );
+}
+
+export async function ackDropoffTransfer(
+  userId: string,
+  input: { operating_company_id: string; transfer_id: string; from_driver_id: string }
+) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("BEGIN");
+    try {
+      const transfer = await loadPendingTransfer(client, input);
+      if (transfer.from_driver_id !== input.from_driver_id) throw new Error("E_TRANSFER_NOT_FROM_DRIVER");
+      const state = parseDualAckNotes(String(transfer.notes ?? "")) ?? initialDualAckState();
+      if (state.dropoff_ack_at) throw new Error("E_DROPOFF_ALREADY_ACKED");
+      const next = withDropoffAck(state);
+      const notes = encodeDualAckNotes(stripDualAckNotes(String(transfer.notes ?? "")), next);
+      await client.query(`UPDATE mdata.equipment_transfers SET notes = $2, updated_at = now() WHERE id = $1`, [
+        input.transfer_id,
+        notes,
+      ]);
+      if (dualAckComplete(next)) await finalizeDualAckTransfer(client, userId, input.operating_company_id, transfer, input.from_driver_id);
+      await client.query("COMMIT");
+      return enrichTransferRow({ id: input.transfer_id, status: dualAckComplete(next) ? "confirmed" : "pending_to_confirm", notes });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    }
+  });
+}
+
+export async function ackPickupTransfer(
+  userId: string,
+  input: { operating_company_id: string; transfer_id: string; to_driver_id: string }
+) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+    await client.query("BEGIN");
+    try {
+      const transfer = await loadPendingTransfer(client, input);
+      if (transfer.to_driver_id !== input.to_driver_id) throw new Error("E_TRANSFER_NOT_ASSIGNED_TO_DRIVER");
+      const state = parseDualAckNotes(String(transfer.notes ?? "")) ?? initialDualAckState();
+      if (!state.dropoff_ack_at) throw new Error("E_DROPOFF_ACK_REQUIRED");
+      if (state.pickup_ack_at) throw new Error("E_PICKUP_ALREADY_ACKED");
+      const next = withPickupAck(state);
+      const notes = encodeDualAckNotes(stripDualAckNotes(String(transfer.notes ?? "")), next);
+      await client.query(`UPDATE mdata.equipment_transfers SET notes = $2, updated_at = now() WHERE id = $1`, [
+        input.transfer_id,
+        notes,
+      ]);
+      if (dualAckComplete(next)) await finalizeDualAckTransfer(client, userId, input.operating_company_id, transfer, input.to_driver_id);
+      await client.query("COMMIT");
+      return enrichTransferRow({ id: input.transfer_id, status: dualAckComplete(next) ? "confirmed" : "pending_to_confirm", notes });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    }
   });
 }
 

@@ -12,7 +12,7 @@ const customerClassifyPayloadSchema = z.object({
   classification: z.enum(["preferred", "standard", "caution", "avoid"]),
 });
 
-const emptyPayloadSchema = z.object({}).default({});
+const emptyPayloadSchema = z.object({});
 
 type CustomerBulkPayload =
   | z.infer<typeof customerStatusPayloadSchema>
