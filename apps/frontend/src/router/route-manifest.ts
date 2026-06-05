@@ -31,6 +31,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/maintenance/in-transit-issues", label: "In-Transit Issues", module: "maintenance" },
   { path: "/maintenance/damage-reports", label: "Damage Reports", module: "maintenance" },
   { path: "/maintenance/severe-repairs", label: "Severe Repairs", module: "maintenance" },
+  { path: "/maintenance/road-service", label: "Road Service", module: "maintenance" },
   { path: "/maintenance/parts-inventory", label: "Parts Inventory", module: "maintenance" },
   { path: "/maintenance/settings", label: "Maintenance Settings", module: "maintenance" },
   { path: "/maintenance/work-orders", label: "Work Orders List", module: "maintenance" },
@@ -91,6 +92,7 @@ export const MAINTENANCE_TAB_PATH: Record<string, string> = {
   in_transit_issues: "/maintenance/in-transit-issues",
   damage_reports: "/maintenance/damage-reports",
   severe_repairs: "/maintenance/severe-repairs",
+  road_service: "/maintenance/road-service",
   parts_inventory: "/maintenance/parts-inventory",
   settings: "/maintenance/settings",
 };
