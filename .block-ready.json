@@ -8,8 +8,8 @@
     "apps/frontend/src/hooks/useColumnWidths.ts",
     "apps/frontend/src/components/shared/ResizableTable.tsx",
     "apps/backend/src/users/table-preferences.routes.ts",
-    "db/migrations/0319_user_table_preferences.sql",
-    "apps/frontend/src/pages/reports/canonical/*.tsx",
+    "apps/backend/src/identity/user-preferences.routes.ts",
+    "apps/frontend/src/pages/reports/runners/RunnerTable.tsx",
     "apps/frontend/src/pages/banking/BankingTransactionsTable.tsx",
     "scripts/verify-tables-use-resizable-th.mjs",
     "package.json",
@@ -21,6 +21,6 @@
     "verify:tables-use-resizable-th"
   ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }
