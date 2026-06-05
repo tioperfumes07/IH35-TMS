@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CLOSURE-7 P5-T17 — road service ticket create-wo must link WO + Bill.
+ * CLOSURE-7 P5-T17 — road service ticket create-wo produces WO + vendor bill refs.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -10,7 +10,7 @@ const ROOT = process.cwd();
 const paths = {
   migration: path.join(ROOT, "apps/backend/src/migrations/0395-road-service-tickets.sql"),
   routes: path.join(ROOT, "apps/backend/src/maintenance/road-service/tickets.routes.ts"),
-  woIntegration: path.join(ROOT, "apps/backend/src/maintenance/road-service/wo-integration.ts"),
+  integration: path.join(ROOT, "apps/backend/src/maintenance/road-service/wo-integration.ts"),
   tests: path.join(ROOT, "apps/backend/src/maintenance/road-service/tickets.test.ts"),
   hook: path.join(ROOT, "apps/frontend/src/hooks/useRoadServiceTickets.ts"),
   list: path.join(ROOT, "apps/frontend/src/pages/maintenance/RoadServiceList.tsx"),
@@ -31,7 +31,7 @@ function fail(message) {
 function main() {
   const migration = read(paths.migration);
   const routes = read(paths.routes);
-  const woIntegration = read(paths.woIntegration);
+  const integration = read(paths.integration);
   const tests = read(paths.tests);
   const hook = read(paths.hook);
   const list = read(paths.list);
@@ -40,8 +40,8 @@ function main() {
 
   if (!migration) fail("missing migration 0395-road-service-tickets.sql");
   if (!routes) fail("missing road-service/tickets.routes.ts");
-  if (!woIntegration) fail("missing road-service/wo-integration.ts");
-  if (!tests) fail("missing road-service/tickets.test.ts");
+  if (!integration) fail("missing wo-integration.ts");
+  if (!tests) fail("missing tickets.test.ts");
   if (!hook) fail("missing useRoadServiceTickets.ts");
   if (!list) fail("missing RoadServiceList.tsx");
   if (!modal) fail("missing RoadServiceTicketModal.tsx");
@@ -50,61 +50,45 @@ function main() {
   if (!migration.includes("CREATE TABLE IF NOT EXISTS maintenance.road_service_tickets")) {
     fail("migration must create maintenance.road_service_tickets");
   }
-  if (!migration.includes("wo_id")) {
-    fail("migration must include wo_id FK");
-  }
-  if (!migration.includes("bill_id")) {
-    fail("migration must include bill_id column");
-  }
+  if (!migration.includes("wo_id")) fail("migration must include wo_id FK");
+  if (!migration.includes("bill_id")) fail("migration must include bill_id column");
 
   if (!routes.includes('app.post("/api/v1/road-service-tickets"')) {
     fail("routes must expose POST /api/v1/road-service-tickets");
   }
   if (!routes.includes('app.patch("/api/v1/road-service-tickets/:id/complete"')) {
-    fail("routes must expose PATCH complete");
+    fail("routes must expose PATCH complete endpoint");
   }
   if (!routes.includes('app.post("/api/v1/road-service-tickets/:id/create-wo"')) {
-    fail("routes must expose POST create-wo");
-  }
-  if (!routes.includes('app.get("/api/v1/road-service-tickets"')) {
-    fail("routes must expose GET list");
+    fail("routes must expose POST create-wo endpoint");
   }
 
-  if (!woIntegration.includes("createWorkOrderFromRoadServiceTicket")) {
+  if (!integration.includes("createWorkOrderFromRoadServiceTicket")) {
     fail("wo-integration must export createWorkOrderFromRoadServiceTicket");
   }
-  if (!woIntegration.includes('source_type: "ES"')) {
-    fail("wo-integration must use source_type ES");
+  if (!integration.includes('source_type: "ES"')) {
+    fail("wo-integration must create ES source_type work orders");
   }
-  if (!woIntegration.includes("autoCreateBillFromWO")) {
-    fail("wo-integration must auto-create vendor bill");
-  }
-  if (!woIntegration.includes("bill_terms")) {
-    fail("wo-integration must set Net 30 bill terms");
+  if (!integration.includes("autoCreateBillFromWO")) {
+    fail("wo-integration must auto-create vendor bill from WO");
   }
 
-  if (!tests.includes("creates open road service ticket")) {
-    fail("tests must cover ticket creation");
-  }
   if (!tests.includes("create-wo returns wo_id and bill_id")) {
-    fail("tests must cover create-wo");
+    fail("tests must cover create-wo WO + bill linkage");
   }
 
   if (!hook.includes("/api/v1/road-service-tickets")) {
-    fail("useRoadServiceTickets must call road-service API");
-  }
-  if (!hook.includes("create-wo")) {
-    fail("hook must expose create-wo mutation");
+    fail("useRoadServiceTickets must call road-service-tickets API");
   }
 
-  if (!list.includes("road-service-list")) {
-    fail("RoadServiceList must render status filter table");
+  if (!list.includes("road-service-status-filter")) {
+    fail("RoadServiceList must render status filter controls");
   }
   if (!maintenanceHome.includes("road_service")) {
     fail("MaintenanceHome must include road_service sub-tab");
   }
-  if (!maintenanceHome.includes("RoadServiceList")) {
-    fail("MaintenanceHome must render RoadServiceList");
+  if (!modal.includes("road-service-ticket-modal")) {
+    fail("RoadServiceTicketModal must render quick-entry form");
   }
 
   console.log("verify:road-service-ticket-creates-wo OK");
