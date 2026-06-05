@@ -13,7 +13,9 @@ import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { displayEntityNotes } from "../lib/qboArchiveNotes";
 import { CustomerCOITab } from "./customers/CustomerCOITab";
+import { CustomersListView } from "./customers/CustomersListView";
 import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
+import { useViewModePref } from "../hooks/useViewModePref";
 
 type CustomerTabId =
   | "transaction_list"
@@ -120,6 +122,7 @@ export function CustomersPage() {
   const [createPhone, setCreatePhone] = useState("");
   const [createFormError, setCreateFormError] = useState("");
   const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string }>({});
+  const { viewMode, setViewMode } = useViewModePref("customers");
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -257,12 +260,41 @@ export function CustomersPage() {
         title="Customers"
         subtitle="Customer list and transactions"
         actions={
-          <ActionButton onClick={() => setCreateOpen(true)}>
-            + Create Customer
-          </ActionButton>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="customers">
+              <button
+                type="button"
+                className={`rounded px-2 py-1 font-medium ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setViewMode("list")}
+              >
+                List view
+              </button>
+              <button
+                type="button"
+                className={`rounded px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setViewMode("master-detail")}
+              >
+                Master-detail
+              </button>
+            </div>
+            <ActionButton onClick={() => setCreateOpen(true)}>
+              + Create Customer
+            </ActionButton>
+          </div>
         }
       />
       {companyId ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null}
+      {viewMode === "list" ? (
+        <CustomersListView
+          companyId={companyId}
+          customers={customersSorted}
+          openByCustomerId={openByCustomerId}
+          onSelectCustomer={(customerId) => {
+            setSelectedCustomerId(customerId);
+            setViewMode("master-detail");
+          }}
+        />
+      ) : (
       <div className="flex gap-3">
         <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2">
           <input
@@ -482,6 +514,7 @@ export function CustomersPage() {
           )}
         </main>
       </div>
+      )}
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create Customer">
         <form
           className="space-y-3"
