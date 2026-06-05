@@ -32,6 +32,7 @@ CREATE POLICY launch_toggles_owner_scope
   USING (current_setting('app.bypass_rls', true) = 'lucia')
   WITH CHECK (current_setting('app.bypass_rls', true) = 'lucia');
 
+GRANT USAGE ON SCHEMA admin TO ih35_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON admin.launch_toggles TO ih35_app;
 
 INSERT INTO admin.launch_toggles (operating_company_id, hidden, notes)
