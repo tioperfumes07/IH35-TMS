@@ -1,0 +1,31 @@
+═══════════════════════════════════════════════════════════════════════════════
+Block 22 of 25 — PHASE CLOSURE-V2 / TASK AUDIT-FIX-22 — Placeholder
+MERGE LINK: pending
+═══════════════════════════════════════════════════════════════════════════════
+
+WAVE: C-15  ·  LANE: B  ·  CURSOR-B
+SEQUENCING: dispatch only after CLOSURE-30 PASS-8 returns GO
+PAIRED WITH: AUDIT-FIX-21..25 placeholder queue
+
+SOURCE:
+  - Deep Audit findings to be assigned post triage
+  - Template: `docs/audit-fix-slots/AUDIT-FIX-TEMPLATE.md`
+
+PROBLEM:
+Awaiting Deep Audit findings — populate before dispatch.
+
+SCOPE:
+1. TBD from Deep Audit triage packet.
+2. Define exact allowed files before dispatch.
+3. Add guard script requirements before dispatch.
+
+ACCEPTANCE:
+[ ] Scope populated from Deep Audit output
+[ ] Allowed file manifest populated
+[ ] Guard and CI gate requirements populated
+
+STANDING ORDERS:
+  - foreground only no subagents
+  - no retries; paste exact errors on stop
+  - measured evidence only; no guesses
+═══════════════════════════════════════════════════════════════════════════════

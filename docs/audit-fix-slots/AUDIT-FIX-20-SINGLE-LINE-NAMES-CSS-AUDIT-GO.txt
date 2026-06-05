@@ -1,0 +1,38 @@
+═══════════════════════════════════════════════════════════════════════════════
+Block 20 of 25 — PHASE CLOSURE-V2 / TASK AUDIT-FIX-20 — Single-Line Names CSS Audit
+MERGE LINK: pending
+═══════════════════════════════════════════════════════════════════════════════
+
+WAVE: C-15  ·  LANE: B  ·  CURSOR-B
+SEQUENCING: dispatch only after CLOSURE-30 PASS-8 returns GO
+PAIRED WITH: AUDIT-FIX-18 and AUDIT-FIX-19 in same queue set
+
+SOURCE:
+  - GAP-5 re-slot decision in `docs/trackers/closure-v2.md`
+  - Deep Audit A summary in `docs/audits/DEEP-AUDIT-A-SUMMARY.md`
+  - Deep Audit B summary in `docs/audits/DEEP-AUDIT-B-SUMMARY.md`
+
+PROBLEM:
+Text wrapping in headers and table-name cells causes visual jitter, row-height
+drift, and scanning slowdown. Naming surfaces need one-line behavior by default.
+
+SCOPE — VERBATIM RE-SLOT FROM GAP-5:
+1. Enforce `white-space: nowrap` on H1/H2/H3 naming surfaces.
+2. Enforce single-line behavior on table name cells and key identity labels.
+3. Apply truncation/ellipsis rules where space is constrained.
+4. Add/maintain guard script `verify-single-line-names.mjs`.
+5. Keep this slot CSS-focused; do not alter domain logic.
+
+ACCEPTANCE:
+[ ] Name and heading surfaces remain single-line in audited views
+[ ] `verify-single-line-names.mjs` passes in CI
+[ ] No cross-lane path edits outside declared dispatch scope
+
+PAUSE:
+  - If accessibility review flags truncation ambiguity, add tooltip requirement.
+
+STANDING ORDERS:
+  - foreground only no subagents
+  - no retries; paste exact errors on stop
+  - measured evidence only; no guesses
+═══════════════════════════════════════════════════════════════════════════════

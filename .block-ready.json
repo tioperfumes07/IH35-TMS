@@ -1,23 +1,24 @@
 {
-  "block_id": "CLOSURE-26-I18N-FULL",
-  "branch": "closure/i18n-audit",
+  "block_id": "CLOSURE-29-AUDIT-FIX-SLOT-MATERIALIZE",
+  "branch": "closure/audit-fix-slots",
   "phase": "CLOSURE",
-  "task": "Full EN/ES translation foundation for non-PWA pages",
-  "agent": "A",
+  "task": "Materialize AUDIT-FIX-18..25 dispatch slots without dispatching",
+  "agent": "B",
   "allowed_files": [
-    "apps/frontend/src/i18n/i18n.ts",
-    "apps/frontend/src/i18n/translations/en.json",
-    "apps/frontend/src/i18n/translations/es.json",
-    "apps/frontend/src/i18n/locale-switcher.tsx",
-    "apps/frontend/src/hooks/useTranslation.ts",
-    "apps/frontend/src/components/Topbar.tsx",
-    "apps/backend/src/users/preferences/locale.routes.ts",
-    "scripts/i18n-extract-strings.mjs",
-    "scripts/verify-i18n-coverage.mjs",
+    "docs/audit-fix-slots/AUDIT-FIX-18-HOVER-DROPDOWN-SYSTEM-WIDE-GO.txt",
+    "docs/audit-fix-slots/AUDIT-FIX-19-BACK-ARROW-BREADCRUMB-ALL-PAGES-GO.txt",
+    "docs/audit-fix-slots/AUDIT-FIX-20-SINGLE-LINE-NAMES-CSS-AUDIT-GO.txt",
+    "docs/audit-fix-slots/AUDIT-FIX-21-PLACEHOLDER-GO.txt",
+    "docs/audit-fix-slots/AUDIT-FIX-22-PLACEHOLDER-GO.txt",
+    "docs/audit-fix-slots/AUDIT-FIX-23-PLACEHOLDER-GO.txt",
+    "docs/audit-fix-slots/AUDIT-FIX-24-PLACEHOLDER-GO.txt",
+    "docs/audit-fix-slots/AUDIT-FIX-25-PLACEHOLDER-GO.txt",
+    "docs/audit-fix-slots/AUDIT-FIX-TEMPLATE.md",
+    "docs/audit-fix-slots/INDEX.md",
     ".block-ready.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }

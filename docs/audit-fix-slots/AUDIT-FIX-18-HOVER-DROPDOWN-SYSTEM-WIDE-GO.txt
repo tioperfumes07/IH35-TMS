@@ -1,0 +1,39 @@
+═══════════════════════════════════════════════════════════════════════════════
+Block 18 of 25 — PHASE CLOSURE-V2 / TASK AUDIT-FIX-18 — Hover Dropdown System-Wide
+MERGE LINK: pending
+═══════════════════════════════════════════════════════════════════════════════
+
+WAVE: C-15  ·  LANE: A  ·  CURSOR-A
+SEQUENCING: dispatch only after CLOSURE-30 PASS-8 returns GO
+PAIRED WITH: AUDIT-FIX-19 and AUDIT-FIX-20 in same queue set
+
+SOURCE:
+  - GAP-2 re-slot decision in `docs/trackers/closure-v2.md`
+  - Deep Audit A summary in `docs/audits/DEEP-AUDIT-A-SUMMARY.md`
+  - Deep Audit B summary in `docs/audits/DEEP-AUDIT-B-SUMMARY.md`
+
+PROBLEM:
+Navigation depth and consistency drift across modules increases misclick risk and
+slows dispatch operators. The old sub-nav pattern must be normalized to top-bar
+hover-dropdown groups so every module exposes a consistent discovery path.
+
+SCOPE — VERBATIM RE-SLOT FROM GAP-2:
+1. Refactor every module sub-nav to top-bar hover-dropdown groups.
+2. Use `HoverDropdown.tsx` as the canonical primitive (no one-off replacements).
+3. Ensure all 12 target modules mount hover-dropdown navigation.
+4. Add/maintain guard script `verify-hover-nav-presence.mjs`.
+5. Keep scope focused on navigation shell parity, not feature behavior changes.
+
+ACCEPTANCE:
+[ ] 12 modules use hover-dropdown top navigation
+[ ] `verify-hover-nav-presence.mjs` passes in CI
+[ ] No cross-lane path edits outside declared dispatch scope
+
+PAUSE:
+  - If module count is not 12, update acceptance count before dispatch.
+
+STANDING ORDERS:
+  - foreground only no subagents
+  - no retries; paste exact errors on stop
+  - measured evidence only; no guesses
+═══════════════════════════════════════════════════════════════════════════════
