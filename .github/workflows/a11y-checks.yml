@@ -31,17 +31,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: axe-core walk (18 modules + 8 detail pages)
-        run: npm run a11y:axe-walk
-
-      - name: Keyboard navigation walk (5 critical workflows)
-        run: npm run a11y:keyboard-nav
-
-      - name: Color contrast verification
-        run: npm run a11y:color-contrast
-
-      - name: Screen reader static checks
-        run: npm run a11y:screen-reader-checks
-
-      - name: CI guard — no new critical/serious a11y violations
-        run: npm run verify:a11y-no-critical-violations
+      - name: A11Y audit suite (axe, keyboard, contrast, screen-reader, guard)
+        run: npm run a11y:audit
