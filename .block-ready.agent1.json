@@ -24,7 +24,7 @@
   "extra_gates": [
     "verify:settlement-dispute-creates-adjustment"
   ],
-  "runtime_path": "scripts",
+  "runtime_path": "src",
   "db_required": true,
   "guard_required": true
 }
