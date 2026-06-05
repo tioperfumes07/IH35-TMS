@@ -1,0 +1,48 @@
+name: perf-budget-check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 7 * * *"
+
+jobs:
+  perf-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend bundles (size snapshot)
+        run: npm run build:frontend
+
+      - name: Build driver PWA bundles (size snapshot)
+        run: npm run build:driver-pwa
+
+      - name: Bundle size snapshot
+        run: node scripts/perf-bundle-size-snapshot.mjs
+
+      - name: API latency baseline (informational)
+        run: node scripts/perf-api-latency-baseline.mjs
+
+      - name: Lighthouse baseline doc (committed metrics)
+        run: node scripts/perf-lighthouse-on-prod.mjs
+
+      - name: CI guard — perf budgets not regressed
+        run: node scripts/verify-perf-budgets-not-regressed.mjs
+
+      - name: Response-time middleware unit tests
+        run: npx vitest run apps/backend/src/middleware/response-time.test.ts --config apps/backend/vitest.config.ts

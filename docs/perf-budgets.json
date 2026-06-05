@@ -1,0 +1,67 @@
+{
+  "snapshot_date": "2026-06-05",
+  "fe_bundle_gzipped": 871408,
+  "fe_bundle_uncompressed": 3957378,
+  "driver_bundle_gzipped": 122280,
+  "driver_bundle_uncompressed": 417177,
+  "largest_chunks": [
+    { "name": "index-B7n4ltVc.js", "bytes": 3957378, "source": "prod https://ih35-tms-web.onrender.com" },
+    { "name": "index-9Ijthmvt.js (driver-pwa)", "bytes": 417177, "source": "prod https://ih35-tms-driver.onrender.com" }
+  ],
+  "budgets": {
+    "fe_bundle_gzipped": 958549,
+    "fe_bundle_uncompressed": 4748854,
+    "driver_bundle_gzipped": 134508,
+    "driver_bundle_uncompressed": 500612,
+    "fcp_mobile_ms": 2400,
+    "lcp_mobile_ms": 3360,
+    "tbt_mobile_ms": 600,
+    "cls_mobile": 0.12,
+    "api_p95_read_ms": 500,
+    "api_p95_write_ms": 2000
+  },
+  "hard_ceilings": {
+    "fe_bundle_uncompressed": 5242880,
+    "fcp_mobile_ms": 3000,
+    "lcp_mobile_ms": 4000,
+    "api_p95_read_ms": 500,
+    "api_p95_write_ms": 2000
+  },
+  "lighthouse_mobile": {
+    "/home": { "performance": 62, "fcp_ms": 2800, "lcp_ms": 4200, "tbt_ms": 480, "cls": 0.08, "tti_ms": 6800 },
+    "/dispatch": { "performance": 58, "fcp_ms": 2900, "lcp_ms": 4400, "tbt_ms": 520, "cls": 0.09, "tti_ms": 7100 },
+    "/maintenance": { "performance": 60, "fcp_ms": 2850, "lcp_ms": 4300, "tbt_ms": 500, "cls": 0.07, "tti_ms": 6900 },
+    "/accounting": { "performance": 55, "fcp_ms": 3000, "lcp_ms": 4600, "tbt_ms": 560, "cls": 0.1, "tti_ms": 7400 },
+    "/banking": { "performance": 61, "fcp_ms": 2750, "lcp_ms": 4100, "tbt_ms": 470, "cls": 0.06, "tti_ms": 6700 },
+    "/customers": { "performance": 59, "fcp_ms": 2880, "lcp_ms": 4350, "tbt_ms": 510, "cls": 0.08, "tti_ms": 7000 },
+    "/drivers": { "performance": 57, "fcp_ms": 2950, "lcp_ms": 4500, "tbt_ms": 530, "cls": 0.09, "tti_ms": 7200 },
+    "/reports": { "performance": 52, "fcp_ms": 3100, "lcp_ms": 4800, "tbt_ms": 620, "cls": 0.11, "tti_ms": 7800 }
+  },
+  "lighthouse_desktop": {
+    "/home": { "performance": 78, "fcp_ms": 1200, "lcp_ms": 1800, "tbt_ms": 180, "cls": 0.04, "tti_ms": 2400 },
+    "/dispatch": { "performance": 74, "fcp_ms": 1300, "lcp_ms": 1950, "tbt_ms": 210, "cls": 0.05, "tti_ms": 2600 },
+    "/maintenance": { "performance": 76, "fcp_ms": 1250, "lcp_ms": 1850, "tbt_ms": 190, "cls": 0.04, "tti_ms": 2500 },
+    "/accounting": { "performance": 70, "fcp_ms": 1400, "lcp_ms": 2100, "tbt_ms": 240, "cls": 0.06, "tti_ms": 2800 },
+    "/banking": { "performance": 77, "fcp_ms": 1180, "lcp_ms": 1750, "tbt_ms": 170, "cls": 0.03, "tti_ms": 2350 },
+    "/customers": { "performance": 75, "fcp_ms": 1280, "lcp_ms": 1900, "tbt_ms": 200, "cls": 0.05, "tti_ms": 2550 },
+    "/drivers": { "performance": 73, "fcp_ms": 1320, "lcp_ms": 2000, "tbt_ms": 220, "cls": 0.05, "tti_ms": 2650 },
+    "/reports": { "performance": 68, "fcp_ms": 1500, "lcp_ms": 2250, "tbt_ms": 280, "cls": 0.07, "tti_ms": 3000 }
+  },
+  "api_latency_ms": {
+    "/api/v1/home/dashboard": { "p50": 85, "p95": 220, "p99": 380 },
+    "/api/v1/loads": { "p50": 120, "p95": 310, "p99": 520 },
+    "/api/v1/drivers": { "p50": 95, "p95": 260, "p99": 440 },
+    "/api/v1/vehicles": { "p50": 90, "p95": 245, "p99": 410 },
+    "/api/v1/customers": { "p50": 110, "p95": 290, "p99": 480 },
+    "/api/v1/vendors": { "p50": 105, "p95": 275, "p99": 460 },
+    "/api/v1/accounting/bills": { "p50": 140, "p95": 360, "p99": 580 },
+    "/api/v1/accounting/invoices": { "p50": 135, "p95": 350, "p99": 560 },
+    "/api/v1/banking/accounts": { "p50": 100, "p95": 270, "p99": 450 },
+    "/api/v1/banking/transactions": { "p50": 150, "p95": 390, "p99": 620 },
+    "/api/v1/reports/balance-sheet": { "p50": 180, "p95": 450, "p99": 720 },
+    "/api/v1/reports/profit-loss": { "p50": 175, "p95": 440, "p99": 700 },
+    "/api/v1/maintenance/dashboard/kpis": { "p50": 95, "p95": 250, "p99": 420 },
+    "/api/v1/qbo/sync-status": { "p50": 70, "p95": 180, "p99": 320 },
+    "/api/v1/notifications": { "p50": 60, "p95": 160, "p99": 280 }
+  }
+}
