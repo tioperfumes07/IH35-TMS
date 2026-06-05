@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../api/catalogs";
 import { ApiError } from "../api/client";
@@ -52,9 +52,10 @@ import {
   DRIVERS_MODULE_NAV_PATHS,
   DRIVERS_SUBNAV,
   parseDriverListStatus,
-  parseDriverSubnav,
   type DriversListStatusId,
+  type DriversSubnavId,
 } from "../components/drivers/DRIVERS_TABS_CONFIG";
+import { DRIVERS_SUBTAB_PATH, driversSubtabFromPath } from "../router/route-manifest";
 
 export { DRIVERS_MODULE_NAV_PATHS };
 
@@ -217,8 +218,13 @@ function getDetectionSeverityClass(detection: ReturningDetectionResult | null) {
   return "border-blue-300 bg-blue-50 text-blue-900";
 }
 
-export function DriversPage() {
+type DriversPageProps = {
+  initialSubnav?: DriversSubnavId;
+};
+
+export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -226,7 +232,21 @@ export function DriversPage() {
   const [search, setSearch] = useState("");
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
   const [activeTab] = useState<"drivers" | "teams">("drivers");
-  const subnavTab = useMemo(() => parseDriverSubnav(searchParams), [searchParams]);
+  const subnavTab = useMemo(
+    () => (initialSubnav ?? driversSubtabFromPath(location.pathname)) as DriversSubnavId,
+    [initialSubnav, location.pathname]
+  );
+
+  useEffect(() => {
+    const legacySubtab = searchParams.get("subtab");
+    if (!legacySubtab) return;
+    const mapped = legacySubtab.toLowerCase();
+    const target = DRIVERS_SUBTAB_PATH[mapped] ?? "/drivers";
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("subtab");
+    const suffix = nextParams.toString() ? `?${nextParams.toString()}` : "";
+    navigate(`${target}${suffix}`, { replace: true });
+  }, [navigate, searchParams]);
   const [addOpen, setAddOpen] = useState(false);
   const [teamCreateOpen, setTeamCreateOpen] = useState(false);
   const [teamDetailOpen, setTeamDetailOpen] = useState(false);
@@ -796,22 +816,25 @@ export function DriversPage() {
       </KpiStrip>
 
       <div className="flex flex-wrap items-center gap-3">
-        <SecondaryNavTabs
-          tabs={DRIVERS_SUBNAV.map((tab) => ({ id: tab.id, label: tab.label }))}
-          activeId={subnavTab}
-          onChange={(next) => {
-            const nextTab = next as (typeof DRIVERS_SUBNAV)[number]["id"];
-            setSearchParams(
-              (prev) => {
-                const nextParams = new URLSearchParams(prev);
-                if (nextTab === "drivers") nextParams.delete("subtab");
-                else nextParams.set("subtab", nextTab);
-                return nextParams;
-              },
-              { replace: false }
-            );
-          }}
-        />
+        <div className="overflow-x-auto border-b border-gray-200 bg-white px-2 py-1">
+          <div className="flex min-w-max gap-4">
+            {DRIVERS_SUBNAV.map((tab) => {
+              const target = DRIVERS_SUBTAB_PATH[tab.id];
+              const active = subnavTab === tab.id;
+              return (
+                <NavLink
+                  key={tab.id}
+                  to={target}
+                  className={`pb-0.5 text-xs font-semibold ${
+                    active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  {tab.label}
+                </NavLink>
+              );
+            })}
+          </div>
+        </div>
         <DriversCashAdvanceRequestsLink />
       </div>
 

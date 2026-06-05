@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deactivateFactoring, getFactoringChargebacksFees, getFactoringRecoursePipeline, getFactoringStatementsSettings, getFactoringSummary } from "../../api/factoring";
 import { listVendors, updateVendor } from "../../api/mdata";
@@ -27,6 +28,7 @@ import { DriverAutocomplete } from "../../components/factoring/DriverAutocomplet
 import { VendorMergeDiffPreview } from "../../components/factoring/VendorMergeDiffPreview";
 import { DeactivateFactorConfirmModal } from "../../components/factoring/DeactivateFactorConfirmModal";
 import { apiRequest } from "../../api/client";
+import { FACTORING_TAB_PATH, factoringTabFromPath } from "../../router/route-manifest";
 
 const SUBNAV = [
   { id: "recourse_pipeline", label: "Recourse Pipeline" },
@@ -36,6 +38,12 @@ const SUBNAV = [
   { id: "equipment_loans", label: "Equipment Loans (CCG)" },
   { id: "vendor_merges", label: "Driver Vendor Merges" },
 ] as const;
+
+type FactoringTabId = (typeof SUBNAV)[number]["id"];
+
+type FactoringHomeProps = {
+  initialTab?: FactoringTabId;
+};
 
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
@@ -50,13 +58,17 @@ function fmtDate(value: unknown) {
   return date.toLocaleDateString();
 }
 
-export function FactoringHomePage() {
+export function FactoringHomePage({ initialTab = "recourse_pipeline" }: FactoringHomeProps = {}) {
+  const location = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
-  const [tab, setTab] = useState<(typeof SUBNAV)[number]["id"]>("recourse_pipeline");
+  const [tab, setTab] = useState<FactoringTabId>(initialTab);
+  useEffect(() => {
+    setTab(factoringTabFromPath(location.pathname) as FactoringTabId);
+  }, [location.pathname]);
   const [deactivating, setDeactivating] = useState(false);
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [faroCsvText, setFaroCsvText] = useState("");
@@ -261,16 +273,19 @@ export function FactoringHomePage() {
 
       <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">
-          {SUBNAV.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={tab === item.id ? "border-b border-white pb-0.5 font-semibold" : ""}
-              onClick={() => setTab(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
+          {SUBNAV.map((item) => {
+            const target = FACTORING_TAB_PATH[item.id];
+            const active = tab === item.id;
+            return (
+              <NavLink
+                key={item.id}
+                to={target}
+                className={active ? "border-b border-white pb-0.5 font-semibold" : "pb-0.5"}
+              >
+                {item.label}
+              </NavLink>
+            );
+          })}
         </div>
       </div>
 

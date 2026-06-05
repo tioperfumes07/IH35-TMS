@@ -18,6 +18,7 @@ import { ApplicantsPipelinePage } from "../pages/drivers/ApplicantsPipelinePage"
 import { ApplicationPage } from "../pages/public/ApplicationPage";
 import { DriverLoadStatusesPage } from "../pages/DriverLoadStatusesPage";
 import { DriversPage } from "../pages/Drivers";
+import type { DriversSubnavId } from "../components/drivers/DRIVERS_TABS_CONFIG";
 import { DispatchPage } from "../pages/Dispatch";
 import { GeofencesPage } from "../pages/operations/GeofencesPage";
 import { DispatchAlertsPage } from "../pages/dispatch/DispatchAlertsPage";
@@ -379,6 +380,22 @@ function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
   return <MaintenanceHomePage initialTab={tabId} />;
 }
 
+function DriversSubtabRoute({ subnav }: { subnav: DriversSubnavId }) {
+  return <DriversPage initialSubnav={subnav} />;
+}
+
+type FactoringTabId =
+  | "recourse_pipeline"
+  | "chargebacks_fees"
+  | "statements_settings"
+  | "faro_imports"
+  | "equipment_loans"
+  | "vendor_merges";
+
+function FactoringTabRoute({ tabId }: { tabId: FactoringTabId }) {
+  return <FactoringHomePage initialTab={tabId} />;
+}
+
 function DispatchLoadsRoute() {
   return <DispatchPage loadsDeepLink />;
 }
@@ -478,6 +495,70 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <UserDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/profiles"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="profiles" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/settlements"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="settlements" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/pre-settlements"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="pre_settlements" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/cash-advances"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="cash_advances" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/permits"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="permits" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/pay-rate-templates"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="pay_rate_templates" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/deductions"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="deductions" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/leave"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="leave" />
             </ProtectedRoute>
           }
         />
@@ -851,6 +932,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="accidents" element={<AccidentsIncidentsTab />} />
           <Route path="damage-reports" element={<DamageReportsTab />} />
           <Route path="trailer-interchanges" element={<TrailerInterchangesTab />} />
+          <Route path="/safety/trailer-interchanges" element={<TrailerInterchangesTab />} />
           <Route path="cargo-claims" element={<CargoClaimsTab />} />
           <Route path="internal-fines" element={<InternalFinesTab />} />
           <Route path="external-fines" element={<ExternalFinesTab />} />
@@ -860,6 +942,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="insurance" element={<InsuranceTab />} />
           <Route path="insurance/*" element={<InsuranceTab />} />
           <Route path="permits" element={<PermitsTab />} />
+          <Route path="/safety/permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />
           <Route path="/safety/integrity-reports" element={<IntegrityReportsTab />} />
           <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
@@ -1183,6 +1266,54 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CashAdvancesHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/recourse-pipeline"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="recourse_pipeline" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/chargebacks-fees"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="chargebacks_fees" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/statements-settings"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="statements_settings" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/faro-imports"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="faro_imports" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/equipment-loans"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="equipment_loans" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/vendor-merges"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="vendor_merges" />
             </ProtectedRoute>
           }
         />
@@ -2544,13 +2675,6 @@ export const ROUTES = React.Children.toArray(
           "/fuel/settings",
           "/fuel/inbox",
           "/safety/accidents-incidents",
-          "/safety/permits",
-          "/safety/trailer-interchanges",
-          "/drivers/settlements",
-          "/drivers/permits",
-          "/factoring/faro-imports",
-          "/factoring/equipment-loans",
-          "/factoring/vendor-merges",
         ].map((path) => (
           <Route
             key={path}

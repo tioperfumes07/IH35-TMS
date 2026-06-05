@@ -1,26 +1,25 @@
 {
-  "block_id": "AUDIT-FIX-17",
-  "branch": "audit-fix/audit-fix-17-factoring-power-user-ux",
+  "block_id": "AUDIT-FIX-14",
+  "branch": "audit-fix/audit-fix-14-subtab-real-routes",
   "phase": "AUDIT-FIX",
-  "task": "FACTORING-POWER-USER-UX — Faro CSV + vendor merge autocomplete + deactivate confirm",
+  "task": "SUBTAB-AS-REAL-ROUTES — deep-linkable sub-tabs across Drivers/Safety/Maint/Bank/Factoring",
   "allowed_files": [
+    "apps/frontend/src/router/route-manifest.ts",
+    "apps/frontend/src/pages/Drivers.tsx",
+    "apps/frontend/src/components/safety/SafetyGroupNav.tsx",
+    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+    "apps/frontend/src/pages/banking/BankingHome.tsx",
     "apps/frontend/src/pages/factoring/FactoringHome.tsx",
-    "apps/frontend/src/pages/factoring/FaroDailyImportsTab.tsx",
-    "apps/frontend/src/pages/factoring/DriverVendorMergesTab.tsx",
-    "apps/frontend/src/pages/factoring/StatementsSettingsTab.tsx",
-    "apps/frontend/src/components/factoring/FaroCSVUploadWidget.tsx",
-    "apps/frontend/src/components/factoring/DriverAutocomplete.tsx",
-    "apps/frontend/src/components/factoring/VendorMergeDiffPreview.tsx",
-    "apps/frontend/src/components/factoring/DeactivateFactorConfirmModal.tsx",
-    "apps/backend/src/factoring/scan-duplicate-vendors.routes.ts",
-    "scripts/verify-factoring-destructive-actions-have-confirm.mjs",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-subtabs-are-real-routes.mjs",
+    "scripts/verify-nav-integrity.mjs",
+    "scripts/nav-integrity-allowlist.json",
     "package.json",
     ".github/workflows/ci.yml",
-    ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.json"
   ],
   "extra_gates": [
-    "verify:factoring-destructive-actions-have-confirm"
+    "verify:subtabs-are-real-routes"
   ],
   "runtime_path": "src",
   "db_required": false,
