@@ -585,6 +585,9 @@ jobs:
       - name: verify:qbo-sync-coa-no-orphans
         run: npm run verify:qbo-sync-coa-no-orphans
 
+      - name: verify:qbo-sync-drift-acceptable
+        run: npm run verify:qbo-sync-drift-acceptable
+
       - name: verify:wo-form-categories-and-items-wired
         run: npm run verify:wo-form-categories-and-items-wired
 

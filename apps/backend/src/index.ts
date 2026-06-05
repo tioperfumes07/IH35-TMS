@@ -246,6 +246,8 @@ import { registerChartOfAccountsSyncRoutes } from "./qbo-sync/chart-of-accounts.
 import { registerItemsSyncRoutes } from "./qbo-sync/items.routes.js";
 import { registerCustomersSyncRoutes } from "./qbo-sync/customers.routes.js";
 import { registerVendorsSyncRoutes } from "./qbo-sync/vendors.routes.js";
+import { registerQboSyncDriftDashboardRoutes } from "./qbo-sync/drift-dashboard.routes.js";
+import { initializeQboSyncDriftScheduler } from "./qbo-sync/sync-scheduler.js";
 import { registerAccountingCatalogLookupRoutes } from "./accounting/items.routes.js";
 import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
 import { initializeQboRemoteCountCollectorCron } from "./cron/qbo-remote-count-collector.cron.js";
@@ -456,6 +458,7 @@ async function main() {
   await registerItemsSyncRoutes(app);
   await registerCustomersSyncRoutes(app);
   await registerVendorsSyncRoutes(app);
+  await registerQboSyncDriftDashboardRoutes(app);
   await registerAccountingCatalogLookupRoutes(app);
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);
@@ -892,6 +895,13 @@ async function main() {
     app.log.info("[STARTUP] qbo-sync-alerts-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] qbo-sync-alerts-cron failed");
+  }
+
+  try {
+    initializeQboSyncDriftScheduler(app);
+    app.log.info("[STARTUP] qbo-sync-drift-scheduler initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] qbo-sync-drift-scheduler failed");
   }
 
   try {

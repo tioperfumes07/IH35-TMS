@@ -41,6 +41,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Sales tax", path: "/accounting/sales-tax", section: "direct" },
   { label: "Month close", path: "/accounting/month-close", section: "direct" },
   { label: "Audit trail", path: "/accounting/audit-trail", section: "direct" },
+  { label: "QBO sync drift", path: "/accounting/qbo-sync", section: "direct" },
   { label: "Posting lineage", path: "/accounting/posting-lineage", section: "direct" },
   { label: "Escrow", path: "/accounting/escrow", section: "direct" },
   { label: "Cash forecast", path: "/accounting/cash-forecast", section: "direct" },
