@@ -107,6 +107,7 @@ import { BatchWizard } from "../pages/factoring/BatchWizard";
 import { BatchDetail } from "../pages/factoring/BatchDetail";
 import { FactorAdmin } from "../pages/factoring/FactorAdmin";
 import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
+import { FaroImportPage } from "../pages/factoring/FaroImportPage";
 import { VehicleProfilePage } from "../pages/fleet/VehicleProfilePage";
 import { TrailerProfilePage } from "../pages/fleet/TrailerProfilePage";
 import { TransfersInProgressPage } from "../pages/fleet/TransfersInProgressPage";
@@ -1191,6 +1192,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ReserveDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/faro-import"
+          element={
+            <ProtectedRoute>
+              <FaroImportPage />
             </ProtectedRoute>
           }
         />

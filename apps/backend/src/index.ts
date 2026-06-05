@@ -140,6 +140,7 @@ import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
 import { registerFactoringBatchRoutes } from "./factoring/batch.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
 import { registerReserveRoutes } from "./factoring/reserve.routes.js";
+import { registerFaroCsvImportRoutes } from "./factoring/faro-csv-import.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js";
@@ -622,6 +623,7 @@ async function main() {
   await registerFactoringBatchRoutes(app);
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);
+  await registerFaroCsvImportRoutes(app);
   await registerDataInfrastructureRoutes(app);
   await registerOcrRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
