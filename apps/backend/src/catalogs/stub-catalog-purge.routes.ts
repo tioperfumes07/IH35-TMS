@@ -18,6 +18,22 @@ type StubCatalogSpec = {
   activeFilter?: string;
 };
 
+/** Catalog tables already registered in mdata routes — refs only for factory coverage guards. */
+const ALREADY_WIRED_STUB_TABLES: Pick<StubCatalogSpec, "tableName" | "catalogTable">[] = [
+  {
+    tableName: "customer_quality_event_reasons",
+    catalogTable: "catalogs.customer_quality_event_reasons",
+  },
+  {
+    tableName: "dispatcher_error_reasons",
+    catalogTable: "catalogs.dispatcher_error_reasons",
+  },
+  {
+    tableName: "driver_termination_reasons",
+    catalogTable: "catalogs.driver_termination_reasons",
+  },
+];
+
 /** Remaining catalog tables wired with read-only list routes (CATALOG-3 stub purge). */
 const STUB_CATALOG_SPECS: StubCatalogSpec[] = [
   {
@@ -47,24 +63,6 @@ const STUB_CATALOG_SPECS: StubCatalogSpec[] = [
     activeFilter: "is_active = true",
   },
   {
-    tableName: "customer_quality_event_reasons",
-    catalogTable: "catalogs.customer_quality_event_reasons",
-    routeSegment: "customer-quality-event-reasons",
-    companyScoped: false,
-    selectSql: "code, label, description, event_type, severity, is_active",
-    orderBy: "code",
-    activeFilter: "is_active = true AND deactivated_at IS NULL",
-  },
-  {
-    tableName: "dispatcher_error_reasons",
-    catalogTable: "catalogs.dispatcher_error_reasons",
-    routeSegment: "dispatcher-error-reasons",
-    companyScoped: false,
-    selectSql: "code, label, description, event_type, severity, is_active",
-    orderBy: "code",
-    activeFilter: "is_active = true AND deactivated_at IS NULL",
-  },
-  {
     tableName: "driver_leave_balances",
     catalogTable: "catalogs.driver_leave_balances",
     routeSegment: "driver-leave-balances",
@@ -72,15 +70,6 @@ const STUB_CATALOG_SPECS: StubCatalogSpec[] = [
     selectSql:
       "id, operating_company_id, driver_id, plan_year, vacation_allocated, vacation_used, sick_allocated, sick_used, personal_allocated, personal_used",
     orderBy: "plan_year DESC, driver_id",
-  },
-  {
-    tableName: "driver_termination_reasons",
-    catalogTable: "catalogs.driver_termination_reasons",
-    routeSegment: "driver-termination-reasons",
-    companyScoped: false,
-    selectSql: "code, label, description, severity, is_active",
-    orderBy: "code",
-    activeFilter: "is_active = true AND deactivated_at IS NULL",
   },
   {
     tableName: "labor_rates",
@@ -169,4 +158,7 @@ export async function registerStubCatalogPurgeRoutes(app: FastifyInstance) {
   }
 }
 
-export const STUB_CATALOG_TABLES = STUB_CATALOG_SPECS.map((spec) => spec.tableName);
+export const STUB_CATALOG_TABLES = [
+  ...STUB_CATALOG_SPECS.map((spec) => spec.tableName),
+  ...ALREADY_WIRED_STUB_TABLES.map((spec) => spec.tableName),
+];
