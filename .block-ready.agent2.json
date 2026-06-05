@@ -12,9 +12,14 @@
     "scripts/deep-audit-a-vendor-buttons.mjs",
     "scripts/deep-audit-a-driver-edit-modal.mjs",
     "scripts/deep-audit-a-equipment-assignments.mjs",
+    "scripts/verify-deep-audit-a-customer-sub-tabs.mjs",
+    "scripts/verify-deep-audit-a-vendor-buttons.mjs",
+    "scripts/verify-deep-audit-a-driver-edit-modal.mjs",
+    "scripts/verify-deep-audit-a-equipment-assignments.mjs",
     "docs/audits/DEEP-AUDIT-A-SUMMARY.md",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent2.json",
+    ".github/workflows/ci.yml"
   ],
   "extra_gates": [],
   "runtime_path": "src",
