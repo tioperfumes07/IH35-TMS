@@ -1,0 +1,31 @@
+name: deploy-approval
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual production deploy gate"
+        required: false
+        default: "manual"
+
+jobs:
+  production-deploy-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Record deploy approval gate
+        run: |
+          echo "Production deploy gate passed at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Commit: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Reason: ${{ github.event.inputs.reason || 'push-to-main' }}"
+          echo ""
+          echo "Render auto-deploy proceeds after this environment approval."
+          echo "Configure 'production' environment reviewers in GitHub repo Settings → Environments."

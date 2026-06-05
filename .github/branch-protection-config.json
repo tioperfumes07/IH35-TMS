@@ -1,0 +1,40 @@
+{
+  "branch": "main",
+  "repository": "tioperfumes07/IH35-TMS",
+  "protection": {
+    "required_pull_request_reviews": {
+      "required_approving_review_count": 1,
+      "dismiss_stale_reviews": true,
+      "require_code_owner_reviews": true
+    },
+    "required_status_checks": {
+      "strict": true,
+      "contexts": [
+        "required-checks / required-checks-gate",
+        "ci / build-typecheck",
+        "ci / verify-branch-fresh",
+        "perf-budget-check / perf-audit",
+        "security-checks / security-audit"
+      ]
+    },
+    "enforce_admins": false,
+    "required_conversation_resolution": true,
+    "restrictions": null,
+    "allow_force_pushes": false,
+    "allow_deletions": false
+  },
+  "required_checks_detail": {
+    "lint-and-typecheck": "ci / build-typecheck (includes verify:pre-commit + tsc + builds)",
+    "build-backend": "ci / build-typecheck",
+    "build-frontend": "ci / build-typecheck",
+    "build-driver-pwa": "ci / build-typecheck",
+    "unit-tests": "ci / build-typecheck (vitest coverage)",
+    "verify-pre-commit": "ci / build-typecheck",
+    "verify-architectural-design": "ci / build-typecheck (verify:arch-design chain)",
+    "verify-migration-application-consistency": "ci / build-typecheck",
+    "perf-budget-check": "perf-budget-check / perf-audit",
+    "security-checks": "security-checks / security-audit"
+  },
+  "apply_script": "node scripts/ci-apply-branch-protection.mjs",
+  "verify_script": "node scripts/verify-ci-policy-applied.mjs"
+}

@@ -1,0 +1,8 @@
+# IH35-TMS — critical path ownership (CLOSURE-22)
+# Jorge must approve changes to migrations, QBO sync, USMCA, deploy config, and CI.
+
+/apps/backend/src/migrations/ @tioperfumes07
+/apps/backend/src/qbo-sync/ @tioperfumes07
+/apps/backend/src/usmca/ @tioperfumes07
+/render.yaml @tioperfumes07
+/.github/ @tioperfumes07
