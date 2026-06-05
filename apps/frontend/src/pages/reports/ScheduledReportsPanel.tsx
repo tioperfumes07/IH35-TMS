@@ -6,7 +6,7 @@ import { useToast } from "../../components/Toast";
 
 type ScheduledRow = {
   id: string;
-  report_id: string;
+  report_id?: string;
   name: string;
   cadence: string;
   cadence_label?: string;
