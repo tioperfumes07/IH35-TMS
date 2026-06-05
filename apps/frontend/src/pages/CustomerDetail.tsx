@@ -312,22 +312,6 @@ type SaferEntityStatus = {
   safer_oos_status: "in_service" | "out_of_service" | "unknown" | null;
 };
 
-function saferStatusVariant(status: SaferEntityStatus["safer_status"]): "positive" | "warn" | "crit" | "neutral" {
-  if (status === "verified") return "positive";
-  if (status === "lookup_failed") return "warn";
-  if (status === "unverified" || status === "not_found") return "crit";
-  return "neutral";
-}
-
-function saferStatusLabel(status: SaferEntityStatus["safer_status"]) {
-  if (status === "verified") return "SAFER Verified";
-  if (status === "unverified") return "SAFER Unverified";
-  if (status === "not_found") return "SAFER Not Found";
-  if (status === "lookup_failed") return "SAFER Lookup Failed";
-  if (status === "skipped") return "SAFER Skipped";
-  return "SAFER Not Checked";
-}
-
 export function CustomerDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -453,24 +437,7 @@ export function CustomerDetailPage() {
     queryFn: () => listFmcsaLookups({ limit: 25 }).then((res) => res.lookups),
     enabled: fmcsaHistoryOpen,
   });
-  const saferStatusQuery = useQuery({
-    queryKey: ["fmcsa-safer-status", "customer", id, operatingCompanyId ?? "none"],
-    queryFn: async () => {
-      const q = new URLSearchParams({
-        entity_type: "customer",
-        entity_id: id,
-        operating_company_id: operatingCompanyId ?? "",
-      });
-      return apiRequest<{ entity_type: "customer"; entity: SaferEntityStatus }>(
-        `/api/v1/compliance/fmcsa-safer/status?${q.toString()}`
-      );
-    },
-    enabled: Boolean(id && operatingCompanyId),
-    retry: false,
-  });
-
   const customer = detailQuery.data;
-  const saferEntity = saferStatusQuery.data?.entity ?? null;
   const contacts = contactsQuery.data ?? customer?.contacts ?? [];
   const factoringVendors = useMemo(
     () =>
@@ -619,36 +586,22 @@ export function CustomerDetailPage() {
       pushToast("FMCSA verification failed", "error");
     },
   });
-  const verifySaferMutation = useMutation({
-    mutationFn: () =>
-      apiRequest(`/api/v1/compliance/fmcsa-safer/verify-now`, {
-        method: "POST",
-        body: { entity_type: "customer", entity_id: id, force: true },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["fmcsa-safer-status", "customer", id] });
-      queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      pushToast("SAFER verification refreshed", "success");
-    },
-    onError: () => {
-      pushToast("SAFER verification failed", "error");
-    },
-  });
-
   const saferStatusQuery = useQuery({
-    queryKey: ["fmcsa-safer-entity", "customer", id, operatingCompanyId],
-    queryFn: () =>
-      apiRequest<{
-        safer: {
-          safer_status: string | null;
-          safer_authority_status: string | null;
-          safer_oos_status: string | null;
-          safer_verified_at: string | null;
-        };
-      }>(`/api/v1/compliance/fmcsa-safer/entity/customer/${id}?operating_company_id=${operatingCompanyId}`),
+    queryKey: ["fmcsa-safer-status", "customer", id, operatingCompanyId ?? "none"],
+    queryFn: () => {
+      const q = new URLSearchParams({
+        entity_type: "customer",
+        entity_id: id,
+        operating_company_id: operatingCompanyId ?? "",
+      });
+      return apiRequest<{ entity_type: "customer"; entity: SaferEntityStatus }>(
+        `/api/v1/compliance/fmcsa-safer/status?${q.toString()}`
+      );
+    },
     enabled: Boolean(id && operatingCompanyId),
+    retry: false,
   });
+  const saferEntity = saferStatusQuery.data?.entity ?? null;
 
   const verifySaferMutation = useMutation({
     mutationFn: () =>
@@ -657,12 +610,13 @@ export function CustomerDetailPage() {
         body: {
           entity_type: "customer",
           entity_id: id,
-          operating_company_id: operatingCompanyId,
           force: true,
         },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["fmcsa-safer-entity", "customer", id] });
+      queryClient.invalidateQueries({ queryKey: ["fmcsa-safer-status", "customer", id] });
+      queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       pushToast("SAFER verification refreshed", "success");
     },
     onError: () => pushToast("SAFER verification failed", "error"),
@@ -966,13 +920,13 @@ export function CustomerDetailPage() {
           </Button>
         ) : null}
         {customer.fmcsa_last_checked_at ? <span className="text-xs text-gray-500">{`Last checked ${new Date(customer.fmcsa_last_checked_at).toLocaleString()}`}</span> : null}
-        {saferStatusQuery.data?.safer?.safer_verified_at ? (
+        {saferEntity?.safer_verified_at ? (
           <StatusBadge variant="positive">
-            {`SAFER ${saferStatusQuery.data.safer.safer_authority_status ?? "verified"} · ${new Date(saferStatusQuery.data.safer.safer_verified_at).toLocaleDateString()}`}
+            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`}
           </StatusBadge>
-        ) : saferStatusQuery.data?.safer?.safer_status ? (
-          <StatusBadge variant={saferStatusQuery.data.safer.safer_status === "verified" ? "positive" : "warn"}>
-            {`SAFER ${saferStatusQuery.data.safer.safer_status}`}
+        ) : saferEntity?.safer_status ? (
+          <StatusBadge variant={saferEntity.safer_status === "verified" ? "positive" : "warn"}>
+            {`SAFER ${saferEntity.safer_status}`}
           </StatusBadge>
         ) : null}
         {canVerifyFmcsa ? (
@@ -1370,9 +1324,9 @@ export function CustomerDetailPage() {
               <MetricCell
                 label="SAFER Status"
                 value={
-                  saferStatusQuery.data?.safer?.safer_verified_at
-                    ? `${saferStatusQuery.data.safer.safer_authority_status ?? "verified"} · ${saferStatusQuery.data.safer.safer_oos_status ?? "unknown"} · ${new Date(saferStatusQuery.data.safer.safer_verified_at).toLocaleDateString()}`
-                    : saferStatusQuery.data?.safer?.safer_status ?? "Not verified"
+                  saferEntity?.safer_verified_at
+                    ? `${saferEntity.safer_authority_status ?? "unknown"} · ${saferEntity.safer_oos_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`
+                    : saferEntity?.safer_status ?? "Not verified"
                 }
               />
             </div>

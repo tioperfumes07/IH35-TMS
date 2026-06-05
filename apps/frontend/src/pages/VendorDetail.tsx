@@ -22,6 +22,16 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { BillSelect } from "../components/ap/BillSelect";
 import { emptyVendorProfileMeta, parseVendorNotes, serializeVendorNotes, type VendorProfileMeta } from "../lib/vendorProfileMeta";
 
+type SaferEntityStatus = {
+  id: string;
+  mc_number: string | null;
+  dot_number: string | null;
+  safer_verified_at: string | null;
+  safer_status: string | null;
+  safer_authority_status: string | null;
+  safer_oos_status: string | null;
+};
+
 const tabs = ["Profile", "A/P", "Documents", "Audit History"] as const;
 type VendorTab = (typeof tabs)[number];
 
@@ -97,17 +107,19 @@ export function VendorDetailPage() {
   });
 
   const saferStatusQuery = useQuery({
-    queryKey: ["fmcsa-safer-entity", "vendor", id, companyId],
-    queryFn: () =>
-      apiRequest<{
-        safer: {
-          safer_status: string | null;
-          safer_authority_status: string | null;
-          safer_oos_status: string | null;
-          safer_verified_at: string | null;
-        };
-      }>(`/api/v1/compliance/fmcsa-safer/entity/vendor/${id}?operating_company_id=${companyId}`),
+    queryKey: ["fmcsa-safer-status", "vendor", id, companyId],
+    queryFn: () => {
+      const q = new URLSearchParams({
+        entity_type: "vendor",
+        entity_id: id,
+        operating_company_id: companyId,
+      });
+      return apiRequest<{ entity_type: "vendor"; entity: SaferEntityStatus }>(
+        `/api/v1/compliance/fmcsa-safer/status?${q.toString()}`
+      );
+    },
     enabled: Boolean(id && companyId),
+    retry: false,
   });
 
   const verifySaferMutation = useMutation({
@@ -117,12 +129,12 @@ export function VendorDetailPage() {
         body: {
           entity_type: "vendor",
           entity_id: id,
-          operating_company_id: companyId,
           force: true,
         },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["fmcsa-safer-entity", "vendor", id] });
+      queryClient.invalidateQueries({ queryKey: ["fmcsa-safer-status", "vendor", id] });
+      queryClient.invalidateQueries({ queryKey: ["vendor", id] });
       pushToast("SAFER verification refreshed", "success");
     },
     onError: () => pushToast("SAFER verification failed", "error"),
@@ -296,6 +308,7 @@ export function VendorDetailPage() {
   }
 
   const vendor = vendorQuery.data;
+  const saferEntity = saferStatusQuery.data?.entity ?? null;
   const reworkSignalCount = Number(
     (vendorIntegrityQuery.data?.repeat_failure_30d_count as number | undefined) ??
       (vendorIntegrityQuery.data?.redo_30d_count as number | undefined) ??
@@ -326,19 +339,19 @@ export function VendorDetailPage() {
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        {saferStatusQuery.data?.safer?.safer_verified_at ? (
+        {saferEntity?.safer_verified_at ? (
           <StatusBadge variant="positive">
-            {`SAFER ${saferStatusQuery.data.safer.safer_authority_status ?? "verified"} · ${new Date(saferStatusQuery.data.safer.safer_verified_at).toLocaleDateString()}`}
+            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`}
           </StatusBadge>
-        ) : saferStatusQuery.data?.safer?.safer_status ? (
-          <StatusBadge variant={saferStatusQuery.data.safer.safer_status === "verified" ? "positive" : "warn"}>
-            {`SAFER ${saferStatusQuery.data.safer.safer_status}`}
+        ) : saferEntity?.safer_status ? (
+          <StatusBadge variant={saferEntity.safer_status === "verified" ? "positive" : "warn"}>
+            {`SAFER ${saferEntity.safer_status}`}
           </StatusBadge>
         ) : (
           <StatusBadge variant="neutral">SAFER not verified</StatusBadge>
         )}
-        {saferStatusQuery.data?.safer?.safer_oos_status ? (
-          <span className="text-xs text-gray-500">{`Operating: ${saferStatusQuery.data.safer.safer_oos_status}`}</span>
+        {saferEntity?.safer_oos_status ? (
+          <span className="text-xs text-gray-500">{`Operating: ${saferEntity.safer_oos_status}`}</span>
         ) : null}
         <Button size="sm" variant="secondary" onClick={() => verifySaferMutation.mutate()} loading={verifySaferMutation.isPending}>
           Verify SAFER
