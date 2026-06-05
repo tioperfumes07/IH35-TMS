@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "machine_translated": false,
+    "review_status": "human-reviewed-seed"
+  },
+  "common": {
+    "app_name": "IH 35 Dispatch",
+    "phone_login": "Phone login",
+    "open_navigation_menu": "Open navigation menu",
+    "profile": "Profile",
+    "sign_out": "Sign out",
+    "reconnect_now": "Reconnect now",
+    "language": "Language",
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "english": "English",
+    "spanish": "Spanish"
+  },
+  "topbar": {
+    "qbo_sync_error": "QBO sync error.",
+    "sign_out_failed_redirecting": "Sign out failed, redirecting to login",
+    "reason": "Reason: {{value}}",
+    "errors": "Errors: {{value}}",
+    "pending": "Pending: {{value}}",
+    "last_failed": "Last failed: {{value}}"
+  },
+  "dashboard": {
+    "title": "Dashboard"
+  },
+  "dispatch": {
+    "title": "Dispatch"
+  },
+  "drivers": {
+    "title": "Drivers"
+  },
+  "maintenance": {
+    "title": "Maintenance"
+  },
+  "accounting": {
+    "title": "Accounting"
+  },
+  "banking": {
+    "title": "Banking"
+  },
+  "factoring": {
+    "title": "Factoring"
+  },
+  "lists": {
+    "title": "Lists"
+  },
+  "reports": {
+    "title": "Reports"
+  }
+}

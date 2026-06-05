@@ -16,6 +16,8 @@ import { PageHelpLink } from "./PageHelpLink";
 import { useToast } from "./Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { qboConnectionLabel, RELAY_NOT_CONFIGURED, resolveSamsaraVisualStatus } from "../lib/integration-telematics-status";
+import { LocaleSwitcher } from "../i18n/locale-switcher";
+import { useTranslation } from "../hooks/useTranslation";
 
 type Props = {
   auth: AuthMeResponse["user"];
@@ -37,9 +39,10 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   const navigate = useNavigate();
   const [now, setNow] = useState(() => new Date());
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const emailLabel = auth.email ?? "Phone login";
+  const emailLabel = auth.email ?? t("common.phone_login", "Phone login");
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const companyLabel = selectedCompany?.short_name?.trim() || selectedCompany?.legal_name?.trim() || "";
@@ -120,12 +123,12 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     if (!qboSyncPill || qboSyncPill.status !== "error") return null;
     const row = qboSyncHealthQuery.data as Record<string, unknown> | undefined;
     const parts: string[] = [];
-    if (qboSyncPill.reconnectReason) parts.push(`Reason: ${qboSyncPill.reconnectReason}`);
-    if (typeof row?.error_count === "number") parts.push(`Errors: ${row.error_count}`);
-    if (typeof row?.pending_count === "number") parts.push(`Pending: ${row.pending_count}`);
-    if (row?.last_failed_sync_at) parts.push(`Last failed: ${new Date(String(row.last_failed_sync_at)).toLocaleString()}`);
+    if (qboSyncPill.reconnectReason) parts.push(t("topbar.reason", "Reason: {{value}}", { value: qboSyncPill.reconnectReason }));
+    if (typeof row?.error_count === "number") parts.push(t("topbar.errors", "Errors: {{value}}", { value: row.error_count }));
+    if (typeof row?.pending_count === "number") parts.push(t("topbar.pending", "Pending: {{value}}", { value: row.pending_count }));
+    if (row?.last_failed_sync_at) parts.push(t("topbar.last_failed", "Last failed: {{value}}", { value: new Date(String(row.last_failed_sync_at)).toLocaleString() }));
     return parts.join(" · ");
-  }, [qboSyncPill, qboSyncHealthQuery.data]);
+  }, [qboSyncPill, qboSyncHealthQuery.data, t]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -161,14 +164,14 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             type="button"
             className="inline-flex h-8 w-8 items-center justify-center rounded border text-white hover:bg-white/10 md:hidden"
             style={{ borderColor: colors.sidebarBorder }}
-            aria-label="Open navigation menu"
+            aria-label={t("common.open_navigation_menu", "Open navigation menu")}
             onClick={onOpenMobileNav}
           >
             <Menu className="h-4 w-4" />
           </button>
         ) : null}
         <div className="flex min-w-0 flex-wrap items-center gap-2 font-medium uppercase" style={{ fontSize: 13, color: colors.sidebarTextActive }}>
-          IH 35 Dispatch
+          {t("common.app_name", "IH 35 Dispatch")}
           <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
           {office && legalNameChip ? (
             <span
@@ -196,6 +199,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       </div>
 
       <div className="relative flex items-center justify-end gap-2 text-sm text-gray-700">
+        {office ? <LocaleSwitcher /> : null}
         {office ? <PageHelpLink /> : null}
         {office ? <NotificationBell /> : null}
         <span style={{ fontSize: typography.pageSubtitle, color: colors.sidebarTextMuted }}>{dateLabel}</span>
@@ -218,7 +222,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                 navigate("/settings");
               }}
             >
-              Profile
+              {t("common.profile", "Profile")}
             </button>
             <button
               type="button"
@@ -228,14 +232,14 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                 try {
                   await signOut(window.location.origin);
                 } catch {
-                  pushToast("Sign out failed, redirecting to login", "info");
+                  pushToast(t("topbar.sign_out_failed_redirecting", "Sign out failed, redirecting to login"), "info");
                 } finally {
                   queryClient.removeQueries({ queryKey: ["auth", "me"] });
                   window.location.href = "/login";
                 }
               }}
             >
-              Sign out
+              {t("common.sign_out", "Sign out")}
             </button>
           </div>
         ) : null}
@@ -244,7 +248,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       {qboErrorBannerMessage ? (
         <div className="px-3 pb-2">
           <div className="rounded border border-red-400/60 bg-red-500/10 px-3 py-2 text-xs text-red-100">
-            <span className="font-semibold">QBO sync error.</span> {qboErrorBannerMessage}
+            <span className="font-semibold">{t("topbar.qbo_sync_error", "QBO sync error.")}</span> {qboErrorBannerMessage}
             {qboSyncPill?.needsReconnect && companyId ? (
               <button
                 type="button"
@@ -253,7 +257,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                   window.location.href = getQboAuthorizeStartUrl(companyId);
                 }}
               >
-                Reconnect now
+                {t("common.reconnect_now", "Reconnect now")}
               </button>
             ) : null}
           </div>
