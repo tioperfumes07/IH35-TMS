@@ -33,6 +33,14 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
     queryFn: () => listDrivers({ operating_company_id: operatingCompanyId }).then((res) => res.drivers),
     enabled: Boolean(operatingCompanyId),
   });
+  const driverOptions = useMemo(
+    () =>
+      (driversQuery.data ?? []).map((driver) => ({
+        value: driver.id,
+        label: `${driver.first_name} ${driver.last_name}`,
+      })),
+    [driversQuery.data]
+  );
 
   const [createOpen, setCreateOpen] = useState(false);
   const [primaryDriverId, setPrimaryDriverId] = useState("");
