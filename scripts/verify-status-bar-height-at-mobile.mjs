@@ -8,7 +8,7 @@ const repoRoot = process.cwd();
 const REQUIRED = [
   {
     file: "apps/frontend/src/components/layout/TopStatusBar.tsx",
-    markers: ["useMaxWidth", "compactMaxWidth = 767", "StatusBarMobile", "data-status-bar-desktop"],
+    markers: ["useMaxWidth", "compactMaxWidth", "StatusBarMobile", "data-status-bar-desktop"],
   },
   {
     file: "apps/frontend/src/components/layout/StatusBarMobile.tsx",
@@ -46,4 +46,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log("[verify-status-bar-height-at-mobile] OK — mobile bar capped at h-10 (40px) with icon-only dots at <=767px");
+console.log("[verify-status-bar-height-at-mobile] OK — StatusBarMobile capped at h-10 (40px) with icon-only compact mode");

@@ -11,13 +11,15 @@
     "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
     "apps/frontend/src/components/Topbar.tsx",
     "scripts/verify-no-clipped-subtabs-at-1024.mjs",
+    "scripts/verify-status-bar-height-at-mobile.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:no-clipped-subtabs-at-1024"
+    "verify:no-clipped-subtabs-at-1024",
+    "verify:status-bar-height-at-mobile"
   ],
   "runtime_path": "src",
   "db_required": false,
