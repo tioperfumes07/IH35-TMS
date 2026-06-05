@@ -140,6 +140,8 @@ jobs:
 
       - name: Verify launch toggle audit trail guard
         run: npm run verify:launch-toggle-audit-trail
+      - name: verify:cc-payment-posts-to-qbo
+        run: npm run verify:cc-payment-posts-to-qbo
 
       - name: verify:drug-alcohol-fmcsa-clearinghouse-link
         run: npm run verify:drug-alcohol-fmcsa-clearinghouse-link
