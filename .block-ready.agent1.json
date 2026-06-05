@@ -1,26 +1,24 @@
 {
-  "block_id": "USMCA-3",
-  "branch": "feat/usmca-3-soft-launch-toggle",
-  "phase": "Phase 7 USMCA",
-  "task": "Soft-launch toggle + admin go-live workflow (USMCA July 2026 cutover)",
+  "block_id": "FINAL-AUDIT-PASS",
+  "branch": "feat/final-audit-pass",
+  "phase": "Phase 7 Closure",
+  "task": "Per-module exhaustive audit pass (18 modules) + 3 CI guards",
   "allowed_files": [
-    "db/migrations/0388_admin_launch_toggles.sql",
-    "apps/backend/src/admin/launch-toggles.ts",
-    "apps/backend/src/admin/launch-toggles.routes.ts",
-    "apps/backend/src/compliance/form-425c.routes.ts",
-    "apps/frontend/src/pages/admin/LaunchToggles.tsx",
-    "apps/frontend/src/components/layout/CarrierSwitcher.tsx",
-    "apps/frontend/src/components/Topbar.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/nav-integrity-allowlist.json",
-    "scripts/verify-launch-toggle-audit-trail.mjs",
+    "docs/audits/FINAL-PER-MODULE-AUDIT-2026-06-04.md",
+    "scripts/verify-no-dead-buttons.mjs",
+    "scripts/verify-no-empty-form-dropdowns.mjs",
+    "scripts/verify-all-list-pages-load-200.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": ["verify:launch-toggle-audit-trail"],
+  "extra_gates": [
+    "verify:no-dead-buttons",
+    "verify:no-empty-form-dropdowns",
+    "verify:all-list-pages-load-200"
+  ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }

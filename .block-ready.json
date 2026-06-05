@@ -1,23 +1,24 @@
 {
-  "block_id": "PWA-POLISH-2",
-  "branch": "feat/pwa-polish-2-web-push",
-  "phase": "Phase 7 Driver PWA",
-  "task": "Web Push notification completion (FCM + iOS Safari 16.4+)",
+  "block_id": "FINAL-AUDIT-PASS",
+  "branch": "feat/final-audit-pass",
+  "phase": "Phase 7 Closure",
+  "task": "Per-module exhaustive audit pass (18 modules) + 3 CI guards",
   "allowed_files": [
-    "apps/driver-pwa/src/notifications/web-push-subscriber.ts",
-    "apps/driver-pwa/src/notifications/notification-handler.ts",
-    "apps/driver-pwa/src/service-worker.ts",
-    "apps/backend/src/notifications/web-push-dispatcher.ts",
-    "apps/backend/src/driver/push-subscriptions.routes.ts",
-    "db/migrations/0389_driver_pwa_push_subscriptions.sql",
-    "scripts/verify-web-push-vapid-keys-present.mjs",
+    "docs/audits/FINAL-PER-MODULE-AUDIT-2026-06-04.md",
+    "scripts/verify-no-dead-buttons.mjs",
+    "scripts/verify-no-empty-form-dropdowns.mjs",
+    "scripts/verify-all-list-pages-load-200.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent1.json"
   ],
-  "extra_gates": ["verify:web-push-vapid-keys-present"],
+  "extra_gates": [
+    "verify:no-dead-buttons",
+    "verify:no-empty-form-dropdowns",
+    "verify:all-list-pages-load-200"
+  ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }
