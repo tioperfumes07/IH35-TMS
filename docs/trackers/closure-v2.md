@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 1 |
+| Shipped | 3 |
 | Forensic-skip | 2 |
 | In-flight | 2 |
-| Remaining | 25 |
+| Remaining | 23 |
 | ON HOLD | 0 (CLOSURE-17 triages A23-11, A23-14, B19, B20 only) |
 
-**Pass:** 3/30 (1 shipped + 2 forensic-skip)
+**Pass:** 5/30 (3 shipped + 2 forensic-skip)
 
 ## Block Status
 
@@ -23,12 +23,12 @@
 | CLOSURE-1 | A | C-1 | **SHIPPED** | [#549](https://github.com/tioperfumes07/IH35-TMS/pull/549) | PASS-7 smoke verify; merged `2ff3d8541` 2026-06-05 |
 | CLOSURE-2 | B | C-1 | **FORENSIC-SKIP** | — | P5-T6 Banking Transfer already on main |
 | CLOSURE-3 | A | C-1 | **FORENSIC-SKIP** | — | P5-T7 CC Payment Workflow already on main |
-| CLOSURE-4 | B | C-2 | **IN-FLIGHT** | — | `closure/p5-t12-auto-deductions` |
-| CLOSURE-5 | A | C-2 | **IN-FLIGHT** | — | `closure/p5-t13-settlement-dispute` |
-| CLOSURE-6 | B | C-3 | QUEUED | — | |
-| CLOSURE-7 | A | C-4 | QUEUED | — | |
+| CLOSURE-4 | B | C-2 | **SHIPPED** | [#550](https://github.com/tioperfumes07/IH35-TMS/pull/550) | Auto-deductions; merged `adf7a5cb3` 2026-06-05 |
+| CLOSURE-5 | A | C-2 | **SHIPPED** | [#551](https://github.com/tioperfumes07/IH35-TMS/pull/551) | Settlement dispute; merged `6b067c5ad` 2026-06-05 |
+| CLOSURE-6 | B | C-3 | **IN-FLIGHT** | — | `closure/p5-t14-team-splits` |
+| CLOSURE-7 | A | C-3 | **IN-FLIGHT** | — | `closure/p5-t17-road-service` |
 | CLOSURE-8 | B | C-4 | QUEUED | — | |
-| CLOSURE-9 | A | C-5 | QUEUED | — | |
+| CLOSURE-9 | A | C-4 | QUEUED | — | |
 | CLOSURE-10 | B | C-5 | QUEUED | — | |
 | CLOSURE-11 | A | C-6 | QUEUED | — | |
 | CLOSURE-12 | B | C-6 | QUEUED | — | |
