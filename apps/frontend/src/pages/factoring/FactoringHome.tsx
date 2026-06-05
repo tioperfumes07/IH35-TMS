@@ -19,6 +19,8 @@ import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { parseVendorNotes, serializeVendorNotes } from "../../lib/vendorProfileMeta";
+import { ChargebacksTable } from "./ChargebacksTable";
+import { RecoursePipelineTable } from "./RecoursePipelineTable";
 
 const SUBNAV = [
   { id: "recourse_pipeline", label: "Recourse Pipeline" },
@@ -292,37 +294,7 @@ export function FactoringHomePage() {
             </span>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-xs">
-              <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th className="px-2 py-2">Invoice</th>
-                  <th className="px-2 py-2">Customer</th>
-                  <th className="px-2 py-2">Advance</th>
-                  <th className="px-2 py-2">Reserve</th>
-                  <th className="px-2 py-2">Recourse Expiry</th>
-                  <th className="px-2 py-2">Days Left</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {invoices.map((row) => (
-                  <tr key={row.factoring_advance_id}>
-                    <td className="px-2 py-2 font-medium text-gray-900">{row.invoice_reference}</td>
-                    <td className="px-2 py-2">{row.customer_name}</td>
-                    <td className="px-2 py-2">{fmtCurrency(row.advance_amount)}</td>
-                    <td className="px-2 py-2">{fmtCurrency(row.reserve_amount)}</td>
-                    <td className="px-2 py-2">{fmtDate(row.recourse_expiry_date)}</td>
-                    <td className="px-2 py-2">{Number(row.days_until_recourse_expiry ?? 0)}</td>
-                  </tr>
-                ))}
-                {invoices.length === 0 ? (
-                  <tr>
-                    <td className="px-2 py-4 text-gray-500" colSpan={6}>
-                      No recourse pipeline rows available in this environment.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+            <RecoursePipelineTable rows={invoices} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
           </div>
         </div>
       ) : null}
@@ -332,33 +304,7 @@ export function FactoringHomePage() {
           <div className="rounded border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Chargebacks + fee history</div>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-xs">
-                <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
-                  <tr>
-                    <th className="px-2 py-2">Date</th>
-                    <th className="px-2 py-2">Statement Ref</th>
-                    <th className="px-2 py-2">Chargeback</th>
-                    <th className="px-2 py-2">Fee</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {(feesQuery.data?.history ?? []).map((row) => (
-                    <tr key={row.factoring_advance_id}>
-                      <td className="px-2 py-2">{fmtDate(row.created_at)}</td>
-                      <td className="px-2 py-2">{row.statement_reference || "—"}</td>
-                      <td className="px-2 py-2">{fmtCurrency(row.chargeback_amount)}</td>
-                      <td className="px-2 py-2">{fmtCurrency(row.factor_fee_amount)}</td>
-                    </tr>
-                  ))}
-                  {(feesQuery.data?.history ?? []).length === 0 ? (
-                    <tr>
-                      <td className="px-2 py-4 text-gray-500" colSpan={4}>
-                        No chargeback/fee rows available.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
+              <ChargebacksTable rows={feesQuery.data?.history ?? []} fmtCurrency={fmtCurrency} fmtDate={fmtDate} />
             </div>
           </div>
           <div className="rounded border border-gray-200 bg-white p-3">

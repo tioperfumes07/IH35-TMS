@@ -1,16 +1,14 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listDrivers } from "../../api/mdata";
 import { listDriverQualificationItems, type DriverQualificationFileItem } from "../../api/safety";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
 import { driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
-import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
+import { DriversTable } from "./DriversTable";
 
 type DriversListPageProps = {
   onOpenProfile?: (driverId: string) => void;
@@ -103,62 +101,11 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
       </KpiStrip>
 
       <section className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
-            <tr>
-              <th className="px-3 py-2">Driver</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">DQF status chips</th>
-              <th className="px-3 py-2">Checklist stats</th>
-              <th className="px-3 py-2 text-right">Profile</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.driverId} className="border-t border-gray-100">
-                <td className="px-3 py-2 font-medium text-slate-900">{row.name}</td>
-                <td className="px-3 py-2">
-                  <StatusBadge status={row.status} />
-                </td>
-                <td className="px-3 py-2">
-                  <DriverDqfComplianceChip summary={row.summary} compact />
-                </td>
-                <td className="px-3 py-2 text-slate-600">
-                  {row.summary.presentCount} present · {row.summary.missingCount} missing · {row.summary.expiredCount} expired
-                </td>
-                <td className="px-3 py-2 text-right">
-                  {onOpenProfile ? (
-                    <button
-                      type="button"
-                      onClick={() => onOpenProfile(row.driverId)}
-                      className="text-xs font-semibold text-sky-700 hover:underline"
-                    >
-                      Open profile
-                    </button>
-                  ) : (
-                    <Link to={`/drivers/${row.driverId}/profile`} className="text-xs font-semibold text-sky-700 hover:underline">
-                      Open profile
-                    </Link>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {!driversQ.isLoading && rows.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
-                  No drivers found.
-                </td>
-              </tr>
-            ) : null}
-            {driversQ.isLoading ? (
-              <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
-                  Loading drivers...
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+        {driversQ.isLoading ? (
+          <div className="px-3 py-6 text-center text-slate-500 text-xs">Loading drivers...</div>
+        ) : (
+          <DriversTable rows={rows} onOpenProfile={onOpenProfile} />
+        )}
       </section>
     </div>
   );

@@ -1,6 +1,8 @@
 type Props = {
   row: Record<string, unknown>;
   selected: boolean;
+  bulkSelected?: boolean;
+  onBulkToggle?: () => void;
   onSelect: () => void;
   onCategorize: () => void;
   onUndo: () => void;
@@ -12,7 +14,7 @@ function statusPill(status: string) {
   return "bg-green-100 text-green-700";
 }
 
-export function RegisterRow({ row, selected, onSelect, onCategorize, onUndo }: Props) {
+export function RegisterRow({ row, selected, bulkSelected = false, onBulkToggle, onSelect, onCategorize, onUndo }: Props) {
   const status = String(row.status ?? "synced");
   const amount = Number(row.amount ?? row.deposits ?? 0);
   const deposits = Number(row.deposits ?? (amount >= 0 ? amount : 0));
@@ -22,7 +24,9 @@ export function RegisterRow({ row, selected, onSelect, onCategorize, onUndo }: P
       className={`border-t border-gray-100 text-xs ${status === "uncategorized" ? "bg-amber-50" : ""} ${selected ? "border-l-2 border-l-blue-500" : ""}`}
       onClick={onSelect}
     >
-      <td className="px-2 py-1"><input type="checkbox" /></td>
+      <td className="px-2 py-1" onClick={(event) => event.stopPropagation()}>
+        <input type="checkbox" checked={bulkSelected} onChange={() => onBulkToggle?.()} aria-label="Select row" />
+      </td>
       <td className="px-2 py-1">{String(row.txn_date ?? "")}</td>
       <td className="px-2 py-1">{String(row.description ?? "")}</td>
       <td className="px-2 py-1 text-green-700">{deposits > 0 ? `$${deposits.toFixed(2)}` : "—"}</td>

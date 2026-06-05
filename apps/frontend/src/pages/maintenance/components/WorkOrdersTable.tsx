@@ -1,6 +1,10 @@
 import type { WorkOrder } from "../../../api/maintenance";
 import { Link } from "react-router-dom";
+import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
+import { TableSelection, TableSelectionHeader } from "../../../components/bulk/TableSelection";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { useToast } from "../../../components/Toast";
+import { useBulkSelection } from "../../../hooks/useBulkSelection";
 
 type Props = {
   rows: WorkOrder[];
@@ -36,8 +40,18 @@ export function WorkOrdersTable({
   onSourceTypeChange,
   onExternalVendorChange,
 }: Props) {
+  const { pushToast } = useToast();
+  const selection = useBulkSelection({ cap: 200, onCapExceeded: (e) => pushToast(e.message, "error") });
+  const pageRowIds = rows.map((row) => row.id);
+
   return (
     <div className="space-y-2">
+      <BulkActionBar
+        {...selection.bulkActionBarProps([
+          { id: "close", label: "Close Selected", onClick: () => pushToast("Close WOs — bulk endpoint pending.", "success") },
+          { id: "export", label: "Export Selected", onClick: () => pushToast("Export WOs queued.", "success") },
+        ])}
+      />
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <label className="space-y-1 text-xs">
           <span className="text-gray-600">Filter by source type</span>
@@ -63,9 +77,26 @@ export function WorkOrdersTable({
         </label>
       </div>
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
+        <TableSelection
+          rows={rows}
+          getId={(row) => row.id}
+          selectedIds={selection.selectedIds}
+          onSelectionChange={selection.setSelectedIds}
+          pageRowIds={pageRowIds}
+          cap={selection.cap}
+        >
+          {({ isSelected, toggle }) => (
         <table className="w-full table-fixed text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>
+              <th className="w-8 px-2 py-1">
+                <TableSelectionHeader
+                  selectedIds={selection.selectedIds}
+                  pageRowIds={pageRowIds}
+                  onSelectionChange={selection.setSelectedIds}
+                  cap={selection.cap}
+                />
+              </th>
               <th className="px-2 py-1">Display ID</th>
               <th className="px-2 py-1">Source Type</th>
               <th className="px-2 py-1">Unit</th>
@@ -79,6 +110,9 @@ export function WorkOrdersTable({
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-gray-100">
+                <td className="px-2 py-1">
+                  <input type="checkbox" checked={isSelected(row.id)} onChange={() => toggle(row.id)} aria-label={`Select ${row.display_id ?? row.id}`} />
+                </td>
                 <td className="px-2 py-1 font-medium">
                   <Link to={`/maintenance/work-orders/${row.id}`} className="text-indigo-700 hover:underline">
                     {row.display_id ?? row.id.slice(0, 8)}
@@ -95,13 +129,15 @@ export function WorkOrdersTable({
             ))}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-2 py-3 text-center text-gray-500">
+                <td colSpan={9} className="px-2 py-3 text-center text-gray-500">
                   No work orders found.
                 </td>
               </tr>
             ) : null}
           </tbody>
         </table>
+          )}
+        </TableSelection>
       </div>
     </div>
   );

@@ -25,6 +25,9 @@ import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { SaveDropdown } from "../components/forms/SaveDropdown";
+import { BulkActionBar } from "../components/bulk/BulkActionBar";
+import { TableSelection, TableSelectionHeader } from "../components/bulk/TableSelection";
+import { useBulkSelection } from "../hooks/useBulkSelection";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
@@ -139,6 +142,7 @@ export function UsersPage() {
   });
   const [roleBaseline, setRoleBaseline] = useState({ roleChangeRole: "Manager" as UserRole, roleReason: "" });
   const { pushToast } = useToast();
+  const userBulk = useBulkSelection({ cap: 200, onCapExceeded: (error) => pushToast(error.message, "error") });
   const queryClient = useQueryClient();
   const isOwnerOrAdmin = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const listTab = useMemo(() => parseUserListTab(searchParams), [searchParams]);
@@ -379,6 +383,30 @@ export function UsersPage() {
         />
       </div>
 
+      <BulkActionBar
+        {...userBulk.bulkActionBarProps([
+          { id: "deactivate", label: "Deactivate", destructive: true, action: "deactivate", onClick: () => pushToast("Bulk deactivate users — endpoint pending.", "success") },
+          { id: "export", label: "Export Selected", onClick: () => pushToast("Export users queued.", "success") },
+        ])}
+      >
+        <TableSelectionHeader
+          selectedIds={userBulk.selectedIds}
+          pageRowIds={filteredUsers.map((row) => row.id)}
+          onSelectionChange={userBulk.setSelectedIds}
+          cap={userBulk.cap}
+          ariaLabel="Select all users on this page"
+        />
+      </BulkActionBar>
+
+      <TableSelection
+        rows={filteredUsers}
+        getId={(row) => row.id}
+        selectedIds={userBulk.selectedIds}
+        onSelectionChange={userBulk.setSelectedIds}
+        pageRowIds={filteredUsers.map((row) => row.id)}
+        cap={userBulk.cap}
+      >
+        {({ isSelected, toggle }) => (
       <DataTable
         rows={filteredUsers}
         loading={usersQuery.isLoading}
@@ -386,6 +414,22 @@ export function UsersPage() {
         rowKey={(row) => row.id}
         onRowClick={(row) => navigate(`/users/${row.id}`)}
         columns={[
+          {
+            key: "_bulk",
+            label: "Select",
+            className: "w-8",
+            render: (row) => (
+              <input
+                type="checkbox"
+                checked={isSelected(row.id)}
+                onChange={(event) => {
+                  event.stopPropagation();
+                  toggle(row.id);
+                }}
+                aria-label={`Select user ${row.name}`}
+              />
+            ),
+          },
           { key: "name", label: "Name", sortable: true },
           { key: "email", label: "Email", sortable: true },
           {
@@ -459,6 +503,8 @@ export function UsersPage() {
           },
         ]}
       />
+        )}
+      </TableSelection>
 
       <Modal
         open={inviteOpen}

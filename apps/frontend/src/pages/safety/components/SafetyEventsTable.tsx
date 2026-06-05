@@ -1,3 +1,8 @@
+import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
+import { TableSelection, TableSelectionHeader } from "../../../components/bulk/TableSelection";
+import { useToast } from "../../../components/Toast";
+import { useBulkSelection } from "../../../hooks/useBulkSelection";
+
 type Props = {
   rows: Array<Record<string, unknown>>;
   onOpenAccident: (row: Record<string, unknown>) => void;
@@ -18,11 +23,38 @@ function severityPill(severity: string) {
 }
 
 export function SafetyEventsTable({ rows, onOpenAccident }: Props) {
+  const { pushToast } = useToast();
+  const selection = useBulkSelection({ cap: 200, onCapExceeded: (e) => pushToast(e.message, "error") });
+  const pageRowIds = rows.map((row) => String(row.id));
+
   return (
     <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+      <BulkActionBar
+        {...selection.bulkActionBarProps([
+          { id: "export", label: "Export Selected", onClick: () => pushToast("Export safety events queued.", "success") },
+          { id: "archive", label: "Archive", destructive: true, onClick: () => pushToast("Archive — bulk endpoint pending.", "success") },
+        ])}
+      />
+      <TableSelection
+        rows={rows}
+        getId={(row) => String(row.id)}
+        selectedIds={selection.selectedIds}
+        onSelectionChange={selection.setSelectedIds}
+        pageRowIds={pageRowIds}
+        cap={selection.cap}
+      >
+        {({ isSelected, toggle }) => (
       <table className="min-w-[1050px] w-full text-left text-xs">
         <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
           <tr>
+            <th className="w-8 px-2 py-1">
+              <TableSelectionHeader
+                selectedIds={selection.selectedIds}
+                pageRowIds={pageRowIds}
+                onSelectionChange={selection.setSelectedIds}
+                cap={selection.cap}
+              />
+            </th>
             <th className="px-2 py-1">Date</th>
             <th className="px-2 py-1">Driver</th>
             <th className="px-2 py-1">Unit</th>
@@ -39,6 +71,9 @@ export function SafetyEventsTable({ rows, onOpenAccident }: Props) {
             const severity = String(row.severity ?? "minor");
             return (
               <tr key={String(row.id)} className="border-t border-gray-100">
+                <td className="px-2 py-1">
+                  <input type="checkbox" checked={isSelected(String(row.id))} onChange={() => toggle(String(row.id))} aria-label="Select event" />
+                </td>
                 <td className="px-2 py-1">{String(row.event_at ?? "").slice(0, 10)}</td>
                 <td className="px-2 py-1">{String(row.driver_full_name ?? "")}</td>
                 <td className="px-2 py-1">{String(row.unit_display_id ?? "—")}</td>
@@ -59,10 +94,12 @@ export function SafetyEventsTable({ rows, onOpenAccident }: Props) {
             );
           })}
           {rows.length === 0 ? (
-            <tr><td colSpan={8} className="px-2 py-3 text-center text-gray-500">No safety events found.</td></tr>
+            <tr><td colSpan={9} className="px-2 py-3 text-center text-gray-500">No safety events found.</td></tr>
           ) : null}
         </tbody>
       </table>
+        )}
+      </TableSelection>
     </div>
   );
 }
