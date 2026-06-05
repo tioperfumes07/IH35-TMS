@@ -50,3 +50,52 @@ describe("ifta-quarterly-preparer routes (smoke)", () => {
     expect(typeof mod.registerIftaQuarterlyPreparerRoutes).toBe("function");
   });
 });
+
+describe("ifta-tax-calculator", () => {
+  it("computes per-state tax from miles and gallons hand example", async () => {
+    const { calculateStateTaxes } = await import("./ifta-tax-calculator.js");
+    const result = calculateStateTaxes({
+      quarter: 2,
+      year: 2026,
+      stateMiles: [
+        { state: "TX", miles: 1000 },
+        { state: "OK", miles: 500 },
+      ],
+      stateGallons: [
+        { state: "TX", gallons: 100 },
+        { state: "OK", gallons: 50 },
+      ],
+    });
+    expect(result.fleetMpg).toBe(10);
+    const tx = result.rows.find((row) => row.state === "TX");
+    expect(tx?.taxable_gallons).toBe(100);
+    expect(tx?.net_taxable_gallons).toBe(0);
+    expect(tx?.tax_owed).toBe(0);
+  });
+});
+
+describe("ifta-csv-generator", () => {
+  it("emits IFTA column order", async () => {
+    const { buildIftaCsvContent } = await import("./ifta-csv-generator.js");
+    const csv = buildIftaCsvContent({
+      carrierIftaNumber: "IH35",
+      quarter: 2,
+      year: 2026,
+      stateTaxRows: [
+        {
+          state: "TX",
+          miles_in_state: 100,
+          taxable_gallons: 10,
+          gallons_purchased_in_state: 10,
+          net_taxable_gallons: 0,
+          tax_rate_per_gallon: 0.2,
+          tax_owed: 0,
+          mpg_in_state: 10,
+        },
+      ],
+    });
+    expect(csv.split("\n")[0]).toBe(
+      "Carrier IFTA #,Quarter,Year,State,Total Miles,Taxable Miles,Taxable Gallons,Tax-Paid Gallons,Net Taxable Gallons,Tax Rate,Tax/Credit"
+    );
+  });
+});
