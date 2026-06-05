@@ -36,6 +36,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Dispute queue", path: "/accounting/dispute-queue", section: "settlements" },
   { label: "Abandonment queue", path: "/accounting/abandonment-queue", section: "settlements" },
   { label: "Factoring", path: "/accounting/factoring", section: "direct" },
+  { label: "Faro CSV import", path: "/factoring/faro-import", section: "direct" },
   { label: "Factor reconciliation", path: "/accounting/factor-reconciliation", section: "direct" },
   { label: "Sales tax", path: "/accounting/sales-tax", section: "direct" },
   { label: "Month close", path: "/accounting/month-close", section: "direct" },
