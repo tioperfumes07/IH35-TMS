@@ -1,0 +1,45 @@
+name: required-checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  required-checks-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate branch protection config committed
+        run: |
+          test -f .github/branch-protection-config.json
+          test -f .github/CODEOWNERS
+          node -e "
+            const cfg = require('./.github/branch-protection-config.json');
+            const contexts = cfg.protection?.required_status_checks?.contexts ?? [];
+            if (contexts.length < 3) {
+              console.error('FAIL: branch-protection-config.json missing required status contexts');
+              process.exit(1);
+            }
+            console.log('branch-protection-config.json OK —', contexts.length, 'required contexts');
+          "
+
+      - name: CI guard — verify CI policy applied (or config baseline)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+        run: node scripts/verify-ci-policy-applied.mjs
