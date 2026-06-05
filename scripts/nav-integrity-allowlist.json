@@ -148,7 +148,7 @@
     },
     {
       "path": "/drivers/settlements",
-      "reason": "ComingSoon stub; canonical /driver-finance/settlements"
+      "reason": "AUDIT-FIX-14 Drivers subtab deep link"
     },
     {
       "path": "/drivers/onboarding/:session_id",
@@ -164,15 +164,27 @@
     },
     {
       "path": "/factoring/faro-imports",
-      "reason": "ComingSoon stub; tab on /factoring home"
+      "reason": "AUDIT-FIX-14 Factoring subtab deep link"
     },
     {
       "path": "/factoring/equipment-loans",
-      "reason": "ComingSoon stub; tab on /factoring home"
+      "reason": "AUDIT-FIX-14 Factoring subtab deep link"
     },
     {
       "path": "/factoring/vendor-merges",
-      "reason": "ComingSoon stub; tab on /factoring home"
+      "reason": "AUDIT-FIX-14 Factoring subtab deep link"
+    },
+    {
+      "path": "/factoring/recourse-pipeline",
+      "reason": "AUDIT-FIX-14 Factoring subtab deep link"
+    },
+    {
+      "path": "/factoring/chargebacks-fees",
+      "reason": "AUDIT-FIX-14 Factoring subtab deep link"
+    },
+    {
+      "path": "/factoring/statements-settings",
+      "reason": "AUDIT-FIX-14 Factoring subtab deep link"
     },
     {
       "path": "/lists/safety",
@@ -386,11 +398,11 @@
     },
     {
       "path": "/factoring",
-      "reason": "6 state tabs on standalone module \u2014 URL sync Block 43"
+      "reason": "6 path-synced subtabs under /factoring/* (AUDIT-FIX-14)"
     },
     {
       "path": "/drivers",
-      "reason": "9 state subtabs via ?subtab= \u2014 partial query sync Block 43"
+      "reason": "9 path-synced subtabs under /drivers/* (AUDIT-FIX-14)"
     },
     {
       "path": "/dispatch",

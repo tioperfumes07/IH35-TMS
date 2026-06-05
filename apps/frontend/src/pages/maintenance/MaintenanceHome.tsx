@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InTransitIssue, WorkOrderType } from "../../api/maintenance";
 import {
@@ -47,6 +47,7 @@ import {
   MAINTENANCE_MASTER_DATA_LINKS,
   MAINTENANCE_OPERATION_LINKS,
 } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
+import { MAINTENANCE_TAB_PATH, maintenanceTabFromPath } from "../../router/route-manifest";
 
 export { MAINTENANCE_MASTER_DATA_LINKS, MAINTENANCE_OPERATION_LINKS } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 
@@ -70,6 +71,7 @@ type Props = {
 };
 
 export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
+  const location = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -79,6 +81,9 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
   const [prefillFromIssue, setPrefillFromIssue] = useState<InTransitIssue | null>(null);
   const [triageIssue, setTriageIssue] = useState<InTransitIssue | null>(null);
   const [tab, setTab] = useState<MaintenanceTabId>(initialTab);
+  useEffect(() => {
+    setTab(maintenanceTabFromPath(location.pathname) as MaintenanceTabId);
+  }, [location.pathname]);
   const [sourceTypeFilter, setSourceTypeFilter] = useState("");
   const [externalVendorFilter, setExternalVendorFilter] = useState("");
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
@@ -200,18 +205,18 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
       <SubTabRow data-subtab-row="maintenance">
         {SUBNAV.map((item) => {
           const active = item.id === tab;
+          const target = MAINTENANCE_TAB_PATH[item.id] ?? "/maintenance";
           return (
-            <button
+            <NavLink
               key={item.id}
-              type="button"
+              to={target}
               data-maintenance-subtab={item.id}
-              onClick={() => setTab(item.id)}
               className={`pb-0.5 text-xs font-semibold ${
                 active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
               }`}
             >
               {item.label}
-            </button>
+            </NavLink>
           );
         })}
       </SubTabRow>

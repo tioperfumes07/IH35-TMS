@@ -591,6 +591,9 @@ jobs:
       - name: verify:route-manifest-completeness
         run: npm run verify:route-manifest-completeness
 
+      - name: verify:subtabs-are-real-routes
+        run: npm run verify:subtabs-are-real-routes
+
       - name: verify:no-nested-box-pattern
         run: npm run verify:no-nested-box-pattern
 

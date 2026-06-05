@@ -20,9 +20,8 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { ManualJEModal } from "../accounting/ManualJEModal";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { TransferModal } from "./TransferModal";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
@@ -199,18 +198,25 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         subtitle="QBO mirrored accounts + categorization"
         actions={headerActions}
       />
-      <SecondaryNavTabs
-        tabs={BANKING_TABS.map((tab) => ({ id: tab.id, label: tab.label }))}
-        activeId={activeTab}
-        onChange={(id) => {
-          const tabId = id as BankingTabId;
-          setActiveTab(tabId);
-          const target = BANKING_TAB_PATH[tabId];
-          if (target && target !== location.pathname) {
-            navigate(target);
-          }
-        }}
-      />
+      <div className="overflow-x-auto border-b border-gray-200 bg-white px-2 py-1">
+        <div className="flex min-w-max gap-4">
+          {BANKING_TABS.map((tab) => {
+            const target = BANKING_TAB_PATH[tab.id];
+            const active = activeTab === tab.id;
+            return (
+              <NavLink
+                key={tab.id}
+                to={target}
+                className={`pb-0.5 text-xs font-semibold ${
+                  active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                {tab.label}
+              </NavLink>
+            );
+          })}
+        </div>
+      </div>
       {kpiQuery.isError || tilesQuery.isError || uncategorizedQuery.isError ? <ListErrorBanner onRetry={() => void uncategorizedQuery.refetch()} /> : null}
       <PlaidSyncStatusPanel operatingCompanyId={companyId} />
       <PlaidLink

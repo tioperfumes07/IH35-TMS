@@ -1,11 +1,12 @@
 import { useMemo } from "react";
+import { NavLink } from "react-router-dom";
 import type { SafetyGroup } from "./SAFETY_TABS_CONFIG";
 import { HoverDropdown } from "../shared/HoverDropdown";
 
 type Props = {
   groups: SafetyGroup[];
   activeTabId: string;
-  onTabChange: (tabId: string) => void;
+  onTabChange?: (tabId: string) => void;
 };
 
 export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
@@ -39,10 +40,10 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
               {group.tabs.map((tab) => {
                 const active = tab.id === activeTabId;
                 return (
-                  <button
+                  <NavLink
                     key={tab.id}
-                    type="button"
-                    onClick={() => onTabChange(tab.id)}
+                    to={tab.route}
+                    onClick={() => onTabChange?.(tab.id)}
                     className="flex w-full items-center justify-between px-3 py-2 text-left text-xs text-slate-600 hover:bg-gray-50 hover:text-[#1f2a44]"
                     style={active ? { color: "#1f2a44", borderLeft: "3px solid #1f2a44", background: "#f8fafc", fontWeight: 600 } : { borderLeft: "3px solid transparent" }}
                   >
@@ -56,7 +57,7 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
                         RENAMED
                       </span>
                     ) : null}
-                  </button>
+                  </NavLink>
                 );
               })}
             </HoverDropdown>
