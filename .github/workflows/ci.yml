@@ -784,6 +784,18 @@ jobs:
       - name: verify:driver-day-summary-route-mounted
         run: npm run verify:driver-day-summary-route-mounted
 
+      - name: verify:deep-audit-a-customer-sub-tabs
+        run: npm run verify:deep-audit-a-customer-sub-tabs
+
+      - name: verify:deep-audit-a-vendor-buttons
+        run: npm run verify:deep-audit-a-vendor-buttons
+
+      - name: verify:deep-audit-a-driver-edit-modal
+        run: npm run verify:deep-audit-a-driver-edit-modal
+
+      - name: verify:deep-audit-a-equipment-assignments
+        run: npm run verify:deep-audit-a-equipment-assignments
+
       - name: verify:customer-detail-route
         run: npm run verify:customer-detail-route
 

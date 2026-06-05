@@ -2,7 +2,7 @@
   "block_id": "CLOSURE-15-DEEP-AUDIT-B",
   "branch": "closure/deep-audit-b",
   "phase": "CLOSURE",
-  "task": "Deep audit B — Bell icon + invoices subnav + Driver PWA mobile",
+  "task": "Deep audit B \u2014 Bell icon + invoices subnav + Driver PWA mobile",
   "agent": "A",
   "allowed_files": [
     "docs/audits/DEEP-AUDIT-B-BELL-ICON.md",
@@ -23,5 +23,5 @@
   ],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }

@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const target = path.join(__dirname, "deep-audit-a-equipment-assignments.mjs");
+const result = spawnSync(process.execPath, [target], { stdio: "inherit" });
+process.exit(result.status ?? 1);
