@@ -4,8 +4,10 @@ import { Link } from "react-router-dom";
 import { createIftaPreparation } from "../../../api/ifta";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { IFTAStepCSVExport } from "./IFTAStepCSVExport";
 import { IFTAStepGallons } from "./IFTAStepGallons";
 import { IFTAStepMiles } from "./IFTAStepMiles";
+import { IFTAStepTax } from "./IFTAStepTax";
 
 function currentQuarterYear(now = new Date()) {
   const month = now.getUTCMonth();
@@ -29,7 +31,7 @@ export function IFTAPreparer() {
     <div className="space-y-3">
       <PageHeader
         title="IFTA Quarterly Preparer"
-        subtitle={`Q${quarter} ${year} · Steps 1–2 (miles + gallons)`}
+        subtitle={`Q${quarter} ${year} · Steps 1–4 (miles, gallons, tax, CSV)`}
         actions={
           <Link to="/reports" className="text-xs font-semibold text-slate-700 hover:underline">
             ← Reports
@@ -40,7 +42,7 @@ export function IFTAPreparer() {
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
       <p className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        This report is always accrual basis per CPA sign-off. Tax calculation and CSV export ship in P6-T3.
+        Accrual basis per CPA sign-off. Run Steps 1→4 in order; CSV uploads to secure storage with signed download.
       </p>
 
       {!prepReady ? (
@@ -58,6 +60,8 @@ export function IFTAPreparer() {
         <div className="space-y-3">
           <IFTAStepMiles operatingCompanyId={companyId} preparationId={preparationId} quarter={quarter} year={year} />
           <IFTAStepGallons operatingCompanyId={companyId} preparationId={preparationId} quarter={quarter} year={year} />
+          <IFTAStepTax operatingCompanyId={companyId} preparationId={preparationId} quarter={quarter} year={year} />
+          <IFTAStepCSVExport operatingCompanyId={companyId} preparationId={preparationId} quarter={quarter} year={year} />
         </div>
       ) : null}
     </div>

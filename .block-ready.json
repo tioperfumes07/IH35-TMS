@@ -16,9 +16,7 @@
     "apps/frontend/src/api/ifta.ts",
     "scripts/verify-ifta-tax-rates-current.mjs",
     "package.json",
-    ".github/workflows/ci.yml",
-    ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.json"
   ],
   "extra_gates": ["verify:ifta-tax-rates-current"],
   "runtime_path": "src",
