@@ -2,11 +2,6 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import {
-  countOpenMaintenanceWorkOrders,
-  countPastDueMaintenanceWorkOrders,
-  countPmDueAlerts,
-} from "../kpi/canonical-kpis.js";
 import { shouldUseDevFixturesForMaintenance, triageDevFixtures } from "./dev-fixtures.js";
 import { listWorkOrdersByBucket } from "./work-orders.service.js";
 
@@ -35,109 +30,8 @@ async function relationExists(client: any, rel: string) {
   return Boolean((res.rows[0] as { ok?: boolean } | undefined)?.ok);
 }
 
+/** Dashboard KPIs live in dashboard-kpis.routes.ts: /api/v1/maintenance/dashboard/kpis */
 export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/dashboard/kpis", async (req, reply) => {
-    const user = authed(req, reply);
-    if (!user) return;
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
-    if (!parsed.success) return validationError(reply, parsed.error);
-    const companyId = parsed.data.operating_company_id;
-
-    const payload = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "views.maintenance_dashboard_kpis"))) {
-        return {
-          open_wos: 0,
-          in_shop: 0,
-          past_due_pm: 0,
-          out_of_service: 0,
-          open_damage: 0,
-          avg_wo_age_days: 0,
-          mtd_repair_cost: 0,
-          mtd_parts_cost: 0,
-          avg_wo_cost: 0,
-          top_vendor: null,
-          top_failure: null,
-          pending_qbo: 0,
-        };
-      }
-      const kpi = await client.query(`SELECT * FROM views.maintenance_dashboard_kpis WHERE operating_company_id = $1 LIMIT 1`, [companyId]);
-      const base = kpi.rows[0] ?? {};
-      const fleetRes = await client.query(
-        `
-          SELECT
-            COUNT(*)::int AS total_units,
-            COUNT(*) FILTER (WHERE status = 'active')::int AS active_units,
-            COUNT(*) FILTER (WHERE COALESCE(is_oos, false))::int AS dot_oos
-          FROM mdata.units
-          WHERE owner_company_id = $1::uuid
-            AND deactivated_at IS NULL
-        `,
-        [companyId]
-      );
-      const fleet = fleetRes.rows[0] ?? {};
-      const openWoCount = await countOpenMaintenanceWorkOrders(client, companyId);
-      const openRes = await client.query(
-        `
-          SELECT COALESCE(SUM(COALESCE(total_actual_cost, 0)), 0)::numeric AS open_cost
-          FROM maintenance.work_orders
-          WHERE operating_company_id = $1::uuid
-            AND status IN ('open', 'in_progress', 'waiting_parts')
-        `,
-        [companyId]
-      );
-      const open = { open_wos: openWoCount, open_cost: openRes.rows[0]?.open_cost ?? 0 };
-      const avgCloseRes = await client.query(
-        `
-          SELECT COALESCE(AVG(duration_seconds) FILTER (WHERE duration_seconds IS NOT NULL), 0)::numeric AS avg_seconds
-          FROM maintenance.work_orders
-          WHERE operating_company_id = $1::uuid
-            AND status IN ('complete', 'completed')
-            AND closed_at >= (now() - INTERVAL '30 days')
-        `,
-        [companyId]
-      );
-      const avgClose = avgCloseRes.rows[0] ?? {};
-      const tireRes = await client.query(
-        `
-          SELECT COUNT(*)::int AS tire_alerts
-          FROM maintenance.work_orders
-          WHERE operating_company_id = $1::uuid
-            AND wo_type = 'tire'
-            AND status IN ('open', 'in_progress', 'waiting_parts')
-        `,
-        [companyId]
-      );
-      const tire = tireRes.rows[0] ?? {};
-      const pmDueCount = await countPmDueAlerts(client, companyId);
-      const pastDueCount = await countPastDueMaintenanceWorkOrders(client, companyId);
-
-      return {
-        open_wos: Number(open.open_wos ?? base.open_wos ?? 0),
-        in_shop: Number(base.in_shop ?? 0),
-        past_due_pm: pastDueCount,
-        out_of_service: 0,
-        open_damage: 0,
-        avg_wo_age_days: Number(base.avg_wo_age_days ?? 0),
-        mtd_repair_cost: Number(base.mtd_repair_cost ?? 0),
-        mtd_parts_cost: 0,
-        avg_wo_cost: Number(base.avg_wo_cost ?? 0),
-        top_vendor: null,
-        top_failure: null,
-        pending_qbo: 0,
-        // Maintenance-home PNG KPI row (7-card canonical set).
-        past_due: pastDueCount,
-        avg_close_days: Number(avgClose.avg_seconds ?? 0) / 86400,
-        open_dollars: Number(open.open_cost ?? 0),
-        tire_alerts: Number(tire.tire_alerts ?? 0),
-        pm_due: pmDueCount,
-        dot_oos: Number(fleet.dot_oos ?? 0),
-        total_units: Number(fleet.total_units ?? 0),
-        active_units: Number(fleet.active_units ?? 0),
-      };
-    });
-    return payload;
-  });
-
   app.get("/api/v1/maintenance/dashboard/rm-status", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;

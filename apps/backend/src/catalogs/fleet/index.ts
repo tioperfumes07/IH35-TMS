@@ -1,7 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { createCatalogRoutes } from "./factory.js";
+import { registerTirePositionsCatalogRoutes } from "./tire-positions.routes.js";
 
 export async function registerFleetCatalogRoutes(app: FastifyInstance) {
+  await registerTirePositionsCatalogRoutes(app);
   createCatalogRoutes(app, {
     tableName: "tractor_statuses",
     urlSegment: "tractor-statuses",
@@ -32,15 +34,6 @@ export async function registerFleetCatalogRoutes(app: FastifyInstance) {
     routePrefix: "/api/v1/catalogs/fleet",
     displayName: "Equipment Types",
     codeRegex: /^[A-Z][A-Z0-9_-]+$/,
-  });
-
-  createCatalogRoutes(app, {
-    tableName: "tire_positions",
-    urlSegment: "tire-positions",
-    routePrefix: "/api/v1/catalogs/fleet",
-    displayName: "Tire Positions",
-    codeRegex: /^[A-Z][A-Z0-9-]+$/,
-    readOnly: true,
   });
 
   createCatalogRoutes(app, {

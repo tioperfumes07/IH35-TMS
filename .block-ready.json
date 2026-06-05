@@ -1,23 +1,30 @@
 {
-  "block_id": "AUDIT-FIX-8",
-  "branch": "audit-fix/audit-fix-8-wo-category-wire-complete",
+  "block_id": "AUDIT-FIX-9",
+  "branch": "audit-fix/audit-fix-9-flaky-endpoints-fix",
   "phase": "AUDIT-FIX",
-  "task": "WO-CATEGORY-WIRE-COMPLETE — wire accounting category/item comboboxes (EXPANDED)",
+  "task": "FLAKY-ENDPOINTS-FIX — notifications 500 + kpis 500 + tire-positions 400 + stream 503",
   "allowed_files": [
-    "apps/frontend/src/pages/maintenance/WorkOrderCreateModal.tsx",
-    "apps/frontend/src/components/forms/TwoSectionLineEditor.tsx",
-    "apps/frontend/src/components/work-orders/CategoryCombobox.tsx",
-    "apps/frontend/src/components/work-orders/ItemCombobox.tsx",
-    "apps/frontend/src/hooks/useAccountingCategoriesQuery.ts",
-    "apps/frontend/src/hooks/useAccountingItemsQuery.ts",
-    "scripts/verify-wo-category-actually-fetches.mjs",
+    "apps/backend/src/notifications/list.routes.ts",
+    "apps/backend/src/notifications/unread-count.routes.ts",
+    "apps/backend/src/notifications/stream.routes.ts",
+    "apps/backend/src/notifications/notification-stream.routes.ts",
+    "apps/backend/src/maintenance/dashboard-kpis.routes.ts",
+    "apps/backend/src/catalogs/fleet/tire-positions.routes.ts",
+    "apps/backend/src/notifications/notifications.routes.ts",
+    "apps/backend/src/maintenance/dashboard.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/backend/src/catalogs/fleet/index.ts",
+    "apps/backend/src/notifications/*.test.ts",
+    "apps/backend/src/maintenance/*.test.ts",
+    "apps/backend/src/catalogs/fleet/*.test.ts",
+    "scripts/verify-no-flaky-endpoints-on-page-load.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:wo-category-actually-fetches"
+    "verify:no-flaky-endpoints-on-page-load"
   ],
   "runtime_path": "src",
   "db_required": false,
