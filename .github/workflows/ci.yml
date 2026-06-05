@@ -672,6 +672,9 @@ jobs:
       - name: verify:all-list-pages-load-200
         run: npm run verify:all-list-pages-load-200
 
+      - name: verify:no-flaky-endpoints-on-page-load
+        run: npm run verify:no-flaky-endpoints-on-page-load
+
       - name: verify:qbo-sync-customer-vendor-counts
         run: npm run verify:qbo-sync-customer-vendor-counts
 

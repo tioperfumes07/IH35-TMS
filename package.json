@@ -199,6 +199,7 @@
     "verify:no-dead-buttons": "node scripts/verify-no-dead-buttons.mjs",
     "verify:no-empty-form-dropdowns": "node scripts/verify-no-empty-form-dropdowns.mjs",
     "verify:all-list-pages-load-200": "node scripts/verify-all-list-pages-load-200.mjs",
+    "verify:no-flaky-endpoints-on-page-load": "node scripts/verify-no-flaky-endpoints-on-page-load.mjs",
     "verify:qbo-sync-customer-vendor-counts": "node scripts/verify-qbo-sync-customer-vendor-counts.mjs",
     "verify:session-create-updates-last-login": "node scripts/verify-session-create-updates-last-login.mjs",
     "verify:identity-users-last-login-at-column": "node scripts/verify-identity-users-last-login-at-column.mjs",
