@@ -8,15 +8,15 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 27 |
+| Shipped | 28 |
 | Forensic-skip | 2 |
 | In-flight | 0 |
-| Remaining | 1 |
+| Remaining | 2 |
 | ON HOLD | 4 (A23-11, A23-14, B19, B20 — triaged CLOSURE-17; do not dispatch) |
 
-**Pass:** 29/30 (27 shipped + 2 forensic-skip) · **wave C-13 COMPLETE (CLOSURE-24 [#582](https://github.com/tioperfumes07/IH35-TMS/pull/582) `07fdc1790` + CLOSURE-25 [#583](https://github.com/tioperfumes07/IH35-TMS/pull/583) `d4c86872a`)** · wiring follow-up [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) · **CLOSURE-28 SHIPPED [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) `5fd0dd8a1`** · **CLOSURE-29 SHIPPED [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) `cbc2cccbb`** · **wave C-14 COMPLETE (CLOSURE-26 + CLOSURE-27)**
+**Pass:** 30/32 (28 shipped + 2 forensic-skip) · **wave C-13 COMPLETE (CLOSURE-24 [#582](https://github.com/tioperfumes07/IH35-TMS/pull/582) `07fdc1790` + CLOSURE-25 [#583](https://github.com/tioperfumes07/IH35-TMS/pull/583) `d4c86872a`)** · wiring follow-up [#589](https://github.com/tioperfumes07/IH35-TMS/pull/589) · **CLOSURE-28 SHIPPED [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) `5fd0dd8a1`** · **CLOSURE-29 SHIPPED [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) `cbc2cccbb`** · **wave C-14 COMPLETE (CLOSURE-26 + CLOSURE-27)** · **CLOSURE-31 SHIPPED [#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`**
 
-> **Program expanded 30 → 32:** CLOSURE-31 (URGENT — customers/vendors restore, `closure/customers-vendors-restore`) inserted; CLOSURE-32 deferred to end. Denominator stays `/30` for the original wave plan below until the 31/32 rows are formally slotted.
+> **Program expanded 30 → 32:** CLOSURE-31 (URGENT — customers/vendors restore) **SHIPPED** ([#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`); CLOSURE-32 deferred to end (gated on PASS-8 GO). Denominator is now `/32`.
 
 ## Block Status
 
@@ -52,6 +52,8 @@
 | CLOSURE-28 | A | C-15 | **SHIPPED** | [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) | Data migration runbooks + `verify:migration-chain-runbook` static gate; merged `5fd0dd8a1` 2026-06-05 |
 | CLOSURE-29 | B | C-15 | **SHIPPED** | [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) | AUDIT-FIX-18..25 slot materialization (docs/.txt + INDEX.md); merged `cbc2cccbb` 2026-06-05 |
 | CLOSURE-30 | A | C-16 | QUEUED | — | Final PASS-8; requires C-1…C-29 |
+| CLOSURE-31 | A | — | **SHIPPED** | [#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) | URGENT: restore /customers + /vendors default to prior master-detail design (regression from #531); list view kept opt-in + recurrence guard (`verify:customers-vendors-default-is-prior-design`); merged `73cba8836` 2026-06-05 |
+| CLOSURE-32 | — | — | DEFERRED | — | Deferred to end; gated on PASS-8 GO |
 
 ## Forensic Skip Evidence
 
@@ -120,4 +122,4 @@
 
 **CANCEL:** standalone GAP-2 dispatch (superseded by AUDIT-FIX-18 re-slot)
 
-**Next dispatch (CLOSURE only):** wave C-13 COMPLETE (CLOSURE-24/25 merged) → **CLOSURE-31 URGENT** (`closure/customers-vendors-restore`), then CLOSURE-30 final PASS-8, CLOSURE-32 last. **Do not dispatch GAP** until Jorge clears CLOSURE gate.
+**Next dispatch (CLOSURE only):** **CLOSURE-31 SHIPPED** ([#586](https://github.com/tioperfumes07/IH35-TMS/pull/586) `73cba8836`) → next **CLOSURE-30 final PASS-8**, then **CLOSURE-32** last (deferred, gated on PASS-8 GO). **Do not dispatch GAP** until Jorge clears CLOSURE gate.
