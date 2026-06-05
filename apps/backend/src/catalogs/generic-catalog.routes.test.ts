@@ -58,6 +58,10 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
     return { rows: [{ total: "1" }] };
   }
 
+  if (sql.includes("count(*)::text AS total")) {
+    return { rows: [{ total: "1" }] };
+  }
+
   if (sql.includes("FROM catalogs.equipment_types")) {
     return {
       rows: [
