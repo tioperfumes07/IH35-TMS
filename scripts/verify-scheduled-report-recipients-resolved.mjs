@@ -15,7 +15,7 @@ function fail(message) {
 const VALID_ROLES = new Set(["Owner", "Accountant", "Safety"]);
 
 const seedBlock = fs.readFileSync(migrationPath, "utf8");
-const valueRows = [...seedBlock.matchAll(/\('([^']+)',\s*'([^']+)',\s*'([^']*)',\s*ARRAY\[([^\]]*)\]/g)];
+const valueRows = [...seedBlock.matchAll(/\('([^']+)',\s*'([^']+)',\s*'([^']*)',\s*ARRAY\[([^\]]*)\]::text\[\]\)/g)];
 
 if (valueRows.length === 0) fail("could not parse seeded scheduled_reports from migration 0058");
 
@@ -26,7 +26,7 @@ if (!recipientMapMatch) fail("RECIPIENT_BY_ROLE map not found in scheduled-repor
 const recipientEntries = [...recipientMapMatch[1].matchAll(/(\w+):\s*"([^"]+)"/g)];
 const recipientByRole = Object.fromEntries(recipientEntries.map((m) => [m[1], m[2]]));
 
-for (const [, reportId, , rolesRaw] of valueRows) {
+for (const [, reportId, , , rolesRaw] of valueRows) {
   const roles = [...rolesRaw.matchAll(/'([^']+)'/g)].map((m) => m[1]);
   if (roles.length === 0) fail(`seed ${reportId} has no recipient_roles`);
 

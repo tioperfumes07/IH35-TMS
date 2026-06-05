@@ -61,7 +61,7 @@ async function processDueSchedules(log: FastifyInstance["log"]) {
         await client.query(
           `
             UPDATE reports.scheduled_reports
-            SET last_sent_at = now(), next_due_at = $2, updated_at = now()
+            SET last_sent_at = now(), next_due_at = $2
             WHERE id = $1::uuid
           `,
           [row.id, nextDue.toISOString()]
