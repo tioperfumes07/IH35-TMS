@@ -30,12 +30,12 @@ export function LoadDetailPage() {
         <div className="flex items-center justify-between">
           <button type="button" className="min-h-11 inline-flex items-center gap-2 text-sm text-pwa-text-secondary" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
-            <span>Back</span>
+            <span>{t("common.back")}</span>
           </button>
           <LifecyclePill stage={load.lifecycle_stage} />
         </div>
 
-        <PwaCard title={`Load ${load.display_id}`} subtitle={load.customer_name}>
+        <PwaCard title={t("load.detail_title", { display_id: load.display_id })} subtitle={load.customer_name}>
           <div className="mt-1 text-xs text-pwa-text-secondary">
             {load.pickup_location} → {load.delivery_location}
           </div>
@@ -46,7 +46,7 @@ export function LoadDetailPage() {
               className="min-h-11 rounded border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
               onClick={() => navigate(`/dvir/pre/${load.id}`)}
             >
-              Pre-trip DVIR
+              {t("dvir.title_pre")}
             </button>
             <button
               type="button"
@@ -54,7 +54,7 @@ export function LoadDetailPage() {
               className="min-h-11 rounded border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
               onClick={() => navigate(`/dvir/post/${load.id}`)}
             >
-              Post-trip DVIR
+              {t("dvir.title_post")}
             </button>
           </div>
         </PwaCard>
@@ -79,8 +79,8 @@ export function LoadDetailPage() {
         {tab === "overview" ? (
           <PwaCard>
             <div className="mb-2 rounded border border-pwa-border px-2 py-1 text-[11px] text-pwa-text-secondary">
-              <div>Important legal notice: confirm pickup and delivery details before accepting any settlement or deduction item.</div>
-              <div className="opacity-80">Aviso legal importante: confirme los detalles de recoleccion y entrega antes de aceptar cualquier liquidacion o deduccion.</div>
+              <div>{t("load.legal_notice_en")}</div>
+              <div className="opacity-80">{t("load.legal_notice_es")}</div>
             </div>
             <div className="space-y-2 text-sm">
               <div><span className="text-pwa-text-secondary">{t("load.miles")}:</span> {load.miles}</div>
@@ -105,7 +105,7 @@ export function LoadDetailPage() {
                 className="min-h-11 w-full rounded-lg border border-pwa-border bg-pwa-card p-3 text-left"
                 onClick={() => navigate(`/loads/${load.id}/stops/${stop.id}`)}
               >
-                <div className="text-xs text-pwa-text-secondary">Stop {stop.sequence}</div>
+                <div className="text-xs text-pwa-text-secondary">{t("load.stop_sequence", { sequence: stop.sequence })}</div>
                 <div className="text-sm font-semibold capitalize">{stop.type}</div>
                 <div className="text-xs text-pwa-text-secondary">{stop.location_name} · {stop.city}, {stop.state}</div>
                 <div className="mt-1 text-xs text-pwa-text-secondary">

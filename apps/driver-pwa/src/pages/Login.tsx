@@ -85,7 +85,7 @@ export function LoginPage() {
       setPhoneCode("");
     },
     onError: () => {
-      setErrorText("Could not send code right now. Please try again.");
+      setErrorText(t("login.send_code_failed"));
     },
   });
 
@@ -97,10 +97,10 @@ export function LoginPage() {
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 401) {
-        setErrorText("Invalid code. Please try again.");
+        setErrorText(t("login.invalid_code"));
         return;
       }
-      setErrorText("Could not verify code. Please try again.");
+      setErrorText(t("login.verify_code_failed"));
     },
   });
 
@@ -114,7 +114,7 @@ export function LoginPage() {
       setEmailCode("");
     },
     onError: () => {
-      setErrorText("Could not send code right now. Please try again.");
+      setErrorText(t("login.send_code_failed"));
     },
   });
 
@@ -126,19 +126,19 @@ export function LoginPage() {
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 401) {
-        setErrorText("Invalid code. Please try again.");
+        setErrorText(t("login.invalid_code"));
         return;
       }
       if (error instanceof ApiError && error.status === 403) {
         setErrorText(t("login.drivers_only_error"));
         return;
       }
-      setErrorText("Could not verify code. Please try again.");
+      setErrorText(t("login.verify_code_failed"));
     },
   });
 
   if (auth.isLoading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-pwa-text-secondary">Checking session...</div>;
+    return <div className="flex min-h-screen items-center justify-center text-sm text-pwa-text-secondary">{t("login.checking_session")}</div>;
   }
 
   if (auth.user) {
@@ -148,8 +148,8 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-pwa-bg px-4 py-3">
       <div className="w-full max-w-sm rounded-2xl border border-pwa-border bg-pwa-card p-6">
-        <h1 className="text-3xl font-semibold text-pwa-text-primary">IH 35 Driver</h1>
-        <p className="mt-2 text-base text-pwa-text-secondary">Sign in to continue</p>
+        <h1 className="text-3xl font-semibold text-pwa-text-primary">{t("login.title")}</h1>
+        <p className="mt-2 text-base text-pwa-text-secondary">{t("login.subtitle")}</p>
         {driversOnly ? (
           <p className="mt-3 rounded-md border border-red-400/40 bg-red-400/10 px-3 py-2 text-sm text-red-200">
             {t("login.drivers_only_error")}
@@ -205,26 +205,29 @@ export function LoginPage() {
                     onClick={() => {
                       const digits = normalizePhoneDigits(phoneInput);
                       if (digits.length !== 10) {
-                        setErrorText("Please enter a valid 10-digit phone number.");
+                        setErrorText(t("login.phone_invalid"));
                         return;
                       }
                       setErrorText("");
                       void sendCodeMutation.mutateAsync(toE164(countryCode, digits));
                     }}
                   >
-                    {sendCodeMutation.isPending ? "Sending..." : "Send code"}
+                    {sendCodeMutation.isPending ? t("login.sending") : t("login.send_code")}
                   </PwaButton>
                 </div>
               ) : (
                 <div className="mt-3 space-y-3">
                   <p className="text-sm text-pwa-text-secondary">
-                    Code sent via {deliveryChannel === "sms" ? "SMS" : "WhatsApp"} to {maskPhoneForMessage(activePhoneDigits)}
+                    {t("login.code_sent_via", {
+                      channel: deliveryChannel === "sms" ? t("login.channel_sms") : t("login.channel_whatsapp"),
+                      phone: maskPhoneForMessage(activePhoneDigits),
+                    })}
                   </p>
                   <input
                     value={phoneCode}
                     onChange={(event) => setPhoneCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
                     inputMode="numeric"
-                    placeholder="6-digit code"
+                    placeholder={t("login.code_placeholder")}
                     className="w-full rounded-md border border-pwa-border bg-pwa-card px-3 py-2 text-sm text-pwa-text-primary"
                   />
                   <PwaButton
@@ -233,7 +236,7 @@ export function LoginPage() {
                     aria-busy={verifyCodeMutation.isPending}
                     onClick={() => void verifyCodeMutation.mutateAsync()}
                   >
-                    {verifyCodeMutation.isPending ? "Verifying..." : "Verify"}
+                    {verifyCodeMutation.isPending ? t("login.verifying") : t("login.verify")}
                   </PwaButton>
                   <PwaButton
                     className="w-full"
@@ -245,7 +248,7 @@ export function LoginPage() {
                       void sendCodeMutation.mutateAsync(activePhoneE164);
                     }}
                   >
-                    {phoneResendCountdown > 0 ? `Resend code (${phoneResendCountdown}s)` : "Resend code"}
+                    {phoneResendCountdown > 0 ? t("login.resend_code_countdown", { seconds: phoneResendCountdown }) : t("login.resend_code")}
                   </PwaButton>
                   <button
                     type="button"
@@ -256,7 +259,7 @@ export function LoginPage() {
                     }}
                     className="w-full text-center text-sm text-pwa-text-secondary underline"
                   >
-                    Use a different phone
+                    {t("login.use_different_phone")}
                   </button>
                 </div>
               )}
@@ -281,14 +284,14 @@ export function LoginPage() {
                     aria-busy={sendEmailCodeMutation.isPending}
                     onClick={() => {
                       if (!emailInput.includes("@")) {
-                        setErrorText("Please enter a valid email.");
+                        setErrorText(t("login.email_invalid"));
                         return;
                       }
                       setErrorText("");
                       void sendEmailCodeMutation.mutateAsync(emailInput);
                     }}
                   >
-                    {sendEmailCodeMutation.isPending ? "Sending..." : t("login.email_send_code")}
+                    {sendEmailCodeMutation.isPending ? t("login.sending") : t("login.email_send_code")}
                   </PwaButton>
                 </div>
               ) : (
@@ -298,7 +301,7 @@ export function LoginPage() {
                     value={emailCode}
                     onChange={(event) => setEmailCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
                     inputMode="numeric"
-                    placeholder="6-digit code"
+                    placeholder={t("login.code_placeholder")}
                     className="w-full rounded-md border border-pwa-border bg-pwa-card px-3 py-2 text-sm text-pwa-text-primary"
                   />
                   <PwaButton
@@ -307,7 +310,7 @@ export function LoginPage() {
                     aria-busy={verifyEmailCodeMutation.isPending}
                     onClick={() => void verifyEmailCodeMutation.mutateAsync()}
                   >
-                    {verifyEmailCodeMutation.isPending ? "Verifying..." : t("login.email_verify")}
+                    {verifyEmailCodeMutation.isPending ? t("login.verifying") : t("login.email_verify")}
                   </PwaButton>
                   <PwaButton
                     className="w-full"
@@ -319,7 +322,7 @@ export function LoginPage() {
                       void sendEmailCodeMutation.mutateAsync(activeEmail);
                     }}
                   >
-                    {emailResendCountdown > 0 ? `Resend code (${emailResendCountdown}s)` : t("login.email_send_code")}
+                    {emailResendCountdown > 0 ? t("login.resend_code_countdown", { seconds: emailResendCountdown }) : t("login.email_send_code")}
                   </PwaButton>
                   <button
                     type="button"
@@ -330,7 +333,7 @@ export function LoginPage() {
                     }}
                     className="w-full text-center text-sm text-pwa-text-secondary underline"
                   >
-                    Use a different email
+                    {t("login.use_different_email")}
                   </button>
                 </div>
               )}
@@ -339,9 +342,9 @@ export function LoginPage() {
           {errorText ? <p className="mt-3 text-sm text-red-400">{errorText}</p> : null}
         </div>
         <a href={loginHref} className="mt-6 block">
-          <PwaButton className="w-full text-base">Sign in with Google</PwaButton>
+          <PwaButton className="w-full text-base">{t("login.sign_in_google")}</PwaButton>
         </a>
-        <p className="mt-8 text-xs text-pwa-text-secondary">IH 35 Transportation LLC</p>
+        <p className="mt-8 text-xs text-pwa-text-secondary">{t("login.company_footer")}</p>
       </div>
     </div>
   );

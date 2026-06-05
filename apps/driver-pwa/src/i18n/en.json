@@ -16,7 +16,25 @@
     "retry": "Retry",
     "online": "Online",
     "offline": "Offline",
-    "pending_sync": "Pending sync"
+    "pending_sync": "Pending sync",
+    "back": "Back",
+    "connecting": "Connecting",
+    "driver_fallback": "Driver",
+    "uncategorized": "Uncategorized",
+    "unknown_error": "Unknown error",
+    "preview": "Preview",
+    "accept": "Accept",
+    "reject": "Reject",
+    "next": "Next",
+    "continue": "Continue",
+    "delete": "Delete",
+    "show_error": "Show error",
+    "hide_error": "Hide error",
+    "retry_all": "Retry all",
+    "download_to_view": "Download to view",
+    "dismiss": "Dismiss",
+    "install": "Install",
+    "to": "to"
   },
   "home": {
     "greeting": "Welcome back, {{name}}",
@@ -63,7 +81,14 @@
     "actions_subtitle": "Phase 1 placeholder — action flows land in Phase 2",
     "actions_subtitle_live": "Quick actions for your current trip",
     "backend_version": "Backend version",
-    "sign_out": "Sign out"
+    "sign_out": "Sign out",
+    "transfer_pending_title": "Equipment Transfer Pending",
+    "transfer_pending_body": "Equipment transfer pending from {{from}} · expires {{expires}}",
+    "transfer_no_location": "No location provided",
+    "transfer_confirmed": "Transfer confirmed",
+    "transfer_rejected": "Transfer rejected",
+    "transfer_reject_prompt": "Reason for rejection (min 10 chars):",
+    "transfer_reject_reason_min": "Reason must be at least 10 characters"
   },
   "equipment": {
     "title": "Equipment",
@@ -94,7 +119,13 @@
     "queue_uploading": "Uploading",
     "queue_failed": "Failed",
     "clear_failed": "Clear {{count}} failed item(s)",
-    "cleared_failed": "Cleared {{count}} item(s)"
+    "cleared_failed": "Cleared {{count}} item(s)",
+    "role_driver": "Driver",
+    "nav_earnings": "Earnings",
+    "nav_hos": "HOS",
+    "nav_disputes": "My Disputes",
+    "nav_messages": "Messages",
+    "nav_submit_dvir": "Submit DVIR"
   },
   "login": {
     "session_expired": "Your session expired. Please log in again.",
@@ -105,7 +136,29 @@
     "email_send_code": "Send code",
     "email_verify": "Verify",
     "email_help": "We'll send you a 6-digit code.",
-    "drivers_only_error": "This app is for drivers only. Office staff: please use app.ih35dispatch.com"
+    "drivers_only_error": "This app is for drivers only. Office staff: please use app.ih35dispatch.com",
+    "title": "IH 35 Driver",
+    "subtitle": "Sign in to continue",
+    "checking_session": "Checking session...",
+    "send_code_failed": "Could not send code right now. Please try again.",
+    "invalid_code": "Invalid code. Please try again.",
+    "verify_code_failed": "Could not verify code. Please try again.",
+    "phone_invalid": "Please enter a valid 10-digit phone number.",
+    "email_invalid": "Please enter a valid email.",
+    "sending": "Sending...",
+    "send_code": "Send code",
+    "code_sent_via": "Code sent via {{channel}} to {{phone}}",
+    "channel_sms": "SMS",
+    "channel_whatsapp": "WhatsApp",
+    "verifying": "Verifying...",
+    "verify": "Verify",
+    "resend_code": "Resend code",
+    "resend_code_countdown": "Resend code ({{seconds}}s)",
+    "use_different_phone": "Use a different phone",
+    "use_different_email": "Use a different email",
+    "sign_in_google": "Sign in with Google",
+    "company_footer": "IH 35 Transportation LLC",
+    "code_placeholder": "6-digit code"
   },
   "sync": {
     "syncing": "Syncing {{count}}…",
@@ -129,7 +182,11 @@
     "scheduled_pickup": "Scheduled pickup",
     "scheduled_delivery": "Scheduled delivery",
     "documents_coming_soon": "Documents linked to this load coming in T11.15.4",
-    "accept_required": "ACCEPT"
+    "accept_required": "ACCEPT",
+    "detail_title": "Load {{display_id}}",
+    "legal_notice_en": "Important legal notice: confirm pickup and delivery details before accepting any settlement or deduction item.",
+    "legal_notice_es": "Aviso legal importante: confirme los detalles de recolección y entrega antes de aceptar cualquier liquidación o deducción.",
+    "stop_sequence": "Stop {{sequence}}"
   },
   "stop": {
     "pending": "Pending",
@@ -213,6 +270,7 @@
     "oos_banner": "OUT OF SERVICE: dispatch notified and movement blocked.",
     "note_required": "Note required for major defect",
     "photo_required": "photo(s)",
+    "add_photo": "+ Photo",
     "status": {
       "pass": "Pass",
       "minor": "Minor",
@@ -379,5 +437,119 @@
     "validation_error": "Check amount and reason",
     "reason_min": "Reason must be at least 10 characters",
     "above_policy_flag": "Above normal limit — needs owner review"
+  },
+  "messages": {
+    "back_to_profile": "Back to profile",
+    "title": "Messages",
+    "subtitle": "Read office messages and reply in-app",
+    "loading": "Loading messages…",
+    "empty": "No messages yet.",
+    "mark_read": "Mark read",
+    "reply_label": "Reply",
+    "reply_placeholder": "Type your reply…",
+    "send_reply": "Send reply",
+    "reply_sent": "Reply sent",
+    "reply_failed": "Failed to send reply"
+  },
+  "disputes": {
+    "title": "My Disputes",
+    "subtitle": "Read-only status view with withdraw option while still open",
+    "loading": "Loading disputes...",
+    "empty": "No disputes filed yet.",
+    "withdrawn_toast": "Dispute withdrawn",
+    "withdraw": "Withdraw",
+    "status": {
+      "open": "open",
+      "under_review": "under_review",
+      "resolved_in_favor": "resolved_in_favor",
+      "partially_resolved": "partially_resolved",
+      "withdrawn": "withdrawn"
+    }
+  },
+  "documents": {
+    "title": "My Documents",
+    "upload_cta": "+ Upload",
+    "pending_count": "{{count}} uploads pending",
+    "pending_heading": "Pending uploads",
+    "synced_heading": "Synced documents",
+    "no_pending": "No pending uploads",
+    "no_synced": "No synced documents yet",
+    "no_local_synced": "No local synced history yet",
+    "loading_profile": "Loading your driver profile...",
+    "profile_not_linked": "Your account is not linked to a driver profile. Contact dispatch.",
+    "profile_load_failed": "Unable to load your driver profile.",
+    "server_list_unavailable": "Server list unavailable for Driver role. Showing local synced history from this device.",
+    "preview_unavailable_r2": "Preview unavailable: R2 not configured",
+    "preview_unavailable": "Preview unavailable",
+    "refreshing": "Refreshing documents...",
+    "synced_toast": "Synced: {{filename}}",
+    "upload_failed_toast": "Upload failed: {{filename}} ({{error}})",
+    "synced_label": "Synced",
+    "tap_to_preview": "Tap to preview",
+    "loading_preview": "Loading preview...",
+    "preview_not_available_type": "Preview not available for this file type.",
+    "preview_title": "Preview - {{filename}}",
+    "status_uploading": "UPLOADING",
+    "status_failed": "FAILED",
+    "status_synced": "SYNCED",
+    "status_queued": "QUEUED",
+    "img_prefix": "[IMG]",
+    "file_prefix": "[FILE]"
+  },
+  "invite": {
+    "title": "Driver Invite",
+    "setting_up": "Setting up your account...",
+    "complete_access": "Complete your account access.",
+    "invalid_link": "Invalid invite link.",
+    "invalid_or_expired": "This invite is invalid or expired. Please contact your dispatcher.",
+    "redeem_failed": "Could not redeem invite. Please try again.",
+    "go_to_login": "Go to login"
+  },
+  "transfer_ack": {
+    "back": "← Back",
+    "title": "Equipment transfer acknowledgements",
+    "ack_dropoff": "Acknowledge drop-off ({{id}})",
+    "ack_pickup": "Acknowledge pickup ({{id}})"
+  },
+  "upload_modal": {
+    "title": "Upload Document",
+    "select_file_first": "Select a file first",
+    "choose_category": "Choose a category",
+    "expiration_required": "Expiration date is required for this category",
+    "profile_not_linked": "Your account is not linked to a driver profile. Contact dispatch.",
+    "queued_success": "Uploading in background — view in My Documents",
+    "queue_failed": "Unable to queue upload",
+    "step_pick_file": "Step 1: Pick file",
+    "step_category": "Step 2: Category quick-pick",
+    "step_details": "Step 3: Optional details",
+    "step_submit": "Step 4: Submit",
+    "camera_capture": "Camera Capture",
+    "pick_file": "Pick File",
+    "other_categories": "Other categories",
+    "select_category": "Select category",
+    "attach_to_me": "Attach to me",
+    "standalone": "Standalone",
+    "add_details": "Add details",
+    "document_date": "Document date",
+    "expiration_date": "Expiration date",
+    "expiration_required_hint": "(required)",
+    "description": "Description",
+    "description_placeholder": "Optional note",
+    "loading_profile": "Loading your driver profile...",
+    "profile_load_failed": "Unable to load your driver profile. Try again.",
+    "optimizing": "Optimizing...",
+    "queue_upload": "Queue Upload"
+  },
+  "install": {
+    "title": "Install IH35 Driver app",
+    "ios_hint": "Tap Share, then Add to Home Screen.",
+    "default_hint": "Add this app to your home screen for quick access."
+  },
+  "error_boundary": {
+    "message": "Documents temporarily unavailable. Please refresh."
+  },
+  "storage": {
+    "itp_restore_reupload": "Storage was reset — please re-upload this document",
+    "itp_stale_warning": "Offline data may be cleared soon. Open the app daily to keep your upload queue."
   }
 }

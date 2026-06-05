@@ -1,4 +1,5 @@
 import type { DvirInspectionItem, DvirStatus } from "../api/dvir";
+import { useTranslation } from "react-i18next";
 
 export const MAX_DVIR_DEFECT_PHOTOS = 5;
 
@@ -27,6 +28,7 @@ export function DvirItemRow({
   noteRequiredLabel,
   photoRequiredLabel,
 }: Props) {
+  const { t } = useTranslation();
   const isMajor = item.status === "major";
   return (
     <div className="rounded-lg border border-pwa-border bg-pwa-card p-3">
@@ -40,7 +42,7 @@ export function DvirItemRow({
             className="min-h-11 rounded border text-xs font-semibold uppercase tracking-[0.04em]"
             style={item.status === status.key ? { backgroundColor: status.bg, color: status.text, borderColor: status.bg } : undefined}
           >
-            {status.key}
+            {t(`dvir.status.${status.key}`)}
           </button>
         ))}
       </div>
@@ -57,7 +59,7 @@ export function DvirItemRow({
           onClick={onAddPhoto}
           className="min-h-11 rounded border border-pwa-border px-3 text-xs font-semibold text-pwa-text-secondary disabled:opacity-40"
         >
-          + Photo
+          {t("dvir.add_photo")}
         </button>
         <div className="text-xs text-pwa-text-secondary">
           {item.photo_keys.length} {photoRequiredLabel}

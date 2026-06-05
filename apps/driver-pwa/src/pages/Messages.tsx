@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { listDriverPwaMessages, markDriverPwaMessageRead, replyDriverPwaMessage } from "../api/messages";
 import { PwaButton } from "../components/PwaButton";
@@ -13,6 +14,7 @@ function formatWhen(iso: string) {
 }
 
 export function MessagesPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [reply, setReply] = useState("");
@@ -33,10 +35,10 @@ export function MessagesPage() {
     mutationFn: () => replyDriverPwaMessage(reply.trim()),
     onSuccess: async () => {
       setReply("");
-      pushToast("Reply sent", "success");
+      pushToast(t("messages.reply_sent"), "success");
       await queryClient.invalidateQueries({ queryKey: ["pwa", "driver-messages"] });
     },
-    onError: () => pushToast("Failed to send reply", "error"),
+    onError: () => pushToast(t("messages.reply_failed"), "error"),
   });
 
   const messages = query.data?.messages ?? [];
@@ -45,12 +47,12 @@ export function MessagesPage() {
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary">
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-24">
         <Link to="/profile" className="text-sm text-pwa-text-secondary hover:underline">
-          Back to profile
+          {t("messages.back_to_profile")}
         </Link>
-        <PwaCard title="Messages" subtitle="Read office messages and reply in-app">
-          {query.isLoading ? <p className="text-sm text-pwa-text-secondary">Loading messages…</p> : null}
+        <PwaCard title={t("messages.title")} subtitle={t("messages.subtitle")}>
+          {query.isLoading ? <p className="text-sm text-pwa-text-secondary">{t("messages.loading")}</p> : null}
           {!query.isLoading && messages.length === 0 ? (
-            <p className="text-sm text-pwa-text-secondary">No messages yet.</p>
+            <p className="text-sm text-pwa-text-secondary">{t("messages.empty")}</p>
           ) : null}
           <div className="space-y-2" data-testid="pwa-messages-list">
             {messages.map((msg) => (
@@ -70,7 +72,7 @@ export function MessagesPage() {
                       className="font-semibold text-amber-300 underline"
                       onClick={() => markReadMutation.mutate(msg.id)}
                     >
-                      Mark read
+                      {t("messages.mark_read")}
                     </button>
                   ) : null}
                 </div>
@@ -78,14 +80,14 @@ export function MessagesPage() {
             ))}
           </div>
           <div className="mt-4 space-y-2">
-            <label className="text-xs font-semibold text-pwa-text-secondary">Reply</label>
+            <label className="text-xs font-semibold text-pwa-text-secondary">{t("messages.reply_label")}</label>
             <textarea
               data-testid="pwa-message-reply"
               value={reply}
               onChange={(event) => setReply(event.target.value)}
               rows={3}
               className="w-full rounded border border-pwa-border bg-[#0d111c] px-2 py-2 text-sm text-white"
-              placeholder="Type your reply…"
+              placeholder={t("messages.reply_placeholder")}
             />
             <PwaButton
               type="button"
@@ -93,7 +95,7 @@ export function MessagesPage() {
               disabled={!reply.trim() || replyMutation.isPending}
               onClick={() => replyMutation.mutate()}
             >
-              Send reply
+              {t("messages.send_reply")}
             </PwaButton>
           </div>
         </PwaCard>

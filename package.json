@@ -313,6 +313,7 @@
     "verify:catalog-factory-coverage": "node scripts/verify-catalog-factory-coverage.mjs",
     "verify:fmcsa-safer-customer-coverage": "node scripts/verify-fmcsa-safer-customer-coverage.mjs",
     "verify:catalog-pages-use-generic-framework": "node scripts/verify-catalog-pages-use-generic-framework.mjs",
+    "verify:driver-pwa-i18n-coverage": "node scripts/verify-driver-pwa-i18n-coverage.mjs",
     "verify:drug-alcohol-fmcsa-clearinghouse-link": "node scripts/verify-drug-alcohol-fmcsa-clearinghouse-link.mjs",
     "verify:wo-display-id-format": "node scripts/verify-wo-display-id-format.mjs",
     "verify:wo-status-transitions": "node scripts/verify-wo-status-transitions.mjs",

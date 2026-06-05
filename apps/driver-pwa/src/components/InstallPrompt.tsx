@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PwaButton } from "./PwaButton";
 
 type DeferredPrompt = Event & {
@@ -16,6 +17,7 @@ function shouldShow(): boolean {
 }
 
 export function InstallPrompt() {
+  const { t } = useTranslation();
   const [deferredPrompt, setDeferredPrompt] = useState<DeferredPrompt | null>(null);
   const [dismissed, setDismissed] = useState<boolean>(() => !shouldShow());
   const isiOS = useMemo(
@@ -39,12 +41,8 @@ export function InstallPrompt() {
 
   return (
     <div className="fixed bottom-3 left-4 right-4 z-30 rounded-xl border border-pwa-border bg-pwa-card p-3 shadow-lg">
-      <p className="text-sm font-medium text-pwa-text-primary">
-        {isiOS ? "Install IH35 Driver app" : "Install IH35 Driver app"}
-      </p>
-      <p className="mt-1 text-xs text-pwa-text-secondary">
-        {isiOS ? "Tap Share, then Add to Home Screen." : "Add this app to your home screen for quick access."}
-      </p>
+      <p className="text-sm font-medium text-pwa-text-primary">{t("install.title")}</p>
+      <p className="mt-1 text-xs text-pwa-text-secondary">{isiOS ? t("install.ios_hint") : t("install.default_hint")}</p>
       <div className="mt-3 flex gap-2">
         {!isiOS ? (
           <PwaButton
@@ -57,7 +55,7 @@ export function InstallPrompt() {
               setDismissed(true);
             }}
           >
-            Install
+            {t("common.install")}
           </PwaButton>
         ) : null}
         <PwaButton
@@ -68,7 +66,7 @@ export function InstallPrompt() {
             setDismissed(true);
           }}
         >
-          Dismiss
+          {t("common.dismiss")}
         </PwaButton>
       </div>
     </div>

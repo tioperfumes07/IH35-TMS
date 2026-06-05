@@ -18,10 +18,10 @@ import { PwaCard } from "../components/PwaCard";
 import { useToast } from "../components/Toast";
 import { subscribeSyncState, syncOnce } from "../lib/upload-sync";
 
-function deriveDriverName(email: string): string {
+function deriveDriverName(email: string, fallback: string): string {
   const base = email.split("@")[0];
   const words = base.split(/[._-]/).filter(Boolean);
-  if (words.length === 0) return "Driver";
+  if (words.length === 0) return fallback;
   return words.map((word) => word[0].toUpperCase() + word.slice(1)).join(" ");
 }
 
@@ -60,7 +60,7 @@ export function HomePage() {
   const [pendingUploads, setPendingUploads] = useState(0);
   const [onlineStatus, setOnlineStatus] = useState<"online" | "connecting" | "offline">(navigator.onLine ? "connecting" : "offline");
 
-  const driverName = useMemo(() => deriveDriverName(auth.user?.email ?? "driver"), [auth.user?.email]);
+  const driverName = useMemo(() => deriveDriverName(auth.user?.email ?? "driver", t("common.driver_fallback")), [auth.user?.email, t]);
   const hosQuery = useQuery({ queryKey: ["pwa", "home", "hos-clocks"], queryFn: getPwaHosClocks });
   const loadsQuery = useQuery({ queryKey: ["pwa", "home", "loads"], queryFn: getMyLoadsToday });
   const fuelQuery = useQuery({ queryKey: ["pwa", "home", "fuel"], queryFn: getRecentFuelTransactions });
@@ -71,14 +71,14 @@ export function HomePage() {
   const confirmTransferMutation = useMutation({
     mutationFn: (id: string) => confirmMyTransfer(id),
     onSuccess: () => {
-      pushToast("Transfer confirmed", "success");
+      pushToast(t("home.transfer_confirmed"), "success");
       void queryClient.invalidateQueries({ queryKey: ["driver-pwa", "pending-transfers"] });
     },
   });
   const rejectTransferMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => rejectMyTransfer(id, reason),
     onSuccess: () => {
-      pushToast("Transfer rejected", "info");
+      pushToast(t("home.transfer_rejected"), "info");
       void queryClient.invalidateQueries({ queryKey: ["driver-pwa", "pending-transfers"] });
     },
   });
@@ -136,11 +136,16 @@ export function HomePage() {
           </Link>
         </header>
         {pendingTransfer ? (
-          <PwaCard title="Equipment Transfer Pending">
+          <PwaCard title={t("home.transfer_pending_title")}>
             <p className="text-sm">
-              {`📦 Equipment transfer pending from ${pendingTransfer.from_driver_id} · expires ${new Date(pendingTransfer.expires_at).toLocaleString()}`}
+              {t("home.transfer_pending_body", {
+                from: pendingTransfer.from_driver_id,
+                expires: new Date(pendingTransfer.expires_at).toLocaleString(),
+              })}
             </p>
-            <p className="mt-1 text-xs text-pwa-text-secondary">{pendingTransfer.transfer_location ?? "No location provided"}</p>
+            <p className="mt-1 text-xs text-pwa-text-secondary">
+              {pendingTransfer.transfer_location ?? t("home.transfer_no_location")}
+            </p>
             <div className="mt-2 flex gap-2">
               <PwaButton
                 className="flex-1"
@@ -148,21 +153,21 @@ export function HomePage() {
                   void confirmTransferMutation.mutateAsync(pendingTransfer.id);
                 }}
               >
-                Accept
+                {t("common.accept")}
               </PwaButton>
               <PwaButton
                 variant="secondary"
                 className="flex-1"
                 onClick={() => {
-                  const reason = window.prompt("Reason for rejection (min 10 chars):", "") ?? "";
+                  const reason = window.prompt(t("home.transfer_reject_prompt"), "") ?? "";
                   if (reason.trim().length < 10) {
-                    pushToast("Reason must be at least 10 characters", "error");
+                    pushToast(t("home.transfer_reject_reason_min"), "error");
                     return;
                   }
                   void rejectTransferMutation.mutateAsync({ id: pendingTransfer.id, reason });
                 }}
               >
-                Reject
+                {t("common.reject")}
               </PwaButton>
             </div>
           </PwaCard>

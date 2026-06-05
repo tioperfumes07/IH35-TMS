@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../api/client";
 import { listFileCategories } from "../api/docs";
 import { getCurrentDriver } from "../api/mdata";
 import { compressImage } from "../lib/image-compress";
 import { enqueueUpload, type UploadQueueItem } from "../lib/upload-queue";
+import { persistQueueWrite } from "../lib/storage";
 import { syncOnce } from "../lib/upload-sync";
 import { Modal } from "./Modal";
 import { PwaButton } from "./PwaButton";
@@ -38,8 +40,10 @@ export function UploadDocumentModal({
   defaultEntityType = "driver",
   defaultEntityId = null,
   allowedCategoryCodes,
-  title = "Upload Document",
+  title,
 }: UploadDocumentModalProps) {
+  const { t } = useTranslation();
+  const resolvedTitle = title ?? t("upload_modal.title");
   const { pushToast } = useToast();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [file, setFile] = useState<File | null>(null);
@@ -103,21 +107,21 @@ export function UploadDocumentModal({
 
   async function handleQueueUpload() {
     if (!file) {
-      pushToast("Select a file first", "error");
+      pushToast(t("upload_modal.select_file_first"), "error");
       return;
     }
     if (!categoryId) {
-      pushToast("Choose a category", "error");
+      pushToast(t("upload_modal.choose_category"), "error");
       return;
     }
     if (selectedCategory?.requires_expiration_date && !expirationDate) {
-      pushToast("Expiration date is required for this category", "error");
+      pushToast(t("upload_modal.expiration_required"), "error");
       return;
     }
 
     const driverId = driverQuery.data?.id ?? null;
     if (entityType === "driver" && (!driverId || !isUuid(driverId))) {
-      pushToast("Your account is not linked to a driver profile. Contact dispatch.", "error");
+      pushToast(t("upload_modal.profile_not_linked"), "error");
       return;
     }
 
@@ -143,23 +147,24 @@ export function UploadDocumentModal({
         next_retry_at: null,
       };
       await enqueueUpload(item);
+      void persistQueueWrite();
       onQueued();
       void syncOnce();
-      pushToast("Uploading in background — view in My Documents", "success");
+      pushToast(t("upload_modal.queued_success"), "success");
       resetAndClose();
     } catch (error) {
-      pushToast(error instanceof Error ? error.message : "Unable to queue upload", "error");
+      pushToast(error instanceof Error ? error.message : t("upload_modal.queue_failed"), "error");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <Modal open={open} onClose={resetAndClose} title={title}>
+    <Modal open={open} onClose={resetAndClose} title={resolvedTitle}>
       <div className="space-y-4">
         {step === 1 ? (
           <div className="space-y-3">
-            <p className="text-sm text-pwa-text-secondary">Step 1: Pick file</p>
+            <p className="text-sm text-pwa-text-secondary">{t("upload_modal.step_pick_file")}</p>
             <input
               ref={cameraInputRef}
               type="file"
@@ -187,10 +192,10 @@ export function UploadDocumentModal({
             />
             <div className="grid grid-cols-2 gap-3">
               <PwaButton className="min-h-16" onClick={() => cameraInputRef.current?.click()}>
-                Camera Capture
+                {t("upload_modal.camera_capture")}
               </PwaButton>
               <PwaButton variant="secondary" className="min-h-16" onClick={() => fileInputRef.current?.click()}>
-                Pick File
+                {t("upload_modal.pick_file")}
               </PwaButton>
             </div>
           </div>
@@ -198,7 +203,7 @@ export function UploadDocumentModal({
 
         {step >= 2 ? (
           <div className="space-y-3">
-            <p className="text-sm text-pwa-text-secondary">Step 2: Category quick-pick</p>
+            <p className="text-sm text-pwa-text-secondary">{t("upload_modal.step_category")}</p>
             {file ? (
               <div className="rounded-xl border border-pwa-border bg-[#1A2030] p-2 text-xs text-pwa-text-secondary">
                 {file.name} ({Math.max(1, Math.round(file.size / 1024))} KB)
@@ -225,7 +230,7 @@ export function UploadDocumentModal({
             </div>
             {showOtherCategories ? (
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-pwa-text-secondary">Other categories</label>
+                <label className="text-xs font-semibold text-pwa-text-secondary">{t("upload_modal.other_categories")}</label>
                 <select
                   value={categoryId ?? ""}
                   onChange={(event) => {
@@ -235,7 +240,7 @@ export function UploadDocumentModal({
                   }}
                   className="h-10 w-full rounded-lg border border-pwa-border bg-pwa-card px-2 text-sm text-pwa-text-primary"
                 >
-                  <option value="">Select category</option>
+                  <option value="">{t("upload_modal.select_category")}</option>
                   {otherCategories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.label}
@@ -249,18 +254,18 @@ export function UploadDocumentModal({
 
         {step >= 3 ? (
           <div className="space-y-3">
-            <p className="text-sm text-pwa-text-secondary">Step 3: Optional details</p>
+            <p className="text-sm text-pwa-text-secondary">{t("upload_modal.step_details")}</p>
             {defaultEntityType === "load_stop" ? null : (
               <div className="grid grid-cols-2 gap-2">
                 <PwaButton variant={entityType === "driver" ? "primary" : "secondary"} className="min-h-12" onClick={() => setEntityType("driver")}>
-                  Attach to me
+                  {t("upload_modal.attach_to_me")}
                 </PwaButton>
                 <PwaButton
                   variant={entityType === "standalone" ? "primary" : "secondary"}
                   className="min-h-12"
                   onClick={() => setEntityType("standalone")}
                 >
-                  Standalone
+                  {t("upload_modal.standalone")}
                 </PwaButton>
               </div>
             )}
@@ -269,12 +274,12 @@ export function UploadDocumentModal({
               className="w-full rounded-xl border border-pwa-border px-3 py-2 text-left text-sm text-pwa-text-secondary"
               onClick={() => setDetailsOpen((current) => !current)}
             >
-              Add details {detailsOpen ? "▴" : "▾"}
+              {t("upload_modal.add_details")} {detailsOpen ? "▴" : "▾"}
             </button>
             {detailsOpen ? (
               <div className="space-y-2 rounded-xl border border-pwa-border bg-[#1A2030] p-3">
                 <label className="block text-xs text-pwa-text-secondary">
-                  Document date
+                  {t("upload_modal.document_date")}
                   <input
                     type="date"
                     value={documentDate}
@@ -283,7 +288,8 @@ export function UploadDocumentModal({
                   />
                 </label>
                 <label className="block text-xs text-pwa-text-secondary">
-                  Expiration date {selectedCategory?.requires_expiration_date ? "(required)" : ""}
+                  {t("upload_modal.expiration_date")}{" "}
+                  {selectedCategory?.requires_expiration_date ? t("upload_modal.expiration_required_hint") : ""}
                   <input
                     type="date"
                     value={expirationDate}
@@ -292,13 +298,13 @@ export function UploadDocumentModal({
                   />
                 </label>
                 <label className="block text-xs text-pwa-text-secondary">
-                  Description
+                  {t("upload_modal.description")}
                   <input
                     type="text"
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     className="mt-1 h-10 w-full rounded-lg border border-pwa-border bg-pwa-card px-2 text-sm text-pwa-text-primary"
-                    placeholder="Optional note"
+                    placeholder={t("upload_modal.description_placeholder")}
                   />
                 </label>
               </div>
@@ -322,7 +328,7 @@ export function UploadDocumentModal({
                   })
                 }
               >
-                Back
+                {t("common.back")}
               </PwaButton>
             ) : null}
             <PwaButton
@@ -336,22 +342,22 @@ export function UploadDocumentModal({
               }}
               disabled={(step === 1 && !file) || (step === 2 && !categoryId)}
             >
-              {step < 3 ? "Next" : "Continue"}
+              {step < 3 ? t("common.next") : t("common.continue")}
             </PwaButton>
           </div>
         )}
 
         {step === 4 ? (
           <div className="space-y-3">
-            <p className="text-sm text-pwa-text-secondary">Step 4: Submit</p>
+            <p className="text-sm text-pwa-text-secondary">{t("upload_modal.step_submit")}</p>
             {entityType === "driver" && driverQuery.isLoading ? (
-              <p className="text-xs text-pwa-text-secondary">Loading your driver profile...</p>
+              <p className="text-xs text-pwa-text-secondary">{t("upload_modal.loading_profile")}</p>
             ) : null}
             {entityType === "driver" && driverQuery.error ? (
               <p className="text-xs text-hos-violation">
                 {driverQuery.error instanceof ApiError && driverQuery.error.status === 404
-                  ? "Your account is not linked to a driver profile. Contact dispatch."
-                  : "Unable to load your driver profile. Try again."}
+                  ? t("upload_modal.profile_not_linked")
+                  : t("upload_modal.profile_load_failed")}
               </p>
             ) : null}
             <PwaButton
@@ -362,7 +368,7 @@ export function UploadDocumentModal({
                 (entityType === "driver" && (driverQuery.isLoading || Boolean(driverQuery.error) || !driverQuery.data?.id))
               }
             >
-              {submitting ? "Optimizing..." : "Queue Upload"}
+              {submitting ? t("upload_modal.optimizing") : t("upload_modal.queue_upload")}
             </PwaButton>
           </div>
         ) : null}
