@@ -678,6 +678,9 @@ jobs:
       - name: verify:qbo-sync-customer-vendor-counts
         run: npm run verify:qbo-sync-customer-vendor-counts
 
+      - name: verify:qbo-sync-status-endpoints-return-200
+        run: npm run verify:qbo-sync-status-endpoints-return-200
+
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 
