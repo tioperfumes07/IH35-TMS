@@ -5,6 +5,10 @@
       "reason": "Owner data migration tool; not in module subnav"
     },
     {
+      "path": "/admin/carrier-bootstrap",
+      "reason": "Owner USMCA hidden-carrier bootstrap (Wave 19 USMCA-2)"
+    },
+    {
       "path": "/admin/forensic-review",
       "reason": "Owner forensic review; not in module subnav"
     },

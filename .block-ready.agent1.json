@@ -11,6 +11,7 @@
     "apps/backend/src/compliance/form-425c.routes.ts",
     "apps/frontend/src/pages/admin/CarrierBootstrap.tsx",
     "apps/frontend/src/routes/manifest.tsx",
+    "scripts/nav-integrity-allowlist.json",
     "scripts/verify-usmca-seed-completeness.mjs",
     "package.json",
     ".github/workflows/ci.yml",
