@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 21 |
+| Shipped | 23 |
 | Forensic-skip | 2 |
 | In-flight | 0 |
-| Remaining | 7 |
+| Remaining | 5 |
 | ON HOLD | 4 (A23-11, A23-14, B19, B20 — triaged CLOSURE-17; do not dispatch) |
 
-**Pass:** 23/30 (21 shipped + 2 forensic-skip) · **wave C-12 COMPLETE** · **next: C-13 (CLOSURE-24 + CLOSURE-25) QUEUED**
+**Pass:** 25/30 (23 shipped + 2 forensic-skip) · **wave C-14 COMPLETE (CLOSURE-26 + CLOSURE-27)** · **note:** C-13 (CLOSURE-24/25) merged out-of-order — still in-flight, not yet on main; pass → 27/30 once both C-13 blocks land
 
 ## Block Status
 
@@ -45,8 +45,8 @@
 | CLOSURE-23 | B | C-12 | **SHIPPED** | [#581](https://github.com/tioperfumes07/IH35-TMS/pull/581) | DR backup; merged `f67c7ec61` 2026-06-05 |
 | CLOSURE-24 | A | C-13 | QUEUED | — | |
 | CLOSURE-25 | B | C-13 | QUEUED | — | |
-| CLOSURE-26 | A | C-14 | QUEUED | — | |
-| CLOSURE-27 | B | C-14 | QUEUED | — | |
+| CLOSURE-26 | A | C-14 | **SHIPPED** | [#584](https://github.com/tioperfumes07/IH35-TMS/pull/584) | i18n EN/ES foundation; merged `d46ddb446` 2026-06-05 · ES machine-translated, flagged for Jorge review (follow-up, not a merge gate) |
+| CLOSURE-27 | B | C-14 | **SHIPPED** | [#585](https://github.com/tioperfumes07/IH35-TMS/pull/585) | Mobile/ultrawide edge breakpoint pack; merged `238681f35` 2026-06-05 |
 | CLOSURE-28 | A | C-15 | QUEUED | — | |
 | CLOSURE-29 | B | C-15 | QUEUED | — | |
 | CLOSURE-30 | A | C-16 | QUEUED | — | Final PASS-8; requires C-1…C-29 |
@@ -94,9 +94,10 @@
 | C-11 | CLOSURE-20 ✅ [#578](https://github.com/tioperfumes07/IH35-TMS/pull/578) | CLOSURE-21 ✅ [#579](https://github.com/tioperfumes07/IH35-TMS/pull/579) |
 | C-12 | CLOSURE-22 ✅ [#580](https://github.com/tioperfumes07/IH35-TMS/pull/580) | CLOSURE-23 ✅ [#581](https://github.com/tioperfumes07/IH35-TMS/pull/581) |
 | C-13 | CLOSURE-24 ⏳ | CLOSURE-25 ⏳ |
+| C-14 | CLOSURE-26 ✅ [#584](https://github.com/tioperfumes07/IH35-TMS/pull/584) | CLOSURE-27 ✅ [#585](https://github.com/tioperfumes07/IH35-TMS/pull/585) |
 | … | per V2 index | per V2 index |
 
-**Main:** `6b26405d0` · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **GAP:** PAUSED (user directive 2026-06-05)
+**Main:** `d46ddb446` · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **C-14 merges:** `238681f35` (CLOSURE-27 #585) · `d46ddb446` (CLOSURE-26 #584) · **GAP:** PAUSED (user directive 2026-06-05)
 
 ## GAP De-Dup Plan (63 active blocks · 2026-06-05)
 
