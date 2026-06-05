@@ -166,6 +166,7 @@
     "verify:no-silent-redirects": "node scripts/verify-no-silent-redirects.mjs",
     "verify:route-manifest-completeness": "node scripts/verify-route-manifest-completeness.mjs",
     "verify:subtabs-are-real-routes": "node scripts/verify-subtabs-are-real-routes.mjs",
+    "verify:pass-7-smoke": "node scripts/run-pass-7-smoke-verify.mjs",
     "verify:no-nested-box-pattern": "node scripts/verify-no-nested-box-pattern.mjs",
     "verify:routes-not-blank": "node scripts/verify-routes-not-blank.mjs",
     "verify:reports-no-undefined-metrics": "node scripts/verify-reports-no-undefined-metrics.mjs",
