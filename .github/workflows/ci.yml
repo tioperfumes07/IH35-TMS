@@ -573,6 +573,9 @@ jobs:
       - name: verify:tables-use-resizable-th
         run: npm run verify:tables-use-resizable-th
 
+      - name: verify:customers-vendors-have-list-view
+        run: npm run verify:customers-vendors-have-list-view
+
       - name: verify:bulk-update-route-mounted
         run: npm run verify:bulk-update-route-mounted
 

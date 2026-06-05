@@ -10,7 +10,9 @@ import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { parseVendorNotes } from "../lib/vendorProfileMeta";
+import { VendorsListView } from "./vendors/VendorsListView";
 import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
+import { useViewModePref } from "../hooks/useViewModePref";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
 
@@ -88,6 +90,7 @@ export function VendorsPage() {
   const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(
     () => Object.fromEntries(COLUMN_OPTIONS.map((column) => [column.key, column.defaultOn])) as Record<ColumnKey, boolean>
   );
+  const { viewMode, setViewMode } = useViewModePref("vendors");
 
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "page", companyId],
@@ -181,8 +184,40 @@ export function VendorsPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Vendors" subtitle="Vendor list and transactions" />
+      <PageHeader
+        title="Vendors"
+        subtitle="Vendor list and transactions"
+        actions={
+          <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="vendors">
+            <button
+              type="button"
+              className={`rounded px-2 py-1 font-medium ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+              onClick={() => setViewMode("list")}
+            >
+              List view
+            </button>
+            <button
+              type="button"
+              className={`rounded px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+              onClick={() => setViewMode("master-detail")}
+            >
+              Master-detail
+            </button>
+          </div>
+        }
+      />
       {companyId ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
+      {viewMode === "list" ? (
+        <VendorsListView
+          companyId={companyId}
+          vendors={vendorsSorted}
+          openByVendorId={openByVendorId}
+          onSelectVendor={(vendorId) => {
+            setSelectedVendorId(vendorId);
+            setViewMode("master-detail");
+          }}
+        />
+      ) : (
       <div className="flex gap-3">
         <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2">
           <input
@@ -383,6 +418,7 @@ export function VendorsPage() {
           )}
         </main>
       </div>
+      )}
     </div>
   );
 }
