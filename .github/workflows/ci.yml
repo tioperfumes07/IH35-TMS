@@ -576,6 +576,12 @@ jobs:
       - name: verify:customers-vendors-have-list-view
         run: npm run verify:customers-vendors-have-list-view
 
+      - name: verify:no-horizontal-overflow-at-1024
+        run: npm run verify:no-horizontal-overflow-at-1024
+
+      - name: verify:responsive-pages-render-at-mobile
+        run: npm run verify:responsive-pages-render-at-mobile
+
       - name: verify:bulk-update-route-mounted
         run: npm run verify:bulk-update-route-mounted
 

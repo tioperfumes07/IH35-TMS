@@ -1,24 +1,25 @@
 {
-  "block_id": "AUDIT-FIX-2",
-  "branch": "feat/audit-fix-2-column-resize",
+  "block_id": "AUDIT-FIX-4",
+  "branch": "audit-fix/audit-fix-4-responsive-breakpoint-pass",
   "phase": "AUDIT-FIX",
-  "task": "COLUMN-RESIZE-FRAMEWORK — resizable column headers + per-user persistence",
+  "task": "RESPONSIVE-BREAKPOINT-PASS — fix overflow at 1024/768/375 + CI guard",
   "allowed_files": [
-    "apps/frontend/src/components/shared/ResizableTh.tsx",
-    "apps/frontend/src/hooks/useColumnWidths.ts",
-    "apps/frontend/src/components/shared/ResizableTable.tsx",
-    "apps/backend/src/users/table-preferences.routes.ts",
-    "apps/backend/src/identity/user-preferences.routes.ts",
-    "apps/frontend/src/pages/reports/runners/RunnerTable.tsx",
-    "apps/frontend/src/pages/banking/BankingTransactionsTable.tsx",
-    "scripts/verify-tables-use-resizable-th.mjs",
+    "apps/frontend/src/styles/responsive-breakpoints.css",
+    "apps/frontend/src/components/layout/ModuleHeader.tsx",
+    "apps/frontend/src/components/Sidebar.tsx",
+    "apps/frontend/src/components/Topbar.tsx",
+    "apps/frontend/src/pages/form425c/Form425CHome.tsx",
+    "scripts/verify-no-horizontal-overflow-at-1024.mjs",
+    "scripts/verify-responsive-pages-render-at-mobile.mjs",
+    "docs/audits/RESPONSIVE-AUDIT-FINDINGS-2026-06-04.md",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:tables-use-resizable-th"
+    "verify:no-horizontal-overflow-at-1024",
+    "verify:responsive-pages-render-at-mobile"
   ],
   "runtime_path": "src",
   "db_required": false,

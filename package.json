@@ -161,6 +161,8 @@
     "verify:all-list-pages-have-bulk-select": "node scripts/verify-all-list-pages-have-bulk-select.mjs",
     "verify:tables-use-resizable-th": "node scripts/verify-tables-use-resizable-th.mjs",
     "verify:customers-vendors-have-list-view": "node scripts/verify-customers-vendors-have-list-view.mjs",
+    "verify:no-horizontal-overflow-at-1024": "node scripts/verify-no-horizontal-overflow-at-1024.mjs",
+    "verify:responsive-pages-render-at-mobile": "node scripts/verify-responsive-pages-render-at-mobile.mjs",
     "verify:bulk-update-route-mounted": "node scripts/verify-bulk-update-route-mounted.mjs",
     "verify:bulk-update-rls-where": "node scripts/verify-bulk-update-rls-where.mjs",
     "verify:bulk-audit-per-id": "node scripts/verify-bulk-audit-per-id.mjs",

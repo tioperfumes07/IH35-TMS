@@ -1,0 +1,42 @@
+/* AUDIT-FIX-4 responsive breakpoint utilities */
+
+@media (max-width: 1023px) {
+  .ih35-sidebar-compact .sidebar {
+    width: 5rem;
+  }
+
+  .ih35-main-shell {
+    overflow-x: hidden;
+  }
+
+  .ih35-hide-below-lg {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .top-bar {
+    grid-template-columns: 1fr !important;
+    row-gap: 0.5rem;
+  }
+
+  .top-bar > div:nth-child(2) {
+    justify-content: flex-start !important;
+  }
+
+  .ih35-module-header-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .ih35-responsive-table-hide-sm {
+    display: none;
+  }
+}
+
+@media (max-width: 374px) {
+  .top-bar {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}

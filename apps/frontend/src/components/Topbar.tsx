@@ -157,7 +157,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   return (
     <div className="border-b" style={{ borderBottomColor: colors.sidebarBorder, backgroundColor: colors.topbarBg }}>
       <header
-        className="top-bar grid items-center"
+        className="top-bar grid items-center max-md:grid-cols-1 max-md:gap-2"
         style={{
           gridTemplateColumns: "1fr auto 1fr",
           minHeight: spacing.topbarHeight,
