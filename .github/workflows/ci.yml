@@ -687,6 +687,9 @@ jobs:
       - name: verify:no-clipped-subtabs-at-1024
         run: npm run verify:no-clipped-subtabs-at-1024
 
+      - name: verify:accounting-subpages-have-subnav
+        run: npm run verify:accounting-subpages-have-subnav
+
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 
