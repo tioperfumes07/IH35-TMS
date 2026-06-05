@@ -1,0 +1,121 @@
+import { useEffect, useState } from "react";
+import { colors } from "../../design/tokens";
+import type { SamsaraVisualStatus } from "../../lib/integration-telematics-status";
+import { StatusBarMobile } from "./StatusBarMobile";
+
+export type QboSyncPill = {
+  dot: "gray" | "green" | "yellow" | "red";
+  label: string;
+  status: string;
+  needsReconnect: boolean;
+  reconnectReason: string | null;
+};
+
+export type TopStatusBarProps = {
+  qboVis: { label: string; dot: "gray" | "green" };
+  samsaraVis: SamsaraVisualStatus;
+  relayVis: SamsaraVisualStatus;
+  qboSyncPill: QboSyncPill | null;
+  onOpenQboSyncDashboard: () => void;
+  onReconnectQbo: () => void;
+  /** Viewport max-width (px) at which icon-only mobile bar renders. AF-10: 767. */
+  compactMaxWidth?: number;
+};
+
+function useMaxWidth(maxWidthPx: number): boolean {
+  const query = `(max-width: ${maxWidthPx}px)`;
+  const [matches, setMatches] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia(query).matches : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setMatches(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [query]);
+
+  return matches;
+}
+
+function topbarDotClass(dot: "gray" | "green" | "yellow" | "red"): string {
+  if (dot === "green") return "bg-emerald-500";
+  if (dot === "yellow") return "bg-amber-400";
+  if (dot === "red") return "bg-red-500";
+  return "bg-slate-500";
+}
+
+export function TopStatusBar({
+  qboVis,
+  samsaraVis,
+  relayVis,
+  qboSyncPill,
+  onOpenQboSyncDashboard,
+  onReconnectQbo,
+  compactMaxWidth = 767,
+}: TopStatusBarProps) {
+  const compact = useMaxWidth(compactMaxWidth);
+  const muted = colors.sidebarTextMuted;
+  const active = colors.sidebarTextActive;
+
+  if (compact) {
+    return (
+      <StatusBarMobile
+        qboVis={qboVis}
+        samsaraVis={samsaraVis}
+        relayVis={relayVis}
+        qboSyncPill={qboSyncPill}
+        onOpenQboSyncDashboard={onOpenQboSyncDashboard}
+        onReconnectQbo={onReconnectQbo}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="flex max-w-[min(640px,94vw)] flex-wrap items-center justify-center gap-x-2 gap-y-1.5 rounded-full px-2 py-1 text-[12px] leading-snug"
+      style={{ backgroundColor: "#151A24", color: muted }}
+      data-status-bar-desktop
+    >
+      <span className="inline-flex items-center gap-1" style={{ color: active }}>
+        <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboVis.dot)}`} />
+        {qboVis.label}
+      </span>
+      <span style={{ color: muted }}>·</span>
+      <span className="inline-flex items-center gap-1" style={{ color: active }} title={samsaraVis.title}>
+        <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(samsaraVis.dot)}`} />
+        {samsaraVis.label}
+      </span>
+      <span style={{ color: muted }}>·</span>
+      <span className="inline-flex items-center gap-1" style={{ color: active }}>
+        <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(relayVis.dot)}`} />
+        {relayVis.label}
+      </span>
+      {qboSyncPill ? (
+        <>
+          <span style={{ color: muted }}>·</span>
+          <button
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-1 underline-offset-2 hover:underline"
+            style={{ color: active }}
+            title="Open QBO sync dashboard"
+            onClick={onOpenQboSyncDashboard}
+          >
+            <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboSyncPill.dot)}`} />
+            {qboSyncPill.label}
+          </button>
+          {qboSyncPill.needsReconnect ? (
+            <button
+              type="button"
+              className="ml-1 rounded-full border border-amber-400/60 px-2 py-0.5 text-[11px] font-semibold text-amber-100 hover:bg-amber-400/10"
+              onClick={onReconnectQbo}
+            >
+              Reconnect QuickBooks
+            </button>
+          ) : null}
+        </>
+      ) : null}
+    </div>
+  );
+}
