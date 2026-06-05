@@ -1,28 +1,24 @@
 {
-  "block_id": "CLOSURE-5-P5-T13-SETTLEMENT-DISPUTE",
-  "branch": "closure/p5-t13-settlement-dispute",
+  "block_id": "CLOSURE-6-P5-T14-TEAM-SPLIT-COMMISSION",
+  "branch": "closure/p5-t14-team-splits",
   "phase": "CLOSURE",
-  "task": "P5-T13 settlement dispute workflow with QBO adjustment + Drivers Disputes tab",
+  "task": "P5-T14 team split commission allocation with settlement apply hook + Drivers Team Splits tab",
+  "agent": "B",
   "allowed_files": [
-    "apps/backend/src/settlements/disputes/disputes.routes.ts",
-    "apps/backend/src/settlements/disputes/disputes.test.ts",
-    "apps/backend/src/migrations/0393-settlement-disputes.sql",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/drivers/SettlementDisputeModal.tsx",
-    "apps/frontend/src/pages/drivers/SettlementDisputeList.tsx",
+    "apps/backend/src/settlements/team-splits/team-splits.routes.ts",
+    "apps/backend/src/settlements/team-splits/apply.ts",
+    "apps/backend/src/settlements/team-splits/team-splits.test.ts",
+    "apps/frontend/src/pages/drivers/TeamSplitConfig.tsx",
     "apps/frontend/src/pages/drivers/DriversPage.tsx",
-    "apps/frontend/src/hooks/useSettlementDisputes.ts",
-    "apps/frontend/src/router/route-manifest.ts",
-    "apps/frontend/src/routes/manifest.tsx",
-    "db/migrations/0393_settlement_disputes.sql",
-    "scripts/verify-settlement-dispute-creates-adjustment.mjs",
+    "apps/frontend/src/hooks/useTeamSplits.ts",
+    "apps/backend/src/migrations/0394-team-splits.sql",
+    "scripts/verify-team-split-applies-to-shared-load.mjs",
     "package.json",
-    ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:settlement-dispute-creates-adjustment"
+    "verify:team-split-applies-to-shared-load"
   ],
   "runtime_path": "src",
   "db_required": true,

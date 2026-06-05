@@ -85,6 +85,7 @@
     "db:verify:mdata-workflows": "node scripts/db-verify-mdata-workflows.mjs",
     "verify:scheduler-tenant-context": "node scripts/verify-scheduler-tenant-context.mjs",
     "verify:settlement-dispute-creates-adjustment": "node scripts/verify-settlement-dispute-creates-adjustment.mjs",
+    "verify:team-split-applies-to-shared-load": "node scripts/verify-team-split-applies-to-shared-load.mjs",
     "db:verify:catalogs-rls": "node scripts/db-verify-catalogs-rls.mjs",
     "db:verify:catalogs-workflows": "node scripts/db-verify-catalogs-workflows.mjs",
     "db:verify:phase1-audit-coverage": "node scripts/db-verify-phase1-audit-coverage.mjs",

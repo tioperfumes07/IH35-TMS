@@ -1,23 +1,26 @@
 {
-  "block_id": "CLOSURE-4-P5-T12-AUTO-DEDUCTIONS",
-  "branch": "closure/p5-t12-auto-deductions",
+  "block_id": "CLOSURE-6-P5-T14-TEAM-SPLIT-COMMISSION",
+  "branch": "closure/p5-t14-team-splits",
   "phase": "CLOSURE",
-  "task": "P5-T12 Auto-deductions from settlements",
+  "task": "P5-T14 team split commission allocation with settlement apply hook + Drivers Team Splits tab",
   "agent": "B",
   "allowed_files": [
-    "apps/backend/src/settlements/auto-deductions/policy.routes.ts",
-    "apps/backend/src/settlements/auto-deductions/apply.ts",
-    "apps/backend/src/settlements/auto-deductions/auto-deductions.test.ts",
-    "apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx",
+    "apps/backend/src/settlements/team-splits/team-splits.routes.ts",
+    "apps/backend/src/settlements/team-splits/apply.ts",
+    "apps/backend/src/settlements/team-splits/team-splits.test.ts",
+    "apps/frontend/src/pages/drivers/TeamSplitConfig.tsx",
     "apps/frontend/src/pages/drivers/DriversPage.tsx",
-    "apps/frontend/src/hooks/useAutoDeductionPolicies.ts",
-    "apps/backend/src/migrations/0392-auto-deductions.sql",
-    "scripts/verify-auto-deduction-applies-to-next-settlement.mjs",
+    "apps/frontend/src/hooks/useTeamSplits.ts",
+    "apps/backend/src/migrations/0394-team-splits.sql",
+    "scripts/verify-team-split-applies-to-shared-load.mjs",
+    "package.json",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:team-split-applies-to-shared-load"
+  ],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": false
+  "guard_required": true
 }
