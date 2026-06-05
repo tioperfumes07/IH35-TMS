@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 19 |
+| Shipped | 21 |
 | Forensic-skip | 2 |
 | In-flight | 0 |
-| Remaining | 9 |
+| Remaining | 7 |
 | ON HOLD | 4 (A23-11, A23-14, B19, B20 — triaged CLOSURE-17; do not dispatch) |
 
-**Pass:** 21/30 (19 shipped + 2 forensic-skip) · **wave C-11 COMPLETE** · **next: C-12 (CLOSURE-22 + CLOSURE-23) QUEUED**
+**Pass:** 23/30 (21 shipped + 2 forensic-skip) · **wave C-12 COMPLETE** · **next: C-13 (CLOSURE-24 + CLOSURE-25) QUEUED**
 
 ## Block Status
 
@@ -41,8 +41,8 @@
 | CLOSURE-19 | B | C-10 | **SHIPPED** | [#575](https://github.com/tioperfumes07/IH35-TMS/pull/575) | SEC audit; merged `b5f4a6c95` 2026-06-05 |
 | CLOSURE-20 | A | C-11 | **SHIPPED** | [#578](https://github.com/tioperfumes07/IH35-TMS/pull/578) | A11Y audit; merged `421fb9187` 2026-06-05 |
 | CLOSURE-21 | B | C-11 | **SHIPPED** | [#579](https://github.com/tioperfumes07/IH35-TMS/pull/579) | Monitoring setup; merged `0df2bfa1c` 2026-06-05 |
-| CLOSURE-22 | A | C-12 | QUEUED | — | CI hardening |
-| CLOSURE-23 | B | C-12 | QUEUED | — | DR backup |
+| CLOSURE-22 | A | C-12 | **SHIPPED** | [#580](https://github.com/tioperfumes07/IH35-TMS/pull/580) | CI hardening; merged `6b26405d0` 2026-06-05 |
+| CLOSURE-23 | B | C-12 | **SHIPPED** | [#581](https://github.com/tioperfumes07/IH35-TMS/pull/581) | DR backup; merged `f67c7ec61` 2026-06-05 |
 | CLOSURE-24 | A | C-13 | QUEUED | — | |
 | CLOSURE-25 | B | C-13 | QUEUED | — | |
 | CLOSURE-26 | A | C-14 | QUEUED | — | |
@@ -92,10 +92,11 @@
 | C-8 | CLOSURE-17 ✅ [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | CLOSURE-16 ✅ [#571](https://github.com/tioperfumes07/IH35-TMS/pull/571) |
 | C-10 | CLOSURE-18 ✅ [#576](https://github.com/tioperfumes07/IH35-TMS/pull/576) | CLOSURE-19 ✅ [#575](https://github.com/tioperfumes07/IH35-TMS/pull/575) |
 | C-11 | CLOSURE-20 ✅ [#578](https://github.com/tioperfumes07/IH35-TMS/pull/578) | CLOSURE-21 ✅ [#579](https://github.com/tioperfumes07/IH35-TMS/pull/579) |
-| C-12 | CLOSURE-22 ⏳ CI hardening | CLOSURE-23 ⏳ DR backup |
+| C-12 | CLOSURE-22 ✅ [#580](https://github.com/tioperfumes07/IH35-TMS/pull/580) | CLOSURE-23 ✅ [#581](https://github.com/tioperfumes07/IH35-TMS/pull/581) |
+| C-13 | CLOSURE-24 ⏳ | CLOSURE-25 ⏳ |
 | … | per V2 index | per V2 index |
 
-**Main:** `789f4cfa1` · **C-11 merges:** `421fb9187` (CLOSURE-20) · `0df2bfa1c` (CLOSURE-21) · **GAP:** PAUSED (user directive 2026-06-05)
+**Main:** `6b26405d0` · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **GAP:** PAUSED (user directive 2026-06-05)
 
 ## GAP De-Dup Plan (63 active blocks · 2026-06-05)
 
@@ -115,4 +116,4 @@
 
 **CANCEL:** standalone GAP-2 dispatch (superseded by AUDIT-FIX-18 re-slot)
 
-**Next dispatch (CLOSURE only):** wave C-12 — CLOSURE-22 (Lane A CI hardening) + CLOSURE-23 (Lane B DR backup). **Do not dispatch GAP** until Jorge clears CLOSURE gate.
+**Next dispatch (CLOSURE only):** wave C-13 — CLOSURE-24 (Lane A) + CLOSURE-25 (Lane B). **Do not dispatch GAP** until Jorge clears CLOSURE gate.
