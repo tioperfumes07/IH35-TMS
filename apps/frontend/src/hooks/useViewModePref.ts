@@ -23,11 +23,21 @@ function writeLocal(key: string, mode: EntityViewMode) {
   }
 }
 
-export function useViewModePref(entity: "customers" | "vendors") {
+// CLOSURE-31: The DEFAULT view for /customers and /vendors must be the prior
+// "master-detail" design Jorge was using before AUDIT-FIX-3 (#531). #531 added
+// the opt-in tabular "list" view but also flipped the default to it, which was
+// an unrequested wholesale change. The list view stays available as a toggle;
+// it must NOT be the default. See scripts/verify-customers-vendors-default-is-prior-design.mjs.
+const DEFAULT_VIEW_MODE: EntityViewMode = "master-detail";
+
+export function useViewModePref(
+  entity: "customers" | "vendors",
+  defaultMode: EntityViewMode = DEFAULT_VIEW_MODE
+) {
   const storageKey = `${STORAGE_PREFIX}${entity}`;
   const prefKey = `${entity}_view_mode`;
 
-  const [viewMode, setViewModeState] = useState<EntityViewMode>(() => readLocal(storageKey) ?? "list");
+  const [viewMode, setViewModeState] = useState<EntityViewMode>(() => readLocal(storageKey) ?? defaultMode);
 
   useEffect(() => {
     let cancelled = false;

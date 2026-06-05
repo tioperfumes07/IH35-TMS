@@ -93,7 +93,8 @@ export function VendorsPage() {
   const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(
     () => Object.fromEntries(COLUMN_OPTIONS.map((column) => [column.key, column.defaultOn])) as Record<ColumnKey, boolean>
   );
-  const { viewMode, setViewMode } = useViewModePref("vendors");
+  // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
+  const { viewMode, setViewMode } = useViewModePref("vendors", "master-detail");
 
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "page", companyId],
