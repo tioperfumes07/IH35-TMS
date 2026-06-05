@@ -58,17 +58,16 @@ async function pass(name, fn) {
 
 const TABLES = [
   {
-    name: "mdata.customers",
-    insert: (companyId, ownerId) => ({
+    name: "qbo_sync.drift_log",
+    insert: (companyId) => ({
       sql: `
-        INSERT INTO mdata.customers (customer_name, customer_code, operating_company_id, created_by_user_id)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO qbo_sync.drift_log (operating_company_id, entity_type, drift_type)
+        VALUES ($1, 'customers', 'missing_local')
         RETURNING id
       `,
-      values: [`USMCA-1 Leak Test ${suffix}`, `USMCA1-${suffix}`, companyId, ownerId],
+      values: [companyId],
     }),
-    countSql: `SELECT count(*)::int AS c FROM mdata.customers WHERE customer_code = $1`,
-    keyParam: () => `USMCA1-${suffix}`,
+    countSql: `SELECT count(*)::int AS c FROM qbo_sync.drift_log WHERE id = $1::uuid`,
   },
   {
     name: "catalogs.complaint_types",
@@ -100,17 +99,14 @@ try {
     const transpId = byCode.get("TRANSP");
     const usmcaId = byCode.get("USMCA");
     if (!transpId || !usmcaId) throw new Error("TRANSP and USMCA companies required");
-
-    const ownerRes = await client.query(`SELECT id FROM identity.users ORDER BY created_at ASC LIMIT 1`);
-    if (ownerRes.rows.length === 0) throw new Error("No users found for leak test seed");
-    return { transpId, usmcaId, ownerId: String(ownerRes.rows[0].id) };
+    return { transpId, usmcaId };
   });
 
   for (const table of TABLES) {
     results.push(
       await pass(`${table.name} invisible across carriers`, async () => {
         const inserted = await runWithBypass(client, async () => {
-          const payload = table.insert(refs.transpId, refs.ownerId);
+          const payload = table.insert(refs.transpId);
           const res = await client.query(payload.sql, payload.values);
           const id = res.rows[0]?.id;
           if (id) createdIds.push({ table: table.name, id: String(id) });
@@ -119,14 +115,17 @@ try {
 
         if (!inserted) throw new Error("fixture insert failed");
 
+        const countSql = table.keyParam ? table.countSql : table.countSql;
+        const countArgs = table.keyParam ? [table.keyParam()] : [inserted];
+
         const transpCount = await runScoped(client, refs.transpId, async () => {
-          const res = await client.query(table.countSql, [table.keyParam()]);
+          const res = await client.query(countSql, countArgs);
           return Number(res.rows[0]?.c ?? 0);
         });
         if (transpCount !== 1) throw new Error(`expected 1 row under TRANSP, got ${transpCount}`);
 
         const usmcaCount = await runScoped(client, refs.usmcaId, async () => {
-          const res = await client.query(table.countSql, [table.keyParam()]);
+          const res = await client.query(countSql, countArgs);
           return Number(res.rows[0]?.c ?? 0);
         });
         if (usmcaCount !== 0) {
@@ -137,22 +136,22 @@ try {
   }
 
   results.push(
-    await pass("fake carrier UUID sees zero TRANSP customers", async () => {
+    await pass("fake carrier UUID sees zero TRANSP drift_log rows", async () => {
       const fakeId = "00000000-0000-4000-8000-000000000001";
+      const driftId = createdIds.find((row) => row.table === "qbo_sync.drift_log")?.id;
+      if (!driftId) throw new Error("missing drift_log fixture");
       const count = await runScoped(client, fakeId, async () => {
-        const res = await client.query(`SELECT count(*)::int AS c FROM mdata.customers WHERE operating_company_id = $1`, [
-          refs.transpId,
-        ]);
+        const res = await client.query(`SELECT count(*)::int AS c FROM qbo_sync.drift_log WHERE id = $1::uuid`, [driftId]);
         return Number(res.rows[0]?.c ?? 0);
       });
-      if (count !== 0) throw new Error(`fake carrier session leaked ${count} TRANSP customer rows`);
+      if (count !== 0) throw new Error(`fake carrier session leaked drift_log row`);
     })
   );
 } finally {
   await runWithBypass(client, async () => {
     for (const row of createdIds) {
-      if (row.table === "mdata.customers") {
-        await client.query(`DELETE FROM mdata.customers WHERE id = $1`, [row.id]);
+      if (row.table === "qbo_sync.drift_log") {
+        await client.query(`DELETE FROM qbo_sync.drift_log WHERE id = $1`, [row.id]);
       }
       if (row.table === "catalogs.complaint_types") {
         await client.query(`DELETE FROM catalogs.complaint_types WHERE id = $1`, [row.id]);
