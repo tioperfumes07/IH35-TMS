@@ -125,7 +125,8 @@ export function CustomersPage() {
   const [createPhone, setCreatePhone] = useState("");
   const [createFormError, setCreateFormError] = useState("");
   const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string }>({});
-  const { viewMode, setViewMode } = useViewModePref("customers");
+  // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
+  const { viewMode, setViewMode } = useViewModePref("customers", "master-detail");
 
   const createMutation = useMutation({
     mutationFn: async () => {

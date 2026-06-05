@@ -590,6 +590,9 @@ jobs:
       - name: verify:customers-vendors-have-list-view
         run: npm run verify:customers-vendors-have-list-view
 
+      - name: verify:customers-vendors-default-is-prior-design
+        run: npm run verify:customers-vendors-default-is-prior-design
+
       - name: verify:no-horizontal-overflow-at-1024
         run: npm run verify:no-horizontal-overflow-at-1024
 
