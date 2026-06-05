@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 11 |
+| Shipped | 13 |
 | Forensic-skip | 2 |
 | In-flight | 2 |
-| Remaining | 15 |
+| Remaining | 13 |
 | ON HOLD | 0 (CLOSURE-17 triages A23-11, A23-14, B19, B20 only) |
 
-**Pass:** 13/30 (11 shipped + 2 forensic-skip) · **wave C-7 active**
+**Pass:** 15/30 (13 shipped + 2 forensic-skip) · **wave C-8 active**
 
 ## Block Status
 
@@ -31,12 +31,12 @@
 | CLOSURE-9 | A | C-4 | **SHIPPED** | [#559](https://github.com/tioperfumes07/IH35-TMS/pull/559) | Trailer profile parity guard; merged `f1437934d` 2026-06-05 |
 | CLOSURE-10 | B | C-5 | **SHIPPED** | [#560](https://github.com/tioperfumes07/IH35-TMS/pull/560) | Parts catalog CI guard; merged `d92d72e30` 2026-06-05 |
 | CLOSURE-11 | A | C-5 | **SHIPPED** | [#561](https://github.com/tioperfumes07/IH35-TMS/pull/561) | Services catalog + ETA; merged `b7bae9b1d` 2026-06-05 |
-| CLOSURE-12 | B | C-6 | **SHIPPED** | [#563](https://github.com/tioperfumes07/IH35-TMS/pull/563) | Payroll integration dispatch; merged `e457dcef` 2026-06-05 |
-| CLOSURE-13 | A | C-6 | **SHIPPED** | [#564](https://github.com/tioperfumes07/IH35-TMS/pull/564) | USMCA July launch dispatch; merged `d6a6336d` 2026-06-05 · **Jorge sign-off gate** for production activation |
-| CLOSURE-14 | B | C-7 | **IN-FLIGHT** | [#565](https://github.com/tioperfumes07/IH35-TMS/pull/565) | `closure/deep-audit-a` · Deep audit A (Customer/Vendor/Driver detail) |
-| CLOSURE-15 | A | C-7 | **IN-FLIGHT** | [#566](https://github.com/tioperfumes07/IH35-TMS/pull/566) | `closure/deep-audit-b` · Deep audit B (Bell + invoices subnav + Driver PWA) |
-| CLOSURE-16 | B | C-8 | QUEUED | — | Hard-dep: CLOSURE-12 + CLOSURE-2 |
-| CLOSURE-17 | A | C-9 | QUEUED | — | ON-HOLD triage |
+| CLOSURE-12 | B | C-6 | **SHIPPED** | [#563](https://github.com/tioperfumes07/IH35-TMS/pull/563) | Payroll integration; merged `e457dcefe` 2026-06-05 |
+| CLOSURE-13 | A | C-6 | **SHIPPED** | [#564](https://github.com/tioperfumes07/IH35-TMS/pull/564) | USMCA July launch; merged `d6a6336d0` 2026-06-05 · **Jorge sign-off gate** |
+| CLOSURE-14 | B | C-7 | **SHIPPED** | [#565](https://github.com/tioperfumes07/IH35-TMS/pull/565) · [#570](https://github.com/tioperfumes07/IH35-TMS/pull/570) | Deep audit A; manifest `bf4d6e30c` + impl `b9ea2be20` |
+| CLOSURE-15 | A | C-7 | **SHIPPED** | [#568](https://github.com/tioperfumes07/IH35-TMS/pull/568) | Deep audit B; merged `e90f2aeb6` 2026-06-05 |
+| CLOSURE-16 | B | C-8 | **IN-FLIGHT** | [#571](https://github.com/tioperfumes07/IH35-TMS/pull/571) | `closure/deep-audit-c` · Deep audit C |
+| CLOSURE-17 | A | C-8 | **IN-FLIGHT** | [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | `closure/on-hold-triage` · ON-HOLD triage |
 | CLOSURE-18 | A | C-10 | QUEUED | — | |
 | CLOSURE-19 | B | C-10 | QUEUED | — | |
 | CLOSURE-20 | A | C-11 | QUEUED | — | |
@@ -88,7 +88,8 @@
 | C-4 | CLOSURE-9 ✅ [#559](https://github.com/tioperfumes07/IH35-TMS/pull/559) | CLOSURE-8 ✅ [#556](https://github.com/tioperfumes07/IH35-TMS/pull/556) |
 | C-5 | CLOSURE-11 ✅ [#561](https://github.com/tioperfumes07/IH35-TMS/pull/561) | CLOSURE-10 ✅ [#560](https://github.com/tioperfumes07/IH35-TMS/pull/560) |
 | C-6 | CLOSURE-13 ✅ [#564](https://github.com/tioperfumes07/IH35-TMS/pull/564) | CLOSURE-12 ✅ [#563](https://github.com/tioperfumes07/IH35-TMS/pull/563) |
-| C-7 | CLOSURE-15 🔄 [#566](https://github.com/tioperfumes07/IH35-TMS/pull/566) | CLOSURE-14 🔄 [#565](https://github.com/tioperfumes07/IH35-TMS/pull/565) |
+| C-7 | CLOSURE-15 ✅ [#568](https://github.com/tioperfumes07/IH35-TMS/pull/568) | CLOSURE-14 ✅ [#570](https://github.com/tioperfumes07/IH35-TMS/pull/570) |
+| C-8 | CLOSURE-17 🔄 [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | CLOSURE-16 🔄 [#571](https://github.com/tioperfumes07/IH35-TMS/pull/571) |
 | … | per V2 index | per V2 index |
 
-**Main:** `d6a6336d` · **C-6 merges:** `e457dcef` (CLOSURE-12) · `d6a6336d` (CLOSURE-13)
+**Main:** `e90f2aeb6` · **C-7 merges:** `b9ea2be20` (CLOSURE-14) · `e90f2aeb6` (CLOSURE-15)
