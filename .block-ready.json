@@ -1,26 +1,22 @@
 {
-  "block_id": "QBO-SYNC-1",
-  "branch": "feat/qbo-sync-1-coa-pull-reconcile",
-  "phase": "QBO Sync Restoration",
-  "task": "Chart of Accounts pull + reconcile (1282 entries drift fix)",
+  "block_id": "P5-T22",
+  "branch": "feat/phase5-faro-factoring-csv",
+  "phase": "Phase 5",
+  "task": "Faro Factoring CSV Import",
   "allowed_files": [
-    "apps/backend/src/qbo-sync/chart-of-accounts-puller.ts",
-    "apps/backend/src/qbo-sync/chart-of-accounts-reconciler.ts",
-    "apps/backend/src/qbo-sync/chart-of-accounts.routes.ts",
-    "db/migrations/0375_qbo_chart_of_accounts_sync_metadata.sql",
-    "apps/frontend/src/pages/accounting/ChartOfAccountsSyncPanel.tsx",
-    "apps/frontend/src/pages/accounting/ChartOfAccounts.tsx",
+    "apps/backend/src/factoring/faro-csv-import.ts",
+    "apps/backend/src/factoring/faro-csv-import.routes.ts",
+    "apps/backend/src/factoring/faro-csv-import.test.ts",
+    "apps/frontend/src/pages/factoring/FaroImportPage.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
     "apps/backend/src/index.ts",
-    "scripts/verify-qbo-sync-coa-no-orphans.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
-  "extra_gates": [
-    "verify:qbo-sync-coa-no-orphans"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "db_required": false,
+  "guard_required": false
 }
