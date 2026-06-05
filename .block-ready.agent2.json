@@ -1,22 +1,20 @@
 {
-  "block_id": "CLOSURE-8-TEST-USER-ARCHIVE",
-  "branch": "closure/test-user-archive",
+  "block_id": "CLOSURE-10-MAINT-PARTS-CATALOG",
+  "branch": "closure/maint-parts-catalog",
   "phase": "CLOSURE",
-  "task": "Archive integration.owner@test.invalid and hide test users from production list",
+  "task": "Maintenance Parts catalog gap-close CI guard (core shipped P3-T11.21.5a)",
   "agent": "B",
   "allowed_files": [
-    "apps/backend/src/identity/seed-cleanup/archive-test-users.routes.ts",
-    "apps/backend/src/identity/seed-cleanup/archive-test-users.test.ts",
-    "apps/backend/src/migrations/0396-archive-test-users.sql",
-    "scripts/verify-no-test-users-in-production-list.mjs",
+    "scripts/verify-parts-catalog-seeded.mjs",
     "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:no-test-users-in-production-list"
+    "verify:parts-catalog-seeded"
   ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }

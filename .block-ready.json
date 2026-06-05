@@ -1,18 +1,18 @@
 {
-  "block_id": "CLOSURE-9-TRAILER-PROFILE",
-  "branch": "closure/trailer-profile",
+  "block_id": "CLOSURE-10-MAINT-PARTS-CATALOG",
+  "branch": "closure/maint-parts-catalog",
   "phase": "CLOSURE",
-  "task": "Trailer profile structural parity guard (core shipped #368/#404; CLOSURE delta CI)",
-  "agent": "A",
+  "task": "Maintenance Parts catalog gap-close CI guard (core shipped P3-T11.21.5a)",
+  "agent": "B",
   "allowed_files": [
-    "scripts/verify-trailer-profile-mirrors-vehicle.mjs",
+    "scripts/verify-parts-catalog-seeded.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:trailer-profile-mirrors-vehicle"
+    "verify:parts-catalog-seeded"
   ],
   "runtime_path": "src",
   "db_required": false,
