@@ -1,23 +1,24 @@
 {
-  "block_id": "USMCA-1",
-  "branch": "feat/usmca-1-rls-hardening",
+  "block_id": "USMCA-2",
+  "branch": "feat/usmca-2-carrier-seed",
   "phase": "Phase 7 USMCA",
-  "task": "RLS audit across carrier-scoped tables + 2 CI guards",
+  "task": "USMCA carrier seed + bootstrap pull from TRANSP template catalogs",
   "allowed_files": [
-    "apps/backend/src/auth/operating-company-scope.ts",
-    "scripts/verify-rls-operating-company-scope.mjs",
-    "scripts/verify-no-cross-carrier-data-leak.mjs",
-    "db/migrations/0385_rls_audit_all_tables.sql",
-    "docs/specs/MULTI-CARRIER-ISOLATION.md",
+    "db/migrations/0386_usmca_carrier_seed.sql",
+    "db/migrations/0387_usmca_chart_of_accounts_seed.sql",
+    "apps/backend/src/onboarding/usmca-carrier-bootstrap.ts",
+    "apps/backend/src/onboarding/usmca-carrier-bootstrap.routes.ts",
+    "apps/backend/src/compliance/form-425c.routes.ts",
+    "apps/frontend/src/pages/admin/CarrierBootstrap.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/nav-integrity-allowlist.json",
+    "scripts/verify-usmca-seed-completeness.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:rls-operating-company-scope",
-    "verify:no-cross-carrier-data-leak"
-  ],
+  "extra_gates": ["verify:usmca-seed-completeness"],
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true
