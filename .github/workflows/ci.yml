@@ -132,6 +132,9 @@ jobs:
       - name: Verify header counts match actual guard
         run: npm run verify:header-counts-match-actual
 
+      - name: Verify USMCA seed completeness guard
+        run: npm run verify:usmca-seed-completeness
+
       - name: verify:drug-alcohol-fmcsa-clearinghouse-link
         run: npm run verify:drug-alcohol-fmcsa-clearinghouse-link
 

@@ -318,6 +318,7 @@
     "verify:driver-pwa-i18n-coverage": "node scripts/verify-driver-pwa-i18n-coverage.mjs",
     "verify:no-stub-catalog-pages": "node scripts/verify-no-stub-catalog-pages.mjs",
     "verify:header-counts-match-actual": "node scripts/verify-header-counts-match-actual.mjs",
+    "verify:usmca-seed-completeness": "node scripts/verify-usmca-seed-completeness.mjs",
     "verify:drug-alcohol-fmcsa-clearinghouse-link": "node scripts/verify-drug-alcohol-fmcsa-clearinghouse-link.mjs",
     "verify:wo-display-id-format": "node scripts/verify-wo-display-id-format.mjs",
     "verify:wo-status-transitions": "node scripts/verify-wo-status-transitions.mjs",

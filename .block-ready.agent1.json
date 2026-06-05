@@ -1,15 +1,24 @@
 {
-  "block_id": "RULES-POST-PASS4",
-  "branch": "chore/dual-lane-post-pass4-17-block-index",
-  "phase": "Coordinator rules",
-  "task": "POST-PASS4 17-block AUDIT-FIX queue index in dual-lane-never-idle.mdc",
+  "block_id": "USMCA-2",
+  "branch": "feat/usmca-2-carrier-seed",
+  "phase": "Phase 7 USMCA",
+  "task": "USMCA carrier seed + bootstrap pull from TRANSP template catalogs",
   "allowed_files": [
-    ".cursor/rules/dual-lane-never-idle.mdc",
+    "db/migrations/0386_usmca_carrier_seed.sql",
+    "db/migrations/0387_usmca_chart_of_accounts_seed.sql",
+    "apps/backend/src/onboarding/usmca-carrier-bootstrap.ts",
+    "apps/backend/src/onboarding/usmca-carrier-bootstrap.routes.ts",
+    "apps/backend/src/compliance/form-425c.routes.ts",
+    "apps/frontend/src/pages/admin/CarrierBootstrap.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-usmca-seed-completeness.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [],
+  "extra_gates": ["verify:usmca-seed-completeness"],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }
