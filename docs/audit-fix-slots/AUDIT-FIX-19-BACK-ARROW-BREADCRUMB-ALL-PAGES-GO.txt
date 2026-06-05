@@ -1,0 +1,38 @@
+═══════════════════════════════════════════════════════════════════════════════
+Block 19 of 25 — PHASE CLOSURE-V2 / TASK AUDIT-FIX-19 — Back Arrow + Breadcrumb
+MERGE LINK: pending
+═══════════════════════════════════════════════════════════════════════════════
+
+WAVE: C-15  ·  LANE: A  ·  CURSOR-A
+SEQUENCING: dispatch only after CLOSURE-30 PASS-8 returns GO
+PAIRED WITH: AUDIT-FIX-18 and AUDIT-FIX-20 in same queue set
+
+SOURCE:
+  - GAP-3 re-slot decision in `docs/trackers/closure-v2.md`
+  - Deep Audit A summary in `docs/audits/DEEP-AUDIT-A-SUMMARY.md`
+  - Deep Audit B summary in `docs/audits/DEEP-AUDIT-B-SUMMARY.md`
+
+PROBLEM:
+Detail/edit pages currently vary in wayfinding affordances. Missing back-arrow
+and breadcrumb patterns increase navigation dead-ends and force sidebar resets.
+
+SCOPE — VERBATIM RE-SLOT FROM GAP-3:
+1. Apply `Breadcrumb.tsx` and `BackButton.tsx` to all drilled detail/edit pages.
+2. Target approximately 80 detail/edit routes identified in the GAP-3 list.
+3. Preserve route semantics; add wayfinding controls only.
+4. Add/maintain guard script `verify-back-arrow-presence.mjs`.
+5. Validate consistency across accounting, maintenance, dispatch, and driver flows.
+
+ACCEPTANCE:
+[ ] All detail/edit pages expose back-arrow and breadcrumb controls
+[ ] `verify-back-arrow-presence.mjs` passes in CI
+[ ] No cross-lane path edits outside declared dispatch scope
+
+PAUSE:
+  - If route inventory changes materially, refresh scoped page list before dispatch.
+
+STANDING ORDERS:
+  - foreground only no subagents
+  - no retries; paste exact errors on stop
+  - measured evidence only; no guesses
+═══════════════════════════════════════════════════════════════════════════════
