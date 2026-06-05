@@ -7,6 +7,7 @@ import {
   getWorkOrder,
   getWorkOrderPostingPreview,
   listMaintenanceVehicles,
+  listSevereRepairEstimates,
 } from "../../api/maintenance";
 import { Button } from "../../components/Button";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../components/forms/TwoSectionLineEditor";
@@ -17,6 +18,8 @@ import { LaborTracker } from "../../components/maintenance/LaborTracker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+/** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
+const OOS_DAILY_LOSS_CENTS = 50_000;
 
 function pickInvoiceTotalCents(wo: Record<string, unknown>): number | null {
   for (const key of ["vendor_invoice_total_cents", "external_vendor_invoice_cents", "invoice_total_cents"]) {
@@ -188,6 +191,11 @@ export function WorkOrderDetailPage() {
     enabled: Boolean(companyId),
     staleTime: 60_000,
   });
+  const severeEstimatesQ = useQuery({
+    queryKey: ["maintenance", "severe-estimates", companyId, "wo-detail"],
+    queryFn: () => listSevereRepairEstimates(companyId),
+    enabled: Boolean(companyId),
+  });
 
   const wo = woQ.data;
 
@@ -195,6 +203,23 @@ export function WorkOrderDetailPage() {
   const linesCents = useMemo(() => (wo ? sumLineItemsCents(wo.line_items) : 0), [wo]);
   const deltaCents = invoiceCents != null ? invoiceCents - linesCents : null;
   const invoiceMismatch = deltaCents != null ? Math.abs(deltaCents) > 1 : false;
+
+  const oosDowntimeEstimate = useMemo(() => {
+    if (!wo || !id) return null;
+    const severity = String(wo.severity ?? "").trim().toLowerCase();
+    if (severity !== "out_of_service" && severity !== "oos-severe" && severity !== "oos_severe") return null;
+    const linked = (severeEstimatesQ.data ?? []).find((row) => row.trigger_wo_id === id);
+    const daysOos = Number(linked?.days_oos ?? 0);
+    const downtimeCents = Math.round(daysOos * OOS_DAILY_LOSS_CENTS);
+    const repairCents = Number(linked?.estimated_total_cents ?? 0);
+    return {
+      daysOos,
+      downtimeCents,
+      repairCents,
+      combinedCents: downtimeCents + repairCents,
+      dailyLossCents: OOS_DAILY_LOSS_CENTS,
+    };
+  }, [wo, id, severeEstimatesQ.data]);
 
   const woNumber = String(wo?.display_id ?? id?.slice(0, 8) ?? "—");
   const assetOptions = useMemo(
@@ -246,6 +271,23 @@ export function WorkOrderDetailPage() {
         >
           Invoice {money.format(invoiceCents / 100)} vs Line items {money.format(linesCents / 100)} · Δ{" "}
           {money.format((deltaCents ?? 0) / 100)}
+        </div>
+      ) : null}
+
+      {oosDowntimeEstimate ? (
+        <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-950">
+          <div className="font-semibold">OOS severe — downtime cost estimate</div>
+          <p className="mt-1 text-xs">
+            {oosDowntimeEstimate.daysOos.toFixed(1)} days OOS × {money.format(oosDowntimeEstimate.dailyLossCents / 100)}/day ={" "}
+            <span className="font-semibold">{money.format(oosDowntimeEstimate.downtimeCents / 100)}</span> downtime
+            {oosDowntimeEstimate.repairCents > 0 ? (
+              <>
+                {" "}
+                + {money.format(oosDowntimeEstimate.repairCents / 100)} repair estimate ={" "}
+                <span className="font-semibold">{money.format(oosDowntimeEstimate.combinedCents / 100)}</span> combined
+              </>
+            ) : null}
+          </p>
         </div>
       ) : null}
 
