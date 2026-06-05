@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 17 |
+| Shipped | 19 |
 | Forensic-skip | 2 |
 | In-flight | 0 |
-| Remaining | 11 |
+| Remaining | 9 |
 | ON HOLD | 4 (A23-11, A23-14, B19, B20 — triaged CLOSURE-17; do not dispatch) |
 
-**Pass:** 19/30 (17 shipped + 2 forensic-skip) · **wave C-10 COMPLETE** · **next: C-11 (CLOSURE-20 + CLOSURE-21) QUEUED**
+**Pass:** 21/30 (19 shipped + 2 forensic-skip) · **wave C-11 COMPLETE** · **next: C-12 (CLOSURE-22 + CLOSURE-23) QUEUED**
 
 ## Block Status
 
@@ -39,10 +39,10 @@
 | CLOSURE-17 | A | C-8 | **SHIPPED** | [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | ON-HOLD triage; merged `ad58b2789` 2026-06-05 |
 | CLOSURE-18 | A | C-10 | **SHIPPED** | [#576](https://github.com/tioperfumes07/IH35-TMS/pull/576) | PERF audit; merged `1345ed75b` 2026-06-05 |
 | CLOSURE-19 | B | C-10 | **SHIPPED** | [#575](https://github.com/tioperfumes07/IH35-TMS/pull/575) | SEC audit; merged `b5f4a6c95` 2026-06-05 |
-| CLOSURE-20 | A | C-11 | QUEUED | — | A11Y — next dispatch lane A |
-| CLOSURE-21 | B | C-11 | QUEUED | — | Monitoring — next dispatch lane B |
-| CLOSURE-22 | A | C-12 | QUEUED | — | |
-| CLOSURE-23 | B | C-12 | QUEUED | — | |
+| CLOSURE-20 | A | C-11 | **SHIPPED** | [#578](https://github.com/tioperfumes07/IH35-TMS/pull/578) | A11Y audit; merged `421fb9187` 2026-06-05 |
+| CLOSURE-21 | B | C-11 | **SHIPPED** | [#579](https://github.com/tioperfumes07/IH35-TMS/pull/579) | Monitoring setup; merged `0df2bfa1c` 2026-06-05 |
+| CLOSURE-22 | A | C-12 | QUEUED | — | Next dispatch lane A |
+| CLOSURE-23 | B | C-12 | QUEUED | — | Next dispatch lane B |
 | CLOSURE-24 | A | C-13 | QUEUED | — | |
 | CLOSURE-25 | B | C-13 | QUEUED | — | |
 | CLOSURE-26 | A | C-14 | QUEUED | — | |
