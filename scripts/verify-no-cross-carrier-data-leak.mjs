@@ -61,7 +61,7 @@ const TABLES = [
     name: "mdata.customers",
     insert: (companyId, ownerId) => ({
       sql: `
-        INSERT INTO mdata.customers (name, customer_code, operating_company_id, created_by_user_id)
+        INSERT INTO mdata.customers (customer_name, customer_code, operating_company_id, created_by_user_id)
         VALUES ($1, $2, $3, $4)
         RETURNING id
       `,
