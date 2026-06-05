@@ -1,26 +1,23 @@
 {
-  "block_id": "AUDIT-FIX-5",
-  "branch": "audit-fix/audit-fix-5-nested-box-removal",
+  "block_id": "AUDIT-FIX-7",
+  "branch": "audit-fix/audit-fix-7-blank-page-wire-up",
   "phase": "AUDIT-FIX",
-  "task": "NESTED-BOX-REMOVAL — flatten detail page layouts with FlatFieldGrid",
+  "task": "BLANK-PAGE-WIRE-UP — /425c + /help + PASS6 fuel metric + test-user archive",
   "allowed_files": [
-    "apps/frontend/src/components/layout/FlatFieldGrid.tsx",
-    "apps/frontend/src/pages/factoring/FactoringProfilePanel.tsx",
-    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
-    "apps/frontend/src/pages/CustomerDetail.tsx",
-    "apps/frontend/src/pages/VendorDetail.tsx",
-    "apps/frontend/src/pages/DriverDetail.tsx",
-    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
-    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
-    "apps/frontend/src/pages/accounting/BillDetailPanel.tsx",
-    "scripts/verify-no-nested-box-pattern.mjs",
+    "apps/frontend/src/pages/form425c/Form425CHome.tsx",
+    "apps/frontend/src/pages/help/HelpCenterPage.tsx",
+    "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx",
+    "apps/backend/src/identity/users.routes.ts",
+    "scripts/verify-routes-not-blank.mjs",
+    "scripts/verify-reports-no-undefined-metrics.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:no-nested-box-pattern"
+    "verify:routes-not-blank",
+    "verify:reports-no-undefined-metrics"
   ],
   "runtime_path": "src",
   "db_required": false,

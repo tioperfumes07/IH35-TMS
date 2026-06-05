@@ -591,6 +591,12 @@ jobs:
       - name: verify:no-nested-box-pattern
         run: npm run verify:no-nested-box-pattern
 
+      - name: verify:routes-not-blank
+        run: npm run verify:routes-not-blank
+
+      - name: verify:reports-no-undefined-metrics
+        run: npm run verify:reports-no-undefined-metrics
+
       - name: verify:bulk-update-route-mounted
         run: npm run verify:bulk-update-route-mounted
 

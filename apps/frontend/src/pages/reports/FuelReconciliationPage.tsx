@@ -142,7 +142,7 @@ export function FuelReconciliationPage() {
                 ["WO amount", money(query.data.totals.wo_amount_cents)],
                 ["Delta", money(query.data.totals.delta_cents)],
                 ["Match rate", `${query.data.totals.match_rate_pct.toFixed(1)}%`],
-                ["Unmatched", String(query.data.totals.unmatched_count)],
+                ["Unmatched", String(query.data.totals.unmatched_count ?? 0)],
               ] as const
             ).map(([k, v]) => (
               <div key={k} className="rounded border border-gray-200 bg-white p-3">
