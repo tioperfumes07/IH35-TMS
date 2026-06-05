@@ -1,21 +1,26 @@
 {
-  "block_id": "AUDIT-FIX-16",
-  "branch": "audit-fix/audit-fix-16-invoice-create-from-load-flow",
+  "block_id": "AUDIT-FIX-17",
+  "branch": "audit-fix/audit-fix-17-factoring-power-user-ux",
   "phase": "AUDIT-FIX",
-  "task": "INVOICE-CREATE-FROM-LOAD-FLOW — + Create stays in accounting",
+  "task": "FACTORING-POWER-USER-UX — Faro CSV + vendor merge autocomplete + deactivate confirm",
   "allowed_files": [
-    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
-    "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx",
-    "apps/frontend/src/pages/accounting/InvoiceCreateBlankPage.tsx",
-    "apps/frontend/src/hooks/useInvoiceCreateFromLoad.ts",
-    "scripts/verify-invoice-create-does-not-leave-accounting.mjs",
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    "apps/frontend/src/pages/factoring/FaroDailyImportsTab.tsx",
+    "apps/frontend/src/pages/factoring/DriverVendorMergesTab.tsx",
+    "apps/frontend/src/pages/factoring/StatementsSettingsTab.tsx",
+    "apps/frontend/src/components/factoring/FaroCSVUploadWidget.tsx",
+    "apps/frontend/src/components/factoring/DriverAutocomplete.tsx",
+    "apps/frontend/src/components/factoring/VendorMergeDiffPreview.tsx",
+    "apps/frontend/src/components/factoring/DeactivateFactorConfirmModal.tsx",
+    "apps/backend/src/factoring/scan-duplicate-vendors.routes.ts",
+    "scripts/verify-factoring-destructive-actions-have-confirm.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:invoice-create-does-not-leave-accounting"
+    "verify:factoring-destructive-actions-have-confirm"
   ],
   "runtime_path": "src",
   "db_required": false,

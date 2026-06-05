@@ -22,6 +22,11 @@ import { parseVendorNotes, serializeVendorNotes } from "../../lib/vendorProfileM
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { ChargebacksTable } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
+import { FaroCSVUploadWidget } from "../../components/factoring/FaroCSVUploadWidget";
+import { DriverAutocomplete } from "../../components/factoring/DriverAutocomplete";
+import { VendorMergeDiffPreview } from "../../components/factoring/VendorMergeDiffPreview";
+import { DeactivateFactorConfirmModal } from "../../components/factoring/DeactivateFactorConfirmModal";
+import { apiRequest } from "../../api/client";
 
 const SUBNAV = [
   { id: "recourse_pipeline", label: "Recourse Pipeline" },
@@ -53,6 +58,10 @@ export function FactoringHomePage() {
   const companyId = selectedCompanyId ?? "";
   const [tab, setTab] = useState<(typeof SUBNAV)[number]["id"]>("recourse_pipeline");
   const [deactivating, setDeactivating] = useState(false);
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [faroCsvText, setFaroCsvText] = useState("");
+  const [faroFileName, setFaroFileName] = useState("");
+  const [showFaroJsonFallback, setShowFaroJsonFallback] = useState(false);
   const [faroStatementDate, setFaroStatementDate] = useState("");
   const [faroStatementRef, setFaroStatementRef] = useState("daily");
   const [faroLinesJson, setFaroLinesJson] = useState(
@@ -82,6 +91,8 @@ export function FactoringHomePage() {
   const [selectedLoanId, setSelectedLoanId] = useState<string>("");
   const [creatingLoan, setCreatingLoan] = useState(false);
   const [mergeDriverId, setMergeDriverId] = useState("");
+  const [mergeDriverName, setMergeDriverName] = useState("");
+  const [mergeConfirm, setMergeConfirm] = useState("");
   const [mergeFromVendor, setMergeFromVendor] = useState("");
   const [mergeToVendor, setMergeToVendor] = useState("");
   const [mergeReason, setMergeReason] = useState("duplicate_vendor_cleanup");
@@ -370,25 +381,34 @@ export function FactoringHomePage() {
                 size="sm"
                 variant="danger"
                 disabled={!canDeactivate || deactivating || !companyId}
-                onClick={async () => {
-                  if (!canDeactivate || !companyId) return;
-                  setDeactivating(true);
-                  try {
-                    await deactivateFactoring(companyId);
-                    pushToast("Active factor deactivated", "success");
-                    await queryClient.invalidateQueries({ queryKey: ["factoring"] });
-                    await queryClient.invalidateQueries({ queryKey: ["banking"] });
-                  } catch (error) {
-                    pushToast(String((error as Error).message || "Failed to deactivate factor"), "error");
-                  } finally {
-                    setDeactivating(false);
-                  }
-                }}
+                onClick={() => setDeactivateModalOpen(true)}
               >
                 Deactivate active factor
               </Button>
             </div>
             {!canDeactivate ? <div className="mt-2 text-xs text-amber-700">Only Owner role can deactivate an active factor.</div> : null}
+          </div>
+          <div data-deactivate-factor-confirm-modal="true">
+            <DeactivateFactorConfirmModal
+              open={deactivateModalOpen}
+              loading={deactivating}
+              onClose={() => setDeactivateModalOpen(false)}
+              onConfirm={async () => {
+                if (!canDeactivate || !companyId) return;
+                setDeactivating(true);
+                try {
+                  await deactivateFactoring(companyId);
+                  pushToast("Active factor deactivated", "success");
+                  setDeactivateModalOpen(false);
+                  await queryClient.invalidateQueries({ queryKey: ["factoring"] });
+                  await queryClient.invalidateQueries({ queryKey: ["banking"] });
+                } catch (error) {
+                  pushToast(String((error as Error).message || "Failed to deactivate factor"), "error");
+                } finally {
+                  setDeactivating(false);
+                }
+              }}
+            />
           </div>
         </div>
       ) : null}
@@ -397,7 +417,7 @@ export function FactoringHomePage() {
         <div className="space-y-3">
           <div className="rounded border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Upsert Faro daily import batch</div>
-            <div className="grid gap-2 md:grid-cols-3">
+            <div className="grid gap-2 md:grid-cols-3 mb-3">
               <input
                 type="date"
                 className="rounded border border-gray-300 px-2 py-1 text-sm"
@@ -410,12 +430,35 @@ export function FactoringHomePage() {
                 onChange={(event) => setFaroStatementRef(event.target.value)}
                 placeholder="statement reference"
               />
-              <Button
-                size="sm"
-                disabled={!companyId || !faroStatementDate || creatingFaro}
-                onClick={async () => {
-                  try {
-                    setCreatingFaro(true);
+            </div>
+            <FaroCSVUploadWidget
+              csvText={faroCsvText}
+              fileName={faroFileName}
+              onCsvTextChange={(text, name) => {
+                setFaroCsvText(text);
+                setFaroFileName(name);
+              }}
+              uploading={creatingFaro}
+              jsonFallback={faroLinesJson}
+              onJsonFallbackChange={setFaroLinesJson}
+              showJsonFallback={showFaroJsonFallback}
+              onToggleJsonFallback={() => setShowFaroJsonFallback((open) => !open)}
+              onUpload={async () => {
+                if (!companyId || !faroStatementDate) return;
+                try {
+                  setCreatingFaro(true);
+                  if (faroCsvText.trim()) {
+                    await apiRequest(`/api/v1/factoring/import/faro`, {
+                      method: "POST",
+                      body: JSON.stringify({
+                        operating_company_id: companyId,
+                        csv_text: faroCsvText,
+                        statement_date: faroStatementDate,
+                        statement_reference: faroStatementRef || "daily",
+                        source_filename: faroFileName || undefined,
+                      }),
+                    });
+                  } else {
                     const lines = JSON.parse(faroLinesJson) as Array<Record<string, unknown>>;
                     await upsertFaroDailyImport({
                       operating_company_id: companyId,
@@ -434,22 +477,17 @@ export function FactoringHomePage() {
                         due_on?: string;
                       }>,
                     });
-                    pushToast("Faro import batch upserted", "success");
-                    await queryClient.invalidateQueries({ queryKey: ["data-infra", "faro-imports", companyId] });
-                  } catch (error) {
-                    pushToast(String((error as Error).message || "Faro import failed"), "error");
-                  } finally {
-                    setCreatingFaro(false);
                   }
-                }}
-              >
-                {creatingFaro ? "Saving..." : "Save Batch"}
-              </Button>
-            </div>
-            <textarea
-              className="mt-2 h-40 w-full rounded border border-gray-300 px-2 py-1 font-mono text-xs"
-              value={faroLinesJson}
-              onChange={(event) => setFaroLinesJson(event.target.value)}
+                  pushToast("Faro import batch upserted", "success");
+                  setFaroCsvText("");
+                  setFaroFileName("");
+                  await queryClient.invalidateQueries({ queryKey: ["data-infra", "faro-imports", companyId] });
+                } catch (error) {
+                  pushToast(String((error as Error).message || "Faro import failed"), "error");
+                } finally {
+                  setCreatingFaro(false);
+                }
+              }}
             />
           </div>
           <div className="rounded border border-gray-200 bg-white p-3">
@@ -637,7 +675,14 @@ export function FactoringHomePage() {
           <div className="rounded border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Merge duplicate QBO vendors for a driver</div>
             <div className="grid gap-2 md:grid-cols-2">
-              <input className="rounded border border-gray-300 px-2 py-1 text-xs" value={mergeDriverId} onChange={(event) => setMergeDriverId(event.target.value)} placeholder="driver uuid" />
+              <DriverAutocomplete
+                companyId={companyId}
+                value={mergeDriverId}
+                onChange={(driverId, driverName) => {
+                  setMergeDriverId(driverId);
+                  setMergeDriverName(driverName);
+                }}
+              />
               <input
                 className="rounded border border-gray-300 px-2 py-1 text-xs"
                 value={mergeReason}
@@ -657,6 +702,15 @@ export function FactoringHomePage() {
                 placeholder="to qbo vendor id"
               />
             </div>
+            <VendorMergeDiffPreview
+              driverName={mergeDriverName}
+              fromVendorName={mergeFromVendor}
+              fromVendorId={mergeFromVendor}
+              toVendorName={mergeToVendor}
+              toVendorId={mergeToVendor}
+              mergeConfirm={mergeConfirm}
+              onMergeConfirmChange={setMergeConfirm}
+            />
             <label className="mt-2 flex items-center gap-2 text-xs text-gray-700">
               <input type="checkbox" checked={mergeApplyToDriver} onChange={(event) => setMergeApplyToDriver(event.target.checked)} />
               Apply target vendor to driver if currently linked to source vendor
@@ -664,7 +718,7 @@ export function FactoringHomePage() {
             <div className="mt-2">
               <Button
                 size="sm"
-                disabled={!companyId || !mergeDriverId || !mergeFromVendor || !mergeToVendor || creatingMerge}
+                disabled={!companyId || !mergeDriverId || !mergeFromVendor || !mergeToVendor || creatingMerge || mergeConfirm.trim().toUpperCase() !== "MERGE"}
                 onClick={async () => {
                   try {
                     setCreatingMerge(true);
