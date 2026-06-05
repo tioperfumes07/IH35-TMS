@@ -17,7 +17,7 @@ import { OnboardingWizardPage } from "../pages/drivers/OnboardingWizardPage";
 import { ApplicantsPipelinePage } from "../pages/drivers/ApplicantsPipelinePage";
 import { ApplicationPage } from "../pages/public/ApplicationPage";
 import { DriverLoadStatusesPage } from "../pages/DriverLoadStatusesPage";
-import { DriversPage } from "../pages/Drivers";
+import { DriversPage } from "../pages/drivers/DriversPage";
 import type { DriversSubnavId } from "../components/drivers/DRIVERS_TABS_CONFIG";
 import { DispatchPage } from "../pages/Dispatch";
 import { GeofencesPage } from "../pages/operations/GeofencesPage";
@@ -380,7 +380,7 @@ function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
   return <MaintenanceHomePage initialTab={tabId} />;
 }
 
-function DriversSubtabRoute({ subnav }: { subnav: DriversSubnavId }) {
+function DriversSubtabRoute({ subnav }: { subnav: DriversSubnavId | "disputes" }) {
   return <DriversPage initialSubnav={subnav} />;
 }
 
@@ -551,6 +551,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriversSubtabRoute subnav="deductions" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/disputes"
+          element={
+            <ProtectedRoute>
+              <DriversSubtabRoute subnav="disputes" />
             </ProtectedRoute>
           }
         />
