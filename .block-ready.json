@@ -1,30 +1,23 @@
 {
-  "block_id": "AUDIT-FIX-9",
-  "branch": "audit-fix/audit-fix-9-flaky-endpoints-fix",
+  "block_id": "AUDIT-FIX-11",
+  "branch": "audit-fix/audit-fix-11-qbo-sync-status-endpoints-fix",
   "phase": "AUDIT-FIX",
-  "task": "FLAKY-ENDPOINTS-FIX — notifications 500 + kpis 500 + tire-positions 400 + stream 503",
+  "task": "QBO-SYNC-STATUS-ENDPOINTS-FIX — Unable to load sync status on /customers + /vendors",
   "allowed_files": [
-    "apps/backend/src/notifications/list.routes.ts",
-    "apps/backend/src/notifications/unread-count.routes.ts",
-    "apps/backend/src/notifications/stream.routes.ts",
-    "apps/backend/src/notifications/notification-stream.routes.ts",
-    "apps/backend/src/maintenance/dashboard-kpis.routes.ts",
-    "apps/backend/src/catalogs/fleet/tire-positions.routes.ts",
-    "apps/backend/src/notifications/notifications.routes.ts",
-    "apps/backend/src/maintenance/dashboard.routes.ts",
-    "apps/backend/src/index.ts",
-    "apps/backend/src/catalogs/fleet/index.ts",
-    "apps/backend/src/notifications/*.test.ts",
-    "apps/backend/src/maintenance/*.test.ts",
-    "apps/backend/src/catalogs/fleet/*.test.ts",
-    "scripts/verify-no-flaky-endpoints-on-page-load.mjs",
+    "apps/backend/src/qbo-sync/customers.routes.ts",
+    "apps/backend/src/qbo-sync/vendors.routes.ts",
+    "apps/backend/src/qbo-sync/chart-of-accounts.routes.ts",
+    "apps/backend/src/qbo-sync/items.routes.ts",
+    "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
+    "apps/frontend/src/pages/vendors/VendorsSyncPanel.tsx",
+    "scripts/verify-qbo-sync-status-endpoints-return-200.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:no-flaky-endpoints-on-page-load"
+    "verify:qbo-sync-status-endpoints-return-200"
   ],
   "runtime_path": "src",
   "db_required": false,

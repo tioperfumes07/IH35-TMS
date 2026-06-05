@@ -15,6 +15,16 @@ const statusQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const EMPTY_SYNC_STATUS = {
+  total_local: 0,
+  synced: 0,
+  drift_detected: 0,
+  local_only: 0,
+  sync_error: 0,
+  last_pull_at: null,
+  last_reconcile_at: null,
+};
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user as { uuid: string; role: string };
@@ -66,7 +76,12 @@ export async function registerChartOfAccountsSyncRoutes(app: FastifyInstance) {
     const parsed = statusQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
-    const status = await fetchChartOfAccountsSyncStatus(parsed.data.operating_company_id);
-    return reply.send(status);
+    try {
+      const status = await fetchChartOfAccountsSyncStatus(parsed.data.operating_company_id);
+      return reply.send(status);
+    } catch (error) {
+      app.log.error({ err: error }, "CoA sync status fetch failed");
+      return reply.send(EMPTY_SYNC_STATUS);
+    }
   });
 }
