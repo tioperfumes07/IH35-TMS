@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 5 |
+| Shipped | 7 |
 | Forensic-skip | 2 |
 | In-flight | 2 |
-| Remaining | 21 |
+| Remaining | 19 |
 | ON HOLD | 0 (CLOSURE-17 triages A23-11, A23-14, B19, B20 only) |
 
-**Pass:** 7/30 (5 shipped + 2 forensic-skip) · **wave C-4 active**
+**Pass:** 9/30 (7 shipped + 2 forensic-skip) · **wave C-5 active**
 
 ## Block Status
 
@@ -27,10 +27,10 @@
 | CLOSURE-5 | A | C-2 | **SHIPPED** | [#551](https://github.com/tioperfumes07/IH35-TMS/pull/551) | Settlement dispute; merged `6b067c5ad` 2026-06-05 |
 | CLOSURE-6 | B | C-3 | **SHIPPED** | [#553](https://github.com/tioperfumes07/IH35-TMS/pull/553) | Team split commission; merged `40e15042a` 2026-06-05 |
 | CLOSURE-7 | A | C-3 | **SHIPPED** | [#555](https://github.com/tioperfumes07/IH35-TMS/pull/555) | Road service tickets; merged `958e5418f` 2026-06-05 |
-| CLOSURE-8 | B | C-4 | **IN-FLIGHT** | — | `closure/test-user-archive` |
-| CLOSURE-9 | A | C-4 | **IN-FLIGHT** | — | `closure/trailer-profile` |
-| CLOSURE-10 | B | C-5 | QUEUED | — | |
-| CLOSURE-11 | A | C-6 | QUEUED | — | |
+| CLOSURE-8 | B | C-4 | **SHIPPED** | [#556](https://github.com/tioperfumes07/IH35-TMS/pull/556) | Test user archive; merged `9884bf059` 2026-06-05 |
+| CLOSURE-9 | A | C-4 | **SHIPPED** | [#559](https://github.com/tioperfumes07/IH35-TMS/pull/559) | Trailer profile parity guard; merged `f1437934d` 2026-06-05 |
+| CLOSURE-10 | B | C-5 | **IN-FLIGHT** | — | `closure/maint-parts-catalog` |
+| CLOSURE-11 | A | C-5 | **IN-FLIGHT** | — | `closure/maint-services-catalog` |
 | CLOSURE-12 | B | C-6 | QUEUED | — | |
 | CLOSURE-13 | A | C-7 | QUEUED | — | Jorge sign-off required |
 | CLOSURE-14 | B | C-7 | QUEUED | — | |
@@ -85,8 +85,9 @@
 | C-1 | CLOSURE-1 ✅ | CLOSURE-2 ⏭️ skip |
 | C-2 | CLOSURE-5 ✅ [#551](https://github.com/tioperfumes07/IH35-TMS/pull/551) · CLOSURE-3 ⏭️ skip + [#552](https://github.com/tioperfumes07/IH35-TMS/pull/552) | CLOSURE-4 ✅ [#550](https://github.com/tioperfumes07/IH35-TMS/pull/550) |
 | C-3 | CLOSURE-7 ✅ [#555](https://github.com/tioperfumes07/IH35-TMS/pull/555) | CLOSURE-6 ✅ [#553](https://github.com/tioperfumes07/IH35-TMS/pull/553) |
-| C-4 | CLOSURE-9 🔄 `closure/trailer-profile` | CLOSURE-8 🔄 `closure/test-user-archive` |
-| C-5 | CLOSURE-11 | CLOSURE-10 |
+| C-4 | CLOSURE-9 ✅ [#559](https://github.com/tioperfumes07/IH35-TMS/pull/559) | CLOSURE-8 ✅ [#556](https://github.com/tioperfumes07/IH35-TMS/pull/556) |
+| C-5 | CLOSURE-11 🔄 `closure/maint-services-catalog` | CLOSURE-10 🔄 `closure/maint-parts-catalog` |
+| C-6 | CLOSURE-13 | CLOSURE-12 |
 | … | per V2 index | per V2 index |
 
-**Main:** `63625c4e4` · **C-3 merges:** `40e15042a` (CLOSURE-6) · `958e5418f` (CLOSURE-7)
+**Main:** `f1437934d` · **C-4 merges:** `9884bf059` (CLOSURE-8) · `f1437934d` (CLOSURE-9)
