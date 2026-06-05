@@ -1,0 +1,82 @@
+name: monthly-restore-drill
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 8 1 * *"
+  workflow_dispatch:
+
+jobs:
+  backup-ci-guard:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: CI guard — backups current
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: tiny-field-89581227
+        run: node scripts/verify-backups-current.mjs
+
+  monthly-drill:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Neon PITR
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: tiny-field-89581227
+        run: node scripts/backup-verify-neon-pitr.mjs
+
+      - name: Restore drill (ephemeral branch)
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: tiny-field-89581227
+        run: bash scripts/backup-restore-drill.sh
+
+      - name: Monthly checksum baseline
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: node scripts/backup-checksum-monthly.mjs
+
+      - name: Upload checksum artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-checksums-${{ github.run_id }}
+          path: docs/audits/backup-checksums-*.json
+          if-no-files-found: warn
+
+      - name: Post drill summary
+        run: |
+          echo "## Monthly restore drill — $(date -u +%Y-%m-%d)" >> "$GITHUB_STEP_SUMMARY"
+          echo "PITR verify + drill script completed. See workflow logs for branch create/teardown." >> "$GITHUB_STEP_SUMMARY"

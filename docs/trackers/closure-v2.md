@@ -41,8 +41,8 @@
 | CLOSURE-19 | B | C-10 | **SHIPPED** | [#575](https://github.com/tioperfumes07/IH35-TMS/pull/575) | SEC audit; merged `b5f4a6c95` 2026-06-05 |
 | CLOSURE-20 | A | C-11 | **SHIPPED** | [#578](https://github.com/tioperfumes07/IH35-TMS/pull/578) | A11Y audit; merged `421fb9187` 2026-06-05 |
 | CLOSURE-21 | B | C-11 | **SHIPPED** | [#579](https://github.com/tioperfumes07/IH35-TMS/pull/579) | Monitoring setup; merged `0df2bfa1c` 2026-06-05 |
-| CLOSURE-22 | A | C-12 | QUEUED | — | Next dispatch lane A |
-| CLOSURE-23 | B | C-12 | QUEUED | — | Next dispatch lane B |
+| CLOSURE-22 | A | C-12 | QUEUED | — | CI hardening |
+| CLOSURE-23 | B | C-12 | QUEUED | — | DR backup |
 | CLOSURE-24 | A | C-13 | QUEUED | — | |
 | CLOSURE-25 | B | C-13 | QUEUED | — | |
 | CLOSURE-26 | A | C-14 | QUEUED | — | |
@@ -91,10 +91,11 @@
 | C-7 | CLOSURE-15 ✅ [#568](https://github.com/tioperfumes07/IH35-TMS/pull/568) | CLOSURE-14 ✅ [#570](https://github.com/tioperfumes07/IH35-TMS/pull/570) |
 | C-8 | CLOSURE-17 ✅ [#572](https://github.com/tioperfumes07/IH35-TMS/pull/572) | CLOSURE-16 ✅ [#571](https://github.com/tioperfumes07/IH35-TMS/pull/571) |
 | C-10 | CLOSURE-18 ✅ [#576](https://github.com/tioperfumes07/IH35-TMS/pull/576) | CLOSURE-19 ✅ [#575](https://github.com/tioperfumes07/IH35-TMS/pull/575) |
-| C-11 | CLOSURE-20 ⏳ A11Y | CLOSURE-21 ⏳ monitoring |
+| C-11 | CLOSURE-20 ✅ [#578](https://github.com/tioperfumes07/IH35-TMS/pull/578) | CLOSURE-21 ✅ [#579](https://github.com/tioperfumes07/IH35-TMS/pull/579) |
+| C-12 | CLOSURE-22 ⏳ CI hardening | CLOSURE-23 ⏳ DR backup |
 | … | per V2 index | per V2 index |
 
-**Main:** `1345ed75b` · **C-10 merges:** `b5f4a6c95` (CLOSURE-19) · `1345ed75b` (CLOSURE-18) · **GAP:** PAUSED (user directive 2026-06-05)
+**Main:** `139c914ea` · **C-11 merges:** `421fb9187` (CLOSURE-20) · `0df2bfa1c` (CLOSURE-21) · **GAP:** PAUSED (user directive 2026-06-05)
 
 ## GAP De-Dup Plan (63 active blocks · 2026-06-05)
 
@@ -114,4 +115,4 @@
 
 **CANCEL:** standalone GAP-2 dispatch (superseded by AUDIT-FIX-18 re-slot)
 
-**Next dispatch (CLOSURE only):** wave C-11 — CLOSURE-20 (Lane A A11Y) + CLOSURE-21 (Lane B monitoring). **Do not dispatch GAP** until Jorge clears CLOSURE gate.
+**Next dispatch (CLOSURE only):** wave C-12 — CLOSURE-22 (Lane A CI hardening) + CLOSURE-23 (Lane B DR backup). **Do not dispatch GAP** until Jorge clears CLOSURE gate.

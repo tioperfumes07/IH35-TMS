@@ -1,0 +1,17 @@
+{
+  "block": "CLOSURE-23-DR-BACKUP-AUDIT",
+  "month": "2026-06",
+  "generated_at": "2026-06-05T17:45:00.000Z",
+  "neon_project_id": "tiny-field-89581227",
+  "pitr_retention_seconds": 604800,
+  "counts": {
+    "companies": 3,
+    "users": 12,
+    "customers": 1213,
+    "vendors": 878,
+    "driver_settlements": 0,
+    "qbo_sync_completed": null
+  },
+  "checksum": "5e4af3d3",
+  "note": "Initial baseline from Neon MCP probe 2026-06-05; production counts higher — refresh via backup-checksum-monthly.mjs with DATABASE_URL"
+}
