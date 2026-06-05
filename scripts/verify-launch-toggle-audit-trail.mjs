@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * USMCA-3 CI guard: every launch toggle action records launched_by_user_id + launched_at
- * and a matching audit.events row (admin.carrier.launched / admin.carrier.rollback).
+ * and a matching audit.audit_events row (admin.carrier.launched / admin.carrier.rollback).
  */
 import dotenv from "dotenv";
 import fs from "node:fs";
