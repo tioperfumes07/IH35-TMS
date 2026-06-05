@@ -630,6 +630,15 @@ jobs:
       - name: verify:wo-form-categories-and-items-wired
         run: npm run verify:wo-form-categories-and-items-wired
 
+      - name: verify:no-dead-buttons
+        run: npm run verify:no-dead-buttons
+
+      - name: verify:no-empty-form-dropdowns
+        run: npm run verify:no-empty-form-dropdowns
+
+      - name: verify:all-list-pages-load-200
+        run: npm run verify:all-list-pages-load-200
+
       - name: verify:qbo-sync-customer-vendor-counts
         run: npm run verify:qbo-sync-customer-vendor-counts
 
