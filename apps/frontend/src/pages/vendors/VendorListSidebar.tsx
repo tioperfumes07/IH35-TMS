@@ -36,7 +36,7 @@ type Props = {
 
 export function VendorListSidebar({
   vendors,
-  totalCount,
+  totalCount: _totalCount,
   page,
   pageSize,
   search,

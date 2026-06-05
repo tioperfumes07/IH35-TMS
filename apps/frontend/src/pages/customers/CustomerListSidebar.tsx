@@ -41,7 +41,7 @@ type Props = {
 
 export function CustomerListSidebar({
   customers,
-  totalCount,
+  totalCount: _totalCount,
   page,
   pageSize,
   search,
