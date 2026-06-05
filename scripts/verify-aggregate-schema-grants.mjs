@@ -66,6 +66,8 @@ const SQL_FALSE_SCHEMAS = new Set([
   "per_unit",
   "bounds",
   "bp",
+  "qa",
+  "qi",
 ]);
 
 const missing = [];
