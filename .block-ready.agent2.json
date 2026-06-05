@@ -1,24 +1,25 @@
 {
-  "block_id": "P5-T1.3",
-  "branch": "feat/phase5-plaid-frontend-link",
-  "phase": "Tier 3 \u2014 Phase 5B",
-  "task": "Plaid frontend Link + daily refresh cron alias",
+  "block_id": "P6-T4",
+  "branch": "feat/p6-t4-scheduled-reports-custom-builder",
+  "phase": "Phase 6",
+  "task": "Scheduled reports auto-email per role + custom report builder UX",
   "allowed_files": [
-    "apps/frontend/src/components/banking/PlaidLink.tsx",
-    "apps/frontend/src/components/banking/PlaidLink.test.tsx",
-    "apps/frontend/src/components/banking/PlaidSyncStatusPanel.tsx",
-    "apps/frontend/src/components/banking/PlaidSyncStatusPanel.test.tsx",
-    "apps/frontend/src/pages/banking/BankingHome.tsx",
-    "apps/backend/src/integrations/plaid/daily-refresh.cron.ts",
-    "apps/backend/src/integrations/plaid/__tests__/daily-refresh-cron.test.ts",
+    "apps/backend/src/reports/scheduler.ts",
+    "apps/backend/src/reports/scheduled-reports.routes.ts",
+    "apps/backend/src/reports/custom-report-builder.routes.ts",
+    "db/migrations/0374_scheduled_reports_custom_definitions.sql",
+    "apps/frontend/src/pages/reports/ScheduledReportsPanel.tsx",
+    "apps/frontend/src/pages/reports/CustomReportBuilder.tsx",
+    "apps/frontend/src/pages/reports/ReportsHome.tsx",
     "apps/backend/src/index.ts",
-    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
-    ".block-ready.agent2.json",
+    "scripts/verify-scheduled-report-recipients-resolved.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.json",
-    "package.json"
+    ".block-ready.agent2.json"
   ],
-  "extra_gates": [],
+  "extra_gates": ["verify:scheduled-report-recipients-resolved"],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }
