@@ -58,19 +58,6 @@ function resolvePushDeepLink(data?: Record<string, string>): string {
   return "/today";
 }
 
-async function postPushAck(endpoint: string, tag?: string): Promise<void> {
-  try {
-    await fetch("/api/v1/driver/push-subscription/ack", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ endpoint, tag: tag ?? null }),
-    });
-  } catch {
-    // best-effort
-  }
-}
-
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_URLS)).then(() => self.skipWaiting())

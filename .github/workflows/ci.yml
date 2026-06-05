@@ -321,6 +321,9 @@ jobs:
       - name: Frontend build (match Render)
         run: cd apps/frontend && npm run build
 
+      - name: Driver PWA build (match Render)
+        run: npm run build:driver-pwa
+
       - name: Build
         run: npm run build
 
