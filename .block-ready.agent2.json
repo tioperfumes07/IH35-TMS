@@ -1,24 +1,20 @@
 {
-  "block_id": "CLOSURE-6-P5-T14-TEAM-SPLIT-COMMISSION",
-  "branch": "closure/p5-t14-team-splits",
+  "block_id": "CLOSURE-8-TEST-USER-ARCHIVE",
+  "branch": "closure/test-user-archive",
   "phase": "CLOSURE",
-  "task": "P5-T14 team split commission allocation with settlement apply hook + Drivers Team Splits tab",
+  "task": "Archive integration.owner@test.invalid and hide test users from production list",
   "agent": "B",
   "allowed_files": [
-    "apps/backend/src/settlements/team-splits/team-splits.routes.ts",
-    "apps/backend/src/settlements/team-splits/apply.ts",
-    "apps/backend/src/settlements/team-splits/team-splits.test.ts",
-    "apps/frontend/src/pages/drivers/TeamSplitConfig.tsx",
-    "apps/frontend/src/pages/drivers/DriversPage.tsx",
-    "apps/frontend/src/hooks/useTeamSplits.ts",
-    "apps/backend/src/migrations/0394-team-splits.sql",
-    "scripts/verify-team-split-applies-to-shared-load.mjs",
+    "apps/backend/src/identity/seed-cleanup/archive-test-users.routes.ts",
+    "apps/backend/src/identity/seed-cleanup/archive-test-users.test.ts",
+    "apps/backend/src/migrations/0396-archive-test-users.sql",
+    "scripts/verify-no-test-users-in-production-list.mjs",
     "package.json",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:team-split-applies-to-shared-load"
+    "verify:no-test-users-in-production-list"
   ],
   "runtime_path": "src",
   "db_required": true,
