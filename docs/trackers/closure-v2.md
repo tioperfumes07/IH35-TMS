@@ -133,3 +133,5 @@
 **CANCEL:** standalone GAP-2 dispatch (superseded by AUDIT-FIX-18 re-slot)
 
 **Next dispatch (CLOSURE only):** **CLOSURE-30 SHIPPED** ([#593](https://github.com/tioperfumes07/IH35-TMS/pull/593) `fa4a800ae`) · **CLOSURE-32 remains deferred/pending** until expanded TIER-1 scope package is prepared and reviewed by Jorge. **Do not dispatch GAP** until Jorge clears CLOSURE gate.
+
+M1 DEFERRED — post-GAP cleanup (reason: 0 transactions on shadow rows, RLS-isolated, not blocking).
