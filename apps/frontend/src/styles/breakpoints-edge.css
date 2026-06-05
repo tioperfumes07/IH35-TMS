@@ -1,0 +1,49 @@
+/* Edge viewport hardening for <375, >=1920, and >=2560 widths. */
+
+@media (max-width: 374px) {
+  .edge-micro-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .edge-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .edge-primary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .edge-primary-actions > * {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+}
+
+@media (min-width: 1920px) {
+  .edge-ultrawide-shell {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 1800px;
+    width: 100%;
+  }
+}
+
+@media (min-width: 2560px) {
+  .edge-ultrawide-shell {
+    max-width: 2200px;
+  }
+
+  .edge-ultrawide-shell .edge-kpi-grid {
+    gap: 1rem;
+  }
+
+  .edge-ultrawide-shell .edge-kpi-card {
+    min-width: clamp(360px, 22vw, 520px);
+    font-size: 1.08rem;
+  }
+}
