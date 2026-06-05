@@ -52,6 +52,7 @@ import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
+import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
@@ -1316,20 +1317,21 @@ export function CustomerDetailPage() {
                 />
               ) : null}
             </div>
-            <div className="grid gap-2 md:grid-cols-3">
-              <MetricCell label="Payment Score" value={customer.quality_payment_score ?? "Not evaluated"} />
-              <MetricCell label="Cancellation Score" value={customer.quality_cancellation_score ?? "Not evaluated"} />
-              <MetricCell label="Disputes (12m)" value={String(customer.quality_disputes_count ?? 0)} />
-              <MetricCell label="FMCSA Standing" value={customer.fmcsa_authority_status_at_verification ?? "Not verified"} />
-              <MetricCell
-                label="SAFER Status"
-                value={
-                  saferEntity?.safer_verified_at
+            <FlatFieldGrid
+              columns={3}
+              fields={[
+                { label: "Payment Score", value: customer.quality_payment_score ?? "Not evaluated" },
+                { label: "Cancellation Score", value: customer.quality_cancellation_score ?? "Not evaluated" },
+                { label: "Disputes (12m)", value: String(customer.quality_disputes_count ?? 0) },
+                { label: "FMCSA Standing", value: customer.fmcsa_authority_status_at_verification ?? "Not verified" },
+                {
+                  label: "SAFER Status",
+                  value: saferEntity?.safer_verified_at
                     ? `${saferEntity.safer_authority_status ?? "unknown"} · ${saferEntity.safer_oos_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`
-                    : saferEntity?.safer_status ?? "Not verified"
-                }
-              />
-            </div>
+                    : saferEntity?.safer_status ?? "Not verified",
+                },
+              ]}
+            />
             <div className="mt-3">
               <label className="mb-1 block text-xs font-semibold text-gray-600">Quality Notes</label>
               <textarea
@@ -1343,12 +1345,15 @@ export function CustomerDetailPage() {
           </DataPanel>
 
           <DataPanel title="Event Summary">
-            <div className="grid gap-2 md:grid-cols-4">
-              <MetricCell label="Total Events" value={String(qualityStats.totalEvents)} />
-              <MetricCell label="Severe" value={String(qualityStats.severeCount)} />
-              <MetricCell label="Dollar Impact" value={`$${qualityStats.totalImpact.toFixed(2)}`} />
-              <MetricCell label="Avg Days Late" value={qualityStats.avgDaysLate.toFixed(1)} />
-            </div>
+            <FlatFieldGrid
+              columns={4}
+              fields={[
+                { label: "Total Events", value: String(qualityStats.totalEvents) },
+                { label: "Severe", value: String(qualityStats.severeCount) },
+                { label: "Dollar Impact", value: `$${qualityStats.totalImpact.toFixed(2)}` },
+                { label: "Avg Days Late", value: qualityStats.avgDaysLate.toFixed(1) },
+              ]}
+            />
           </DataPanel>
 
           <DataPanel title="Timeline">
@@ -2385,15 +2390,6 @@ function SelectField({
         disabled={disabled}
         placeholder="Select option"
       />
-    </div>
-  );
-}
-
-function MetricCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded border border-gray-200 bg-gray-50 px-2 py-1.5">
-      <div className="text-[11px] font-semibold text-gray-500">{label}</div>
-      <div className="text-sm font-semibold text-gray-800">{value}</div>
     </div>
   );
 }

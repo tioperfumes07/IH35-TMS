@@ -36,6 +36,7 @@ import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PageHeader } from "../components/forms/shared/PageHeader";
+import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { Modal } from "../components/Modal";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
@@ -650,6 +651,17 @@ export function DriverDetailPage() {
 
       {activeTab === "Profile" ? (
         <div className="grid gap-3 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <FlatFieldGrid
+              columns={4}
+              fields={[
+                { label: "Driver name", value: `${driver.first_name} ${driver.last_name}`.trim() || "—" },
+                { label: "Status", value: driver.status ?? "—" },
+                { label: "CDL", value: [driver.cdl_class, driver.cdl_state].filter(Boolean).join(" / ") || "—" },
+                { label: "Phone", value: driver.phone ?? "—" },
+              ]}
+            />
+          </div>
           {driver.is_rehire ? (
             <div className="md:col-span-2 flex flex-wrap items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
               <span className="rounded bg-amber-200 px-2 py-1 text-xs font-semibold">REHIRE (stint #{driver.rehire_count + 1})</span>

@@ -1,22 +1,26 @@
 {
-  "block_id": "AUDIT-FIX-3",
-  "branch": "audit-fix/audit-fix-3-customers-vendors-list-view",
+  "block_id": "AUDIT-FIX-5",
+  "branch": "audit-fix/audit-fix-5-nested-box-removal",
   "phase": "AUDIT-FIX",
-  "task": "CUSTOMERS-VENDORS-LIST-VIEW-TOGGLE — tabular list view alongside master-detail",
+  "task": "NESTED-BOX-REMOVAL — flatten detail page layouts with FlatFieldGrid",
   "allowed_files": [
-    "apps/frontend/src/pages/customers/CustomersListView.tsx",
-    "apps/frontend/src/pages/Customers.tsx",
-    "apps/frontend/src/pages/vendors/VendorsListView.tsx",
-    "apps/frontend/src/pages/Vendors.tsx",
-    "apps/frontend/src/hooks/useViewModePref.ts",
-    "scripts/verify-customers-vendors-have-list-view.mjs",
+    "apps/frontend/src/components/layout/FlatFieldGrid.tsx",
+    "apps/frontend/src/pages/factoring/FactoringProfilePanel.tsx",
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    "apps/frontend/src/pages/CustomerDetail.tsx",
+    "apps/frontend/src/pages/VendorDetail.tsx",
+    "apps/frontend/src/pages/DriverDetail.tsx",
+    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/BillDetailPanel.tsx",
+    "scripts/verify-no-nested-box-pattern.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:customers-vendors-have-list-view"
+    "verify:no-nested-box-pattern"
   ],
   "runtime_path": "src",
   "db_required": false,

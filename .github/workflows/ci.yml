@@ -588,6 +588,9 @@ jobs:
       - name: verify:route-manifest-completeness
         run: npm run verify:route-manifest-completeness
 
+      - name: verify:no-nested-box-pattern
+        run: npm run verify:no-nested-box-pattern
+
       - name: verify:bulk-update-route-mounted
         run: npm run verify:bulk-update-route-mounted
 
