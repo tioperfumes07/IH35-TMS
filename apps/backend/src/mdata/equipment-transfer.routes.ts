@@ -164,7 +164,9 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     const payload = await listTransfers(user.uuid, { operating_company_id: operatingCompanyId, status: "pending_to_confirm" });
     const rows = payload.rows.filter(
       (row) =>
-        row.from_driver_id === driverId && row.dual_ack?.pending_dropoff_ack === true,
+        typeof row.from_driver_id === "string" &&
+        row.from_driver_id === driverId &&
+        row.dual_ack?.pending_dropoff_ack === true,
     );
     return { rows };
   });

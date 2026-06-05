@@ -75,6 +75,10 @@
       "reason": "Factoring batch detail dynamic route \u2014 Block 43"
     },
     {
+      "path": "/fleet/transfers-in-progress",
+      "reason": "WF-047 dual-confirm transfer queue (P5-T21); fleet module subnav deferred"
+    },
+    {
       "path": "/dispatch/loads",
       "reason": "Legacy alias redirect \u2192 /dispatch?view=loads (B21-D1)"
     },

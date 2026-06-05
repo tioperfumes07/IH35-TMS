@@ -12,7 +12,7 @@ const vendor1099PayloadSchema = z.object({
   eligible: z.boolean(),
 });
 
-const emptyPayloadSchema = z.object({}).default({});
+const emptyPayloadSchema = z.object({});
 
 type VendorBulkPayload =
   | z.infer<typeof vendorStatusPayloadSchema>
