@@ -1,27 +1,20 @@
 {
-  "block_id": "CLOSURE-7-P5-T17-ROAD-SERVICE-TICKET",
-  "branch": "closure/p5-t17-road-service",
+  "block_id": "CLOSURE-8-TEST-USER-ARCHIVE",
+  "branch": "closure/test-user-archive",
   "phase": "CLOSURE",
-  "task": "P5-T17 road service ticket integration with WO + vendor bill auto-create",
-  "agent": "A",
+  "task": "Archive integration.owner@test.invalid and hide test users from production list",
+  "agent": "B",
   "allowed_files": [
-    "apps/backend/src/maintenance/road-service/tickets.routes.ts",
-    "apps/backend/src/maintenance/road-service/wo-integration.ts",
-    "apps/backend/src/maintenance/road-service/tickets.test.ts",
-    "apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx",
-    "apps/frontend/src/pages/maintenance/RoadServiceList.tsx",
-    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    "apps/frontend/src/hooks/useRoadServiceTickets.ts",
-    "apps/backend/src/migrations/0395-road-service-tickets.sql",
-    "scripts/verify-road-service-ticket-creates-wo.mjs",
-    "apps/frontend/src/router/route-manifest.ts",
-    "apps/frontend/src/routes/manifest.tsx",
+    "apps/backend/src/identity/seed-cleanup/archive-test-users.routes.ts",
+    "apps/backend/src/identity/seed-cleanup/archive-test-users.test.ts",
+    "apps/backend/src/migrations/0396-archive-test-users.sql",
+    "scripts/verify-no-test-users-in-production-list.mjs",
     "package.json",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:road-service-ticket-creates-wo"
+    "verify:no-test-users-in-production-list"
   ],
   "runtime_path": "src",
   "db_required": true,
