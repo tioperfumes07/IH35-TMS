@@ -40,7 +40,7 @@ describe("ar aging report routes", () => {
 
   beforeEach(async () => {
     app = Fastify();
-    await registerArAgingRoutes(app);
+    await registerReportsArAgingRoutes(app);
   });
 
   afterEach(async () => {
