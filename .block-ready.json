@@ -17,6 +17,7 @@
     "scripts/verify-deep-audit-a-driver-edit-modal.mjs",
     "scripts/verify-deep-audit-a-equipment-assignments.mjs",
     "docs/audits/DEEP-AUDIT-A-SUMMARY.md",
+    "package.json",
     ".block-ready.json",
     ".block-ready.agent2.json",
     ".github/workflows/ci.yml"
@@ -24,5 +25,5 @@
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }
