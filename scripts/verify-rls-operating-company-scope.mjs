@@ -55,12 +55,7 @@ async function main() {
   try {
     await client.query("SET ROLE ih35_app");
 
-    const tablesRes = await client.query<{
-      schema_name: string;
-      table_name: string;
-      rls_enabled: boolean;
-      policy_count: number;
-    }>(
+    const tablesRes = await client.query(
       `
         SELECT
           n.nspname AS schema_name,
