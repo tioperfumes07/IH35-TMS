@@ -47,22 +47,36 @@ async function main() {
 
   const pool = new pg.Pool({ connectionString });
   const client = await pool.connect();
+
+  async function countWithBypass(sql, params = []) {
+    await client.query("BEGIN");
+    try {
+      await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+      const res = await client.query(sql, params);
+      await client.query("COMMIT");
+      return res;
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    }
+  }
+
   try {
     await client.query("SET ROLE ih35_app");
 
-    const companyRes = await client.query(
+    const companyRes = await countWithBypass(
       `SELECT id::text, is_active, usdot_number FROM org.companies WHERE code = 'USMCA' LIMIT 1`
     );
     const usmca = companyRes.rows[0];
     if (!usmca) fail("USMCA company row missing");
     if (usmca.is_active !== false) fail("USMCA must remain hidden (is_active=false)");
 
-    const transpCoa = await client.query(
+    const transpCoa = await countWithBypass(
       `SELECT count(*)::int AS c FROM accounting.qbo_accounts qa
        JOIN org.companies c ON c.id = qa.operating_company_id
        WHERE c.code = 'TRANSP'`
     );
-    const usmcaCoa = await client.query(
+    const usmcaCoa = await countWithBypass(
       `SELECT count(*)::int AS c FROM accounting.qbo_accounts WHERE operating_company_id = $1::uuid`,
       [usmca.id]
     );
@@ -73,7 +87,7 @@ async function main() {
       fail(`USMCA CoA count ${usmcaCount} below minimum vs TRANSP template ${transpCount}`);
     }
 
-    const complaintRes = await client.query(
+    const complaintRes = await countWithBypass(
       `SELECT count(*)::int AS c FROM catalogs.complaint_types WHERE operating_company_id = $1::uuid`,
       [usmca.id]
     );
