@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 24 |
+| Shipped | 25 |
 | Forensic-skip | 2 |
 | In-flight | 0 |
-| Remaining | 4 |
+| Remaining | 3 |
 | ON HOLD | 4 (A23-11, A23-14, B19, B20 — triaged CLOSURE-17; do not dispatch) |
 
-**Pass:** 26/30 (24 shipped + 2 forensic-skip) · **CLOSURE-29 SHIPPED [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) `cbc2cccbb`** · **wave C-14 COMPLETE (CLOSURE-26 + CLOSURE-27)** · **note:** C-13 (CLOSURE-24/25) merged out-of-order — still in-flight, not yet on main; pass → 28/30 once both C-13 blocks land · **CLOSURE-28 PAUSED** on migration drift (separate investigation underway)
+**Pass:** 27/30 (25 shipped + 2 forensic-skip) · **CLOSURE-28 SHIPPED [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) `5fd0dd8a1`** · **CLOSURE-29 SHIPPED [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) `cbc2cccbb`** · **wave C-14 COMPLETE (CLOSURE-26 + CLOSURE-27)** · **note:** C-13 (CLOSURE-24/25) merged out-of-order — still in-flight, not yet on main; pass → 29/30 once both C-13 blocks land
 
 ## Block Status
 
@@ -47,7 +47,7 @@
 | CLOSURE-25 | B | C-13 | QUEUED | — | |
 | CLOSURE-26 | A | C-14 | **SHIPPED** | [#584](https://github.com/tioperfumes07/IH35-TMS/pull/584) | i18n EN/ES foundation; merged `d46ddb446` 2026-06-05 · ES machine-translated, flagged for Jorge review (follow-up, not a merge gate) |
 | CLOSURE-27 | B | C-14 | **SHIPPED** | [#585](https://github.com/tioperfumes07/IH35-TMS/pull/585) | Mobile/ultrawide edge breakpoint pack; merged `238681f35` 2026-06-05 |
-| CLOSURE-28 | A | C-15 | **PAUSED** | — | Migration drift — separate investigation underway; do not dispatch |
+| CLOSURE-28 | A | C-15 | **SHIPPED** | [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) | Data migration runbooks + `verify:migration-chain-runbook` static gate; merged `5fd0dd8a1` 2026-06-05 |
 | CLOSURE-29 | B | C-15 | **SHIPPED** | [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) | AUDIT-FIX-18..25 slot materialization (docs/.txt + INDEX.md); merged `cbc2cccbb` 2026-06-05 |
 | CLOSURE-30 | A | C-16 | QUEUED | — | Final PASS-8; requires C-1…C-29 |
 
@@ -95,10 +95,10 @@
 | C-12 | CLOSURE-22 ✅ [#580](https://github.com/tioperfumes07/IH35-TMS/pull/580) | CLOSURE-23 ✅ [#581](https://github.com/tioperfumes07/IH35-TMS/pull/581) |
 | C-13 | CLOSURE-24 ⏳ | CLOSURE-25 ⏳ |
 | C-14 | CLOSURE-26 ✅ [#584](https://github.com/tioperfumes07/IH35-TMS/pull/584) | CLOSURE-27 ✅ [#585](https://github.com/tioperfumes07/IH35-TMS/pull/585) |
-| C-15 | CLOSURE-28 ⏸️ PAUSED (migration drift) | CLOSURE-29 ✅ [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) |
+| C-15 | CLOSURE-28 ✅ [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) | CLOSURE-29 ✅ [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) |
 | … | per V2 index | per V2 index |
 
-**Main:** `d46ddb446` · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **C-14 merges:** `238681f35` (CLOSURE-27 #585) · `d46ddb446` (CLOSURE-26 #584) · **GAP:** PAUSED (user directive 2026-06-05)
+**Main:** `5fd0dd8a1` · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **C-14 merges:** `238681f35` (CLOSURE-27 #585) · `d46ddb446` (CLOSURE-26 #584) · **GAP:** PAUSED (user directive 2026-06-05)
 
 ## GAP De-Dup Plan (63 active blocks · 2026-06-05)
 
