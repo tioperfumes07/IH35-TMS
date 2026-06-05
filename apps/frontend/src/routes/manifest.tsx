@@ -379,6 +379,10 @@ function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
   return <MaintenanceHomePage initialTab={tabId} />;
 }
 
+function DispatchLoadsRoute() {
+  return <DispatchPage loadsDeepLink />;
+}
+
 function FactoringBatchDetailRoute() {
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
@@ -673,7 +677,7 @@ export const ROUTES = React.Children.toArray(
           path="/dispatch/loads"
           element={
             <ProtectedRoute>
-              <Navigate to="/dispatch?view=loads" replace />
+              <DispatchLoadsRoute />
             </ProtectedRoute>
           }
         />
@@ -706,6 +710,30 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FuelPlannerHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/transactions"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="transactions" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/driver-escrow"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="driver_escrow" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/reports"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="reports" />
             </ProtectedRoute>
           }
         />
@@ -894,7 +922,7 @@ export const ROUTES = React.Children.toArray(
           path="/maintenance/work-orders"
           element={
             <ProtectedRoute>
-              <Navigate to="/maintenance" replace />
+              <WorkOrdersConsoleListPage />
             </ProtectedRoute>
           }
         />

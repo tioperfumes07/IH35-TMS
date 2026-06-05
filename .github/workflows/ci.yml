@@ -582,6 +582,12 @@ jobs:
       - name: verify:responsive-pages-render-at-mobile
         run: npm run verify:responsive-pages-render-at-mobile
 
+      - name: verify:no-silent-redirects
+        run: npm run verify:no-silent-redirects
+
+      - name: verify:route-manifest-completeness
+        run: npm run verify:route-manifest-completeness
+
       - name: verify:bulk-update-route-mounted
         run: npm run verify:bulk-update-route-mounted
 

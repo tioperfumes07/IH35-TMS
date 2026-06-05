@@ -22,7 +22,7 @@ import { ManageAccountsModal } from "./components/ManageAccountsModal";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { TransferModal } from "./TransferModal";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
@@ -30,6 +30,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DriverEscrowTabContent } from "./components/DriverEscrowTabContent";
 import { BankingReportsTabContent } from "./components/BankingReportsTabContent";
 import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
+import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
 
 const BANKING_TABS = [
   { id: "accounts", label: "Accounts" },
@@ -39,8 +40,15 @@ const BANKING_TABS = [
   { id: "reports", label: "Reports" },
 ] as const;
 
-export function BankingHomePage() {
+type BankingTabId = (typeof BANKING_TABS)[number]["id"];
+
+type Props = {
+  initialTab?: BankingTabId;
+};
+
+export function BankingHomePage({ initialTab }: Props = {}) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -57,7 +65,11 @@ export function BankingHomePage() {
   const [reconStatementBalance, setReconStatementBalance] = useState("");
   const [startingRecon, setStartingRecon] = useState(false);
   const [showDisconnectedBankAccounts, setShowDisconnectedBankAccounts] = useState(false);
-  const [activeTab, setActiveTab] = useState<(typeof BANKING_TABS)[number]["id"]>("accounts");
+  const [activeTab, setActiveTab] = useState<BankingTabId>(initialTab ?? bankingTabFromPath(location.pathname) as BankingTabId);
+
+  useEffect(() => {
+    setActiveTab(bankingTabFromPath(location.pathname) as BankingTabId);
+  }, [location.pathname]);
 
   const kpiQuery = useQuery({
     queryKey: ["banking", "kpis", companyId],
@@ -190,7 +202,14 @@ export function BankingHomePage() {
       <SecondaryNavTabs
         tabs={BANKING_TABS.map((tab) => ({ id: tab.id, label: tab.label }))}
         activeId={activeTab}
-        onChange={(id) => setActiveTab(id as (typeof BANKING_TABS)[number]["id"])}
+        onChange={(id) => {
+          const tabId = id as BankingTabId;
+          setActiveTab(tabId);
+          const target = BANKING_TAB_PATH[tabId];
+          if (target && target !== location.pathname) {
+            navigate(target);
+          }
+        }}
       />
       {kpiQuery.isError || tilesQuery.isError || uncategorizedQuery.isError ? <ListErrorBanner onRetry={() => void uncategorizedQuery.refetch()} /> : null}
       <PlaidSyncStatusPanel operatingCompanyId={companyId} />
