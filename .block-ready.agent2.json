@@ -1,23 +1,23 @@
 {
-  "block_id": "AUDIT-FIX-11",
-  "branch": "audit-fix/audit-fix-11-qbo-sync-status-endpoints-fix",
+  "block_id": "AUDIT-FIX-15",
+  "branch": "audit-fix/audit-fix-15-status-bar-1366",
   "phase": "AUDIT-FIX",
-  "task": "QBO-SYNC-STATUS-ENDPOINTS-FIX — Unable to load sync status on /customers + /vendors",
+  "task": "STATUS-BAR-COMPACT-AT-1366 — icon-only breakpoint moved up + 1024 sub-tab overflow fix",
   "allowed_files": [
-    "apps/backend/src/qbo-sync/customers.routes.ts",
-    "apps/backend/src/qbo-sync/vendors.routes.ts",
-    "apps/backend/src/qbo-sync/chart-of-accounts.routes.ts",
-    "apps/backend/src/qbo-sync/items.routes.ts",
-    "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
-    "apps/frontend/src/pages/vendors/VendorsSyncPanel.tsx",
-    "scripts/verify-qbo-sync-status-endpoints-return-200.mjs",
+    "apps/frontend/src/components/layout/TopStatusBar.tsx",
+    "apps/frontend/src/components/layout/StatusBarMobile.tsx",
+    "apps/frontend/src/components/layout/StatusBarPopover.tsx",
+    "apps/frontend/src/components/layout/SubTabRow.tsx",
+    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+    "apps/frontend/src/components/Topbar.tsx",
+    "scripts/verify-no-clipped-subtabs-at-1024.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:qbo-sync-status-endpoints-return-200"
+    "verify:no-clipped-subtabs-at-1024"
   ],
   "runtime_path": "src",
   "db_required": false,

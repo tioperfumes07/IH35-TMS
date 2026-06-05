@@ -1,13 +1,16 @@
 {
-  "block_id": "AUDIT-FIX-10",
-  "branch": "audit-fix/audit-fix-10-mobile-status-bar",
+  "block_id": "AUDIT-FIX-15",
+  "branch": "audit-fix/audit-fix-15-status-bar-1366",
   "phase": "AUDIT-FIX",
-  "task": "MOBILE-STATUS-BAR-COLLAPSE — top status bar responsive at <768",
+  "task": "STATUS-BAR-COMPACT-AT-1366 — icon-only breakpoint moved up + 1024 sub-tab overflow fix",
   "allowed_files": [
     "apps/frontend/src/components/layout/TopStatusBar.tsx",
     "apps/frontend/src/components/layout/StatusBarMobile.tsx",
     "apps/frontend/src/components/layout/StatusBarPopover.tsx",
+    "apps/frontend/src/components/layout/SubTabRow.tsx",
+    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
     "apps/frontend/src/components/Topbar.tsx",
+    "scripts/verify-no-clipped-subtabs-at-1024.mjs",
     "scripts/verify-status-bar-height-at-mobile.mjs",
     "package.json",
     ".github/workflows/ci.yml",
@@ -15,6 +18,7 @@
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
+    "verify:no-clipped-subtabs-at-1024",
     "verify:status-bar-height-at-mobile"
   ],
   "runtime_path": "src",

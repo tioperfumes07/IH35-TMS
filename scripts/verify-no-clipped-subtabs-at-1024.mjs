@@ -8,19 +8,19 @@ const repoRoot = process.cwd();
 const REQUIRED = [
   {
     file: "apps/frontend/src/components/layout/TopStatusBar.tsx",
-    markers: ["useMaxWidth", "compactMaxWidth", "StatusBarMobile", "data-status-bar-desktop"],
+    markers: ["compactMaxWidth = 1366", "StatusBarMobile", "data-status-bar-desktop"],
   },
   {
-    file: "apps/frontend/src/components/layout/StatusBarMobile.tsx",
-    markers: ["data-status-bar-mobile", "StatusBarPopover", "h-10"],
+    file: "apps/frontend/src/components/layout/SubTabRow.tsx",
+    markers: ["data-subtab-row", "data-subtab-scroll-chevron", "overflow-x-auto"],
   },
   {
-    file: "apps/frontend/src/components/layout/StatusBarPopover.tsx",
-    markers: ["role=\"dialog\"", "aria-label"],
+    file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+    markers: ["SubTabRow", "data-maintenance-subtab", "parts_inventory"],
   },
   {
     file: "apps/frontend/src/components/Topbar.tsx",
-    markers: ["TopStatusBar", "top-bar"],
+    markers: ["TopStatusBar"],
   },
 ];
 
@@ -41,9 +41,9 @@ for (const req of REQUIRED) {
 }
 
 if (failures.length > 0) {
-  console.error("[verify-status-bar-height-at-mobile] FAIL:");
+  console.error("[verify-no-clipped-subtabs-at-1024] FAIL:");
   for (const message of failures) console.error(`  - ${message}`);
   process.exit(1);
 }
 
-console.log("[verify-status-bar-height-at-mobile] OK — StatusBarMobile capped at h-10 (40px) with icon-only compact mode");
+console.log("[verify-no-clipped-subtabs-at-1024] OK — SubTabRow scroll + status bar compact <=1366px");
