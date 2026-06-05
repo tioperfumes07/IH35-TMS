@@ -17,9 +17,11 @@ export function initialDualAckState(): DualAckState {
 }
 
 export function parseDualAckNotes(notes: string | null | undefined): DualAckState | null {
-  if (!notes?.startsWith(WF047_NOTES_PREFIX)) return null;
+  if (!notes) return null;
+  const metaLine = notes.split("\n").find((line) => line.startsWith(WF047_NOTES_PREFIX));
+  if (!metaLine) return null;
   try {
-    const parsed = JSON.parse(notes.slice(WF047_NOTES_PREFIX.length)) as Partial<DualAckState>;
+    const parsed = JSON.parse(metaLine.slice(WF047_NOTES_PREFIX.length)) as Partial<DualAckState>;
     return {
       pending_dropoff_ack: parsed.pending_dropoff_ack ?? !parsed.dropoff_ack_at,
       pending_pickup_ack: parsed.pending_pickup_ack ?? !parsed.pickup_ack_at,
