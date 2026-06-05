@@ -1,24 +1,15 @@
 {
-  "block_id": "CATALOG-3",
-  "branch": "feat/catalog-3-stub-purge",
-  "phase": "Phase 7 Catalogs",
-  "task": "Stub purge + header count corrections (Fleet 6→10, Fuel 7→12, Accounting 10→14)",
+  "block_id": "RULES-POST-PASS4",
+  "branch": "chore/dual-lane-post-pass4-17-block-index",
+  "phase": "Coordinator rules",
+  "task": "POST-PASS4 17-block AUDIT-FIX queue index in dual-lane-never-idle.mdc",
   "allowed_files": [
-    "apps/backend/src/catalogs/*.routes.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/components/layout/ModuleHeader.tsx",
-    "apps/frontend/src/components/layout/SubNavCounts.tsx",
-    "db/migrations/0384_seed_remaining_catalogs.sql",
-    "scripts/verify-no-stub-catalog-pages.mjs",
-    "scripts/verify-header-counts-match-actual.mjs",
-    "scripts/verify-catalog-factory-coverage.mjs",
-    "package.json",
-    ".github/workflows/ci.yml",
+    ".cursor/rules/dual-lane-never-idle.mdc",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": ["verify:no-stub-catalog-pages", "verify:header-counts-match-actual"],
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "db_required": false,
+  "guard_required": false
 }

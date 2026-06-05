@@ -20,16 +20,43 @@ Applies to **coordinator** sessions for IH35-TMS (Lane A + Lane B in parallel).
 
 1. **Phase 2 (Wave 11+):** `/Users/jorgemunoz/Downloads/final/00-MASTER-DISPATCH-INDEX-PHASE-2-FINAL-21-BLOCKS-mvp-100pct.txt` + `block-*.txt`
 2. **Phase 1 (MVP closure):** `/Users/jorgemunoz/Downloads/20 blocks/00-MASTER-DISPATCH-INDEX-FINAL-20-BLOCKS-mvp-closure.txt` + `block-*.txt`
-3. **AUDIT-FIX (15 blocks · PASS 1–4 consolidated):** `/Users/jorgemunoz/Downloads/PASS-4/00-MASTER-DISPATCH-INDEX-AUDIT-FIX-15-BLOCKS-FINAL.txt` + `block-AUDIT-FIX-*.txt`
-   - **Gate:** paste ONLY after Phase 2 Wave 21 (FINAL-AUDIT-PASS) merges — never interleave with in-flight P8-COMP-3/4
-   - **PASS 4 additions (blocks 12–15):** AF-7 Lane A `AUDIT-FIX-12`, Lane B `AUDIT-FIX-13`; AF-8 solo `AUDIT-FIX-14` (Lane B idle)
-   - **Hard deps:** AUDIT-FIX-12 + 14 require AUDIT-FIX-6; AUDIT-FIX-15 soft-depends AUDIT-FIX-10
-   - Supersedes separate indexes in `audit pass 1 and 2/` (7 blocks) and `pass-3/` (4 blocks)
+3. **AUDIT-FIX (17 blocks · PASS 1–6 consolidated · POST-PASS4):** `/Users/jorgemunoz/Downloads/JORGE-IH35TMS-POST-PASS4-PACKAGE-2026-06-05/dispatch-indices/00-MASTER-DISPATCH-INDEX-AUDIT-FIX-17-BLOCKS-FINAL.txt` + `block-AUDIT-FIX-*.txt` (blocks 1–15 under `audit pass 1 and 2/`, `pass-3/`, `PASS-4/`; blocks 16–17 in package `blocks-audit-fix/`)
+   - **Supersession chain (EXTENSION, not REPLACEMENT):**
+     | Source | Status | Blocks |
+     |--------|--------|--------|
+     | `audit pass 1 and 2/` | superseded as separate paste source; blocks retained in consolidated index | AUDIT-FIX 1–7 → folded into PASS-4 15-block index |
+     | `pass-3/` | superseded as separate paste source; blocks retained in consolidated index | AUDIT-FIX 8–11 → folded into PASS-4 15-block index |
+     | `PASS-4/` (15 blocks) | **extended** by POST-PASS4 (+16, +17) | AUDIT-FIX 1–15 → **17 total** |
+     | **Authoritative index** | paste from POST-PASS4 package | `dispatch-indices/00-MASTER-DISPATCH-INDEX-AUDIT-FIX-17-BLOCKS-FINAL.txt` |
+     Do **NOT** say earlier audit folders were "replaced and discarded" — say **superseded as separate paste sources; blocks retained in consolidated index**.
+   - **Gate:** paste ONLY after Phase 2 Wave 21 (FINAL-AUDIT-PASS) merges — never interleave with in-flight Phase 2 waves (e.g. Wave 18 CATALOG-3 + PWA-POLISH-1 while Wave 21 pending)
+   - **9-wave plan:** AF-1…AF-7 unchanged; **AF-8** Lane A `AUDIT-FIX-16`, Lane B `AUDIT-FIX-17`; **AF-9** solo Lane A `AUDIT-FIX-14` (Lane B idle)
+   - **Hard deps:** AUDIT-FIX-3 requires 1+2; AUDIT-FIX-12 + 14 require AUDIT-FIX-6; AUDIT-FIX-15 soft-depends AUDIT-FIX-10
+   - Package audits + progress report: `JORGE-IH35TMS-POST-PASS4-PACKAGE-2026-06-05/audits/`
 4. **Active batch:** `/Users/jorgemunoz/Downloads/abb/00-TIER-2-3-DISPATCH-INDEX.txt` + `block-*.txt`
 5. **52-block archive (only if abb empty / explicit Jorge):** `/Users/jorgemunoz/Downloads/ab/00-MASTER-QUEUE-INDEX-52-BLOCKS.txt`
 6. **In-flight GOs:** `/Users/jorgemunoz/Downloads/sdf/`
 
 Use **git/gh** for dispatch truth; tracker xlsx is advisory only.
+
+## Scope expansion — MUST-COMMUNICATE-AT-DISPATCH
+
+<!-- Gate: inject GO file patches only after Wave 21 merges; rules-only until then. -->
+
+**Gate:** Inject scope expansions **only when** Phase 2 Wave 21 (FINAL-AUDIT-PASS) has merged **and before** AUDIT-FIX wave AF-1 dispatch starts. If Wave 21 is **not merged yet**, do **NOT** inject — rules-only update; continue in-flight Phase 2 waves.
+
+**When gate opens:** Before Lane A picks up **AF-4** (AUDIT-FIX-7) and **AF-5** (AUDIT-FIX-8), patch the relevant GO block files from the POST-PASS4 package (not chat-only):
+
+| Wave | Block | Expansion (from PASS5/PASS6 findings) |
+|------|-------|----------------------------------------|
+| **AF-4** | AUDIT-FIX-7 | PASS6: test-user archive + Fuel "UNMATCHED undefined" (P6-C2, P6-C3) |
+| **AF-5** | AUDIT-FIX-8 | PASS5: Bill Create Category + A/P Account combobox (P5-C1) |
+
+Read expansions from:
+- `/Users/jorgemunoz/Downloads/JORGE-IH35TMS-POST-PASS4-PACKAGE-2026-06-05/audits/JORGE-MANUAL-AUDIT-2026-06-04-PASS5-FINDINGS.md`
+- `/Users/jorgemunoz/Downloads/JORGE-IH35TMS-POST-PASS4-PACKAGE-2026-06-05/audits/JORGE-MANUAL-AUDIT-2026-06-04-PASS6-FINDINGS.md`
+
+Coordinator MUST patch GO files **before** those blocks are dispatched to the lane — specifically before AF-4 (FIX-7) and AF-5 (FIX-8) lane pickup.
 
 ## Never idle (coordinator MUST obey)
 
@@ -91,8 +118,8 @@ Coordinator heartbeats include **2–5 STATUS lines** covering active phases:
 ```
 STATUS Phase1 | LaneA: <branch> <±N vs main> | <block-id> | PR: <url|none> | CI: <green|pending|red|conflict> | ETA-SHIP: <~Nm> | <active|babysit|implement>
 STATUS Phase2 | LaneB: <branch> <±N vs main> | <block-id> | PR: <url|none> | CI: <green|pending|red|conflict> | ETA-SHIP: <~Nm> | <active|babysit|implement>
-STATUS AUDIT   | queue: AUDIT-FIX AF-<n> | gated: <yes|no> | next: <block-id> | ETA: post-Wave-21
-STATUS PASS4   | blocks 12–15 | <queued|dispatched|shipped> | wave AF-7/AF-8
+STATUS AUDIT   | queue: AUDIT-FIX AF-<n>/9 | gated: <yes|no> | next: <block-id> | T=17 S=<n> R=<n> | ETA: post-Wave-21
+STATUS POST-PASS4 | blocks 16–17 | <queued|dispatched|shipped> | wave AF-8 | scope-inject: <pending|done|gated>
 ```
 
 Use Phase1/Phase2 lines when MVP dispatch is active; add AUDIT/PASS4 lines once AUDIT-FIX queue is armed.
