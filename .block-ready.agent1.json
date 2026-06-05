@@ -1,18 +1,19 @@
 {
-  "block_id": "CLOSURE-9-TRAILER-PROFILE",
-  "branch": "closure/trailer-profile",
+  "block_id": "CLOSURE-11-MAINT-SERVICES-CATALOG",
+  "branch": "closure/maint-services-catalog",
   "phase": "CLOSURE",
-  "task": "Trailer profile structural parity guard (core shipped #368/#404; CLOSURE delta CI)",
+  "task": "Maintenance Services catalog + ETA calculator gap-close (core shipped P3-T11.21.5a)",
   "agent": "A",
   "allowed_files": [
-    "scripts/verify-trailer-profile-mirrors-vehicle.mjs",
+    "apps/backend/src/catalogs/maintenance/eta-calculator.ts",
+    "scripts/verify-services-catalog-eta-calculator.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:trailer-profile-mirrors-vehicle"
+    "verify:services-catalog-eta-calculator"
   ],
   "runtime_path": "src",
   "db_required": false,

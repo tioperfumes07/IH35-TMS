@@ -1,18 +1,19 @@
 {
-  "block_id": "CLOSURE-10-MAINT-PARTS-CATALOG",
-  "branch": "closure/maint-parts-catalog",
+  "block_id": "CLOSURE-11-MAINT-SERVICES-CATALOG",
+  "branch": "closure/maint-services-catalog",
   "phase": "CLOSURE",
-  "task": "Maintenance Parts catalog gap-close CI guard (core shipped P3-T11.21.5a)",
-  "agent": "B",
+  "task": "Maintenance Services catalog + ETA calculator gap-close (core shipped P3-T11.21.5a)",
+  "agent": "A",
   "allowed_files": [
-    "scripts/verify-parts-catalog-seeded.mjs",
+    "apps/backend/src/catalogs/maintenance/eta-calculator.ts",
+    "scripts/verify-services-catalog-eta-calculator.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:parts-catalog-seeded"
+    "verify:services-catalog-eta-calculator"
   ],
   "runtime_path": "src",
   "db_required": false,

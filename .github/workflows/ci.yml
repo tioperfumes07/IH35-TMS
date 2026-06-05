@@ -482,6 +482,9 @@ jobs:
       - name: verify:parts-catalog-seeded
         run: npm run verify:parts-catalog-seeded
 
+      - name: verify:services-catalog-eta-calculator
+        run: npm run verify:services-catalog-eta-calculator
+
       - name: verify:compliance-dashboard-aggregate-sources
         run: npm run verify:compliance-dashboard-aggregate-sources
 
