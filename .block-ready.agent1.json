@@ -1,17 +1,24 @@
 {
-  "block_id": "P5-T16",
-  "branch": "feat/phase5-oos-estimate-generation",
-  "phase": "Phase 5",
-  "task": "Severe repair OOS downtime estimate generation",
+  "block_id": "CATALOG-1",
+  "branch": "feat/catalog-1-generic-backend",
+  "phase": "Phase 7 Catalogs",
+  "task": "Generic Catalog Framework backend (CRUD + Excel parser)",
   "allowed_files": [
-    "apps/backend/src/maintenance/wo-oos-estimator.ts",
-    "apps/backend/src/maintenance/wo-oos-estimator.test.ts",
-    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    "apps/backend/src/catalogs/generic-catalog.factory.ts",
+    "apps/backend/src/catalogs/excel-uploader.ts",
+    "apps/backend/src/catalogs/generic-catalog.routes.ts",
+    "apps/backend/src/catalogs/generic-catalog.routes.test.ts",
+    "db/migrations/0383_catalog_excel_upload_jobs.sql",
+    "scripts/verify-catalog-factory-coverage.mjs",
+    "scripts/__tests__/verify-catalog-factory-coverage.test.mjs",
+    "apps/backend/src/index.ts",
+    "package.json",
+    ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [],
+  "extra_gates": ["verify:catalog-factory-coverage"],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }

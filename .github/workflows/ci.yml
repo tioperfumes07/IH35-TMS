@@ -111,6 +111,9 @@ jobs:
       - name: Verify FMCSA SAFER customer coverage guard
         run: npm run verify:fmcsa-safer-customer-coverage
 
+      - name: Verify catalog factory coverage guard
+        run: npm run verify:catalog-factory-coverage
+
       - name: verify:drug-alcohol-fmcsa-clearinghouse-link
         run: npm run verify:drug-alcohol-fmcsa-clearinghouse-link
 
