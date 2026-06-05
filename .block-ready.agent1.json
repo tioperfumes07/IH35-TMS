@@ -1,21 +1,30 @@
 {
-  "block_id": "CLOSURE-11-MAINT-SERVICES-CATALOG",
-  "branch": "closure/maint-services-catalog",
+  "block_id": "CLOSURE-13-USMCA-JULY-LAUNCH",
+  "branch": "closure/usmca-july-launch",
   "phase": "CLOSURE",
-  "task": "Maintenance Services catalog + ETA calculator gap-close (core shipped P3-T11.21.5a)",
+  "task": "USMCA July 2026 launch activation runbook + toggle sequence",
   "agent": "A",
   "allowed_files": [
-    "apps/backend/src/catalogs/maintenance/eta-calculator.ts",
-    "scripts/verify-services-catalog-eta-calculator.mjs",
+    "docs/runbooks/USMCA-JULY-2026-LAUNCH-RUNBOOK.md",
+    "docs/runbooks/USMCA-ROLLBACK-PLAN.md",
+    "apps/backend/src/usmca/activation/activation.routes.ts",
+    "apps/backend/src/usmca/activation/activation-state-machine.ts",
+    "apps/backend/src/usmca/activation/activation.test.ts",
+    "apps/frontend/src/pages/admin/USMCAActivationPanel.tsx",
+    "apps/frontend/src/pages/admin/AdminPage.tsx",
+    "apps/backend/src/migrations/0402-usmca-activation-state.sql",
+    "apps/backend/src/qbo-subaccount-setup/usmca-bootstrap.ts",
+    "data/training/usmca-driver-onboarding-EN.md",
+    "data/training/usmca-driver-onboarding-ES.md",
+    "scripts/verify-usmca-launch-readiness.mjs",
     "package.json",
-    ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:services-catalog-eta-calculator"
+    "verify:usmca-launch-readiness"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
