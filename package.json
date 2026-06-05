@@ -175,6 +175,8 @@
     "verify:route-manifest-completeness": "node scripts/verify-route-manifest-completeness.mjs",
     "verify:subtabs-are-real-routes": "node scripts/verify-subtabs-are-real-routes.mjs",
     "verify:pass-7-smoke": "node scripts/run-pass-7-smoke-verify.mjs",
+    "verify:pass-8-smoke": "node scripts/pass-8-full-orchestrator.mjs",
+    "verify:pass-8-clean-baseline": "node scripts/verify-pass-8-clean-baseline.mjs",
     "verify:deep-audit-b-bell-icon": "node scripts/deep-audit-b-bell-icon.mjs",
     "verify:deep-audit-b-invoices-subnav": "node scripts/deep-audit-b-invoices-subnav.mjs",
     "verify:deep-audit-b-driver-pwa-375": "node scripts/deep-audit-b-driver-pwa-375.mjs",

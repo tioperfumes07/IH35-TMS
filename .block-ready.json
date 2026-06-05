@@ -1,15 +1,31 @@
 {
-  "block_id": "HEALTHZ-PG-BUDGET-503-FLAP-FIX",
-  "branch": "fix/healthz-pg-timeout-budgets",
+  "block_id": "CLOSURE-30-PASS-8-PRE-PROD-SMOKE",
+  "branch": "closure/pass-8-smoke",
   "phase": "CLOSURE",
-  "task": "Relax healthz postgres.select1 (50ms->1000ms) and migrations.ledger (50ms+80ms->1000ms) inner query timeout budgets to stop residual production /healthz 503 flap; keep both checks tier=critical; no other check/tier/query/pool/file touched",
+  "task": "Build and run PASS-8 pre-prod smoke suite, aggregate machine-readable results, and wire CI guard for PASS-8 regressions without modifying production code.",
   "agent": "A",
   "allowed_files": [
-    "apps/backend/src/health/health.routes.ts",
-    ".block-ready.json"
+    ".block-ready.json",
+    "docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.md",
+    "docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.json",
+    "scripts/pass-8-shared.mjs",
+    "scripts/pass-8-walk-all-modules.mjs",
+    "scripts/pass-8-walk-all-workflows.mjs",
+    "scripts/pass-8-walk-all-error-codes.mjs",
+    "scripts/pass-8-walk-all-must-clauses.mjs",
+    "scripts/pass-8-walk-all-locked-invariants.mjs",
+    "scripts/pass-8-walk-integration-health.mjs",
+    "scripts/pass-8-walk-financial-integrity.mjs",
+    "scripts/pass-8-full-orchestrator.mjs",
+    "scripts/verify-pass-8-clean-baseline.mjs",
+    ".github/workflows/pass-8-smoke-verify.yml",
+    ".github/workflows/ci.yml",
+    "package.json"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:pass-8-smoke"
+  ],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }

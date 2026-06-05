@@ -470,6 +470,12 @@ jobs:
       - name: verify:trailer-profile-reefer-conditional
         run: npm run verify:trailer-profile-reefer-conditional
 
+      - name: verify:pass-8-smoke
+        run: npm run verify:pass-8-smoke
+
+      - name: verify:pass-8-clean-baseline
+        run: npm run verify:pass-8-clean-baseline
+
       - name: verify:trailer-status-state-machine-coverage
         run: npm run verify:trailer-status-state-machine-coverage
 
