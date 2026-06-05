@@ -37,8 +37,8 @@ type CommitResponse = {
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 export function FaroImportPage() {
-  const { companyId } = useCompanyContext();
-  const toast = useToast();
+  const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
   const [fileName, setFileName] = useState("");
   const [csvText, setCsvText] = useState("");
   const [statementDate, setStatementDate] = useState(new Date().toISOString().slice(0, 10));
@@ -46,11 +46,11 @@ export function FaroImportPage() {
 
   const mutation = useMutation({
     mutationFn: async (previewOnly: boolean) => {
-      if (!companyId) throw new Error("company_required");
+      if (!selectedCompanyId) throw new Error("company_required");
       return apiRequest<PreviewResponse | CommitResponse>(`/api/v1/factoring/import/faro`, {
         method: "POST",
         body: JSON.stringify({
-          operating_company_id: companyId,
+          operating_company_id: selectedCompanyId,
           csv_text: csvText,
           statement_date: statementDate,
           source_filename: fileName || undefined,
@@ -58,20 +58,20 @@ export function FaroImportPage() {
         }),
       });
     },
-    onSuccess: (data, previewOnly) => {
+    onSuccess: (data) => {
       if ("preview" in data && data.preview) {
         setPreview(data);
-        toast.show("Preview ready", "success");
+        pushToast("Preview ready", "success");
         return;
       }
       const commit = data as CommitResponse;
-      toast.show(`Imported ${commit.line_count} lines (${commit.invoices_updated} invoices, ${commit.reserve_movements} reserves)`, "success");
+      pushToast(`Imported ${commit.line_count} lines (${commit.invoices_updated} invoices, ${commit.reserve_movements} reserves)`, "success");
       setPreview(null);
       setCsvText("");
       setFileName("");
     },
     onError: (error: Error) => {
-      toast.show(error.message || "Import failed", "error");
+      pushToast(error.message || "Import failed", "error");
     },
   });
 
