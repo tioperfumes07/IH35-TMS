@@ -207,6 +207,7 @@
     "verify:accounting-subpages-have-subnav": "node scripts/verify-accounting-subpages-have-subnav.mjs",
     "verify:list-cards-are-anchors": "node scripts/verify-list-cards-are-anchors.mjs",
     "verify:invoice-create-does-not-leave-accounting": "node scripts/verify-invoice-create-does-not-leave-accounting.mjs",
+    "verify:factoring-destructive-actions-have-confirm": "node scripts/verify-factoring-destructive-actions-have-confirm.mjs",
     "verify:session-create-updates-last-login": "node scripts/verify-session-create-updates-last-login.mjs",
     "verify:identity-users-last-login-at-column": "node scripts/verify-identity-users-last-login-at-column.mjs",
     "verify:backend-column-references": "node scripts/verify-backend-column-references.mjs",

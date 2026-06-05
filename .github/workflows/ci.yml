@@ -696,6 +696,9 @@ jobs:
       - name: verify:invoice-create-does-not-leave-accounting
         run: npm run verify:invoice-create-does-not-leave-accounting
 
+      - name: verify:factoring-destructive-actions-have-confirm
+        run: npm run verify:factoring-destructive-actions-have-confirm
+
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 
