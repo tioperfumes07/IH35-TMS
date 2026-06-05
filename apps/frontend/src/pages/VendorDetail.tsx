@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { listVendorBills } from "../api/accounting";
-import { ApiError } from "../api/client";
+import { ApiError, apiRequest } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
 import { getVendor, updateVendor } from "../api/mdata";
 import { getVendorIntegrityHistory } from "../api/maintenance";
@@ -14,12 +14,23 @@ import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
+import { StatusBadge } from "../components/layout/StatusBadge";
 import { VendorCategoryChip } from "../components/vendors/VendorCategoryChip";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorCategories";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { BillSelect } from "../components/ap/BillSelect";
 import { emptyVendorProfileMeta, parseVendorNotes, serializeVendorNotes, type VendorProfileMeta } from "../lib/vendorProfileMeta";
+
+type SaferEntityStatus = {
+  id: string;
+  mc_number: string | null;
+  dot_number: string | null;
+  safer_verified_at: string | null;
+  safer_status: string | null;
+  safer_authority_status: string | null;
+  safer_oos_status: string | null;
+};
 
 const tabs = ["Profile", "A/P", "Documents", "Audit History"] as const;
 type VendorTab = (typeof tabs)[number];
@@ -93,6 +104,40 @@ export function VendorDetailPage() {
     queryFn: () => listVendorBillPayments(id, { operating_company_id: companyId, limit: 50 }),
     enabled: Boolean(companyId && id && activeTab === "A/P"),
     retry: false,
+  });
+
+  const saferStatusQuery = useQuery({
+    queryKey: ["fmcsa-safer-status", "vendor", id, companyId],
+    queryFn: () => {
+      const q = new URLSearchParams({
+        entity_type: "vendor",
+        entity_id: id,
+        operating_company_id: companyId,
+      });
+      return apiRequest<{ entity_type: "vendor"; entity: SaferEntityStatus }>(
+        `/api/v1/compliance/fmcsa-safer/status?${q.toString()}`
+      );
+    },
+    enabled: Boolean(id && companyId),
+    retry: false,
+  });
+
+  const verifySaferMutation = useMutation({
+    mutationFn: () =>
+      apiRequest("/api/v1/compliance/fmcsa-safer/verify-now", {
+        method: "POST",
+        body: {
+          entity_type: "vendor",
+          entity_id: id,
+          force: true,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fmcsa-safer-status", "vendor", id] });
+      queryClient.invalidateQueries({ queryKey: ["vendor", id] });
+      pushToast("SAFER verification refreshed", "success");
+    },
+    onError: () => pushToast("SAFER verification failed", "error"),
   });
 
   const openBillsForPay = useMemo(
@@ -263,6 +308,7 @@ export function VendorDetailPage() {
   }
 
   const vendor = vendorQuery.data;
+  const saferEntity = saferStatusQuery.data?.entity ?? null;
   const reworkSignalCount = Number(
     (vendorIntegrityQuery.data?.repeat_failure_30d_count as number | undefined) ??
       (vendorIntegrityQuery.data?.redo_30d_count as number | undefined) ??
@@ -291,6 +337,26 @@ export function VendorDetailPage() {
           Warning: {reworkSignalCount} possible re-do signal(s) in last 30 days (same vendor/unit/failure pattern).
         </div>
       ) : null}
+
+      <div className="flex flex-wrap items-center gap-2">
+        {saferEntity?.safer_verified_at ? (
+          <StatusBadge variant="positive">
+            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`}
+          </StatusBadge>
+        ) : saferEntity?.safer_status ? (
+          <StatusBadge variant={saferEntity.safer_status === "verified" ? "positive" : "warn"}>
+            {`SAFER ${saferEntity.safer_status}`}
+          </StatusBadge>
+        ) : (
+          <StatusBadge variant="neutral">SAFER not verified</StatusBadge>
+        )}
+        {saferEntity?.safer_oos_status ? (
+          <span className="text-xs text-gray-500">{`Operating: ${saferEntity.safer_oos_status}`}</span>
+        ) : null}
+        <Button size="sm" variant="secondary" onClick={() => verifySaferMutation.mutate()} loading={verifySaferMutation.isPending}>
+          Verify SAFER
+        </Button>
+      </div>
 
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
         <div className="flex min-w-max gap-1">

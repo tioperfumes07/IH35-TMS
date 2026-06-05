@@ -6,7 +6,7 @@ import { z } from "zod";
 import { listInvoices, type Invoice } from "../api/accounting";
 import { listCustomerPayments, recordCustomerPayment, unapplyCustomerPayment, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
-import { ApiError } from "../api/client";
+import { ApiError, apiRequest } from "../api/client";
 import { listFmcsaLookups } from "../api/fmcsa";
 import {
   createCustomerLane,
@@ -302,6 +302,16 @@ function formatDateShort(value: string | null | undefined) {
   return date.toLocaleDateString("en-US");
 }
 
+type SaferEntityStatus = {
+  id: string;
+  mc_number: string | null;
+  dot_number: string | null;
+  safer_verified_at: string | null;
+  safer_status: "verified" | "unverified" | "not_found" | "lookup_failed" | "skipped" | null;
+  safer_authority_status: "active" | "inactive" | "revoked" | "unknown" | null;
+  safer_oos_status: "in_service" | "out_of_service" | "unknown" | null;
+};
+
 export function CustomerDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -427,7 +437,6 @@ export function CustomerDetailPage() {
     queryFn: () => listFmcsaLookups({ limit: 25 }).then((res) => res.lookups),
     enabled: fmcsaHistoryOpen,
   });
-
   const customer = detailQuery.data;
   const contacts = contactsQuery.data ?? customer?.contacts ?? [];
   const factoringVendors = useMemo(
@@ -576,6 +585,41 @@ export function CustomerDetailPage() {
     onError: () => {
       pushToast("FMCSA verification failed", "error");
     },
+  });
+  const saferStatusQuery = useQuery({
+    queryKey: ["fmcsa-safer-status", "customer", id, operatingCompanyId ?? "none"],
+    queryFn: () => {
+      const q = new URLSearchParams({
+        entity_type: "customer",
+        entity_id: id,
+        operating_company_id: operatingCompanyId ?? "",
+      });
+      return apiRequest<{ entity_type: "customer"; entity: SaferEntityStatus }>(
+        `/api/v1/compliance/fmcsa-safer/status?${q.toString()}`
+      );
+    },
+    enabled: Boolean(id && operatingCompanyId),
+    retry: false,
+  });
+  const saferEntity = saferStatusQuery.data?.entity ?? null;
+
+  const verifySaferMutation = useMutation({
+    mutationFn: () =>
+      apiRequest("/api/v1/compliance/fmcsa-safer/verify-now", {
+        method: "POST",
+        body: {
+          entity_type: "customer",
+          entity_id: id,
+          force: true,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fmcsa-safer-status", "customer", id] });
+      queryClient.invalidateQueries({ queryKey: ["customer-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      pushToast("SAFER verification refreshed", "success");
+    },
+    onError: () => pushToast("SAFER verification failed", "error"),
   });
 
   const createContactMutation = useMutation({
@@ -876,6 +920,20 @@ export function CustomerDetailPage() {
           </Button>
         ) : null}
         {customer.fmcsa_last_checked_at ? <span className="text-xs text-gray-500">{`Last checked ${new Date(customer.fmcsa_last_checked_at).toLocaleString()}`}</span> : null}
+        {saferEntity?.safer_verified_at ? (
+          <StatusBadge variant="positive">
+            {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`}
+          </StatusBadge>
+        ) : saferEntity?.safer_status ? (
+          <StatusBadge variant={saferEntity.safer_status === "verified" ? "positive" : "warn"}>
+            {`SAFER ${saferEntity.safer_status}`}
+          </StatusBadge>
+        ) : null}
+        {canVerifyFmcsa ? (
+          <Button size="sm" variant="secondary" onClick={() => verifySaferMutation.mutate()} loading={verifySaferMutation.isPending}>
+            Verify SAFER
+          </Button>
+        ) : null}
       </div>
 
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} />
@@ -1263,6 +1321,14 @@ export function CustomerDetailPage() {
               <MetricCell label="Cancellation Score" value={customer.quality_cancellation_score ?? "Not evaluated"} />
               <MetricCell label="Disputes (12m)" value={String(customer.quality_disputes_count ?? 0)} />
               <MetricCell label="FMCSA Standing" value={customer.fmcsa_authority_status_at_verification ?? "Not verified"} />
+              <MetricCell
+                label="SAFER Status"
+                value={
+                  saferEntity?.safer_verified_at
+                    ? `${saferEntity.safer_authority_status ?? "unknown"} · ${saferEntity.safer_oos_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`
+                    : saferEntity?.safer_status ?? "Not verified"
+                }
+              />
             </div>
             <div className="mt-3">
               <label className="mb-1 block text-xs font-semibold text-gray-600">Quality Notes</label>
