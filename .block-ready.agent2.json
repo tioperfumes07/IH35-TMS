@@ -1,20 +1,29 @@
 {
-  "block_id": "CLOSURE-8-TEST-USER-ARCHIVE",
-  "branch": "closure/test-user-archive",
+  "block_id": "CLOSURE-10-MAINT-PARTS-CATALOG",
+  "branch": "closure/maint-parts-catalog",
   "phase": "CLOSURE",
-  "task": "Archive integration.owner@test.invalid and hide test users from production list",
+  "task": "Maintenance Parts catalog by brand for owned fleet",
   "agent": "B",
   "allowed_files": [
-    "apps/backend/src/identity/seed-cleanup/archive-test-users.routes.ts",
-    "apps/backend/src/identity/seed-cleanup/archive-test-users.test.ts",
-    "apps/backend/src/migrations/0396-archive-test-users.sql",
-    "scripts/verify-no-test-users-in-production-list.mjs",
+    "apps/backend/src/catalogs/maintenance/parts.routes.ts",
+    "apps/backend/src/catalogs/maintenance/parts-seed.ts",
+    "apps/backend/src/catalogs/maintenance/parts.test.ts",
+    "apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx",
+    "apps/frontend/src/pages/lists/ListsPage.tsx",
+    "apps/frontend/src/hooks/useMaintenancePartsCatalog.ts",
+    "apps/backend/src/migrations/0399-maintenance-parts-catalog.sql",
+    "data/seeds/maintenance-parts/detroit-diesel.csv",
+    "data/seeds/maintenance-parts/cummins.csv",
+    "data/seeds/maintenance-parts/freightliner.csv",
+    "data/seeds/maintenance-parts/peterbilt.csv",
+    "data/seeds/maintenance-parts/kenworth.csv",
+    "scripts/verify-parts-catalog-seeded.mjs",
     "package.json",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:no-test-users-in-production-list"
+    "verify:parts-catalog-seeded"
   ],
   "runtime_path": "src",
   "db_required": true,

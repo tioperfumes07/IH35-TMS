@@ -1,20 +1,31 @@
 {
-  "block_id": "CLOSURE-9-TRAILER-PROFILE",
-  "branch": "closure/trailer-profile",
+  "block_id": "CLOSURE-10-MAINT-PARTS-CATALOG",
+  "branch": "closure/maint-parts-catalog",
   "phase": "CLOSURE",
-  "task": "Trailer profile structural parity guard (core shipped #368/#404; CLOSURE delta CI)",
-  "agent": "A",
+  "task": "Maintenance Parts catalog by brand for owned fleet",
+  "agent": "B",
   "allowed_files": [
-    "scripts/verify-trailer-profile-mirrors-vehicle.mjs",
+    "apps/backend/src/catalogs/maintenance/parts.routes.ts",
+    "apps/backend/src/catalogs/maintenance/parts-seed.ts",
+    "apps/backend/src/catalogs/maintenance/parts.test.ts",
+    "apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx",
+    "apps/frontend/src/pages/lists/ListsPage.tsx",
+    "apps/frontend/src/hooks/useMaintenancePartsCatalog.ts",
+    "apps/backend/src/migrations/0399-maintenance-parts-catalog.sql",
+    "data/seeds/maintenance-parts/detroit-diesel.csv",
+    "data/seeds/maintenance-parts/cummins.csv",
+    "data/seeds/maintenance-parts/freightliner.csv",
+    "data/seeds/maintenance-parts/peterbilt.csv",
+    "data/seeds/maintenance-parts/kenworth.csv",
+    "scripts/verify-parts-catalog-seeded.mjs",
     "package.json",
-    ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:trailer-profile-mirrors-vehicle"
+    "verify:parts-catalog-seeded"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
