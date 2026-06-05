@@ -36,8 +36,22 @@ Applies to **coordinator** sessions for IH35-TMS (Lane A + Lane B in parallel).
 4. **Active batch:** `/Users/jorgemunoz/Downloads/abb/00-TIER-2-3-DISPATCH-INDEX.txt` + `block-*.txt`
 5. **52-block archive (only if abb empty / explicit Jorge):** `/Users/jorgemunoz/Downloads/ab/00-MASTER-QUEUE-INDEX-52-BLOCKS.txt`
 6. **In-flight GOs:** `/Users/jorgemunoz/Downloads/sdf/`
+7. **CLOSURE V2 (30 blocks · post AUDIT-FIX):** `/Users/jorgemunoz/Downloads/JORGE-IH35TMS-CLOSURE-PACKAGE-V2-30-BLOCKS-2026-06-05/` + `closure-blocks/00-CLOSURE-DISPATCH-INDEX-V2-30-BLOCKS.txt` + `CLOSURE-*-GO.txt`
+   - **Supersession chain (EXTENSION, not REPLACEMENT):**
+     | Source | Status | Blocks |
+     |--------|--------|--------|
+     | Phase 2 (21 blocks) | complete on main | Wave 21 FINAL-AUDIT-PASS merged |
+     | AUDIT-FIX (17 blocks) | complete on main | AF-1…AF-17 shipped 2026-06-05 |
+     | CLOSURE V1 index | superseded as separate paste source; blocks retained | CLOSURE-1…CLOSURE-17 (9-wave plan C-1…C-9) |
+     | **CLOSURE V2 package** | **active queue** | CLOSURE-1…CLOSURE-30 (16-wave plan C-1…C-16) |
+     Do **NOT** say V1 or earlier phases were "replaced" — say **extended by CLOSURE V2 for production readiness, security, monitoring, operator onboarding, i18n, and PASS-8 ratification**.
+   - **V1 reference only:** `/Users/jorgemunoz/Downloads/files-4/` (4-block starter paste) + `00-CLOSURE-DISPATCH-INDEX.txt` — do not re-dispatch blocks already shipped
+   - **Gate:** CLOSURE-1 (PASS-7 smoke verify) runs **first** as verify-only gate before Wave C-2 feature blocks
+   - **16-wave plan:** C-1…C-9 V1 blocks per V2 index; C-10…C-15 V2 blocks 18-29; C-16 solo Lane A `CLOSURE-30` PASS-8 (after all others)
+   - **Hard deps:** CLOSURE-16 requires CLOSURE-12 + CLOSURE-2; CLOSURE-22 after CLOSURE-18+19; CLOSURE-30 requires C-1…C-29; CLOSURE-13 requires Jorge sign-off
+   - **Forensic skip:** CLOSURE-2 (P5-T6) and CLOSURE-3 (P5-T7) may already be on main under different file paths — confirm before re-implementing; gap-close CI guards only if feature shipped
+   - **ON HOLD unchanged:** A23-11, A23-14, B19, B20 (CLOSURE-17 triages only)
 
-Use **git/gh** for dispatch truth; tracker xlsx is advisory only.
 
 ## Scope expansion — MUST-COMMUNICATE-AT-DISPATCH
 
