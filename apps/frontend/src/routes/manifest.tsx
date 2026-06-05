@@ -143,6 +143,9 @@ import { VendorDetailPage } from "../pages/VendorDetail";
 import { Form425CHome } from "../pages/form425c/Form425CHome";
 import { HelpCenterPage } from "../pages/help/HelpCenterPage";
 import { HelpArticlePage } from "../pages/help/HelpArticlePage";
+import { HelpPage } from "../pages/help/HelpPage";
+import { RunbooksIndex } from "../pages/help/RunbooksIndex";
+import { OnboardingWizard } from "../pages/onboarding/OnboardingWizard";
 import { ReportsHomePage } from "../pages/reports/ReportsHome";
 import IFTAPreparer from "../pages/reports/ifta/IFTAPreparer";
 import { ReportsRunnerPage } from "../pages/reports/ReportsRunner";
@@ -2039,10 +2042,34 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/help/overview"
+          element={
+            <ProtectedRoute>
+              <HelpPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/help/runbooks"
+          element={
+            <ProtectedRoute>
+              <RunbooksIndex />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/help/:slug"
           element={
             <ProtectedRoute>
               <HelpArticlePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              <OnboardingWizard />
             </ProtectedRoute>
           }
         />

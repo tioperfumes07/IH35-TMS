@@ -210,8 +210,17 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Policies", to: "/legal/policies" },
         { label: "Attorney Review", to: "/legal/attorney-review" },
       ];
+    case "help":
+      return [
+        { label: "Help Center", to: "/help" },
+        { label: "Overview", to: "/help/overview" },
+        { label: "Runbooks", to: "/help/runbooks" },
+      ];
     case "users": {
-      const rows: SidebarFlyoutLink[] = [{ label: "Users", to: "/users" }];
+      const rows: SidebarFlyoutLink[] = [
+        { label: "Users", to: "/users" },
+        { label: "Operator Onboarding", to: "/onboarding" },
+      ];
       if (role === "Owner") {
         rows.push(
           { label: "Migration Status", to: "/admin/migration-status" },
