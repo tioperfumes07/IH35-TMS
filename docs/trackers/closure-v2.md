@@ -95,7 +95,7 @@
 | C-12 | CLOSURE-22 ⏳ CI hardening | CLOSURE-23 ⏳ DR backup |
 | … | per V2 index | per V2 index |
 
-**Main:** `139c914ea` · **C-11 merges:** `421fb9187` (CLOSURE-20) · `0df2bfa1c` (CLOSURE-21) · **GAP:** PAUSED (user directive 2026-06-05)
+**Main:** `789f4cfa1` · **C-11 merges:** `421fb9187` (CLOSURE-20) · `0df2bfa1c` (CLOSURE-21) · **GAP:** PAUSED (user directive 2026-06-05)
 
 ## GAP De-Dup Plan (63 active blocks · 2026-06-05)
 
