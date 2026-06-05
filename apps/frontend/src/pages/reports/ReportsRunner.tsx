@@ -38,7 +38,18 @@ function buildQuery(reportId: string, values: Record<string, unknown>) {
     return q;
   }
   if (reportId === "maint-cost-unit") {
-    q.set("period", toMonth(values.from));
+    if (values.from) q.set("period_start", String(values.from));
+    if (values.to) q.set("period_end", String(values.to));
+    return q;
+  }
+  if (reportId === "ar-aging") {
+    q.set("as_of_date", String(values.as_of ?? values.from ?? new Date().toISOString().slice(0, 10)));
+    return q;
+  }
+  if (reportId === "dispatch-margin") {
+    if (values.from) q.set("from", String(values.from));
+    if (values.to) q.set("to", String(values.to));
+    if (values.basis) q.set("basis", String(values.basis));
     return q;
   }
   if (reportId === "fuel-savings") {
@@ -55,7 +66,6 @@ function responseRows(reportId: string, payload: any): Record<string, unknown>[]
 }
 
 const STUB_PHASE: Record<string, string> = {
-  "ar-aging": "Phase 5 accounting module",
   "detention-claims": "Phase 4 detention billing",
 };
 

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, parseMonthWindow, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, parseMonthWindow, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 
 const legacyQuerySchema = companyQuerySchema.extend({
@@ -11,12 +11,14 @@ const legacyQuerySchema = companyQuerySchema.extend({
 const periodQuerySchema = companyQuerySchema.extend({
   period_start: z.string().date(),
   period_end: z.string().date(),
+  basis: reportBasisSchema,
 });
 
 type TruckFlag = "most_profitable" | "least_profitable" | "high_maintenance" | "underutilized";
 
 type ProfitPerTruckExtended = {
   period: { start: string; end: string };
+  basis?: "cash" | "accrual";
   totals: {
     revenue_cents: number;
     driver_pay_cents: number;
@@ -79,8 +81,8 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
     const q = req.query ?? {};
     const periodParsed = periodQuerySchema.safeParse(q);
     if (periodParsed.success) {
-      const { operating_company_id: companyId, period_start: pStart, period_end: pEnd } = periodParsed.data;
-      const cacheKey = `${companyId}:${pStart}:${pEnd}`;
+      const { operating_company_id: companyId, period_start: pStart, period_end: pEnd, basis } = periodParsed.data;
+      const cacheKey = `${companyId}:${pStart}:${pEnd}:${basis}`;
       const hit = extendedCache.get(cacheKey);
       if (hit) return hit;
 
@@ -308,6 +310,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
           period: { start: pStart, end: pEnd },
           totals,
           by_truck,
+          basis,
         };
 
         return body;

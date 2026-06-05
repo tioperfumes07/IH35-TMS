@@ -14,7 +14,9 @@
     "apps/frontend/src/pages/fleet/TransfersInProgressPage.tsx",
     "apps/frontend/src/pages/fleet/__tests__/TransfersInProgressPage.test.tsx",
     "apps/frontend/src/routes/manifest.tsx",
-    ".block-ready.json"
+    "scripts/nav-integrity-allowlist.json",
+    ".block-ready.json",
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",

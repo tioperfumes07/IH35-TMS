@@ -142,6 +142,7 @@ import { Form425CHome } from "../pages/form425c/Form425CHome";
 import { HelpCenterPage } from "../pages/help/HelpCenterPage";
 import { HelpArticlePage } from "../pages/help/HelpArticlePage";
 import { ReportsHomePage } from "../pages/reports/ReportsHome";
+import IFTAPreparer from "../pages/reports/ifta/IFTAPreparer";
 import { ReportsRunnerPage } from "../pages/reports/ReportsRunner";
 import { ARAgingPage } from "../pages/reports/ARAgingPage";
 import { APAgingPage } from "../pages/reports/APAgingPage";
@@ -156,6 +157,7 @@ import { ProfitPerTruckPage } from "../pages/reports/ProfitPerTruckPage";
 import { LaneProfitabilityPage } from "../pages/reports/LaneProfitabilityPage";
 import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage";
 import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
+import { DispatchMarginPage } from "../pages/reports/DispatchMarginPage";
 import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
 import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
@@ -1866,6 +1868,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/reports/ifta"
+          element={
+            <ProtectedRoute>
+              <IFTAPreparer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/reports/ar-aging"
           element={
             <ProtectedRoute>
@@ -1974,6 +1984,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <MaintenanceCostPerUnitPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/dispatch-margin"
+          element={
+            <ProtectedRoute>
+              <DispatchMarginPage />
             </ProtectedRoute>
           }
         />

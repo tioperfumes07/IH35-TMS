@@ -11,6 +11,8 @@ import { registerFuelReconciliationRoutes } from "./fuel-reconciliation.routes.j
 import { registerFuelSavingsRoutes } from "./fuel-savings.routes.js";
 import { registerCsaFleetScoreRoutes } from "./csa-fleet-score.routes.js";
 import { registerDetentionClaimsRoutes } from "./detention-claims.routes.js";
+import { registerReportsArAgingRoutes } from "./ar-aging.routes.js";
+import { registerDispatchMarginRoutes } from "./dispatch-margin.routes.js";
 import { registerIftaStatusRoutes } from "./ifta-status.routes.js";
 import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.routes.js";
 import { registerGeofenceDwellRoutes } from "./geofence-dwell.routes.js";
@@ -26,6 +28,8 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerDriverSettlementSummaryRoutes(app);
   await registerDriverPayHistoryRoutes(app);
   await registerMaintenanceCostPerUnitRoutes(app);
+  await registerReportsArAgingRoutes(app);
+  await registerDispatchMarginRoutes(app);
   await registerFuelReconciliationRoutes(app);
   await registerFuelSavingsRoutes(app);
   await registerCsaFleetScoreRoutes(app);

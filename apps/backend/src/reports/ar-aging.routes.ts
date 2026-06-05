@@ -1,14 +1,16 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 
 const arAgingQuerySchema = companyQuerySchema.extend({
   as_of_date: z.string().date().optional(),
+  basis: reportBasisSchema,
 });
 
 type ArAgingPayload = {
   as_of_date: string;
+  basis: "cash" | "accrual";
   totals: {
     total_outstanding_cents: number;
     bucket_0_30_cents: number;
@@ -31,7 +33,7 @@ type ArAgingPayload = {
 
 const cache = createTtlCache<ArAgingPayload>();
 
-export async function registerArAgingRoutes(app: FastifyInstance) {
+export async function registerReportsArAgingRoutes(app: FastifyInstance) {
   app.get("/api/v1/reports/ar-aging", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -123,7 +125,7 @@ export async function registerArAgingRoutes(app: FastifyInstance) {
         }
       );
 
-      const body: ArAgingPayload = { as_of_date: asOf, totals, rows: mappedRows };
+      const body: ArAgingPayload = { as_of_date: asOf, totals, rows: mappedRows, basis: query.data.basis };
       return body;
     });
 

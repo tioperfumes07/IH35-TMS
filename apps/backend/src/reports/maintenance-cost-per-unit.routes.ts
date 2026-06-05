@@ -6,6 +6,7 @@ import {
   companyQuerySchema,
   currentAuthUser,
   parseMonthWindow,
+  reportBasisSchema,
   validationError,
   withCompanyScope,
 } from "./shared.js";
@@ -13,6 +14,8 @@ import {
 const periodQuerySchema = companyQuerySchema.extend({
   period_start: z.string().date(),
   period_end: z.string().date(),
+  include_roadservice: z.coerce.boolean().optional().default(true),
+  basis: reportBasisSchema,
 });
 
 const legacyMonthSchema = companyQuerySchema.extend({
@@ -111,11 +114,15 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
     let operatingCompanyId: string;
     let startDay: string;
     let endDay: string;
+    let includeRoadservice = true;
+    let basis: "cash" | "accrual" = "accrual";
 
     if (parsedPeriod.success) {
       operatingCompanyId = parsedPeriod.data.operating_company_id;
       startDay = parsedPeriod.data.period_start;
       endDay = parsedPeriod.data.period_end;
+      includeRoadservice = parsedPeriod.data.include_roadservice;
+      basis = parsedPeriod.data.basis;
     } else if (parsedLegacy.success) {
       operatingCompanyId = parsedLegacy.data.operating_company_id;
       const window = parseMonthWindow(parsedLegacy.data.period);
@@ -132,7 +139,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
       return reply.code(400).send({ error: "validation_error", details: { period: ["period_start must be on or before period_end"] } });
     }
 
-    const cacheKey = `${operatingCompanyId}:${startDay}:${endDay}`;
+    const cacheKey = `${operatingCompanyId}:${startDay}:${endDay}:${includeRoadservice}:${basis}`;
     const hit = cache.get(cacheKey);
     if (hit) return hit;
 
@@ -145,6 +152,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
             WHERE wo.operating_company_id = $1
               AND wo.unit_id IS NOT NULL
               AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
+              AND ($4::boolean OR COALESCE(wo.bucket::text, 'in_house') <> 'roadside')
           ),
           line_totals AS (
             SELECT
@@ -183,7 +191,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
           GROUP BY u.id, u.unit_number
           ORDER BY SUM(we.grand_cents) DESC
         `,
-        [operatingCompanyId, startDay, endDay]
+        [operatingCompanyId, startDay, endDay, includeRoadservice]
       );
 
       const categoryAgg = await client.query<CategoryAggRow>(
@@ -194,6 +202,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
             WHERE wo.operating_company_id = $1
               AND wo.unit_id IS NOT NULL
               AND COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
+              AND ($4::boolean OR COALESCE(wo.bucket::text, 'in_house') <> 'roadside')
           ),
           wo_enriched AS (
             SELECT
@@ -207,7 +216,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
           FROM wo_enriched we
           GROUP BY COALESCE(we.wo_type, 'unknown')
         `,
-        [operatingCompanyId, startDay, endDay]
+        [operatingCompanyId, startDay, endDay, includeRoadservice]
       );
 
       const milesRows = await client.query<MilesRow>(
@@ -325,6 +334,8 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
 
       return {
         period: { start: startDay, end: endDay },
+        basis,
+        include_roadservice: includeRoadservice,
         totals: {
           wo_count: woCountTotal,
           total_parts_cents: partsTotal,

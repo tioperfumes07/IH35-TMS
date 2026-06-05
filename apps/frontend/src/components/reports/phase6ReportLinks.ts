@@ -11,6 +11,7 @@ export const PHASE_6_REPORT_HREFS: Record<string, string> = {
   "lane-profitability": "/reports/lane-profitability",
   "fuel-reconciliation": "/reports/fuel-reconciliation",
   "maintenance-cost-per-unit": "/reports/maintenance-cost-per-unit",
+  "dispatch-margin": "/reports/dispatch-margin",
   "geofence-dwell": "/reports/geofence-dwell",
   deadhead: "/reports/deadhead",
   "scheduled-reports": "/reports/scheduled",

@@ -1,10 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 
 const querySchema = companyQuerySchema.extend({
   cycle_start: z.string().optional(),
   cycle_end: z.string().optional(),
+  basis: reportBasisSchema,
 });
 
 function previousCycleWindow() {
@@ -54,6 +55,7 @@ export async function registerDriverSettlementSummaryRoutes(app: FastifyInstance
     return {
       cycle_start: cycleStart,
       cycle_end: cycleEnd,
+      basis: query.data.basis,
       rows,
     };
   });
