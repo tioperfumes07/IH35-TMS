@@ -79,6 +79,7 @@ import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approv
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
+import { registerIftaQuarterlyPreparerRoutes } from "./ifta/ifta-quarterly-preparer.routes.js";
 import { registerFleetTrailerRoutes } from "./fleet/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
 import { registerFuelLovesUploadRoutes } from "./fuel/loves-upload.routes.js";
@@ -551,6 +552,7 @@ async function main() {
   await registerHomeRoutes(app);
   await registerHomeWidgetRoutes(app);
   await registerReportsRoutes(app);
+  await registerIftaQuarterlyPreparerRoutes(app);
   await registerFuelPlannerRoutes(app);
   await registerFuelLovesUploadRoutes(app);
   await registerSafetyRoutes(app);
