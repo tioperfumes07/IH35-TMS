@@ -22,11 +22,11 @@
 |-------|------|------|--------|-----|-------|
 | CLOSURE-1 | A | C-1 | **SHIPPED** | [#549](https://github.com/tioperfumes07/IH35-TMS/pull/549) | PASS-7 smoke verify; merged `2ff3d8541` 2026-06-05 |
 | CLOSURE-2 | B | C-1 | **FORENSIC-SKIP** | — | P5-T6 Banking Transfer already on main |
-| CLOSURE-3 | A | C-1 | **FORENSIC-SKIP** | — | P5-T7 CC Payment Workflow already on main |
+| CLOSURE-3 | A | C-1 | **FORENSIC-SKIP** | [#552](https://github.com/tioperfumes07/IH35-TMS/pull/552) | Core on main; delta CI guard merged `454a7ab9b` 2026-06-05 |
 | CLOSURE-4 | B | C-2 | **SHIPPED** | [#550](https://github.com/tioperfumes07/IH35-TMS/pull/550) | Auto-deductions; merged `adf7a5cb3` 2026-06-05 |
-| CLOSURE-5 | A | C-2 | **SHIPPED** | [#551](https://github.com/tioperfumes07/IH35-TMS/pull/551) | Settlement dispute; merged `6b067c5ad` 2026-06-05 |
-| CLOSURE-6 | B | C-3 | **IN-FLIGHT** | — | `closure/p5-t14-team-splits` |
-| CLOSURE-7 | A | C-3 | **IN-FLIGHT** | — | `closure/p5-t17-road-service` |
+| CLOSURE-5 | A | C-3 | **SHIPPED** | [#551](https://github.com/tioperfumes07/IH35-TMS/pull/551) | Settlement dispute; merged `6b067c5ad` 2026-06-05 |
+| CLOSURE-6 | B | C-3 | **IN-FLIGHT** | [#553](https://github.com/tioperfumes07/IH35-TMS/pull/553) | `closure/p5-t14-team-splits` |
+| CLOSURE-7 | A | C-4 | **IN-FLIGHT** | — | `closure/p5-t17-road-service` |
 | CLOSURE-8 | B | C-4 | QUEUED | — | |
 | CLOSURE-9 | A | C-4 | QUEUED | — | |
 | CLOSURE-10 | B | C-5 | QUEUED | — | |
@@ -76,13 +76,14 @@
 - `apps/frontend/src/components/ap/BillPaymentModal.tsx` — payment modal UI
 - `apps/frontend/src/api/ap.ts` — AP payment API
 
-**Action:** Gap-close CI guards only if PASS-7/PASS-8 regressions found (none as of CLOSURE-1).
+**Action:** Gap-close via [#552](https://github.com/tioperfumes07/IH35-TMS/pull/552) — `POST /bill-payments/cc`, migration 0391, CI guard (redundant delta OK).
 
 ## Wave Plan (active)
 
 | Wave | Lane A | Lane B |
 |------|--------|--------|
 | C-1 | CLOSURE-1 ✅ | CLOSURE-2 ⏭️ skip |
-| C-2 | CLOSURE-5 🔄 | CLOSURE-4 🔄 |
-| C-3 | CLOSURE-7 | CLOSURE-6 |
+| C-2 | CLOSURE-3 ⏭️ skip + [#552](https://github.com/tioperfumes07/IH35-TMS/pull/552) delta ✅ | CLOSURE-4 ✅ [#550](https://github.com/tioperfumes07/IH35-TMS/pull/550) |
+| C-3 | CLOSURE-5 ✅ [#551](https://github.com/tioperfumes07/IH35-TMS/pull/551) | CLOSURE-6 🔄 [#553](https://github.com/tioperfumes07/IH35-TMS/pull/553) |
+| C-4 | CLOSURE-7 🔄 | CLOSURE-8 |
 | … | per V2 index | per V2 index |
