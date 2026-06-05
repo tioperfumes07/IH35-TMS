@@ -30,6 +30,7 @@ describe("road service tickets routes (CLOSURE-7)", () => {
   let app: FastifyInstance;
   const companyId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
   const ticketId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const unitId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 
   beforeEach(async () => {
     mocked.withCurrentUserMock.mockReset();
@@ -80,7 +81,7 @@ describe("road service tickets routes (CLOSURE-7)", () => {
         operating_company_id: companyId,
         ticket_number: "RS-1001",
         vendor_name: "FleetNet",
-        unit_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        unit_id: unitId,
         service_type: "tire_change",
         initial_complaint: "Steer tire blowout on I-35",
       },
