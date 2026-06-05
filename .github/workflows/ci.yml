@@ -114,6 +114,9 @@ jobs:
       - name: Verify catalog factory coverage guard
         run: npm run verify:catalog-factory-coverage
 
+      - name: Verify catalog pages use generic framework
+        run: npm run verify:catalog-pages-use-generic-framework
+
       - name: verify:drug-alcohol-fmcsa-clearinghouse-link
         run: npm run verify:drug-alcohol-fmcsa-clearinghouse-link
 

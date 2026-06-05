@@ -1,24 +1,24 @@
 {
-  "block_id": "CATALOG-1",
-  "branch": "feat/catalog-1-generic-backend",
+  "block_id": "CATALOG-2",
+  "branch": "feat/catalog-2-generic-frontend",
   "phase": "Phase 7 Catalogs",
-  "task": "Generic Catalog Framework backend (CRUD + Excel parser)",
+  "task": "Generic Catalog Framework frontend (universal CRUD UI + Excel upload modal)",
   "allowed_files": [
-    "apps/backend/src/catalogs/generic-catalog.factory.ts",
-    "apps/backend/src/catalogs/excel-uploader.ts",
-    "apps/backend/src/catalogs/generic-catalog.routes.ts",
-    "apps/backend/src/catalogs/generic-catalog.routes.test.ts",
-    "db/migrations/0383_catalog_excel_upload_jobs.sql",
-    "scripts/verify-catalog-factory-coverage.mjs",
-    "scripts/__tests__/verify-catalog-factory-coverage.test.mjs",
-    "apps/backend/src/index.ts",
+    "apps/frontend/src/components/catalogs/CatalogTable.tsx",
+    "apps/frontend/src/components/catalogs/CatalogEditModal.tsx",
+    "apps/frontend/src/components/catalogs/CatalogExcelUploadModal.tsx",
+    "apps/frontend/src/hooks/useCatalogQuery.ts",
+    "apps/frontend/src/pages/lists/GenericCatalogPage.tsx",
+    "apps/frontend/src/pages/lists/CatalogIndex.tsx",
+    "scripts/verify-catalog-pages-use-generic-framework.mjs",
+    "scripts/__tests__/verify-catalog-pages-use-generic-framework.test.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
-  "extra_gates": ["verify:catalog-factory-coverage"],
+  "extra_gates": ["verify:catalog-pages-use-generic-framework"],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }
