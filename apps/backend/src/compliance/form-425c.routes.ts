@@ -17,6 +17,7 @@ import { registerDrugAlcoholComplianceRoutes } from "./drug-alcohol.routes.js";
 import { registerCsaRoutes } from "./csa.routes.js";
 import { registerFmcsaSaferRoutes } from "./fmcsa-safer.routes.js";
 import { registerUsmcaCarrierBootstrapRoutes } from "../onboarding/usmca-carrier-bootstrap.routes.js";
+import { registerLaunchToggleRoutes } from "../admin/launch-toggles.routes.js";
 
 const COMPANY_QUERY = z.object({
   operating_company_id: z.string().uuid(),
@@ -297,6 +298,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
   await registerCsaRoutes(app);
   await registerFmcsaSaferRoutes(app);
   await registerUsmcaCarrierBootstrapRoutes(app);
+  await registerLaunchToggleRoutes(app);
   app.get("/api/v1/form-425c", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
