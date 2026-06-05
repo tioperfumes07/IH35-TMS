@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listCustomers, listDrivers } from "../api/mdata";
 import { getDispatchDashboard } from "../api/dispatch";
@@ -89,12 +89,24 @@ function customerMatchReason(search: string, customer: { name: string; customer_
   return null;
 }
 
-export function DispatchPage() {
+export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolean } = {}) {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [newLoadOpen, setNewLoadOpen] = useState(false);
   const [subTab, setSubTab] = useState<DispatchSubTabId>("load_board");
+  const loadsRoute = loadsDeepLink || location.pathname === "/dispatch/loads";
+
+  useEffect(() => {
+    if (!loadsRoute) return;
+    setSubTab("load_board");
+    const next = new URLSearchParams(searchParams);
+    if (next.get("view") !== "list") {
+      next.set("view", "list");
+      setSearchParams(next, { replace: true });
+    }
+  }, [loadsRoute, searchParams, setSearchParams]);
   const [showPositionHeatmap, setShowPositionHeatmap] = useState(false);
   const [heatmapFrom, setHeatmapFrom] = useState(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
   const [heatmapTo, setHeatmapTo] = useState(() => new Date().toISOString());

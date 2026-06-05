@@ -1,25 +1,24 @@
 {
-  "block_id": "AUDIT-FIX-4",
-  "branch": "audit-fix/audit-fix-4-responsive-breakpoint-pass",
+  "block_id": "AUDIT-FIX-6",
+  "branch": "audit-fix/audit-fix-6-route-enumeration-ci-guard",
   "phase": "AUDIT-FIX",
-  "task": "RESPONSIVE-BREAKPOINT-PASS — fix overflow at 1024/768/375 + CI guard",
+  "task": "ROUTE-ENUMERATION-CI-GUARD — route manifest + deep-link fixes",
   "allowed_files": [
-    "apps/frontend/src/styles/responsive-breakpoints.css",
-    "apps/frontend/src/components/layout/ModuleHeader.tsx",
-    "apps/frontend/src/components/Sidebar.tsx",
-    "apps/frontend/src/components/Topbar.tsx",
-    "apps/frontend/src/pages/form425c/Form425CHome.tsx",
-    "scripts/verify-no-horizontal-overflow-at-1024.mjs",
-    "scripts/verify-responsive-pages-render-at-mobile.mjs",
-    "docs/audits/RESPONSIVE-AUDIT-FINDINGS-2026-06-04.md",
+    "apps/frontend/src/router/route-manifest.ts",
+    "apps/frontend/src/pages/banking/BankingHome.tsx",
+    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
+    "apps/frontend/src/pages/Dispatch.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-no-silent-redirects.mjs",
+    "scripts/verify-route-manifest-completeness.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:no-horizontal-overflow-at-1024",
-    "verify:responsive-pages-render-at-mobile"
+    "verify:no-silent-redirects",
+    "verify:route-manifest-completeness"
   ],
   "runtime_path": "src",
   "db_required": false,
