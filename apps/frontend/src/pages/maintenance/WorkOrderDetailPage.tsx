@@ -208,7 +208,7 @@ export function WorkOrderDetailPage() {
     if (!wo || !id) return null;
     const severity = String(wo.severity ?? "").trim().toLowerCase();
     if (severity !== "out_of_service" && severity !== "oos-severe" && severity !== "oos_severe") return null;
-    const linked = (severeEstimatesQ.data ?? []).find((row) => row.trigger_wo_id === id);
+    const linked = (severeEstimatesQ.data?.data ?? []).find((row) => row.trigger_wo_id === id);
     const daysOos = Number(linked?.days_oos ?? 0);
     const downtimeCents = Math.round(daysOos * OOS_DAILY_LOSS_CENTS);
     const repairCents = Number(linked?.estimated_total_cents ?? 0);
