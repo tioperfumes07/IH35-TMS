@@ -10,6 +10,7 @@ import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { parseVendorNotes } from "../lib/vendorProfileMeta";
+import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
 
@@ -181,6 +182,7 @@ export function VendorsPage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Vendors" subtitle="Vendor list and transactions" />
+      {companyId ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
       <div className="flex gap-3">
         <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2">
           <input
