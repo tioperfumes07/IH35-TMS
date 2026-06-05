@@ -45,11 +45,6 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const configs = data?.configs ?? [];
   const active = useMemo(() => configs.filter((row) => row.status === "active"), [configs]);
 
-  const driverOptions = (driversQuery.data ?? []).map((driver) => ({
-    value: driver.id,
-    label: `${driver.first_name} ${driver.last_name}`,
-  }));
-
   async function handleCreate() {
     setError(null);
     if (!primaryDriverId || !secondaryDriverId) {
@@ -108,8 +103,36 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create team split config">
         <div className="space-y-3">
-          <SelectCombobox label="Primary driver" value={primaryDriverId} onChange={setPrimaryDriverId} options={driverOptions} />
-          <SelectCombobox label="Secondary driver" value={secondaryDriverId} onChange={setSecondaryDriverId} options={driverOptions} />
+          <label className="block text-xs font-medium text-gray-700">
+            Primary driver
+            <SelectCombobox
+              className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
+              value={primaryDriverId}
+              onChange={(e) => setPrimaryDriverId(e.target.value)}
+            >
+              <option value="">Select driver…</option>
+              {driverOptions.map((driver) => (
+                <option key={driver.value} value={driver.value}>
+                  {driver.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
+          <label className="block text-xs font-medium text-gray-700">
+            Secondary driver
+            <SelectCombobox
+              className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
+              value={secondaryDriverId}
+              onChange={(e) => setSecondaryDriverId(e.target.value)}
+            >
+              <option value="">Select driver…</option>
+              {driverOptions.map((driver) => (
+                <option key={driver.value} value={driver.value}>
+                  {driver.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
           <div className="flex flex-wrap gap-2">
             {RATIO_PRESETS.map((preset) => (
               <Button
