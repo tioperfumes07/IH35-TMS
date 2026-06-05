@@ -1,0 +1,53 @@
+name: monthly-restore-drill
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 8 1 * *"
+  workflow_dispatch:
+
+jobs:
+  backup-ci-guard:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: CI guard — backups current
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: tiny-field-89581227
+        run: node scripts/verify-backups-current.mjs
+
+  monthly-drill:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: PITR verify
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: tiny-field-89581227
+        run: node scripts/backup-verify-neon-pitr.mjs
+      - name: Restore drill
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+        run: bash scripts/backup-restore-drill.sh
+      - name: Checksum baseline
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: node scripts/backup-checksum-monthly.mjs
