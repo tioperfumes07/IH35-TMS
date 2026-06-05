@@ -132,6 +132,7 @@ import { registerPlaidAdminRoutes } from "./integrations/plaid/admin.routes.js";
 import { registerPlaidWebhookRoutes } from "./integrations/plaid/webhook.routes.js";
 import { registerBankingPlaidWebhookRoutes } from "./banking/plaid/webhook.routes.js";
 import { registerBankingTransfersRoutes } from "./banking/transfers.routes.js";
+import { registerCcPaymentRoutes } from "./bill-payments/cc-payment.routes.js";
 import { registerBankingManualJeRoutes } from "./banking/manual-je.routes.js";
 import { registerBankingFactoringVirtualRoutes } from "./banking/factoring-virtual.routes.js";
 import { registerBankingEscrowVisualizerRoutes } from "./banking/escrow-visualizer.routes.js";
@@ -626,6 +627,7 @@ async function main() {
   await registerPlaidWebhookRoutes(app);
   await registerBankingPlaidWebhookRoutes(app);
   await registerBankingTransfersRoutes(app);
+  await registerCcPaymentRoutes(app);
   await registerBankingManualJeRoutes(app);
   await registerBankingFactoringVirtualRoutes(app);
   await registerBankingEscrowVisualizerRoutes(app);
