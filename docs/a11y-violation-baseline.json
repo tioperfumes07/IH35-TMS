@@ -1,0 +1,18 @@
+{
+  "tool": "axe-core",
+  "standard": "WCAG 2.1 AA",
+  "captured_at": "2026-06-05",
+  "pages_planned": 26,
+  "totals": {
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "minor": 0
+  },
+  "static_findings": {
+    "icon_only_buttons": 14,
+    "inputs_label_heuristic": 38,
+    "contrast_primary_button": "3.77:1 (UI component — meets 3:1, below 4.5:1 text)"
+  },
+  "note": "Committed baseline — live axe via A11Y_TARGET=https://app.ih35dispatch.com"
+}

@@ -469,7 +469,9 @@
     "verify:ifta-aggregator-determinism": "node scripts/verify-ifta-aggregator-determinism.mjs",
     "verify:ifta-tax-rates-current": "node scripts/verify-ifta-tax-rates-current.mjs",
     "verify:scheduled-report-recipients-resolved": "node scripts/verify-scheduled-report-recipients-resolved.mjs",
-    "verify:samsara-webhook-route-mounted": "node scripts/verify-samsara-webhook-route-mounted.mjs"
+    "verify:samsara-webhook-route-mounted": "node scripts/verify-samsara-webhook-route-mounted.mjs",
+    "verify:a11y-no-critical-violations": "node scripts/verify-a11y-no-critical-violations.mjs",
+    "a11y:audit": "node scripts/a11y-axe-walk.mjs && node scripts/a11y-keyboard-nav.mjs && node scripts/a11y-color-contrast.mjs && node scripts/a11y-screen-reader-checks.mjs && node scripts/verify-a11y-no-critical-violations.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
