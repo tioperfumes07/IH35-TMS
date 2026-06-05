@@ -1098,6 +1098,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/maintenance/road-service"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="road_service" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/maintenance/parts-inventory"
           element={
             <ProtectedRoute>

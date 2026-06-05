@@ -38,6 +38,7 @@ import { PartsInventoryTable } from "./components/PartsInventoryTable";
 import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { RecentActivityRow } from "./components/RecentActivityRow";
+import { RoadServiceList } from "./RoadServiceList";
 import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
 import { WorkOrderDetailModal } from "../../components/maintenance/WorkOrderDetailModal";
@@ -60,6 +61,7 @@ const SUBNAV = [
   { id: "in_transit_issues", label: "In-Transit Issues" },
   { id: "damage_reports", label: "Damage Reports" },
   { id: "severe_repairs", label: "Severe Repairs" },
+  { id: "road_service", label: "Road Service" },
   { id: "parts_inventory", label: "Parts Inventory" },
   { id: "settings", label: "Settings" },
 ] as const;
@@ -283,6 +285,8 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
       {tab === "damage_reports" ? <DriverReportsQueuePage /> : null}
 
       {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
+
+      {tab === "road_service" ? <RoadServiceList operatingCompanyId={companyId} /> : null}
 
       {tab === "parts_inventory" ? (
         <div className="space-y-2">
