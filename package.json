@@ -285,6 +285,8 @@
     "verify:deadhead-calculation-method": "node scripts/verify-deadhead-calculation-method.mjs",
     "verify:deadhead-cache-rls": "node scripts/verify-deadhead-cache-rls.mjs",
     "verify:rls-uuid-cast-nullif": "node scripts/verify-rls-uuid-cast-nullif.mjs",
+    "verify:rls-operating-company-scope": "node scripts/verify-rls-operating-company-scope.mjs",
+    "verify:no-cross-carrier-data-leak": "node scripts/verify-no-cross-carrier-data-leak.mjs",
     "verify:reports-no-stub-data": "node scripts/verify-reports-no-stub-data.mjs",
     "verify:deadhead-uses-lane-profitability-for-suggestions": "node scripts/verify-deadhead-uses-lane-profitability-for-suggestions.mjs",
     "verify:notification-center-bell-in-nav": "node scripts/verify-notification-center-bell-in-nav.mjs",
