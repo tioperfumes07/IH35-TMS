@@ -196,6 +196,7 @@ import { MonthClosePage } from "../pages/accounting/MonthClosePage";
 import { EscrowPage } from "../pages/accounting/EscrowPage";
 import { CashForecastPage } from "../pages/accounting/CashForecastPage";
 import { PeriodComparisonPage } from "../pages/accounting/PeriodComparisonPage";
+import { QBOSyncDriftDashboard } from "../pages/accounting/QBOSyncDriftDashboard";
 import { COLLECTIONS_ROUTE } from "./collections.routes";
 import { ForensicReviewPage } from "../pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "../pages/admin/ActivityLogPage";
@@ -2481,6 +2482,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <BillPaymentsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/qbo-sync"
+          element={
+            <ProtectedRoute>
+              <QBOSyncDriftDashboard />
             </ProtectedRoute>
           }
         />
