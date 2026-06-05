@@ -50,23 +50,19 @@ async function main() {
   try {
     await client.query("SET ROLE ih35_app");
 
-    const companyRes = await client.query<{
-      id: string;
-      is_active: boolean;
-      usdot_number: string | null;
-    }>(
+    const companyRes = await client.query(
       `SELECT id::text, is_active, usdot_number FROM org.companies WHERE code = 'USMCA' LIMIT 1`
     );
     const usmca = companyRes.rows[0];
     if (!usmca) fail("USMCA company row missing");
     if (usmca.is_active !== false) fail("USMCA must remain hidden (is_active=false)");
 
-    const transpCoa = await client.query<{ c: number }>(
+    const transpCoa = await client.query(
       `SELECT count(*)::int AS c FROM accounting.qbo_accounts qa
        JOIN org.companies c ON c.id = qa.operating_company_id
        WHERE c.code = 'TRANSP'`
     );
-    const usmcaCoa = await client.query<{ c: number }>(
+    const usmcaCoa = await client.query(
       `SELECT count(*)::int AS c FROM accounting.qbo_accounts WHERE operating_company_id = $1::uuid`,
       [usmca.id]
     );
@@ -77,7 +73,7 @@ async function main() {
       fail(`USMCA CoA count ${usmcaCount} below minimum vs TRANSP template ${transpCount}`);
     }
 
-    const complaintRes = await client.query<{ c: number }>(
+    const complaintRes = await client.query(
       `SELECT count(*)::int AS c FROM catalogs.complaint_types WHERE operating_company_id = $1::uuid`,
       [usmca.id]
     );
