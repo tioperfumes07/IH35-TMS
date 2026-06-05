@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const migrationPath = path.join(ROOT, "db/migrations/0378_qbo_sync_drift_log.sql");
+const migrationPath = path.join(ROOT, "db/migrations/0379_qbo_sync_drift_log.sql");
 const detectorPath = path.join(ROOT, "apps/backend/src/qbo-sync/drift-detector.ts");
 const schedulerPath = path.join(ROOT, "apps/backend/src/qbo-sync/sync-scheduler.ts");
 const alertsPath = path.join(ROOT, "apps/backend/src/qbo-sync/sync-alerts.ts");
