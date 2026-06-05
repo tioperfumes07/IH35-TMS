@@ -1,20 +1,30 @@
 {
-  "block_id": "CLOSURE-10-MAINT-PARTS-CATALOG",
-  "branch": "closure/maint-parts-catalog",
+  "block_id": "CLOSURE-12-CYCLE5-PAYROLL-INTEGRATION",
+  "branch": "closure/cycle5-payroll-integration",
   "phase": "CLOSURE",
-  "task": "Maintenance Parts catalog gap-close CI guard (core shipped P3-T11.21.5a)",
+  "task": "TMS↔QBO Payroll integration page (Cycle 5 post-MVP)",
   "agent": "B",
   "allowed_files": [
-    "scripts/verify-parts-catalog-seeded.mjs",
+    "apps/backend/src/payroll-integration/aggregate.routes.ts",
+    "apps/backend/src/payroll-integration/qbo-payroll-pull.ts",
+    "apps/backend/src/payroll-integration/tms-settlements-pull.ts",
+    "apps/backend/src/payroll-integration/class-allocator.ts",
+    "apps/backend/src/payroll-integration/aggregate.test.ts",
+    "apps/frontend/src/pages/payroll-integration/PayrollIntegrationPage.tsx",
+    "apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx",
+    "apps/frontend/src/pages/payroll-integration/ClassAllocationView.tsx",
+    "apps/frontend/src/components/layout/Sidebar.tsx",
+    "apps/frontend/src/hooks/usePayrollAggregate.ts",
+    "apps/backend/src/migrations/0401-payroll-integration-cache.sql",
+    "scripts/verify-payroll-aggregate-matches-qbo.mjs",
     "package.json",
-    ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:parts-catalog-seeded"
+    "verify:payroll-aggregate-matches-qbo"
   ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
