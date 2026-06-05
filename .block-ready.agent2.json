@@ -1,25 +1,23 @@
 {
-  "block_id": "AUDIT-FIX-15",
-  "branch": "audit-fix/audit-fix-15-status-bar-1366",
-  "phase": "AUDIT-FIX",
-  "task": "STATUS-BAR-COMPACT-AT-1366 — icon-only breakpoint moved up + 1024 sub-tab overflow fix",
+  "block_id": "CLOSURE-4-P5-T12-AUTO-DEDUCTIONS",
+  "branch": "closure/p5-t12-auto-deductions",
+  "phase": "CLOSURE",
+  "task": "P5-T12 Auto-deductions from settlements",
+  "agent": "B",
   "allowed_files": [
-    "apps/frontend/src/components/layout/TopStatusBar.tsx",
-    "apps/frontend/src/components/layout/StatusBarMobile.tsx",
-    "apps/frontend/src/components/layout/StatusBarPopover.tsx",
-    "apps/frontend/src/components/layout/SubTabRow.tsx",
-    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    "apps/frontend/src/components/Topbar.tsx",
-    "scripts/verify-no-clipped-subtabs-at-1024.mjs",
-    "package.json",
-    ".github/workflows/ci.yml",
+    "apps/backend/src/settlements/auto-deductions/policy.routes.ts",
+    "apps/backend/src/settlements/auto-deductions/apply.ts",
+    "apps/backend/src/settlements/auto-deductions/auto-deductions.test.ts",
+    "apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx",
+    "apps/frontend/src/pages/drivers/DriversPage.tsx",
+    "apps/frontend/src/hooks/useAutoDeductionPolicies.ts",
+    "apps/backend/src/migrations/0392-auto-deductions.sql",
+    "scripts/verify-auto-deduction-applies-to-next-settlement.mjs",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [
-    "verify:no-clipped-subtabs-at-1024"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": true
+  "db_required": true,
+  "guard_required": false
 }
