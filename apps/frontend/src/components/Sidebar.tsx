@@ -77,7 +77,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
         />
       ) : null}
       <aside
-        className={`sidebar z-50 shrink-0 flex-col text-white md:z-auto md:flex ${
+        className={`sidebar z-50 shrink-0 flex-col text-white md:z-auto md:flex max-lg:overflow-x-hidden ${
           mobileOpen ? "fixed inset-y-0 left-0 flex w-20 md:relative md:inset-auto" : "hidden md:flex"
         }`}
         style={{ background: "rgb(27, 35, 51)", borderRight: "1px solid rgb(42, 50, 66)" }}
