@@ -15,6 +15,7 @@ import { registerAutoWoDraftsRoutes } from "../maintenance/fault-auto-wo/auto-wo
 import { registerForm2290Routes } from "./form-2290.routes.js";
 import { registerDrugAlcoholComplianceRoutes } from "./drug-alcohol.routes.js";
 import { registerCsaRoutes } from "./csa.routes.js";
+import { registerFmcsaSaferRoutes } from "./fmcsa-safer.routes.js";
 
 const COMPANY_QUERY = z.object({
   operating_company_id: z.string().uuid(),
@@ -293,6 +294,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
   await registerForm2290Routes(app);
   await registerDrugAlcoholComplianceRoutes(app);
   await registerCsaRoutes(app);
+  await registerFmcsaSaferRoutes(app);
   app.get("/api/v1/form-425c", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
