@@ -567,6 +567,9 @@ jobs:
       - name: verify:bulk-action-bar-mounted
         run: npm run verify:bulk-action-bar-mounted
 
+      - name: verify:all-list-pages-have-bulk-select
+        run: npm run verify:all-list-pages-have-bulk-select
+
       - name: verify:bulk-update-route-mounted
         run: npm run verify:bulk-update-route-mounted
 

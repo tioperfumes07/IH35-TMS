@@ -13,8 +13,11 @@ import {
   type PlaidBankAccount,
   type PlaidBankTransaction,
 } from "../../../api/banking";
+import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
+import { TableSelectionHeader } from "../../../components/bulk/TableSelection";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { Button } from "../../../components/Button";
+import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 
@@ -348,6 +351,11 @@ export function BankingTransactionsDesignView({
   );
   const pageRangeStart = tableRows.length === 0 ? 0 : pageStartIndex + 1;
   const pageRangeEnd = tableRows.length === 0 ? 0 : Math.min(pageStartIndex + viewSettings.pageSize, tableRows.length);
+  const pageRowIds = useMemo(() => pagedRows.map((tx) => tx.id), [pagedRows]);
+  const bulkSelection = useBulkSelection({
+    cap: 200,
+    onCapExceeded: (error) => pushToast(error.message, "error"),
+  });
 
   const groupedRows = useMemo(() => {
     if (viewSettings.turnOffGrouping) return [{ monthKey: "all", title: "All transactions", rows: pagedRows }];
@@ -762,11 +770,26 @@ export function BankingTransactionsDesignView({
         </div>
       </div>
 
+      <BulkActionBar
+        {...bulkSelection.bulkActionBarProps([
+          { id: "categorize", label: "Categorize", onClick: () => pushToast("Bulk categorize — wire banking bulk endpoint.", "success") },
+          { id: "exclude", label: "Exclude", onClick: () => pushToast("Bulk exclude queued.", "success") },
+          { id: "export", label: "Export Selected", onClick: () => pushToast("Export selected transactions queued.", "success") },
+        ])}
+      />
+
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <table className="w-full table-fixed text-left text-[12px]">
           <thead className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>
-              <th className="w-[3%] px-1 py-2">☐</th>
+              <th className="w-[3%] px-1 py-2">
+                <TableSelectionHeader
+                  selectedIds={bulkSelection.selectedIds}
+                  pageRowIds={pageRowIds}
+                  onSelectionChange={bulkSelection.setSelectedIds}
+                  cap={bulkSelection.cap}
+                />
+              </th>
               <th className="w-[7%] px-1 py-2">Date</th>
               <th className="w-[17%] px-1 py-2">Full bank description</th>
               {viewSettings.showAmountsInOneColumn ? <th className="px-2 py-2">Amount</th> : <>
@@ -830,8 +853,13 @@ export function BankingTransactionsDesignView({
                     className="cursor-pointer border-t border-gray-100 text-sm hover:bg-gray-50"
                     onClick={() => setExpandedTxId((cur) => (cur === tx.id ? null : tx.id))}
                   >
-                    <td className="px-1 py-2 align-top">
-                      <input type="checkbox" onClick={(e) => e.stopPropagation()} />
+                    <td className="px-1 py-2 align-top" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={bulkSelection.isSelected(tx.id)}
+                        onChange={() => bulkSelection.toggleRow(tx.id)}
+                        aria-label={`Select transaction ${tx.id}`}
+                      />
                     </td>
                     <td className="px-1 py-2 align-top text-gray-700">
                       {viewSettings.editableDateField && expanded ? (
