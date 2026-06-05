@@ -17,6 +17,7 @@
     "apps/frontend/src/pages/Vendors.tsx",
     "apps/backend/src/index.ts",
     "scripts/verify-qbo-sync-customer-vendor-counts.mjs",
+    "scripts/verify-aggregate-schema-grants.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
