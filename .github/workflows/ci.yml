@@ -492,6 +492,12 @@ jobs:
       - name: verify:rls-uuid-cast-nullif
         run: npm run verify:rls-uuid-cast-nullif
 
+      - name: verify:rls-operating-company-scope
+        run: npm run verify:rls-operating-company-scope
+
+      - name: verify:no-cross-carrier-data-leak
+        run: npm run verify:no-cross-carrier-data-leak
+
       - name: verify:reports-no-stub-data
         run: npm run verify:reports-no-stub-data
 

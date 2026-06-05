@@ -1,21 +1,24 @@
 {
-  "block_id": "PWA-POLISH-1",
-  "branch": "feat/pwa-polish-1-i18n-itp",
-  "phase": "Phase 7 Driver PWA",
-  "task": "Driver PWA i18n EN/ES completion + iPhone Safari ITP storage fix",
+  "block_id": "USMCA-1",
+  "branch": "feat/usmca-1-multi-carrier-isolation",
+  "phase": "Phase 7 USMCA",
+  "task": "Multi-carrier isolation hardening (operating_company_id scoping audit)",
   "allowed_files": [
-    "apps/driver-pwa/src/i18n/*",
-    "apps/driver-pwa/src/lib/storage.ts",
-    "apps/driver-pwa/src/components/**",
-    "apps/driver-pwa/src/pages/**",
-    "scripts/verify-driver-pwa-i18n-coverage.mjs",
+    "apps/backend/src/auth/operating-company-scope.ts",
+    "scripts/verify-rls-operating-company-scope.mjs",
+    "scripts/verify-no-cross-carrier-data-leak.mjs",
+    "db/migrations/0385_rls_audit_all_tables.sql",
+    "docs/specs/MULTI-CARRIER-ISOLATION.md",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": ["verify:driver-pwa-i18n-coverage"],
+  "extra_gates": [
+    "verify:rls-operating-company-scope",
+    "verify:no-cross-carrier-data-leak"
+  ],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
