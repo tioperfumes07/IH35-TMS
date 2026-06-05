@@ -2,7 +2,7 @@
   "block_id": "CATALOG-2",
   "branch": "feat/catalog-2-generic-frontend",
   "phase": "Phase 7 Catalogs",
-  "task": "Generic catalog framework frontend (universal CRUD UI + Excel upload modal)",
+  "task": "Generic Catalog Framework frontend (universal CRUD UI + Excel upload modal)",
   "allowed_files": [
     "apps/frontend/src/components/catalogs/CatalogTable.tsx",
     "apps/frontend/src/components/catalogs/CatalogEditModal.tsx",
@@ -17,9 +17,8 @@
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [],
+  "extra_gates": ["verify:catalog-pages-use-generic-framework"],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false,
-  "gate_note": "Full implementation gated until CATALOG-1 merges to main"
+  "guard_required": true
 }

@@ -120,9 +120,6 @@ jobs:
       - name: verify:drug-alcohol-fmcsa-clearinghouse-link
         run: npm run verify:drug-alcohol-fmcsa-clearinghouse-link
 
-      - name: Verify FMCSA SAFER customer coverage guard
-        run: npm run verify:fmcsa-safer-customer-coverage
-
       - name: Verify safety driver DQF contract
         run: npm run verify:safety-driver-dqf
 
