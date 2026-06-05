@@ -33,8 +33,8 @@
 | CLOSURE-11 | A | C-5 | **SHIPPED** | [#561](https://github.com/tioperfumes07/IH35-TMS/pull/561) | Services catalog + ETA; merged `b7bae9b1d` 2026-06-05 |
 | CLOSURE-12 | B | C-6 | **SHIPPED** | [#563](https://github.com/tioperfumes07/IH35-TMS/pull/563) | Payroll integration dispatch; merged `e457dcef` 2026-06-05 |
 | CLOSURE-13 | A | C-6 | **SHIPPED** | [#564](https://github.com/tioperfumes07/IH35-TMS/pull/564) | USMCA July launch dispatch; merged `d6a6336d` 2026-06-05 · **Jorge sign-off gate** for production activation |
-| CLOSURE-14 | B | C-7 | **IN-FLIGHT** | — | `closure/deep-audit-a` · Deep audit A (Customer/Vendor/Driver detail) |
-| CLOSURE-15 | A | C-7 | **IN-FLIGHT** | — | `closure/deep-audit-b` · Deep audit B (Bell + invoices subnav + Driver PWA) |
+| CLOSURE-14 | B | C-7 | **IN-FLIGHT** | [#565](https://github.com/tioperfumes07/IH35-TMS/pull/565) | `closure/deep-audit-a` · Deep audit A (Customer/Vendor/Driver detail) |
+| CLOSURE-15 | A | C-7 | **IN-FLIGHT** | [#566](https://github.com/tioperfumes07/IH35-TMS/pull/566) | `closure/deep-audit-b` · Deep audit B (Bell + invoices subnav + Driver PWA) |
 | CLOSURE-16 | B | C-8 | QUEUED | — | Hard-dep: CLOSURE-12 + CLOSURE-2 |
 | CLOSURE-17 | A | C-9 | QUEUED | — | ON-HOLD triage |
 | CLOSURE-18 | A | C-10 | QUEUED | — | |
@@ -88,7 +88,7 @@
 | C-4 | CLOSURE-9 ✅ [#559](https://github.com/tioperfumes07/IH35-TMS/pull/559) | CLOSURE-8 ✅ [#556](https://github.com/tioperfumes07/IH35-TMS/pull/556) |
 | C-5 | CLOSURE-11 ✅ [#561](https://github.com/tioperfumes07/IH35-TMS/pull/561) | CLOSURE-10 ✅ [#560](https://github.com/tioperfumes07/IH35-TMS/pull/560) |
 | C-6 | CLOSURE-13 ✅ [#564](https://github.com/tioperfumes07/IH35-TMS/pull/564) | CLOSURE-12 ✅ [#563](https://github.com/tioperfumes07/IH35-TMS/pull/563) |
-| C-7 | CLOSURE-15 🔄 | CLOSURE-14 🔄 |
+| C-7 | CLOSURE-15 🔄 [#566](https://github.com/tioperfumes07/IH35-TMS/pull/566) | CLOSURE-14 🔄 [#565](https://github.com/tioperfumes07/IH35-TMS/pull/565) |
 | … | per V2 index | per V2 index |
 
 **Main:** `d6a6336d` · **C-6 merges:** `e457dcef` (CLOSURE-12) · `d6a6336d` (CLOSURE-13)
