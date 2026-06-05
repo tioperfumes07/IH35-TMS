@@ -1,24 +1,23 @@
 {
-  "block_id": "CLOSURE-19-SEC-AUDIT",
-  "branch": "closure/sec-audit",
+  "block_id": "CLOSURE-18-PERF-AUDIT",
+  "branch": "closure/perf-audit",
   "phase": "CLOSURE",
-  "task": "Security audit — RLS + auth + secrets + dependency CVEs",
-  "agent": "B",
+  "task": "Performance audit — bundle size + page load + API latency budgets",
+  "agent": "A",
   "allowed_files": [
-    "docs/audits/SEC-AUDIT-2026-06-05.md",
-    "scripts/sec-audit-rls-policies.mjs",
-    "scripts/sec-audit-auth-flows.mjs",
-    "scripts/sec-audit-secrets-scan.mjs",
-    "scripts/sec-audit-deps-cve-scan.mjs",
-    "scripts/sec-audit-cors-csp.mjs",
-    ".github/workflows/security-checks.yml",
-    "docs/security-baseline.md",
-    "scripts/verify-no-secrets-in-bundle.mjs",
-    ".block-ready.json",
-    ".block-ready.agent2.json"
+    "docs/audits/PERF-AUDIT-2026-06-05.md",
+    "scripts/perf-bundle-size-snapshot.mjs",
+    "scripts/perf-lighthouse-on-prod.mjs",
+    "scripts/perf-api-latency-baseline.mjs",
+    "apps/backend/src/middleware/response-time.ts",
+    "apps/backend/src/middleware/response-time.test.ts",
+    ".github/workflows/perf-budget-check.yml",
+    "docs/perf-budgets.json",
+    "scripts/verify-perf-budgets-not-regressed.mjs",
+    ".block-ready.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }
