@@ -180,6 +180,7 @@
     "verify:qbo-vendors-push-fields": "node scripts/verify-qbo-vendors-push-fields.mjs",
     "verify:qbo-vendors-push-shared-rate": "node scripts/verify-qbo-vendors-push-shared-rate.mjs",
     "verify:qbo-accounts-parent-first": "node scripts/verify-qbo-accounts-parent-first.mjs",
+    "verify:qbo-sync-coa-no-orphans": "node scripts/verify-qbo-sync-coa-no-orphans.mjs",
     "verify:session-create-updates-last-login": "node scripts/verify-session-create-updates-last-login.mjs",
     "verify:identity-users-last-login-at-column": "node scripts/verify-identity-users-last-login-at-column.mjs",
     "verify:backend-column-references": "node scripts/verify-backend-column-references.mjs",

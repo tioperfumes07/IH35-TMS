@@ -1,24 +1,25 @@
 {
-  "block_id": "P6-T4",
-  "branch": "feat/p6-t4-scheduled-reports-custom-builder",
-  "phase": "Phase 6",
-  "task": "Scheduled reports auto-email per role + custom report builder UX",
+  "block_id": "QBO-SYNC-1",
+  "branch": "feat/qbo-sync-1-coa-pull-reconcile",
+  "phase": "QBO Sync Restoration",
+  "task": "Chart of Accounts pull + reconcile (1282 entries drift fix)",
   "allowed_files": [
-    "apps/backend/src/reports/scheduler.ts",
-    "apps/backend/src/reports/scheduled-reports.routes.ts",
-    "apps/backend/src/reports/custom-report-builder.routes.ts",
-    "db/migrations/0374_scheduled_reports_custom_definitions.sql",
-    "apps/frontend/src/pages/reports/ScheduledReportsPanel.tsx",
-    "apps/frontend/src/pages/reports/CustomReportBuilder.tsx",
-    "apps/frontend/src/pages/reports/ReportsHome.tsx",
+    "apps/backend/src/qbo-sync/chart-of-accounts-puller.ts",
+    "apps/backend/src/qbo-sync/chart-of-accounts-reconciler.ts",
+    "apps/backend/src/qbo-sync/chart-of-accounts.routes.ts",
+    "db/migrations/0375_qbo_chart_of_accounts_sync_metadata.sql",
+    "apps/frontend/src/pages/accounting/ChartOfAccountsSyncPanel.tsx",
+    "apps/frontend/src/pages/accounting/ChartOfAccounts.tsx",
     "apps/backend/src/index.ts",
-    "scripts/verify-scheduled-report-recipients-resolved.mjs",
+    "scripts/verify-qbo-sync-coa-no-orphans.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent1.json"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:qbo-sync-coa-no-orphans"
+  ],
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true
