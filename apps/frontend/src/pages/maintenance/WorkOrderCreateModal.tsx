@@ -1,7 +1,7 @@
 // @ModalNoX — inline WO cost panel embedded in CreateWorkOrderModal, not an overlay dialog
 /**
- * QBO-SYNC-2 — WO create cost breakdown with live accounting category/item lookups.
- * Wired comboboxes call /api/v1/accounting/categories and /api/v1/accounting/items.
+ * AUDIT-FIX-8 — WO create cost breakdown with live accounting category/item lookups.
+ * SelectCombobox surfaces feed query results from /api/v1/accounting/categories and items-for-wo.
  */
 import { useMemo, useState } from "react";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -29,17 +29,19 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
   const [itemSearch, setItemSearch] = useState("");
   const [lines, setLines] = useState<WorkOrderLineDraft[]>([]);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
+  const [categoryFetchActive, setCategoryFetchActive] = useState(false);
+  const [itemFetchActive, setItemFetchActive] = useState(false);
 
   const categoriesQuery = useAccountingCategoriesQuery({
     operatingCompanyId,
     search: categorySearch,
-    enabled: Boolean(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId) && categoryFetchActive,
   });
   const itemsQuery = useAccountingItemsQuery({
     operatingCompanyId,
     kind: "service",
     search: itemSearch,
-    enabled: Boolean(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId) && itemFetchActive,
   });
 
   const categoryOptions = useMemo(
@@ -67,6 +69,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
   const addCategoryLine = () => {
     const id = crypto.randomUUID();
     setActiveLineId(id);
+    setCategoryFetchActive(true);
     updateLines([
       ...lines,
       { id, section: "A", description: "", quantity: 1, unit_cost: 0, amount: 0 },
@@ -76,6 +79,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
   const addItemLine = () => {
     const id = crypto.randomUUID();
     setActiveLineId(id);
+    setItemFetchActive(true);
     updateLines([
       ...lines,
       { id, section: "B", description: "", quantity: 1, unit_cost: 0, amount: 0 },
@@ -107,9 +111,10 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
           <input
             type="search"
             className="mb-1 w-full rounded border px-2 py-1 text-sm"
-            placeholder="Filter accounts (debounced via query)…"
+            placeholder="Filter accounts…"
             value={categorySearch}
             onChange={(e) => setCategorySearch(e.target.value)}
+            onFocus={() => setCategoryFetchActive(true)}
           />
           <SelectCombobox
             value={activeLine.category_id ?? ""}
@@ -135,6 +140,7 @@ export function WorkOrderCreateModal({ operatingCompanyId, onLinesChange }: Prop
             placeholder="Filter items…"
             value={itemSearch}
             onChange={(e) => setItemSearch(e.target.value)}
+            onFocus={() => setItemFetchActive(true)}
           />
           <SelectCombobox
             value={activeLine.item_id ?? ""}

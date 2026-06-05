@@ -597,6 +597,9 @@ jobs:
       - name: verify:reports-no-undefined-metrics
         run: npm run verify:reports-no-undefined-metrics
 
+      - name: verify:wo-category-actually-fetches
+        run: npm run verify:wo-category-actually-fetches
+
       - name: verify:bulk-update-route-mounted
         run: npm run verify:bulk-update-route-mounted
 

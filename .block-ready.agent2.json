@@ -1,24 +1,23 @@
 {
-  "block_id": "AUDIT-FIX-6",
-  "branch": "audit-fix/audit-fix-6-route-enumeration-ci-guard",
+  "block_id": "AUDIT-FIX-8",
+  "branch": "audit-fix/audit-fix-8-wo-category-wire-complete",
   "phase": "AUDIT-FIX",
-  "task": "ROUTE-ENUMERATION-CI-GUARD — route manifest + deep-link fixes",
+  "task": "WO-CATEGORY-WIRE-COMPLETE — wire accounting category/item comboboxes (EXPANDED)",
   "allowed_files": [
-    "apps/frontend/src/router/route-manifest.ts",
-    "apps/frontend/src/pages/banking/BankingHome.tsx",
-    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    "apps/frontend/src/pages/Dispatch.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-no-silent-redirects.mjs",
-    "scripts/verify-route-manifest-completeness.mjs",
+    "apps/frontend/src/pages/maintenance/WorkOrderCreateModal.tsx",
+    "apps/frontend/src/components/forms/TwoSectionLineEditor.tsx",
+    "apps/frontend/src/components/work-orders/CategoryCombobox.tsx",
+    "apps/frontend/src/components/work-orders/ItemCombobox.tsx",
+    "apps/frontend/src/hooks/useAccountingCategoriesQuery.ts",
+    "apps/frontend/src/hooks/useAccountingItemsQuery.ts",
+    "scripts/verify-wo-category-actually-fetches.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:no-silent-redirects",
-    "verify:route-manifest-completeness"
+    "verify:wo-category-actually-fetches"
   ],
   "runtime_path": "src",
   "db_required": false,

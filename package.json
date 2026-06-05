@@ -168,6 +168,7 @@
     "verify:no-nested-box-pattern": "node scripts/verify-no-nested-box-pattern.mjs",
     "verify:routes-not-blank": "node scripts/verify-routes-not-blank.mjs",
     "verify:reports-no-undefined-metrics": "node scripts/verify-reports-no-undefined-metrics.mjs",
+    "verify:wo-category-actually-fetches": "node scripts/verify-wo-category-actually-fetches.mjs",
     "verify:bulk-update-route-mounted": "node scripts/verify-bulk-update-route-mounted.mjs",
     "verify:bulk-update-rls-where": "node scripts/verify-bulk-update-rls-where.mjs",
     "verify:bulk-audit-per-id": "node scripts/verify-bulk-audit-per-id.mjs",

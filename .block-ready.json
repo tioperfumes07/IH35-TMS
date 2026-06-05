@@ -1,23 +1,23 @@
 {
-  "block_id": "AUDIT-FIX-7",
-  "branch": "audit-fix/audit-fix-7-blank-page-wire-up",
+  "block_id": "AUDIT-FIX-8",
+  "branch": "audit-fix/audit-fix-8-wo-category-wire-complete",
   "phase": "AUDIT-FIX",
-  "task": "BLANK-PAGE-WIRE-UP — /425c + /help + PASS6 fuel metric + test-user archive",
+  "task": "WO-CATEGORY-WIRE-COMPLETE — wire accounting category/item comboboxes (EXPANDED)",
   "allowed_files": [
-    "apps/frontend/src/pages/form425c/Form425CHome.tsx",
-    "apps/frontend/src/pages/help/HelpCenterPage.tsx",
-    "apps/frontend/src/pages/reports/FuelReconciliationPage.tsx",
-    "apps/backend/src/identity/users.routes.ts",
-    "scripts/verify-routes-not-blank.mjs",
-    "scripts/verify-reports-no-undefined-metrics.mjs",
+    "apps/frontend/src/pages/maintenance/WorkOrderCreateModal.tsx",
+    "apps/frontend/src/components/forms/TwoSectionLineEditor.tsx",
+    "apps/frontend/src/components/work-orders/CategoryCombobox.tsx",
+    "apps/frontend/src/components/work-orders/ItemCombobox.tsx",
+    "apps/frontend/src/hooks/useAccountingCategoriesQuery.ts",
+    "apps/frontend/src/hooks/useAccountingItemsQuery.ts",
+    "scripts/verify-wo-category-actually-fetches.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [
-    "verify:routes-not-blank",
-    "verify:reports-no-undefined-metrics"
+    "verify:wo-category-actually-fetches"
   ],
   "runtime_path": "src",
   "db_required": false,
