@@ -11,6 +11,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { parseVendorNotes } from "../lib/vendorProfileMeta";
 import { VendorsListView } from "./vendors/VendorsListView";
+import { VendorListSidebar } from "./vendors/VendorListSidebar";
 import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
 import { useViewModePref } from "../hooks/useViewModePref";
 
@@ -87,6 +88,8 @@ export function VendorsPage() {
   const [showColumnChooser, setShowColumnChooser] = useState(false);
   const [pageSize, setPageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sidebarPage, setSidebarPage] = useState(1);
+  const [sidebarPageSize, setSidebarPageSize] = useState(50);
   const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(
     () => Object.fromEntries(COLUMN_OPTIONS.map((column) => [column.key, column.defaultOn])) as Record<ColumnKey, boolean>
   );
@@ -182,6 +185,10 @@ export function VendorsPage() {
     setCurrentPage(1);
   }, [activeTab, selectedVendor?.id, typeFilter, statusFilter, dateFrom, dateTo, categoryFilter, pageSize]);
 
+  useEffect(() => {
+    setSidebarPage(1);
+  }, [search, sortByName, sidebarPageSize, companyId]);
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -219,39 +226,21 @@ export function VendorsPage() {
         />
       ) : (
       <div className="flex gap-3">
-        <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2">
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name or details"
-            className="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-          />
-          <SelectCombobox
-            value={sortByName}
-            onChange={(event) => setSortByName(event.target.value as "name_asc" | "name_desc")}
-            className="mb-2 w-full rounded border border-gray-300 px-2 py-1 text-sm"
-          >
-            <option value="name_asc">Sort by name</option>
-            <option value="name_desc">Sort by name (Z-A)</option>
-          </SelectCombobox>
-          <div className="max-h-[760px] space-y-1 overflow-y-auto">
-            {vendorsSorted.map((vendor) => (
-              <button
-                key={vendor.id}
-                type="button"
-                className={`w-full rounded border px-2 py-2 text-left ${selectedVendor?.id === vendor.id ? "border-blue-500 bg-blue-50" : "border-transparent hover:bg-gray-50"}`}
-                onClick={() => setSelectedVendorId(vendor.id)}
-              >
-                <p className="truncate text-sm font-medium text-gray-900">{vendor.name}</p>
-                <p className="text-xs text-gray-600">Open balance {fmtMoney(openByVendorId.get(vendor.id) ?? 0)}</p>
-                <p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${vendorQualityLabel(vendor.notes).className}`}>
-                  {vendorQualityLabel(vendor.notes).label}
-                </p>
-              </button>
-            ))}
-            {vendorsSorted.length === 0 ? <p className="px-1 py-2 text-xs text-gray-500">No vendors found.</p> : null}
-          </div>
-        </aside>
+        <VendorListSidebar
+          vendors={vendorsQuery.data ?? []}
+          totalCount={vendorsSorted.length}
+          page={sidebarPage}
+          pageSize={sidebarPageSize}
+          search={search}
+          sortByName={sortByName}
+          selectedVendorId={selectedVendor?.id ?? ""}
+          openByVendorId={openByVendorId}
+          onSearchChange={setSearch}
+          onSortChange={setSortByName}
+          onPageChange={setSidebarPage}
+          onPageSizeChange={setSidebarPageSize}
+          onSelectVendor={setSelectedVendorId}
+        />
 
         <main className="min-w-0 flex-1 space-y-3">
           {selectedVendor ? (

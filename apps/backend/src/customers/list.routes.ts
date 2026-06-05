@@ -18,6 +18,31 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+async function resolveOperatingCompanyId(
+  client: { query: (sql: string, values: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  userId: string,
+  requested?: string
+) {
+  if (requested) return requested;
+  const res = await client.query(
+    `
+      SELECT c.id
+      FROM identity.users u
+      JOIN org.companies c ON c.id = u.default_company_id
+      WHERE u.id = $1
+        AND c.deactivated_at IS NULL
+      UNION
+      SELECT c.id
+      FROM org.companies c
+      WHERE c.id IN (SELECT org.user_accessible_company_ids())
+      ORDER BY id
+      LIMIT 1
+    `,
+    [userId]
+  );
+  return res.rows[0]?.id ?? null;
+}
+
 export async function registerCustomerListRoutes(app: FastifyInstance) {
   app.get("/api/v1/customers", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -31,13 +56,7 @@ export async function registerCustomerListRoutes(app: FastifyInstance) {
     const orderDir = sort === "-name" ? "DESC" : "ASC";
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      const companyRes = operating_company_id
-        ? { rows: [{ id: operating_company_id }] }
-        : await client.query<{ id: string }>(
-            `SELECT operating_company_id AS id FROM auth.user_operating_companies WHERE user_id = $1 ORDER BY is_default DESC NULLS LAST LIMIT 1`,
-            [authUser.uuid]
-          );
-      const companyId = companyRes.rows[0]?.id;
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!companyId) return null;
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
 

@@ -71,12 +71,21 @@ export function CustomerListSidebar({
     return rows;
   }, [customers, search, sortByName]);
 
+  const filteredCount = sortedCustomers.length;
+  const totalPages = Math.max(1, Math.ceil(filteredCount / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pagedCustomers = useMemo(
+    () => sortedCustomers.slice(pageStart, pageStart + pageSize),
+    [pageStart, pageSize, sortedCustomers]
+  );
+
   return (
     <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2" data-customer-list-sidebar="true">
       <SidebarPagination
-        page={page}
+        page={safePage}
         pageSize={pageSize}
-        totalCount={totalCount}
+        totalCount={filteredCount}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
       />
@@ -95,7 +104,7 @@ export function CustomerListSidebar({
         <option value="name_desc">Sort by name (Z-A)</option>
       </SelectCombobox>
       <div className="max-h-[760px] space-y-1 overflow-y-auto">
-        {sortedCustomers.map((customer) => (
+        {pagedCustomers.map((customer) => (
           <CardLink
             key={customer.id}
             href={`/customers/${customer.id}`}
@@ -115,13 +124,13 @@ export function CustomerListSidebar({
             </p>
           </CardLink>
         ))}
-        {sortedCustomers.length === 0 ? <p className="px-1 py-2 text-xs text-gray-500">No customers found.</p> : null}
+        {pagedCustomers.length === 0 ? <p className="px-1 py-2 text-xs text-gray-500">No customers found.</p> : null}
       </div>
       <div className="mt-2">
         <SidebarPagination
-          page={page}
+          page={safePage}
           pageSize={pageSize}
-          totalCount={totalCount}
+          totalCount={filteredCount}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
         />

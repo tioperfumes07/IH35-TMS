@@ -66,12 +66,21 @@ export function VendorListSidebar({
     return rows;
   }, [vendors, search, sortByName]);
 
+  const filteredCount = sortedVendors.length;
+  const totalPages = Math.max(1, Math.ceil(filteredCount / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pagedVendors = useMemo(
+    () => sortedVendors.slice(pageStart, pageStart + pageSize),
+    [pageStart, pageSize, sortedVendors]
+  );
+
   return (
     <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2" data-vendor-list-sidebar="true">
       <SidebarPagination
-        page={page}
+        page={safePage}
         pageSize={pageSize}
-        totalCount={totalCount}
+        totalCount={filteredCount}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
       />
@@ -90,7 +99,7 @@ export function VendorListSidebar({
         <option value="name_desc">Sort by name (Z-A)</option>
       </SelectCombobox>
       <div className="max-h-[760px] space-y-1 overflow-y-auto">
-        {sortedVendors.map((vendor) => (
+        {pagedVendors.map((vendor) => (
           <CardLink
             key={vendor.id}
             href={`/vendors/${vendor.id}`}
@@ -106,13 +115,13 @@ export function VendorListSidebar({
             </p>
           </CardLink>
         ))}
-        {sortedVendors.length === 0 ? <p className="px-1 py-2 text-xs text-gray-500">No vendors found.</p> : null}
+        {pagedVendors.length === 0 ? <p className="px-1 py-2 text-xs text-gray-500">No vendors found.</p> : null}
       </div>
       <div className="mt-2">
         <SidebarPagination
-          page={page}
+          page={safePage}
           pageSize={pageSize}
-          totalCount={totalCount}
+          totalCount={filteredCount}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
         />
