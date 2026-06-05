@@ -1,30 +1,24 @@
 {
-  "block_id": "CLOSURE-13-USMCA-JULY-LAUNCH",
-  "branch": "closure/usmca-july-launch",
+  "block_id": "CLOSURE-14-DEEP-AUDIT-A",
+  "branch": "closure/deep-audit-a",
   "phase": "CLOSURE",
-  "task": "USMCA July 2026 launch activation runbook + toggle sequence",
-  "agent": "A",
+  "task": "Deep audit A — Customer + Vendor + Driver detail per-button walk",
+  "agent": "B",
   "allowed_files": [
-    "docs/runbooks/USMCA-JULY-2026-LAUNCH-RUNBOOK.md",
-    "docs/runbooks/USMCA-ROLLBACK-PLAN.md",
-    "apps/backend/src/usmca/activation/activation.routes.ts",
-    "apps/backend/src/usmca/activation/activation-state-machine.ts",
-    "apps/backend/src/usmca/activation/activation.test.ts",
-    "apps/frontend/src/pages/admin/USMCAActivationPanel.tsx",
-    "apps/frontend/src/pages/admin/AdminPage.tsx",
-    "apps/backend/src/migrations/0402-usmca-activation-state.sql",
-    "apps/backend/src/qbo-subaccount-setup/usmca-bootstrap.ts",
-    "data/training/usmca-driver-onboarding-EN.md",
-    "data/training/usmca-driver-onboarding-ES.md",
-    "scripts/verify-usmca-launch-readiness.mjs",
+    "docs/audits/DEEP-AUDIT-A-CUSTOMER-DETAIL.md",
+    "docs/audits/DEEP-AUDIT-A-VENDOR-DETAIL.md",
+    "docs/audits/DEEP-AUDIT-A-DRIVER-DETAIL.md",
+    "scripts/deep-audit-a-customer-sub-tabs.mjs",
+    "scripts/deep-audit-a-vendor-buttons.mjs",
+    "scripts/deep-audit-a-driver-edit-modal.mjs",
+    "scripts/deep-audit-a-equipment-assignments.mjs",
+    "docs/audits/DEEP-AUDIT-A-SUMMARY.md",
     "package.json",
     ".block-ready.json",
-    ".block-ready.agent1.json"
+    ".block-ready.agent2.json"
   ],
-  "extra_gates": [
-    "verify:usmca-launch-readiness"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }
