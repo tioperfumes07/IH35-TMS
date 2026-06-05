@@ -1,14 +1,21 @@
 {
-  "block_id": "HOTFIX-RENDER-0383",
-  "branch": "hotfix/render-0383-checksum-override",
-  "phase": "Deploy recovery",
-  "task": "Unblock Render preDeploy after 0383 migration checksum drift",
+  "block_id": "PWA-POLISH-1",
+  "branch": "feat/pwa-polish-1-i18n-itp",
+  "phase": "Phase 7 Driver PWA",
+  "task": "Driver PWA i18n EN/ES completion + iPhone Safari ITP storage fix",
   "allowed_files": [
-    "scripts/lib/migration-checksum-overrides.json",
-    ".block-ready.json"
+    "apps/driver-pwa/src/i18n/*",
+    "apps/driver-pwa/src/lib/storage.ts",
+    "apps/driver-pwa/src/components/**/*",
+    "apps/driver-pwa/src/pages/**/*",
+    "scripts/verify-driver-pwa-i18n-coverage.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
+    ".block-ready.json",
+    ".block-ready.agent2.json"
   ],
-  "extra_gates": [],
-  "runtime_path": "none",
+  "extra_gates": ["verify:driver-pwa-i18n-coverage"],
+  "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }

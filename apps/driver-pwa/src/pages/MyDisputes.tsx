@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { listMyDisputes, withdrawMyDispute } from "../api/disputes";
 import { PwaCard } from "../components/PwaCard";
 import { useToast } from "../components/Toast";
@@ -16,6 +17,7 @@ function statusClass(status: string) {
 }
 
 export function MyDisputesPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const query = useQuery({
@@ -26,7 +28,7 @@ export function MyDisputesPage() {
   const withdrawMutation = useMutation({
     mutationFn: ({ id, companyId }: { id: string; companyId: string }) => withdrawMyDispute(id, companyId),
     onSuccess: async () => {
-      pushToast("Dispute withdrawn", "success");
+      pushToast(t("disputes.withdrawn_toast"), "success");
       await queryClient.invalidateQueries({ queryKey: ["pwa", "my-disputes"] });
     },
     onError: (error) => pushToast(String((error as Error).message || error), "error"),
@@ -37,22 +39,26 @@ export function MyDisputesPage() {
   return (
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary">
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-24">
-        <PwaCard title="My Disputes" subtitle="Read-only status view with withdraw option while still open">
-          {query.isLoading ? <div className="text-sm text-pwa-text-secondary">Loading disputes...</div> : null}
+        <PwaCard title={t("disputes.title")} subtitle={t("disputes.subtitle")}>
+          {query.isLoading ? <div className="text-sm text-pwa-text-secondary">{t("disputes.loading")}</div> : null}
           {!query.isLoading && disputes.length === 0 ? (
-            <div className="text-sm text-pwa-text-secondary">No disputes filed yet.</div>
+            <div className="text-sm text-pwa-text-secondary">{t("disputes.empty")}</div>
           ) : null}
           <div className="space-y-2">
             {disputes.map((dispute) => (
               <div key={dispute.id} className="rounded border border-pwa-border bg-[#101522] p-2">
                 <div className="mb-1 flex items-center justify-between">
                   <p className="text-sm font-semibold">{dispute.settlement_display_id ?? dispute.settlement_id}</p>
-                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${statusClass(dispute.status)}`}>{dispute.status}</span>
+                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${statusClass(dispute.status)}`}>
+                    {t(`disputes.status.${dispute.status}`, { defaultValue: dispute.status })}
+                  </span>
                 </div>
                 <p className="text-xs text-pwa-text-secondary">
-                  {dispute.period_start ?? "-"} to {dispute.period_end ?? "-"}
+                  {dispute.period_start ?? "-"} {t("common.to")} {dispute.period_end ?? "-"}
                 </p>
-                <p className="mt-1 text-xs">{dispute.dispute_category} · {money(dispute.disputed_amount_cents)}</p>
+                <p className="mt-1 text-xs">
+                  {dispute.dispute_category} · {money(dispute.disputed_amount_cents)}
+                </p>
                 <p className="mt-1 text-xs text-pwa-text-secondary">{dispute.dispute_description}</p>
                 {dispute.status === "open" ? (
                   <button
@@ -61,7 +67,7 @@ export function MyDisputesPage() {
                     disabled={withdrawMutation.isPending}
                     onClick={() => withdrawMutation.mutate({ id: dispute.id, companyId: dispute.operating_company_id })}
                   >
-                    Withdraw
+                    {t("disputes.withdraw")}
                   </button>
                 ) : null}
               </div>

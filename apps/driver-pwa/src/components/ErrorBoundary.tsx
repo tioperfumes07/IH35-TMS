@@ -1,15 +1,16 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { withTranslation, type WithTranslation } from "react-i18next";
 import { PwaButton } from "./PwaButton";
 
 type ErrorBoundaryProps = {
   children: ReactNode;
-};
+} & WithTranslation;
 
 type ErrorBoundaryState = {
   hasError: boolean;
 };
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundaryInner extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -27,7 +28,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <div className="rounded-xl border border-hos-violation/40 bg-hos-violation/10 p-3 text-sm text-pwa-text-primary">
-          <p>Documents temporarily unavailable. Please refresh.</p>
+          <p>{this.props.t("error_boundary.message")}</p>
           <div className="mt-2">
             <PwaButton
               type="button"
@@ -37,7 +38,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 window.location.reload();
               }}
             >
-              Retry
+              {this.props.t("common.retry")}
             </PwaButton>
           </div>
         </div>
@@ -46,3 +47,5 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return this.props.children;
   }
 }
+
+export const ErrorBoundary = withTranslation()(ErrorBoundaryInner);

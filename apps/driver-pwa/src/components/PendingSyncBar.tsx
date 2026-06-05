@@ -1,14 +1,28 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { subscribeSyncEvent, subscribeSyncState } from "../lib/upload-sync";
+import { bootstrapItpStorage } from "../lib/storage";
+import { useToast } from "./Toast";
 
 type SyncBarMode = "hidden" | "syncing" | "offline" | "error";
 
 export function PendingSyncBar() {
   const { t } = useTranslation();
+  const { pushToast } = useToast();
   const [pendingCount, setPendingCount] = useState(0);
   const [onlineStatus, setOnlineStatus] = useState<"online" | "connecting" | "offline">(navigator.onLine ? "connecting" : "offline");
   const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    void bootstrapItpStorage().then(({ restored, stale }) => {
+      if (restored > 0) {
+        pushToast(t("storage.itp_restore_reupload"), "info");
+      }
+      if (stale) {
+        pushToast(t("storage.itp_stale_warning"), "info");
+      }
+    });
+  }, [pushToast, t]);
 
   useEffect(() => {
     const unsubState = subscribeSyncState((state) => {

@@ -16,7 +16,25 @@
     "retry": "Reintentar",
     "online": "En línea",
     "offline": "Sin conexión",
-    "pending_sync": "Sincronización pendiente"
+    "pending_sync": "Sincronización pendiente",
+    "back": "Atrás",
+    "connecting": "Conectando",
+    "driver_fallback": "Conductor",
+    "uncategorized": "Sin categoría",
+    "unknown_error": "Error desconocido",
+    "preview": "Vista previa",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "next": "Siguiente",
+    "continue": "Continuar",
+    "delete": "Eliminar",
+    "show_error": "Ver error",
+    "hide_error": "Ocultar error",
+    "retry_all": "Reintentar todo",
+    "download_to_view": "Descargar para ver",
+    "dismiss": "Descartar",
+    "install": "Instalar",
+    "to": "a"
   },
   "home": {
     "greeting": "Bienvenido, {{name}}",
@@ -63,7 +81,14 @@
     "actions_subtitle": "Fase 1 — los flujos llegan en fase 2",
     "actions_subtitle_live": "Acciones rápidas para su viaje actual",
     "backend_version": "Versión backend",
-    "sign_out": "Cerrar sesión"
+    "sign_out": "Cerrar sesión",
+    "transfer_pending_title": "Transferencia de equipo pendiente",
+    "transfer_pending_body": "Transferencia pendiente de {{from}} · vence {{expires}}",
+    "transfer_no_location": "Sin ubicación proporcionada",
+    "transfer_confirmed": "Transferencia confirmada",
+    "transfer_rejected": "Transferencia rechazada",
+    "transfer_reject_prompt": "Motivo del rechazo (mín. 10 caracteres):",
+    "transfer_reject_reason_min": "El motivo debe tener al menos 10 caracteres"
   },
   "equipment": {
     "title": "Equipo",
@@ -94,7 +119,13 @@
     "queue_uploading": "Subiendo",
     "queue_failed": "Fallidas",
     "clear_failed": "Limpiar {{count}} fallida(s)",
-    "cleared_failed": "Eliminadas {{count}} elemento(s)"
+    "cleared_failed": "Eliminadas {{count}} elemento(s)",
+    "role_driver": "Conductor",
+    "nav_earnings": "Ganancias",
+    "nav_hos": "HOS",
+    "nav_disputes": "Mis disputas",
+    "nav_messages": "Mensajes",
+    "nav_submit_dvir": "Enviar DVIR"
   },
   "login": {
     "session_expired": "Tu sesión expiró. Inicia sesión de nuevo.",
@@ -105,7 +136,29 @@
     "email_send_code": "Enviar código",
     "email_verify": "Verificar",
     "email_help": "Te enviaremos un código de 6 dígitos.",
-    "drivers_only_error": "Esta app es solo para conductores. Personal de oficina: usa app.ih35dispatch.com"
+    "drivers_only_error": "Esta app es solo para conductores. Personal de oficina: usa app.ih35dispatch.com",
+    "title": "IH 35 Conductor",
+    "subtitle": "Inicia sesión para continuar",
+    "checking_session": "Verificando sesión...",
+    "send_code_failed": "No se pudo enviar el código. Inténtalo de nuevo.",
+    "invalid_code": "Código inválido. Inténtalo de nuevo.",
+    "verify_code_failed": "No se pudo verificar el código. Inténtalo de nuevo.",
+    "phone_invalid": "Ingresa un número de teléfono válido de 10 dígitos.",
+    "email_invalid": "Ingresa un correo válido.",
+    "sending": "Enviando...",
+    "send_code": "Enviar código",
+    "code_sent_via": "Código enviado por {{channel}} a {{phone}}",
+    "channel_sms": "SMS",
+    "channel_whatsapp": "WhatsApp",
+    "verifying": "Verificando...",
+    "verify": "Verificar",
+    "resend_code": "Reenviar código",
+    "resend_code_countdown": "Reenviar código ({{seconds}}s)",
+    "use_different_phone": "Usar otro teléfono",
+    "use_different_email": "Usar otro correo",
+    "sign_in_google": "Iniciar sesión con Google",
+    "company_footer": "IH 35 Transportation LLC",
+    "code_placeholder": "Código de 6 dígitos"
   },
   "sync": {
     "syncing": "Sincronizando {{count}}…",
@@ -129,7 +182,11 @@
     "scheduled_pickup": "Recogida programada",
     "scheduled_delivery": "Entrega programada",
     "documents_coming_soon": "Documentos vinculados a esta carga llegan en T11.15.4",
-    "accept_required": "ACEPTAR"
+    "accept_required": "ACEPTAR",
+    "detail_title": "Carga {{display_id}}",
+    "legal_notice_en": "Important legal notice: confirm pickup and delivery details before accepting any settlement or deduction item.",
+    "legal_notice_es": "Aviso legal importante: confirme los detalles de recolección y entrega antes de aceptar cualquier liquidación o deducción.",
+    "stop_sequence": "Parada {{sequence}}"
   },
   "stop": {
     "pending": "Pendiente",
@@ -213,6 +270,7 @@
     "oos_banner": "FUERA DE SERVICIO: despacho notificado y movimiento bloqueado.",
     "note_required": "Nota obligatoria para defecto mayor",
     "photo_required": "foto(s)",
+    "add_photo": "+ Foto",
     "status": {
       "pass": "Pasa",
       "minor": "Menor",
@@ -379,5 +437,119 @@
     "validation_error": "Revise el monto y el motivo",
     "reason_min": "El motivo debe tener al menos 10 caracteres",
     "above_policy_flag": "Sobre el límite habitual — requiere revisión del propietario"
+  },
+  "messages": {
+    "back_to_profile": "Volver al perfil",
+    "title": "Mensajes",
+    "subtitle": "Lea mensajes de oficina y responda en la app",
+    "loading": "Cargando mensajes…",
+    "empty": "Aún no hay mensajes.",
+    "mark_read": "Marcar leído",
+    "reply_label": "Respuesta",
+    "reply_placeholder": "Escriba su respuesta…",
+    "send_reply": "Enviar respuesta",
+    "reply_sent": "Respuesta enviada",
+    "reply_failed": "No se pudo enviar la respuesta"
+  },
+  "disputes": {
+    "title": "Mis disputas",
+    "subtitle": "Vista de solo lectura con opción de retirar mientras esté abierta",
+    "loading": "Cargando disputas...",
+    "empty": "Aún no ha presentado disputas.",
+    "withdrawn_toast": "Disputa retirada",
+    "withdraw": "Retirar",
+    "status": {
+      "open": "open",
+      "under_review": "under_review",
+      "resolved_in_favor": "resolved_in_favor",
+      "partially_resolved": "partially_resolved",
+      "withdrawn": "withdrawn"
+    }
+  },
+  "documents": {
+    "title": "Mis documentos",
+    "upload_cta": "+ Subir",
+    "pending_count": "{{count}} subidas pendientes",
+    "pending_heading": "Subidas pendientes",
+    "synced_heading": "Documentos sincronizados",
+    "no_pending": "No hay subidas pendientes",
+    "no_synced": "Aún no hay documentos sincronizados",
+    "no_local_synced": "Aún no hay historial local sincronizado",
+    "loading_profile": "Cargando su perfil de conductor...",
+    "profile_not_linked": "Su cuenta no está vinculada a un perfil de conductor. Contacte a despacho.",
+    "profile_load_failed": "No se pudo cargar su perfil de conductor.",
+    "server_list_unavailable": "Lista del servidor no disponible para rol Conductor. Mostrando historial local de este dispositivo.",
+    "preview_unavailable_r2": "Vista previa no disponible: R2 no configurado",
+    "preview_unavailable": "Vista previa no disponible",
+    "refreshing": "Actualizando documentos...",
+    "synced_toast": "Sincronizado: {{filename}}",
+    "upload_failed_toast": "Falló la subida: {{filename}} ({{error}})",
+    "synced_label": "Sincronizado",
+    "tap_to_preview": "Tocar para vista previa",
+    "loading_preview": "Cargando vista previa...",
+    "preview_not_available_type": "Vista previa no disponible para este tipo de archivo.",
+    "preview_title": "Vista previa - {{filename}}",
+    "status_uploading": "SUBIENDO",
+    "status_failed": "FALLIDA",
+    "status_synced": "SINCRONIZADO",
+    "status_queued": "EN COLA",
+    "img_prefix": "[IMG]",
+    "file_prefix": "[ARCHIVO]"
+  },
+  "invite": {
+    "title": "Invitación de conductor",
+    "setting_up": "Configurando su cuenta...",
+    "complete_access": "Complete el acceso a su cuenta.",
+    "invalid_link": "Enlace de invitación inválido.",
+    "invalid_or_expired": "Esta invitación es inválida o expiró. Contacte a su despachador.",
+    "redeem_failed": "No se pudo canjear la invitación. Inténtelo de nuevo.",
+    "go_to_login": "Ir a inicio de sesión"
+  },
+  "transfer_ack": {
+    "back": "← Atrás",
+    "title": "Confirmaciones de transferencia de equipo",
+    "ack_dropoff": "Confirmar entrega ({{id}})",
+    "ack_pickup": "Confirmar recogida ({{id}})"
+  },
+  "upload_modal": {
+    "title": "Subir documento",
+    "select_file_first": "Seleccione un archivo primero",
+    "choose_category": "Elija una categoría",
+    "expiration_required": "La fecha de vencimiento es obligatoria para esta categoría",
+    "profile_not_linked": "Su cuenta no está vinculada a un perfil de conductor. Contacte a despacho.",
+    "queued_success": "Subiendo en segundo plano — ver en Mis documentos",
+    "queue_failed": "No se pudo encolar la subida",
+    "step_pick_file": "Paso 1: Elegir archivo",
+    "step_category": "Paso 2: Categoría rápida",
+    "step_details": "Paso 3: Detalles opcionales",
+    "step_submit": "Paso 4: Enviar",
+    "camera_capture": "Captura con cámara",
+    "pick_file": "Elegir archivo",
+    "other_categories": "Otras categorías",
+    "select_category": "Seleccionar categoría",
+    "attach_to_me": "Adjuntar a mí",
+    "standalone": "Independiente",
+    "add_details": "Agregar detalles",
+    "document_date": "Fecha del documento",
+    "expiration_date": "Fecha de vencimiento",
+    "expiration_required_hint": "(obligatorio)",
+    "description": "Descripción",
+    "description_placeholder": "Nota opcional",
+    "loading_profile": "Cargando su perfil de conductor...",
+    "profile_load_failed": "No se pudo cargar su perfil de conductor. Inténtelo de nuevo.",
+    "optimizing": "Optimizando...",
+    "queue_upload": "Encolar subida"
+  },
+  "install": {
+    "title": "Instalar app IH35 Conductor",
+    "ios_hint": "Toque Compartir y luego Agregar a pantalla de inicio.",
+    "default_hint": "Agregue esta app a su pantalla de inicio para acceso rápido."
+  },
+  "error_boundary": {
+    "message": "Documentos temporalmente no disponibles. Actualice la página."
+  },
+  "storage": {
+    "itp_restore_reupload": "El almacenamiento se restableció — vuelva a subir este documento",
+    "itp_stale_warning": "Los datos sin conexión pueden borrarse pronto. Abra la app a diario para conservar su cola de subidas."
   }
 }

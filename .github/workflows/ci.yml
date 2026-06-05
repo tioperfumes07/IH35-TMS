@@ -117,6 +117,9 @@ jobs:
       - name: Verify catalog pages use generic framework
         run: npm run verify:catalog-pages-use-generic-framework
 
+      - name: Verify driver PWA i18n coverage
+        run: npm run verify:driver-pwa-i18n-coverage
+
       - name: verify:drug-alcohol-fmcsa-clearinghouse-link
         run: npm run verify:drug-alcohol-fmcsa-clearinghouse-link
 

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
   ackDropoffMyTransfer,
@@ -8,6 +9,7 @@ import {
 } from "../api/transfers";
 
 export function EquipmentTransferAckPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const inbound = useQuery({ queryKey: ["driver-pwa", "pending-transfers"], queryFn: listMyPendingTransfers });
   const outbound = useQuery({ queryKey: ["driver-pwa", "outbound-transfers"], queryFn: listMyOutboundTransfers });
@@ -23,12 +25,12 @@ export function EquipmentTransferAckPage() {
   return (
     <div className="space-y-4 p-4" data-testid="equipment-transfer-ack-page">
       <Link to="/today" className="text-sm text-pwa-accent">
-        ← Back
+        {t("transfer_ack.back")}
       </Link>
-      <h1 className="text-lg font-semibold">Equipment transfer acknowledgements</h1>
+      <h1 className="text-lg font-semibold">{t("transfer_ack.title")}</h1>
       {(outbound.data?.rows ?? []).map((row) => (
         <button key={row.id} type="button" className="block w-full rounded border p-3 text-left" onClick={() => ackDropoff.mutate(row.id)}>
-          Acknowledge drop-off ({row.id.slice(0, 8)})
+          {t("transfer_ack.ack_dropoff", { id: row.id.slice(0, 8) })}
         </button>
       ))}
       {(inbound.data?.rows ?? []).map((row) => (
@@ -39,7 +41,7 @@ export function EquipmentTransferAckPage() {
           disabled={!row.dual_ack?.dropoff_ack_at}
           onClick={() => ackPickup.mutate(row.id)}
         >
-          Acknowledge pickup ({row.id.slice(0, 8)})
+          {t("transfer_ack.ack_pickup", { id: row.id.slice(0, 8) })}
         </button>
       ))}
     </div>

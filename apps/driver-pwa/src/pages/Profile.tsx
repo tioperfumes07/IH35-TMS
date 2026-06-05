@@ -66,7 +66,7 @@ export function ProfilePage() {
         <PwaCard title={t("profile.title")} subtitle={t("profile.subtitle")}>
           <p className="text-xs text-pwa-text-secondary">{t("profile.signed_in_as")}</p>
           <p className="text-lg font-semibold text-pwa-text-primary">{auth.user?.full_name || auth.user?.email || t("profile.no_name")}</p>
-          <p className="mt-1 text-sm text-pwa-text-secondary">{t("profile.role")}: {auth.user?.role ?? "Driver"}</p>
+          <p className="mt-1 text-sm text-pwa-text-secondary">{t("profile.role")}: {auth.user?.role ?? t("profile.role_driver")}</p>
           <div className="mt-4">
             <div className="mb-2 text-xs font-semibold text-pwa-text-secondary">{t("profile.language")}</div>
             <div className="grid grid-cols-2 gap-2">
@@ -100,19 +100,19 @@ export function ProfilePage() {
           </div>
           <div className="mt-4 grid gap-2">
             <Link to="/earnings" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
-              Earnings
+              {t("profile.nav_earnings")}
             </Link>
             <Link to="/hos" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
-              HOS
+              {t("profile.nav_hos")}
             </Link>
             <Link to="/my-disputes" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
-              My Disputes
+              {t("profile.nav_disputes")}
             </Link>
             <Link to="/messages" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
-              Messages
+              {t("profile.nav_messages")}
             </Link>
             <Link to="/dvir/pre/load-1002" className="min-h-11 rounded border border-pwa-border px-3 py-2 text-sm font-semibold text-pwa-text-secondary">
-              Submit DVIR
+              {t("profile.nav_submit_dvir")}
             </Link>
           </div>
           <PwaButton
