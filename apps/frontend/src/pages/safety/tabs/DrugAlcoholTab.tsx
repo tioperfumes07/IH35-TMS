@@ -14,6 +14,9 @@ import {
   type RtdCase,
 } from "../../../api/safety";
 import { DrugAlcoholTable } from "../components/DrugAlcoholTable";
+import { DrugAlcoholDashboard } from "../DrugAlcoholDashboard";
+import { RandomTestingPool } from "../RandomTestingPool";
+import { ReturnToDuty } from "../ReturnToDuty";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 const TEST_TYPES = [
@@ -156,6 +159,10 @@ export function DrugAlcoholTab() {
 
   return (
     <div className="space-y-4">
+      <DrugAlcoholDashboard />
+      <RandomTestingPool />
+      <ReturnToDuty />
+
       <div className="rounded border border-gray-200 bg-white p-4">
         <div className="flex flex-wrap items-end gap-3">
           <label className="block text-xs text-slate-600">

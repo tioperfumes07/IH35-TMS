@@ -105,6 +105,9 @@ jobs:
       - name: Verify Form 2290 deadline guard
         run: npm run verify:form-2290-deadlines-current
 
+      - name: verify:drug-alcohol-fmcsa-clearinghouse-link
+        run: npm run verify:drug-alcohol-fmcsa-clearinghouse-link
+
       - name: Verify safety driver DQF contract
         run: npm run verify:safety-driver-dqf
 

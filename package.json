@@ -309,6 +309,7 @@
     "verify:csv-import-gated-for-projected-entities": "node scripts/verify-csv-import-gated-for-projected-entities.mjs",
     "verify:safety-tab-coverage": "node scripts/verify-safety-tab-coverage.mjs",
     "verify:form-2290-deadlines-current": "node scripts/verify-form-2290-deadlines-current.mjs",
+    "verify:drug-alcohol-fmcsa-clearinghouse-link": "node scripts/verify-drug-alcohol-fmcsa-clearinghouse-link.mjs",
     "verify:wo-display-id-format": "node scripts/verify-wo-display-id-format.mjs",
     "verify:wo-status-transitions": "node scripts/verify-wo-status-transitions.mjs",
     "verify:safety-rls-coverage": "node scripts/verify-safety-rls-coverage.mjs",
