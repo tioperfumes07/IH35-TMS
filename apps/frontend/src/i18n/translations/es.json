@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "machine_translated": true,
+    "review_status": "machine-translated-needs-jorge-review"
+  },
+  "common": {
+    "app_name": "IH 35 Dispatch",
+    "phone_login": "Acceso por telefono",
+    "open_navigation_menu": "Abrir menu de navegacion",
+    "profile": "Perfil",
+    "sign_out": "Cerrar sesion",
+    "reconnect_now": "Reconectar ahora",
+    "language": "Idioma",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "english": "Ingles",
+    "spanish": "Espanol"
+  },
+  "topbar": {
+    "qbo_sync_error": "Error de sincronizacion de QBO.",
+    "sign_out_failed_redirecting": "Fallo el cierre de sesion, redirigiendo al acceso",
+    "reason": "Motivo: {{value}}",
+    "errors": "Errores: {{value}}",
+    "pending": "Pendientes: {{value}}",
+    "last_failed": "Ultimo fallo: {{value}}"
+  },
+  "dashboard": {
+    "title": "Panel"
+  },
+  "dispatch": {
+    "title": "Despacho"
+  },
+  "drivers": {
+    "title": "Conductores"
+  },
+  "maintenance": {
+    "title": "Mantenimiento"
+  },
+  "accounting": {
+    "title": "Contabilidad"
+  },
+  "banking": {
+    "title": "Banca"
+  },
+  "factoring": {
+    "title": "Factoraje"
+  },
+  "lists": {
+    "title": "Listas"
+  },
+  "reports": {
+    "title": "Reportes"
+  }
+}
