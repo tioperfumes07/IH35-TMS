@@ -1,30 +1,22 @@
 {
-  "block_id": "CLOSURE-13-USMCA-JULY-LAUNCH",
-  "branch": "closure/usmca-july-launch",
+  "block_id": "CLOSURE-15-DEEP-AUDIT-B",
+  "branch": "closure/deep-audit-b",
   "phase": "CLOSURE",
-  "task": "USMCA July 2026 launch activation runbook + toggle sequence",
+  "task": "Deep audit B — Bell icon + /accounting/invoices 17 sub-tabs + Driver PWA mobile",
   "agent": "A",
   "allowed_files": [
-    "docs/runbooks/USMCA-JULY-2026-LAUNCH-RUNBOOK.md",
-    "docs/runbooks/USMCA-ROLLBACK-PLAN.md",
-    "apps/backend/src/usmca/activation/activation.routes.ts",
-    "apps/backend/src/usmca/activation/activation-state-machine.ts",
-    "apps/backend/src/usmca/activation/activation.test.ts",
-    "apps/frontend/src/pages/admin/USMCAActivationPanel.tsx",
-    "apps/frontend/src/pages/admin/AdminPage.tsx",
-    "apps/backend/src/migrations/0402-usmca-activation-state.sql",
-    "apps/backend/src/qbo-subaccount-setup/usmca-bootstrap.ts",
-    "data/training/usmca-driver-onboarding-EN.md",
-    "data/training/usmca-driver-onboarding-ES.md",
-    "scripts/verify-usmca-launch-readiness.mjs",
-    "package.json",
+    "docs/audits/DEEP-AUDIT-B-BELL-ICON.md",
+    "docs/audits/DEEP-AUDIT-B-INVOICES-SUBNAV.md",
+    "docs/audits/DEEP-AUDIT-B-DRIVER-PWA-MOBILE.md",
+    "scripts/deep-audit-b-bell-icon.mjs",
+    "scripts/deep-audit-b-invoices-subnav.mjs",
+    "scripts/deep-audit-b-driver-pwa-375.mjs",
+    "docs/audits/DEEP-AUDIT-B-SUMMARY.md",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:usmca-launch-readiness"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "db_required": false,
+  "guard_required": false
 }
