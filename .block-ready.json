@@ -1,25 +1,20 @@
 {
-  "block_id": "AUDIT-FIX-15",
-  "branch": "audit-fix/audit-fix-15-status-bar-1366",
+  "block_id": "AUDIT-FIX-12",
+  "branch": "audit-fix/audit-fix-12-accounting-bills-normalize",
   "phase": "AUDIT-FIX",
-  "task": "STATUS-BAR-COMPACT-AT-1366 — icon-only breakpoint moved up + 1024 sub-tab overflow fix",
+  "task": "ACCOUNTING-BILLS-NORMALIZE — match /accounting + /invoices subnav + actions",
   "allowed_files": [
-    "apps/frontend/src/components/layout/TopStatusBar.tsx",
-    "apps/frontend/src/components/layout/StatusBarMobile.tsx",
-    "apps/frontend/src/components/layout/StatusBarPopover.tsx",
-    "apps/frontend/src/components/layout/SubTabRow.tsx",
-    "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx",
-    "apps/frontend/src/components/Topbar.tsx",
-    "scripts/verify-no-clipped-subtabs-at-1024.mjs",
-    "scripts/verify-status-bar-height-at-mobile.mjs",
+    "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx",
+    "apps/frontend/src/pages/accounting/index.ts",
+    "scripts/verify-accounting-subpages-have-subnav.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:no-clipped-subtabs-at-1024",
-    "verify:status-bar-height-at-mobile"
+    "verify:accounting-subpages-have-subnav"
   ],
   "runtime_path": "src",
   "db_required": false,

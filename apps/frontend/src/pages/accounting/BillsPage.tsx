@@ -4,7 +4,6 @@ import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
 import { BillAllocationPanel } from "../../components/allocation";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -18,6 +17,7 @@ import {
 } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
 export type BillListCategory = (typeof BILL_LIST_CATEGORIES)[number];
@@ -44,6 +44,34 @@ function billMatchesCategory(bill: VendorBill, category: BillListCategory): bool
   if (category === "repair") return /repair|roadside|breakdown/.test(hay);
   if (category === "fuel") return /fuel|diesel|loves|def\b/.test(hay);
   return /driver|settlement|advance|payroll|escrow/.test(hay);
+}
+
+function billBalanceCents(bill: VendorBill) {
+  if (bill.balance_cents != null) return Number(bill.balance_cents);
+  return Number(bill.amount_cents) - Number(bill.paid_cents ?? 0);
+}
+
+function monthStartIso(date = new Date()) {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  return d.toISOString().slice(0, 10);
+}
+
+function daysAgoIso(days: number, date = new Date()) {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+function billKpiCard(label: string, value: string, sublabel: string, tone: "neutral" | "warn" | "danger" = "neutral") {
+  const toneClass =
+    tone === "danger" ? "border-l-4 border-l-red-500" : tone === "warn" ? "border-l-4 border-l-amber-500" : "border-l-4 border-l-slate-300";
+  return (
+    <div className={`rounded border border-gray-200 bg-white px-3 py-2 ${toneClass}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+      <p className="text-lg font-semibold text-gray-900">{value}</p>
+      <p className="text-xs text-gray-500">{sublabel}</p>
+    </div>
+  );
 }
 
 export function BillsPage() {
@@ -87,6 +115,26 @@ export function BillsPage() {
     return all.filter((bill) => billMatchesCategory(bill, category));
   }, [billsQuery.data?.rows, category]);
   const pageRowIds = useMemo(() => rows.map((bill) => bill.id), [rows]);
+
+  const billKpis = useMemo(() => {
+    const all = billsQuery.data?.rows ?? [];
+    const mtdStart = monthStartIso();
+    const past90Start = daysAgoIso(90);
+    const openBills = all.filter((bill) => (bill.status === "open" || bill.status === "partial") && billBalanceCents(bill) > 0);
+    const mtdBills = all.filter((bill) => (bill.bill_date ?? "") >= mtdStart);
+    const overdueBills = openBills.filter((bill) => (bill.due_date ?? "") < new Date().toISOString().slice(0, 10));
+    const past90Bills = all.filter((bill) => (bill.bill_date ?? "") >= past90Start);
+    return {
+      openAmount: openBills.reduce((sum, bill) => sum + billBalanceCents(bill), 0),
+      openCount: openBills.length,
+      mtdAmount: mtdBills.reduce((sum, bill) => sum + Number(bill.amount_cents ?? 0), 0),
+      mtdCount: mtdBills.length,
+      overdueAmount: overdueBills.reduce((sum, bill) => sum + billBalanceCents(bill), 0),
+      overdueCount: overdueBills.length,
+      past90Amount: past90Bills.reduce((sum, bill) => sum + Number(bill.amount_cents ?? 0), 0),
+      past90Count: past90Bills.length,
+    };
+  }, [billsQuery.data?.rows]);
 
   const runScheduleBulk = async () => {
     if (!companyId) {
@@ -140,8 +188,19 @@ export function BillsPage() {
   }
 
   return (
+    <AccountingSubNavWrapper
+      title="Bills"
+      subtitle="Vendor bills with paid balance and partial payment history"
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          {billKpiCard("Open Bills", money(billKpis.openAmount), `${billKpis.openCount} open`, billKpis.openCount ? "danger" : "neutral")}
+          {billKpiCard("MTD Bills", money(billKpis.mtdAmount), `${billKpis.mtdCount} bills`, "warn")}
+          {billKpiCard("Overdue Bills", money(billKpis.overdueAmount), `${billKpis.overdueCount} overdue`, billKpis.overdueCount ? "danger" : "neutral")}
+          {billKpiCard("Past 90 days", money(billKpis.past90Amount), `${billKpis.past90Count} bills`)}
+        </div>
+      }
+    >
     <div className="space-y-3">
-      <PageHeader title="Bills" subtitle="Vendor bills with paid balance and partial payment history" />
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
 
@@ -360,5 +419,6 @@ export function BillsPage() {
         />
       ) : null}
     </div>
+    </AccountingSubNavWrapper>
   );
 }

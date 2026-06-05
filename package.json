@@ -204,6 +204,7 @@
     "verify:qbo-sync-customer-vendor-counts": "node scripts/verify-qbo-sync-customer-vendor-counts.mjs",
     "verify:qbo-sync-status-endpoints-return-200": "node scripts/verify-qbo-sync-status-endpoints-return-200.mjs",
     "verify:no-clipped-subtabs-at-1024": "node scripts/verify-no-clipped-subtabs-at-1024.mjs",
+    "verify:accounting-subpages-have-subnav": "node scripts/verify-accounting-subpages-have-subnav.mjs",
     "verify:session-create-updates-last-login": "node scripts/verify-session-create-updates-last-login.mjs",
     "verify:identity-users-last-login-at-column": "node scripts/verify-identity-users-last-login-at-column.mjs",
     "verify:backend-column-references": "node scripts/verify-backend-column-references.mjs",
