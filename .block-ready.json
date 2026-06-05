@@ -1,28 +1,24 @@
 {
-  "block_id": "CLOSURE-16-DEEP-AUDIT-C",
-  "branch": "closure/deep-audit-c",
+  "block_id": "CLOSURE-19-SEC-AUDIT",
+  "branch": "closure/sec-audit",
   "phase": "CLOSURE",
-  "task": "Deep audit C — All 11 canonical reports + end-to-end QBO workflows",
+  "task": "Security audit — RLS + auth + secrets + dependency CVEs",
   "agent": "B",
   "allowed_files": [
-    "docs/audits/DEEP-AUDIT-C-CANONICAL-REPORTS.md",
-    "docs/audits/DEEP-AUDIT-C-E2E-WORKFLOWS.md",
-    "scripts/deep-audit-c-reports.mjs",
-    "scripts/deep-audit-c-workflow-wo-to-bill-to-qbo.mjs",
-    "scripts/deep-audit-c-workflow-load-to-invoice-to-factored.mjs",
-    "scripts/deep-audit-c-workflow-settlement-to-payroll.mjs",
-    "scripts/verify-deep-audit-c-reports.mjs",
-    "scripts/verify-deep-audit-c-workflow-wo-to-bill-to-qbo.mjs",
-    "scripts/verify-deep-audit-c-workflow-load-to-invoice-to-factored.mjs",
-    "scripts/verify-deep-audit-c-workflow-settlement-to-payroll.mjs",
-    "docs/audits/DEEP-AUDIT-C-SUMMARY.md",
-    "package.json",
+    "docs/audits/SEC-AUDIT-2026-06-05.md",
+    "scripts/sec-audit-rls-policies.mjs",
+    "scripts/sec-audit-auth-flows.mjs",
+    "scripts/sec-audit-secrets-scan.mjs",
+    "scripts/sec-audit-deps-cve-scan.mjs",
+    "scripts/sec-audit-cors-csp.mjs",
+    ".github/workflows/security-checks.yml",
+    "docs/security-baseline.md",
+    "scripts/verify-no-secrets-in-bundle.mjs",
     ".block-ready.json",
-    ".block-ready.agent2.json",
-    ".github/workflows/ci.yml"
+    ".block-ready.agent2.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }
