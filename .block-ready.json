@@ -1,23 +1,21 @@
 {
-  "block_id": "AUDIT-FIX-11",
-  "branch": "audit-fix/audit-fix-11-qbo-sync-status-endpoints-fix",
+  "block_id": "AUDIT-FIX-10",
+  "branch": "audit-fix/audit-fix-10-mobile-status-bar",
   "phase": "AUDIT-FIX",
-  "task": "QBO-SYNC-STATUS-ENDPOINTS-FIX — Unable to load sync status on /customers + /vendors",
+  "task": "MOBILE-STATUS-BAR-COLLAPSE — top status bar responsive at <768",
   "allowed_files": [
-    "apps/backend/src/qbo-sync/customers.routes.ts",
-    "apps/backend/src/qbo-sync/vendors.routes.ts",
-    "apps/backend/src/qbo-sync/chart-of-accounts.routes.ts",
-    "apps/backend/src/qbo-sync/items.routes.ts",
-    "apps/frontend/src/pages/customers/CustomersSyncPanel.tsx",
-    "apps/frontend/src/pages/vendors/VendorsSyncPanel.tsx",
-    "scripts/verify-qbo-sync-status-endpoints-return-200.mjs",
+    "apps/frontend/src/components/layout/TopStatusBar.tsx",
+    "apps/frontend/src/components/layout/StatusBarMobile.tsx",
+    "apps/frontend/src/components/layout/StatusBarPopover.tsx",
+    "apps/frontend/src/components/Topbar.tsx",
+    "scripts/verify-status-bar-height-at-mobile.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
-    ".block-ready.agent2.json"
+    ".block-ready.agent1.json"
   ],
   "extra_gates": [
-    "verify:qbo-sync-status-endpoints-return-200"
+    "verify:status-bar-height-at-mobile"
   ],
   "runtime_path": "src",
   "db_required": false,

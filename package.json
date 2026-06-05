@@ -200,6 +200,7 @@
     "verify:no-empty-form-dropdowns": "node scripts/verify-no-empty-form-dropdowns.mjs",
     "verify:all-list-pages-load-200": "node scripts/verify-all-list-pages-load-200.mjs",
     "verify:no-flaky-endpoints-on-page-load": "node scripts/verify-no-flaky-endpoints-on-page-load.mjs",
+    "verify:status-bar-height-at-mobile": "node scripts/verify-status-bar-height-at-mobile.mjs",
     "verify:qbo-sync-customer-vendor-counts": "node scripts/verify-qbo-sync-customer-vendor-counts.mjs",
     "verify:qbo-sync-status-endpoints-return-200": "node scripts/verify-qbo-sync-status-endpoints-return-200.mjs",
     "verify:session-create-updates-last-login": "node scripts/verify-session-create-updates-last-login.mjs",

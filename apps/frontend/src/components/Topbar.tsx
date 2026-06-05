@@ -10,6 +10,7 @@ import { colors, spacing, typography } from "../design/tokens";
 import { companyOperatingChipClasses } from "../lib/company-branding";
 import type { AuthMeResponse } from "../types/api";
 import { CarrierSwitcher } from "./layout/CarrierSwitcher";
+import { TopStatusBar } from "./layout/TopStatusBar";
 import { NotificationBell } from "./notifications/NotificationBell";
 import { PageHelpLink } from "./PageHelpLink";
 import { useToast } from "./Toast";
@@ -30,13 +31,6 @@ function formatNow(now: Date): string {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-function topbarDotClass(dot: "gray" | "green" | "yellow" | "red"): string {
-  if (dot === "green") return "bg-emerald-500";
-  if (dot === "yellow") return "bg-amber-400";
-  if (dot === "red") return "bg-red-500";
-  return "bg-slate-500";
 }
 
 export function Topbar({ auth, onOpenMobileNav }: Props) {
@@ -133,9 +127,6 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     return parts.join(" · ");
   }, [qboSyncPill, qboSyncHealthQuery.data]);
 
-  const muted = colors.sidebarTextMuted;
-  const active = colors.sidebarTextActive;
-
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
     return () => window.clearInterval(timer);
@@ -191,51 +182,16 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       </div>
 
       <div className="flex min-w-0 items-center justify-center gap-2">
-        <div
-          className="flex max-w-[min(640px,94vw)] flex-wrap items-center justify-center gap-x-2 gap-y-1.5 rounded-full px-2 py-1 text-[12px] leading-snug"
-          style={{ backgroundColor: "#151A24", color: muted }}
-        >
-          <span className="inline-flex items-center gap-1" style={{ color: active }}>
-            <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboVis.dot)}`} />
-            {qboVis.label}
-          </span>
-          <span style={{ color: muted }}>·</span>
-          <span className="inline-flex items-center gap-1" style={{ color: active }} title={samsaraVis.title}>
-            <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(samsaraVis.dot)}`} />
-            {samsaraVis.label}
-          </span>
-          <span style={{ color: muted }}>·</span>
-          <span className="inline-flex items-center gap-1" style={{ color: active }}>
-            <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(relayVis.dot)}`} />
-            {relayVis.label}
-          </span>
-          {qboSyncPill ? (
-            <>
-              <span style={{ color: muted }}>·</span>
-              <button
-                type="button"
-                className="inline-flex cursor-pointer items-center gap-1 underline-offset-2 hover:underline"
-                style={{ color: active }}
-                title="Open QBO sync dashboard"
-                onClick={() => navigate("/qbo/sync-dashboard")}
-              >
-                <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboSyncPill.dot)}`} />
-                {qboSyncPill.label}
-              </button>
-              {qboSyncPill.needsReconnect && companyId ? (
-                <button
-                  type="button"
-                  className="ml-1 rounded-full border border-amber-400/60 px-2 py-0.5 text-[11px] font-semibold text-amber-100 hover:bg-amber-400/10"
-                  onClick={() => {
-                    window.location.href = getQboAuthorizeStartUrl(companyId);
-                  }}
-                >
-                  Reconnect QuickBooks
-                </button>
-              ) : null}
-            </>
-          ) : null}
-        </div>
+        <TopStatusBar
+          qboVis={qboVis}
+          samsaraVis={samsaraVis}
+          relayVis={relayVis}
+          qboSyncPill={qboSyncPill}
+          onOpenQboSyncDashboard={() => navigate("/qbo/sync-dashboard")}
+          onReconnectQbo={() => {
+            if (companyId) window.location.href = getQboAuthorizeStartUrl(companyId);
+          }}
+        />
         <CarrierSwitcher />
       </div>
 
