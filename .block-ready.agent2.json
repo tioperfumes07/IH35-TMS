@@ -1,23 +1,22 @@
 {
-  "block_id": "USMCA-1",
-  "branch": "feat/usmca-1-rls-hardening",
-  "phase": "Phase 7 USMCA",
-  "task": "RLS audit across carrier-scoped tables + 2 CI guards",
+  "block_id": "PWA-POLISH-2",
+  "branch": "feat/pwa-polish-2-web-push",
+  "phase": "Phase 7 Driver PWA",
+  "task": "Web Push notification completion (FCM + iOS Safari 16.4+)",
   "allowed_files": [
-    "apps/backend/src/auth/operating-company-scope.ts",
-    "scripts/verify-rls-operating-company-scope.mjs",
-    "scripts/verify-no-cross-carrier-data-leak.mjs",
-    "db/migrations/0385_rls_audit_all_tables.sql",
-    "docs/specs/MULTI-CARRIER-ISOLATION.md",
+    "apps/driver-pwa/src/notifications/web-push-subscriber.ts",
+    "apps/driver-pwa/src/notifications/notification-handler.ts",
+    "apps/driver-pwa/src/service-worker.ts",
+    "apps/backend/src/notifications/web-push-dispatcher.ts",
+    "apps/backend/src/driver/push-subscriptions.routes.ts",
+    "db/migrations/0389_driver_pwa_push_subscriptions.sql",
+    "scripts/verify-web-push-vapid-keys-present.mjs",
     "package.json",
     ".github/workflows/ci.yml",
     ".block-ready.json",
     ".block-ready.agent2.json"
   ],
-  "extra_gates": [
-    "verify:rls-operating-company-scope",
-    "verify:no-cross-carrier-data-leak"
-  ],
+  "extra_gates": ["verify:web-push-vapid-keys-present"],
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true

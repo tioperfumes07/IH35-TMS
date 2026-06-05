@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { registerWebPushAckRoutes } from "../notifications/web-push-dispatcher.js";
 import { requireDriverSession } from "./auth.js";
 
 const bodySchema = z.object({
@@ -16,6 +17,8 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverPushSubscriptionRoutes(app: FastifyInstance) {
+  await registerWebPushAckRoutes(app);
+
   app.post("/api/v1/driver/push-subscription", async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
@@ -41,16 +44,17 @@ export async function registerDriverPushSubscriptionRoutes(app: FastifyInstance)
         await client.query(
           `
             INSERT INTO driver_pwa.push_subscriptions (
-              operating_company_id, driver_id, endpoint, p256dh_key, auth_key, user_agent, last_active_at
+              operating_company_id, driver_id, endpoint, p256dh_key, auth_key, user_agent, last_active_at, subscribed_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, now())
+            VALUES ($1, $2, $3, $4, $5, $6, now(), now())
             ON CONFLICT (endpoint) DO UPDATE SET
               operating_company_id = EXCLUDED.operating_company_id,
               driver_id = EXCLUDED.driver_id,
               p256dh_key = EXCLUDED.p256dh_key,
               auth_key = EXCLUDED.auth_key,
               user_agent = EXCLUDED.user_agent,
-              last_active_at = now()
+              last_active_at = now(),
+              subscribed_at = COALESCE(driver_pwa.push_subscriptions.subscribed_at, now())
           `,
           [
             operatingCompanyId,
