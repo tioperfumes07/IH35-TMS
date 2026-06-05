@@ -25,7 +25,10 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
   const { createTicket } = useRoadServiceTickets();
   const unitsQuery = useQuery({
     queryKey: ["units", "road-service", operatingCompanyId],
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId }).then((res) => res.units),
+    queryFn: () =>
+      listUnits({ operating_company_id: operatingCompanyId }).then((res) =>
+        (res.units as Array<{ id: string; display_id?: string | null; unit_number?: string | null }>)
+      ),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -79,13 +82,35 @@ export function RoadServiceTicketModal({ open, onClose, operatingCompanyId }: Pr
           Vendor
           <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" value={vendorName} onChange={(e) => setVendorName(e.target.value)} />
         </label>
-        <SelectCombobox label="Unit" value={unitId} onChange={setUnitId} options={unitOptions} />
-        <SelectCombobox
-          label="Service type"
-          value={serviceType}
-          onChange={(value) => setServiceType(value as RoadServiceType)}
-          options={SERVICE_TYPES.map((row) => ({ value: row.value, label: row.label }))}
-        />
+        <label className="block text-xs font-medium text-gray-700">
+          Unit
+          <SelectCombobox
+            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
+            value={unitId}
+            onChange={(e) => setUnitId(e.target.value)}
+          >
+            <option value="">Select unit…</option>
+            {unitOptions.map((unit) => (
+              <option key={unit.value} value={unit.value}>
+                {unit.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </label>
+        <label className="block text-xs font-medium text-gray-700">
+          Service type
+          <SelectCombobox
+            className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-[13px]"
+            value={serviceType}
+            onChange={(e) => setServiceType(e.target.value as RoadServiceType)}
+          >
+            {SERVICE_TYPES.map((row) => (
+              <option key={row.value} value={row.value}>
+                {row.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </label>
         <label className="block text-xs font-medium text-gray-700">
           Location
           <input className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
