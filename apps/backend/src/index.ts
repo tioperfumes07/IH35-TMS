@@ -244,6 +244,8 @@ import { initializeMasterDataSyncCron } from "./qbo/master-data-sync.cron.js";
 import { registerMasterDataSyncRoutes } from "./qbo/master-data-sync.routes.js";
 import { registerChartOfAccountsSyncRoutes } from "./qbo-sync/chart-of-accounts.routes.js";
 import { registerItemsSyncRoutes } from "./qbo-sync/items.routes.js";
+import { registerCustomersSyncRoutes } from "./qbo-sync/customers.routes.js";
+import { registerVendorsSyncRoutes } from "./qbo-sync/vendors.routes.js";
 import { registerAccountingCatalogLookupRoutes } from "./accounting/items.routes.js";
 import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
 import { initializeQboRemoteCountCollectorCron } from "./cron/qbo-remote-count-collector.cron.js";
@@ -452,6 +454,8 @@ async function main() {
   await registerMasterDataSyncRoutes(app);
   await registerChartOfAccountsSyncRoutes(app);
   await registerItemsSyncRoutes(app);
+  await registerCustomersSyncRoutes(app);
+  await registerVendorsSyncRoutes(app);
   await registerAccountingCatalogLookupRoutes(app);
   await registerQboSyncAlertsRoutes(app);
   await registerQboSyncRunsListRoutes(app);

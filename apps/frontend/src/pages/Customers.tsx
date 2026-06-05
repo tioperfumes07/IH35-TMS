@@ -13,6 +13,7 @@ import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { displayEntityNotes } from "../lib/qboArchiveNotes";
 import { CustomerCOITab } from "./customers/CustomerCOITab";
+import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
 
 type CustomerTabId =
   | "transaction_list"
@@ -261,6 +262,7 @@ export function CustomersPage() {
           </ActionButton>
         }
       />
+      {companyId ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null}
       <div className="flex gap-3">
         <aside className="w-[216px] flex-shrink-0 rounded border border-gray-200 bg-white p-2">
           <input
