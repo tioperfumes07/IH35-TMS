@@ -47,16 +47,16 @@ async function fetchProtection(token, owner, repo, branch) {
 
 async function main() {
   const cfg = assertConfigBaseline();
-  const token = process.env.GH_ADMIN_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim();
+  const adminToken = process.env.GH_ADMIN_TOKEN?.trim();
 
-  if (!token || process.env.CI !== "true") {
+  if (!adminToken || process.env.CI !== "true") {
     console.log(`[${LABEL}] PASS (baseline) — config + workflows committed; live API check skipped without admin token in CI`);
     process.exit(0);
   }
 
   const [owner, repo] = cfg.repository.split("/");
   const branch = cfg.branch || "main";
-  const protection = await fetchProtection(token, owner, repo, branch);
+  const protection = await fetchProtection(adminToken, owner, repo, branch);
 
   if (!protection) {
     console.warn(
