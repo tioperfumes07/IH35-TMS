@@ -113,13 +113,13 @@ export function FaroImportPage() {
         <div className="flex flex-wrap gap-2">
           <Button
             variant="secondary"
-            disabled={!companyId || !csvText || mutation.isPending}
+            disabled={!selectedCompanyId || !csvText || mutation.isPending}
             onClick={() => mutation.mutate(true)}
           >
             Preview
           </Button>
           <Button
-            disabled={!companyId || !csvText || mutation.isPending}
+            disabled={!selectedCompanyId || !csvText || mutation.isPending}
             onClick={() => mutation.mutate(false)}
           >
             Commit import
