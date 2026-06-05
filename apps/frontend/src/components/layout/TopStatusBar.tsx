@@ -18,7 +18,7 @@ export type TopStatusBarProps = {
   qboSyncPill: QboSyncPill | null;
   onOpenQboSyncDashboard: () => void;
   onReconnectQbo: () => void;
-  /** Viewport max-width (px) at which icon-only mobile bar renders. AF-10: 767. */
+  /** Icon-only mode at/below this viewport width. AF-15: 1366 (tablet + laptop). */
   compactMaxWidth?: number;
 };
 
@@ -53,7 +53,7 @@ export function TopStatusBar({
   qboSyncPill,
   onOpenQboSyncDashboard,
   onReconnectQbo,
-  compactMaxWidth = 767,
+  compactMaxWidth = 1366,
 }: TopStatusBarProps) {
   const compact = useMaxWidth(compactMaxWidth);
   const muted = colors.sidebarTextMuted;
@@ -74,21 +74,21 @@ export function TopStatusBar({
 
   return (
     <div
-      className="flex max-w-[min(640px,94vw)] flex-wrap items-center justify-center gap-x-2 gap-y-1.5 rounded-full px-2 py-1 text-[12px] leading-snug"
+      className="flex max-w-[min(640px,94vw)] flex-nowrap items-center justify-center gap-x-2 rounded-full px-2 py-1 text-[12px] leading-snug"
       style={{ backgroundColor: "#151A24", color: muted }}
       data-status-bar-desktop
     >
-      <span className="inline-flex items-center gap-1" style={{ color: active }}>
+      <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: active }}>
         <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboVis.dot)}`} />
         {qboVis.label}
       </span>
       <span style={{ color: muted }}>·</span>
-      <span className="inline-flex items-center gap-1" style={{ color: active }} title={samsaraVis.title}>
+      <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: active }} title={samsaraVis.title}>
         <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(samsaraVis.dot)}`} />
         {samsaraVis.label}
       </span>
       <span style={{ color: muted }}>·</span>
-      <span className="inline-flex items-center gap-1" style={{ color: active }}>
+      <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: active }}>
         <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(relayVis.dot)}`} />
         {relayVis.label}
       </span>
@@ -97,7 +97,7 @@ export function TopStatusBar({
           <span style={{ color: muted }}>·</span>
           <button
             type="button"
-            className="inline-flex cursor-pointer items-center gap-1 underline-offset-2 hover:underline"
+            className="inline-flex cursor-pointer items-center gap-1 whitespace-nowrap underline-offset-2 hover:underline"
             style={{ color: active }}
             title="Open QBO sync dashboard"
             onClick={onOpenQboSyncDashboard}

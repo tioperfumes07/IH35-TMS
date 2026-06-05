@@ -684,6 +684,9 @@ jobs:
       - name: verify:qbo-sync-status-endpoints-return-200
         run: npm run verify:qbo-sync-status-endpoints-return-200
 
+      - name: verify:no-clipped-subtabs-at-1024
+        run: npm run verify:no-clipped-subtabs-at-1024
+
       - name: verify:session-create-updates-last-login
         run: npm run verify:session-create-updates-last-login
 

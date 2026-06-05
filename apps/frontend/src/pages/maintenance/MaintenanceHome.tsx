@@ -19,7 +19,7 @@ import {
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { SubTabRow } from "../../components/layout/SubTabRow";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ArrivingSoonPage } from "./ArrivingSoonPage";
@@ -197,11 +197,24 @@ export function MaintenanceHomePage({ initialTab = "active_wos" }: Props) {
 
       <MaintenanceSubNav />
 
-      <SecondaryNavTabs
-        tabs={SUBNAV.map((item) => ({ id: item.id, label: item.label }))}
-        activeId={tab}
-        onChange={(next) => setTab(next as (typeof SUBNAV)[number]["id"])}
-      />
+      <SubTabRow data-subtab-row="maintenance">
+        {SUBNAV.map((item) => {
+          const active = item.id === tab;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              data-maintenance-subtab={item.id}
+              onClick={() => setTab(item.id)}
+              className={`pb-0.5 text-xs font-semibold ${
+                active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </SubTabRow>
 
       <MaintKpiRows kpis={kpis} />
       {companyId ? <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} /> : null}
