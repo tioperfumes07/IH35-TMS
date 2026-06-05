@@ -8,13 +8,13 @@
 
 | Metric | Count |
 |--------|-------|
-| Shipped | 3 |
+| Shipped | 5 |
 | Forensic-skip | 2 |
 | In-flight | 2 |
-| Remaining | 23 |
+| Remaining | 21 |
 | ON HOLD | 0 (CLOSURE-17 triages A23-11, A23-14, B19, B20 only) |
 
-**Pass:** 5/30 (3 shipped + 2 forensic-skip)
+**Pass:** 7/30 (5 shipped + 2 forensic-skip)
 
 ## Block Status
 
@@ -25,10 +25,10 @@
 | CLOSURE-3 | A | C-1 | **FORENSIC-SKIP** | [#552](https://github.com/tioperfumes07/IH35-TMS/pull/552) | Core on main; delta CI guard merged `454a7ab9b` 2026-06-05 |
 | CLOSURE-4 | B | C-2 | **SHIPPED** | [#550](https://github.com/tioperfumes07/IH35-TMS/pull/550) | Auto-deductions; merged `adf7a5cb3` 2026-06-05 |
 | CLOSURE-5 | A | C-3 | **SHIPPED** | [#551](https://github.com/tioperfumes07/IH35-TMS/pull/551) | Settlement dispute; merged `6b067c5ad` 2026-06-05 |
-| CLOSURE-6 | B | C-3 | **IN-FLIGHT** | [#553](https://github.com/tioperfumes07/IH35-TMS/pull/553) | `closure/p5-t14-team-splits` |
-| CLOSURE-7 | A | C-4 | **IN-FLIGHT** | — | `closure/p5-t17-road-service` |
-| CLOSURE-8 | B | C-4 | QUEUED | — | |
-| CLOSURE-9 | A | C-4 | QUEUED | — | |
+| CLOSURE-6 | B | C-3 | **SHIPPED** | [#553](https://github.com/tioperfumes07/IH35-TMS/pull/553) | Team splits; merged `40e15042a` 2026-06-05 |
+| CLOSURE-7 | A | C-4 | **SHIPPED** | [#555](https://github.com/tioperfumes07/IH35-TMS/pull/555) | Road service; merged `958e5418f` 2026-06-05 |
+| CLOSURE-8 | B | C-4 | **IN-FLIGHT** | [#556](https://github.com/tioperfumes07/IH35-TMS/pull/556) | `closure/test-user-archive` |
+| CLOSURE-9 | A | C-4 | **IN-FLIGHT** | — | `closure/trailer-profile` (manifest dispatched) |
 | CLOSURE-10 | B | C-5 | QUEUED | — | |
 | CLOSURE-11 | A | C-6 | QUEUED | — | |
 | CLOSURE-12 | B | C-6 | QUEUED | — | |
@@ -84,6 +84,7 @@
 |------|--------|--------|
 | C-1 | CLOSURE-1 ✅ | CLOSURE-2 ⏭️ skip |
 | C-2 | CLOSURE-3 ⏭️ skip + [#552](https://github.com/tioperfumes07/IH35-TMS/pull/552) delta ✅ | CLOSURE-4 ✅ [#550](https://github.com/tioperfumes07/IH35-TMS/pull/550) |
-| C-3 | CLOSURE-5 ✅ [#551](https://github.com/tioperfumes07/IH35-TMS/pull/551) | CLOSURE-6 🔄 [#553](https://github.com/tioperfumes07/IH35-TMS/pull/553) |
-| C-4 | CLOSURE-7 🔄 | CLOSURE-8 |
+| C-3 | CLOSURE-5 ✅ [#551](https://github.com/tioperfumes07/IH35-TMS/pull/551) | CLOSURE-6 ✅ [#553](https://github.com/tioperfumes07/IH35-TMS/pull/553) |
+| C-4 | CLOSURE-7 ✅ [#555](https://github.com/tioperfumes07/IH35-TMS/pull/555) | CLOSURE-8 🔄 [#556](https://github.com/tioperfumes07/IH35-TMS/pull/556) |
+| C-5 | CLOSURE-9 🔄 | CLOSURE-10 |
 | … | per V2 index | per V2 index |
