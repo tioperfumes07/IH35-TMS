@@ -60,8 +60,8 @@ export function SafetyHomePage() {
     enabled: Boolean(companyId),
   });
   const eventsQuery = useQuery({
-    queryKey: ["safety", "events", companyId, safetyUi.filter],
-    queryFn: () => getSafetyEventsFiltered(companyId, safetyUi.filter),
+    queryKey: ["safety", "events", companyId, safetyUi.filter, safetyUi.activityWindow],
+    queryFn: () => getSafetyEventsFiltered(companyId, safetyUi.filter, safetyUi.activityWindow),
     enabled: Boolean(companyId),
   });
   const accidentsQuery = useQuery({
