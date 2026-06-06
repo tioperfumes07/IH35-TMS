@@ -1,12 +1,17 @@
 {
-  "block_id": "CLOSURE-32-H1-RESOLVED-DOC",
-  "branch": "chore/closure-32-h1-resolved",
+  "block_id": "PASS-8-RUNTIME-RESOLUTION-DOCS",
+  "description": "PASS-8-RUNTIME resolution: D1-B D3-X verification, audit doc + checklist updates, reusable probe harnesses preserved",
+  "branch": "docs/pass8-runtime-resolution",
+  "status": "in-progress",
   "phase": "M2",
-  "task": "Mark CLOSURE-32 H1 RESOLVED in the findings doc + fill resolution merge SHA after PR #599 merge.",
+  "task": "PASS-8-RUNTIME resolution: D1-B D3-X verification, audit doc + checklist updates, reusable probe harnesses preserved",
   "agent": "A",
   "allowed_files": [
-    "docs/audits/CLOSURE-32-FINDINGS-2026-06-05.md",
-    "docs/audits/CLOSURE-32-H1-RESOLUTION.md",
+    "docs/runbooks/pre-cutover-checklist.md",
+    "docs/trackers/closure-v2.md",
+    "docs/audits/PASS-8-RESULTS-2026-06-06.md",
+    "scripts/pass-8-runtime-healthz-probe.mjs",
+    "scripts/pass-8-runtime-smoke.mjs",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
