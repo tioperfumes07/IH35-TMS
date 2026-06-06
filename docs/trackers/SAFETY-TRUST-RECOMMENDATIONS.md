@@ -416,6 +416,38 @@ These were surfaced by inspecting Jorge's actual QuickBooks for IH 35 Transporta
 
 ---
 
+## 🖼️ DESIGN PRINCIPLE: NO PAGE CHANGES WITHOUT VISUAL PREVIEW FIRST (locked 2026-06-06)
+
+Existing page designs are **LOCKED**. Any proposed change to an existing page — including QBO parity alignment, trust-layer additions, or feature work — **MUST include a visual preview** (mockup, screenshot annotation, side-by-side comparison) for Jorge's explicit approval **BEFORE** any code changes are dispatched.
+
+**REQUIRES preview before code:**
+- Existing page layout changes
+- Existing modal redesigns
+- Existing list view changes (column reorder, filter additions)
+- Existing form changes (field additions, repositioning)
+- Existing navigation changes
+- Color, spacing, typography changes
+- Universal pattern rollouts applied to existing pages
+
+**Does NOT need preview (additive-only):**
+- New routes / new pages (preview optional but recommended)
+- Backend-only changes (no UI impact)
+- Adding `is_active` flag to existing entity (DB-only)
+- Bug fixes that don't change visual output
+
+**DEFAULT: if uncertain → treat as REQUIRES PREVIEW.**
+
+**Process:**
+1. Cursor/Claude propose change → produce visual preview (mockup or annotated screenshot)
+2. Jorge reviews preview side-by-side with current state
+3. Jorge approves or requests adjustments
+4. Only then code changes are dispatched
+5. Post-merge, actual UI must match the approved preview
+
+**Enforcement:** block specs that touch existing UI must include `preview_provided: true` in manifest plus a link to the preview artifact. Without preview, block manifest fails validation.
+
+---
+
 ## 🧭 META-PRINCIPLES (the "how" not the "what")
 
 These should govern decision-making on every GAP block.
