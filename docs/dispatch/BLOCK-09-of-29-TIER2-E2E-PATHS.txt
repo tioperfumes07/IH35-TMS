@@ -1,0 +1,74 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 9 of 29 in the remaining-tiers series.
+# Tier: 2
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 9 of 29 — PHASE TRUST-HARDEN / TASK E2E-PATHS — E2E Critical Path Tests
+
+**Tier:** 2 | **Model:** Sonnet 4.6 medium | **Days:** 2.0
+**Depends on:** Block 1 (OBSERV) | **Preview required:** No
+
+### Goal
+Playwright E2E tests for the 10 most critical user paths. Catch UI breakage before users do. Currently no E2E coverage on critical paths.
+
+### Scope
+**Critical paths (Cursor confirms list with Jorge):**
+1. Driver PWA: login → submit fuel expense → see in dispatcher
+2. Dispatcher: book a load → assign driver → confirm
+3. Accounting: create invoice → send → mark paid
+4. Accounting: enter bill → schedule payment → record payment
+5. Driver Settlement: create → finalize → PDF export
+6. Banking: import statement → categorize → reconcile
+7. Maintenance: create WO → assign mechanic → close with receipt
+8. Safety: view live map → click truck → see HOS
+9. Reports: run P&L → drill into a line → export PDF
+10. Admin: invite user → set role → user logs in
+
+**Setup:**
+- Playwright in CI
+- Tests run against staging on every PR + nightly against prod (read-only)
+- Screenshots + traces on failure
+- Tests stored in `tests/e2e/`
+
+### Acceptance criteria
+- 10 paths covered
+- All passing on staging
+- Nightly prod runs (read-only paths only)
+- Failure surfaces with screenshot + trace
+- 4-gate done
+
+### Out of scope
+- Visual regression (separate concern)
+- Performance assertions (Block 8 covers)
+- Mobile responsive E2E (future)
+
+### Hard stops
+- Test data not isolated from prod → STOP, fix tenant isolation first
+
+---
+

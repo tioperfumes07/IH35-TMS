@@ -1,0 +1,63 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 4 of 29 in the remaining-tiers series.
+# Tier: 2
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 4 of 29 — PHASE TRUST-HARDEN / TASK RATE-LIMIT — API Rate Limiting
+
+**Tier:** 2 | **Model:** Sonnet 4.6 medium | **Days:** 1.0
+**Depends on:** Tier 1 Block 1 (observability) | **Preview required:** No
+
+### Goal
+Add rate limiting per user + per route to prevent runaway scripts, broken loops, accidental DoS. Fastify supports `@fastify/rate-limit` natively.
+
+### Scope
+- Install `@fastify/rate-limit`
+- Default limits: 100 req/min per IP, 1000 req/hour per user
+- Strict limits on auth routes: 5 login attempts per 15 min per IP
+- Strict limits on financial mutating routes: 30 writes/min per user
+- Headers returned: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`
+- 429 responses logged to Sentry as warning
+- Per-route override via decorator
+
+### Acceptance criteria
+- Hammer test: 200 rapid requests → 100 succeed, rest 429
+- Auth brute force test: 6th login attempt blocked
+- Headers present on all responses
+- Sentry receives 429 events
+- 4-gate done
+
+### Out of scope
+- Distributed rate limit across multiple instances (Redis-backed) — future Tier 3 if scaling
+- Token bucket vs sliding window — pick `@fastify/rate-limit` default
+
+### Hard stops
+- Existing rate-limit middleware found → assess overlap, surface to Jorge
+
+---
+

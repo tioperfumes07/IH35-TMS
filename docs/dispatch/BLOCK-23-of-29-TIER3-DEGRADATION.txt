@@ -1,0 +1,85 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 23 of 29 in the remaining-tiers series.
+# Tier: 3
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 23 of 29 — PHASE ENTERPRISE / TASK DEGRADATION — Degradation Matrix
+
+**Tier:** 3 | **Model:** Sonnet 4.6 medium | **Days:** 2.0
+**Depends on:** Block 5 (circuit breakers), Block 22 (runbooks) | **Preview required:** No
+
+### Goal
+Single document showing exactly what happens when each external dep fails. Builds on circuit breaker block (Block 5). Customer-facing degradation matrix when needed for SLA discussions.
+
+### Scope
+
+**Document:** `docs/runbooks/degradation-matrix.md`
+
+**For each external dep:**
+```markdown
+### <Dep Name>
+- What it provides: <description>
+- Failure impact: <what users can/can't do>
+- Detection: <how we know>
+- Mitigation: <auto + manual>
+- Communication: <when + how we tell users>
+- Recovery: <expected time + steps>
+- Last drill: <date>
+```
+
+**Deps to cover:**
+- QBO (sync delays, manual posts continue)
+- Samsara (live map down, settled data unaffected)
+- Plaid (banking import delayed)
+- ComData / Relay (fuel imports delayed)
+- Sentry (silent — observability gap only)
+- OpenAI / LLM (features degrade, app fully usable)
+- Email delivery (Postmark / Resend?)
+- SMS (Twilio if used)
+- Render (full app down — backup procedure)
+- Neon DB (full app down — DR Block 21)
+
+**Drills:**
+- For each, simulate failure + verify behavior matches matrix
+- Drill schedule
+
+### Acceptance criteria
+- Matrix complete
+- Each entry has 6 fields filled
+- 3 simulated failures drilled successfully
+- 4-gate done
+
+### Out of scope
+- Customer-facing status page (future Tier 4)
+- Auto-failover (manual for now)
+
+### Hard stops
+- Drill reveals undocumented hard dependency → STOP, refactor to add circuit breaker first
+
+---
+

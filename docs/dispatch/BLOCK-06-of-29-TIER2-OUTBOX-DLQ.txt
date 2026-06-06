@@ -1,0 +1,81 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 6 of 29 in the remaining-tiers series.
+# Tier: 2
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 6 of 29 — PHASE TRUST-HARDEN / TASK OUTBOX-DLQ — Outbox Dead Letter Queue
+
+**Tier:** 2 | **Model:** Opus 4.8 thinking-high | **Days:** 2.0
+**Depends on:** Block 5 (circuit breakers) | **Preview required:** No
+
+### Goal
+Existing outbox pattern queues writes to QBO. When QBO fails repeatedly, messages should land in DLQ for human review — not retry forever or get lost. Repo recon: outbox exists (CLOSURE-21 era?), verify and add DLQ.
+
+### Scope
+- Verify existing outbox table schema (`qbo_sync_queue` or similar)
+- Add `dead_letter_queue` table:
+  ```sql
+  CREATE TABLE IF NOT EXISTS ops.outbox_dlq (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    original_outbox_id uuid NOT NULL,
+    destination text NOT NULL,
+    payload jsonb NOT NULL,
+    error_history jsonb NOT NULL,           -- last 10 errors
+    attempt_count int NOT NULL,
+    first_failure_at timestamptz NOT NULL,
+    last_failure_at timestamptz NOT NULL,
+    moved_to_dlq_at timestamptz NOT NULL DEFAULT now(),
+    resolved boolean NOT NULL DEFAULT false,
+    resolved_at timestamptz,
+    resolved_by_user_id uuid,
+    resolution_action text  -- 'replayed', 'cancelled', 'manual-fix'
+  );
+  ```
+- Move logic: after 10 retries OR 24 hours of failures, message moves to DLQ
+- Admin UI: `/admin/dlq` shows pending DLQ items, error history, [Replay] [Cancel] actions
+- Alert when DLQ count > 5 (Sentry warning)
+
+### Acceptance criteria
+- Schema migrated
+- Outbox retry policy reads attempt count + age
+- After 10 failed retries, message in DLQ
+- Replay moves item back to outbox
+- Cancel marks resolved without sending
+- Admin UI functional
+- Alert fires when threshold crossed
+- 4-gate done
+
+### Out of scope
+- Per-destination DLQ policies (universal for now)
+- Automatic replay (manual review required)
+
+### Hard stops
+- Existing outbox has hidden retry-forever loop → STOP, fix first
+
+---
+

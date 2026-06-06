@@ -1,0 +1,78 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 28 of 29 in the remaining-tiers series.
+# Tier: 4
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 28 of 29 — PHASE SCALE / TASK VENDOR-LOCKIN — Vendor Lock-in Documentation
+
+**Tier:** 4 | **Model:** Sonnet 4.6 medium | **Days:** 1.0
+**Depends on:** Block 23 (degradation matrix) | **Preview required:** No
+
+### Goal
+Document where IH35-TMS is locked into specific vendors (Render, Neon, Samsara, QBO, etc.). Explicit so decisions about lock-in are conscious.
+
+### Scope
+
+**Document:** `docs/runbooks/vendor-lockin-analysis.md`
+
+**For each vendor:**
+- What we depend on them for
+- Cost of leaving (engineering hours + data migration)
+- Acceptable alternatives
+- Mitigation (e.g., own data, portable formats)
+- Lock-in severity: low / medium / high
+- Renewal date / contract terms (if applicable)
+
+**Vendors:**
+- Render (hosting)
+- Neon (Postgres)
+- Samsara (telematics)
+- QBO (accounting)
+- Plaid (banking)
+- ComData (fuel cards)
+- Relay (fuel cards)
+- Sentry (observability)
+- OpenAI / Anthropic (LLMs if used)
+- Email provider
+- DNS / domain
+
+### Acceptance criteria
+- Document covers all 10+ vendors
+- Severity scoring done
+- Mitigation noted per vendor
+- 4-gate done
+
+### Out of scope
+- Actual vendor switches (only docs here)
+- Negotiation strategy
+
+### Hard stops
+- None
+
+---
+

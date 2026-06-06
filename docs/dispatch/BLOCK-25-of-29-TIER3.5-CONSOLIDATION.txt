@@ -1,0 +1,93 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 25 of 29 in the remaining-tiers series.
+# Tier: 3.5
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 25 of 29 — PHASE FIN-REPORTING / TASK CONSOLIDATION — Multi-Company Consolidation
+
+**Tier:** 3.5 | **Model:** Opus 4.8 thinking-high | **Days:** 3.0
+**Depends on:** Tier 1 Blocks 5+6, Block 8 (financial-recon) | **Preview required:** No (new reports)
+
+### Goal
+Roll up financials across operating companies (TRK + TRANSP + USMCA). Eliminate intercompany. Consolidated P&L, Balance Sheet, Cash Flow.
+
+### Scope
+
+**Schema (intercompany identification):**
+```sql
+ALTER TABLE finance.journal_entry_lines
+  ADD COLUMN IF NOT EXISTS intercompany_counterparty_id uuid;
+
+-- Intercompany pair recognition
+CREATE TABLE IF NOT EXISTS finance.intercompany_pairs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  je_line_a_id uuid NOT NULL,
+  je_line_b_id uuid NOT NULL,
+  pair_amount_cents bigint NOT NULL,
+  matched_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT je_lines_different CHECK (je_line_a_id != je_line_b_id)
+);
+```
+
+**Service:**
+- `consolidate(year, period, operatingCompanies[])`
+  - Sum each account across companies
+  - Subtract intercompany pairs
+  - Output consolidated balance sheet + P&L + cash flow
+- Intercompany matching: automated for clear cases (matching amounts, dates, counterparty IDs), manual review queue for ambiguous
+
+**Reports:**
+- Consolidated P&L (with eliminations column)
+- Consolidated Balance Sheet
+- Consolidated Cash Flow
+- Per-entity drill-down from any consolidated line
+- Intercompany match status
+
+**Frontend:**
+- `/reports/consolidated` with entity multi-select
+- "Eliminations" column showing IC adjustments
+- Drill-down to per-entity sources
+
+### Acceptance criteria
+- For latest closed month, consolidation produces P&L + BS + CF
+- IC eliminations identified (currently TRANSP owes TRK $293K — should appear)
+- Per-entity drill-down works
+- Test: $1 manual JE between TRK and TRANSP → IC pair recognized → eliminated in consolidation
+- 4-gate done
+
+### Out of scope
+- Currency translation (single USD currently)
+- Minority interest (single-owner all entities)
+- Acquisition accounting (no acquisitions)
+
+### Hard stops
+- Existing intercompany unmatched > $10K → STOP, surface for Jorge investigation
+- Multiple operating companies don't share account structure → STOP, structure first
+
+---
+

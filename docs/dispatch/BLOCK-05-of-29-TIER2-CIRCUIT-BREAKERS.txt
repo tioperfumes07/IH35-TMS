@@ -1,0 +1,67 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 5 of 29 in the remaining-tiers series.
+# Tier: 2
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 5 of 29 — PHASE TRUST-HARDEN / TASK CIRCUIT-BREAKERS — Circuit Breakers on External Deps
+
+**Tier:** 2 | **Model:** Opus 4.8 thinking-high | **Days:** 2.0
+**Depends on:** Block 1 (OBSERV), Block 6 (Outbox DLQ benefits from this) | **Preview required:** No
+
+### Goal
+Every external dependency (QBO, Samsara, Plaid, Sentry, OpenAI/LLM, ComData, Relay) wrapped in a circuit breaker. When dep fails repeatedly, breaker opens, requests fast-fail instead of hanging. Documents degradation behavior per dep.
+
+### Scope
+- Install `opossum` (Node circuit breaker library) or write minimal wrapper
+- Configure per-dep settings:
+  - QBO: 5 failures in 30s → open for 60s
+  - Samsara: 3 failures in 30s → open for 30s (read-only mostly)
+  - Plaid: 5 failures in 60s → open for 120s
+  - Sentry: never break (fire-and-forget anyway)
+  - OpenAI: 3 failures → fallback to cached or skip
+- Each breaker emits events to observability (open/half-open/close)
+- Service layer wraps every external call
+- Document degradation behavior per dep in `docs/runbooks/external-deps-degradation.md`
+
+### Acceptance criteria
+- Each external dep call goes through breaker (audit pass)
+- Test: force 6 QBO failures → breaker opens → 7th call fails fast
+- Half-open probe: after timeout, breaker tries one request
+- Sentry shows breaker state transitions
+- Degradation runbook committed
+- 4-gate done
+
+### Out of scope
+- Per-route circuit configuration (per-service is enough)
+- Distributed breaker state (per-instance is fine)
+
+### Hard stops
+- Breaker opens on healthy dep due to false positives → STOP, tune thresholds
+
+---
+

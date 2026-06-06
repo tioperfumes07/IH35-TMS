@@ -1,0 +1,87 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 18 of 29 in the remaining-tiers series.
+# Tier: 3
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 18 of 29 — PHASE ENTERPRISE / TASK PII-ENCRYPTION — PII Encryption at Rest
+
+**Tier:** 3 | **Model:** Opus 4.8 thinking-high | **Days:** 2.0
+**Depends on:** Tier 1 Block 11 (audit-trail-coverage) | **Preview required:** No
+
+### Goal
+SSN, EIN, driver TIN, bank account numbers, payment card data — encrypted at rest using application-level encryption. Currently in plaintext in DB. Compliance + breach-impact reduction.
+
+### Scope
+- Choose KMS: AWS KMS / GCP KMS / Render secret (start simple)
+- Library: `node-cryptr` or `aws-sdk` envelope encryption
+- Encrypt-on-write, decrypt-on-read service: `lib/services/encryption.mjs`
+
+**Fields encrypted:**
+- driver_profiles.tin
+- driver_profiles.dob
+- vendors.tin
+- bank_account_numbers (any table)
+- customers.tax_id
+- payment_methods.last4 (token only, never PAN)
+
+**Schema pattern:**
+```sql
+-- Original column kept for type
+ALTER TABLE driver_profiles
+  ADD COLUMN IF NOT EXISTS tin_encrypted bytea,
+  ADD COLUMN IF NOT EXISTS tin_search_hash text;       -- HMAC for exact-match search
+
+-- After backfill, drop plaintext column
+ALTER TABLE driver_profiles DROP COLUMN tin;
+```
+
+**Service:**
+- Application encrypts on write
+- Decrypts only when explicitly requested (e.g., 1099 generation, IRS forms)
+- Audit log records every decrypt access
+- Search by exact value uses HMAC hash (not plaintext)
+
+### Acceptance criteria
+- All listed fields encrypted in DB
+- Backfill migration ran cleanly
+- Search by TIN still works (HMAC path)
+- Audit log captures every decrypt
+- Encryption key rotatable (test rotation)
+- 4-gate done
+
+### Out of scope
+- Full-disk encryption (Render handles infra)
+- Encrypted backups (Render handles)
+- HSM key storage (KMS sufficient)
+
+### Hard stops
+- Existing plaintext data needs backfill → STOP, plan migration window
+- Performance test shows > 50ms penalty on hot path → STOP, optimize
+
+---
+

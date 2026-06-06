@@ -1,0 +1,66 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 10 of 29 in the remaining-tiers series.
+# Tier: 2
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 10 of 29 — PHASE TRUST-HARDEN / TASK RLS-TEST-GATE — RLS Test Gate
+
+**Tier:** 2 | **Model:** Sonnet 4.6 medium | **Days:** 1.0
+**Depends on:** Tier 1 Block 7 (RLS standardize) | **Preview required:** No
+
+### Goal
+CI gate that proves RLS prevents cross-tenant leaks. Without this, any future schema change could silently break RLS.
+
+### Scope
+- Test suite that:
+  1. Sets up 2 fake operating companies (test fixtures)
+  2. Inserts data into every RLS-protected table for both companies
+  3. Sets GUC to Company A
+  4. Reads every protected table — must return only A's rows
+  5. Sets GUC to Company B → same check
+  6. Sets empty GUC → must return 0 rows (default deny)
+- Runs in CI on every PR
+- Failure blocks merge
+- New table without RLS policy → test fails ("RLS missing for table X")
+
+### Acceptance criteria
+- Test suite covers every table in RLS scope
+- Test passes against current main
+- Deliberately broken policy → test catches it
+- CI gate blocks merge on failure
+- 4-gate done
+
+### Out of scope
+- Column-level RLS (row-level is current scope)
+- Cross-company sharing scenarios (future block if needed)
+
+### Hard stops
+- Current code has a cross-tenant leak → STOP, fix before adding gate
+
+---
+

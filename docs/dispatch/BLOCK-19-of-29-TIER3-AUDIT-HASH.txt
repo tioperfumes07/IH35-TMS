@@ -1,0 +1,94 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 19 of 29 in the remaining-tiers series.
+# Tier: 3
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 19 of 29 — PHASE ENTERPRISE / TASK AUDIT-HASH — Audit Trail Hash Chain
+
+**Tier:** 3 | **Model:** Opus 4.8 thinking-high | **Days:** 2.0
+**Depends on:** Block 11 (audit-trail-coverage) | **Preview required:** No
+
+### Goal
+Tamper-evident audit log. Each entry hashes its content + prior entry's hash. Tampering with one row breaks the chain. Required for SOC 2, useful for legal defensibility.
+
+### Scope
+
+**Schema:**
+```sql
+ALTER TABLE audit_log
+  ADD COLUMN IF NOT EXISTS sequence_number bigint,
+  ADD COLUMN IF NOT EXISTS row_hash text,
+  ADD COLUMN IF NOT EXISTS prev_row_hash text,
+  ADD COLUMN IF NOT EXISTS chain_signature text;
+
+CREATE UNIQUE INDEX idx_audit_log_seq ON audit_log(sequence_number);
+```
+
+**Write logic:**
+```
+row_hash = sha256(
+  prev_row_hash || 
+  sequence_number || 
+  timestamp || 
+  user_id || 
+  table_name || 
+  record_id || 
+  action || 
+  before_json || 
+  after_json
+)
+```
+
+**Verification job:**
+- Daily cron walks audit_log in sequence order
+- Recomputes each row_hash
+- Mismatch → alert (chain broken = tampering or corruption)
+- Result stored in `ops.audit_chain_verifications`
+
+**Periodic signing:**
+- Every 100K rows, hash signed with private key + timestamped
+- Signatures stored separately for legal evidence
+
+### Acceptance criteria
+- Schema migrated
+- All new audit_log rows have hash chain populated
+- Backfill chained existing rows (sequence number assigned chronologically)
+- Daily verification cron runs
+- Tamper test: manually edit a row → next verification fails
+- 4-gate done
+
+### Out of scope
+- Distributed ledger / blockchain (overkill)
+- Public attestation (future if customer demands)
+
+### Hard stops
+- Hash collision in current data (impossibly unlikely but verify) → STOP
+- Backfill performance issue (millions of rows) → STOP, plan in batches
+
+---
+

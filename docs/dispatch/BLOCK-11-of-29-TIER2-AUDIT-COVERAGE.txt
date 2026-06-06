@@ -1,0 +1,76 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 11 of 29 in the remaining-tiers series.
+# Tier: 2
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 11 of 29 — PHASE TRUST-HARDEN / TASK AUDIT-COVERAGE — Audit Trail Coverage
+
+**Tier:** 2 | **Model:** Sonnet 4.6 medium | **Days:** 2.0
+**Depends on:** Tier 1 Block 3 (idempotency), Block 9 (active/inactive) | **Preview required:** No
+
+### Goal
+Every mutating endpoint writes to audit_log. Currently coverage is partial. CI gate prevents regression.
+
+### Scope
+**Phase 1 (audit, read-only):**
+- Enumerate every mutating endpoint (POST/PUT/PATCH/DELETE)
+- For each: does it write to audit_log?
+- Output: `docs/audits/AUDIT-COVERAGE-2026-06-XX.md`
+
+**Phase 2 (fixes):** for uncovered endpoints, add audit_log write with: who, what action, before-state JSON, after-state JSON, request_id, timestamp
+
+**Phase 3 (gate):** CI check that:
+- Greps for handlers without `auditLog.write(...)` call
+- New endpoints must include audit_log
+
+**Schema augmentation:**
+```sql
+ALTER TABLE audit_log
+  ADD COLUMN IF NOT EXISTS request_id uuid,
+  ADD COLUMN IF NOT EXISTS actor_role text,
+  ADD COLUMN IF NOT EXISTS ip_address inet,
+  ADD COLUMN IF NOT EXISTS user_agent text;
+```
+
+### Acceptance criteria
+- Phase 1 audit committed
+- Coverage > 95% on mutating endpoints (100% goal)
+- CI gate active
+- New write without audit_log → CI fails
+- Test: perform every mutation type → audit_log row exists
+- 4-gate done
+
+### Out of scope
+- Diff-display UI on audit_log (future block)
+- Audit retention policy (Tier 3 secrets-rotation will touch this)
+
+### Hard stops
+- audit_log table is growing unboundedly → STOP, add retention policy first
+
+---
+

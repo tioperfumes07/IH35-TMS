@@ -1,0 +1,117 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 14 of 29 in the remaining-tiers series.
+# Tier: 2.5
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 14 of 29 — PHASE CROSS-BORDER / TASK MEXICO-OPS — Mexico Operations Module
+
+**Tier:** 2.5 | **Model:** Opus 4.8 thinking-high | **Days:** 3.0
+**Depends on:** Settlement blocks, Tier 1 Blocks 5/6/9 | **Preview required:** No (new module)
+
+### Goal
+First-class Mexico operations. Currently bolted on: Mexico-B1 driver pay items in QBO, MX permits as line items, but no module organizing it. This block creates the parallel stack: MX customers, MX vendors, MX-specific load fields (cruces, cartas porte, manifests), MX tolls module, MX permits tracking, B1 driver workflow.
+
+### Scope
+
+**Schema:**
+```sql
+-- Mexico-specific fields on loads
+ALTER TABLE loads
+  ADD COLUMN IF NOT EXISTS is_cross_border boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS mx_carta_porte_uuid uuid,
+  ADD COLUMN IF NOT EXISTS mx_manifest_number text,
+  ADD COLUMN IF NOT EXISTS mx_customs_broker_id uuid,
+  ADD COLUMN IF NOT EXISTS us_customs_broker_id uuid,
+  ADD COLUMN IF NOT EXISTS cruce_north_at timestamptz,        -- US-bound border crossing
+  ADD COLUMN IF NOT EXISTS cruce_south_at timestamptz,        -- MX-bound border crossing
+  ADD COLUMN IF NOT EXISTS empty_or_loaded_at_cruce text;
+
+-- MX-specific entities
+CREATE TABLE IF NOT EXISTS mdata.mx_permits (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  permit_type text NOT NULL,                    -- 'I-94', 'SCT', 'OS_OW_TX', etc.
+  unit_id uuid REFERENCES mdata.units(id),
+  driver_id uuid,
+  issued_date date NOT NULL,
+  expires_date date NOT NULL,
+  permit_number text,
+  issuing_authority text,
+  cost_cents bigint,
+  attachment_url text,
+  is_active boolean NOT NULL DEFAULT true
+);
+
+CREATE TABLE IF NOT EXISTS mdata.mx_tolls_ledger (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  load_id uuid REFERENCES loads(id),
+  toll_date date NOT NULL,
+  caseta text NOT NULL,                         -- toll booth name
+  amount_mxn bigint,
+  amount_usd_cents bigint,
+  payment_method text,                          -- 'IAVE', 'CASH', 'TAG'
+  unit_id uuid NOT NULL,
+  driver_id uuid NOT NULL,
+  receipt_url text,
+  is_active boolean NOT NULL DEFAULT true
+);
+```
+
+**Driver categorization:**
+- B1 visa holders flagged on driver_profile
+- B1 drivers only assigned to cross-border loads (validation)
+- B1 pay rates differ from US-only
+
+**Frontend:**
+- New route `/cross-border` with sub-tabs: Permits, Tolls, Customs Brokers, Active Cruces, B1 Drivers
+- Load detail page: if `is_cross_border=true`, show cross-border section
+- Mexico-specific reports: per-cruce times, MX toll spend per truck, permit expiration calendar
+
+**Reports:**
+- Cross-border revenue split (US miles vs MX miles)
+- MX toll spend by unit
+- Permit expiration calendar (30/60/90 day alerts)
+- B1 driver utilization
+
+### Acceptance criteria
+- Schema migrated
+- Cross-border flag on existing loads (manual backfill for next 10 active loads as proof)
+- Permit expiration alerts in observability
+- B1 driver assignment validation works
+- Reports tie to GL where applicable
+- 4-gate done
+
+### Out of scope
+- SAT (Mexican tax authority) integration
+- CFDI (electronic invoicing) for Mexican customers — separate large block
+- Auto-issue carta porte (future block)
+
+### Hard stops
+- Existing carta porte field in different table → STOP, consolidate first
+
+---
+

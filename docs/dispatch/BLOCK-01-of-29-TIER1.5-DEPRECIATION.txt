@@ -1,0 +1,125 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 1 of 29 in the remaining-tiers series.
+# Tier: 1.5
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 1 of 29 — PHASE FIN-COMPLETE / TASK DEPRECIATION — Fixed Assets + Depreciation Engine
+
+**Tier:** 1.5 | **Model:** Opus 4.8 thinking-high | **Days:** 3.0
+**Depends on:** Tier 1 Block 5 (double-entry), Block 6 (period-lock), Block 9 (active/inactive)
+**Preview required:** No (new module + new pages = additive)
+
+### Goal
+Fixed asset depreciation engine for trucks, trailers, equipment. MACRS + straight-line + Section 179. Auto-posts monthly depreciation JE. Current state: `mdata.assets` table exists with purchase cost but ZERO depreciation fields — meaning P&L and balance sheet are materially inaccurate for fleet worth millions.
+
+### Scope
+
+**Schema additions to `mdata.assets`:**
+```sql
+ALTER TABLE mdata.assets
+  ADD COLUMN IF NOT EXISTS depreciation_method text 
+    CHECK (depreciation_method IN ('MACRS-3', 'MACRS-5', 'MACRS-7', 'MACRS-15', 'SL', 'SECTION_179', 'NONE')),
+  ADD COLUMN IF NOT EXISTS useful_life_years numeric(4,1),
+  ADD COLUMN IF NOT EXISTS salvage_value_cents bigint DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS placed_in_service_date date,
+  ADD COLUMN IF NOT EXISTS accumulated_depreciation_cents bigint DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS depreciation_account_id uuid,        -- expense account
+  ADD COLUMN IF NOT EXISTS accumulated_depr_account_id uuid,    -- contra-asset
+  ADD COLUMN IF NOT EXISTS section_179_taken_cents bigint DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS bonus_depreciation_pct numeric(5,2),
+  ADD COLUMN IF NOT EXISTS disposal_date date,
+  ADD COLUMN IF NOT EXISTS disposal_proceeds_cents bigint,
+  ADD COLUMN IF NOT EXISTS gain_loss_on_disposal_cents bigint;
+
+CREATE TABLE IF NOT EXISTS finance.depreciation_schedule (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  asset_id uuid NOT NULL REFERENCES mdata.assets(id),
+  period date NOT NULL,                          -- first day of month
+  depreciation_cents bigint NOT NULL,
+  accumulated_cents bigint NOT NULL,
+  remaining_basis_cents bigint NOT NULL,
+  journal_entry_id uuid REFERENCES finance.journal_entries(id),
+  posted_at timestamptz,
+  is_active boolean NOT NULL DEFAULT true,
+  UNIQUE (asset_id, period)
+);
+```
+
+**Service layer:** `lib/services/depreciation.mjs`
+- `calculateMonthlyDepreciation(assetId, period)` — returns expected amount per method
+- `generateScheduleForAsset(assetId)` — populates full schedule from placed-in-service to fully depreciated
+- `postMonthlyDepreciation(period)` — creates batch JE for all active assets, idempotent
+- `recordDisposal(assetId, disposalDate, proceeds)` — calculates gain/loss, posts JE
+- `applySection179(assetId, electedAmount, taxYear)` — books elected expense
+
+**MACRS tables** (IRS-published, hardcoded in `lib/services/macrs-tables.mjs`):
+- 3-year (over-the-road tractors): 33.33%, 44.45%, 14.81%, 7.41%
+- 5-year (trailers, computers): 20%, 32%, 19.20%, 11.52%, 11.52%, 5.76%
+- 7-year (office equipment): 14.29%, 24.49%, 17.49%, 12.49%, 8.93%, 8.92%, 8.93%, 4.46%
+- 15-year (improvements): 5%, 9.5%, 8.55%, 7.7%, ...
+- Half-year + mid-quarter conventions
+
+**Endpoints:**
+```
+GET    /api/assets/:id/depreciation-schedule
+POST   /api/assets/:id/depreciation-schedule/generate
+GET    /api/depreciation/preview?period=YYYY-MM
+POST   /api/depreciation/post-period           # admin only, idempotency required
+POST   /api/assets/:id/dispose
+GET    /api/depreciation/summary?year=YYYY
+```
+
+**Cron:** First of each month at 5 AM CST, `postMonthlyDepreciation(previousMonth)` runs idempotently.
+
+**Frontend:**
+- New route `/assets/depreciation` — schedule view, posting status, disposal workflow
+- Asset detail page: add Depreciation tab showing schedule + accumulated + book value
+- Reports: Depreciation Expense Detail, Fixed Asset Register, Disposal Gain/Loss
+
+### Acceptance criteria
+- Schema migrated, all FK valid
+- Service calculates MACRS-3 correctly for sample tractor (validate against IRS Pub 946 examples)
+- Monthly cron posts balanced JE (debit Depreciation Expense, credit Accumulated Depreciation)
+- Section 179 election recorded with proper JE
+- Disposal calculates gain/loss against book value
+- Reports tie to GL accounts within $0.01
+- Idempotency on `post-period` (same period twice = no duplicate JE)
+- Period-lock honored (cannot post into locked period)
+- 4-gate done
+
+### Out of scope
+- IRS Form 4562 PDF generation (future block)
+- State depreciation deviations (federal only for now)
+- Like-kind exchanges (1031) — flag for CPA review
+
+### Hard stops
+- Existing `depreciation_cents` on `ProfitPerTruckPage` differs materially from calculated value → STOP, surface to CPA before backdating
+- No `depreciation_account_id` configured in COA → STOP, ask Jorge to create
+
+---
+
