@@ -10,12 +10,20 @@
 
 ---
 
+## H1 RESOLUTION UPDATE (2026-06-06)
+
+> **H1 — RESOLVED.** `mdata.drivers` is now OCI-scoped. Migration `db/migrations/0404_drivers_rls_oci_scope.sql` (PR **#599**, merge SHA **`535c02052c482441362c071d05e996254369a288`**) replaced the unscoped `drivers_select` with `is_lucia_bypass() OR operating_company_id IN (SELECT org.user_accessible_company_ids()) OR identity_user_id = identity.current_user_id()` (role `ih35_app`), mirroring `mdata.customers`/`mdata.vendors` and preserving the Driver self-access path. Deployed to prod (preDeploy `db:migrate`; ledger `0404` applied 2026-06-06 05:13:04Z). Permanent regression guard `scripts/verify-drivers-rls-scope.mjs` wired in `.github/workflows/closure-checks.yml`.
+>
+> **Post-fix RLS re-verification (role `ih35_app`, live prod):** non-owner TRANSP user sees 82 TRANSP / **0 non-TRANSP** (accessible set = `{TRANSP}`); fake-uuid → 0; unset context → 0 (default-deny); `bypass='lucia'` → 82; USMCA (inactive) drivers = 0. Cross-carrier exclusion is enforced by the OCI predicate (a non-owner user only sees drivers in their accessible companies; Owners retain intended multi-company access). **Net: the only HIGH is cleared.** The original audit below is preserved as-of 2026-06-05.
+
+---
+
 ## 0. Executive Classification
 
 > ## 🔴 CRITICAL/HIGH PRESENT — HARD STOP / NO-GO for PASS-8-RUNTIME
 >
 > - **CRITICAL: 0** — zero confirmed cross-tenant row visibility in any runtime probe.
-> - **HIGH: 1** — `mdata.drivers` SELECT policy provides **no tenant/OCI scoping** (latent cross-carrier driver visibility; 0 rows leak *today* only because all 82 drivers are TRANSP and no TRK/USMCA drivers exist yet).
+> - **HIGH: 1** — `mdata.drivers` SELECT policy provides **no tenant/OCI scoping** (latent cross-carrier driver visibility; 0 rows leak *today* only because all 82 drivers are TRANSP and no TRK/USMCA drivers exist yet). **→ RESOLVED 2026-06-06 (PR #599, `535c02052`); see "H1 RESOLUTION UPDATE" above.**
 > - RLS runtime matrix **R1–R7: 7/7 PASS**. Bank-account isolation: **no account visible to >1 carrier**. OCI chain: **0 mismatches**.
 >
 > This is **not ALL CLEAN** and **not MEDIUM-ONLY** because of the one HIGH structural isolation defect. **PASS-8-RUNTIME remains blocked.** No cleanup performed — see §7 Recommendation (PING JORGE).

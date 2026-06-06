@@ -4,7 +4,7 @@
 **Finding source:** `docs/audits/CLOSURE-32-FINDINGS-2026-06-05.md` (§0, §5 entry `mdata.drivers/rls_coverage`, §7 H1)
 **Resolved by migration:** `db/migrations/0404_drivers_rls_oci_scope.sql`
 **Guard:** `scripts/verify-drivers-rls-scope.mjs` (wired in `.github/workflows/closure-checks.yml`)
-**Merge SHA:** `<FILL-AFTER-MERGE>`
+**PR:** #599 · **Merge SHA:** `535c02052c482441362c071d05e996254369a288` · **Prod ledger applied:** 2026-06-06 05:13:04Z
 
 ## Finding
 
