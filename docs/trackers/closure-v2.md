@@ -135,3 +135,24 @@
 **Next dispatch (CLOSURE only):** **CLOSURE-30 SHIPPED** ([#593](https://github.com/tioperfumes07/IH35-TMS/pull/593) `fa4a800ae`) · **CLOSURE-32 remains deferred/pending** until expanded TIER-1 scope package is prepared and reviewed by Jorge. **Do not dispatch GAP** until Jorge clears CLOSURE gate.
 
 M1 DEFERRED — post-GAP cleanup (reason: 0 transactions on shadow rows, RLS-isolated, not blocking).
+
+## Migration Ledger Orphan Cluster — FULLY RECONCILED (2026-06-05)
+
+**Status:** RESOLVED. The complete known orphan cluster `{0360, 0378, 0379, 0380}` has been reconciled per `docs/runbooks/migration-orphan-cleanup.md` (privileged single-transaction DELETE, Neon project `tiny-field-89581227`, default branch). Post-reconciliation parity is exact: disk=350, canonical(`_system._schema_migrations`)=350, mirror(`ih35_migrations.applied_migrations`)=350; `verify:no-orphan-migration-ledger-entries` and `runbook-detect-migration-drift` both report **zero** orphans/drift.
+
+**Root cause:** renumber-orphan. Each row was applied to prod under a pre-rename filename, then the repo file was renumbered (+1) before merge, leaving the old-named ledger rows with no file on disk. The canonical renamed files are present on disk and carry their own ledger entries (verified 1/1 each):
+
+| orphan ledger row (deleted) | canonical file on disk (kept) | prod table(s) (untouched) |
+|---|---|---|
+| `0360_safety_onboarding_sessions.sql` | `0361_safety_onboarding_sessions.sql` | `safety.onboarding_sessions` |
+| `0378_qbo_sync_drift_log.sql` | `0379_qbo_sync_drift_log.sql` | `qbo_sync.drift_log` |
+| `0379_drug_alcohol_program.sql` | `0380_drug_alcohol_program.sql` | `compliance.drug_alcohol_*`, `compliance.return_to_duty_processes` |
+| `0380_csa_basic_scores.sql` | `0381_csa_basic_scores.sql` | `compliance.csa_basic_scores`, `compliance.csa_mitigation_actions` |
+
+No prod schema was modified — only the orphan ledger rows were deleted. The 24h grace window in the orphan guard had expired for these rows, which surfaced them as hard pre-push (block-ready C5) failures repo-wide.
+
+**Rollback SQL (exact captured rows, single-transaction restore):**
+- `docs/audits/CLOSURE-32-0360-ledger-rollback-2026-06-05.sql`
+- `docs/audits/CLOSURE-32-0378-380-ledger-rollback-2026-06-05.sql`
+
+**Follow-up audit task (fresh-DB rebuild):** schedule a clean-DB replay of `db/migrations/*` (e.g., the CI ephemeral Postgres path used by `security-checks`) to confirm the canonical renamed files apply cleanly from empty and that no further pre-rename artifacts remain. Track under post-GAP-unpause cleanup. Any **future** orphan requires fresh explicit authorization to delete ledger rows (no auto-extension of the one-time lift).
