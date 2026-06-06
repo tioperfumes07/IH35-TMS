@@ -111,6 +111,10 @@
 - Gate 11 (NEW) = PASS-8-RUNTIME shipped + Jorge second GO
 - Gate 12 = Pass-2 ingest
 - Gate 13 (NEW) = Claude `UNPAUSE GAP NOW` signal
+- Gate 14: ✅ PASS-8-RUNTIME shipped — PASS (was DEGRADED)
+           D1: warm p95 = 388ms (cold-start artifact accepted)
+           D3: outbox enqueue verified; direct QBO probe deferred to pre-cutover per architectural pattern
+- Gate 15: ⏳ Jorge second GO on PASS-8-RUNTIME PASS
 
 **Explicit note:** Do NOT auto-dispatch CLOSURE-32 until expanded TIER-1 spec is prepared and reviewed by Jorge.
 
@@ -158,3 +162,7 @@ No prod schema was modified — only the orphan ledger rows were deleted. The 24
 **Follow-up audit task (fresh-DB rebuild):** schedule a clean-DB replay of `db/migrations/*` (e.g., the CI ephemeral Postgres path used by `security-checks`) to confirm the canonical renamed files apply cleanly from empty and that no further pre-rename artifacts remain. Track under post-GAP-unpause cleanup. Any **future** orphan requires fresh explicit authorization to delete ledger rows (no auto-extension of the one-time lift).
 
 healthz SHA reporting field needs diagnosis — does not match Render-deployed commit. Non-blocking. Post-GAP-unpause cleanup.
+
+## Post-GAP Cleanup Residuals (2026-06-06)
+
+`closure/data-migration-runbook` + `stash@{0}` (investigate-mdc-pre-m2-patch-2026-06-05) preserved for post-GAP-unpause INVESTIGATE review (alongside .mdc + 8 PR-less commits)
