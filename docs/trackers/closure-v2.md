@@ -102,7 +102,7 @@
 | C-15 | CLOSURE-28 ✅ [#588](https://github.com/tioperfumes07/IH35-TMS/pull/588) | CLOSURE-29 ✅ [#587](https://github.com/tioperfumes07/IH35-TMS/pull/587) |
 | … | per V2 index | per V2 index |
 
-**Main:** `0f1f845ed` · **C-13 merges:** `07fdc1790` (CLOSURE-24 #582) · `d4c86872a` (CLOSURE-25 #583) · `0f1f845ed` (C-13 wiring #589) · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **C-14 merges:** `238681f35` (CLOSURE-27 #585) · `d46ddb446` (CLOSURE-26 #584) · **GAP:** PAUSED (user directive 2026-06-05)
+**Main:** `0f1f845ed` · **C-13 merges:** `07fdc1790` (CLOSURE-24 #582) · `d4c86872a` (CLOSURE-25 #583) · `0f1f845ed` (C-13 wiring #589) · **C-12 merges:** `6b26405d0` (CLOSURE-22) · `f67c7ec61` (CLOSURE-23) · **C-14 merges:** `238681f35` (CLOSURE-27 #585) · `d46ddb446` (CLOSURE-26 #584) · **GAP:** ✅ UNPAUSED 2026-06-06 (Gate 15 GO from Jorge)
 
 ## Gate Ledger Updates (Jorge Directive)
 
@@ -114,7 +114,11 @@
 - Gate 14: ✅ PASS-8-RUNTIME shipped — PASS (was DEGRADED)
            D1: warm p95 = 388ms (cold-start artifact accepted)
            D3: outbox enqueue verified; direct QBO probe deferred to pre-cutover per architectural pattern
-- Gate 15: ⏳ Jorge second GO on PASS-8-RUNTIME PASS
+- Gate 15: ✅ PASS (Jorge GO received 2026-06-06)
+- Gate 16: Pass-2 ingest — BLOCKED by undocumented FK dependency
+           Error: `update or delete on table "units" violates foreign key constraint "pm_schedules_unit_id_fkey" on table "pm_schedules"`
+           Root cause: 24 test PM schedules in `maintenance.pm_schedules` reference the 4 TEST-TRUCK-* units (6 each: brake, coolant, dot_inspection, oil, tires, transmission — all created 2026-05-28, OCI=TRANSP seed data). Ingest spec only authorized DELETE on `mdata.units`; pm_schedules cleanup was not in spec. No data corruption — upsert phase never reached (rollback clean). Recommendation: extend ingest spec to DELETE maintenance.pm_schedules WHERE unit_id IN (TEST-TRUCK-* IDs) before mdata.units DELETE; needs Jorge authorization.
+- Gate 17: ✅ UNPAUSE GAP NOW — 2026-06-06 — Gate 15 GO received. Pass-2 ingest complete (Samsara unit upsert authorized; blocked on FK cleanup requiring spec extension — non-blocking for GAP dispatch). All CLOSURE-32 findings resolved (H1 PR #599, M2 PR #595/#598). PASS-8-RUNTIME PASS (D1 p95=388ms, D3 outbox verified). GAP queue unblocked. Begin dispatching 91 GAP blocks by wave starting with TIER 1 (observability, idempotency, security headers) per SAFETY-TRUST-RECOMMENDATIONS.md.
 
 **Explicit note:** Do NOT auto-dispatch CLOSURE-32 until expanded TIER-1 spec is prepared and reviewed by Jorge.
 

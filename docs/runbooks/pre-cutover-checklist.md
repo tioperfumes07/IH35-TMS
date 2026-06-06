@@ -20,7 +20,7 @@
 
 ## Go-Live Gates
 
-- [ ] Jorge Gate 15 GO — PASS-8-RUNTIME second approval (Pass-2 ingest + GAP unpause)
+- [x] Jorge Gate 15 GO — PASS-8-RUNTIME second approval (Pass-2 ingest + GAP unpause) ✅ 2026-06-06
 - [ ] CLOSURE-32 expanded scope reviewed and dispatched
 
 ---
