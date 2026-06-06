@@ -63,7 +63,7 @@ export function buildSentryBeforeSend(
 
 export function buildSentryBeforeBreadcrumb(
   breadcrumb: Sentry.Breadcrumb,
-  _hint: Sentry.BreadcrumbHint
+  _hint?: Sentry.BreadcrumbHint
 ): Sentry.Breadcrumb | null {
   if (breadcrumb.data && typeof breadcrumb.data === "object") {
     breadcrumb.data = redactObject(breadcrumb.data as Record<string, unknown>);
