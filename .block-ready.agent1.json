@@ -1,9 +1,9 @@
 {
-  "block_id": "WAVE1-SETTLEMENT-SPEC",
+  "block_id": "WAVE1-SETTLEMENT-AUDIT",
   "phase": "SETTLEMENT",
-  "task": "SPEC-COMMIT",
+  "task": "AUDIT-RBC",
   "allowed_files": [
-    "docs/dispatch/GAP-BLOCKS-SETTLEMENTS-2026-06-06.md",
+    "docs/audits/SETTLEMENTS-AUDIT-2026-06-06.md",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
@@ -13,24 +13,12 @@
   "created_at": "2026-06-06T00:00:00Z",
   "status": "ready",
   "spec_file": "docs/dispatch/GAP-BLOCKS-SETTLEMENTS-2026-06-06.md",
-  "block_count": 6,
-  "description": "Wave 1 Settlement Blocks — Driver Settlement + Company Settlement Report",
+  "block_number": 1,
+  "description": "Wave 1 Block 1 — Settlement Audit (RBC, read-only reconnaissance)",
   "wave": 1,
-  "blocks": [
-    { "number": 1, "task": "AUDIT",                "model": "sonnet-4.6",  "type": "RBC" },
-    { "number": 2, "task": "BACKEND",               "model": "opus-4.8",   "type": "GO"  },
-    { "number": 3, "task": "FRONTEND",              "model": "sonnet-4.6",  "type": "GO"  },
-    { "number": 4, "task": "DEDUCTION-LINK",        "model": "opus-4.8",   "type": "GO"  },
-    { "number": 5, "task": "COMPANY-SETTLEMENT",    "model": "opus-4.8",   "type": "GO"  },
-    { "number": 6, "task": "COMPANY-SETTLEMENT-UI", "model": "sonnet-4.6",  "type": "GO"  }
-  ],
-  "preconditions": [
-    "docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md committed to main",
-    "docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md committed to main"
-  ],
   "hard_stops": [
-    "existing settlement UI pages found → STOP and surface for preview workflow",
-    "Wave 1 DB tables missing → STOP and report to Jorge",
+    "existing settlement UI pages found → STOP — preview required (TRIGGERED)",
+    "Wave 1 DB tables missing → STOP — 4 tables missing (TRIGGERED)",
     "any command failure → STOP and report exact error"
   ]
 }
