@@ -1,16 +1,14 @@
 {
-  "block_id": "M2-LUCIA-BYPASS-GUARD-PATTERN",
-  "branch": "security/m2-lucia-bypass-guard-pattern",
+  "block_id": "H1-DRIVERS-RLS-SCOPE",
+  "branch": "security/h1-drivers-rls-oci-scope",
   "phase": "M2",
-  "task": "Permanent luciaBypass guard-pattern CI verification + CLOSURE-32 findings doc; tracker + manifest scope updates.",
+  "task": "CLOSURE-32 H1: add OCI tenant scoping to mdata.drivers SELECT policy (mirror canonical siblings + preserve driver self-access) + static regression guard wired in closure-checks.yml + resolution doc.",
   "agent": "A",
   "allowed_files": [
-    "scripts/verify-lucia-bypass-guard-pattern.mjs",
+    "db/migrations/0404_drivers_rls_oci_scope.sql",
+    "scripts/verify-drivers-rls-scope.mjs",
+    "docs/audits/CLOSURE-32-H1-RESOLUTION.md",
     ".github/workflows/closure-checks.yml",
-    "docs/specs/lucia-bypass-guard-pattern.md",
-    "docs/audits/CLOSURE-32-FINDINGS-2026-06-05.md",
-    "docs/trackers/closure-v2.md",
-    ".block-ready.json",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
