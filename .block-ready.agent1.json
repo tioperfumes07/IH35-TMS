@@ -1,14 +1,12 @@
 {
-  "block_id": "H1-DRIVERS-RLS-SCOPE",
-  "branch": "security/h1-drivers-rls-oci-scope",
+  "block_id": "CLOSURE-32-H1-RESOLVED-DOC",
+  "branch": "chore/closure-32-h1-resolved",
   "phase": "M2",
-  "task": "CLOSURE-32 H1: add OCI tenant scoping to mdata.drivers SELECT policy (mirror canonical siblings + preserve driver self-access) + static regression guard wired in closure-checks.yml + resolution doc.",
+  "task": "Mark CLOSURE-32 H1 RESOLVED in the findings doc + fill resolution merge SHA after PR #599 merge.",
   "agent": "A",
   "allowed_files": [
-    "db/migrations/0404_drivers_rls_oci_scope.sql",
-    "scripts/verify-drivers-rls-scope.mjs",
+    "docs/audits/CLOSURE-32-FINDINGS-2026-06-05.md",
     "docs/audits/CLOSURE-32-H1-RESOLUTION.md",
-    ".github/workflows/closure-checks.yml",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
