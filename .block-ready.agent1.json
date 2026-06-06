@@ -1,18 +1,14 @@
 {
-  "block_id": "CANONICAL-DESIGN-REFERENCE-2026-06-06",
-  "branch": "docs/canonical-design-reference-2026-06-06",
-  "phase": "M2",
-  "task": "Commit canonical design reference docs (SAFETY-TRUST + QBO-PARITY) and May 27 inspection artifacts as immutable historical reference.",
+  "block_id": "PREVIEW-GOVERNANCE-RULE",
+  "branch": "docs/add-preview-governance",
+  "phase": "docs",
+  "task": "Add No-Design-Changes-Without-Preview governance rule to SAFETY-TRUST-RECOMMENDATIONS.md.",
   "agent": "A",
   "allowed_files": [
     "docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md",
-    "docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md",
-    "docs/inspection/2026-05-27-qbo-inspection/INSPECTION-AND-CONFIRMATIONS.txt",
-    "docs/inspection/2026-05-27-qbo-inspection/COA-PS-DESIGN.xlsx",
-    "docs/inspection/2026-05-27-qbo-inspection/INSPECTION-CONFIRM-v2.xlsx",
-    "docs/inspection/2026-05-27-qbo-inspection/README.md",
     ".block-ready.agent1.json"
   ],
+  "preview_provided": true,
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
