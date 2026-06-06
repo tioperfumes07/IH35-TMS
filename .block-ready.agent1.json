@@ -1,22 +1,15 @@
 {
-  "block_id": "CLOSURE-22-CI-HARDENING",
-  "branch": "closure/ci-hardening",
-  "phase": "CLOSURE",
-  "task": "CI/CD hardening — branch protection + required checks + deploy approvals",
+  "block_id": "PASS-8-GITIGNORE-ARTIFACTS",
+  "branch": "chore/gitignore-pass-8-test-artifacts",
+  "phase": "CHORE",
+  "task": "Exclude PASS-8 pre-prod smoke artifact paths from git to unblock block-ready C1 on unrelated work branches.",
   "agent": "A",
   "allowed_files": [
-    ".github/branch-protection-config.json",
-    ".github/CODEOWNERS",
-    ".github/workflows/required-checks.yml",
-    ".github/workflows/deploy-approval.yml",
-    "scripts/ci-apply-branch-protection.mjs",
-    "docs/runbooks/CI-CD-POLICY.md",
-    "scripts/verify-ci-policy-applied.mjs",
-    ".block-ready.json",
+    ".gitignore",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }
