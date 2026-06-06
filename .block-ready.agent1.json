@@ -1,16 +1,37 @@
 {
-  "block_id": "PREVIEW-GOVERNANCE-RULE",
-  "branch": "docs/add-preview-governance",
-  "phase": "docs",
-  "task": "Add No-Design-Changes-Without-Preview governance rule to SAFETY-TRUST-RECOMMENDATIONS.md.",
-  "agent": "A",
+  "block_id": "WAVE1-SETTLEMENT-SPEC",
+  "phase": "SETTLEMENT",
+  "task": "SPEC-COMMIT",
   "allowed_files": [
+    "docs/dispatch/GAP-BLOCKS-SETTLEMENTS-2026-06-06.md",
     "docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md",
     ".block-ready.agent1.json"
   ],
-  "preview_provided": true,
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": false,
+  "created_at": "2026-06-06T00:00:00Z",
+  "status": "ready",
+  "spec_file": "docs/dispatch/GAP-BLOCKS-SETTLEMENTS-2026-06-06.md",
+  "block_count": 6,
+  "description": "Wave 1 Settlement Blocks — Driver Settlement + Company Settlement Report",
+  "wave": 1,
+  "blocks": [
+    { "number": 1, "task": "AUDIT",                "model": "sonnet-4.6",  "type": "RBC" },
+    { "number": 2, "task": "BACKEND",               "model": "opus-4.8",   "type": "GO"  },
+    { "number": 3, "task": "FRONTEND",              "model": "sonnet-4.6",  "type": "GO"  },
+    { "number": 4, "task": "DEDUCTION-LINK",        "model": "opus-4.8",   "type": "GO"  },
+    { "number": 5, "task": "COMPANY-SETTLEMENT",    "model": "opus-4.8",   "type": "GO"  },
+    { "number": 6, "task": "COMPANY-SETTLEMENT-UI", "model": "sonnet-4.6",  "type": "GO"  }
+  ],
+  "preconditions": [
+    "docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md committed to main",
+    "docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md committed to main"
+  ],
+  "hard_stops": [
+    "existing settlement UI pages found → STOP and surface for preview workflow",
+    "Wave 1 DB tables missing → STOP and report to Jorge",
+    "any command failure → STOP and report exact error"
+  ]
 }
