@@ -115,10 +115,15 @@
            D1: warm p95 = 388ms (cold-start artifact accepted)
            D3: outbox enqueue verified; direct QBO probe deferred to pre-cutover per architectural pattern
 - Gate 15: ✅ PASS (Jorge GO received 2026-06-06)
-- Gate 16: Pass-2 ingest — BLOCKED by undocumented FK dependency
-           Error: `update or delete on table "units" violates foreign key constraint "pm_schedules_unit_id_fkey" on table "pm_schedules"`
-           Root cause: 24 test PM schedules in `maintenance.pm_schedules` reference the 4 TEST-TRUCK-* units (6 each: brake, coolant, dot_inspection, oil, tires, transmission — all created 2026-05-28, OCI=TRANSP seed data). Ingest spec only authorized DELETE on `mdata.units`; pm_schedules cleanup was not in spec. No data corruption — upsert phase never reached (rollback clean). Recommendation: extend ingest spec to DELETE maintenance.pm_schedules WHERE unit_id IN (TEST-TRUCK-* IDs) before mdata.units DELETE; needs Jorge authorization.
-- Gate 17: ✅ UNPAUSE GAP NOW — 2026-06-06 — Gate 15 GO received. Pass-2 ingest complete (Samsara unit upsert authorized; blocked on FK cleanup requiring spec extension — non-blocking for GAP dispatch). All CLOSURE-32 findings resolved (H1 PR #599, M2 PR #595/#598). PASS-8-RUNTIME PASS (D1 p95=388ms, D3 outbox verified). GAP queue unblocked. Begin dispatching 91 GAP blocks by wave starting with TIER 1 (observability, idempotency, security headers) per SAFETY-TRUST-RECOMMENDATIONS.md.
+- Gate 16: ⚠️ Pass-2 ingest DEFERRED to GAP-TEST-DATA-CLEANUP
+           Reason: incomplete FK chain analysis surfaced in two halts
+             Halt 1: pm_schedules FK on mdata.units (spec extended to cover; halted before any DELETE)
+             Halt 2: pm_auto_wo_log (1,344 rows, 336/unit) has NO ACTION FKs to both pm_schedules
+                     AND mdata.units — outside authorized delete scope; active 5-min cron still writing
+           Operational impact: NONE
+           Production state: stable, no cleanup blocking GAP work
+           See: docs/audits/PASS-2-INGEST-DEFERRED-2026-06-06.md
+- Gate 17: ✅ UNPAUSED (unchanged)
 
 **Explicit note:** Do NOT auto-dispatch CLOSURE-32 until expanded TIER-1 spec is prepared and reviewed by Jorge.
 

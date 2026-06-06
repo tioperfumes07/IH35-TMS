@@ -10,6 +10,7 @@
     "docs/runbooks/pre-cutover-checklist.md",
     "docs/trackers/closure-v2.md",
     "docs/audits/PASS-8-RESULTS-2026-06-06.md",
+    "docs/audits/PASS-2-INGEST-DEFERRED-2026-06-06.md",
     "scripts/pass-8-runtime-healthz-probe.mjs",
     "scripts/pass-8-runtime-smoke.mjs",
     ".block-ready.agent1.json"
