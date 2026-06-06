@@ -378,6 +378,14 @@ If sum mismatch > $1 → warning prompt but allow override (with note required).
 ## Block 5 of 6 — PHASE SETTLEMENT / TASK COMPANY-SETTLEMENT — Per-Load Rollup Backend
 **MERGE LINK:** TBD
 **Model:** Opus 4.8 thinking-high (first-of-kind multi-table aggregation, financial accuracy critical)
+
+**SEAM NOTE (per DEDUPE-AUDIT-2026-06-06.md — S5-A):**
+This block is the canonical per-load P&L engine. GAP-73 (MarginPill frontend)
+calls this block's `/api/loads/:loadId/company-settlement` endpoint instead of
+building a separate `calculator.service.ts`. Before dispatching GAP-73, update
+its spec to remove the duplicate backend scope and wire the frontend component
+to this endpoint. Do NOT build a separate calculator service in GAP-73.
+
 **Type:** GO (backend + service layer)
 **Duration:** ~1.5 days
 **Precondition:** Blocks 2-4 deployed; loads table has `load_id` foreign keys on invoices, driver_pay, expenses, fuel_expenses
