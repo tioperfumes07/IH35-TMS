@@ -1,16 +1,18 @@
 {
-  "block_id": "CLOSURE-32-SPEC-AMENDMENTS",
-  "branch": "spec/closure-32-amendments",
-  "phase": "CLOSURE",
-  "task": "Apply Jorge spec amendments to CLOSURE-32 EXPANDED + PASS-8-RUNTIME tracker specs (docs only, no code, no dispatch, no runtime).",
+  "block_id": "CLOSURE-32-M2-LUCIA-BYPASS-GUARD",
+  "branch": "security/m2-lucia-bypass-guard",
+  "phase": "M2",
+  "task": "Insert assertCompanyMembership before luciaBypass usage in drift-dashboard and qbo-customers-status routes; add focused RLS guard tests.",
   "agent": "A",
   "allowed_files": [
-    "docs/trackers/CLOSURE-32-EXPANDED-TIER1-DISPATCH.md",
-    "docs/trackers/PASS-8-RUNTIME-TIER1-DISPATCH.md",
+    "apps/backend/src/qbo-sync/drift-dashboard.routes.ts",
+    "apps/backend/src/sync/qbo-customers-status.routes.ts",
+    "apps/backend/src/qbo-sync/__tests__/drift-dashboard-rls.test.ts",
+    "apps/backend/src/sync/__tests__/qbo-customers-status-rls.test.ts",
     ".block-ready.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }

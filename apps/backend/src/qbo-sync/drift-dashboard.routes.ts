@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withLuciaBypass } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { fetchChartOfAccountsSyncStatus } from "./chart-of-accounts-reconciler.js";
 import { fetchItemsSyncStatus } from "./items-reconciler.js";
 import type { DriftEntityType } from "./drift-detector.js";
@@ -106,6 +107,7 @@ export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) 
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const operatingCompanyId = parsed.data.operating_company_id;
+    await assertCompanyMembership(authUser.uuid, operatingCompanyId);
     const [coa, items, customers, vendors] = await Promise.all([
       fetchChartOfAccountsSyncStatus(operatingCompanyId),
       fetchItemsSyncStatus(operatingCompanyId),
@@ -205,6 +207,7 @@ export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) 
     const body = resolveBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
+    await assertCompanyMembership(authUser.uuid, body.data.operating_company_id);
     const updated = await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
       const res = await client.query(
