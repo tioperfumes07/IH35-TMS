@@ -1,11 +1,13 @@
 {
-  "block_id": "PASS-8-GITIGNORE-ARTIFACTS",
-  "branch": "chore/gitignore-pass-8-test-artifacts",
+  "block_id": "TRACK-ORPHAN-CLUSTER-RECONCILED",
+  "branch": "chore/track-orphan-cluster-fully-reconciled",
   "phase": "CHORE",
-  "task": "Exclude PASS-8 pre-prod smoke artifact paths from git to unblock block-ready C1 on unrelated work branches.",
+  "task": "Document full migration orphan cluster {360,378,379,380} reconciliation, rollback SQL artifacts, and the fresh-DB rebuild audit task.",
   "agent": "A",
   "allowed_files": [
-    ".gitignore",
+    "docs/trackers/closure-v2.md",
+    "docs/audits/CLOSURE-32-0360-ledger-rollback-2026-06-05.sql",
+    "docs/audits/CLOSURE-32-0378-380-ledger-rollback-2026-06-05.sql",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
