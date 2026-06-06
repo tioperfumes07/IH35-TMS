@@ -202,6 +202,12 @@ Closed periods → READ-ONLY at DB level via trigger. 7 financial tables covered
 ## BLOCK 7 — GAP-RLS-STANDARDIZE-128
 **Model:** Sonnet 4.6 | **Days:** 1.0 | **Wave:** B | **Depends on:** Block 1 | **Preview:** No
 
+**HOLD: CLOSURE-32 RE-RUN REQUIRED FIRST (per DEDUPE-AUDIT-2026-06-06.md — T7-A)**
+The "128 tables" count in this spec may have changed since the initial CLOSURE-32 audit.
+This block MUST NOT dispatch until a fresh CLOSURE-32 targeted re-run confirms the
+current count of ::text cast tables. Add this to the Wave B dispatch prerequisites:
+Dependency: CLOSURE-32 re-run → confirms RLS cast table count → unblocks T7.
+
 ### Goal
 Migrate 128 RLS policies from `::text` cast to canonical `NULLIF(...)::uuid` pattern.
 
