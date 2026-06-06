@@ -1,0 +1,28 @@
+name: Migration Rename/Edit Guard
+
+on:
+  pull_request:
+    paths:
+      - "db/migrations/**"
+      - ".applied-migrations.json"
+      - "db/migrations/.ledger.json"
+
+jobs:
+  migration-guard:
+    name: Reject renamed or edited applied migrations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check for changes to applied migrations
+        run: node scripts/ci-migration-guard.mjs
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}

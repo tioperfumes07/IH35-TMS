@@ -9,6 +9,47 @@
 
 CHANGED_FILES=$(git diff --cached --name-only)
 
+# Migration rename/edit guard (HARD BLOCK — GAP-MIGRATION-RENAME-CI-GUARD)
+#
+# Rejects commits that rename or edit content of already-applied migrations.
+# Applied migrations are tracked in .applied-migrations.json.
+# CI (migration-guard.yml) is authoritative; this hook provides earlier feedback.
+STAGED_MIGRATIONS=$(echo "$CHANGED_FILES" | grep -E "^db/migrations/[0-9].*\.sql$" || true)
+if [ -n "$STAGED_MIGRATIONS" ] && [ -f ".applied-migrations.json" ] && command -v node >/dev/null 2>&1; then
+  VIOLATIONS=$(node -e "
+    const fs = require('fs');
+    const path = require('path');
+    const crypto = require('crypto');
+    const raw = JSON.parse(fs.readFileSync('.applied-migrations.json', 'utf8'));
+    const entries = Array.isArray(raw) ? raw : (raw.migrations || raw.entries || []);
+    const applied = new Map(entries.map(e => [e.filename || e.name, e.checksum || e.sha256 || null]));
+    const staged = \`$STAGED_MIGRATIONS\`.trim().split('\n').filter(Boolean).map(f => path.basename(f));
+    const violations = [];
+    for (const file of staged) {
+      if (!applied.has(file)) continue;
+      const diskPath = path.join('db/migrations', file);
+      if (!fs.existsSync(diskPath)) { violations.push('MISSING: ' + file); continue; }
+      const expected = applied.get(file);
+      if (expected) {
+        const actual = crypto.createHash('sha256').update(fs.readFileSync(diskPath, 'utf8'), 'utf8').digest('hex');
+        if (actual !== expected) violations.push('CONTENT EDITED: ' + file);
+      } else {
+        violations.push('STAGED APPLIED MIGRATION: ' + file);
+      }
+    }
+    if (violations.length > 0) { console.error(violations.join('\n')); process.exit(1); }
+  " 2>&1)
+  MIG_GUARD_EXIT=$?
+  if [ "$MIG_GUARD_EXIT" -ne 0 ]; then
+    echo ""
+    echo "COMMIT BLOCKED by migration-rename-ci-guard:"
+    echo "$VIOLATIONS"
+    echo ""
+    echo "Applied migrations are immutable. Create a new migration file instead."
+    exit 1
+  fi
+fi
+
 if echo "$CHANGED_FILES" | grep -qE "apps/frontend/src/pages/(safety|maintenance|dispatch|drivers|customers|banking|fuel|accounting|home|docs|lists|reports|form425c|vendors)/.*\.(tsx|ts)$"; then
   if ! echo "$CHANGED_FILES" | grep -q "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"; then
     echo ""
