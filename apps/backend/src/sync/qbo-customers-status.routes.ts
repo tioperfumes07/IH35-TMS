@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -83,6 +84,7 @@ export async function registerQboCustomersPushStatusRoutes(app: FastifyInstance)
 
     const parsed = querySchema.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
 
     const status = await fetchQboCustomersPushStatus(parsed.data.operating_company_id);
     return reply.send(status);
