@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/node";
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import os from "node:os";
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import { buildSentryBeforeBreadcrumb, buildSentryBeforeSend } from "./sentry-scrub.js";
 
 export function initBackendSentry(): void {
   const dsn = process.env.SENTRY_DSN?.trim();
@@ -17,6 +18,8 @@ export function initBackendSentry(): void {
     tracesSampleRate: 0.1,
     profilesSampleRate: 0.1,
     sampleRate: 1.0,
+    beforeSend: buildSentryBeforeSend,
+    beforeBreadcrumb: buildSentryBeforeBreadcrumb,
   });
 }
 

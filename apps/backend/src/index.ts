@@ -304,7 +304,9 @@ import { assertMigrationDriftBootGuard } from "./lib/migration-status.js";
 import { attachHttpErrorMonitor } from "./lib/error-monitor-hooks.js";
 import { pool, withLuciaBypass } from "./auth/db.js";
 import { registerUrlCanonicalizeMiddleware } from "./middleware/url-canonicalize.js";
+import { registerRequestIdMiddleware } from "./middleware/request-id.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
+import { registerAdminObservabilityRoutes } from "./admin/observability.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
 import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js";
 import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
@@ -398,6 +400,7 @@ async function main() {
   }
 
   registerSentryFastifyErrorHandler(app);
+  await registerRequestIdMiddleware(app);
   await registerUrlCanonicalizeMiddleware(app);
   await registerHealthRoutes(app);
 
@@ -490,6 +493,7 @@ async function main() {
   await registerHealthDeepRoutes(app);
   await registerAdminJobsRoutes(app);
   await registerMigrationStatusRoutes(app);
+  await registerAdminObservabilityRoutes(app);
   await registerDataImportAdminRoutes(app);
   await registerPhoneAuthRoutes(app);
   await registerEmailAuthRoutes(app);

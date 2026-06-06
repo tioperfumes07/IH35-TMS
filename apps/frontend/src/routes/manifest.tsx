@@ -211,6 +211,7 @@ import { IntegrityAdminPage } from "../pages/admin/IntegrityAdminPage";
 import { DataImportPage } from "../pages/admin/DataImportPage";
 import { CarrierBootstrapPage } from "../pages/admin/CarrierBootstrap";
 import { LaunchTogglesPage } from "../pages/admin/LaunchToggles";
+import { ObservabilityPage } from "../pages/admin/ObservabilityPage";
 import { AccountRoleBindingsListPage } from "../pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "../pages/lists/accounting/ChartOfAccountsListPage";
 import { ChartOfAccountsSeedsListPage } from "../pages/lists/accounting/ChartOfAccountsSeedsListPage";
@@ -2375,6 +2376,14 @@ export const ROUTES = React.Children.toArray(
             <OwnerOnlyRoute>
               <ErrorMonitorPage />
             </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/admin/observability"
+          element={
+            <OwnerAdminRoute>
+              <ObservabilityPage />
+            </OwnerAdminRoute>
           }
         />
         <Route
