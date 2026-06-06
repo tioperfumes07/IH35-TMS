@@ -1,18 +1,17 @@
 {
-  "block_id": "CLOSURE-32-M2-LUCIA-BYPASS-GUARD",
-  "branch": "security/m2-lucia-bypass-guard",
+  "block_id": "M2-CLOSURE-32-LUCIA-BYPASS-GUARD-PATTERN",
+  "branch": "security/m2-lucia-bypass-guard-pattern",
   "phase": "M2",
-  "task": "Insert assertCompanyMembership before luciaBypass usage in drift-dashboard and qbo-customers-status routes; add focused RLS guard tests.",
+  "task": "Permanent luciaBypass guard-pattern verification with CI enforcement.",
   "agent": "A",
   "allowed_files": [
-    "apps/backend/src/qbo-sync/drift-dashboard.routes.ts",
-    "apps/backend/src/sync/qbo-customers-status.routes.ts",
-    "apps/backend/src/qbo-sync/__tests__/drift-dashboard-rls.test.ts",
-    "apps/backend/src/sync/__tests__/qbo-customers-status-rls.test.ts",
+    "scripts/verify-lucia-bypass-guard-pattern.mjs",
+    ".github/workflows/closure-checks.yml",
+    "docs/specs/lucia-bypass-guard-pattern.md",
     ".block-ready.json"
   ],
   "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": true
 }

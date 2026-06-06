@@ -156,3 +156,5 @@ No prod schema was modified — only the orphan ledger rows were deleted. The 24
 - `docs/audits/CLOSURE-32-0378-380-ledger-rollback-2026-06-05.sql`
 
 **Follow-up audit task (fresh-DB rebuild):** schedule a clean-DB replay of `db/migrations/*` (e.g., the CI ephemeral Postgres path used by `security-checks`) to confirm the canonical renamed files apply cleanly from empty and that no further pre-rename artifacts remain. Track under post-GAP-unpause cleanup. Any **future** orphan requires fresh explicit authorization to delete ledger rows (no auto-extension of the one-time lift).
+
+healthz SHA reporting field needs diagnosis — does not match Render-deployed commit. Non-blocking. Post-GAP-unpause cleanup.
