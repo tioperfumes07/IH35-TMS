@@ -1,12 +1,11 @@
 {
-  "block_id": "CLOSURE-32-H1-RESOLVED-DOC",
-  "branch": "chore/closure-32-h1-resolved",
+  "block_id": "SAFETY-TRUST-DOC-INITIAL",
+  "branch": "docs/safety-trust-recommendations",
   "phase": "M2",
-  "task": "Mark CLOSURE-32 H1 RESOLVED in the findings doc + fill resolution merge SHA after PR #599 merge.",
+  "task": "Commit canonical SAFETY-TRUST-RECOMMENDATIONS.md as authoritative reference for trust-layer work.",
   "agent": "A",
   "allowed_files": [
-    "docs/audits/CLOSURE-32-FINDINGS-2026-06-05.md",
-    "docs/audits/CLOSURE-32-H1-RESOLUTION.md",
+    "docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md",
     ".block-ready.agent1.json"
   ],
   "extra_gates": [],
