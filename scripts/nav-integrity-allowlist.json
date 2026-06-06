@@ -29,6 +29,10 @@
       "reason": "Owner flyout error monitor"
     },
     {
+      "path": "/admin/observability",
+      "reason": "Owner/Admin observability status page (Sentry + healthz links)"
+    },
+    {
       "path": "/admin/activity",
       "reason": "Owner/SuperAdmin activity log"
     },
