@@ -1,0 +1,357 @@
+================================================================================
+IH35-TMS — INSPECTION + CONFIRMATION DOC FOR JORGE
+Created 2026-05-27. Fill in the [CONFIRM: ...] sections and paste back to Claude.
+================================================================================
+
+HOW TO USE THIS DOC
+-------------------
+- Sections P1-P5 below are things Claude needs you to verify, decide, or list.
+- Look for [CONFIRM: ...] markers. Either replace the marker with your answer
+  inline, or write the answer below the marker.
+- The Visual Defect Log at the bottom is a RUNNING LIST. Add new entries any
+  time you spot something. Don't fix them as you find them — log them.
+- Paste the whole doc back to Claude when you're ready. Sections you didn't
+  touch will be flagged and re-asked.
+
+
+================================================================================
+P1 — VERIFICATIONS (quick checks, ~5 min each)
+================================================================================
+
+VER-1   CPA REPLY STATUS
+        Packet sent to CPA + bookkeeper on 2026-05-20 via WhatsApp (6 files).
+        Has either of them replied since then?
+
+        [CONFIRM: REPLIED YES / REPLIED NO / DON'T KNOW — CHECK WHATSAPP]
+        If REPLIED YES, paste the gist of what they said:
+        ___
+
+
+VER-2   FLEET VEHICLES IN DATABASE
+        PR #187 (DS-REMEDIATE-17) shipped the engine to ingest Samsara vehicles
+        into mdata.units. We need to verify it actually ingested T120-T177
+        tractors + Wabash dry vans + Utility reefers.
+
+        EASIEST CHECK: Open https://app.ih35dispatch.com/maint
+        Look at the "Units" or "Vehicles" table.
+
+        [CONFIRM: How many vehicles do you see in maintenance?]   ___
+        [CONFIRM: Is T177 (last tractor) visible in the list?]   YES / NO
+        [CONFIRM: Are Wabash van trailers visible?]              YES / NO / NOT SURE
+        [CONFIRM: Are Utility reefer trailers visible?]          YES / NO / NOT SURE
+
+        If counts look wrong or trailers are missing, that's a data-import gap
+        and goes on the work list.
+
+
+VER-3   DRIVERS IN DATABASE
+        Open https://app.ih35dispatch.com/drivers
+
+        [CONFIRM: How many drivers do you see?]   ___
+        [CONFIRM: Are all your current drivers present?]   YES / NO
+        If NO, list the missing names:
+        ___
+
+
+VER-4   WO PDF GENERATION (M-6)
+        Open https://app.ih35dispatch.com/maint
+        Open or create a Work Order.
+        Look for a "Download PDF" or "Print" or "Generate Receipt" button.
+
+        [CONFIRM: Does the WO have a PDF download button?]   YES / NO
+        If YES: click it and confirm a PDF actually generates.
+        [CONFIRM: PDF generates correctly?]                  YES / NO / N/A
+
+
+VER-5   RECEIPT UPLOAD ON WORK ORDERS (M-7)
+        Same WO screen as VER-4.
+        Look for a "Upload Receipt" or "Attach File" or paperclip button.
+
+        [CONFIRM: Can you attach a receipt to a WO?]   YES / NO
+
+
+VER-6   QBO SYNC STATUS
+        Open https://app.ih35dispatch.com (Office HOME)
+        Look at the top bar status indicators.
+
+        [CONFIRM: QuickBooks indicator]   GREEN / YELLOW / RED — paste exact text:  ___
+        [CONFIRM: Samsara indicator]      GREEN / YELLOW / RED — paste exact text:  ___
+        [CONFIRM: Relay indicator]        GREEN / YELLOW / RED — paste exact text:  ___
+
+
+================================================================================
+P2 — TAXONOMY CONFIRMATIONS (for VC-1 dispatch)
+================================================================================
+
+DEC-1   VENDOR SUBTYPE LIST — MAINTENANCE (9 values proposed)
+        Approve the list, or add/remove. Strike through anything you don't
+        need; add anything you do.
+
+        [ ] shop_repair         (mechanic shops)
+        [ ] tire                (tire shops, retread)
+        [ ] parts_distributor   (NAPA, Carquest, FleetPride, etc.)
+        [ ] auto_glass          (windshield, glass repair)
+        [ ] oil_lube            (Arguindegui, oil change shops, lube)
+        [ ] dealership          (Freightliner, Peterbilt, etc.)
+        [ ] body_shop           (collision repair, paint)
+        [ ] def_coolant         (DEF supplier, coolant)
+        [ ] towing_recovery     (wreckers, recovery)
+
+        [CONFIRM: ADD or REMOVE from the list above?]
+        Add:    ___
+        Remove: ___
+
+
+DEC-2   VENDOR SUBTYPE LIST — OPERATING (15 values proposed)
+
+        [ ] fuel                (Loves, Pilot, fuel cards)
+        [ ] insurance           (truck, cargo, GL, workers comp)
+        [ ] utility             (electric, water, gas, trash)
+        [ ] communication       (cell, internet, fleet comms)
+        [ ] tax_authority       (IRS, state, IFTA, county)
+        [ ] legal_professional  (attorneys, CPAs, consultants)
+        [ ] payroll_service     (QBO Payroll, Gusto, ADP)
+        [ ] software_saas       (TMS subs, accounting, dispatch software)
+        [ ] office_supply       (paper, ink, supplies)
+        [ ] bank_financial      (banks, financial institutions)
+        [ ] factoring           (Faro, factoring companies)
+        [ ] property_rent       (terminal rent, office rent)
+        [ ] tolls               (Texas DOT, Mexico tolls)
+        [ ] permits_licensing   (DOT permits, oversize, hazmat)
+        [ ] other_operating     (catch-all)
+
+        [CONFIRM: ADD or REMOVE from the list above?]
+        Add:    ___
+        Remove: ___
+
+
+DEC-3   CUSTOMER TYPE LIST (7 values proposed)
+
+        [ ] direct_shipper          (manufacturer/retailer placing direct loads)
+        [ ] broker                  (3PL, freight broker, dispatch agent)
+        [ ] third_party_logistics   (TIA-style 3PL)
+        [ ] government              (federal, state, military shipper)
+        [ ] retailer                (big-box destination)
+        [ ] manufacturer            (production destination)
+        [ ] other_customer          (catch-all)
+
+        [CONFIRM: ADD or REMOVE from the list above?]
+        Add:    ___
+        Remove: ___
+
+
+DEC-4   DEFAULT EXPENSE CATEGORY NAMES (24 mappings)
+        For each vendor subtype, when an expense posts from a vendor of that
+        subtype, the suggested expense category will be one of these names.
+        For auto-derivation to work cleanly, these names need to MATCH your
+        QuickBooks Chart of Accounts EXACTLY (or close enough for fuzzy match).
+
+        Open QuickBooks Chart of Accounts (Lists > Chart of Accounts).
+        For each row below, either confirm the name matches a real QBO account,
+        or replace with the EXACT name your QBO uses.
+
+        shop_repair         -> [CONFIRM: Maintenance & Repair                      / replace: ___ ]
+        tire                -> [CONFIRM: Tire Expense                              / replace: ___ ]
+        parts_distributor   -> [CONFIRM: Parts Expense                             / replace: ___ ]
+        auto_glass          -> [CONFIRM: Maintenance & Repair                      / replace: ___ ]
+        oil_lube            -> [CONFIRM: Maintenance & Repair                      / replace: ___ ]
+        dealership          -> [CONFIRM: Maintenance & Repair                      / replace: ___ ]
+        body_shop           -> [CONFIRM: Maintenance & Repair                      / replace: ___ ]
+        def_coolant         -> [CONFIRM: DEF & Fluids                              / replace: ___ ]
+        towing_recovery     -> [CONFIRM: Towing & Recovery                         / replace: ___ ]
+        fuel                -> [CONFIRM: Fuel Expense                              / replace: ___ ]
+        insurance           -> [CONFIRM: Insurance Expense                         / replace: ___ ]
+        utility             -> [CONFIRM: Utilities                                 / replace: ___ ]
+        communication       -> [CONFIRM: Communications                            / replace: ___ ]
+        tax_authority       -> [CONFIRM: Taxes & Licenses                          / replace: ___ ]
+        legal_professional  -> [CONFIRM: Professional Services                     / replace: ___ ]
+        payroll_service     -> [CONFIRM: Payroll Service Fees                      / replace: ___ ]
+        software_saas       -> [CONFIRM: Software Subscriptions                    / replace: ___ ]
+        office_supply       -> [CONFIRM: Office Supplies                           / replace: ___ ]
+        bank_financial      -> [CONFIRM: Bank Fees                                 / replace: ___ ]
+        factoring           -> [CONFIRM: Factoring Fees                            / replace: ___ ]
+        property_rent       -> [CONFIRM: Rent                                      / replace: ___ ]
+        tolls               -> [CONFIRM: Tolls                                     / replace: ___ ]
+        permits_licensing   -> [CONFIRM: Permits & Licenses                        / replace: ___ ]
+        other_operating     -> [CONFIRM: Uncategorized                             / replace: ___ ]
+
+        QUICK OPTION: If you want me to pull these directly from QBO via the
+        Intuit connector instead of typing them out, just write
+        [CONFIRM: PULL FROM QBO] at the top of DEC-4 and skip the rest of it.
+
+
+================================================================================
+P3 — MAINTENANCE CONTENT DECISIONS
+================================================================================
+
+DEC-5   PARTS CATALOG SEED SOURCE
+        How do you want to populate the parts master catalog?
+
+        [CONFIRM: ONE of:
+          A) Pull from QBO items list (whatever's already there)
+          B) Upload a CSV I'll provide
+          C) Manual entry, one part at a time
+          D) Start empty, add as we use them
+        ]
+
+
+DEC-6   PM SCHEDULE BASELINE
+        At 12,000 miles/month per truck, here are typical PM intervals.
+        Confirm or override each.
+
+        Engine oil change             -> [CONFIRM: every 30,000 miles OR 90 days, whichever first / OVERRIDE: ___ ]
+        Oil/lube/filter (LOF)         -> [CONFIRM: every 15,000 miles                              / OVERRIDE: ___ ]
+        DOT annual inspection         -> [CONFIRM: every 365 days                                  / OVERRIDE: ___ ]
+        Brake inspection              -> [CONFIRM: every 25,000 miles                              / OVERRIDE: ___ ]
+        Tire rotation                 -> [CONFIRM: every 50,000 miles                              / OVERRIDE: ___ ]
+        Transmission service          -> [CONFIRM: every 100,000 miles                             / OVERRIDE: ___ ]
+        DEF system service            -> [CONFIRM: every 200,000 miles OR per fault code          / OVERRIDE: ___ ]
+        Alignment                     -> [CONFIRM: every 50,000 miles OR on tire replacement      / OVERRIDE: ___ ]
+        Trailer brake/tire (Wabash)   -> [CONFIRM: every 50,000 miles                              / OVERRIDE: ___ ]
+        Trailer reefer unit (Utility) -> [CONFIRM: every 250 reefer-hours                          / OVERRIDE: ___ ]
+
+
+DEC-7   SPECIFIC VENDORS WITH ATYPICAL CLASSIFICATION
+        Most vendors will fall cleanly into one of the subtypes from DEC-1/DEC-2.
+        Are there any vendors you know about that are weird and need a special
+        note? Examples:
+
+        - "Carlos A. Brosig" — is this a person you pay for shop labor (shop_repair)
+          or something else?
+        - "City Of Laredo Tax Department" — clearly tax_authority
+        - "Comdata Solutions" — is this fuel card service (fuel) or payment
+          processor (bank_financial)?
+        - "Arguindegui Oil Company" — oil_lube
+        - "Arnold Oil Company" — oil_lube
+        - "Alvaro Paramo / Protec Auto Glass" — auto_glass
+
+        [CONFIRM: List any vendors that need special handling:]
+        ___
+
+
+DEC-8   CUSTOMERS WITH ATYPICAL CLASSIFICATION
+        [CONFIRM: List any customers that need special handling:]
+        ___
+
+
+================================================================================
+P4 — PRIORITIES + SEQUENCING CONFIRMATIONS
+================================================================================
+
+DEC-9   MAINTENANCE BEFORE SAFETY — CONFIRM?
+        Claude proposed: After Phase 7 closes (Blocks 08/09/10), run
+        Maintenance go-live wave first, Safety second.
+
+        Reasons:
+        - Maintenance engines mostly shipped (PRs #205, #221, #229, #266)
+        - Most remaining maintenance work is content seed (parts, PM schedules,
+          vendor classification — which you do in parallel while Cursor codes)
+        - Safety needs heavier dev work (DQ file, accident reports, drug pool,
+          roadside inspections) — workflows mostly net-new
+        - HOS safety workflow blocked on Block 10 P7-ELD-FOUNDATION anyway
+
+        [CONFIRM: MAINTENANCE FIRST / SAFETY FIRST / BOTH IN PARALLEL]
+
+
+DEC-10  VC-WAVE TIMING
+        VC-Wave (vendor/customer categorization + UI redesign + notes backfill)
+        is queued to run AFTER Phase 7 closes (Blocks 08/09/10).
+
+        [CONFIRM: Run VC-Wave AFTER Phase 7 / Run VC-Wave NOW in parallel using agent-2 worktree]
+        (Running NOW in agent-2 is technically safe because VC touches different
+        files than Blocks 08/09/10. Adds zero risk; saves ~6 hours wall-clock.)
+
+
+DEC-11  POLISH WAVE — defer all P2/P3 visual fixes to a single later PR?
+        Claude recommends: don't fix one-off cosmetic issues now. Log them in
+        the Visual Defect Log below. Then ship one focused Polish PR after MVP
+        go-live that fixes ALL of them at once.
+
+        [CONFIRM: AGREE — defer cosmetics / DISAGREE — fix as we find them]
+
+
+================================================================================
+P5 — VISUAL DEFECT LOG (running list, add as you find issues)
+================================================================================
+
+INSTRUCTIONS: Every time you spot something off, add a row. Don't fix it.
+At the end of each block ship, Claude will triage the new entries:
+- Severity P0 = workflow blocker or data integrity → fix in next available block
+- Severity P1 = data-display ambiguity → fix in Polish Wave
+- Severity P2 = pure cosmetic → fix in Polish Wave or DEFER post-launch
+
+FORMAT per entry:
+  PAGE_URL | ELEMENT | OBSERVED | EXPECTED | YOUR_SEVERITY_GUESS
+
+EXISTING ENTRIES (already known, do NOT re-add):
+  /vendors                       | Notes field           | "Projected from qbo_archive.entities_snapshot..." | blank or real notes | P0 (VC-4 will fix)
+  /customers                     | Notes field           | Same leak                                          | same                  | P0 (VC-4 will fix)
+  /vendors/<id> Edit             | Quality rating row    | 3 elements overlap (— + Medium badge + Medium input) | One control, no overlap | P1 (VC-3 will fix)
+  /vendors/<id> Edit             | Accounting category   | 5 elements crammed (label + — + input + Lock + Save) | Spaced row             | P1 (VC-3 will fix)
+  /vendors/<id> Edit             | Telephone, Address, General email, etc. | Empty rows, no inputs visible | All inputs render even if empty | P0 (VC-3 will fix)
+  /vendors/<id> Edit             | All value columns     | Far-right aligned with dead space             | Inputs adjacent to labels | P1 (VC-3 will fix)
+  /vendors and /customers lists  | (entire list)         | No multi-select checkboxes                    | Bulk select + categorize | P0 (VC-2 will fix)
+  HOME                           | Work orders by status | "undefined" appears in legend                 | Filter null or label as "Unknown" | P0 (Block 08 will fix)
+  /maint                         | Sync status banner    | Duplicate banner (top + below DTC Auto WOs)   | One banner only          | P1 (Block 08 will fix)
+  /dispatch                      | Customer search       | "Abe" matches "LinQ Transport Inc"            | Show match reason or tighten ranking | P1 (Block 08 will fix)
+
+NEW ENTRIES (add yours below):
+1.
+
+2.
+
+3.
+
+4.
+
+5.
+
+6.
+
+7.
+
+8.
+
+9.
+
+10.
+
+
+================================================================================
+P6 — TRIAGE RUBRIC (for your own decision-making)
+================================================================================
+
+When you find a visual issue, run this in your head:
+
+  Q1: Does this stop me from completing a task right now?
+      YES -> P0, log + ping Claude immediately
+      NO  -> continue
+
+  Q2: Does this show "undefined", "null", "[object Object]", or blank where
+      data clearly should appear?
+      YES -> P0, log + ping Claude immediately
+      NO  -> continue
+
+  Q3: Does this make me distrust a number I'm looking at? (e.g., two screens
+      show different counts, a balance looks wrong, a date format is missing)
+      YES -> P1, log but don't ping (Polish Wave handles)
+      NO  -> continue
+
+  Q4: Is this just ugly/awkward/misaligned but the page works?
+      YES -> P2, log but don't ping (Polish Wave handles)
+
+The P0 rule: stop, log, message Claude with the URL + what you saw + what you
+expected. Most things are P1 or P2 — log only.
+
+
+================================================================================
+END OF INSPECTION DOC
+================================================================================
+
+When you're done filling this in (or as much as you want to do at this sitting),
+paste the whole thing back into chat. Claude will:
+1. Lock the taxonomy + expense-category names into VC-1 dispatch
+2. Add fleet + maintenance content decisions to the master tracker
+3. Triage any new P5 defect log entries
+4. Adjust block sequencing per your DEC-9/DEC-10 answers
+5. Update Claude's memory so this doesn't have to be re-asked
