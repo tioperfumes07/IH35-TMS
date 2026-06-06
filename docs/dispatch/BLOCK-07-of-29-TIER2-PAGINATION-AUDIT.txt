@@ -1,0 +1,65 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 7 of 29 in the remaining-tiers series.
+# Tier: 2
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 7 of 29 — PHASE TRUST-HARDEN / TASK PAGINATION-AUDIT — Pagination Audit
+
+**Tier:** 2 | **Model:** Sonnet 4.6 medium | **Days:** 1.0
+**Depends on:** none | **Preview required:** No
+
+### Goal
+Every list endpoint must paginate. Audit current state, fix endpoints returning unbounded results. At 300-truck scale, an unbounded `/api/loads` could return 100K rows.
+
+### Scope
+**Phase 1 (audit, read-only):** enumerate every GET endpoint returning a list
+- For each: does it paginate? What's the max page size?
+- Output: `docs/audits/PAGINATION-AUDIT-2026-06-XX.md`
+
+**Phase 2 (fixes):** for each unpaginated endpoint:
+- Add `?page=1&pageSize=50` (max 250)
+- Default sort
+- Return `{ data, total, page, pageSize, hasMore }`
+- CI check rejects new GET-list endpoints lacking pagination
+
+### Acceptance criteria
+- Audit doc lists every list endpoint
+- All unpaginated endpoints fixed
+- CI guard rejects new violators
+- Test: hammer biggest list endpoint at 300-truck-scale-equivalent data → response < 500ms
+- 4-gate done
+
+### Out of scope
+- Cursor-based pagination (page-based is sufficient for current scale)
+- GraphQL connections (REST only)
+
+### Hard stops
+- Frontend assumes unpaginated response → STOP, coordinate fix together
+
+---
+

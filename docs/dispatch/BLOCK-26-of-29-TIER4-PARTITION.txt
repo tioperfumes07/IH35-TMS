@@ -1,0 +1,80 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 26 of 29 in the remaining-tiers series.
+# Tier: 4
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 26 of 29 — PHASE SCALE / TASK PARTITION — Partition Hot Tables
+
+**Tier:** 4 | **Model:** Opus 4.8 thinking-high | **Days:** 2.0
+**Depends on:** Block 8 (load-test-baseline) | **Preview required:** No
+
+### Goal
+At 300-truck scale, hot tables grow large (audit_log, banking_transactions, fuel_card_transactions, samsara_events). Partition by date for performance + retention.
+
+### Scope
+
+**Candidates:**
+- audit_log (write-heavy)
+- banking_transactions
+- fuel_card_transactions
+- integrations.samsara_events (if exists, telemetry stream)
+- finance.depreciation_schedule (less hot but growing)
+
+**Pattern (PostgreSQL declarative partitioning):**
+```sql
+-- Convert audit_log to partitioned
+CREATE TABLE audit_log_new (...) PARTITION BY RANGE (created_at);
+
+-- Monthly partitions
+CREATE TABLE audit_log_2026_01 PARTITION OF audit_log_new 
+  FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+-- ... etc
+
+-- Migrate data, swap tables, drop old
+```
+
+**Maintenance cron:**
+- Monthly: create next month's partitions
+- Annually: archive partitions older than retention (e.g., 7 years for audit_log per IRS)
+
+### Acceptance criteria
+- Hot tables identified by load test (Block 8) confirmed as candidates
+- Partitioning applied with zero downtime (online migration)
+- Query plans use partition pruning
+- Maintenance cron works
+- 4-gate done
+
+### Out of scope
+- Cross-partition foreign keys (avoid them)
+- Hash partitioning (range by date is best fit)
+
+### Hard stops
+- Migration requires downtime > 5 min → STOP, replan with shadow tables
+
+---
+

@@ -1,0 +1,86 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 17 of 29 in the remaining-tiers series.
+# Tier: 2.5
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 17 of 29 — PHASE CROSS-BORDER / TASK W2-1099 — W-2 vs 1099 Driver Distinction
+
+**Tier:** 2.5 | **Model:** Sonnet 4.6 medium | **Days:** 2.0
+**Depends on:** Settlement blocks, Tier 1 Block 9 (active/inactive) | **Preview required:** ⚠️ YES if driver profile UI exists
+
+### Goal
+Office staff are W-2 employees (existing payroll). Drivers are typically 1099 contractors. Currently the distinction isn't enforced cleanly. This block locks the model: W-2 → full payroll integration (taxes, deductions). 1099 → settlements workflow + year-end 1099-NEC.
+
+### Scope
+
+**Schema:**
+```sql
+ALTER TABLE driver_profiles
+  ADD COLUMN IF NOT EXISTS employment_type text 
+    CHECK (employment_type IN ('W2', '1099', 'OWNER_OPERATOR'));
+
+-- For 1099 drivers, vendor record needed for QBO
+ALTER TABLE driver_profiles
+  ADD COLUMN IF NOT EXISTS linked_vendor_id uuid,        -- for 1099-NEC tracking
+  ADD COLUMN IF NOT EXISTS tin text,                     -- EIN or SSN (encrypted)
+  ADD COLUMN IF NOT EXISTS w9_on_file boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS w9_url text,
+  ADD COLUMN IF NOT EXISTS tax_classification text;      -- 'sole_prop', 'LLC', 'S-Corp', etc.
+```
+
+**Routing logic:**
+- Settlement is finalized
+  - If driver.employment_type = '1099': posts as vendor bill in QBO + outbox
+  - If driver.employment_type = 'W2': posts to payroll system (Sonnet 4.6 to verify integration available)
+
+**Validation:**
+- 1099 drivers MUST have linked_vendor_id + W-9 on file before settlement can be finalized
+- W-2 drivers MUST have payroll-active record before settlement can be finalized
+
+**Frontend (PREVIEW REQUIRED if driver detail page touched):**
+- Driver detail page: Tax tab shows employment_type, TIN (masked), W-9 status, [Upload W-9]
+- New driver wizard: choose employment_type first (locks downstream fields)
+
+### Acceptance criteria
+- Schema migrated
+- Existing drivers backfilled with employment_type (Jorge confirms majority)
+- Settlement routing logic enforces type
+- Validation gates work
+- W-9 upload + storage (encrypted at rest per Tier 3 Block 18)
+- 4-gate done
+
+### Out of scope
+- Auto-W-9 collection workflow (future)
+- Multi-jurisdiction tax handling (US only for now)
+
+### Hard stops
+- Existing drivers with mixed type evidence → STOP, escalate to Jorge for cleanup decisions
+- Preview not approved if driver UI touched → STOP
+
+---
+

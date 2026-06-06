@@ -1,0 +1,105 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 16 of 29 in the remaining-tiers series.
+# Tier: 2.5
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 16 of 29 — PHASE CROSS-BORDER / TASK FUEL-CARD — Fuel Card Integration (ComData + Relay)
+
+**Tier:** 2.5 | **Model:** Opus 4.8 thinking-high | **Days:** 3.0
+**Depends on:** Tier 1 Block 3 (idempotency), Block 6 (outbox-dlq), Settlement Block 4 (deduction link)
+**Preview required:** No (new integration + new routes)
+
+### Goal
+Two-way integration with ComData + Relay fuel cards. Auto-import transactions. Map to driver + unit + state (for IFTA). Auto-link to driver settlement deductions. Currently manual CSV upload.
+
+### Scope
+
+**Per provider (ComData, Relay):**
+- API client wrapper in `lib/integrations/<provider>/`
+- Webhook receiver if available, polling fallback (every 15 min)
+- Schema:
+  ```sql
+  CREATE TABLE IF NOT EXISTS integrations.fuel_card_transactions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider text NOT NULL CHECK (provider IN ('COMDATA', 'RELAY')),
+    provider_txn_id text NOT NULL,
+    card_number_last4 text,
+    driver_id uuid,
+    unit_id uuid,
+    transaction_at timestamptz NOT NULL,
+    station_name text,
+    station_address text,
+    state text,
+    country text,
+    gallons numeric(10,3),
+    price_per_gallon_cents bigint,
+    total_amount_cents bigint NOT NULL,
+    fuel_type text,
+    raw_payload jsonb NOT NULL,
+    settlement_deduction_id uuid,                -- linked deduction
+    qbo_synced_at timestamptz,
+    is_active boolean NOT NULL DEFAULT true,
+    UNIQUE (provider, provider_txn_id)
+  );
+  ```
+
+**Auto-mapping logic:**
+1. Card number → driver (driver_profile.fuel_card_<provider>_last4)
+2. Date + driver → assigned unit at that date
+3. State from station address
+4. Auto-link to next pending settlement for that driver
+
+**Settlement integration:**
+- Pending settlements pre-populate fuel deductions from imported txns
+- Driver views: "Your fuel deductions this week" before settlement finalized
+- Discrepancy alerts: card txn without unit assignment, etc.
+
+**Frontend:**
+- `/fuel-cards` route: list providers, sync status, manual import button
+- Per-transaction edit (admin only): override driver, unit, state, fuel_type
+- Bulk re-categorize tool
+
+### Acceptance criteria
+- ComData sandbox or live API integrated, test transactions imported
+- Relay same
+- Auto-mapping accuracy > 95% on sample data
+- Discrepancy alerts work
+- Settlement deduction auto-population works
+- 4-gate done
+
+### Out of scope
+- Fuel price benchmarking (future)
+- Card replacement workflow (admin manual for now)
+- Driver self-service card limit requests (future)
+
+### Hard stops
+- API credentials not available → STOP, ask Jorge to obtain
+- Existing fuel-card import code conflicts → STOP, refactor first
+
+---
+

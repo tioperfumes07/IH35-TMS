@@ -1,0 +1,80 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 24 of 29 in the remaining-tiers series.
+# Tier: 3.5
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 24 of 29 — PHASE FIN-REPORTING / TASK 1099-ANNUAL — 1099 Annual Reporting
+
+**Tier:** 3.5 | **Model:** Opus 4.8 thinking-high | **Days:** 2.0
+**Depends on:** Block 17 (W-2 vs 1099), Block 18 (PII encryption) | **Preview required:** No (new module)
+
+### Goal
+January deadline for issuing 1099-NEC to contractors paid ≥ $600 in calendar year. Currently manual via QBO. Automate detection + form generation + IRS e-filing prep.
+
+### Scope
+
+**Detection:**
+- For each vendor (including 1099 drivers' linked vendor records):
+  - Sum 1099-reportable payments for the tax year
+  - If ≥ $600 → require 1099-NEC
+  - W-9 on file = required
+- For each settlement-payable 1099 driver, sum gross paid (net to driver, not gross earned)
+
+**Form generation:**
+- PDF generation per 1099 recipient
+- Box 1: Nonemployee compensation
+- Box 4: Federal income tax withheld (if any backup withholding)
+- Returns: copy A (IRS), copy B (recipient), copy C (company file)
+
+**E-file prep:**
+- Output IRS-formatted text file for FIRE system upload
+- Or integrate with IRS-authorized e-file service (Tax1099, Track1099, etc.)
+
+**Frontend:**
+- Route `/reports/1099` shows: tax year selector, candidate list, status (W-9 missing / ready / sent / filed)
+- Per-recipient action: generate PDF, email recipient, mark filed
+- Bulk: generate all PDFs, generate e-file batch
+
+### Acceptance criteria
+- For 2025 tax year (if data available), generates correct list of recipients
+- Sample 1099-NEC PDF matches IRS form layout
+- E-file format validated
+- W-9 missing alerts work
+- 4-gate done
+
+### Out of scope
+- State 1099 filings (Texas doesn't require for state income tax — verify)
+- 1099-MISC (rare for trucking)
+- Corrections (1099-NEC with X box) — future block if needed
+
+### Hard stops
+- W-9 missing on > 20% of candidates → STOP, surface gap to Jorge
+- Historical payments missing entity-type field → STOP, backfill needed
+
+---
+

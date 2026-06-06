@@ -1,0 +1,69 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 8 of 29 in the remaining-tiers series.
+# Tier: 2
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 8 of 29 — PHASE TRUST-HARDEN / TASK LOAD-TEST — k6 Load Test Baseline
+
+**Tier:** 2 | **Model:** Sonnet 4.6 medium | **Days:** 2.0
+**Depends on:** Block 1 (OBSERV), Block 7 (pagination) | **Preview required:** No
+
+### Goal
+Establish baseline performance at 300-truck-scale-equivalent load. k6 scripts simulate realistic traffic. Sentry observability confirms behavior under load. Required to prove the system handles target scale before claiming production-ready.
+
+### Scope
+- Install k6 in CI
+- Write scripts in `tests/load/`:
+  - `dispatch-board-realtime.js` — 50 concurrent dispatcher sessions
+  - `driver-pwa-sync.js` — 300 concurrent PWA sync requests
+  - `invoice-creation-burst.js` — 100 invoices/min sustained 10 min
+  - `qbo-sync-backlog.js` — process 1000 queued outbox items
+- Target p95 thresholds:
+  - GET endpoints: < 500ms
+  - POST mutations: < 1s
+  - QBO sync: < 5s per item
+- CI runs load tests nightly, alerts on regression > 20%
+- Results stored in `ops.load_test_runs` table for historical trend
+
+### Acceptance criteria
+- 4 k6 scripts written
+- Baseline run executed, results committed to `docs/audits/LOAD-TEST-BASELINE-2026-06-XX.md`
+- p95 thresholds met OR documented gaps with remediation plan
+- Nightly run in CI works
+- Regression alert tested
+- 4-gate done
+
+### Out of scope
+- Soak testing > 1 hour
+- Chaos engineering (future Tier 3)
+
+### Hard stops
+- Baseline fails badly (p95 > 5s on basic endpoints) → STOP, surface scaling issue
+
+---
+

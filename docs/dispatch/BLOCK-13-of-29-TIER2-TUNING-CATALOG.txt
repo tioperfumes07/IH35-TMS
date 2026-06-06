@@ -1,0 +1,77 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 13 of 29 in the remaining-tiers series.
+# Tier: 2
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 13 of 29 — PHASE TRUST-HARDEN / TASK TUNING-CATALOG — Operational Tuning Catalog
+
+**Tier:** 2 | **Model:** Sonnet 4.6 medium | **Days:** 1.0
+**Depends on:** Tier 1 Block 13 (CRON-AUDIT) | **Preview required:** No
+
+### Goal
+Single document cataloging every tunable parameter: cron schedules, rate limits, retry counts, timeouts, cache TTLs, batch sizes. Each has: current value, why, change procedure.
+
+### Scope
+**Document:** `docs/runbooks/operational-tuning-catalog.md`
+
+**For each tunable:**
+```markdown
+### <Parameter Name>
+- Current value: <value>
+- Location: <file:line or env var>
+- Why this value: <rationale>
+- How to change: <procedure>
+- Impact of changing: <what breaks/improves>
+- Last changed: <date> by <who> from <prev> to <current>
+```
+
+**Categories:**
+- Cron schedules (from Tier 1 Block 13 audit)
+- Rate limits (from Block 4)
+- Retry counts (from outbox, circuit breakers)
+- Timeouts (HTTP, DB, external API)
+- Cache TTLs (report cache, QBO cache, etc.)
+- Batch sizes (sync jobs, exports)
+- Reconciliation thresholds
+- Alert thresholds
+
+### Acceptance criteria
+- Catalog has ≥ 30 entries covering all categories
+- Each entry has all 6 fields filled
+- Linked from operations dashboard
+- 4-gate done
+
+### Out of scope
+- Auto-tuning ML (way future)
+- Per-tenant tuning (single-tenant per OCI for now)
+
+### Hard stops
+- None
+
+---
+

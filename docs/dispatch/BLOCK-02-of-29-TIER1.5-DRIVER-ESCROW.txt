@@ -1,0 +1,117 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 2 of 29 in the remaining-tiers series.
+# Tier: 1.5
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 2 of 29 — PHASE FIN-COMPLETE / TASK DRIVER-ESCROW — Driver Escrow Ledger
+
+**Tier:** 1.5 | **Model:** Opus 4.8 thinking-high | **Days:** 2.0
+**Depends on:** Tier 1 Block 5 (double-entry), Block 9 (active/inactive), Settlement Block 2 (settlement backend)
+**Preview required:** ⚠️ YES — driver detail page already exists per audit; adding Escrow tab requires preview
+
+### Goal
+Per-driver escrow ledger. Weekly $X deduction from settlements accumulates as driver's escrow balance. Used to pay claims (damage, fines) against the driver. Year-end rollover. Termination payout. Currently QBO has the "Driver Deduction-Escrow for Claims-2026" item but no actual ledger — sum-of-parts ≠ GL balance reconciliation impossible.
+
+### Scope
+
+**Schema:**
+```sql
+CREATE TABLE IF NOT EXISTS payroll.driver_escrow_ledger (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  driver_id uuid NOT NULL,
+  operating_company_id uuid NOT NULL,
+  txn_date date NOT NULL,
+  txn_type text NOT NULL CHECK (txn_type IN ('DEPOSIT', 'WITHDRAWAL', 'INTEREST', 'ADJUSTMENT', 'TERMINATION_PAYOUT', 'YEAR_END_ROLLOVER')),
+  amount_cents bigint NOT NULL,
+  running_balance_cents bigint NOT NULL,
+  description text NOT NULL,
+  source_settlement_id uuid,                    -- if from settlement deduction
+  source_claim_id uuid,                         -- if withdrawal for claim
+  journal_entry_id uuid REFERENCES finance.journal_entries(id),
+  created_by_user_id uuid NOT NULL,
+  is_active boolean NOT NULL DEFAULT true,
+  void_reason text,
+  CONSTRAINT escrow_amount_nonzero CHECK (amount_cents != 0)
+);
+
+CREATE INDEX idx_escrow_driver_date ON payroll.driver_escrow_ledger(driver_id, txn_date);
+
+CREATE OR REPLACE VIEW payroll.driver_escrow_balances AS
+SELECT 
+  driver_id,
+  operating_company_id,
+  SUM(CASE WHEN txn_type IN ('DEPOSIT', 'INTEREST', 'ADJUSTMENT') THEN amount_cents
+           WHEN txn_type IN ('WITHDRAWAL', 'TERMINATION_PAYOUT') THEN -amount_cents
+           ELSE 0 END) AS balance_cents,
+  MAX(txn_date) AS last_activity_date
+FROM payroll.driver_escrow_ledger
+WHERE is_active = true
+GROUP BY driver_id, operating_company_id;
+```
+
+**Service:** `lib/services/escrow.mjs`
+- `recordDeposit(driverId, amount, settlementId)` — called when settlement is finalized with escrow deduction
+- `recordWithdrawal(driverId, amount, claimId, reason)` — admin-initiated
+- `recordTerminationPayout(driverId, terminationDate)` — pays out remaining balance
+- `reconcileWithGL()` — sum of all driver balances should = GL "Driver Escrow Liability" account
+
+**Endpoints:**
+```
+GET    /api/drivers/:id/escrow/ledger          # full history
+GET    /api/drivers/:id/escrow/balance
+POST   /api/drivers/:id/escrow/withdrawal      # admin only
+POST   /api/drivers/:id/escrow/payout          # admin only, on termination
+GET    /api/escrow/reconciliation              # sum vs GL
+GET    /api/escrow/aging                       # which drivers have long-held balances
+```
+
+**Frontend (PREVIEW REQUIRED for driver detail tab addition):**
+- Driver detail page → add "Escrow" tab
+- Tab shows: current balance prominent + ledger table + [Withdraw] [Adjust] [Payout] buttons (admin only)
+- Each row: date, type, amount, running balance, description, source link
+- Admin-only `/admin/escrow` overview: all drivers' balances, aging, reconciliation status
+
+### Acceptance criteria
+- Preview approved by Jorge for driver detail tab addition
+- Schema migrated, view created
+- Service hooks fire on settlement finalization (deposits) and admin actions (withdrawals)
+- Running balance always tied to GL within $0.01 (reconciliation endpoint passes)
+- Period-lock honored on backdated entries
+- Test: deposit 10 weeks → withdraw 1 claim → balance = 10×$X - claim
+- 4-gate done
+
+### Out of scope
+- Year-end interest crediting (future block, requires CPA decision on rate)
+- Bank account for escrow holdings (separate from operating)
+
+### Hard stops
+- Existing settlement deductions to escrow item exist but no balance tracking → STOP, backfill plan required (historical reconstruction)
+- Preview not approved → STOP
+
+---
+

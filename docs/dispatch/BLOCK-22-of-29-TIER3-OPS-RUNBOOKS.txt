@@ -1,0 +1,88 @@
+# IH35-TMS — REMAINING TIERS GAP BLOCK
+# This is BLOCK 22 of 29 in the remaining-tiers series.
+# Tier: 3
+# Spec context: docs/dispatch/GAP-BLOCKS-REMAINING-2026-06-06.md
+# Created: 2026-06-06 by Jorge + Claude
+#
+# READ FIRST:
+#   - docs/trackers/QBO-FEATURE-PARITY-REQUIREMENTS.md
+#   - docs/trackers/SAFETY-TRUST-RECOMMENDATIONS.md
+#   - docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md (foundation)
+#
+# STANDING ORDERS: foreground only, manifest-first, no --no-verify, 
+# 4-gate done, phantom-read self-guard, live updates every 5 min CST.
+#
+# 🚨 MANDATORY BEFORE CODE: REPO RECONNAISSANCE
+#   1. Verify the spec's assumed codebase shape (TypeScript Fastify monorepo)
+#   2. Search for keywords from this spec in actual codebase
+#   3. If MISMATCH found: STOP, surface 3 options to Jorge:
+#      A) Re-scope this block to actual gaps
+#      B) Defer this block, write replacement spec  
+#      C) Cancel this block (work already done)
+#
+# 🚨 MANDATORY BEFORE CODE: DEDUPE AUDIT
+#   - docs/audits/DEDUPE-AUDIT-2026-06-06.md must show this block as ✅ CLEAN
+#   - If ⚠️ OVERLAP / 🚫 DUPLICATE / ⛔ CONTRADICTION: STOP, surface to Jorge
+#
+# 🚨 IF UI-TOUCHING: PREVIEW REQUIRED
+#   - Check the "Preview required" field in block header
+#   - If YES: mockup → Jorge approval → only then code
+#
+## Block 22 of 29 — PHASE ENTERPRISE / TASK OPS-RUNBOOKS — Operational Runbooks
+
+**Tier:** 3 | **Model:** Sonnet 4.6 medium | **Days:** 3.0
+**Depends on:** Many prior blocks | **Preview required:** No
+
+### Goal
+Every operational scenario has a runbook. Currently knowledge is in Jorge's head + chat history. Key-person risk = trust risk. Documented runbooks = anyone can operate.
+
+### Scope
+
+**Runbook topics (minimum):**
+1. New driver onboarding (W-2 vs 1099 paths)
+2. New customer onboarding
+3. Month-end close procedure
+4. Quarterly IFTA filing
+5. Quarterly tax filings
+6. Annual 1099 issuance
+7. Annual W-2 issuance
+8. QBO disconnect/reconnect
+9. Samsara key rotation
+10. Render deploy rollback
+11. Database restore (links to Block 21)
+12. Secrets rotation (links to Block 20)
+13. DR procedures (links to Block 21)
+14. Adding a new operating company (TRK + TRANSP + USMCA pattern)
+15. Period-end financial close
+16. Reconciliation drift investigation
+17. DLQ message review (Block 6)
+18. Cross-border permit renewal
+19. Driver termination + escrow payout
+20. Customer dispute resolution
+
+**Pattern per runbook:**
+- When to use this
+- Pre-requisites
+- Step-by-step (with screenshots for UI work)
+- Verification steps
+- Rollback if applicable
+- Escalation contacts
+
+**Storage:** `docs/runbooks/<topic>.md`, linked from a master index `docs/runbooks/README.md`
+
+### Acceptance criteria
+- 20 runbooks written
+- Each follows the pattern
+- Master index updated
+- One runbook executed by a non-Jorge person as test (delegate to dispatcher or family member)
+- 4-gate done
+
+### Out of scope
+- Video walkthroughs (text first; future Tier 4)
+- Multi-language (English only for now)
+
+### Hard stops
+- A runbook reveals undocumented process Cursor can't reverse-engineer → STOP, surface to Jorge for input
+
+---
+
