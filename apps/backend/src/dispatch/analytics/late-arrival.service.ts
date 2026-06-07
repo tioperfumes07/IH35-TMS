@@ -52,7 +52,7 @@ async function tableExists(client: PoolClient, qualified: string): Promise<boole
     `SELECT 1 FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2 LIMIT 1`,
     [schema, table]
   );
-  return res.rowCount > 0;
+  return (res.rowCount ?? 0) > 0;
 }
 
 const COMPLETED_STOPS_CTE = `
