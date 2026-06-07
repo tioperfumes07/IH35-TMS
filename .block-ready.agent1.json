@@ -1,40 +1,41 @@
 {
-  "block_id": "GAP-87-AUDIT-LOG-VIEWER",
-  "branch": "feature/gap-87-audit-log-viewer",
-  "phase": "ui",
-  "task": "Universal read-only audit log viewer — surfaces audit.audit_events for compliance/forensics. New route /admin/audit-log. Owner-only RBAC. No data mutations.",
-  "agent": "A",
+  "block_id": "GAP-66-DISPATCHER-HOME",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-rebase645",
+  "branch": "feature/gap-66-dispatcher-home",
+  "phase": "P2-H",
+  "lane": "B",
+  "task": "Dispatcher Home role-specific view",
   "allowed_files": [
-    "apps/backend/src/audit/viewer/service.ts",
-    "apps/backend/src/audit/viewer/routes.ts",
-    "apps/backend/src/audit/viewer/__tests__/service.test.ts",
+    ".block-ready.json",
+    ".block-ready.agent1.json",
+    "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts",
+    "apps/backend/src/dispatcher-board/role-views/routes.ts",
+    "apps/backend/src/dispatcher-board/role-views/__tests__/dispatcher.test.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/api/audit.ts",
-    "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx",
-    "apps/frontend/src/components/audit/AuditEventCard.tsx",
-    "apps/frontend/src/components/admin/SuperAdminNav.tsx",
-    "apps/frontend/src/components/layout/sidebar-config.ts",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-audit-log-viewer.mjs",
-    "scripts/nav-integrity-allowlist.json",
-    "docs/specs/gap-87-audit-log-viewer.md",
-    ".block-ready.agent1.json"
+    "apps/frontend/src/pages/home/HomePage.tsx",
+    "apps/frontend/src/pages/home/roles/DispatcherHome.tsx",
+    "apps/frontend/src/components/home/DispatcherKpiBar.tsx",
+    "apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx",
+    "apps/frontend/src/components/home/DispatcherPendingActionsPanel.tsx",
+    "scripts/verify-dispatcher-home.mjs",
+    "docs/specs/gap-66-dispatcher-home-view.md",
+    "package.json",
+    ".github/workflows/ci.yml",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "scripts/verify-fleet-counter-tenant-scope.mjs",
+    "scripts/verify-drivers-count-nav-integrity.mjs",
+    "scripts/verify-safety-count-nav-integrity.mjs",
+    "scripts/verify-maint-nav-count-reconcile.mjs"
   ],
-  "preview_provided": false,
-  "extra_gates": [],
-  "runtime_path": "apps/frontend",
-  "db_required": false,
-  "guard_required": false,
-  "read_only_viewer": true,
-  "fields": {
-    "route": "/admin/audit-log",
-    "backend_endpoints": [
-      "GET /api/audit/viewer/events",
-      "GET /api/audit/viewer/events/:uuid"
-    ],
-    "db_table": "audit.audit_events",
-    "filters": ["entity_type", "entity_uuid", "user_uuid", "action", "from", "to", "severity", "search_text"],
-    "rbac": "Owner + SuperAdmin only",
-    "mutations": "none"
-  }
+  "extra_gates": [
+    "verify:dispatcher-home"
+  ],
+  "forbidden_paths": [
+    "apps/backend/src/owner/todays-attention/**",
+    "apps/frontend/src/pages/home/OwnerHome.tsx",
+    "apps/frontend/src/components/home/TodaysAttentionTop5.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
 }

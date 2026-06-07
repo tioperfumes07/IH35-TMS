@@ -9,11 +9,7 @@ const ROOT = process.env.VERIFY_MAINT_NAV_COUNT_RECONCILE_ROOT ?? process.cwd();
 
 const paths = {
   navConfig: path.join(ROOT, "apps/frontend/src/components/maintenance/MAINTENANCE_NAV_CONFIG.ts"),
-  homePage: path.join(ROOT, "apps/frontend/src/pages/home/HomePage.tsx"),
-  homeRolePages: [
-    path.join(ROOT, "apps/frontend/src/pages/home/roles/DefaultHome.tsx"),
-    path.join(ROOT, "apps/frontend/src/pages/home/OwnerHome.tsx"),
-  ],
+  homePage: path.join(ROOT, "apps/frontend/src/pages/home/roles/DefaultHome.tsx"),
   sidebarConfig: path.join(ROOT, "apps/frontend/src/components/layout/sidebar-config.ts"),
   maintenanceHome: path.join(ROOT, "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx"),
   allCatalogsMap: path.join(ROOT, "apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx"),
@@ -83,12 +79,11 @@ function main() {
     failures.push(`MAINTENANCE_LISTS_CATALOG_COUNT must be ${expected.listsCatalogs}`);
   }
 
-  const homeSources = [homePage, ...paths.homeRolePages.map((p) => read(p))];
-  if (homeSources.some((src) => src.includes("count: 14") || src.includes("count: 14,"))) {
-    failures.push("HomePage must not hardcode Maintenance quick-jump count 14");
+  if (homePage.includes("count: 14") || homePage.includes('count: 14,')) {
+    failures.push("DefaultHome must not hardcode Maintenance quick-jump count 14");
   }
-  if (!homeSources.some((src) => src.includes("MAINTENANCE_HOME_QUICK_JUMP_COUNT"))) {
-    failures.push("HomePage must import MAINTENANCE_HOME_QUICK_JUMP_COUNT");
+  if (!homePage.includes("MAINTENANCE_HOME_QUICK_JUMP_COUNT")) {
+    failures.push("DefaultHome must import MAINTENANCE_HOME_QUICK_JUMP_COUNT");
   }
 
   if (!sidebarConfig.includes("MAINTENANCE_MODULE_NAV_LINKS")) {

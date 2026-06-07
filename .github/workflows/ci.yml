@@ -257,6 +257,9 @@ jobs:
       - name: verify:dispatch-secondary-nav-depth
         run: npm run verify:dispatch-secondary-nav-depth
 
+      - name: verify:dispatcher-home
+        run: npm run verify:dispatcher-home
+
       - name: verify:maint-dvir-defect-intake
         run: npm run verify:maint-dvir-defect-intake
 
