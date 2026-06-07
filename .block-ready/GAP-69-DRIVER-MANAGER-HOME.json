@@ -1,0 +1,27 @@
+{
+  "block_id": "GAP-69-DRIVER-MANAGER-HOME",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap69",
+  "branch": "feature/gap-69-driver-manager-home",
+  "phase": "GAP-HIGH",
+  "task": "Driver Manager home role-specific view",
+  "allowed_files": [
+    ".block-ready/GAP-69-DRIVER-MANAGER-HOME.json",
+    "apps/backend/src/driver-manager/role-views/dm-home.service.ts",
+    "apps/backend/src/driver-manager/role-views/routes.ts",
+    "apps/backend/src/driver-manager/role-views/__tests__/dm-home.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/home/roles/DriverManagerHome.tsx",
+    "apps/frontend/src/components/home/DriverManagerKpiBar.tsx",
+    "apps/frontend/src/components/home/DriverManagerAttentionPanel.tsx",
+    "scripts/verify-driver-manager-home.mjs",
+    "docs/specs/gap-69-driver-manager-home-view.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:driver-manager-home"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
