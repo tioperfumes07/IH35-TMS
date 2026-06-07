@@ -1,17 +1,32 @@
 {
-  "block_id": "FIX-SAFETY-NAV-COUNT",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-nav-fix",
-  "branch": "fix/safety-nav-count-import",
-  "phase": "HOTFIX",
-  "task": "Restore SAFETY_CANONICAL_TAB_COUNT reference in HomePage after home router refactor",
+  "block_id": "GAP-82-MEDICAL-CARD-TRACKING",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap82",
+  "branch": "feature/gap-82-medical-card",
+  "phase": "GAP-HIGH",
+  "task": "Medical card + CDL expiry tracking and alerts",
   "allowed_files": [
     ".block-ready.json",
-    "apps/frontend/src/pages/home/HomePage.tsx"
+    ".block-ready.agent1.json",
+    "apps/backend/src/safety/expiry-tracking/cert-monitor.service.ts",
+    "apps/backend/src/safety/expiry-tracking/alerter.service.ts",
+    "apps/backend/src/safety/expiry-tracking/routes.ts",
+    "apps/backend/src/safety/expiry-tracking/__tests__/cert-monitor.test.ts",
+    "apps/backend/src/jobs/cert-expiry-monitor.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/safety/expiry-tracking/ExpiryDashboard.tsx",
+    "apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx",
+    "apps/frontend/src/components/safety/CertExpiryBadge.tsx",
+    "apps/frontend/src/pages/DriverDetail.tsx",
+    "apps/frontend/src/components/safety/SafetyGroupNav.tsx",
+    "scripts/verify-cert-expiry-tracking.mjs",
+    "docs/specs/gap-82-cert-expiry-tracking.md",
+    "package.json",
+    ".github/workflows/ci.yml"
   ],
   "extra_gates": [
-    "verify:safety-count-nav-integrity"
+    "verify:cert-expiry-tracking"
   ],
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false
+  "db_required": true,
+  "guard_required": true
 }

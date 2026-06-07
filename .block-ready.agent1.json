@@ -1,16 +1,18 @@
 {
-  "block_id": "FIX-DA-TABLES-RLS",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-da-rls",
-  "branch": "fix/da-tables-rls",
+  "block_id": "FIX-SAFETY-NAV-COUNT",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-nav-fix",
+  "branch": "fix/safety-nav-count-import",
   "phase": "HOTFIX",
-  "task": "Add RLS policies to safety.da_* tables from migration 0327 (GAP-81)",
+  "task": "Restore SAFETY_CANONICAL_TAB_COUNT reference in HomePage after home router refactor",
   "agent": "1",
   "allowed_files": [
     ".block-ready.agent1.json",
-    "db/migrations/0406_da_tables_rls.sql"
+    "apps/frontend/src/pages/home/HomePage.tsx"
   ],
-  "extra_gates": [],
+  "extra_gates": [
+    "verify:safety-count-nav-integrity"
+  ],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": false
 }
