@@ -63,6 +63,7 @@ import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js"
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
 import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify.routes.js";
 import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
+import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
 import { registerDispatcherRoleViewRoutes } from "./dispatcher-board/role-views/routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriversMessagesRoutes } from "./drivers/messages.routes.js";
@@ -589,6 +590,7 @@ async function main() {
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
   await registerDispatchPodBolRoutes(app);
+  await registerPreDispatchValidationRoutes(app);
   await registerDispatcherRoleViewRoutes(app);
   await registerDriverRoutes(app);
   await registerDriversMessagesRoutes(app);
