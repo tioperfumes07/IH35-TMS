@@ -1,10 +1,29 @@
 {
+  "block_id": "BLOCK-G-COI-PDF",
+  "phase": "implementation",
+  "task": "Certificate of Insurance PDF — GET /api/v1/insurance/policies/:id/coi returns Puppeteer-rendered PDF; frontend Download COI button on PolicyDetail. Read-only, no schema changes, no financial writes.",
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready/BLOCK-G-COI-PDF.json",
+    "apps/backend/src/insurance/coi-pdf-renderer.service.ts",
+    "apps/backend/src/insurance/__tests__/coi-pdf-renderer.test.ts",
+    "apps/backend/src/insurance/policy.routes.ts",
+    "apps/frontend/src/api/insurance.ts",
+    "apps/frontend/src/pages/insurance/PolicyDetail.tsx"
+  ],
+  "extra_gates": [],
+  "runtime_path": "both",
+  "db_required": true,
+  "guard_required": false,
   "block": "G",
   "name": "Certificate of Insurance (COI) PDF",
   "model": "Sonnet 4.6",
   "category": "Insurance / Documents",
   "status": "ready",
   "spec": "docs/dispatch/followup/block-G-insurance-COI.txt",
+  "no_schema_changes": true,
+  "no_financial_writes": true,
+  "rls_scoped": true,
   "changes": [
     {
       "file": "apps/backend/src/insurance/coi-pdf-renderer.service.ts",
@@ -12,22 +31,19 @@
     },
     {
       "file": "apps/backend/src/insurance/policy.routes.ts",
-      "summary": "Added GET /api/v1/insurance/policies/:id/coi endpoint. RLS-scoped via withCompanyScope. Returns application/pdf with Content-Disposition: attachment. Returns 404 if policy not found, 500 on render failure. Read-only."
+      "summary": "Added GET /api/v1/insurance/policies/:id/coi endpoint. RLS-scoped via withCompanyScope. Returns application/pdf with Content-Disposition: attachment. Returns 404 if policy not found, 500 on render failure."
     },
     {
       "file": "apps/frontend/src/api/insurance.ts",
-      "summary": "Added downloadInsuranceCoiPdf(policyId, operatingCompanyId) — raw fetch, blobs the PDF response, triggers browser download via createObjectURL. Added resolveApiUrl + ApiError to imports."
+      "summary": "Added downloadInsuranceCoiPdf(policyId, operatingCompanyId) — raw fetch, blobs the PDF response, triggers browser download via createObjectURL."
     },
     {
       "file": "apps/frontend/src/pages/insurance/PolicyDetail.tsx",
-      "summary": "Added 'Download COI' button to policy detail header action row. Calls downloadInsuranceCoiPdf, shows loading state, shows error toast on failure."
+      "summary": "Added Download COI button to policy detail header action row."
     },
     {
       "file": "apps/backend/src/insurance/__tests__/coi-pdf-renderer.test.ts",
-      "summary": "Vitest unit tests for coi-pdf-renderer.service: null when policy not found, correct buffer/filename/sha256 when policy + units present, handles zero units, sanitises special chars in filename."
+      "summary": "Vitest unit tests: null on policy not found, correct buffer/filename/sha256, handles zero units, sanitises special chars in filename."
     }
-  ],
-  "no_schema_changes": true,
-  "no_financial_writes": true,
-  "rls_scoped": true
+  ]
 }
