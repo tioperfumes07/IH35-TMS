@@ -6,6 +6,7 @@
   "task": "Per-tenant and per-user feature flag system",
   "allowed_files": [
     ".block-ready/GAP-92-FEATURE-FLAG-SYSTEM.json",
+    ".block-ready.agent1.json",
     ".block-ready.json",
     "db/migrations/0408_feature_flags.sql",
     "db/migrations/.ledger.json",
