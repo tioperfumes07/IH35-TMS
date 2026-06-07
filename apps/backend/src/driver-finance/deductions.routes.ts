@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { createSettlementDeduction } from "./deductions.service.js";
 
 const deductionIdParamsSchema = z.object({ id: z.string().uuid() });
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -32,7 +33,37 @@ async function hasDeductionSchedule(client: any) {
   return Boolean((res.rows[0] as { ok?: boolean } | undefined)?.ok);
 }
 
+const createDeductionBodySchema = z.object({
+  driver_id: z.string().uuid(),
+  amount_cents: z.number().int().positive(),
+  reason: z.string().trim().min(5).max(2000),
+  source_type: z.enum(["cash_advance_repayment", "damage", "equipment", "fuel", "other"]),
+  source_reference_id: z.string().uuid().optional(),
+});
+
 export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance) {
+  app.post("/api/v1/driver-finance/deductions", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = createDeductionBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const deduction = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      return createSettlementDeduction(client, {
+        driverId: body.data.driver_id,
+        operatingCompanyId: query.data.operating_company_id,
+        amountCents: body.data.amount_cents,
+        reason: body.data.reason,
+        sourceType: body.data.source_type,
+        sourceReferenceId: body.data.source_reference_id,
+        createdByUserId: user.uuid,
+      });
+    });
+
+    return reply.code(201).send({ deduction });
+  });
   app.patch("/api/v1/driver-finance/deduction-schedules/:id/hold", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
