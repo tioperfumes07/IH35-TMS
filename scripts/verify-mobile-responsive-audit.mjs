@@ -67,8 +67,8 @@ contains("docs/specs/gap-91-mobile-responsive-audit.md", docs, [
   { pattern: /375/, label: "viewport documented" },
 ]);
 
-const blockReady = read(".block-ready.json");
-contains(".block-ready.json", blockReady, [
+const blockReady = read(".block-ready/GAP-91-MOBILE-RESPONSIVE-AUDIT.json");
+contains(".block-ready/GAP-91-MOBILE-RESPONSIVE-AUDIT.json", blockReady, [
   { pattern: /GAP-91-MOBILE-RESPONSIVE-AUDIT/, label: "GAP-91 block id" },
 ]);
 
@@ -76,11 +76,6 @@ const report = runAudit();
 const baselinePath = path.join(ROOT, "apps/frontend/src/audit/mobile-responsive/baseline.json");
 const baseline = JSON.parse(fs.readFileSync(baselinePath, "utf8"));
 const { newIssues } = compareAgainstBaseline(report, baseline);
-
-fs.writeFileSync(
-  path.join(ROOT, "apps/frontend/src/audit/mobile-responsive/latest-report.json"),
-  `${JSON.stringify(report, null, 2)}\n`
-);
 
 if (newIssues.length > 0) {
   fail(`regression detector: ${newIssues.length} new issue(s) vs baseline`);
