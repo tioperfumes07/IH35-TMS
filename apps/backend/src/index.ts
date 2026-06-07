@@ -11,6 +11,7 @@ import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
 import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.js";
+import { registerEdiRoutes } from "./integrations/edi/edi.routes.js";
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
@@ -517,6 +518,7 @@ async function main() {
   await registerQboOAuthRoutes(app);
   await registerQboWebhookRoutes(app);
   await registerSamsaraWebhookRoutes(app);
+  await registerEdiRoutes(app);
   await registerSamsaraConfigRoutes(app);
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);

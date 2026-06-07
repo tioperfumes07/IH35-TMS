@@ -129,6 +129,8 @@ import { LoginResetConfirmPage } from "../pages/LoginResetConfirmPage";
 import { ComingSoonPage } from "../pages/ComingSoonPage";
 import { BulkDemoPage } from "../pages/dev/BulkDemoPage";
 import { SamsaraIntegrationPage } from "../pages/integrations/SamsaraIntegrationPage";
+import { EdiSetupWizard } from "../pages/integrations/edi/EdiSetupWizard";
+import { EdiTransactionLog } from "../pages/integrations/edi/EdiTransactionLog";
 import { DriverAppLandingPage } from "../pages/DriverAppLandingPage";
 import { DisputesPage } from "../pages/driver/DisputesPage";
 import { DriverShell } from "../pages/driver/DriverShell";
@@ -2092,6 +2094,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <OwnerOnlyRoute>
               <SamsaraIntegrationPage />
+            </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/integrations/edi/setup"
+          element={
+            <OwnerOnlyRoute>
+              <EdiSetupWizard />
+            </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/integrations/edi/log"
+          element={
+            <OwnerOnlyRoute>
+              <EdiTransactionLog />
             </OwnerOnlyRoute>
           }
         />

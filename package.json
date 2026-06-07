@@ -400,6 +400,7 @@
     "verify:mobile-responsive-audit": "node scripts/verify-mobile-responsive-audit.mjs",
     "verify:feature-flags": "node scripts/verify-feature-flags.mjs",
     "verify:dispatcher-home": "node scripts/verify-dispatcher-home.mjs",
+    "verify:edi-foundation": "node scripts/verify-edi-foundation.mjs",
     "verify:dot-inspection-history": "node scripts/verify-dot-inspection-history.mjs",
     "verify:permits-toll-tags": "node scripts/verify-permits-toll-tags.mjs",
     "verify:cap-12-tire-tread": "node scripts/verify-cap-12-tire-tread.mjs",

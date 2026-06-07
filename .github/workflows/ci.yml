@@ -268,6 +268,9 @@ jobs:
       - name: verify:dispatcher-home
         run: npm run verify:dispatcher-home
 
+      - name: verify:edi-foundation
+        run: npm run verify:edi-foundation
+
       - name: verify:maint-dvir-defect-intake
         run: npm run verify:maint-dvir-defect-intake
 

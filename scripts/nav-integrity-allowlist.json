@@ -255,6 +255,14 @@
       "reason": "Owner integration page \u2014 not in subnav"
     },
     {
+      "path": "/integrations/edi/setup",
+      "reason": "GAP-70 EDI partner setup wizard \u2014 owner integration deep link"
+    },
+    {
+      "path": "/integrations/edi/log",
+      "reason": "GAP-70 EDI transaction log \u2014 owner integration deep link"
+    },
+    {
       "path": "/samsara/vendor-mapping-integrity",
       "reason": "Samsara integrity tool \u2014 deep link only"
     },
