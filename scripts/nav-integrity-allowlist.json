@@ -39,6 +39,10 @@
     {
       "path": "/admin/audit-events",
       "reason": "Owner/SuperAdmin bulk audit events filter (BULK-6)"
+    },
+    {
+      "path": "/admin/audit-log",
+      "reason": "Owner/SuperAdmin universal audit log viewer (GAP-87)"
     }
   ],
   "BLOCK_43_TODO": [
