@@ -1,10 +1,11 @@
 name: premerge-gates
 
-# Three focused gates promoted from post-merge feedback to required pre-merge CI.
-# Catches the GAP-81 failure class (missing RLS, missing role, strict-null errors)
-# before any PR can merge to main.
+# Four focused gates promoted from post-merge feedback to required pre-merge CI.
+# Gate 1-3 catch the GAP-81 failure class (missing RLS, missing role, strict-null errors).
+# Gate 4 catches the 0309_notification_center failure class (CREATE SCHEMA without
+# GRANT USAGE ON SCHEMA to ih35_app, which causes login outages).
 #
-# All three jobs are added to branch-protection-config.json required_status_checks.contexts.
+# All four jobs are added to branch-protection-config.json required_status_checks.contexts.
 
 on:
   pull_request:
@@ -86,3 +87,29 @@ jobs:
 
       - name: Gate 3 — Migration role validation (no unknown GRANT roles)
         run: npm run verify:migration-no-unknown-roles
+
+  # Gate 4 — Schema-level GRANT USAGE check (login-outage class)
+  # Closes the 0309_notification_center failure class: CREATE SCHEMA without
+  # GRANT USAGE ON SCHEMA <name> TO ih35_app.  PostgreSQL requires schema-level
+  # USAGE before the app role can access any object within the schema, even if
+  # object-level GRANTs are present.  Without this, the app gets
+  # "permission denied for schema <name>" at runtime → login outages.
+  schema-grant-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gate 4 — Schema GRANT USAGE check (CREATE SCHEMA must include GRANT USAGE ON SCHEMA … TO ih35_app)
+        run: npm run verify:migration-schema-grants
