@@ -402,6 +402,7 @@
     "verify:driver-manager-home": "node scripts/verify-driver-manager-home.mjs",
     "verify:late-arrival-analytics": "node scripts/verify-late-arrival-analytics.mjs",
     "verify:driver-pwa-dispatch-view": "node scripts/verify-driver-pwa-dispatch-view.mjs",
+    "verify:reports-hub-9-categories": "node scripts/verify-reports-hub-9-categories.mjs",
     "verify:severe-repair-estimate": "node scripts/verify-severe-repair-estimate.mjs",
     "verify:assignments-quicksave": "node scripts/verify-assignments-quicksave.mjs",
     "verify:load-cancellations-report": "node scripts/verify-load-cancellations-report.mjs",
