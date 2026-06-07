@@ -1,10 +1,29 @@
 {
-  "block_id": "DEDUPE-SEAM-UPDATES",
-  "allowed_files": [
-    "docs/dispatch/GAP-BLOCKS-SETTLEMENTS-2026-06-06.md",
-    "docs/dispatch/GAP-BLOCKS-TIER1-TRUST-2026-06-06.md",
-    ".block-ready.agent1.json"
-  ],
+  "block_id": "GAP-MIGRATION-RENAME-CI-GUARD",
+  "branch": "feature/gap-migration-rename-ci-guard",
+  "phase": "implementation",
+  "task": "Activate dormant migration immutability guard: populate ledger, add PR workflow, add pre-commit hook.",
+  "agent": "A",
   "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-spec-updates"
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-mig-guard",
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    "db/migrations/.ledger.json",
+    ".applied-migrations.json",
+    ".github/workflows/migration-guard.yml",
+    ".husky/pre-commit",
+    "scripts/ci-migration-guard.mjs"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "db_required": false,
+  "guard_required": true,
+  "fields": {
+    "gap_block": 4,
+    "wave": "A",
+    "additive_only": true,
+    "existing_gate_preserved": "CLOSURE-28 (verify:applied-migrations-immutable + chain gate)",
+    "ledger_file_count": 351,
+    "note": "Activates dormant verify:applied-migrations-immutable CI step by populating db/migrations/.ledger.json. Adds PR-triggered migration-guard.yml and pre-commit enforcement."
+  }
 }
