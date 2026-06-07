@@ -2,8 +2,7 @@
   "block_id": "ACCT-QBOPAR-00",
   "branch": "feat/acct-qbopar-00-design-lock",
   "phase": "Accounting-QBO-Parity",
-  "task": "CA-00 Design lock: commit QBO-parity COA spec, account-type/detail-type catalog, and two interactive HTML design-law previews (COA list + register). Additive docs only — no app code, no schema changes.",
-  "agent": "1",
+  "task": "CA-00 Design lock: commit QBO-parity COA spec, account-type/detail-type catalog, and two interactive HTML design-law previews (COA list + register). Additive docs only — no app code, no schema changes. Establishes design law for CA-01..06.",
   "allowed_files": [
     ".block-ready/ACCT-QBOPAR-00.json",
     ".block-ready.agent1.json",
