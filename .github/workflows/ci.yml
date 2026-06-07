@@ -308,6 +308,9 @@ jobs:
       - name: Verify ELD audit trail contract
         run: npm run verify:eld-audit-trail
 
+      - name: Verify safety officer home contract
+        run: npm run verify:safety-officer-home
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 
