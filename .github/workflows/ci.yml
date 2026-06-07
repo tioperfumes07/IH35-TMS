@@ -296,6 +296,9 @@ jobs:
       - name: Verify cert expiry tracking contract
         run: npm run verify:cert-expiry-tracking
 
+      - name: Verify DOT inspection history gap-close contract
+        run: npm run verify:dot-inspection-history
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 

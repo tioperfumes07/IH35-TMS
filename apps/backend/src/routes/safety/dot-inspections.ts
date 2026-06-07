@@ -9,6 +9,11 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const cleanRateQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  driver_id: z.string().uuid().optional(),
+});
+
 const idParamsSchema = z.object({
   id: z.string().uuid(),
 });
@@ -132,6 +137,42 @@ async function recomputeCsa(client: any, companyId: string, actorId: string) {
 }
 
 export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
+  app.get("/api/v1/safety/dot-inspections/clean-rate", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    const query = cleanRateQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const trailingMonths = 12;
+    const stats = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+      const res = await client.query(
+        `
+          SELECT
+            COUNT(*)::int AS total_inspections,
+            COUNT(*) FILTER (WHERE outcome <> 'OOS')::int AS clean_inspections
+          FROM safety.dot_inspections
+          WHERE operating_company_id = $1
+            AND voided_at IS NULL
+            AND inspection_date >= (CURRENT_DATE - make_interval(months => $2))
+            AND ($3::uuid IS NULL OR driver_id = $3)
+        `,
+        [query.data.operating_company_id, trailingMonths, query.data.driver_id ?? null]
+      );
+      return res.rows[0];
+    });
+
+    const total = Number(stats.total_inspections ?? 0);
+    const clean = Number(stats.clean_inspections ?? 0);
+    const cleanRatePercent = total > 0 ? Math.round((clean / total) * 1000) / 10 : null;
+
+    return {
+      clean_rate_percent: cleanRatePercent,
+      total_inspections: total,
+      clean_inspections: clean,
+      trailing_months: trailingMonths,
+    };
+  });
+
   app.get("/api/v1/safety/dot-inspections", async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
