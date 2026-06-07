@@ -68,7 +68,7 @@ export function EdiTransactionLog() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="overflow-hidden rounded border">
+          <div className="overflow-x-auto rounded border">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left">
                 <tr>
