@@ -165,6 +165,103 @@ export async function listCancellationReasons(userId: string) {
   });
 }
 
+export type LoadCancellationAnalyticsGroupBy = "reason" | "driver" | "customer" | "date";
+
+export async function getLoadCancellationsAnalytics(
+  userId: string,
+  input: {
+    operating_company_id: string;
+    from: string;
+    to: string;
+    group_by: LoadCancellationAnalyticsGroupBy;
+  }
+) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SET LOCAL app.operating_company_id = '${input.operating_company_id}'`);
+
+    const baseFrom = `
+      FROM dispatch.load_cancellations c
+      JOIN mdata.loads l ON l.id = c.load_id AND l.soft_deleted_at IS NULL
+    `;
+    const baseWhere = `
+      WHERE c.operating_company_id = $1
+        AND c.cancelled_at >= $2::date
+        AND c.cancelled_at < ($3::date + interval '1 day')
+    `;
+    const values = [input.operating_company_id, input.from, input.to];
+
+    let query = "";
+    switch (input.group_by) {
+      case "reason":
+        query = `
+          SELECT
+            c.reason_code AS group_key,
+            r.reason_label AS group_label,
+            COUNT(*)::int AS cancellation_count,
+            COALESCE(SUM(c.cancellation_charge_cents), 0)::bigint AS total_charge_cents,
+            COALESCE(SUM(l.rate_total_cents), 0)::bigint AS total_rate_cents
+          ${baseFrom}
+          JOIN catalogs.cancellation_reasons r ON r.reason_code = c.reason_code
+          ${baseWhere}
+          GROUP BY c.reason_code, r.reason_label
+          ORDER BY cancellation_count DESC, group_label ASC
+        `;
+        break;
+      case "driver":
+        query = `
+          SELECT
+            COALESCE(l.assigned_primary_driver_id::text, 'unassigned') AS group_key,
+            COALESCE(NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), ''), 'Unassigned') AS group_label,
+            COUNT(*)::int AS cancellation_count,
+            COALESCE(SUM(c.cancellation_charge_cents), 0)::bigint AS total_charge_cents,
+            COALESCE(SUM(l.rate_total_cents), 0)::bigint AS total_rate_cents
+          ${baseFrom}
+          LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
+          ${baseWhere}
+          GROUP BY l.assigned_primary_driver_id, d.first_name, d.last_name
+          ORDER BY cancellation_count DESC, group_label ASC
+        `;
+        break;
+      case "customer":
+        query = `
+          SELECT
+            l.customer_id::text AS group_key,
+            cust.customer_name AS group_label,
+            COUNT(*)::int AS cancellation_count,
+            COALESCE(SUM(c.cancellation_charge_cents), 0)::bigint AS total_charge_cents,
+            COALESCE(SUM(l.rate_total_cents), 0)::bigint AS total_rate_cents
+          ${baseFrom}
+          JOIN mdata.customers cust ON cust.id = l.customer_id
+          ${baseWhere}
+          GROUP BY l.customer_id, cust.customer_name
+          ORDER BY cancellation_count DESC, group_label ASC
+        `;
+        break;
+      case "date":
+        query = `
+          SELECT
+            to_char(date_trunc('day', c.cancelled_at), 'YYYY-MM-DD') AS group_key,
+            to_char(date_trunc('day', c.cancelled_at), 'YYYY-MM-DD') AS group_label,
+            COUNT(*)::int AS cancellation_count,
+            COALESCE(SUM(c.cancellation_charge_cents), 0)::bigint AS total_charge_cents,
+            COALESCE(SUM(l.rate_total_cents), 0)::bigint AS total_rate_cents
+          ${baseFrom}
+          ${baseWhere}
+          GROUP BY date_trunc('day', c.cancelled_at)
+          ORDER BY group_key ASC
+        `;
+        break;
+    }
+
+    const rows = await client.query(query, values);
+    return {
+      period: { from: input.from, to: input.to },
+      group_by: input.group_by,
+      rows: rows.rows,
+    };
+  });
+}
+
 export async function approveCancellation(
   userId: string,
   role: string,

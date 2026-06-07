@@ -165,6 +165,7 @@ import { LaneProfitabilityPage } from "../pages/reports/LaneProfitabilityPage";
 import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage";
 import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
 import { DispatchMarginPage } from "../pages/reports/DispatchMarginPage";
+import { LoadCancellationsReportPage } from "../pages/dispatch/LoadCancellationsReportPage";
 import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
 import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
@@ -2214,6 +2215,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DispatchMarginPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/dispatch/load-cancellations"
+          element={
+            <ProtectedRoute>
+              <LoadCancellationsReportPage />
             </ProtectedRoute>
           }
         />

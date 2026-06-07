@@ -21,6 +21,7 @@ const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
   { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
   { id: "geofence-dwell", label: "Geofence dwell report" },
   { id: "deadhead", label: "Deadhead optimization" },
+  { id: "load-cancellations", label: "Load cancellations" },
   { id: "scheduled-reports", label: "Scheduled reports" },
 ];
 
@@ -72,6 +73,7 @@ export function reportsSubNavActiveHref(pathname: string): string {
     pathname === "/reports/maintenance-cost-per-unit" ||
     pathname === "/reports/geofence-dwell" ||
     pathname === "/reports/deadhead" ||
+    pathname === "/reports/dispatch/load-cancellations" ||
     pathname === "/reports/scheduled"
   ) {
     return pathname;
