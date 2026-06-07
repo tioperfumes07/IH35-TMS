@@ -972,6 +972,8 @@ Event contract family:
 - `safety.driver_score_recomputed`
 - `integrity.mapping_violation_detected`
 
+**Samsara 4-tier cache (GAP-23, 2026-06-07):** `apps/backend/src/lib/cache-tiers.ts` defines freshness budgets (5s / 30s / 5min / 15min). Tier accessors live under `apps/backend/src/integrations/samsara/cache/`; `cache-warmer.ts` pre-populates tiers 3+4 on cron. Legacy direct `SamsaraClient` consumers remain allowlisted until GAP-24 per-screen adoption. **CI:** `verify:cache-tier-coverage`.
+
 ### C. CAP-13 locked schema shape (lock-now decision)
 
 The CAP-13 architecture locks the core schema objects and outcome enum set now.

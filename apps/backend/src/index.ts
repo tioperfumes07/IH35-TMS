@@ -331,6 +331,7 @@ import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/d
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
 import { initializeCertExpiryMonitor } from "./jobs/cert-expiry-monitor.js";
+import { initializeSamsaraCacheWarmer } from "./integrations/samsara/cache/cache-warmer.js";
 import { initializeSearchIndexerIncremental } from "./jobs/search-indexer-incremental.js";
 import { registerUniversalSearchRoutes } from "./search/universal/routes.js";
 import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
@@ -932,6 +933,8 @@ async function main() {
     app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
 
     initializeCertExpiryMonitor(app);
+    initializeSamsaraCacheWarmer(app);
+    app.log.info("[STARTUP] samsara-cache-warmer initialized");
     initializeSearchIndexerIncremental(app);
     app.log.info("[STARTUP] cert-expiry-monitor initialized");
 

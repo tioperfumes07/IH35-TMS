@@ -395,6 +395,7 @@
     "verify:dispatcher-home": "node scripts/verify-dispatcher-home.mjs",
     "verify:dot-inspection-history": "node scripts/verify-dot-inspection-history.mjs",
     "verify:permits-toll-tags": "node scripts/verify-permits-toll-tags.mjs",
+    "verify:cache-tier-coverage": "node scripts/verify-cache-tier-coverage.mjs",
     "verify:accounting-home": "node scripts/verify-accounting-home.mjs",
     "verify:eld-audit-trail": "node scripts/verify-eld-audit-trail.mjs",
     "verify:safety-officer-home": "node scripts/verify-safety-officer-home.mjs",
