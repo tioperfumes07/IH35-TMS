@@ -325,6 +325,7 @@ import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/rou
 import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
 import { registerDriverManagerRoleHomeRoutes } from "./driver-manager/role-views/routes.js";
+import { registerDispatchViewRoutes } from "./dispatch/driver-pwa/dispatch-view.routes.js";
 import { initializeTodaysAttentionWorker, stopTodaysAttentionWorker } from "./jobs/todays-attention-worker.js";
 import {
   initializeLateArrivalAggregatorWorker,
@@ -623,6 +624,7 @@ async function main() {
   await registerAccountingRoleHomeRoutes(app);
   await registerSafetyOfficerRoleHomeRoutes(app);
   await registerDriverManagerRoleHomeRoutes(app);
+  await registerDispatchViewRoutes(app);
   await registerReportsRoutes(app);
   await registerReportsScheduledCrudRoutes(app);
   await registerCustomReportBuilderRoutes(app);

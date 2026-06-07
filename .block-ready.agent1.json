@@ -1,45 +1,8 @@
 {
-  "block_id": "GAP-IDEMP-KEYS",
-  "branch": "feature/gap-idemp-keys",
-  "phase": "implementation",
-  "task": "HTTP idempotency keys for mutating financial endpoints: idempotency_keys table + middleware (5 behaviors) + daily cleanup cron + frontend auto-key.",
+  "block_id": "GAP-34",
+  "branch": "feature/gap-34-driver-pwa-dispatch-view",
+  "phase": "GAP-HIGH",
+  "task": "G22 Driver PWA dispatch view",
   "agent": "A",
-  "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-idemp",
-  "allowed_files": [
-    ".block-ready.agent1.json",
-    "db/migrations/202606071300_idempotency_keys.sql",
-    "apps/backend/src/middleware/idempotency.ts",
-    "apps/backend/src/middleware/idempotency-cleanup.cron.ts",
-    "apps/backend/src/middleware/__tests__/idempotency.test.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/api/client.ts",
-    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx"
-  ],
-  "preview_provided": false,
-  "extra_gates": [],
-  "runtime_path": "both",
-  "db_required": true,
-  "guard_required": false,
-  "fields": {
-    "gap_block": 3,
-    "wave": "A",
-    "depends_on": "Block 1 (GAP-OBSERV-FOUNDATION)",
-    "additive_only": true,
-    "migration": "202606071300_idempotency_keys.sql (timestamp format, after 202606071200_feature_flags.sql chain tail)",
-    "required_endpoints": [
-      "driver-finance/settlements",
-      "accounting/invoices",
-      "accounting/bills",
-      "accounting/bill-payments",
-      "expenses",
-      "accounting/payments",
-      "accounting/journal-entries",
-      "accounting/factoring-advances",
-      "banking/transactions",
-      "banking/manual-je",
-      "qbo-sync/* writes"
-    ],
-    "note": "Client sends Idempotency-Key: <uuid>; server stores key+response (24h TTL); replay returns cached response. Enforcement registered globally in index.ts main() only — route/integration test harnesses build minimal Fastify apps and are unaffected. Idempotency store reads/writes use withLuciaBypass (infra-level). RLS added on idempotency_keys for tenant-scope defense-in-depth + verify:rls-operating-company-scope compliance."
-  }
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap34"
 }
