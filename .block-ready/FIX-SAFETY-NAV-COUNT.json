@@ -1,0 +1,18 @@
+{
+  "block_id": "FIX-SAFETY-NAV-COUNT",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-nav-fix",
+  "branch": "fix/safety-nav-count-import",
+  "phase": "HOTFIX",
+  "task": "Restore SAFETY_CANONICAL_TAB_COUNT reference in HomePage after home router refactor",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/FIX-SAFETY-NAV-COUNT.json",
+    "apps/frontend/src/pages/home/HomePage.tsx"
+  ],
+  "extra_gates": [
+    "verify:safety-count-nav-integrity"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
