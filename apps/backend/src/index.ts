@@ -305,6 +305,7 @@ import { attachHttpErrorMonitor } from "./lib/error-monitor-hooks.js";
 import { pool, withLuciaBypass } from "./auth/db.js";
 import { registerUrlCanonicalizeMiddleware } from "./middleware/url-canonicalize.js";
 import { registerRequestIdMiddleware } from "./middleware/request-id.js";
+import { registerSecurityHeaders } from "./middleware/security-headers.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
 import { registerAdminObservabilityRoutes } from "./admin/observability.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
@@ -429,6 +430,7 @@ async function main() {
   }
   setAppReady(true);
 
+  await registerSecurityHeaders(app);
   await app.register(cors, {
     origin: (origin: string | undefined, cb: (err: Error | null, allow: CorsOriginValue) => void) => {
       if (!origin) return cb(null, true);
