@@ -102,6 +102,9 @@ export function DrugAlcoholProgramTab() {
     queryFn: () => fetchPositives(companyId),
   });
 
+  const enrollmentRows = enrollmentsQ.data ?? [];
+  const positiveRows = positivesQ.data ?? [];
+
   if (!companyId) {
     return (
       <div className="rounded border border-gray-200 bg-white p-4 text-xs text-slate-500">
@@ -116,9 +119,9 @@ export function DrugAlcoholProgramTab() {
       <section className="rounded-lg border border-gray-200 bg-white p-4">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">
           Consortium Enrollments
-          {enrollmentsQ.data ? (
+          {enrollmentRows.length > 0 ? (
             <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-normal text-slate-600">
-              {enrollmentsQ.data.length} active
+              {enrollmentRows.length} active
             </span>
           ) : null}
         </h2>
@@ -127,7 +130,7 @@ export function DrugAlcoholProgramTab() {
           <p className="text-xs text-slate-500">Loading…</p>
         ) : enrollmentsQ.isError ? (
           <p className="text-xs text-red-600">Failed to load enrollments.</p>
-        ) : (enrollmentsQ.data ?? []).length === 0 ? (
+        ) : enrollmentRows.length === 0 ? (
           <p className="text-xs text-slate-500">No active consortium enrollments.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -140,7 +143,7 @@ export function DrugAlcoholProgramTab() {
                 </tr>
               </thead>
               <tbody>
-                {enrollmentsQ.data.map((e) => (
+                {enrollmentRows.map((e) => (
                   <EnrollmentRow key={e.uuid} enrollment={e} />
                 ))}
               </tbody>
@@ -153,9 +156,9 @@ export function DrugAlcoholProgramTab() {
       <section className="rounded-lg border border-red-100 bg-red-50 p-4">
         <h2 className="mb-3 text-sm font-semibold text-red-900">
           Positive Results — SAP Referral Queue
-          {positivesQ.data && positivesQ.data.length > 0 ? (
+          {positiveRows.length > 0 ? (
             <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-normal text-red-800">
-              {positivesQ.data.length} pending
+              {positiveRows.length} pending
             </span>
           ) : null}
         </h2>
@@ -164,7 +167,7 @@ export function DrugAlcoholProgramTab() {
           <p className="text-xs text-red-500">Loading…</p>
         ) : positivesQ.isError ? (
           <p className="text-xs text-red-700">Failed to load positive results.</p>
-        ) : (positivesQ.data ?? []).length === 0 ? (
+        ) : positiveRows.length === 0 ? (
           <p className="text-xs text-red-700">No open positive results. All clear.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -179,7 +182,7 @@ export function DrugAlcoholProgramTab() {
                 </tr>
               </thead>
               <tbody>
-                {positivesQ.data.map((t) => (
+                {positiveRows.map((t) => (
                   <PositiveRow key={t.uuid} test={t} />
                 ))}
               </tbody>

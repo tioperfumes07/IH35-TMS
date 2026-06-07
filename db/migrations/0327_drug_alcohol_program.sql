@@ -74,4 +74,4 @@ GRANT SELECT, INSERT, UPDATE ON
   safety.da_program_enrollments,
   safety.da_test_records,
   safety.da_random_pool_draws
-TO app_user;
+TO ih35_app;
