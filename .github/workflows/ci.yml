@@ -331,6 +331,9 @@ jobs:
 
       - name: Verify late arrival analytics contract
         run: npm run verify:late-arrival-analytics
+      - name: Verify geofence state machine contract
+        run: npm run verify:geofence-state-machine
+
 
       - name: Verify driver PWA dispatch view contract
         run: npm run verify:driver-pwa-dispatch-view

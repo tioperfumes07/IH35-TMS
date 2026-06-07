@@ -18,7 +18,8 @@
     "apps/backend/src/index.ts",
     "scripts/verify-geofence-state-machine.mjs",
     "docs/specs/gap-39-geofence-state-machine.md",
-    "package.json"
+    "package.json",
+    ".github/workflows/ci.yml"
   ],
   "extra_gates": [
     "verify:geofence-state-machine"
