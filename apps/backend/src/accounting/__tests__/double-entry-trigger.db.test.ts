@@ -22,8 +22,8 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
-import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
+import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 
 // Only runs in environments with a real Postgres (CI). Remove the `skipIf` to
 // run locally when DATABASE_URL points to a seeded dev DB.
