@@ -6,6 +6,7 @@
   "task": "Universal Cmd-K quick switcher search",
   "allowed_files": [
     ".block-ready/GAP-89.json",
+    ".block-ready/GAP-89-UNIVERSAL-SEARCH-CMD-K.json",
     ".block-ready.json",
     "db/migrations/0408_search_universal_index.sql",
     "apps/backend/src/search/universal/indexer.service.ts",
