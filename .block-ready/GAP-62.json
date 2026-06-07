@@ -1,6 +1,5 @@
 {
   "block_id": "GAP-62-CAP-12-TIRE-TREAD",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap62",
   "branch": "feature/gap-62",
   "phase": "GAP-HIGH",
   "task": "CAP-12 tire tread wear tracking and replacement projections",

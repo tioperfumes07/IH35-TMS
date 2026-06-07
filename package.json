@@ -396,6 +396,7 @@
     "verify:dispatcher-home": "node scripts/verify-dispatcher-home.mjs",
     "verify:dot-inspection-history": "node scripts/verify-dot-inspection-history.mjs",
     "verify:permits-toll-tags": "node scripts/verify-permits-toll-tags.mjs",
+    "verify:cap-12-tire-tread": "node scripts/verify-cap-12-tire-tread.mjs",
     "verify:driver-operations-depth": "node scripts/verify-driver-operations-depth.mjs",
     "verify:dvir-severity-tagging": "node scripts/verify-dvir-severity-tagging.mjs",
     "verify:cap-13-brake-wear": "node scripts/verify-cap-13-brake-wear.mjs",

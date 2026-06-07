@@ -182,6 +182,7 @@ import { registerWoCostContextRoutes } from "./maintenance/wo-cost-context.route
 import { registerMaintenancePmScheduleRoutes } from "./maintenance/pm-schedule.routes.js";
 import { registerMaintenanceInspectionsRoutes } from "./maintenance/inspections.routes.js";
 import { registerMaintenanceTiresRoutes } from "./maintenance/tires.routes.js";
+import { registerCap12TireTreadRoutes } from "./integrations/samsara/cap-12-tire-tread/routes.js";
 import { registerMaintenanceWarrantyRoutes } from "./maintenance/warranty.routes.js";
 import { registerMaintenanceReeferHoursRoutes } from "./maintenance/reefer-hours.routes.js";
 import { registerMaintenanceVendorsRoutes } from "./maintenance/vendors.routes.js";
@@ -349,6 +350,7 @@ import { registerDailyTasksRoutes } from "./daily-tasks/daily-tasks.routes.js";
 import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/daily-task-alerts.cron.js";
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
+import { initializeCap12TireTreadWorker } from "./jobs/cap-12-tire-tread-worker.js";
 import { initializeCertExpiryMonitor } from "./jobs/cert-expiry-monitor.js";
 import { initializeDamageContinuityWorker } from "./jobs/damage-continuity-worker.js";
 import { initializeCap13BrakeWearWorker } from "./jobs/cap-13-brake-wear-worker.js";
@@ -737,6 +739,7 @@ async function main() {
   await registerMaintenancePmScheduleRoutes(app);
   await registerMaintenanceInspectionsRoutes(app);
   await registerMaintenanceTiresRoutes(app);
+  await registerCap12TireTreadRoutes(app);
   await registerMaintenanceWarrantyRoutes(app);
   await registerMaintenanceReeferHoursRoutes(app);
   await registerMaintenanceVendorsRoutes(app);
@@ -969,6 +972,9 @@ async function main() {
 
     initializeDaRandomPoolDrawWorker(app);
     app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
+
+    initializeCap12TireTreadWorker(app);
+    app.log.info("[STARTUP] cap-12-tire-tread-worker initialized");
 
     initializeCertExpiryMonitor(app);
     initializeDamageContinuityWorker(app);
