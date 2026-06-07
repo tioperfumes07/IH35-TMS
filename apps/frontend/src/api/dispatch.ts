@@ -503,6 +503,36 @@ export function postLoadReassign(
   });
 }
 
+export function patchAssignUnit(
+  loadId: string,
+  body: { operating_company_id: string; unit_uuid: string }
+) {
+  return apiRequest<{ load_id: string; assigned_unit_id: string }>(
+    `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/assign-unit`,
+    { method: "PATCH", body }
+  );
+}
+
+export function patchAssignTrailer(
+  loadId: string,
+  body: { operating_company_id: string; trailer_uuid: string }
+) {
+  return apiRequest<{ load_id: string; trailer_uuid: string }>(
+    `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/assign-trailer`,
+    { method: "PATCH", body }
+  );
+}
+
+export function patchAssignDriver(
+  loadId: string,
+  body: { operating_company_id: string; driver_uuid: string }
+) {
+  return apiRequest<{ load_id: string; assigned_primary_driver_id: string }>(
+    `/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/assign-driver`,
+    { method: "PATCH", body }
+  );
+}
+
 export type DispatchLoadEta = {
   driver_lat: number | null;
   driver_lng: number | null;

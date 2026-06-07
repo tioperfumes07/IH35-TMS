@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
 import type { DataTableErrorState } from "../../lib/tableError";
@@ -7,6 +8,8 @@ import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents } from "./constants"
 import { InTransitEtaChip } from "./InTransitEtaChip";
 import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
 import { TableSelection, TableSelectionHeader } from "../bulk";
+import { InlineUnitPicker } from "./InlineUnitPicker";
+import { InlineDriverPicker } from "./InlineDriverPicker";
 
 type SortField = "created_at" | "load_number" | "status" | "rate_total_cents";
 type SortDirection = "asc" | "desc";
@@ -35,6 +38,15 @@ export type DispatchListProps = {
   };
   onExportSelectedCsv?: () => void;
   selectedCount?: number;
+  inlineQuicksaveEnabled?: boolean;
+  operatingCompanyId?: string;
+};
+
+type RowOverride = {
+  unitId?: string | null;
+  unitLabel?: string;
+  driverId?: string | null;
+  driverLabel?: string;
 };
 
 function statusVariant(status: DispatchLoadRow["status"]) {
@@ -70,7 +82,27 @@ export function DispatchList({
   bulkSelection,
   onExportSelectedCsv,
   selectedCount = 0,
+  inlineQuicksaveEnabled = false,
+  operatingCompanyId,
 }: DispatchListProps) {
+  const [rowOverrides, setRowOverrides] = useState<Record<string, RowOverride>>({});
+  const effectiveLoads = useMemo(
+    () =>
+      loads.map((load) => {
+        const override = rowOverrides[load.id];
+        if (!override) return load;
+        return {
+          ...load,
+          assigned_unit_id: override.unitId !== undefined ? override.unitId : load.assigned_unit_id,
+          assigned_unit_number: override.unitLabel ?? load.assigned_unit_number,
+          assigned_primary_driver_id:
+            override.driverId !== undefined ? override.driverId : load.assigned_primary_driver_id,
+          assigned_primary_driver_name: override.driverLabel ?? load.assigned_primary_driver_name,
+        };
+      }),
+    [loads, rowOverrides]
+  );
+
   const from = totalCount === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, totalCount);
   const hasPrev = offset > 0;
@@ -126,7 +158,7 @@ export function DispatchList({
 
       <div className="hidden overflow-x-auto rounded border border-gray-200 bg-white md:block">
         <TableSelection
-          rows={loads}
+          rows={effectiveLoads}
           getId={(load) => load.id}
           selectedIds={bulkSelection?.selectedIds ?? new Set()}
           onSelectionChange={bulkSelection?.onSelectionChange ?? (() => undefined)}
@@ -184,7 +216,7 @@ export function DispatchList({
                     </td>
                   </tr>
                 ))
-              : loads.map((load) => (
+              : effectiveLoads.map((load) => (
                   <tr
                     key={load.id}
                     onClick={() => onRowClick(load.id)}
@@ -209,11 +241,57 @@ export function DispatchList({
                     </td>
                     <td className="px-3 py-2">{load.first_pickup_city ?? "-"}</td>
                     <td className="px-3 py-2">{load.first_delivery_city ?? "-"}</td>
-                    <td className="code-cell px-3 py-2">{load.assigned_unit_number ?? "-"}</td>
+                    <td className="code-cell px-3 py-2">
+                      {inlineQuicksaveEnabled && operatingCompanyId ? (
+                        <InlineUnitPicker
+                          loadId={load.id}
+                          operatingCompanyId={operatingCompanyId}
+                          unitId={load.assigned_unit_id}
+                          displayLabel={load.assigned_unit_number ?? "—"}
+                          onAssigned={({ unitId, label }) =>
+                            setRowOverrides((prev) => ({
+                              ...prev,
+                              [load.id]: { ...prev[load.id], unitId, unitLabel: label },
+                            }))
+                          }
+                          onRollback={() =>
+                            setRowOverrides((prev) => {
+                              const next = { ...prev };
+                              delete next[load.id]?.unitId;
+                              return next;
+                            })
+                          }
+                        />
+                      ) : (
+                        load.assigned_unit_number ?? "-"
+                      )}
+                    </td>
                     <td className="min-w-0 max-w-[240px] px-3 py-2">
-                      <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
-                        {load.assigned_primary_driver_name ?? "Unassigned"}
-                      </span>
+                      {inlineQuicksaveEnabled && operatingCompanyId ? (
+                        <InlineDriverPicker
+                          loadId={load.id}
+                          operatingCompanyId={operatingCompanyId}
+                          driverId={load.assigned_primary_driver_id}
+                          displayLabel={load.assigned_primary_driver_name ?? "Unassigned"}
+                          onAssigned={({ driverId, label }) =>
+                            setRowOverrides((prev) => ({
+                              ...prev,
+                              [load.id]: { ...prev[load.id], driverId, driverLabel: label },
+                            }))
+                          }
+                          onRollback={() =>
+                            setRowOverrides((prev) => {
+                              const next = { ...prev };
+                              delete next[load.id]?.driverId;
+                              return next;
+                            })
+                          }
+                        />
+                      ) : (
+                        <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">
+                          {load.assigned_primary_driver_name ?? "Unassigned"}
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2">
                       <DriverHosPill driverId={load.assigned_primary_driver_id} operatingCompanyId={load.operating_company_id} />

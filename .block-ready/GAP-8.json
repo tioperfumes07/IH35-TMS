@@ -1,0 +1,31 @@
+{
+  "block_id": "GAP-8",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap8",
+  "branch": "feature/gap-8-assignments-quicksave",
+  "phase": "GAP-HIGH",
+  "task": "G26 assignments inline quicksave (unit/trailer/driver)",
+  "allowed_files": [
+    ".block-ready/GAP-8.json",
+    "apps/backend/src/dispatch/assignments/quicksave.service.ts",
+    "apps/backend/src/dispatch/assignments/quicksave.routes.ts",
+    "apps/backend/src/dispatch/assignments/__tests__/quicksave.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
+    "apps/frontend/src/components/dispatch/DispatchList.tsx",
+    "apps/frontend/src/components/dispatch/InlineUnitPicker.tsx",
+    "apps/frontend/src/components/dispatch/InlineTrailerPicker.tsx",
+    "apps/frontend/src/components/dispatch/InlineDriverPicker.tsx",
+    "apps/frontend/src/lib/optimisticPatch.ts",
+    "apps/frontend/src/api/dispatch.ts",
+    "scripts/verify-assignments-quicksave.mjs",
+    "docs/specs/gap-8-assignments-quicksave.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:assignments-quicksave"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}

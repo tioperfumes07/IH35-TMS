@@ -52,6 +52,7 @@ import { registerDispatchCancelLoadRoutes } from "./dispatch/cancel-load.routes.
 import { registerDispatchSheetHtmlRoutes } from "./dispatch/dispatch-sheet.routes.js";
 import { registerDispatchLoadAssignRoutes } from "./dispatch/load-assign.routes.js";
 import { registerDispatchQuicksaveRoutes } from "./dispatch/quicksave.routes.js";
+import { registerDispatchAssignmentsQuicksaveRoutes } from "./dispatch/assignments/quicksave.routes.js";
 import { registerDispatchCancellationRoutes } from "./dispatch/cancellation.routes.js";
 import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinements.routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
@@ -573,6 +574,7 @@ async function main() {
   await registerDispatchSheetHtmlRoutes(app);
   await registerDispatchLoadAssignRoutes(app);
   await registerDispatchQuicksaveRoutes(app);
+  await registerDispatchAssignmentsQuicksaveRoutes(app);
   await registerDispatchCancellationRoutes(app);
   await registerDispatchRefinementsRoutes(app);
   await registerIntransitIssuesRoutes(app);

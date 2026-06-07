@@ -107,6 +107,8 @@ export function DispatchBoard({ operatingCompanyId, onBulkComplete, loads, onExp
         {...props}
         loads={loads}
         showEtaColumn
+        inlineQuicksaveEnabled
+        operatingCompanyId={companyId}
         onExportCsv={onExportCsv}
         selectedCount={selection.count}
         onExportSelectedCsv={selection.count > 0 ? exportSelectedCsv : undefined}
