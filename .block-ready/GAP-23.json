@@ -1,0 +1,42 @@
+{
+  "block_id": "GAP-23",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "GAP-MEDIUM",
+  "task": "4-tier Samsara cache hierarchy with scheduled warmer",
+  "spec": "docs/dispatch/batches/GAP-23-4-TIER-SAMSARA-CACHE-HIERARCHY-GO.md",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap23",
+  "branch": "feature/gap-23-samsara-cache-tiers",
+  "base_sha": "7343d1f6b",
+  "preview_provided": false,
+  "details": [
+    "ADDITIVE backend-only: 4-tier Samsara cache hierarchy with in-memory + optional Redis tier2.",
+    "No existing cache-tiers module on main — dedupe clean.",
+    "Cache warmer wired via initializeSamsaraCacheWarmer in index.ts.",
+    "Legacy SamsaraClient consumers grandfathered in verify:cache-tier-coverage until GAP-24."
+  ],
+  "dedupe_findings": {
+    "existing": [],
+    "conflict_level": "ADDITIVE"
+  },
+  "allowed_files": [
+    ".block-ready/GAP-23.json",
+    "apps/backend/src/lib/cache-tiers.ts",
+    "apps/backend/src/integrations/samsara/cache/tier1-realtime.ts",
+    "apps/backend/src/integrations/samsara/cache/tier2-30s.ts",
+    "apps/backend/src/integrations/samsara/cache/tier3-5min.ts",
+    "apps/backend/src/integrations/samsara/cache/tier4-15min.ts",
+    "apps/backend/src/integrations/samsara/cache/cache-warmer.ts",
+    "apps/backend/src/integrations/samsara/cache/__tests__/cache.test.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-cache-tier-coverage.mjs",
+    "docs/specs/gap-23-samsara-cache-tiers.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": ["verify:cache-tier-coverage"],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
