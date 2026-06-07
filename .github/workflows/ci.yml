@@ -347,6 +347,9 @@ jobs:
       - name: Verify load cancellations report contract
         run: npm run verify:load-cancellations-report
 
+      - name: Verify reports hub 9 categories contract
+        run: npm run verify:reports-hub-9-categories
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 
