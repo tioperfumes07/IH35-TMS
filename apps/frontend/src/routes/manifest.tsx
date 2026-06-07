@@ -143,6 +143,7 @@ import { UsersPage } from "../pages/Users";
 import { VendorsPage } from "../pages/Vendors";
 import { VendorDetailPage } from "../pages/VendorDetail";
 import { Form425CHome } from "../pages/form425c/Form425CHome";
+import { ExhibitsViewer } from "../pages/reports/form-425c/ExhibitsViewer";
 import { HelpCenterPage } from "../pages/help/HelpCenterPage";
 import { HelpArticlePage } from "../pages/help/HelpArticlePage";
 import { HelpPage } from "../pages/help/HelpPage";
@@ -1419,6 +1420,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route path="/form-425c" element={<Navigate to="/425c" replace />} />
+        <Route
+          path="/reports/form-425c/exhibits"
+          element={
+            <ProtectedRoute>
+              <ExhibitsViewer />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/work-orders"
           element={

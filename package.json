@@ -403,6 +403,7 @@
     "verify:driver-manager-home": "node scripts/verify-driver-manager-home.mjs",
     "verify:late-arrival-analytics": "node scripts/verify-late-arrival-analytics.mjs",
     "verify:driver-pwa-dispatch-view": "node scripts/verify-driver-pwa-dispatch-view.mjs",
+    "verify:form-425c-exhibits": "node scripts/verify-form-425c-exhibits.mjs",
     "verify:reports-hub-9-categories": "node scripts/verify-reports-hub-9-categories.mjs",
     "verify:exif-chain-preservation": "node scripts/verify-exif-chain-preservation.mjs",
     "verify:severe-repair-estimate": "node scripts/verify-severe-repair-estimate.mjs",

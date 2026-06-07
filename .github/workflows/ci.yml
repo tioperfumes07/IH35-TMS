@@ -340,6 +340,9 @@ jobs:
       - name: Verify driver PWA dispatch view contract
         run: npm run verify:driver-pwa-dispatch-view
 
+      - name: Verify Form 425C exhibits auto-build contract
+        run: npm run verify:form-425c-exhibits
+
       - name: Verify severe repair fleet restore estimate contract
         run: npm run verify:severe-repair-estimate
 

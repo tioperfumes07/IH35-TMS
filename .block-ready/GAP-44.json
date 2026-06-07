@@ -1,0 +1,36 @@
+{
+  "block_id": "GAP-44",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap44",
+  "branch": "feature/gap-44-form-425c-exhibits",
+  "phase": "GAP-HIGH",
+  "task": "Form 425C Exhibits A-F auto-build for TRANSP monthly DIP filings",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-44.json",
+    "apps/backend/src/reports/form-425c/exhibits/types.ts",
+    "apps/backend/src/reports/form-425c/exhibits/exhibit-a-cash-receipts.ts",
+    "apps/backend/src/reports/form-425c/exhibits/exhibit-b-disbursements.ts",
+    "apps/backend/src/reports/form-425c/exhibits/exhibit-c-bank-reconciliation.ts",
+    "apps/backend/src/reports/form-425c/exhibits/exhibit-d-quarterly-fees.ts",
+    "apps/backend/src/reports/form-425c/exhibits/exhibit-e-statements-summary.ts",
+    "apps/backend/src/reports/form-425c/exhibits/exhibit-f-supporting-docs.ts",
+    "apps/backend/src/reports/form-425c/exhibits/exhibits-builder.service.ts",
+    "apps/backend/src/reports/form-425c/exhibits/routes.ts",
+    "apps/backend/src/reports/form-425c/exhibits/__tests__/exhibits.test.ts",
+    "apps/backend/src/reports/index.ts",
+    "apps/frontend/src/pages/reports/form-425c/ExhibitsViewer.tsx",
+    "apps/frontend/src/components/form-425c/ExhibitCard.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-form-425c-exhibits.mjs",
+    "scripts/block-ready-agent-manifest.mjs",
+    "docs/specs/gap-44-form-425c-exhibits.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:form-425c-exhibits"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
