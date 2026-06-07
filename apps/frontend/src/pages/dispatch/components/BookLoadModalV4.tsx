@@ -14,7 +14,7 @@ import { useToast } from "../../../components/Toast";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
-import { BookLoadValidationSection } from "./BookLoadValidationSection";
+import { PreDispatchValidationPanel } from "../../../components/dispatch/PreDispatchValidationPanel";
 import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTextarea";
 import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCallout";
 import type { LiveReservation } from "./book-load-v4/LiveLoadIdBar";
@@ -155,6 +155,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const [showSpecialNotes, setShowSpecialNotes] = useState(false);
   const [showDriverInstructions, setShowDriverInstructions] = useState(false);
   const [showExpectedAdjustments, setShowExpectedAdjustments] = useState(false);
+  const [preDispatchHasBlockers, setPreDispatchHasBlockers] = useState(false);
+  const [preDispatchOverrideReason, setPreDispatchOverrideReason] = useState("");
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -277,6 +279,11 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const reservedLoadNumber = form.watch("reserved_load_number");
   const factoringCompanySummary = form.watch("factoring_company_summary");
 
+  const assignedPrimaryDriverId = form.watch("assigned_primary_driver_id");
+  const assignedUnitId = form.watch("assigned_unit_id");
+  const assignedTrailerUnitId = form.watch("assigned_trailer_unit_id");
+  const customerId = form.watch("customer_id");
+
   const factoringVendorsQuery = useQuery({
     queryKey: ["book-load-factoring-vendors", operatingCompanyId],
     queryFn: () => listVendors({ operating_company_id: operatingCompanyId }),
@@ -324,18 +331,6 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     []
   );
 
-  const validationIssues = useMemo(
-    () => [
-      "Unit PM up-to-date check",
-      "DVIR / dispatch block",
-      "Trailer inspection check (pending automation)",
-      "Customer quality flag warning (pending automation)",
-      "FMCSA broker authority cache check (pending automation)",
-      "Driver instructions pushed to driver mobile app + dispatch sheet PDF",
-      "Expected adjustments flagged on customer invoice review banner",
-    ],
-    []
-  );
   const billNumberPreview = useMemo(() => {
     if (!reservedLoadNumber) return "B-—";
     return reservedLoadNumber.startsWith("L-") ? reservedLoadNumber.replace(/^L-/, "B-") : `B-${reservedLoadNumber}`;
@@ -358,6 +353,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     setShowSpecialNotes(false);
     setShowDriverInstructions(false);
     setShowExpectedAdjustments(false);
+    setPreDispatchHasBlockers(false);
+    setPreDispatchOverrideReason("");
   }, [open, form]);
 
   async function submitLoad(values: FormValues, saveMode: "book_dispatch" | "draft", opts?: { override?: boolean }) {
@@ -878,10 +875,27 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">D</span>
                 <span className="blw-sec-name">Pre-dispatch validation</span>
-                <span className="blw-sec-meta"><b>5 of 5 checks pass</b> · ready to book</span>
+                <span className="blw-sec-meta">
+                  {preDispatchHasBlockers ? (
+                    <span className="text-red-600 font-semibold">Blocker — cannot dispatch</span>
+                  ) : (
+                    <b>Checks pass · ready to book</b>
+                  )}
+                </span>
               </div>
               <div className="p-3">
-                <BookLoadValidationSection issues={validationIssues} />
+                <PreDispatchValidationPanel
+                  operatingCompanyId={operatingCompanyId}
+                  driverUuid={assignedPrimaryDriverId || null}
+                  unitUuid={assignedUnitId || null}
+                  trailerUuid={assignedTrailerUnitId || null}
+                  customerId={customerId || null}
+                  onValidationChange={(_canDispatch, hasBlockers) => {
+                    setPreDispatchHasBlockers(hasBlockers);
+                  }}
+                  overrideReason={preDispatchOverrideReason}
+                  onOverrideReasonChange={setPreDispatchOverrideReason}
+                />
               </div>
             </section>
           </div>
@@ -905,7 +919,17 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
               >
                 Save draft
               </Button>
-              <Button type="submit">Book + dispatch</Button>
+              <Button
+                type="submit"
+                disabled={preDispatchHasBlockers && preDispatchOverrideReason.trim().length < 10}
+                title={
+                  preDispatchHasBlockers
+                    ? "Pre-dispatch blocker active — provide override reason (min 10 chars) in Section D"
+                    : undefined
+                }
+              >
+                Book + dispatch
+              </Button>
             </div>
           </div>
           <div className="border-t border-gray-100 px-3 py-1 text-right text-[9px] text-gray-500">

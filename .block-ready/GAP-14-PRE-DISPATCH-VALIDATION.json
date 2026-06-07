@@ -1,0 +1,33 @@
+{
+  "block": "GAP-14",
+  "title": "Pre-Dispatch Validation Panel",
+  "wave": "G-F",
+  "lane": "A",
+  "preview_provided": true,
+  "preview_approved_by": "Jorge",
+  "preview_approved_date": "2026-06-07",
+  "design_decisions_locked": {
+    "debt_threshold_cents": 50000,
+    "fmcsa_cache_stale_hours": 24,
+    "override_workflow": "inline_book_load_modal_with_reason_audit_trail",
+    "medical_card_warning_days": 30
+  },
+  "allowed_files": [
+    "apps/backend/src/dispatch/validation/pre-dispatch-validator.service.ts",
+    "apps/backend/src/dispatch/validation/pre-dispatch.routes.ts",
+    "apps/backend/src/dispatch/validation/__tests__/pre-dispatch.test.ts",
+    "apps/frontend/src/components/shared/ValidationPanel.tsx",
+    "apps/frontend/src/components/dispatch/PreDispatchValidationPanel.tsx",
+    "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    "scripts/verify-pre-dispatch-validation.mjs",
+    "docs/specs/gap-14-validation-pre-dispatch.md",
+    ".block-ready/GAP-14-PRE-DISPATCH-VALIDATION.json"
+  ],
+  "forbidden_paths": [
+    "apps/backend/src/accounting/settlements/pre-settlement-validation/**",
+    "apps/frontend/src/components/settlements/PreSettlementValidationPanel.tsx"
+  ],
+  "financial_writes": false,
+  "read_only_validator": true,
+  "ci_guard": "scripts/verify-pre-dispatch-validation.mjs"
+}
