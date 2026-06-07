@@ -311,6 +311,9 @@ jobs:
       - name: Verify safety officer home contract
         run: npm run verify:safety-officer-home
 
+      - name: Verify driver manager home contract
+        run: npm run verify:driver-manager-home
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 
