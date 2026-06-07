@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeSafetyReminder, listSafetyReminders } from "../../../api/safety";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ExpiryDashboard } from "../expiry-tracking/ExpiryDashboard";
 
 type DotReferenceCard = {
   cfr: string;
@@ -105,6 +106,8 @@ export function DOTComplianceTab() {
 
   return (
     <div className="space-y-4">
+      <ExpiryDashboard />
+
       <div className="rounded border border-gray-200 bg-white p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
