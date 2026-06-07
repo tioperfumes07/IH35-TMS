@@ -329,6 +329,8 @@ import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/d
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
 import { initializeCertExpiryMonitor } from "./jobs/cert-expiry-monitor.js";
+import { initializeSearchIndexerIncremental } from "./jobs/search-indexer-incremental.js";
+import { registerUniversalSearchRoutes } from "./search/universal/routes.js";
 import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
 import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
 import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
@@ -640,6 +642,7 @@ async function main() {
   await registerSafetyDrugProgramRoutes(app);
   await registerDrugAlcoholProgramRoutes(app);
   await registerCertExpiryTrackingRoutes(app);
+  await registerUniversalSearchRoutes(app);
   await registerEldAuditTrailRoutes(app);
   await registerSafetyRtdRoutes(app);
   await registerSafetySettingsRoutes(app);
@@ -925,6 +928,7 @@ async function main() {
     app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
 
     initializeCertExpiryMonitor(app);
+    initializeSearchIndexerIncremental(app);
     app.log.info("[STARTUP] cert-expiry-monitor initialized");
 
     initializePmAutoEngineCron(app);
