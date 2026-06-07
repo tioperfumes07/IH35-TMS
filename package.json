@@ -334,6 +334,7 @@
     "verify:rls-operating-company-scope": "node scripts/verify-rls-operating-company-scope.mjs",
     "verify:rls-migration-scan": "node scripts/verify-rls-migration-scan.mjs",
     "verify:ts-strict-null": "node scripts/verify-ts-strict-null.mjs",
+    "verify:migration-schema-grants": "node scripts/verify-migration-schema-grants.mjs",
     "verify:migration-no-unknown-roles": "node scripts/verify-migration-no-unknown-roles.mjs",
     "verify:no-cross-carrier-data-leak": "node scripts/verify-no-cross-carrier-data-leak.mjs",
     "verify:reports-no-stub-data": "node scripts/verify-reports-no-stub-data.mjs",

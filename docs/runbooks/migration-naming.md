@@ -52,6 +52,51 @@ Within timestamp names, chronological order equals lexicographic order.
 
 ---
 
+## Every CREATE SCHEMA Must Include GRANT USAGE
+
+When a migration introduces a new PostgreSQL schema with `CREATE SCHEMA`, it
+**must** also include `GRANT USAGE ON SCHEMA <name> TO ih35_app` in the same
+file (or a co-committed migration file in the same PR).
+
+### Why this is required
+
+PostgreSQL schema-level `USAGE` is a prerequisite for the app role to access
+any object within the schema — tables, sequences, functions, etc.  Object-level
+`GRANT SELECT/INSERT/UPDATE` is **not sufficient** on its own.  Without
+`GRANT USAGE ON SCHEMA`, the app role receives:
+
+```
+ERROR: permission denied for schema <name>
+```
+
+at runtime, even when all table-level permissions are correctly granted.  This
+causes login outages and was observed in the `0309_notification_center` incident
+(the schema `notifications` was created with table grants but no schema USAGE,
+which broke the auth flow until a subsequent hotfix migration was deployed).
+
+### Required GRANT block
+
+```sql
+-- Required alongside any CREATE SCHEMA:
+GRANT USAGE ON SCHEMA <name> TO ih35_app;
+
+-- Object-level grants (also required, separately):
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA <name> TO ih35_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA <name> TO ih35_app;
+```
+
+### CI enforcement
+
+The `premerge-gates / schema-grant-check` CI gate (`scripts/verify-migration-schema-grants.mjs`)
+scans all new migrations (above baseline `0406`) and fails the PR with:
+
+> Schema '\<name\>' created but GRANT USAGE ON SCHEMA ... TO ih35\_app not found.
+> Add it to prevent login outages.
+
+PRs cannot merge to `main` until this gate passes.
+
+---
+
 ## Immutability Rule
 
 Once a migration is applied (recorded in `_system._schema_migrations` and

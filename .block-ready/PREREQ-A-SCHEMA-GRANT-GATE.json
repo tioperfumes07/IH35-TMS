@@ -1,0 +1,34 @@
+{
+  "block": "PREREQ-A-SCHEMA-GRANT-GATE",
+  "title": "4th pre-merge CI gate: schema-level GRANT USAGE check",
+  "closes": "login-outage class (0309_notification_center pattern)",
+  "status": "ready",
+  "files": {
+    "created": [
+      "scripts/verify-migration-schema-grants.mjs"
+    ],
+    "modified": [
+      ".github/workflows/premerge-gates.yml",
+      ".github/branch-protection-config.json",
+      "package.json",
+      "docs/runbooks/migration-naming.md"
+    ]
+  },
+  "ci_gate": {
+    "job": "schema-grant-check",
+    "workflow": "premerge-gates",
+    "required_context": "premerge-gates / schema-grant-check",
+    "script": "npm run verify:migration-schema-grants",
+    "baseline": 406,
+    "checks": [
+      "Any new migration (num > 0406 or timestamp format) containing CREATE SCHEMA must have GRANT USAGE ON SCHEMA <name> TO ih35_app in the same file or a co-committed migration file"
+    ],
+    "fail_message": "Schema '<name>' created but GRANT USAGE ON SCHEMA ... TO ih35_app not found. Add it to prevent login outages."
+  },
+  "incident_reference": {
+    "migration": "0309_notification_center.sql",
+    "root_cause": "CREATE SCHEMA notifications + table-level GRANTs added without GRANT USAGE ON SCHEMA notifications TO ih35_app",
+    "symptom": "permission denied for schema notifications → login outage",
+    "fix_migration": "202606071420_grant_notifications_schema_to_app.sql"
+  }
+}
