@@ -41,7 +41,7 @@ export function ReportsHubPage() {
   return (
     <div className="space-y-3" data-testid="reports-hub-page">
       <ReportsSubNav />
-      <PageHeader title="Reports Hub" subtitle="WF-061 · 9 categories with hover-dropdown navigation" />
+      <PageHeader title="Reports Hub" subtitle="9 categories with hover-dropdown navigation" />
       <ReportCategoryHoverNav />
       <input
         type="search"
