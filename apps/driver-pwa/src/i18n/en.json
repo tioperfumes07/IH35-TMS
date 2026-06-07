@@ -588,5 +588,8 @@
   "storage": {
     "itp_restore_reupload": "Storage was reset — please re-upload this document",
     "itp_stale_warning": "Offline data may be cleared soon. Open the app daily to keep your upload queue."
+  },
+  "photo": {
+    "angle_label": "Angle"
   }
 }

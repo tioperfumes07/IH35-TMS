@@ -364,6 +364,9 @@ jobs:
       - name: Verify EXIF chain preservation contract
         run: npm run verify:exif-chain-preservation
 
+      - name: Verify photo comparison AI contract
+        run: npm run verify:photo-comparison-ai
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 

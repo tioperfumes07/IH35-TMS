@@ -136,6 +136,7 @@ import { registerPreFlightDvirRoutes } from "./maintenance/pre-flight/routes.js"
 import { registerSafetyIncidentsRoutes } from "./safety/incidents.routes.js";
 import { registerDamageContinuityRoutes } from "./safety/damage-continuity/continuity.routes.js";
 import { registerDamagePhotoEvidenceRoutes } from "./safety/damage-reports/photo-evidence.routes.js";
+import { registerPhotoComparisonRoutes } from "./safety/photo-comparison/routes.js";
 import { registerSafetyPermitsRoutes } from "./safety/permits.routes.js";
 import { registerSafetyOnboardingRoutes } from "./safety/onboarding.routes.js";
 import { registerOnboardingStateRoutes } from "./onboarding/state.routes.js";
@@ -685,6 +686,7 @@ async function main() {
   await registerSafetyIncidentsRoutes(app);
   await registerDamageContinuityRoutes(app);
   await registerDamagePhotoEvidenceRoutes(app);
+  await registerPhotoComparisonRoutes(app);
   await registerSafetyPermitsRoutes(app);
   await registerSafetyOnboardingRoutes(app);
   await registerOnboardingStateRoutes(app);
