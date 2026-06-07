@@ -7,6 +7,7 @@ import {
   INSURANCE_COVERAGE_TYPES,
   INSURANCE_POLICY_STATUSES,
 } from "./policy.shared.js";
+import { createPolicyBillSchedule } from "./policy-bill-schedule.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -45,6 +46,9 @@ const createPolicySchema = z.object({
   insurer_email: z.string().trim().email().nullable().optional(),
   agent_contact: z.string().trim().max(500).nullable().optional(),
   status: z.enum(INSURANCE_POLICY_STATUSES).default("pending"),
+  /** Accounting vendor ID for the insurer. When provided with installment_count > 0,
+   *  bill schedule rows are created in accounting.bills via createBill(). */
+  vendor_id: z.string().trim().min(1).nullable().optional(),
 });
 
 const updatePolicySchema = z
@@ -63,6 +67,7 @@ const updatePolicySchema = z
     insurer_email: z.string().trim().email().nullable().optional(),
     agent_contact: z.string().trim().max(500).nullable().optional(),
     status: z.enum(INSURANCE_POLICY_STATUSES).optional(),
+    vendor_id: z.string().trim().min(1).nullable().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
@@ -120,6 +125,7 @@ function policySelectColumns() {
     insurer_email,
     agent_contact,
     status,
+    vendor_id,
     created_at::text,
     updated_at::text
   `;
@@ -243,12 +249,13 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
             late_fee_pct,
             insurer_email,
             agent_contact,
-            status
+            status,
+            vendor_id
           )
           VALUES (
-            $1::uuid, $2, $3, $4, $5::uuid, $6::date, $7::date, $8, $9, $10, $11, $12, $13, $14, $15, $16
+            $1::uuid, $2, $3, $4, $5::uuid, $6::date, $7::date, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
           )
-          RETURNING ${policySelectColumns()}
+          RETURNING ${policySelectColumns()}, vendor_id
         `,
         [
           body.operating_company_id,
@@ -267,6 +274,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           body.insurer_email ?? null,
           body.agent_contact ?? null,
           body.status,
+          body.vendor_id ?? null,
         ]
       );
       await appendCrudAudit(client, user.uuid, "insurance.policy.created", {
@@ -277,6 +285,23 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     });
 
     if (!created) return reply.code(400).send({ error: "coverage_type_not_found" });
+
+    // Fire bill schedule if vendor_id + installment_count > 0
+    const createdRow = created as Record<string, unknown>;
+    if (body.vendor_id && body.installment_count > 0 && createdRow.id) {
+      try {
+        await withCurrentUser(user.uuid, async (billClient) => {
+          await billClient.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
+          await createPolicyBillSchedule(String(createdRow.id), user.uuid, billClient as Parameters<typeof createPolicyBillSchedule>[2]);
+        });
+      } catch (err) {
+        // Bill schedule failure is non-fatal: policy is already committed.
+        // Log and surface a warning header; the operator can regenerate bills manually.
+        app.log.error({ err, policyId: createdRow.id }, "[insurance] bill-schedule generation failed");
+        return reply.code(201).header("X-Bill-Schedule-Warning", "bill_schedule_failed").send(createdRow);
+      }
+    }
+
     return reply.code(201).send(created);
   });
 
@@ -333,6 +358,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       if (body.insurer_email !== undefined) setField("insurer_email", body.insurer_email);
       if (body.agent_contact !== undefined) setField("agent_contact", body.agent_contact);
       if (body.status !== undefined) setField("status", body.status);
+      if (body.vendor_id !== undefined) setField("vendor_id", body.vendor_id);
 
       const result = await client.query(
         `
