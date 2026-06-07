@@ -302,6 +302,12 @@
     "note_required": "Nota obligatoria para defecto mayor",
     "photo_required": "foto(s)",
     "add_photo": "+ Foto",
+    "severity_picker": "Gravedad del defecto",
+    "sev_major": "Mayor",
+    "sev_minor": "Menor",
+    "sev_observation": "Observación",
+    "major_warning": "Esto bloqueará el despacho hasta que se repare.",
+    "major_ack": "Confirmo que este defecto mayor bloquea el despacho hasta que se repare.",
     "status": {
       "pass": "Pasa",
       "minor": "Menor",

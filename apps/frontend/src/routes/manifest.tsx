@@ -89,6 +89,7 @@ import { WorkOrdersConsoleListPage } from "../pages/work-orders/WorkOrdersConsol
 import { WorkOrderDetailPage } from "../pages/maintenance/WorkOrderDetailPage";
 import { WorkOrderNewPage } from "../pages/maintenance/WorkOrderNewPage";
 import { DefectsInboxPage } from "../pages/maintenance/DefectsInboxPage";
+import { PreFlightDvirQueue } from "../pages/maintenance/pre-flight/PreFlightDvirQueue";
 import { DefectDetailPage } from "../pages/maintenance/DefectDetailPage";
 import { VehiclesMasterDataPage } from "../pages/maintenance/vehicles/VehiclesMasterDataPage";
 import { DriversMasterDataPage } from "../pages/maintenance/drivers/DriversMasterDataPage";
@@ -1019,6 +1020,16 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <MaintenanceShell>
                 <DefectsInboxPage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/pre-flight/dvir"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <PreFlightDvirQueue />
               </MaintenanceShell>
             </ProtectedRoute>
           }
