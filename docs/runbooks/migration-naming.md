@@ -11,8 +11,13 @@ across parallel development lanes. Legacy 4-digit sequence names are frozen.
 
 | Format | Pattern | Example | Status |
 |--------|---------|---------|--------|
-| **New (timestamp)** | `YYYYMMDD_HHMMSS_<slug>.sql` | `20260607_143022_add_foo_column.sql` | ✅ Use for all new migrations |
+| **New (timestamp)** | `YYYYMMDDHHMM_<slug>.sql` (12 continuous digits) | `202606071430_add_foo_column.sql` | ✅ Use for all new migrations |
 | **Legacy (sequence)** | `NNNN[a]_<slug>.sql` | `0404_drivers_rls_oci_scope.sql` | ❌ Frozen — no new files |
+
+> ⚠️ The timestamp prefix MUST be **12 continuous digits** (`YYYYMMDDHHMM`) followed
+> by an underscore — this is what `db-migrate.mjs` (`MIGRATION_FILE_PATTERN_TIMESTAMP
+> = /^\d{12}_.+\.sql$/i`) recognizes. A `YYYYMMDD_HHMMSS` name (8 digits, underscore,
+> 6 digits) matches **neither** runner pattern and is silently skipped by the runner.
 
 ---
 
@@ -32,14 +37,14 @@ construction — parallel workers generating names seconds apart get distinct pr
 ```js
 import { generateMigrationName } from "../scripts/db-migrate.mjs";
 
-// Returns e.g. "20260607_143022_add_foo_column.sql"
+// Returns e.g. "202606071430_add_foo_column.sql"
 const filename = generateMigrationName("add_foo_column");
 ```
 
 ### Manual
 
-1. Note the current UTC time: `date -u +%Y%m%d_%H%M%S`
-2. Construct: `<YYYYMMDD_HHMMSS>_<descriptive_slug>.sql`
+1. Note the current UTC time: `date -u +%Y%m%d%H%M`
+2. Construct: `<YYYYMMDDHHMM>_<descriptive_slug>.sql`
 3. Place in `db/migrations/`
 
 ---

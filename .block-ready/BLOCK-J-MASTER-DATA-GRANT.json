@@ -1,0 +1,43 @@
+{
+  "block": "J",
+  "title": "Repair master_data schema USAGE grant on production + fix migration filename generator",
+  "model": "Opus",
+  "category": "DB hotfix + migration tooling",
+  "status": "ready",
+  "incident": {
+    "live_finding": "has_schema_privilege('ih35_app','master_data','USAGE') = FALSE on Neon project tiny-field-89581227",
+    "symptom": "permission denied for schema master_data → permit/toll-tag CRUD routes failing in production",
+    "root_cause": "PR #684 hotfix shipped as db/migrations/20260607_183150_grant_master_data_schema_to_app.sql. Its YYYYMMDD_HHMMSS filename (8 digits, underscore, 6 digits) matched NEITHER runner pattern in scripts/db-migrate.mjs (legacy /^\\d{4}[a-z]?_/ nor timestamp /^\\d{12}_/), so listMigrationFiles() filtered it out. db:migrate silently skipped it: never applied, never ledgered, no error. The file existed on origin/main and deployed, but the GRANT never ran.",
+    "secondary_root_cause": "generateMigrationName() emitted the same unrunnable YYYYMMDD_HHMMSS format, so any migration scaffolded with the helper would be silently skipped."
+  },
+  "fix": {
+    "part_1": "New idempotent migration db/migrations/202606072230_grant_master_data_schema_to_app.sql (runner-valid 12-digit YYYYMMDDHHMM prefix) granting USAGE + table/sequence grants + ALTER DEFAULT PRIVILEGES on schema master_data to ih35_app.",
+    "part_2": "Fixed generateMigrationName() to emit YYYYMMDDHHMM_<slug>.sql (12 continuous digits) matching MIGRATION_FILE_PATTERN_TIMESTAMP. Deleted the stale invalid file 20260607_183150_grant_master_data_schema_to_app.sql (can never apply). Corrected docs/runbooks/migration-naming.md examples."
+  },
+  "files": {
+    "created": [
+      "db/migrations/202606072230_grant_master_data_schema_to_app.sql"
+    ],
+    "modified": [
+      "scripts/db-migrate.mjs",
+      "docs/runbooks/migration-naming.md"
+    ],
+    "deleted": [
+      "db/migrations/20260607_183150_grant_master_data_schema_to_app.sql"
+    ]
+  },
+  "ci_gates": {
+    "schema-grant-check": "PASS — master_data (created in 0407) has GRANT USAGE ON SCHEMA ... TO ih35_app supplied by the new co-committed migration",
+    "migration-guard": "PASS — new file uses timestamp format (no new legacy); stale file is not in .applied-migrations.json so deletion is allowed",
+    "migration-role-validation": "PASS — grants target only ih35_app"
+  },
+  "verification": {
+    "filename_pattern": "202606072230_grant_master_data_schema_to_app.sql matches /^\\d{12}_.+\\.sql$/",
+    "stale_file_deleted": true,
+    "idempotent": "All GRANT / ALTER DEFAULT PRIVILEGES statements are safe to re-run"
+  },
+  "post_merge": {
+    "action": "Apply GRANT directly to Neon prod via MCP (migration runs on next Render deploy; prod needs it immediately)",
+    "verify": "SELECT has_schema_privilege('ih35_app','master_data','USAGE') = TRUE"
+  }
+}

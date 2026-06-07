@@ -48,10 +48,16 @@ function listMigrationFiles() {
 
 /**
  * Generates a migration filename using the current UTC timestamp.
- * Format: YYYYMMDD_HHMMSS_<slug>.sql
+ * Format: YYYYMMDDHHMM_<slug>.sql (12 continuous digits, matching
+ * MIGRATION_FILE_PATTERN_TIMESTAMP).
+ *
+ * NOTE: this MUST emit a 12-digit continuous prefix. A prior version emitted
+ * YYYYMMDD_HHMMSS (8_6 digits with an internal underscore), which matched
+ * neither isMigrationFile() pattern, so the runner silently skipped any file
+ * created with it. Keep this aligned with MIGRATION_FILE_PATTERN_TIMESTAMP.
  *
  * Usage: generateMigrationName("add_foo_column")
- *   → "20260607_143022_add_foo_column.sql"
+ *   → "202606071430_add_foo_column.sql"
  */
 export function generateMigrationName(slug) {
   if (!slug || typeof slug !== "string") {
@@ -64,9 +70,8 @@ export function generateMigrationName(slug) {
   const day = pad(now.getUTCDate());
   const hours = pad(now.getUTCHours());
   const minutes = pad(now.getUTCMinutes());
-  const seconds = pad(now.getUTCSeconds());
   const sanitized = slug.replace(/[^a-z0-9_]/gi, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
-  return `${year}${month}${day}_${hours}${minutes}${seconds}_${sanitized}.sql`;
+  return `${year}${month}${day}${hours}${minutes}_${sanitized}.sql`;
 }
 
 function sha256(text) {
