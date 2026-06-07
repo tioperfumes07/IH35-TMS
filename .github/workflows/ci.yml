@@ -302,6 +302,9 @@ jobs:
       - name: Verify accounting home role view contract
         run: npm run verify:accounting-home
 
+      - name: Verify ELD audit trail contract
+        run: npm run verify:eld-audit-trail
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 

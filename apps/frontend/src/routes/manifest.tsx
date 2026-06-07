@@ -54,6 +54,7 @@ import { QboSyncQueuePage } from "../pages/banking/QboSyncQueuePage";
 import { EmailQueuePage } from "../pages/banking/EmailQueuePage";
 import { BankAccountDetailPage } from "../pages/banking/BankAccountDetail";
 import { SafetyLayout } from "../pages/safety/SafetyLayout";
+import { EldAuditTrailViewer } from "../pages/safety/eld/EldAuditTrailViewer";
 import {
   AccidentsIncidentsTab,
   CargoClaimsTab,
@@ -936,6 +937,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="/safety/training/programs" element={<TrainingProgramsTab />} />
           <Route path="/safety/training/records" element={<TrainingRecordsTab />} />
           <Route path="hos" element={<HoursOfServiceTab />} />
+          <Route path="/safety/eld/audit-trail" element={<EldAuditTrailViewer />} />
           <Route path="/safety/hos/exceptions" element={<HosExceptionsPage />} />
           <Route path="hos-violations" element={<HOSViolationsTab />} />
           <Route path="idvr" element={<IDVRTab />} />
