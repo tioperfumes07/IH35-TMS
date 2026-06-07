@@ -73,6 +73,9 @@ jobs:
       - name: Verify accounting autoload coverage (src + dist)
         run: npm run verify:accounting-autoload-coverage
 
+      - name: Verify migration filenames (no silent-skip naming)
+        run: npm run verify:migration-filenames
+
       - name: Migration application consistency guard
         run: npm run verify:migration-application-consistency
 

@@ -1,43 +1,56 @@
 {
   "block": "J",
-  "title": "Repair master_data schema USAGE grant on production + fix migration filename generator",
+  "title": "Systemic migration silent-skip fix + repair master_data schema USAGE grant on production",
   "model": "Opus",
-  "category": "DB hotfix + migration tooling",
+  "category": "DB hotfix + migration tooling (systemic)",
   "status": "ready",
   "incident": {
-    "live_finding": "has_schema_privilege('ih35_app','master_data','USAGE') = FALSE on Neon project tiny-field-89581227",
-    "symptom": "permission denied for schema master_data → permit/toll-tag CRUD routes failing in production",
-    "root_cause": "PR #684 hotfix shipped as db/migrations/20260607_183150_grant_master_data_schema_to_app.sql. Its YYYYMMDD_HHMMSS filename (8 digits, underscore, 6 digits) matched NEITHER runner pattern in scripts/db-migrate.mjs (legacy /^\\d{4}[a-z]?_/ nor timestamp /^\\d{12}_/), so listMigrationFiles() filtered it out. db:migrate silently skipped it: never applied, never ledgered, no error. The file existed on origin/main and deployed, but the GRANT never ran.",
-    "secondary_root_cause": "generateMigrationName() emitted the same unrunnable YYYYMMDD_HHMMSS format, so any migration scaffolded with the helper would be silently skipped."
+    "live_finding": "has_schema_privilege('ih35_app','master_data','USAGE') = FALSE on Neon project tiny-field-89581227 → permit/toll-tag CRUD routes failing in production",
+    "root_cause": "Migration files named YYYYMMDD_HHMMSS_slug.sql (8 digits, underscore, 6 digits) match NEITHER runner pattern in scripts/db-migrate.mjs (legacy /^\\d{4}[a-z]?_/ nor timestamp /^\\d{12}_/). listMigrationFiles() silently filtered them out: never applied, never ledgered, no error. The bug originated in generateMigrationName(), which emitted that unrunnable format.",
+    "systemic_impact": "Multiple shipped migrations were silently skipped, not just the master_data grant: GAP-19 detention tables (dispatch.detention_requests, dispatch.detention_evidence) also did not exist in prod, plus Block C settlement and Block H detention-notify migrations (owned by their respective workers)."
   },
-  "fix": {
-    "part_1": "New idempotent migration db/migrations/202606072230_grant_master_data_schema_to_app.sql (runner-valid 12-digit YYYYMMDDHHMM prefix) granting USAGE + table/sequence grants + ALTER DEFAULT PRIVILEGES on schema master_data to ih35_app.",
-    "part_2": "Fixed generateMigrationName() to emit YYYYMMDDHHMM_<slug>.sql (12 continuous digits) matching MIGRATION_FILE_PATTERN_TIMESTAMP. Deleted the stale invalid file 20260607_183150_grant_master_data_schema_to_app.sql (can never apply). Corrected docs/runbooks/migration-naming.md examples."
+  "scope": {
+    "block_j_owns": "master_data grant migration + GAP-19 detention migrations (#686) + the systemic runner/CI guards + generateMigrationName fix",
+    "explicitly_excluded": [
+      "20260607_191000_settlement_min_net_floor.sql (Block C worker e063cf15 renames in its own PR)",
+      "detention_customer_notify migration (Block H worker / PR #693 renames in its own PR)"
+    ]
   },
   "files": {
     "created": [
-      "db/migrations/202606072230_grant_master_data_schema_to_app.sql"
+      "db/migrations/202606072230_grant_master_data_schema_to_app.sql",
+      "scripts/verify-migration-filenames.mjs"
     ],
-    "modified": [
-      "scripts/db-migrate.mjs",
-      "docs/runbooks/migration-naming.md"
+    "renamed": [
+      "20260607_190000_dispatch_detention_requests.sql -> 202606071900_dispatch_detention_requests.sql",
+      "20260607_190100_dispatch_detention_evidence.sql -> 202606071901_dispatch_detention_evidence.sql"
     ],
     "deleted": [
       "db/migrations/20260607_183150_grant_master_data_schema_to_app.sql"
+    ],
+    "modified": [
+      "scripts/db-migrate.mjs",
+      ".github/workflows/ci.yml",
+      "package.json",
+      "docs/runbooks/migration-naming.md"
     ]
   },
-  "ci_gates": {
-    "schema-grant-check": "PASS — master_data (created in 0407) has GRANT USAGE ON SCHEMA ... TO ih35_app supplied by the new co-committed migration",
-    "migration-guard": "PASS — new file uses timestamp format (no new legacy); stale file is not in .applied-migrations.json so deletion is allowed",
-    "migration-role-validation": "PASS — grants target only ih35_app"
+  "fixes": {
+    "1_grant_migration": "New idempotent 12-digit migration grants USAGE + table/sequence grants + ALTER DEFAULT PRIVILEGES on master_data to ih35_app.",
+    "2_detention_renames": "Renamed the two GAP-19 detention migrations to 12-digit format; both were already fully idempotent (CREATE TABLE/INDEX IF NOT EXISTS, DROP POLICY IF EXISTS, idempotent GRANTs) — content unchanged.",
+    "3_runner_fail_loud": "db-migrate.mjs listMigrationFiles() now THROWS (non-zero exit) on any .sql file matching neither recognized pattern, instead of silently skipping. Message: 'Migration file {filename} does not match any recognized naming pattern. Rename to YYYYMMDDHHMM_slug.sql'.",
+    "4_ci_guard": "Added scripts/verify-migration-filenames.mjs (npm run verify:migration-filenames), wired into .github/workflows/ci.yml. Scans db/migrations/*.sql and fails on any YYYYMMDD_HHMMSS (8+6) or otherwise unrecognized filename.",
+    "5_generator": "generateMigrationName() now emits YYYYMMDDHHMM_slug.sql (12 contiguous digits) matching MIGRATION_FILE_PATTERN_TIMESTAMP."
   },
-  "verification": {
-    "filename_pattern": "202606072230_grant_master_data_schema_to_app.sql matches /^\\d{12}_.+\\.sql$/",
-    "stale_file_deleted": true,
-    "idempotent": "All GRANT / ALTER DEFAULT PRIVILEGES statements are safe to re-run"
+  "prod_action_taken": {
+    "applied_directly": "RESET ROLE (to neondb_owner, the schema owner; MCP runs as ih35_app which cannot self-grant) then GRANT USAGE + table/sequence grants + ALTER DEFAULT PRIVILEGES on master_data to ih35_app.",
+    "verification": "has_schema_privilege('ih35_app','master_data','USAGE') = TRUE; table SELECT/INSERT on master_data.* = TRUE. Prod outage resolved immediately."
   },
-  "post_merge": {
-    "action": "Apply GRANT directly to Neon prod via MCP (migration runs on next Render deploy; prod needs it immediately)",
-    "verify": "SELECT has_schema_privilege('ih35_app','master_data','USAGE') = TRUE"
+  "ci_dependency_note": "verify:migration-filenames scans the whole tree, so it will stay RED on this PR until Block C (settlement_min_net_floor) and Block H (detention_customer_notify) bad-format files are renamed by their own PRs and this branch is rebased onto the updated main. This is the intended coordination gate for the systemic fix.",
+  "local_gate_results": {
+    "verify:migration-schema-grants": "PASS",
+    "verify:migration-no-unknown-roles": "PASS",
+    "verify:rls-migration-scan": "PASS",
+    "verify:migration-filenames": "FAIL only on Block C's settlement_min_net_floor (owned by Block C) — all Block J files pass"
   }
 }

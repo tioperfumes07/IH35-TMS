@@ -42,8 +42,32 @@ function isMigrationFile(name) {
   return MIGRATION_FILE_PATTERN_LEGACY.test(name) || MIGRATION_FILE_PATTERN_TIMESTAMP.test(name);
 }
 
+/**
+ * Lists migration files, failing LOUDLY on any .sql file whose name matches
+ * neither the legacy (^\d{4}[a-z]?_) nor the timestamp (^\d{12}_) pattern.
+ *
+ * Previously such files (e.g. the YYYYMMDD_HHMMSS format emitted by an old
+ * generateMigrationName) were silently filtered out — they would never apply,
+ * never ledger, and never error, leaving prod missing grants/tables. We now
+ * refuse to proceed so the operator must rename the file before any migration
+ * runs. This prevents the entire silent-skip failure class.
+ */
 function listMigrationFiles() {
-  return fs.readdirSync(MIGRATIONS_DIR).filter((name) => isMigrationFile(name)).sort();
+  const sqlFiles = fs.readdirSync(MIGRATIONS_DIR).filter((name) => name.toLowerCase().endsWith(".sql"));
+  const unrecognized = sqlFiles.filter((name) => !isMigrationFile(name));
+  if (unrecognized.length > 0) {
+    const lines = unrecognized
+      .sort()
+      .map(
+        (filename) =>
+          `Migration file ${filename} does not match any recognized naming pattern. Rename to YYYYMMDDHHMM_slug.sql`
+      );
+    throw new Error(
+      `Refusing to run migrations — ${unrecognized.length} unrecognized migration filename(s):\n  ${lines.join("\n  ")}\n` +
+        `Recognized patterns: legacy NNNN[a]_slug.sql or timestamp YYYYMMDDHHMM_slug.sql (12 continuous digits).`
+    );
+  }
+  return sqlFiles.filter((name) => isMigrationFile(name)).sort();
 }
 
 /**
