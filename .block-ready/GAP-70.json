@@ -1,0 +1,38 @@
+{
+  "block_id": "GAP-70",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap70",
+  "branch": "feature/gap-70",
+  "phase": "GAP-HIGH",
+  "task": "EDI Integration Foundation (204/214/210/990)",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-70.json",
+    "db/migrations/202606071500_edi_foundation.sql",
+    "apps/backend/src/integrations/edi/setup.service.ts",
+    "apps/backend/src/integrations/edi/transactions/inbound-204.handler.ts",
+    "apps/backend/src/integrations/edi/transactions/outbound-214.builder.ts",
+    "apps/backend/src/integrations/edi/transactions/outbound-210.builder.ts",
+    "apps/backend/src/integrations/edi/transactions/outbound-990.builder.ts",
+    "apps/backend/src/integrations/edi/edi.routes.ts",
+    "apps/backend/src/integrations/edi/__tests__/setup.test.ts",
+    "apps/backend/src/integrations/edi/__tests__/inbound-204.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/integrations/edi/EdiSetupWizard.tsx",
+    "apps/frontend/src/pages/integrations/edi/EdiTransactionLog.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-edi-foundation.mjs",
+    "docs/specs/gap-70-edi-foundation.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:edi-foundation"
+  ],
+  "forbidden_paths": [
+    "apps/backend/src/driver-manager/role-views/**",
+    "apps/frontend/src/pages/home/role-views/DriverManagerHome.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
