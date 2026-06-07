@@ -9,6 +9,7 @@ import {
   CircleHelp,
   FileText,
   Home,
+  LayoutDashboard,
   ListChecks,
   Radio,
   Scale,
@@ -23,10 +24,11 @@ import { MAINTENANCE_MODULE_NAV_LINKS } from "../maintenance/MAINTENANCE_NAV_CON
 /** Canonical sidebar ids (locked; single source for order + prefs overrides). */
 export const SIDEBAR_ITEM_IDS = [
   "home",
-  "maintenance",
-  "fuel",
   "dispatch",
   "drivers",
+  "driver-hub",
+  "maintenance",
+  "fuel",
   "safety",
   "accounting",
   "bank",
@@ -46,7 +48,29 @@ export const SIDEBAR_ITEM_IDS = [
 
 export type SidebarItemId = (typeof SIDEBAR_ITEM_IDS)[number];
 
-export const SIDEBAR_DEFAULT_ORDER: readonly SidebarItemId[] = SIDEBAR_ITEM_IDS;
+export const SIDEBAR_DEFAULT_ORDER: readonly SidebarItemId[] = [
+  "home",
+  "maintenance",
+  "fuel",
+  "dispatch",
+  "driver-hub",
+  "safety",
+  "drivers",
+  "eld",
+  "accounting",
+  "bank",
+  "factoring",
+  "vendors",
+  "customers",
+  "legal",
+  "form_425",
+  "drv_app",
+  "lists",
+  "reports",
+  "docs",
+  "users",
+  "help",
+];
 
 const DEFAULT_ORDER_SET = new Set<string>(SIDEBAR_DEFAULT_ORDER);
 
@@ -74,7 +98,8 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   },
   fuel: { id: "fuel", label: "FUEL", Icon: CarFront, to: "/fuel" },
   dispatch: { id: "dispatch", label: "DISPATCH", Icon: Truck, to: "/dispatch", dataTour: "tour-nav-dispatch" },
-  drivers: { id: "drivers", label: "DRIVERS", Icon: Truck, to: "/drivers" },
+  drivers: { id: "drivers", label: "DRIVER PROFILE", Icon: Truck, to: "/drivers" },
+  "driver-hub": { id: "driver-hub", label: "DRIVER HUB", Icon: LayoutDashboard, to: "/driver-hub" },
   safety: { id: "safety", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
   accounting: { id: "accounting", label: "ACCTG", Icon: Calculator, to: "/accounting" },
   bank: { id: "bank", label: "BANK", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
@@ -123,11 +148,11 @@ function parseUserOverride(raw: unknown): SidebarItemId[] | null {
 
 /** Role-first ordering; remaining ids append from `SIDEBAR_DEFAULT_ORDER`. Owner / Administrator / SuperAdmin use defaults only (no entry here). */
 export const SIDEBAR_ROLE_ORDER: Partial<Record<UserRole, readonly SidebarItemId[]>> = {
-  Mechanic: ["home", "maintenance", "fuel", "drivers", "safety", "lists", "docs", "eld", "reports", "drv_app", "users", "help"],
-  Dispatcher: ["home", "dispatch", "drivers", "fuel", "safety", "maintenance", "customers", "vendors", "lists", "reports", "help"],
-  Accountant: ["home", "accounting", "bank", "factoring", "vendors", "customers", "drivers", "fuel", "reports", "lists", "form_425", "legal", "docs", "help"],
-  Safety: ["home", "safety", "drivers", "maintenance", "dispatch", "fuel", "lists", "reports", "help", "users"],
-  Manager: ["home", "dispatch", "drivers", "maintenance", "fuel", "customers", "vendors", "safety", "lists", "reports", "help", "users"],
+  Mechanic: ["home", "maintenance", "fuel", "drivers", "driver-hub", "safety", "lists", "docs", "eld", "reports", "drv_app", "users", "help"],
+  Dispatcher: ["home", "dispatch", "drivers", "driver-hub", "fuel", "safety", "maintenance", "customers", "vendors", "lists", "reports", "help"],
+  Accountant: ["home", "accounting", "bank", "factoring", "vendors", "customers", "drivers", "driver-hub", "fuel", "reports", "lists", "form_425", "legal", "docs", "help"],
+  Safety: ["home", "safety", "drivers", "driver-hub", "maintenance", "dispatch", "fuel", "lists", "reports", "help", "users"],
+  Manager: ["home", "dispatch", "drivers", "driver-hub", "maintenance", "fuel", "customers", "vendors", "safety", "lists", "reports", "help", "users"],
 };
 
 export function resolveSidebarOrder(role: UserRole, preferences: Record<string, unknown> | undefined): SidebarItemId[] {

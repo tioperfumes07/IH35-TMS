@@ -120,6 +120,7 @@ import { ComplianceDashboardPage } from "../pages/compliance/ComplianceDashboard
 import { NotificationCenterPage } from "../pages/notifications/NotificationCenterPage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
+import { DriverHubPage } from "../pages/home/DriverHubPage";
 import { OwnerHome } from "../pages/home/OwnerHome";
 import { LoginPage } from "../pages/Login";
 import { LoginResetRequestPage } from "../pages/LoginResetRequestPage";
@@ -479,6 +480,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <HomeRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver-hub"
+          element={
+            <ProtectedRoute>
+              <DriverHubPage />
             </ProtectedRoute>
           }
         />

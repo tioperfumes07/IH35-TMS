@@ -1,0 +1,18 @@
+{
+  "block": "SIDEBAR-DRIVER-HUB",
+  "description": "Add Driver Hub sidebar entry, relabel Drivers→Drv Profile, apply canonical order",
+  "status": "in-progress",
+  "branch": "feature/sidebar-driver-hub",
+  "files_touched": [
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/router/route-manifest.ts",
+    "apps/frontend/src/pages/home/DriverHubPage.tsx"
+  ],
+  "changes": {
+    "sidebar_item_ids_count": 21,
+    "new_item": "driver-hub",
+    "relabeled": { "drivers": "DRV PROFILE" },
+    "canonical_order": ["home", "dispatch", "drivers", "driver-hub", "maintenance", "fuel", "safety", "accounting", "bank", "factoring", "customers", "vendors", "lists", "reports", "legal", "docs", "eld", "form_425", "drv_app", "users", "help"]
+  }
+}
