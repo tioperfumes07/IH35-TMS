@@ -14,7 +14,10 @@
         "ci / build-typecheck",
         "ci / verify-branch-fresh",
         "perf-budget-check / perf-audit",
-        "security-checks / security-audit"
+        "security-checks / security-audit",
+        "premerge-gates / rls-migration-scan",
+        "premerge-gates / typescript-strict-null",
+        "premerge-gates / migration-role-validation"
       ]
     },
     "enforce_admins": false,
@@ -33,7 +36,10 @@
     "verify-architectural-design": "ci / build-typecheck (verify:arch-design chain)",
     "verify-migration-application-consistency": "ci / build-typecheck",
     "perf-budget-check": "perf-budget-check / perf-audit",
-    "security-checks": "security-checks / security-audit"
+    "security-checks": "security-checks / security-audit",
+    "rls-migration-scan": "premerge-gates / rls-migration-scan (GAP-81: missing RLS on new tables)",
+    "typescript-strict-null": "premerge-gates / typescript-strict-null (GAP-81: TS18048 strict-null bypasses)",
+    "migration-role-validation": "premerge-gates / migration-role-validation (GAP-81: unknown GRANT roles)"
   },
   "apply_script": "node scripts/ci-apply-branch-protection.mjs",
   "verify_script": "node scripts/verify-ci-policy-applied.mjs"

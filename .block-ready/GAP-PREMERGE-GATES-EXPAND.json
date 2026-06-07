@@ -1,0 +1,47 @@
+{
+  "block_id": "GAP-PREMERGE-GATES-EXPAND",
+  "branch": "feat/premerge-gates-expand",
+  "phase": "GAP-STRUCTURAL",
+  "task": "Promote three post-merge feedback checks to required pre-merge CI gates (GAP-81 failure class)",
+  "gates_added": [
+    {
+      "id": "premerge-gates / rls-migration-scan",
+      "description": "Gate 1: Static scan of new migration SQL files for CREATE TABLE with operating_company_id but no ENABLE ROW LEVEL SECURITY",
+      "script": "scripts/verify-rls-migration-scan.mjs",
+      "npm_script": "verify:rls-migration-scan",
+      "failure_class": "GAP-81: missing RLS on new carrier-scoped tables"
+    },
+    {
+      "id": "premerge-gates / typescript-strict-null",
+      "description": "Gate 2: Validates tsconfig.json strict=true + no bare @ts-ignore bypasses + tsc --noEmit compile check",
+      "script": "scripts/verify-ts-strict-null.mjs",
+      "npm_script": "verify:ts-strict-null",
+      "failure_class": "GAP-81: TS18048 strict-null bypasses"
+    },
+    {
+      "id": "premerge-gates / migration-role-validation",
+      "description": "Gate 3: Scans new migration SQL files for GRANT ... TO <role> referencing roles not in the canonical Neon allowed list",
+      "script": "scripts/verify-migration-no-unknown-roles.mjs",
+      "npm_script": "verify:migration-no-unknown-roles",
+      "failure_class": "GAP-81: unknown GRANT roles causing migration apply-time failures"
+    }
+  ],
+  "branch_protection_contexts_added": [
+    "premerge-gates / rls-migration-scan",
+    "premerge-gates / typescript-strict-null",
+    "premerge-gates / migration-role-validation"
+  ],
+  "workflow": ".github/workflows/premerge-gates.yml",
+  "baseline_migration_num": 406,
+  "allowed_files": [
+    "scripts/verify-rls-migration-scan.mjs",
+    "scripts/verify-ts-strict-null.mjs",
+    "scripts/verify-migration-no-unknown-roles.mjs",
+    ".github/workflows/premerge-gates.yml",
+    ".github/branch-protection-config.json",
+    "package.json",
+    ".block-ready/GAP-PREMERGE-GATES-EXPAND.json"
+  ],
+  "db_required": false,
+  "guard_required": false
+}
