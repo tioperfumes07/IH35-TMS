@@ -217,90 +217,98 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const body = parsed.data;
 
-    const created = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
-      const coverageTypeRes = await client.query<{ id: string }>(
-        `
-          SELECT id::text
-          FROM insurance.type_catalog
-          WHERE tenant_id = $1::uuid
-            AND code = $2
-            AND active = true
-          LIMIT 1
-        `,
-        [body.operating_company_id, body.coverage_type]
-      );
-      if (!coverageTypeRes.rows[0]) return null;
+    // Forward-fix (GAP-86): the bill schedule is generated INSIDE the same transaction
+    // as the policy insert. Any failure throws and rolls the policy back (atomic /
+    // all-or-nothing) — no more silent non-fatal warning header / zero-bill policies.
+    // Combined with the Idempotency-Key now required on this route (REQUIRED_MATCHERS)
+    // and the replay-skip in createPolicyBillSchedule(), retries cannot double-bill.
+    let created: Record<string, unknown> | null;
+    try {
+      created = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+        const coverageTypeRes = await client.query<{ id: string }>(
+          `
+            SELECT id::text
+            FROM insurance.type_catalog
+            WHERE tenant_id = $1::uuid
+              AND code = $2
+              AND active = true
+            LIMIT 1
+          `,
+          [body.operating_company_id, body.coverage_type]
+        );
+        if (!coverageTypeRes.rows[0]) return null;
 
-      const result = await client.query(
-        `
-          INSERT INTO insurance.policy (
-            tenant_id,
-            insurer_name,
-            policy_number,
-            coverage_type,
-            coverage_type_id,
-            effective_date,
-            expiry_date,
-            total_premium_cents,
-            down_payment_cents,
-            installment_count,
-            due_day,
-            pay_day,
-            late_fee_pct,
-            insurer_email,
-            agent_contact,
-            status,
-            vendor_id
-          )
-          VALUES (
-            $1::uuid, $2, $3, $4, $5::uuid, $6::date, $7::date, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
-          )
-          RETURNING ${policySelectColumns()}, vendor_id
-        `,
-        [
-          body.operating_company_id,
-          body.insurer_name,
-          body.policy_number,
-          body.coverage_type,
-          coverageTypeRes.rows[0].id,
-          body.effective_date,
-          body.expiry_date,
-          body.total_premium_cents,
-          body.down_payment_cents,
-          body.installment_count,
-          body.due_day ?? null,
-          body.pay_day ?? null,
-          body.late_fee_pct,
-          body.insurer_email ?? null,
-          body.agent_contact ?? null,
-          body.status,
-          body.vendor_id ?? null,
-        ]
-      );
-      await appendCrudAudit(client, user.uuid, "insurance.policy.created", {
-        resource_id: result.rows[0]?.id,
-        operating_company_id: body.operating_company_id,
+        const result = await client.query(
+          `
+            INSERT INTO insurance.policy (
+              tenant_id,
+              insurer_name,
+              policy_number,
+              coverage_type,
+              coverage_type_id,
+              effective_date,
+              expiry_date,
+              total_premium_cents,
+              down_payment_cents,
+              installment_count,
+              due_day,
+              pay_day,
+              late_fee_pct,
+              insurer_email,
+              agent_contact,
+              status,
+              vendor_id
+            )
+            VALUES (
+              $1::uuid, $2, $3, $4, $5::uuid, $6::date, $7::date, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+            )
+            RETURNING ${policySelectColumns()}, vendor_id
+          `,
+          [
+            body.operating_company_id,
+            body.insurer_name,
+            body.policy_number,
+            body.coverage_type,
+            coverageTypeRes.rows[0].id,
+            body.effective_date,
+            body.expiry_date,
+            body.total_premium_cents,
+            body.down_payment_cents,
+            body.installment_count,
+            body.due_day ?? null,
+            body.pay_day ?? null,
+            body.late_fee_pct,
+            body.insurer_email ?? null,
+            body.agent_contact ?? null,
+            body.status,
+            body.vendor_id ?? null,
+          ]
+        );
+        const policyRow = result.rows[0] as Record<string, unknown> | undefined;
+        await appendCrudAudit(client, user.uuid, "insurance.policy.created", {
+          resource_id: policyRow?.id,
+          operating_company_id: body.operating_company_id,
+        });
+
+        if (body.vendor_id && body.installment_count > 0 && policyRow?.id) {
+          await createPolicyBillSchedule(
+            String(policyRow.id),
+            user.uuid,
+            client as Parameters<typeof createPolicyBillSchedule>[2]
+          );
+        }
+        return policyRow ?? null;
       });
-      return result.rows[0];
-    });
+    } catch (err) {
+      // Hard-fail: the policy transaction has rolled back and createPolicyBillSchedule
+      // has already voided / CRITICAL-alerted any bills it committed. Surface an error.
+      app.log.error({ err }, "[insurance] policy create + bill schedule failed; policy rolled back");
+      return reply
+        .code(502)
+        .send({ error: "bill_schedule_failed", detail: "policy was not created; no partial bills remain" });
+    }
 
     if (!created) return reply.code(400).send({ error: "coverage_type_not_found" });
-
-    // Fire bill schedule if vendor_id + installment_count > 0
-    const createdRow = created as Record<string, unknown>;
-    if (body.vendor_id && body.installment_count > 0 && createdRow.id) {
-      try {
-        await withCurrentUser(user.uuid, async (billClient) => {
-          await billClient.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.operating_company_id]);
-          await createPolicyBillSchedule(String(createdRow.id), user.uuid, billClient as Parameters<typeof createPolicyBillSchedule>[2]);
-        });
-      } catch (err) {
-        // Bill schedule failure is non-fatal: policy is already committed.
-        // Log and surface a warning header; the operator can regenerate bills manually.
-        app.log.error({ err, policyId: createdRow.id }, "[insurance] bill-schedule generation failed");
-        return reply.code(201).header("X-Bill-Schedule-Warning", "bill_schedule_failed").send(createdRow);
-      }
-    }
 
     return reply.code(201).send(created);
   });

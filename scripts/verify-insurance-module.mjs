@@ -41,22 +41,44 @@ contains("db/migrations/202606071800_insurance_bill_schedule_link.sql", migratio
   { pattern: /bill_uuid/, label: "bill_uuid column" },
 ]);
 
-// 2 — Bill schedule service
+// 2 — Bill schedule service (forward-fix hardening)
 const billScheduleService = read("apps/backend/src/insurance/policy-bill-schedule.service.ts");
 contains("apps/backend/src/insurance/policy-bill-schedule.service.ts", billScheduleService, [
   { pattern: /createBill/, label: "imports or calls createBill()" },
+  { pattern: /voidBill/, label: "voids committed bills on rollback" },
   { pattern: /createPolicyBillSchedule/, label: "exports createPolicyBillSchedule" },
   { pattern: /insurance\.payment_schedule/, label: "inserts into insurance.payment_schedule" },
   { pattern: /bill_uuid/, label: "persists bill_uuid back to schedule" },
   { pattern: /NO NEW FINANCIAL CODE|FINANCIAL RULE/, label: "financial rule comment" },
+  { pattern: /bill_uuid IS NOT NULL/, label: "replay-skip pre-check" },
+  { pattern: /INS-\$\{policy\.policy_number\}-DP|down_payment/, label: "down payment billed" },
+  { pattern: /insurance_vendor_not_resolvable/, label: "pre-flight vendor validation" },
+  { pattern: /captureMessage/, label: "CRITICAL Sentry alert on orphaned bills" },
 ]);
 
-// 3 — Policy routes: vendor_id wired
+// 2b — Belt-and-suspenders UNIQUE index migration
+const uniqueMigration = read("db/migrations/202606072100_insurance_payment_schedule_bill_uuid_unique.sql");
+contains("db/migrations/202606072100_insurance_payment_schedule_bill_uuid_unique.sql", uniqueMigration, [
+  { pattern: /CREATE UNIQUE INDEX IF NOT EXISTS/, label: "unique index" },
+  { pattern: /payment_schedule \(bill_uuid\)/, label: "on payment_schedule(bill_uuid)" },
+  { pattern: /WHERE bill_uuid IS NOT NULL/, label: "partial (bill_uuid IS NOT NULL)" },
+]);
+
+// 3 — Policy routes: atomic firing, no silent warning swallow
 const policyRoutes = read("apps/backend/src/insurance/policy.routes.ts");
 contains("apps/backend/src/insurance/policy.routes.ts", policyRoutes, [
   { pattern: /policy-bill-schedule\.service/, label: "imports policy-bill-schedule service" },
   { pattern: /createPolicyBillSchedule/, label: "calls createPolicyBillSchedule" },
   { pattern: /vendor_id/, label: "vendor_id in createPolicySchema" },
+]);
+if (policyRoutes && /X-Bill-Schedule-Warning/.test(policyRoutes)) {
+  fail("apps/backend/src/insurance/policy.routes.ts: non-fatal X-Bill-Schedule-Warning path must be removed (atomic hard-fail required)");
+}
+
+// 3b — Idempotency middleware now guards insurance policies
+const idempotency = read("apps/backend/src/middleware/idempotency.ts");
+contains("apps/backend/src/middleware/idempotency.ts", idempotency, [
+  { pattern: /insurance\\\/policies\(\\\/\|\$\)/, label: "insurance/policies in REQUIRED_MATCHERS" },
 ]);
 
 // 4 — Frontend: vendor picker added to modal
