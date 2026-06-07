@@ -68,6 +68,7 @@ import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-d
 import { registerDispatcherRoleViewRoutes } from "./dispatcher-board/role-views/routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriversMessagesRoutes } from "./drivers/messages.routes.js";
+import { registerDriverCommunicationsRoutes } from "./drivers/communications.routes.js";
 import { registerDriversDocumentAlertsRoutes } from "./drivers/document-alerts.routes.js";
 import { initializeDocumentAlertEngineCron } from "./drivers/document-alerts.cron.js";
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
@@ -611,6 +612,7 @@ async function main() {
   await registerDispatcherRoleViewRoutes(app);
   await registerDriverRoutes(app);
   await registerDriversMessagesRoutes(app);
+  await registerDriverCommunicationsRoutes(app);
   await registerDriversDocumentAlertsRoutes(app);
   await registerGeofencesRoutes(app);
   await registerGeofenceStateMachineRoutes(app);

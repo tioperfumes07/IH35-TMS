@@ -47,6 +47,7 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { CertExpiryBadge } from "../components/safety/CertExpiryBadge";
 import { EldEditHistoryTimeline } from "../components/safety/EldEditHistoryTimeline";
 import { UnitDriverHistoryStrip } from "./units/UnitDriverHistoryStrip";
+import { DriverCommunicationsTab } from "../components/drivers/DriverCommunicationsTab";
 import { OperationsDepthNav, OPERATIONS_DEPTH_SUBVIEWS } from "../components/drivers/OperationsDepthNav";
 import { DebtHistoryView } from "./drivers/operations/DebtHistoryView";
 import { PayrollHistoryView } from "./drivers/operations/PayrollHistoryView";
@@ -72,6 +73,7 @@ const tabs = [
   "Audit History",
   "ELD Edits",
   "Legal Matters",
+  "Communications",
 ] as const;
 type DriverTab = (typeof tabs)[number];
 
@@ -1338,6 +1340,10 @@ export function DriverDetailPage() {
           <p className="text-sm text-gray-600">Read-only Samsara HOS log edit history for DOT audit review.</p>
           <EldEditHistoryTimeline driverUuid={id} operatingCompanyId={String(driverQuery.data.operating_company_id)} />
         </div>
+      ) : null}
+
+      {activeTab === "Communications" && driver.operating_company_id ? (
+        <DriverCommunicationsTab driverId={id} operatingCompanyId={driver.operating_company_id} />
       ) : null}
 
       {activeTab === "Profile" ? (
