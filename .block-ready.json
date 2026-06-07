@@ -1,31 +1,28 @@
 {
-  "block_id": "GAP-65-OWNER-ATTENTION",
-  "branch": "feature/gap-65-owner-attention",
-  "phase": "Wave-P2-H",
-  "task": "Owner Today's Attention Top-5 Aggregator: scored backend service, 15-min worker, Owner-only API routes, TodaysAttentionTop5 frontend component wired into OwnerHome.",
-  "agent": "A",
-  "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap65",
+  "block_id": "GAP-81-DRUG-ALCOHOL-PROGRAM",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap81",
+  "branch": "feature/gap-81-drug-alcohol",
+  "wave": "P2-P",
+  "lane": "A",
+  "status": "shipped",
   "allowed_files": [
-    "apps/backend/src/owner/todays-attention/aggregator.service.ts",
-    "apps/backend/src/owner/todays-attention/routes.ts",
-    "apps/backend/src/owner/todays-attention/__tests__/aggregator.test.ts",
-    "apps/backend/src/jobs/todays-attention-worker.ts",
-    "apps/frontend/src/pages/home/OwnerHome.tsx",
-    "apps/frontend/src/components/home/TodaysAttentionTop5.tsx",
-    "apps/frontend/src/components/home/AttentionItemCard.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    "apps/frontend/src/api/home.ts",
-    "db/migrations/0405_owner_todays_attention_snapshot.sql",
-    "apps/backend/src/index.ts",
-    "scripts/verify-owner-todays-attention.mjs",
-    "docs/specs/gap-65-owner-todays-attention.md",
-    ".block-ready.json"
+    "db/migrations/0327_drug_alcohol_program.sql",
+    "apps/backend/src/safety/drug-alcohol/program.service.ts",
+    "apps/backend/src/safety/drug-alcohol/random-pool.service.ts",
+    "apps/backend/src/safety/drug-alcohol/routes.ts",
+    "apps/backend/src/safety/drug-alcohol/__tests__/program.test.ts",
+    "apps/backend/src/safety/drug-alcohol/__tests__/random-pool.test.ts",
+    "apps/backend/src/jobs/da-random-pool-draw-worker.ts",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "apps/frontend/src/pages/safety/drug-alcohol/TestSchedulingPanel.tsx",
+    "apps/frontend/src/pages/safety/drug-alcohol/RandomPoolDashboard.tsx",
+    "scripts/verify-drug-alcohol-program.mjs",
+    "docs/specs/gap-81-drug-alcohol-program.md"
   ],
-  "extra_gates": [
-    "verify-owner-todays-attention.mjs"
+  "forbidden_paths": [
+    "apps/backend/src/safety/medical-cards-cdl-expiry/",
+    "apps/frontend/src/pages/safety/expiry-tracking/"
   ],
-  "runtime_path": "apps/backend/src",
-  "db_required": true,
-  "guard_required": false
+  "recon_notes": "SafetyGroupNav.tsx EDIT skipped — drug-alcohol tab already present at SAFETY_TABS_CONFIG position 2 (tab count=27, spec claim 23→24 is stale). Additive safety.da_* schema alongside existing compliance.drug_alcohol_* tables.",
+  "created_at": "2026-06-06T00:00:00Z"
 }
