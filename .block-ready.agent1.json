@@ -1,34 +1,40 @@
 {
-  "block_id": "GAP-85-PERMIT-TOLL-TRACKING",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap85",
-  "branch": "feature/gap-85-permit-toll",
-  "phase": "GAP-HIGH",
-  "task": "Permit + toll tag tracking per unit with expiry alerts",
+  "block_id": "GAP-87-AUDIT-LOG-VIEWER",
+  "branch": "feature/gap-87-audit-log-viewer",
+  "phase": "ui",
+  "task": "Universal read-only audit log viewer — surfaces audit.audit_events for compliance/forensics. New route /admin/audit-log. Owner-only RBAC. No data mutations.",
+  "agent": "A",
   "allowed_files": [
-    ".block-ready.json",
-    ".block-ready.agent1.json",
-    ".block-ready/GAP-85-PERMIT-TOLL-TRACKING.json",
-    "db/migrations/0407_permits_toll_tags.sql",
-    "apps/backend/src/master-data/units/permits/service.ts",
-    "apps/backend/src/master-data/units/permits/routes.ts",
-    "apps/backend/src/master-data/units/permits/__tests__/permits.test.ts",
-    "apps/backend/src/master-data/units/toll-tags/service.ts",
-    "apps/backend/src/master-data/units/toll-tags/routes.ts",
-    "apps/backend/src/master-data/units/toll-tags/__tests__/toll-tags.test.ts",
-    "apps/backend/src/jobs/cert-expiry-monitor.ts",
+    "apps/backend/src/audit/viewer/service.ts",
+    "apps/backend/src/audit/viewer/routes.ts",
+    "apps/backend/src/audit/viewer/__tests__/service.test.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/units/UnitPermitsTab.tsx",
-    "apps/frontend/src/pages/units/UnitTollTagsTab.tsx",
-    "apps/frontend/src/pages/units/UnitDetail.tsx",
-    "scripts/verify-permits-toll-tags.mjs",
-    "docs/specs/gap-85-permits-toll-tags.md",
-    "package.json",
-    ".github/workflows/ci.yml"
+    "apps/frontend/src/api/audit.ts",
+    "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx",
+    "apps/frontend/src/components/audit/AuditEventCard.tsx",
+    "apps/frontend/src/components/admin/SuperAdminNav.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-audit-log-viewer.mjs",
+    "scripts/nav-integrity-allowlist.json",
+    "docs/specs/gap-87-audit-log-viewer.md",
+    ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:permits-toll-tags"
-  ],
-  "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "apps/frontend",
+  "db_required": false,
+  "guard_required": false,
+  "read_only_viewer": true,
+  "fields": {
+    "route": "/admin/audit-log",
+    "backend_endpoints": [
+      "GET /api/audit/viewer/events",
+      "GET /api/audit/viewer/events/:uuid"
+    ],
+    "db_table": "audit.audit_events",
+    "filters": ["entity_type", "entity_uuid", "user_uuid", "action", "from", "to", "severity", "search_text"],
+    "rbac": "Owner + SuperAdmin only",
+    "mutations": "none"
+  }
 }
