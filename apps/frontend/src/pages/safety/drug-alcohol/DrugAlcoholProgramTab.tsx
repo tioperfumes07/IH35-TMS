@@ -140,7 +140,7 @@ export function DrugAlcoholProgramTab() {
                 </tr>
               </thead>
               <tbody>
-                {enrollmentsQ.data.map((e) => (
+                {(enrollmentsQ.data ?? []).map((e) => (
                   <EnrollmentRow key={e.uuid} enrollment={e} />
                 ))}
               </tbody>
@@ -179,7 +179,7 @@ export function DrugAlcoholProgramTab() {
                 </tr>
               </thead>
               <tbody>
-                {positivesQ.data.map((t) => (
+                {(positivesQ.data ?? []).map((t) => (
                   <PositiveRow key={t.uuid} test={t} />
                 ))}
               </tbody>

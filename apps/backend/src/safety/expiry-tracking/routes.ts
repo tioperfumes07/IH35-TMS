@@ -70,7 +70,7 @@ export async function registerCertExpiryTrackingRoutes(app: FastifyInstance) {
     if (!parsedQuery.success || !parsedParams.success) {
       return reply.code(400).send({
         error: "validation_error",
-        details: parsedQuery.success ? parsedParams.error.flatten() : parsedQuery.error.flatten(),
+        details: parsedQuery.success ? parsedParams.error?.flatten() : parsedQuery.error?.flatten(),
       });
     }
 

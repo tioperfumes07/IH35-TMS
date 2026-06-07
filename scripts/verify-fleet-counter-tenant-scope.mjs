@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const homePagePath = path.join(ROOT, "apps/frontend/src/pages/home/HomePage.tsx");
+const homePagePath = path.join(ROOT, "apps/frontend/src/pages/home/roles/DefaultHome.tsx");
 const reportsRoutePath = path.join(ROOT, "apps/backend/src/reports/library.routes.ts");
 
 function fail(message) {

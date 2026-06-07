@@ -182,5 +182,13 @@
     "reason": "USMCA-1 (#523): prod applied earlier 0385 variant before RLS audit finalized in repo.",
     "added_at": "2026-06-05",
     "added_in_pr": "hotfix/render-0385-checksum-override"
+  },
+  {
+    "filename": "0327_drug_alcohol_program.sql",
+    "ledger_checksum": "24929c568028992304aec36c7baa1504a2900692d6dc4deb5c009b44560e5952",
+    "disk_checksum": "53ec4796c74792c6e6714352170e053c5d8b9e455dfcb6dd8908a2c8e1d88f4d",
+    "reason": "GAP-81 (#636): migration shipped with `TO app_user` (wrong role) and operating_company_id TEXT (should be UUID). Fixed before first production deploy — never applied to prod. Local ledger recorded original SHA; override accepts corrected version.",
+    "added_at": "2026-06-07",
+    "added_in_pr": "hotfix/0327-drug-alcohol-app-user"
   }
 ]

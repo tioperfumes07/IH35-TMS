@@ -1,4 +1,5 @@
 import type { AuthMeResponse } from "../../types/api";
+export { DRIVERS_CANONICAL_SUBNAV_COUNT } from "../../components/drivers/DRIVERS_TABS_CONFIG";
 import { OwnerHome } from "./OwnerHome";
 import { AccountingHome } from "./roles/AccountingHome";
 import { DefaultHome } from "./roles/DefaultHome";
