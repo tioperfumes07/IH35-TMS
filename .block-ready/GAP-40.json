@@ -1,0 +1,31 @@
+{
+  "block_id": "GAP-40",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap40",
+  "branch": "feature/gap-40",
+  "phase": "GAP-HIGH",
+  "task": "Damage photo EXIF chain-of-custody (WF-058)",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-40.json",
+    "apps/backend/src/documents/exif-preserver.ts",
+    "apps/backend/src/documents/chain-of-custody.service.ts",
+    "apps/backend/src/documents/__tests__/exif-chain.test.ts",
+    "apps/backend/src/safety/damage-reports/photo-evidence.service.ts",
+    "apps/backend/src/safety/damage-reports/photo-evidence.routes.ts",
+    "apps/frontend/src/components/safety/PhotoEvidenceViewer.tsx",
+    "apps/frontend/src/components/safety/EvidenceChainAudit.tsx",
+    "apps/frontend/src/pages/safety/damage-reports/DamageReportDetail.tsx",
+    "apps/driver-pwa/src/lib/preserve-exif-on-upload.ts",
+    "scripts/verify-exif-chain-preservation.mjs",
+    "docs/specs/gap-40-damage-photo-exif-chain.md",
+    "db/migrations/0408_damage_photo_exif_chain.sql",
+    "apps/backend/src/index.ts",
+    "package.json"
+  ],
+  "extra_gates": [
+    "verify:exif-chain-preservation"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
