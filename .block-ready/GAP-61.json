@@ -1,0 +1,34 @@
+{
+  "block_id": "GAP-61",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap61",
+  "branch": "feature/gap-61",
+  "phase": "GAP-HIGH",
+  "task": "CAP-11 Fuel card real-time fraud alerts",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-61.json",
+    "apps/backend/src/integrations/fuel/fraud-detector/rules.service.ts",
+    "apps/backend/src/integrations/fuel/fraud-detector/alerter.service.ts",
+    "apps/backend/src/integrations/fuel/fraud-detector/routes.ts",
+    "apps/backend/src/integrations/fuel/fraud-detector/__tests__/rules.test.ts",
+    "apps/backend/src/integrations/fuel/fraud-detector/__tests__/alerter.test.ts",
+    "apps/backend/src/jobs/fuel-fraud-detector-worker.ts",
+    "apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx",
+    "apps/frontend/src/components/fuel/FuelFraudBadge.tsx",
+    "apps/frontend/src/pages/fuel/FuelHome.tsx",
+    "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-cap-11-fuel-fraud.mjs",
+    "docs/specs/gap-61-cap-11-fuel-fraud-alerts.md",
+    "db/migrations/202606071800_fuel_fraud_alerts.sql",
+    "apps/backend/src/index.ts",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:cap-11-fuel-fraud"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
