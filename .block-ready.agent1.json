@@ -5,9 +5,11 @@
   "task": "Fix migration 0327 GRANT role (app_user → ih35_app) + TS18048 guards (GAP-81)",
   "agent": "1",
   "allowed_files": [
+    ".block-ready.agent1.json",
     "db/migrations/0327_drug_alcohol_program.sql",
     "db/migrations/.ledger.json",
-    ".block-ready.agent1.json",
+    "scripts/lib/migration-checksum-overrides.json",
+    "scripts/verify-fleet-counter-tenant-scope.mjs",
     "apps/backend/src/safety/expiry-tracking/routes.ts",
     "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
     "apps/frontend/src/pages/home/HomePage.tsx"
