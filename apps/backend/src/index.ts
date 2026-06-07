@@ -62,6 +62,7 @@ import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js"
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
 import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify.routes.js";
 import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
+import { registerDispatcherRoleViewRoutes } from "./dispatcher-board/role-views/routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriversMessagesRoutes } from "./drivers/messages.routes.js";
 import { registerDriversDocumentAlertsRoutes } from "./drivers/document-alerts.routes.js";
@@ -195,7 +196,6 @@ import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
 import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
 import { registerDriverAuditEventsRoutes } from "./audit/driver-events.routes.js";
-import { registerAuditViewerRoutes } from "./audit/viewer/routes.js";
 import { registerDriverMetricsRoutes } from "./integrity/driver-metrics.routes.js";
 import { registerAnomalyStatusRoutes } from "./integrity/anomaly-status.routes.js";
 import { runAnomalyDetectionForTenant } from "./integrity/anomaly-detector.service.js";
@@ -574,6 +574,7 @@ async function main() {
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
   await registerDispatchPodBolRoutes(app);
+  await registerDispatcherRoleViewRoutes(app);
   await registerDriverRoutes(app);
   await registerDriversMessagesRoutes(app);
   await registerDriversDocumentAlertsRoutes(app);
@@ -707,7 +708,6 @@ async function main() {
   await registerInsuranceTypeCatalogRoutes(app);
   await registerAuditRoutes(app);
   await registerDriverAuditEventsRoutes(app);
-  await registerAuditViewerRoutes(app);
   await registerDriverMetricsRoutes(app);
   await registerAnomalyStatusRoutes(app);
   await registerMaintPmRoutes(app);

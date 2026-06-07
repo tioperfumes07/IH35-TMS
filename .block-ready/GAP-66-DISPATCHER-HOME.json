@@ -1,0 +1,39 @@
+{
+  "block_id": "GAP-66-DISPATCHER-HOME",
+  "branch": "feature/gap-66-dispatcher-home",
+  "phase": "P2-H",
+  "lane": "B",
+  "task": "Dispatcher Home role-specific view",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/GAP-66-DISPATCHER-HOME.json",
+    "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts",
+    "apps/backend/src/dispatcher-board/role-views/routes.ts",
+    "apps/backend/src/dispatcher-board/role-views/__tests__/dispatcher.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/home/roles/DispatcherHome.tsx",
+    "apps/frontend/src/components/home/DispatcherKpiBar.tsx",
+    "apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx",
+    "apps/frontend/src/components/home/DispatcherPendingActionsPanel.tsx",
+    "scripts/verify-dispatcher-home.mjs",
+    "docs/specs/gap-66-dispatcher-home-view.md",
+    "package.json",
+    ".github/workflows/ci.yml",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "scripts/verify-fleet-counter-tenant-scope.mjs",
+    "scripts/verify-drivers-count-nav-integrity.mjs",
+    "scripts/verify-safety-count-nav-integrity.mjs",
+    "scripts/verify-maint-nav-count-reconcile.mjs"
+  ],
+  "extra_gates": [
+    "verify:dispatcher-home"
+  ],
+  "forbidden_paths": [
+    "apps/backend/src/owner/todays-attention/**",
+    "apps/frontend/src/pages/home/OwnerHome.tsx",
+    "apps/frontend/src/components/home/TodaysAttentionTop5.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
