@@ -345,6 +345,7 @@ import {
   initializeLateArrivalAggregatorWorker,
   stopLateArrivalAggregatorWorker,
 } from "./jobs/late-arrival-aggregator-worker.js";
+import { initializeRecurringBillGeneratorWorker, stopRecurringBillGeneratorWorker } from "./jobs/recurring-bill-generator-worker.js";
 import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js";
 import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
 import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
@@ -422,6 +423,7 @@ async function shutdown(signal: string) {
     stopDailyTaskAlertsCron();
     stopTodaysAttentionWorker();
     stopLateArrivalAggregatorWorker();
+    stopRecurringBillGeneratorWorker();
     stopAdminJobsWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
@@ -1072,6 +1074,8 @@ async function main() {
     app.log.info("[STARTUP] todays-attention worker initialized");
     initializeLateArrivalAggregatorWorker(app);
     app.log.info("[STARTUP] late-arrival aggregator worker initialized");
+    initializeRecurringBillGeneratorWorker(app);
+    app.log.info("[STARTUP] recurring-bill-generator worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] daily-task-alerts cron failed");
   }

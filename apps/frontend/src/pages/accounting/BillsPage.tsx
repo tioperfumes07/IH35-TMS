@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
+import { RecurringBillList } from "./bills/RecurringBillList";
 import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -87,6 +88,7 @@ export function BillsPage() {
   const [scheduledDate, setScheduledDate] = useState("");
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("tab") as "bills" | "recurring") ?? "bills";
   const category = parseBillCategory(searchParams.get("category"));
   const [status, setStatus] = useState<"" | BillStatus | "unpaid">("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -201,6 +203,28 @@ export function BillsPage() {
       }
     >
     <div className="space-y-3">
+      {/* Tab switcher */}
+      <div className="flex gap-1 border-b border-gray-200 pb-0">
+        {(["bills", "recurring"] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setSearchParams((p) => { const n = new URLSearchParams(p); n.set("tab", tab); return n; })}
+            className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
+              activeTab === tab
+                ? "border-b-2 border-blue-600 text-blue-700"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {tab === "recurring" ? "Recurring" : "Bills"}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "recurring" ? (
+        <RecurringBillList />
+      ) : (
+      <>
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
 
@@ -418,6 +442,8 @@ export function BillsPage() {
           billAmountCents={allocationBill.amount_cents}
         />
       ) : null}
+      </>
+      )}
     </div>
     </AccountingSubNavWrapper>
   );
