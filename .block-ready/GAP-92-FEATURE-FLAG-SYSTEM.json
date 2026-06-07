@@ -19,6 +19,7 @@
     "apps/frontend/src/pages/admin/feature-flags/FeatureFlagsManager.tsx",
     "apps/frontend/src/routes/manifest.tsx",
     "scripts/verify-feature-flags.mjs",
+    "scripts/nav-integrity-allowlist.json",
     "docs/specs/gap-92-feature-flags.md",
     "package.json",
     ".github/workflows/ci.yml"
