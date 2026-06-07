@@ -1,6 +1,11 @@
 import { withCurrentUser } from "../auth/db.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "./cash-basis/engine.js";
 
+type RoleMatches = {
+  arControlAccountId?: string | null;
+  apControlAccountId?: string | null;
+};
+
 export type AccountBalanceRow = {
   account_id: string;
   account_code: string;
@@ -35,7 +40,14 @@ export type AccountBalancesReport = {
   generated_at: string;
 };
 
-function inferSourceType(row: { account_code: string; account_name: string; account_type: string }): CashBasisEntry["source_type"] {
+function inferSourceType(
+  row: { account_id: string; account_code: string; account_name: string; account_type: string },
+  roleMatches?: RoleMatches
+): CashBasisEntry["source_type"] {
+  // Prefer exact role-based matching (same logic as report-transforms.ts).
+  if (roleMatches?.arControlAccountId && row.account_id === roleMatches.arControlAccountId) return "ar_control";
+  if (roleMatches?.apControlAccountId && row.account_id === roleMatches.apControlAccountId) return "ap_control";
+  // Fallback to heuristic name matching.
   const hint = `${row.account_code} ${row.account_name}`.toLowerCase();
   if (row.account_type === "Asset" && (hint.includes("accounts receivable") || hint.includes("a/r"))) {
     return "ar_control";
@@ -46,16 +58,14 @@ function inferSourceType(row: { account_code: string; account_name: string; acco
   return "other";
 }
 
-function applyAccountBalancesCashBasis(rows: AccountBalanceRow[], asOfDate: string): AccountBalanceRow[] {
-  // Map each account row to a CashBasisEntry using the closing_balance as the amount.
-  // applyCashBasisSuppression zeroes AR/AP accounts (decision Q3) and passes others through.
+function applyAccountBalancesCashBasis(rows: AccountBalanceRow[], asOfDate: string, roleMatches?: RoleMatches): AccountBalanceRow[] {
   const entries: CashBasisEntry[] = rows.map((row) => ({
     entry_id: row.account_id,
     account_code: row.account_code,
     account_name: row.account_name,
     account_type: row.account_type,
     amount_cents: row.closing_balance_cents,
-    source_type: inferSourceType(row),
+    source_type: inferSourceType(row, roleMatches),
   }));
 
   const suppressed = applyCashBasisSuppression(entries, { as_of_date: asOfDate });
@@ -94,6 +104,7 @@ export async function getAccountBalances(input: {
   as_of_date: string;
   from_date?: string | null;
   basis?: "accrual" | "cash";
+  roleMatches?: RoleMatches;
 }): Promise<AccountBalancesReport> {
   const basis = input.basis ?? "accrual";
 
@@ -123,7 +134,7 @@ export async function getAccountBalances(input: {
   });
 
   const accounts = basis === "cash"
-    ? applyAccountBalancesCashBasis(rows, input.as_of_date)
+    ? applyAccountBalancesCashBasis(rows, input.as_of_date, input.roleMatches)
     : rows;
 
   return {
