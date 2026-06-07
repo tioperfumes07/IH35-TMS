@@ -1,0 +1,17 @@
+{
+  "block_id": "GAP-11-DELTA-UPLOAD-EXPENSE",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap11d",
+  "branch": "feature/gap-11-delta-upload-expense",
+  "phase": "GAP-HIGH",
+  "task": "Wire UploadZone into expense create form (match bill/invoice attachment pattern)",
+  "allowed_files": [
+    ".block-ready/GAP-11-DELTA-UPLOAD-EXPENSE.json",
+    "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
+    "apps/frontend/src/pages/accounting/ExpenseCreatePage.tsx"
+  ],
+  "forbidden_paths": [],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
