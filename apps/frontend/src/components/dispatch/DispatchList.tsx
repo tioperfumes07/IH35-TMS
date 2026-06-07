@@ -5,7 +5,12 @@ import type { DataTableErrorState } from "../../lib/tableError";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents } from "./constants";
-import { InTransitEtaChip } from "./InTransitEtaChip";
+import {
+  DriverStatusColumn,
+  LiveEtaFreshnessColumn,
+  OnTimePredictionColumn,
+  SamsaraEtaColumn,
+} from "./LiveEtaColumns";
 import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
 import { TableSelection, TableSelectionHeader } from "../bulk";
 import { InlineUnitPicker } from "./InlineUnitPicker";
@@ -28,7 +33,7 @@ export type DispatchListProps = {
   onRowClick: (loadId: string) => void;
   onExportCsv: () => void;
   listError?: DataTableErrorState;
-  /** P6-T11191: poll backend ETA for in_transit rows */
+  /** Live ETA columns from cached board payload (60s list refresh; no per-row fetches). */
   showEtaColumn?: boolean;
   bulkSelection?: {
     selectedIds: Set<string>;
@@ -190,7 +195,14 @@ export function DispatchList({
                 ["hos", "HOS"],
                 ["status", "Status"],
                 ["progress", "Progress"],
-                ...(showEtaColumn ? [["eta", "ETA"] as const] : []),
+                ...(showEtaColumn
+                  ? ([
+                      ["driver_status", "Driver Status"],
+                      ["samsara_eta", "Samsara ETA"],
+                      ["on_time", "On-time"],
+                      ["freshness", "Freshness"],
+                    ] as const)
+                  : []),
                 ["rate_total_cents", "Rate"],
                 ["created_at", "Created"],
               ].map(([key, label]) => (
@@ -211,7 +223,7 @@ export function DispatchList({
             {loading
               ? Array.from({ length: Math.max(4, limit / 10) }).map((_, idx) => (
                   <tr key={idx} className="border-b border-gray-100">
-                    <td colSpan={(showEtaColumn ? 13 : 12) + (bulkSelection ? 1 : 0)} className="px-3 py-3 text-gray-400">
+                    <td colSpan={(showEtaColumn ? 16 : 12) + (bulkSelection ? 1 : 0)} className="px-3 py-3 text-gray-400">
                       Loading loads...
                     </td>
                   </tr>
@@ -319,13 +331,20 @@ export function DispatchList({
                       </span>
                     </td>
                     {showEtaColumn ? (
-                      <td className="px-3 py-2 align-middle">
-                        {load.status === "in_transit" ? (
-                          <InTransitEtaChip loadId={load.id} operatingCompanyId={load.operating_company_id} />
-                        ) : (
-                          <span className="text-[11px] text-gray-300">—</span>
-                        )}
-                      </td>
+                      <>
+                        <td className="px-3 py-2 align-middle">
+                          <DriverStatusColumn load={load} />
+                        </td>
+                        <td className="px-3 py-2 align-middle">
+                          <SamsaraEtaColumn load={load} />
+                        </td>
+                        <td className="px-3 py-2 align-middle">
+                          <OnTimePredictionColumn load={load} />
+                        </td>
+                        <td className="px-3 py-2 align-middle">
+                          <LiveEtaFreshnessColumn load={load} />
+                        </td>
+                      </>
                     ) : null}
                     <td className="px-3 py-2">{formatMoneyCents(load.rate_total_cents, load.currency_code)}</td>
                     <td className="px-3 py-2">{new Date(load.created_at).toLocaleDateString()}</td>
@@ -383,9 +402,12 @@ export function DispatchList({
                   <span className="ml-2 rounded bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">Geofence alert</span>
                 ) : null}
               </div>
-              {showEtaColumn && load.status === "in_transit" ? (
-                <div className="mt-2">
-                  <InTransitEtaChip loadId={load.id} operatingCompanyId={load.operating_company_id} />
+              {showEtaColumn ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <DriverStatusColumn load={load} />
+                  <SamsaraEtaColumn load={load} />
+                  <OnTimePredictionColumn load={load} />
+                  <LiveEtaFreshnessColumn load={load} />
                 </div>
               ) : null}
             </button>

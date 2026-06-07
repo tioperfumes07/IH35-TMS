@@ -64,6 +64,14 @@ export type DispatchLoadRow = {
   deleted_by_user_id: string | null;
   progress_status?: "on_track" | "behind" | "delayed" | "early" | "unknown";
   progress_eta_delta_minutes?: number | null;
+  driver_lifecycle_stage?: string | null;
+  driver_pwa_last_ping_at?: string | null;
+  samsara_eta_at?: string | null;
+  samsara_eta_source?: "samsara" | "manual" | "prediction" | "fallback" | null;
+  samsara_cache_tier?: 3 | 4 | null;
+  samsara_last_fetched_at?: string | null;
+  delivery_scheduled_at?: string | null;
+  on_time_prediction?: "green" | "amber" | "red" | null;
 };
 
 export type LoadsListResponse = {
@@ -100,6 +108,7 @@ export type LoadsListFilters = {
   status?: LoadStatus[];
   operating_company_id?: string[];
   include_progress?: boolean;
+  include_live_eta?: boolean;
 };
 
 type CreateLoadWizardBody = {
@@ -145,6 +154,7 @@ export function listLoads(filters: LoadsListFilters) {
   encodeMulti(query, "status", filters.status);
   encodeMulti(query, "operating_company_id", filters.operating_company_id);
   if (filters.include_progress !== undefined) query.set("include_progress", String(filters.include_progress));
+  if (filters.include_live_eta !== undefined) query.set("include_live_eta", String(filters.include_live_eta));
   const qs = query.toString();
   return apiRequest<LoadsListResponse>(`/api/v1/mdata/loads${qs ? `?${qs}` : ""}`);
 }

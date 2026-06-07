@@ -1,0 +1,41 @@
+{
+  "block_id": "DISPATCH-LIVE-ETA",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DISPATCH",
+  "task": "Dispatch live ETA columns — driver status, Samsara ETA, on-time prediction",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-dispatch-eta",
+  "branch": "feature/dispatch-live-eta-columns",
+  "base_sha": "d5144e1595",
+  "dependency_check": {
+    "GAP-24": "MET — FreshnessIndicator at apps/frontend/src/components/dispatch/FreshnessIndicator.tsx (#685)"
+  },
+  "details": [
+    "Additive read-only columns on DispatchList (not DispatchBoard.tsx).",
+    "Board data from GET /api/v1/mdata/loads?include_live_eta=true (no new route).",
+    "60s React Query refresh via useLoadsList; no per-row ETA API calls.",
+    "Freshness column imports GAP-24 FreshnessIndicator."
+  ],
+  "allowed_files": [
+    ".block-ready/DISPATCH-LIVE-ETA.json",
+    "apps/backend/src/telematics/dispatch-live-eta.service.ts",
+    "apps/backend/src/telematics/__tests__/dispatch-live-eta.test.ts",
+    "apps/backend/src/mdata/loads.routes.ts",
+    "apps/frontend/src/api/loads.ts",
+    "apps/frontend/src/components/dispatch/DispatchList.tsx",
+    "apps/frontend/src/components/dispatch/LiveEtaColumns.tsx",
+    "apps/frontend/src/components/dispatch/LiveEtaColumns.test.tsx",
+    "apps/frontend/src/pages/Dispatch.tsx",
+    "scripts/verify-dispatch-eta-columns.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "forbidden_paths": [
+    "apps/frontend/src/config/sidebar-config.ts",
+    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx"
+  ],
+  "extra_gates": ["verify:dispatch-eta-columns"],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
