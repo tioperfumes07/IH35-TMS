@@ -20,7 +20,14 @@ export type CreateSettlementDeductionInput = {
   amountCents: number;
   reason: string;
   sourceType: SettlementDeductionSourceType;
-  sourceReferenceId?: string;
+  /**
+   * Optional id of an originating driver_finance.escrow_deductions_pending row.
+   * FK-constrained: must reference an existing escrow_deductions_pending(id).
+   * Non-escrow sources MUST leave this undefined.
+   * TODO B4-B: generic source_reference_id uuid column + partial unique index
+   * deferred to the deduction-cap migration block.
+   */
+  sourcePendingId?: string;
   createdByUserId: string;
 };
 
@@ -37,6 +44,19 @@ export type SettlementDeductionRow = {
   created_at: string;
 };
 
+const RETURNING_COLUMNS = `
+  id,
+  operating_company_id,
+  driver_id,
+  deduction_type,
+  amount_cents::int AS amount_cents,
+  reason,
+  applied_to_settlement_id,
+  created_by_user_id,
+  source_pending_id,
+  created_at::text AS created_at
+`;
+
 export async function createSettlementDeduction(
   client: Queryable,
   input: CreateSettlementDeductionInput
@@ -47,6 +67,27 @@ export async function createSettlementDeduction(
     throw new Error("E_INVALID_INPUT: amountCents must be a positive integer");
   if (!input.reason?.trim()) throw new Error("E_INVALID_INPUT: reason is required");
   if (!input.createdByUserId?.trim()) throw new Error("E_INVALID_INPUT: createdByUserId is required");
+
+  // B2-B dedupe: in-transaction pre-check so a double-approve of the same
+  // escrow pending row cannot double-charge. There is no unique index on
+  // source_pending_id (adding one needs a migration — out of lane), so a
+  // pre-check is the FK-safe option. Block 7 (cash-advance-request) sources
+  // pass no sourcePendingId and rely on the caller's pending->approved status
+  // guard for idempotency.
+  if (input.sourcePendingId) {
+    const existing = await client.query<SettlementDeductionRow>(
+      `
+        SELECT ${RETURNING_COLUMNS}
+        FROM driver_finance.driver_settlement_deductions
+        WHERE operating_company_id = $1
+          AND source_pending_id = $2
+        ORDER BY created_at ASC
+        LIMIT 1
+      `,
+      [input.operatingCompanyId, input.sourcePendingId]
+    );
+    if (existing.rows[0]) return existing.rows[0];
+  }
 
   const res = await client.query<SettlementDeductionRow>(
     `
@@ -61,17 +102,7 @@ export async function createSettlementDeduction(
         source_pending_id
       )
       VALUES ($1, $2, $3, $4, $5, NULL, $6, $7)
-      RETURNING
-        id,
-        operating_company_id,
-        driver_id,
-        deduction_type,
-        amount_cents::int AS amount_cents,
-        reason,
-        applied_to_settlement_id,
-        created_by_user_id,
-        source_pending_id,
-        created_at::text AS created_at
+      RETURNING ${RETURNING_COLUMNS}
     `,
     [
       input.operatingCompanyId,
@@ -80,7 +111,7 @@ export async function createSettlementDeduction(
       input.amountCents,
       input.reason.trim(),
       input.createdByUserId,
-      input.sourceReferenceId ?? null,
+      input.sourcePendingId ?? null,
     ]
   );
 
@@ -98,7 +129,7 @@ export async function createSettlementDeduction(
       driver_id: input.driverId,
       amount_cents: input.amountCents,
       source_type: input.sourceType,
-      source_reference_id: input.sourceReferenceId ?? null,
+      source_pending_id: input.sourcePendingId ?? null,
     },
     "info",
     "PREREQ-B-SETTLEMENT-DEDUCTION-SVC"

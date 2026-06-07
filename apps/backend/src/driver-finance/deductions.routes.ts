@@ -38,7 +38,8 @@ const createDeductionBodySchema = z.object({
   amount_cents: z.number().int().positive(),
   reason: z.string().trim().min(5).max(2000),
   source_type: z.enum(["cash_advance_repayment", "damage", "equipment", "fuel", "other"]),
-  source_reference_id: z.string().uuid().optional(),
+  // FK-constrained to driver_finance.escrow_deductions_pending(id); non-escrow sources omit it.
+  source_pending_id: z.string().uuid().optional(),
 });
 
 export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance) {
@@ -57,7 +58,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
         amountCents: body.data.amount_cents,
         reason: body.data.reason,
         sourceType: body.data.source_type,
-        sourceReferenceId: body.data.source_reference_id,
+        sourcePendingId: body.data.source_pending_id,
         createdByUserId: user.uuid,
       });
     });
