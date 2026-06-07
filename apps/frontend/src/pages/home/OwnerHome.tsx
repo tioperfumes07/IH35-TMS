@@ -35,6 +35,7 @@ import { DriverDaySummaryCard } from "../../components/home/DriverDaySummaryCard
 import { QboSyncHealthCard } from "../../components/home/QboSyncHealthCard";
 import { VendorMappingIntegrityCard } from "../../components/home/VendorMappingIntegrityCard";
 import { TodaysAttentionTop5 } from "../../components/home/TodaysAttentionTop5";
+import { HomeFleetRestoreCard } from "./HomeFleetRestoreCard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AttentionList } from "./AttentionList";
 import { FleetUtilizationGauge } from "./charts/FleetUtilizationGauge";
@@ -218,6 +219,8 @@ export function OwnerHome({ auth }: Props) {
       {selectedCompanyId ? (
         <TodaysAttentionTop5 operatingCompanyId={selectedCompanyId} />
       ) : null}
+
+      {selectedCompanyId ? <HomeFleetRestoreCard operatingCompanyId={selectedCompanyId} /> : null}
 
       {selectedCompanyId ? (
         <section className="rounded border border-violet-200 bg-violet-50/90 px-3 py-3 text-sm text-violet-950">

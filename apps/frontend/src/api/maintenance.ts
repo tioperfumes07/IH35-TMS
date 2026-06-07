@@ -161,6 +161,14 @@ export type SevereRepairRollup = {
   oldest_oos_days: number;
 };
 
+export type FleetRestoreCost = {
+  total_estimated_cents: number;
+  total_actual_cents: number;
+  total_remaining_cents: number;
+  unit_count: number;
+  avg_days_open: number;
+};
+
 export type CreateWorkOrderLegacyPayload = {
   operating_company_id: string;
   wo_type: WorkOrderType;
@@ -361,6 +369,18 @@ export function listSevereRepairEstimates(companyId: string) {
 export function getSevereRepairRollup(companyId: string) {
   return apiRequest<{ data: SevereRepairRollup }>(
     `/api/v1/maintenance/severe-repair-estimates/total?${query(companyId)}`
+  );
+}
+
+export function getFleetRestoreCost(companyId: string) {
+  return apiRequest<{ data: FleetRestoreCost }>(
+    `/api/v1/maintenance/severe-repair/fleet-restore-cost?${query(companyId)}`
+  );
+}
+
+export function exportSevereRepairInsurancePdf(operatingCompanyId: string) {
+  return resolveApiUrl(
+    `/api/v1/maintenance/severe-repair/export-pdf?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
 }
 

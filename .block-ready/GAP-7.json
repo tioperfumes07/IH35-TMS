@@ -1,0 +1,12 @@
+{
+  "block_id": "GAP-7",
+  "status": "BUILD",
+  "classification": "OVERLAP",
+  "details": [
+    "severe-repair-estimate.service/routes and SevereRepairOosTab rollup already exist — extend with fleet-restore-cost, per-unit-breakdown, PDF export, Owner home card.",
+    "GAP-6 dependency met: duration_minutes present in migration 0158_abandonment_and_wo_time_tracking.sql."
+  ],
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap7",
+  "branch": "feature/gap-7-severe-repair-oos",
+  "spec": "docs/dispatch/batches/GAP-7-G20-SEVERE-REPAIR-OOS-ESTIMATE-GO.md"
+}
