@@ -376,6 +376,9 @@ jobs:
       - name: Verify photo comparison AI contract
         run: npm run verify:photo-comparison-ai
 
+      - name: Verify CAP-11 fuel fraud alerts contract
+        run: npm run verify:cap-11-fuel-fraud
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 

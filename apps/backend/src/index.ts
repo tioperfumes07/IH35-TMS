@@ -125,6 +125,7 @@ import { registerSafetyRemindersRoutes } from "./safety/reminders.routes.js";
 import { registerSafetyReportsRoutes } from "./safety/reports/safety-reports.routes.js";
 import { registerSafetyDrugProgramRoutes } from "./safety/drug-program.routes.js";
 import { registerDrugAlcoholProgramRoutes } from "./safety/drug-alcohol/routes.js";
+import { registerFuelFraudAlertRoutes } from "./integrations/fuel/fraud-detector/routes.js";
 import { registerCertExpiryTrackingRoutes } from "./safety/expiry-tracking/routes.js";
 import { registerFeatureFlagRoutes } from "./lib/feature-flags/routes.js";
 import { registerEldAuditTrailRoutes } from "./safety/eld-audit-trail/routes.js";
@@ -352,6 +353,7 @@ import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/d
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
 import { initializeCap12TireTreadWorker } from "./jobs/cap-12-tire-tread-worker.js";
+import { initializeFuelFraudDetectorWorker } from "./jobs/fuel-fraud-detector-worker.js";
 import { initializeCertExpiryMonitor } from "./jobs/cert-expiry-monitor.js";
 import { initializeDamageContinuityWorker } from "./jobs/damage-continuity-worker.js";
 import { initializeCap13BrakeWearWorker } from "./jobs/cap-13-brake-wear-worker.js";
@@ -679,6 +681,7 @@ async function main() {
   await registerSafetyReportsRoutes(app);
   await registerSafetyDrugProgramRoutes(app);
   await registerDrugAlcoholProgramRoutes(app);
+  await registerFuelFraudAlertRoutes(app);
   await registerCertExpiryTrackingRoutes(app);
   await registerFeatureFlagRoutes(app);
   await registerUniversalSearchRoutes(app);
@@ -977,6 +980,9 @@ async function main() {
 
     initializeCap12TireTreadWorker(app);
     app.log.info("[STARTUP] cap-12-tire-tread-worker initialized");
+
+    initializeFuelFraudDetectorWorker(app);
+    app.log.info("[STARTUP] fuel-fraud-detector-worker initialized");
 
     initializeCertExpiryMonitor(app);
     initializeDamageContinuityWorker(app);

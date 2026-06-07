@@ -26,9 +26,11 @@ import { SavingsPanel } from "./components/SavingsPanel";
 import { StopReasoningTable } from "./components/StopReasoningTable";
 import { TripPlanSummaryBanner } from "./components/TripPlanSummaryBanner";
 import { UploadLovesPricesModal } from "./components/UploadLovesPricesModal";
+import { FuelFraudAlertsKpiCard } from "./FuelHome";
 
 const SUBNAV = [
   { id: "home", label: "Home" },
+  { id: "fraud_alerts", label: "Fraud alerts", path: "/fuel/fraud-alerts" },
   { id: "planner", label: "Planner" },
   { id: "relay_inbox", label: "Relay inbox" },
   { id: "settings", label: "Settings" },
@@ -98,6 +100,9 @@ export function FuelPlannerHomePage() {
 
   return (
     <div className="space-y-3">
+      <div className="max-w-xs">
+        <FuelFraudAlertsKpiCard />
+      </div>
       <PageHeader
         title="Fuel · 0 new in last 3 days"
         subtitle="Planner"

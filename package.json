@@ -413,6 +413,7 @@
     "verify:reports-hub-9-categories": "node scripts/verify-reports-hub-9-categories.mjs",
     "verify:exif-chain-preservation": "node scripts/verify-exif-chain-preservation.mjs",
     "verify:photo-comparison-ai": "node scripts/verify-photo-comparison-ai.mjs",
+    "verify:cap-11-fuel-fraud": "node scripts/verify-cap-11-fuel-fraud.mjs",
     "verify:severe-repair-estimate": "node scripts/verify-severe-repair-estimate.mjs",
     "verify:assignments-quicksave": "node scripts/verify-assignments-quicksave.mjs",
     "verify:load-cancellations-report": "node scripts/verify-load-cancellations-report.mjs",
