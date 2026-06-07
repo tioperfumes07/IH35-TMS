@@ -54,6 +54,79 @@ export async function listOpenEstimates(client: PoolClient, operating_company_id
   return res.rows;
 }
 
+export type FleetRestoreCost = {
+  total_estimated_cents: number;
+  total_actual_cents: number;
+  total_remaining_cents: number;
+  unit_count: number;
+  avg_days_open: number;
+};
+
+export type PerUnitBreakdownRow = {
+  unit_id: string;
+  display_id: string;
+  open_wo_count: number;
+  total_cost_cents: number;
+  severity: string;
+};
+
+export async function getFleetRestoreCost(client: PoolClient, operating_company_id: string): Promise<FleetRestoreCost> {
+  const res = await client.query<{
+    total_estimated_cents: string;
+    total_actual_cents: string;
+    unit_count: number;
+    avg_days_open: number;
+  }>(
+    `
+      SELECT
+        COALESCE(SUM(e.estimated_total_cents), 0)::bigint AS total_estimated_cents,
+        COALESCE(SUM(ROUND(COALESCE(w.total_actual_cost, 0)::numeric * 100)), 0)::bigint AS total_actual_cents,
+        COUNT(DISTINCT e.unit_id)::int AS unit_count,
+        COALESCE(AVG(EXTRACT(EPOCH FROM (now() - COALESCE(w.opened_at, e.created_at))) / 86400), 0)::numeric AS avg_days_open
+      FROM maintenance.severe_repair_estimates e
+      LEFT JOIN maintenance.work_orders w ON w.id = e.trigger_wo_id
+      LEFT JOIN mdata.units u ON u.id = e.unit_id
+      WHERE e.operating_company_id = $1
+        AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
+    `,
+    [operating_company_id]
+  );
+  const row = res.rows[0];
+  const totalEstimated = Number(row?.total_estimated_cents ?? 0);
+  const totalActual = Number(row?.total_actual_cents ?? 0);
+  return {
+    total_estimated_cents: totalEstimated,
+    total_actual_cents: totalActual,
+    total_remaining_cents: Math.max(0, totalEstimated - totalActual),
+    unit_count: Number(row?.unit_count ?? 0),
+    avg_days_open: Number(row?.avg_days_open ?? 0),
+  };
+}
+
+export async function getPerUnitBreakdown(client: PoolClient, operating_company_id: string): Promise<PerUnitBreakdownRow[]> {
+  const res = await client.query<PerUnitBreakdownRow>(
+    `
+      SELECT
+        e.unit_id,
+        COALESCE(u.unit_number, LEFT(e.unit_id::text, 8)) AS display_id,
+        COUNT(*)::int AS open_wo_count,
+        COALESCE(SUM(e.estimated_total_cents), 0)::bigint AS total_cost_cents,
+        MAX(e.damage_severity)::text AS severity
+      FROM maintenance.severe_repair_estimates e
+      LEFT JOIN mdata.units u ON u.id = e.unit_id
+      WHERE e.operating_company_id = $1
+        AND e.estimate_status IN ('open', 'awaiting_approval', 'approved')
+      GROUP BY e.unit_id, u.unit_number
+      ORDER BY total_cost_cents DESC
+    `,
+    [operating_company_id]
+  );
+  return res.rows.map((row) => ({
+    ...row,
+    total_cost_cents: Number(row.total_cost_cents),
+  }));
+}
+
 export async function getRollupTotal(client: PoolClient, operating_company_id: string) {
   const res = await client.query<{
     open_count: number;

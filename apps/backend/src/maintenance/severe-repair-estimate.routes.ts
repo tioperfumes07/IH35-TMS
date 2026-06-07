@@ -3,12 +3,15 @@ import { z } from "zod";
 import { pool } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
+  getFleetRestoreCost,
+  getPerUnitBreakdown,
   getRollupTotal,
   listOpenEstimates,
   manualMarkUnitOos,
   manualReturnUnitToService,
   refreshEstimate,
 } from "./severe-repair-estimate.service.js";
+import { renderSevereRepairInsurancePdf } from "./severe-repair-pdf-export.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -45,6 +48,10 @@ function canManageOos(role: string) {
   return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
+function isOwner(role: string) {
+  return role === "Owner";
+}
+
 export async function registerMaintenanceSevereRepairEstimateRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/severe-repair-estimates", async (req, reply) => {
     const user = authed(req, reply);
@@ -57,6 +64,64 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
       const rows = await listOpenEstimates(client, query.data.operating_company_id);
       return reply.send({ data: rows });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.get("/api/v1/maintenance/severe-repair/fleet-restore-cost", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const client = await pool.connect();
+    try {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      const row = await getFleetRestoreCost(client, query.data.operating_company_id);
+      return reply.send({ data: row });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.get("/api/v1/maintenance/severe-repair/per-unit-breakdown", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const client = await pool.connect();
+    try {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+      const rows = await getPerUnitBreakdown(client, query.data.operating_company_id);
+      return reply.send({ data: rows });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.post("/api/v1/maintenance/severe-repair/export-pdf", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (!isOwner(user.role)) return reply.code(403).send({ error: "forbidden_owner_only" });
+    const body = refreshBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const client = await pool.connect();
+    try {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
+      const summary = await getFleetRestoreCost(client, body.data.operating_company_id);
+      const units = await getPerUnitBreakdown(client, body.data.operating_company_id);
+      const pdf = await renderSevereRepairInsurancePdf({
+        operatingCompanyId: body.data.operating_company_id,
+        summary,
+        units,
+      });
+      return reply
+        .header("Content-Type", pdf.mimeType)
+        .header("Content-Disposition", `attachment; filename="${pdf.filename}"`)
+        .send(pdf.pdfBuffer);
     } finally {
       client.release();
     }
