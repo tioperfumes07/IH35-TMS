@@ -30,7 +30,7 @@ export function initializeLaneProfitabilityRefreshCron(app: FastifyInstance) {
         "reports.lane_profitability_refresh_cron",
         async () => {
           await withLuciaBypass(async (client) => {
-            const companies = await client.query<{ id: string }>(`SELECT id::text FROM org.companies`);
+            const companies = await client.query<{ id: string }>(`SELECT id::text FROM org.companies WHERE is_active = true`);
             for (const company of companies.rows) {
               assertTenantContext(company.id, "reports.lane_profitability_refresh_cron");
               await runLaneProfitabilityRefreshTick(company.id);
