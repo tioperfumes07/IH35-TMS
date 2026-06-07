@@ -64,9 +64,9 @@ contains("docs/specs/gap-7-severe-repair-oos-estimate.md", docs, [
   { pattern: /fleet-restore-cost/, label: "routes documented" },
 ]);
 
-const manifest = read(".block-ready.json");
-contains(".block-ready.json", manifest, [
-  { pattern: /GAP-7/, label: "GAP-7 block id in manifest" },
+const manifest = read(".block-ready/GAP-7.json");
+contains(".block-ready/GAP-7.json", manifest, [
+  { pattern: /GAP-7/, label: "GAP-7 block id in per-block manifest" },
 ]);
 
 if (failures.length > 0) {
