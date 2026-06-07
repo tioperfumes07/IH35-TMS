@@ -1,40 +1,45 @@
 {
-  "block_id": "GAP-87-AUDIT-LOG-VIEWER",
-  "branch": "feature/gap-87-audit-log-viewer",
-  "phase": "ui",
-  "task": "Universal read-only audit log viewer — surfaces audit.audit_events for compliance/forensics. New route /admin/audit-log. Owner-only RBAC. No data mutations.",
+  "block_id": "GAP-IDEMP-KEYS",
+  "branch": "feature/gap-idemp-keys",
+  "phase": "implementation",
+  "task": "HTTP idempotency keys for mutating financial endpoints: idempotency_keys table + middleware (5 behaviors) + daily cleanup cron + frontend auto-key.",
   "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-idemp",
   "allowed_files": [
-    "apps/backend/src/audit/viewer/service.ts",
-    "apps/backend/src/audit/viewer/routes.ts",
-    "apps/backend/src/audit/viewer/__tests__/service.test.ts",
+    ".block-ready.agent1.json",
+    "db/migrations/202606071300_idempotency_keys.sql",
+    "apps/backend/src/middleware/idempotency.ts",
+    "apps/backend/src/middleware/idempotency-cleanup.cron.ts",
+    "apps/backend/src/middleware/__tests__/idempotency.test.ts",
     "apps/backend/src/index.ts",
-    "apps/frontend/src/api/audit.ts",
-    "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx",
-    "apps/frontend/src/components/audit/AuditEventCard.tsx",
-    "apps/frontend/src/components/admin/SuperAdminNav.tsx",
-    "apps/frontend/src/components/layout/sidebar-config.ts",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-audit-log-viewer.mjs",
-    "scripts/nav-integrity-allowlist.json",
-    "docs/specs/gap-87-audit-log-viewer.md",
-    ".block-ready.agent1.json"
+    "apps/frontend/src/api/client.ts",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx"
   ],
   "preview_provided": false,
   "extra_gates": [],
-  "runtime_path": "apps/frontend",
-  "db_required": false,
+  "runtime_path": "both",
+  "db_required": true,
   "guard_required": false,
-  "read_only_viewer": true,
   "fields": {
-    "route": "/admin/audit-log",
-    "backend_endpoints": [
-      "GET /api/audit/viewer/events",
-      "GET /api/audit/viewer/events/:uuid"
+    "gap_block": 3,
+    "wave": "A",
+    "depends_on": "Block 1 (GAP-OBSERV-FOUNDATION)",
+    "additive_only": true,
+    "migration": "202606071300_idempotency_keys.sql (timestamp format, after 202606071200_feature_flags.sql chain tail)",
+    "required_endpoints": [
+      "driver-finance/settlements",
+      "accounting/invoices",
+      "accounting/bills",
+      "accounting/bill-payments",
+      "expenses",
+      "accounting/payments",
+      "accounting/journal-entries",
+      "accounting/factoring-advances",
+      "banking/transactions",
+      "banking/manual-je",
+      "qbo-sync/* writes"
     ],
-    "db_table": "audit.audit_events",
-    "filters": ["entity_type", "entity_uuid", "user_uuid", "action", "from", "to", "severity", "search_text"],
-    "rbac": "Owner + SuperAdmin only",
-    "mutations": "none"
+    "note": "Client sends Idempotency-Key: <uuid>; server stores key+response (24h TTL); replay returns cached response. Enforcement registered globally in index.ts main() only — route/integration test harnesses build minimal Fastify apps and are unaffected. Idempotency store reads/writes use withLuciaBypass (infra-level). RLS added on idempotency_keys for tenant-scope defense-in-depth + verify:rls-operating-company-scope compliance."
   }
 }
