@@ -329,7 +329,7 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 - Header includes back-arrow, breadcrumb `Modules > Safety > {group}`, page title `Safety`, and descriptor text.
 - Driver filter strip defaults to **Active 7-10 days** and is visible on all safety routes.
 
-### Grouped top navigation (27 tabs across 9 groups)
+### Grouped top navigation (28 tabs across 9 groups)
 
 ### Sub-nav tabs (27 — V6.4 top hover-dropdown + Block K workforce)
 
@@ -381,7 +381,7 @@ Eleven backend route modules under `apps/backend/src/safety/` existed as code bu
 
 ### A23-2 — Safety count / nav integrity (2026-06-03)
 
-Canonical inventory is **27 tabs / 9 groups**, exported from `SAFETY_TABS_CONFIG.ts` as `SAFETY_CANONICAL_TAB_COUNT`, `SAFETY_CANONICAL_GROUP_COUNT`, and `SAFETY_CANONICAL_TAB_KEYS`. Home quick-jump badge reads `SAFETY_CANONICAL_TAB_COUNT` (replaces stale hardcoded `6`). Safety module sidebar flyout links only under `/safety/*` (DOT Compliance → `/safety/dot-compliance`; global `/compliance` dashboard remains reachable from other modules). `foundation-kpis.routes.ts` KPI route allowlist matches all 27 tab keys.
+Canonical inventory is **28 tabs / 9 groups**, exported from `SAFETY_TABS_CONFIG.ts` as `SAFETY_CANONICAL_TAB_COUNT`, `SAFETY_CANONICAL_GROUP_COUNT`, and `SAFETY_CANONICAL_TAB_KEYS`. Home quick-jump badge reads `SAFETY_CANONICAL_TAB_COUNT` (replaces stale hardcoded `6`). Safety module sidebar flyout links only under `/safety/*` (DOT Compliance → `/safety/dot-compliance`; Compliance Dashboard → `/compliance` via Safety tab under Compliance Docs & Monitoring). `foundation-kpis.routes.ts` KPI route allowlist matches all 28 tab keys.
 
 **CI guards:** `verify:safety-tab-coverage` (config ↔ backend KPI pairs), `verify:safety-count-nav-integrity` (Home + sidebar + arch doc + canonical constants).
 

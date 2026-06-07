@@ -4,6 +4,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   buildComplianceCredentials,
+  rollupComplianceOwners,
   summarizeComplianceCredentials,
   type ComplianceSeverity,
 } from "./compliance-aggregate.service.js";
@@ -51,7 +52,12 @@ export async function registerComplianceRoutes(app: FastifyInstance) {
         owner_type: query.data.owner_type,
       })
     );
-    return reply.send({ credentials });
+    return reply.send({
+      credentials,
+      summary: summarizeComplianceCredentials(credentials),
+      drivers: rollupComplianceOwners(credentials, "driver"),
+      trucks: rollupComplianceOwners(credentials, "unit"),
+    });
   });
 
   app.get("/api/v1/compliance/dashboard/summary", async (req, reply) => {

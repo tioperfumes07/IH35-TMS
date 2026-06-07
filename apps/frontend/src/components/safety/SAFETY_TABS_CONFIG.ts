@@ -73,6 +73,7 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     id: "compliance-monitoring",
     label: "Compliance Docs & Monitoring",
     tabs: [
+      { id: "compliance-dashboard", label: "Compliance Dashboard", route: "/compliance", badge: "new", status: "Live" },
       { id: "geofence-alerts", label: "Geofence Alerts", route: "/safety/geofence-alerts", badge: "new" },
       { id: "insurance", label: "Insurance", route: "/safety/insurance", badge: null },
       { id: "permits", label: "Permits", route: "/safety/permits", badge: null, status: "Live" },
@@ -116,6 +117,7 @@ export const TABS = [
   { id: "external-fines" },
   { id: "complaints" },
   { id: "escrow-record" },
+  { id: "compliance-dashboard" },
   { id: "geofence-alerts" },
   { id: "insurance" },
   { id: "permits" },
@@ -137,7 +139,7 @@ export function findSafetyTab(tabId: string) {
 
 /** Canonical inventory for count/nav integrity guards (Block A23-2). */
 export const SAFETY_CANONICAL_GROUP_COUNT = 9;
-export const SAFETY_CANONICAL_TAB_COUNT = 27;
+export const SAFETY_CANONICAL_TAB_COUNT = 28;
 export const SAFETY_CANONICAL_TAB_KEYS = SAFETY_GROUPS.flatMap((group) =>
   group.tabs.map((tab) => [group.id, tab.id] as const)
 );
