@@ -29,12 +29,10 @@ export async function buildExhibitF(
     display_id: string;
     total_cents: string;
     invoice_date: string;
-    evidence_uuid: string | null;
   }>(
     `
-      SELECT i.id, i.display_id, i.total_cents, i.invoice_date::text, e.uuid AS evidence_uuid
+      SELECT i.id, i.display_id, i.total_cents, i.invoice_date::text
       FROM accounting.invoices i
-      LEFT JOIN evidence.files e ON e.linked_entity_id = i.id AND e.linked_entity_type = 'invoice'
       WHERE i.operating_company_id = $1
         AND i.invoice_date >= $2::date
         AND i.invoice_date <= $3::date
@@ -49,7 +47,7 @@ export async function buildExhibitF(
     documents.push({
       doc_type: "invoice",
       reference_id: String(row.display_id ?? row.id),
-      evidence_uuid: row.evidence_uuid ? String(row.evidence_uuid) : null,
+      evidence_uuid: null,
       label: `Invoice ${row.display_id}`,
       amount_cents: Number(row.total_cents ?? 0),
       doc_date: row.invoice_date ? String(row.invoice_date) : null,
@@ -61,12 +59,10 @@ export async function buildExhibitF(
     display_id: string;
     total_cents: string;
     bill_date: string;
-    evidence_uuid: string | null;
   }>(
     `
-      SELECT b.id, b.display_id, b.total_cents, b.bill_date::text, e.uuid AS evidence_uuid
+      SELECT b.id, b.display_id, b.total_cents, b.bill_date::text
       FROM accounting.bills b
-      LEFT JOIN evidence.files e ON e.linked_entity_id = b.id AND e.linked_entity_type = 'bill'
       WHERE b.operating_company_id = $1
         AND b.bill_date >= $2::date
         AND b.bill_date <= $3::date
@@ -81,7 +77,7 @@ export async function buildExhibitF(
     documents.push({
       doc_type: "bill",
       reference_id: String(row.display_id ?? row.id),
-      evidence_uuid: row.evidence_uuid ? String(row.evidence_uuid) : null,
+      evidence_uuid: null,
       label: `Bill ${row.display_id}`,
       amount_cents: Number(row.total_cents ?? 0),
       doc_date: row.bill_date ? String(row.bill_date) : null,
