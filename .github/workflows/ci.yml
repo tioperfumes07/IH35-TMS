@@ -302,6 +302,9 @@ jobs:
       - name: Verify DOT inspection history gap-close contract
         run: npm run verify:dot-inspection-history
 
+      - name: Verify permits and toll tags contract
+        run: npm run verify:permits-toll-tags
+
       - name: Verify accounting home role view contract
         run: npm run verify:accounting-home
 

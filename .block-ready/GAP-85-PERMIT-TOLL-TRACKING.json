@@ -1,7 +1,6 @@
 {
   "block_id": "GAP-85-PERMIT-TOLL-TRACKING",
   "cert_expiry_integration": "GAP-82-MEDICAL-CARD-TRACKING",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap85",
   "branch": "feature/gap-85-permit-toll",
   "phase": "GAP-HIGH",
   "task": "Permit + toll tag tracking per unit with expiry alerts",

@@ -223,6 +223,8 @@ import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.j
 import { registerQboMasterWriteRoutes } from "./mdata/qbo-master-write.routes.js";
 import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.routes.js";
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
+import { registerUnitPermitsRoutes } from "./master-data/units/permits/routes.js";
+import { registerUnitTollTagsRoutes } from "./master-data/units/toll-tags/routes.js";
 import { initializeAccountingCrons, registerAccountingRoutes } from "./accounting/index.js";
 import { registerApPaymentApplicationRoutes } from "./ap/payment-application.routes.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
@@ -521,6 +523,8 @@ async function main() {
   await registerWorkflowRoutes(app);
   await registerIdentityApplicantRoutes(app);
   await registerMdataRoutes(app);
+  await registerUnitPermitsRoutes(app);
+  await registerUnitTollTagsRoutes(app);
   await registerAssignmentsQuicksaveRoutes(app);
   await registerFleetTrailerRoutes(app);
   await registerAssetsRoutes(app);
