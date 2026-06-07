@@ -5,6 +5,7 @@
   "phase": "GAP-HIGH",
   "task": "Insurance multi-vehicle policy creator + bill schedule write via createBill()",
   "financial_rule": "calls existing createBill() from apps/backend/src/accounting/bills.service.ts:483 — NO NEW FINANCIAL CODE",
+  "runtime_path": "both",
   "allowed_files": [
     ".block-ready/GAP-86-INSURANCE-BILL-CREATOR.json",
     "db/migrations/202606071800_insurance_bill_schedule_link.sql",
