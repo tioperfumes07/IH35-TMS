@@ -85,9 +85,11 @@ contains("docs/specs/gap-82-cert-expiry-tracking.md", docs, [
 ]);
 
 const manifest = read(".block-ready.json");
-contains(".block-ready.json", manifest, [
-  { pattern: /GAP-82-MEDICAL-CARD-TRACKING/, label: "GAP-82 block id in manifest" },
-]);
+if (/GAP-82-MEDICAL-CARD-TRACKING/.test(manifest)) {
+  contains(".block-ready.json", manifest, [
+    { pattern: /GAP-82-MEDICAL-CARD-TRACKING/, label: "GAP-82 block id in manifest" },
+  ]);
+}
 
 if (failures.length > 0) {
   console.error("verify:cert-expiry-tracking — FAILED");

@@ -299,6 +299,9 @@ jobs:
       - name: Verify cert expiry tracking contract
         run: npm run verify:cert-expiry-tracking
 
+      - name: Verify Cmd-K quick switcher contract
+        run: npm run verify:cmd-k-quick-switcher
+
       - name: Verify DOT inspection history gap-close contract
         run: npm run verify:dot-inspection-history
 

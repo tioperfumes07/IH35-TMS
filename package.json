@@ -389,6 +389,7 @@
     "verify:safety-medical-cards": "node scripts/verify-safety-medical-cards.mjs",
     "verify:safety-reminders": "node scripts/verify-safety-reminders.mjs",
     "verify:cert-expiry-tracking": "node scripts/verify-cert-expiry-tracking.mjs",
+    "verify:cmd-k-quick-switcher": "node scripts/verify-cmd-k-quick-switcher.mjs",
     "verify:dispatcher-home": "node scripts/verify-dispatcher-home.mjs",
     "verify:dot-inspection-history": "node scripts/verify-dot-inspection-history.mjs",
     "verify:permits-toll-tags": "node scripts/verify-permits-toll-tags.mjs",

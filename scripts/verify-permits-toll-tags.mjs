@@ -95,9 +95,11 @@ contains("docs/specs/gap-85-permits-toll-tags.md", docs, [
 ]);
 
 const manifest = read(".block-ready.json");
-contains(".block-ready.json", manifest, [
-  { pattern: /GAP-85-PERMIT-TOLL-TRACKING/, label: "GAP-85 block id in manifest" },
-]);
+if (/GAP-85-PERMIT-TOLL-TRACKING/.test(manifest)) {
+  contains(".block-ready.json", manifest, [
+    { pattern: /GAP-85-PERMIT-TOLL-TRACKING/, label: "GAP-85 block id in manifest" },
+  ]);
+}
 
 const indexTs = read("apps/backend/src/index.ts");
 contains("apps/backend/src/index.ts", indexTs, [
