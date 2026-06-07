@@ -1,0 +1,23 @@
+Block H (follow-up) — PHASE <add tracker phase> / TASK <add tracker row, real ID> — Detention approval -> auto-notify customer with evidence   [RECOMMENDED — needs Jorge GO + outbound-comms decision]
+RBC TARGET: detention module + existing comms/outbox; reuse bridgeDetentionToBilling seam (apps/backend/src/accounting/from-load.ts:29)
+DEPENDS: Block 6 merged (detention approval-gate + detention_evidence table).
+MODEL: Opus 4.8 thinking-high (sends outbound customer messages — money-adjacent + external).
+
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+WHY: when a detention charge is APPROVED, notify the customer with the derived evidence (arrival/departure timestamps from stop_arrivals/load_stops, dwell, charge amount) so billing isn't disputed.
+
+OUTBOUND-COMMS DECISION REQUIRED BEFORE DISPATCH: this sends an external message. Confirm channel (email via existing comms? customer portal note only?), sender identity, and that it is gated behind a feature flag + explicit per-send or per-policy enablement. Default OFF until Jorge enables.
+
+LANE LOCK: detention + comms-send only. Reuse existing outbox/comms service; do NOT add new financial code; do NOT modify createBill or bridgeDetentionToBilling. Forbidden: insurance, driver-finance, sidebar-config, accounting internals.
+
+RESPOND-BEFORE-CODE: post (1) the trigger point (on approval event), (2) the message template + which evidence fields (label them "derived from stop timestamps", not "Samsara dwell record"), (3) the channel + feature-flag gate, (4) idempotency so one approval = one notification. WAIT for Jorge GO.
+
+SCOPE:
+- On detention approval, enqueue ONE customer notification via existing comms/outbox (idempotent on detention id).
+- Evidence pulled from detention_evidence (derived from stop_arrivals/load_stops).
+- Feature-flag gated, default OFF.
+
+ACCEPT: one approval -> exactly one queued notification (idempotent); flag OFF = no send; evidence labeled as derived; RLS scoped; tests green; CI green.
+
+PAUSE: RECOMMENDED block — do NOT dispatch until Jorge confirms outbound-comms decision + says GO. Then RESPOND-BEFORE-CODE, then wait for code GO. Squash-merge holds for explicit GO.

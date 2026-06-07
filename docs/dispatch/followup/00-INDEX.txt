@@ -1,0 +1,39 @@
+IH35-TMS — FOLLOW-UP / QUEUED BLOCKS — INDEX
+Generated 2026-06-07 (~2:25 PM CDT, Laredo). State below = verified live via Chrome, not relayed.
+
+================= VERIFIED LIVE STATE =================
+RENDER (prod web srv-d7rpem7avr4c73fhp4n0):
+- Live deploy #679 (2f7feb9) — 2:01 PM CDT — GREEN.
+- GAP-24 #685 (d5144e1) deployed 1:58 PM. All deploys green since morning #668 fix.
+
+GITHUB (tioperfumes07/IH35-TMS):
+- #683 Block B (createSettlementDeduction) — OPEN, HEAD f58b1f5 — ALL CHECKS PASS (13 successful, 1 skipped, 0 failing). Held for GO-B.
+- #680 Block 1 (sidebar) — OPEN. Label fixed to "Driver Profile" (5d3ac46); modules=19. ORDER IS WRONG — must fix before merge (see block-1-order-correction.txt).
+- #685 GAP-24 — MERGED + deployed.
+
+NEON (production branch, db neondb) — ih35_app schema USAGE:
+- notifications = YES
+- audit = YES
+- master_data = NO  <-- real gap; repo has the grant, prod does not. See block-J.
+
+================= BLOCK FILES IN THIS ZIP =================
+IMMEDIATE FIX (active PR):
+- block-1-order-correction.txt        FIX #680 rail order. Do NOT merge #680 until applied + CI green.
+
+APPROVED — queued (dispatch when dependency met):
+- block-C-deduction-cap.txt           Settlement net-floor + roll-over.   DEPENDS: B merged. Owns org.companies + mdata.drivers migration.
+- block-D-insurance-renewal.txt       Policy renewal (clone-forward).     DEPENDS: Block 5 merged.
+- block-E-insurance-fleet-change.txt  Mid-term add/remove + proration.    DEPENDS: Block 5 merged.
+- block-7-driver-hub-requests.txt     Requests approve/deny -> deduction. DEPENDS: B merged + #680 merged.
+- block-I-ci-dist-fix.txt             Fix verify:no-duplicate-routes dist/ gate (surfaced by #680). Standalone CI lane.
+- block-J-master-data-grant-verify.txt Repair master_data USAGE on prod + fix the execution gap. Standalone DB lane. (FIX)
+
+RECOMMENDED — need Jorge GO before dispatch:
+- block-F-insurance-cancellation.txt  Cancellation + refund (refund = separate line per VQ6).
+- block-G-insurance-COI.txt           Certificate of Insurance PDF (read-only).
+- block-H-detention-notify.txt        Detention approval -> auto-notify customer. Needs outbound-comms decision. DEPENDS: Block 6 merged.
+
+================= NOTES =================
+- Every file is self-contained and paste-ready (header + STANDING ORDERS + RESPOND-BEFORE-CODE where financial + ACCEPT + PAUSE).
+- Financial blocks call existing service functions only (createBill / createSettlementDeduction). No new financial code.
+- Migrations carry full GRANTs (Block A schema-GRANT gate is live and enforcing).
