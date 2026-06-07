@@ -1,6 +1,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { applyApprovedAbandonmentChargebacksToSettlement } from "./abandonment.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
+import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-deduction-cap.service.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -298,6 +299,15 @@ async function closeLoadBookendedSettlementForDriver(
     settlementId,
     driverId: opts.driverId,
     operatingCompanyId: opts.operatingCompanyId,
+  });
+
+  // Block C: apply pending deductions all-or-nothing against the net floor.
+  // Skipped deductions stay unapplied and roll over to the next settlement.
+  await applyPendingDeductionsToSettlementWithNetFloor(client, {
+    settlementId,
+    driverId: opts.driverId,
+    operatingCompanyId: opts.operatingCompanyId,
+    actorUserId: opts.actorUserId,
   });
 
   const totals = await aggregateSettlementTotals(client, settlementId);

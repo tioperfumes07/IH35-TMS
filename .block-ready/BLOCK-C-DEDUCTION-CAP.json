@@ -1,0 +1,38 @@
+{
+  "block_id": "BLOCK-C-DEDUCTION-CAP",
+  "branch": "feature/block-c-deduction-cap",
+  "phase": "BLOCK-C",
+  "task": "Settlement deduction cap — net floor (50% gross + absolute cents) with all-or-nothing roll-over of pending deductions at settlement close.",
+  "classification": "ADDITIVE",
+  "depends_on": [
+    { "block": "PREREQ-A-SCHEMA-GRANT-GATE", "sha": "3e6b3ee2" },
+    { "block": "PREREQ-B-SETTLEMENT-DEDUCTION-SVC", "sha": "af0e13f" }
+  ],
+  "decisions": {
+    "C-1-A": "Per-field independent coalesce (driver.pct + company.cents resolve independently)",
+    "C-2-A": "Spec literal — available = gross - floor only (abandonment chargebacks not subtracted)",
+    "C-3-A": "CHECK constraints: pct BETWEEN 0 AND 100, cents >= 0",
+    "C-4-A": "No GRANT changes — existing table grants on org.companies (0013) and mdata.drivers (0008) cover new columns"
+  },
+  "allowed_files": [
+    ".block-ready/BLOCK-C-DEDUCTION-CAP.json",
+    "db/migrations/20260607_191000_settlement_min_net_floor.sql",
+    "apps/backend/src/driver-finance/settlement-deduction-cap.service.ts",
+    "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
+    "apps/backend/src/driver-finance/__tests__/settlement-deduction-cap.service.test.ts"
+  ],
+  "env": {
+    "SETTLEMENT_MIN_NET_PCT": "50"
+  },
+  "resolve_order": "per-driver override -> company default -> env SETTLEMENT_MIN_NET_PCT",
+  "audit_events": ["driver_finance.deduction.deferred_over_cap"],
+  "tables": {
+    "org.companies": ["min_net_settlement_pct integer DEFAULT 50", "min_net_settlement_cents integer DEFAULT 0"],
+    "mdata.drivers": ["min_net_settlement_pct integer NULL", "min_net_settlement_cents integer NULL"]
+  },
+  "db_required": true,
+  "migration_required": true,
+  "migration": "db/migrations/20260607_191000_settlement_min_net_floor.sql",
+  "apply_point": "closeLoadBookendedSettlementForDriver — after applyApprovedAbandonmentChargebacksToSettlement, before aggregateSettlementTotals",
+  "note": "First production consumer of driver_finance.driver_settlement_deductions.applied_to_settlement_id. Deductions over the cap stay unapplied (applied_to_settlement_id IS NULL) and auto roll over to the next settlement."
+}
