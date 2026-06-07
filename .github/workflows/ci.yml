@@ -329,6 +329,9 @@ jobs:
       - name: Verify severe repair fleet restore estimate contract
         run: npm run verify:severe-repair-estimate
 
+      - name: Verify assignments inline quicksave contract
+        run: npm run verify:assignments-quicksave
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 
