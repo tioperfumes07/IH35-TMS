@@ -9,6 +9,7 @@
   "allowed_files": [
     ".block-ready.agent1.json",
     "db/migrations/202606071300_idempotency_keys.sql",
+    "db/migrations/202606071420_grant_notifications_schema_to_app.sql",
     "apps/backend/src/middleware/idempotency.ts",
     "apps/backend/src/middleware/idempotency-cleanup.cron.ts",
     "apps/backend/src/middleware/__tests__/idempotency.test.ts",
