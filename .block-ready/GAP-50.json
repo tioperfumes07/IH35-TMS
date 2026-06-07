@@ -1,0 +1,35 @@
+{
+  "block_id": "GAP-50",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap50",
+  "branch": "feature/gap-50",
+  "phase": "GAP-MEDIUM",
+  "task": "AI Photo Comparison Pre/Post Trip Damage Detection",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-50.json",
+    "db/migrations/202606071830_pre_post_trip_photo_sessions.sql",
+    "apps/backend/src/safety/photo-comparison/session.service.ts",
+    "apps/backend/src/safety/photo-comparison/diff-engine.service.ts",
+    "apps/backend/src/safety/photo-comparison/anthropic-client.ts",
+    "apps/backend/src/safety/photo-comparison/routes.ts",
+    "apps/backend/src/safety/photo-comparison/__tests__/diff-engine.test.ts",
+    "apps/backend/src/safety/photo-comparison/__tests__/anthropic-client.test.ts",
+    "apps/driver-pwa/src/screens/PreTripPhotoCapture.tsx",
+    "apps/driver-pwa/src/screens/PostTripPhotoCapture.tsx",
+    "apps/driver-pwa/src/components/photo/AngleGuide.tsx",
+    "apps/frontend/src/pages/safety/photo-comparison/SessionDetail.tsx",
+    "apps/frontend/src/components/safety/PhotoDiffViewer.tsx",
+    "apps/frontend/src/components/safety/DiffFindingsList.tsx",
+    "scripts/verify-photo-comparison-ai.mjs",
+    "docs/specs/gap-50-ai-photo-comparison.md",
+    "apps/backend/src/index.ts",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:photo-comparison-ai"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
