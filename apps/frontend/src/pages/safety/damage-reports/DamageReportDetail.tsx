@@ -43,7 +43,7 @@ export function DamageReportDetail({ damageUuid, operatingCompanyId }: Props) {
   return (
     <section className="rounded border border-slate-200 bg-white p-3" data-testid="damage-report-detail">
       <h3 className="text-sm font-semibold text-slate-900">Photo evidence (EXIF chain-of-custody)</h3>
-      <p className="mb-2 text-xs text-slate-500">WF-058 · unaltered originals with custody audit trail</p>
+      <p className="mb-2 text-xs text-slate-500">Unaltered originals with custody audit trail</p>
 
       <div className="grid gap-2 sm:grid-cols-2">
         {photos.map((photo) => (
