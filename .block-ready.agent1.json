@@ -9,7 +9,8 @@
     "db/migrations/.ledger.json",
     ".block-ready.agent1.json",
     "apps/backend/src/safety/expiry-tracking/routes.ts",
-    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx"
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "apps/frontend/src/pages/home/HomePage.tsx"
   ],
   "extra_gates": [],
   "runtime_path": "src",
