@@ -1,33 +1,20 @@
 {
-  "block_id": "GAP-82-MEDICAL-CARD-TRACKING",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap82",
-  "branch": "feature/gap-82-medical-card",
-  "phase": "GAP-HIGH",
-  "task": "Medical card + CDL expiry tracking and alerts",
-  "agent": "1",
+  "block_id": "HOTFIX-GAP-81-MIGRATION-TS",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap81-fix",
+  "branch": "hotfix/gap-81-migration-ts-mainfix",
+  "phase": "hotfix",
+  "task": "Fix GAP-81 migration role grant and DrugAlcoholProgramTab TypeScript nullability errors.",
+  "agent": "A",
   "allowed_files": [
-    ".block-ready.json",
-    ".block-ready.agent1.json",
-    "apps/backend/src/safety/expiry-tracking/cert-monitor.service.ts",
-    "apps/backend/src/safety/expiry-tracking/alerter.service.ts",
-    "apps/backend/src/safety/expiry-tracking/routes.ts",
-    "apps/backend/src/safety/expiry-tracking/__tests__/cert-monitor.test.ts",
-    "apps/backend/src/jobs/cert-expiry-monitor.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/safety/expiry-tracking/ExpiryDashboard.tsx",
-    "apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx",
-    "apps/frontend/src/components/safety/CertExpiryBadge.tsx",
-    "apps/frontend/src/pages/DriverDetail.tsx",
-    "apps/frontend/src/components/safety/SafetyGroupNav.tsx",
-    "scripts/verify-cert-expiry-tracking.mjs",
-    "docs/specs/gap-82-cert-expiry-tracking.md",
-    "package.json",
-    ".github/workflows/ci.yml"
+    "db/migrations/0327_drug_alcohol_program.sql",
+    "db/migrations/0384a_rls_tenant_policy_preseed.sql",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:cert-expiry-tracking"
-  ],
+  "preview_provided": false,
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "db_required": false,
+  "guard_required": false,
+  "fields": {}
 }
