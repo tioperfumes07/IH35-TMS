@@ -33,6 +33,10 @@
       "reason": "Owner/Admin observability status page (Sentry + healthz links)"
     },
     {
+      "path": "/admin/mobile-audit",
+      "reason": "GAP-91 mobile responsive audit report (admin tooling)"
+    },
+    {
       "path": "/admin/activity",
       "reason": "Owner/SuperAdmin activity log"
     },

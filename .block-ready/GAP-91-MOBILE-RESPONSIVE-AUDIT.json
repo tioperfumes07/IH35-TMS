@@ -18,9 +18,6 @@
     "apps/frontend/src/pages/admin/mobile-audit/MobileAuditReport.tsx",
     "apps/frontend/src/routes/manifest.tsx",
     "scripts/verify-mobile-responsive-audit.mjs",
-    "scripts/nav-integrity-allowlist.json",
-    "scripts/verify-cert-expiry-tracking.mjs",
-    "scripts/verify-permits-toll-tags.mjs",
     "docs/specs/gap-91-mobile-responsive-audit.md",
     "package.json",
     ".github/workflows/ci.yml"
