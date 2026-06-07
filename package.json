@@ -401,6 +401,7 @@
     "verify:cap-13-brake-wear": "node scripts/verify-cap-13-brake-wear.mjs",
     "verify:damage-insurance-continuity": "node scripts/verify-damage-insurance-continuity.mjs",
     "verify:cache-tier-coverage": "node scripts/verify-cache-tier-coverage.mjs",
+    "verify:freshness-indicator": "node scripts/verify-freshness-indicator.mjs",
     "verify:accounting-home": "node scripts/verify-accounting-home.mjs",
     "verify:eld-audit-trail": "node scripts/verify-eld-audit-trail.mjs",
     "verify:safety-officer-home": "node scripts/verify-safety-officer-home.mjs",

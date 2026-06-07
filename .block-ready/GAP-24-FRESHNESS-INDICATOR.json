@@ -1,0 +1,41 @@
+{
+  "block_id": "GAP-24-FRESHNESS-INDICATOR",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "GAP-MEDIUM",
+  "task": "Samsara freshness indicator pill (L1-L4, green/amber/red)",
+  "spec": "docs/dispatch/batches/GAP-24-PER-SCREEN-SAMSARA-FRESHNESS-BUDGET-GO.md",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap24",
+  "branch": "feature/gap-24-freshness-indicator",
+  "base_sha": "3e6b3ee2b",
+  "preview_provided": false,
+  "dependency_check": {
+    "GAP-23": "MET — cache tier metadata (tier, maxAgeMs) in apps/backend/src/lib/cache-tiers.ts"
+  },
+  "details": [
+    "ADDITIVE frontend-only: reusable FreshnessIndicator pill for dispatch table columns.",
+    "Props: lastFetchedAt (ISO string|null), cacheTier (1|2|3|4|null).",
+    "Color: green <30s L1/L2, amber 30s-2min or L3, red >2min or L4/unknown.",
+    "Usage example shipped for Block 3 ETA column wiring; DispatchBoard.tsx not edited."
+  ],
+  "dedupe_findings": {
+    "existing": [],
+    "conflict_level": "ADDITIVE"
+  },
+  "allowed_files": [
+    ".block-ready/GAP-24-FRESHNESS-INDICATOR.json",
+    "apps/frontend/src/components/dispatch/FreshnessIndicator.tsx",
+    "apps/frontend/src/components/dispatch/FreshnessIndicator.test.tsx",
+    "apps/frontend/src/components/dispatch/FreshnessIndicator.usage.example.tsx",
+    "scripts/verify-freshness-indicator.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "forbidden_paths": [
+    "apps/frontend/src/config/sidebar-config.ts"
+  ],
+  "extra_gates": ["verify:freshness-indicator"],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
