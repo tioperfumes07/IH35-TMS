@@ -133,6 +133,7 @@ import { registerSafetyTrainingRecordsRoutes } from "./safety/training-records.r
 import { registerSafetyDvirRoutes } from "./safety/dvir.routes.js";
 import { registerSafetyIncidentsRoutes } from "./safety/incidents.routes.js";
 import { registerDamageContinuityRoutes } from "./safety/damage-continuity/continuity.routes.js";
+import { registerDamagePhotoEvidenceRoutes } from "./safety/damage-reports/photo-evidence.routes.js";
 import { registerSafetyPermitsRoutes } from "./safety/permits.routes.js";
 import { registerSafetyOnboardingRoutes } from "./safety/onboarding.routes.js";
 import { registerOnboardingStateRoutes } from "./onboarding/state.routes.js";
@@ -677,6 +678,7 @@ async function main() {
   await registerSafetyDvirRoutes(app);
   await registerSafetyIncidentsRoutes(app);
   await registerDamageContinuityRoutes(app);
+  await registerDamagePhotoEvidenceRoutes(app);
   await registerSafetyPermitsRoutes(app);
   await registerSafetyOnboardingRoutes(app);
   await registerOnboardingStateRoutes(app);

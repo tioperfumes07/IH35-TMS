@@ -352,6 +352,9 @@ jobs:
       - name: Verify reports hub 9 categories contract
         run: npm run verify:reports-hub-9-categories
 
+      - name: Verify EXIF chain preservation contract
+        run: npm run verify:exif-chain-preservation
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 
