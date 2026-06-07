@@ -18,6 +18,20 @@ type RequestOptions = {
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
 
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/** RFC4122 v4 UUID, used to auto-attach an Idempotency-Key to mutating requests. */
+function generateIdempotencyKey(): string {
+  const c = typeof globalThis !== "undefined" ? (globalThis.crypto as Crypto | undefined) : undefined;
+  if (c?.randomUUID) return c.randomUUID();
+  // Fallback for environments without crypto.randomUUID.
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (ch) => {
+    const r = (Math.random() * 16) | 0;
+    const v = ch === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 function buildUrl(path: string): string {
   if (/^https?:\/\//i.test(path)) return path;
   if (API_BASE_URL) return `${API_BASE_URL.replace(/\/$/, "")}${path}`;
@@ -49,13 +63,18 @@ export async function apiRequestFormData<T>(path: string, formData: FormData, me
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const method = options.method ?? "GET";
   const headers: Record<string, string> = { ...(options.headers ?? {}) };
   if (options.body !== undefined) {
     headers["Content-Type"] = "application/json";
   }
+  // Auto-generate an Idempotency-Key for every mutating call so retries are safe (GAP-IDEMP-KEYS).
+  if (MUTATING_METHODS.has(method) && !headers["Idempotency-Key"] && !headers["idempotency-key"]) {
+    headers["Idempotency-Key"] = generateIdempotencyKey();
+  }
 
   const response = await fetch(buildUrl(path), {
-    method: options.method ?? "GET",
+    method,
     credentials: "include",
     headers,
     body: options.body === undefined ? undefined : JSON.stringify(options.body),

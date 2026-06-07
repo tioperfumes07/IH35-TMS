@@ -305,6 +305,8 @@ import { attachHttpErrorMonitor } from "./lib/error-monitor-hooks.js";
 import { pool, withLuciaBypass } from "./auth/db.js";
 import { registerUrlCanonicalizeMiddleware } from "./middleware/url-canonicalize.js";
 import { registerRequestIdMiddleware } from "./middleware/request-id.js";
+import { registerIdempotencyMiddleware } from "./middleware/idempotency.js";
+import { initializeIdempotencyCleanupCron } from "./middleware/idempotency-cleanup.cron.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
 import { registerAdminObservabilityRoutes } from "./admin/observability.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
@@ -437,11 +439,12 @@ async function main() {
     },
     credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Idempotency-Key"],
   });
   await app.register(cookie);
   await app.register(multipart);
   await registerSessionMiddleware(app);
+  await registerIdempotencyMiddleware(app);
   app.addHook("preHandler", async (req, _reply) => {
     const url = req.raw.url ?? "";
     if (url.startsWith("/api/v1/healthz")) {
@@ -883,6 +886,13 @@ async function main() {
     app.log.info("[STARTUP] insurance-payment-reminder-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] insurance-payment-reminder-cron failed");
+  }
+
+  try {
+    initializeIdempotencyCleanupCron(app);
+    app.log.info("[STARTUP] idempotency-cleanup-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] idempotency-cleanup-cron failed");
   }
 
   try {

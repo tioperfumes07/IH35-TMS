@@ -1,29 +1,43 @@
 {
-  "block_id": "GAP-CRON-AUDIT",
-  "branch": "docs/cron-audit-2026-06-06",
-  "phase": "complete",
-  "task": "Read-only audit of all cron jobs. Produced CRON-INVENTORY-2026-06-06.md and CRON-RECOMMENDATIONS-2026-06-06.md.",
+  "block_id": "GAP-IDEMP-KEYS",
+  "branch": "feature/gap-idemp-keys",
+  "phase": "implementation",
+  "task": "HTTP idempotency keys for mutating financial endpoints: idempotency_keys table + middleware (5 behaviors) + daily cleanup cron + frontend auto-key.",
   "agent": "A",
   "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-cron-audit",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-idemp",
   "allowed_files": [
     ".block-ready.agent1.json",
-    "docs/audits/CRON-INVENTORY-2026-06-06.md",
-    "docs/audits/CRON-RECOMMENDATIONS-2026-06-06.md"
+    "db/migrations/0405_idempotency_keys.sql",
+    "apps/backend/src/middleware/idempotency.ts",
+    "apps/backend/src/middleware/idempotency-cleanup.cron.ts",
+    "apps/backend/src/middleware/__tests__/idempotency.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/client.ts"
   ],
   "preview_provided": false,
   "extra_gates": [],
-  "db_required": false,
+  "runtime_path": "both",
+  "db_required": true,
   "guard_required": false,
   "fields": {
-    "gap_block": 13,
-    "wave": "B",
-    "audit_date": "2026-06-06",
-    "cron_count": 46,
-    "schedule_registrations": 51,
-    "red_fixes": 4,
-    "yellow_tunes": 4,
-    "is_active_missing": ["compliance/compliance-reminder.job.ts", "reports/deadhead-refresh.job.ts", "reports/lane-profitability-refresh.job.ts"],
-    "note": "Read-only audit. No code changed. All schedule expressions copied verbatim from source."
+    "gap_block": 3,
+    "wave": "A",
+    "depends_on": "Block 1 (GAP-OBSERV-FOUNDATION)",
+    "additive_only": true,
+    "required_endpoints": [
+      "driver-finance/settlements",
+      "accounting/invoices",
+      "accounting/bills",
+      "accounting/bill-payments",
+      "expenses",
+      "accounting/payments",
+      "accounting/journal-entries",
+      "accounting/factoring-advances",
+      "banking/transactions",
+      "banking/manual-je",
+      "qbo-sync/* writes"
+    ],
+    "note": "Client sends Idempotency-Key: <uuid>; server stores key+response (24h TTL); replay returns cached response. Enforcement registered globally in index.ts main() only — route/integration test harnesses build minimal Fastify apps and are unaffected. Idempotency store reads/writes use withLuciaBypass (infra-level). RLS added on idempotency_keys for tenant-scope defense-in-depth + verify:rls-operating-company-scope compliance."
   }
 }
