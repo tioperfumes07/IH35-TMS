@@ -79,3 +79,26 @@ Run: `node scripts/verify-insurance-module.mjs`
 - [ ] `PolicyCreateModal` shows vendor dropdown + "N bill(s) will be created" hint
 - [ ] `verify-insurance-module.mjs` exits 0
 - [ ] `build:backend`, `frontend tsc -b`, `vitest` all pass
+
+## Forward-fix (post-#687) — double-bill vulnerability remediation
+
+#687 shipped the creator but left a double-bill hole: `POST /api/v1/insurance/policies`
+was not in the idempotency `REQUIRED_MATCHERS`, the schedule fired post-commit with a
+silent non-fatal swallow (`X-Bill-Schedule-Warning`), there was no replay-skip, and the
+down payment was not billed. This fix is additive (keeps `bill_uuid` + `vendor_id`):
+
+- **Idempotency:** `^/api/v1/insurance/policies(/|$)` added to `REQUIRED_MATCHERS`
+  (`middleware/idempotency.ts`) — a retry/double-click replays the cached response,
+  so no duplicate policy + duplicate vendor bills.
+- **Belt-and-suspenders:** partial `UNIQUE` index on `insurance.payment_schedule(bill_uuid)`
+  (`db/migrations/202606072100_…`) — a bill can never be linked twice.
+- **Replay-skip:** `createPolicyBillSchedule` no-ops if the policy already has any
+  `bill_uuid`-linked row.
+- **Atomic / hard-fail:** the schedule is generated **inside the policy transaction**;
+  any failure rolls the policy back and returns `502` (the `X-Bill-Schedule-Warning`
+  path is removed). Pre-flight validation (vendor resolvable + amounts sane) runs before
+  the first `createBill()` so a mid-loop failure is near-impossible. If a bill was already
+  committed when a later step fails, it is voided via `voidBill()`; any that cannot be
+  voided raise a **CRITICAL Sentry alert** listing the orphaned bill ids (never silent).
+- **Down payment billed:** when `down_payment_cents > 0`, a first `INS-<policy>-DP` bill is
+  created so `down_payment + Σ installments === total_premium`.

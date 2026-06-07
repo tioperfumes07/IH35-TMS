@@ -47,6 +47,10 @@ const REQUIRED_MATCHERS: RegExp[] = [
   /^\/api\/v1\/banking\/transactions(\/|$)/i,
   /^\/api\/v1\/banking\/manual-je(\/|$)/i,
   /^\/api\/v1\/qbo-sync\//i,
+  // GAP-86 forward-fix: creating/updating an insurance policy can create accounting
+  // bills via createBill(); require an Idempotency-Key so retries/double-clicks cannot
+  // produce duplicate policies + duplicate vendor bills syncing to QBO.
+  /^\/api\/v1\/insurance\/policies(\/|$)/i,
 ];
 
 type StoreContext = {
