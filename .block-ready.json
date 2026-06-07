@@ -1,41 +1,34 @@
 {
-  "block_id": "DISPATCH-LIVE-ETA",
-  "status": "BUILD",
-  "classification": "ADDITIVE",
-  "phase": "DISPATCH",
-  "task": "Dispatch live ETA columns — driver status, Samsara ETA, on-time prediction",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-dispatch-eta",
-  "branch": "feature/dispatch-live-eta-columns",
-  "base_sha": "d5144e1595",
-  "dependency_check": {
-    "GAP-24": "MET — FreshnessIndicator at apps/frontend/src/components/dispatch/FreshnessIndicator.tsx (#685)"
-  },
-  "details": [
-    "Additive read-only columns on DispatchList (not DispatchBoard.tsx).",
-    "Board data from GET /api/v1/mdata/loads?include_live_eta=true (no new route).",
-    "60s React Query refresh via useLoadsList; no per-row ETA API calls.",
-    "Freshness column imports GAP-24 FreshnessIndicator."
-  ],
+  "block_id": "GAP-85-PERMIT-TOLL-TRACKING",
+  "cert_expiry_integration": "GAP-82-MEDICAL-CARD-TRACKING",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap85",
+  "branch": "feature/gap-85-permit-toll",
+  "phase": "GAP-HIGH",
+  "task": "Permit + toll tag tracking per unit with expiry alerts",
   "allowed_files": [
-    ".block-ready/DISPATCH-LIVE-ETA.json",
-    "apps/backend/src/telematics/dispatch-live-eta.service.ts",
-    "apps/backend/src/telematics/__tests__/dispatch-live-eta.test.ts",
-    "apps/backend/src/mdata/loads.routes.ts",
-    "apps/frontend/src/api/loads.ts",
-    "apps/frontend/src/components/dispatch/DispatchList.tsx",
-    "apps/frontend/src/components/dispatch/LiveEtaColumns.tsx",
-    "apps/frontend/src/components/dispatch/LiveEtaColumns.test.tsx",
-    "apps/frontend/src/pages/Dispatch.tsx",
-    "scripts/verify-dispatch-eta-columns.mjs",
+    ".block-ready.json",
+    ".block-ready/GAP-85-PERMIT-TOLL-TRACKING.json",
+    "db/migrations/0407_permits_toll_tags.sql",
+    "apps/backend/src/master-data/units/permits/service.ts",
+    "apps/backend/src/master-data/units/permits/routes.ts",
+    "apps/backend/src/master-data/units/permits/__tests__/permits.test.ts",
+    "apps/backend/src/master-data/units/toll-tags/service.ts",
+    "apps/backend/src/master-data/units/toll-tags/routes.ts",
+    "apps/backend/src/master-data/units/toll-tags/__tests__/toll-tags.test.ts",
+    "apps/backend/src/jobs/cert-expiry-monitor.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/units/UnitPermitsTab.tsx",
+    "apps/frontend/src/pages/units/UnitTollTagsTab.tsx",
+    "apps/frontend/src/pages/units/UnitDetail.tsx",
+    "scripts/verify-permits-toll-tags.mjs",
+    "docs/specs/gap-85-permits-toll-tags.md",
     "package.json",
     ".github/workflows/ci.yml"
   ],
-  "forbidden_paths": [
-    "apps/frontend/src/config/sidebar-config.ts",
-    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx"
+  "extra_gates": [
+    "verify:permits-toll-tags"
   ],
-  "extra_gates": ["verify:dispatch-eta-columns"],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
