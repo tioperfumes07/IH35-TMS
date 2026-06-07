@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 describe("GAP-19 detention approval gate", () => {
@@ -51,5 +51,56 @@ describe("GAP-19 detention approval gate", () => {
     expect(routes).toContain("reason: z.string().trim().min(3)");
     expect(service).toContain("request_approved");
     expect(service).toContain("request_rejected");
+  });
+});
+
+describe("Block H detention approval → customer notification", () => {
+  const servicePath = resolve(import.meta.dirname, "../detention-approval.service.ts");
+  const service = readFileSync(servicePath, "utf8");
+  const migrationsDir = resolve(import.meta.dirname, "../../../../../db/migrations");
+  const migrationFile = readdirSync(migrationsDir).find((f) =>
+    f.includes("dispatch_detention_customer_notify")
+  );
+  const migration = migrationFile ? readFileSync(resolve(migrationsDir, migrationFile), "utf8") : "";
+
+  it("gates the email behind the default-OFF feature flag", () => {
+    expect(service).toContain("detention_customer_notify_email");
+    expect(service).toContain("isEnabled(");
+    expect(service).toContain('reason: "flag_disabled"');
+  });
+
+  it("sends via the existing dispatch email service", () => {
+    expect(service).toContain('from "../notifications/email.service.js"');
+    expect(service).toContain("sendEmail(");
+    expect(service).toContain('sender: "dispatch"');
+    expect(service).toContain("Detention charge — Load #");
+  });
+
+  it("labels the charge as derived from stop timestamps (not Samsara/GPS)", () => {
+    expect(service).toContain("Charge derived from stop timestamps.");
+    expect(service).not.toContain("GPS-tracked");
+    expect(service).not.toContain("Samsara dwell record");
+  });
+
+  it("is idempotent on customer_notified_at and sends after the approval tx", () => {
+    expect(service).toContain("customer_notified_at IS NULL");
+    expect(service).toContain("SET customer_notified_at = now()");
+    // The notification helper runs after the approval withCompany block resolves.
+    expect(service.indexOf("status = 'invoiced'")).toBeLessThan(
+      service.indexOf("notifyCustomerOfApprovedDetention(userId")
+    );
+  });
+
+  it("never lets a notification failure roll back the approval", () => {
+    expect(service).toContain('reason: "send_failed"');
+  });
+
+  it("ships the additive migration: notify column + seeded default-OFF flag", () => {
+    expect(migrationFile).toBeTruthy();
+    expect(migration).toContain("ADD COLUMN IF NOT EXISTS customer_notified_at timestamptz");
+    expect(migration).toContain("INSERT INTO lib.feature_flags");
+    expect(migration).toContain("'detention_customer_notify_email'");
+    expect(migration).toMatch(/false/);
+    expect(migration).toContain("GRANT USAGE ON SCHEMA dispatch TO ih35_app");
   });
 });

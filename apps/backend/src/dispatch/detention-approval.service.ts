@@ -2,9 +2,14 @@ import type { PoolClient } from "pg";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { sendEmail } from "../notifications/email.service.js";
 import { bridgeDetentionToBilling } from "./detention.service.js";
 
 const AUDIT_TAG = "GAP-19";
+
+/** Block H — feature flag gating the customer detention-charge notification (default OFF). */
+const DETENTION_NOTIFY_FLAG = "detention_customer_notify_email";
 
 async function withCompany<T>(
   userId: string,
@@ -170,11 +175,130 @@ async function recordDetentionEvidence(
       LEFT JOIN integrations.samsara_vehicles sv ON sv.local_unit_id = de.unit_id
       WHERE de.id = $3
         AND de.operating_company_id = $1
-      RETURNING id
+      RETURNING *
     `,
     [operatingCompanyId, requestId, detentionEventId, billableMinutes]
   );
-  return res.rows[0]?.id ? String(res.rows[0].id) : null;
+  return res.rows[0] ?? null;
+}
+
+type DetentionEvidenceRow = {
+  arrival_at: string | null;
+  departure_at: string | null;
+  dwell_minutes: number | null;
+  free_time_minutes: number | null;
+  billable_minutes: number | null;
+};
+
+function formatTimestamp(value: unknown): string {
+  if (!value) return "n/a";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return "n/a";
+  return date.toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
+}
+
+/**
+ * Block H — send the customer a detention-charge notice after an approval is
+ * invoiced. Runs in its own transaction AFTER the approval commits (the email
+ * is an external side-effect that must never roll back billing). Gated behind
+ * the {@link DETENTION_NOTIFY_FLAG} feature flag (default OFF) and idempotent on
+ * dispatch.detention_requests.customer_notified_at (send only when IS NULL, then
+ * stamp). A send failure is swallowed so the approval still succeeds.
+ */
+async function notifyCustomerOfApprovedDetention(
+  userId: string,
+  operatingCompanyId: string,
+  requestId: string,
+  details: {
+    loadNumber: string;
+    customerName: string | null;
+    customerEmail: string | null;
+    amountCents: number;
+    evidence: DetentionEvidenceRow | null;
+  }
+): Promise<{ sent: boolean; reason?: string }> {
+  try {
+    const enabled = await withCompany(userId, operatingCompanyId, (client) =>
+      isEnabled(client, DETENTION_NOTIFY_FLAG, {
+        operating_company_id: operatingCompanyId,
+        user_uuid: userId,
+      })
+    );
+    if (!enabled) return { sent: false, reason: "flag_disabled" };
+
+    const email = details.customerEmail ? details.customerEmail.trim() : "";
+    if (!email) return { sent: false, reason: "no_customer_email" };
+
+    // Idempotency guard: only the first approval-notification per request sends.
+    const claimed = await withCompany(userId, operatingCompanyId, async (client) => {
+      const res = await client.query(
+        `SELECT customer_notified_at FROM dispatch.detention_requests
+         WHERE id = $1 AND operating_company_id = $2`,
+        [requestId, operatingCompanyId]
+      );
+      return res.rows[0] && !res.rows[0].customer_notified_at;
+    });
+    if (!claimed) return { sent: false, reason: "already_notified" };
+
+    const ev = details.evidence;
+    const dwell = Number(ev?.dwell_minutes ?? 0);
+    const freeTime = Number(ev?.free_time_minutes ?? 0);
+    const billable = Number(ev?.billable_minutes ?? 0);
+    const amount = (Number(details.amountCents ?? 0) / 100).toFixed(2);
+    const customer = details.customerName ?? "Customer";
+    const arrival = formatTimestamp(ev?.arrival_at);
+    const departure = formatTimestamp(ev?.departure_at);
+
+    const subject = `Detention charge — Load #${details.loadNumber}`;
+    const html = `
+      <p>Dear ${customer},</p>
+      <p>A detention charge has been applied to <strong>Load #${details.loadNumber}</strong>.</p>
+      <table cellpadding="4" style="border-collapse:collapse;">
+        <tr><td><strong>Arrival</strong></td><td>${arrival}</td></tr>
+        <tr><td><strong>Departure</strong></td><td>${departure}</td></tr>
+        <tr><td><strong>Dwell time</strong></td><td>${dwell} minutes</td></tr>
+        <tr><td><strong>Free time</strong></td><td>${freeTime} minutes</td></tr>
+        <tr><td><strong>Billable detention</strong></td><td>${billable} minutes</td></tr>
+        <tr><td><strong>Charge amount</strong></td><td>$${amount}</td></tr>
+      </table>
+      <p style="color:#555;font-size:12px;">Charge derived from stop timestamps.</p>
+    `.trim();
+    const text = [
+      `Dear ${customer},`,
+      `A detention charge has been applied to Load #${details.loadNumber}.`,
+      `Arrival: ${arrival}`,
+      `Departure: ${departure}`,
+      `Dwell time: ${dwell} minutes`,
+      `Free time: ${freeTime} minutes`,
+      `Billable detention: ${billable} minutes`,
+      `Charge amount: $${amount}`,
+      `Charge derived from stop timestamps.`,
+    ].join("\n");
+
+    await sendEmail({
+      sender: "dispatch",
+      to: email,
+      subject,
+      html,
+      text,
+      eventClass: "dispatch.detention.customer_charge_notified",
+      actorUserId: userId,
+    });
+
+    await withCompany(userId, operatingCompanyId, (client) =>
+      client.query(
+        `UPDATE dispatch.detention_requests
+         SET customer_notified_at = now(), updated_at = now()
+         WHERE id = $1 AND operating_company_id = $2 AND customer_notified_at IS NULL`,
+        [requestId, operatingCompanyId]
+      )
+    );
+
+    return { sent: true };
+  } catch {
+    // The approval already committed — never fail it on a notification error.
+    return { sent: false, reason: "send_failed" };
+  }
 }
 
 export async function approveDetentionRequest(
@@ -184,7 +308,13 @@ export async function approveDetentionRequest(
 ) {
   const request = await withCompany(userId, operatingCompanyId, async (client) => {
     const res = await client.query(
-      `SELECT * FROM dispatch.detention_requests WHERE id = $1 AND operating_company_id = $2`,
+      `
+        SELECT dr.*, l.load_number, c.customer_name, c.ar_email
+        FROM dispatch.detention_requests dr
+        JOIN mdata.loads l ON l.id = dr.load_id
+        LEFT JOIN mdata.customers c ON c.id = dr.customer_id
+        WHERE dr.id = $1 AND dr.operating_company_id = $2
+      `,
       [requestId, operatingCompanyId]
     );
     return res.rows[0] ?? null;
@@ -201,7 +331,7 @@ export async function approveDetentionRequest(
     return { ok: false as const, error: bridge.error };
   }
 
-  return withCompany(userId, operatingCompanyId, async (client) => {
+  const result = await withCompany(userId, operatingCompanyId, async (client) => {
     const built = await buildInvoiceFromLoad(client, {
       userId,
       operatingCompanyId,
@@ -210,13 +340,14 @@ export async function approveDetentionRequest(
     const invoiceId = String((built.invoice as { id?: unknown }).id ?? "") || null;
     const lineId = String((built.line as { id?: unknown })?.id ?? "") || null;
 
-    const evidenceId = await recordDetentionEvidence(
+    const evidence = await recordDetentionEvidence(
       client,
       operatingCompanyId,
       requestId,
       String(request.detention_event_id),
       Number(request.billable_minutes ?? 0)
     );
+    const evidenceId = evidence?.id ? String(evidence.id) : null;
 
     const updated = await client.query(
       `
@@ -258,9 +389,29 @@ export async function approveDetentionRequest(
       request: updated.rows[0],
       invoice: built.invoice,
       evidence_id: evidenceId,
+      evidence,
       idempotent_invoice: built.idempotent,
     };
   });
+
+  // Block H — notify the customer AFTER the approval transaction commits.
+  const notification = await notifyCustomerOfApprovedDetention(userId, operatingCompanyId, requestId, {
+    loadNumber: String(request.load_number ?? request.load_id ?? ""),
+    customerName: request.customer_name ? String(request.customer_name) : null,
+    customerEmail: request.ar_email ? String(request.ar_email) : null,
+    amountCents: Number(request.amount_cents ?? 0),
+    evidence: result.evidence,
+  });
+
+  return {
+    ok: true as const,
+    request: result.request,
+    invoice: result.invoice,
+    evidence_id: result.evidence_id,
+    idempotent_invoice: result.idempotent_invoice,
+    customer_notified: notification.sent,
+    customer_notify_reason: notification.reason,
+  };
 }
 
 export async function rejectDetentionRequest(
