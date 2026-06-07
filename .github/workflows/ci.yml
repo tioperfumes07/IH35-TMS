@@ -299,6 +299,9 @@ jobs:
       - name: Verify DOT inspection history gap-close contract
         run: npm run verify:dot-inspection-history
 
+      - name: Verify accounting home role view contract
+        run: npm run verify:accounting-home
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 

@@ -313,6 +313,7 @@ import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.j
 import { registerAdminObservabilityRoutes } from "./admin/observability.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
 import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/routes.js";
+import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.js";
 import { initializeTodaysAttentionWorker, stopTodaysAttentionWorker } from "./jobs/todays-attention-worker.js";
 import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js";
 import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
@@ -593,6 +594,7 @@ async function main() {
   await registerHomeRoutes(app);
   await registerHomeWidgetRoutes(app);
   await registerOwnerTodaysAttentionRoutes(app);
+  await registerAccountingRoleHomeRoutes(app);
   await registerReportsRoutes(app);
   await registerReportsScheduledCrudRoutes(app);
   await registerCustomReportBuilderRoutes(app);
