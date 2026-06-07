@@ -84,8 +84,8 @@ contains("docs/specs/gap-67-accounting-home-view.md", docs, [
   { pattern: /read-only/i, label: "read-only documented" },
 ]);
 
-const manifest = read(".block-ready.json");
-contains(".block-ready.json", manifest, [
+const manifest = read(".block-ready/GAP-67-ACCOUNTING-HOME.json");
+contains(".block-ready/GAP-67-ACCOUNTING-HOME.json", manifest, [
   { pattern: /GAP-67-ACCOUNTING-HOME/, label: "GAP-67 block id in manifest" },
 ]);
 

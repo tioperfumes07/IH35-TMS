@@ -1,0 +1,32 @@
+{
+  "block_id": "GAP-67-ACCOUNTING-HOME",
+  "branch": "feature/gap-67-accounting-home",
+  "phase": "GAP-HIGH",
+  "task": "Accounting Home role-specific view (read-only display)",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/GAP-67-ACCOUNTING-HOME.json",
+    "apps/backend/src/accounting/role-home/accounting-home.service.ts",
+    "apps/backend/src/accounting/role-home/routes.ts",
+    "apps/backend/src/accounting/role-home/__tests__/accounting-home.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/backend/src/safety/expiry-tracking/routes.ts",
+    "apps/frontend/src/pages/home/roles/AccountingHome.tsx",
+    "apps/frontend/src/components/home/AccountingKpiBar.tsx",
+    "apps/frontend/src/components/home/AccountingPendingApprovalsPanel.tsx",
+    "apps/frontend/src/api/accountingHome.ts",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "scripts/verify-accounting-home.mjs",
+    "scripts/verify-fleet-counter-tenant-scope.mjs",
+    "scripts/verify-drivers-count-nav-integrity.mjs",
+    "docs/specs/gap-67-accounting-home-view.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:accounting-home"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
