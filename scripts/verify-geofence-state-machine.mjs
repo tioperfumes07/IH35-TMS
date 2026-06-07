@@ -28,8 +28,8 @@ function contains(relativePath, content, checks) {
   }
 }
 
-const migration = read("db/migrations/0408_geofence_state_transitions.sql");
-contains("db/migrations/0408_geofence_state_transitions.sql", migration, [
+const migration = read("db/migrations/202606071500_geofence_state_transitions.sql");
+contains("db/migrations/202606071500_geofence_state_transitions.sql", migration, [
   { pattern: /geo\.geofence_state_transitions/, label: "state transitions table" },
   { pattern: /current_state/, label: "current_state column" },
   { pattern: /'idle'.*'approaching'.*'at'.*'dwelling'.*'departing'.*'departed'/, label: "6 states check" },

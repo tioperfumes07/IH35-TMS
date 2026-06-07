@@ -6,7 +6,7 @@
   "task": "G17 Geofencing full backend state machine",
   "allowed_files": [
     ".block-ready/GAP-39.json",
-    "db/migrations/0408_geofence_state_transitions.sql",
+    "db/migrations/202606071500_geofence_state_transitions.sql",
     "apps/backend/src/integrations/samsara/geofences/state-machine/states.ts",
     "apps/backend/src/integrations/samsara/geofences/state-machine/engine.ts",
     "apps/backend/src/integrations/samsara/geofences/state-machine/transitions.service.ts",
