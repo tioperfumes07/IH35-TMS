@@ -3,7 +3,7 @@
  *
  * Renders a major / minor / observation severity pill used by the pre-flight
  * DVIR queue, the work-order detail page, and the dispatch board.  Major is the
- * dispatch-blocking class (WF-050 / 49 CFR §396.11).
+ * dispatch-blocking class (49 CFR §396.11).
  */
 
 export type DvirSeverityValue = "major" | "minor" | "observation" | string;

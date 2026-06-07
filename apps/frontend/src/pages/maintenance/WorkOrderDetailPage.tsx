@@ -274,7 +274,7 @@ export function WorkOrderDetailPage() {
         >
           <span className="font-semibold">Linked DVIR defect</span>
           <DvirSeverityBadge severity={String(wo.severity ?? "major")} />
-          <span className="text-xs text-red-800">Dispatch blocked until repaired (WF-050 / 49 CFR §396.11)</span>
+          <span className="text-xs text-red-800">Dispatch blocked until repaired (49 CFR §396.11)</span>
         </div>
       ) : null}
 

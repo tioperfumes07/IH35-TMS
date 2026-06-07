@@ -66,7 +66,7 @@ export function PreFlightDvirQueue() {
     <div className="space-y-4" data-testid="pre-flight-dvir-queue">
       <PageHeader
         title="Pre-Flight DVIR Queue"
-        subtitle="Major defects block dispatch (WF-050 / 49 CFR §396.11). Minor defects queue for next PM; observations log only."
+        subtitle="Major defects block dispatch (49 CFR §396.11). Minor defects queue for next PM; observations log only."
       />
 
       <div className="flex items-center gap-2 border-b border-gray-200">
