@@ -28,8 +28,8 @@ function contains(relativePath, content, checks) {
   }
 }
 
-const migration = read("db/migrations/0408_feature_flags.sql");
-contains("db/migrations/0408_feature_flags.sql", migration, [
+const migration = read("db/migrations/202606071200_feature_flags.sql");
+contains("db/migrations/202606071200_feature_flags.sql", migration, [
   { pattern: /lib\.feature_flags/, label: "feature_flags table" },
   { pattern: /lib\.feature_flag_overrides/, label: "feature_flag_overrides table" },
   { pattern: /rollout_pct/, label: "rollout_pct column" },

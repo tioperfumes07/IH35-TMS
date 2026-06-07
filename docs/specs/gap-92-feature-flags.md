@@ -11,7 +11,7 @@ Per-tenant and per-user feature flags for soft-launching capabilities without a 
 
 ## Schema
 
-Migration: `db/migrations/0408_feature_flags.sql`
+Migration: `db/migrations/202606071200_feature_flags.sql`
 
 ## Frontend
 
