@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { ReportCard } from "../../../components/reports/ReportCard";
 
 export function UsafetyCategoryPage() {
   return (
