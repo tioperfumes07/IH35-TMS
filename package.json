@@ -400,6 +400,7 @@
     "verify:eld-audit-trail": "node scripts/verify-eld-audit-trail.mjs",
     "verify:safety-officer-home": "node scripts/verify-safety-officer-home.mjs",
     "verify:driver-manager-home": "node scripts/verify-driver-manager-home.mjs",
+    "verify:late-arrival-analytics": "node scripts/verify-late-arrival-analytics.mjs",
     "verify:severe-repair-estimate": "node scripts/verify-severe-repair-estimate.mjs",
     "verify:assignments-quicksave": "node scripts/verify-assignments-quicksave.mjs",
     "verify:pm-due-soon-calculation": "node scripts/verify-pm-due-soon-calculation.mjs",

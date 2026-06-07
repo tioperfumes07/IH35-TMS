@@ -170,6 +170,7 @@ import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
 import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
 import { FaultRulesPage } from "../pages/maintenance/FaultRulesPage";
 import { DeadheadReportPage } from "../pages/reports/DeadheadReportPage";
+import { LateArrivalReport } from "../pages/reports/LateArrivalReport";
 import { QboSyncDetailPage } from "../pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "../pages/accounting/InvoicesListPage";
 import { MultiEntityAccountingPage } from "../pages/accounting/MultiEntityAccountingPage";
@@ -2230,6 +2231,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DeadheadReportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/late-arrival"
+          element={
+            <ProtectedRoute>
+              <LateArrivalReport />
             </ProtectedRoute>
           }
         />
