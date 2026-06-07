@@ -314,6 +314,8 @@ import { pool, withLuciaBypass } from "./auth/db.js";
 import { registerUrlCanonicalizeMiddleware } from "./middleware/url-canonicalize.js";
 import { registerRequestIdMiddleware } from "./middleware/request-id.js";
 import { registerSecurityHeaders } from "./middleware/security-headers.js";
+import { registerIdempotencyMiddleware } from "./middleware/idempotency.js";
+import { initializeIdempotencyCleanupCron } from "./middleware/idempotency-cleanup.cron.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
 import { registerAdminObservabilityRoutes } from "./admin/observability.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
@@ -449,6 +451,7 @@ async function main() {
   setAppReady(true);
 
   await registerSecurityHeaders(app);
+  await registerIdempotencyMiddleware(app);
   await app.register(cors, {
     origin: (origin: string | undefined, cb: (err: Error | null, allow: CorsOriginValue) => void) => {
       if (!origin) return cb(null, true);
@@ -457,7 +460,7 @@ async function main() {
     },
     credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Idempotency-Key"],
   });
   await app.register(cookie);
   await app.register(multipart);
@@ -995,6 +998,13 @@ async function main() {
     app.log.info("[STARTUP] error-digest scheduler initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] error-digest scheduler failed");
+  }
+
+  try {
+    initializeIdempotencyCleanupCron(app);
+    app.log.info("[STARTUP] idempotency-cleanup cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] idempotency-cleanup cron failed");
   }
 
   try {
