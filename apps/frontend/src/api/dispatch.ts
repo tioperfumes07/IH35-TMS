@@ -771,6 +771,62 @@ export function notifyDetentionCustomer(eventId: string, body: { operating_compa
   );
 }
 
+export type DetentionRequest = {
+  id: string;
+  detention_event_id: string;
+  load_id: string;
+  load_number: string;
+  customer_name: string | null;
+  stop_type: string | null;
+  stop_city: string | null;
+  stop_state: string | null;
+  billable_minutes: number;
+  rate_per_hour_cents: number;
+  amount_cents: number;
+  status: "pending_review" | "approved" | "rejected" | "invoiced";
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+  invoice_id: string | null;
+  created_at: string;
+};
+
+export type DetentionApprovalKpis = {
+  pending_count: number;
+  week_approved_cents: number;
+  ytd_approved_cents: number;
+};
+
+export function getDetentionRequests(operatingCompanyId: string, status?: string) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (status) params.set("status", status);
+  return apiRequest<{ count: number; requests: DetentionRequest[] }>(
+    `/api/v1/dispatch/detention/requests?${params.toString()}`
+  );
+}
+
+export function getDetentionApprovalKpis(operatingCompanyId: string) {
+  return apiRequest<DetentionApprovalKpis>(
+    `/api/v1/dispatch/detention/requests/kpis?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function approveDetentionRequest(requestId: string, body: { operating_company_id: string }) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/detention/requests/${requestId}/approve`, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function rejectDetentionRequest(
+  requestId: string,
+  body: { operating_company_id: string; reason: string }
+) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/dispatch/detention/requests/${requestId}/reject`, {
+    method: "PATCH",
+    body,
+  });
+}
+
 export type OcrIntakeExtractedFields = {
   customer_name_raw?: string;
   customer_id?: string | null;

@@ -61,6 +61,7 @@ import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-arrival.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js";
+import { registerDispatchDetentionApprovalRoutes } from "./dispatch/detention-approval.routes.js";
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
 import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify.routes.js";
 import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
@@ -610,6 +611,7 @@ async function main() {
   await registerLateArrivalAnalyticsRoutes(app);
   await registerDispatchPlannerRoutes(app);
   await registerDispatchDetentionRoutes(app);
+  await registerDispatchDetentionApprovalRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
   await registerDispatchPodBolRoutes(app);
