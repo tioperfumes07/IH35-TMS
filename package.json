@@ -397,6 +397,7 @@
     "verify:permits-toll-tags": "node scripts/verify-permits-toll-tags.mjs",
     "verify:driver-operations-depth": "node scripts/verify-driver-operations-depth.mjs",
     "verify:dvir-severity-tagging": "node scripts/verify-dvir-severity-tagging.mjs",
+    "verify:cap-13-brake-wear": "node scripts/verify-cap-13-brake-wear.mjs",
     "verify:damage-insurance-continuity": "node scripts/verify-damage-insurance-continuity.mjs",
     "verify:cache-tier-coverage": "node scripts/verify-cache-tier-coverage.mjs",
     "verify:accounting-home": "node scripts/verify-accounting-home.mjs",

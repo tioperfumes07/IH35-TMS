@@ -1,0 +1,32 @@
+{
+  "block_id": "GAP-63",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap63",
+  "branch": "feature/gap-63",
+  "phase": "GAP-HIGH",
+  "task": "CAP-13 Brake Wear Predictive Maintenance — lining thickness tracking + replacement projections",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-63.json",
+    "db/migrations/202606071820_brake_wear_measurements.sql",
+    "apps/backend/src/integrations/samsara/cap-13-brake-wear/service.ts",
+    "apps/backend/src/integrations/samsara/cap-13-brake-wear/routes.ts",
+    "apps/backend/src/integrations/samsara/cap-13-brake-wear/__tests__/service.test.ts",
+    "apps/backend/src/jobs/cap-13-brake-wear-worker.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/maintenance/brakes/BrakeWearDashboard.tsx",
+    "apps/frontend/src/components/maintenance/BrakeWearGauge.tsx",
+    "apps/frontend/src/pages/maintenance/units/UnitBrakesTab.tsx",
+    "apps/frontend/src/pages/units/UnitDetail.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-cap-13-brake-wear.mjs",
+    "docs/specs/gap-63-cap-13-brake-wear.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:cap-13-brake-wear"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

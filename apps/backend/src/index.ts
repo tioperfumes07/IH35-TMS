@@ -132,6 +132,7 @@ import { registerSafetyTrainingProgramsRoutes } from "./safety/training-programs
 import { registerSafetyTrainingRecordsRoutes } from "./safety/training-records.routes.js";
 import { registerSafetyDvirRoutes } from "./safety/dvir.routes.js";
 import { registerPreFlightDvirRoutes } from "./maintenance/pre-flight/routes.js";
+import { registerCap13BrakeWearRoutes } from "./integrations/samsara/cap-13-brake-wear/routes.js";
 import { registerSafetyIncidentsRoutes } from "./safety/incidents.routes.js";
 import { registerDamageContinuityRoutes } from "./safety/damage-continuity/continuity.routes.js";
 import { registerDamagePhotoEvidenceRoutes } from "./safety/damage-reports/photo-evidence.routes.js";
@@ -348,6 +349,7 @@ import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jo
 import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
 import { initializeCertExpiryMonitor } from "./jobs/cert-expiry-monitor.js";
 import { initializeDamageContinuityWorker } from "./jobs/damage-continuity-worker.js";
+import { initializeCap13BrakeWearWorker } from "./jobs/cap-13-brake-wear-worker.js";
 import { initializeSamsaraCacheWarmer } from "./integrations/samsara/cache/cache-warmer.js";
 import { initializeSearchIndexerIncremental } from "./jobs/search-indexer-incremental.js";
 import { registerUniversalSearchRoutes } from "./search/universal/routes.js";
@@ -680,6 +682,7 @@ async function main() {
   await registerSafetyTrainingRecordsRoutes(app);
   await registerSafetyDvirRoutes(app);
   await registerPreFlightDvirRoutes(app);
+  await registerCap13BrakeWearRoutes(app);
   await registerSafetyIncidentsRoutes(app);
   await registerDamageContinuityRoutes(app);
   await registerDamagePhotoEvidenceRoutes(app);
@@ -966,6 +969,8 @@ async function main() {
     initializeCertExpiryMonitor(app);
     initializeDamageContinuityWorker(app);
     app.log.info("[STARTUP] damage-continuity-worker initialized");
+    initializeCap13BrakeWearWorker(app);
+    app.log.info("[STARTUP] cap-13-brake-wear-worker initialized");
     initializeSamsaraCacheWarmer(app);
     app.log.info("[STARTUP] samsara-cache-warmer initialized");
     initializeSearchIndexerIncremental(app);
