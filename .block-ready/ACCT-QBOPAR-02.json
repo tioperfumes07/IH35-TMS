@@ -6,8 +6,8 @@
   "agent": "2",
   "allowed_files": [
     ".block-ready/ACCT-QBOPAR-02.json",
-    ".block-ready.agent1.json",
     "apps/frontend/package.json",
+    "package.json",
     "package-lock.json",
     "apps/frontend/src/components/lists/ListView/index.ts",
     "apps/frontend/src/components/lists/ListView/types.ts",
