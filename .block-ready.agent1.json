@@ -1,22 +1,17 @@
 {
-  "block_id": "SENTRY-ENV-TEMPLATE-2026-06-06",
-  "branch": "feat/sentry-env-template",
-  "phase": "config",
-  "task": "Add Sentry env var placeholders to .env.example so new developers know which keys to set.",
+  "block_id": "GAP-81-REGISTER",
+  "branch": "fix/gap-81-register-worker-routes",
+  "phase": "backend",
+  "task": "Register GAP-81 drug-alcohol worker and routes in apps/backend/src/index.ts.",
   "agent": "A",
-  "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-cron-audit",
   "allowed_files": [
-    ".env.example",
+    "apps/backend/src/index.ts",
     ".block-ready.agent1.json"
   ],
   "preview_provided": false,
   "extra_gates": [],
+  "runtime_path": "src",
   "db_required": false,
   "guard_required": false,
-  "fields": {
-    "sentry_org": "ih-35-tms",
-    "projects": ["ih35-tms-prod", "ih35-tms-staging", "ih35-tms-dev"],
-    "vars_added": ["SENTRY_DSN", "VITE_SENTRY_DSN", "SENTRY_ORG_SLUG", "SENTRY_PROJECT_SLUG"]
-  }
+  "fields": {}
 }

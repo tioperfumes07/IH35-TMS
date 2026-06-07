@@ -116,6 +116,7 @@ import { registerSafetyMedicalCardsRoutes } from "./safety/medical-cards.routes.
 import { registerSafetyRemindersRoutes } from "./safety/reminders.routes.js";
 import { registerSafetyReportsRoutes } from "./safety/reports/safety-reports.routes.js";
 import { registerSafetyDrugProgramRoutes } from "./safety/drug-program.routes.js";
+import { registerDrugAlcoholProgramRoutes } from "./safety/drug-alcohol/routes.js";
 import { registerSafetyRtdRoutes } from "./safety/rtd.routes.js";
 import { registerSafetySettingsRoutes } from "./safety/settings.routes.js";
 import { registerSafetyTrainingProgramsRoutes } from "./safety/training-programs.routes.js";
@@ -318,6 +319,7 @@ import { initializeErrorDigestCron } from "./cron/error-digest.cron.js";
 import { registerDailyTasksRoutes } from "./daily-tasks/daily-tasks.routes.js";
 import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/daily-task-alerts.cron.js";
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
+import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
 import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
 import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
 import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
@@ -621,6 +623,7 @@ async function main() {
   await registerSafetyRemindersRoutes(app);
   await registerSafetyReportsRoutes(app);
   await registerSafetyDrugProgramRoutes(app);
+  await registerDrugAlcoholProgramRoutes(app);
   await registerSafetyRtdRoutes(app);
   await registerSafetySettingsRoutes(app);
   await registerSafetyTrainingProgramsRoutes(app);
@@ -900,6 +903,9 @@ async function main() {
 
     initializeDocumentAlertEngineCron(app);
     app.log.info("[STARTUP] document-alert-engine-cron initialized");
+
+    initializeDaRandomPoolDrawWorker(app);
+    app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
 
     initializePmAutoEngineCron(app);
     app.log.info("[STARTUP] pm-auto-engine-cron initialized");
