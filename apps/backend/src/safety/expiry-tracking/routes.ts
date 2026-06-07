@@ -67,10 +67,16 @@ export async function registerCertExpiryTrackingRoutes(app: FastifyInstance) {
     if (!user) return;
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     const parsedParams = driverParamsSchema.safeParse(req.params ?? {});
-    if (!parsedQuery.success || !parsedParams.success) {
+    if (!parsedQuery.success) {
       return reply.code(400).send({
         error: "validation_error",
-        details: parsedQuery.success ? parsedParams.error.flatten() : parsedQuery.error.flatten(),
+        details: parsedQuery.error.flatten(),
+      });
+    }
+    if (!parsedParams.success) {
+      return reply.code(400).send({
+        error: "validation_error",
+        details: parsedParams.error.flatten(),
       });
     }
 

@@ -9,6 +9,7 @@
     "db/migrations/0327_drug_alcohol_program.sql",
     "db/migrations/0384a_rls_tenant_policy_preseed.sql",
     "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "apps/backend/src/safety/expiry-tracking/routes.ts",
     ".block-ready.agent1.json"
   ],
   "preview_provided": false,
