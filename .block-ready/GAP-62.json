@@ -4,7 +4,6 @@
   "phase": "GAP-HIGH",
   "task": "CAP-12 tire tread wear tracking and replacement projections",
   "allowed_files": [
-    ".block-ready.json",
     ".block-ready/GAP-62.json",
     "db/migrations/202606071810_tire_tread_measurements.sql",
     "apps/backend/src/integrations/samsara/cap-12-tire-tread/measurement.service.ts",
