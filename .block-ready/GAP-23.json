@@ -2,6 +2,8 @@
   "block_id": "GAP-23",
   "status": "BUILD",
   "classification": "ADDITIVE",
+  "phase": "GAP-MEDIUM",
+  "task": "4-tier Samsara cache hierarchy with scheduled warmer",
   "spec": "docs/dispatch/batches/GAP-23-4-TIER-SAMSARA-CACHE-HIERARCHY-GO.md",
   "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap23",
   "branch": "feature/gap-23-samsara-cache-tiers",
@@ -19,6 +21,7 @@
   },
   "allowed_files": [
     ".block-ready/GAP-23.json",
+    ".block-ready.agent1.json",
     "apps/backend/src/lib/cache-tiers.ts",
     "apps/backend/src/integrations/samsara/cache/tier1-realtime.ts",
     "apps/backend/src/integrations/samsara/cache/tier2-30s.ts",
