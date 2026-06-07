@@ -13,6 +13,7 @@ const EXPECTED_GROUP_COUNT = 9;
 const paths = {
   tabsConfig: path.join(ROOT, "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"),
   homePage: path.join(ROOT, "apps/frontend/src/pages/home/HomePage.tsx"),
+  defaultHome: path.join(ROOT, "apps/frontend/src/pages/home/roles/DefaultHome.tsx"),
   sidebarConfig: path.join(ROOT, "apps/frontend/src/components/layout/sidebar-config.ts"),
   archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
   foundationKpis: path.join(ROOT, "apps/backend/src/safety/foundation-kpis.routes.ts"),
@@ -31,6 +32,7 @@ function fail(msg) {
 function main() {
   const tabsConfig = read(paths.tabsConfig);
   const homePage = read(paths.homePage);
+  const defaultHome = read(paths.defaultHome);
   const sidebarConfig = read(paths.sidebarConfig);
   const archDesign = read(paths.archDesign);
   const foundationKpis = read(paths.foundationKpis);
@@ -42,11 +44,11 @@ function main() {
   if (!tabsConfig.includes(`SAFETY_CANONICAL_GROUP_COUNT = ${EXPECTED_GROUP_COUNT}`)) {
     failures.push("SAFETY_CANONICAL_GROUP_COUNT must be 9");
   }
-  if (!homePage.includes("SAFETY_CANONICAL_TAB_COUNT")) {
-    failures.push("HomePage must import SAFETY_CANONICAL_TAB_COUNT");
+  if (!homePage.includes("SAFETY_CANONICAL_TAB_COUNT") && !defaultHome.includes("SAFETY_CANONICAL_TAB_COUNT")) {
+    failures.push("Home surfaces must import SAFETY_CANONICAL_TAB_COUNT");
   }
-  if (homePage.includes("count: 6, to: \"/safety\"")) {
-    failures.push("HomePage must not hardcode Safety quick-jump count 6");
+  if (homePage.includes("count: 6, to: \"/safety\"") || defaultHome.includes("count: 6, to: \"/safety\"")) {
+    failures.push("Home surfaces must not hardcode Safety quick-jump count 6");
   }
   if (sidebarConfig.includes('to: "/compliance"') && sidebarConfig.includes('case "safety"')) {
     const safetyBlock = sidebarConfig.split('case "safety"')[1]?.split("case ")[0] ?? "";

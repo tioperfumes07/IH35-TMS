@@ -11,6 +11,7 @@
     "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
     "apps/backend/src/safety/expiry-tracking/routes.ts",
     "scripts/verify-fleet-counter-tenant-scope.mjs",
+    "scripts/verify-safety-count-nav-integrity.mjs",
     ".block-ready.agent1.json"
   ],
   "preview_provided": false,
