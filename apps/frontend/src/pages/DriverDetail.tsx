@@ -45,6 +45,7 @@ import { QboCombobox } from "../components/forms/QboCombobox";
 import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { CertExpiryBadge } from "../components/safety/CertExpiryBadge";
+import { EldEditHistoryTimeline } from "../components/safety/EldEditHistoryTimeline";
 import { UnitDriverHistoryStrip } from "./units/UnitDriverHistoryStrip";
 
 const tabs = [
@@ -55,6 +56,7 @@ const tabs = [
   "Safety File",
   "Documents",
   "Audit History",
+  "ELD Edits",
   "Legal Matters",
 ] as const;
 type DriverTab = (typeof tabs)[number];
@@ -1276,6 +1278,13 @@ export function DriverDetailPage() {
 
       {activeTab === "Audit History" && driverQuery.data?.operating_company_id ? (
         <AuditHistoryTab driverId={id} operatingCompanyId={String(driverQuery.data.operating_company_id)} />
+      ) : null}
+
+      {activeTab === "ELD Edits" && driverQuery.data?.operating_company_id ? (
+        <div className="space-y-2">
+          <p className="text-sm text-gray-600">Read-only Samsara HOS log edit history for DOT audit review.</p>
+          <EldEditHistoryTimeline driverUuid={id} operatingCompanyId={String(driverQuery.data.operating_company_id)} />
+        </div>
       ) : null}
 
       {activeTab === "Profile" ? (

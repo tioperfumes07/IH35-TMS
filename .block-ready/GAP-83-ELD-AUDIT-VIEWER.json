@@ -1,0 +1,32 @@
+{
+  "block_id": "GAP-83-ELD-AUDIT-VIEWER",
+  "branch": "feature/gap-83-eld-audit",
+  "phase": "GAP-HIGH",
+  "task": "ELD audit trail read-only viewer",
+  "allowed_files": [
+    ".block-ready/GAP-83-ELD-AUDIT-VIEWER.json",
+    "apps/backend/src/safety/eld-audit-trail/viewer.service.ts",
+    "apps/backend/src/safety/eld-audit-trail/routes.ts",
+    "apps/backend/src/safety/eld-audit-trail/__tests__/viewer.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/backend/src/safety/expiry-tracking/routes.ts",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "apps/frontend/src/pages/home/HomePage.tsx",
+    "apps/frontend/src/pages/safety/eld/EldAuditTrailViewer.tsx",
+    "apps/frontend/src/components/safety/EldEditHistoryTimeline.tsx",
+    "apps/frontend/src/pages/DriverDetail.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-eld-audit-trail.mjs",
+    "docs/specs/gap-83-eld-audit-trail.md",
+    "package.json",
+    ".github/workflows/ci.yml",
+    "scripts/verify-fleet-counter-tenant-scope.mjs",
+    "scripts/verify-drivers-count-nav-integrity.mjs"
+  ],
+  "extra_gates": [
+    "verify:eld-audit-trail"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
