@@ -311,10 +311,6 @@
       "reason": "Trailer profile dynamic route from in-app links (Block 15)"
     },
     {
-      "path": "/compliance",
-      "reason": "Master compliance dashboard \u2014 Safety flyout deep link (Block 16)"
-    },
-    {
       "path": "/cash-advances",
       "reason": "Legacy cash advances home \u2014 separate from driver-finance requests"
     },

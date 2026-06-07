@@ -22,10 +22,28 @@ export type ComplianceSummary = {
   total: number;
 };
 
+export type ComplianceOwnerStatus = "expired" | "expiring_soon" | "compliant";
+
+export type ComplianceOwnerRollup = {
+  owner_id: string;
+  owner_name: string;
+  status: ComplianceOwnerStatus;
+  credential_count: number;
+  worst_days_until_expiration: number | null;
+  action_link: string;
+};
+
+export type ComplianceDashboardResponse = {
+  credentials: ComplianceCredential[];
+  summary: ComplianceSummary;
+  drivers: ComplianceOwnerRollup[];
+  trucks: ComplianceOwnerRollup[];
+};
+
 export function fetchComplianceDashboard(operatingCompanyId: string, filters?: { severity?: ComplianceSeverity }) {
   const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (filters?.severity) params.set("severity", filters.severity);
-  return apiRequest<{ credentials: ComplianceCredential[] }>(`/api/v1/compliance/dashboard?${params}`);
+  return apiRequest<ComplianceDashboardResponse>(`/api/v1/compliance/dashboard?${params}`);
 }
 
 export function fetchComplianceSummary(operatingCompanyId: string) {
