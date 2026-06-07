@@ -1,0 +1,22 @@
+{
+  "block_id": "HOTFIX-0327-MIGRATION-ROLE",
+  "branch": "hotfix/0327-drug-alcohol-app-user",
+  "phase": "HOTFIX",
+  "task": "Fix migration 0327 GRANT role (app_user → ih35_app) + TS18048 guards (GAP-81)",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready/HOTFIX-0327-MIGRATION-ROLE.json",
+    "db/migrations/0327_drug_alcohol_program.sql",
+    "db/migrations/.ledger.json",
+    "scripts/lib/migration-checksum-overrides.json",
+    "scripts/verify-fleet-counter-tenant-scope.mjs",
+    "apps/backend/src/safety/expiry-tracking/routes.ts",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "apps/frontend/src/pages/home/HomePage.tsx"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false
+}

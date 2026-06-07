@@ -1,0 +1,21 @@
+{
+  "block_id": "STRUCTURAL-MIGRATION-TIMESTAMPS",
+  "branch": "feat/migration-timestamp-naming",
+  "phase": "STRUCTURAL-FIX",
+  "task": "New migrations use timestamp format (20260607_120000_name.sql) to eliminate parallel-lane sequence collisions",
+  "agent": "1",
+  "merge_sha": "dd21e0ba2",
+  "pr": 648,
+  "merged": true,
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready/STRUCTURAL-MIGRATION-TIMESTAMPS.json",
+    "scripts/db-migrate.mjs",
+    ".github/workflows/migration-guard.yml",
+    "docs/runbooks/migration-naming.md"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}

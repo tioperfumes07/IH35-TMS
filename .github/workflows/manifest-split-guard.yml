@@ -1,0 +1,52 @@
+name: Block-Ready Manifest Split Guard
+
+# Enforces the per-block manifest pattern introduced in STRUCTURAL-MANIFEST-SPLIT.
+# New PRs must write .block-ready/<block-id>.json instead of editing the
+# shared .block-ready.agent1.json directly.
+#
+# Legacy files (.block-ready.agent1.json, .block-ready.agent2.json,
+# .block-ready.json) are frozen — no direct edits allowed from new PRs.
+
+on:
+  pull_request:
+    paths:
+      - ".block-ready.agent1.json"
+      - ".block-ready.agent2.json"
+      - ".block-ready.json"
+      - ".block-ready/**"
+
+jobs:
+  manifest-split-guard:
+    name: Reject direct edits to shared block-ready files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject direct edits to legacy shared manifests
+        run: |
+          LEGACY_EDITS=$(git diff --name-only --diff-filter=M origin/${{ github.base_ref }}...HEAD \
+            -- .block-ready.agent1.json .block-ready.agent2.json .block-ready.json || true)
+          if [ -n "$LEGACY_EDITS" ]; then
+            echo "MANIFEST PATTERN ERROR: Direct edits to shared block-ready files are no longer allowed."
+            echo ""
+            echo "Instead, create a per-block manifest at .block-ready/<your-block-id>.json"
+            echo "See docs/runbooks/manifest-per-block.md for the new pattern."
+            echo ""
+            echo "Files that triggered this error:"
+            echo "$LEGACY_EDITS"
+            exit 1
+          fi
+          echo "manifest-split-guard PASS — no direct edits to legacy shared manifests."
+
+      - name: Require per-block manifest when adding new block work
+        run: |
+          NEW_BLOCK_FILES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD \
+            -- .block-ready/ | grep -v '\.gitkeep$' || true)
+          if [ -n "$NEW_BLOCK_FILES" ]; then
+            echo "manifest-split-guard: new per-block manifest file(s) detected — good."
+            echo "$NEW_BLOCK_FILES"
+          fi
+          echo "manifest-split-guard PASS"
