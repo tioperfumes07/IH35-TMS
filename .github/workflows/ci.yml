@@ -322,6 +322,9 @@ jobs:
       - name: Verify DVIR severity tagging contract (GAP-49)
         run: npm run verify:dvir-severity-tagging
 
+      - name: Verify CAP-13 brake wear contract (GAP-63)
+        run: npm run verify:cap-13-brake-wear
+
       - name: Verify Samsara cache tier coverage contract
         run: npm run verify:cache-tier-coverage
 
