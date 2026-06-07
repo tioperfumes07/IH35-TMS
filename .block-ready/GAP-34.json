@@ -7,7 +7,6 @@
   "classification": "OVERLAP",
   "allowed_files": [
     ".block-ready/GAP-34.json",
-    ".block-ready.agent1.json",
     "apps/driver-pwa/src/screens/DispatchView.tsx",
     "apps/driver-pwa/src/components/dispatch/PickupCard.tsx",
     "apps/driver-pwa/src/components/dispatch/DeliveryCard.tsx",
@@ -21,6 +20,7 @@
     "apps/driver-pwa/src/i18n/en.json",
     "apps/driver-pwa/src/i18n/es.json",
     "scripts/verify-driver-pwa-dispatch-view.mjs",
+    "scripts/block-ready-agent-manifest.mjs",
     "docs/specs/gap-34-driver-pwa-dispatch.md",
     "package.json",
     ".github/workflows/ci.yml"
