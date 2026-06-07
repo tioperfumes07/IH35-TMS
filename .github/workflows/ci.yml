@@ -280,6 +280,9 @@ jobs:
       - name: verify:maint-tire-program
         run: npm run verify:maint-tire-program
 
+      - name: verify:cap-12-tire-tread
+        run: npm run verify:cap-12-tire-tread
+
       - name: verify:maint-warranty-claims
         run: npm run verify:maint-warranty-claims
 

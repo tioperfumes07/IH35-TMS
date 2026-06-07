@@ -5,8 +5,16 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { UnitBrakesTab } from "../maintenance/units/UnitBrakesTab";
 import { UnitPermitsTab } from "./UnitPermitsTab";
 import { UnitTollTagsTab } from "./UnitTollTagsTab";
+import { UnitTiresTab } from "../maintenance/units/UnitTiresTab";
 
-type UnitDetailTab = "permits" | "toll-tags" | "brakes";
+type UnitDetailTab = "permits" | "toll-tags" | "brakes" | "tires";
+
+const TAB_LABELS: Record<UnitDetailTab, string> = {
+  permits: "Permits",
+  "toll-tags": "Toll Tags",
+  brakes: "Brakes",
+  tires: "Tires",
+};
 
 export function UnitDetail() {
   const { id = "" } = useParams();
@@ -17,17 +25,17 @@ export function UnitDetail() {
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab === "toll-tags" || tab === "permits" || tab === "brakes") {
+    if (tab === "toll-tags" || tab === "permits" || tab === "brakes" || tab === "tires") {
       setActiveTab(tab);
     }
   }, [searchParams]);
 
   return (
     <div className="space-y-3 p-4" data-testid="unit-detail-page">
-      <PageHeader title={`Unit ${id.slice(0, 8)}`} subtitle="Permits, toll tags, and brake wear" />
+      <PageHeader title={`Unit ${id.slice(0, 8)}`} subtitle="Permits, toll tags, brakes, and tire wear" />
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
       <div className="flex flex-wrap gap-1 rounded border border-gray-200 bg-white p-1">
-        {(["permits", "toll-tags", "brakes"] as const).map((tab) => (
+        {(["permits", "toll-tags", "brakes", "tires"] as const).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -36,13 +44,14 @@ export function UnitDetail() {
               activeTab === tab ? "bg-sky-100 text-sky-800" : "text-gray-700 hover:bg-gray-100"
             }`}
           >
-            {tab === "toll-tags" ? "Toll Tags" : tab === "brakes" ? "Brakes" : "Permits"}
+            {TAB_LABELS[tab]}
           </button>
         ))}
       </div>
       {activeTab === "permits" ? <UnitPermitsTab unitId={id} companyId={companyId} /> : null}
       {activeTab === "toll-tags" ? <UnitTollTagsTab unitId={id} companyId={companyId} /> : null}
       {activeTab === "brakes" ? <UnitBrakesTab unitId={id} companyId={companyId} /> : null}
+      {activeTab === "tires" ? <UnitTiresTab unitId={id} companyId={companyId} /> : null}
     </div>
   );
 }

@@ -100,6 +100,7 @@ import { MaintKpiDashboardPage } from "../pages/maintenance/MaintKpiDashboardPag
 import { InspectionsPage } from "../pages/maintenance/inspections/InspectionsPage";
 import { TireProgramPage } from "../pages/maintenance/TireProgramPage";
 import { BrakeWearDashboard } from "../pages/maintenance/brakes/BrakeWearDashboard";
+import { TireWearDashboard } from "../pages/maintenance/tires/TireWearDashboard";
 import { WarrantyClaimsPage } from "../pages/maintenance/WarrantyClaimsPage";
 import { VendorsPage as MaintenanceVendorsPage } from "../pages/maintenance/vendors/VendorsPage";
 import { VendorDetailPage as MaintenanceVendorDetailPage } from "../pages/maintenance/VendorDetailPage";
@@ -1219,6 +1220,16 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <MaintenanceShell>
                 <InspectionsPage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/tires/wear"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <TireWearDashboard />
               </MaintenanceShell>
             </ProtectedRoute>
           }
