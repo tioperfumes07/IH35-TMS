@@ -1,0 +1,41 @@
+{
+  "block_id": "ACCT-QBOPAR-02",
+  "branch": "feat/acct-qbopar-02-listview",
+  "phase": "Accounting — QBO Parity",
+  "task": "Shared ListView component (universal list behaviors): reusable table with sort, filter, gear, pagination, drag-reorder, resize, export, saved-views.",
+  "agent": "2",
+  "allowed_files": [
+    ".block-ready/ACCT-QBOPAR-02.json",
+    ".block-ready.agent1.json",
+    "apps/frontend/package.json",
+    "package-lock.json",
+    "apps/frontend/src/components/lists/ListView/index.ts",
+    "apps/frontend/src/components/lists/ListView/types.ts",
+    "apps/frontend/src/components/lists/ListView/ListView.tsx",
+    "apps/frontend/src/components/lists/ListView/hooks/useListSort.ts",
+    "apps/frontend/src/components/lists/ListView/hooks/useListFilters.ts",
+    "apps/frontend/src/components/lists/ListView/hooks/useColumnReorder.ts",
+    "apps/frontend/src/components/lists/ListView/hooks/useListSelection.ts",
+    "apps/frontend/src/components/lists/ListView/hooks/useListView.ts",
+    "apps/frontend/src/components/lists/ListView/hooks/useListExport.ts",
+    "apps/frontend/src/components/lists/ListView/components/ListViewHeader.tsx",
+    "apps/frontend/src/components/lists/ListView/components/ListViewRow.tsx",
+    "apps/frontend/src/components/lists/ListView/components/ListViewFooter.tsx",
+    "apps/frontend/src/components/lists/ListView/components/ListViewGear.tsx",
+    "apps/frontend/src/components/lists/ListView/components/FilterPopover.tsx",
+    "apps/frontend/src/components/lists/ListView/components/ListViewFilterBar.tsx",
+    "apps/frontend/src/components/lists/ListView/components/BatchActionsBar.tsx",
+    "apps/frontend/src/components/lists/ListView/demo/ListViewDemo.tsx"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "fields": {
+    "additive_only": true,
+    "no_magnet_edits": true,
+    "xlsx_replacement": "exceljs@4.4.0 (MIT, CVE-2023-30533 safe)",
+    "no_virtualizer": true,
+    "saved_views_server_side": true
+  }
+}

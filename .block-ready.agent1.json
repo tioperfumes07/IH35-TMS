@@ -1,5 +1,5 @@
 {
-  "block_id": "GAP-IDEMP-KEYS",
+  "block_id": "ACCT-QBOPAR-02",
   "branch": "feature/gap-idemp-keys",
   "phase": "implementation",
   "task": "HTTP idempotency keys for mutating financial endpoints: idempotency_keys table + middleware (5 behaviors) + daily cleanup cron + frontend auto-key.",
