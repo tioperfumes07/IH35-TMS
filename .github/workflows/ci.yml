@@ -293,6 +293,9 @@ jobs:
       - name: Verify safety reminders contract
         run: npm run verify:safety-reminders
 
+      - name: Verify cert expiry tracking contract
+        run: npm run verify:cert-expiry-tracking
+
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
 

@@ -44,6 +44,7 @@ import { useToast } from "../components/Toast";
 import { QboCombobox } from "../components/forms/QboCombobox";
 import { VendorLinkageModal } from "../components/qbo/VendorLinkageModal";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
+import { CertExpiryBadge } from "../components/safety/CertExpiryBadge";
 import { UnitDriverHistoryStrip } from "./units/UnitDriverHistoryStrip";
 
 const tabs = [
@@ -591,6 +592,13 @@ export function DriverDetailPage() {
     await updateMutation.mutateAsync();
   };
 
+  const certBadges = [
+    { label: "CDL", expiresAt: driver.cdl_expires_at },
+    { label: "Medical", expiresAt: driver.dot_medical_expires_at },
+    { label: "Hazmat", expiresAt: driver.hazmat_endorsement_expires_at },
+    { label: "Passport", expiresAt: driver.passport_expires_at },
+  ];
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -602,7 +610,10 @@ export function DriverDetailPage() {
         ]}
         subtitle={driver.status}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex max-w-[940px] flex-wrap items-center justify-end gap-2">
+            {certBadges.map((badge) => (
+              <CertExpiryBadge key={badge.label} label={badge.label} expiresAt={badge.expiresAt} />
+            ))}
             <StatusBadge status={driver.status} />
             <Link to={`/drivers/${driver.id}/hos`} className="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
               HOS Detail

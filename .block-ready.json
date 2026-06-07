@@ -1,28 +1,32 @@
 {
-  "block_id": "GAP-81-DRUG-ALCOHOL-PROGRAM",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap81",
-  "branch": "feature/gap-81-drug-alcohol",
-  "wave": "P2-P",
-  "lane": "A",
-  "status": "shipped",
+  "block_id": "GAP-82-MEDICAL-CARD-TRACKING",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap82",
+  "branch": "feature/gap-82-medical-card",
+  "phase": "GAP-HIGH",
+  "task": "Medical card + CDL expiry tracking and alerts",
   "allowed_files": [
-    "db/migrations/0327_drug_alcohol_program.sql",
-    "apps/backend/src/safety/drug-alcohol/program.service.ts",
-    "apps/backend/src/safety/drug-alcohol/random-pool.service.ts",
-    "apps/backend/src/safety/drug-alcohol/routes.ts",
-    "apps/backend/src/safety/drug-alcohol/__tests__/program.test.ts",
-    "apps/backend/src/safety/drug-alcohol/__tests__/random-pool.test.ts",
-    "apps/backend/src/jobs/da-random-pool-draw-worker.ts",
-    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
-    "apps/frontend/src/pages/safety/drug-alcohol/TestSchedulingPanel.tsx",
-    "apps/frontend/src/pages/safety/drug-alcohol/RandomPoolDashboard.tsx",
-    "scripts/verify-drug-alcohol-program.mjs",
-    "docs/specs/gap-81-drug-alcohol-program.md"
+    ".block-ready.json",
+    ".block-ready.agent1.json",
+    "apps/backend/src/safety/expiry-tracking/cert-monitor.service.ts",
+    "apps/backend/src/safety/expiry-tracking/alerter.service.ts",
+    "apps/backend/src/safety/expiry-tracking/routes.ts",
+    "apps/backend/src/safety/expiry-tracking/__tests__/cert-monitor.test.ts",
+    "apps/backend/src/jobs/cert-expiry-monitor.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/safety/expiry-tracking/ExpiryDashboard.tsx",
+    "apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx",
+    "apps/frontend/src/components/safety/CertExpiryBadge.tsx",
+    "apps/frontend/src/pages/DriverDetail.tsx",
+    "apps/frontend/src/components/safety/SafetyGroupNav.tsx",
+    "scripts/verify-cert-expiry-tracking.mjs",
+    "docs/specs/gap-82-cert-expiry-tracking.md",
+    "package.json",
+    ".github/workflows/ci.yml"
   ],
-  "forbidden_paths": [
-    "apps/backend/src/safety/medical-cards-cdl-expiry/",
-    "apps/frontend/src/pages/safety/expiry-tracking/"
+  "extra_gates": [
+    "verify:cert-expiry-tracking"
   ],
-  "recon_notes": "SafetyGroupNav.tsx EDIT skipped — drug-alcohol tab already present at SAFETY_TABS_CONFIG position 2 (tab count=27, spec claim 23→24 is stale). Additive safety.da_* schema alongside existing compliance.drug_alcohol_* tables.",
-  "created_at": "2026-06-06T00:00:00Z"
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
 }
