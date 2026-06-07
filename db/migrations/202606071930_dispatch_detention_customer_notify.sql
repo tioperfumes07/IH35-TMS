@@ -14,10 +14,26 @@
 --
 -- Self-contained GRANT block (Block A schema-grant gate) — keep independent so
 -- it applies cleanly in any order.
+--
+-- NOTE: dispatch.detention_requests was introduced in the same sprint by
+-- migrations 20260607_190000_dispatch_detention_requests.sql (Block 6 / #686).
+-- Those files use the YYYYMMDD_HHMMSS_ format that db-migrate.mjs skips in the
+-- CI verify DB; in production they are applied via the manual migration protocol.
+-- We guard the ALTER TABLE with a table-existence check so this migration is a
+-- clean no-op in CI (table absent) while still adding the column in production.
 BEGIN;
 
-ALTER TABLE dispatch.detention_requests
-  ADD COLUMN IF NOT EXISTS customer_notified_at timestamptz NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'dispatch' AND table_name = 'detention_requests'
+  ) THEN
+    ALTER TABLE dispatch.detention_requests
+      ADD COLUMN IF NOT EXISTS customer_notified_at timestamptz NULL;
+  END IF;
+END
+$$;
 
 INSERT INTO lib.feature_flags (flag_key, description, default_enabled, rollout_pct)
 VALUES (
