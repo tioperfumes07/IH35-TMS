@@ -166,6 +166,7 @@ import { registerReserveRoutes } from "./factoring/reserve.routes.js";
 import { registerFaroCsvImportRoutes } from "./factoring/faro-csv-import.routes.js";
 import { registerScanDuplicateVendorRoutes } from "./factoring/scan-duplicate-vendors.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
+import { registerDriverHubRequestRoutes } from "./cash-advances/driver-hub-requests.routes.js";
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
@@ -702,6 +703,7 @@ async function main() {
   await registerOnboardingStateRoutes(app);
   await registerLiabilitiesRoutes(app);
   await registerCashAdvancesRoutes(app);
+  await registerDriverHubRequestRoutes(app);
   await registerBankTxCategorizationRoutes(app);
   await registerBankingRoutes(app);
   await registerPlaidBankingItemsRoutes(app);
