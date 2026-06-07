@@ -175,6 +175,8 @@ jobs:
         run: npm run verify:safety-hos-dashboard-wire
       - name: Verify safety incidents cluster wire-up
         run: npm run verify:safety-incidents-cluster-wire
+      - name: Verify damage insurance continuity (GAP-38)
+        run: npm run verify:damage-insurance-continuity
       - name: Verify DVIR schema presence
         run: npm run verify:dvir-schema-presence
       - name: verify:safety-count-nav-integrity

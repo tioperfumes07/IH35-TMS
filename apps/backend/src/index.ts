@@ -131,6 +131,7 @@ import { registerSafetyTrainingProgramsRoutes } from "./safety/training-programs
 import { registerSafetyTrainingRecordsRoutes } from "./safety/training-records.routes.js";
 import { registerSafetyDvirRoutes } from "./safety/dvir.routes.js";
 import { registerSafetyIncidentsRoutes } from "./safety/incidents.routes.js";
+import { registerDamageContinuityRoutes } from "./safety/damage-continuity/continuity.routes.js";
 import { registerSafetyPermitsRoutes } from "./safety/permits.routes.js";
 import { registerSafetyOnboardingRoutes } from "./safety/onboarding.routes.js";
 import { registerOnboardingStateRoutes } from "./onboarding/state.routes.js";
@@ -342,6 +343,7 @@ import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/d
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
 import { initializeCertExpiryMonitor } from "./jobs/cert-expiry-monitor.js";
+import { initializeDamageContinuityWorker } from "./jobs/damage-continuity-worker.js";
 import { initializeSamsaraCacheWarmer } from "./integrations/samsara/cache/cache-warmer.js";
 import { initializeSearchIndexerIncremental } from "./jobs/search-indexer-incremental.js";
 import { registerUniversalSearchRoutes } from "./search/universal/routes.js";
@@ -672,6 +674,7 @@ async function main() {
   await registerSafetyTrainingRecordsRoutes(app);
   await registerSafetyDvirRoutes(app);
   await registerSafetyIncidentsRoutes(app);
+  await registerDamageContinuityRoutes(app);
   await registerSafetyPermitsRoutes(app);
   await registerSafetyOnboardingRoutes(app);
   await registerOnboardingStateRoutes(app);
@@ -953,6 +956,8 @@ async function main() {
     app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
 
     initializeCertExpiryMonitor(app);
+    initializeDamageContinuityWorker(app);
+    app.log.info("[STARTUP] damage-continuity-worker initialized");
     initializeSamsaraCacheWarmer(app);
     app.log.info("[STARTUP] samsara-cache-warmer initialized");
     initializeSearchIndexerIncremental(app);
