@@ -42,16 +42,46 @@ function isMigrationFile(name) {
   return MIGRATION_FILE_PATTERN_LEGACY.test(name) || MIGRATION_FILE_PATTERN_TIMESTAMP.test(name);
 }
 
+/**
+ * Lists migration files, failing LOUDLY on any .sql file whose name matches
+ * neither the legacy (^\d{4}[a-z]?_) nor the timestamp (^\d{12}_) pattern.
+ *
+ * Previously such files (e.g. the YYYYMMDD_HHMMSS format emitted by an old
+ * generateMigrationName) were silently filtered out — they would never apply,
+ * never ledger, and never error, leaving prod missing grants/tables. We now
+ * refuse to proceed so the operator must rename the file before any migration
+ * runs. This prevents the entire silent-skip failure class.
+ */
 function listMigrationFiles() {
-  return fs.readdirSync(MIGRATIONS_DIR).filter((name) => isMigrationFile(name)).sort();
+  const sqlFiles = fs.readdirSync(MIGRATIONS_DIR).filter((name) => name.toLowerCase().endsWith(".sql"));
+  const unrecognized = sqlFiles.filter((name) => !isMigrationFile(name));
+  if (unrecognized.length > 0) {
+    const lines = unrecognized
+      .sort()
+      .map(
+        (filename) =>
+          `Migration file ${filename} does not match any recognized naming pattern. Rename to YYYYMMDDHHMM_slug.sql`
+      );
+    throw new Error(
+      `Refusing to run migrations — ${unrecognized.length} unrecognized migration filename(s):\n  ${lines.join("\n  ")}\n` +
+        `Recognized patterns: legacy NNNN[a]_slug.sql or timestamp YYYYMMDDHHMM_slug.sql (12 continuous digits).`
+    );
+  }
+  return sqlFiles.filter((name) => isMigrationFile(name)).sort();
 }
 
 /**
  * Generates a migration filename using the current UTC timestamp.
- * Format: YYYYMMDD_HHMMSS_<slug>.sql
+ * Format: YYYYMMDDHHMM_<slug>.sql (12 continuous digits, matching
+ * MIGRATION_FILE_PATTERN_TIMESTAMP).
+ *
+ * NOTE: this MUST emit a 12-digit continuous prefix. A prior version emitted
+ * YYYYMMDD_HHMMSS (8_6 digits with an internal underscore), which matched
+ * neither isMigrationFile() pattern, so the runner silently skipped any file
+ * created with it. Keep this aligned with MIGRATION_FILE_PATTERN_TIMESTAMP.
  *
  * Usage: generateMigrationName("add_foo_column")
- *   → "20260607_143022_add_foo_column.sql"
+ *   → "202606071430_add_foo_column.sql"
  */
 export function generateMigrationName(slug) {
   if (!slug || typeof slug !== "string") {
@@ -64,9 +94,8 @@ export function generateMigrationName(slug) {
   const day = pad(now.getUTCDate());
   const hours = pad(now.getUTCHours());
   const minutes = pad(now.getUTCMinutes());
-  const seconds = pad(now.getUTCSeconds());
   const sanitized = slug.replace(/[^a-z0-9_]/gi, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
-  return `${year}${month}${day}_${hours}${minutes}${seconds}_${sanitized}.sql`;
+  return `${year}${month}${day}${hours}${minutes}_${sanitized}.sql`;
 }
 
 function sha256(text) {
