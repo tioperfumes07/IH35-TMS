@@ -20,7 +20,8 @@
     "docs/specs/gap-40-damage-photo-exif-chain.md",
     "db/migrations/0408_damage_photo_exif_chain.sql",
     "apps/backend/src/index.ts",
-    "package.json"
+    "package.json",
+    ".github/workflows/ci.yml"
   ],
   "extra_gates": [
     "verify:exif-chain-preservation"
