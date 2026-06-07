@@ -1347,3 +1347,5 @@ Names Master (`/lists/names`) is a **read-only hub** that searches existing part
 - **P5-T1.3 (shipped):** PlaidLink wrapper + sync status panel + daily refresh cron alias.
 - **P5-T11 (shipped):** Manual JE 2-step modal (`ManualJEModal`) with balance enforcement; PR #489 · `584bf29c`.
 - **P5-T6 / P5-T7 (shipped):** Banking transfer + CC payment UI on main via P5 banking bundle (`TransferModal`, `RecordCCPaymentModal`, `/api/v1/banking/transfers`).
+
+- **QBO-Parity COA Design (locked 2026-06-07):** COA register + account-type/detail-type catalog approved as design law for CA-01..06. See [COA-REGISTER-QBO-PARITY-2026-06-07.md](./COA-REGISTER-QBO-PARITY-2026-06-07.md) and [ACCOUNT-TYPE-DETAIL-TYPE-CATALOG.md](./ACCOUNT-TYPE-DETAIL-TYPE-CATALOG.md); previews at docs/approved-screens/preview-coa-qbo.html and docs/approved-screens/preview-register-qbo.html.

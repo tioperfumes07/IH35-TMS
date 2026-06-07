@@ -83,3 +83,6 @@ c652df5c47425c9427ea40bfa6c95aa6467dd9c9765171d7c06a502ca46fc82e  docs/approved-
 65bb861dfdb6a73df94a3a4c0e70a38d46afca2b2ee507ee79593711b8ca71d7  docs/approved-screens/screenshot-2026-05-16-at-7.53.06-pm.png
 ad69bb6391f017c08c9a39c450eb609bffa0d71463dd4da3956c53605e2f0308  docs/approved-screens/screenshot-2026-05-16-at-7.53.09-pm.png
 7a2bfab3aa9e5face4db69361f4c9ebc17665ec9c6e9f1b59078f5a809050bd4  docs/approved-screens/screenshot-2026-05-16-at-7.53.45-pm.png
+
+preview-coa-qbo.html
+preview-register-qbo.html
