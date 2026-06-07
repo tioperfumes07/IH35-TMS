@@ -1,0 +1,35 @@
+{
+  "block_id": "GAP-91-MOBILE-RESPONSIVE-AUDIT",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap91",
+  "branch": "feature/gap-91-mobile-responsive-audit",
+  "phase": "GAP-HIGH",
+  "task": "Mobile responsive audit + PWA touch UI polish",
+  "allowed_files": [
+    ".block-ready/GAP-91.json",
+    ".block-ready/GAP-91-MOBILE-RESPONSIVE-AUDIT.json",
+    ".block-ready.json",
+    "apps/frontend/src/audit/mobile-responsive/auditor.script.mjs",
+    "apps/frontend/src/audit/mobile-responsive/baseline.json",
+    "apps/frontend/src/audit/mobile-responsive/latest-report.json",
+    "apps/frontend/src/styles/mobile-responsive-tweaks.css",
+    "apps/frontend/src/components/shared/MobileOptimizedTable.tsx",
+    "apps/frontend/src/components/shared/SwipeActionRow.tsx",
+    "apps/driver-pwa/src/styles/touch-target-tweaks.css",
+    "apps/driver-pwa/src/components/shared/TouchOptimizedButton.tsx",
+    "apps/frontend/src/pages/admin/mobile-audit/MobileAuditReport.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-mobile-responsive-audit.mjs",
+    "scripts/nav-integrity-allowlist.json",
+    "scripts/verify-cert-expiry-tracking.mjs",
+    "scripts/verify-permits-toll-tags.mjs",
+    "docs/specs/gap-91-mobile-responsive-audit.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:mobile-responsive-audit"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}

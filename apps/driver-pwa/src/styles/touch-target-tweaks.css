@@ -1,0 +1,6 @@
+/* GAP-91 — driver PWA glove-friendly touch targets (56px) */
+.driver-pwa-touch-scope button,
+.driver-pwa-touch-scope [role="button"] {
+  min-height: 56px;
+  gap: 16px;
+}
