@@ -309,6 +309,8 @@ import { registerSecurityHeaders } from "./middleware/security-headers.js";
 import { registerMigrationStatusRoutes } from "./admin/migration-status.routes.js";
 import { registerAdminObservabilityRoutes } from "./admin/observability.routes.js";
 import { registerHomeWidgetRoutes } from "./home/home-widgets.routes.js";
+import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/routes.js";
+import { initializeTodaysAttentionWorker, stopTodaysAttentionWorker } from "./jobs/todays-attention-worker.js";
 import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js";
 import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
 import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
@@ -375,6 +377,7 @@ async function shutdown(signal: string) {
     stopQboAccountsPushScheduler();
     stopQboInboundSyncCron();
     stopDailyTaskAlertsCron();
+    stopTodaysAttentionWorker();
     stopAdminJobsWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
@@ -584,6 +587,7 @@ async function main() {
   await registerAbandonmentRoutes(app);
   await registerHomeRoutes(app);
   await registerHomeWidgetRoutes(app);
+  await registerOwnerTodaysAttentionRoutes(app);
   await registerReportsRoutes(app);
   await registerReportsScheduledCrudRoutes(app);
   await registerCustomReportBuilderRoutes(app);
@@ -962,6 +966,8 @@ async function main() {
   try {
     initializeDailyTaskAlertsCron(app);
     app.log.info("[STARTUP] daily-task-alerts cron initialized");
+    initializeTodaysAttentionWorker(app);
+    app.log.info("[STARTUP] todays-attention worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] daily-task-alerts cron failed");
   }
