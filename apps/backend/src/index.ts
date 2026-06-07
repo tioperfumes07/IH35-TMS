@@ -87,6 +87,7 @@ import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.j
 import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disputes.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
+import { registerReportCategoryCatalogRoutes } from "./reports/categories/routes.js";
 import { registerReportsScheduledCrudRoutes } from "./reports/scheduled-reports.routes.js";
 import { registerCustomReportBuilderRoutes } from "./reports/custom-report-builder.routes.js";
 import { initializeReportsRoleScheduler, stopReportsRoleScheduler } from "./reports/scheduler.js";
@@ -631,6 +632,7 @@ async function main() {
   await registerDriverManagerRoleHomeRoutes(app);
   await registerDispatchViewRoutes(app);
   await registerReportsRoutes(app);
+  await registerReportCategoryCatalogRoutes(app);
   await registerReportsScheduledCrudRoutes(app);
   await registerCustomReportBuilderRoutes(app);
   await registerIftaQuarterlyPreparerRoutes(app);
