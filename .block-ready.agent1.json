@@ -1,18 +1,13 @@
 {
-  "block_id": "HOTFIX-0327-MIGRATION-ROLE",
-  "branch": "hotfix/0327-drug-alcohol-app-user",
+  "block_id": "FIX-DA-TABLES-RLS",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-da-rls",
+  "branch": "fix/da-tables-rls",
   "phase": "HOTFIX",
-  "task": "Fix migration 0327 GRANT role (app_user → ih35_app) + TS18048 guards (GAP-81)",
+  "task": "Add RLS policies to safety.da_* tables from migration 0327 (GAP-81)",
   "agent": "1",
   "allowed_files": [
     ".block-ready.agent1.json",
-    "db/migrations/0327_drug_alcohol_program.sql",
-    "db/migrations/.ledger.json",
-    "scripts/lib/migration-checksum-overrides.json",
-    "scripts/verify-fleet-counter-tenant-scope.mjs",
-    "apps/backend/src/safety/expiry-tracking/routes.ts",
-    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
-    "apps/frontend/src/pages/home/HomePage.tsx"
+    "db/migrations/0406_da_tables_rls.sql"
   ],
   "extra_gates": [],
   "runtime_path": "src",
