@@ -14,11 +14,11 @@ CREATE POLICY drift_log_tenant_scope ON qbo_sync.drift_log
 FOR ALL TO ih35_app
 USING (
   identity.is_lucia_bypass()
-  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+  OR operating_company_id::text = NULLIF(current_setting('app.operating_company_id', true), '')
 )
 WITH CHECK (
   identity.is_lucia_bypass()
-  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+  OR operating_company_id::text = NULLIF(current_setting('app.operating_company_id', true), '')
 );
 
 -- qbo_sync.drift_alert_throttle (0379)
@@ -31,11 +31,11 @@ CREATE POLICY drift_alert_throttle_tenant_scope ON qbo_sync.drift_alert_throttle
 FOR ALL TO ih35_app
 USING (
   identity.is_lucia_bypass()
-  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+  OR operating_company_id::text = NULLIF(current_setting('app.operating_company_id', true), '')
 )
 WITH CHECK (
   identity.is_lucia_bypass()
-  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+  OR operating_company_id::text = NULLIF(current_setting('app.operating_company_id', true), '')
 );
 
 -- integrations.qbo_payroll_links (0371)
@@ -48,11 +48,11 @@ CREATE POLICY qbo_payroll_links_tenant_scope ON integrations.qbo_payroll_links
 FOR ALL TO ih35_app
 USING (
   identity.is_lucia_bypass()
-  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+  OR operating_company_id::text = NULLIF(current_setting('app.operating_company_id', true), '')
 )
 WITH CHECK (
   identity.is_lucia_bypass()
-  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+  OR operating_company_id::text = NULLIF(current_setting('app.operating_company_id', true), '')
 );
 
 -- Dynamic sweep: any remaining carrier-scoped table missing RLS gets a standard tenant policy.
@@ -84,8 +84,8 @@ BEGIN
       EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', pol_name, rec.schema_name, rec.table_name);
       EXECUTE format(
         'CREATE POLICY %I ON %I.%I FOR ALL TO ih35_app
-         USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting(''app.operating_company_id'', true), '''')::uuid)
-         WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting(''app.operating_company_id'', true), '''')::uuid)',
+         USING (identity.is_lucia_bypass() OR operating_company_id::text = NULLIF(current_setting(''app.operating_company_id'', true), ''''))
+         WITH CHECK (identity.is_lucia_bypass() OR operating_company_id::text = NULLIF(current_setting(''app.operating_company_id'', true), ''''))',
         pol_name, rec.schema_name, rec.table_name
       );
     END IF;
