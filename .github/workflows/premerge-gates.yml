@@ -1,0 +1,88 @@
+name: premerge-gates
+
+# Three focused gates promoted from post-merge feedback to required pre-merge CI.
+# Catches the GAP-81 failure class (missing RLS, missing role, strict-null errors)
+# before any PR can merge to main.
+#
+# All three jobs are added to branch-protection-config.json required_status_checks.contexts.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  # Gate 1 — RLS operating-company-scope (static migration scan)
+  # Triggered on any PR that adds or modifies .sql files under db/migrations/.
+  # Fails if a new CREATE TABLE with operating_company_id lacks ENABLE ROW LEVEL SECURITY.
+  rls-migration-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gate 1 — RLS migration scan (operating_company_id → ENABLE ROW LEVEL SECURITY)
+        run: npm run verify:rls-migration-scan
+
+  # Gate 2 — TypeScript strict-null gate
+  # Validates tsconfig.json has strict=true + no bare @ts-ignore bypasses.
+  # Then runs tsc --noEmit so any TS18048 "Object is possibly undefined" hard-fails.
+  typescript-strict-null:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gate 2a — tsconfig strict-null config guard
+        run: npm run verify:ts-strict-null
+
+      - name: Gate 2b — TypeScript compile check (tsc --noEmit, strict mode)
+        run: npx tsc --noEmit
+        # Runs against the root tsconfig.json which already has "strict": true.
+        # Any TS18048 error causes a non-zero exit → job fails → PR blocked.
+
+  # Gate 3 — Migration role validation
+  # Scans all .sql files in db/migrations/ for GRANT ... TO <role>.
+  # Fails if a role is not in the canonical allowed list (ih35_app, neondb_owner, …).
+  migration-role-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gate 3 — Migration role validation (no unknown GRANT roles)
+        run: npm run verify:migration-no-unknown-roles
