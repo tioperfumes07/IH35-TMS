@@ -332,6 +332,9 @@ jobs:
       - name: Verify late arrival analytics contract
         run: npm run verify:late-arrival-analytics
 
+      - name: Verify driver PWA dispatch view contract
+        run: npm run verify:driver-pwa-dispatch-view
+
       - name: Verify severe repair fleet restore estimate contract
         run: npm run verify:severe-repair-estimate
 
