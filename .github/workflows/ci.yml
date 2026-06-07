@@ -334,6 +334,9 @@ jobs:
       - name: Verify Samsara freshness indicator contract
         run: npm run verify:freshness-indicator
 
+      - name: Verify dispatch live ETA columns contract
+        run: npm run verify:dispatch-eta-columns
+
       - name: Verify accounting home role view contract
         run: npm run verify:accounting-home
 
