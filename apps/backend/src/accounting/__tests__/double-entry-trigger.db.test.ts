@@ -50,7 +50,7 @@ describeIntegration("double-entry balance trigger (real Postgres)", () => {
     await db.query(`SET app.operating_company_id = '${companyId}'`);
 
     const acctRes = await db.query<{ id: string }>(
-      `SELECT id FROM catalogs.accounts WHERE active = true LIMIT 1`
+      `SELECT id FROM catalogs.accounts WHERE deactivated_at IS NULL LIMIT 1`
     );
     if (!acctRes.rows[0]?.id) {
       throw new Error(
