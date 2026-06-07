@@ -588,5 +588,8 @@
   "storage": {
     "itp_restore_reupload": "El almacenamiento se restableció — vuelva a subir este documento",
     "itp_stale_warning": "Los datos sin conexión pueden borrarse pronto. Abra la app a diario para conservar su cola de subidas."
+  },
+  "photo": {
+    "angle_label": "Ángulo"
   }
 }
