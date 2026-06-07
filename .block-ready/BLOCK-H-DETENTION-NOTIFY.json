@@ -8,7 +8,7 @@
   "classification": "ADDITIVE",
   "allowed_files": [
     ".block-ready/BLOCK-H-DETENTION-NOTIFY.json",
-    "db/migrations/20260607_193000_dispatch_detention_customer_notify.sql",
+    "db/migrations/202606071930_dispatch_detention_customer_notify.sql",
     "apps/backend/src/dispatch/detention-approval.service.ts",
     "apps/backend/src/dispatch/__tests__/detention-approval.routes.test.ts"
   ],
