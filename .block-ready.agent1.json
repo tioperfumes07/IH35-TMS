@@ -1,16 +1,17 @@
 {
-  "block_id": "FIX-DA-TABLES-RLS",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-da-rls",
-  "branch": "fix/da-tables-rls",
-  "phase": "HOTFIX",
-  "task": "Add RLS policies to safety.da_* tables from migration 0327 (GAP-81)",
+  "block_id": "STRUCTURAL-MIGRATION-TIMESTAMPS",
+  "branch": "feat/migration-timestamp-naming",
+  "phase": "STRUCTURAL-FIX",
+  "task": "New migrations use timestamp format (20260607_120000_name.sql) to eliminate parallel-lane sequence collisions",
   "agent": "1",
   "allowed_files": [
     ".block-ready.agent1.json",
-    "db/migrations/0406_da_tables_rls.sql"
+    "scripts/db-migrate.mjs",
+    ".github/workflows/migration-guard.yml",
+    "docs/runbooks/migration-naming.md"
   ],
   "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
+  "db_required": false,
   "guard_required": false
 }
