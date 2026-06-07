@@ -2,6 +2,7 @@
 BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS search;
+GRANT USAGE ON SCHEMA search TO ih35_app;
 
 CREATE TABLE IF NOT EXISTS search.universal_index (
   uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
