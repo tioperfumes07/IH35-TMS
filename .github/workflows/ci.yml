@@ -400,6 +400,16 @@ jobs:
       - name: Verify insurance module (Block 5 bill schedule) contract
         run: npm run verify:insurance-module
 
+      # Block F Decision C: active carriers must map ap_control + expense_default to
+      # post insurance cancellation refunds. Non-strict here because the current
+      # carrier (TRANSP) is not yet COA-mapped; cancellation still succeeds via a
+      # durable pending obligation. Flip COA_ROLES_GUARD_STRICT=1 for the deploy gate
+      # once carriers are mapped. The same check runs (warn/error log) at app startup.
+      - name: Verify active-carrier COA refund roles (Block F)
+        env:
+          COA_ROLES_GUARD_STRICT: "0"
+        run: npm run verify:coa-roles
+
       - name: Verify maintenance reports coverage guard
         run: npm run verify:maintenance-reports-coverage
 

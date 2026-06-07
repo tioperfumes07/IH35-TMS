@@ -423,6 +423,7 @@
     "verify:maint-pm": "node scripts/verify-maint-pm.mjs",
     "verify:insurance-schema": "node scripts/verify-insurance-schema.mjs",
     "verify:insurance-module": "node scripts/verify-insurance-module.mjs",
+    "verify:coa-roles": "node scripts/verify-coa-roles.mjs",
     "verify:insurance-policy-create-button": "node scripts/verify-insurance-policy-create-button.mjs",
     "verify:dispatch-insurance-coverage-gate": "node scripts/verify-dispatch-insurance-coverage-gate.mjs",
     "verify:dispatch-coming-soon-triage": "node scripts/verify-dispatch-coming-soon-triage.mjs",

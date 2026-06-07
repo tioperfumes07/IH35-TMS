@@ -362,6 +362,7 @@ import { initializeSamsaraCacheWarmer } from "./integrations/samsara/cache/cache
 import { initializeSearchIndexerIncremental } from "./jobs/search-indexer-incremental.js";
 import { registerUniversalSearchRoutes } from "./search/universal/routes.js";
 import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
+import { runRefundCoaRolesStartupCheck } from "./accounting/coa-roles/refund-roles-guard.js";
 import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
 import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
@@ -461,6 +462,15 @@ async function main() {
   } finally {
     driftConn.release();
   }
+
+  // Block F Decision C: warn/error-log if any active carrier is missing the
+  // ap_control/expense_default COA roles needed to post insurance refunds.
+  // Non-fatal — cancellations fall back to durable pending obligations.
+  await runRefundCoaRolesStartupCheck({
+    withLuciaBypass,
+    logWarn: (obj, msg) => app.log.warn(obj, msg),
+    logError: (obj, msg) => app.log.error(obj, msg),
+  });
 
   try {
     await Promise.race([
