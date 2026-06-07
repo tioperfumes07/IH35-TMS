@@ -302,6 +302,12 @@
     "note_required": "Note required for major defect",
     "photo_required": "photo(s)",
     "add_photo": "+ Photo",
+    "severity_picker": "Defect severity",
+    "sev_major": "Major",
+    "sev_minor": "Minor",
+    "sev_observation": "Observation",
+    "major_warning": "This will block dispatch until repaired.",
+    "major_ack": "I confirm this major defect blocks dispatch until repaired.",
     "status": {
       "pass": "Pass",
       "minor": "Minor",

@@ -319,6 +319,9 @@ jobs:
       - name: Verify driver operations depth contract (GAP-48)
         run: npm run verify:driver-operations-depth
 
+      - name: Verify DVIR severity tagging contract (GAP-49)
+        run: npm run verify:dvir-severity-tagging
+
       - name: Verify Samsara cache tier coverage contract
         run: npm run verify:cache-tier-coverage
 

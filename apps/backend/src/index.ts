@@ -131,6 +131,7 @@ import { registerSafetySettingsRoutes } from "./safety/settings.routes.js";
 import { registerSafetyTrainingProgramsRoutes } from "./safety/training-programs.routes.js";
 import { registerSafetyTrainingRecordsRoutes } from "./safety/training-records.routes.js";
 import { registerSafetyDvirRoutes } from "./safety/dvir.routes.js";
+import { registerPreFlightDvirRoutes } from "./maintenance/pre-flight/routes.js";
 import { registerSafetyIncidentsRoutes } from "./safety/incidents.routes.js";
 import { registerDamageContinuityRoutes } from "./safety/damage-continuity/continuity.routes.js";
 import { registerDamagePhotoEvidenceRoutes } from "./safety/damage-reports/photo-evidence.routes.js";
@@ -678,6 +679,7 @@ async function main() {
   await registerSafetyTrainingProgramsRoutes(app);
   await registerSafetyTrainingRecordsRoutes(app);
   await registerSafetyDvirRoutes(app);
+  await registerPreFlightDvirRoutes(app);
   await registerSafetyIncidentsRoutes(app);
   await registerDamageContinuityRoutes(app);
   await registerDamagePhotoEvidenceRoutes(app);

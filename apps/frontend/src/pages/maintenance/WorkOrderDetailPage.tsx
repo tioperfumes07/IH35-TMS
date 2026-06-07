@@ -16,6 +16,7 @@ import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
+import { DvirSeverityBadge } from "../../components/maintenance/DvirSeverityBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -265,6 +266,17 @@ export function WorkOrderDetailPage() {
           { label: woNumber },
         ]}
       />
+
+      {String(wo.origin ?? "") === "dvir" ? (
+        <div
+          className="flex items-center gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900"
+          data-testid="wo-dvir-severity"
+        >
+          <span className="font-semibold">Linked DVIR defect</span>
+          <DvirSeverityBadge severity={String(wo.severity ?? "major")} />
+          <span className="text-xs text-red-800">Dispatch blocked until repaired (49 CFR §396.11)</span>
+        </div>
+      ) : null}
 
       {invoiceCents != null ? (
         <div
