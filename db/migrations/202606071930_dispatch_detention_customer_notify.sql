@@ -31,6 +31,8 @@ BEGIN
   ) THEN
     ALTER TABLE dispatch.detention_requests
       ADD COLUMN IF NOT EXISTS customer_notified_at timestamptz NULL;
+    -- Table-level grant only when Block 6 table exists (skipped in CI verify DB).
+    GRANT SELECT, INSERT, UPDATE ON dispatch.detention_requests TO ih35_app;
   END IF;
 END
 $$;
@@ -44,9 +46,8 @@ VALUES (
 )
 ON CONFLICT (flag_key) DO NOTHING;
 
--- Self-contained GRANT block.
+-- Self-contained GRANT block (schema-level only; table grant is inside DO above).
 GRANT USAGE ON SCHEMA dispatch TO ih35_app;
-GRANT SELECT, INSERT, UPDATE ON dispatch.detention_requests TO ih35_app;
 GRANT USAGE ON SCHEMA lib TO ih35_app;
 GRANT SELECT ON lib.feature_flags TO ih35_app;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA dispatch TO ih35_app;
