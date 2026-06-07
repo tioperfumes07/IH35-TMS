@@ -74,7 +74,7 @@ export function FraudAlertsListPage() {
         body: { operating_company_id: companyId },
       }),
     onSuccess: () => {
-      pushToast("Alert confirmed as fraud.", "warning");
+      pushToast("Alert confirmed as fraud.", "error");
       invalidate();
     },
   });
