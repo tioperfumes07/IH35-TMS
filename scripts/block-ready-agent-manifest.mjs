@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 
 export const AGENT_MANIFEST_REGISTRY = Object.freeze({
@@ -21,11 +22,93 @@ function inferAgentFromWorktreePath(worktreePath) {
   return null;
 }
 
+/**
+ * Scan .block-ready/ for a per-block manifest JSON file.
+ *
+ * Priority order:
+ *   1. BLOCK_ID env var  → .block-ready/<BLOCK_ID>.json
+ *   2. block_id field from the legacy agentN file (if it exists)
+ *      → .block-ready/<block_id>.json
+ *   3. Single non-gitkeep .json in .block-ready/ (unambiguous case)
+ *
+ * Returns the relative manifest path if found, null otherwise.
+ */
+function resolvePerBlockManifest(worktreePath, legacyManifestPath) {
+  const blockReadyDir = path.join(worktreePath, ".block-ready");
+  if (!fs.existsSync(blockReadyDir)) return null;
+
+  // Priority 1: explicit BLOCK_ID env var
+  const envBlockId = (process.env.BLOCK_ID ?? "").trim();
+  if (envBlockId) {
+    const candidate = path.join(blockReadyDir, `${envBlockId}.json`);
+    if (fs.existsSync(candidate)) {
+      return path.relative(worktreePath, candidate);
+    }
+  }
+
+  // Priority 2: derive block_id from legacy manifest file
+  const legacyAbs = path.resolve(worktreePath, legacyManifestPath);
+  if (fs.existsSync(legacyAbs)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(legacyAbs, "utf8"));
+      const blockId = parsed?.block_id;
+      if (blockId) {
+        const candidate = path.join(blockReadyDir, `${blockId}.json`);
+        if (fs.existsSync(candidate)) {
+          return path.relative(worktreePath, candidate);
+        }
+      }
+    } catch {
+      // malformed legacy file; fall through
+    }
+  }
+
+  // Priority 3: only one non-.gitkeep JSON file in .block-ready/
+  let jsonFiles;
+  try {
+    jsonFiles = fs
+      .readdirSync(blockReadyDir)
+      .filter((f) => f.endsWith(".json") && f !== ".gitkeep");
+  } catch {
+    return null;
+  }
+  if (jsonFiles.length === 1) {
+    return path.relative(worktreePath, path.join(blockReadyDir, jsonFiles[0]));
+  }
+
+  return null;
+}
+
 export function resolveBlockReadyManifest(options = {}) {
   const worktreePath = path.resolve(options.worktreePath ?? process.cwd());
   const envAgent = normalizeAgent(options.agentEnv ?? process.env.AGENT);
   const inferredAgent = inferAgentFromWorktreePath(worktreePath);
   const agent = envAgent ?? inferredAgent ?? "1";
-  const manifest = AGENT_MANIFEST_REGISTRY[agent] ?? AGENT_MANIFEST_REGISTRY["1"];
+  const legacyManifest = AGENT_MANIFEST_REGISTRY[agent] ?? AGENT_MANIFEST_REGISTRY["1"];
+
+  // Prefer the new per-block pattern when available
+  const perBlockManifest = resolvePerBlockManifest(worktreePath, legacyManifest);
+  const manifest = perBlockManifest ?? legacyManifest;
+
   return { agent, manifest, worktreePath };
+}
+
+/**
+ * Aggregate all per-block manifests from .block-ready/*.json.
+ * Returns an array of parsed manifest objects (skips unreadable files).
+ */
+export function aggregateBlockReadyManifests(worktreePath = process.cwd()) {
+  const blockReadyDir = path.join(path.resolve(worktreePath), ".block-ready");
+  if (!fs.existsSync(blockReadyDir)) return [];
+  const results = [];
+  for (const filename of fs.readdirSync(blockReadyDir)) {
+    if (!filename.endsWith(".json") || filename === ".gitkeep") continue;
+    try {
+      const raw = fs.readFileSync(path.join(blockReadyDir, filename), "utf8");
+      results.push(JSON.parse(raw));
+    } catch {
+      // skip unreadable/unparseable files
+    }
+  }
+  return results;
 }

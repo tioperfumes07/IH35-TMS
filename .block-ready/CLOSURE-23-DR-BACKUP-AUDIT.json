@@ -1,0 +1,23 @@
+{
+  "block_id": "CLOSURE-23-DR-BACKUP-AUDIT",
+  "branch": "closure/dr-backup-audit",
+  "phase": "CLOSURE",
+  "task": "Disaster recovery + backup verification + restore drill",
+  "agent": "2",
+  "allowed_files": [
+    "docs/runbooks/DISASTER-RECOVERY.md",
+    "docs/runbooks/BACKUP-RESTORE-DRILL.md",
+    "scripts/backup-verify-neon-pitr.mjs",
+    "scripts/backup-restore-drill.sh",
+    "scripts/backup-checksum-monthly.mjs",
+    ".github/workflows/monthly-restore-drill.yml",
+    "scripts/verify-backups-current.mjs",
+    "docs/audits/backup-checksums-2026-06.json",
+    ".block-ready.agent2.json",
+    ".block-ready/CLOSURE-23-DR-BACKUP-AUDIT.json"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
