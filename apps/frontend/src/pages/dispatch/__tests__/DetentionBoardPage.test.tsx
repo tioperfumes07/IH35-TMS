@@ -38,6 +38,36 @@ vi.mock("../../../api/dispatch", () => ({
   closeDetentionEvent: vi.fn(),
   bridgeDetentionBilling: vi.fn(),
   notifyDetentionCustomer: vi.fn(),
+  getDetentionApprovalKpis: vi.fn(async () => ({
+    pending_count: 2,
+    week_approved_cents: 12500,
+    ytd_approved_cents: 98000,
+  })),
+  getDetentionRequests: vi.fn(async () => ({
+    count: 1,
+    requests: [
+      {
+        id: "req-1",
+        detention_event_id: "det-1",
+        load_id: "load-2",
+        load_number: "L-200",
+        customer_name: "Acme",
+        stop_type: "delivery",
+        stop_city: "Dallas",
+        stop_state: "TX",
+        billable_minutes: 90,
+        rate_per_hour_cents: 5000,
+        amount_cents: 7500,
+        status: "pending_review",
+        reviewed_at: null,
+        rejection_reason: null,
+        invoice_id: null,
+        created_at: new Date().toISOString(),
+      },
+    ],
+  })),
+  approveDetentionRequest: vi.fn(),
+  rejectDetentionRequest: vi.fn(),
 }));
 
 function wrap(ui: ReactNode) {
@@ -71,5 +101,20 @@ describe("DetentionBoardPage (B21-D5)", () => {
     expect(await screen.findByText("Sync from arrivals")).toBeTruthy();
     expect(await screen.findByText("Stop accrual")).toBeTruthy();
     expect(screen.getByText("Accrual")).toBeTruthy();
+  });
+
+  it("renders KPI header with pending / week / YTD cards", async () => {
+    wrap(<DetentionBoardPage />);
+    expect(await screen.findByTestId("detention-kpi-header")).toBeTruthy();
+    expect(screen.getByTestId("detention-kpi-pending")).toBeTruthy();
+    expect(screen.getByTestId("detention-kpi-week")).toBeTruthy();
+    expect(screen.getByTestId("detention-kpi-ytd")).toBeTruthy();
+  });
+
+  it("renders the manager approval queue with approve action", async () => {
+    wrap(<DetentionBoardPage />);
+    expect(await screen.findByTestId("detention-approval-queue")).toBeTruthy();
+    expect(await screen.findByTestId("detention-request-req-1")).toBeTruthy();
+    expect(screen.getByText("Approve & invoice")).toBeTruthy();
   });
 });

@@ -1,0 +1,26 @@
+{
+  "block_id": "GAP-19-DETENTION-INVOICE",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap19",
+  "is_read_only": false,
+  "branch": "feature/gap-19-detention-invoice",
+  "phase": "GAP-HIGH",
+  "task": "GAP-19 Detention billable manager-approval gate — approve bridges detention into linehaul invoice (reuses bridgeDetentionToBilling + buildInvoiceFromLoad) and records dwell evidence (stop-timestamp derived + units→Samsara projection join).",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-19-DETENTION-INVOICE.json",
+    "db/migrations/20260607_190000_dispatch_detention_requests.sql",
+    "db/migrations/20260607_190100_dispatch_detention_evidence.sql",
+    "apps/backend/src/dispatch/detention-approval.service.ts",
+    "apps/backend/src/dispatch/detention-approval.routes.ts",
+    "apps/backend/src/dispatch/__tests__/detention-approval.routes.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/dispatch.ts",
+    "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
+    "apps/frontend/src/pages/dispatch/__tests__/DetentionBoardPage.test.tsx",
+    "docs/specs/gap-19-detention-invoice.md"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false
+}
