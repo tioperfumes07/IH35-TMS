@@ -73,6 +73,9 @@ export type CreateInsurancePolicyPayload = {
   insurer_email?: string | null;
   agent_contact?: string | null;
   status?: InsurancePolicyStatus;
+  /** Accounting vendor ID (from mdata.qbo_vendors). When set with installment_count > 0,
+   *  the backend generates accounting.bills via createBill() for each installment. */
+  vendor_id?: string | null;
 };
 
 export type UpdateInsurancePolicyPayload = Partial<Omit<CreateInsurancePolicyPayload, "operating_company_id">>;

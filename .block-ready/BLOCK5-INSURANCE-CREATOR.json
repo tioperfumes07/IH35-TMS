@@ -1,0 +1,34 @@
+{
+  "block_id": "BLOCK5-INSURANCE-CREATOR",
+  "gap": "GAP-86",
+  "branch": "feature/insurance-bill-creator",
+  "phase": "GAP-HIGH",
+  "task": "Insurance multi-vehicle policy creator + bill schedule write via createBill()",
+  "financial_rule": "calls existing createBill() from apps/backend/src/accounting/bills.service.ts:483 — NO NEW FINANCIAL CODE",
+  "allowed_files": [
+    ".block-ready/BLOCK5-INSURANCE-CREATOR.json",
+    "db/migrations/202606071800_insurance_bill_schedule_link.sql",
+    "apps/backend/src/insurance/policy-bill-schedule.service.ts",
+    "apps/backend/src/insurance/policy.routes.ts",
+    "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
+    "scripts/verify-insurance-module.mjs",
+    "docs/specs/gap-86-insurance-module.md"
+  ],
+  "extra_gates": [
+    "verify:insurance-module"
+  ],
+  "forbidden_paths": [
+    "apps/backend/src/master-data/units/permits/**",
+    "apps/backend/src/master-data/units/toll-tags/**",
+    "apps/frontend/src/sidebar-config.ts"
+  ],
+  "db_required": true,
+  "guard_required": true,
+  "acceptance": [
+    "migration 202606071800 applied — vendor_id on insurance.policy, bill_uuid on insurance.payment_schedule",
+    "POST /api/v1/insurance/policies with vendor_id + installment_count creates bills via createBill()",
+    "PolicyCreateModal shows vendor picker and multi-vehicle unit selection",
+    "verify-insurance-module.mjs exits 0",
+    "CI gates: build:backend, frontend tsc, vitest pass"
+  ]
+}
