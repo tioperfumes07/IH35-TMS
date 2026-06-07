@@ -1,0 +1,20 @@
+{
+  "block_id": "BLOCK-D-INSURANCE-RENEWAL",
+  "gap": "GAP-86",
+  "branch": "feature/block-d-insurance-renewal",
+  "phase": "GAP-HIGH",
+  "task": "Insurance policy renewal (clone-forward). POST /api/v1/insurance/policies/:id/renew clones the source policy (tenant_id, insurer_name, vendor_id, coverage_type/id, due_day, pay_day, late_fee_pct, insurer_email, agent_contact) plus all policy_unit children (asset_id + insured_value_cents); resets the term fields (policy_number, effective_date, expiry_date, total_premium_cents, down_payment_cents, installment_count) from the request body; stamps renewed_from_policy_id to the source policy id; and regenerates the premium bill schedule via createPolicyBillSchedule() inside the SAME transaction (atomic all-or-nothing — schedule failure rolls the renewal back and returns 502). Idempotency is inherited: the route matches the existing /api/v1/insurance/policies(/|$) REQUIRED_MATCHERS, so an Idempotency-Key is required and retries replay the cached response. Additive-only.",
+  "financial_rule": "Bills are created/voided ONLY via createBill()/voidBill() from apps/backend/src/accounting/bills.service.ts (reused through createPolicyBillSchedule from Block 5). No new financial ledger code.",
+  "allowed_files": [
+    ".block-ready/BLOCK-D-INSURANCE-RENEWAL.json",
+    "db/migrations/202606072300_insurance_policy_renewal.sql",
+    "apps/backend/src/insurance/policy.routes.ts",
+    "apps/backend/src/insurance/policy.routes.renew.test.ts"
+  ],
+  "extra_gates": [
+    "verify:insurance-module"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false
+}

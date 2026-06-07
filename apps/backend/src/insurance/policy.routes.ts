@@ -72,6 +72,19 @@ const updatePolicySchema = z
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 
+/** Block D — renewal (clone-forward). Copies the source policy + its units; resets
+ *  the term fields below and regenerates the bill schedule (same atomic pattern as
+ *  policy create). */
+const renewPolicySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  policy_number: z.string().trim().min(1).max(120),
+  effective_date: z.string(),
+  expiry_date: z.string(),
+  total_premium_cents: z.number().int().nonnegative().default(0),
+  down_payment_cents: z.number().int().nonnegative().default(0),
+  installment_count: z.number().int().nonnegative().default(0),
+});
+
 const createPolicyUnitSchema = z.object({
   operating_company_id: z.string().uuid(),
   asset_id: z.string().uuid(),
@@ -127,6 +140,7 @@ function policySelectColumns() {
     agent_contact,
     status,
     vendor_id,
+    renewed_from_policy_id::text,
     created_at::text,
     updated_at::text
   `;
@@ -312,6 +326,132 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     if (!created) return reply.code(400).send({ error: "coverage_type_not_found" });
 
     return reply.code(201).send(created);
+  });
+
+  // Block D — Insurance policy renewal (clone-forward). Clones the source policy +
+  // its policy_unit children, resets the term fields, stamps renewed_from_policy_id,
+  // and regenerates the premium bill schedule INSIDE the same transaction (same
+  // atomic / all-or-nothing pattern as policy create — a schedule failure rolls the
+  // renewed policy back and returns 502). This route matches the insurance.policies
+  // idempotency matcher, so an Idempotency-Key is required and retries replay the
+  // cached response (no duplicate renewed policy + no duplicate vendor bills).
+  app.post("/api/v1/insurance/policies/:id/renew", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const parsed = renewPolicySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const body = parsed.data;
+
+    let renewed: Record<string, unknown> | null;
+    try {
+      renewed = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+        // Clone-forward: copy carried-over columns straight from the source row; reset
+        // the term/financial fields from the request body. No matching source row →
+        // zero rows inserted → treated as policy_not_found below.
+        const insertRes = await client.query(
+          `
+            INSERT INTO insurance.policy (
+              tenant_id,
+              insurer_name,
+              policy_number,
+              coverage_type,
+              coverage_type_id,
+              effective_date,
+              expiry_date,
+              total_premium_cents,
+              down_payment_cents,
+              installment_count,
+              due_day,
+              pay_day,
+              late_fee_pct,
+              insurer_email,
+              agent_contact,
+              status,
+              vendor_id,
+              renewed_from_policy_id
+            )
+            SELECT
+              src.tenant_id,
+              src.insurer_name,
+              $3,
+              src.coverage_type,
+              src.coverage_type_id,
+              $4::date,
+              $5::date,
+              $6,
+              $7,
+              $8,
+              src.due_day,
+              src.pay_day,
+              src.late_fee_pct,
+              src.insurer_email,
+              src.agent_contact,
+              'pending',
+              src.vendor_id,
+              src.id
+            FROM insurance.policy src
+            WHERE src.tenant_id = $1::uuid AND src.id = $2::uuid
+            RETURNING ${policySelectColumns()}
+          `,
+          [
+            body.operating_company_id,
+            params.data.id,
+            body.policy_number,
+            body.effective_date,
+            body.expiry_date,
+            body.total_premium_cents,
+            body.down_payment_cents,
+            body.installment_count,
+          ]
+        );
+        const policyRow = insertRes.rows[0] as Record<string, unknown> | undefined;
+        if (!policyRow?.id) return null;
+        const newPolicyId = String(policyRow.id);
+
+        // Clone-forward the covered units (asset_id + insured_value_cents).
+        await client.query(
+          `
+            INSERT INTO insurance.policy_unit (
+              tenant_id, policy_id, asset_id, insured_value_cents
+            )
+            SELECT tenant_id, $2::uuid, asset_id, insured_value_cents
+            FROM insurance.policy_unit
+            WHERE tenant_id = $1::uuid AND policy_id = $3::uuid
+          `,
+          [body.operating_company_id, newPolicyId, params.data.id]
+        );
+
+        await appendCrudAudit(client, user.uuid, "insurance.policy.renewed", {
+          resource_id: newPolicyId,
+          operating_company_id: body.operating_company_id,
+          renewed_from_policy_id: params.data.id,
+        });
+
+        // Regenerate the premium bill schedule (down payment + installments) in the
+        // SAME transaction via the canonical createPolicyBillSchedule(). Mirrors the
+        // create path: only when an insurer vendor + installments are present.
+        if (policyRow.vendor_id && body.installment_count > 0) {
+          await createPolicyBillSchedule(
+            newPolicyId,
+            user.uuid,
+            client as Parameters<typeof createPolicyBillSchedule>[2]
+          );
+        }
+        return policyRow;
+      });
+    } catch (err) {
+      app.log.error({ err }, "[insurance] policy renew + bill schedule failed; renewal rolled back");
+      return reply
+        .code(502)
+        .send({ error: "bill_schedule_failed", detail: "policy was not renewed; no partial bills remain" });
+    }
+
+    if (!renewed) return reply.code(404).send({ error: "policy_not_found" });
+
+    return reply.code(201).send(renewed);
   });
 
   app.patch("/api/v1/insurance/policies/:id", async (req, reply) => {
