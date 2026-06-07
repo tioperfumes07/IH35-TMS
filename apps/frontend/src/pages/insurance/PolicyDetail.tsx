@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   archiveInsurancePolicy,
+  downloadInsuranceCoiPdf,
   getInsurancePolicy,
   listInsuranceClaims,
   listInsuranceCoiRequests,
@@ -31,6 +32,7 @@ export function PolicyDetail() {
   const [status, setStatus] = useState<InsurancePolicyStatus>("active");
   const [effectiveDate, setEffectiveDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
+  const [coiDownloading, setCoiDownloading] = useState(false);
 
   const policyQuery = useQuery({
     queryKey: ["insurance", "policy", policyId, companyId],
@@ -125,6 +127,18 @@ export function PolicyDetail() {
     archiveMutation.mutate();
   };
 
+  const handleDownloadCoi = async () => {
+    if (!policyId || !companyId || coiDownloading) return;
+    setCoiDownloading(true);
+    try {
+      await downloadInsuranceCoiPdf(policyId, companyId);
+    } catch {
+      pushToast("Failed to generate COI PDF", "error");
+    } finally {
+      setCoiDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <header className="rounded border border-gray-200 bg-white p-4">
@@ -141,6 +155,9 @@ export function PolicyDetail() {
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" onClick={openEditPanel}>
               Edit / Update
+            </Button>
+            <Button size="sm" variant="secondary" loading={coiDownloading} onClick={handleDownloadCoi}>
+              Download COI
             </Button>
             <Button size="sm" variant="tertiary" loading={archiveMutation.isPending} onClick={handleArchive}>
               Archive

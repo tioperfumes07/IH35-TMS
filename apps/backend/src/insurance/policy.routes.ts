@@ -7,6 +7,7 @@ import {
   INSURANCE_COVERAGE_TYPES,
   INSURANCE_POLICY_STATUSES,
 } from "./policy.shared.js";
+import { renderCoiPdf } from "./coi-pdf-renderer.service.js";
 import { createPolicyBillSchedule } from "./policy-bill-schedule.service.js";
 
 const companyQuerySchema = z.object({
@@ -528,6 +529,31 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
 
     if (!deleted) return reply.code(404).send({ error: "policy_unit_not_found" });
     return reply.code(204).send();
+  });
+
+  app.get("/api/v1/insurance/policies/:id/coi", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+
+    try {
+      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+        renderCoiPdf(client as unknown as Parameters<typeof renderCoiPdf>[0], {
+          policyId: params.data.id,
+          operatingCompanyId: query.data.operating_company_id,
+        })
+      );
+      if (!result) return reply.code(404).send({ error: "policy_not_found" });
+      reply.header("Content-Type", result.mimeType);
+      reply.header("Content-Disposition", `attachment; filename="${result.filename}"`);
+      reply.header("X-Coi-Pdf-Sha256", result.sha256);
+      return reply.send(result.pdfBuffer);
+    } catch {
+      return reply.code(500).send({ error: "coi_pdf_generation_failed" });
+    }
   });
 
   app.get("/api/v1/assets/:id/coverage", async (req, reply) => {

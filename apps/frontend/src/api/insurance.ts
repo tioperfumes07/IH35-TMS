@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, resolveApiUrl, ApiError } from "./client";
 
 export type InsuranceCoverageType =
   | "auto_liability"
@@ -563,6 +563,29 @@ export function createInsuranceLawsuit(payload: CreateInsuranceLawsuitPayload) {
 
 export function updateInsuranceLawsuit(id: string, operatingCompanyId: string, payload: UpdateInsuranceLawsuitPayload) {
   return insuranceLawsuitsApi.update(id, operatingCompanyId, payload);
+}
+
+export async function downloadInsuranceCoiPdf(policyId: string, operatingCompanyId: string): Promise<void> {
+  const path = `/api/v1/insurance/policies/${policyId}/coi?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
+  const response = await fetch(resolveApiUrl(path), {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") ?? "";
+    const payload = contentType.includes("application/json") ? await response.json() : await response.text();
+    throw new ApiError(response.status, payload);
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const fileNameMatch = disposition.match(/filename="([^"]+)"/i);
+  const fileName = fileNameMatch?.[1] ?? `coi-${policyId.slice(0, 8)}.pdf`;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export function listCoiRequests(customerId: string, params: { operating_company_id: string; status?: CoiRequestStatus }) {
