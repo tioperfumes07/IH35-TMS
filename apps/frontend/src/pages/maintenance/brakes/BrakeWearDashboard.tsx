@@ -84,7 +84,7 @@ export function BrakeWearDashboard() {
           <p className="text-xs text-gray-500">{rows.length} brake positions projected for service</p>
         </div>
         {atRiskQ.isLoading ? <p className="p-3 text-xs text-gray-500">Loading projections...</p> : null}
-        <div className="overflow-auto">
+        <div className="overflow-x-auto">
           <table className="min-w-full text-left text-xs">
             <thead className="bg-gray-50 text-[11px] uppercase text-gray-600">
               <tr>
