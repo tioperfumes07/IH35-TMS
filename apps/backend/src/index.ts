@@ -119,6 +119,7 @@ import { registerSafetyReportsRoutes } from "./safety/reports/safety-reports.rou
 import { registerSafetyDrugProgramRoutes } from "./safety/drug-program.routes.js";
 import { registerDrugAlcoholProgramRoutes } from "./safety/drug-alcohol/routes.js";
 import { registerCertExpiryTrackingRoutes } from "./safety/expiry-tracking/routes.js";
+import { registerFeatureFlagRoutes } from "./lib/feature-flags/routes.js";
 import { registerEldAuditTrailRoutes } from "./safety/eld-audit-trail/routes.js";
 import { registerSafetyRtdRoutes } from "./safety/rtd.routes.js";
 import { registerSafetySettingsRoutes } from "./safety/settings.routes.js";
@@ -642,6 +643,7 @@ async function main() {
   await registerSafetyDrugProgramRoutes(app);
   await registerDrugAlcoholProgramRoutes(app);
   await registerCertExpiryTrackingRoutes(app);
+  await registerFeatureFlagRoutes(app);
   await registerUniversalSearchRoutes(app);
   await registerEldAuditTrailRoutes(app);
   await registerSafetyRtdRoutes(app);

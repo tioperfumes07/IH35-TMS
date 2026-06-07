@@ -13,6 +13,10 @@
       "reason": "Owner USMCA soft-launch toggle (Wave 20 USMCA-3)"
     },
     {
+      "path": "/admin/feature-flags",
+      "reason": "GAP-92 per-tenant/per-user feature flag manager (Owner admin)"
+    },
+    {
       "path": "/admin/forensic-review",
       "reason": "Owner forensic review; not in module subnav"
     },

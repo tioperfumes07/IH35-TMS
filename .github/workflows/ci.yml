@@ -305,6 +305,9 @@ jobs:
       - name: Verify mobile responsive audit contract
         run: npm run verify:mobile-responsive-audit
 
+      - name: Verify feature flags contract
+        run: npm run verify:feature-flags
+
       - name: Verify DOT inspection history gap-close contract
         run: npm run verify:dot-inspection-history
 

@@ -214,6 +214,7 @@ import { IntegrityAdminPage } from "../pages/admin/IntegrityAdminPage";
 import { DataImportPage } from "../pages/admin/DataImportPage";
 import { CarrierBootstrapPage } from "../pages/admin/CarrierBootstrap";
 import { LaunchTogglesPage } from "../pages/admin/LaunchToggles";
+import { FeatureFlagsManager } from "../pages/admin/feature-flags/FeatureFlagsManager";
 import { ObservabilityPage } from "../pages/admin/ObservabilityPage";
 import { MobileAuditReport } from "../pages/admin/mobile-audit/MobileAuditReport";
 import { AccountRoleBindingsListPage } from "../pages/lists/accounting/AccountRoleBindingsListPage";
@@ -2341,6 +2342,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <OwnerAdminRoute>
               <LaunchTogglesPage />
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/feature-flags"
+          element={
+            <OwnerAdminRoute>
+              <FeatureFlagsManager />
             </OwnerAdminRoute>
           }
         />
