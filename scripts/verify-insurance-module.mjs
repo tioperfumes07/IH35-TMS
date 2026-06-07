@@ -74,9 +74,9 @@ contains("apps/frontend/src/api/insurance.ts", insuranceApi, [
 ]);
 
 // 6 — Block manifest
-const manifest = read(".block-ready/BLOCK5-INSURANCE-CREATOR.json");
-contains(".block-ready/BLOCK5-INSURANCE-CREATOR.json", manifest, [
-  { pattern: /BLOCK5-INSURANCE-CREATOR/, label: "block_id present" },
+const manifest = read(".block-ready/GAP-86-INSURANCE-BILL-CREATOR.json");
+contains(".block-ready/GAP-86-INSURANCE-BILL-CREATOR.json", manifest, [
+  { pattern: /GAP-86-INSURANCE-BILL-CREATOR/, label: "block_id present" },
   { pattern: /GAP-86/, label: "gap reference" },
   { pattern: /createBill/, label: "financial rule documented" },
 ]);

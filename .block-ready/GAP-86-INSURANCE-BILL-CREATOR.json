@@ -1,18 +1,23 @@
 {
-  "block_id": "BLOCK5-INSURANCE-CREATOR",
+  "block_id": "GAP-86-INSURANCE-BILL-CREATOR",
   "gap": "GAP-86",
-  "branch": "feature/insurance-bill-creator",
+  "branch": "feature/gap-86-insurance-bill-creator",
   "phase": "GAP-HIGH",
   "task": "Insurance multi-vehicle policy creator + bill schedule write via createBill()",
   "financial_rule": "calls existing createBill() from apps/backend/src/accounting/bills.service.ts:483 — NO NEW FINANCIAL CODE",
   "allowed_files": [
-    ".block-ready/BLOCK5-INSURANCE-CREATOR.json",
+    ".block-ready/GAP-86-INSURANCE-BILL-CREATOR.json",
     "db/migrations/202606071800_insurance_bill_schedule_link.sql",
     "apps/backend/src/insurance/policy-bill-schedule.service.ts",
     "apps/backend/src/insurance/policy.routes.ts",
+    "apps/frontend/src/api/insurance.ts",
     "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
+    "apps/frontend/tsconfig.app.json",
     "scripts/verify-insurance-module.mjs",
-    "docs/specs/gap-86-insurance-module.md"
+    "scripts/verify-meta.json",
+    "docs/specs/gap-86-insurance-module.md",
+    "package.json",
+    ".github/workflows/ci.yml"
   ],
   "extra_gates": [
     "verify:insurance-module"
