@@ -1,0 +1,32 @@
+{
+  "block_id": "GAP-68-SAFETY-OFFICER-HOME",
+  "branch": "feature/gap-68-safety-home",
+  "phase": "GAP-HIGH",
+  "task": "Safety Officer home role-specific view",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/GAP-68-SAFETY-OFFICER-HOME.json",
+    "apps/backend/src/safety-officer/role-views/safety-home.service.ts",
+    "apps/backend/src/safety-officer/role-views/routes.ts",
+    "apps/backend/src/safety-officer/role-views/__tests__/safety-home.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/backend/src/safety/expiry-tracking/routes.ts",
+    "apps/frontend/src/pages/home/roles/SafetyHome.tsx",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
+    "apps/frontend/src/components/home/SafetyKpiBar.tsx",
+    "apps/frontend/src/components/home/SafetyAlertsPanel.tsx",
+    "apps/frontend/src/api/home.ts",
+    "scripts/verify-safety-officer-home.mjs",
+    "scripts/verify-fleet-counter-tenant-scope.mjs",
+    "scripts/verify-drivers-count-nav-integrity.mjs",
+    "docs/specs/gap-68-safety-officer-home-view.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:safety-officer-home"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

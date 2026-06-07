@@ -566,3 +566,66 @@ export async function dismissOwnerAttentionItem(
     }
   );
 }
+
+// ─── GAP-68 Safety Officer role home ─────────────────────────────────────────
+
+export type SafetyOfficerAlert = {
+  alert_id: string;
+  source: string;
+  severity: HomeAttentionSeverity;
+  title: string;
+  body: string;
+  count: number;
+  action_url: string;
+  action_label: string;
+};
+
+export type SafetyOfficerRoleHomeResult = {
+  kpis: {
+    open_dvir_major_defects: number;
+    hos_violations_today: number;
+    expiring_certs_30d: number;
+    open_accidents_7d: number;
+    pending_da_draws: number;
+    open_workers_comp_claims: number;
+  };
+  alerts: SafetyOfficerAlert[];
+  cert_data_stale: boolean;
+  computed_at: string;
+};
+
+function normalizeSafetyAlert(raw: unknown): SafetyOfficerAlert | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  return {
+    alert_id: typeof o.alert_id === "string" ? o.alert_id : "",
+    source: typeof o.source === "string" ? o.source : "",
+    severity: normalizeAttentionSeverity(o.severity),
+    title: typeof o.title === "string" ? o.title : "Safety alert",
+    body: typeof o.body === "string" ? o.body : "",
+    count: num(o.count),
+    action_url: typeof o.action_url === "string" ? o.action_url : "/safety",
+    action_label: typeof o.action_label === "string" ? o.action_label : "View",
+  };
+}
+
+export async function fetchSafetyOfficerRoleHome(companyId: string): Promise<SafetyOfficerRoleHomeResult> {
+  const payload = await apiRequest<Record<string, unknown>>(
+    withCompany("/api/safety-officer/role-home", companyId)
+  );
+  const kpisRaw = payload.kpis && typeof payload.kpis === "object" ? (payload.kpis as Record<string, unknown>) : {};
+  const rawAlerts = Array.isArray(payload.alerts) ? payload.alerts : [];
+  return {
+    kpis: {
+      open_dvir_major_defects: num(kpisRaw.open_dvir_major_defects),
+      hos_violations_today: num(kpisRaw.hos_violations_today),
+      expiring_certs_30d: num(kpisRaw.expiring_certs_30d),
+      open_accidents_7d: num(kpisRaw.open_accidents_7d),
+      pending_da_draws: num(kpisRaw.pending_da_draws),
+      open_workers_comp_claims: num(kpisRaw.open_workers_comp_claims),
+    },
+    alerts: rawAlerts.map(normalizeSafetyAlert).filter((x): x is SafetyOfficerAlert => x !== null),
+    cert_data_stale: Boolean(payload.cert_data_stale),
+    computed_at: typeof payload.computed_at === "string" ? payload.computed_at : new Date().toISOString(),
+  };
+}
