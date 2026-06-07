@@ -76,7 +76,7 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   },
   fuel: { id: "fuel", label: "FUEL", Icon: CarFront, to: "/fuel" },
   dispatch: { id: "dispatch", label: "DISPATCH", Icon: Truck, to: "/dispatch", dataTour: "tour-nav-dispatch" },
-  drivers: { id: "drivers", label: "DRV PROFILE", Icon: Truck, to: "/drivers" },
+  drivers: { id: "drivers", label: "DRIVER PROFILE", Icon: Truck, to: "/drivers" },
   "driver-hub": { id: "driver-hub", label: "DRIVER HUB", Icon: LayoutDashboard, to: "/driver-hub" },
   safety: { id: "safety", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
   accounting: { id: "accounting", label: "ACCTG", Icon: Calculator, to: "/accounting" },
