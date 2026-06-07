@@ -4,6 +4,7 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const homePagePath = path.join(ROOT, "apps/frontend/src/pages/home/HomePage.tsx");
+const defaultHomePath = path.join(ROOT, "apps/frontend/src/pages/home/roles/DefaultHome.tsx");
 const reportsRoutePath = path.join(ROOT, "apps/backend/src/reports/library.routes.ts");
 
 function fail(message) {
@@ -14,15 +15,20 @@ function fail(message) {
 if (!fs.existsSync(homePagePath)) {
   fail("missing apps/frontend/src/pages/home/HomePage.tsx");
 }
+if (!fs.existsSync(defaultHomePath)) {
+  fail("missing apps/frontend/src/pages/home/roles/DefaultHome.tsx");
+}
 if (!fs.existsSync(reportsRoutePath)) {
   fail("missing apps/backend/src/reports/library.routes.ts");
 }
 
 const homeText = fs.readFileSync(homePagePath, "utf8");
-if (/label:\s*"Vehicles in Service"[\s\S]*number:\s*"94"/m.test(homeText)) {
+const defaultHomeText = fs.readFileSync(defaultHomePath, "utf8");
+const vehiclesPattern = /label:\s*"Vehicles in Service"[\s\S]*kpiSummaryQuery\.data\?\.live_units/m;
+if (/label:\s*"Vehicles in Service"[\s\S]*number:\s*"94"/m.test(homeText) || /label:\s*"Vehicles in Service"[\s\S]*number:\s*"94"/m.test(defaultHomeText)) {
   fail("Vehicles in Service card must not use hardcoded 94");
 }
-if (!/label:\s*"Vehicles in Service"[\s\S]*kpiSummaryQuery\.data\?\.live_units/m.test(homeText)) {
+if (!vehiclesPattern.test(homeText) && !vehiclesPattern.test(defaultHomeText)) {
   fail("Vehicles in Service card must read tenant-scoped live_units from API");
 }
 

@@ -10,6 +10,7 @@
     "db/migrations/0384a_rls_tenant_policy_preseed.sql",
     "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx",
     "apps/backend/src/safety/expiry-tracking/routes.ts",
+    "scripts/verify-fleet-counter-tenant-scope.mjs",
     ".block-ready.agent1.json"
   ],
   "preview_provided": false,
