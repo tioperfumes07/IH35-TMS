@@ -16,6 +16,10 @@ const paths = {
   tabsConfig: path.join(ROOT, "apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts"),
   driversPage: path.join(ROOT, "apps/frontend/src/pages/Drivers.tsx"),
   homePage: path.join(ROOT, "apps/frontend/src/pages/home/HomePage.tsx"),
+  homeRolePages: [
+    path.join(ROOT, "apps/frontend/src/pages/home/roles/DefaultHome.tsx"),
+    path.join(ROOT, "apps/frontend/src/pages/home/OwnerHome.tsx"),
+  ],
   sidebarConfig: path.join(ROOT, "apps/frontend/src/components/layout/sidebar-config.ts"),
   archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
   navIntegrity: path.join(ROOT, "scripts/verify-nav-integrity.mjs"),
@@ -66,10 +70,15 @@ function main() {
   if (driversPage.includes("const DRIVERS_SUBNAV = [")) {
     failures.push("DriversPage must not duplicate DRIVERS_SUBNAV — use DRIVERS_TABS_CONFIG");
   }
-  if (!homePage.includes("DRIVERS_CANONICAL_SUBNAV_COUNT")) {
+  const homeSources = [homePage, ...paths.homeRolePages.map((p) => read(p))];
+  if (!homeSources.some((src) => src.includes("DRIVERS_CANONICAL_SUBNAV_COUNT"))) {
     failures.push("HomePage must import DRIVERS_CANONICAL_SUBNAV_COUNT");
   }
-  if (homePage.includes('title: "Drivers"') && homePage.includes("count: 3, to: \"/drivers\"")) {
+  if (
+    homeSources.some(
+      (src) => src.includes('title: "Drivers"') && src.includes("count: 3, to: \"/drivers\"")
+    )
+  ) {
     failures.push("HomePage must not hardcode Drivers quick-jump count 3");
   }
   if (!sidebarConfig.includes('case "drivers":')) {
