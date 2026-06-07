@@ -6,6 +6,7 @@
   "task": "Mobile responsive audit + PWA touch UI polish",
   "allowed_files": [
     ".block-ready/GAP-91.json",
+    ".block-ready/GAP-91-MOBILE-RESPONSIVE-AUDIT.json",
     ".block-ready.json",
     "apps/frontend/src/audit/mobile-responsive/auditor.script.mjs",
     "apps/frontend/src/audit/mobile-responsive/baseline.json",
