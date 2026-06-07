@@ -1,6 +1,7 @@
 -- GAP-49: DVIR defect severity tagging (major vs minor vs observation).
 -- SOURCE: G18 master rule · WF-050 hard-block · 49 CFR §396.11 severity classes.
 --
+-- File: 202606071700_dvir_defect_severity_tagging.sql (timestamp-format migration).
 -- safety.dvir_defects (migration 0344) is APPEND-ONLY: an UPDATE/DELETE trigger
 -- blocks mutation and UPDATE is REVOKEd from ih35_app, and its `severity` column
 -- is constrained to ('minor','major').  Severity classification + Manager-level

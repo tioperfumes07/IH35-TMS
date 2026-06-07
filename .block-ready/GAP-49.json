@@ -7,7 +7,7 @@
   "classification": "ADDITIVE",
   "allowed_files": [
     ".block-ready/GAP-49.json",
-    "db/migrations/0408_dvir_defect_severity_tagging.sql",
+    "db/migrations/202606071700_dvir_defect_severity_tagging.sql",
     "apps/backend/src/maintenance/pre-flight/major-defect-catalog.ts",
     "apps/backend/src/maintenance/pre-flight/dvir-severity.service.ts",
     "apps/backend/src/maintenance/pre-flight/dvir-routing.service.ts",

@@ -24,7 +24,7 @@ trigger blocks mutation, `UPDATE` is `REVOKE`d from `ih35_app`, and its `severit
 column is constrained to `('minor','major')`. Severity classification and
 Manager-level overrides therefore **cannot** be modeled as in-place updates.
 
-Migration `0408_dvir_defect_severity_tagging.sql` introduces an **append-only
+Migration `202606071700_dvir_defect_severity_tagging.sql` introduces an **append-only
 audit table** `safety.dvir_defect_severity_tags` that records every severity tag
 event (classifier output, driver selection, manager override) for a defect. The
 **effective severity** for a defect is the most recent row (`created_at DESC`).
@@ -36,7 +36,7 @@ to `safety.dvir_defects` as additive DDL.
 
 | Piece | File |
 | --- | --- |
-| Migration | `db/migrations/0408_dvir_defect_severity_tagging.sql` |
+| Migration | `db/migrations/202606071700_dvir_defect_severity_tagging.sql` |
 | Major defect catalog (CFR codes, locked) | `apps/backend/src/maintenance/pre-flight/major-defect-catalog.ts` |
 | Severity service (classify, override, RBAC, audit) | `apps/backend/src/maintenance/pre-flight/dvir-severity.service.ts` |
 | Routing service (auto-WO / next-PM / log-only) | `apps/backend/src/maintenance/pre-flight/dvir-routing.service.ts` |
@@ -79,7 +79,7 @@ compliance liability).
 
 ## Acceptance
 
-- [x] Migration 0408 applied (append-only severity tags + RLS + grants).
+- [x] Migration 202606071700 applied (append-only severity tags + RLS + grants).
 - [x] Catalog seeded with major defect codes from 49 CFR §396.11.
 - [x] Driver PWA shows the severity picker (Major / Minor / Observation, default Minor) with major confirmation.
 - [x] Major defects auto-create maintenance work orders.

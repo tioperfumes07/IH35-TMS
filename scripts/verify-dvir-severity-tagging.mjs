@@ -36,8 +36,8 @@ function contains(relativePath, content, checks) {
   }
 }
 
-const migration = read("db/migrations/0408_dvir_defect_severity_tagging.sql");
-contains("db/migrations/0408_dvir_defect_severity_tagging.sql", migration, [
+const migration = read("db/migrations/202606071700_dvir_defect_severity_tagging.sql");
+contains("db/migrations/202606071700_dvir_defect_severity_tagging.sql", migration, [
   { pattern: /safety\.dvir_defect_severity_tags/, label: "severity tag table" },
   { pattern: /severity text NOT NULL CHECK \(severity IN \('major', 'minor', 'observation'\)\)/, label: "three severity levels" },
   { pattern: /ENABLE ROW LEVEL SECURITY/, label: "RLS enabled" },
