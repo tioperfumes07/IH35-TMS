@@ -1,17 +1,18 @@
 {
-  "block_id": "M2-CLOSURE-32-LUCIA-BYPASS-GUARD-PATTERN",
-  "branch": "security/m2-lucia-bypass-guard-pattern",
-  "phase": "M2",
-  "task": "Permanent luciaBypass guard-pattern verification with CI enforcement.",
+  "block_id": "GAP-SECURITY-HEADERS",
+  "branch": "feature/gap-security-headers",
+  "phase": "Wave-B",
+  "task": "Apply OWASP-recommended security headers via @fastify/helmet: HSTS, CSP (report-only), X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, COOP, CORP.",
   "agent": "A",
   "allowed_files": [
-    "scripts/verify-lucia-bypass-guard-pattern.mjs",
-    ".github/workflows/closure-checks.yml",
-    "docs/specs/lucia-bypass-guard-pattern.md",
+    "apps/backend/src/middleware/security-headers.ts",
+    "apps/backend/src/index.ts",
+    "package.json",
+    "package-lock.json",
     ".block-ready.json"
   ],
   "extra_gates": [],
-  "runtime_path": "src",
+  "runtime_path": "apps/backend/src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }
