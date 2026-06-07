@@ -11,6 +11,9 @@
   "engines": {
     "node": "22.x"
   },
+  "overrides": {
+    "tmp": "0.2.7"
+  },
   "scripts": {
     "prepare": "husky",
     "branch:rebuild-linear": "node scripts/branch-rebuild-linear.mjs",
