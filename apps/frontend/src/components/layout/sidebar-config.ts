@@ -48,7 +48,29 @@ export const SIDEBAR_ITEM_IDS = [
 
 export type SidebarItemId = (typeof SIDEBAR_ITEM_IDS)[number];
 
-export const SIDEBAR_DEFAULT_ORDER: readonly SidebarItemId[] = SIDEBAR_ITEM_IDS;
+export const SIDEBAR_DEFAULT_ORDER: readonly SidebarItemId[] = [
+  "home",
+  "maintenance",
+  "fuel",
+  "dispatch",
+  "driver-hub",
+  "safety",
+  "drivers",
+  "eld",
+  "accounting",
+  "bank",
+  "factoring",
+  "vendors",
+  "customers",
+  "legal",
+  "form_425",
+  "drv_app",
+  "lists",
+  "reports",
+  "docs",
+  "users",
+  "help",
+];
 
 const DEFAULT_ORDER_SET = new Set<string>(SIDEBAR_DEFAULT_ORDER);
 
