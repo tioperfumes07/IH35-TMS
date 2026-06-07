@@ -379,7 +379,9 @@ export function getFleetRestoreCost(companyId: string) {
 }
 
 export function exportSevereRepairInsurancePdf(operatingCompanyId: string) {
-  return resolveApiUrl(`/api/v1/maintenance/severe-repair/export-pdf`);
+  return resolveApiUrl(
+    `/api/v1/maintenance/severe-repair/export-pdf?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
 }
 
 export function refreshSevereRepairEstimate(id: string, operatingCompanyId: string) {

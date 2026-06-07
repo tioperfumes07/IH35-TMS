@@ -1,30 +1,40 @@
 {
-  "block_id": "GAP-7",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap7",
-  "branch": "feature/gap-7-severe-repair-oos",
-  "phase": "GAP-HIGH",
-  "task": "G20 severe repair OOS fleet restore estimate + Owner home card",
-  "agent": "1",
+  "block_id": "GAP-87-AUDIT-LOG-VIEWER",
+  "branch": "feature/gap-87-audit-log-viewer",
+  "phase": "ui",
+  "task": "Universal read-only audit log viewer — surfaces audit.audit_events for compliance/forensics. New route /admin/audit-log. Owner-only RBAC. No data mutations.",
+  "agent": "A",
   "allowed_files": [
-    ".block-ready.json",
-    ".block-ready.agent1.json",
-    ".block-ready/GAP-7.json",
-    "apps/backend/src/maintenance/severe-repair-estimate.service.ts",
-    "apps/backend/src/maintenance/severe-repair-estimate.routes.ts",
-    "apps/backend/src/maintenance/severe-repair-pdf-export.ts",
-    "apps/backend/src/maintenance/__tests__/severe-repair-estimate-gap7.test.ts",
-    "apps/frontend/src/pages/home/HomeFleetRestoreCard.tsx",
-    "apps/frontend/src/pages/home/OwnerHome.tsx",
-    "apps/frontend/src/api/maintenance.ts",
-    "scripts/verify-severe-repair-estimate.mjs",
-    "docs/specs/gap-7-severe-repair-oos-estimate.md",
-    "package.json",
-    ".github/workflows/ci.yml"
+    "apps/backend/src/audit/viewer/service.ts",
+    "apps/backend/src/audit/viewer/routes.ts",
+    "apps/backend/src/audit/viewer/__tests__/service.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/audit.ts",
+    "apps/frontend/src/pages/admin/audit-log/AuditLogViewer.tsx",
+    "apps/frontend/src/components/audit/AuditEventCard.tsx",
+    "apps/frontend/src/components/admin/SuperAdminNav.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-audit-log-viewer.mjs",
+    "scripts/nav-integrity-allowlist.json",
+    "docs/specs/gap-87-audit-log-viewer.md",
+    ".block-ready.agent1.json"
   ],
-  "extra_gates": [
-    "verify:severe-repair-estimate"
-  ],
-  "runtime_path": "src",
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "apps/frontend",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false,
+  "read_only_viewer": true,
+  "fields": {
+    "route": "/admin/audit-log",
+    "backend_endpoints": [
+      "GET /api/audit/viewer/events",
+      "GET /api/audit/viewer/events/:uuid"
+    ],
+    "db_table": "audit.audit_events",
+    "filters": ["entity_type", "entity_uuid", "user_uuid", "action", "from", "to", "severity", "search_text"],
+    "rbac": "Owner + SuperAdmin only",
+    "mutations": "none"
+  }
 }
