@@ -6,19 +6,33 @@
  * is present in the migration files and that no subsequent migration silently
  * drops or replaces it.
  *
- * This is NOT a live-DB check (use db:verify:double-entry-balance for that).
- * This guard runs in CI without a Postgres connection.
+ * Two modes:
  *
- * What it asserts:
- *   1. accounting.ensure_journal_entry_balanced() function is defined in the
- *      canonical migration (0092_p5_d4_manual_journal_entries.sql).
- *   2. trg_check_journal_entry_balanced CONSTRAINT TRIGGER is defined on
- *      accounting.journal_entry_postings in the same migration and is marked
- *      DEFERRABLE INITIALLY DEFERRED.
- *   3. No migration file drops accounting.ensure_journal_entry_balanced.
- *   4. No migration file drops trg_check_journal_entry_balanced.
- *   5. No migration file creates accounting.journal_entry_lines (forbidden by
- *      verify-accounting-backbone-schema — duplicated here as belt-and-suspenders).
+ *   STATIC (default — `npm run verify:double-entry-balance`):
+ *     File-system guard that runs in CI WITHOUT a Postgres connection.
+ *     1. accounting.ensure_journal_entry_balanced() function is defined in the
+ *        canonical migration (0092_p5_d4_manual_journal_entries.sql).
+ *     2. trg_check_journal_entry_balanced CONSTRAINT TRIGGER is defined on
+ *        accounting.journal_entry_postings in the same migration and is marked
+ *        DEFERRABLE INITIALLY DEFERRED.
+ *     3. No migration file drops accounting.ensure_journal_entry_balanced.
+ *     4. No migration file drops trg_check_journal_entry_balanced.
+ *     5. No migration file creates accounting.journal_entry_lines (forbidden by
+ *        verify-accounting-backbone-schema — duplicated here as belt-and-suspenders).
+ *
+ *   LIVE (`--live` flag — `npm run db:verify:double-entry-balance`):
+ *     Runs the static checks first, then connects to the REAL database named by
+ *     DATABASE_URL / DATABASE_DIRECT_URL and asserts the constraint trigger is
+ *     actually attached to accounting.journal_entry_postings. This catches the
+ *     class of drift discovered on 2026-06-07: 0092 marked applied + function
+ *     present, yet the trigger missing in production (double-entry UNENFORCED).
+ *
+ *     The static guard is decoupled from the live check ON PURPOSE: the static
+ *     guard runs in CI before the verify DB is guaranteed to be migrated, so it
+ *     must never depend on a live connection. The live check is opt-in via the
+ *     --live flag (wired as the db:verify:double-entry-balance npm script) and
+ *     MUST be run post-deploy against production before any financial-write
+ *     block merges. See docs/finance/double-entry.md.
  *
  * Exit 0 → all checks pass
  * Exit 1 → at least one check failed (message printed to stderr)
@@ -26,6 +40,12 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { createRequire } from "node:module";
+
+// The STATIC guard intentionally has no third-party imports so it always runs in
+// CI without a DB or installed runtime deps. `pg`/`dotenv` are loaded lazily only
+// when the --live flag is used (see runLiveDbCheck).
+const LIVE = process.argv.includes("--live");
 
 const CANONICAL_MIGRATION = "db/migrations/0092_p5_d4_manual_journal_entries.sql";
 
@@ -156,8 +176,67 @@ try {
     process.exit(1);
   }
 
-  console.log("✅ verify-double-entry-balance-trigger passed");
+  console.log("✅ verify-double-entry-balance-trigger (static) passed");
 } catch (error) {
   console.error(`✘ verify-double-entry-balance-trigger: ${error.message}`);
   process.exit(1);
+}
+
+// ── LIVE-DB CHECK (opt-in via --live) ───────────────────────────────────────
+// Asserts the constraint trigger is actually attached in the target database.
+if (LIVE) {
+  await runLiveDbCheck();
+}
+
+async function runLiveDbCheck() {
+  const require = createRequire(import.meta.url);
+  const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
+  const pg = (await import("pg")).default;
+  try {
+    (await import("dotenv")).default.config();
+  } catch {
+    // dotenv is optional — env vars may already be present in the shell.
+  }
+
+  const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+  if (!connectionString) {
+    console.error(
+      "✘ db:verify:double-entry-balance: DATABASE_URL (or DATABASE_DIRECT_URL) must be set for the live-DB check",
+    );
+    process.exit(1);
+  }
+
+  const { Client } = pg;
+  const client = new Client(buildPgClientConfig(connectionString, { connectionTimeoutMillis: 15000 }));
+
+  try {
+    await client.connect();
+    const { rows } = await client.query(`
+      SELECT COUNT(*)::int AS count
+      FROM pg_trigger t
+      JOIN pg_class c ON c.oid = t.tgrelid
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'accounting'
+        AND c.relname = 'journal_entry_postings'
+        AND t.tgname = 'trg_check_journal_entry_balanced'
+        AND t.tgconstraint > 0
+    `);
+    const count = rows[0]?.count ?? 0;
+
+    if (count < 1) {
+      console.error(
+        "✘ CRITICAL: trg_check_journal_entry_balanced is NOT attached in the target DB — double-entry is UNENFORCED",
+      );
+      process.exit(1);
+    }
+
+    console.log(
+      `✅ live-DB check: trg_check_journal_entry_balanced is attached as a constraint trigger on accounting.journal_entry_postings (count=${count})`,
+    );
+  } catch (error) {
+    console.error(`✘ db:verify:double-entry-balance live check failed: ${error.message}`);
+    process.exit(1);
+  } finally {
+    await client.end().catch(() => {});
+  }
 }

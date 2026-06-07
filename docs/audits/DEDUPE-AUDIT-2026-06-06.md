@@ -158,11 +158,44 @@
 
 ---
 
-### [GAP-DOUBLE-ENTRY-DB-ENFORCEMENT] — ✅
-**Status:** ✅ CLEAN  
+### [GAP-DOUBLE-ENTRY-DB-ENFORCEMENT] — ⛔ CORRECTED (was CLEAN) + PROD DRIFT REMEDIATED
+**Status:** ⛔ ORIGINAL FINDING INCORRECT — constraint already defined in migrations, but found MISSING IN PRODUCTION  
 **Existing block(s) compared against:** All 97 numbered GAP blocks, CLOSURE-1..32, Settlement Block 2  
-**Finding:** No existing block implements a DB-level constraint on journal entry balance. Settlement Block 2 creates journal entries in the finalize workflow and references "GAP-DOUBLE-ENTRY-DB-ENFORCEMENT" explicitly, but does not implement the constraint. This trust block is the authoritative constraint implementation.  
-**Recommendation:** Proceed. Dispatch after Settlement Block 2 so the journal_entries schema is settled. Settlement Block 2's finalize endpoint must handle the constraint gracefully (catch 23514 constraint violation → 409 response).
+
+> **CORRECTION (2026-06-07, TIER1-T5 build).** The original finding below was **WRONG** on two counts:
+>
+> **(a) The constraint already exists in the migrations.** A DB-level double-entry balance constraint was
+> defined long before this trust block, in `db/migrations/0092_p5_d4_manual_journal_entries.sql`:
+> - function `accounting.ensure_journal_entry_balanced()` — re-sums postings and
+>   `RAISE EXCEPTION ... USING ERRCODE = '23514'` when `SUM(debit) <> SUM(credit)`
+> - `CREATE CONSTRAINT TRIGGER trg_check_journal_entry_balanced AFTER INSERT OR UPDATE OR DELETE ON accounting.journal_entry_postings DEFERRABLE INITIALLY DEFERRED`
+>   (the function is idempotently re-declared in `0123_p6_pre_ledger_drift_reconciliation.sql`).
+>   Note the spec's literal SQL (`finance.journal_entry_lines`, `total_debits`/`total_credits` columns,
+>   non-deferred trigger) does NOT match the canonical schema (`accounting.journal_entry_postings`,
+>   `debit_or_credit` + `amount_cents`) and would be rejected by the existing
+>   `verify:accounting-backbone-schema` guard, which forbids a `journal_entry_lines` table.
+>
+> **(b) The trigger was MISSING IN PRODUCTION.** Live verification of the production Neon branch on
+> 2026-06-07 found `0092` recorded as applied and the **function present**, but the **constraint trigger
+> absent** (zero user triggers on `accounting.journal_entry_postings`). The function was orphaned, so
+> double-entry was **NOT enforced at the DB level in production** — a silent trust gap. (No data harm yet:
+> production currently holds 0 journal entries / 0 postings, so 0 unbalanced rows.)
+>
+> **(c) Remediation shipped by this PR.** Path A (hardening) + a production fix:
+> - `db/migrations/202606080020_reattach_double_entry_balance_trigger.sql` — idempotent
+>   `DROP TRIGGER IF EXISTS … ; CREATE CONSTRAINT TRIGGER … DEFERRABLE INITIALLY DEFERRED` to re-attach the
+>   trigger in every environment (including prod). No GRANT needed.
+> - `verify:double-entry-balance` — static CI regression lock (function + DEFERRABLE constraint trigger
+>   present in migrations; never silently dropped/weakened; `journal_entry_lines` forbidden).
+> - `db:verify:double-entry-balance` (`--live`) — live-DB check asserting the trigger is actually attached
+>   in the target DB; **must be green against production before any financial-write block merges**.
+> - `apps/backend/src/accounting/__tests__/double-entry-trigger.db.test.ts` — real-Postgres negative proof
+>   (unbalanced insert fails at COMMIT with SQLSTATE 23514).
+> - `docs/finance/double-entry.md` — invariant + drift incident + verification runbook.
+
+**Original (incorrect) finding:** No existing block implements a DB-level constraint on journal entry balance. Settlement Block 2 creates journal entries in the finalize workflow and references "GAP-DOUBLE-ENTRY-DB-ENFORCEMENT" explicitly, but does not implement the constraint. This trust block is the authoritative constraint implementation.  
+
+**Revised recommendation:** Merge this PR (constraint already defined + production re-attach migration + static and live-DB guards). Run `db:verify:double-entry-balance` against production post-deploy and confirm exit 0. Settlement Block 2's finalize endpoint must still handle the constraint gracefully (catch 23514 → 409 response).
 
 ---
 

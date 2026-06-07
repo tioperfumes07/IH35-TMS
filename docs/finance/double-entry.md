@@ -1,7 +1,9 @@
 # Double-Entry Accounting Enforcement
 
 > **TIER 1 TRUST — Block 5 of 13**
-> Status: ✅ Active — constraint trigger live since migration `0092_p5_d4_manual_journal_entries.sql`
+> Status: ✅ Active — constraint trigger defined in `0092_p5_d4_manual_journal_entries.sql` and
+> re-attached in production by `202606080020_reattach_double_entry_balance_trigger.sql`
+> (see [Production Drift Incident](#production-drift-incident-2026-06-07)).
 
 ## The Invariant
 
@@ -109,13 +111,37 @@ All financial writes route through `lib/services/journal.mjs` → `postJournalEn
 This service validates balance before sending to the DB (app-layer defense). The DB trigger is the
 **safety net** — it catches any path that bypasses the service layer.
 
+## Production Drift Incident (2026-06-07)
+
+During TIER1-T5 verification, the live production Neon branch was found to have migration `0092`
+recorded as **applied** and the function `accounting.ensure_journal_entry_balanced()` **present**, but
+the constraint trigger `trg_check_journal_entry_balanced` **missing** — there were zero user triggers on
+`accounting.journal_entry_postings`. The function was orphaned, so **double-entry was NOT enforced at the
+database level in production.**
+
+There was no data corruption (production held 0 journal entries / 0 postings at the time), but any future
+financial write would not have been DB-protected.
+
+**Root cause class:** a migration can be marked applied while a specific object it created is later dropped
+out-of-band (or never materialized), leaving the migration ledger and the live schema out of sync. A
+static, file-only guard cannot detect this — only a live-DB check can.
+
+**Fix:** migration `202606080020_reattach_double_entry_balance_trigger.sql` idempotently re-attaches the
+trigger (`DROP TRIGGER IF EXISTS … ; CREATE CONSTRAINT TRIGGER … DEFERRABLE INITIALLY DEFERRED`), and the
+new live-DB guard (`db:verify:double-entry-balance`) detects this class of drift going forward.
+
 ## CI Guards
 
 | Guard | Purpose |
 |---|---|
-| `verify:double-entry-balance` (`scripts/verify-double-entry-balance-trigger.mjs`) | Static — asserts trigger + function exist in migrations; fails if any migration drops them without re-creating |
+| `verify:double-entry-balance` (`scripts/verify-double-entry-balance-trigger.mjs`) | **Static** — asserts trigger + function exist in migrations; fails if any migration drops/weakens them without a compliant re-create. Runs in CI without a DB. |
+| `db:verify:double-entry-balance` (`… --live`) | **Live-DB** — connects to `DATABASE_URL`/`DATABASE_DIRECT_URL` and asserts `trg_check_journal_entry_balanced` is actually attached as a constraint trigger on `accounting.journal_entry_postings` (`pg_trigger.tgconstraint > 0`). Exit 1 (CRITICAL) if missing. |
 | `verify:accounting-backbone-schema` (`scripts/verify-accounting-backbone-schema.mjs`) | Static — forbids `accounting.journal_entry_lines` table (wrong name) |
 | `test:coverage` | DB integration test `double-entry-trigger.db.test.ts` — proves the trigger actually rejects unbalanced entries in real Postgres |
+
+> **POST-DEPLOY GATE.** `db:verify:double-entry-balance` **must be run against production after every
+> deploy** (set `DATABASE_URL` to the prod connection string) and **must return exit 0 before any
+> financial-write block is merged.** A green static guard is not sufficient — it cannot see live drift.
 
 ## Verifying on a Live Database
 
@@ -142,7 +168,8 @@ emergency (TIER 1 HARD STOP per Block 5 spec).
 | Migration | What it added |
 |---|---|
 | `0092_p5_d4_manual_journal_entries.sql` | Created `accounting.journal_entries`, `accounting.journal_entry_postings`, function `accounting.ensure_journal_entry_balanced()`, and `trg_check_journal_entry_balanced` CONSTRAINT TRIGGER |
-| Block 5 / `feat/tier1-double-entry-guard` | Added CI guard (`verify:double-entry-balance`) + DB integration test + this doc. No schema changes. |
+| `202606080020_reattach_double_entry_balance_trigger.sql` | Block 5 remediation — idempotently re-attaches `trg_check_journal_entry_balanced` (found missing in production despite 0092 applied). No GRANT needed. |
+| Block 5 / `feat/tier1-double-entry-guard` | Added static CI guard (`verify:double-entry-balance`), live-DB guard (`db:verify:double-entry-balance`), DB integration test, and this doc. |
 
 ## Out of Scope (Future Blocks)
 

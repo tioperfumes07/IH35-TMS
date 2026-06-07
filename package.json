@@ -140,6 +140,7 @@
     "verify:accounting-autoload-coverage": "node scripts/verify-accounting-autoload-coverage.mjs",
     "verify:accounting-backbone-schema": "node scripts/verify-accounting-backbone-schema.mjs",
     "verify:double-entry-balance": "node scripts/verify-double-entry-balance-trigger.mjs",
+    "db:verify:double-entry-balance": "node scripts/verify-double-entry-balance-trigger.mjs --live",
     "verify:posting-engine-mvp-contract": "node scripts/verify-posting-engine-mvp-contract.mjs",
     "verify:trial-balance-contract": "node scripts/verify-trial-balance-contract.mjs",
     "verify:accounting-periods-contract": "node scripts/verify-accounting-periods-contract.mjs",
