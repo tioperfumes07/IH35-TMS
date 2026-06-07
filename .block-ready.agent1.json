@@ -1,26 +1,18 @@
 {
-  "block_id": "HOME-ROLE-ROUTER-REFACTOR",
-  "branch": "refactor/home-role-router",
-  "phase": "REFACTOR",
-  "task": "Thin role-router HomePage with DefaultHome fallback — unblocks GAP-66/67/68/69",
-  "agent": "A",
-  "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-home-router",
-  "runtime_path": "src",
+  "block_id": "HOTFIX-0327-MIGRATION-ROLE",
+  "branch": "hotfix/0327-drug-alcohol-app-user",
+  "phase": "HOTFIX",
+  "task": "Fix migration 0327 GRANT role (app_user → ih35_app) + TS18048 guards (GAP-81)",
+  "agent": "1",
   "allowed_files": [
+    "db/migrations/0327_drug_alcohol_program.sql",
+    "db/migrations/.ledger.json",
     ".block-ready.agent1.json",
-    "apps/frontend/src/pages/home/HomePage.tsx",
-    "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
-    "apps/frontend/src/pages/home/roles/DispatcherHome.tsx",
-    "apps/frontend/src/pages/home/roles/AccountingHome.tsx",
-    "apps/frontend/src/pages/home/roles/SafetyHome.tsx",
-    "apps/frontend/src/pages/home/roles/DriverManagerHome.tsx"
+    "apps/backend/src/safety/expiry-tracking/routes.ts",
+    "apps/frontend/src/pages/safety/drug-alcohol/DrugAlcoholProgramTab.tsx"
   ],
-  "preview_provided": true,
   "extra_gates": [],
-  "db_required": false,
-  "guard_required": false,
-  "fields": {
-    "note": "Move HomePage logic verbatim to roles/DefaultHome.tsx. HomePage becomes thin switch on auth.role. Role stubs pass through to DefaultHome on day 1. OwnerHome wired in switch. Zero visible UX change."
-  }
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false
 }

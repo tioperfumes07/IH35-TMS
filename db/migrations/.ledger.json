@@ -1197,6 +1197,10 @@
       "checksum": "1a9cffe272b7546d89e0823fa7576479a18216e5258ad99149a2c552fb51bd53"
     },
     {
+      "filename": "0327_drug_alcohol_program.sql",
+      "checksum": "24929c568028992304aec36c7baa1504a2900692d6dc4deb5c009b44560e5952"
+    },
+    {
       "filename": "0340_reference_driver_catalogs.sql",
       "checksum": "03b0b163f55ae85ef2cfab36fb8bbb36cf93208536485954dcc69383305e3584"
     },

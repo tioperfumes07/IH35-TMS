@@ -7,7 +7,7 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS safety.da_program_enrollments (
   uuid              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id TEXT     NOT NULL,
+  operating_company_id UUID     NOT NULL,
   driver_uuid       UUID        NOT NULL,
   consortium_name   TEXT        NOT NULL,
   enrolled_at       DATE        NOT NULL,
@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS da_program_enrollments_active_idx
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS safety.da_test_records (
   uuid                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id  TEXT        NOT NULL,
+  operating_company_id  UUID        NOT NULL,
   driver_uuid           UUID        NOT NULL,
   test_type             TEXT        NOT NULL
     CHECK (test_type IN ('pre_employment','random','post_accident','reasonable_suspicion','return_to_duty','follow_up')),
@@ -54,7 +54,7 @@ CREATE INDEX IF NOT EXISTS da_test_records_result_idx
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS safety.da_random_pool_draws (
   uuid                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id  TEXT        NOT NULL,
+  operating_company_id  UUID        NOT NULL,
   draw_date             DATE        NOT NULL,
   pool_size             INTEGER     NOT NULL,
   drug_drawn_count      INTEGER     NOT NULL,
@@ -74,4 +74,4 @@ GRANT SELECT, INSERT, UPDATE ON
   safety.da_program_enrollments,
   safety.da_test_records,
   safety.da_random_pool_draws
-TO app_user;
+TO ih35_app;
