@@ -7,6 +7,7 @@
   "allowed_files": [
     ".block-ready/ACCT-QBOPAR-02.json",
     "apps/frontend/package.json",
+    "apps/frontend/package-lock.json",
     "package.json",
     "package-lock.json",
     "apps/frontend/src/components/lists/ListView/index.ts",
