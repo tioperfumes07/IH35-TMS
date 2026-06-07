@@ -17,7 +17,7 @@ Damage photos uploaded via driver PWA and dispatcher dashboard must retain EXIF 
 
 ## Migration
 
-`0408_damage_photo_exif_chain.sql` — `documents.damage_photo_evidence` + `safety.incidents.evidence_uuids[]`.
+`202606071630_damage_photo_exif_chain.sql` — `documents.damage_photo_evidence` + `safety.incidents.evidence_uuids[]`.
 
 ## CI
 

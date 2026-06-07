@@ -28,7 +28,7 @@ function contains(relativePath, content, checks) {
   }
 }
 
-read("db/migrations/0408_damage_photo_exif_chain.sql");
+read("db/migrations/202606071630_damage_photo_exif_chain.sql");
 read("apps/backend/src/documents/exif-preserver.ts");
 read("apps/backend/src/documents/chain-of-custody.service.ts");
 read("apps/backend/src/safety/damage-reports/photo-evidence.service.ts");

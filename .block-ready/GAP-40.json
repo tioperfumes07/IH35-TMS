@@ -18,7 +18,7 @@
     "apps/driver-pwa/src/lib/preserve-exif-on-upload.ts",
     "scripts/verify-exif-chain-preservation.mjs",
     "docs/specs/gap-40-damage-photo-exif-chain.md",
-    "db/migrations/0408_damage_photo_exif_chain.sql",
+    "db/migrations/202606071630_damage_photo_exif_chain.sql",
     "apps/backend/src/index.ts",
     "package.json",
     ".github/workflows/ci.yml"
