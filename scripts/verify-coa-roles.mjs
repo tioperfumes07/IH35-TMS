@@ -115,6 +115,9 @@ async function dbChecks() {
     .map((g) => `${g.code ?? g.operating_company_id} missing [${g.missing_roles.join(", ")}]`)
     .join("; ");
 
+  // STRICT-FLIP: set COA_ROLES_GUARD_STRICT=1 after CA-04 loads chart of accounts
+  // (TRANSP must have ap_control + expense_default mapped before enabling)
+  // Tracked: GitHub issue #705
   if (STRICT) {
     fail(
       `active carrier(s) missing refund COA roles: ${summary}. ` +
