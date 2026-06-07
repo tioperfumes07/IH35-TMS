@@ -6,6 +6,7 @@
   "task": "Permit + toll tag tracking per unit with expiry alerts",
   "allowed_files": [
     ".block-ready.json",
+    ".block-ready.agent1.json",
     ".block-ready/GAP-85-PERMIT-TOLL-TRACKING.json",
     "db/migrations/0407_permits_toll_tags.sql",
     "apps/backend/src/master-data/units/permits/service.ts",
