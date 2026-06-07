@@ -21,7 +21,6 @@
   },
   "allowed_files": [
     ".block-ready/GAP-23.json",
-    ".block-ready.agent1.json",
     "apps/backend/src/lib/cache-tiers.ts",
     "apps/backend/src/integrations/samsara/cache/tier1-realtime.ts",
     "apps/backend/src/integrations/samsara/cache/tier2-30s.ts",

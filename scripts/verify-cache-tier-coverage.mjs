@@ -61,6 +61,13 @@ contains("apps/backend/src/index.ts", index, [
   { pattern: /initializeSamsaraCacheWarmer/, label: "index wires cache warmer" },
 ]);
 
+const manifest = read(".block-ready/GAP-23.json");
+contains(".block-ready/GAP-23.json", manifest, [
+  { pattern: /"block_id":\s*"GAP-23"/, label: "GAP-23 block_id" },
+  { pattern: /cache-tiers\.ts/, label: "cache-tiers allowed file" },
+  { pattern: /verify:cache-tier-coverage/, label: "extra_gates verify script" },
+]);
+
 const archDesign = read("docs/specs/IH35_ARCHITECTURAL_DESIGN.md");
 contains("docs/specs/IH35_ARCHITECTURAL_DESIGN.md", archDesign, [
   { pattern: /verify:cache-tier-coverage/, label: "arch design references verify:cache-tier-coverage" },
