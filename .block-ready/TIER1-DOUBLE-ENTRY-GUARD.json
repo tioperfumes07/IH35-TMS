@@ -1,0 +1,41 @@
+{
+  "block_id": "GAP-DOUBLE-ENTRY-DB-ENFORCEMENT",
+  "branch": "feat/tier1-double-entry-guard",
+  "phase": "implementation",
+  "task": "Double-entry DB enforcement guard: CI script asserting balance trigger exists + DB integration test + existing-data verification + docs.",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-trust5",
+  "allowed_files": [
+    ".block-ready/TIER1-DOUBLE-ENTRY-GUARD.json",
+    "scripts/verify-double-entry-balance-trigger.mjs",
+    "apps/backend/src/accounting/__tests__/double-entry-trigger.db.test.ts",
+    "db/migrations/202606080020_reattach_double_entry_balance_trigger.sql",
+    "docs/finance/double-entry.md",
+    "docs/audits/DEDUPE-AUDIT-2026-06-06.md",
+    "package.json",
+    ".github/workflows/ci.yml",
+    ".husky/pre-commit"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "both",
+  "db_required": true,
+  "guard_required": true,
+  "fields": {
+    "gap_block": 5,
+    "wave": "C",
+    "depends_on": "Block 6 (GAP-PERIOD-LOCK-DB-LEVEL) — Wave C",
+    "additive_only": true,
+    "migration": "202606080020_reattach_double_entry_balance_trigger.sql — idempotent re-attach of trg_check_journal_entry_balanced. The trigger was DEFINED in 0092_p5_d4_manual_journal_entries.sql but found MISSING in the live production DB (function present, trigger absent) despite 0092 marked applied; this migration restores DB-level enforcement everywhere.",
+    "trigger_schema": "accounting",
+    "trigger_function": "accounting.ensure_journal_entry_balanced()",
+    "trigger_name": "trg_check_journal_entry_balanced",
+    "trigger_table": "accounting.journal_entry_postings",
+    "trigger_type": "CONSTRAINT TRIGGER AFTER INSERT OR UPDATE OR DELETE DEFERRABLE INITIALLY DEFERRED",
+    "lines_table": "accounting.journal_entry_postings (NOT journal_entry_lines — see CI guard)",
+    "balance_column": "debit_or_credit + amount_cents (NOT debit/credit columns)",
+    "dedup_audit_status": "CORRECTED — audit entry (lines 161-165) updated from 'CLEAN/not built' to 'ALREADY BUILT in 0092'; the original finding was incorrect.",
+    "note": "Path A (hardening) + production remediation. Live verification found trg_check_journal_entry_balanced MISSING in prod despite 0092 applied (double-entry UNENFORCED; 0 entries so no data harm). This block adds: idempotent re-attach migration (202606080020), static CI guard (verify:double-entry-balance), live-DB guard (db:verify:double-entry-balance, --live, asserts trigger attached via pg_trigger.tgconstraint), negative DB integration test, docs, and dedupe-audit correction. MERGE GATE: db:verify:double-entry-balance must return exit 0 against prod before merge; no financial-write block merges until live check is green against prod."
+  }
+}
