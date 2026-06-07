@@ -1,0 +1,31 @@
+{
+  "block_id": "GAP-82-MEDICAL-CARD-TRACKING",
+  "branch": "feature/gap-82-medical-card",
+  "phase": "GAP-HIGH",
+  "task": "Medical card + CDL expiry tracking and alerts",
+  "allowed_files": [
+    ".block-ready.json",
+    ".block-ready/GAP-82-MEDICAL-CARD-TRACKING.json",
+    "apps/backend/src/safety/expiry-tracking/cert-monitor.service.ts",
+    "apps/backend/src/safety/expiry-tracking/alerter.service.ts",
+    "apps/backend/src/safety/expiry-tracking/routes.ts",
+    "apps/backend/src/safety/expiry-tracking/__tests__/cert-monitor.test.ts",
+    "apps/backend/src/jobs/cert-expiry-monitor.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/safety/expiry-tracking/ExpiryDashboard.tsx",
+    "apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx",
+    "apps/frontend/src/components/safety/CertExpiryBadge.tsx",
+    "apps/frontend/src/pages/DriverDetail.tsx",
+    "apps/frontend/src/components/safety/SafetyGroupNav.tsx",
+    "scripts/verify-cert-expiry-tracking.mjs",
+    "docs/specs/gap-82-cert-expiry-tracking.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:cert-expiry-tracking"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { resolveBlockReadyManifest } from "./block-ready-agent-manifest.mjs";
+import { resolveBlockReadyManifest, aggregateBlockReadyManifests } from "./block-ready-agent-manifest.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -68,6 +68,8 @@ function pass(checkId, detail) {
     console.log(`[${checkId}] PASS ${detail}`);
   }
 }
+
+export { aggregateBlockReadyManifests } from "./block-ready-agent-manifest.mjs";
 
 export function globToRegExp(globPattern) {
   const normalized = globPattern.replace(/\\/g, "/");
@@ -522,6 +524,14 @@ function main() {
     worktreePath: ROOT,
     agentEnv: process.env.AGENT,
   });
+
+  // Aggregate all per-block manifests for informational purposes
+  const allManifests = aggregateBlockReadyManifests(ROOT);
+  if (allManifests.length > 0) {
+    const ids = allManifests.map((m) => m.block_id ?? "<unknown>").join(", ");
+    console.log(`[C2] KNOWN blocks in .block-ready/: ${ids}`);
+  }
+
   console.log(`[C2] RESOLVED manifest=${args.manifest} agent=${resolved.agent}`);
   runCheckC1();
   const manifest = runCheckC2(args.manifest);

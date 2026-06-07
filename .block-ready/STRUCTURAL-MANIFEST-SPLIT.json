@@ -1,0 +1,23 @@
+{
+  "block_id": "STRUCTURAL-MANIFEST-SPLIT",
+  "branch": "feat/manifest-per-block",
+  "phase": "STRUCTURAL-FIX",
+  "task": "Each block writes its own .block-ready/<block-id>.json; zero manifest merge conflicts in parallel lanes",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/.gitkeep",
+    ".block-ready/STRUCTURAL-MANIFEST-SPLIT.json",
+    ".block-ready/HOTFIX-0327-MIGRATION-ROLE.json",
+    ".block-ready/CLOSURE-23-DR-BACKUP-AUDIT.json",
+    ".block-ready/GAP-82-MEDICAL-CARD-TRACKING.json",
+    ".block-ready/STRUCTURAL-MIGRATION-TIMESTAMPS.json",
+    "scripts/block-ready.mjs",
+    "scripts/block-ready-agent-manifest.mjs",
+    ".github/workflows/manifest-split-guard.yml",
+    "docs/runbooks/manifest-per-block.md"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
