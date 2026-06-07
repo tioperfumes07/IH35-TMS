@@ -425,6 +425,7 @@
     "verify:dispatch-customer-eta-notify": "node scripts/verify-dispatch-customer-eta-notify.mjs",
     "verify:dispatch-pod-bol-workflow": "node scripts/verify-dispatch-pod-bol-workflow.mjs",
     "verify:dispatch-settings-tab": "node scripts/verify-dispatch-settings-tab.mjs",
+    "verify:geofence-state-machine": "node scripts/verify-geofence-state-machine.mjs",
     "verify:dispatch-secondary-nav-depth": "node scripts/verify-dispatch-secondary-nav-depth.mjs",
     "verify:maint-dvir-defect-intake": "node scripts/verify-maint-dvir-defect-intake.mjs",
     "verify:maint-pm-auto-wo-engine": "node scripts/verify-maint-pm-auto-wo-engine.mjs",

@@ -71,6 +71,7 @@ import { registerDriversMessagesRoutes } from "./drivers/messages.routes.js";
 import { registerDriversDocumentAlertsRoutes } from "./drivers/document-alerts.routes.js";
 import { initializeDocumentAlertEngineCron } from "./drivers/document-alerts.cron.js";
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
+import { registerGeofenceStateMachineRoutes } from "./integrations/samsara/geofences/state-machine/routes.js";
 import { registerDashcamOnDemandRoutes } from "./telematics/dashcam-on-demand.routes.js";
 import { registerTelematicsPositionsRoutes } from "./telematics/positions.routes.js";
 import { registerDriverDaySummaryRoutes } from "./telematics/driver-day-summary.routes.js";
@@ -254,6 +255,7 @@ import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron
 import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
+import { initializeGeofenceStateWatcher } from "./jobs/geofence-state-watcher.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { initializeSafetyRemindersCron } from "./safety/reminders.cron.js";
 import { initializeIntegrityAlertEngineCron } from "./safety/integrity-alert-engine.cron.js";
@@ -604,6 +606,7 @@ async function main() {
   await registerDriversMessagesRoutes(app);
   await registerDriversDocumentAlertsRoutes(app);
   await registerGeofencesRoutes(app);
+  await registerGeofenceStateMachineRoutes(app);
   await registerDriverDaySummaryRoutes(app);
   await registerTelematicsHeatmapRoutes(app);
   await registerDashcamOnDemandRoutes(app);
@@ -889,6 +892,9 @@ async function main() {
 
   try {
     initializeGeofenceBreachDetectorCron(app);
+
+    initializeGeofenceStateWatcher(app);
+    app.log.info("[STARTUP] geofence-state-watcher initialized");
     app.log.info("[STARTUP] geofence-breach-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] geofence-breach-cron failed");
