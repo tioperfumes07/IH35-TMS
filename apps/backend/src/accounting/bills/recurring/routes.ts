@@ -66,7 +66,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
     const body = templateBodySchema.safeParse(req.body);
     if (!body.success) return validationError(reply, body.error);
 
-    await assertCompanyMembership(user.userId, query.data.operating_company_id);
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
     const idempotencyKey = (req.headers["idempotency-key"] as string | undefined) ?? undefined;
     if (!idempotencyKey) {
@@ -88,7 +88,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
         autoPost: body.data.auto_post,
         lineItems: body.data.line_items,
       },
-      user.userId
+      String(user.uuid)
     );
     return reply.code(201).send({ uuid });
   });
@@ -100,9 +100,9 @@ async function recurringBillRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(req.query);
     if (!query.success) return validationError(reply, query.error);
 
-    await assertCompanyMembership(user.userId, query.data.operating_company_id);
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
-    const rows = await listTemplates(query.data.operating_company_id, user.userId, {
+    const rows = await listTemplates(query.data.operating_company_id, String(user.uuid), {
       activeOnly: query.data.active_only,
       dueSoon: query.data.due_soon,
     });
@@ -118,10 +118,10 @@ async function recurringBillRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query);
     if (!query.success) return validationError(reply, query.error);
 
-    await assertCompanyMembership(user.userId, query.data.operating_company_id);
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
     try {
-      const tmpl = await getTemplate(params.data.uuid, query.data.operating_company_id, user.userId);
+      const tmpl = await getTemplate(params.data.uuid, query.data.operating_company_id, String(user.uuid));
       return reply.send(tmpl);
     } catch (err) {
       if (err instanceof Error && err.message.includes("not_found")) {
@@ -156,7 +156,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
           lineItems: line_items,
           ...rest,
         },
-        user.userId
+        String(user.uuid)
       );
       return reply.send({ uuid });
     } catch (err) {
@@ -175,7 +175,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
 
     try {
-      const uuid = await deactivateTemplate(params.data.uuid, user.userId);
+      const uuid = await deactivateTemplate(params.data.uuid, String(user.uuid));
       return reply.send({ uuid, is_active: false });
     } catch (err) {
       if (err instanceof Error && err.message.includes("not_found")) {
@@ -201,7 +201,7 @@ async function recurringBillRoutes(app: FastifyInstance) {
 
     try {
       const targetDate = body.data.target_date ?? DateTime.utc().toISODate()!;
-      const result = await generateFromTemplate(params.data.uuid, targetDate, user.userId);
+      const result = await generateFromTemplate(params.data.uuid, targetDate, String(user.uuid));
       return reply.code(201).send(result);
     } catch (err) {
       if (err instanceof Error && err.message.includes("not_found")) {
@@ -221,9 +221,9 @@ async function recurringBillRoutes(app: FastifyInstance) {
     const query = generationLogQuerySchema.safeParse(req.query);
     if (!query.success) return validationError(reply, query.error);
 
-    await assertCompanyMembership(user.userId, query.data.operating_company_id);
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
 
-    const rows = await withCurrentUser(user.userId, async (client) => {
+    const rows = await withCurrentUser(String(user.uuid), async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
       const params: unknown[] = [query.data.operating_company_id, query.data.limit, query.data.offset];
       let sql = `
