@@ -231,9 +231,10 @@ export async function createPolicyBillSchedule(
             due_date,
             amount_cents,
             status,
+            bill_status,
             bill_uuid
           )
-          VALUES ($1::uuid, $2::uuid, $3::date, $4, 'scheduled', $5::uuid)
+          VALUES ($1::uuid, $2::uuid, $3::date, $4, 'scheduled', 'issued', $5::uuid)
           RETURNING id::text
         `,
         [policy.operating_company_id, policyId, row.dueDate, row.amountCents, bill.id]

@@ -1,0 +1,30 @@
+{
+  "block_id": "BLOCK-F-INSURANCE-CANCELLATION",
+  "gap": "BLOCK-F",
+  "branch": "feature/block-f-insurance-cancellation",
+  "phase": "GAP-HIGH",
+  "task": "Insurance policy cancellation + unearned-premium refund with Decision C hardened soft-skip. POST /api/v1/insurance/policies/:id/cancel sets policy.status='cancelled' + cancelled_on + cancel_reason and stops FUTURE not-yet-issued payment_schedule rows via the explicit bill_status column (issued bills untouched). The pro-rated unearned premium posts as a SEPARATE credit line via existing createJournalEntry() (NOT a negative premium). Decision C: if ap_control/expense_default are NOT mapped, the cancel STILL succeeds, a CRITICAL audit event is emitted, and a DURABLE insurance.refund_obligation row is persisted (tenant_id, policy_id, amount_cents, debit/credit roles, deterministic_memo) — drainable/auto-postable via POST /api/v1/insurance/refund-obligations/post-pending, deduped by deterministic memo so retries never double-post. A CI + startup COA-roles guard (verify:coa-roles) verifies every active operating carrier maps the two roles.",
+  "financial_rule": "All refund posting goes ONLY through the existing accounting service createJournalEntry() (balanced debit/credit, source='auto'). No new financial ledger code. Accounts resolved via the existing coa-roles resolver. Unmapped carriers fall back to a durable obligation row + CRITICAL audit instead of silently skipping.",
+  "allowed_files": [
+    ".block-ready/BLOCK-F-INSURANCE-CANCELLATION.json",
+    "db/migrations/202606072350_insurance_policy_cancellation.sql",
+    "db/migrations/202606072330_insurance_policy_cancellation.sql",
+    "apps/backend/src/insurance/policy-cancel.service.ts",
+    "apps/backend/src/insurance/policy-cancel.service.test.ts",
+    "apps/backend/src/insurance/policy.routes.ts",
+    "apps/backend/src/insurance/policy-bill-schedule.service.ts",
+    "apps/backend/src/insurance/refund-obligation.service.ts",
+    "apps/backend/src/insurance/refund-obligation.service.test.ts",
+    "apps/backend/src/accounting/coa-roles/refund-roles-guard.ts",
+    "apps/backend/src/audit/crud-audit.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-coa-roles.mjs",
+    "scripts/verify-meta.json",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false
+}

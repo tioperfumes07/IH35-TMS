@@ -8,6 +8,8 @@ import {
   INSURANCE_POLICY_STATUSES,
 } from "./policy.shared.js";
 import { renderCoiPdf } from "./coi-pdf-renderer.service.js";
+import { cancelInsurancePolicy } from "./policy-cancel.service.js";
+import { postPendingRefundObligations } from "./refund-obligation.service.js";
 import { createPolicyBillSchedule } from "./policy-bill-schedule.service.js";
 import {
   computeProRataPremiumDeltaCents,
@@ -92,6 +94,16 @@ const renewPolicySchema = z.object({
   total_premium_cents: z.number().int().nonnegative().default(0),
   down_payment_cents: z.number().int().nonnegative().default(0),
   installment_count: z.number().int().nonnegative().default(0),
+});
+
+const cancelPolicySchema = z.object({
+  cancelled_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  cancel_reason: z.string().trim().min(1).max(2000),
+});
+
+const postRefundObligationsBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  policy_id: z.string().uuid().optional(),
 });
 
 const createPolicyUnitSchema = z.object({
@@ -569,6 +581,75 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
 
     if (!deleted) return reply.code(404).send({ error: "policy_not_found" });
     return reply.code(204).send();
+  });
+
+  app.post("/api/v1/insurance/policies/:id/cancel", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    const bodyParsed = cancelPolicySchema.safeParse(req.body ?? {});
+    if (!bodyParsed.success) return reply.code(400).send({ error: "validation_error", details: bodyParsed.error.flatten() });
+
+    const result = await cancelInsurancePolicy({
+      userId: user.uuid,
+      role: user.role,
+      operatingCompanyId: query.data.operating_company_id,
+      policyId: params.data.id,
+      cancelledOn: bodyParsed.data.cancelled_on,
+      cancelReason: bodyParsed.data.cancel_reason,
+    });
+
+    if (result.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
+    if (result.kind === "already_cancelled") {
+      return reply.code(200).send({
+        policy: result.policy,
+        already_cancelled: true,
+        cancelled_schedule_count: 0,
+        unearned_premium_cents: 0,
+        refund: null,
+        refund_skipped_reason: null,
+      });
+    }
+    return reply.code(200).send({
+      policy: result.policy,
+      already_cancelled: false,
+      cancelled_schedule_count: result.cancelled_schedule_count,
+      unearned_premium_cents: result.unearned_premium_cents,
+      refund: result.refund,
+      refund_skipped_reason: result.refund_skipped_reason,
+      refund_obligation_id: result.refund_obligation_id,
+    });
+  });
+
+  // Decision C: drain pending refund obligations (one-click / auto-post). Resolves
+  // ap_control/expense_default and posts each pending refund via createJournalEntry,
+  // deduped by deterministic memo. No-op for obligations whose roles are still unmapped.
+  app.post("/api/v1/insurance/refund-obligations/post-pending", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const parsed = postRefundObligationsBodySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+
+    const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) =>
+      postPendingRefundObligations(client as Parameters<typeof postPendingRefundObligations>[0], {
+        operatingCompanyId: parsed.data.operating_company_id,
+        userId: user.uuid,
+        role: user.role,
+        policyId: parsed.data.policy_id,
+      })
+    );
+
+    return {
+      posted_count: result.posted.length,
+      still_pending_count: result.still_pending.length,
+      posted: result.posted,
+      still_pending: result.still_pending,
+    };
   });
 
   // Block E — add a truck/trailer to an active policy mid-term. Idempotent on

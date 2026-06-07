@@ -12,7 +12,8 @@
     "verify:csa-score-pull-recency",
     "verify:driver-repair-guard",
     "verify:fmcsa-safer-customer-coverage",
-    "verify:no-orphan-migration-ledger-entries"
+    "verify:no-orphan-migration-ledger-entries",
+    "verify:coa-roles"
   ],
   "block_ready_c5_skip_after_c4": [
     "verify:arch-design"
