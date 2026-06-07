@@ -2,7 +2,7 @@
 
 Operational tracking for unit-level oversize/overweight/hazmat permits and toll transponder tags (TxTAG, EZ-Pass, I-Pass, etc.).
 
-## Schema (migration `0329_permits_toll_tags.sql`)
+## Schema (migration `0407_permits_toll_tags.sql`)
 
 - `master_data.unit_permits` — permit type, issuing state, number, effective/expiration dates, optional cost and PDF evidence
 - `master_data.unit_toll_tags` — tag network, number, activation/deactivation, monthly fee, current balance, auto-replenish flag

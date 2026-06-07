@@ -28,8 +28,8 @@ function contains(relativePath, content, checks) {
   }
 }
 
-const migration = read("db/migrations/0329_permits_toll_tags.sql");
-contains("db/migrations/0329_permits_toll_tags.sql", migration, [
+const migration = read("db/migrations/0407_permits_toll_tags.sql");
+contains("db/migrations/0407_permits_toll_tags.sql", migration, [
   { pattern: /master_data\.unit_permits/, label: "unit_permits table" },
   { pattern: /master_data\.unit_toll_tags/, label: "unit_toll_tags table" },
   { pattern: /deleted_at/, label: "soft-delete column" },
