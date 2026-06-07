@@ -1,29 +1,29 @@
 {
-  "block_id": "GAP-MIGRATION-RENAME-CI-GUARD",
-  "branch": "feature/gap-migration-rename-ci-guard",
-  "phase": "implementation",
-  "task": "Activate dormant migration immutability guard: populate ledger, add PR workflow, add pre-commit hook.",
+  "block_id": "GAP-CRON-AUDIT",
+  "branch": "docs/cron-audit-2026-06-06",
+  "phase": "complete",
+  "task": "Read-only audit of all cron jobs. Produced CRON-INVENTORY-2026-06-06.md and CRON-RECOMMENDATIONS-2026-06-06.md.",
   "agent": "A",
   "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-mig-guard",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-cron-audit",
   "allowed_files": [
     ".block-ready.agent1.json",
-    "db/migrations/.ledger.json",
-    ".applied-migrations.json",
-    ".github/workflows/migration-guard.yml",
-    ".husky/pre-commit",
-    "scripts/ci-migration-guard.mjs"
+    "docs/audits/CRON-INVENTORY-2026-06-06.md",
+    "docs/audits/CRON-RECOMMENDATIONS-2026-06-06.md"
   ],
   "preview_provided": false,
   "extra_gates": [],
   "db_required": false,
-  "guard_required": true,
+  "guard_required": false,
   "fields": {
-    "gap_block": 4,
-    "wave": "A",
-    "additive_only": true,
-    "existing_gate_preserved": "CLOSURE-28 (verify:applied-migrations-immutable + chain gate)",
-    "ledger_file_count": 351,
-    "note": "Activates dormant verify:applied-migrations-immutable CI step by populating db/migrations/.ledger.json. Adds PR-triggered migration-guard.yml and pre-commit enforcement."
+    "gap_block": 13,
+    "wave": "B",
+    "audit_date": "2026-06-06",
+    "cron_count": 46,
+    "schedule_registrations": 51,
+    "red_fixes": 4,
+    "yellow_tunes": 4,
+    "is_active_missing": ["compliance/compliance-reminder.job.ts", "reports/deadhead-refresh.job.ts", "reports/lane-profitability-refresh.job.ts"],
+    "note": "Read-only audit. No code changed. All schedule expressions copied verbatim from source."
   }
 }
