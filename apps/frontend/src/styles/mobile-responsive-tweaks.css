@@ -1,0 +1,31 @@
+/* GAP-91 — scoped mobile tweaks for audit report + shared mobile components only */
+.mobile-audit-scope {
+  --mobile-min-touch: 44px;
+  --mobile-min-input: 48px;
+}
+
+@media (max-width: 639px) {
+  .mobile-audit-scope button,
+  .mobile-audit-scope [role="button"] {
+    min-height: var(--mobile-min-touch);
+  }
+
+  .mobile-audit-scope input,
+  .mobile-audit-scope select,
+  .mobile-audit-scope textarea {
+    min-height: var(--mobile-min-input);
+  }
+
+  .mobile-audit-scope .mobile-table-fallback {
+    display: block;
+  }
+
+  .mobile-audit-scope .mobile-table-fallback table {
+    display: none;
+  }
+
+  .mobile-audit-scope .modal-panel {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}

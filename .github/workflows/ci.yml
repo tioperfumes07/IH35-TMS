@@ -302,6 +302,9 @@ jobs:
       - name: Verify Cmd-K quick switcher contract
         run: npm run verify:cmd-k-quick-switcher
 
+      - name: Verify mobile responsive audit contract
+        run: npm run verify:mobile-responsive-audit
+
       - name: Verify DOT inspection history gap-close contract
         run: npm run verify:dot-inspection-history
 
