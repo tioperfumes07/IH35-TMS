@@ -20,6 +20,7 @@
     "apps/frontend/src/layouts/AppLayout.tsx",
     "apps/frontend/src/components/Shell.tsx",
     "scripts/verify-cmd-k-quick-switcher.mjs",
+    "scripts/verify-cert-expiry-tracking.mjs",
     "docs/specs/gap-89-cmd-k-quick-switcher.md",
     "package.json",
     ".github/workflows/ci.yml"
