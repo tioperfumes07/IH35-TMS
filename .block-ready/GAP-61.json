@@ -18,6 +18,7 @@
     "apps/frontend/src/pages/fuel/FuelHome.tsx",
     "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
     "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
     "scripts/verify-cap-11-fuel-fraud.mjs",
     "docs/specs/gap-61-cap-11-fuel-fraud-alerts.md",
     "db/migrations/202606071800_fuel_fraud_alerts.sql",

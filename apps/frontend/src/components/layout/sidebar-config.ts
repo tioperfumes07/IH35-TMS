@@ -159,6 +159,11 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Transfers", to: "/banking/transfers" },
         { label: "Fuel Planner", to: "/fuel" },
       ];
+    case "fuel":
+      return [
+        { label: "Fuel Planner", to: "/fuel" },
+        { label: "Fraud Alerts", to: "/fuel/fraud-alerts" },
+      ];
     case "safety":
       return [
         { label: "Driver Files", to: "/safety/driver-files" },

@@ -30,6 +30,7 @@ import { FuelFraudAlertsKpiCard } from "./FuelHome";
 
 const SUBNAV = [
   { id: "home", label: "Home" },
+  { id: "fraud_alerts", label: "Fraud alerts", path: "/fuel/fraud-alerts" },
   { id: "planner", label: "Planner" },
   { id: "relay_inbox", label: "Relay inbox" },
   { id: "settings", label: "Settings" },
