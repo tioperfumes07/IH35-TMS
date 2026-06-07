@@ -1,12 +1,13 @@
 {
-  "_comment": "DB-gated verify:* scripts: verify:db:start, verify:db:stop, verify:db:reset, verify:pre-commit, verify:migration-application-consistency",
+  "_comment": "DB-gated verify:* scripts: require DATABASE_URL; skipped in local pre-push, run in CI",
   "db_gated_verify_scripts": [
     "verify:db:start",
     "verify:db:stop",
     "verify:db:reset",
     "verify:pre-commit",
     "verify:migration-application-consistency",
-    "verify:equipment-types-no-collision"
+    "verify:equipment-types-no-collision",
+    "verify:content-drift-check"
   ],
   "block_ready_c5_skip_after_c4": [
     "verify:arch-design"
