@@ -116,6 +116,7 @@ import { ComplianceDashboardPage } from "../pages/compliance/ComplianceDashboard
 import { NotificationCenterPage } from "../pages/notifications/NotificationCenterPage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
+import { OwnerHome } from "../pages/home/OwnerHome";
 import { LoginPage } from "../pages/Login";
 import { LoginResetRequestPage } from "../pages/LoginResetRequestPage";
 import { LoginResetConfirmPage } from "../pages/LoginResetConfirmPage";
@@ -377,6 +378,7 @@ function OwnerOnlyRoute({ children }: { children: ReactNode }) {
 function HomeRoute() {
   const auth = useAuth();
   if (!auth.user) return null;
+  if (auth.user.role === "Owner") return <OwnerHome auth={auth.user} />;
   return <HomePage auth={auth.user} />;
 }
 

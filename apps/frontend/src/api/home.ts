@@ -487,3 +487,82 @@ export async function fetchDriverDaySummary(companyId: string, date: string): Pr
 
   throw new ApiError(500, { error: "invalid_response", message: "Driver day summary response shape mismatch" });
 }
+
+// ─── GAP-65: Owner Today's Attention API ─────────────────────────────────────
+
+export type OwnerAttentionItemSeverity = "info" | "warning" | "error" | "critical";
+
+export type OwnerAttentionItem = {
+  id: string;
+  item_id: string;
+  source: string;
+  score: number;
+  title: string;
+  body: string;
+  action_url: string;
+  action_label: string;
+  severity: OwnerAttentionItemSeverity;
+  extra: Record<string, unknown>;
+  dismissed: boolean;
+  computed_at: string | null;
+};
+
+export type OwnerTodaysAttentionResult = {
+  items: OwnerAttentionItem[];
+  computed_at: string | null;
+  source: "snapshot" | "no_snapshot" | "error";
+};
+
+function normalizeAttentionSeverity(raw: unknown): OwnerAttentionItemSeverity {
+  if (raw === "critical" || raw === "error" || raw === "warning") return raw;
+  return "info";
+}
+
+function normalizeOwnerAttentionItem(raw: unknown): OwnerAttentionItem | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  return {
+    id: typeof o.id === "string" ? o.id : "",
+    item_id: typeof o.item_id === "string" ? o.item_id : "",
+    source: typeof o.source === "string" ? o.source : "",
+    score: num(o.score),
+    title: typeof o.title === "string" ? o.title : "Attention item",
+    body: typeof o.body === "string" ? o.body : "",
+    action_url: typeof o.action_url === "string" ? o.action_url : "/",
+    action_label: typeof o.action_label === "string" ? o.action_label : "View",
+    severity: normalizeAttentionSeverity(o.severity),
+    extra: o.extra && typeof o.extra === "object" && !Array.isArray(o.extra)
+      ? (o.extra as Record<string, unknown>)
+      : {},
+    dismissed: Boolean(o.dismissed),
+    computed_at: typeof o.computed_at === "string" ? o.computed_at : null,
+  };
+}
+
+export async function fetchOwnerTodaysAttention(companyId: string): Promise<OwnerTodaysAttentionResult> {
+  const payload = await apiRequest<Record<string, unknown>>(
+    withCompany("/api/v1/owner/todays-attention", companyId)
+  );
+  const rawItems = Array.isArray(payload.items) ? payload.items : [];
+  const items = rawItems
+    .map(normalizeOwnerAttentionItem)
+    .filter((x): x is OwnerAttentionItem => x !== null);
+  return {
+    items,
+    computed_at: typeof payload.computed_at === "string" ? payload.computed_at : null,
+    source: (payload.source as "snapshot" | "no_snapshot" | "error") ?? "snapshot",
+  };
+}
+
+export async function dismissOwnerAttentionItem(
+  companyId: string,
+  itemId: string
+): Promise<{ ok: boolean; item_id: string; dismissed: boolean }> {
+  return apiRequest<{ ok: boolean; item_id: string; dismissed: boolean }>(
+    `/api/v1/owner/todays-attention/dismiss/${encodeURIComponent(itemId)}`,
+    {
+      method: "POST",
+      body: { operating_company_id: companyId },
+    }
+  );
+}
