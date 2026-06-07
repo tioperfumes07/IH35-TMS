@@ -1,5 +1,11 @@
 name: Migration Rename/Edit Guard
 
+# Accepts both filename formats:
+#   - Legacy 4-digit sequence: 0001_name.sql, 0001a_name.sql
+#   - New 12-digit UTC timestamp: 20260607_120000_name.sql
+# Both formats are immutable once applied. New migrations MUST use the
+# timestamp format to prevent parallel-lane sequence collisions.
+
 on:
   pull_request:
     paths:
@@ -26,3 +32,15 @@ jobs:
         run: node scripts/ci-migration-guard.mjs
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
+
+      - name: Reject new 4-digit sequence migrations
+        run: |
+          NEW_LEGACY=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD -- db/migrations/ \
+            | grep -E '^db/migrations/[0-9]{4}[a-z]?_.+\.sql$' || true)
+          if [ -n "$NEW_LEGACY" ]; then
+            echo "MIGRATION FORMAT ERROR: New migrations must use the timestamp format (20260607_120000_name.sql)."
+            echo "Legacy 4-digit sequence names are frozen. Found new legacy-format file(s):"
+            echo "$NEW_LEGACY"
+            exit 1
+          fi
+          echo "migration-format-guard PASS — no new legacy-format migrations detected."

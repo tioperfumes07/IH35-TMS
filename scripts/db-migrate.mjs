@@ -21,15 +21,52 @@ const SEARCH_PATH =
   "mdata, dispatch, docs, catalogs, identity, org, integrations, qbo_archive, accounting, banking, factor, documents, pwa, audit, outbox, safety, fuel, driver_finance, maintenance, views, public, email";
 const MIGRATIONS_DIR = path.resolve("db/migrations");
 const CHECKSUM_OVERRIDES_FILE = path.resolve("scripts/lib/migration-checksum-overrides.json");
-const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;
+// Legacy format: 0001_name.sql, 0001a_name.sql
+// New timestamp format: 20260607_120000_name.sql (12-digit prefix)
+const MIGRATION_FILE_PATTERN_LEGACY = /^\d{4}[a-z]?_.+\.sql$/i;
+const MIGRATION_FILE_PATTERN_TIMESTAMP = /^\d{12}_.+\.sql$/i;
 const CANONICAL_LEDGER_TABLE = "_system._schema_migrations";
 const MIRROR_LEDGER_TABLE = "ih35_migrations.applied_migrations";
 const ARGS = new Set(process.argv.slice(2));
 const VERIFY_ONLY = ARGS.has("--verify-only");
 const BACKFILL_LEDGER = ARGS.has("--backfill-ledger");
 
+/**
+ * Returns true for migration filenames matching either the legacy 4-digit format
+ * (e.g. 0001_name.sql, 0001a_name.sql) or the new 12-digit timestamp format
+ * (e.g. 20260607_120000_name.sql). Both coexist in the same migrations directory;
+ * filenames sort correctly because timestamp names (2026…) sort after all legacy
+ * 4-digit names (0001…0999).
+ */
+function isMigrationFile(name) {
+  return MIGRATION_FILE_PATTERN_LEGACY.test(name) || MIGRATION_FILE_PATTERN_TIMESTAMP.test(name);
+}
+
 function listMigrationFiles() {
-  return fs.readdirSync(MIGRATIONS_DIR).filter((name) => MIGRATION_FILE_PATTERN.test(name)).sort();
+  return fs.readdirSync(MIGRATIONS_DIR).filter((name) => isMigrationFile(name)).sort();
+}
+
+/**
+ * Generates a migration filename using the current UTC timestamp.
+ * Format: YYYYMMDD_HHMMSS_<slug>.sql
+ *
+ * Usage: generateMigrationName("add_foo_column")
+ *   → "20260607_143022_add_foo_column.sql"
+ */
+export function generateMigrationName(slug) {
+  if (!slug || typeof slug !== "string") {
+    throw new Error("generateMigrationName requires a non-empty slug string");
+  }
+  const now = new Date();
+  const pad = (n, len = 2) => String(n).padStart(len, "0");
+  const year = now.getUTCFullYear();
+  const month = pad(now.getUTCMonth() + 1);
+  const day = pad(now.getUTCDate());
+  const hours = pad(now.getUTCHours());
+  const minutes = pad(now.getUTCMinutes());
+  const seconds = pad(now.getUTCSeconds());
+  const sanitized = slug.replace(/[^a-z0-9_]/gi, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+  return `${year}${month}${day}_${hours}${minutes}${seconds}_${sanitized}.sql`;
 }
 
 function sha256(text) {
