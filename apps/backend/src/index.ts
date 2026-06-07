@@ -58,6 +58,7 @@ import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinemen
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
+import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-arrival.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js";
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
@@ -325,6 +326,10 @@ import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
 import { registerDriverManagerRoleHomeRoutes } from "./driver-manager/role-views/routes.js";
 import { initializeTodaysAttentionWorker, stopTodaysAttentionWorker } from "./jobs/todays-attention-worker.js";
+import {
+  initializeLateArrivalAggregatorWorker,
+  stopLateArrivalAggregatorWorker,
+} from "./jobs/late-arrival-aggregator-worker.js";
 import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js";
 import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
 import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
@@ -397,6 +402,7 @@ async function shutdown(signal: string) {
     stopQboInboundSyncCron();
     stopDailyTaskAlertsCron();
     stopTodaysAttentionWorker();
+    stopLateArrivalAggregatorWorker();
     stopAdminJobsWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
@@ -585,6 +591,7 @@ async function main() {
   await registerIntransitIssuesRoutes(app);
   await registerDispatchArchTabsRoutes(app);
   await registerDispatchAlertsRoutes(app);
+  await registerLateArrivalAnalyticsRoutes(app);
   await registerDispatchPlannerRoutes(app);
   await registerDispatchDetentionRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
@@ -1017,6 +1024,8 @@ async function main() {
     app.log.info("[STARTUP] daily-task-alerts cron initialized");
     initializeTodaysAttentionWorker(app);
     app.log.info("[STARTUP] todays-attention worker initialized");
+    initializeLateArrivalAggregatorWorker(app);
+    app.log.info("[STARTUP] late-arrival aggregator worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] daily-task-alerts cron failed");
   }
