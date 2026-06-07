@@ -41,6 +41,6 @@
       "banking/manual-je",
       "qbo-sync/* writes"
     ],
-    "note": "Client sends Idempotency-Key: <uuid>; server stores key+response (24h TTL); replay returns cached response. Enforcement registered globally in index.ts main() only — route/integration test harnesses build minimal Fastify apps and are unaffected. Idempotency store reads/writes use withLuciaBypass (infra-level). RLS added on idempotency_keys for tenant-scope defense-in-depth + verify:rls-operating-company-scope compliance."
+    "note": "Client sends Idempotency-Key: <uuid>; server stores key+response (24h TTL); replay returns cached response. Enforcement registered globally in index.ts main() only \u2014 route/integration test harnesses build minimal Fastify apps and are unaffected. Idempotency store reads/writes use withLuciaBypass (infra-level). RLS added on idempotency_keys for tenant-scope defense-in-depth + verify:rls-operating-company-scope compliance."
   }
 }

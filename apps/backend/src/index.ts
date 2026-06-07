@@ -361,7 +361,7 @@ let shuttingDown = false;
 function getAllowedOrigins(): string[] {
   const origins =
     process.env.CORS_ALLOWED_ORIGINS ??
-    "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174";
+    "https://app.ih35dispatch.com,https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174";
   return origins
     .split(",")
     .map((value) => value.trim())
