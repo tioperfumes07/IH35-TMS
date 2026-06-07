@@ -5,7 +5,8 @@
     "verify:db:stop",
     "verify:db:reset",
     "verify:pre-commit",
-    "verify:migration-application-consistency"
+    "verify:migration-application-consistency",
+    "verify:equipment-types-no-collision"
   ],
   "block_ready_c5_skip_after_c4": [
     "verify:arch-design"
