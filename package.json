@@ -391,6 +391,7 @@
     "verify:cert-expiry-tracking": "node scripts/verify-cert-expiry-tracking.mjs",
     "verify:cmd-k-quick-switcher": "node scripts/verify-cmd-k-quick-switcher.mjs",
     "verify:mobile-responsive-audit": "node scripts/verify-mobile-responsive-audit.mjs",
+    "verify:feature-flags": "node scripts/verify-feature-flags.mjs",
     "verify:dispatcher-home": "node scripts/verify-dispatcher-home.mjs",
     "verify:dot-inspection-history": "node scripts/verify-dot-inspection-history.mjs",
     "verify:permits-toll-tags": "node scripts/verify-permits-toll-tags.mjs",

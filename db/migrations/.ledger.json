@@ -1407,6 +1407,10 @@
     {
       "filename": "0404_drivers_rls_oci_scope.sql",
       "checksum": "d73b626957b9c7fa28fbed49f600ab4b999868b6b7b30f1a1ceaa5846cc41905"
+    },
+    {
+      "filename": "0408_feature_flags.sql",
+      "checksum": "46e1ecaa641b6ced142235388e2afef5aa3cab98acc9e9427c419ac6cce9d9e9"
     }
   ]
 }
