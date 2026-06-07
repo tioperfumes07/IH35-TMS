@@ -19,10 +19,16 @@ if (!fs.existsSync(reportsRoutePath)) {
 }
 
 const homeText = fs.readFileSync(homePagePath, "utf8");
-if (/label:\s*"Vehicles in Service"[\s\S]*number:\s*"94"/m.test(homeText)) {
+// KPI logic may live in DefaultHome.tsx after the role-router refactor (#642)
+const defaultHomePath = path.join(ROOT, "apps/frontend/src/pages/home/roles/DefaultHome.tsx");
+const kpiSourceText = fs.existsSync(defaultHomePath)
+  ? homeText + "\n" + fs.readFileSync(defaultHomePath, "utf8")
+  : homeText;
+
+if (/label:\s*"Vehicles in Service"[\s\S]*number:\s*"94"/m.test(kpiSourceText)) {
   fail("Vehicles in Service card must not use hardcoded 94");
 }
-if (!/label:\s*"Vehicles in Service"[\s\S]*kpiSummaryQuery\.data\?\.live_units/m.test(homeText)) {
+if (!/label:\s*"Vehicles in Service"[\s\S]*kpiSummaryQuery\.data\?\.live_units/m.test(kpiSourceText)) {
   fail("Vehicles in Service card must read tenant-scoped live_units from API");
 }
 
