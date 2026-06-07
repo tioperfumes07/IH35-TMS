@@ -28,8 +28,8 @@ function contains(relativePath, content, checks) {
   }
 }
 
-const migration = read("db/migrations/0408_search_universal_index.sql");
-contains("db/migrations/0408_search_universal_index.sql", migration, [
+const migration = read("db/migrations/202606071000_search_universal_index.sql");
+contains("db/migrations/202606071000_search_universal_index.sql", migration, [
   { pattern: /search\.universal_index/, label: "universal_index table" },
   { pattern: /idx_search_tsvector/, label: "GIN tsvector index" },
 ]);
@@ -82,8 +82,8 @@ contains("docs/specs/gap-89-cmd-k-quick-switcher.md", docs, [
   { pattern: /\/api\/search\/universal/, label: "API documented" },
 ]);
 
-const manifest = read(".block-ready.json");
-contains(".block-ready.json", manifest, [
+const manifest = read(".block-ready/GAP-89-UNIVERSAL-SEARCH-CMD-K.json");
+contains(".block-ready/GAP-89-UNIVERSAL-SEARCH-CMD-K.json", manifest, [
   { pattern: /GAP-89-UNIVERSAL-SEARCH-CMD-K/, label: "GAP-89 block id in manifest" },
 ]);
 

@@ -6,7 +6,7 @@ Adds a global Cmd+K / Ctrl+K quick switcher that searches loads and drivers (ext
 
 ## Database
 
-- Migration `0408_search_universal_index.sql`
+- Migration `202606071000_search_universal_index.sql`
 - Schema `search.universal_index` with GIN index on `search_text` tsvector
 - RLS scoped by `app.operating_company_id`
 

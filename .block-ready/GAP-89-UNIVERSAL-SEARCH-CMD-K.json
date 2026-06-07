@@ -10,7 +10,7 @@
     ".block-ready.json",
     "scripts/verify-cert-expiry-tracking.mjs",
     "scripts/verify-permits-toll-tags.mjs",
-    "db/migrations/0408_search_universal_index.sql",
+    "db/migrations/202606071000_search_universal_index.sql",
     "apps/backend/src/search/universal/indexer.service.ts",
     "apps/backend/src/search/universal/query.service.ts",
     "apps/backend/src/search/universal/routes.ts",
