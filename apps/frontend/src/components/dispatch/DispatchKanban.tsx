@@ -65,7 +65,7 @@ const KANBAN_STATUS_GROUPS: KanbanColumnDef[] = [
   },
 ];
 
-function readExtras(load: DispatchLoadRow): KanbanLoadExtras {
+function readExtras(load: DispatchLoadRow): KanbanLoad {
   return load as KanbanLoad;
 }
 
