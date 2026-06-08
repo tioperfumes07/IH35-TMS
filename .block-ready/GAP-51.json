@@ -1,0 +1,33 @@
+{
+  "block_id": "GAP-51",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap51",
+  "branch": "feature/gap-51-data-sovereignty",
+  "phase": "GAP-CRITICAL",
+  "task": "Data sovereignty DS-1..7 suite",
+  "allowed_files": [
+    ".block-ready/GAP-51.json",
+    ".block-ready.json",
+    "db/migrations/202606080212_qbo_reconciliation_alerts.sql",
+    "apps/backend/src/integrations/qbo/mirror-integrity.service.ts",
+    "apps/backend/src/integrations/qbo/reconciliation-report.service.ts",
+    "apps/backend/src/integrations/samsara/config-bootstrap.service.ts",
+    "apps/backend/src/integrations/samsara/vehicle-import.service.ts",
+    "apps/backend/src/integrations/samsara/driver-import.service.ts",
+    "apps/backend/src/integrations/samsara/daily-sync-job.ts",
+    "apps/backend/src/integrations/integration-health.routes.ts",
+    "apps/backend/src/integrations/__tests__/ds-suite.test.ts",
+    "apps/backend/scripts/ds-verify-and-report.mjs",
+    "scripts/verify-data-sovereignty-rows-exist.mjs",
+    "docs/runbooks/DATA-SOVEREIGNTY-EXECUTION.md",
+    "docs/specs/gap-51-data-sovereignty.md",
+    "apps/backend/src/index.ts",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:data-sovereignty-rows-exist"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
