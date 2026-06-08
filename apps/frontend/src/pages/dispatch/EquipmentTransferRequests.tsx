@@ -35,8 +35,9 @@ export function EquipmentTransferRequests() {
       <button type="button" className="rounded bg-blue-600 px-3 py-2 text-white" onClick={() => setShowModal(true)}>
         New transfer
       </button>
-      {showModal && companyId ? (
+      {companyId ? (
         <EquipmentTransferModal
+          open={showModal}
           operatingCompanyId={companyId}
           onClose={() => setShowModal(false)}
           onCreated={() => {
