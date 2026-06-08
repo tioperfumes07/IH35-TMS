@@ -1,0 +1,33 @@
+{
+  "block_id": "DISP-FACTORING-PACKET",
+  "lane": "B",
+  "is_read_only": false,
+  "branch": "feat/disp-factoring-packet",
+  "phase": "dispatch",
+  "completed_at": "2026-06-08",
+  "description": "Factoring queue + FARO Reserve Tracker + FactoringTab drawer child. Auto-assemble packet on delivery+POD. Reuses Block-24/25 poster + existing factoring services. No new financial code.",
+  "delivered_files": [
+    "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
+    "apps/frontend/src/pages/factoring/ReserveTracker.tsx",
+    "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx",
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    "apps/backend/src/dispatch/factoring-queue.routes.ts",
+    "apps/backend/src/factoring/packet-assemble.service.ts"
+  ],
+  "wiring_pending": {
+    "note": "Lane A registers route + sidebar. Backend index.ts needs registerFactoringQueueRoutes import.",
+    "backend_registration": "apps/backend/src/index.ts — add: import { registerFactoringQueueRoutes } from './dispatch/factoring-queue.routes.js'; await registerFactoringQueueRoutes(app);",
+    "frontend_route": "apps/frontend/src/routes/manifest.tsx — add /dispatch/factoring-queue → FactoringQueuePage",
+    "sidebar": "apps/frontend/src/components/layout/sidebar-config.ts — add Factoring Queue entry to dispatch flyout",
+    "route_manifest": "apps/frontend/src/router/route-manifest.ts — add reserve_tracker to FACTORING_TAB_PATH",
+    "packet_trigger": "apps/backend/src/dispatch/pod.routes.ts — call assembleFactoringPacket() on POD approval"
+  },
+  "forbidden_files_confirmed_untouched": [
+    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/pages/Dispatch.tsx"
+  ],
+  "factoring_status_state_machine": "NOT_FACTORED → PACKET_READY → SUBMITTED → ADVANCE_RECEIVED → RESERVE_RELEASED → CHARGED_BACK",
+  "no_new_financial_code": true
+}
