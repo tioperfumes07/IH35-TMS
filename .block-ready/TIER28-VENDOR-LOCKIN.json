@@ -1,0 +1,30 @@
+{
+  "block_id": "TIER28-VENDOR-LOCKIN",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "SCALE",
+  "task": "Block 28 — Vendor Lock-in Analysis: 11 vendors documented with severity scoring",
+  "branch": "feat/tier28-vendor-lockin",
+  "lane": "A",
+  "lane_position": "A28",
+  "stub_on_main": false,
+  "prior_state": "NET-NEW — no vendor lock-in analysis existed on main",
+  "details": [
+    "docs/runbooks/vendor-lockin-analysis.md: 11 vendors covered (Render, Neon, Samsara, QBO, Plaid, ComData, Relay, Sentry, OpenAI/Anthropic, Postmark, DNS)",
+    "Each vendor has: what we depend on, cost of leaving (eng hours), acceptable alternatives, mitigation, lock-in severity (Low/Medium/High), renewal/contract info, monthly cost",
+    "Key finding: Samsara is the only HIGH severity due to ELD hardware on every truck",
+    "Summary scorecard table included",
+    "Mitigation: IH35 owns all data in portable standard formats"
+  ],
+  "allowed_files": [
+    ".block-ready/TIER28-VENDOR-LOCKIN.json",
+    "docs/runbooks/vendor-lockin-analysis.md"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "acceptance": {
+    "document_covers_10_plus_vendors": true,
+    "severity_scoring_done": true,
+    "mitigation_noted_per_vendor": true
+  }
+}
