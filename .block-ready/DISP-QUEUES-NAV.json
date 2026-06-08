@@ -1,0 +1,18 @@
+{
+  "block_id": "DISP-QUEUES-NAV",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-disp-queues",
+  "is_read_only": false,
+  "branch": "feat/disp-queues-nav",
+  "phase": "DISPATCH",
+  "task": "DISP-QUEUES-NAV Block 2 — top-bar queue navigation with live count badges and Dispatch › view breadcrumb.",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    "apps/frontend/src/components/dispatch/DispatchSubnav.tsx",
+    "apps/frontend/src/pages/Dispatch.tsx",
+    ".block-ready/DISP-QUEUES-NAV.json"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
