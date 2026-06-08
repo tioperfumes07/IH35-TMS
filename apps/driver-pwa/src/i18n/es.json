@@ -101,7 +101,12 @@
     "make_model": "Marca / modelo",
     "source": "Fuente de asignación",
     "type": "Tipo",
-    "unassigned": "Sin asignar"
+    "unassigned": "Sin asignar",
+    "confirm_drop_title": "Confirmar entrega de equipo",
+    "confirm_pickup_title": "Confirmar recogida de equipo",
+    "location_status": "{{kind}} @ {{location}} · {{status}}",
+    "evidence_placeholder": "UUID de evidencia fotográfica",
+    "confirm_with_photo": "Confirmar con foto"
   },
   "profile": {
     "signed_in_as": "Sesión iniciada como",

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type TransferRow = {
   uuid: string;
@@ -16,25 +17,25 @@ type Props = {
 };
 
 export function IncomingTransferRequest({ operatingCompanyId, driverUuid, fetchJson }: Props) {
+  const { t } = useTranslation();
   const [evidenceUuid, setEvidenceUuid] = useState("");
   const [busy, setBusy] = useState(false);
 
-  /** PWA pending queries: direction: "outbound" | direction: "inbound" */
   const pendingQuery = (direction: "outbound" | "inbound") =>
     `/api/v1/dispatch/equipment-transfers/pending?operating_company_id=${operatingCompanyId}&driver=${driverUuid}&direction=${direction}`;
 
   const outbound = useQuery({
     queryKey: ["pwa", "transfer", "outbound", driverUuid],
-    queryFn: () => fetchJson(pendingQuery("outbound")) as Promise<{ data: TransferRow[] }>,
+    queryFn: () => fetchJson(pendingQuery("outbound")) as Promise<{ requests: TransferRow[] }>,
   });
 
   const inbound = useQuery({
     queryKey: ["pwa", "transfer", "inbound", driverUuid],
-    queryFn: () => fetchJson(pendingQuery("inbound")) as Promise<{ data: TransferRow[] }>,
+    queryFn: () => fetchJson(pendingQuery("inbound")) as Promise<{ requests: TransferRow[] }>,
   });
 
-  const pendingOutbound = outbound.data?.data?.[0];
-  const pendingInbound = inbound.data?.data?.[0];
+  const pendingOutbound = outbound.data?.requests?.[0];
+  const pendingInbound = inbound.data?.requests?.[0];
   const active = pendingOutbound ?? pendingInbound;
   const mode = pendingOutbound ? "outbound" : pendingInbound ? "inbound" : null;
 
@@ -68,19 +69,28 @@ export function IncomingTransferRequest({ operatingCompanyId, driverUuid, fetchJ
   return (
     <div className="rounded border border-amber-300 bg-amber-50 p-3" data-testid="incoming-transfer-request">
       <div className="font-semibold">
-        {mode === "outbound" ? "Confirm equipment drop-off" : "Confirm equipment pickup"}
+        {mode === "outbound" ? t("equipment.confirm_drop_title") : t("equipment.confirm_pickup_title")}
       </div>
       <div className="text-sm">
-        {active.equipment_kind} @ {active.transfer_location} · {active.status}
+        {t("equipment.location_status", {
+          kind: active.equipment_kind,
+          location: active.transfer_location,
+          status: active.status,
+        })}
       </div>
       <input
         className="mt-2 w-full rounded border px-2 py-1 text-sm"
-        placeholder="Photo evidence UUID"
+        placeholder={t("equipment.evidence_placeholder")}
         value={evidenceUuid}
         onChange={(e) => setEvidenceUuid(e.target.value)}
       />
-      <button type="button" className="mt-2 rounded bg-blue-700 px-3 py-1 text-sm text-white disabled:opacity-50" disabled={busy || !evidenceUuid} onClick={confirm}>
-        Confirm with photo
+      <button
+        type="button"
+        className="mt-2 rounded bg-blue-700 px-3 py-1 text-sm text-white disabled:opacity-50"
+        disabled={busy || !evidenceUuid}
+        onClick={confirm}
+      >
+        {t("equipment.confirm_with_photo")}
       </button>
     </div>
   );
