@@ -422,6 +422,12 @@ jobs:
       - name: Verify sidebar contract (21-item array, indexes locked)
         run: npm run verify:sidebar-contract
 
+      - name: Verify cash flow module contract
+        run: npm run verify:cashflow-module
+
+      - name: Verify insurance atomic financial writes
+        run: npm run verify:insurance-financial-writes
+
       - name: Verify sidebar routes resolve to real pages
         run: npm run verify:sidebar-route-resolution
 

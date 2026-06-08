@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 /**
  * verify-sidebar-contract.mjs
- * CI guard: asserts SIDEBAR_ITEM_IDS in sidebar-config.ts matches the locked 21-item array.
- * Fails with a descriptive error if length, specific indexes, or full order drift.
+ * CI guard: asserts SIDEBAR_ITEM_IDS in sidebar-config.ts matches the locked current array.
+ * Fails with a descriptive error if length, specific indexes, full order, or additive ids drift.
+ *
+ * TODO(driver-hub block): remove "driver-hub" from PENDING_IDS; set LOCKED_ORDER to the 22-item
+ *   array (driver-hub inserted at index 4 per LOCKED_23_TARGET).
+ * TODO(cash-flow block): remove "cash-flow" from PENDING_IDS; set LOCKED_ORDER to LOCKED_23_TARGET
+ *   (23 items); add cash-flow position assertions (between eld and accounting).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -13,6 +18,7 @@ const sidebarPath = path.join(
   "apps/frontend/src/components/layout/sidebar-config.ts"
 );
 
+/** Current locked sidebar order on main (21 items). Bump when PENDING_IDS entries land. */
 const LOCKED_ORDER = [
   "home",
   "maintenance",
@@ -37,14 +43,42 @@ const LOCKED_ORDER = [
   "help",
 ];
 
-const EXPECTED_LENGTH = 21;
-const EXPECTED_INSURANCE_INDEX = 7;
-const EXPECTED_FACTORING_INDEX = 9;
+/** Final owner-locked target (23 items). Additive check uses non-pending subset today. */
+const LOCKED_23_TARGET = [
+  "home",
+  "maintenance",
+  "fuel",
+  "dispatch",
+  "driver-hub",
+  "safety",
+  "drivers",
+  "insurance",
+  "eld",
+  "cash-flow",
+  "accounting",
+  "bank",
+  "factoring",
+  "vendors",
+  "customers",
+  "legal",
+  "form_425",
+  "drv_app",
+  "lists",
+  "reports",
+  "docs",
+  "users",
+  "help",
+];
+
+/** Sidebar ids not yet on main — excluded from additive presence check until their blocks ship. */
+const PENDING_IDS = new Set(["driver-hub", "cash-flow"]);
+
+const EXPECTED_LENGTH = LOCKED_ORDER.length;
+const EXPECTED_INSURANCE_INDEX = LOCKED_ORDER.indexOf("insurance");
+const EXPECTED_FACTORING_INDEX = LOCKED_ORDER.indexOf("factoring");
 
 const src = fs.readFileSync(sidebarPath, "utf8");
 
-// Extract SIDEBAR_ITEM_IDS array from the TypeScript source.
-// Matches: export const SIDEBAR_ITEM_IDS = [ ... ] as const;
 const arrayMatch = src.match(
   /export\s+const\s+SIDEBAR_ITEM_IDS\s*=\s*\[([\s\S]*?)\]\s*as\s+const/
 );
@@ -66,29 +100,26 @@ const rawItems = arrayMatch[1]
   .filter(Boolean);
 
 const errors = [];
+const rawSet = new Set(rawItems);
 
-// Assertion 1: length === 21
 if (rawItems.length !== EXPECTED_LENGTH) {
   errors.push(
     `length mismatch: found ${rawItems.length}, expected ${EXPECTED_LENGTH}`
   );
 }
 
-// Assertion 2: index 7 === 'insurance'
 if (rawItems[EXPECTED_INSURANCE_INDEX] !== "insurance") {
   errors.push(
     `index ${EXPECTED_INSURANCE_INDEX} mismatch: found "${rawItems[EXPECTED_INSURANCE_INDEX]}", expected "insurance"`
   );
 }
 
-// Assertion 3: index 9 === 'factoring'
 if (rawItems[EXPECTED_FACTORING_INDEX] !== "factoring") {
   errors.push(
     `index ${EXPECTED_FACTORING_INDEX} mismatch: found "${rawItems[EXPECTED_FACTORING_INDEX]}", expected "factoring"`
   );
 }
 
-// Assertion 4: full exact ordered array
 for (let i = 0; i < LOCKED_ORDER.length; i++) {
   if (rawItems[i] !== LOCKED_ORDER[i]) {
     errors.push(
@@ -96,25 +127,51 @@ for (let i = 0; i < LOCKED_ORDER.length; i++) {
     );
   }
 }
-// Also catch any extra items beyond locked length
+
 if (rawItems.length > LOCKED_ORDER.length) {
   for (let i = LOCKED_ORDER.length; i < rawItems.length; i++) {
     errors.push(`unexpected extra item at position ${i}: "${rawItems[i]}"`);
   }
 }
 
+for (const id of LOCKED_23_TARGET) {
+  if (PENDING_IDS.has(id)) continue;
+  if (!rawSet.has(id)) {
+    errors.push(
+      `additive-only violation: locked id "${id}" is missing from SIDEBAR_ITEM_IDS (never remove locked sidebar entries)`
+    );
+  }
+}
+
+if (!PENDING_IDS.has("cash-flow") && rawSet.has("cash-flow")) {
+  const eldIdx = rawItems.indexOf("eld");
+  const cashFlowIdx = rawItems.indexOf("cash-flow");
+  const accountingIdx = rawItems.indexOf("accounting");
+  if (eldIdx === -1 || cashFlowIdx === -1 || accountingIdx === -1) {
+    errors.push("cash-flow position: eld, cash-flow, and accounting must all be present");
+  } else if (cashFlowIdx !== eldIdx + 1 || accountingIdx !== cashFlowIdx + 1) {
+    errors.push(
+      `cash-flow position: expected eld → cash-flow → accounting; found eld@${eldIdx}, cash-flow@${cashFlowIdx}, accounting@${accountingIdx}`
+    );
+  }
+}
+
 if (errors.length > 0) {
-  console.error("verify-sidebar-contract FAIL — SIDEBAR_ITEM_IDS has drifted from the locked 21-item array:");
+  console.error(
+    `verify-sidebar-contract FAIL — SIDEBAR_ITEM_IDS has drifted from the locked ${EXPECTED_LENGTH}-item array:`
+  );
   for (const e of errors) {
     console.error(`  • ${e}`);
   }
-  console.error(
-    "\nLocked array: " + JSON.stringify(LOCKED_ORDER)
-  );
+  console.error("\nLocked array: " + JSON.stringify(LOCKED_ORDER));
+  console.error("23-target:    " + JSON.stringify(LOCKED_23_TARGET));
   console.error("Found array:  " + JSON.stringify(rawItems));
   process.exit(1);
 }
 
 console.log(
   `verify-sidebar-contract OK — SIDEBAR_ITEM_IDS has ${rawItems.length} items, insurance at index ${EXPECTED_INSURANCE_INDEX}, factoring at index ${EXPECTED_FACTORING_INDEX}.`
+);
+console.log(
+  `  additive check: ${LOCKED_23_TARGET.length - PENDING_IDS.size}/${LOCKED_23_TARGET.length} locked ids present (${PENDING_IDS.size} pending: ${[...PENDING_IDS].join(", ")})`
 );
