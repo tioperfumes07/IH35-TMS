@@ -346,6 +346,8 @@ import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js"
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
 import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
 import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-detector.js";
+import { registerBookingGapRoutes } from "./dispatch/analytics/booking-gap.routes.js";
+import { initializeBookingGapAggregatorWorker, stopBookingGapAggregatorWorker } from "./jobs/booking-gap-aggregator-worker.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -401,6 +403,7 @@ async function shutdown(signal: string) {
     stopDailyTaskAlertsCron();
     stopTodaysAttentionWorker();
     stopAdminJobsWorker();
+    stopBookingGapAggregatorWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
   }
@@ -592,6 +595,7 @@ async function main() {
   await registerDispatchPlannerRoutes(app);
   await registerDispatchDetentionRoutes(app);
   await registerLayoverRoutes(app);
+  await registerBookingGapRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
   await registerDispatchPodBolRoutes(app);
@@ -1036,6 +1040,13 @@ async function main() {
     app.log.info("[STARTUP] admin-jobs-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] admin-jobs-worker failed");
+  }
+
+  try {
+    initializeBookingGapAggregatorWorker(app);
+    app.log.info("[STARTUP] booking-gap aggregator worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] booking-gap aggregator worker failed");
   }
 
   try {
