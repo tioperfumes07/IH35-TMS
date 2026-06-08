@@ -2,8 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
+import { MobileOptimizedTable } from "../../../components/shared/MobileOptimizedTable";
 
 type Props = { operatingCompanyId: string };
+
+type AlertRow = Record<string, unknown>;
 
 export function AnomalyDashboard({ operatingCompanyId }: Props) {
   const qc = useQueryClient();
@@ -11,7 +14,7 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
   const q = useQuery({
     queryKey: ["anomaly-alerts", operatingCompanyId, severity],
     enabled: Boolean(operatingCompanyId),
-    queryFn: () => apiRequest<{ alerts: Array<Record<string, unknown>> }>(
+    queryFn: () => apiRequest<{ alerts: AlertRow[] }>(
       `/api/safety/anomaly/alerts?operating_company_id=${encodeURIComponent(operatingCompanyId)}&status=open${severity ? `&severity=${severity}` : ""}`
     ),
   });
@@ -24,6 +27,7 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
       apiRequest(`/api/safety/anomaly/alerts/${uuid}/resolve`, { method: "PATCH", body: JSON.stringify({ status: "resolved", notes }) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["anomaly-alerts"] }),
   });
+  const rows = q.data?.alerts ?? [];
   return (
     <div className="space-y-3 p-3" data-testid="anomaly-dashboard">
       <div className="flex items-center gap-2">
@@ -35,24 +39,26 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
           <option value="warn">Warn</option>
         </select>
       </div>
-      <div className="overflow-x-auto rounded border">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50"><tr><th className="p-2 text-left">Detected</th><th className="p-2 text-left">Severity</th><th className="p-2 text-left">Evidence</th><th className="p-2">Actions</th></tr></thead>
-          <tbody>
-            {(q.data?.alerts ?? []).map((row) => (
-              <tr key={String(row.uuid)} className="border-t">
-                <td className="p-2">{String(row.detected_at ?? "")}</td>
-                <td className="p-2 font-semibold">{String(row.severity ?? "")}</td>
-                <td className="p-2 font-mono text-xs">{JSON.stringify(row.evidence ?? {})}</td>
-                <td className="p-2 space-x-1">
-                  <Button type="button" variant="secondary" onClick={() => ack.mutate(String(row.uuid))}>Ack</Button>
-                  <Button type="button" onClick={() => resolve.mutate({ uuid: String(row.uuid), notes: "Resolved from dashboard" })}>Resolve</Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <MobileOptimizedTable
+        rows={rows}
+        rowKey={(row) => String(row.uuid)}
+        emptyMessage="No open anomaly alerts"
+        columns={[
+          { key: "detected_at", header: "Detected", render: (row) => String(row.detected_at ?? "") },
+          { key: "severity", header: "Severity", render: (row) => <span className="font-semibold">{String(row.severity ?? "")}</span> },
+          { key: "evidence", header: "Evidence", render: (row) => <span className="font-mono text-xs">{JSON.stringify(row.evidence ?? {})}</span> },
+          {
+            key: "actions",
+            header: "Actions",
+            render: (row) => (
+              <div className="flex flex-wrap gap-1">
+                <Button type="button" variant="secondary" onClick={() => ack.mutate(String(row.uuid))}>Ack</Button>
+                <Button type="button" onClick={() => resolve.mutate({ uuid: String(row.uuid), notes: "Resolved from dashboard" })}>Resolve</Button>
+              </div>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }
