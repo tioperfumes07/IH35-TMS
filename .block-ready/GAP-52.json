@@ -1,0 +1,29 @@
+{
+  "block_id": "GAP-52",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap52",
+  "branch": "feature/gap-52-driver-qbo-vendor",
+  "phase": "GAP-CRITICAL",
+  "task": "CAP-15 Driver QBO vendor mapping integrity",
+  "allowed_files": [
+    ".block-ready/GAP-52.json",
+    "db/migrations/202606080213_driver_vendor_integrity_findings.sql",
+    "apps/backend/src/integrations/integrity-monitors/driver-vendor-mapping.ts",
+    "apps/backend/src/integrations/integrity-monitors/driver-vendor-mapping.routes.ts",
+    "apps/backend/src/integrations/integrity-monitors/__tests__/mapping.test.ts",
+    "apps/backend/src/jobs/driver-vendor-mapping-worker.ts",
+    "apps/frontend/src/pages/safety/integrity-reports/DriverVendorMappingTab.tsx",
+    "apps/frontend/src/pages/safety/tabs/IntegrityReportsTab.tsx",
+    "scripts/verify-driver-vendor-mapping-monitor.mjs",
+    "docs/specs/gap-52-driver-vendor-mapping-integrity.md",
+    "apps/backend/src/index.ts",
+    "package.json",
+    "scripts/lib/migration-checksum-overrides.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:driver-vendor-mapping"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
