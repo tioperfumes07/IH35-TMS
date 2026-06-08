@@ -878,6 +878,9 @@ jobs:
       - name: verify:qbo-shared-rate-limit-ceiling
         run: npm run verify:qbo-shared-rate-limit-ceiling
 
+      - name: verify:global-sort-rule
+        run: npm run verify:global-sort-rule
+
       - name: verify:redis-resilient-config
         run: npm run verify:redis-resilient-config
 

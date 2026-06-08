@@ -1,0 +1,33 @@
+{
+  "block_id": "GLOBAL-SORT-RULE",
+  "status": "DOCS+CI",
+  "classification": "ADDITIVE",
+  "phase": "docs+ci-guard",
+  "task": "Lock Global Sort Rule as a UI contract (docs/specs/GLOBAL-SORT-RULE.md) and wire CI guard (scripts/verify-global-sort-rule.mjs) that warns on pre-rule non-compliant columns and hard-fails on post-rule violations. No app code changed.",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "branch": "feat/global-sort-rule",
+  "allowed_files": [
+    ".block-ready/GLOBAL-SORT-RULE.json",
+    "docs/specs/GLOBAL-SORT-RULE.md",
+    "scripts/verify-global-sort-rule.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:global-sort-rule"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "rule_effective_date": "2026-06-07",
+  "non_compliant_columns_at_lock": [
+    {
+      "file": "apps/frontend/src/hooks/useCatalogQuery.ts",
+      "line": 95,
+      "key": "description",
+      "label": "Description",
+      "violation": "sortable: false",
+      "status": "pre-rule-warn"
+    }
+  ]
+}
