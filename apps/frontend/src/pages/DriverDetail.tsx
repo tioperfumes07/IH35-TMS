@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { AuditHistoryTab } from "../components/drivers/AuditHistoryTab";
+import { LoadHistoryTab } from "../components/drivers/LoadHistoryTab";
 import { EarningsTab } from "../components/drivers/EarningsTab";
 import { useAuth } from "../auth/useAuth";
 import { listEquipmentTypes, listMexicoStates, listUsStates } from "../api/catalogs";
@@ -58,6 +59,7 @@ const tabs = [
   "Audit History",
   "ELD Edits",
   "Legal Matters",
+  "Load History",
 ] as const;
 type DriverTab = (typeof tabs)[number];
 
@@ -1278,6 +1280,10 @@ export function DriverDetailPage() {
 
       {activeTab === "Audit History" && driverQuery.data?.operating_company_id ? (
         <AuditHistoryTab driverId={id} operatingCompanyId={String(driverQuery.data.operating_company_id)} />
+      ) : null}
+
+      {activeTab === "Load History" && driverQuery.data?.operating_company_id ? (
+        <LoadHistoryTab driverId={id} operatingCompanyId={String(driverQuery.data.operating_company_id)} />
       ) : null}
 
       {activeTab === "ELD Edits" && driverQuery.data?.operating_company_id ? (
