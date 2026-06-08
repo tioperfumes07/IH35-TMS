@@ -1,11 +1,30 @@
 {
-  "_comment": "DB-gated verify:* scripts: verify:db:start, verify:db:stop, verify:db:reset, verify:pre-commit, verify:migration-application-consistency",
+  "_comment": "DB-gated verify:* scripts: require DATABASE_URL; skipped in local block-ready C5, still enforced in CI",
   "db_gated_verify_scripts": [
+    "verify:a17-deprecation-comments",
+    "verify:aggregate-schema-grants",
+    "verify:coa-canonical",
+    "verify:coa-roles",
+    "verify:content-drift-check",
+    "verify:db:reset",
     "verify:db:start",
     "verify:db:stop",
-    "verify:db:reset",
+    "verify:driver-repair-guard",
+    "verify:equipment-types-no-collision",
+    "verify:launch-toggle-audit-trail",
+    "verify:live-db-schema-script-wiring",
+    "verify:migration-application-consistency",
+    "verify:migration-empty-db-safe",
+    "verify:migration-idempotency",
+    "verify:migration-no-unknown-roles",
+    "verify:no-cross-carrier-data-leak",
+    "verify:no-orphan-migration-ledger-entries",
+    "verify:no-spurious-duplicates",
+    "verify:no-test-seed-in-prod-listings",
+    "verify:no-test-units-in-prod",
+    "verify:no-unledgered-migrations",
     "verify:pre-commit",
-    "verify:migration-application-consistency"
+    "verify:referenced-tables-exist"
   ],
   "block_ready_c5_skip_after_c4": [
     "verify:arch-design"

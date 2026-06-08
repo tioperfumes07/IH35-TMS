@@ -1,0 +1,76 @@
+{
+  "block_id": "ACCT-QBOPAR-01-CATALOG-BACKEND",
+  "block": "ACCT-QBOPAR-01",
+  "title": "Account Type & Detail Type Catalog (backend)",
+  "phase": "Accounting — QBO Parity",
+  "task": "QBO-parity account type & detail type catalog: migration + seed (15 types / 5 groups) + GET /api/v1/accounting/account-type-catalog route.",
+  "status": "ready",
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready/ACCT-QBOPAR-01-CATALOG-BACKEND.json",
+    "apps/backend/src/__tests__/migrations/202606080010-account-type-detail-type-catalog.test.ts",
+    "apps/backend/src/audit/crud-audit.ts",
+    "apps/backend/src/catalogs/accounting/__tests__/account-type-catalog.routes.test.ts",
+    "apps/backend/src/catalogs/accounting/account-type-catalog.routes.ts",
+    "apps/backend/src/catalogs/accounting/index.ts",
+    "apps/driver-pwa/src/i18n/en.json",
+    "apps/driver-pwa/src/i18n/es.json",
+    "apps/frontend/src/api/accounting.ts",
+    "apps/frontend/src/api/driver-messages.ts",
+    "apps/frontend/src/api/loads.ts",
+    "apps/frontend/src/api/maintenance.ts",
+    "apps/frontend/src/components/dispatch/CustomsTimePill.tsx",
+    "apps/frontend/src/components/dispatchers/DispatcherPerformanceCard.tsx",
+    "apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx",
+    "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx",
+    "apps/frontend/src/pages/reports/BookingGapReport.tsx",
+    "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "db/migrations/202606080010_account_type_detail_type_catalog.sql",
+    "db/migrations/202606080112_border_crossing_events_rls.sql",
+    "docs/specs/ACCOUNT-TYPE-DETAIL-TYPE-CATALOG.md",
+    "scripts/block-ready-agent-manifest.mjs",
+    "scripts/nav-integrity-allowlist.json",
+    "scripts/verify-meta.json"
+  ],
+  "extra_gates": [],
+  "runtime_path": "both",
+  "db_required": true,
+  "guard_required": false,
+  "migration": {
+    "filename": "202606080010_account_type_detail_type_catalog.sql",
+    "path": "db/migrations/202606080010_account_type_detail_type_catalog.sql",
+    "timestamp": "202606080010",
+    "tables_created": [
+      "catalogs.account_types",
+      "catalogs.detail_types"
+    ],
+    "seed": "15 account types / 5 groups + full QBO detail types (idempotent ON CONFLICT DO NOTHING)"
+  },
+  "endpoint": {
+    "method": "GET",
+    "path": "/api/v1/accounting/account-type-catalog",
+    "route_file": "apps/backend/src/catalogs/accounting/account-type-catalog.routes.ts",
+    "wired_via": "apps/backend/src/catalogs/accounting/index.ts"
+  },
+  "tests": [
+    "apps/backend/src/__tests__/migrations/202606080010-account-type-detail-type-catalog.test.ts",
+    "apps/backend/src/catalogs/accounting/__tests__/account-type-catalog.routes.test.ts"
+  ],
+  "spec": "docs/specs/ACCOUNT-TYPE-DETAIL-TYPE-CATALOG.md",
+  "grants": [
+    "GRANT USAGE ON SCHEMA catalogs TO ih35_app",
+    "GRANT SELECT, INSERT, UPDATE ON catalogs.account_types TO ih35_app",
+    "GRANT SELECT, INSERT, UPDATE ON catalogs.detail_types TO ih35_app"
+  ],
+  "acceptance": {
+    "ci_gates": [
+      "build:backend",
+      "verify:arch-design",
+      "verify:migration-filenames"
+    ],
+    "neon_check": "SELECT has_table_privilege('ih35_app','catalogs.account_types','SELECT'), has_table_privilege('ih35_app','catalogs.detail_types','SELECT')",
+    "merge_gate": "HOLD — requires GO-CA-01 from Jorge before squash-merge"
+  },
+  "sha": null
+}

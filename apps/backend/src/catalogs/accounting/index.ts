@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createCatalogRoutes as createCompanyScopedCatalogRoutes } from "../fuel/factory.js";
+import { registerAccountTypeCatalogRoutes } from "./account-type-catalog.routes.js";
 import {
   registerJournalEntryTypesReadOnlyRoutes,
   registerLegacyAccountingCatalogRoutes,
@@ -232,4 +233,6 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
     displayName: "Currency Codes",
     codeRegex: accountingCodeRegex,
   });
+
+  registerAccountTypeCatalogRoutes(app);
 }

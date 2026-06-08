@@ -1473,6 +1473,8 @@ export type RecurringBillLineItem = {
   description: string;
   amount: number;
   account_id?: string | null;
+  memo?: string | null;
+  class_id?: string | null;
 };
 
 export type RecurringBillTemplate = {

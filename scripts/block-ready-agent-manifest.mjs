@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 
 export const AGENT_MANIFEST_REGISTRY = Object.freeze({
   "1": ".block-ready.agent1.json",
@@ -44,6 +45,24 @@ function resolvePerBlockManifest(worktreePath, legacyManifestPath) {
     if (fs.existsSync(candidate)) {
       return path.relative(worktreePath, candidate);
     }
+  }
+
+  // Priority 1b: derive block ID from the current git branch name
+  // Supports gap-N, gap-NAMED, and general branch→block-id mappings like
+  // acct-qbopar-01-catalog-backend → ACCT-QBOPAR-01-CATALOG-BACKEND
+  try {
+    const branch = execSync("git branch --show-current", {
+      cwd: worktreePath, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    if (branch) {
+      const branchBlockId = branch.replace(/[^a-zA-Z0-9-]/g, "-").toUpperCase();
+      const candidate = path.join(blockReadyDir, `${branchBlockId}.json`);
+      if (fs.existsSync(candidate)) {
+        return path.relative(worktreePath, candidate);
+      }
+    }
+  } catch {
+    // not a git repo or no branch; fall through
   }
 
   // Priority 2: derive block_id from legacy manifest file

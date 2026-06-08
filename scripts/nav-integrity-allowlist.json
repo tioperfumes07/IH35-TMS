@@ -103,6 +103,14 @@
       "reason": "WF-047 dual-confirm transfer queue (P5-T21); fleet module subnav deferred"
     },
     {
+      "path": "/dispatch/borders/geofence-history",
+      "reason": "gap-26 border crossing history — deep-link from Dispatch flyout; full subnav deferred Block 43"
+    },
+    {
+      "path": "/dispatch/layovers/driver/:driverUuid",
+      "reason": "gap-28 driver layover history — deep-link from Driver profile; subnav deferred Block 43"
+    },
+    {
       "path": "/dispatch/loads",
       "reason": "Legacy alias redirect \u2192 /dispatch?view=loads (B21-D1)"
     },
