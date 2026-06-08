@@ -101,9 +101,9 @@ contains(".block-ready/GAP-72.json", blockManifest, [
   { pattern: /verify:customer-relationship-score/, label: "verify gate in manifest" },
 ]);
 
-const rootManifest = read(".block-ready.json");
-contains(".block-ready.json", rootManifest, [
-  { pattern: /"block_id": "GAP-72"/, label: "root block manifest id" },
+const branchManifest = read(".block-ready/FEATURE-GAP-72-CUSTOMER-SCORE.json");
+contains(".block-ready/FEATURE-GAP-72-CUSTOMER-SCORE.json", branchManifest, [
+  { pattern: /"block_id": "GAP-72"/, label: "branch block manifest id" },
 ]);
 
 const pkg = read("package.json");
