@@ -411,6 +411,8 @@
     "verify:maint-pm": "node scripts/verify-maint-pm.mjs",
     "verify:insurance-schema": "node scripts/verify-insurance-schema.mjs",
     "verify:insurance-policy-create-button": "node scripts/verify-insurance-policy-create-button.mjs",
+    "verify:insurance-creator": "node scripts/verify-insurance-creator.mjs",
+    "verify:sidebar-contract": "node scripts/verify-sidebar-contract.mjs",
     "verify:dispatch-insurance-coverage-gate": "node scripts/verify-dispatch-insurance-coverage-gate.mjs",
     "verify:dispatch-coming-soon-triage": "node scripts/verify-dispatch-coming-soon-triage.mjs",
     "verify:maint-nav-count-reconcile": "node scripts/verify-maint-nav-count-reconcile.mjs",

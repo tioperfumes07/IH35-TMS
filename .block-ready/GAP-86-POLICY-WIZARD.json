@@ -3,8 +3,8 @@
   "gap": "GAP-86",
   "branch": "feat/insurance-policy-wizard",
   "phase": "GAP-HIGH",
-  "task": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCreateWizard.tsx alongside existing PolicyCreateModal.tsx, single atomic transaction wrapping dispersal math + generate-bills, cost-per-vehicle display, migration 202606080120.",
-  "financial_rule": "math via dispersal.service.ts + accounting/allocation.ts — NO NEW FINANCIAL CODE",
+  "task": "Insurance policy create wizard: 4-step wizard (Policy Details \u2192 Units \u2192 Schedule Preview \u2192 Confirm), additive PolicyCreateWizard.tsx alongside existing PolicyCreateModal.tsx, single atomic transaction wrapping dispersal math + generate-bills, cost-per-vehicle display, migration 202606080120.",
+  "financial_rule": "math via dispersal.service.ts + accounting/allocation.ts \u2014 NO NEW FINANCIAL CODE",
   "runtime_path": "both",
   "allowed_files": [
     ".block-ready/GAP-86-POLICY-WIZARD.json",
@@ -44,7 +44,8 @@
     "scripts/pass-8-shared.mjs",
     "scripts/verify-insurance-creator.mjs",
     "scripts/verify-insurance-policy-create-button.mjs",
-    "scripts/verify-sidebar-contract.mjs"
+    "scripts/verify-sidebar-contract.mjs",
+    "package.json"
   ],
   "preview_provided": false,
   "extra_gates": [
@@ -54,7 +55,7 @@
   "db_required": true,
   "guard_required": false,
   "acceptance": [
-    "migration 202606080120 applied — allocation_method on insurance.policy, cost_per_month_cents on insurance.policy_unit",
+    "migration 202606080120 applied \u2014 allocation_method on insurance.policy, cost_per_month_cents on insurance.policy_unit",
     "POST /api/v1/insurance/policies/with-bills creates policy + N bills atomically",
     "PolicyCreateWizard.tsx mounts via '+ Create policy' button in PoliciesList",
     "verify:insurance-policy-create-button exits 0",
