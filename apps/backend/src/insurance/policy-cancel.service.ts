@@ -284,7 +284,7 @@ export async function cancelInsurancePolicy(input: CancelPolicyInput): Promise<C
           deterministic_memo: refundMemo(pre.policy.id, pre.policy.policy_number),
           reason: refundSkippedReason,
         },
-        "critical",
+        "warning",
         "BLOCK-F-REFUND-COA-UNMAPPED"
       );
     }
