@@ -16,7 +16,8 @@
   "allowed_files": [
     ".block-ready.agent1.json",
     ".block-ready/DISP-KANBAN-STATES.json",
-    "apps/frontend/src/components/dispatch/DispatchKanban.tsx"
+    "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+    "docs/lockdown/00_LOCKED_DECISIONS.md"
   ],
   "runtime_path": "src",
   "db_required": false,
