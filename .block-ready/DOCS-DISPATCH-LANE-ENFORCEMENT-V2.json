@@ -1,0 +1,18 @@
+{
+  "block_id": "DOCS-DISPATCH-LANE-ENFORCEMENT-V2",
+  "branch": "docs/dispatch-lane-enforcement-v2",
+  "phase": "docs",
+  "task": "Lock dispatch lane enforcement document — allowed_files per block, disjoint-lane rules, stop-the-line gate policy.",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    "docs/dispatch/DISPATCH-LANE-ENFORCEMENT.md",
+    ".block-ready/DOCS-DISPATCH-LANE-ENFORCEMENT-V2.json"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "both",
+  "db_required": false,
+  "guard_required": false
+}
