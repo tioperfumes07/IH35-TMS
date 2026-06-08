@@ -329,6 +329,9 @@ jobs:
       - name: Verify equipment dual-confirm transfer contract
         run: npm run verify:equipment-transfer-dual-confirm
 
+      - name: Verify GAP-43 scheduled reports contract
+        run: npm run verify:scheduled-reports
+
       - name: Verify Samsara cache tier coverage contract
         run: npm run verify:cache-tier-coverage
 

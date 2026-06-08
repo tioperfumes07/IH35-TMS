@@ -173,7 +173,7 @@ import { LaneProfitabilityPage } from "../pages/reports/LaneProfitabilityPage";
 import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage";
 import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
 import { DispatchMarginPage } from "../pages/reports/DispatchMarginPage";
-import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
+import { SubscriptionManager } from "../pages/reports/SubscriptionManager";
 import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
 import { GeofenceReconciliationReport } from "../pages/reports/GeofenceReconciliationReport";
 import BookingGapReport from "../pages/reports/BookingGapReport";
@@ -2319,7 +2319,7 @@ export const ROUTES = React.Children.toArray(
           path="/reports/scheduled"
           element={
             <ProtectedRoute>
-              <ScheduledReportsPage />
+              <SubscriptionManager />
             </ProtectedRoute>
           }
         />
