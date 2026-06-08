@@ -947,6 +947,9 @@ jobs:
       - name: Verify driver repair guard
         run: npm run verify:driver-repair-guard
 
+      - name: Verify load test baseline guard
+        run: npm run verify:load-test-baseline
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
