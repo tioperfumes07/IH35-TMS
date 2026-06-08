@@ -22,14 +22,14 @@ export function EquipmentTransferModal({ operatingCompanyId, onCreated, onClose 
     try {
       const res = await apiRequest<{ uuid: string }>("/api/v1/dispatch/equipment-transfers/initiate", {
         method: "POST",
-        body: JSON.stringify({
+        body: {
           operating_company_id: operatingCompanyId,
           equipment_uuid: equipmentUuid,
           equipment_kind: kind,
           from_driver_uuid: fromDriver,
           to_driver_uuid: toDriver,
           transfer_location: location,
-        }),
+        },
       });
       onCreated?.(res.uuid);
       onClose?.();
@@ -42,7 +42,7 @@ export function EquipmentTransferModal({ operatingCompanyId, onCreated, onClose 
 
   return (
     <div className="rounded border bg-white p-4 shadow-lg" data-testid="equipment-transfer-modal">
-      <h3 className="mb-3 text-lg font-semibold">Initiate equipment transfer (WF-047)</h3>
+      <h3 className="mb-3 text-lg font-semibold">Initiate equipment transfer</h3>
       <div className="grid gap-2">
         <select className="rounded border px-2 py-1" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
           <option value="truck">Truck</option>

@@ -6,6 +6,7 @@
   "task": "G14 Equipment dual-confirm transfer (WF-047)",
   "allowed_files": [
     ".block-ready/GAP-37.json",
+    ".block-ready/FEATURE-GAP-37-EQUIPMENT-TRANSFER.json",
     ".block-ready.json",
     "db/migrations/202606080204_equipment_transfer_requests.sql",
     "apps/backend/src/dispatch/equipment-transfer/request.service.ts",
