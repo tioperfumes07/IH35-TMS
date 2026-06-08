@@ -1,0 +1,26 @@
+{
+  "block_id": "LOCKDOWN-ENFORCEMENT-GUARDS",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-guards",
+  "is_read_only": true,
+  "branch": "feat/lockdown-enforcement-guards",
+  "phase": "LOCKDOWN",
+  "task": "Anti-regression CI guards — sidebar 23-target additive check, cash-flow module pending gate, insurance atomic financial writes.",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    "scripts/verify-sidebar-contract.mjs",
+    "scripts/verify-cashflow-module.mjs",
+    "scripts/verify-insurance-financial-writes.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
+    "docs/lockdown/00_LOCKED_DECISIONS.md",
+    ".block-ready/LOCKDOWN-ENFORCEMENT-GUARDS.json"
+  ],
+  "extra_gates": [
+    "verify:sidebar-contract",
+    "verify:cashflow-module",
+    "verify:insurance-financial-writes"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
