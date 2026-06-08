@@ -1,0 +1,31 @@
+{
+  "block_id": "CLOSURE-24-OPERATOR-ONBOARDING",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-closure24",
+  "branch": "feat/closure-24-onboarding",
+  "phase": "CLOSURE",
+  "task": "Operator onboarding flow + sample data + walkthroughs",
+  "agent": "1",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/CLOSURE-24-OPERATOR-ONBOARDING.json",
+    "apps/frontend/src/pages/onboarding/OnboardingWizard.tsx",
+    "apps/frontend/src/pages/onboarding/Step1Company.tsx",
+    "apps/frontend/src/pages/onboarding/Step2QBOConnect.tsx",
+    "apps/frontend/src/pages/onboarding/Step3SamsaraConnect.tsx",
+    "apps/frontend/src/pages/onboarding/Step4PlaidConnect.tsx",
+    "apps/frontend/src/pages/onboarding/Step5InviteTeam.tsx",
+    "apps/frontend/src/pages/onboarding/Step6SampleData.tsx",
+    "apps/backend/src/onboarding/state.routes.ts",
+    "apps/backend/src/onboarding/seed-sample-data.ts",
+    "apps/backend/src/migrations/0403-onboarding-state.sql",
+    "docs/walkthroughs/NEW-USER-DAY-1.md",
+    "docs/walkthroughs/NEW-USER-WEEK-1.md",
+    "scripts/verify-onboarding-flow-completes.mjs",
+    "scripts/verify-closure-24-onboarding-artifacts.mjs",
+    "package.json"
+  ],
+  "extra_gates": ["verify:closure-24-onboarding-artifacts"],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
