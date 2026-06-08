@@ -50,6 +50,7 @@ import { PortalLoadDetailPage } from "../portal/PortalLoadDetailPage";
 import { PortalProfilePage } from "../portal/PortalProfilePage";
 import { PortalRouteGuard } from "../portal/PortalRouteGuard";
 import { FuelPlannerHomePage } from "../pages/fuel/FuelPlannerHome";
+import { FraudAlertsListPage } from "../pages/fuel/fraud-alerts/FraudAlertsList";
 import { BankingHomePage } from "../pages/banking/BankingHome";
 import { TransfersListPage } from "../pages/banking/TransfersListPage";
 import { BankingObligationReconcilePage } from "../pages/banking/BankingObligationReconcilePage";
@@ -871,6 +872,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FuelPlannerHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/fraud-alerts"
+          element={
+            <ProtectedRoute>
+              <FraudAlertsListPage />
             </ProtectedRoute>
           }
         />
