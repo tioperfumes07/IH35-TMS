@@ -1,0 +1,28 @@
+{
+  "block_id": "CLOSURE-13-USMCA-JULY-LAUNCH",
+  "branch": "feat/closure-13-usmca",
+  "phase": "CLOSURE",
+  "task": "USMCA July 2026 launch activation runbook + toggle sequence",
+  "agent": "1",
+  "allowed_files": [
+    "docs/runbooks/USMCA-JULY-2026-LAUNCH-RUNBOOK.md",
+    "docs/runbooks/USMCA-ROLLBACK-PLAN.md",
+    "apps/backend/src/usmca/activation/activation.routes.ts",
+    "apps/backend/src/usmca/activation/activation-state-machine.ts",
+    "apps/backend/src/usmca/activation/activation.test.ts",
+    "apps/frontend/src/pages/admin/USMCAActivationPanel.tsx",
+    "apps/frontend/src/pages/admin/AdminPage.tsx",
+    "apps/backend/src/migrations/202606080244-usmca-activation-state.sql",
+    "apps/backend/src/qbo-subaccount-setup/usmca-bootstrap.ts",
+    "data/training/usmca-driver-onboarding-EN.md",
+    "data/training/usmca-driver-onboarding-ES.md",
+    "scripts/verify-usmca-launch-readiness.mjs",
+    ".block-ready/CLOSURE-13-USMCA-JULY-LAUNCH.json",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": ["verify:usmca-launch-readiness"],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
