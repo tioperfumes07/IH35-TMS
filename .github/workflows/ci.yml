@@ -924,6 +924,18 @@ jobs:
       - name: verify:deep-audit-a-equipment-assignments
         run: npm run verify:deep-audit-a-equipment-assignments
 
+      - name: verify:deep-audit-c-reports
+        run: npm run verify:deep-audit-c-reports
+
+      - name: verify:deep-audit-c-workflow-wo-to-bill-to-qbo
+        run: npm run verify:deep-audit-c-workflow-wo-to-bill-to-qbo
+
+      - name: verify:deep-audit-c-workflow-load-to-invoice-to-factored
+        run: npm run verify:deep-audit-c-workflow-load-to-invoice-to-factored
+
+      - name: verify:deep-audit-c-workflow-settlement-to-payroll
+        run: npm run verify:deep-audit-c-workflow-settlement-to-payroll
+
       - name: verify:customer-detail-route
         run: npm run verify:customer-detail-route
 
