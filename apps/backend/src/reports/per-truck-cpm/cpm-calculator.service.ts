@@ -76,33 +76,57 @@ export async function calculatePerTruckCpm(
         GROUP BY wo.unit_id
       ),
       insurance AS (
-        SELECT ipu.unit_id,
+        SELECT u.id AS unit_id,
                COALESCE(
                  ROUND(
-                   (COALESCE(ip.annual_premium_cents, 0)::numeric / 365.0)
-                   * GREATEST(1, ($3::date - $2::date + 1))
+                   SUM(
+                     (ip.total_premium_cents::numeric / GREATEST(pu_cnt.n, 1) / 365.0)
+                     * GREATEST(1, ($3::date - $2::date + 1))
+                   )
                  ),
                  0
                )::bigint AS cents
-        FROM insurance.insurance_policy_units ipu
-        JOIN insurance.insurance_policies ip ON ip.id = ipu.policy_id
-        WHERE ip.operating_company_id = $1::uuid
-          AND ip.cancelled_at IS NULL
-        GROUP BY ipu.unit_id
+        FROM insurance.policy ip
+        JOIN insurance.policy_unit ipu
+          ON ipu.policy_id = ip.id
+         AND ipu.tenant_id = ip.tenant_id
+         AND ipu.removed_at IS NULL
+        JOIN LATERAL (
+          SELECT COUNT(*)::int AS n
+          FROM insurance.policy_unit x
+          WHERE x.policy_id = ip.id
+            AND x.tenant_id = ip.tenant_id
+            AND x.removed_at IS NULL
+        ) pu_cnt ON true
+        JOIN mdata.assets a
+          ON a.id = ipu.asset_id
+         AND a.tenant_id = ip.tenant_id
+        JOIN mdata.units u
+          ON u.unit_number = a.unit_code
+         AND u.deactivated_at IS NULL
+         AND (
+           u.owner_company_id = ip.tenant_id
+           OR u.currently_leased_to_company_id = ip.tenant_id
+         )
+        WHERE ip.tenant_id = $1::uuid
+          AND ip.status = 'active'
+        GROUP BY u.id
       ),
       permits AS (
-        SELECT up.unit_id,
+        SELECT up.unit_uuid AS unit_id,
                COALESCE(
                  ROUND(
-                   (COALESCE(up.annual_cost_cents, 0)::numeric / 365.0)
-                   * GREATEST(1, ($3::date - $2::date + 1))
+                   SUM(
+                     (COALESCE(up.cost, 0)::numeric * 100 / 365.0)
+                     * GREATEST(1, ($3::date - $2::date + 1))
+                   )
                  ),
                  0
                )::bigint AS cents
         FROM master_data.unit_permits up
         WHERE up.operating_company_id = $1::uuid
           AND up.deleted_at IS NULL
-        GROUP BY up.unit_id
+        GROUP BY up.unit_uuid
       )
       SELECT
         u.id::text AS unit_uuid,

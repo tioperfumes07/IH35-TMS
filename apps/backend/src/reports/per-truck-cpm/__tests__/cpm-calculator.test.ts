@@ -34,4 +34,15 @@ describe("cpm-calculator (GAP-45)", () => {
     expect(rows[0].total_cost_cents).toBe(0);
     expect(rows[0].cpm_cents).toBe(0);
   });
+
+  it("scopes load, fuel, and maintenance CTEs to operating_company_id (RLS)", async () => {
+    const client = mockClient([]);
+    await calculatePerTruckCpm(client, COMPANY, "2026-01-01", "2026-01-31");
+    const sql = String(client.query.mock.calls[0]?.[0] ?? "");
+    expect(sql).toContain("l.operating_company_id = $1::uuid");
+    expect(sql).toContain("ft.operating_company_id = $1::uuid");
+    expect(sql).toContain("wo.operating_company_id = $1::uuid");
+    expect(sql).toContain("ip.tenant_id = $1::uuid");
+    expect(sql).toContain("up.operating_company_id = $1::uuid");
+  });
 });

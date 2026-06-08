@@ -22,8 +22,8 @@
 | Driver pay | `driver_finance.driver_bills` joined to loads |
 | Fuel | `fuel.fuel_transactions` on load |
 | Maintenance | `maintenance.work_orders` actual cost in period |
-| Insurance | `insurance.insurance_policy_units` premium / 365 × days |
-| Permits | `master_data.unit_permits` annual cost / 365 × days |
+| Insurance | `insurance.policy` + `insurance.policy_unit` via `mdata.assets`, premium / active units / 365 × days |
+| Permits | `master_data.unit_permits.cost` (USD) / 365 × days |
 
 Outliers: CPM > 2× fleet median highlighted in red on the frontend table.
 
