@@ -372,6 +372,9 @@ jobs:
       - name: Verify driver manager home contract
         run: npm run verify:driver-manager-home
 
+      - name: Verify CAP-10 driver scoring contract
+        run: npm run verify:cap-10-driver-scoring
+
       - name: Verify severe repair fleet restore estimate contract
         run: npm run verify:severe-repair-estimate
 

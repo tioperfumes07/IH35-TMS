@@ -118,6 +118,7 @@ import { registerSafetyFinesRoutes } from "./safety/fines.routes.js";
 import { registerSafetyCompanyViolationsRoutes } from "./safety/company-violations.routes.js";
 import { registerSafetyV5Routes } from "./safety/safety-v5.routes.js";
 import { registerDriverScoringRoutes } from "./safety/driver-scoring.routes.js";
+import { registerDriverCompositeScoringRoutes } from "./safety/driver-scoring/scoring.routes.js";
 import { registerFuelGpsMatchRoutes } from "./safety/fuel-gps-match.routes.js";
 import { registerGeofenceBreachRoutes } from "./safety/geofence-breach.routes.js";
 import { registerDotInspectionEventsRoutes } from "./safety/dot-inspection-events.routes.js";
@@ -368,6 +369,7 @@ import { registerBookingGapRoutes } from "./dispatch/analytics/booking-gap.route
 import { initializeBookingGapAggregatorWorker, stopBookingGapAggregatorWorker } from "./jobs/booking-gap-aggregator-worker.js";
 import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-arrival.routes.js";
 import { initializeLateArrivalAggregatorWorker } from "./jobs/late-arrival-aggregator-worker.js";
+import { initializeDriverScoringAggregatorWorker } from "./jobs/driver-scoring-aggregator-worker.js";
 import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
 import { registerDispatchAuthGateRoutes } from "./dispatch/auth-gates/routes.js";
 import { registerAnomalyDetectionRoutes } from "./safety/anomaly/routes.js";
@@ -681,6 +683,7 @@ async function main() {
   await registerSafetyCompanyViolationsRoutes(app);
   await registerSafetyV5Routes(app);
   await registerDriverScoringRoutes(app);
+  await registerDriverCompositeScoringRoutes(app);
   await registerFuelGpsMatchRoutes(app);
   await registerGeofenceBreachRoutes(app);
   await registerDotInspectionEventsRoutes(app);
@@ -1112,6 +1115,13 @@ async function main() {
     app.log.info("[STARTUP] late-arrival aggregator worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] late-arrival aggregator worker failed");
+  }
+
+  try {
+    initializeDriverScoringAggregatorWorker(app);
+    app.log.info("[STARTUP] driver-scoring aggregator worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] driver-scoring aggregator worker failed");
   }
 
   try {

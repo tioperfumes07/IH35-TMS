@@ -501,6 +501,44 @@ export function listDriverScoreEvents(companyId: string, driverId: string, perio
   );
 }
 
+export type DriverSafetyScoreRow = {
+  uuid: string;
+  operating_company_id: string;
+  driver_uuid: string;
+  driver_name: string;
+  period_start: string;
+  period_end: string;
+  harsh_brake_count: number;
+  hard_accel_count: number;
+  speeding_seconds: number;
+  lane_departure_count: number;
+  miles_driven: number;
+  composite_score: number | null;
+  rank_in_fleet: number | null;
+  computed_at: string;
+};
+
+export function listDriverSafetyPeriodScores(companyId: string, from: string, to: string) {
+  const qs = new URLSearchParams({
+    operating_company_id: companyId,
+    from,
+    to,
+  });
+  return apiRequest<{ period_start: string; period_end: string; rows: DriverSafetyScoreRow[] }>(
+    `/api/safety/driver-scoring/period?${qs.toString()}`
+  );
+}
+
+export function listDriverSafetyTrend(companyId: string, driverUuid: string, periods = 12) {
+  const qs = new URLSearchParams({
+    operating_company_id: companyId,
+    periods: String(periods),
+  });
+  return apiRequest<{ driver_uuid: string; periods: DriverSafetyScoreRow[] }>(
+    `/api/safety/driver-scoring/driver/${encodeURIComponent(driverUuid)}?${qs.toString()}`
+  );
+}
+
 export function getSafetyFines(
   companyId: string,
   params: { status?: string; subject_type?: "driver" | "company"; subject_driver_id?: string } = {}
