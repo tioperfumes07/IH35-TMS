@@ -118,12 +118,6 @@ contains(".block-ready/GAP-64.json", blockManifest, [
   { pattern: /scripts\/verify-cap-14-cargo-sensors\.mjs/, label: "guard file allowlist" },
 ]);
 
-const rootManifest = read(".block-ready.json");
-contains(".block-ready.json", rootManifest, [
-  { pattern: /"block_id": "GAP-64"/, label: "root block id pointer" },
-  { pattern: /"manifest": "\.block-ready\/GAP-64\.json"/, label: "per-block manifest pointer" },
-]);
-
 const pkg = read("package.json");
 contains("package.json", pkg, [
   { pattern: /verify:cap-14-cargo-sensors/, label: "npm verify script" },

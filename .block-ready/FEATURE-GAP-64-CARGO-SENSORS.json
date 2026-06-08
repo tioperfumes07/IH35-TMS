@@ -1,0 +1,33 @@
+{
+  "block_id": "GAP-64",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap64",
+  "branch": "feature/gap-64-cargo-sensors",
+  "phase": "GAP-HIGH",
+  "task": "CAP-14 cargo temp/humidity sensors",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-64.json",
+    ".block-ready.json",
+    "db/migrations/202606080219_cargo_sensor_readings.sql",
+    "apps/backend/src/integrations/samsara/cap-14-cargo-sensors/ingester.service.ts",
+    "apps/backend/src/integrations/samsara/cap-14-cargo-sensors/threshold.service.ts",
+    "apps/backend/src/integrations/samsara/cap-14-cargo-sensors/routes.ts",
+    "apps/backend/src/integrations/samsara/cap-14-cargo-sensors/__tests__/ingester.test.ts",
+    "apps/backend/src/integrations/samsara/cap-14-cargo-sensors/__tests__/threshold.test.ts",
+    "apps/backend/src/jobs/cap-14-cargo-sensor-worker.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/dispatch/cargo-sensors/CargoSensorTimeline.tsx",
+    "apps/frontend/src/components/dispatch/CargoTempBadge.tsx",
+    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
+    "scripts/verify-cap-14-cargo-sensors.mjs",
+    "docs/specs/gap-64-cap-14-cargo-sensors.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:cap-14-cargo-sensors"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
