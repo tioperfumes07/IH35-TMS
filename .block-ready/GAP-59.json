@@ -1,0 +1,29 @@
+{
+  "block_id": "GAP-59",
+  "classification": "ADDITIVE",
+  "preview_provided": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap59",
+  "branch": "feature/gap-59-vehicle-driver-pairing",
+  "phase": "GAP-HIGH",
+  "task": "CAP-9 Vehicle-Driver Pairing At Time of Event — Samsara pairing lookup for WO/accident/fuel attribution",
+  "allowed_files": [
+    ".block-ready/GAP-59.json",
+    "apps/backend/src/integrations/samsara/vehicle-driver-pairing/pairing.service.ts",
+    "apps/backend/src/integrations/samsara/vehicle-driver-pairing/routes.ts",
+    "apps/backend/src/integrations/samsara/vehicle-driver-pairing/__tests__/pairing.test.ts",
+    "apps/backend/src/lib/at-time-of-event-lookup.ts",
+    "apps/backend/src/jobs/vehicle-driver-pairing-worker.ts",
+    "db/migrations/202606080217_vehicle_driver_pairing_audit.sql",
+    "scripts/verify-cap-9-pairing.mjs",
+    "docs/specs/gap-59-cap-9-vehicle-driver-pairing.md",
+    "apps/backend/src/index.ts",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:cap-9-pairing"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

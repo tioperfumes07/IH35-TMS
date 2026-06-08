@@ -348,6 +348,9 @@ jobs:
         run: npm run verify:cap-1-live-gps
       - name: Verify CAP-8 engine fault auto WO (GAP-58)
         run: npm run verify:cap-8-engine-fault-auto-wo
+
+      - name: Verify CAP-9 vehicle-driver pairing (GAP-59)
+        run: npm run verify:cap-9-pairing
       - name: Verify bank account company assignment (GAP-53)
         run: npm run verify:bank-account-company-assignment
 
