@@ -1,0 +1,19 @@
+{
+  "block_id": "BLOCK-H-DETENTION-NOTIFY",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-block-h",
+  "is_read_only": false,
+  "branch": "feature/block-h-detention-notify",
+  "phase": "BLOCK-H",
+  "task": "Block H — On detention request approval (PATCH /api/v1/dispatch/detention/requests/:id/approve), after the billing bridge + invoice build, email the customer a detention-charge notice. Default OFF behind feature flag 'detention_customer_notify_email'; sent AFTER the approval tx commits; idempotent on dispatch.detention_requests.customer_notified_at; charge labeled 'derived from stop timestamps'.",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/BLOCK-H-DETENTION-NOTIFY.json",
+    "db/migrations/202606071930_dispatch_detention_customer_notify.sql",
+    "apps/backend/src/dispatch/detention-approval.service.ts",
+    "apps/backend/src/dispatch/__tests__/detention-approval.routes.test.ts"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false
+}

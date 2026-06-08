@@ -1,0 +1,19 @@
+{
+  "block_id": "DOCS-GEOFENCE-INSURANCE-SPEC",
+  "status": "DOCS-ONLY",
+  "classification": "ADDITIVE",
+  "phase": "docs",
+  "task": "Lock dispatch geofence timing model (WF-043) + insurance blueprint + CI guard spec — no app code changed.",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "branch": "feat/lock-dispatch-geofence-insurance-spec",
+  "allowed_files": [
+    ".block-ready/DOCS-GEOFENCE-INSURANCE-SPEC.json",
+    "docs/specs/DISPATCH-GEOFENCE-TIMING-MODEL.md",
+    "docs/specs/INSURANCE-BLUEPRINT-ADDITION.md",
+    "docs/specs/INSURANCE-CI-GUARDS.md"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}

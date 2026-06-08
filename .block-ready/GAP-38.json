@@ -1,0 +1,27 @@
+{
+  "block_id": "GAP-38-DAMAGE-INSURANCE-CONTINUITY",
+  "branch": "feature/gap-38-damage-continuity",
+  "phase": "GAP-HIGH",
+  "task": "Damage report continuity chain + WF-027 insurance auto-claim linkage (additive; UI on locked shared surface deferred for preview)",
+  "is_read_only": false,
+  "allowed_files": [
+    ".block-ready/GAP-38.json",
+    "db/migrations/202606071600_damage_insurance_continuity.sql",
+    "apps/backend/src/safety/damage-continuity/continuity.service.ts",
+    "apps/backend/src/safety/damage-continuity/insurance-link.service.ts",
+    "apps/backend/src/safety/damage-continuity/continuity.routes.ts",
+    "apps/backend/src/safety/damage-continuity/__tests__/continuity.test.ts",
+    "apps/backend/src/jobs/damage-continuity-worker.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-damage-insurance-continuity.mjs",
+    "docs/specs/gap-38-damage-insurance-continuity.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:damage-insurance-continuity"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

@@ -1,0 +1,40 @@
+{
+  "block_id": "GAP-86-INSURANCE-BILL-CREATOR",
+  "gap": "GAP-86",
+  "branch": "feature/gap-86-insurance-bill-creator",
+  "phase": "GAP-HIGH",
+  "task": "Insurance multi-vehicle policy creator + bill schedule write via createBill()",
+  "financial_rule": "calls existing createBill() from apps/backend/src/accounting/bills.service.ts:483 — NO NEW FINANCIAL CODE",
+  "runtime_path": "both",
+  "allowed_files": [
+    ".block-ready/GAP-86-INSURANCE-BILL-CREATOR.json",
+    "db/migrations/202606071800_insurance_bill_schedule_link.sql",
+    "apps/backend/src/insurance/policy-bill-schedule.service.ts",
+    "apps/backend/src/insurance/policy.routes.ts",
+    "apps/frontend/src/api/insurance.ts",
+    "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
+    "apps/frontend/tsconfig.app.json",
+    "scripts/verify-insurance-module.mjs",
+    "scripts/verify-meta.json",
+    "docs/specs/gap-86-insurance-module.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:insurance-module"
+  ],
+  "forbidden_paths": [
+    "apps/backend/src/master-data/units/permits/**",
+    "apps/backend/src/master-data/units/toll-tags/**",
+    "apps/frontend/src/sidebar-config.ts"
+  ],
+  "db_required": true,
+  "guard_required": true,
+  "acceptance": [
+    "migration 202606071800 applied — vendor_id on insurance.policy, bill_uuid on insurance.payment_schedule",
+    "POST /api/v1/insurance/policies with vendor_id + installment_count creates bills via createBill()",
+    "PolicyCreateModal shows vendor picker and multi-vehicle unit selection",
+    "verify-insurance-module.mjs exits 0",
+    "CI gates: build:backend, frontend tsc, vitest pass"
+  ]
+}

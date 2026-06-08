@@ -1,0 +1,17 @@
+{
+  "block_id": "PREREQ-B-SETTLEMENT-DEDUCTION-SVC",
+  "branch": "feat/settlement-deduction-service",
+  "phase": "PREREQ",
+  "task": "createSettlementDeduction() service — unblocks Driver Hub Requests approve→deduction (Block 7)",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/PREREQ-B-SETTLEMENT-DEDUCTION-SVC.json",
+    "apps/backend/src/driver-finance/deductions.service.ts",
+    "apps/backend/src/driver-finance/deductions.routes.ts",
+    "apps/backend/src/driver-finance/__tests__/deductions.service.test.ts"
+  ],
+  "table": "driver_finance.driver_settlement_deductions",
+  "db_required": false,
+  "migration_required": false,
+  "note": "Uses existing driver_finance.driver_settlement_deductions table (columns: operating_company_id, driver_id, deduction_type, amount_cents, reason, applied_to_settlement_id, created_by_user_id, source_pending_id)"
+}

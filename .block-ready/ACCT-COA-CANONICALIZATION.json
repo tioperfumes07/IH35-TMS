@@ -1,0 +1,49 @@
+{
+  "block_id": "ACCT-COA-CANONICALIZATION",
+  "branch": "feat/acct-coa-canonicalization",
+  "phase": "Accounting — Chart of Accounts canonicalization",
+  "task": "Establish catalogs.accounts as the canonical posting COA: reconcile against the accounting.qbo_accounts TRANSP slice, additively backfill qbo_account_id for confirmed matches, document accounting.coa_account as a non-canonical PSE mirror (no drop), and add a CI verifier. Backend + migration + docs only; no UI (CA-03/CA-04 blocked until merge).",
+  "agent": "1",
+  "is_read_only": false,
+  "allowed_files": [
+    ".block-ready/ACCT-COA-CANONICALIZATION.json",
+    "db/migrations/202606080100_coa_qbo_link_backfill.sql",
+    "db/migrations/202606080110_coa_account_retire_note.sql",
+    "scripts/reconcile-coa-qbo.mjs",
+    "scripts/verify-coa-canonical.mjs",
+    "docs/audits/COA-QBO-RECONCILIATION.json",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "preview_provided": false,
+  "extra_gates": ["verify:coa-canonical"],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "fields": {
+    "additive_only": true,
+    "no_inserts": true,
+    "no_deletes": true,
+    "no_type_changes": true,
+    "canonical_coa": "catalogs.accounts",
+    "qbo_mirror": "accounting.qbo_accounts (TRANSP slice)",
+    "coa_account_disposition": "kept + documented as non-canonical PSE mirror (COMMENT only, no DROP/RENAME)",
+    "match_strategy": "normalized account name (bijective, unique on both sides) + QBO->canonical type-class validation",
+    "verifier_threshold_pct": 90,
+    "verifier_threshold_floor_pct": 50,
+    "verifier_threshold_env_override": "COA_QBO_LINK_MIN_PCT",
+    "reconciliation_at_authoring": {
+      "tms_catalogs_accounts": 370,
+      "qbo_accounts_transp": 365,
+      "matched": 347,
+      "conflict": 0,
+      "ambiguous": 18,
+      "tms_only": 5,
+      "qbo_only": 0,
+      "observed_matched_pct_of_matchable": 95
+    },
+    "prod_state_note": "Live prod already had qbo_account_id populated for 365/370 (5 NULL = TMS-only); the backfill is therefore an idempotent safety net (links any remaining NULL matches, flags TMS-only as local_only) and the verifier passes at 100% coverage.",
+    "scope_boundary": "no UI changes; CA-03/CA-04 remain blocked until this merges",
+    "concurrent_with": "CA-01 (different tables; additive column writes only)"
+  }
+}

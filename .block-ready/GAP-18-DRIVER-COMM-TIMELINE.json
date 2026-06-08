@@ -1,0 +1,26 @@
+{
+  "block_id": "GAP-18-DRIVER-COMM-TIMELINE",
+  "status": "READY",
+  "spec": "docs/dispatch/batches/GAP-18-DRIVER-COMMUNICATION-LOG-MODULE-GO.md",
+  "branch": "feature/gap-18-driver-comm-log",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap18",
+  "migration_required": false,
+  "existing_table": "mdata.driver_profile_messages",
+  "no_new_outbound_sending": true,
+  "additive_only": true,
+  "files": [
+    ".block-ready/GAP-18-DRIVER-COMM-TIMELINE.json",
+    "apps/backend/src/drivers/communications.service.ts",
+    "apps/backend/src/drivers/communications.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/driver-messages.ts",
+    "apps/frontend/src/components/drivers/DriverCommunicationsTab.tsx",
+    "apps/frontend/src/pages/DriverDetail.tsx"
+  ],
+  "api_endpoint": "GET /api/v1/drivers/:id/communications",
+  "frontend_tab": "Communications (additive, after ELD Edits)",
+  "channels_shown": ["sms", "email", "in_app"],
+  "direction_shown": true,
+  "pagination": true,
+  "twilio_outbound": false
+}

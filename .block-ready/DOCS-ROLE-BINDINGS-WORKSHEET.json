@@ -1,0 +1,15 @@
+{
+  "block_id": "DOCS-ROLE-BINDINGS-WORKSHEET",
+  "branch": "docs/role-bindings-bookkeeper-worksheet",
+  "phase": "docs",
+  "task": "Bookkeeper approval worksheet for chart-of-accounts role bindings used by the IH35-TMS posting engine.",
+  "is_read_only": false,
+  "db_required": false,
+  "guard_required": false,
+  "runtime_path": "src",
+  "extra_gates": [],
+  "allowed_files": [
+    ".block-ready/DOCS-ROLE-BINDINGS-WORKSHEET.json",
+    "docs/accounting/ROLE-BINDINGS-BOOKKEEPER-WORKSHEET.md"
+  ]
+}

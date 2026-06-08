@@ -1,0 +1,23 @@
+{
+  "block_id": "BLOCK-C-MIGRATION-RENAME",
+  "branch": "fix/block-c-migration-rename",
+  "phase": "HOTFIX",
+  "task": "Rename Block C migration to 12-digit runner-compatible filename so db:migrate applies min_net_settlement columns in prod.",
+  "classification": "ADDITIVE",
+  "depends_on": [
+    { "block": "BLOCK-C-DEDUCTION-CAP", "pr": 692, "sha": "a7a4356ff6f636e18442643fc7443ff543a199dd" }
+  ],
+  "root_cause": "Migration runner regex /^\\d{12}_.+\\.sql$/ rejects YYYYMMDD_HHMMSS_ filenames; 20260607_191000_settlement_min_net_floor.sql was silently skipped on deploy.",
+  "allowed_files": [
+    ".block-ready/BLOCK-C-MIGRATION-RENAME.json",
+    "db/migrations/202606071910_settlement_min_net_floor.sql",
+    "db/migrations/20260607_191000_settlement_min_net_floor.sql"
+  ],
+  "removed": ["db/migrations/20260607_191000_settlement_min_net_floor.sql"],
+  "added": ["db/migrations/202606071910_settlement_min_net_floor.sql"],
+  "db_required": true,
+  "migration_required": true,
+  "migration": "db/migrations/202606071910_settlement_min_net_floor.sql",
+  "grant_changes": false,
+  "note": "Block J fixes runner regex separately. This hotfix unblocks Block C column DDL on next Render deploy."
+}

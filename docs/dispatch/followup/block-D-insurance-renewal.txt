@@ -1,0 +1,22 @@
+Block D of 4 (follow-up) — PHASE <add tracker phase> / TASK <add tracker row, drop real ID> — Insurance policy renewal (clone-forward)
+RBC TARGET: insurance module backend + frontend; bills via createBill (apps/backend/src/accounting/bills.service.ts:483)
+DEPENDS: Block 5 merged (insurance creator + /api/v1/insurance/policies/with-schedule endpoint).
+MODEL: Opus 4.8 thinking-high (financial — creates bills).
+
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+WHY: at expiry, renew a policy without rebuilding the multi-vehicle selection. Clone the prior policy forward with units pre-filled; user adjusts term / premium / down payment / number of payments; regenerate the bill schedule via createBill.
+
+LANE LOCK: insurance module only. Call createBill, do NOT modify it. Forbidden: detention, driver-finance, sidebar-config, accounting internals.
+
+RESPOND-BEFORE-CODE: post (1) the clone mapping (which fields copy vs. reset), (2) the endpoint, (3) the createBill call shape, (4) the additive renewed_from_policy_id column + its migration grants. WAIT for Jorge GO.
+
+SCOPE:
+- "Renew" action on an existing/expiring policy opens the creator pre-filled: same carrier / type / units; blank new term dates, new total premium, new down payment, new payment count.
+- On save (one tx): new policy row + policy_unit rows + (1 down payment + N monthly) bills via createBill, idempotency-keyed, QBO outbox.
+- Additive column renewed_from_policy_id links the new policy to the prior one (migration carries full grants per Block A gate).
+- Old policy left intact (status reflects expiry). No deletes.
+
+ACCEPT: renewing pre-fills units; new schedule reconciles to new total; bills created via createBill only; renewed_from link set; RLS isolation test; vitest + tsc -b green; CI green.
+
+PAUSE: after RESPOND-BEFORE-CODE, before code — wait for Jorge GO. Squash-merge holds for explicit GO.
