@@ -6,13 +6,11 @@
   "task": "Multi-stop extra rate per stop (WF-053)",
   "allowed_files": [
     ".block-ready/GAP-31.json",
-    ".block-ready/DISP-LIST-TABLE-ASSIGN.json",
     "db/migrations/202606080202_stop_extra_rates.sql",
     "apps/backend/src/dispatch/loads/multi-stop/extra-rate.service.ts",
     "apps/backend/src/dispatch/loads/multi-stop/extra-rate.routes.ts",
     "apps/backend/src/dispatch/loads/multi-stop/__tests__/extra-rate.test.ts",
     "apps/frontend/src/components/dispatch/MultiStopExtraRateEditor.tsx",
-    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
     "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx",
     "apps/backend/src/accounting/from-load.ts",
     "apps/backend/src/index.ts",
