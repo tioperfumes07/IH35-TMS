@@ -1,0 +1,28 @@
+{
+  "block_id": "CLOSURE-12-CYCLE5-PAYROLL-INTEGRATION",
+  "branch": "feat/closure-12-payroll",
+  "phase": "CLOSURE",
+  "task": "Cycle 5 TMS↔QBO payroll integration page",
+  "agent": "2",
+  "allowed_files": [
+    "apps/backend/src/payroll-integration/aggregate.routes.ts",
+    "apps/backend/src/payroll-integration/qbo-payroll-pull.ts",
+    "apps/backend/src/payroll-integration/tms-settlements-pull.ts",
+    "apps/backend/src/payroll-integration/class-allocator.ts",
+    "apps/backend/src/payroll-integration/aggregate.test.ts",
+    "apps/frontend/src/pages/payroll-integration/PayrollIntegrationPage.tsx",
+    "apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx",
+    "apps/frontend/src/pages/payroll-integration/ClassAllocationView.tsx",
+    "apps/frontend/src/components/Sidebar.tsx",
+    "apps/frontend/src/hooks/usePayrollAggregate.ts",
+    "apps/backend/src/migrations/202606080241-payroll-integration-cache.sql",
+    "scripts/verify-payroll-aggregate-matches-qbo.mjs",
+    ".block-ready/CLOSURE-12-CYCLE5-PAYROLL-INTEGRATION.json",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": ["verify:payroll-aggregate-matches-qbo"],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
