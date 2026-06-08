@@ -47,6 +47,12 @@ Returns **503** with `failed: [...]` when any dependency is down.
 
 See [INCIDENT-RESPONSE.md](./INCIDENT-RESPONSE.md).
 
+## Operational tuning
+
+All tunable parameters (cron schedules, rate limits, retries, timeouts, cache TTLs, batch sizes, alert thresholds) are cataloged in [operational-tuning-catalog.md](./operational-tuning-catalog.md). Update that doc whenever changing an operational default.
+
 ## CI guard
 
 `node scripts/verify-sentry-receives-test-error.mjs` — validates Sentry wiring when `SENTRY_DSN` + `SENTRY_AUTH_TOKEN` are set in CI.
+
+`npm run verify:operational-tuning-catalog` — BLOCK-13 guard: catalog has ≥30 entries with all required fields and UI links.

@@ -906,6 +906,9 @@ jobs:
       - name: verify:positions-latest-rls
         run: npm run verify:positions-latest-rls
 
+      - name: verify:operational-tuning-catalog
+        run: npm run verify:operational-tuning-catalog
+
       - name: verify:driver-day-summary-empty-state-not-red
         run: npm run verify:driver-day-summary-empty-state-not-red
 
