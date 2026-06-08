@@ -6,6 +6,7 @@
   "task": "Driver PWA full incident reporting (WF-048)",
   "classification": "OVERLAP",
   "allowed_files": [
+    ".block-ready.agent1.json",
     ".block-ready/GAP-36.json",
     "apps/driver-pwa/src/pages/IncidentReport.tsx",
     "apps/driver-pwa/src/components/incident/IncidentTypePicker.tsx",
