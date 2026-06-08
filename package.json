@@ -521,6 +521,7 @@
     "verify:wf-051-arrival-radius": "node scripts/verify-wf-051-arrival-radius-meters.mjs",
     "verify:bank-account-company-assignment": "node scripts/verify-bank-account-company-assignment.mjs",
     "verify:cap-1-live-gps": "node scripts/verify-cap-1-live-gps.mjs",
+    "verify:cap-4-auto-status-switch": "node scripts/verify-cap-4-auto-status-switch.mjs",
     "verify:cap-5-tri-signal": "node scripts/verify-cap-5-tri-signal.mjs",
     "verify:cap-8-engine-fault-auto-wo": "node scripts/verify-cap-8-engine-fault-auto-wo.mjs",
     "verify:cap-9-pairing": "node scripts/verify-cap-9-pairing.mjs",

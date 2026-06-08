@@ -346,6 +346,10 @@ jobs:
 
       - name: Verify CAP-1 live GPS (GAP-55)
         run: npm run verify:cap-1-live-gps
+
+      - name: Verify CAP-4 auto status switch (GAP-56)
+        run: npm run verify:cap-4-auto-status-switch
+
       - name: Verify CAP-8 engine fault auto WO (GAP-58)
         run: npm run verify:cap-8-engine-fault-auto-wo
 
