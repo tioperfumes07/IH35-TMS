@@ -1,12 +1,9 @@
 import { fetchTier3FiveMinutes } from "./cache/tier3-5min.js";
 import { syncSamsaraVehiclesMaster } from "./samsara-master-sync.service.js";
-
-type Client = {
-  query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount?: number }>;
-};
+import type { PgClient } from "./samsara.service.js";
 
 /** DS-4: Import Samsara vehicles into integrations.samsara_vehicles via master sync + projection upsert. */
-export async function importSamsaraVehicles(client: Client, operatingCompanyId: string) {
+export async function importSamsaraVehicles(client: PgClient, operatingCompanyId: string) {
   const { value: stats } = await fetchTier3FiveMinutes(`ds4:vehicles:${operatingCompanyId}`, async () =>
     syncSamsaraVehiclesMaster(client, operatingCompanyId)
   );
@@ -14,9 +11,9 @@ export async function importSamsaraVehicles(client: Client, operatingCompanyId: 
     `SELECT COUNT(*)::int AS cnt FROM integrations.samsara_vehicles WHERE operating_company_id = $1::uuid`,
     [operatingCompanyId]
   );
-  let imported = Number(mirror.rows[0]?.cnt ?? 0);
+  let imported = Number((mirror.rows[0] as { cnt?: number })?.cnt ?? 0);
   if (imported === 0) {
-    const equip = await client.query<{ samsara_vehicle_id: string; raw: Record<string, unknown> }>(
+    const equip = await client.query(
       `SELECT samsara_vehicle_id, jsonb_build_object('id', samsara_vehicle_id) AS raw
        FROM mdata.equipment
        WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
@@ -24,7 +21,7 @@ export async function importSamsaraVehicles(client: Client, operatingCompanyId: 
        LIMIT 500`,
       [operatingCompanyId]
     );
-    for (const row of equip.rows) {
+    for (const row of equip.rows as Array<{ samsara_vehicle_id: string; raw: Record<string, unknown> }>) {
       if (!row.samsara_vehicle_id) continue;
       await client.query(
         `INSERT INTO integrations.samsara_vehicles (operating_company_id, samsara_vehicle_id, raw_payload, last_seen_at)
