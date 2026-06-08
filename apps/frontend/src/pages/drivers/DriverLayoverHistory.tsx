@@ -65,6 +65,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
         <p className="text-gray-400 text-sm">No layovers detected in this period.</p>
       )}
       {rows.length > 0 && (
+        <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-50">
@@ -98,6 +99,7 @@ export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) 
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
