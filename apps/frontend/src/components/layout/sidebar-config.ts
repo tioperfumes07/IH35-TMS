@@ -13,7 +13,6 @@ import {
   ListChecks,
   Radio,
   Scale,
-  Shield,
   ShieldCheck,
   SquareStack,
   Truck,
