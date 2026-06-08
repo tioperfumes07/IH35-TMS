@@ -93,8 +93,10 @@ import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disput
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
 import { registerReportsScheduledCrudRoutes } from "./reports/scheduled-reports.routes.js";
+import { registerScheduledSubscriptionRoutes } from "./reports/scheduled/routes.js";
 import { registerCustomReportBuilderRoutes } from "./reports/custom-report-builder.routes.js";
 import { initializeReportsRoleScheduler, stopReportsRoleScheduler } from "./reports/scheduler.js";
+import { initializeScheduledReportsEmailer } from "./jobs/scheduled-reports-emailer.js";
 import { registerIftaQuarterlyPreparerRoutes } from "./ifta/ifta-quarterly-preparer.routes.js";
 import { registerFleetTrailerRoutes } from "./fleet/index.js";
 import { registerFuelPlannerRoutes } from "./fuel/planner.routes.js";
@@ -645,6 +647,7 @@ async function main() {
   await registerDriverManagerRoleHomeRoutes(app);
   await registerReportsRoutes(app);
   await registerReportsScheduledCrudRoutes(app);
+  await registerScheduledSubscriptionRoutes(app);
   await registerCustomReportBuilderRoutes(app);
   await registerIftaQuarterlyPreparerRoutes(app);
   await registerFuelPlannerRoutes(app);
@@ -1044,6 +1047,8 @@ async function main() {
   try {
     initializeReportsRoleScheduler(app);
     app.log.info("[STARTUP] reports-role-scheduler initialized");
+    initializeScheduledReportsEmailer(app);
+    app.log.info("[STARTUP] scheduled-reports-emailer initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] reports-role-scheduler failed");
   }
