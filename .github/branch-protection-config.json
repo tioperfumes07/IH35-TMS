@@ -17,7 +17,8 @@
         "security-checks / security-audit",
         "premerge-gates / rls-migration-scan",
         "premerge-gates / typescript-strict-null",
-        "premerge-gates / migration-role-validation"
+        "premerge-gates / migration-role-validation",
+        "pass-8-smoke-verify / pass-8"
       ]
     },
     "enforce_admins": false,
@@ -39,7 +40,8 @@
     "security-checks": "security-checks / security-audit",
     "rls-migration-scan": "premerge-gates / rls-migration-scan (GAP-81: missing RLS on new tables)",
     "typescript-strict-null": "premerge-gates / typescript-strict-null (GAP-81: TS18048 strict-null bypasses)",
-    "migration-role-validation": "premerge-gates / migration-role-validation (GAP-81: unknown GRANT roles)"
+    "migration-role-validation": "premerge-gates / migration-role-validation (GAP-81: unknown GRANT roles)",
+    "pass-8": "pass-8-smoke-verify / pass-8 (Pass-8 smoke + clean-baseline verification)"
   },
   "apply_script": "node scripts/ci-apply-branch-protection.mjs",
   "verify_script": "node scripts/verify-ci-policy-applied.mjs"
