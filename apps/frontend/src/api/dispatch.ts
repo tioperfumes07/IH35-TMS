@@ -962,3 +962,42 @@ export function downloadBolDocument(bolId: string, operatingCompanyId: string) {
     `/api/v1/dispatch/bol-documents/${encodeURIComponent(bolId)}/download?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
 }
+
+export type DeadheadNextLoadSuggestion = {
+  load_uuid: string;
+  load_number: string | null;
+  pickup_city: string;
+  pickup_state: string;
+  delivery_city: string;
+  delivery_state: string;
+  deadhead_miles: number;
+  loaded_miles: number;
+  total_miles: number;
+  est_revenue_cents: number;
+  est_margin_cents: number;
+  score: number;
+};
+
+export function getDeadheadNextLoadSuggestions(params: {
+  operating_company_id: string;
+  unit: string;
+  after: string;
+  max_deadhead_miles?: number;
+  drop_city?: string;
+  drop_state?: string;
+  drop_latitude?: number;
+  drop_longitude?: number;
+}) {
+  const u = new URLSearchParams();
+  u.set("operating_company_id", params.operating_company_id);
+  u.set("unit", params.unit);
+  u.set("after", params.after);
+  if (params.max_deadhead_miles != null) u.set("max_deadhead_miles", String(params.max_deadhead_miles));
+  if (params.drop_city) u.set("drop_city", params.drop_city);
+  if (params.drop_state) u.set("drop_state", params.drop_state);
+  if (params.drop_latitude != null) u.set("drop_latitude", String(params.drop_latitude));
+  if (params.drop_longitude != null) u.set("drop_longitude", String(params.drop_longitude));
+  return apiRequest<{ suggestions: DeadheadNextLoadSuggestion[] }>(
+    `/api/v1/dispatch/deadhead/next-load-suggestions?${u.toString()}`
+  );
+}

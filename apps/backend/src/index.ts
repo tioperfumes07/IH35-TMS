@@ -71,6 +71,7 @@ import { registerDispatchQuicksaveRoutes } from "./dispatch/quicksave.routes.js"
 import { registerDispatchAssignmentsQuicksaveRoutes } from "./dispatch/assignments/quicksave.routes.js";
 import { registerDispatchCancellationRoutes } from "./dispatch/cancellation.routes.js";
 import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinements.routes.js";
+import { registerDeadheadOptimizerRoutes } from "./dispatch/deadhead/routes.js";
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
@@ -651,6 +652,7 @@ async function main() {
   await registerDispatchAssignmentsQuicksaveRoutes(app);
   await registerDispatchCancellationRoutes(app);
   await registerDispatchRefinementsRoutes(app);
+  await registerDeadheadOptimizerRoutes(app);
   await registerIntransitIssuesRoutes(app);
   await registerDispatchArchTabsRoutes(app);
   await registerDispatchAlertsRoutes(app);

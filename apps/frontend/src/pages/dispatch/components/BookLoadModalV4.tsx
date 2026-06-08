@@ -13,6 +13,7 @@ import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
+import { DeadheadOptimizerPanel } from "../../../components/dispatch/DeadheadOptimizerPanel";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
 import { DriverInstructionsTextarea } from "./book-load-v4/DriverInstructionsTextarea";
@@ -223,6 +224,32 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
       ],
     },
   });
+  const assignedUnitId = form.watch("assigned_unit_id");
+  const watchedStops = form.watch("stops");
+  const deadheadAfterAt = useMemo(() => {
+    const stops = (watchedStops ?? []) as Array<{
+      stop_type?: string;
+      scheduled_arrival_at?: string;
+      scheduled_departure_at?: string;
+      city?: string;
+      state?: string;
+    }>;
+    const deliveries = stops.filter((s) => String(s?.stop_type ?? "").toLowerCase().includes("deliver"));
+    const last = deliveries[deliveries.length - 1] ?? stops[stops.length - 1];
+    const raw = last?.scheduled_departure_at || last?.scheduled_arrival_at;
+    if (raw) {
+      const d = new Date(raw);
+      if (!Number.isNaN(d.getTime())) return d.toISOString();
+    }
+    return new Date().toISOString();
+  }, [watchedStops]);
+  const deadheadDropPreview = useMemo(() => {
+    const stops = (watchedStops ?? []) as Array<{ stop_type?: string; city?: string; state?: string }>;
+    const deliveries = stops.filter((s) => String(s?.stop_type ?? "").toLowerCase().includes("deliver"));
+    const last = deliveries[deliveries.length - 1] ?? stops[stops.length - 1];
+    return { city: last?.city, state: last?.state };
+  }, [watchedStops]);
+
 
   const { isDirty } = form.formState;
 
@@ -825,6 +852,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   </div>
                   <div className="space-y-2 p-3">
                     <BookLoadEquipmentSection register={form.register} watch={form.watch} setValue={form.setValue} operatingCompanyId={operatingCompanyId} />
+                    {assignedUnitId ? (
+                      <DeadheadOptimizerPanel
+                        operatingCompanyId={operatingCompanyId}
+                        unitUuid={assignedUnitId}
+                        afterDeliveryAt={deadheadAfterAt}
+                        dropCity={deadheadDropPreview.city}
+                        dropState={deadheadDropPreview.state}
+                      />
+                    ) : null}
                     <div className={`blw-collapse ${showDriverInstructions ? "open" : ""}`}>
                       <button type="button" className="blw-collapse-bar w-full text-left" onClick={() => setShowDriverInstructions((openState) => !openState)}>
                         <span className="blw-collapse-plus">{showDriverInstructions ? "−" : "+"}</span>
