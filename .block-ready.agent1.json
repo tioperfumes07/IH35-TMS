@@ -20,7 +20,8 @@
     "apps/frontend/src/pages/dispatch/planners/__tests__/DispatchPlanners.test.tsx",
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts",
-    "docs/locked-ui-surface.json"
+    "docs/locked-ui-surface.json",
+    "apps/frontend/src/lib/loadProfit.ts"
   ],
   "preview_provided": false,
   "extra_gates": [],
