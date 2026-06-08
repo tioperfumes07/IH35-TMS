@@ -38,6 +38,7 @@ BEGIN
     WHERE flag_key = 'PERIODS_INIT_ENABLED'
       AND default_enabled = true
   ) THEN
+    RAISE NOTICE 'Seeding accounting periods for TRANSP operating_company_id = 91e0bf0a-133f-4ce8-a734-2586cfa66d96';
     INSERT INTO accounting.periods (
       operating_company_id,
       period_start,
