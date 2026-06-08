@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useFieldArray, type Control, type UseFormRegister } from "react-hook-form";
 import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
 
 type Props = {
   control: Control<any>;
@@ -101,6 +102,9 @@ export function BookLoadStopsSection({ control, register }: Props) {
                 </label>
                 <Field label="Tarp count" input={<input type="number" min={0} step={1} {...register(`stops.${index}.tarp_count`, { valueAsNumber: true })} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
                 <Field label="Stop notes" input={<input {...register(`stops.${index}.stop_notes`)} className="h-7 w-full rounded border border-gray-300 px-2 text-xs" />} />
+                <div className="md:col-span-2">
+                  <MultiStopExtraRateEditor control={control} register={register} stopIndex={index} />
+                </div>
               </div>
             ) : null}
           </div>
@@ -130,6 +134,7 @@ export function BookLoadStopsSection({ control, register }: Props) {
             site_contact_name: "",
             site_contact_phone: "",
             gate_dock_text: "",
+            extra_rates: [],
           })
         }
       >
