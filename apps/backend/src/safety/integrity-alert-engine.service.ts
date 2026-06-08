@@ -1,4 +1,4 @@
-export const INTEGRITY_ALERT_ENGINE_VERSION = "a23-12-v1";
+export const INTEGRITY_ALERT_ENGINE_VERSION = "a23-12-v2";
 
 type IntegrityAlertRule = {
   id: string;
@@ -148,6 +148,135 @@ async function evaluateRuleMatches(
       subject_unit_id: row.unit_id ? String(row.unit_id) : null,
       subject_vendor_id: null,
       detection_summary: `WO cost outlier z=${String(row.z_score ?? "—")}`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  // ── Financial integrity probes (added by 202606080222) ──────────────────
+
+  if (rule.rule_code === "acct_unbalanced_je") {
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT
+          je.id         AS journal_entry_id,
+          je.entry_date,
+          je.memo,
+          SUM(CASE WHEN jep.debit_or_credit = 'debit'  THEN jep.amount_cents ELSE 0 END) AS debit_cents,
+          SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END) AS credit_cents
+        FROM accounting.journal_entries je
+        JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
+        WHERE je.operating_company_id = $1
+          AND je.status = 'posted'
+        GROUP BY je.id, je.entry_date, je.memo
+        HAVING SUM(CASE WHEN jep.debit_or_credit = 'debit'  THEN jep.amount_cents ELSE 0 END)
+            <> SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END)
+        LIMIT 200
+      `,
+      [operatingCompanyId]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `je:${String(row.journal_entry_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Unbalanced JE: debits=${String(row.debit_cents)} credits=${String(row.credit_cents)}`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  if (rule.rule_code === "acct_orphan_bill") {
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT bill_id, bill_date, reason FROM (
+          SELECT b.id AS bill_id, b.bill_date, 'no_lines' AS reason
+          FROM accounting.bills b
+          WHERE b.operating_company_id = $1
+            AND b.revoked_at IS NULL
+            AND COALESCE(b.status, '') NOT IN ('voided', 'cancelled', 'revoked', 'void')
+            AND NOT EXISTS (SELECT 1 FROM accounting.bill_lines bl WHERE bl.bill_id = b.id)
+          UNION ALL
+          SELECT DISTINCT b.id AS bill_id, b.bill_date, 'line_missing_gl_account' AS reason
+          FROM accounting.bills b
+          JOIN accounting.bill_lines bl ON bl.bill_id = b.id
+          WHERE b.operating_company_id = $1
+            AND b.revoked_at IS NULL
+            AND COALESCE(b.status, '') NOT IN ('voided', 'cancelled', 'revoked', 'void')
+            AND bl.account_id IS NULL
+        ) orphan_bills
+        LIMIT 200
+      `,
+      [operatingCompanyId]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `bill:${String(row.bill_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Orphan bill (${String(row.reason)})`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  if (rule.rule_code === "acct_orphan_payment") {
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT
+          p.id                    AS payment_id,
+          p.payment_date,
+          p.amount_cents,
+          p.amount_unapplied_cents
+        FROM accounting.payments p
+        WHERE p.operating_company_id = $1
+          AND p.voided_at IS NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM accounting.payment_applications pa WHERE pa.payment_id = p.id
+          )
+        LIMIT 200
+      `,
+      [operatingCompanyId]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `payment:${String(row.payment_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Orphan payment: ${String(row.amount_cents)} cents unapplied, no application rows`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  if (rule.rule_code === "acct_posting_closed_period") {
+    const res = await client.query<Record<string, unknown>>(
+      `
+        WITH cutoff AS (
+          SELECT accounting.closed_period_cutoff($1) AS closed_through
+        )
+        SELECT
+          jep.id        AS posting_id,
+          je.id         AS journal_entry_id,
+          je.entry_date,
+          cutoff.closed_through
+        FROM accounting.journal_entry_postings jep
+        JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+        CROSS JOIN cutoff
+        WHERE jep.operating_company_id = $1
+          AND je.status = 'posted'
+          AND cutoff.closed_through IS NOT NULL
+          AND je.entry_date <= cutoff.closed_through
+        LIMIT 200
+      `,
+      [operatingCompanyId]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `posting:${String(row.posting_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Posting in closed period: entry_date=${String(row.entry_date)} <= closed_through=${String(row.closed_through)}`,
       detection_metric: row,
       source_view: rule.source_view,
     }));
