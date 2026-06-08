@@ -92,27 +92,29 @@ END $$;
 CREATE OR REPLACE FUNCTION maintenance.check_parts_reorder_alert()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN
-  IF NEW.qty_on_hand IS NOT NULL
+  IF NEW.on_hand_qty IS NOT NULL
      AND NEW.reorder_point IS NOT NULL
-     AND NEW.qty_on_hand <= NEW.reorder_point
-     AND (OLD.qty_on_hand IS NULL OR OLD.qty_on_hand > OLD.reorder_point) THEN
+     AND NEW.on_hand_qty <= NEW.reorder_point
+     AND (OLD.on_hand_qty IS NULL OR OLD.on_hand_qty > OLD.reorder_point) THEN
     RAISE NOTICE 'REORDER ALERT: part % (%) is at or below reorder point (qty=%, reorder=%)',
-      NEW.id, NEW.part_description, NEW.qty_on_hand, NEW.reorder_point;
-    -- Insert into a simple alerts log (observability hook)
-    INSERT INTO audit_log (
-      table_name, record_id, action, changed_by, change_data
-    ) VALUES (
-      'maintenance.parts_inventory',
-      NEW.id,
-      'REORDER_ALERT',
-      current_setting('app.current_user_id', true),
-      jsonb_build_object(
-        'part_description', NEW.part_description,
-        'qty_on_hand', NEW.qty_on_hand,
-        'reorder_point', NEW.reorder_point,
-        'alert_type', 'below_reorder_point'
-      )
-    );
+      NEW.id, NEW.part_description, NEW.on_hand_qty, NEW.reorder_point;
+    -- Insert into audit log if the table exists (observability hook, non-fatal)
+    IF to_regclass('public.audit_log') IS NOT NULL THEN
+      INSERT INTO audit_log (
+        table_name, record_id, action, changed_by, change_data
+      ) VALUES (
+        'maintenance.parts_inventory',
+        NEW.id,
+        'REORDER_ALERT',
+        current_setting('app.current_user_id', true),
+        jsonb_build_object(
+          'part_description', NEW.part_description,
+          'on_hand_qty', NEW.on_hand_qty,
+          'reorder_point', NEW.reorder_point,
+          'alert_type', 'below_reorder_point'
+        )
+      );
+    END IF;
   END IF;
   RETURN NEW;
 END;
@@ -123,7 +125,7 @@ DO $$ BEGIN
     SELECT 1 FROM pg_trigger WHERE tgname = 'parts_inventory_reorder_check'
   ) THEN
     CREATE TRIGGER parts_inventory_reorder_check
-      AFTER UPDATE OF qty_on_hand ON maintenance.parts_inventory
+      AFTER UPDATE OF on_hand_qty ON maintenance.parts_inventory
       FOR EACH ROW EXECUTE FUNCTION maintenance.check_parts_reorder_alert();
   END IF;
 END $$;

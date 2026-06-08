@@ -64,7 +64,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
       offset: z.coerce.number().int().min(0).default(0),
     }).parse(req.query);
 
-    const rows = await withCompany(user.id, q.operating_company_id, async (client) => {
+    const rows = await withCompany(user.uuid, q.operating_company_id, async (client) => {
       const conditions: string[] = ["il.is_active = true"];
       const params: unknown[] = [];
       let idx = 1;
@@ -104,7 +104,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
       to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     }).parse(req.query);
 
-    const rows = await withCompany(user.id, q.operating_company_id, async (client) => {
+    const rows = await withCompany(user.uuid, q.operating_company_id, async (client) => {
       const { rows } = await client.query(`
         SELECT
           il.mechanic_user_id,
@@ -135,7 +135,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
     const body = createLaborBody.parse(req.body);
     const totalPartsCost = computePartsCost(body.parts_used);
 
-    const row = await withCompany(user.id, body.operating_company_id, async (client) => {
+    const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const { rows } = await client.query(`
         INSERT INTO maintenance.internal_labor_log (
           operating_company_id, tenant_id,
@@ -172,7 +172,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
     const { id } = idParams.parse(req.params);
     const body = closeLaborBody.parse(req.body);
 
-    const result = await withCompany(user.id, body.operating_company_id, async (client) => {
+    const result = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       await client.query("BEGIN");
 
       // 1. Fetch existing labor entry
@@ -206,8 +206,8 @@ export async function internalLaborRoutes(app: FastifyInstance) {
       for (const part of partsUsed) {
         await client.query(`
           UPDATE maintenance.parts_inventory
-          SET qty_on_hand = qty_on_hand - $1
-          WHERE id = $2 AND qty_on_hand >= $1
+          SET on_hand_qty = on_hand_qty - $1
+          WHERE id = $2 AND on_hand_qty >= $1
         `, [part.qty, part.part_id]);
       }
 
@@ -226,7 +226,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
         `, [
           body.operating_company_id,
           `Internal WO close: WO ${entry.work_order_id} — labor ${closed.labor_cost_cents}¢ + parts ${totalPartsCost}¢`,
-          user.id,
+          user.uuid,
         ]);
         const jeId = jeRows[0].id;
 
@@ -252,7 +252,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
     const { id } = idParams.parse(req.params);
     const { operating_company_id } = companyQuery.parse(req.query);
 
-    await withCompany(user.id, operating_company_id, async (client) => {
+    await withCompany(user.uuid, operating_company_id, async (client) => {
       await client.query(
         `UPDATE maintenance.internal_labor_log SET is_active = false, updated_at = now() WHERE id = $1`,
         [id]
