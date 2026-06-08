@@ -33,7 +33,7 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
     const body = z.object({
       operating_company_id: z.string().uuid(),
       rule_slug: z.string(), rule_name: z.string(), category: z.string(),
-      detector_function: z.string(), threshold_config: z.record(z.unknown()).optional(),
+      detector_function: z.string(), threshold_config: z.record(z.string(), z.unknown()).optional(),
       severity: z.string(), notify_roles: z.array(z.string()).optional(), cadence_minutes: z.number().optional(),
     }).safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
@@ -55,7 +55,7 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
   app.patch("/api/safety/anomaly/rules/:uuid", async (req, reply) => {
     const user = authed(req, reply); if (!user) return;
     const p = uuidParams.safeParse(req.params ?? {});
-    const body = z.object({ is_active: z.boolean().optional(), threshold_config: z.record(z.unknown()).optional(), severity: z.string().optional() }).safeParse(req.body ?? {});
+    const body = z.object({ is_active: z.boolean().optional(), threshold_config: z.record(z.string(), z.unknown()).optional(), severity: z.string().optional() }).safeParse(req.body ?? {});
     if (!p.success || !body.success) return reply.code(400).send({ error: "validation_error" });
     const row = await withCurrentUser(user.uuid, async (client) => {
       const res = await client.query(
