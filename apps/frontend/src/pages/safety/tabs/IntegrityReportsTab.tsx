@@ -10,8 +10,9 @@ import {
   reviewIntegrityObservation,
 } from "../../../api/safetyV64";
 import { IntegrityAlertsPage } from "../IntegrityAlertsPage";
+import { DriverVendorMappingTab } from "../integrity-reports/DriverVendorMappingTab";
 
-type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "active-alerts";
+type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "driver-vendor" | "active-alerts";
 
 export function IntegrityReportsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -67,6 +68,10 @@ export function IntegrityReportsTab() {
     return map;
   }, [observationsQuery.data?.observations]);
 
+  if (subTab === "driver-vendor") {
+    return <DriverVendorMappingTab />;
+  }
+
   if (subTab === "active-alerts") {
     return (
       <div className="space-y-3" data-testid="integrity-reports-active-alerts">
@@ -76,6 +81,7 @@ export function IntegrityReportsTab() {
             { id: "fuel-mpg", label: "Fuel MPG Anomalies" },
             { id: "driver-dwell", label: "Driver Dwell Outliers" },
             { id: "hos-pattern", label: "HOS Pattern Breaks" },
+            { id: "driver-vendor", label: "Driver-Vendor Mapping" },
             { id: "active-alerts", label: "Active Alerts" },
           ].map((tab) => (
             <button
@@ -106,7 +112,8 @@ export function IntegrityReportsTab() {
           { id: "fuel-mpg", label: "Fuel MPG Anomalies" },
           { id: "driver-dwell", label: "Driver Dwell Outliers" },
           { id: "hos-pattern", label: "HOS Pattern Breaks" },
-          { id: "active-alerts", label: "Active Alerts" },
+          { id: "driver-vendor", label: "Driver-Vendor Mapping" },
+            { id: "active-alerts", label: "Active Alerts" },
         ].map((tab) => (
           <button
             key={tab.id}
