@@ -362,6 +362,8 @@ import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-ar
 import { initializeLateArrivalAggregatorWorker } from "./jobs/late-arrival-aggregator-worker.js";
 import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
 import { registerDispatchAuthGateRoutes } from "./dispatch/auth-gates/routes.js";
+import { registerAnomalyDetectionRoutes } from "./safety/anomaly/routes.js";
+import { initializeAnomalyDetectorWorker } from "./jobs/anomaly-detector-worker.js";
 import { registerDispatchDetentionApprovalRoutes } from "./dispatch/detention-approval.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
@@ -619,6 +621,7 @@ async function main() {
   await registerLateArrivalAnalyticsRoutes(app);
   await registerPreDispatchValidationRoutes(app);
   await registerDispatchAuthGateRoutes(app);
+  await registerAnomalyDetectionRoutes(app);
   await registerDispatchDetentionApprovalRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
@@ -923,6 +926,7 @@ async function main() {
 
   try {
     initializeGeofenceReconciliationWorker(app);
+    initializeAnomalyDetectorWorker(app);
     app.log.info("[STARTUP] geofence-reconciliation-daily worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] geofence-reconciliation-daily worker failed");

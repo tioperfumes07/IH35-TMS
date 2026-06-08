@@ -15,8 +15,7 @@
     "docs/specs/gap-46-anomaly-detection.md",
     "apps/backend/src/index.ts",
     "package.json",
-    ".github/workflows/ci.yml",
-    ".block-ready.json"
+    ".github/workflows/ci.yml"
   ],
   "extra_gates": [
     "verify:anomaly-detection-engine"
