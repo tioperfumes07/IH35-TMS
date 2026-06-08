@@ -1,0 +1,7 @@
+AGENT-2 · Block 8 of 13 — PHASE Dispatch / TASK <add tracker row DISP-CROSSBORDER> — Cross-border customs tracker + compliance gate
+SO: prepend BOX 0. CITES docs/specs/CROSS-BORDER-DISPATCH.md, gap-14-validation-pre-dispatch.md, gap-26-border-crossings.md.
+SCOPE (ADDITIVE): Border view = customs document tracker: Dir (NB/SB), Lane, Crossing (World Trade/Colombia/Pharr), Customs broker, Pedimento (SB), USMCA, Doc-compliance, Border wait, Status. NB required docs: Rate Con + BOL + USMCA + Broker + Crossing. SB required: Rate Con + PITA + SCT + USMCA + Pedimento + Broker + Crossing. Broker + Pedimento assigned at booking (BookLoadModal); Pedimento links to customs clearance event in audit. Border wait from geo.geofence_events (is_border_crossing): crossing_in→crossing_out, running avg/crossing/week (gap-26). Add Customs tab to LoadDetailDrawer (cross-border loads only).
+COMPLIANCE GATE: before dispatch (status→assigned), verify required docs for direction; missing → WARN + BLOCK; override allowed with reason logged (extends gap-14 pre-dispatch validation). Show compliance on Booked-loads (Assignment) + Customs tab.
+FILES: dispatch Border view + BookLoadModal (EDIT — broker/crossing/pedimento fields, gate), LoadDetailDrawer Customs tab (coordinate w/ Block 12), reuse geofence/border services.
+ACCEPTANCE: SB missing Pedimento blocks dispatch (override logs reason); border wait shows from geofence; broker/pedimento stored + audited.
+LANE LOCK: border/booking files; drawer tab via Block 12 writer.
