@@ -16,8 +16,8 @@ ALTER TABLE loads
 CREATE INDEX IF NOT EXISTS idx_loads_is_cross_border
   ON loads (is_cross_border) WHERE is_cross_border = true;
 
--- ─── B1 visa flag on driver_profile ─────────────────────────────────────────
-ALTER TABLE identity.driver_profiles
+-- ─── B1 visa flag on mdata.drivers ──────────────────────────────────────────
+ALTER TABLE mdata.drivers
   ADD COLUMN IF NOT EXISTS has_b1_visa boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS b1_visa_number text,
   ADD COLUMN IF NOT EXISTS b1_visa_expires_date date;
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS mdata.mx_permits (
   tenant_id uuid NOT NULL REFERENCES org.companies(id),
   permit_type text NOT NULL CHECK (permit_type IN ('I-94', 'SCT', 'OS_OW_TX', 'OVERSIZE_MX', 'HAZMAT_MX', 'OTHER')),
   unit_id uuid REFERENCES mdata.units(id),
-  driver_id uuid REFERENCES identity.driver_profiles(id),
+  driver_id uuid REFERENCES mdata.drivers(id),
   issued_date date NOT NULL,
   expires_date date NOT NULL,
   permit_number text,
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS mdata.mx_tolls_ledger (
   exchange_rate_used numeric(10,4),
   payment_method text NOT NULL DEFAULT 'CASH' CHECK (payment_method IN ('IAVE', 'CASH', 'TAG')),
   unit_id uuid NOT NULL REFERENCES mdata.units(id),
-  driver_id uuid NOT NULL REFERENCES identity.driver_profiles(id),
+  driver_id uuid NOT NULL REFERENCES mdata.drivers(id),
   receipt_url text,
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),

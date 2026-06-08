@@ -46,12 +46,12 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
     if (!user) return;
     const { operating_company_id } = companyQuery.parse(req.query);
 
-    const rows = await withCompany(user.id, operating_company_id, async (client) => {
+    const rows = await withCompany(user.uuid, operating_company_id, async (client) => {
       const { rows } = await client.query(`
-        SELECT p.*, u.unit_number, dp.first_name || ' ' || dp.last_name AS driver_name
+        SELECT p.*, u.unit_number, d.first_name || ' ' || d.last_name AS driver_name
         FROM mdata.mx_permits p
         LEFT JOIN mdata.units u ON u.id = p.unit_id
-        LEFT JOIN identity.driver_profiles dp ON dp.id = p.driver_id
+        LEFT JOIN mdata.drivers d ON d.id = p.driver_id
         WHERE p.is_active = true
         ORDER BY p.expires_date ASC
       `);
@@ -70,13 +70,13 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
       days: z.coerce.number().int().min(1).max(365).default(90),
     }).parse(req.query);
 
-    const rows = await withCompany(user.id, query.operating_company_id, async (client) => {
+    const rows = await withCompany(user.uuid, query.operating_company_id, async (client) => {
       const { rows } = await client.query(`
-        SELECT p.*, u.unit_number, dp.first_name || ' ' || dp.last_name AS driver_name,
+        SELECT p.*, u.unit_number, d.first_name || ' ' || d.last_name AS driver_name,
                (p.expires_date - current_date) AS days_until_expiry
         FROM mdata.mx_permits p
         LEFT JOIN mdata.units u ON u.id = p.unit_id
-        LEFT JOIN identity.driver_profiles dp ON dp.id = p.driver_id
+        LEFT JOIN mdata.drivers d ON d.id = p.driver_id
         WHERE p.is_active = true
           AND p.expires_date <= current_date + ($1 || ' days')::interval
           AND p.expires_date >= current_date
@@ -94,7 +94,7 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
     if (!user) return;
     const body = createPermitBody.parse(req.body);
 
-    const row = await withCompany(user.id, body.operating_company_id, async (client) => {
+    const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const { rows } = await client.query(`
         INSERT INTO mdata.mx_permits (
           operating_company_id, tenant_id,
@@ -136,7 +136,7 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
     const setClauses = fields.map(([k], i) => `"${k}" = $${i + 2}`).join(", ");
     const values = fields.map(([, v]) => v);
 
-    const row = await withCompany(user.id, operating_company_id, async (client) => {
+    const row = await withCompany(user.uuid, operating_company_id, async (client) => {
       const { rows } = await client.query(
         `UPDATE mdata.mx_permits SET ${setClauses}, updated_at = now()
          WHERE id = $1 AND is_active = true RETURNING *`,
@@ -156,7 +156,7 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
     const { id } = idParams.parse(req.params);
     const { operating_company_id } = companyQuery.parse(req.query);
 
-    await withCompany(user.id, operating_company_id, async (client) => {
+    await withCompany(user.uuid, operating_company_id, async (client) => {
       await client.query(
         `UPDATE mdata.mx_permits SET is_active = false, updated_at = now() WHERE id = $1`,
         [id]

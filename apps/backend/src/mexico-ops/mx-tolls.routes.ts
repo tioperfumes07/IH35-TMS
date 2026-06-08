@@ -47,7 +47,7 @@ export async function mxTollsRoutes(app: FastifyInstance) {
       offset: z.coerce.number().int().min(0).default(0),
     }).parse(req.query);
 
-    const rows = await withCompany(user.id, q.operating_company_id, async (client) => {
+    const rows = await withCompany(user.uuid, q.operating_company_id, async (client) => {
       const conditions: string[] = [];
       const params: unknown[] = [];
       let idx = 1;
@@ -63,10 +63,10 @@ export async function mxTollsRoutes(app: FastifyInstance) {
       const { rows } = await client.query(`
         SELECT t.*,
                u.unit_number,
-               dp.first_name || ' ' || dp.last_name AS driver_name
+               d.first_name || ' ' || d.last_name AS driver_name
         FROM mdata.mx_tolls_ledger t
         LEFT JOIN mdata.units u ON u.id = t.unit_id
-        LEFT JOIN identity.driver_profiles dp ON dp.id = t.driver_id
+        LEFT JOIN mdata.drivers d ON d.id = t.driver_id
         ${conditions.length ? "WHERE " + conditions.join(" AND ") : ""}
         ORDER BY t.toll_date DESC, t.created_at DESC
         LIMIT $${idx++} OFFSET $${idx++}
@@ -87,7 +87,7 @@ export async function mxTollsRoutes(app: FastifyInstance) {
       to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     }).parse(req.query);
 
-    const rows = await withCompany(user.id, q.operating_company_id, async (client) => {
+    const rows = await withCompany(user.uuid, q.operating_company_id, async (client) => {
       const { rows } = await client.query(`
         SELECT u.unit_number,
                count(t.id) AS toll_count,
@@ -111,7 +111,7 @@ export async function mxTollsRoutes(app: FastifyInstance) {
     if (!user) return;
     const body = createTollBody.parse(req.body);
 
-    const row = await withCompany(user.id, body.operating_company_id, async (client) => {
+    const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const { rows } = await client.query(`
         INSERT INTO mdata.mx_tolls_ledger (
           operating_company_id, tenant_id,
@@ -146,7 +146,7 @@ export async function mxTollsRoutes(app: FastifyInstance) {
     const { id } = idParams.parse(req.params);
     const { operating_company_id } = companyQuery.parse(req.query);
 
-    await withCompany(user.id, operating_company_id, async (client) => {
+    await withCompany(user.uuid, operating_company_id, async (client) => {
       await client.query(
         `UPDATE mdata.mx_tolls_ledger SET is_active = false, updated_at = now() WHERE id = $1`,
         [id]
