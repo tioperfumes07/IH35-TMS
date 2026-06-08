@@ -20,6 +20,7 @@ import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
 import { BookLoadModal } from "./dispatch/components/BookLoadModal";
 import { AssignmentHistoryPage } from "./dispatch/AssignmentHistoryPage";
 import { DispatchOverview } from "./dispatch/DispatchOverview";
+import { DispatchSubnav } from "../components/dispatch/DispatchSubnav";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 
 type ViewMode = "overview" | "list" | "kanban";
@@ -278,6 +279,8 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
           </div>
         }
       />
+
+      <DispatchSubnav operatingCompanyId={defaultCompanyIds[0] ?? ""} />
 
       <div data-testid="dispatch-secondary-nav">
         <SecondaryNavTabs tabs={DISPATCH_SUB_TABS} activeId={subTab} onChange={(id) => setSubTab(id as DispatchSubTabId)} />
