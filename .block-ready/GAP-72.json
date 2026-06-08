@@ -6,6 +6,7 @@
   "task": "Customer Relationship Score + Health",
   "allowed_files": [
     ".block-ready/GAP-72.json",
+    ".block-ready/FEATURE-GAP-72-CUSTOMER-SCORE.json",
     ".block-ready.json",
     "db/migrations/202606080221_customer_relationship_scores.sql",
     "apps/backend/src/customers/relationship-score/scorer.service.ts",
