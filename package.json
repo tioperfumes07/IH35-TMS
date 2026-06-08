@@ -517,6 +517,7 @@
     "verify:sentry-receives-test-error": "node scripts/verify-sentry-receives-test-error.mjs",
     "uptime:monitor-config": "node scripts/uptime-monitor-config.mjs",
     "verify:driver-vendor-mapping": "node scripts/verify-driver-vendor-mapping-monitor.mjs",
+    "verify:wf-051-arrival-radius": "node scripts/verify-wf-051-arrival-radius-meters.mjs",
     "verify:bank-account-company-assignment": "node scripts/verify-bank-account-company-assignment.mjs"
   },
   "dependencies": {
