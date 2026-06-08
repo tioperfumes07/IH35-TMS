@@ -60,6 +60,8 @@ import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js";
+import { registerLayoverRoutes } from "./dispatch/layovers/routes.js";
+import { initializeLayoverDetectorWorker } from "./jobs/layover-detector-worker.js";
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
 import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify.routes.js";
 import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
@@ -586,6 +588,7 @@ async function main() {
   await registerDispatchAlertsRoutes(app);
   await registerDispatchPlannerRoutes(app);
   await registerDispatchDetentionRoutes(app);
+  await registerLayoverRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
   await registerDispatchPodBolRoutes(app);
@@ -934,6 +937,9 @@ async function main() {
 
     initializeDaRandomPoolDrawWorker(app);
     app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
+
+    initializeLayoverDetectorWorker(app);
+    app.log.info("[STARTUP] layover-detector-worker initialized");
 
     initializeCertExpiryMonitor(app);
     initializeSamsaraCacheWarmer(app);
