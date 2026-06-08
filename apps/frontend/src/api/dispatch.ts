@@ -547,6 +547,27 @@ export function getDispatchLoadEta(loadId: string, operatingCompanyId: string) {
   );
 }
 
+export type TriSignalRow = {
+  load_uuid: string;
+  signal: "on_track" | "behind" | "delayed";
+  reason: string;
+  slip_minutes: number | null;
+  hos_remaining_minutes: number | null;
+  driver_ack_age_minutes: number | null;
+};
+
+export function listActiveLoadTriSignals(operatingCompanyId: string) {
+  return apiRequest<{ signals: TriSignalRow[] }>(
+    `/api/dispatch/load-status-signal/active-loads?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+export function getLoadTriSignal(loadId: string, operatingCompanyId: string) {
+  return apiRequest<{ signal: TriSignalRow }>(
+    `/api/dispatch/load-status-signal/${encodeURIComponent(loadId)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export type LoadTemplateRow = {
   id: string;
   name: string;

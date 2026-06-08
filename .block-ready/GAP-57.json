@@ -1,0 +1,30 @@
+{
+  "block_id": "GAP-57",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap57",
+  "branch": "feature/gap-57-dispatch-status",
+  "phase": "GAP-HIGH",
+  "task": "CAP-5 Dispatch board on-track behind delayed tri-signal",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-57.json",
+    "apps/backend/src/dispatch/load-status-signal/thresholds.config.ts",
+    "apps/backend/src/dispatch/load-status-signal/tri-signal.service.ts",
+    "apps/backend/src/dispatch/load-status-signal/tri-signal.routes.ts",
+    "apps/backend/src/dispatch/load-status-signal/__tests__/tri-signal.test.ts",
+    "apps/frontend/src/components/dispatch/TriSignalPill.tsx",
+    "apps/frontend/src/pages/dispatch/TriSignalHoverDetail.tsx",
+    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
+    "apps/frontend/src/api/dispatch.ts",
+    "scripts/verify-cap-5-tri-signal.mjs",
+    "docs/specs/gap-57-cap-5-tri-signal.md",
+    "apps/backend/src/index.ts",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:cap-5-tri-signal"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

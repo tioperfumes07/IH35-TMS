@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
-import { listUnitsWithoutLoad, type UnitsWithoutLoad } from "../../api/dispatch";
+import { listUnitsWithoutLoad, listActiveLoadTriSignals, type TriSignalRow, type UnitsWithoutLoad } from "../../api/dispatch";
 import type { DispatchListProps } from "../../components/dispatch/DispatchList";
 import {
   BulkActionBar,
@@ -22,6 +22,7 @@ import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
 import { OnTimePredictionColumn } from "../../components/dispatch/LiveEtaColumns";
 import { LoadLivePositionCell } from "../../components/dispatch/LoadLivePositionCell";
+import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
@@ -235,6 +236,22 @@ export function DispatchBoard({
     staleTime: 30_000,
   });
 
+  const triSignalsQuery = useQuery({
+    queryKey: ["dispatch-board", "tri-signals", companyId],
+    queryFn: () => listActiveLoadTriSignals(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+
+  const triSignalByLoadId = useMemo(() => {
+    const map = new Map<string, TriSignalRow>();
+    for (const row of triSignalsQuery.data?.signals ?? []) {
+      map.set(row.load_uuid, row);
+    }
+    return map;
+  }, [triSignalsQuery.data]);
+
   const openPreSettlementsMap = useMemo<Map<string, OpenPreSettlement>>(() => {
     const map = new Map<string, OpenPreSettlement>();
     for (const ps of openPreSettlementsQuery.data?.pre_settlements ?? []) {
@@ -392,6 +409,10 @@ export function DispatchBoard({
       load.assigned_primary_driver_name ?? "Unassigned"
     );
 
+  const renderTriSignalCell = (load: DispatchLoadRow) => (
+    <TriSignalPill signal={triSignalByLoadId.get(load.id)} loading={triSignalsQuery.isLoading && Boolean(companyId)} />
+  );
+
   const renderStatusCell = (load: DispatchLoadRow) => (
     <div className="flex items-center gap-1">
       <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusVariant(load.status)}`}>
@@ -488,6 +509,7 @@ export function DispatchBoard({
     { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
+    { key: "status_signal", header: "Status Signal", cell: (load) => renderTriSignalCell(load) },
     { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
     { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
     { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={null} loadId={load.id} /> },
@@ -506,6 +528,7 @@ export function DispatchBoard({
     { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code) },
     { key: "flag", header: "Flag", cell: (load) => FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪" },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
+    { key: "status_signal", header: "Status Signal", cell: (load) => renderTriSignalCell(load) },
     { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
     { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={null} loadId={load.id} /> },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
