@@ -8,10 +8,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const CATALOG = path.join(ROOT, "docs/runbooks/operational-tuning-catalog.md");
-const RUNBOOKS_UI = path.join(ROOT, "apps/frontend/src/pages/help/RunbooksIndex.tsx");
-const MONITORING = path.join(ROOT, "docs/runbooks/MONITORING-PLAYBOOK.md");
-
 const REQUIRED_FIELDS = [
   "- Current value:",
   "- Location:",
@@ -33,15 +29,21 @@ function readRequired(rel) {
 }
 
 const catalog = readRequired("docs/runbooks/operational-tuning-catalog.md");
-const entries = catalog.match(/^### /gm) ?? [];
-if (entries.length < 30) {
-  fail(`expected ≥30 parameter entries (### headings), found ${entries.length}`);
+const entryBlocks = catalog
+  .split(/^### /m)
+  .slice(1)
+  .map((chunk) => `### ${chunk}`);
+
+if (entryBlocks.length < 30) {
+  fail(`expected ≥30 parameter entries (### headings), found ${entryBlocks.length}`);
 }
 
-for (const field of REQUIRED_FIELDS) {
-  const count = (catalog.match(new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) ?? []).length;
-  if (count < 30) {
-    fail(`field "${field.trim()}" appears ${count} times; need ≥30`);
+for (const [index, block] of entryBlocks.entries()) {
+  const title = block.split("\n")[0]?.replace(/^###\s*/, "").trim() || `entry_${index + 1}`;
+  for (const field of REQUIRED_FIELDS) {
+    if (!block.includes(field)) {
+      fail(`entry "${title}" is missing field "${field}"`);
+    }
   }
 }
 
@@ -56,7 +58,7 @@ const categories = [
   "Alert thresholds",
 ];
 for (const cat of categories) {
-  if (!catalog.includes(cat)) fail(`missing category section: ${cat}`);
+  if (!catalog.includes(`## ${cat}`)) fail(`missing category section: ${cat}`);
 }
 
 const runbooksUi = readRequired("apps/frontend/src/pages/help/RunbooksIndex.tsx");
@@ -69,4 +71,4 @@ if (!monitoring.includes("operational-tuning-catalog")) {
   fail("MONITORING-PLAYBOOK must link operational-tuning-catalog.md");
 }
 
-console.log(`verify:operational-tuning-catalog OK (${entries.length} entries)`);
+console.log(`verify:operational-tuning-catalog OK (${entryBlocks.length} entries)`);
