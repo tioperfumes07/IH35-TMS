@@ -6,7 +6,6 @@
   "task": "CAP-15 Driver QBO vendor mapping integrity",
   "allowed_files": [
     ".block-ready/GAP-52.json",
-    ".block-ready.json",
     "db/migrations/202606080213_driver_vendor_integrity_findings.sql",
     "apps/backend/src/integrations/integrity-monitors/driver-vendor-mapping.ts",
     "apps/backend/src/integrations/integrity-monitors/driver-vendor-mapping.routes.ts",
