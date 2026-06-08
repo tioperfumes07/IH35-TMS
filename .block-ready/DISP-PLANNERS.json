@@ -2,9 +2,9 @@
   "block_id": "DISP-PLANNERS",
   "phase": "Dispatch",
   "task": "DISP-PLANNERS",
-  "title": "Driver Planner + Truck Planner + Loads Planner",
-  "lane": "B",
   "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready/DISP-PLANNERS.json",
     "apps/frontend/src/pages/dispatch/planners/DriverPlanner.tsx",
     "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
     "apps/frontend/src/pages/dispatch/planners/LoadsPlanner.tsx",
@@ -16,25 +16,10 @@
     "apps/frontend/src/pages/dispatch/planners/__tests__/DispatchPlanners.test.tsx",
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts",
-    "docs/locked-ui-surface.json",
-    ".block-ready/DISP-PLANNERS.json"
+    "docs/locked-ui-surface.json"
   ],
-  "forbidden_files": [
-    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
-    "apps/frontend/src/pages/Dispatch.tsx",
-    "apps/frontend/src/components/dispatch/DispatchBoard.tsx",
-    "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
-    "apps/frontend/src/components/layout/Sidebar.tsx",
-    "apps/frontend/src/components/layout/SidebarFlyoutMenu.tsx"
-  ],
-  "routes": [
-    "/dispatch/planners",
-    "/dispatch/planners/driver",
-    "/dispatch/planners/truck",
-    "/dispatch/planners/loads"
-  ],
-  "range_options": [7, 14, 30, 40],
-  "default_range_days": 30,
-  "reuses_safety_scheduler_api": true,
-  "created_at": "2026-06-08"
+  "extra_gates": [],
+  "runtime_path": "frontend",
+  "db_required": false,
+  "guard_required": false
 }
