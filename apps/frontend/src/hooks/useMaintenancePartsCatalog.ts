@@ -49,7 +49,7 @@ export function useMaintenancePartsCatalog(filters: MaintPartsFilters) {
   });
 }
 
-export function useCreateMaintPart(operatingCompanyId: string) {
+export function useCreateMaintPart(_operatingCompanyId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: Omit<MaintPartRow, "id" | "created_at"> & { operating_company_id: string }) =>
