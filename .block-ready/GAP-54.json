@@ -1,0 +1,26 @@
+{
+  "block_id": "GAP-54",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap54",
+  "branch": "feature/gap-54-arrival-prompt",
+  "phase": "GAP-CRITICAL",
+  "task": "WF-051 250-foot arrival prompt correction",
+  "allowed_files": [
+    ".block-ready/GAP-54.json",
+    "apps/backend/src/integrations/samsara/geofences/wf-051-radius.ts",
+    "apps/backend/src/integrations/samsara/geofences/arrival-prompt.service.ts",
+    "apps/backend/src/integrations/samsara/geofences/__tests__/wf-051.test.ts",
+    "apps/driver-pwa/src/lib/arrival-prompt-trigger.ts",
+    "apps/driver-pwa/src/lib/__tests__/arrival-prompt.test.ts",
+    "apps/backend/scripts/migrate-existing-wf-051-geofences.mjs",
+    "scripts/verify-wf-051-arrival-radius-meters.mjs",
+    "docs/specs/gap-54-wf-051-250-foot-correction.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:wf-051-arrival-radius"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
