@@ -14,20 +14,22 @@ import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { DispatchKanban } from "../components/dispatch/DispatchKanban";
+import { FleetOosStrip } from "../components/dispatch/FleetOosStrip";
 import { DispatchBoard } from "./dispatch/DispatchBoard";
 import { FilterBar, type DispatchFilterState } from "../components/dispatch/FilterBar";
 import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
 import { BookLoadModal } from "./dispatch/components/BookLoadModal";
 import { AssignmentHistoryPage } from "./dispatch/AssignmentHistoryPage";
 import { DispatchOverview } from "./dispatch/DispatchOverview";
+import { RoundTrips } from "./dispatch/RoundTrips";
 import { DispatchSubnav } from "../components/dispatch/DispatchSubnav";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 
-type ViewMode = "overview" | "list" | "kanban";
+type ViewMode = "overview" | "list" | "kanban" | "units";
 
 function parseViewMode(raw: string | null, loadsRoute: boolean): ViewMode {
   if (loadsRoute) return "list";
-  if (raw === "overview" || raw === "kanban" || raw === "list") return raw;
+  if (raw === "overview" || raw === "kanban" || raw === "list" || raw === "units") return raw;
   if (raw === "loads") return "kanban";
   return "overview";
 }
@@ -114,7 +116,8 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
   }, [loadsRoute, searchParams, setSearchParams]);
 
   const view = parseViewMode(searchParams.get("view"), loadsRoute);
-  const showLoadBoard = view === "kanban" || view === "list";
+  const showLoadBoard = view === "kanban" || view === "list" || view === "units";
+  const showFleetOosStrip = subTab === "load_board" && (view === "overview" || view === "kanban" || view === "list" || view === "units");
   const sort = searchParams.get("sort") ?? "created_at:desc";
   const offset = Number(searchParams.get("offset") ?? "0");
   const limit = Number(searchParams.get("limit") ?? "50");
@@ -273,6 +276,19 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
             >
               List
             </Button>
+            <Button
+              type="button"
+              variant={view === "units" ? "primary" : "secondary"}
+              size="sm"
+              data-testid="dispatch-view-round-trips"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.set("view", "units");
+                setSearchParams(next);
+              }}
+            >
+              Round Trips
+            </Button>
             <Button type="button" onClick={() => setNewLoadOpen(true)}>
               + Book Load
             </Button>
@@ -324,7 +340,20 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
       ) : null}
 
       {subTab === "load_board" && showLoadBoard ? (
-        view === "list" ? (
+        view === "units" ? (
+          <RoundTrips
+            loads={loads}
+            operatingCompanyId={defaultCompanyIds[0] ?? ""}
+            loading={loadsQuery.isLoading}
+            listError={dataTableErrorState(loadsQuery.error, () => void loadsQuery.refetch())}
+            onLoadClick={(id) => {
+              const next = new URLSearchParams(searchParams);
+              next.set("load_id", id);
+              setSearchParams(next);
+            }}
+            onBookReturn={() => setNewLoadOpen(true)}
+          />
+        ) : view === "list" ? (
           <DispatchBoard
             loads={loads}
             operatingCompanyId={defaultCompanyIds[0] ?? ""}
@@ -407,6 +436,8 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
           </DataPanel>
         </div>
       )}
+
+      {showFleetOosStrip ? <FleetOosStrip operatingCompanyId={defaultCompanyIds[0] ?? ""} /> : null}
 
       <LoadDetailDrawer
         loadId={loadId}
