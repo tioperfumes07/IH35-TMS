@@ -5,9 +5,9 @@ STATUS: OPEN. Do NOT merge until order is fixed AND CI green. Label already corr
 STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
 
 FIX:
-SIDEBAR_DEFAULT_ORDER must be EXACTLY these 21 ids, in this order:
-home, maintenance, fuel, dispatch, driver-hub, safety, drivers, eld, accounting, bank, factoring, vendors, customers, legal, form_425, drv_app, lists, reports, docs, users, help
-( drivers = the relabeled "Driver Profile"; route stays /drivers. )
+SIDEBAR_DEFAULT_ORDER must be EXACTLY these 21 ids, in this order (locked 2026-06-08, SIDEBAR_ITEM_IDS = source of truth):
+home, maintenance, fuel, dispatch, drivers, safety, accounting, insurance, bank, factoring, customers, vendors, lists, reports, legal, docs, eld, form_425, drv_app, users, help
+( drivers = "Driver Profile"; route stays /drivers. insurance = index 7. factoring = index 9. driver-hub NOT in array yet — pending its own block. )
 
 ROLE ARRAYS (Mechanic / Dispatcher / Accountant / Safety / Manager): do NOT force the order above onto them. Leave each role's existing order intact and ONLY insert driver-hub immediately after drivers in each. Owner / Admin / SuperAdmin inherit DEFAULT, so the Owner sees the order above.
 

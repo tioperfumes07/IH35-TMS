@@ -13,6 +13,7 @@ allowed_files:
   - apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx
   - apps/frontend/src/routes/manifest.tsx
   - .block-ready/DISP-DRAWER-WIRE.json
+note: sidebar-config.ts scope = NONE (Factoring already rail #9 — no sidebar edit needed). manifest.tsx only: add /dispatch/factoring-queue → FactoringQueuePage and /dispatch/trip-profitability → TripProfitability.
 
 Block 1 — DISP-OVERVIEW
 allowed_files:

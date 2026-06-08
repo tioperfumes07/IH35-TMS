@@ -1,6 +1,7 @@
 AGENT-1 · Block 12 of 13 — PHASE Dispatch / TASK <add tracker row DISP-DRAWER-WIRE> — Wire load click to live LoadDetailDrawer everywhere + edit + additive tabs
 SO: prepend BOX 0. EXTEND existing component, do not replace.
 SCOPE (ADDITIVE): every dispatch surface (Kanban, List, Table, Assignment, Round Trips, all queues, planners' load bars) opens the EXISTING apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx via ?load_id= (DispatchLoadDetailRedirect pattern in routes/manifest.tsx). Honor canEdit (edit fields inline). Add the additive tabs to LoadDetailDrawer DrawerTab: Factoring (Block 7), Customs (cross-border only, Block 8), and profitability breakdown inside Settlement (Block 9); keep Pre-Settlement (+Add SB Load) tab. THIS BLOCK is the single writer of LoadDetailDrawer.tsx this cycle — Blocks 7/8/9 provide tab content via props/child components, this block mounts them.
-FILES: LoadDetailDrawer.tsx (EDIT — sole writer), each dispatch view (EDIT — row/card onClick → setLoadId/navigate ?load_id=).
+FILES: LoadDetailDrawer.tsx (EDIT — sole writer), each dispatch view (EDIT — row/card onClick → setLoadId/navigate ?load_id=), manifest.tsx (add /dispatch/factoring-queue → FactoringQueuePage and /dispatch/trip-profitability → TripProfitability).
+sidebar-config.ts scope = NONE — Factoring is already rail #9; no sidebar edit needed in this block.
 ACCEPTANCE: clicking a load in ANY view opens the live drawer; edit works; new tabs present; domestic loads hide Customs tab.
 LANE LOCK: LoadDetailDrawer.tsx ONE writer (this block); coordinate tab content with 7/8/9.

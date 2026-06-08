@@ -11,7 +11,7 @@ LOCKED 2026-06-08 | supersedes scattered dispatch notes; additive to existing di
 - Queues (top-bar, with counts): At-Risk, Detention, Border Crossings, Late Arrivals, Live Map.
 - Planners: Driver Planner + Truck Planner (mirror Safety Driver Scheduler grid, range 7/14/30/40) + Loads Planner (Gantt, multi-day spans). All share one date range/timeline.
 - Settlements: Pre-settlements (NB→SB trip-linked), Settlements & pay, Trip Profitability.
-- Factoring: queue + FARO Reserve Tracker.
+- Factoring: queue + FARO Reserve Tracker. (Factoring is also sidebar rail #9 — top-level entry; this Dispatch sub-view is an additional surface inside Dispatch. No sidebar-config.ts edit needed for Dispatch blocks.)
 
 ## Global
 - OUT-OF-SERVICE / in-shop units pinned to the BOTTOM of EVERY view (full-fleet visibility).
