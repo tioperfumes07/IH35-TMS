@@ -1,0 +1,27 @@
+{
+  "block_id": "DISP-ROUNDTRIPS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DISPATCH",
+  "task": "Block 4 — Round Trips view + OOS strip pinned bottom of every dispatch view",
+  "branch": "feat/disp-roundtrips",
+  "lane": "A",
+  "lane_position": "A4",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-disp-roundtrips",
+  "details": [
+    "RoundTrips.tsx: Kanban-style unit rows with outbound load card + RETURN·SB return card or dashed Needs return + Book return.",
+    "FleetOosStrip.tsx: shared in-shop/OOS unit strip (reason + ETA back) pinned at bottom of dispatch load-board views.",
+    "Dispatch.tsx: register Round Trips view toggle (view=units key preserved); FleetOosStrip on Overview/Kanban/List/Round Trips."
+  ],
+  "allowed_files": [
+    ".block-ready/DISP-ROUNDTRIPS.json",
+    "apps/frontend/src/pages/dispatch/RoundTrips.tsx",
+    "apps/frontend/src/components/dispatch/FleetOosStrip.tsx",
+    "apps/frontend/src/pages/Dispatch.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "gate_for": ["DISP-LIST-TABLE-ASSIGN", "DISP-DENSITY-NAV"]
+}
