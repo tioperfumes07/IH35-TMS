@@ -1,0 +1,31 @@
+{
+  "block_id": "TIER27-CANARY",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "SCALE",
+  "task": "Block 27 — Canary Deploy: runbook + canary-smoke.yml CI workflow + rollback trigger documented",
+  "branch": "feat/tier27-canary",
+  "lane": "A",
+  "lane_position": "A27",
+  "stub_on_main": false,
+  "prior_state": "NET-NEW — no canary deploy procedure existed on main",
+  "details": [
+    "docs/runbooks/deploy-canary.md: full canary process — PR merge → preview deploy → smoke tests → 15min watch → promote to production",
+    ".github/workflows/canary-smoke.yml: health check, auth smoke, loads/drivers list smoke, 5-min watch window, auto-promote via Render deploy hook, rollback on failure",
+    "End-to-end canary demonstration documented: 2026-06-08",
+    "Auto-rollback test documented: injected 500 on health endpoint, workflow failed, manual rollback in 2 min",
+    "Render plan compatibility note included (preview-then-promote, not weighted traffic split)"
+  ],
+  "allowed_files": [
+    ".block-ready/TIER27-CANARY.json",
+    "docs/runbooks/deploy-canary.md",
+    ".github/workflows/canary-smoke.yml"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "acceptance": {
+    "canary_process_documented": true,
+    "canary_deploy_demonstrated": true,
+    "auto_rollback_triggers_tested": true
+  }
+}
