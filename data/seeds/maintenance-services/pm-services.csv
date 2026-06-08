@@ -1,0 +1,31 @@
+service_code,service_name,service_category,applies_to_type,interval_miles,interval_months,interval_hours,is_safety_critical,typical_duration_hours,typical_cost_cents,compliance_ref
+PM-OIL-25K,Engine Oil & Filter Change,Preventive Maintenance,truck,25000,6,,false,1.5,28000,
+PM-FUEL-FILTER-25K,Fuel Filter Change,Preventive Maintenance,truck,25000,6,,false,1,15000,
+PM-AIR-FILTER-50K,Air Filter Replacement,Preventive Maintenance,truck,50000,12,,false,0.5,8000,
+PM-BRAKE-INSPECT-50K,Brake Inspection,Preventive Maintenance,truck,50000,12,,true,2,25000,FMCSA 393.40
+PM-TIRE-ROTATE-50K,Tire Rotation & Inspection,Preventive Maintenance,truck,50000,12,,false,2,18000,
+PM-TRANSMISSION-100K,Transmission Service,Preventive Maintenance,truck,100000,24,,false,3,45000,
+PM-COOLANT-200K,Coolant System Flush,Preventive Maintenance,truck,200000,48,,false,2,22000,
+PM-DOT-ANNUAL,DOT Annual Inspection,Compliance Inspection,truck,,12,,true,4,15000,FMCSA 396.17
+PM-BRAKE-ADJ-25K,Brake Adjustment,Preventive Maintenance,truck,25000,6,,true,1,12000,FMCSA 393.40
+PM-WHEEL-BEARING-100K,Wheel Bearing Inspection,Preventive Maintenance,truck,100000,24,,true,3,35000,
+PM-FIFTH-WHEEL-50K,Fifth Wheel Lubrication & Inspection,Preventive Maintenance,truck,50000,12,,true,1,8000,
+PM-GREASE-25K,Chassis Lubrication (Grease),Preventive Maintenance,truck,25000,,false,1,10000,
+PM-DEF-FILTER-150K,DEF Filter Replacement,Preventive Maintenance,truck,150000,36,,false,1,18000,
+PM-DPF-CLEAN-300K,DPF Filter Cleaning,Preventive Maintenance,truck,300000,,,false,4,48000,
+PM-FANCLUTCH-100K,Fan Clutch Inspection,Preventive Maintenance,truck,100000,24,,false,1.5,15000,
+PM-TRANS-OIL-100K,Differential Oil Change,Preventive Maintenance,truck,100000,24,,false,2,28000,
+PM-AIR-DRYER-ANNUAL,Air Dryer Service,Preventive Maintenance,truck,,12,,true,1,12000,
+PM-SAFETY-LAMP-6MO,Safety Lamp Inspection,Compliance Inspection,truck,,6,,true,0.5,5000,FMCSA 393.9
+PM-FIRE-EXT,Fire Extinguisher Inspection,Compliance Inspection,truck,,12,,true,0.25,8000,FMCSA 393.95
+PM-EMERGENCY-KIT,Emergency Equipment Check,Compliance Inspection,truck,,12,,true,0.5,3000,FMCSA 393.95
+PM-TRAILER-INSPECT-ANNUAL,Trailer Annual Inspection,Compliance Inspection,trailer,,12,,true,3,15000,FMCSA 396.17
+PM-TRAILER-BRAKE-50K,Trailer Brake Inspection,Preventive Maintenance,trailer,50000,12,,true,2,22000,
+PM-TRAILER-LIGHTS-6MO,Trailer Light Check,Preventive Maintenance,trailer,,6,,true,0.5,5000,
+PM-TRAILER-TIRES-50K,Trailer Tire Inspection,Preventive Maintenance,trailer,50000,12,,false,1,12000,
+PM-KINGPIN-INSPECT,King Pin Inspection,Preventive Maintenance,trailer,,12,,true,2,18000,
+PM-LANDING-GEAR-INSPECT,Landing Gear Inspection,Preventive Maintenance,trailer,,6,,false,0.5,5000,
+PM-GLAD-HAND-INSPECT,Glad Hand & Hose Inspection,Preventive Maintenance,trailer,,6,,true,0.5,3000,
+PM-DOOR-SEAL-INSPECT,Door Seal Inspection,Preventive Maintenance,trailer,,12,,false,0.5,5000,
+PM-FLOOR-INSPECT,Trailer Floor Inspection,Preventive Maintenance,trailer,,12,,false,1,8000,
+PM-ROOF-INSPECT,Trailer Roof Inspection,Preventive Maintenance,trailer,,12,,false,0.5,6000,
