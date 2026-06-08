@@ -397,3 +397,83 @@ export function withdrawSettlementDispute(id: string, payload: { operating_compa
     body: payload,
   });
 }
+
+// ── Pre-settlement NB→SB trip-linking (MUST 8a.0.5.12) ─────────────────────
+
+export type OpenPreSettlement = {
+  settlement_id: string;
+  settlement_number: string | null;
+  driver_id: string;
+  first_load_id: string | null;
+  first_load_number: string | null;
+  last_load_id: string | null;
+  last_load_number: string | null;
+  status: string;
+  gross_pay: number;
+  deductions_total: number;
+  net_pay: number;
+  trip_started_at: string | null;
+};
+
+export type PreSettlementLine = {
+  id: string;
+  line_type: string;
+  description: string;
+  amount: number;
+  created_at: string;
+};
+
+export type PreSettlementDetail = {
+  settlement: {
+    id: string;
+    display_id: string | null;
+    driver_id: string;
+    status: string;
+    gross_pay: number;
+    deductions_total: number;
+    reimbursements_total: number;
+    net_pay: number;
+    first_load_id: string | null;
+    first_load_number: string | null;
+    last_load_id: string | null;
+    last_load_number: string | null;
+    trip_started_at: string | null;
+    trip_closed_at: string | null;
+    period_start: string;
+    period_end: string;
+  };
+  lines: PreSettlementLine[];
+};
+
+/** Board: bulk list of all open pre-settlements keyed by driver. */
+export function listOpenPreSettlements(companyId: string) {
+  return apiRequest<{ pre_settlements: OpenPreSettlement[] }>(
+    `/api/v1/driver-finance/pre-settlements/open-by-driver?${q(companyId)}`
+  );
+}
+
+/** Drawer: detail view (lines + totals) for a single driver's active pre-settlement. */
+export function getPreSettlementForDriver(driverId: string, companyId: string) {
+  return apiRequest<PreSettlementDetail>(
+    `/api/v1/driver-finance/pre-settlements/by-driver/${encodeURIComponent(driverId)}?${q(companyId)}`
+  );
+}
+
+/** Board: links the SB load to the driver's existing open pre-settlement. */
+export function addLoadToPreSettlement(
+  settlementId: string,
+  payload: { operating_company_id: string; load_id: string }
+) {
+  return apiRequest<{ ok: boolean; settlement_id: string; totals: Record<string, number> }>(
+    `/api/v1/driver-finance/pre-settlements/${encodeURIComponent(settlementId)}/add-load`,
+    { method: "POST", body: payload }
+  );
+}
+
+/** Drawer: finalises the closed pre-settlement — PDF, email, driver notification. */
+export function settleAndPay(settlementId: string, operatingCompanyId: string) {
+  return apiRequest<{ ok: boolean; settlement_id: string; net_pay: number }>(
+    `/api/v1/driver-finance/pre-settlements/${encodeURIComponent(settlementId)}/settle`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId } }
+  );
+}

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DispatchList, type DispatchListProps } from "../../components/dispatch/DispatchList";
 import {
   BulkActionBar,
@@ -8,6 +9,7 @@ import {
 } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
+import { addLoadToPreSettlement, listOpenPreSettlements, type OpenPreSettlement } from "../../api/driverFinance";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
@@ -24,6 +26,7 @@ const LOAD_TRANSITION_OPTIONS = [
 
 export function DispatchBoard({ operatingCompanyId, onBulkComplete, loads, onExportCsv, ...props }: DispatchBoardProps) {
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingTransition, setPendingTransition] = useState<string>(LOAD_TRANSITION_OPTIONS[0].value);
   const bulk = useEntityBulkAction();
@@ -35,6 +38,36 @@ export function DispatchBoard({ operatingCompanyId, onBulkComplete, loads, onExp
   });
 
   const companyId = operatingCompanyId ?? loads[0]?.operating_company_id ?? "";
+
+  // Fetch all open pre-settlements for the company so the board can show the
+  // "Driver has open pre-settlement · Add to it?" prompt on return-trip rows.
+  const openPreSettlementsQuery = useQuery({
+    queryKey: ["pre-settlements-open", companyId],
+    queryFn: () => listOpenPreSettlements(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 30_000,
+  });
+
+  const openPreSettlementsMap = useMemo<Map<string, OpenPreSettlement>>(() => {
+    const map = new Map<string, OpenPreSettlement>();
+    for (const ps of openPreSettlementsQuery.data?.pre_settlements ?? []) {
+      if (ps.driver_id) map.set(ps.driver_id, ps);
+    }
+    return map;
+  }, [openPreSettlementsQuery.data]);
+
+  const addLoadMutation = useMutation({
+    mutationFn: ({ settlementId, loadId, ocId }: { settlementId: string; loadId: string; ocId: string }) =>
+      addLoadToPreSettlement(settlementId, { operating_company_id: ocId, load_id: loadId }),
+    onSuccess: () => {
+      pushToast("Load linked to pre-settlement", "success");
+      void openPreSettlementsQuery.refetch();
+      void queryClient.invalidateQueries({ queryKey: ["pre-settlements-open"] });
+    },
+    onError: (err) => {
+      pushToast(err instanceof Error ? err.message : "Failed to link load to pre-settlement", "error");
+    },
+  });
 
   const exportSelectedCsv = () => {
     const selected = loads.filter((load) => selection.selectedIds.has(load.id));
@@ -118,6 +151,10 @@ export function DispatchBoard({ operatingCompanyId, onBulkComplete, loads, onExp
           pageRowIds,
           onCapExceeded: (message) => pushToast(message, "error"),
         }}
+        openPreSettlements={openPreSettlementsMap}
+        onAddToPreSettlement={(settlementId, loadId, ocId) =>
+          addLoadMutation.mutate({ settlementId, loadId, ocId })
+        }
       />
 
       <BulkActionModal
