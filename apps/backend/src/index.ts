@@ -16,6 +16,10 @@ import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-heal
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
 import { registerSamsaraVendorMappingActionsRoutes } from "./integrations/samsara/vendor-mapping-actions.routes.js";
 import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
+import { registerGeofenceReconciliationRoutes } from "./integrations/samsara/geofences/reconciliation.routes.js";
+import { initializeGeofenceReconciliationWorker } from "./jobs/geofence-reconciliation-daily.js";
+import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
+import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-detector.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -60,8 +64,6 @@ import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js";
-import { registerLayoverRoutes } from "./dispatch/layovers/routes.js";
-import { initializeLayoverDetectorWorker } from "./jobs/layover-detector-worker.js";
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
 import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify.routes.js";
 import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
@@ -344,8 +346,6 @@ import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
 import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js";
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
-import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
-import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-detector.js";
 import { registerBookingGapRoutes } from "./dispatch/analytics/booking-gap.routes.js";
 import { initializeBookingGapAggregatorWorker, stopBookingGapAggregatorWorker } from "./jobs/booking-gap-aggregator-worker.js";
 
@@ -490,7 +490,9 @@ async function main() {
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
+  await registerGeofenceReconciliationRoutes(app);
   await registerBorderCrossingDetectorRoutes(app);
+  await registerBookingGapRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -594,8 +596,6 @@ async function main() {
   await registerDispatchAlertsRoutes(app);
   await registerDispatchPlannerRoutes(app);
   await registerDispatchDetentionRoutes(app);
-  await registerLayoverRoutes(app);
-  await registerBookingGapRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
   await registerDispatchPodBolRoutes(app);
@@ -894,6 +894,27 @@ async function main() {
   }
 
   try {
+    initializeGeofenceReconciliationWorker(app);
+    app.log.info("[STARTUP] geofence-reconciliation-daily worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] geofence-reconciliation-daily worker failed");
+  }
+
+  try {
+    initializeBorderCrossingDetectorWorker(app);
+    app.log.info("[STARTUP] border-crossing-detector-worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] border-crossing-detector-worker failed");
+  }
+
+  try {
+    initializeBookingGapAggregatorWorker(app);
+    app.log.info("[STARTUP] booking-gap aggregator worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] booking-gap aggregator worker failed");
+  }
+
+  try {
     cron.schedule(
       "*/30 * * * *",
       async () => {
@@ -945,17 +966,11 @@ async function main() {
     initializeDaRandomPoolDrawWorker(app);
     app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
 
-    initializeLayoverDetectorWorker(app);
-    app.log.info("[STARTUP] layover-detector-worker initialized");
-
     initializeCertExpiryMonitor(app);
     initializeSamsaraCacheWarmer(app);
     app.log.info("[STARTUP] samsara-cache-warmer initialized");
     initializeSearchIndexerIncremental(app);
     app.log.info("[STARTUP] cert-expiry-monitor initialized");
-
-    initializeBorderCrossingDetectorWorker(app);
-    app.log.info("[STARTUP] border-crossing-detector-worker initialized");
 
     initializePmAutoEngineCron(app);
     app.log.info("[STARTUP] pm-auto-engine-cron initialized");
@@ -1040,13 +1055,6 @@ async function main() {
     app.log.info("[STARTUP] admin-jobs-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] admin-jobs-worker failed");
-  }
-
-  try {
-    initializeBookingGapAggregatorWorker(app);
-    app.log.info("[STARTUP] booking-gap aggregator worker initialized");
-  } catch (error) {
-    app.log.error({ err: error }, "[STARTUP] booking-gap aggregator worker failed");
   }
 
   try {

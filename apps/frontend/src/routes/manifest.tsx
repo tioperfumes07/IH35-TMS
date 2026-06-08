@@ -28,7 +28,6 @@ import { InTransitIssuesPage } from "../pages/dispatch/InTransitIssuesPage";
 import { AssignmentHistoryPage } from "../pages/dispatch/AssignmentHistoryPage";
 import { PlannerCalendarPage } from "../pages/dispatch/PlannerCalendarPage";
 import { DetentionBoardPage } from "../pages/dispatch/DetentionBoardPage";
-import { DriverLayoverHistory } from "../pages/drivers/DriverLayoverHistory";
 import { OcrQueuePage } from "../pages/dispatch/OcrQueuePage";
 import { NotifyPreferencesPage } from "../pages/dispatch/NotifyPreferencesPage";
 import { PodReviewPage } from "../pages/dispatch/PodReviewPage";
@@ -167,9 +166,10 @@ import { LaneProfitabilityPage } from "../pages/reports/LaneProfitabilityPage";
 import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage";
 import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
 import { DispatchMarginPage } from "../pages/reports/DispatchMarginPage";
-import BookingGapReport from "../pages/reports/BookingGapReport";
 import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
+import { GeofenceReconciliationReport } from "../pages/reports/GeofenceReconciliationReport";
+import BookingGapReport from "../pages/reports/BookingGapReport";
 import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
 import { FaultRulesPage } from "../pages/maintenance/FaultRulesPage";
 import { DeadheadReportPage } from "../pages/reports/DeadheadReportPage";
@@ -325,12 +325,6 @@ function RootRedirect() {
   }
   if (!auth.user || auth.isUnauthenticated) return <Navigate to="/login" replace />;
   return <Navigate to="/home" replace />;
-}
-
-function LayoverHistoryWrapper() {
-  const { driverUuid = "" } = useParams<{ driverUuid: string }>();
-  const { selectedCompanyId = "" } = useCompanyContext();
-  return <DriverLayoverHistory driverUuid={driverUuid} operatingCompanyId={selectedCompanyId} />;
 }
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -690,14 +684,6 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DetentionBoardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dispatch/layovers/driver/:driverUuid"
-          element={
-            <ProtectedRoute>
-              <LayoverHistoryWrapper />
             </ProtectedRoute>
           }
         />
@@ -2243,18 +2229,26 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/reports/booking-gap"
-          element={
-            <ProtectedRoute>
-              <BookingGapReport />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/reports/geofence-dwell"
           element={
             <ProtectedRoute>
               <GeofenceDwellReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/geofence-reconciliation"
+          element={
+            <ProtectedRoute>
+              <GeofenceReconciliationReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/booking-gap"
+          element={
+            <ProtectedRoute>
+              <BookingGapReport />
             </ProtectedRoute>
           }
         />

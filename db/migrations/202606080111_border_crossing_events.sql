@@ -25,6 +25,21 @@ CREATE INDEX IF NOT EXISTS idx_bce_vehicle_time
 CREATE INDEX IF NOT EXISTS idx_bce_company_time
   ON dispatch.border_crossing_events(operating_company_id, entered_geofence_at DESC);
 
+ALTER TABLE dispatch.border_crossing_events ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_dispatch_border_crossing_events_company ON dispatch.border_crossing_events;
+CREATE POLICY rls_dispatch_border_crossing_events_company
+  ON dispatch.border_crossing_events
+  FOR ALL TO ih35_app
+  USING (
+    operating_company_id = current_setting('app.operating_company_id', true)
+    OR current_setting('app.bypass_rls', true) = 'lucia'
+  )
+  WITH CHECK (
+    operating_company_id = current_setting('app.operating_company_id', true)
+    OR current_setting('app.bypass_rls', true) = 'lucia'
+  );
+
 GRANT USAGE ON SCHEMA dispatch TO ih35_app;
 GRANT SELECT, INSERT, UPDATE ON dispatch.border_crossing_events TO ih35_app;
 

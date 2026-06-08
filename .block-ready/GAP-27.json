@@ -1,0 +1,22 @@
+{
+  "block_id": "GAP-27",
+  "status": "READY",
+  "branch": "feature/gap-27-geofence-reconciliation",
+  "phase": "GAP-MEDIUM",
+  "task": "Daily Geofence Reconciliation Report",
+  "allowed_files": [
+    "db/migrations/202606080112_geofence_integrity_findings.sql",
+    "apps/backend/src/integrations/samsara/geofences/reconciliation.service.ts",
+    "apps/backend/src/integrations/samsara/geofences/reconciliation.routes.ts",
+    "apps/backend/src/integrations/samsara/geofences/__tests__/recon.test.ts",
+    "apps/backend/src/jobs/geofence-reconciliation-daily.ts",
+    "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx",
+    "scripts/verify-geofence-recon.mjs",
+    "docs/specs/gap-27-geofence-reconciliation.md",
+    "apps/backend/src/index.ts"
+  ],
+  "extra_gates": ["verify:geofence-recon"],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

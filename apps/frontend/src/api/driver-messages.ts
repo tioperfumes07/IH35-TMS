@@ -50,3 +50,28 @@ export function markDriverMessageRead(messageId: string, operatingCompanyId: str
     { method: "PATCH" }
   );
 }
+
+export type DriverCommEntry = {
+  id: string;
+  channel: "sms" | "email" | "in_app";
+  direction: "inbound" | "outbound";
+  message: string;
+  urgency: string | null;
+  delivery_status: string;
+  delivery_ref: string | null;
+  created_at: string;
+};
+
+export function getDriverCommunications(
+  driverId: string,
+  operatingCompanyId: string,
+  params: { channel?: string; limit?: number; offset?: number } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.channel) q.set("channel", params.channel);
+  if (params.limit !== undefined) q.set("limit", String(params.limit));
+  if (params.offset !== undefined) q.set("offset", String(params.offset));
+  return apiRequest<{ entries: DriverCommEntry[]; total: number }>(
+    `/api/v1/drivers/${encodeURIComponent(driverId)}/communications?${q.toString()}`
+  );
+}

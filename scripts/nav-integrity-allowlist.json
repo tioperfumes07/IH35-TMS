@@ -139,6 +139,10 @@
       "reason": "Load detail deep-link alias \u2192 /dispatch?load_id= (B21-D1)"
     },
     {
+      "path": "/dispatch/borders/geofence-history",
+      "reason": "GPS border crossing geofence history \u2014 subnav wiring deferred (GAP-26)"
+    },
+    {
       "path": "/fuel/planner",
       "reason": "ComingSoon stub; fuel tabs on /fuel"
     },

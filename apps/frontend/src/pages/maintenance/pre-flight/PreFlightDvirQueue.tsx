@@ -109,7 +109,7 @@ export function PreFlightDvirQueue() {
                 </td>
                 <td className="truncate px-2 py-2">{row.unit_number ?? row.unit_id}</td>
                 <td className="truncate px-2 py-2">{row.driver_name ?? "—"}</td>
-                <td className="truncate px-2 py-2" title={row.notes}>
+                <td className="truncate px-2 py-2" title={row.notes ?? undefined}>
                   {row.item_key}
                 </td>
                 <td className="px-2 py-2">
