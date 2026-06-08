@@ -341,6 +341,9 @@ jobs:
       - name: Verify driver vendor mapping monitor (GAP-52)
         run: npm run verify:driver-vendor-mapping
 
+      - name: Verify bank account company assignment (GAP-53)
+        run: npm run verify:bank-account-company-assignment
+
       - name: Verify equipment dual-confirm transfer contract
         run: npm run verify:equipment-transfer-dual-confirm
 
