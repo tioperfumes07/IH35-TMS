@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
 import type { DataTableErrorState } from "../../lib/tableError";
@@ -10,6 +10,7 @@ import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
 import { TableSelection, TableSelectionHeader } from "../bulk";
 import { InlineUnitPicker } from "./InlineUnitPicker";
 import { InlineDriverPicker } from "./InlineDriverPicker";
+import type { OpenPreSettlement } from "../../api/driverFinance";
 
 type SortField = "created_at" | "load_number" | "status" | "rate_total_cents";
 type SortDirection = "asc" | "desc";
@@ -40,6 +41,10 @@ export type DispatchListProps = {
   selectedCount?: number;
   inlineQuicksaveEnabled?: boolean;
   operatingCompanyId?: string;
+  /** Pre-settlement trip-linking (MUST 8a.0.5.12): drivers with open pre-settlements */
+  openPreSettlements?: Map<string, OpenPreSettlement>;
+  /** Called when dispatcher clicks "Add to it" on a row with an open pre-settlement */
+  onAddToPreSettlement?: (settlementId: string, loadId: string, operatingCompanyId: string) => void;
 };
 
 type RowOverride = {
@@ -84,6 +89,8 @@ export function DispatchList({
   selectedCount = 0,
   inlineQuicksaveEnabled = false,
   operatingCompanyId,
+  openPreSettlements,
+  onAddToPreSettlement,
 }: DispatchListProps) {
   const [rowOverrides, setRowOverrides] = useState<Record<string, RowOverride>>({});
   const effectiveLoads = useMemo(
@@ -216,9 +223,20 @@ export function DispatchList({
                     </td>
                   </tr>
                 ))
-              : effectiveLoads.map((load) => (
+              : effectiveLoads.map((load) => {
+                  const effectiveDriverId = rowOverrides[load.id]?.driverId ?? load.assigned_primary_driver_id;
+                  const openPreSettlement = effectiveDriverId ? openPreSettlements?.get(effectiveDriverId) : undefined;
+                  // Show prompt when this load is NOT the one that opened the pre-settlement
+                  // and the load hasn't already been delivered/cancelled.
+                  const showPreSettlementPrompt = Boolean(
+                    openPreSettlement &&
+                      openPreSettlement.first_load_id !== load.id &&
+                      !["delivered", "delivered_pending_docs", "completed_docs_received", "closed", "paid", "invoiced", "cancelled"].includes(load.status)
+                  );
+                  const colSpan = (showEtaColumn ? 13 : 12) + (bulkSelection ? 1 : 0);
+                  return (
+                  <Fragment key={load.id}>
                   <tr
-                    key={load.id}
                     onClick={() => onRowClick(load.id)}
                     className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
                   >
@@ -330,7 +348,37 @@ export function DispatchList({
                     <td className="px-3 py-2">{formatMoneyCents(load.rate_total_cents, load.currency_code)}</td>
                     <td className="px-3 py-2">{new Date(load.created_at).toLocaleDateString()}</td>
                   </tr>
-                ))}
+                  {showPreSettlementPrompt && openPreSettlement ? (
+                    <tr className="border-b border-amber-100 bg-amber-50">
+                      <td colSpan={colSpan} className="px-3 py-1.5">
+                        <div className="flex items-center gap-2 text-xs text-amber-900">
+                          <span className="font-semibold">⚠ Driver has open pre-settlement</span>
+                          {openPreSettlement.settlement_number ? (
+                            <span className="font-mono text-amber-700">{openPreSettlement.settlement_number}</span>
+                          ) : null}
+                          <span className="text-amber-600">· add this load to it?</span>
+                          <button
+                            type="button"
+                            className="rounded bg-amber-300 px-2 py-0.5 text-xs font-semibold text-amber-900 hover:bg-amber-400"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onAddToPreSettlement?.(
+                                openPreSettlement.settlement_id,
+                                load.id,
+                                load.operating_company_id
+                              );
+                            }}
+                          >
+                            Add to it
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                  </Fragment>
+                );
+              })}
+
           </tbody>
         </table>
           )}

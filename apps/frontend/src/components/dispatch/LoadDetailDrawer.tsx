@@ -19,6 +19,7 @@ import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
 import { MultiStopEditor } from "../../pages/dispatch/MultiStopEditor";
 import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail } from "../../pages/dispatch/LoadTemplateLibrary";
 import { AbandonmentReportModal } from "../../pages/loads/AbandonmentReportModal";
+import { PreSettlementPanel } from "./PreSettlementPanel";
 
 type Props = {
   loadId: string | null;
@@ -36,6 +37,7 @@ const tabs = [
   "Geofence Timeline",
   "Assignment History",
   "Audit History",
+  "Pre-Settlement",
 ] as const;
 type DrawerTab = (typeof tabs)[number];
 const FACTORING_PACKAGE_META_PREFIX = "IH35_FACTORING_PACKAGE_V1::";
@@ -564,6 +566,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
                 <div className="text-sm text-gray-500">No assignment events yet.</div>
               ) : null}
             </div>
+          ) : null}
+
+          {activeTab === "Pre-Settlement" ? (
+            load?.assigned_primary_driver_id ? (
+              <PreSettlementPanel
+                driverId={load.assigned_primary_driver_id}
+                operatingCompanyId={load.operating_company_id}
+                onSettled={() => void loadQuery.refetch()}
+              />
+            ) : (
+              <div className="text-sm text-gray-500">No driver assigned to this load.</div>
+            )
           ) : null}
         </div>
 

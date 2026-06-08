@@ -79,6 +79,7 @@ import { registerTelematicsPositionsRoutes } from "./telematics/positions.routes
 import { registerDriverDaySummaryRoutes } from "./telematics/driver-day-summary.routes.js";
 import { registerTelematicsHeatmapRoutes } from "./telematics/heatmap.routes.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
+import { registerPreSettlementRoutes } from "./driver-finance/pre-settlement.routes.js";
 import { registerDriverFinanceSettlementHtmlRoutes } from "./driver-finance/settlement-render.routes.js";
 import { registerDriverFinanceDriverBillsRoutes } from "./driver-finance/driver-bills.routes.js";
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
@@ -618,6 +619,7 @@ async function main() {
   await registerDashcamOnDemandRoutes(app);
   await registerTelematicsPositionsRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
+  await registerPreSettlementRoutes(app);
   await registerWeeklyCloseRoutes(app);
   await registerSettlementsDisputesRoutes(app);
   await registerDriverFinanceSettlementHtmlRoutes(app);
