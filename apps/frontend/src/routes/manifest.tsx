@@ -424,6 +424,12 @@ function DispatchLoadsRoute() {
   return <DispatchPage loadsDeepLink />;
 }
 
+type DispatchSecondarySubTabId = "load_board" | "book_load" | "assignments" | "settlements" | "pre_settlements";
+
+function DispatchSecondaryTabRoute({ subTab }: { subTab: DispatchSecondarySubTabId }) {
+  return <DispatchPage initialSubTab={subTab} />;
+}
+
 function FactoringBatchDetailRoute() {
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
@@ -815,6 +821,38 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <MapView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/book-load"
+          element={
+            <ProtectedRoute>
+              <DispatchSecondaryTabRoute subTab="book_load" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/assignments"
+          element={
+            <ProtectedRoute>
+              <DispatchSecondaryTabRoute subTab="assignments" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/settlements"
+          element={
+            <ProtectedRoute>
+              <DispatchSecondaryTabRoute subTab="settlements" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/pre-settlements"
+          element={
+            <ProtectedRoute>
+              <DispatchSecondaryTabRoute subTab="pre_settlements" />
             </ProtectedRoute>
           }
         />

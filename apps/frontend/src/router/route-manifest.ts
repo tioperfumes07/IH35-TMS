@@ -45,6 +45,10 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/dispatch", label: "Dispatch Home", module: "dispatch" },
   { path: "/dispatch/map", label: "Active Load Map", module: "dispatch" },
   { path: "/dispatch/loads", label: "Loads List", module: "dispatch" },
+  { path: "/dispatch/book-load", label: "Book Load", module: "dispatch" },
+  { path: "/dispatch/assignments", label: "Assignments", module: "dispatch" },
+  { path: "/dispatch/settlements", label: "Settlements", module: "dispatch" },
+  { path: "/dispatch/pre-settlements", label: "Pre-settlements", module: "dispatch" },
 ];
 
 export const BANKING_TAB_PATH: Record<string, string> = {
@@ -124,4 +128,21 @@ export function factoringTabFromPath(pathname: string): string {
     if (routePath === norm) return id;
   }
   return "recourse_pipeline";
+}
+
+export const DISPATCH_SECONDARY_TAB_PATH: Record<string, string> = {
+  load_board: "/dispatch",
+  book_load: "/dispatch/book-load",
+  assignments: "/dispatch/assignments",
+  settlements: "/dispatch/settlements",
+  pre_settlements: "/dispatch/pre-settlements",
+};
+
+export function dispatchSecondaryTabFromPath(pathname: string): string {
+  const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  if (norm === "/dispatch/loads") return "load_board";
+  for (const [id, routePath] of Object.entries(DISPATCH_SECONDARY_TAB_PATH)) {
+    if (routePath === norm) return id;
+  }
+  return "load_board";
 }
