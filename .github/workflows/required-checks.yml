@@ -38,6 +38,31 @@ jobs:
             console.log('branch-protection-config.json OK —', contexts.length, 'required contexts');
           "
 
+      # Hard-coded mandatory checks: these MUST appear in branch-protection-config.json.
+      # This step is an independent safety net — if the config file is edited to remove a
+      # required check, this step catches it before merge. Added post-#729 post-mortem.
+      - name: Assert all mandatory checks present in config
+        run: |
+          node -e "
+            const cfg = require('./.github/branch-protection-config.json');
+            const contexts = new Set(cfg.protection?.required_status_checks?.contexts ?? []);
+            const mandatory = [
+              'required-checks / required-checks-gate',
+              'ci / build-typecheck',
+              'perf-budget-check / perf-audit',
+              'security-checks / security-audit',
+              'premerge-gates / rls-migration-scan',
+              'premerge-gates / typescript-strict-null',
+              'pass-8-smoke-verify / pass-8',
+            ];
+            const missing = mandatory.filter(c => !contexts.has(c));
+            if (missing.length > 0) {
+              console.error('FAIL (#729 post-mortem): mandatory checks missing from config:', missing.join(', '));
+              process.exit(1);
+            }
+            console.log('All', mandatory.length, 'mandatory checks present in branch-protection-config.json');
+          "
+
       - name: CI guard — verify CI policy applied (or config baseline)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

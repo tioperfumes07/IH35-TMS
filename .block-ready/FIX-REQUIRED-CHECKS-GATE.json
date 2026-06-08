@@ -1,0 +1,42 @@
+{
+  "block": "FIX-REQUIRED-CHECKS-GATE",
+  "type": "infrastructure/ci",
+  "pr_trigger": "fix/required-checks-gate",
+  "post_mortem": "PR #729 merged with 6 failing checks because verify-ci-policy-applied.mjs exited 0 (success) when live branch protection was missing required contexts",
+  "root_cause": "verify-ci-policy-applied.mjs called process.exit(0) in two error branches: (1) branch protection not applied, (2) live protection missing required contexts",
+  "changes": [
+    {
+      "file": "scripts/verify-ci-policy-applied.mjs",
+      "fix": "Changed process.exit(0) → process.exit(1) for missing-contexts and unprotected-branch conditions; added MANDATORY_CHECKS constant enforced at both config-baseline and live-API layers"
+    },
+    {
+      "file": ".github/branch-protection-config.json",
+      "fix": "Added pass-8-smoke-verify / pass-8 to required contexts (was missing)"
+    },
+    {
+      "file": ".github/workflows/required-checks.yml",
+      "fix": "Added 'Assert all mandatory checks present in config' step with hard-coded mandatory list as independent safety net"
+    }
+  ],
+  "checks_now_required": [
+    "required-checks / required-checks-gate",
+    "ci / build-typecheck",
+    "perf-budget-check / perf-audit",
+    "security-checks / security-audit",
+    "premerge-gates / rls-migration-scan",
+    "premerge-gates / typescript-strict-null",
+    "pass-8-smoke-verify / pass-8"
+  ],
+  "checks_added_to_mandatory": [
+    "pass-8-smoke-verify / pass-8"
+  ],
+  "checks_already_in_config_but_gate_was_soft": [
+    "ci / build-typecheck",
+    "perf-budget-check / perf-audit",
+    "security-checks / security-audit",
+    "premerge-gates / rls-migration-scan",
+    "premerge-gates / typescript-strict-null"
+  ],
+  "migration": "none",
+  "app_code_changes": false
+}
