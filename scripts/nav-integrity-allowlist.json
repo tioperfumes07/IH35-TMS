@@ -335,6 +335,10 @@
       "reason": "Legacy cash advances home \u2014 separate from driver-finance requests"
     },
     {
+      "path": "/cash-flow",
+      "reason": "Cash Flow MODULE top-level route — sidebar entry wired; nav-subnav deferred (Block 43)"
+    },
+    {
       "path": "/attorney-review/:token",
       "reason": "Tokenized attorney review deep link \u2014 Block 43"
     },

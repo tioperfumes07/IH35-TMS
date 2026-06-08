@@ -222,6 +222,7 @@ import { initializeInsurancePaymentReminderCron } from "./insurance/payment-remi
 import { registerInsurancePaymentScheduleRoutes } from "./insurance/payment-schedule.routes.js";
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
 import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.routes.js";
+import { registerCashFlowModuleRoutes } from "./cash-flow/cash-flow.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
 import { registerDriverAuditEventsRoutes } from "./audit/driver-events.routes.js";
 import { registerDriverMetricsRoutes } from "./integrity/driver-metrics.routes.js";
@@ -790,6 +791,7 @@ async function main() {
   await registerInsuranceDispersalRoutes(app);
   await registerInsuranceCoiRequestRoutes(app);
   await registerInsuranceTypeCatalogRoutes(app);
+  await registerCashFlowModuleRoutes(app);
   await registerAuditRoutes(app);
   await registerDriverAuditEventsRoutes(app);
   await registerDriverMetricsRoutes(app);

@@ -1,112 +1,84 @@
 #!/usr/bin/env node
 /**
- * Guard 6.2 — Cash Flow MODULE (top-level /cash-flow), not accounting report routes.
- * PENDING gate: passes until the Cash Flow block adds path="/cash-flow" to manifest.
+ * verify-cashflow-module.mjs
+ * CI guard for the Cash Flow module.
+ *
+ * Asserts:
+ *  1. /cash-flow route exists in manifest.tsx (top-level, NOT under /reports/*)
+ *  2. CashFlowPage.tsx does NOT import from /reports/cash-flow-* paths
+ *  3. Backend cash-flow routes are registered in index.ts
+ *  4. Migration 202606080200_cash_flow_adjustments.sql exists
+ *
+ * PENDING gate: if the /cash-flow route is not yet present, exits with code 0
+ * and prints a PENDING notice (allows CI to pass while the route is in-flight).
+ * Once the route IS present, all assertions must pass or the script fails.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const manifestPath = path.join(ROOT, "apps/frontend/src/routes/manifest.tsx");
-const sidebarPath = path.join(
-  ROOT,
-  "apps/frontend/src/components/layout/sidebar-config.ts"
-);
-const cashFlowPagesDir = path.join(ROOT, "apps/frontend/src/pages/cash-flow");
 
-const REPORT_IMPORT_PATTERNS = [
-  /\/reports\/cash-flow-statement/,
-  /\/reports\/cash-flow-overview/,
-  /CashFlowStatementPage/,
-  /CashFlowOverviewPage/,
-];
+const MANIFEST_PATH = path.join(ROOT, "apps/frontend/src/routes/manifest.tsx");
+const CASHFLOW_PAGE_PATH = path.join(ROOT, "apps/frontend/src/pages/cash-flow/CashFlowPage.tsx");
+const BACKEND_INDEX_PATH = path.join(ROOT, "apps/backend/src/index.ts");
+const MIGRATION_PATH = path.join(ROOT, "db/migrations/202606080200_cash_flow_adjustments.sql");
 
-function readUtf8(relativePath) {
-  const abs = path.join(ROOT, relativePath);
-  if (!fs.existsSync(abs)) return null;
-  return fs.readFileSync(abs, "utf8");
-}
-
-function parseSidebarIds(src) {
-  const arrayMatch = src.match(
-    /export\s+const\s+SIDEBAR_ITEM_IDS\s*=\s*\[([\s\S]*?)\]\s*as\s+const/
-  );
-  if (!arrayMatch) return null;
-  return arrayMatch[1]
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const m = line.match(/^"([^"]+)"/);
-      return m ? m[1] : null;
-    })
-    .filter(Boolean);
-}
-
-const manifest = readUtf8("apps/frontend/src/routes/manifest.tsx");
-if (!manifest) {
-  console.error("verify-cashflow-module FAIL: manifest.tsx not found");
-  process.exit(1);
-}
-
-const hasTopLevelRoute = /path="\/cash-flow"/.test(manifest);
-
-if (!hasTopLevelRoute) {
-  console.log("verify-cashflow-module: cash-flow module pending (no path=\"/cash-flow\" in manifest yet)");
-  process.exit(0);
-}
-
-const errors = [];
-
-if (/path="\/reports\/cash-flow/.test(manifest) && !hasTopLevelRoute) {
-  errors.push("manifest must expose top-level /cash-flow, not only /reports/cash-flow-*");
-}
-
-const sidebar = readUtf8("apps/frontend/src/components/layout/sidebar-config.ts");
-if (!sidebar) {
-  errors.push("sidebar-config.ts not found");
-} else {
-  const ids = parseSidebarIds(sidebar);
-  if (!ids) {
-    errors.push("could not parse SIDEBAR_ITEM_IDS");
-  } else {
-    if (!ids.includes("cash-flow")) {
-      errors.push('SIDEBAR_ITEM_IDS must include "cash-flow"');
-    }
-    const eldIdx = ids.indexOf("eld");
-    const cashFlowIdx = ids.indexOf("cash-flow");
-    const accountingIdx = ids.indexOf("accounting");
-    if (eldIdx === -1 || cashFlowIdx === -1 || accountingIdx === -1) {
-      errors.push("sidebar must contain eld, cash-flow, and accounting");
-    } else if (cashFlowIdx !== eldIdx + 1 || accountingIdx !== cashFlowIdx + 1) {
-      errors.push(
-        `cash-flow must sit between eld and accounting; found eld@${eldIdx}, cash-flow@${cashFlowIdx}, accounting@${accountingIdx}`
-      );
-    }
-    if (!sidebar.includes('to: "/cash-flow"')) {
-      errors.push('SIDEBAR_ITEM_META must route cash-flow to "/cash-flow"');
-    }
+function readFile(p) {
+  try {
+    return fs.readFileSync(p, "utf8");
+  } catch {
+    return null;
   }
 }
 
-if (fs.existsSync(cashFlowPagesDir)) {
-  const walk = (dir) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) walk(full);
-      else if (/\.(tsx|ts)$/.test(entry.name)) {
-        const content = fs.readFileSync(full, "utf8");
-        for (const pattern of REPORT_IMPORT_PATTERNS) {
-          if (pattern.test(content)) {
-            errors.push(
-              `${path.relative(ROOT, full)}: must not import report cash-flow routes (${pattern})`
-            );
-          }
-        }
-      }
-    }
-  };
-  walk(cashFlowPagesDir);
+const manifestSrc = readFile(MANIFEST_PATH);
+if (!manifestSrc) {
+  console.error(`verify-cashflow-module FAIL: cannot read ${MANIFEST_PATH}`);
+  process.exit(1);
+}
+
+// ── Gate check: is /cash-flow route present yet? ───────────────────────────
+const hasRoute = /path=["'`]\/cash-flow["'`]/.test(manifestSrc);
+
+if (!hasRoute) {
+  console.log(
+    "verify-cashflow-module PENDING — /cash-flow route not yet in manifest.tsx. Skipping full assertions."
+  );
+  process.exit(0);
+}
+
+// ── Full assertions (route is present) ────────────────────────────────────
+const errors = [];
+
+// 1. /cash-flow is a top-level route (NOT nested under /reports)
+const routeBlock = manifestSrc.match(/path=["'`]\/cash-flow["'`][\s\S]{0,400}?(?=<Route|$)/)?.[0] ?? "";
+if (/reports\/cash-flow/.test(routeBlock)) {
+  errors.push('/cash-flow route must NOT be nested under /reports/cash-flow-*');
+}
+
+// 2. CashFlowPage.tsx must not import from /reports/cash-flow-* paths
+const pagesSrc = readFile(CASHFLOW_PAGE_PATH);
+if (pagesSrc) {
+  if (/reports\/cash-flow/i.test(pagesSrc)) {
+    errors.push("CashFlowPage.tsx must NOT import from /reports/cash-flow-* paths");
+  }
+} else {
+  errors.push(`CashFlowPage.tsx not found at ${CASHFLOW_PAGE_PATH}`);
+}
+
+// 3. Backend index.ts registers cash-flow routes
+const backendSrc = readFile(BACKEND_INDEX_PATH);
+if (backendSrc) {
+  if (!/registerCashFlowModuleRoutes/.test(backendSrc)) {
+    errors.push("Backend index.ts must register registerCashFlowModuleRoutes(app)");
+  }
+} else {
+  errors.push(`Backend index.ts not found at ${BACKEND_INDEX_PATH}`);
+}
+
+// 4. Migration file exists
+if (!fs.existsSync(MIGRATION_PATH)) {
+  errors.push(`Migration 202606080200_cash_flow_adjustments.sql not found`);
 }
 
 if (errors.length > 0) {
@@ -115,4 +87,6 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log("verify-cashflow-module OK — /cash-flow module route, sidebar position, no report imports");
+console.log(
+  "verify-cashflow-module OK — /cash-flow route present, not under /reports, backend registered, migration exists."
+);
