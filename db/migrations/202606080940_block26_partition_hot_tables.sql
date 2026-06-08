@@ -11,6 +11,20 @@ BEGIN;
 -- SECTION 1: audit_log partitioning
 -- ══════════════════════════════════════════════════════════════════════════════
 
+-- Step 0: Ensure audit_log exists (base table for partitioning).
+-- If the table was never created, create it here so partitioning can proceed.
+CREATE TABLE IF NOT EXISTS audit_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  table_name text NOT NULL,
+  record_id uuid,
+  action text NOT NULL,
+  changed_by text,
+  change_data jsonb,
+  operating_company_id uuid,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT ON audit_log TO ih35_app;
+
 -- Step 1a: Create new partitioned table alongside existing
 CREATE TABLE IF NOT EXISTS audit_log_partitioned (
   LIKE audit_log INCLUDING ALL
