@@ -886,6 +886,9 @@ jobs:
       - name: verify:customer-free-time-catalog
         run: npm run verify:customer-free-time-catalog
 
+      - name: verify:ifta-quarterly-preparer
+        run: npm run verify:ifta-quarterly-preparer
+
       - name: Verify qbo master write route contract
         run: npm run verify:qbo-master-write-contract
       - name: Verify integrity anomaly tenant scope

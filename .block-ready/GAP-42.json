@@ -1,0 +1,44 @@
+{
+  "block_id": "GAP-42",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap42",
+  "branch": "feature/gap-42-ifta-preparer",
+  "phase": "GAP-MEDIUM",
+  "task": "IFTA 4-step quarterly preparer + Owner-only WF-064",
+  "classification": "LANE-A",
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready.json",
+    ".block-ready/GAP-42.json",
+    ".block-ready/FEATURE-GAP-42-IFTA-PREPARER.json",
+    "db/migrations/202606080205_ifta_filings.sql",
+    "apps/backend/src/reports/ifta/quarterly-preparer.service.ts",
+    "apps/backend/src/reports/ifta/mileage-aggregator.service.ts",
+    "apps/backend/src/reports/ifta/fuel-aggregator.service.ts",
+    "apps/backend/src/reports/ifta/routes.ts",
+    "apps/backend/src/reports/ifta/__tests__/mileage-aggregator.test.ts",
+    "apps/backend/src/reports/ifta/__tests__/fuel-aggregator.test.ts",
+    "apps/backend/src/reports/ifta/__tests__/quarterly-preparer.test.ts",
+    "apps/backend/src/reports/index.ts",
+    "apps/frontend/src/api/reports-ifta.ts",
+    "apps/frontend/src/pages/reports/tax-regulatory/IftaPreparer.tsx",
+    "apps/frontend/src/components/reports/ifta/StepWizard.tsx",
+    "apps/frontend/src/components/reports/ifta/Step1MileageReview.tsx",
+    "apps/frontend/src/components/reports/ifta/Step2FuelReview.tsx",
+    "apps/frontend/src/components/reports/ifta/Step3JurisdictionCalc.tsx",
+    "apps/frontend/src/components/reports/ifta/Step4FinalReview.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-ifta-quarterly-preparer.mjs",
+    "docs/specs/gap-42-ifta-quarterly-preparer.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "forbidden_paths": [
+    "apps/backend/src/reports/scheduled/**"
+  ],
+  "extra_gates": [
+    "verify:ifta-quarterly-preparer"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
