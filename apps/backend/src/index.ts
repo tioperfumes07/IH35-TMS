@@ -190,6 +190,7 @@ import { registerMaintenanceDriverReportsRoutes } from "./maintenance/driver-rep
 import { registerMaintenanceLaborRoutes } from "./maintenance/labor.routes.js";
 import { registerWoTimeEntriesRoutes } from "./maintenance/time-entries.routes.js";
 import { registerMaintenancePartsInventoryRoutes } from "./maintenance/parts-inventory.routes.js";
+import { internalLaborRoutes } from "./maintenance/internal-labor.routes.js";
 import { registerMaintenancePartsInvoiceLinksRoutes } from "./maintenance/parts-invoice-links.routes.js";
 import { registerMaintenanceSevereRepairEstimateRoutes } from "./maintenance/severe-repair-estimate.routes.js";
 import { registerMaintenanceIntegrityRoutes } from "./maintenance/integrity.routes.js";
@@ -781,6 +782,7 @@ async function main() {
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);
   await registerMaintenancePartsInventoryRoutes(app);
+  await internalLaborRoutes(app);
   await registerMaintenancePartsInvoiceLinksRoutes(app);
   await registerMaintenanceSevereRepairEstimateRoutes(app);
   await registerMaintenanceIntegrityRoutes(app);
