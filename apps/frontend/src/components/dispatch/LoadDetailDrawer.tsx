@@ -11,6 +11,9 @@ import { FlatFieldGrid } from "../layout/FlatFieldGrid";
 import { DocumentsTab } from "../documents/DocumentsTab";
 import { listFiles } from "../../api/docs";
 import { CancelLoadModal } from "./CancelLoadModal";
+import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
+import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
+import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
 import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "./constants";
 import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
 import { MultiStopEditor } from "../../pages/dispatch/MultiStopEditor";
@@ -24,7 +27,16 @@ type Props = {
   onClose: () => void;
 };
 
-const tabs = ["Overview", "Stops", "Documents", "Assignment History", "Audit History"] as const;
+const tabs = [
+  "Overview",
+  "Stops",
+  "Driver Pay",
+  "Documents",
+  "Settlement",
+  "Geofence Timeline",
+  "Assignment History",
+  "Audit History",
+] as const;
 type DrawerTab = (typeof tabs)[number];
 const FACTORING_PACKAGE_META_PREFIX = "IH35_FACTORING_PACKAGE_V1::";
 
@@ -191,9 +203,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
               Close
             </Button>
           </div>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
             {tabs.map((tab) => (
-              <Button key={tab} type="button" size="sm" variant={activeTab === tab ? "primary" : "secondary"} onClick={() => setActiveTab(tab)}>
+              <Button key={tab} type="button" size="sm" variant={activeTab === tab ? "primary" : "secondary"} onClick={() => setActiveTab(tab)} style={{ whiteSpace: "nowrap" }}>
                 {tab}
               </Button>
             ))}
@@ -370,6 +382,41 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
               )
             ) : (
               <div className="text-sm text-gray-500">Loading stops…</div>
+            )
+          ) : null}
+
+          {activeTab === "Driver Pay" ? (
+            load ? (
+              <LoadDetailDriverPayTab
+                loadId={load.id}
+                operatingCompanyId={load.operating_company_id}
+                currencyCode={load.currency_code}
+              />
+            ) : (
+              <div className="text-sm text-gray-500">Loading…</div>
+            )
+          ) : null}
+
+          {activeTab === "Settlement" ? (
+            load ? (
+              <LoadDetailSettlementTab
+                loadId={load.id}
+                operatingCompanyId={load.operating_company_id}
+                currencyCode={load.currency_code}
+              />
+            ) : (
+              <div className="text-sm text-gray-500">Loading…</div>
+            )
+          ) : null}
+
+          {activeTab === "Geofence Timeline" ? (
+            load ? (
+              <LoadDetailGeofenceTimelineTab
+                loadId={load.id}
+                operatingCompanyId={load.operating_company_id}
+              />
+            ) : (
+              <div className="text-sm text-gray-500">Loading…</div>
             )
           ) : null}
 
