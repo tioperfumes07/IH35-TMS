@@ -91,7 +91,7 @@ DO $$ BEGIN
     WHERE tablename = 'mx_permits' AND schemaname = 'mdata' AND policyname = 'mx_permits_tenant_isolation'
   ) THEN
     CREATE POLICY mx_permits_tenant_isolation ON mdata.mx_permits
-      USING (tenant_id = current_setting('app.operating_company_id', true)::uuid);
+      USING (tenant_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
   END IF;
 END $$;
 
@@ -101,7 +101,7 @@ DO $$ BEGIN
     WHERE tablename = 'mx_tolls_ledger' AND schemaname = 'mdata' AND policyname = 'mx_tolls_tenant_isolation'
   ) THEN
     CREATE POLICY mx_tolls_tenant_isolation ON mdata.mx_tolls_ledger
-      USING (tenant_id = current_setting('app.operating_company_id', true)::uuid);
+      USING (tenant_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
   END IF;
 END $$;
 
