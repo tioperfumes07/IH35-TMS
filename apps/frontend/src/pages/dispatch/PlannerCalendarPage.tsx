@@ -1,7 +1,7 @@
 import { DndContext, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   getDispatchPlannerWeek,
   patchDispatchPlannerLoadStartAt,
@@ -40,6 +40,7 @@ function hosClass(status: PlannerDriverRow["hos_status"]): string {
 }
 
 function PlannerLoadChip({ load }: { load: PlannerLoadEvent }) {
+  const navigate = useNavigate();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: load.id, data: { load } });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   return (
@@ -51,7 +52,8 @@ function PlannerLoadChip({ load }: { load: PlannerLoadEvent }) {
       type="button"
       data-testid={`planner-load-${load.load_number}`}
       className={`mb-1 block w-full rounded border border-sky-200 bg-sky-50 px-2 py-1 text-left text-[11px] text-sky-900 ${isDragging ? "opacity-60" : ""}`}
-      title={`${load.customer_name ?? "Load"} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""}`}
+      title={`${load.customer_name ?? "Load"} · ${load.pickup_city ?? ""}${load.pickup_state ? `, ${load.pickup_state}` : ""} — click to open detail`}
+      onClick={() => navigate(`/dispatch?load_id=${encodeURIComponent(load.id)}`)}
     >
       <span className="font-semibold">{load.load_number}</span>
       <span className="block truncate text-[10px] text-sky-700">{load.customer_name ?? "—"}</span>

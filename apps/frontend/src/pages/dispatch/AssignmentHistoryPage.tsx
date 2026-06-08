@@ -101,7 +101,15 @@ export function AssignmentHistoryPage() {
               rows.map((row) => (
                 <tr key={row.id} className="border-b last:border-b-0">
                   <td className="px-3 py-2">{new Date(row.assigned_at).toLocaleString()}</td>
-                  <td className="px-3 py-2">{row.load_number ?? row.load_id}</td>
+                  <td className="px-3 py-2">
+                    {row.load_id ? (
+                      <Link to={`/dispatch?load_id=${encodeURIComponent(row.load_id)}`} className="text-sky-700 hover:underline">
+                        {row.load_number ?? row.load_id}
+                      </Link>
+                    ) : (
+                      row.load_number ?? "—"
+                    )}
+                  </td>
                   <td className="px-3 py-2">{row.assignment_method}</td>
                   <td className="px-3 py-2">{row.previous_driver_name ?? "—"}</td>
                   <td className="px-3 py-2">{row.new_driver_name ?? "—"}</td>
