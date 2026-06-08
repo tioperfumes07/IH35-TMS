@@ -1,0 +1,28 @@
+{
+  "block": "CASH-FLOW-MODULE",
+  "phase": "feat/cash-flow-daily-prediction",
+  "locked_date": "2026-06-08",
+  "scope": "additive",
+  "route": "/cash-flow",
+  "tabs": ["daily_prediction", "actual_vs_projected"],
+  "migration": "202606080200_cash_flow_adjustments.sql",
+  "locked_decisions": {
+    "income_basis": "gross_rate_confirmation",
+    "driver_pay_date": "delivery_date",
+    "opening_closing_cash": true,
+    "seven_day_strip": true
+  },
+  "forbidden_touches": [
+    "sidebar-config.ts",
+    "verify-sidebar-contract.mjs",
+    "verify-pre-commit.mjs",
+    "/reports/cash-flow-statement",
+    "/reports/cash-flow-overview"
+  ],
+  "gates": [
+    "build:backend EMIT",
+    "frontend tsc -b",
+    "backend vitest (cash-flow paths)",
+    "verify-cashflow-module.mjs"
+  ]
+}
