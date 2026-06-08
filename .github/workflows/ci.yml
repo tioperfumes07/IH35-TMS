@@ -228,6 +228,9 @@ jobs:
       - name: verify:book-load-accessorial
         run: npm run verify:book-load-accessorial
 
+      - name: verify:multi-stop-extra-rates
+        run: npm run verify:multi-stop-extra-rates
+
       - name: verify:maint-create-vocab
         run: npm run verify:maint-create-vocab
 

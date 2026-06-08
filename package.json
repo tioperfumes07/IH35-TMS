@@ -424,6 +424,7 @@
     "verify:maint-nav-count-reconcile": "node scripts/verify-maint-nav-count-reconcile.mjs",
     "verify:parts-canonical-source": "node scripts/verify-parts-canonical-source.mjs",
     "verify:book-load-accessorial": "node scripts/verify-book-load-accessorial.mjs",
+    "verify:multi-stop-extra-rates": "node scripts/verify-multi-stop-extra-rates.mjs",
     "verify:maint-create-vocab": "node scripts/verify-maint-create-vocab.mjs",
     "verify:trailer-wo-equipment-id": "node scripts/verify-trailer-wo-equipment-id.mjs",
     "verify:dispatch-arch-tab-parity": "node scripts/verify-dispatch-arch-tab-parity.mjs",

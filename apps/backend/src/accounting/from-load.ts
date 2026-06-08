@@ -26,6 +26,19 @@ function toIsoDate(value: unknown) {
   return d.toISOString().slice(0, 10);
 }
 
+function stopExtraDescription(input: {
+  sequence_number: number | null;
+  stop_type: string | null;
+  rate_type: string | null;
+  description: string | null;
+}) {
+  const stopLabel = input.sequence_number ? `Stop ${input.sequence_number}` : "Stop";
+  const stopType = input.stop_type ? ` ${String(input.stop_type).toUpperCase()}` : "";
+  const rateLabel = input.rate_type ? ` · ${String(input.rate_type).replace(/_/g, " ")}` : "";
+  const detail = input.description ? ` · ${input.description}` : "";
+  return `${stopLabel}${stopType}${rateLabel}${detail}`;
+}
+
 export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoiceInput): Promise<BuildInvoiceResult> {
   const existingRes = await client.query(
     `
@@ -158,6 +171,90 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
     ]
   );
   const line = lineRes.rows[0];
+
+  const stopExtraRatesRes = await client
+    .query<{
+      uuid: string;
+      rate_type: string | null;
+      amount_cents: number | null;
+      description: string | null;
+      sequence_number: number | null;
+      stop_type: string | null;
+    }>(
+      `
+        SELECT
+          ser.uuid,
+          ser.rate_type,
+          ser.amount_cents,
+          ser.description,
+          ls.sequence_number,
+          ls.stop_type::text AS stop_type
+        FROM dispatch.stop_extra_rates ser
+        JOIN mdata.load_stops ls
+          ON ls.id = ser.stop_uuid
+        WHERE ser.operating_company_id = $1
+          AND ser.load_uuid = $2
+          AND ser.is_active = true
+        ORDER BY ls.sequence_number ASC, ser.created_at ASC
+      `,
+      [input.operatingCompanyId, input.loadId]
+    )
+    .catch(() => ({ rows: [] }));
+
+  if (stopExtraRatesRes.rows.length > 0) {
+    const accessorialResolution = await resolveInvoiceLineRevenueAccountId(input.operatingCompanyId, {
+      line_type: "accessorial",
+    });
+    for (let idx = 0; idx < stopExtraRatesRes.rows.length; idx += 1) {
+      const rate = stopExtraRatesRes.rows[idx];
+      const cents = Math.max(0, Number(rate.amount_cents ?? 0));
+      const invoiceLineRes = await client.query<{ id: string }>(
+        `
+          INSERT INTO accounting.invoice_lines (
+            operating_company_id,
+            invoice_id,
+            source_load_id,
+            line_type,
+            revenue_code,
+            account_id,
+            description,
+            quantity,
+            unit_amount_cents,
+            line_total_cents,
+            display_order
+          ) VALUES ($1,$2,$3,'accessorial',$4,$5,$6,1,$7,$7,$8)
+          RETURNING id
+        `,
+        [
+          input.operatingCompanyId,
+          invoice.id,
+          input.loadId,
+          accessorialResolution.revenue_code,
+          accessorialResolution.account_id,
+          stopExtraDescription({
+            sequence_number: Number(rate.sequence_number ?? 0) || null,
+            stop_type: rate.stop_type,
+            rate_type: rate.rate_type,
+            description: rate.description,
+          }),
+          cents,
+          idx + 1,
+        ]
+      );
+      const invoiceLineId = String(invoiceLineRes.rows[0]?.id ?? "");
+      if (invoiceLineId) {
+        await client.query(
+          `
+            UPDATE dispatch.stop_extra_rates
+            SET invoice_line_uuid = $1,
+                updated_at = now()
+            WHERE uuid = $2
+          `,
+          [invoiceLineId, rate.uuid]
+        );
+      }
+    }
+  }
 
   await recomputeInvoiceTotals(client, String(invoice.id));
   const refreshedInvoiceRes = await client.query(`SELECT * FROM accounting.invoices WHERE id = $1 LIMIT 1`, [invoice.id]);
