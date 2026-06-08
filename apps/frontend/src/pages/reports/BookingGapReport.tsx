@@ -82,6 +82,7 @@ export function BookingGapReport() {
       )}
 
       {dispatchers.length > 0 && (
+        <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-50">
@@ -109,6 +110,7 @@ export function BookingGapReport() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

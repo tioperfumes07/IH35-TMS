@@ -71,6 +71,7 @@ export function BorderCrossingHistory() {
         <p className="text-gray-500">No border crossing events found for this period.</p>
       )}
       {events.length > 0 && (
+        <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-50">
@@ -97,6 +98,7 @@ export function BorderCrossingHistory() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

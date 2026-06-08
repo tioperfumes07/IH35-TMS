@@ -92,6 +92,7 @@ export function GeofenceReconciliationReport() {
             </span>
             <span className="text-sm text-gray-500">{items.length} finding{items.length !== 1 ? "s" : ""}</span>
           </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-50">
@@ -127,6 +128,7 @@ export function GeofenceReconciliationReport() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       ))}
     </div>

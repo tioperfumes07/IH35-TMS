@@ -551,5 +551,35 @@
   "storage": {
     "itp_restore_reupload": "El almacenamiento se restableció — vuelva a subir este documento",
     "itp_stale_warning": "Los datos sin conexión pueden borrarse pronto. Abra la app a diario para conservar su cola de subidas."
+  },
+  "dispatch": {
+    "delivery_title": "Entrega {{sequence}}",
+    "pickup_title": "Recolección {{sequence}}",
+    "status_label": "Estado: {{status}} · {{geofence}}",
+    "open_in_maps": "Abrir en Mapas",
+    "hours_label": "Horario: {{hours}}",
+    "window_label": "Ventana: {{start}} – {{end}}",
+    "arrived_at": "Llegó: {{time}}",
+    "departed_at": "Salió: {{time}}",
+    "docs_label": "Docs: {{docs}}",
+    "arrived_btn": "Registrar Llegada",
+    "departed_btn": "Registrar Salida",
+    "upload_doc_btn": "Subir Documento",
+    "upload_title": "Subir Documento",
+    "upload_hint": "Toma una foto o elige de tu biblioteca",
+    "choose_photo": "Elegir Foto",
+    "uploading": "Subiendo...",
+    "upload_queued": "En cola para subir",
+    "upload_failed": "Error al subir",
+    "arrival_recorded": "Llegada registrada",
+    "departure_recorded": "Salida registrada",
+    "document_attached": "Documento adjunto",
+    "document_attach_failed": "Error al adjuntar documento",
+    "action_failed": "Acción fallida. Intenta de nuevo.",
+    "screen_loading": "Cargando despacho...",
+    "screen_not_found": "Carga no encontrada"
+  },
+  "photo": {
+    "angle_label": "Ángulo"
   }
 }
