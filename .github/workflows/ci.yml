@@ -114,6 +114,13 @@ jobs:
       - name: Verify RLS operating company scope guard
         run: npm run verify:rls-operating-company-scope
 
+      - name: Verify RLS cross-tenant gate static checks
+        run: npm run verify:rls-cross-tenant-gate-static
+
+      - name: Verify RLS cross-tenant runtime gate
+        if: ${{ env.DATABASE_URL != '' }}
+        run: npm run db:verify:rls-cross-tenant-gate
+
       - name: Verify no cross-carrier data leak guard
         run: npm run verify:no-cross-carrier-data-leak
 

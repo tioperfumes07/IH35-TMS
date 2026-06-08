@@ -1,0 +1,19 @@
+{
+  "block_id": "BLOCK-10-TIER2-RLS-TEST-GATE",
+  "branch": "feat/tier10-rls-test-gate",
+  "phase": "implementation",
+  "task": "Add a full cross-tenant RLS runtime gate and static test guard for every operating_company_id table, wire scripts into package.json and CI, and fail closed when a table is missing RLS policy coverage.",
+  "agent": "1",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-tier10",
+  "allowed_files": [
+    ".block-ready/BLOCK-10-TIER2-RLS-TEST-GATE.json",
+    "scripts/db-verify-rls-cross-tenant-gate.mjs",
+    "scripts/__tests__/verify-rls-cross-tenant-gate.test.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "migration": "none",
+  "db_required": true,
+  "guard_required": true
+}
