@@ -23,6 +23,7 @@ import { parseVendorNotes, serializeVendorNotes } from "../../lib/vendorProfileM
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { ChargebacksTable } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
+import { ReserveTracker } from "./ReserveTracker";
 import { FaroCSVUploadWidget } from "../../components/factoring/FaroCSVUploadWidget";
 import { DriverAutocomplete } from "../../components/factoring/DriverAutocomplete";
 import { VendorMergeDiffPreview } from "../../components/factoring/VendorMergeDiffPreview";
@@ -31,6 +32,7 @@ import { apiRequest } from "../../api/client";
 import { FACTORING_TAB_PATH, factoringTabFromPath } from "../../router/route-manifest";
 
 const SUBNAV = [
+  { id: "reserve_tracker", label: "Reserve Tracker" },
   { id: "recourse_pipeline", label: "Recourse Pipeline" },
   { id: "chargebacks_fees", label: "Chargebacks & Fees" },
   { id: "statements_settings", label: "Statements & Settings" },
@@ -276,6 +278,20 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           {SUBNAV.map((item) => {
             const target = FACTORING_TAB_PATH[item.id];
             const active = tab === item.id;
+            // Tabs without a registered route path (e.g. reserve_tracker — Lane A wires route later)
+            // are rendered as buttons that set local state directly.
+            if (!target) {
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setTab(item.id as FactoringTabId)}
+                  className={active ? "border-b border-white pb-0.5 font-semibold" : "pb-0.5 hover:opacity-80"}
+                >
+                  {item.label}
+                </button>
+              );
+            }
             return (
               <NavLink
                 key={item.id}
@@ -288,6 +304,12 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           })}
         </div>
       </div>
+
+      {tab === "reserve_tracker" ? (
+        <div className="rounded border border-gray-200 bg-white p-3">
+          <ReserveTracker />
+        </div>
+      ) : null}
 
       {tab === "recourse_pipeline" ? (
         <div className="space-y-2 rounded border border-gray-200 bg-white p-3">
