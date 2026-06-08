@@ -1159,8 +1159,3 @@ process.on("SIGINT", () => {
 });
 
 main();
-=> {
-  void shutdown("SIGINT");
-});
-
-main();

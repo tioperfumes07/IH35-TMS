@@ -1,12 +1,13 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
-import type { Queryable } from "./request.service.js";
+import { withCurrentUser } from "../../auth/db.js";
+import { setTransferCompanyScope, type Queryable } from "./request.service.js";
 
 const BLOCK_ID = "GAP-37-EQUIPMENT-DUAL-CONFIRM";
 
 export type ConfirmResult =
   | { kind: "ok"; uuid: string }
   | { kind: "not_found" }
-  | { kind: "wrong_driver" }
+  | { kind: "driver_mismatch" }
   | { kind: "invalid_status" };
 
 export async function confirmOutbound(
@@ -23,12 +24,13 @@ export async function confirmOutbound(
       FROM dispatch.equipment_transfer_requests
       WHERE uuid = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1
+      FOR UPDATE
     `,
     [requestUuid, operatingCompanyId]
   );
   const req = row.rows[0];
   if (!req) return { kind: "not_found" };
-  if (String(req.from_driver_uuid) !== driverUuid) return { kind: "wrong_driver" as const, reason: "driver_mismatch" };
+  if (String(req.from_driver_uuid) !== driverUuid) return { kind: "driver_mismatch" };
   if (req.status !== "pending_outbound") return { kind: "invalid_status" };
 
   await client.query(
@@ -51,7 +53,7 @@ export async function confirmOutbound(
       driver_uuid: driverUuid,
       evidence_uuid: evidenceUuid,
       operating_company_id: operatingCompanyId,
-      wf047_outbound: true,
+      wf047_dual_confirm: true,
     },
     "info",
     BLOCK_ID
@@ -74,12 +76,13 @@ export async function confirmInbound(
       FROM dispatch.equipment_transfer_requests
       WHERE uuid = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1
+      FOR UPDATE
     `,
     [requestUuid, operatingCompanyId]
   );
   const req = row.rows[0];
   if (!req) return { kind: "not_found" };
-  if (String(req.to_driver_uuid) !== driverUuid) return { kind: "wrong_driver" as const, reason: "driver_mismatch" };
+  if (String(req.to_driver_uuid) !== driverUuid) return { kind: "driver_mismatch" };
   if (req.status !== "outbound_confirmed") return { kind: "invalid_status" };
 
   await client.query(
@@ -97,10 +100,10 @@ export async function confirmInbound(
     `
       UPDATE mdata.equipment
       SET assigned_driver_id = $3::uuid, updated_at = now()
-      WHERE id = $1::uuid
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
     `,
     [req.equipment_uuid, operatingCompanyId, req.to_driver_uuid]
-  ).catch(() => ({ rows: [] }));
+  );
 
   await appendCrudAudit(
     client as never,
@@ -113,8 +116,7 @@ export async function confirmInbound(
       outbound_evidence_uuid: req.outbound_evidence_uuid,
       equipment_uuid: req.equipment_uuid,
       operating_company_id: operatingCompanyId,
-      wf047_inbound: true,
-      wf047_chain_complete: true,
+      wf047_dual_confirm: true,
       audit_chain: {
         outbound_evidence_uuid: req.outbound_evidence_uuid,
         inbound_evidence_uuid: evidenceUuid,
@@ -123,5 +125,46 @@ export async function confirmInbound(
     "info",
     BLOCK_ID
   );
+
+  await appendCrudAudit(
+    client as never,
+    userId,
+    "dispatch.equipment_transfer.completed",
+    {
+      resource_id: requestUuid,
+      equipment_uuid: req.equipment_uuid,
+      assigned_driver_uuid: req.to_driver_uuid,
+      operating_company_id: operatingCompanyId,
+    },
+    "info",
+    BLOCK_ID
+  );
+
   return { kind: "ok", uuid: requestUuid };
+}
+
+export async function confirmOutboundForUser(
+  userId: string,
+  operatingCompanyId: string,
+  requestUuid: string,
+  driverUuid: string,
+  evidenceUuid: string
+) {
+  return withCurrentUser(userId, async (client) => {
+    await setTransferCompanyScope(client, operatingCompanyId);
+    return confirmOutbound(client, userId, operatingCompanyId, requestUuid, driverUuid, evidenceUuid);
+  });
+}
+
+export async function confirmInboundForUser(
+  userId: string,
+  operatingCompanyId: string,
+  requestUuid: string,
+  driverUuid: string,
+  evidenceUuid: string
+) {
+  return withCurrentUser(userId, async (client) => {
+    await setTransferCompanyScope(client, operatingCompanyId);
+    return confirmInbound(client, userId, operatingCompanyId, requestUuid, driverUuid, evidenceUuid);
+  });
 }
