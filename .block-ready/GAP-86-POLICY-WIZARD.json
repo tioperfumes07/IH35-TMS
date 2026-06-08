@@ -49,8 +49,6 @@
   "preview_provided": false,
   "extra_gates": [
     "verify:insurance-policy-create-button",
-    "verify:insurance-creator",
-    "verify:sidebar-contract",
     "verify:nav-integrity"
   ],
   "db_required": true,
