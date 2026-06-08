@@ -1,0 +1,26 @@
+{
+  "block_id": "ACCT-QBOPAR-04",
+  "branch": "feat/acct-qbopar-04-account-drawer",
+  "phase": "Accounting — QBO Parity",
+  "task": "CA-04: New/Edit Account drawer with is_locked flag, opening_balance_as_of, nullable account_number. Migration 202606080230, backend locked-account enforcement (HTTP 423), AccountDrawer.tsx.",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/FEAT-ACCT-QBOPAR-04-ACCOUNT-DRAWER.json",
+    "apps/backend/src/__tests__/migrations/202606080230-coa-account-lock-balance-as-of.test.ts",
+    "apps/backend/src/catalogs/accounting/index.ts",
+    "apps/backend/src/catalogs/accounts.routes.ts",
+    "apps/frontend/src/api/catalog-accounts.ts",
+    "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx",
+    "apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx",
+    "db/migrations/202606080230_coa_account_lock_balance_as_of.sql"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "fields": {
+    "additive_only": false,
+    "no_magnet_edits": false,
+    "no_new_migrations": false
+  }
+}

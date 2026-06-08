@@ -26,6 +26,8 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
       "'is_postable', t.is_postable",
       "'currency_code', t.currency_code",
       "'opening_balance_cents', t.opening_balance_cents",
+      "'opening_balance_as_of', t.opening_balance_as_of",
+      "'is_locked', t.is_locked",
       "'qbo_account_id', t.qbo_account_id",
       "'qbo_account_qrn', t.qbo_account_qrn",
     ],
@@ -39,6 +41,8 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
         metadata.opening_balance_cents === undefined || metadata.opening_balance_cents === null
           ? null
           : Number(metadata.opening_balance_cents),
+      opening_balance_as_of: (metadata.opening_balance_as_of as string | null | undefined) ?? null,
+      is_locked: metadata.is_locked === undefined ? false : Boolean(metadata.is_locked),
       qbo_account_id: (metadata.qbo_account_id as string | null | undefined) ?? null,
       qbo_account_qrn: (metadata.qbo_account_qrn as string | null | undefined) ?? null,
     }),
@@ -51,6 +55,10 @@ export async function registerAccountingCatalogRoutes(app: FastifyInstance) {
       ...(metadata.opening_balance_cents !== undefined
         ? { opening_balance_cents: metadata.opening_balance_cents === null ? null : Number(metadata.opening_balance_cents) }
         : {}),
+      ...(metadata.opening_balance_as_of !== undefined
+        ? { opening_balance_as_of: metadata.opening_balance_as_of as string | null }
+        : {}),
+      ...(metadata.is_locked !== undefined ? { is_locked: Boolean(metadata.is_locked) } : {}),
       ...(metadata.qbo_account_id !== undefined ? { qbo_account_id: metadata.qbo_account_id as string | null } : {}),
       ...(metadata.qbo_account_qrn !== undefined ? { qbo_account_qrn: metadata.qbo_account_qrn as string | null } : {}),
     }),

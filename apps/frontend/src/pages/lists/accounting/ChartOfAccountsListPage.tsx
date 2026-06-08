@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
+import type { CatalogAccount } from "../../../api/catalog-accounts";
 import { fetchAccountBalances, fetchAccountTypeCatalog } from "../../../api/coa-list";
 import { getPlaidBankAccounts } from "../../../api/banking";
 import { Button } from "../../../components/Button";
@@ -11,7 +12,7 @@ import { ListView } from "../../../components/lists/ListView";
 import type { ActiveFilter, ListViewColumn, ListViewFilter, SortConfig } from "../../../components/lists/ListView/types";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { AccountingCatalogModal } from "./AccountingCatalogModal";
+import { AccountDrawer } from "./AccountDrawer";
 import { CoaBatchActions } from "./CoaBatchActions";
 import {
   applyCollapsedVisibility,
@@ -35,21 +36,30 @@ const FILTERS: ListViewFilter[] = [
   },
 ];
 
-const METADATA_FIELDS = [
-  {
-    key: "account_type",
-    label: "Account Type",
-    type: "select" as const,
-    required: true,
-    options: [
-      { value: "Asset", label: "Asset" },
-      { value: "Liability", label: "Liability" },
-      { value: "Equity", label: "Equity" },
-      { value: "Income", label: "Income" },
-      { value: "Expense", label: "Expense" },
-    ],
-  },
-];
+function catalogRowToCatalogAccount(row: AccountingCatalogRow): CatalogAccount {
+  const meta = row.metadata;
+  return {
+    id: row.id,
+    account_number: row.code || null,
+    account_name: row.display_name,
+    account_type: String(meta.account_type ?? "Expense"),
+    account_subtype: meta.account_subtype != null ? String(meta.account_subtype) : null,
+    parent_account_id: meta.parent_account_id != null ? String(meta.parent_account_id) : null,
+    qbo_account_id: meta.qbo_account_id != null ? String(meta.qbo_account_id) : null,
+    qbo_account_qrn: meta.qbo_account_qrn != null ? String(meta.qbo_account_qrn) : null,
+    is_postable: meta.is_postable !== false,
+    currency_code: String(meta.currency_code ?? "USD"),
+    opening_balance_cents: meta.opening_balance_cents != null ? Number(meta.opening_balance_cents) : null,
+    opening_balance_as_of: meta.opening_balance_as_of != null ? String(meta.opening_balance_as_of) : null,
+    is_locked: meta.is_locked === true,
+    notes: row.description ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    deactivated_at: row.is_active ? null : row.updated_at,
+    created_by_user_id: null,
+    updated_by_user_id: null,
+  };
+}
 
 async function fetchAllCatalogRows(operatingCompanyId: string, includeInactive: boolean) {
   const limit = 200;
@@ -84,7 +94,8 @@ function syncBadgeClasses(badge: CoaListRow["syncBadge"]) {
 
 function buildColumns(
   collapsedParentIds: Set<string>,
-  onToggleCollapse: (parentId: string) => void
+  onToggleCollapse: (parentId: string) => void,
+  onEditRow: (row: CoaListRow) => void
 ): ListViewColumn<CoaListRow>[] {
   return [
     {
@@ -164,25 +175,38 @@ function buildColumns(
     {
       id: "action",
       label: "ACTION",
-      width: 130,
-      render: (row) =>
-        row.defaultAction === "view_register" ? (
-          <Link
-            to={`/accounting/chart-of-accounts/register/${row.id}`}
-            className="text-blue-600 hover:underline"
-            onClick={(event) => event.stopPropagation()}
+      width: 180,
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          {row.defaultAction === "view_register" ? (
+            <Link
+              to={`/accounting/chart-of-accounts/register/${row.id}`}
+              className="text-blue-600 hover:underline"
+              onClick={(event) => event.stopPropagation()}
+            >
+              View register
+            </Link>
+          ) : (
+            <Link
+              to="/reports/profit-loss"
+              className="text-blue-600 hover:underline"
+              onClick={(event) => event.stopPropagation()}
+            >
+              Run report
+            </Link>
+          )}
+          <button
+            type="button"
+            className="text-gray-500 hover:text-gray-800 hover:underline text-xs"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEditRow(row);
+            }}
           >
-            View register
-          </Link>
-        ) : (
-          <Link
-            to="/reports/profit-loss"
-            className="text-blue-600 hover:underline"
-            onClick={(event) => event.stopPropagation()}
-          >
-            Run report
-          </Link>
-        ),
+            Edit
+          </button>
+        </div>
+      ),
     },
   ];
 }
@@ -197,9 +221,9 @@ export function ChartOfAccountsListPage() {
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("active");
   const [collapsedParentIds, setCollapsedParentIds] = useState<Set<string>>(() => new Set());
-  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
-  const [selectedRow, setSelectedRow] = useState<AccountingCatalogRow | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
+  const [drawerAccount, setDrawerAccount] = useState<CatalogAccount | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const asOfDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -272,15 +296,25 @@ export function ChartOfAccountsListPage() {
 
   const columns = useMemo(
     () =>
-      buildColumns(collapsedParentIds, (parentId) => {
-        setCollapsedParentIds((prev) => {
-          const next = new Set(prev);
-          if (next.has(parentId)) next.delete(parentId);
-          else next.add(parentId);
-          return next;
-        });
-      }),
-    [collapsedParentIds]
+      buildColumns(
+        collapsedParentIds,
+        (parentId) => {
+          setCollapsedParentIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(parentId)) next.delete(parentId);
+            else next.add(parentId);
+            return next;
+          });
+        },
+        (coaRow) => {
+          const raw = catalogQuery.data?.find((r) => r.id === coaRow.id);
+          if (!raw) return;
+          setDrawerMode("edit");
+          setDrawerAccount(catalogRowToCatalogAccount(raw));
+          setDrawerOpen(true);
+        }
+      ),
+    [collapsedParentIds, catalogQuery.data]
   );
 
   const sort: SortConfig = {
@@ -323,9 +357,9 @@ export function ChartOfAccountsListPage() {
         actions={
           <Button
             onClick={() => {
-              setModalMode("create");
-              setSelectedRow(null);
-              setModalOpen(true);
+              setDrawerMode("create");
+              setDrawerAccount(null);
+              setDrawerOpen(true);
             }}
           >
             + Create
@@ -393,16 +427,12 @@ export function ChartOfAccountsListPage() {
         )}
       </div>
 
-      <AccountingCatalogModal
-        open={modalOpen}
+      <AccountDrawer
+        open={drawerOpen}
+        mode={drawerMode}
+        account={drawerAccount}
         operatingCompanyId={companyId}
-        displayName="Chart of Accounts"
-        codeLabel="Account Number"
-        metadataFields={METADATA_FIELDS}
-        client={chartOfAccountsCatalogClient}
-        mode={modalMode}
-        row={selectedRow}
-        onClose={() => setModalOpen(false)}
+        onClose={() => setDrawerOpen(false)}
         onSaved={() => {
           refetchAll();
         }}
