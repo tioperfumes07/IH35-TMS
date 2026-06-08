@@ -1,0 +1,33 @@
+{
+  "block_id": "P0-BLOCK-3-DRIVER-LOAD-HISTORY",
+  "gap": "P0-BLOCK-3",
+  "branch": "feat/driver-load-history-tab",
+  "phase": "implementation",
+  "task": "Driver per-load history tab: surface dispatch.load_assignment_history in DriverDetailPage via new LoadHistoryTab component calling existing GET /api/v1/dispatch/assignment-history?driver_id=. No migration — frontend-only tab addition.",
+  "agent": "A",
+  "is_read_only": false,
+  "runtime_path": "src",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-p0-driver-history",
+  "allowed_files": [
+    ".block-ready/P0-BLOCK-3-DRIVER-LOAD-HISTORY.json",
+    "apps/frontend/package.json",
+    "apps/frontend/src/components/drivers/LoadHistoryTab.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/hooks/useCatalogQuery.ts",
+    "apps/frontend/src/pages/DriverDetail.tsx",
+    "apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx",
+    "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx",
+    "apps/frontend/src/pages/reports/BookingGapReport.tsx",
+    "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "package-lock.json"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "acceptance": [
+    "LoadHistoryTab component renders a table of past loads for a driver",
+    "DriverDetailPage shows Load History tab alongside existing tabs",
+    "GET /api/v1/dispatch/assignment-history?driver_id= returns load history",
+    "CI gates: build:backend, frontend tsc, mobile responsive audit pass"
+  ]
+}
