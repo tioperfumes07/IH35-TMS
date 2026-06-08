@@ -149,6 +149,7 @@ import { registerOnboardingStateRoutes } from "./onboarding/state.routes.js";
 import { registerLiabilitiesRoutes } from "./liabilities/liabilities.routes.js";
 import { registerBankTxCategorizationRoutes } from "./banking/categorization.routes.js";
 import { registerBankingRoutes } from "./banking/banking.routes.js";
+import { registerBankAccountCompanyAuditRoutes } from "./banking/integrity/account-company-audit.routes.js";
 import { registerAccountBalanceRoutes } from "./banking/account-balance.routes.js";
 import { registerPlaidLinkRoutes } from "./integrations/plaid/link.routes.js";
 import { registerPlaidAdminRoutes } from "./integrations/plaid/admin.routes.js";
@@ -711,6 +712,7 @@ async function main() {
   await registerCashAdvancesRoutes(app);
   await registerBankTxCategorizationRoutes(app);
   await registerBankingRoutes(app);
+  await registerBankAccountCompanyAuditRoutes(app);
   await registerPlaidBankingItemsRoutes(app);
   await registerAccountBalanceRoutes(app);
   await registerPlaidLinkRoutes(app);

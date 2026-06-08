@@ -1,0 +1,27 @@
+{
+  "block_id": "GAP-53",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap53",
+  "branch": "feature/gap-53-bank-drift-fix",
+  "phase": "GAP-CRITICAL",
+  "task": "Bank account multi-company drift fix",
+  "allowed_files": [
+    ".block-ready/GAP-53.json",
+    "apps/backend/src/banking/integrity/account-company-audit.service.ts",
+    "apps/backend/src/banking/integrity/account-company-audit.routes.ts",
+    "apps/backend/src/banking/integrity/__tests__/account-company-audit.test.ts",
+    "apps/backend/scripts/backfill-bank-account-company-tagging.mjs",
+    "apps/backend/scripts/report-bank-account-historical-txn-drift.mjs",
+    "scripts/verify-bank-account-company-assignment.mjs",
+    "docs/runbooks/BANK-ACCOUNT-COMPANY-AUDIT.md",
+    "docs/specs/gap-53-bank-multi-company-drift.md",
+    "apps/backend/src/index.ts",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:bank-account-company-assignment"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
