@@ -391,6 +391,9 @@ jobs:
       - name: Verify customer relationship score contract
         run: npm run verify:customer-relationship-score
 
+      - name: Verify driver retention model contract
+        run: npm run verify:driver-retention
+
       - name: Verify severe repair fleet restore estimate contract
         run: npm run verify:severe-repair-estimate
 

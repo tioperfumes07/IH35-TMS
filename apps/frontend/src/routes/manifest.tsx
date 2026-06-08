@@ -19,6 +19,7 @@ import { ApplicantsPipelinePage } from "../pages/drivers/ApplicantsPipelinePage"
 import { ApplicationPage } from "../pages/public/ApplicationPage";
 import { DriverLoadStatusesPage } from "../pages/DriverLoadStatusesPage";
 import { DriversPage } from "../pages/drivers/DriversPage";
+import { RetentionDashboard } from "../pages/drivers/RetentionDashboard";
 import type { DriversSubnavId } from "../components/drivers/DRIVERS_TABS_CONFIG";
 import { DispatchPage } from "../pages/Dispatch";
 import { GeofencesPage } from "../pages/operations/GeofencesPage";
@@ -2999,6 +3000,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <MessagesInboxPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/drivers/retention"
+          element={
+            <ProtectedRoute>
+              <RetentionDashboard />
             </ProtectedRoute>
           }
         />
