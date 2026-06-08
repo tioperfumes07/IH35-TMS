@@ -1,0 +1,30 @@
+{
+  "block_id": "TIER29-KNOWN-LIMITATIONS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "SCALE",
+  "task": "Block 29 — Known Limitations Doc: 51 limitations documented across 8 categories",
+  "branch": "feat/tier29-known-limitations",
+  "lane": "A",
+  "lane_position": "A29",
+  "stub_on_main": false,
+  "prior_state": "NET-NEW — no known limitations document existed on main",
+  "details": [
+    "docs/runbooks/known-limitations.md: 51 limitations across 8 categories (Scale, Feature Gaps vs QBO, Integration Gaps, Geographic, Tax, UI, Reporting, Multi-Currency + Compliance + Data/Privacy)",
+    "Exceeds spec requirement of ≥30 limitations",
+    "Recently Resolved section tracks limitations fixed by Blocks 14-28",
+    "Internal version (full detail) + customer-facing summary included",
+    "Maintained as living document with instructions for adding/resolving limitations"
+  ],
+  "allowed_files": [
+    ".block-ready/TIER29-KNOWN-LIMITATIONS.json",
+    "docs/runbooks/known-limitations.md"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "acceptance": {
+    "at_least_30_limitations": true,
+    "categorized": true,
+    "internal_and_customer_facing_versions": true
+  }
+}
