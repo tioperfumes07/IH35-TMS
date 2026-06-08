@@ -64,6 +64,13 @@ export type DispatchLoadRow = {
   deleted_by_user_id: string | null;
   progress_status?: "on_track" | "behind" | "delayed" | "early" | "unknown";
   progress_eta_delta_minutes?: number | null;
+  driver_lifecycle_stage?: string | null;
+  driver_pwa_last_ping_at?: string | null;
+  samsara_eta_at?: string | null;
+  samsara_eta_source?: "samsara" | "manual" | "prediction" | null;
+  on_time_prediction?: "green" | "amber" | "red" | null;
+  samsara_last_fetched_at?: string | null;
+  samsara_cache_tier?: string | null;
 };
 
 export type LoadsListResponse = {

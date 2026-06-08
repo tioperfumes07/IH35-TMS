@@ -24,6 +24,21 @@ CREATE INDEX IF NOT EXISTS idx_gif_company_date
 CREATE INDEX IF NOT EXISTS idx_gif_anomaly_class
   ON safety.integrity_findings(operating_company_id, anomaly_class, resolved);
 
+ALTER TABLE safety.integrity_findings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rls_safety_integrity_findings_company ON safety.integrity_findings;
+CREATE POLICY rls_safety_integrity_findings_company
+  ON safety.integrity_findings
+  FOR ALL TO ih35_app
+  USING (
+    operating_company_id = current_setting('app.operating_company_id', true)
+    OR current_setting('app.bypass_rls', true) = 'lucia'
+  )
+  WITH CHECK (
+    operating_company_id = current_setting('app.operating_company_id', true)
+    OR current_setting('app.bypass_rls', true) = 'lucia'
+  );
+
 GRANT USAGE ON SCHEMA safety TO ih35_app;
 GRANT SELECT, INSERT, UPDATE ON safety.integrity_findings TO ih35_app;
 
