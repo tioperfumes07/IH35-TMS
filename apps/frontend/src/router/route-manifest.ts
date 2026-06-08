@@ -146,3 +146,22 @@ export function dispatchSecondaryTabFromPath(pathname: string): string {
   }
   return "load_board";
 }
+
+export const FUEL_TAB_PATH: Record<string, string> = {
+  home: "/fuel",
+  planner: "/fuel/planner",
+  relay_inbox: "/fuel/inbox",
+  settings: "/fuel/settings",
+  expense_mapping: "/fuel/expense-mapping",
+  history: "/fuel/history",
+  loves_prices: "/fuel/loves-prices",
+  compliance: "/fuel/compliance",
+};
+
+export function fuelTabFromPath(pathname: string): string {
+  const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  for (const [id, routePath] of Object.entries(FUEL_TAB_PATH)) {
+    if (routePath === norm) return id;
+  }
+  return "planner";
+}

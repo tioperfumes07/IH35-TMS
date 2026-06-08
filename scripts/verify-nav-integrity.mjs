@@ -173,6 +173,7 @@ function modulePrefixReachable(routePath, navReachable) {
     ["/drivers", "/drivers"],
     ["/factoring", "/factoring"],
     ["/dispatch", "/dispatch"],
+    ["/fuel", "/fuel"],
     ["/help", "/help"],
   ];
   for (const [prefix, root] of prefixes) {

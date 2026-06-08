@@ -155,18 +155,6 @@
       "reason": "GPS border crossing geofence history \u2014 subnav wiring deferred (GAP-26)"
     },
     {
-      "path": "/fuel/planner",
-      "reason": "ComingSoon stub; fuel tabs on /fuel"
-    },
-    {
-      "path": "/fuel/settings",
-      "reason": "ComingSoon stub; fuel tabs on /fuel"
-    },
-    {
-      "path": "/fuel/inbox",
-      "reason": "ComingSoon stub; fuel tabs on /fuel"
-    },
-    {
       "path": "/safety/accidents-incidents",
       "reason": "Legacy stub; canonical /safety/accidents"
     },
