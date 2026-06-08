@@ -1,0 +1,27 @@
+{
+  "block_id": "DISP-LIST-TABLE-ASSIGN",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DISPATCH",
+  "task": "Block 5 — List(simple+risk) vs Table(detailed) + Assignment bands with unassigned-on-top",
+  "branch": "feat/disp-list-table-assign",
+  "lane": "A",
+  "lane_position": "A5",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-disp-list",
+  "details": [
+    "DispatchBoard.tsx: board sub-view toggle (List / Table / Assignment) via ?board= URL param.",
+    "List = simple cols (Load/Customer/Unit/Driver/Lane/Delivery/Risk/Status) with blended ETA risk tier + at-risk flag; unassigned loads sorted on top.",
+    "Table = detailed superset adding WO#, Commodity, Lane, Linehaul, Flag (Unit-first column order).",
+    "Assignment = stacked bands: Unassigned Units (cover first) → Booked loads (reserve-a-load, Doc-Compliance gate) → Assigned units.",
+    "Inline quicksave pickers preserved for unit/driver assignment on load rows."
+  ],
+  "allowed_files": [
+    ".block-ready/DISP-LIST-TABLE-ASSIGN.json",
+    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "gate_for": ["DISP-DENSITY-NAV"]
+}
