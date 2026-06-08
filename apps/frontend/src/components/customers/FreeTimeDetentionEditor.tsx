@@ -175,8 +175,9 @@ export function FreeTimeDetentionEditor(props: {
         {historyQuery.isLoading ? <p className="text-xs text-gray-500">Loading history...</p> : null}
         {historyQuery.isError ? <p className="text-xs text-red-700">Failed to load history.</p> : null}
         {historyQuery.data && historyQuery.data.length > 0 ? (
-          <div className="max-h-72 overflow-auto">
-            <table className="min-w-full text-left text-xs">
+          <div className="max-h-72 overflow-y-auto">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-gray-200 text-gray-600">
                   <th className="px-2 py-1.5 font-semibold">Recorded</th>
@@ -197,7 +198,8 @@ export function FreeTimeDetentionEditor(props: {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         ) : null}
         {historyQuery.data && historyQuery.data.length === 0 ? (
