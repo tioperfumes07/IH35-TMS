@@ -22,7 +22,7 @@ import { AbandonmentReportModal } from "../../pages/loads/AbandonmentReportModal
 import { PreSettlementPanel } from "./PreSettlementPanel";
 import { CustomsTab } from "./drawer-tabs/CustomsTab";
 import { FactoringTab } from "./drawer-tabs/FactoringTab";
-import { FinesDeductionsCard } from "./drawer-tabs/FinesDeductionsCard";
+import { FinesDeductionsCard } from "./tabs/FinesDeductionsCard";
 import { SettlementProfitabilityCard } from "./drawer-tabs/SettlementProfitabilityCard";
 
 type Props = {
