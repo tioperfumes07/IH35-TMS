@@ -4,9 +4,12 @@
   "is_read_only": false,
   "branch": "feat/disp-factoring-packet",
   "phase": "dispatch",
+  "task": "DISP-FACTORING-PACKET — Factoring queue + FARO Reserve Tracker + FactoringTab drawer child (LANE B Block 7)",
   "completed_at": "2026-06-08",
   "description": "Factoring queue + FARO Reserve Tracker + FactoringTab drawer child. Auto-assemble packet on delivery+POD. Reuses Block-24/25 poster + existing factoring services. No new financial code.",
-  "delivered_files": [
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready/DISP-FACTORING-PACKET.json",
     "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
     "apps/frontend/src/pages/factoring/ReserveTracker.tsx",
     "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx",
@@ -14,6 +17,11 @@
     "apps/backend/src/dispatch/factoring-queue.routes.ts",
     "apps/backend/src/factoring/packet-assemble.service.ts"
   ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "preview_provided": false,
   "wiring_pending": {
     "note": "Lane A registers route + sidebar. Backend index.ts needs registerFactoringQueueRoutes import.",
     "backend_registration": "apps/backend/src/index.ts — add: import { registerFactoringQueueRoutes } from './dispatch/factoring-queue.routes.js'; await registerFactoringQueueRoutes(app);",
