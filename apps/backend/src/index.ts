@@ -16,6 +16,8 @@ import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-heal
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
 import { registerSamsaraVendorMappingActionsRoutes } from "./integrations/samsara/vendor-mapping-actions.routes.js";
 import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
+import { registerGeofenceReconciliationRoutes } from "./integrations/samsara/geofences/reconciliation.routes.js";
+import { initializeGeofenceReconciliationWorker } from "./jobs/geofence-reconciliation-daily.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -483,6 +485,7 @@ async function main() {
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
+  await registerGeofenceReconciliationRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -881,6 +884,13 @@ async function main() {
     app.log.info("[STARTUP] geofence-breach-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] geofence-breach-cron failed");
+  }
+
+  try {
+    initializeGeofenceReconciliationWorker(app);
+    app.log.info("[STARTUP] geofence-reconciliation-daily worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] geofence-reconciliation-daily worker failed");
   }
 
   try {

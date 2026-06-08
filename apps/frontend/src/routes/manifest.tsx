@@ -167,6 +167,7 @@ import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerU
 import { DispatchMarginPage } from "../pages/reports/DispatchMarginPage";
 import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
+import { GeofenceReconciliationReport } from "../pages/reports/GeofenceReconciliationReport";
 import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
 import { FaultRulesPage } from "../pages/maintenance/FaultRulesPage";
 import { DeadheadReportPage } from "../pages/reports/DeadheadReportPage";
@@ -2222,6 +2223,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <GeofenceDwellReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/geofence-reconciliation"
+          element={
+            <ProtectedRoute>
+              <GeofenceReconciliationReport />
             </ProtectedRoute>
           }
         />
