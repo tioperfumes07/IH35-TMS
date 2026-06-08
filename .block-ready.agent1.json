@@ -24,7 +24,7 @@
   ],
   "preview_provided": false,
   "extra_gates": [],
-  "runtime_path": "frontend",
+  "runtime_path": "src",
   "db_required": false,
   "guard_required": false
 }
