@@ -2,19 +2,17 @@
  * GAP-64 / CAP-14 — Cargo sensor worker (every 5 minutes).
  */
 import type { FastifyInstance } from "fastify";
+import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { runCargoSensorIngestionTick } from "../integrations/samsara/cap-14-cargo-sensors/ingester.service.js";
 import { processOutOfRangeAlerts } from "../integrations/samsara/cap-14-cargo-sensors/threshold.service.js";
 
 const WORKER_NAME = "dispatch.cap14_cargo_sensor_worker";
-const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
-
-let timer: NodeJS.Timeout | undefined;
-
-function intervalMs(): number {
-  const raw = Number(process.env.CAP14_CARGO_SENSOR_INTERVAL_MS ?? String(DEFAULT_INTERVAL_MS));
-  return Number.isFinite(raw) && raw >= 60_000 ? raw : DEFAULT_INTERVAL_MS;
-}
+const CRON_EXPRESSION = "*/5 * * * *";
+const CRON_TZ = "America/Chicago";
+let initialized = false;
+let task: ReturnType<typeof cron.schedule> | null = null;
 
 export async function runCap14CargoSensorWorkerTick(): Promise<{
   companiesProcessed: number;
@@ -45,21 +43,35 @@ export async function runCap14CargoSensorWorkerTick(): Promise<{
 }
 
 export function initializeCap14CargoSensorWorker(app: FastifyInstance) {
-  const ms = intervalMs();
-  const run = async () => {
-    try {
-      const summary = await runCap14CargoSensorWorkerTick();
-      app.log.info({ summary }, `[${WORKER_NAME}] tick complete`);
-    } catch (err) {
-      app.log.error({ err }, `[${WORKER_NAME}] tick failed`);
-    }
-  };
-  void run();
-  timer = setInterval(() => void run(), ms);
-  app.log.info({ intervalMs: ms }, `[${WORKER_NAME}] started`);
+  if (initialized) return;
+  initialized = true;
+
+  if (process.env.ENABLE_CAP14_CARGO_SENSOR_WORKER === "false") {
+    app.log.info(`[${WORKER_NAME}] disabled via ENABLE_CAP14_CARGO_SENSOR_WORKER=false`);
+    return;
+  }
+
+  task = cron.schedule(
+    CRON_EXPRESSION,
+    async () => {
+      await wrapBackgroundJobTick(
+        WORKER_NAME,
+        async () => {
+          const summary = await runCap14CargoSensorWorkerTick();
+          app.log.info({ summary }, `[${WORKER_NAME}] tick complete`);
+        },
+        app.log
+      );
+    },
+    { timezone: CRON_TZ }
+  );
+
+  app.log.info({ cron: CRON_EXPRESSION, tz: CRON_TZ }, `[${WORKER_NAME}] scheduled`);
 }
 
 export function stopCap14CargoSensorWorker() {
-  if (timer) clearInterval(timer);
-  timer = undefined;
+  if (!task) return;
+  task.stop();
+  task = null;
+  initialized = false;
 }

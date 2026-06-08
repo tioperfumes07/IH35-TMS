@@ -25,6 +25,15 @@ export type CargoThresholdEvaluation = {
   reasons: string[];
 };
 
+export type CargoSensorIncident = {
+  started_at: string;
+  ended_at: string | null;
+  severity: "warning" | "critical";
+  duration_minutes: number;
+  sample_count: number;
+  reasons: string[];
+};
+
 export type OutOfRangeIncident = {
   reading_uuid: string;
   load_uuid: string | null;
@@ -39,6 +48,7 @@ const DEFAULT_MAX_TEMP_C = 4.4;
 const DEFAULT_SETPOINT_BAND_C = 1.5;
 const EDGE_TEMP_C = 0.5;
 const EDGE_HUMIDITY_PCT = 3;
+const CRITICAL_DURATION_MINUTES = 10;
 
 function toNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -63,6 +73,13 @@ function fahrenheitToCelsius(value: number): number {
 
 function clamp(min: number, max: number): [number, number] {
   return min <= max ? [min, max] : [max, min];
+}
+
+function minutesBetween(startIso: string, endIso: string): number {
+  const start = Date.parse(startIso);
+  const end = Date.parse(endIso);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return 0;
+  return Math.max(0, Math.round((end - start) / 60000));
 }
 
 export function resolveCargoThresholds(loadMetadata: Record<string, unknown> | null | undefined): CargoThresholdRange {
@@ -164,6 +181,67 @@ export function evaluateCargoThreshold(
   }
 
   return { out_of_range: outOfRange, near_edge: nearEdge, status: outOfRange ? "red" : nearEdge ? "amber" : "green", reasons };
+}
+
+export function detectCargoIncidents(
+  readings: CargoSensorThresholdInput[],
+  range: CargoThresholdRange,
+  nowIso = new Date().toISOString()
+): CargoSensorIncident[] {
+  const sorted = [...readings].sort((a, b) => Date.parse(a.reading_at) - Date.parse(b.reading_at));
+  const incidents: CargoSensorIncident[] = [];
+
+  let active:
+    | {
+        started_at: string;
+        sample_count: number;
+        reasons: Set<string>;
+      }
+    | null = null;
+
+  for (const reading of sorted) {
+    const evaluation = evaluateCargoThreshold(reading, range);
+
+    if (evaluation.out_of_range) {
+      if (!active) {
+        active = {
+          started_at: reading.reading_at,
+          sample_count: 1,
+          reasons: new Set(evaluation.reasons),
+        };
+      } else {
+        active.sample_count += 1;
+        for (const reason of evaluation.reasons) active.reasons.add(reason);
+      }
+      continue;
+    }
+
+    if (!active) continue;
+    const duration = minutesBetween(active.started_at, reading.reading_at);
+    incidents.push({
+      started_at: active.started_at,
+      ended_at: reading.reading_at,
+      duration_minutes: duration,
+      severity: duration >= CRITICAL_DURATION_MINUTES ? "critical" : "warning",
+      sample_count: active.sample_count,
+      reasons: [...active.reasons],
+    });
+    active = null;
+  }
+
+  if (active) {
+    const duration = minutesBetween(active.started_at, nowIso);
+    incidents.push({
+      started_at: active.started_at,
+      ended_at: null,
+      duration_minutes: duration,
+      severity: duration >= CRITICAL_DURATION_MINUTES ? "critical" : "warning",
+      sample_count: active.sample_count,
+      reasons: [...active.reasons],
+    });
+  }
+
+  return incidents;
 }
 
 export async function findOutOfRangeIncidents(
