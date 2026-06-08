@@ -351,6 +351,9 @@ jobs:
 
       - name: Verify CAP-9 vehicle-driver pairing (GAP-59)
         run: npm run verify:cap-9-pairing
+
+      - name: Verify CAP-5 tri-signal (GAP-57)
+        run: npm run verify:cap-5-tri-signal
       - name: Verify bank account company assignment (GAP-53)
         run: npm run verify:bank-account-company-assignment
 

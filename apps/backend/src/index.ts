@@ -13,6 +13,7 @@ import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
 import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.js";
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
 import { registerSamsaraLivePositionRoutes } from "./integrations/samsara/positions/live-position.routes.js";
+import { registerTriSignalRoutes } from "./dispatch/load-status-signal/tri-signal.routes.js";
 import { initializeSamsaraPositionPollWorker } from "./jobs/samsara-position-poll-worker.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
 import { registerIntegrationHealthRoutes } from "./integrations/integration-health.routes.js";
@@ -518,6 +519,7 @@ async function main() {
   await registerSamsaraEngineFaultRoutes(app);
   await registerSamsaraConfigRoutes(app);
   await registerSamsaraLivePositionRoutes(app);
+  await registerTriSignalRoutes(app);
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraVehicleDriverPairingRoutes(app);
   await registerIntegrationHealthRoutes(app);
