@@ -1,0 +1,26 @@
+{
+  "block_id": "DISP-KANBAN-STATES",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DISPATCH",
+  "task": "Block 3 — True Kanban operational states (7 columns + Completed/Cancelled terminal)",
+  "branch": "feat/disp-kanban-states",
+  "lane": "A",
+  "details": [
+    "DispatchKanban.tsx: 7 active columns Pending → Assigned → En Route → At Pickup → Loaded → At Delivery → Delivered.",
+    "Completed + Cancelled terminal columns (Cancelled collapsed by default).",
+    "Cards show load#, lane, driver·unit, FTL/LTL/Reefer + weight + commodity, dwell/free/det on pickup/delivery columns.",
+    "On-time/delay chip, breakdown + ETA-held flags; delivered cards show factoring status + net-profit badge via loadProfit.ts.",
+    "State mapping from load status + optional geofence state (gap-39). Card click opens LoadDetailDrawer via ?load_id= (Block 12)."
+  ],
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready/DISP-KANBAN-STATES.json",
+    "apps/frontend/src/components/dispatch/DispatchKanban.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "gate_for": ["DISP-OVERVIEW", "DISP-QUEUES-NAV", "DISP-ROUND-TRIPS", "DISP-DENSITY-NAV"]
+}
