@@ -32,6 +32,7 @@ import { DriverPlanner } from "../pages/dispatch/planners/DriverPlanner";
 import { TruckPlanner } from "../pages/dispatch/planners/TruckPlanner";
 import { LoadsPlanner } from "../pages/dispatch/planners/LoadsPlanner";
 import { DetentionBoardPage } from "../pages/dispatch/DetentionBoardPage";
+import { EquipmentTransferRequestsPage } from "../pages/dispatch/EquipmentTransferRequests";
 import { OcrQueuePage } from "../pages/dispatch/OcrQueuePage";
 import { NotifyPreferencesPage } from "../pages/dispatch/NotifyPreferencesPage";
 import { PodReviewPage } from "../pages/dispatch/PodReviewPage";
@@ -714,6 +715,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DetentionBoardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/equipment-transfers"
+          element={
+            <ProtectedRoute>
+              <EquipmentTransferRequestsPage />
             </ProtectedRoute>
           }
         />
