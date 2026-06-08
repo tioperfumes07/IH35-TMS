@@ -1,0 +1,19 @@
+{
+  "block_id": "FIX-AT-RISK-LOADS-SD-CITY",
+  "branch": "fix/at-risk-loads-sd-city",
+  "phase": "P0-HOTFIX",
+  "task": "at-risk-loads 500 (Postgres 42703) — project city/state in the sd delivery-stop lateral + projection-drift regression guard",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    ".block-ready/FIX-AT-RISK-LOADS-SD-CITY.json",
+    "apps/backend/src/dispatch/arch-tabs.service.ts",
+    "apps/backend/src/dispatch/__tests__/arch-tabs.routes.test.ts"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
