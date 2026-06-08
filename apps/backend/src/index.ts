@@ -239,6 +239,7 @@ import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.route
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerUnitPermitsRoutes } from "./master-data/units/permits/routes.js";
 import { registerUnitTollTagsRoutes } from "./master-data/units/toll-tags/routes.js";
+import { registerDriverOperationsDepthRoutes } from "./master-data/drivers/operations-depth/routes.js";
 import { registerCustomerFreeTimeDetentionRoutes } from "./master-data/customers/free-time-detention.routes.js";
 import { initializeAccountingCrons, registerAccountingRoutes } from "./accounting/index.js";
 import { registerApPaymentApplicationRoutes } from "./ap/payment-application.routes.js";
@@ -556,6 +557,7 @@ async function main() {
   await registerMdataRoutes(app);
   await registerUnitPermitsRoutes(app);
   await registerUnitTollTagsRoutes(app);
+  await registerDriverOperationsDepthRoutes(app);
   await registerCustomerFreeTimeDetentionRoutes(app);
   await registerAssignmentsQuicksaveRoutes(app);
   await registerFleetTrailerRoutes(app);

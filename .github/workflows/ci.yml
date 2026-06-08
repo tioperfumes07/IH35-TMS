@@ -323,6 +323,9 @@ jobs:
       - name: Verify permits and toll tags contract
         run: npm run verify:permits-toll-tags
 
+      - name: Verify driver operations depth contract (GAP-48)
+        run: npm run verify:driver-operations-depth
+
       - name: Verify cash flow and per-truck CPM routes (GAP-45)
         run: npm run verify:cash-flow-cpm-routes
 

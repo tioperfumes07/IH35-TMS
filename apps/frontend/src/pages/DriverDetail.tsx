@@ -48,10 +48,24 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { CertExpiryBadge } from "../components/safety/CertExpiryBadge";
 import { EldEditHistoryTimeline } from "../components/safety/EldEditHistoryTimeline";
 import { UnitDriverHistoryStrip } from "./units/UnitDriverHistoryStrip";
+import { OperationsDepthNav, OPERATIONS_DEPTH_SUBVIEWS } from "../components/drivers/OperationsDepthNav";
+import { DebtHistoryView } from "./drivers/operations/DebtHistoryView";
+import { PayrollHistoryView } from "./drivers/operations/PayrollHistoryView";
+import { EscrowHistoryView } from "./drivers/operations/EscrowHistoryView";
+import { PermitHistoryView } from "./drivers/operations/PermitHistoryView";
+import { AccidentHistoryView } from "./drivers/operations/AccidentHistoryView";
+import { SettlementHistoryView } from "./drivers/operations/SettlementHistoryView";
+import { FuelHistoryView } from "./drivers/operations/FuelHistoryView";
+import { MaintenanceAssignmentsView } from "./drivers/operations/MaintenanceAssignmentsView";
+import { SafetyEventsView } from "./drivers/operations/SafetyEventsView";
+import { CommunicationsLogView } from "./drivers/operations/CommunicationsLogView";
+import { PwaEngagementView } from "./drivers/operations/PwaEngagementView";
+import { DocumentsVaultView } from "./drivers/operations/DocumentsVaultView";
 
 const tabs = [
   "Profile",
   "QBO Mapping",
+  "Operations",
   "Earnings & Debt",
   "Equipment Assignments",
   "Safety File",
@@ -62,6 +76,21 @@ const tabs = [
   "Load History",
 ] as const;
 type DriverTab = (typeof tabs)[number];
+
+const OPERATIONS_VIEW_BY_SLUG = {
+  "debt-history": DebtHistoryView,
+  "payroll-history": PayrollHistoryView,
+  "escrow-history": EscrowHistoryView,
+  "permit-history": PermitHistoryView,
+  "accident-history": AccidentHistoryView,
+  "settlement-history": SettlementHistoryView,
+  "fuel-history": FuelHistoryView,
+  "maintenance-assignments": MaintenanceAssignmentsView,
+  "safety-events": SafetyEventsView,
+  "communications-log": CommunicationsLogView,
+  "pwa-engagement": PwaEngagementView,
+  "documents-vault": DocumentsVaultView,
+};
 
 const reasonOptions = [
   { value: "raise", label: "Raise" },
@@ -127,6 +156,9 @@ export function DriverDetailPage() {
 
   const [editMode, setEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState<DriverTab>("Profile");
+  const [operationsSubView, setOperationsSubView] = useState<string>(
+    OPERATIONS_DEPTH_SUBVIEWS[0]?.slug ?? "debt-history"
+  );
   useEffect(() => {
     const t = searchParams.get("tab");
     if (t === "settlements" || t === "earnings") {
@@ -663,6 +695,29 @@ export function DriverDetailPage() {
       />
 
       {driver.operating_company_id ? <UnitDriverHistoryStrip operatingCompanyId={driver.operating_company_id} driverId={driver.id} /> : null}
+
+      {activeTab === "Operations" ? (
+        (() => {
+          const operatingCompanyId = String(driver.operating_company_id ?? "");
+          const ActiveOperationsView =
+            OPERATIONS_VIEW_BY_SLUG[operationsSubView as keyof typeof OPERATIONS_VIEW_BY_SLUG] ?? DebtHistoryView;
+          return (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">
+                Full operational history for this driver across finance, compliance, safety and engagement.
+              </p>
+              <OperationsDepthNav activeSlug={operationsSubView} onChange={setOperationsSubView} />
+              {operatingCompanyId ? (
+                <ActiveOperationsView driverId={driver.id} operatingCompanyId={operatingCompanyId} />
+              ) : (
+                <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
+                  This driver has no operating company assigned.
+                </div>
+              )}
+            </div>
+          );
+        })()
+      ) : null}
 
       {activeTab === "Profile" ? (
         <div className="grid gap-3 md:grid-cols-2">
