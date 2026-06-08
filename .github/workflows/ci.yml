@@ -237,6 +237,9 @@ jobs:
       - name: verify:dispatch-planner-calendar
         run: npm run verify:dispatch-planner-calendar
 
+      - name: verify:cashflow-includes-dispatch-events
+        run: npm run verify:cashflow-includes-dispatch-events
+
       - name: verify:dispatch-detention-board
         run: npm run verify:dispatch-detention-board
 

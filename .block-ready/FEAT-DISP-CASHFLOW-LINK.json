@@ -1,0 +1,21 @@
+{
+  "block_id": "FEAT-DISP-CASHFLOW-LINK",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-disp-cashflow",
+  "is_read_only": true,
+  "branch": "feat/disp-cashflow-link",
+  "phase": "DISPATCH",
+  "task": "DISP-CASHFLOW-LINK — verify factoring advances, settlement payouts, detention revenue, and factoring fees are represented in cash-flow sources and map to the correct cash-flow section.",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    "scripts/verify-cashflow-includes-dispatch-events.mjs",
+    ".block-ready/FEAT-DISP-CASHFLOW-LINK.json",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:cashflow-includes-dispatch-events"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
