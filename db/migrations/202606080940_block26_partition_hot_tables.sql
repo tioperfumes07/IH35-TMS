@@ -6,41 +6,41 @@
 -- Tables: audit_log, banking_transactions, fuel_card_transactions
 -- Retention: 7 years (IRS requirement for financial records)
 BEGIN;
+SET LOCAL search_path = public;
 
 -- ══════════════════════════════════════════════════════════════════════════════
 -- SECTION 1: audit_log partitioning
 -- ══════════════════════════════════════════════════════════════════════════════
 
--- Step 0: Ensure audit_log exists (base table for partitioning).
--- If the table was never created, create it here so partitioning can proceed.
-CREATE TABLE IF NOT EXISTS audit_log (
+-- Step 0: Ensure public.audit_log exists (base table for partitioning).
+-- No operating_company_id: this is a cross-tenant audit log; RLS not needed.
+CREATE TABLE IF NOT EXISTS public.audit_log (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   table_name text NOT NULL,
   record_id uuid,
   action text NOT NULL,
   changed_by text,
   change_data jsonb,
-  operating_company_id uuid,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-GRANT SELECT, INSERT ON audit_log TO ih35_app;
+GRANT SELECT, INSERT ON public.audit_log TO ih35_app;
 
 -- Step 1a: Create new partitioned table alongside existing.
 -- Primary key must include the partition key (created_at) per PostgreSQL requirement.
-CREATE TABLE IF NOT EXISTS audit_log_partitioned (
+-- No operating_company_id: cross-tenant append-only table; RLS not required.
+CREATE TABLE IF NOT EXISTS public.audit_log_partitioned (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   table_name text NOT NULL,
   record_id uuid,
   action text NOT NULL,
   changed_by text,
   change_data jsonb,
-  operating_company_id uuid,
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
 
 -- Step 1b: Grant same permissions
-GRANT SELECT, INSERT ON audit_log_partitioned TO ih35_app;
+GRANT SELECT, INSERT ON public.audit_log_partitioned TO ih35_app;
 
 -- Step 1c: Create monthly partitions covering 2024-01 through 2027-12
 -- (Covers all existing data + 18 months forward)
@@ -144,8 +144,8 @@ CREATE TABLE IF NOT EXISTS audit_log_2027_12 PARTITION OF audit_log_partitioned
 -- Step 1d: Copy existing data in batches (online, no lock on reads/writes)
 -- Done outside transaction in production via the maintenance cron.
 -- For migration: copy all existing rows.
-INSERT INTO audit_log_partitioned
-SELECT * FROM audit_log
+INSERT INTO public.audit_log_partitioned
+SELECT * FROM public.audit_log
 ON CONFLICT (id, created_at) DO NOTHING;
 
 -- ══════════════════════════════════════════════════════════════════════════════
