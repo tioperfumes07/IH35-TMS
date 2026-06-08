@@ -329,6 +329,9 @@ jobs:
       - name: Verify dispatch auth gates (GAP-47)
         run: npm run verify:dispatch-auth-gates-wired
 
+      - name: Verify anomaly detection engine (GAP-46)
+        run: npm run verify:anomaly-detection-engine
+
       - name: Verify cash flow and per-truck CPM routes (GAP-45)
         run: npm run verify:cash-flow-cpm-routes
 

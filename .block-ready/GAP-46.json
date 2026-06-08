@@ -1,0 +1,26 @@
+{
+  "block_id": "GAP-46",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap46",
+  "branch": "feature/gap-46-integrity-alerts",
+  "phase": "GAP-MEDIUM",
+  "task": "Integrity anomaly detection alert engine",
+  "allowed_files": [
+    ".block-ready/GAP-46.json",
+    "db/migrations/202606080211_anomaly_alert_rules.sql",
+    "apps/backend/src/safety/anomaly/**",
+    "apps/backend/src/jobs/anomaly-detector-worker.ts",
+    "apps/frontend/src/pages/safety/anomaly/**",
+    "apps/frontend/src/components/safety/AnomalyAlertBadge.tsx",
+    "scripts/verify-anomaly-detection-engine.mjs",
+    "docs/specs/gap-46-anomaly-detection.md",
+    "apps/backend/src/index.ts",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:anomaly-detection-engine"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
