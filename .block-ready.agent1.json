@@ -1,35 +1,19 @@
 {
-  "block_id": "GAP-43",
-  "branch": "feature/gap-43-scheduled-reports",
-  "phase": "GAP-MEDIUM",
-  "task": "6 scheduled reports auto-emailed per Q8",
+  "block_id": "DISP-KANBAN-STATES",
+  "branch": "feat/disp-kanban-states",
+  "phase": "Dispatch",
+  "task": "Block 3 — True Kanban operational states (7 columns + Completed/Cancelled terminal)",
   "agent": "A",
   "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap43",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-disp-kanban",
   "allowed_files": [
     ".block-ready.agent1.json",
-    ".block-ready/GAP-43.json",
-    ".block-ready.json",
-    "db/migrations/202606080206_scheduled_report_subscriptions.sql",
-    "apps/backend/src/reports/scheduled/subscription.service.ts",
-    "apps/backend/src/reports/scheduled/runner.service.ts",
-    "apps/backend/src/reports/scheduled/routes.ts",
-    "apps/backend/src/reports/scheduled/cadence.ts",
-    "apps/backend/src/reports/scheduled/__tests__/scheduled.test.ts",
-    "apps/backend/src/jobs/scheduled-reports-emailer.ts",
-    "apps/backend/src/index.ts",
-    "apps/frontend/src/pages/reports/SubscriptionManager.tsx",
-    "apps/frontend/src/components/reports/SubscriptionEditor.tsx",
-    "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-scheduled-reports.mjs",
-    "docs/specs/gap-43-scheduled-reports.md",
-    "package.json",
-    ".github/workflows/ci.yml"
+    ".block-ready/DISP-KANBAN-STATES.json",
+    "apps/frontend/src/components/dispatch/DispatchKanban.tsx"
   ],
-  "extra_gates": [
-    "verify:scheduled-reports"
-  ],
+  "preview_provided": false,
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "db_required": false,
+  "guard_required": false
 }
