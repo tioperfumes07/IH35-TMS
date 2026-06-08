@@ -1,22 +1,24 @@
 {
   "block_id": "CLOSURE-23-DR-BACKUP-AUDIT",
-  "branch": "closure/dr-backup-audit",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-closure23",
+  "branch": "feat/closure-23-dr-backup",
   "phase": "CLOSURE",
   "task": "Disaster recovery + backup verification + restore drill",
   "agent": "2",
+  "classification": "ADDITIVE",
   "allowed_files": [
+    ".block-ready/CLOSURE-23-DR-BACKUP-AUDIT.json",
     "docs/runbooks/DISASTER-RECOVERY.md",
     "docs/runbooks/BACKUP-RESTORE-DRILL.md",
     "scripts/backup-verify-neon-pitr.mjs",
     "scripts/backup-restore-drill.sh",
     "scripts/backup-checksum-monthly.mjs",
-    ".github/workflows/monthly-restore-drill.yml",
     "scripts/verify-backups-current.mjs",
-    "docs/audits/backup-checksums-2026-06.json",
-    ".block-ready.agent2.json",
-    ".block-ready/CLOSURE-23-DR-BACKUP-AUDIT.json"
+    "scripts/verify-closure-23-dr-artifacts.mjs",
+    ".github/workflows/monthly-restore-drill.yml",
+    "package.json"
   ],
-  "extra_gates": [],
+  "extra_gates": ["verify:closure-23-dr-artifacts"],
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true

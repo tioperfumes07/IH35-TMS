@@ -519,6 +519,7 @@
     "verify:a11y-no-critical-violations": "node scripts/verify-a11y-no-critical-violations.mjs",
     "a11y:audit": "node scripts/a11y-axe-walk.mjs && node scripts/a11y-keyboard-nav.mjs && node scripts/a11y-color-contrast.mjs && node scripts/a11y-screen-reader-checks.mjs && node scripts/verify-a11y-no-critical-violations.mjs",
     "verify:sentry-receives-test-error": "node scripts/verify-sentry-receives-test-error.mjs",
+    "verify:closure-23-dr-artifacts": "node scripts/verify-closure-23-dr-artifacts.mjs",
     "uptime:monitor-config": "node scripts/uptime-monitor-config.mjs",
     "verify:driver-vendor-mapping": "node scripts/verify-driver-vendor-mapping-monitor.mjs",
     "verify:wf-051-arrival-radius": "node scripts/verify-wf-051-arrival-radius-meters.mjs",
