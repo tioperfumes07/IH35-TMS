@@ -267,7 +267,7 @@ export function ReserveTracker() {
         </div>
 
         {/* Forecast schedule table */}
-        <div className="max-h-56 overflow-auto rounded border border-gray-200">
+        <div className="max-h-56 overflow-x-auto rounded border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-xs">
             <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
               <tr>
@@ -332,7 +332,7 @@ export function ReserveTracker() {
           <div className="mb-2 text-sm font-semibold text-gray-800">
             Reserve Movement History — {factorNameById.get(selectedFactorId) ?? selectedFactorId.slice(0, 8)}
           </div>
-          <div className="max-h-64 overflow-auto rounded border border-gray-200">
+          <div className="max-h-64 overflow-x-auto rounded border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
                 <tr>
@@ -397,7 +397,7 @@ export function ReserveTracker() {
       {(chargebacksQ.data?.history ?? []).length > 0 ? (
         <div className="rounded border border-gray-200 bg-white p-3">
           <div className="mb-2 text-sm font-semibold text-gray-800">Chargeback + Fee History</div>
-          <div className="max-h-48 overflow-auto rounded border border-gray-200">
+          <div className="max-h-48 overflow-x-auto rounded border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
                 <tr>
