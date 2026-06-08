@@ -159,6 +159,7 @@
     "verify:identity-users-preferred-language": "node scripts/verify-identity-users-preferred-language.mjs",
     "verify:driver-company-scope": "node scripts/verify-driver-company-scope.mjs",
     "verify:samsara-config-shape": "node scripts/verify-samsara-config-shape.mjs",
+    "verify:global-sort-rule": "node scripts/verify-global-sort-rule.mjs",
     "verify:redis-resilient-config": "node scripts/verify-redis-resilient-config.mjs",
     "verify:samsara-sync-tenant-context": "node scripts/verify-samsara-sync-tenant-context.mjs",
     "verify:fleet-counter-tenant-scope": "node scripts/verify-fleet-counter-tenant-scope.mjs",
