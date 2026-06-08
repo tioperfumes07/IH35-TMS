@@ -169,6 +169,7 @@ import { DispatchMarginPage } from "../pages/reports/DispatchMarginPage";
 import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
 import { GeofenceReconciliationReport } from "../pages/reports/GeofenceReconciliationReport";
+import BookingGapReport from "../pages/reports/BookingGapReport";
 import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
 import { FaultRulesPage } from "../pages/maintenance/FaultRulesPage";
 import { DeadheadReportPage } from "../pages/reports/DeadheadReportPage";
@@ -2240,6 +2241,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <GeofenceReconciliationReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/booking-gap"
+          element={
+            <ProtectedRoute>
+              <BookingGapReport />
             </ProtectedRoute>
           }
         />

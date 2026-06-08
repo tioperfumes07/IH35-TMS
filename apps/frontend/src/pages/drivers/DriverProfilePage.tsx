@@ -27,6 +27,73 @@ import { driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import { DriverDqfPanel } from "./components/DriverDqfPanel";
 
+interface LayoverSummary {
+  total_layovers: number;
+  total_hours: number;
+  billable_count: number;
+  per_diem_count: number;
+}
+
+function LayoverSummaryCard({ driverId, companyId }: { driverId: string; companyId: string }) {
+  const from = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const to = new Date().toISOString().slice(0, 10);
+  const { data, isLoading } = useQuery<{ data: LayoverSummary[] }>({
+    queryKey: ["driver-layovers-summary", driverId, companyId],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/v1/dispatch/layovers?operating_company_id=${encodeURIComponent(companyId)}&driver=${encodeURIComponent(driverId)}&from=${from}&to=${to}`,
+        { credentials: "include" }
+      );
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    enabled: !!driverId && !!companyId,
+    staleTime: 60_000,
+  });
+
+  const rows = data?.data ?? [];
+  const totalLayovers = rows.length;
+  const totalHours = rows.reduce((sum: number, r: LayoverSummary) => sum + (r.total_hours ?? 0), 0);
+  const billableCount = rows.filter((r: LayoverSummary) => r.billable_count > 0).length;
+  const perDiemCount = rows.filter((r: LayoverSummary) => r.per_diem_count > 0).length;
+
+  return (
+    <section className="rounded border border-gray-200 bg-white p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-slate-900">Layovers (last 30 days)</h2>
+        <Link
+          to={`/dispatch/layovers/driver/${driverId}`}
+          className="text-xs font-semibold text-sky-700 hover:underline"
+        >
+          View history
+        </Link>
+      </div>
+      {isLoading ? (
+        <p className="text-xs text-gray-400">Loading...</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded bg-gray-50 p-3 text-center">
+            <p className="text-lg font-bold text-slate-900">{totalLayovers}</p>
+            <p className="text-xs text-gray-500">Total layovers</p>
+          </div>
+          <div className="rounded bg-gray-50 p-3 text-center">
+            <p className="text-lg font-bold text-slate-900">{totalHours.toFixed(1)}</p>
+            <p className="text-xs text-gray-500">Total hours</p>
+          </div>
+          <div className="rounded bg-amber-50 p-3 text-center">
+            <p className="text-lg font-bold text-amber-800">{billableCount}</p>
+            <p className="text-xs text-amber-600">Billable</p>
+          </div>
+          <div className="rounded bg-green-50 p-3 text-center">
+            <p className="text-lg font-bold text-green-800">{perDiemCount}</p>
+            <p className="text-xs text-green-600">Per diem eligible</p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export type DriverProfileAggregate = {
   driver: Record<string, unknown>;
   license: Record<string, unknown>;
@@ -194,6 +261,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             }
           }}
         />
+      </div>
+      <div data-testid="dp-section-layovers">
+        <LayoverSummaryCard driverId={id} companyId={companyId} />
       </div>
       <div data-testid="dp-section-9-training">
         <TrainingRecordsSection

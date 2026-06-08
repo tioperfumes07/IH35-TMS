@@ -346,6 +346,8 @@ import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
 import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js";
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
+import { registerBookingGapRoutes } from "./dispatch/analytics/booking-gap.routes.js";
+import { initializeBookingGapAggregatorWorker, stopBookingGapAggregatorWorker } from "./jobs/booking-gap-aggregator-worker.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -401,6 +403,7 @@ async function shutdown(signal: string) {
     stopDailyTaskAlertsCron();
     stopTodaysAttentionWorker();
     stopAdminJobsWorker();
+    stopBookingGapAggregatorWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
   }
@@ -489,6 +492,7 @@ async function main() {
   await registerSamsaraVendorMappingActionsRoutes(app);
   await registerGeofenceReconciliationRoutes(app);
   await registerBorderCrossingDetectorRoutes(app);
+  await registerBookingGapRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -901,6 +905,13 @@ async function main() {
     app.log.info("[STARTUP] border-crossing-detector-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] border-crossing-detector-worker failed");
+  }
+
+  try {
+    initializeBookingGapAggregatorWorker(app);
+    app.log.info("[STARTUP] booking-gap aggregator worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] booking-gap aggregator worker failed");
   }
 
   try {

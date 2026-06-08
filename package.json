@@ -60,6 +60,7 @@
     "ops:replay-missing-migrations": "node scripts/runbook-replay-missing-migrations.mjs",
     "verify:pre-commit": "node scripts/verify-pre-commit.mjs",
     "verify:geofence-recon": "node scripts/verify-geofence-recon.mjs",
+    "verify:booking-gap-analytics": "node scripts/verify-booking-gap-analytics.mjs",
     "verify:canonical-schema-names": "node scripts/verify-canonical-schema-names.mjs",
     "verify:test-insert-columns": "node scripts/verify-test-insert-columns.mjs",
     "verify:schema-usage-grants": "node scripts/verify-schema-usage-grants.mjs",

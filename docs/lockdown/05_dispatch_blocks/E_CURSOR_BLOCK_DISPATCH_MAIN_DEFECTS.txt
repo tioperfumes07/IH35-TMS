@@ -1,0 +1,15 @@
+AGENT-1 · Block <N> of <M> — PHASE <tracker-phase> / TASK <set-from-latest-tracker> — Dispatch main page sizing/alignment defects
+RBC TARGET: branch fix/dispatch-main-sizing
+
+[!] Set a real tracker TASK id before dispatch.
+STANDING ORDERS: foreground only, no subagents; no retries — STOP, paste exact error; live updates every 5 min CST/Laredo + real measured data, no guesses; confirm worktree pwd, git status, log, rev-parse; show diff --staged --stat before commit; stop on unexpected.
+LOCKS: ADDITIVE/correction; remove nothing. Do not touch the Book Load wizard. RESPOND-BEFORE-CODE (RULE 6): reply first with as-built vs spec inventory, screens/blueprint matched, deltas, NEW spec. Wait for GO.
+LANE LOCK: one writer per magnet file per cycle (sidebar-config.ts, App.tsx, verify-*). Migrations sequential, one agent. Do not edit shared registries beyond what this block names.
+SCOPE per DISPATCH-MAIN-DEFECTS.md:
+- Resize tiles (Load board, Book load, Assignments, Dispatch map feed, Settlements, Dispatch map controls) + calendar boxes to the universal six-column grid (one column width each).
+- Fix "Show position heatmap / bucket size 0.001 deg" + map controls sizing.
+- Tighten box sizes + alignment across dispatch main; clean, professional, less wasted space.
+CI GUARD: snapshot/lint that dispatch tiles use the shared six-column grid token.
+GATES (Std Order #16 v2): build:backend EMIT, frontend tsc -b, verify:arch-design, full backend vitest for runtime/calc paths, migrations self-contained w/ GRANTs + drift-capture (CI is fresh-DB). verify+commit+push as ONE step.
+ACCEPTANCE: tiles + calendar boxes proportioned to the six-column standard; clean alignment.
+PAUSE after RESPOND-BEFORE-CODE. PAUSE before merge — Claude verifies live.

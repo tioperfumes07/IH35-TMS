@@ -1,0 +1,13 @@
+AGENT-1 · Block <N> of <M> — PHASE <tracker-phase> / TASK <set-from-latest-tracker> — Book Load wizard DEFECT FIXES (do NOT redesign)
+RBC TARGET: branch fix/bookload-wizard-defects
+
+[!] Set a real tracker TASK id before dispatch.
+STANDING ORDERS: foreground only, no subagents; no retries — STOP, paste exact error; live updates every 5 min CST/Laredo + real measured data, no guesses; confirm worktree pwd, git status, log, rev-parse; show diff --staged --stat before commit; stop on unexpected.
+LOCKS: DO NOT redesign the Book Load wizard. Fix the listed defects only. ADDITIVE/correction; remove nothing. RESPOND-BEFORE-CODE (RULE 6): reply first with as-built vs spec inventory, screens/blueprint matched, deltas, NEW spec. Wait for GO.
+LANE LOCK: one writer per magnet file per cycle (sidebar-config.ts, App.tsx, verify-*). Migrations sequential, one agent. Do not edit shared registries beyond what this block names.
+SCOPE per BOOKLOAD-WIZARD-DEFECTS.md (fix each):
+A box-in-box on "load from template"; B Customer = Customer WO# equal size; C center headers; D weight thousands separator (24600->24,600) + kg/lbs toggle; E currency format on linehaul/fuel surcharge/accessorial/cash advance/fuel advance (4800->4,800.00 not 48.00); F factoring company box = cash advance = fuel advance size; G Section B dropdowns -> filter-typeahead, collapse on blur, unselect/clear, never block advancing; H driver shows NAMES not "Driver 1/2"; I selection lists are filter-typeahead not dropdowns; J Section C routing box proportions clean; K stop time-window + free time/lumper universal size + same collapse fix; L date fields = calendar type-and-adjust; M tighten box sizes/alignment to universal standard; N support reserving a load with no unit/driver at book time.
+CI GUARD: currency/weight formatting unit tests; equal-field-size lint where feasible; assert lists are typeahead (no native bare select for these fields).
+GATES (Std Order #16 v2): build:backend EMIT, frontend tsc -b, verify:arch-design, full backend vitest for runtime/calc paths, migrations self-contained w/ GRANTs + drift-capture (CI is fresh-DB). verify+commit+push as ONE step.
+ACCEPTANCE: every defect A-N fixed; wizard design otherwise unchanged.
+PAUSE after RESPOND-BEFORE-CODE. PAUSE before merge — Claude verifies live.

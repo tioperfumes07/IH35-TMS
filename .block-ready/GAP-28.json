@@ -1,0 +1,23 @@
+{
+  "block_id": "GAP-28",
+  "status": "READY",
+  "branch": "feature/gap-28-layover-detection",
+  "phase": "GAP-MEDIUM",
+  "task": "Layover Time Computation (>8h Gap)",
+  "allowed_files": [
+    "db/migrations/202606080113_driver_layovers.sql",
+    "apps/backend/src/dispatch/layovers/detection.service.ts",
+    "apps/backend/src/dispatch/layovers/routes.ts",
+    "apps/backend/src/dispatch/layovers/__tests__/layovers.test.ts",
+    "apps/backend/src/jobs/layover-detector-worker.ts",
+    "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx",
+    "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+    "scripts/verify-layover-detection.mjs",
+    "docs/specs/gap-28-layover-detection.md",
+    "apps/backend/src/index.ts"
+  ],
+  "extra_gates": ["verify:layover-detection"],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
