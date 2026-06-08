@@ -21,7 +21,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
         LEFT JOIN LATERAL (
-          SELECT scheduled_arrival_at
+          SELECT scheduled_arrival_at, city, state
           FROM mdata.load_stops
           WHERE load_id = l.id AND stop_type = 'delivery'
           ORDER BY sequence_number DESC
