@@ -18,6 +18,8 @@ import { registerSamsaraVendorMappingActionsRoutes } from "./integrations/samsar
 import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
 import { registerGeofenceReconciliationRoutes } from "./integrations/samsara/geofences/reconciliation.routes.js";
 import { initializeGeofenceReconciliationWorker } from "./jobs/geofence-reconciliation-daily.js";
+import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
+import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-detector.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -486,6 +488,7 @@ async function main() {
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
   await registerGeofenceReconciliationRoutes(app);
+  await registerBorderCrossingDetectorRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -891,6 +894,13 @@ async function main() {
     app.log.info("[STARTUP] geofence-reconciliation-daily worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] geofence-reconciliation-daily worker failed");
+  }
+
+  try {
+    initializeBorderCrossingDetectorWorker(app);
+    app.log.info("[STARTUP] border-crossing-detector-worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] border-crossing-detector-worker failed");
   }
 
   try {

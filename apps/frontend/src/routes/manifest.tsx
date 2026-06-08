@@ -34,6 +34,7 @@ import { PodReviewPage } from "../pages/dispatch/PodReviewPage";
 import { DispatchSettingsPage } from "../pages/dispatch/DispatchSettingsPage";
 import { BorderCrossingWizardPage } from "../pages/dispatch/BorderCrossingWizardPage";
 import { BorderCrossingHistoryPage } from "../pages/dispatch/BorderCrossingHistoryPage";
+import { BorderCrossingHistory as GpsBorderCrossingHistory } from "../pages/dispatch/borders/BorderCrossingHistory";
 import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
 import { CashAdvanceRequestsPage } from "../pages/driver-finance/CashAdvanceRequestsPage";
 import { OwnerApprovalPortalPage } from "../pages/driver-finance/OwnerApprovalPortalPage";
@@ -746,6 +747,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <BorderCrossingWizardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/borders/geofence-history"
+          element={
+            <ProtectedRoute>
+              <GpsBorderCrossingHistory />
             </ProtectedRoute>
           }
         />
