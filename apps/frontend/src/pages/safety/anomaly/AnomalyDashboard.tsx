@@ -35,7 +35,7 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
           <option value="warn">Warn</option>
         </select>
       </div>
-      <div className="overflow-auto rounded border">
+      <div className="overflow-x-auto rounded border">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50"><tr><th className="p-2 text-left">Detected</th><th className="p-2 text-left">Severity</th><th className="p-2 text-left">Evidence</th><th className="p-2">Actions</th></tr></thead>
           <tbody>
