@@ -1,0 +1,29 @@
+{
+  "block_id": "CLOSURE-10-MAINT-PARTS-CATALOG",
+  "branch": "feat/closure-10-parts-catalog",
+  "phase": "CLOSURE",
+  "task": "Maintenance parts master catalog by brand for owned fleet",
+  "agent": "2",
+  "allowed_files": [
+    "apps/backend/src/catalogs/maintenance/parts.routes.ts",
+    "apps/backend/src/catalogs/maintenance/parts-seed.ts",
+    "apps/backend/src/catalogs/maintenance/parts.test.ts",
+    "apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx",
+    "apps/frontend/src/pages/lists/ListsPage.tsx",
+    "apps/frontend/src/hooks/useMaintenancePartsCatalog.ts",
+    "apps/backend/src/migrations/202606080242-maintenance-parts-catalog.sql",
+    "data/seeds/maintenance-parts/detroit-diesel.csv",
+    "data/seeds/maintenance-parts/cummins.csv",
+    "data/seeds/maintenance-parts/freightliner.csv",
+    "data/seeds/maintenance-parts/peterbilt.csv",
+    "data/seeds/maintenance-parts/kenworth.csv",
+    "scripts/verify-maint-parts-catalog-enhanced.mjs",
+    ".block-ready/CLOSURE-10-MAINT-PARTS-CATALOG.json",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": ["verify:maint-parts-catalog-enhanced"],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
