@@ -10,7 +10,7 @@ type Props = {
   onBook?: () => void;
 };
 
-/** GAP-47: Book load review step with WF-044/050/038 auth gates. */
+/** GAP-47: Book load review step with dispatch authorization gates. */
 export function BookLoad({ operatingCompanyId, unitUuid, driverUuid, loadUuid, onBook }: Props) {
   const [blocked, setBlocked] = useState(false);
   return (
