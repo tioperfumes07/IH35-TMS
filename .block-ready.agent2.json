@@ -1,29 +1,23 @@
 {
-  "block_id": "CLOSURE-16-DEEP-AUDIT-C",
-  "branch": "feat/closure-16-deep-audit-c",
+  "block_id": "CLOSURE-23-DR-BACKUP-AUDIT",
+  "branch": "closure/dr-backup-audit",
   "phase": "CLOSURE",
-  "task": "Deep audit C — 11 canonical reports + 3 E2E QBO workflows",
+  "task": "Disaster recovery + backup verification + restore drill",
   "agent": "2",
   "allowed_files": [
-    "docs/audits/DEEP-AUDIT-C-CANONICAL-REPORTS.md",
-    "docs/audits/DEEP-AUDIT-C-E2E-WORKFLOWS.md",
-    "docs/audits/DEEP-AUDIT-C-SUMMARY.md",
-    "scripts/deep-audit-c-reports.mjs",
-    "scripts/deep-audit-c-workflow-wo-to-bill-to-qbo.mjs",
-    "scripts/deep-audit-c-workflow-load-to-invoice-to-factored.mjs",
-    "scripts/deep-audit-c-workflow-settlement-to-payroll.mjs",
+    "docs/runbooks/DISASTER-RECOVERY.md",
+    "docs/runbooks/BACKUP-RESTORE-DRILL.md",
+    "scripts/backup-verify-neon-pitr.mjs",
+    "scripts/backup-restore-drill.sh",
+    "scripts/backup-checksum-monthly.mjs",
+    ".github/workflows/monthly-restore-drill.yml",
+    "scripts/verify-backups-current.mjs",
+    "docs/audits/backup-checksums-2026-06.json",
     ".block-ready.json",
-    ".block-ready.agent2.json",
-    "package.json",
-    ".github/workflows/ci.yml"
+    ".block-ready.agent2.json"
   ],
-  "extra_gates": [
-    "verify:deep-audit-c-reports",
-    "verify:deep-audit-c-workflow-wo-to-bill-to-qbo",
-    "verify:deep-audit-c-workflow-load-to-invoice-to-factored",
-    "verify:deep-audit-c-workflow-settlement-to-payroll"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": false,
+  "db_required": true,
   "guard_required": true
 }
