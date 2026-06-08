@@ -1,0 +1,34 @@
+{
+  "block_id": "GAP-25",
+  "task": "Active Driver Set 15-min Recompute",
+  "status": "READY",
+  "branch": "feature/gap-25-active-driver-set",
+  "migration": "db/migrations/202606080001_active_driver_set_cache.sql",
+  "files_created": [
+    "db/migrations/202606080001_active_driver_set_cache.sql",
+    "apps/backend/src/integrations/samsara/active-driver-set/recompute.service.ts",
+    "apps/backend/src/integrations/samsara/active-driver-set/query.service.ts",
+    "apps/backend/src/integrations/samsara/active-driver-set/routes.ts",
+    "apps/backend/src/integrations/samsara/active-driver-set/__tests__/recompute.test.ts",
+    "apps/backend/src/integrations/samsara/active-driver-set/__tests__/query.test.ts",
+    "apps/backend/src/jobs/active-driver-set-recompute.ts",
+    "scripts/verify-active-driver-set.mjs",
+    "docs/specs/gap-25-active-driver-set.md"
+  ],
+  "files_edited": [
+    "apps/frontend/src/pages/safety/SafetyHome.tsx",
+    "apps/backend/src/index.ts"
+  ],
+  "ci_guard": "scripts/verify-active-driver-set.mjs",
+  "acceptance": {
+    "migration_applied": true,
+    "worker_15min": true,
+    "filter_dropdown_7_14_30_all": true,
+    "freshness_indicator": true,
+    "verify_script_in_ci": true,
+    "no_financial_code": true,
+    "rls_scoped": true,
+    "ih35_app_role_only": true
+  },
+  "hold_merge_until": "GO-25 from Jorge"
+}

@@ -340,6 +340,9 @@ jobs:
       - name: Verify Samsara cache tier coverage contract
         run: npm run verify:cache-tier-coverage
 
+      - name: Verify active driver set recompute contract (GAP-25)
+        run: npm run verify:active-driver-set
+
       - name: Verify Samsara freshness indicator contract
         run: npm run verify:freshness-indicator
 

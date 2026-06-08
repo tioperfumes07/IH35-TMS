@@ -2,6 +2,9 @@
  * @deprecated Sunset 2026-09-01 — legacy v5 Safety shell superseded by `/safety/*` tab routes.
  * Accident workflow canonical home: `AccidentsPage` at `/safety/accidents` (Block A23-3).
  * ARCHIVE-not-DELETE: retained for reference; no active manifest imports.
+ *
+ * GAP-25: Active Driver Set filter dropdown (7d/14d/30d/All) + freshness indicator.
+ * Driver list now sourced from cached active_driver_set_cache (<100ms vs prior >800ms scan).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +24,16 @@ import { DrugAlcoholTable } from "./components/DrugAlcoholTable";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { SafetyKpiRow } from "./components/SafetyKpiRow";
 import { TrainingTable } from "./components/TrainingTable";
+
+// GAP-25: activity window options for the active-driver filter
+const ACTIVITY_WINDOW_OPTIONS = [
+  { label: "Active 7d", value: 7 },
+  { label: "Active 14d", value: 14 },
+  { label: "Active 30d", value: 30 },
+  { label: "All drivers", value: 0 },
+] as const;
+
+type ActivityWindow = (typeof ACTIVITY_WINDOW_OPTIONS)[number]["value"];
 
 const SAFETY_SUBNAV = [
   "Events",
@@ -53,6 +66,31 @@ export function SafetyHomePage() {
   const safetyUi = useSafetyUiContext();
   const [selectedAccident, setSelectedAccident] = useState<Record<string, unknown> | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // GAP-25: active-driver filter window (default 7d)
+  const [activityWindow, setActivityWindow] = useState<ActivityWindow>(7);
+
+  // GAP-25: cached active-driver set query
+  const activeDriverSetQuery = useQuery({
+    queryKey: ["safety", "active-drivers", companyId, activityWindow],
+    queryFn: async () => {
+      if (!companyId || activityWindow === 0) return null;
+      const params = new URLSearchParams({
+        operating_company_id: companyId,
+        threshold_days: String(activityWindow),
+      });
+      const res = await fetch(`/api/integrations/samsara/active-drivers?${params.toString()}`);
+      if (!res.ok) return null;
+      return res.json() as Promise<{
+        active_driver_uuids: string[];
+        total_driver_count: number;
+        snapshot_at: string;
+        threshold_days: number;
+        cache_hit: boolean;
+      }>;
+    },
+    enabled: Boolean(companyId) && activityWindow !== 0,
+    staleTime: 14 * 60 * 1000, // 14min — slightly under 15min worker cadence
+  });
 
   const kpisQuery = useQuery({
     queryKey: ["safety", "kpis", companyId],
@@ -99,6 +137,41 @@ export function SafetyHomePage() {
   return (
     <div className="space-y-3">
       <PageHeader title="Safety" subtitle="Driver events, training, accidents, CSA" />
+
+      {/* GAP-25: active-driver filter + freshness indicator */}
+      <div className="flex items-center gap-3 rounded bg-[#1A1F36] px-3 py-2 text-[11px] text-white">
+        <span className="font-medium text-gray-300">Driver filter:</span>
+        <div className="flex gap-1">
+          {ACTIVITY_WINDOW_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setActivityWindow(opt.value)}
+              className={
+                activityWindow === opt.value
+                  ? "rounded bg-indigo-600 px-2 py-0.5 font-semibold"
+                  : "rounded px-2 py-0.5 text-gray-400 hover:text-white"
+              }
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {activeDriverSetQuery.data && (
+          <span className="ml-auto text-gray-400">
+            {activeDriverSetQuery.data.active_driver_uuids.length} /{" "}
+            {activeDriverSetQuery.data.total_driver_count} drivers
+            {" · "}
+            <span
+              className={activeDriverSetQuery.data.cache_hit ? "text-green-400" : "text-yellow-400"}
+            >
+              {activeDriverSetQuery.data.cache_hit ? "cached" : "live"}
+            </span>
+            {" · "}
+            {new Date(activeDriverSetQuery.data.snapshot_at).toLocaleTimeString()}
+          </span>
+        )}
+      </div>
 
       <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">

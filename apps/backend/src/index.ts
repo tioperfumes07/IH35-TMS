@@ -17,6 +17,8 @@ import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-heal
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
 import { registerSamsaraVendorMappingActionsRoutes } from "./integrations/samsara/vendor-mapping-actions.routes.js";
 import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
+import { registerActiveDriverSetRoutes } from "./integrations/samsara/active-driver-set/routes.js";
+import { initializeActiveDriverSetRecomputeWorker } from "./jobs/active-driver-set-recompute.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -523,6 +525,7 @@ async function main() {
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
+  await registerActiveDriverSetRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -1007,6 +1010,7 @@ async function main() {
     app.log.info("[STARTUP] cap-13-brake-wear-worker initialized");
     initializeSamsaraCacheWarmer(app);
     app.log.info("[STARTUP] samsara-cache-warmer initialized");
+    initializeActiveDriverSetRecomputeWorker(app);
     initializeSearchIndexerIncremental(app);
     app.log.info("[STARTUP] cert-expiry-monitor initialized");
 
