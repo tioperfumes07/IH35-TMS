@@ -126,6 +126,9 @@ jobs:
       - name: Verify driver PWA i18n coverage
         run: npm run verify:driver-pwa-i18n-coverage
 
+      - name: Verify driver PWA incident full report
+        run: npm run verify:driver-pwa-incident-full
+
       - name: Verify web push VAPID keys present
         run: npm run verify:web-push-vapid-keys-present
 
