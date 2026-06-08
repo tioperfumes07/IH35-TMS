@@ -526,7 +526,8 @@
     "verify:cap-5-tri-signal": "node scripts/verify-cap-5-tri-signal.mjs",
     "verify:cap-8-engine-fault-auto-wo": "node scripts/verify-cap-8-engine-fault-auto-wo.mjs",
     "verify:cap-9-pairing": "node scripts/verify-cap-9-pairing.mjs",
-    "verify:cap-10-driver-scoring": "node scripts/verify-cap-10-driver-scoring.mjs"
+    "verify:cap-10-driver-scoring": "node scripts/verify-cap-10-driver-scoring.mjs",
+    "verify:cap-14-cargo-sensors": "node scripts/verify-cap-14-cargo-sensors.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

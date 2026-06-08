@@ -511,6 +511,17 @@ export function DispatchBoard({
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
     { key: "status_signal", header: "Status Signal", cell: (load) => renderTriSignalCell(load) },
+    {
+      key: "cargo_temp",
+      header: "Cargo Temp",
+      cell: (load) => (
+        <CargoTempBadge
+          loadId={load.id}
+          operatingCompanyId={load.operating_company_id}
+          reefer={isReeferCommodity(load.commodity)}
+        />
+      ),
+    },
     { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
     { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
     { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={null} loadId={load.id} /> },
@@ -527,7 +538,7 @@ export function DispatchBoard({
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
     {
       key: "cargo_temp",
-      header: "Cargo",
+      header: "Cargo Temp",
       cell: (load) => (
         <CargoTempBadge
           loadId={load.id}
@@ -737,7 +748,7 @@ export function DispatchBoard({
             <table className="min-w-full text-left text-[11px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
                 <tr>
-                  {["Load", "Customer", "Lane", "Delivery", "Doc-Compliance", "Status"].map((header) => (
+                  {["Load", "Customer", "Lane", "Delivery", "Doc-Compliance", "Cargo Temp", "Status"].map((header) => (
                     <th key={header} className="px-2 py-1">
                       {header}
                     </th>
@@ -747,7 +758,7 @@ export function DispatchBoard({
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-2 py-3 text-gray-400">
+                    <td colSpan={7} className="px-2 py-3 text-gray-400">
                       Loading booked loads...
                     </td>
                   </tr>
@@ -762,12 +773,23 @@ export function DispatchBoard({
                     { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
                     { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
                     { key: "doc", header: "Doc-Compliance", cell: (load) => <DocComplianceCell load={load} /> },
+                    {
+                      key: "cargo_temp",
+                      header: "Cargo Temp",
+                      cell: (load) => (
+                        <CargoTempBadge
+                          loadId={load.id}
+                          operatingCompanyId={load.operating_company_id}
+                          reefer={isReeferCommodity(load.commodity)}
+                        />
+                      ),
+                    },
                     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
                   ], { showBulk: false })
                 )}
                 {!loading && bookedLoads.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-2 py-3 text-center text-gray-500">
+                    <td colSpan={7} className="px-2 py-3 text-center text-gray-500">
                       No reserved loads waiting for assignment.
                     </td>
                   </tr>
@@ -782,7 +804,7 @@ export function DispatchBoard({
             <table className="min-w-full text-left text-[11px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
                 <tr>
-                  {["Unit", "Trailer", "Load", "Customer", "Driver", "Lane", "Delivery", "Status"].map((header) => (
+                  {["Unit", "Trailer", "Cargo Temp", "Load", "Customer", "Driver", "Lane", "Delivery", "Status"].map((header) => (
                     <th key={header} className="px-2 py-1">
                       {header}
                     </th>
@@ -792,7 +814,7 @@ export function DispatchBoard({
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-2 py-3 text-gray-400">
+                    <td colSpan={9} className="px-2 py-3 text-gray-400">
                       Loading assigned units...
                     </td>
                   </tr>
@@ -800,6 +822,17 @@ export function DispatchBoard({
                   renderLoadRows(assignedLoads, [
                     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
                     { key: "trailer", header: "Trailer", cell: (load) => load.trailer_number ?? "—" },
+                    {
+                      key: "cargo_temp",
+                      header: "Cargo Temp",
+                      cell: (load) => (
+                        <CargoTempBadge
+                          loadId={load.id}
+                          operatingCompanyId={load.operating_company_id}
+                          reefer={isReeferCommodity(load.commodity)}
+                        />
+                      ),
+                    },
                     {
                       key: "load",
                       header: "Load",
@@ -814,7 +847,7 @@ export function DispatchBoard({
                 )}
                 {!loading && assignedLoads.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-2 py-3 text-center text-gray-500">
+                    <td colSpan={9} className="px-2 py-3 text-center text-gray-500">
                       No assigned units on current page.
                     </td>
                   </tr>
