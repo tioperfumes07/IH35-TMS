@@ -49,6 +49,7 @@ export function DriverVendorMappingTab() {
       >
         Run scan
       </button>
+      <div className="overflow-x-auto rounded border border-gray-200 bg-white">
       <table className="min-w-full text-xs">
         <thead>
           <tr className="bg-gray-50 text-[10px] uppercase">
@@ -74,6 +75,7 @@ export function DriverVendorMappingTab() {
           ) : null}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
