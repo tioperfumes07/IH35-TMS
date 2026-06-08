@@ -507,6 +507,7 @@
     "verify:plaid-cron-registered": "node scripts/verify-plaid-cron-registered.mjs",
     "verify:ifta-aggregator-determinism": "node scripts/verify-ifta-aggregator-determinism.mjs",
     "verify:ifta-tax-rates-current": "node scripts/verify-ifta-tax-rates-current.mjs",
+    "verify:ifta-quarterly-preparer": "node scripts/verify-ifta-quarterly-preparer.mjs",
     "verify:scheduled-report-recipients-resolved": "node scripts/verify-scheduled-report-recipients-resolved.mjs",
     "verify:scheduled-reports": "node scripts/verify-scheduled-reports.mjs",
     "verify:samsara-webhook-route-mounted": "node scripts/verify-samsara-webhook-route-mounted.mjs",

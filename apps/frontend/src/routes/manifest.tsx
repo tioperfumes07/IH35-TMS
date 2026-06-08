@@ -156,6 +156,7 @@ import { RunbooksIndex } from "../pages/help/RunbooksIndex";
 import { OnboardingWizard } from "../pages/onboarding/OnboardingWizard";
 import { ReportsHomePage } from "../pages/reports/ReportsHome";
 import IFTAPreparer from "../pages/reports/ifta/IFTAPreparer";
+import IftaPreparer from "../pages/reports/tax-regulatory/IftaPreparer";
 import { ReportsRunnerPage } from "../pages/reports/ReportsRunner";
 import { ARAgingPage } from "../pages/reports/ARAgingPage";
 import { APAgingPage } from "../pages/reports/APAgingPage";
@@ -2144,6 +2145,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <IFTAPreparer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/ifta-preparer"
+          element={
+            <ProtectedRoute>
+              <IftaPreparer />
             </ProtectedRoute>
           }
         />
