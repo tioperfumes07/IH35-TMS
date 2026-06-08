@@ -20,7 +20,7 @@ export type BreakerConfig = {
 
 const DEFAULTS: Omit<BreakerConfig, "enabled" | "fallbackMode"> = {
   timeout: 30_000,
-  errorThresholdPercentage: 50,
+  errorThresholdPercentage: 100,
   resetTimeout: 30_000,
   volumeThreshold: 5,
   rollingCountTimeout: 30_000,

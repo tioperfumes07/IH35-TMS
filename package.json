@@ -588,6 +588,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/luxon": "^3.7.1",
     "@types/node": "^22.0.0",
+    "@types/opossum": "^8.1.9",
     "@types/pg": "^8.20.0",
     "@types/supertest": "^7.2.0",
     "@types/ws": "^8.18.1",

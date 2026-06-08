@@ -700,11 +700,13 @@ export async function getAccountBalance(bankAccountId: string) {
   if (!account || !account.plaid_access_token || !account.plaid_account_id) {
     throw new Error("bank_account_not_linked");
   }
+  const plaidAccessToken = account.plaid_access_token;
+  const plaidAccountId = account.plaid_account_id;
 
   const response = await withPlaidCircuit(() =>
     plaid.accountsBalanceGet({
-      access_token: account.plaid_access_token,
-      options: { account_ids: [account.plaid_account_id] },
+      access_token: plaidAccessToken,
+      options: { account_ids: [plaidAccountId] },
     })
   );
   const plaidAccount = response.data.accounts[0];
