@@ -1,0 +1,27 @@
+{
+  "block_id": "BLOCK-05-TIER2-CIRCUIT-BREAKERS",
+  "branch": "feat/tier05-circuit-breakers",
+  "phase": "TIER2-TRUST-HARDEN",
+  "task": "Circuit breakers on external dependencies (QBO, Samsara, Plaid, OpenAI, etc.)",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-tier05",
+  "allowed_files": [
+    ".block-ready/BLOCK-05-TIER2-CIRCUIT-BREAKERS.json",
+    "apps/backend/src/lib/circuit-breaker/registry.ts",
+    "apps/backend/src/lib/circuit-breaker/index.ts",
+    "apps/backend/src/lib/circuit-breaker/__tests__/circuit-breaker.test.ts",
+    "apps/backend/src/integrations/qbo/qbo-client.ts",
+    "apps/backend/src/integrations/samsara/samsara-client.ts",
+    "apps/backend/src/integrations/samsara/vehicle-driver-pairing/pairing.service.ts",
+    "apps/backend/src/integrations/plaid/plaid.service.ts",
+    "apps/backend/src/safety/photo-comparison/anthropic-client.ts",
+    "docs/runbooks/external-deps-degradation.md",
+    "scripts/verify-circuit-breakers.mjs",
+    "package.json",
+    "package-lock.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": ["verify:circuit-breakers"],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}

@@ -1,3 +1,5 @@
+import { CircuitBreakerOpenError, withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
+
 export type DamageFinding = {
   location: string;
   severity: "minor" | "moderate" | "severe";
@@ -70,16 +72,42 @@ export function createAnthropicClient(options?: {
 
   return {
     async compareImages(preImageUrl, postImageUrl, angleLabel) {
-      const apiKey = options?.apiKey ?? process.env.ANTHROPIC_API_KEY;
-      if (!apiKey) {
-        throw new Error("anthropic_not_configured");
-      }
-
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-
       try {
-        const response = await fetchImpl("https://api.anthropic.com/v1/messages", {
+        return await withCircuitBreaker("openai", async () => {
+          return compareImagesInner(preImageUrl, postImageUrl, angleLabel, {
+            apiKey: options?.apiKey,
+            fetchImpl,
+            timeoutMs,
+          });
+        });
+      } catch (error) {
+        if (error instanceof CircuitBreakerOpenError) {
+          return { has_new_damage: false, findings: [] };
+        }
+        throw error;
+      }
+    },
+  };
+}
+
+async function compareImagesInner(
+  preImageUrl: string,
+  postImageUrl: string,
+  angleLabel: string,
+  options?: { apiKey?: string; fetchImpl?: typeof fetch; timeoutMs?: number }
+): Promise<CompareImagesResult> {
+  const fetchImpl = options?.fetchImpl ?? fetch;
+  const timeoutMs = options?.timeoutMs ?? 30_000;
+  const apiKey = options?.apiKey ?? process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("anthropic_not_configured");
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetchImpl("https://api.anthropic.com/v1/messages", {
           method: "POST",
           signal: controller.signal,
           headers: {
@@ -119,16 +147,14 @@ export function createAnthropicClient(options?: {
           throw new Error("anthropic_parse_error: empty_content");
         }
         return parseCompareResponse(textBlock.text);
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
-          throw new AnthropicTimeoutError();
-        }
-        throw err;
-      } finally {
-        clearTimeout(timer);
-      }
-    },
-  };
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new AnthropicTimeoutError();
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export { buildPrompt, parseCompareResponse, VISION_MODEL };

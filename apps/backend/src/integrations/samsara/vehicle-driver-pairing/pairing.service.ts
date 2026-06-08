@@ -3,6 +3,7 @@
  * Wrapper around telematics.vehicle_driver_assignments (migration 0221).
  */
 import { decryptSamsaraSecret } from "../../../lib/samsara-crypto.js";
+import { withCircuitBreaker } from "../../../lib/circuit-breaker/index.js";
 import { getDriverForVehicleAtTime } from "../../../telematics/vehicle-driver-lookup.service.js";
 
 const SAMSARA_API_BASE = "https://api.samsara.com";
@@ -160,12 +161,14 @@ async function fetchSamsaraVehicleAssignmentsPage(
   url.searchParams.set("limit", "512");
   if (after) url.searchParams.set("after", after);
 
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
-  });
+  const res = await withCircuitBreaker("samsara", () =>
+    fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    })
+  );
   if (!res.ok) {
     throw new Error(`samsara_vehicle_assignments_http_${res.status}`);
   }

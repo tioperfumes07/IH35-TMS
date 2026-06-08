@@ -16,6 +16,7 @@ import {
   resolvePlaidLinkAccountType,
   type PlaidLinkAccountType,
 } from "./link-token-config.js";
+import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
 import { getPlaidClient, getPlaidEnvForAudit } from "./plaid-client.js";
 import { markPlaidItemSyncSucceeded } from "./plaid-sync-state.js";
 
@@ -27,6 +28,10 @@ type SyncCounts = {
   autoCategorizeMatched: number;
   autoCategorizeUnmatched: number;
 };
+
+async function withPlaidCircuit<T>(fn: () => Promise<T>) {
+  return withCircuitBreaker("plaid", fn);
+}
 
 function toCents(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return 0;
@@ -146,12 +151,14 @@ export async function createLinkToken(
   const accountType: PlaidLinkAccountType = resolvePlaidLinkAccountType(accountTypeInput);
   const core = buildLinkTokenCreateCore(accountType);
 
-  const response = await plaid.linkTokenCreate({
-    user: { client_user_id: userId },
-    ...buildLinkTokenCreateRequestBase(webhookUrl),
-    products: core.products,
-    ...(core.account_filters ? { account_filters: core.account_filters } : {}),
-  });
+  const response = await withPlaidCircuit(() =>
+    plaid.linkTokenCreate({
+      user: { client_user_id: userId },
+      ...buildLinkTokenCreateRequestBase(webhookUrl),
+      products: core.products,
+      ...(core.account_filters ? { account_filters: core.account_filters } : {}),
+    })
+  );
 
   await withCurrentUser(userId, async (client) => {
     await appendCrudAudit(
@@ -204,11 +211,13 @@ export async function createUpdateModeLinkToken(userId: string, operatingCompany
   const webhookUrl =
     process.env.PLAID_WEBHOOK_URL?.trim() || "https://api.ih35dispatch.com/api/v1/banking/plaid/webhook";
 
-  const response = await plaid.linkTokenCreate({
-    user: { client_user_id: userId },
-    ...buildLinkTokenCreateRequestBase(webhookUrl),
-    access_token: accessToken,
-  });
+  const response = await withPlaidCircuit(() =>
+    plaid.linkTokenCreate({
+      user: { client_user_id: userId },
+      ...buildLinkTokenCreateRequestBase(webhookUrl),
+      access_token: accessToken,
+    })
+  );
 
   await withCurrentUser(userId, async (client) => {
     await appendCrudAudit(
@@ -234,19 +243,21 @@ export async function createUpdateModeLinkToken(userId: string, operatingCompany
 
 export async function exchangePublicToken(publicToken: string, operatingCompanyId: string, actorUserId: string) {
   const plaid = getPlaidClient();
-  const exchange = await plaid.itemPublicTokenExchange({ public_token: publicToken });
+  const exchange = await withPlaidCircuit(() => plaid.itemPublicTokenExchange({ public_token: publicToken }));
   const accessToken = exchange.data.access_token;
   const itemId = exchange.data.item_id;
-  const accountsResponse = await plaid.accountsGet({ access_token: accessToken });
+  const accountsResponse = await withPlaidCircuit(() => plaid.accountsGet({ access_token: accessToken }));
 
   let institutionName = "Unknown Institution";
   const institutionId = accountsResponse.data.item?.institution_id;
   if (institutionId) {
     try {
-      const institution = await plaid.institutionsGetById({
-        institution_id: institutionId,
-        country_codes: [CountryCode.Us],
-      });
+      const institution = await withPlaidCircuit(() =>
+        plaid.institutionsGetById({
+          institution_id: institutionId,
+          country_codes: [CountryCode.Us],
+        })
+      );
       institutionName = institution.data.institution.name || institutionName;
     } catch {
       institutionName = "Unknown Institution";
@@ -490,11 +501,13 @@ export async function syncTransactions(itemId: string) {
   };
 
   while (hasMore) {
-    const syncRes = await plaid.transactionsSync({
-      access_token: accessToken,
-      cursor,
-      count: 200,
-    });
+    const syncRes = await withPlaidCircuit(() =>
+      plaid.transactionsSync({
+        access_token: accessToken,
+        cursor,
+        count: 200,
+      })
+    );
     hasMore = syncRes.data.has_more;
     cursor = syncRes.data.next_cursor;
 
@@ -687,11 +700,15 @@ export async function getAccountBalance(bankAccountId: string) {
   if (!account || !account.plaid_access_token || !account.plaid_account_id) {
     throw new Error("bank_account_not_linked");
   }
+  const plaidAccessToken = account.plaid_access_token;
+  const plaidAccountId = account.plaid_account_id;
 
-  const response = await plaid.accountsBalanceGet({
-    access_token: account.plaid_access_token,
-    options: { account_ids: [account.plaid_account_id] },
-  });
+  const response = await withPlaidCircuit(() =>
+    plaid.accountsBalanceGet({
+      access_token: plaidAccessToken,
+      options: { account_ids: [plaidAccountId] },
+    })
+  );
   const plaidAccount = response.data.accounts[0];
   if (!plaidAccount) throw new Error("plaid_account_not_found");
 

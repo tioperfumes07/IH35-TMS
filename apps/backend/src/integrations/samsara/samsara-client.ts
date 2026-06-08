@@ -4,6 +4,8 @@
  * @packageDocumentation
  */
 
+import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
+
 export type SamsaraConfig = {
   apiToken: string | null;
   samsaraOrgId: string | null;
@@ -171,7 +173,7 @@ async function fetchSamsaraLocationsPage(token: string, after: string | null): P
   if (after) url.searchParams.set("after", after);
   let res: Response;
   try {
-    res = await fetch(url, { headers: bearerHeaders(token) });
+    res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
   } catch (error) {
     throw new SamsaraApiError(
       `samsara_network_error:${String((error as Error)?.message ?? error)}`,
@@ -206,7 +208,7 @@ async function fetchSamsaraPage(token: string, endpoint: "/fleet/drivers" | "/fl
   if (after) url.searchParams.set("after", after);
   let res: Response;
   try {
-    res = await fetch(url, { headers: bearerHeaders(token) });
+    res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
   } catch (error) {
     throw new SamsaraApiError(
       `samsara_network_error:${String((error as Error)?.message ?? error)}`,
@@ -241,7 +243,7 @@ export class SamsaraClient {
     try {
       const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles`);
       url.searchParams.set("limit", "1");
-      const res = await fetch(url, { headers: bearerHeaders(token) });
+      const res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
       if (!res.ok) {
         const body = await readJsonResponse(res);
         return { ok: false, error: `http_${res.status}:${JSON.stringify(body).slice(0, 500)}` };
@@ -348,7 +350,7 @@ export class SamsaraClient {
     if (!token || !clipId.trim()) return null;
     const url = new URL(`${SAMSARA_API_BASE}/fleet/dashcam/clips/${encodeURIComponent(clipId)}`);
     try {
-      const res = await fetch(url, { headers: bearerHeaders(token) });
+      const res = await withCircuitBreaker("samsara", () => fetch(url, { headers: bearerHeaders(token) }));
       if (!res.ok) return null;
       const json = await readJsonResponse(res);
       const direct = typeof json.url === "string" ? json.url : null;
@@ -376,11 +378,13 @@ export class SamsaraClient {
       cameraFacing: input.cameraFacing,
     };
     try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { ...bearerHeaders(token), "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await withCircuitBreaker("samsara", () =>
+        fetch(url, {
+          method: "POST",
+          headers: { ...bearerHeaders(token), "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+      );
       if (!res.ok) return null;
       const json = await readJsonResponse(res);
       const clipId =

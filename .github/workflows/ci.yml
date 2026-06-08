@@ -909,6 +909,9 @@ jobs:
       - name: verify:operational-tuning-catalog
         run: npm run verify:operational-tuning-catalog
 
+      - name: verify:circuit-breakers
+        run: npm run verify:circuit-breakers
+
       - name: verify:driver-day-summary-empty-state-not-red
         run: npm run verify:driver-day-summary-empty-state-not-red
 

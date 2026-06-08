@@ -1,4 +1,5 @@
 import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
+import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
 
 type PlaidEnv = "sandbox" | "development" | "production";
 
@@ -49,5 +50,10 @@ export function getPlaidClient() {
 
 export function getPlaidEnvForAudit() {
   return initializedEnv ?? resolvePlaidEnv();
+}
+
+/** Wrap Plaid SDK calls with the plaid circuit breaker (BLOCK-05). */
+export async function withPlaidApi<T>(fn: (client: PlaidApi) => Promise<T>): Promise<T> {
+  return withCircuitBreaker("plaid", () => fn(getPlaidClient()));
 }
 
