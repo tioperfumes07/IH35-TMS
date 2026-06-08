@@ -526,6 +526,7 @@
     "verify:a11y-no-critical-violations": "node scripts/verify-a11y-no-critical-violations.mjs",
     "a11y:audit": "node scripts/a11y-axe-walk.mjs && node scripts/a11y-keyboard-nav.mjs && node scripts/a11y-color-contrast.mjs && node scripts/a11y-screen-reader-checks.mjs && node scripts/verify-a11y-no-critical-violations.mjs",
     "verify:sentry-receives-test-error": "node scripts/verify-sentry-receives-test-error.mjs",
+    "verify:closure-23-dr-artifacts": "node scripts/verify-closure-23-dr-artifacts.mjs",
     "verify:closure-19-sec-artifacts": "node scripts/verify-closure-19-sec-artifacts.mjs",
     "verify:closure-17-on-hold-triage": "node scripts/verify-closure-17-on-hold-triage.mjs",
     "verify:closure-18-perf-artifacts": "node scripts/verify-closure-18-perf-artifacts.mjs",
