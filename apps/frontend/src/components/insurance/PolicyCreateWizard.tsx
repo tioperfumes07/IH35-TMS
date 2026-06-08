@@ -483,7 +483,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             <p className="text-xs font-semibold text-slate-700">
               Bill schedule — {billPreview.length} monthly bills
             </p>
-            <div className="max-h-48 overflow-y-auto rounded border border-gray-200 bg-white">
+            <div className="max-h-48 overflow-x-auto overflow-y-auto rounded border border-gray-200 bg-white">
               <table className="min-w-full text-left text-xs">
                 <thead className="bg-gray-50 text-slate-500">
                   <tr>
