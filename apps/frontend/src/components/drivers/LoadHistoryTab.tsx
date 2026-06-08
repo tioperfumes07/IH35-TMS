@@ -72,6 +72,7 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
       ) : null}
 
       {rows.length > 0 ? (
+        <div className="overflow-x-auto">
         <table className="min-w-full text-xs" data-testid="driver-load-history-table">
           <thead>
             <tr className="border-b text-left text-gray-600">
@@ -96,6 +97,7 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
             ))}
           </tbody>
         </table>
+        </div>
       ) : null}
     </div>
   );
