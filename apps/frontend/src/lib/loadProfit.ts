@@ -92,7 +92,7 @@ export interface NetProfitBadgeProps {
 }
 
 /** Classify net profit for badge colouring. */
-export function classifyProfit(netProfitCents: number, marginPct: number): NetProfitBadgeVariant {
+export function classifyProfit(_netProfitCents: number, marginPct: number): NetProfitBadgeVariant {
   if (marginPct >= 15) return "positive";
   if (marginPct >= 0) return "breakeven";
   return "negative";
