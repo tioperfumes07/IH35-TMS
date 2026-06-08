@@ -1,0 +1,25 @@
+{
+  "block_id": "CLOSURE-20-A11Y-AUDIT",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-closure20",
+  "branch": "feat/closure-20-a11y",
+  "phase": "CLOSURE",
+  "task": "Accessibility audit — WCAG 2.1 AA compliance pass",
+  "agent": "1",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/CLOSURE-20-A11Y-AUDIT.json",
+    "docs/audits/A11Y-AUDIT-2026-06-05.md",
+    "scripts/a11y-axe-walk.mjs",
+    "scripts/a11y-keyboard-nav.mjs",
+    "scripts/a11y-screen-reader-checks.mjs",
+    "scripts/a11y-color-contrast.mjs",
+    "scripts/verify-a11y-no-critical-violations.mjs",
+    "scripts/verify-closure-20-a11y-artifacts.mjs",
+    ".github/workflows/a11y-checks.yml",
+    "package.json"
+  ],
+  "extra_gates": ["verify:closure-20-a11y-artifacts"],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
