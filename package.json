@@ -417,6 +417,7 @@
     "verify:dispatch-late-arrivals-alerts": "node scripts/verify-dispatch-late-arrivals-alerts.mjs",
     "verify:dispatch-planner-calendar": "node scripts/verify-dispatch-planner-calendar.mjs",
     "verify:dispatch-detention-board": "node scripts/verify-dispatch-detention-board.mjs",
+    "verify:booking-gap-analytics": "node scripts/verify-booking-gap-analytics.mjs",
     "verify:dispatch-ocr-queue": "node scripts/verify-dispatch-ocr-queue.mjs",
     "verify:dispatch-assignment-optimizer": "node scripts/verify-dispatch-assignment-optimizer.mjs",
     "verify:dispatch-customer-eta-notify": "node scripts/verify-dispatch-customer-eta-notify.mjs",

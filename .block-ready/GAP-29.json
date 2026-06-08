@@ -1,0 +1,22 @@
+{
+  "block_id": "GAP-29",
+  "status": "READY",
+  "branch": "feature/gap-29-booking-gap-analytics",
+  "phase": "GAP-MEDIUM",
+  "task": "Booking-Gap Time per Dispatcher Analytics",
+  "allowed_files": [
+    "apps/backend/src/dispatch/analytics/booking-gap.service.ts",
+    "apps/backend/src/dispatch/analytics/booking-gap.routes.ts",
+    "apps/backend/src/dispatch/analytics/__tests__/booking-gap.test.ts",
+    "apps/backend/src/jobs/booking-gap-aggregator-worker.ts",
+    "apps/frontend/src/pages/reports/BookingGapReport.tsx",
+    "apps/frontend/src/components/dispatchers/DispatcherPerformanceCard.tsx",
+    "scripts/verify-booking-gap-analytics.mjs",
+    "docs/specs/gap-29-booking-gap-analytics.md",
+    "apps/backend/src/index.ts"
+  ],
+  "extra_gates": ["verify:booking-gap-analytics"],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
