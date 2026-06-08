@@ -405,6 +405,14 @@
     {
       "path": "/dev/bulk-demo",
       "reason": "BULK-1 dev harness for shared bulk components; not in module subnav"
+    },
+    {
+      "path": "/dispatch/borders/geofence-history",
+      "reason": "GAP-26 GPS border crossing geofence history; drilldown from border crossing board, not top-level subnav"
+    },
+    {
+      "path": "/dispatch/layovers/driver/:driverUuid",
+      "reason": "GAP-28 per-driver layover history; drilldown from layover board, not top-level subnav"
     }
   ],
   "URL_SYNC_DEFERRED": [

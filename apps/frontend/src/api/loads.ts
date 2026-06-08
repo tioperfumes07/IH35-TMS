@@ -67,10 +67,11 @@ export type DispatchLoadRow = {
   driver_lifecycle_stage?: string | null;
   driver_pwa_last_ping_at?: string | null;
   samsara_eta_at?: string | null;
-  samsara_eta_source?: "samsara" | "manual" | "prediction" | null;
-  on_time_prediction?: "green" | "amber" | "red" | null;
-  samsara_last_fetched_at?: string | null;
+  samsara_eta_source?: "samsara" | "manual" | "prediction" | "fallback" | null;
   samsara_cache_tier?: 1 | 2 | 3 | 4 | null;
+  samsara_last_fetched_at?: string | null;
+  delivery_scheduled_at?: string | null;
+  on_time_prediction?: "green" | "amber" | "red" | null;
 };
 
 export type LoadsListResponse = {
