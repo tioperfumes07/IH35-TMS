@@ -417,6 +417,7 @@
     "verify:safety-officer-home": "node scripts/verify-safety-officer-home.mjs",
     "verify:driver-manager-home": "node scripts/verify-driver-manager-home.mjs",
     "verify:cap-10-driver-scoring": "node scripts/verify-cap-10-driver-scoring.mjs",
+    "verify:customer-relationship-score": "node scripts/verify-customer-relationship-score.mjs",
     "verify:severe-repair-estimate": "node scripts/verify-severe-repair-estimate.mjs",
     "verify:assignments-quicksave": "node scripts/verify-assignments-quicksave.mjs",
     "verify:pm-due-soon-calculation": "node scripts/verify-pm-due-soon-calculation.mjs",

@@ -17,6 +17,7 @@ import {
   getCustomerBillingSummary,
   getCustomerDetail,
   getCustomerFinancialSummary,
+  getCustomerRelationshipScore,
   listCustomerLanes,
   listCustomerQualityEventReasons,
   listCustomerQualityEvents,
@@ -43,6 +44,7 @@ import { Combobox } from "../components/Combobox";
 import { CustomerEditModal, type CustomerEditFormValues } from "../components/customers/CustomerEditModal";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
 import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetentionEditor";
+import { CustomerRelationshipScore } from "../components/customers/CustomerRelationshipScore";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
@@ -388,6 +390,11 @@ export function CustomerDetailPage() {
   const financialSummaryQuery = useQuery({
     queryKey: ["customer-financial-summary", id, operatingCompanyId],
     queryFn: () => getCustomerFinancialSummary(id, operatingCompanyId!),
+    enabled: Boolean(id && operatingCompanyId),
+  });
+  const relationshipScoreQuery = useQuery({
+    queryKey: ["customer-relationship-score", id, operatingCompanyId],
+    queryFn: () => getCustomerRelationshipScore(id, operatingCompanyId!),
     enabled: Boolean(id && operatingCompanyId),
   });
   const lanesQuery = useQuery({
@@ -938,6 +945,12 @@ export function CustomerDetailPage() {
           </Button>
         ) : null}
       </div>
+
+      <CustomerRelationshipScore
+        score={relationshipScoreQuery.data}
+        loading={relationshipScoreQuery.isLoading}
+        error={relationshipScoreQuery.isError ? "Could not load relationship score." : null}
+      />
 
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} />
 

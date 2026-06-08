@@ -287,7 +287,7 @@ const CUSTOMER_C_SELECT_COLUMNS = CUSTOMER_SELECT_COLUMNS.replace(
   "$1c.$2"
 );
 
-function mapCustomerRow(row: Record<string, unknown>, includeTaxId: boolean) {
+function mapCustomerRow(row: Record<string, unknown>, includeTaxId: boolean): Record<string, unknown> {
   let taxId: string | null = null;
   if (includeTaxId && row.tax_id_encrypted) {
     try {
@@ -304,6 +304,56 @@ function mapCustomerRow(row: Record<string, unknown>, includeTaxId: boolean) {
     tax_id: taxId,
     tax_id_encrypted: undefined,
   };
+}
+
+async function relationshipScoresTableExists(client: {
+  query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ rel?: string | null }> }>;
+}) {
+  const res = await client.query(`SELECT to_regclass('master_data.customer_relationship_scores') AS rel`);
+  return Boolean(res.rows[0]?.rel);
+}
+
+async function relationshipScoreByCustomerId(
+  client: {
+    query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+  },
+  operatingCompanyId: string,
+  customerIds: string[]
+) {
+  if (customerIds.length === 0) return new Map<string, { health_tier: string; overall_health_score: number; computed_at: string }>();
+  if (!(await relationshipScoresTableExists(client))) {
+    return new Map<string, { health_tier: string; overall_health_score: number; computed_at: string }>();
+  }
+
+  const res = await client.query<{
+    customer_uuid: string;
+    health_tier: string;
+    overall_health_score: number;
+    computed_at: string;
+  }>(
+    `
+      SELECT
+        customer_uuid::text,
+        health_tier,
+        overall_health_score::float8 AS overall_health_score,
+        computed_at::text
+      FROM master_data.customer_relationship_scores
+      WHERE operating_company_id = $1::uuid
+        AND customer_uuid = ANY($2::uuid[])
+    `,
+    [operatingCompanyId, customerIds]
+  );
+
+  return new Map(
+    res.rows.map((row) => [
+      row.customer_uuid,
+      {
+        health_tier: row.health_tier,
+        overall_health_score: Number(row.overall_health_score),
+        computed_at: row.computed_at,
+      },
+    ])
+  );
 }
 
 function normalizeCustomerType(input: "broker" | "direct" | "direct_shipper" | null | undefined): "broker" | "direct_shipper" | null {
@@ -391,7 +441,18 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows.map((row) => mapCustomerRow(row, canReadTaxId(authUser.role)));
+      const mapped = res.rows.map((row) => mapCustomerRow(row, canReadTaxId(authUser.role)));
+      const customerIds = mapped.map((row) => String(row["id"] ?? ""));
+      const relationshipScores = await relationshipScoreByCustomerId(client, resolvedOperatingCompanyId, customerIds);
+      return mapped.map((row) => {
+        const score = relationshipScores.get(String(row["id"] ?? ""));
+        return {
+          ...row,
+          relationship_health_tier: score?.health_tier ?? null,
+          relationship_overall_health_score: score?.overall_health_score ?? null,
+          relationship_score_computed_at: score?.computed_at ?? null,
+        };
+      });
     });
     return { customers };
   });

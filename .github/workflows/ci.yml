@@ -388,6 +388,9 @@ jobs:
       - name: Verify CAP-14 cargo sensors contract
         run: npm run verify:cap-14-cargo-sensors
 
+      - name: Verify customer relationship score contract
+        run: npm run verify:customer-relationship-score
+
       - name: Verify severe repair fleet restore estimate contract
         run: npm run verify:severe-repair-estimate
 

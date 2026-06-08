@@ -332,6 +332,9 @@ export type Customer = {
   quality_disputes_count: number;
   quality_last_evaluated_at: string | null;
   quality_notes: string | null;
+  relationship_health_tier?: RelationshipHealthTier | null;
+  relationship_overall_health_score?: number | null;
+  relationship_score_computed_at?: string | null;
   fmcsa_verified_at: string | null;
   fmcsa_lookup_id: string | null;
   fmcsa_authority_status_at_verification: string | null;
@@ -396,6 +399,30 @@ export type CreateCustomerInput = {
   factoring_notes?: string | null;
   quality_overall_flag?: "preferred" | "standard" | "caution" | "avoid";
   quality_notes?: string;
+};
+
+export type RelationshipHealthTier = "thriving" | "healthy" | "watch" | "at_risk";
+
+export type CustomerRelationshipScore = {
+  customer_uuid: string;
+  operating_company_id: string;
+  computed_at: string;
+  overall_health_score: number;
+  health_tier: RelationshipHealthTier;
+  engagement_subscore: number | null;
+  payment_behavior_subscore: number | null;
+  service_quality_subscore: number | null;
+  margin_trend_subscore: number | null;
+  complaint_subscore: number | null;
+};
+
+export type AtRiskCustomerRelationshipScore = {
+  customer_uuid: string;
+  customer_name: string;
+  customer_code: string | null;
+  overall_health_score: number;
+  health_tier: RelationshipHealthTier;
+  computed_at: string;
 };
 
 export type UpdateCustomerInput = Partial<{
@@ -800,6 +827,28 @@ export function listCustomers(params: CompanyScopedListParams = {}) {
   appendCompanyScopedQuery(query, params);
   const qs = query.toString();
   return apiRequest<{ customers: Customer[] }>(`/api/v1/mdata/customers${qs ? `?${qs}` : ""}`);
+}
+
+export function getCustomerRelationshipScore(customerUuid: string, operatingCompanyId?: string | null) {
+  const query = new URLSearchParams();
+  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
+  const qs = query.toString();
+  return apiRequest<CustomerRelationshipScore>(
+    `/api/v1/customers/${customerUuid}/relationship-score${qs ? `?${qs}` : ""}`
+  );
+}
+
+export function listAtRiskCustomerRelationshipScores(params: {
+  operating_company_id?: string | null;
+  limit?: number;
+} = {}) {
+  const query = new URLSearchParams();
+  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
+  if (params.limit) query.set("limit", String(params.limit));
+  const qs = query.toString();
+  return apiRequest<{ operating_company_id: string; count: number; customers: AtRiskCustomerRelationshipScore[] }>(
+    `/api/v1/customers/relationship-scores/at-risk${qs ? `?${qs}` : ""}`
+  );
 }
 
 export function createCustomer(body: CreateCustomerInput) {
