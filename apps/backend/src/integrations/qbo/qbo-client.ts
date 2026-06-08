@@ -1,4 +1,5 @@
 import { getValidAccessToken } from "./qbo-oauth.service.js";
+import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
 
 type QboEnv = "sandbox" | "production";
 
@@ -50,18 +51,28 @@ async function requestWithRetry(
   init: RequestInit,
   onRetry?: (details: { status: number; attempt: number; delay_ms: number; url: string }) => void | Promise<void>
 ): Promise<Response> {
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
-    const response = await fetch(url, init);
-    const retryable = response.status === 429 || response.status === 503;
-    if (!retryable || attempt === MAX_RETRIES) return response;
+  return withCircuitBreaker("qbo", async () => {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+      const response = await fetch(url, init);
+      const retryable = response.status === 429 || response.status === 503;
+      if (!retryable || attempt === MAX_RETRIES) {
+        if (!response.ok && response.status >= 500) {
+          throw new Error(`QBO HTTP ${response.status}`);
+        }
+        return response;
+      }
 
-    const retryAfterSeconds = Number.parseInt(response.headers.get("retry-after") ?? "0", 10);
-    const delayMs = Math.max(Number.isFinite(retryAfterSeconds) ? retryAfterSeconds * 1000 : 0, RETRY_DELAYS_MS[attempt] ?? 16000);
-    await onRetry?.({ status: response.status, attempt: attempt + 1, delay_ms: delayMs, url });
-    await sleep(delayMs);
-  }
+      const retryAfterSeconds = Number.parseInt(response.headers.get("retry-after") ?? "0", 10);
+      const delayMs = Math.max(
+        Number.isFinite(retryAfterSeconds) ? retryAfterSeconds * 1000 : 0,
+        RETRY_DELAYS_MS[attempt] ?? 16000
+      );
+      await onRetry?.({ status: response.status, attempt: attempt + 1, delay_ms: delayMs, url });
+      await sleep(delayMs);
+    }
 
-  return fetch(url, init);
+    return fetch(url, init);
+  });
 }
 
 function sanitizeBodyPreview(text: string) {
