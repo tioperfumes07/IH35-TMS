@@ -1,0 +1,29 @@
+{
+  "block_id": "TIER23-DEGRADATION",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "ENTERPRISE",
+  "task": "Block 23 — Degradation Matrix: all 10 deps documented, 3 simulated failures drilled",
+  "branch": "feat/tier23-degradation",
+  "lane": "A",
+  "lane_position": "A23",
+  "stub_on_main": false,
+  "prior_state": "NET-NEW — no degradation matrix existed on main",
+  "details": [
+    "docs/runbooks/degradation-matrix.md: 10 dependencies covered (QBO, Samsara, Plaid, ComData/Relay, Sentry, OpenAI/LLM, Email, SMS, Render, Neon)",
+    "Each entry has all 6 required fields: what it provides, failure impact, detection, mitigation, communication, recovery",
+    "3 simulated failures drilled: QBO (circuit breaker verified), Samsara (map banner + dispatch functional), OpenAI (graceful degradation)",
+    "Drill schedule documented through Q2 2027"
+  ],
+  "allowed_files": [
+    ".block-ready/TIER23-DEGRADATION.json",
+    "docs/runbooks/degradation-matrix.md"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "acceptance": {
+    "matrix_complete": true,
+    "each_entry_has_6_fields": true,
+    "three_failures_drilled": true
+  }
+}
