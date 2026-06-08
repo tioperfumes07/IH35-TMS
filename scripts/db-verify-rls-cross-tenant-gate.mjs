@@ -60,8 +60,56 @@ async function withTenantReadContext(client, companyId, fn) {
 function parseAllowedLiteral(checkDef, columnName) {
   const columnRef = new RegExp(`\\b${columnName}\\b`, "i");
   if (!columnRef.test(checkDef)) return null;
-  const literal = checkDef.match(/'([^']+)'/);
-  return literal ? literal[1] : null;
+  if (/[~]/.test(checkDef) || /\bSIMILAR TO\b/i.test(checkDef) || /\bLIKE\b/i.test(checkDef)) return null;
+  const literals = [...checkDef.matchAll(/'([^']+)'/g)].map((match) => match[1]);
+  if (literals.length === 0) return null;
+  return literals[0];
+}
+
+function parseRegexLiteral(checkDef, columnName) {
+  const columnRef = new RegExp(`\\b${columnName}\\b`, "i");
+  if (!columnRef.test(checkDef)) return null;
+  if (!/[~]/.test(checkDef)) return null;
+  const literals = [...checkDef.matchAll(/'([^']+)'/g)].map((match) => match[1]);
+  return literals.find((value) => value.includes("^") || value.includes("[0-9]")) ?? null;
+}
+
+function tableAcronym(tableName) {
+  const letters = String(tableName)
+    .split("_")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+  return letters || "ID";
+}
+
+function numericToken(seed, digits) {
+  const digest = crypto.createHash("sha1").update(seed).digest("hex");
+  const raw = Number.parseInt(digest.slice(0, 12), 16);
+  const width = Math.max(1, Math.min(digits, 12));
+  const mod = 10 ** width;
+  return String(raw % mod).padStart(width, "0");
+}
+
+function buildDisplayId(tableName, marker, prefix, digits) {
+  const code = (prefix || tableAcronym(tableName)).slice(0, 8).toUpperCase();
+  return `${code}-${numericToken(`${tableName}:${marker}`, digits)}`;
+}
+
+function valueFromRegex(regexLiteral, tableName, marker) {
+  if (!regexLiteral) return null;
+  const explicitPrefixDigits =
+    regexLiteral.match(/^\^([A-Za-z]{1,8})-\[0-9\]\{(\d+)\}\$$/) ??
+    regexLiteral.match(/^\^([A-Za-z]{1,8})-\\d\{(\d+)\}\$$/);
+  if (explicitPrefixDigits) {
+    return buildDisplayId(tableName, marker, explicitPrefixDigits[1], Number(explicitPrefixDigits[2]));
+  }
+  const simplePrefix = regexLiteral.match(/^\^([A-Za-z]{1,8})-/);
+  if (simplePrefix) {
+    return buildDisplayId(tableName, marker, simplePrefix[1], 6);
+  }
+  return null;
 }
 
 async function getFirstEnumLabel(client, typeOid, enumCache) {
@@ -103,9 +151,17 @@ function scalarFallbackForType(typeName, columnName, marker) {
   return undefined;
 }
 
-async function buildValue(client, column, marker, checks, enumCache) {
+async function buildValue(client, table, column, marker, checks, enumCache) {
+  const regexLiteral = checks.map((check) => parseRegexLiteral(check, column.column_name)).find(Boolean);
+  const regexValue = valueFromRegex(regexLiteral, table.table_name, marker);
+  if (regexValue !== null) return regexValue;
+
   const checkLiteral = checks.map((check) => parseAllowedLiteral(check, column.column_name)).find(Boolean);
   if (checkLiteral) return checkLiteral;
+
+  if (column.column_name === "display_id") {
+    return buildDisplayId(table.table_name, marker, null, 6);
+  }
 
   if (column.typtype === "e") {
     const enumLabel = await getFirstEnumLabel(client, column.type_oid, enumCache);
@@ -175,18 +231,13 @@ async function insertFixtureForCompany(client, table, companyId, marker, enumCac
     const hasDefault = column.default_expr !== null;
     if (!column.is_not_null || hasDefault) continue;
 
-    const value = await buildValue(client, column, marker, checks, enumCache);
+    const value = await buildValue(client, table, column, marker, checks, enumCache);
     if (value === undefined) {
       throw new Error(`cannot synthesize required column ${table.full_name}.${column.column_name}`);
     }
 
-    let insertValue = value;
-    if (column.column_name === "display_id" && typeof value === "string") {
-      insertValue = value.replace(/[^A-Z0-9-]/gi, "").slice(0, 20) || `ID-${marker}`;
-    }
-
     insertCols.push(column.column_name);
-    values.push(insertValue);
+    values.push(value);
   }
 
   if (!insertCols.includes("operating_company_id")) {
@@ -299,26 +350,15 @@ try {
 
   companies = await createFixtureCompanies(client);
   const enumCache = new Map();
-  const insertSkipped = [];
 
   for (const table of tables) {
-    try {
-      await withBypassFixtureContext(client, async () => {
-        await insertFixtureForCompany(client, table, companies.companyAId, `A_${runSuffix}`, enumCache);
-        await insertFixtureForCompany(client, table, companies.companyBId, `B_${runSuffix}`, enumCache);
-      });
-    } catch (insertError) {
-      insertSkipped.push(table.full_name);
-      console.warn(`db:verify:rls-cross-tenant-gate WARN: skip insert for ${table.full_name}: ${String(insertError?.message || insertError)}`);
-    }
+    await withBypassFixtureContext(client, async () => {
+      await insertFixtureForCompany(client, table, companies.companyAId, `A_${runSuffix}`, enumCache);
+      await insertFixtureForCompany(client, table, companies.companyBId, `B_${runSuffix}`, enumCache);
+    });
   }
 
-  const validatedTables = tables.filter((table) => !insertSkipped.includes(table.full_name));
-  if (validatedTables.length < 20) {
-    throw new Error(`too many insert skips (${insertSkipped.length}); need at least 20 tables with fixture rows`);
-  }
-
-  for (const table of validatedTables) {
+  for (const table of tables) {
     const asA = await withTenantReadContext(client, companies.companyAId, async () => {
       const countA = await countRowsForCompany(client, table, companies.companyAId);
       const countB = await countRowsForCompany(client, table, companies.companyBId);
@@ -349,7 +389,7 @@ try {
     }
   }
 
-  console.log(`db:verify:rls-cross-tenant-gate PASS (${validatedTables.length}/${tables.length} tables validated, ${insertSkipped.length} insert skips)`);
+  console.log(`db:verify:rls-cross-tenant-gate PASS (${tables.length} tables validated)`);
 } catch (error) {
   console.error(`db:verify:rls-cross-tenant-gate FAIL: ${String(error?.message || error)}`);
   process.exitCode = 1;
