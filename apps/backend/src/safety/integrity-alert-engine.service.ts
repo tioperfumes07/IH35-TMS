@@ -153,7 +153,96 @@ async function evaluateRuleMatches(
     }));
   }
 
-  // ── Financial integrity probes (added by 202606080222) ──────────────────
+  // ── Financial integrity probes — view-based dispatchers ─────────────────
+  // These query pre-built accounting schema views. Source views are seeded in
+  // earlier migrations and the view definition lives in the DB.
+
+  if (rule.rule_code === "unbalanced_je" || rule.source_view === "accounting.v_unbalanced_journal_entries") {
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT *
+        FROM accounting.v_unbalanced_journal_entries
+        WHERE operating_company_id = $1
+        LIMIT 200
+      `,
+      [operatingCompanyId]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `je:${String(row.journal_entry_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Unbalanced journal entry (debits ${String(row.debit_cents)} ≠ credits ${String(row.credit_cents)})`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  if (rule.rule_code === "orphan_bill" || rule.source_view === "accounting.v_orphan_bills") {
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT *
+        FROM accounting.v_orphan_bills
+        WHERE operating_company_id = $1
+        LIMIT 200
+      `,
+      [operatingCompanyId]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `bill:${String(row.bill_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Orphan bill ${String(row.display_id ?? row.bill_id)} (${String(row.orphan_reason ?? "missing GL account")})`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  if (rule.rule_code === "orphan_payment" || rule.source_view === "accounting.v_orphan_payments") {
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT *
+        FROM accounting.v_orphan_payments
+        WHERE operating_company_id = $1
+        LIMIT 200
+      `,
+      [operatingCompanyId]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `payment:${String(row.payment_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Orphan payment ${String(row.display_id ?? row.payment_id)} (unapplied to any bill/invoice)`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  if (rule.rule_code === "posting_closed_period" || rule.source_view === "accounting.v_postings_in_closed_period") {
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT *
+        FROM accounting.v_postings_in_closed_period
+        WHERE operating_company_id = $1
+        LIMIT 200
+      `,
+      [operatingCompanyId]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `posting:${String(row.posting_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Posting in closed period (entry_date ${String(row.entry_date)} ≤ closed_through ${String(row.closed_through)})`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  // ── Financial integrity probes — inline SQL (added by 202606080222) ──────
+  // These use inline SQL so no DB views are required for the acct_* rule_codes.
 
   if (rule.rule_code === "acct_unbalanced_je") {
     const res = await client.query<Record<string, unknown>>(

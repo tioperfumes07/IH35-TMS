@@ -1,0 +1,21 @@
+{
+  "block_id": "FEAT-ACCOUNTING-INTEGRITY-LEDGER-LOCK-PROBES",
+  "branch": "feat/accounting-integrity-ledger-lock-probes",
+  "phase": "Accounting",
+  "task": "Closed-period ledger lock on accounting.journal_entry_postings + financial integrity probes (unbalanced JE, orphan bill, orphan payment, posting-in-closed-period) wired into the existing integrity-alert-engine cron",
+  "agent": "A",
+  "is_read_only": false,
+  "classification": "ADDITIVE",
+  "prior_state": "0183 already guards journal_entries/bills/payments/bill_payments/invoices for closed periods; journal_entry_postings had no guard and the alert engine had no financial probes",
+  "allowed_files": [
+    ".block-ready/FEAT-ACCOUNTING-INTEGRITY-LEDGER-LOCK-PROBES.json",
+    "db/migrations/202606080222_ledger_closed_period_lock_and_financial_probes.sql",
+    "apps/backend/src/safety/integrity-alert-engine.service.ts",
+    "apps/backend/src/safety/__tests__/integrity-alert-engine.service.test.ts",
+    "apps/backend/src/safety/__tests__/ledger-lock-migration.test.ts"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false
+}
