@@ -1,0 +1,19 @@
+{
+  "block_id": "ACCT-BLOCK-10-ACCOUNT-BALANCES",
+  "gap": "BLOCK-10",
+  "branch": "feat/acct-block-10-account-balances",
+  "phase": "PHASE-B-FINANCIAL-STATEMENTS",
+  "task": "Block 10/44 — Account Balances View. Adds accounting.fn_account_balances_as_of(p_company_id, p_as_of_date, p_from_date) — a STABLE SQL function that returns per-account cumulative (inception-to-date) balances, opening balance, period activity, and closing balance. Exposes GET /api/v1/accounting/account-balances with basis=accrual|cash support via applyCashBasisSuppression (decisions Q1, Q3, Q10). Building block for Block 13 (Balance Sheet) and Block 14 (Cash Flow). Backend-only — no new UI surface.",
+  "financial_rule": "Read-only. No new write paths. Query derives exclusively from existing accounting.journal_entry_postings + accounting.journal_entries + accounting.posting_batches + catalogs.accounts. Honors existing voided-JE exclusion and batch_status filter identical to trial-balance.service.ts.",
+  "allowed_files": [
+    ".block-ready/ACCT-BLOCK-10-ACCOUNT-BALANCES.json",
+    "db/migrations/202606072356_accounting_account_balances.sql",
+    "apps/backend/src/accounting/account-balances.service.ts",
+    "apps/backend/src/accounting/account-balances.routes.ts",
+    "docs/accounting/block-10-account-balances.md"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false
+}
