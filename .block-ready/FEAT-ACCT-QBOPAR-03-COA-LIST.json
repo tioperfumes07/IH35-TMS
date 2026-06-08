@@ -1,0 +1,27 @@
+{
+  "block_id": "ACCT-QBOPAR-03",
+  "branch": "feat/acct-qbopar-03-coa-list",
+  "phase": "Accounting — QBO Parity",
+  "task": "Chart of Accounts list on ListView: QBO-parity columns, balances, hierarchy, batch archive/merge, gear/filter/export.",
+  "agent": "2",
+  "allowed_files": [
+    ".block-ready/FEAT-ACCT-QBOPAR-03-COA-LIST.json",
+    "apps/frontend/src/api/coa-list.ts",
+    "apps/frontend/src/components/lists/ListView/ListView.tsx",
+    "apps/frontend/src/components/lists/ListView/types.ts",
+    "apps/frontend/src/pages/lists/accounting/ChartOfAccountsListPage.tsx",
+    "apps/frontend/src/pages/lists/accounting/CoaBatchActions.tsx",
+    "apps/frontend/src/pages/lists/accounting/coa-list-utils.ts",
+    "apps/frontend/src/pages/lists/accounting/__tests__/ChartOfAccountsListPage.test.tsx",
+    "apps/frontend/src/pages/lists/accounting/__tests__/coa-list-utils.test.ts"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "fields": {
+    "additive_only": true,
+    "no_magnet_edits": true,
+    "no_new_migrations": true
+  }
+}

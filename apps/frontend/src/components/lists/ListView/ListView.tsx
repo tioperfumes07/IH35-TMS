@@ -123,6 +123,8 @@ export function ListView<T>({
     [selectAllPages, processedRows, selected, rowKey]
   );
 
+  const selectedIds = useMemo(() => selectedRows.map((row) => rowKey(row)), [selectedRows, rowKey]);
+
   const { exportCsv, exportXlsx } = useListExport();
 
   const visibleCols = useMemo(
@@ -199,7 +201,9 @@ export function ListView<T>({
             onSelectAcrossPages={selectAcrossPages}
             onClearSelection={clearSelection}
           >
-            {batchActions}
+            {typeof batchActions === "function"
+              ? batchActions({ selectedIds, selectedCount })
+              : batchActions}
           </BatchActionsBar>
         </div>
       )}

@@ -57,7 +57,7 @@ export interface ListViewProps<T> {
   sort?: SortConfig;
   filters?: ListViewFilter[];
   onFilterChange?: (active: ActiveFilter[]) => void;
-  batchActions?: ReactNode;
+  batchActions?: ReactNode | ((selection: { selectedIds: string[]; selectedCount: number }) => ReactNode);
   filterBarSlot?: ReactNode;
   savedViewsKey?: string;
   showTotals?: boolean;
