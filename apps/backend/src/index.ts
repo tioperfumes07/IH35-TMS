@@ -12,6 +12,8 @@ import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
 import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.js";
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
+import { registerSamsaraLivePositionRoutes } from "./integrations/samsara/positions/live-position.routes.js";
+import { initializeSamsaraPositionPollWorker } from "./jobs/samsara-position-poll-worker.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
 import { registerIntegrationHealthRoutes } from "./integrations/integration-health.routes.js";
 import { initializeDataSovereigntyDailySync } from "./integrations/samsara/daily-sync-job.js";
@@ -509,6 +511,7 @@ async function main() {
   await registerQboWebhookRoutes(app);
   await registerSamsaraWebhookRoutes(app);
   await registerSamsaraConfigRoutes(app);
+  await registerSamsaraLivePositionRoutes(app);
   await registerSamsaraHealthRoutes(app);
   await registerIntegrationHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
@@ -934,6 +937,7 @@ async function main() {
 
   try {
     initializeDriverVendorMappingWorker(app);
+    initializeSamsaraPositionPollWorker(app);
     initializeGeofenceReconciliationWorker(app);
     initializeAnomalyDetectorWorker(app);
     initializeDataSovereigntyDailySync(app);

@@ -27,6 +27,7 @@ import { ProfilePage } from "./pages/Profile";
 import { SchedulerHomePage } from "./pages/SchedulerHome";
 import { StopActionPage } from "./pages/StopAction";
 import { TodayPage } from "./pages/Today";
+import { MyPositionScreen } from "./screens/MyPosition";
 import { startSyncService, stopSyncService } from "./lib/upload-sync";
 import { initDB } from "./lib/upload-queue";
 
@@ -97,6 +98,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <MyDisputesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-position"
+        element={
+          <ProtectedRoute>
+            <MyPositionScreen />
           </ProtectedRoute>
         }
       />

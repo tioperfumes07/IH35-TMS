@@ -1,0 +1,35 @@
+{
+  "block_id": "GAP-55",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap55",
+  "branch": "feature/gap-55-realtime-gps",
+  "phase": "GAP-HIGH",
+  "task": "CAP-1 Real-time GPS every active load",
+  "allowed_files": [
+    ".block-ready/GAP-55.json",
+    "db/migrations/202606080214_samsara_vehicle_positions.sql",
+    "apps/backend/src/integrations/samsara/positions/live-position.service.ts",
+    "apps/backend/src/integrations/samsara/positions/live-position.routes.ts",
+    "apps/backend/src/integrations/samsara/positions/__tests__/positions.test.ts",
+    "apps/backend/src/jobs/samsara-position-poll-worker.ts",
+    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
+    "apps/frontend/src/components/dispatch/LoadLivePositionCell.tsx",
+    "apps/frontend/src/pages/dispatch/MapView.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/driver-pwa/src/screens/MyPosition.tsx",
+    "apps/driver-pwa/src/App.tsx",
+    "scripts/verify-cap-1-live-gps.mjs",
+    "docs/specs/gap-55-cap-1-live-gps.md",
+    "apps/backend/src/index.ts",
+    "package.json",
+    "scripts/lib/migration-checksum-overrides.json",
+    ".github/workflows/ci.yml",
+    "scripts/nav-integrity-allowlist.json",
+    "apps/frontend/src/router/route-manifest.ts"
+  ],
+  "extra_gates": [
+    "verify:cap-1-live-gps"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

@@ -1,3 +1,4 @@
+import { MapView } from "../pages/dispatch/MapView";
 import React from "react";
 import { Navigate, Route, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -796,6 +797,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <GpsBorderCrossingHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/map"
+          element={
+            <ProtectedRoute>
+              <MapView />
             </ProtectedRoute>
           }
         />
