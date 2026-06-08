@@ -519,7 +519,8 @@
     "verify:driver-vendor-mapping": "node scripts/verify-driver-vendor-mapping-monitor.mjs",
     "verify:wf-051-arrival-radius": "node scripts/verify-wf-051-arrival-radius-meters.mjs",
     "verify:bank-account-company-assignment": "node scripts/verify-bank-account-company-assignment.mjs",
-    "verify:cap-1-live-gps": "node scripts/verify-cap-1-live-gps.mjs"
+    "verify:cap-1-live-gps": "node scripts/verify-cap-1-live-gps.mjs",
+    "verify:cap-8-engine-fault-auto-wo": "node scripts/verify-cap-8-engine-fault-auto-wo.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
