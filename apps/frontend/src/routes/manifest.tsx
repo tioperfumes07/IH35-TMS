@@ -1002,6 +1002,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="settings" element={<SettingsTab />} />
           <Route path="vehicle-inspections" element={<Navigate to="/safety/idvr" replace />} />
         </Route>
+        <Route path="/insurance" element={<Navigate to="/safety/insurance" replace />} />
         <Route
           path="/liabilities"
           element={
