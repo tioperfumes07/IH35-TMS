@@ -343,6 +343,9 @@ jobs:
 
       - name: Verify WF-051 arrival radius (GAP-54)
         run: npm run verify:wf-051-arrival-radius
+
+      - name: Verify CAP-1 live GPS (GAP-55)
+        run: npm run verify:cap-1-live-gps
       - name: Verify bank account company assignment (GAP-53)
         run: npm run verify:bank-account-company-assignment
 

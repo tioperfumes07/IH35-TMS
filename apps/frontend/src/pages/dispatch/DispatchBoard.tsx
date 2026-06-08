@@ -21,6 +21,7 @@ import { InTransitEtaChip } from "../../components/dispatch/InTransitEtaChip";
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
 import { OnTimePredictionColumn } from "../../components/dispatch/LiveEtaColumns";
+import { LoadLivePositionCell } from "../../components/dispatch/LoadLivePositionCell";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
@@ -489,6 +490,7 @@ export function DispatchBoard({
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
     { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
     { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
+    { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={null} loadId={load.id} /> },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
   ];
@@ -505,6 +507,7 @@ export function DispatchBoard({
     { key: "flag", header: "Flag", cell: (load) => FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪" },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
     { key: "delivery", header: "Delivery", cell: (load) => load.first_delivery_city ?? "—" },
+    { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={null} loadId={load.id} /> },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
   ];

@@ -103,6 +103,10 @@
       "reason": "WF-047 dual-confirm transfer queue (P5-T21); fleet module subnav deferred"
     },
     {
+      "path": "/dispatch/map",
+      "reason": "GAP-55 CAP-1 active load map; deep-link from Dispatch board Live GPS column"
+    },
+    {
       "path": "/dispatch/borders/geofence-history",
       "reason": "gap-26 border crossing history — deep-link from Dispatch flyout; full subnav deferred Block 43"
     },

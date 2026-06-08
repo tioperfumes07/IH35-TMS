@@ -43,6 +43,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/factoring/equipment-loans", label: "Equipment Loans", module: "factoring" },
   { path: "/factoring/vendor-merges", label: "Driver Vendor Merges", module: "factoring" },
   { path: "/dispatch", label: "Dispatch Home", module: "dispatch" },
+  { path: "/dispatch/map", label: "Active Load Map", module: "dispatch" },
   { path: "/dispatch/loads", label: "Loads List", module: "dispatch" },
 ];
 
