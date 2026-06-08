@@ -4,6 +4,7 @@
   "branch": "feature/gap-37-equipment-transfer",
   "phase": "GAP-HIGH",
   "task": "G14 Equipment dual-confirm transfer (WF-047)",
+  "classification": "ADDITIVE",
   "allowed_files": [
     ".block-ready/GAP-37.json",
     ".block-ready/FEATURE-GAP-37-EQUIPMENT-TRANSFER.json",

@@ -326,6 +326,9 @@ jobs:
       - name: Verify cash flow and per-truck CPM routes (GAP-45)
         run: npm run verify:cash-flow-cpm-routes
 
+      - name: Verify equipment dual-confirm transfer contract
+        run: npm run verify:equipment-transfer-dual-confirm
+
       - name: Verify Samsara cache tier coverage contract
         run: npm run verify:cache-tier-coverage
 

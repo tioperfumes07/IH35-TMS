@@ -101,7 +101,12 @@
     "make_model": "Make / model",
     "source": "Assignment source",
     "type": "Type",
-    "unassigned": "Unassigned"
+    "unassigned": "Unassigned",
+    "confirm_drop_title": "Confirm equipment drop-off",
+    "confirm_pickup_title": "Confirm equipment pickup",
+    "location_status": "{{kind}} @ {{location}} · {{status}}",
+    "evidence_placeholder": "Photo evidence UUID",
+    "confirm_with_photo": "Confirm with photo"
   },
   "profile": {
     "signed_in_as": "Signed in as",

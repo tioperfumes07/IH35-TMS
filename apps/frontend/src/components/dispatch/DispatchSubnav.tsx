@@ -52,6 +52,7 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
     children: [
       { label: "POD Review", href: "/dispatch/pod-review", badgeKey: "pod_review" },
       { label: "OCR Queue", href: "/dispatch/ocr-queue", badgeKey: "ocr_queue" },
+      { label: "Equipment transfers", href: "/dispatch/equipment-transfers" },
     ],
   },
 ] as const;
@@ -78,6 +79,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/accounting/pre-settlements": "Pre-settlements",
   "/dispatch/pod-review": "POD Review",
   "/dispatch/ocr-queue": "OCR Queue",
+  "/dispatch/equipment-transfers": "Equipment transfers",
 };
 
 function itemOrChildActive(item: NavItem, activeHref?: string): boolean {
