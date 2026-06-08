@@ -139,9 +139,9 @@ END $$;
 UPDATE loads
 SET is_cross_border = true
 WHERE id IN (
-  SELECT DISTINCT load_id
-  FROM border_crossing_events
-  WHERE load_id IS NOT NULL
+  SELECT DISTINCT load_uuid
+  FROM dispatch.border_crossing_events
+  WHERE load_uuid IS NOT NULL
 )
 AND is_cross_border = false;
 
