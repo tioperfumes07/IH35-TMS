@@ -1,0 +1,27 @@
+{
+  "block_id": "DISP-OVERVIEW",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DISPATCH",
+  "task": "Block 1 — Dispatch Overview command center (default view)",
+  "branch": "feat/disp-overview",
+  "lane": "A",
+  "lane_position": "A2-SECOND",
+  "details": [
+    "DispatchOverview.tsx: 4 KPIs (active loads, at-risk/late, units available, units needing return) + 6 drill-in panels.",
+    "Panels: Unassigned units, Round-trip exposure, At-Risk queue, Detention board, Border crossings, Out-of-service.",
+    "Each panel row shows unit + driver + load/customer; header View all routes to full view.",
+    "Dispatch.tsx: register overview as default view segment alongside Kanban and List.",
+    "Read-only counts from existing dispatch/queue endpoints in api/dispatch.ts (border via apiRequest inline)."
+  ],
+  "allowed_files": [
+    ".block-ready/DISP-OVERVIEW.json",
+    "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+    "apps/frontend/src/pages/Dispatch.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "gate_for": ["DISP-QUEUES-NAV", "DISP-KANBAN", "DISP-ROUND-TRIPS"]
+}
