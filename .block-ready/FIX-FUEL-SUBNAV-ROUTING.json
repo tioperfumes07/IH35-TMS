@@ -1,0 +1,19 @@
+{
+  "block_id": "FIX-FUEL-SUBNAV-ROUTING",
+  "branch": "fix/fuel-subnav-routing",
+  "phase": "FUEL",
+  "task": "Block U — wire 8 fuel sub-nav tabs to distinct routes",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/FIX-FUEL-SUBNAV-ROUTING.json",
+    "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+    "apps/frontend/src/router/route-manifest.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/nav-integrity-allowlist.json",
+    "scripts/verify-nav-integrity.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

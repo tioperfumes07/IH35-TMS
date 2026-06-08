@@ -51,7 +51,7 @@ import { PortalDashboardPage } from "../portal/PortalDashboardPage";
 import { PortalLoadDetailPage } from "../portal/PortalLoadDetailPage";
 import { PortalProfilePage } from "../portal/PortalProfilePage";
 import { PortalRouteGuard } from "../portal/PortalRouteGuard";
-import { FuelPlannerHomePage } from "../pages/fuel/FuelPlannerHome";
+import { FuelPlannerHomePage, type FuelTabId } from "../pages/fuel/FuelPlannerHome";
 import { BankingHomePage } from "../pages/banking/BankingHome";
 import { TransfersListPage } from "../pages/banking/TransfersListPage";
 import { BankingObligationReconcilePage } from "../pages/banking/BankingObligationReconcilePage";
@@ -419,6 +419,10 @@ type FactoringTabId =
 
 function FactoringTabRoute({ tabId }: { tabId: FactoringTabId }) {
   return <FactoringHomePage initialTab={tabId} />;
+}
+
+function FuelTabRoute({ tabId }: { tabId: FuelTabId }) {
+  return <FuelPlannerHomePage initialTab={tabId} />;
 }
 
 function DispatchLoadsRoute() {
@@ -955,7 +959,63 @@ export const ROUTES = React.Children.toArray(
           path="/fuel"
           element={
             <ProtectedRoute>
-              <FuelPlannerHomePage />
+              <FuelTabRoute tabId="home" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/planner"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="planner" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/inbox"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="relay_inbox" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/settings"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="settings" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/expense-mapping"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="expense_mapping" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/history"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="history" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/loves-prices"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="loves_prices" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/compliance"
+          element={
+            <ProtectedRoute>
+              <FuelTabRoute tabId="compliance" />
             </ProtectedRoute>
           }
         />
@@ -2952,9 +3012,6 @@ export const ROUTES = React.Children.toArray(
           }
         />
         {[
-          "/fuel/planner",
-          "/fuel/settings",
-          "/fuel/inbox",
           "/safety/accidents-incidents",
         ].map((path) => (
           <Route
