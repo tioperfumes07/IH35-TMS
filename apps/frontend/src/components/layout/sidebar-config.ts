@@ -193,7 +193,6 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
     case "fuel":
       return [
         { label: "Fuel Planner", to: "/fuel" },
-        { label: "Fraud Alerts", to: "/fuel/fraud-alerts" },
       ];
     case "safety":
       return [
