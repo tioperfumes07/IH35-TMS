@@ -21,6 +21,7 @@ export function IncomingTransferRequest({ operatingCompanyId, driverUuid, fetchJ
   const [evidenceUuid, setEvidenceUuid] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Driver Today pending queries: direction: "outbound" (drop) · direction: "inbound" (pickup)
   const pendingQuery = (direction: "outbound" | "inbound") =>
     `/api/v1/dispatch/equipment-transfers/pending?operating_company_id=${operatingCompanyId}&driver=${driverUuid}&direction=${direction}`;
 
