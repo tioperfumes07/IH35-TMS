@@ -1,0 +1,34 @@
+{
+  "block_id": "TIER15-MECHANIC-SHOP",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "CROSS-BORDER",
+  "task": "Block 15 — Internal Mechanic Shop: internal_labor_log, parts decrement, JE posting",
+  "branch": "feat/tier15-mechanic-shop",
+  "lane": "A",
+  "lane_position": "A15",
+  "stub_on_main": false,
+  "prior_state": "PARTIAL — maintenance.parts_inventory already exists; maintenance.internal_labor_log is net-new",
+  "details": [
+    "Migration 202606080935_block15_mechanic_shop.sql: creates maintenance.internal_labor_log with computed hours/labor_cost columns, RLS, ih35_app grants",
+    "Reorder point trigger on maintenance.parts_inventory: alerts to audit_log when qty falls to/below reorder_point",
+    "internal-labor.routes.ts: start/list/close endpoints",
+    "Close endpoint: sets end_time, decrements parts inventory, posts balanced JE to accounting.journal_entries",
+    "Productivity report: hours billed per mechanic per week",
+    "Corrected spec: finance.journal_entries → actual table is accounting.journal_entries"
+  ],
+  "allowed_files": [
+    ".block-ready/TIER15-MECHANIC-SHOP.json",
+    "db/migrations/202606080935_block15_mechanic_shop.sql",
+    "apps/backend/src/maintenance/internal-labor.routes.ts"
+  ],
+  "db_required": true,
+  "guard_required": false,
+  "acceptance": {
+    "schema_migrated": true,
+    "internal_wo_close_creates_je": true,
+    "inventory_decrements": true,
+    "reorder_alerts_trigger": true,
+    "productivity_report": true
+  }
+}
