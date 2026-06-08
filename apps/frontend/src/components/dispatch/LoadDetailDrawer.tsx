@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { updateLoad, useCancelLoad, useLoad, useLoadAudit } from "../../api/loads";
+import { type LoadDetail, updateLoad, useCancelLoad, useLoad, useLoadAudit } from "../../api/loads";
 import { createInvoiceFromLoad, listInvoices } from "../../api/accounting";
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory } from "../../api/dispatch";
 import { resolveApiUrl } from "../../api/client";
@@ -20,6 +20,10 @@ import { MultiStopEditor } from "../../pages/dispatch/MultiStopEditor";
 import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail } from "../../pages/dispatch/LoadTemplateLibrary";
 import { AbandonmentReportModal } from "../../pages/loads/AbandonmentReportModal";
 import { PreSettlementPanel } from "./PreSettlementPanel";
+import { CustomsTab } from "./drawer-tabs/CustomsTab";
+import { FactoringTab } from "./drawer-tabs/FactoringTab";
+import { FinesDeductionsCard } from "./drawer-tabs/FinesDeductionsCard";
+import { SettlementProfitabilityCard } from "./drawer-tabs/SettlementProfitabilityCard";
 
 type Props = {
   loadId: string | null;
@@ -33,13 +37,23 @@ const tabs = [
   "Stops",
   "Driver Pay",
   "Documents",
+  "Factoring",
+  "Customs",
   "Settlement",
   "Geofence Timeline",
   "Assignment History",
-  "Audit History",
+  "Audit",
   "Pre-Settlement",
 ] as const;
 type DrawerTab = (typeof tabs)[number];
+
+function loadHasCrossBorder(load: LoadDetail): boolean {
+  return (load.stops ?? []).some(
+    (stop) =>
+      stop.stop_type === "border" ||
+      Boolean(stop.country && !["US", "USA", "United States"].includes(String(stop.country)))
+  );
+}
 const FACTORING_PACKAGE_META_PREFIX = "IH35_FACTORING_PACKAGE_V1::";
 
 type FactoringPackageMeta = {
@@ -147,6 +161,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
     enabled: Boolean(linkedInvoice?.id && activeTab === "Documents"),
   });
   const isPackageEligible = Boolean(load && ["delivered", "invoiced", "paid", "closed"].includes(load.status));
+  const showCustomsTab = Boolean(load && loadHasCrossBorder(load));
+  const visibleTabs = useMemo(
+    () => tabs.filter((tab) => tab !== "Customs" || showCustomsTab),
+    [showCustomsTab]
+  );
+  useEffect(() => {
+    if (activeTab === "Customs" && !showCustomsTab) {
+      setActiveTab("Overview");
+    }
+  }, [activeTab, showCustomsTab]);
 
   async function persistPackageMeta(nextMeta: FactoringPackageMeta) {
     if (!loadId) return;
@@ -206,7 +230,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
             </Button>
           </div>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {tabs.map((tab) => (
+            {visibleTabs.map((tab) => (
               <Button key={tab} type="button" size="sm" variant={activeTab === tab ? "primary" : "secondary"} onClick={() => setActiveTab(tab)} style={{ whiteSpace: "nowrap" }}>
                 {tab}
               </Button>
@@ -522,7 +546,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
             )
           ) : null}
 
-          {activeTab === "Audit History" ? (
+          {activeTab === "Audit" ? (
             <div className="space-y-2">
               {auditQuery.isLoading ? <div className="text-sm text-gray-500">Loading audit history...</div> : null}
               {(auditQuery.data ?? []).map((event) => (
@@ -578,6 +602,30 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, onClose }: Props) {
             ) : (
               <div className="text-sm text-gray-500">No driver assigned to this load.</div>
             )
+          ) : null}
+
+          {/* Block 7 — Factoring packet tab (stub; Lane B fills content) */}
+          {activeTab === "Factoring" && load ? (
+            <FactoringTab loadId={load.id} operatingCompanyId={load.operating_company_id} canEdit={canEdit} />
+          ) : null}
+
+          {/* Block 8 — Customs/border compliance tab (stub; hidden for domestic loads) */}
+          {activeTab === "Customs" && load && showCustomsTab ? (
+            <CustomsTab loadId={load.id} operatingCompanyId={load.operating_company_id} canEdit={canEdit} />
+          ) : null}
+
+          {/* Block 9 — Settlement profitability card (stub; Lane B fills content) */}
+          {activeTab === "Settlement" && load ? (
+            <div className="mt-3">
+              <SettlementProfitabilityCard loadId={load.id} operatingCompanyId={load.operating_company_id} canEdit={canEdit} />
+            </div>
+          ) : null}
+
+          {/* Block 13 — Fines & deductions confirm/defer card (stub; Lane A Block 13 fills content) */}
+          {activeTab === "Settlement" && load ? (
+            <div className="mt-3">
+              <FinesDeductionsCard loadId={load.id} operatingCompanyId={load.operating_company_id} canEdit={canEdit} />
+            </div>
           ) : null}
         </div>
 

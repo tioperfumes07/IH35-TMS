@@ -1,0 +1,42 @@
+{
+  "block_id": "DISP-DRAWER-WIRE",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DISPATCH",
+  "task": "Block 12 — Wire every dispatch surface to LoadDetailDrawer via ?load_id= + mount 4 stub tabs",
+  "branch": "feat/disp-drawer-wire",
+  "lane": "A",
+  "lane_position": "A1-FIRST",
+  "details": [
+    "LoadDetailDrawer.tsx: add Factoring, Customs (border-only), SettlementProfitabilityCard, FinesDeductionsCard stub tabs.",
+    "Customs tab conditionally shown only when load has a border stop (loadHasCrossBorder).",
+    "Stub tab components created in drawer-tabs/ — empty shells for Lane B Blocks 7/8/9 and Lane A Block 13.",
+    "SettlementProfitabilityCard and FinesDeductionsCard mounted inside Settlement tab pane.",
+    "Surface wiring: AtRiskQueuePage, LateArrivalsPage, DetentionBoardPage updated from ?view=loads&load= to ?load_id=.",
+    "AssignmentHistoryPage load column now links to /dispatch?load_id=.",
+    "InTransitIssuesPage load column now links to /dispatch?load_id=.",
+    "PlannerCalendarPage PlannerLoadChip onClick navigates to /dispatch?load_id=.",
+    "Kanban + List + Table + DispatchBoard already wired via ?load_id= (no change needed)."
+  ],
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready/DISP-DRAWER-WIRE.json",
+    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+    "apps/frontend/src/components/dispatch/drawer-tabs/FactoringTab.tsx",
+    "apps/frontend/src/components/dispatch/drawer-tabs/CustomsTab.tsx",
+    "apps/frontend/src/components/dispatch/drawer-tabs/SettlementProfitabilityCard.tsx",
+    "apps/frontend/src/components/dispatch/drawer-tabs/FinesDeductionsCard.tsx",
+    "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
+    "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx",
+    "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx",
+    "apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx",
+    "apps/frontend/src/pages/dispatch/InTransitIssuesPage.tsx",
+    "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx",
+    "apps/frontend/src/lib/loadProfit.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "gate_for": ["DISP-OVERVIEW", "DISP-QUEUES-NAV", "DISP-KANBAN", "DISP-ROUND-TRIPS", "DISP-DENSITY-NAV"]
+}

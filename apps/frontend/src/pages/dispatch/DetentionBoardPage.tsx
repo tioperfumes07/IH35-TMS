@@ -58,7 +58,7 @@ function EventRow({
   return (
     <tr className="border-b last:border-b-0">
       <td className="px-3 py-2 font-medium">
-        <Link to={`/dispatch?view=loads&load=${event.load_id}`} className="text-sky-700 hover:underline">
+        <Link to={`/dispatch?load_id=${encodeURIComponent(event.load_id)}`} className="text-sky-700 hover:underline">
           {event.load_number}
         </Link>
       </td>
