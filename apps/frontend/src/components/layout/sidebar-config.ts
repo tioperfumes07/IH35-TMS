@@ -107,7 +107,6 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   safety: { id: "safety", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
   insurance: { id: "insurance", label: "INSURANCE", Icon: ShieldCheck, to: "/insurance" },
   accounting: { id: "accounting", label: "ACCTG", Icon: Calculator, to: "/accounting" },
-  insurance: { id: "insurance", label: "INSURANCE", Icon: Shield, to: "/safety/insurance" },
   bank: { id: "bank", label: "BANK", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
   factoring: { id: "factoring", label: "FACT", Icon: Calculator, to: "/accounting/factoring" },
   customers: { id: "customers", label: "CUSTOMERS", Icon: Building2, to: "/customers", dataTour: "tour-nav-customers" },
