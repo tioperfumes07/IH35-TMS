@@ -42,6 +42,7 @@ import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
 import { CustomerEditModal, type CustomerEditFormValues } from "../components/customers/CustomerEditModal";
 import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificationModal";
+import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetentionEditor";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
@@ -456,6 +457,7 @@ export function CustomerDetailPage() {
   const canWriteQuality = user?.role === "Owner";
   const canEditQualityNotes = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canEditCreditLimit = user?.role === "Owner" || user?.role === "Administrator";
+  const canEditFreeTimeDetention = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canViewDocuments = ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant"].includes(user?.role ?? "");
   const canVerifyFmcsa = user?.role === "Owner" || user?.role === "Administrator";
   const canUnapplyCustomerPayment = user?.role === "Owner" || user?.role === "Administrator";
@@ -1551,6 +1553,9 @@ export function CustomerDetailPage() {
               message={formatBillingSummaryError(billingSummaryQuery.error)}
               onRetry={() => void billingSummaryQuery.refetch()}
             />
+          ) : null}
+          {operatingCompanyId ? (
+            <FreeTimeDetentionEditor customerUuid={id} operatingCompanyId={operatingCompanyId} canEdit={canEditFreeTimeDetention} />
           ) : null}
         <div className="grid gap-3 md:grid-cols-3">
           <DataPanel title="Factoring Config">
