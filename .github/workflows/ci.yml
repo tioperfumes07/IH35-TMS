@@ -144,6 +144,9 @@ jobs:
       - name: Verify USMCA seed completeness guard
         run: npm run verify:usmca-seed-completeness
 
+      - name: Verify COA canonical (catalogs.accounts) + QBO link coverage
+        run: npm run verify:coa-canonical
+
       - name: Verify launch toggle audit trail guard
         run: npm run verify:launch-toggle-audit-trail
       - name: verify:cc-payment-posts-to-qbo
