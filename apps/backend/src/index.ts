@@ -377,6 +377,8 @@ import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-ar
 import { initializeLateArrivalAggregatorWorker } from "./jobs/late-arrival-aggregator-worker.js";
 import { initializeDriverScoringAggregatorWorker } from "./jobs/driver-scoring-aggregator-worker.js";
 import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
+import { registerCap14CargoSensorRoutes } from "./integrations/samsara/cap-14-cargo-sensors/routes.js";
+import { initializeCap14CargoSensorWorker, stopCap14CargoSensorWorker } from "./jobs/cap-14-cargo-sensor-worker.js";
 import { registerDispatchAuthGateRoutes } from "./dispatch/auth-gates/routes.js";
 import { registerAnomalyDetectionRoutes } from "./safety/anomaly/routes.js";
 import { initializeAnomalyDetectorWorker } from "./jobs/anomaly-detector-worker.js";
@@ -435,6 +437,7 @@ async function shutdown(signal: string) {
     stopQboInboundSyncCron();
     stopDailyTaskAlertsCron();
     stopTodaysAttentionWorker();
+    stopCap14CargoSensorWorker();
     stopAdminJobsWorker();
     stopBookingGapAggregatorWorker();
   } catch (error) {
@@ -643,6 +646,7 @@ async function main() {
   await registerLoadStopExtraRateRoutes(app);
   await registerLateArrivalAnalyticsRoutes(app);
   await registerPreDispatchValidationRoutes(app);
+  await registerCap14CargoSensorRoutes(app);
   await registerDispatchAuthGateRoutes(app);
   await registerAnomalyDetectionRoutes(app);
   await registerDispatchDetentionApprovalRoutes(app);
@@ -980,6 +984,13 @@ async function main() {
     app.log.info("[STARTUP] auto-status-switch-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] auto-status-switch-worker failed");
+  }
+
+  try {
+    initializeCap14CargoSensorWorker(app);
+    app.log.info("[STARTUP] cap-14-cargo-sensor-worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] cap-14-cargo-sensor-worker failed");
   }
 
   try {

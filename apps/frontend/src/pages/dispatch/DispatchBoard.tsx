@@ -21,6 +21,7 @@ import { InTransitEtaChip } from "../../components/dispatch/InTransitEtaChip";
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
 import { OnTimePredictionColumn } from "../../components/dispatch/LiveEtaColumns";
+import { CargoTempBadge, isReeferCommodity } from "../../components/dispatch/CargoTempBadge";
 import { LoadLivePositionCell } from "../../components/dispatch/LoadLivePositionCell";
 import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
 
@@ -524,6 +525,17 @@ export function DispatchBoard({
     { key: "customer", header: "Customer", cell: (load) => load.customer_name ?? "—" },
     { key: "wo", header: "WO #", cell: (load) => load.customer_wo_number ?? "—" },
     { key: "commodity", header: "Commodity", cell: (load) => load.commodity ?? "—" },
+    {
+      key: "cargo_temp",
+      header: "Cargo",
+      cell: (load) => (
+        <CargoTempBadge
+          loadId={load.id}
+          operatingCompanyId={load.operating_company_id}
+          reefer={isReeferCommodity(load.commodity)}
+        />
+      ),
+    },
     { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
     { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code) },
     { key: "flag", header: "Flag", cell: (load) => FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪" },
