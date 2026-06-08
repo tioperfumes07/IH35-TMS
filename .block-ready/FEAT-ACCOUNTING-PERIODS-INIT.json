@@ -14,5 +14,5 @@
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": true
+  "guard_required": false
 }
