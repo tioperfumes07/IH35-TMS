@@ -36,7 +36,7 @@ export function MultiStopExtraRateEditor({ control, register, stopIndex }: Props
       <div className="space-y-2">
         {fields.map((field, rowIndex) => (
           <div key={field.id} className="grid grid-cols-1 gap-2 rounded border border-gray-200 bg-white p-2 md:grid-cols-[1.2fr_1fr_2fr_auto]">
-            <SelectCombobox {...register(`stops.${stopIndex}.extra_rates.${rowIndex}.rate_type`)} className="h-7 text-xs">
+            <SelectCombobox {...register(`stops.${stopIndex}.extra_rates.${rowIndex}.rate_type`)} className="h-12 text-sm">
               <option value="extra_stop_fee">Extra stop fee</option>
               <option value="lumper">Lumper</option>
               <option value="detention">Detention</option>
@@ -49,17 +49,17 @@ export function MultiStopExtraRateEditor({ control, register, stopIndex }: Props
               min={0}
               step={1}
               {...register(`stops.${stopIndex}.extra_rates.${rowIndex}.amount_cents`, { valueAsNumber: true })}
-              className="h-7 rounded border border-gray-300 px-2 text-xs"
+              className="h-12 rounded border border-gray-300 px-3 text-sm"
               placeholder="Amount cents"
             />
             <input
               {...register(`stops.${stopIndex}.extra_rates.${rowIndex}.description`)}
-              className="h-7 rounded border border-gray-300 px-2 text-xs"
+              className="h-12 rounded border border-gray-300 px-3 text-sm"
               placeholder="Description"
             />
             <button
               type="button"
-              className="text-[10px] font-semibold text-red-600 hover:underline"
+              className="h-12 rounded border border-red-200 px-3 text-xs font-semibold text-red-600 hover:bg-red-50"
               onClick={() => remove(rowIndex)}
             >
               Remove
