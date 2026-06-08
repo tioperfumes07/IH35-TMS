@@ -1,6 +1,6 @@
 import { MapView } from "../pages/dispatch/MapView";
 import React from "react";
-import { Navigate, Route, useParams } from "react-router-dom";
+import { Navigate, Route, useLocation, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -218,6 +218,7 @@ import { CashForecastPage } from "../pages/accounting/CashForecastPage";
 import { PeriodComparisonPage } from "../pages/accounting/PeriodComparisonPage";
 import { QBOSyncDriftDashboard } from "../pages/accounting/QBOSyncDriftDashboard";
 import { COLLECTIONS_ROUTE } from "./collections.routes";
+import { resolveUnderscoreRedirectPath } from "./url-canonicalize";
 import { ForensicReviewPage } from "../pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "../pages/admin/ActivityLogPage";
 import AuditEventsList from "../pages/audit/AuditEventsList";
@@ -456,6 +457,44 @@ function DispatchLoadDetailRedirect() {
   const { id } = useParams<{ id: string }>();
   if (!id) return <Navigate to="/dispatch?view=loads" replace />;
   return <Navigate to={`/dispatch?load_id=${encodeURIComponent(id)}`} replace />;
+}
+
+/** Legacy bookmarked underscore paths → hyphen canonical routes (Block A10). */
+const UNDERSCORE_LEGACY_REDIRECTS: ReadonlyArray<readonly [string, string]> = [
+  ["/lists/driver/pay_rate_templates", "/lists/driver/pay-rate-templates"],
+  ["/lists/dispatch/load_types", "/lists/dispatch/load-types"],
+  ["/lists/dispatch/detention_reasons", "/lists/dispatch/detention-reasons"],
+  ["/lists/dispatch/pickup_time_types", "/lists/dispatch/pickup-time-types"],
+  ["/lists/dispatch/additional_charges", "/lists/dispatch/additional-charges"],
+];
+
+function UnderscoreLegacyRedirect({ from, to }: { from: string; to: string }) {
+  void from;
+  return <Navigate to={to} replace />;
+}
+
+function ListsDomainRoute() {
+  const { domain } = useParams();
+  const location = useLocation();
+  if (domain) {
+    const redirectPath = resolveUnderscoreRedirectPath(`/lists/${domain}`);
+    if (redirectPath) {
+      return <Navigate to={`${redirectPath}${location.search}${location.hash}`} replace />;
+    }
+  }
+  return <ComingSoonPage />;
+}
+
+function ListsCatalogKeyRoute() {
+  const { domain, catalogKey } = useParams();
+  const location = useLocation();
+  if (domain && catalogKey) {
+    const redirectPath = resolveUnderscoreRedirectPath(`/lists/${domain}/${catalogKey}`);
+    if (redirectPath) {
+      return <Navigate to={`${redirectPath}${location.search}${location.hash}`} replace />;
+    }
+  }
+  return <ComingSoonPage />;
 }
 
 const LOCKED_SAFETY_TAB_PATHS = ["/safety/driver-files"];
@@ -2109,11 +2148,22 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {UNDERSCORE_LEGACY_REDIRECTS.map(([from, to]) => (
+          <Route
+            key={from}
+            path={from}
+            element={
+              <ProtectedRoute>
+                <UnderscoreLegacyRedirect from={from} to={to} />
+              </ProtectedRoute>
+            }
+          />
+        ))}
         <Route
           path="/lists/:domain"
           element={
             <ProtectedRoute>
-              <ComingSoonPage />
+              <ListsDomainRoute />
             </ProtectedRoute>
           }
         />
@@ -2121,7 +2171,7 @@ export const ROUTES = React.Children.toArray(
           path="/lists/:domain/:catalogKey"
           element={
             <ProtectedRoute>
-              <ComingSoonPage />
+              <ListsCatalogKeyRoute />
             </ProtectedRoute>
           }
         />

@@ -1,0 +1,15 @@
+{
+  "block_id": "FIX-URL-NORMALIZE",
+  "branch": "fix/url-normalize",
+  "phase": "ROUTING",
+  "task": "Block H — underscore URL redirect to hyphen canonical paths",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/FIX-URL-NORMALIZE.json",
+    "apps/frontend/src/routes/manifest.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
