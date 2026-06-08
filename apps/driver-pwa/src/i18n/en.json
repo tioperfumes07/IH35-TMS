@@ -551,5 +551,35 @@
   "storage": {
     "itp_restore_reupload": "Storage was reset — please re-upload this document",
     "itp_stale_warning": "Offline data may be cleared soon. Open the app daily to keep your upload queue."
+  },
+  "dispatch": {
+    "delivery_title": "Delivery Stop {{sequence}}",
+    "pickup_title": "Pickup Stop {{sequence}}",
+    "status_label": "Status: {{status}} · {{geofence}}",
+    "open_in_maps": "Open in Maps",
+    "hours_label": "Hours: {{hours}}",
+    "window_label": "Window: {{start}} – {{end}}",
+    "arrived_at": "Arrived: {{time}}",
+    "departed_at": "Departed: {{time}}",
+    "docs_label": "Docs: {{docs}}",
+    "arrived_btn": "Record Arrival",
+    "departed_btn": "Record Departure",
+    "upload_doc_btn": "Upload Document",
+    "upload_title": "Upload Document",
+    "upload_hint": "Tap to select or take a photo",
+    "choose_photo": "Choose Photo",
+    "uploading": "Uploading...",
+    "upload_queued": "Queued for upload",
+    "upload_failed": "Upload failed",
+    "arrival_recorded": "Arrival recorded",
+    "departure_recorded": "Departure recorded",
+    "document_attached": "Document attached",
+    "document_attach_failed": "Failed to attach document",
+    "action_failed": "Action failed. Please try again.",
+    "screen_loading": "Loading dispatch...",
+    "screen_not_found": "Load not found"
+  },
+  "photo": {
+    "angle_label": "Angle"
   }
 }
