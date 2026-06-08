@@ -73,6 +73,13 @@ export const RUNBOOKS: RunbookLink[] = [
     description: "Purchase, title/DOT, insurance, Samsara, PM schedule, assignment.",
     docPath: "docs/runbooks/UNIT-ACQUISITION-WORKFLOW.md",
   },
+  {
+    slug: "operational-tuning-catalog",
+    title: "Operational Tuning Catalog",
+    frequency: "Reference",
+    description: "All tunable cron, rate limit, timeout, cache, batch, and alert parameters.",
+    docPath: "docs/runbooks/operational-tuning-catalog.md",
+  },
 ];
 
 export function RunbooksIndex() {
