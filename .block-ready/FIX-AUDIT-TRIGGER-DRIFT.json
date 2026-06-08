@@ -1,0 +1,72 @@
+{
+  "block": "FIX-AUDIT-TRIGGER-DRIFT",
+  "migration": "202606080030_audit_trigger_drift_remediation.sql",
+  "description": "Re-attach 10 missing audit triggers in production Neon",
+  "created_at": "2026-06-08T00:30:00Z",
+  "triggers": [
+    {
+      "trigger": "tg_audit_abandonment_chargebacks",
+      "table": "driver_finance.abandonment_chargebacks",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0158_abandonment_and_wo_time_tracking.sql"
+    },
+    {
+      "trigger": "tg_audit_wo_time_entries",
+      "table": "maintenance.wo_time_entries",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0158_abandonment_and_wo_time_tracking.sql"
+    },
+    {
+      "trigger": "tg_audit_settlement_disputes",
+      "table": "driver_finance.settlement_disputes",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0156_settlement_disputes_and_driver_teams.sql"
+    },
+    {
+      "trigger": "tg_audit_sync_runs",
+      "table": "qbo.sync_runs",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0162_p6_t11196_qbo_sync_runs_and_bill_payment_mappings.sql"
+    },
+    {
+      "trigger": "tg_audit_bill_payment_mappings",
+      "table": "qbo.bill_payment_mappings",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0162_p6_t11196_qbo_sync_runs_and_bill_payment_mappings.sql"
+    },
+    {
+      "trigger": "tg_audit_scheduled_reports",
+      "table": "reporting.scheduled_reports",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0164_scheduled_reports.sql"
+    },
+    {
+      "trigger": "tg_audit_scheduled_report_runs",
+      "table": "reporting.scheduled_report_runs",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0164_scheduled_reports.sql"
+    },
+    {
+      "trigger": "tg_audit_daily_tasks",
+      "table": "ops.daily_tasks",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0192_ops_daily_tasks_module.sql"
+    },
+    {
+      "trigger": "tg_audit_safety_events",
+      "table": "safety.safety_events",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0261_safety_events.sql"
+    },
+    {
+      "trigger": "tg_audit_safety_event_notes",
+      "table": "safety.safety_event_notes",
+      "function": "audit.tg_audit_row()",
+      "source_migration": "0261_safety_events.sql"
+    }
+  ],
+  "grants_defensive": true,
+  "idempotent": true,
+  "status": "ready",
+  "merge_gate": "HOLD — awaiting GO from Jorge"
+}

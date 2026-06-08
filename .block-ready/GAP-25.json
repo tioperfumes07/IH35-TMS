@@ -1,0 +1,40 @@
+{
+  "block_id": "GAP-25",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "GAP-MEDIUM",
+  "task": "Active Driver Set 15-min Recompute Cache",
+  "spec": "docs/specs/gap-25-active-driver-set.md",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap25",
+  "branch": "feature/gap-25-active-driver-set",
+  "base_sha": "8db0e18d5",
+  "preview_provided": true,
+  "details": [
+    "ADDITIVE: integrations.active_driver_set_cache table + recompute worker + query service.",
+    "Worker runs every 15min for all Samsara-enabled OCIs, retains 30 snapshots per OCI.",
+    "SafetyHome.tsx filter dropdown (7d/14d/30d/All) + freshness indicator wired to cached API.",
+    "No financial code touched; RLS scoped on operating_company_id; ih35_app role only.",
+    "Hold squash-merge for GO-25 from Jorge."
+  ],
+  "allowed_files": [
+    ".block-ready/GAP-25.json",
+    ".block-ready/GAP-25-ACTIVE-DRIVER-SET.json",
+    "db/migrations/202606080001_active_driver_set_cache.sql",
+    "apps/backend/src/integrations/samsara/active-driver-set/recompute.service.ts",
+    "apps/backend/src/integrations/samsara/active-driver-set/query.service.ts",
+    "apps/backend/src/integrations/samsara/active-driver-set/routes.ts",
+    "apps/backend/src/integrations/samsara/active-driver-set/__tests__/recompute.test.ts",
+    "apps/backend/src/integrations/samsara/active-driver-set/__tests__/query.test.ts",
+    "apps/backend/src/jobs/active-driver-set-recompute.ts",
+    "apps/frontend/src/pages/safety/SafetyHome.tsx",
+    "apps/backend/src/index.ts",
+    "scripts/verify-active-driver-set.mjs",
+    "docs/specs/gap-25-active-driver-set.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": ["verify:active-driver-set"],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

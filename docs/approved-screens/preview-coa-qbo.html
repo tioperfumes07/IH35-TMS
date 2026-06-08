@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>IH35-TMS — Chart of Accounts (QBO parity preview)</title>
+<style>
+  :root{--bd:#e3e3df;--bd2:#cfcfc8;--mut:#6b6b66;--info:#185fa5;--infobg:#e6f1fb;--dng:#a32d2d;--ok:#3b6d11;--bg:#fff;--bg2:#f6f5f1;}
+  *{box-sizing:border-box;} body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a18;background:var(--bg2);font-size:13px;}
+  .screen{position:relative;min-height:100vh;background:var(--bg);}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--bd);flex-wrap:wrap;}
+  .ttl{font-size:18px;font-weight:500;} .mut{color:var(--mut);font-size:12px;}
+  button{height:32px;border:1px solid var(--bd2);background:#fff;border-radius:8px;padding:0 10px;cursor:pointer;font-size:13px;}
+  button:hover{background:var(--bg2);} button:disabled{opacity:.45;cursor:default;}
+  input,select,textarea{height:32px;border:1px solid var(--bd2);border-radius:8px;padding:0 8px;font-size:13px;background:#fff;}
+  textarea{height:auto;padding:6px 8px;}
+  table{border-collapse:collapse;font-size:12px;table-layout:fixed;}
+  th,td{padding:9px 10px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid var(--bd);}
+  th{color:var(--mut);position:relative;} thead tr{border-bottom:1px solid var(--bd);}
+  .lbl{cursor:pointer;user-select:none;} .rsz{position:absolute;top:0;right:0;width:6px;height:100%;cursor:col-resize;}
+  .pill{font-size:10px;padding:1px 6px;border-radius:10px;margin-left:6px;}
+  .pop{position:absolute;background:#fff;border:1px solid var(--bd2);border-radius:8px;padding:12px;z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.08);}
+  a.act{color:var(--info);cursor:pointer;}
+  .seg{display:flex;gap:4px;} .seg button{flex:1;height:26px;}
+  .sel{border:2px solid var(--info)!important;}
+  .ovl{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:40;display:none;}
+  .drawer{position:absolute;top:0;right:0;height:100%;width:576px;max-width:96%;background:#fff;border-left:1px solid var(--bd2);padding:18px 20px;overflow-y:auto;}
+  .fld{font-size:13px;font-weight:500;} .req{color:var(--dng);}
+  .foot{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--bd);color:var(--mut);font-size:12px;}
+</style></head>
+<body>
+<div class="screen" id="coa">
+  <div class="bar">
+    <div style="display:flex;align-items:center;gap:10px;"><span class="ttl">Chart of accounts</span><span id="selinfo" class="mut"></span></div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <input id="flt" placeholder="Filter by name or number" style="width:170px;"/>
+      <div style="position:relative;"><button id="viewBtn">View: All ▾</button>
+        <div id="viewPop" class="pop" style="display:none;top:36px;left:0;width:180px;">
+          <div class="mut" style="margin-bottom:4px;">Show accounts (multi-select)</div>
+          <label style="display:flex;gap:6px;"><input type="checkbox" class="vf" value="BAL" checked/> Balance sheet</label>
+          <label style="display:flex;gap:6px;"><input type="checkbox" class="vf" value="P&L" checked/> Profit &amp; loss</label>
+        </div></div>
+      <button id="btnNew">+ Create account</button>
+      <button id="btnBatch" disabled>Batch actions ▾</button>
+      <button id="btnBedit" disabled>Batch edit</button>
+      <button title="Export">Export</button><button title="Print">Print</button>
+      <button id="btnGear" title="Settings">⚙</button>
+    </div>
+  </div>
+  <div style="overflow-x:auto;"><table id="tbl"><colgroup id="cg"></colgroup><thead><tr id="hr"></tr></thead><tbody id="tb"></tbody></table></div>
+  <div class="foot"><span id="pginfo">Showing 1–9 of 198</span><span style="display:flex;gap:6px;align-items:center;"><button>Previous</button><span>1 of <span id="np">22</span></span><button>Next</button></span></div>
+
+  <div id="gear" class="pop" style="display:none;top:52px;right:16px;width:250px;">
+    <div style="font-weight:500;margin-bottom:6px;">Columns</div><div id="cols" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-bottom:10px;"></div>
+    <div style="font-weight:500;border-top:1px solid var(--bd);padding-top:8px;">Other</div>
+    <label style="display:flex;gap:6px;margin:4px 0;"><input type="checkbox" id="incInactive"/> Include inactive</label>
+    <label style="display:flex;gap:6px;margin:4px 0;"><input type="checkbox" id="showBadges" checked/> Show account type badges</label>
+    <div class="seg" style="margin:6px 0;"><button class="sel">All</button><button>Active</button><button>Inactive</button></div>
+    <div style="font-weight:500;border-top:1px solid var(--bd);padding-top:8px;margin-top:6px;">Page size</div><div id="psize" class="seg"></div>
+    <div style="font-weight:500;border-top:1px solid var(--bd);padding-top:8px;margin-top:10px;">Table density</div><div id="dens" class="seg"></div>
+  </div>
+
+  <div id="ovl" class="ovl"><div class="drawer">
+    <div style="display:flex;justify-content:space-between;align-items:center;"><span class="ttl" id="dttl">New account</span><button id="dClose">✕</button></div>
+    <p class="mut" style="margin:2px 0 14px;">Right-side drawer, 576px (~30% of screen).</p>
+    <label class="fld">Account name <span class="req">*</span></label><br/><input id="f_name" style="width:100%;margin:4px 0 12px;"/>
+    <label class="fld">Account number</label><br/><input style="width:100%;margin:4px 0 12px;"/>
+    <label class="fld">Account type <span class="req">*</span></label><br/><select id="atype" style="width:100%;margin:4px 0 12px;"></select>
+    <label class="fld">Detail type <span class="req">*</span></label><br/><select id="dtype" style="width:100%;margin:4px 0 12px;"></select>
+    <label style="display:flex;gap:8px;align-items:center;margin-bottom:8px;"><input type="checkbox" id="subchk"/> Make this a subaccount</label>
+    <div id="subwrap" style="display:none;margin-bottom:12px;"><label class="fld">Parent account</label><br/><select style="width:100%;margin-top:4px;"><option>Bank</option><option>Other Current Assets</option><option>Expenses</option><option>Income</option></select></div>
+    <label class="fld">Description</label><br/><textarea style="width:100%;margin:4px 0 12px;min-height:56px;"></textarea>
+    <div style="display:flex;gap:10px;margin-bottom:12px;"><div style="flex:1;"><label class="fld">Beginning balance</label><br/><input id="f_bb" placeholder="0.00" style="width:100%;margin-top:4px;"/></div><div style="flex:1;"><label class="fld">As of</label><br/><input type="date" style="width:100%;margin-top:4px;"/></div></div>
+    <p class="mut" style="margin:-4px 0 12px;">Adjustable later from Edit. Posts via Opening Balance Equity (existing service).</p>
+    <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">Lock account <input type="checkbox"/></label>
+    <label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">Active <input type="checkbox" checked/></label>
+    <div style="display:flex;gap:8px;"><button id="dSave" class="sel" style="flex:1;">Save</button><button id="dCancel" style="flex:1;">Cancel</button></div>
+    <p style="color:var(--info);margin-top:12px;">▸ Video tutorials</p>
+    <p id="saved" style="display:none;color:var(--ok);">✓ Saved (preview — nothing written)</p>
+  </div></div>
+</div>
+<script>
+var COLS=[{k:"sel",label:"",w:34,sort:false},{k:"num",label:"NUMBER",w:90,type:"text"},{k:"name",label:"NAME",w:240,type:"text"},{k:"type",label:"ACCOUNT TYPE",w:180,type:"text"},{k:"detail",label:"DETAIL TYPE",w:180,type:"text"},{k:"qbbal",label:"QUICKBOOKS BALANCE",w:160,type:"num",align:"right"},{k:"bankbal",label:"BANK BALANCE",w:130,type:"num",align:"right"},{k:"action",label:"ACTION",w:120,sort:false}];
+var ROWS=[{num:"1135",name:"BOA-CHECKING-1135",type:"Bank",detail:"Checking",qb:"$147,752.16",bk:"$0.00",cls:"BAL"},{num:"",name:"Petty Cash",type:"Bank",detail:"Cash on hand",qb:"$4,000.00",bk:"",cls:"BAL"},{num:"",name:"Accounts Receivable (A/R)",type:"Accounts receivable (A/R)",detail:"Accounts Receivable (A/R)",qb:"-$398,928.14",bk:"",cls:"BAL"},{num:"",name:"Amex Card-",type:"Credit Card",detail:"Credit Card",qb:"-$35,442.89",bk:"-$34,321.82",cls:"BAL"},{num:"",name:"Accounts Payable (A/P)",type:"Accounts payable (A/P)",detail:"Accounts Payable (A/P)",qb:"$1,435,563.27",bk:"",cls:"BAL"},{num:"",name:"Opening Balance Equity",type:"Equity",detail:"Opening Balance Equity",qb:"-$10,700.00",bk:"",cls:"BAL"},{num:"",name:"Sales of Product Income",type:"Income",detail:"Sales of Product Income",qb:"",bk:"",cls:"P&L"},{num:"",name:"Fuel-Truck-Diesel Expense",type:"Other Expense",detail:"Gas And Fuel",qb:"",bk:"",cls:"P&L"},{num:"",name:"Travel Expenses",type:"Expenses",detail:"Travel",qb:"",bk:"",cls:"P&L"}];
+var DETAIL={"Bank":["Cash on hand","Checking","Money Market","Rents Held in Trust","Savings","Trust account"],"Accounts receivable (A/R)":["Accounts Receivable (A/R)"],"Other Current Assets":["Employee Cash Advances","Inventory","Loans to Others","Prepaid Expenses","Undeposited Funds","Other Current Assets"],"Fixed Assets":["Accumulated Depreciation","Buildings","Furniture & Fixtures","Land","Machinery & Equipment","Vehicles","Other fixed assets"],"Other Assets":["Goodwill","Intangible Assets","Licenses","Security Deposits","Other Long-term Assets"],"Credit Card":["Credit Card"],"Accounts payable (A/P)":["Accounts Payable (A/P)"],"Other Current Liabilities":["Loan Payable","Payroll Tax Payable","Sales Tax Payable","Direct Deposit Payable","Deferred Revenue","Line of Credit","Other Current Liabilities"],"Long Term Liabilities":["Notes Payable","Other Long Term Liabilities","Shareholder Notes Payable"],"Equity":["Opening Balance Equity","Owner's Equity","Retained Earnings","Partner Contributions","Partner Distributions","Common Stock"],"Income":["Sales of Product Income","Service/Fee Income","Discounts/Refunds Given","Unapplied Cash Payment Income"],"Other Income":["Interest Earned","Dividend Income","Other Miscellaneous Income","Tax-Exempt Interest"],"Cost of Goods Sold":["Cost of labor - COS","Equipment Rental - COS","Shipping, Freight & Delivery - COS","Supplies & Materials - COGS","Other Costs of Services - COS"],"Expenses":["Advertising/Promotional","Auto","Bank Charges","Communication","Insurance","Interest Paid","Legal & Professional Fees","Office/General Administrative Expenses","Payroll Expenses","Rent or Lease of Buildings","Repair & Maintenance","Taxes Paid","Travel","Travel Meals","Utilities"],"Other Expense":["Amortization","Depreciation","Gas And Fuel","Parking and Tolls","Penalties & Settlements","Vehicle","Vehicle Insurance","Vehicle Registration","Vehicle Repairs","Wash and Road Services","Other Miscellaneous Expense"]};
+var GROUPS=[["Asset",["Bank","Accounts receivable (A/R)","Other Current Assets","Fixed Assets","Other Assets"]],["Liability",["Credit Card","Accounts payable (A/P)","Other Current Liabilities","Long Term Liabilities"]],["Equity",["Equity"]],["Income",["Income","Other Income"]],["Expense",["Cost of Goods Sold","Expenses","Other Expense"]]];
+var $=function(s){return document.querySelector(s);},pad=9,sortK=null,sortDir=-1,hidden={};
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+function num(s){if(!s)return null;var n=parseFloat(String(s).replace(/[^0-9.\-]/g,""));return isNaN(n)?null:n;}
+function mapKey(k){return k==="qbbal"?"qb":k==="bankbal"?"bk":k;}
+var cg=$("#cg"),hr=$("#hr"),tw=0;COLS.forEach(function(c){tw+=c.w;});$("#tbl").style.width=tw+"px";
+COLS.forEach(function(c){var col=document.createElement("col");col.style.width=c.w+"px";col.dataset.k=c.k;cg.appendChild(col);});
+COLS.forEach(function(c,i){var th=document.createElement("th");if(c.align==="right")th.style.textAlign="right";th.dataset.k=c.k;
+  th.innerHTML=c.k==="sel"?'<input type="checkbox" id="selAll"/>':'<span class="lbl">'+c.label+' <span class="car" style="font-size:10px;"></span></span>';
+  var rz=document.createElement("span");rz.className="rsz";rz.onmousedown=function(e){e.preventDefault();e.stopPropagation();var sx=e.pageX,col=cg.children[i],sw=col.getBoundingClientRect().width;function mm(ev){col.style.width=Math.max(40,sw+(ev.pageX-sx))+"px";}function mu(){document.removeEventListener("mousemove",mm);document.removeEventListener("mouseup",mu);}document.addEventListener("mousemove",mm);document.addEventListener("mouseup",mu);};th.appendChild(rz);
+  if(c.sort!==false)th.querySelector(".lbl").onclick=function(){if(sortK===c.k)sortDir=-sortDir;else{sortK=c.k;sortDir=-1;}render();};hr.appendChild(th);});
+function viewSet(){return [].slice.call(document.querySelectorAll(".vf:checked")).map(function(x){return x.value;});}
+function render(){var q=($("#flt").value||"").toLowerCase(),vs=viewSet();
+  var data=ROWS.filter(function(r){return vs.indexOf(r.cls)>=0 && (!q || r.name.toLowerCase().indexOf(q)>=0 || (r.num||"").toLowerCase().indexOf(q)>=0);});
+  if(sortK){var col=COLS.filter(function(c){return c.k===sortK;})[0];data.sort(function(a,b){var x,y;if(col.type==="num"){x=num(a[mapKey(sortK)]);y=num(b[mapKey(sortK)]);if(x===null)return 1;if(y===null)return -1;return (x-y)*sortDir;}x=(a[mapKey(sortK)]||"").toLowerCase();y=(b[mapKey(sortK)]||"").toLowerCase();return x<y?-sortDir:x>y?sortDir:0;});}
+  document.querySelectorAll(".car").forEach(function(c){c.textContent="";});if(sortK){var th=hr.querySelector('th[data-k="'+sortK+'"]');if(th)th.querySelector(".car").textContent=sortDir===-1?"▼":"▲";}
+  var badge=$("#showBadges").checked,tb=$("#tb");tb.innerHTML="";
+  data.forEach(function(r){var pill='<span class="pill" style="background:'+(r.cls==="BAL"?"var(--infobg);color:var(--info)":"#eee;color:#666")+';">'+r.cls+'</span>';
+    var act=r.cls==="BAL"?'<a class="act">View register</a>':'<a class="act">Run report</a>';
+    var cell={sel:'<input type="checkbox" class="rk"/>',num:esc(r.num),name:'<b style="font-weight:500;">'+esc(r.name)+'</b>',type:esc(r.type)+(badge?pill:""),detail:esc(r.detail),qbbal:esc(r.qb),bankbal:esc(r.bk),action:act};
+    var tr=document.createElement("tr");tr.innerHTML=COLS.map(function(c){return '<td data-col="'+c.k+'" style="'+(c.align==="right"?"text-align:right;":"")+(hidden[c.k]?"display:none;":"")+'padding:'+pad+'px 10px;">'+cell[c.k]+'</td>';}).join("");tb.appendChild(tr);});
+  tb.querySelectorAll(".rk").forEach(function(c){c.onchange=selUpd;});}
+function selUpd(){var n=document.querySelectorAll("#tb .rk:checked").length;$("#selinfo").textContent=n?(n+" selected"):"";$("#btnBatch").disabled=!n;$("#btnBedit").disabled=!n;}
+var colDefs=[["num","Number"],["type","Type"],["detail","Detail type"],["qbbal","QuickBooks balance"],["bankbal","Bank balance"]];
+$("#cols").innerHTML=colDefs.map(function(c){return '<label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" data-k="'+c[0]+'" checked/> '+c[1]+'</label>';}).join("");
+$("#cols").onchange=function(e){var k=e.target.dataset.k;hidden[k]=!e.target.checked;cg.querySelector('col[data-k="'+k+'"]').style.display=e.target.checked?"":"none";hr.querySelector('th[data-k="'+k+'"]').style.display=e.target.checked?"":"none";render();};
+$("#showBadges").onchange=render;
+[50,75,100,200,300].forEach(function(n){var b=document.createElement("button");b.textContent=n;if(n===50)b.className="sel";b.onclick=function(){document.querySelectorAll("#psize button").forEach(function(x){x.className="";});b.className="sel";$("#pginfo").textContent="Showing 1–"+Math.min(n,198)+" of 198";$("#np").textContent=Math.ceil(198/n);};$("#psize").appendChild(b);});
+["Cozy","Compact"].forEach(function(d){var b=document.createElement("button");b.textContent=d;if(d==="Cozy")b.className="sel";b.onclick=function(){pad=d==="Cozy"?9:4;document.querySelectorAll("#dens button").forEach(function(x){x.className="";});b.className="sel";render();};$("#dens").appendChild(b);});
+$("#btnGear").onclick=function(){var g=$("#gear");g.style.display=g.style.display==="none"?"block":"none";};
+$("#viewBtn").onclick=function(){var p=$("#viewPop");p.style.display=p.style.display==="none"?"block":"none";};
+document.querySelectorAll(".vf").forEach(function(c){c.onchange=function(){var v=viewSet();$("#viewBtn").textContent="View: "+(v.length===2?"All":v.length===0?"None":v[0]==="BAL"?"Balance sheet":"P&L")+" ▾";render();};});
+$("#hr").onchange=function(e){if(e.target.id==="selAll"){document.querySelectorAll("#tb .rk").forEach(function(c){c.checked=e.target.checked;});selUpd();}};
+$("#flt").oninput=render;
+function buildAtype(){$("#atype").innerHTML=GROUPS.map(function(g){return '<optgroup label="'+g[0]+'">'+g[1].map(function(t){return '<option>'+t+'</option>';}).join("")+'</optgroup>';}).join("");syncDetail();}
+function syncDetail(){var l=DETAIL[$("#atype").value]||[];$("#dtype").innerHTML=l.map(function(d){return '<option>'+d+'</option>';}).join("");}
+$("#atype").onchange=syncDetail;$("#subchk").onchange=function(){$("#subwrap").style.display=this.checked?"block":"none";};
+$("#btnNew").onclick=function(){buildAtype();$("#saved").style.display="none";$("#ovl").style.display="block";};
+$("#dClose").onclick=$("#dCancel").onclick=function(){$("#ovl").style.display="none";};
+$("#dSave").onclick=function(){$("#saved").style.display="block";setTimeout(function(){$("#ovl").style.display="none";},900);};
+render();
+</script></body></html>

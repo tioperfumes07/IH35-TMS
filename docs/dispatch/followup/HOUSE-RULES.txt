@@ -1,0 +1,34 @@
+IH35-TMS — HOUSE RULES (paste-ready reference; locked)
+Last updated: 2026-06-07
+
+PASTE FORMAT (hard-wired 2026-06-07):
+- EVERY instruction meant for Cursor goes in a copyable code block (textbox) with a TITLE + HEADER line. Never loose prose.
+- Queued / recommended / missing work blocks are delivered as INDIVIDUAL self-contained .txt files in a downloadable .zip — never left half-written in chat.
+
+RESPONSE FORMAT TO JORGE (locked 2026-06-07):
+- Lead with the decision in ONE line: MERGE / DO NOT MERGE / FIX FIRST / FLAG.
+- Then max 3 bullets of why. No play-by-play.
+- Long id-lists / pastes go in a code box at the END.
+
+VERIFICATION (locked):
+- Live read-only verification before ANY status claim. Never fabricate Render/GitHub/Neon/app status.
+- Agent Chrome hard rule: if the Chrome tool is not in your loaded tool set, say so in ONE sentence and STOP. A made-up "all green" is worse than no answer.
+- Forensic 5-point before "shipped": merge SHA on main, CI green, Render deploy LIVE, prod/Neon state, no regressions.
+
+MERGE (locked):
+- Claude verifies CI green in Chrome, then gives GO. Jorge holds final GO on financial blocks. Squash-merge.
+
+EVERY CURSOR PASTE OPENS WITH:
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+BLOCK HEADER FORMAT:
+- Solo: "Block N of M — PHASE <tracker-phase> / TASK <tracker-task-ID> — Title"  (line 2 = MERGE LINK or RBC TARGET)
+- Multi-agent: "AGENT-N · Block N of M — PHASE <p> / TASK <t> — Title"
+- "(FIX)" suffix for CI-red fixes. Never invent tracker IDs — add the tracker row first.
+
+DESIGN (locked):
+- ADDITIVE-ONLY. Never delete modules/pages/sidebar/sections/cards/KPIs/fields/columns/tabs/routes. Only add. Exception: Jorge says "remove X."
+- All financial flows go through existing accounting service functions (createBill, createSettlementDeduction, etc.). Never new financial code.
+- One writer per shared/magnet file per cycle. Migrations: one agent at a time, sequential, self-contained with full GRANTs.
+
+VOCAB: "+ Create" / "+ Book" — never "+ New" / "+ Add". No emojis in headers or tables.

@@ -1,0 +1,31 @@
+Block C of 4 (follow-up) — PHASE <add tracker phase> / TASK <add tracker row, drop real ID> — Settlement deduction cap (net floor + roll-over)
+RBC TARGET: migration adding columns to org.companies + mdata.drivers; settlement-build deduction-apply path in apps/backend/src/driver-finance/
+DEPENDS: Prereq B merged (createSettlementDeduction). Prereq A merged (this block runs a migration; A's schema-GRANT gate must be active).
+MODEL: Opus 4.8 thinking-high (financial, hard to undo, touches settlement math).
+
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+WHY: protect a driver's net settlement from dropping below a floor; deductions that do not fit this period roll to the next settlement automatically.
+
+LOCKED DECISIONS (from session):
+- Default 50% of gross net floor + $0 absolute floor. Env fallback SETTLEMENT_MIN_NET_PCT=50 (mirror cash_advance_threshold pattern).
+- Roll-over = all-or-nothing (no partial split). A deduction either fully fits under available room this period or waits entirely for the next.
+- Resolve order: per-driver override -> company default -> env fallback.
+
+LANE LOCK: this block OWNS the org.companies + mdata.drivers column migration and the settlement-build deduction-application code. Forbidden while another lane is active: do not edit createSettlementDeduction internals (call it), sidebar-config, insurance module, detention.
+
+MIGRATION (must satisfy Block A schema-GRANT gate):
+- org.companies: add min_net_settlement_pct (default 50), min_net_settlement_cents (default 0).
+- mdata.drivers: add min_net_settlement_pct NULL, min_net_settlement_cents NULL (per-driver override).
+- Column adds on existing schemas only (no new schema expected). Confirm existing grants on org.companies + mdata.drivers already cover ih35_app; if any new schema/sequence is introduced, include GRANT USAGE ON SCHEMA + table/sequence grants + ALTER DEFAULT PRIVILEGES for ih35_app in the same migration.
+
+RESPOND-BEFORE-CODE: post (1) resolveSettlementMinNet(driverId, operatingCompanyId) shape with two-tier + env fallback and information_schema existence probe; (2) the settlement-build apply algorithm; (3) the audit event name. WAIT for Jorge GO before writing code.
+
+SCOPE:
+- resolveSettlementMinNet returns {pct, cents}, per-driver -> company -> env, with information_schema existence check (mirror resolveCompanyCashAdvanceThresholdDollars precedent).
+- At settlement build: floor_cents = max(gross_cents * pct, cents); available = gross_cents - floor_cents; pull pending deductions (applied_to_settlement_id IS NULL) oldest-first; apply all-or-nothing per deduction only while running total stays <= available; set applied_to_settlement_id on applied ones; leave the rest NULL so the next settlement run re-picks them (auto roll-over).
+- Audit event driver_finance.deduction.deferred_over_cap for each skipped deduction.
+
+ACCEPT: settlement net never drops below floor; a deduction exceeding available room is skipped this run and applied next run; per-driver override beats company default beats env; unit test covers floor math + roll-over; existing settlement tests stay green; CI including Block A gate green.
+
+PAUSE: after RESPOND-BEFORE-CODE, before code — wait for Jorge GO. Squash-merge holds for explicit GO.

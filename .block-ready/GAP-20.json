@@ -1,0 +1,31 @@
+{
+  "block_id": "GAP-20",
+  "status": "READY",
+  "branch": "feature/gap-20-recurring-bills",
+  "spec": "docs/specs/gap-20-recurring-bills.md",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap20",
+  "pieces": {
+    "A_migration": "db/migrations/202606072351_recurring_bills.sql",
+    "B_template_service": "apps/backend/src/accounting/bills/recurring/template.service.ts",
+    "C_generator_service": "apps/backend/src/accounting/bills/recurring/generator.service.ts",
+    "C_worker": "apps/backend/src/jobs/recurring-bill-generator-worker.ts",
+    "D_routes": "apps/backend/src/accounting/bills/recurring/routes.ts",
+    "E_frontend_list": "apps/frontend/src/pages/accounting/bills/RecurringBillList.tsx",
+    "E_frontend_create": "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx",
+    "E_bills_page_edit": "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    "F_ci_guard": "scripts/verify-recurring-bills.mjs",
+    "G_tests": [
+      "apps/backend/src/accounting/bills/recurring/__tests__/template.test.ts",
+      "apps/backend/src/accounting/bills/recurring/__tests__/generator.test.ts"
+    ],
+    "H_docs": "docs/specs/gap-20-recurring-bills.md"
+  },
+  "acceptance": {
+    "migration_0307": true,
+    "templates_crud": true,
+    "worker_06CT": true,
+    "auto_post": true,
+    "deactivation_no_delete": true,
+    "ci_guard": true
+  }
+}

@@ -1,0 +1,18 @@
+Block J (follow-up, FIX) — PHASE 7 STABILIZATION / TASK <add tracker row, real ID> — Verify + repair master_data schema USAGE grant on production
+RBC TARGET: db/migrations + production DB grant state (Neon prod branch)
+DEPENDS: none. Surfaced 2026-06-07 by live Neon read: ih35_app has USAGE on notifications=YES, audit=YES, master_data=NO — despite #684's hotfix 20260607_183150_grant_master_data_schema_to_app.sql being in the repo.
+MODEL: Opus 4.8 thinking-high (production DB grant; login/page-load class).
+
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+LIVE FINDING (verified via Chrome, Neon prod branch, db neondb): has_schema_privilege('ih35_app','master_data','USAGE') = FALSE. notifications + audit = TRUE.
+
+WHY THIS MATTERS: any runtime query against master_data.* gets "permission denied for schema master_data" — the same class as the earlier login outage. The repo has the grant; prod does not. Classic migration drift: migration present, not applied to prod.
+
+RESPOND-BEFORE-CODE: post (1) confirmation of whether 20260607_183150_grant_master_data_schema_to_app.sql is recorded as applied in the prod migrations ledger (schema_migrations / equivalent) vs physically present grant; (2) whether any app code actually references the literal schema master_data (vs mdata) — if nothing uses master_data, say so and recommend either granting anyway for safety or documenting it as intentionally ungranted; (3) the fix: an idempotent migration GRANT USAGE ON SCHEMA master_data TO ih35_app (+ table/sequence grants + ALTER DEFAULT PRIVILEGES) that is safe to re-run, ordered so Render preDeploy actually executes it. WAIT for Jorge GO.
+
+ROOT-CAUSE TASK: determine why the existing hotfix did not take on prod (preDeploy not running migrations? service created manually without render.yaml preDeploy? ledger says applied but grant absent?). Fix the execution gap, not just the symptom — otherwise the next schema grant drifts too.
+
+ACCEPT: post-deploy, live re-check shows has_schema_privilege('ih35_app','master_data','USAGE') = TRUE on prod; migration is idempotent; prereq-A gate still green; a note added to the migration runbook on the execution-gap fix.
+
+PAUSE: after RESPOND-BEFORE-CODE, before code — wait for Jorge GO. This changes prod DB grants — hold for explicit GO.

@@ -1,0 +1,35 @@
+{
+  "block": "I",
+  "name": "CI-infra fix: verify:no-duplicate-routes dist/ availability",
+  "model": "Sonnet",
+  "category": "CI tooling",
+  "status": "ready",
+  "changes": [
+    {
+      "file": "scripts/verify-no-duplicate-routes.mjs",
+      "summary": "Changed distRoot default from dist/ to apps/backend/src/, autoloadRoot from dist/accounting to apps/backend/src/accounting. Updated file filter from .routes.js/.js to .routes.ts/.ts. Renamed --dist-root CLI flag to --src-root. Updated error message to say 'src root'."
+    },
+    {
+      "file": "scripts/__tests__/verify-no-duplicate-routes.test.mjs",
+      "summary": "Updated fixture paths from positive/dist and negative/dist to positive/src and negative/src to match new source-based check."
+    },
+    {
+      "file": "scripts/__tests__/fixtures/no-duplicate-routes/positive/src/accounting/settlements.routes.ts",
+      "summary": "New fixture: single autoload route plugin with no manual re-registration (positive/clean case)."
+    },
+    {
+      "file": "scripts/__tests__/fixtures/no-duplicate-routes/negative/src/accounting/settlements.routes.ts",
+      "summary": "New fixture: autoload route plugin for negative case."
+    },
+    {
+      "file": "scripts/__tests__/fixtures/no-duplicate-routes/negative/src/server.ts",
+      "summary": "New fixture: manually re-registers the same route function, creating the deliberate duplicate that the guard must catch."
+    }
+  ],
+  "verification": {
+    "test_command": "node --test scripts/__tests__/verify-no-duplicate-routes.test.mjs",
+    "test_result": "2 pass, 0 fail",
+    "script_command": "node scripts/verify-no-duplicate-routes.mjs",
+    "script_result": "verify:no-duplicate-routes OK (no dist/ required)"
+  }
+}

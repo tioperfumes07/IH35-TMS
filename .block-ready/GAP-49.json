@@ -1,0 +1,37 @@
+{
+  "block_id": "GAP-49",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap49",
+  "branch": "feature/gap-49-dvir-severity-tagging",
+  "phase": "GAP-HIGH",
+  "task": "Maintenance Pre-Flight DVIR Severity Tagging (major vs minor vs observation) — WF-050 / 49 CFR §396.11",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-49.json",
+    "db/migrations/202606071700_dvir_defect_severity_tagging.sql",
+    "apps/backend/src/maintenance/pre-flight/major-defect-catalog.ts",
+    "apps/backend/src/maintenance/pre-flight/dvir-severity.service.ts",
+    "apps/backend/src/maintenance/pre-flight/dvir-routing.service.ts",
+    "apps/backend/src/maintenance/pre-flight/routes.ts",
+    "apps/backend/src/maintenance/pre-flight/__tests__/dvir-severity.test.ts",
+    "apps/backend/src/maintenance/pre-flight/__tests__/dvir-routing.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/maintenance.ts",
+    "apps/frontend/src/pages/maintenance/pre-flight/PreFlightDvirQueue.tsx",
+    "apps/frontend/src/components/maintenance/DvirSeverityBadge.tsx",
+    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/driver-pwa/src/pages/DVIR.tsx",
+    "apps/driver-pwa/src/i18n/en.json",
+    "apps/driver-pwa/src/i18n/es.json",
+    "scripts/verify-dvir-severity-tagging.mjs",
+    "docs/specs/gap-49-dvir-severity-tagging.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:dvir-severity-tagging"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
