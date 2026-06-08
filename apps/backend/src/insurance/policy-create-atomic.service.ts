@@ -2,7 +2,7 @@
  * G2-A: single atomic transaction wrapping existing dispersal math + bill persistence.
  * Writes insurance.policy (1) + insurance.policy_unit (N) + term_months scheduled bills in ONE
  * BEGIN/COMMIT via withCurrentUser. A failure anywhere rolls the whole thing back.
- * No new financial calculation code — math from dispersal.service.ts + accounting/allocation.ts.
+ * No new financial calculation code — math via dispersal.service.ts + accounting/allocation.ts.
  */
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
