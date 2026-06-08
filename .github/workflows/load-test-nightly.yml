@@ -1,0 +1,100 @@
+name: load-test-nightly
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tests/load/**"
+      - "scripts/verify-load-test-baseline.mjs"
+      - "db/migrations/202606080205_load_test_runs.sql"
+      - ".github/workflows/load-test-nightly.yml"
+      - "docs/audits/LOAD-TEST-BASELINE-2026-06-08.md"
+      - ".block-ready/BLOCK-08-TIER2-LOAD-TEST.json"
+      - "package.json"
+      - ".github/workflows/ci.yml"
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+    inputs:
+      smoke_mode:
+        description: "Run smoke profile only"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  load-test-smoke:
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.smoke_mode)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        script:
+          - tests/load/dispatch-board-realtime.js
+          - tests/load/driver-pwa-sync.js
+          - tests/load/invoice-creation-burst.js
+          - tests/load/qbo-sync-backlog.js
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Verify load-test baseline assets
+        run: node scripts/verify-load-test-baseline.mjs
+
+      - name: Run k6 smoke script
+        env:
+          K6_SMOKE: "1"
+          LOAD_TEST_BASE_URL: ${{ secrets.LOAD_TEST_BASE_URL != '' && secrets.LOAD_TEST_BASE_URL || 'https://api.ih35dispatch.com' }}
+          OPERATING_COMPANY_ID: ${{ secrets.LOAD_TEST_OPERATING_COMPANY_ID != '' && secrets.LOAD_TEST_OPERATING_COMPANY_ID || '00000000-0000-4000-8000-000000000001' }}
+          LOAD_TEST_BEARER_TOKEN: ${{ secrets.LOAD_TEST_BEARER_TOKEN }}
+          LOAD_TEST_DRIVER_BEARER_TOKEN: ${{ secrets.LOAD_TEST_DRIVER_BEARER_TOKEN }}
+          LOAD_TEST_DRIVER_COOKIE: ${{ secrets.LOAD_TEST_DRIVER_COOKIE }}
+          LOAD_TEST_CUSTOMER_ID: ${{ secrets.LOAD_TEST_CUSTOMER_ID }}
+        run: k6 run "${{ matrix.script }}"
+
+  load-test-nightly:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.smoke_mode)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        script:
+          - tests/load/dispatch-board-realtime.js
+          - tests/load/driver-pwa-sync.js
+          - tests/load/invoice-creation-burst.js
+          - tests/load/qbo-sync-backlog.js
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Verify load-test baseline assets
+        run: node scripts/verify-load-test-baseline.mjs
+
+      - name: Run nightly k6 script
+        env:
+          K6_SMOKE: "0"
+          LOAD_TEST_BASE_URL: ${{ secrets.LOAD_TEST_BASE_URL }}
+          OPERATING_COMPANY_ID: ${{ secrets.LOAD_TEST_OPERATING_COMPANY_ID }}
+          LOAD_TEST_BEARER_TOKEN: ${{ secrets.LOAD_TEST_BEARER_TOKEN }}
+          LOAD_TEST_DRIVER_BEARER_TOKEN: ${{ secrets.LOAD_TEST_DRIVER_BEARER_TOKEN }}
+          LOAD_TEST_DRIVER_COOKIE: ${{ secrets.LOAD_TEST_DRIVER_COOKIE }}
+          LOAD_TEST_CUSTOMER_ID: ${{ secrets.LOAD_TEST_CUSTOMER_ID }}
+        run: k6 run "${{ matrix.script }}"
