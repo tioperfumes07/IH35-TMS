@@ -1,0 +1,27 @@
+{
+  "block_id": "CLOSURE-19-SEC-AUDIT",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-closure19",
+  "branch": "feat/closure-19-sec-audit",
+  "phase": "CLOSURE",
+  "task": "Security audit — RLS + auth + secrets + dependency CVEs",
+  "agent": "2",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/CLOSURE-19-SEC-AUDIT.json",
+    "docs/audits/SEC-AUDIT-2026-06-05.md",
+    "docs/security-baseline.md",
+    "scripts/sec-audit-rls-policies.mjs",
+    "scripts/sec-audit-auth-flows.mjs",
+    "scripts/sec-audit-secrets-scan.mjs",
+    "scripts/sec-audit-deps-cve-scan.mjs",
+    "scripts/sec-audit-cors-csp.mjs",
+    "scripts/verify-no-secrets-in-bundle.mjs",
+    "scripts/verify-closure-19-sec-artifacts.mjs",
+    ".github/workflows/security-checks.yml",
+    "package.json"
+  ],
+  "extra_gates": ["verify:closure-19-sec-artifacts"],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
