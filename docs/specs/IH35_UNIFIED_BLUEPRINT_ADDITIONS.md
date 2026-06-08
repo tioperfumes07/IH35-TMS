@@ -1111,3 +1111,17 @@ Status: LOCKED
 Relevant block: BLOCK-A24-2-DRIVERS-TAB-NAV-PARITY
 
 Canonical `DRIVERS_TABS_CONFIG.ts` (9 query-synced subtabs, 5 list-status filters, 7 KPI cards, 2 module nav paths). Home quick-jump and DRIVERS sidebar flyout use canonical counts; arch doc aligned. **CI:** `verify:drivers-count-nav-integrity`, `verify:nav-integrity`.
+
+---
+
+## Dispatch additions (2026-06-08, all locked & approved)
+1. Overview command center (one-page, drill-in panels).
+2. True Kanban operational states.
+3. Round Trips visualization (outbound + return paired); OOS bottom of every view.
+4. Driver + Truck + Loads planners in Dispatch, mirroring Safety Driver Scheduler; Loads = multi-day Gantt.
+5. Factoring packet auto-assembly + FARO reserve tracker (FACTORING-PACKET-AUTO-ASSEMBLY.md).
+6. Cross-border customs tracker + document compliance gate (CROSS-BORDER-DISPATCH.md).
+7. Instant load profitability + Trip Profitability / Company Settlement Report (LOAD-PROFITABILITY-AT-DELIVERY.md).
+8. Driver fines (internal + DOT) → auto_deduction_policies → settlement (one payment or rolled over) → per-settlement confirm/defer.
+9. Everything connected to Cash Flow (CASHFLOW-BLUEPRINT-ADDITION.md).
+10. Load click → live LoadDetailDrawer everywhere, edit-enabled, additive tabs.
