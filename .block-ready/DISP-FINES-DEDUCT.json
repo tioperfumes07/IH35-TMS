@@ -1,0 +1,40 @@
+{
+  "block_id": "DISP-FINES-DEDUCT",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DISPATCH",
+  "task": "Block 13 — Driver fines → auto-deduction policies + drawer confirm/defer card",
+  "branch": "feat/disp-fines-deduct",
+  "lane": "A",
+  "lane_position": "A13",
+  "details": [
+    "FineEntryForm.tsx: when a fine is logged (internal or DOT), prompt ONE payment vs SPLIT across N settlements and create driver_finance.auto_deduction_policies row (deduction_type=fine) via useAutoDeductionPolicies.",
+    "FinesDeductionsCard.tsx: standalone Settlement-tab child showing pending escrow deductions (confirm/defer via approvePendingEscrowDeduction/rejectPendingEscrowDeduction), active fine policies, current settlement lines, and completed policy history.",
+    "Reuses existing backend only: auto-deduction policies API, escrow-deduction-pending routes, settlement-deduction-cap net-floor roll-over (no new services).",
+    "Lane A Block 12 imports tabs/FinesDeductionsCard when wiring drawer stub → real component."
+  ],
+  "allowed_files": [
+    ".block-ready/DISP-FINES-DEDUCT.json",
+    "apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx",
+    "apps/frontend/src/pages/safety/components/FineEntryForm.tsx"
+  ],
+  "forbidden_files": [
+    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/pages/Dispatch.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "lane_a_integration": {
+    "drawer": "Block 12 re-imports from components/dispatch/tabs/FinesDeductionsCard (replaces drawer-tabs stub)",
+    "safety": "Safety pages may adopt FineEntryForm for unified fine + policy creation"
+  },
+  "reused_services": [
+    "useAutoDeductionPolicies / POST /api/v1/auto-deductions/policies",
+    "escrow-deduction-pending.service (approvePendingDeduction / rejectPendingDeduction)",
+    "settlement-deduction-cap.service (net-floor cap + deferred_over_cap audit)"
+  ]
+}
