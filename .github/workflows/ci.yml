@@ -326,6 +326,9 @@ jobs:
       - name: Verify driver operations depth contract (GAP-48)
         run: npm run verify:driver-operations-depth
 
+      - name: Verify dispatch auth gates (GAP-47)
+        run: npm run verify:dispatch-auth-gates-wired
+
       - name: Verify cash flow and per-truck CPM routes (GAP-45)
         run: npm run verify:cash-flow-cpm-routes
 

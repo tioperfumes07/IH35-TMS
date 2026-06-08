@@ -361,6 +361,7 @@ import { initializeBookingGapAggregatorWorker, stopBookingGapAggregatorWorker } 
 import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-arrival.routes.js";
 import { initializeLateArrivalAggregatorWorker } from "./jobs/late-arrival-aggregator-worker.js";
 import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
+import { registerDispatchAuthGateRoutes } from "./dispatch/auth-gates/routes.js";
 import { registerDispatchDetentionApprovalRoutes } from "./dispatch/detention-approval.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
@@ -617,6 +618,7 @@ async function main() {
   await registerLoadStopExtraRateRoutes(app);
   await registerLateArrivalAnalyticsRoutes(app);
   await registerPreDispatchValidationRoutes(app);
+  await registerDispatchAuthGateRoutes(app);
   await registerDispatchDetentionApprovalRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
