@@ -420,6 +420,7 @@
     "verify:dispatch-arch-tab-parity": "node scripts/verify-dispatch-arch-tab-parity.mjs",
     "verify:dispatch-late-arrivals-alerts": "node scripts/verify-dispatch-late-arrivals-alerts.mjs",
     "verify:dispatch-planner-calendar": "node scripts/verify-dispatch-planner-calendar.mjs",
+    "verify:cashflow-includes-dispatch-events": "node scripts/verify-cashflow-includes-dispatch-events.mjs",
     "verify:dispatch-detention-board": "node scripts/verify-dispatch-detention-board.mjs",
     "verify:dispatch-ocr-queue": "node scripts/verify-dispatch-ocr-queue.mjs",
     "verify:dispatch-assignment-optimizer": "node scripts/verify-dispatch-assignment-optimizer.mjs",
