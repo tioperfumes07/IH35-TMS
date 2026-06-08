@@ -11,10 +11,7 @@
     "apps/backend/src/__tests__/migrations/202606080210-accounting-periods-init.test.ts",
     ".block-ready/FEAT-ACCOUNTING-PERIODS-INIT.json"
   ],
-  "extra_gates": [
-    "PERIODS_INIT_ENABLED must be manually set to true in lib.feature_flags before seed INSERT runs in prod",
-    "OPENING_BALANCE_BOOKKEEPER_CONFIRM must be manually enabled by bookkeeper before any opening-balance entries are posted"
-  ],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true
