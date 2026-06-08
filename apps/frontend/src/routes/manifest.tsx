@@ -163,6 +163,8 @@ import { ProfitLossPage } from "../pages/reports/ProfitLossPage";
 import { BalanceSheetPage } from "../pages/reports/BalanceSheetPage";
 import { CashFlowStatementPage } from "../pages/reports/CashFlowStatementPage";
 import { CashFlowOverviewPage } from "../pages/reports/CashFlowOverviewPage";
+import { CashFlowReport } from "../pages/reports/CashFlowReport";
+import { PerTruckCpmReport } from "../pages/reports/PerTruckCpmReport";
 import { SettlementSummaryPage } from "../pages/reports/SettlementSummaryPage";
 import { CustomerProfitabilityPage } from "../pages/reports/CustomerProfitabilityPage";
 import { ProfitPerTruckPage } from "../pages/reports/ProfitPerTruckPage";
@@ -2181,6 +2183,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CashFlowStatementPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/cash-flow"
+          element={
+            <ProtectedRoute>
+              <CashFlowReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/per-truck-cpm"
+          element={
+            <ProtectedRoute>
+              <PerTruckCpmReport />
             </ProtectedRoute>
           }
         />
