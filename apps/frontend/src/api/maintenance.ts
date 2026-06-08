@@ -1698,40 +1698,30 @@ export type PreFlightDvirQueueRow = {
   id: string;
   unit_id: string;
   unit_number: string | null;
-  driver_id: string | null;
   driver_name: string | null;
   item_key: string;
-  item_label: string | null;
   severity: DvirSeverityLevel;
-  cfr_code?: string;
-  major_defect_code?: string | null;
-  notes: string | null;
-  submitted_at: string;
-  work_order_id: string | null;
-  work_order_display_id: string | null;
-  auto_wo_id?: string | null;
-  status: "open" | "routed" | "closed";
-  routed?: boolean;
+  notes?: string | null;
+  major_defect_code: string | null;
+  auto_wo_id: string | null;
+  routed: boolean;
+  submitted_at: string | null;
 };
 
 export function listPreFlightDvirQueue(
   operatingCompanyId: string,
-  params: { severity?: DvirSeverityLevel; status?: "open" | "routed" | "closed" } = {}
+  params: { severity?: DvirSeverityLevel; status?: string } = {}
 ) {
-  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  if (params.severity) q.set("severity", params.severity);
-  if (params.status) q.set("status", params.status);
-  return apiRequest<{ defects: PreFlightDvirQueueRow[] }>(
-    `/api/v1/maintenance/pre-flight-dvir/queue?${q.toString()}`
-  );
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, ...params });
+  return apiRequest<{ defects: PreFlightDvirQueueRow[] }>(`/api/v1/maintenance/pre-flight-dvir?${q}`);
 }
 
 export function routePreFlightDvirDefect(defectId: string, operatingCompanyId: string) {
   return apiRequest<{
     action: "work_order_created" | "queued_next_pm" | "logged_observation" | "already_routed";
-    work_order_id?: string;
-    display_id?: string | null;
-  }>(`/api/v1/maintenance/pre-flight-dvir/${encodeURIComponent(defectId)}/route`, {
+    work_order_id: string | null;
+    display_id: string | null;
+  }>(`/api/v1/maintenance/pre-flight-dvir/${defectId}/route`, {
     method: "POST",
     body: { operating_company_id: operatingCompanyId },
   });
@@ -1739,10 +1729,10 @@ export function routePreFlightDvirDefect(defectId: string, operatingCompanyId: s
 
 export function setPreFlightDvirSeverity(
   defectId: string,
-  body: { operating_company_id: string; severity: DvirSeverityLevel }
+  payload: { operating_company_id: string; severity: DvirSeverityLevel }
 ) {
-  return apiRequest<{ id: string; severity: DvirSeverityLevel }>(
-    `/api/v1/maintenance/pre-flight-dvir/${encodeURIComponent(defectId)}/severity`,
-    { method: "PATCH", body }
-  );
+  return apiRequest<{ ok: boolean }>(`/api/v1/maintenance/pre-flight-dvir/${defectId}/severity`, {
+    method: "PATCH",
+    body: payload,
+  });
 }

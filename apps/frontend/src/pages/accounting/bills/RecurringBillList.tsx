@@ -53,8 +53,8 @@ export function RecurringBillList() {
   const generateNowMutation = useMutation({
     mutationFn: (uuid: string) =>
       generateRecurringBillNow(uuid, companyId, `generate-${uuid}-${Date.now()}`),
-    onSuccess: (result: { billUuid: string }) => {
-      pushToast(`Bill generated: ${result.billUuid.slice(0, 8)}…`, "success");
+    onSuccess: (result: { bill_id: string }) => {
+      pushToast(`Bill generated: ${result.bill_id.slice(0, 8)}…`, "success");
       void queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "recurring-bills"] });
     },

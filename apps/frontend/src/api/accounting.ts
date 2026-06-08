@@ -1472,82 +1472,62 @@ export type RecurringBillFrequency = "weekly" | "biweekly" | "monthly" | "quarte
 export type RecurringBillLineItem = {
   description: string;
   amount: number;
-  account_id?: string | null;
-  memo?: string | null;
-  class_id?: string | null;
 };
 
 export type RecurringBillTemplate = {
   uuid: string;
-  template_name: string;
+  operating_company_id: string;
   vendor_uuid: string;
-  vendor_name?: string | null;
-  amount: number | string;
-  memo: string | null;
+  template_name: string;
   frequency: RecurringBillFrequency;
-  next_generation_date: string;
+  amount: number;
+  memo: string | null;
+  line_items: RecurringBillLineItem[];
+  is_active: boolean;
+  next_generation_date: string | null;
   end_date: string | null;
   auto_post: boolean;
-  is_active: boolean;
-  line_items: RecurringBillLineItem[];
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
 };
+
+export function listRecurringBillTemplates(operatingCompanyId: string, params?: { activeOnly?: boolean }) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params?.activeOnly !== undefined) q.set("active_only", String(params.activeOnly));
+  return apiRequest<{ rows: RecurringBillTemplate[] }>(`/api/v1/accounting/recurring-bills?${q}`);
+}
 
 export function createRecurringBillTemplate(
   operatingCompanyId: string,
-  body: {
+  payload: {
     vendor_uuid: string;
     template_name: string;
     amount: number;
-    memo: string | null;
+    memo?: string | null;
     frequency: RecurringBillFrequency;
     next_generation_date: string;
-    end_date: string | null;
-    auto_post: boolean;
-    line_items: RecurringBillLineItem[];
+    end_date?: string | null;
+    auto_post?: boolean;
+    line_items?: RecurringBillLineItem[];
   },
-  idempotencyKey: string
+  idempotencyKey?: string
 ) {
-  return apiRequest<{ uuid: string; template: RecurringBillTemplate }>(
-    `/api/v1/accounting/recurring-bill-templates`,
-    {
-      method: "POST",
-      body: { ...body, operating_company_id: operatingCompanyId },
-      headers: { "Idempotency-Key": idempotencyKey },
-    }
-  );
+  return apiRequest<RecurringBillTemplate>("/api/v1/accounting/recurring-bills", {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, ...payload, idempotency_key: idempotencyKey },
+  });
 }
 
-export function listRecurringBillTemplates(
-  operatingCompanyId: string,
-  params: { activeOnly?: boolean } = {}
-) {
-  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  if (params.activeOnly !== undefined) q.set("active_only", params.activeOnly ? "true" : "false");
-  return apiRequest<{ rows: RecurringBillTemplate[] }>(
-    `/api/v1/accounting/recurring-bill-templates?${q.toString()}`
-  );
+export function deactivateRecurringBillTemplate(uuid: string, operatingCompanyId?: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/accounting/recurring-bills/${uuid}/deactivate`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
 }
 
-export function deactivateRecurringBillTemplate(uuid: string, operatingCompanyId: string) {
-  return apiRequest<{ uuid: string; is_active: false }>(
-    `/api/v1/accounting/recurring-bill-templates/${encodeURIComponent(uuid)}/deactivate`,
-    { method: "POST", body: { operating_company_id: operatingCompanyId } }
-  );
-}
-
-export function generateRecurringBillNow(
-  uuid: string,
-  operatingCompanyId: string,
-  idempotencyKey: string
-) {
-  return apiRequest<{ billUuid: string }>(
-    `/api/v1/accounting/recurring-bill-templates/${encodeURIComponent(uuid)}/generate-now`,
-    {
-      method: "POST",
-      body: { operating_company_id: operatingCompanyId },
-      headers: { "Idempotency-Key": idempotencyKey },
-    }
-  );
+export function generateRecurringBillNow(uuid: string, operatingCompanyId?: string, idempotencyKey?: string) {
+  return apiRequest<{ bill_id: string }>(`/api/v1/accounting/recurring-bills/${uuid}/generate`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, idempotency_key: idempotencyKey },
+  });
 }
