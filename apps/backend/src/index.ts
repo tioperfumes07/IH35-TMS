@@ -246,6 +246,7 @@ import { registerCustomerBillingRoutes } from "./mdata/customer-billing.routes.j
 import { registerCustomerLanesRoutes } from "./mdata/customer-lanes.routes.js";
 import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias.routes.js";
 import { registerCustomerRoutes } from "./customers/index.js";
+import { registerCustomerRelationshipScoreRoutes } from "./customers/relationship-score/routes.js";
 import { registerAssignmentsQuicksaveRoutes } from "./assignments/quicksave.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.js";
@@ -375,6 +376,10 @@ import { registerBookingGapRoutes } from "./dispatch/analytics/booking-gap.route
 import { initializeBookingGapAggregatorWorker, stopBookingGapAggregatorWorker } from "./jobs/booking-gap-aggregator-worker.js";
 import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-arrival.routes.js";
 import { initializeLateArrivalAggregatorWorker } from "./jobs/late-arrival-aggregator-worker.js";
+import {
+  initializeCustomerRelationshipScorerWorker,
+  stopCustomerRelationshipScorerWorker,
+} from "./jobs/customer-relationship-scorer.js";
 import { initializeDriverScoringAggregatorWorker } from "./jobs/driver-scoring-aggregator-worker.js";
 import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
 import { registerCap14CargoSensorRoutes } from "./integrations/samsara/cap-14-cargo-sensors/routes.js";
@@ -440,6 +445,7 @@ async function shutdown(signal: string) {
     stopCap14CargoSensorWorker();
     stopAdminJobsWorker();
     stopBookingGapAggregatorWorker();
+    stopCustomerRelationshipScorerWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
   }
@@ -603,6 +609,7 @@ async function main() {
   await registerCustomerLanesRoutes(app);
   await registerCustomerDetailAliasRoutes(app);
   await registerCustomerRoutes(app);
+  await registerCustomerRelationshipScoreRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerDriverTeamsAliasRoutes(app);
   await registerCatalogsRoutes(app);
@@ -1150,6 +1157,13 @@ async function main() {
     app.log.info("[STARTUP] late-arrival aggregator worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] late-arrival aggregator worker failed");
+  }
+
+  try {
+    initializeCustomerRelationshipScorerWorker(app);
+    app.log.info("[STARTUP] customer-relationship scorer worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] customer-relationship scorer worker failed");
   }
 
   try {

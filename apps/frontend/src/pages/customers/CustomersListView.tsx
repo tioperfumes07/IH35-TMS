@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import type { Customer } from "../../api/mdata";
+import { listAtRiskCustomerRelationshipScores, type Customer } from "../../api/mdata";
 import { bulkUpdate } from "../../api/bulk";
 import { BulkActionBar } from "../../components/bulk/BulkActionBar";
 import { TableSelection, TableSelectionHeader } from "../../components/bulk/TableSelection";
@@ -35,10 +35,19 @@ const COLUMNS = [
   { id: "billing_state", label: "Billing State", defaultWidth: 100 },
   { id: "open_balance", label: "Open Balance", defaultWidth: 110, align: "right" as const },
   { id: "fmcsa", label: "FMCSA Verified", defaultWidth: 110 },
+  { id: "health", label: "Health", defaultWidth: 110 },
   { id: "quality", label: "Quality Flag", defaultWidth: 100 },
   { id: "last_activity", label: "Last Activity", defaultWidth: 110 },
   { id: "created", label: "Created", defaultWidth: 100 },
 ];
+
+function relationshipTierBadge(tier: Customer["relationship_health_tier"] | null | undefined) {
+  if (tier === "thriving") return { label: "Thriving", className: "bg-emerald-100 text-emerald-800" };
+  if (tier === "healthy") return { label: "Healthy", className: "bg-teal-100 text-teal-800" };
+  if (tier === "watch") return { label: "Watch", className: "bg-amber-100 text-amber-800" };
+  if (tier === "at_risk") return { label: "At Risk", className: "bg-red-100 text-red-800" };
+  return { label: "Unknown", className: "bg-gray-100 text-gray-700" };
+}
 
 type FilterChip = "all" | "late_pay" | "medium" | "active" | "overdue";
 
@@ -57,6 +66,15 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
   const [pageSize] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBalanceDesc, setSortBalanceDesc] = useState(true);
+  const atRiskQuery = useQuery({
+    queryKey: ["customers-relationship-at-risk", companyId],
+    queryFn: () => listAtRiskCustomerRelationshipScores({ operating_company_id: companyId, limit: 250 }),
+    enabled: Boolean(companyId),
+  });
+  const atRiskCustomerIds = useMemo(
+    () => new Set((atRiskQuery.data?.customers ?? []).map((customer) => customer.customer_uuid)),
+    [atRiskQuery.data?.customers]
+  );
 
   const defaultWidths = Object.fromEntries(COLUMNS.map((c) => [c.id, c.defaultWidth]));
   const { widths, setWidth, minWidth, maxWidth } = useColumnWidths("customers-list-view", defaultWidths);
@@ -226,6 +244,9 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
               <tbody>
                 {pageRows.map((customer) => {
                   const badge = qualityBadge(customer);
+                  const healthTier =
+                    customer.relationship_health_tier ?? (atRiskCustomerIds.has(customer.id) ? "at_risk" : null);
+                  const healthBadge = relationshipTierBadge(healthTier);
                   const open = openByCustomerId.get(customer.id) ?? 0;
                   return (
                     <tr
@@ -252,6 +273,11 @@ export function CustomersListView({ companyId, customers, openByCustomerId, onSe
                       <td style={{ width: widths.open_balance }} className="truncate px-2 py-2 text-right">{fmtMoney(open)}</td>
                       <td style={{ width: widths.fmcsa }} className="truncate px-2 py-2">
                         {customer.fmcsa_verified_at ? "Yes" : "No"}
+                      </td>
+                      <td style={{ width: widths.health }} className="truncate px-2 py-2">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${healthBadge.className}`}>
+                          {healthBadge.label}
+                        </span>
                       </td>
                       <td style={{ width: widths.quality }} className="truncate px-2 py-2">
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${badge.className}`}>
