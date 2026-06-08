@@ -17,6 +17,8 @@ import { registerIftaStatusRoutes } from "./ifta-status.routes.js";
 import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.routes.js";
 import { registerGeofenceDwellRoutes } from "./geofence-dwell.routes.js";
 import { registerLaneProfitabilityRoutes } from "./lane-profitability.routes.js";
+import { registerCashFlowReportRouteFix } from "./cash-flow/route-fix.js";
+import { registerPerTruckCpmRoutes } from "./per-truck-cpm/route.js";
 
 export async function registerReportsRoutes(app: FastifyInstance) {
   await registerReportsLibraryRoutes(app);
@@ -37,4 +39,6 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   await registerIftaStatusRoutes(app);
   await registerGeofenceDwellRoutes(app);
   await registerScheduledReportAdminRoutes(app);
+  await registerCashFlowReportRouteFix(app);
+  await registerPerTruckCpmRoutes(app);
 }

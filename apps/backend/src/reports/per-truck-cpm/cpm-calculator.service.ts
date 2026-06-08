@@ -1,0 +1,147 @@
+export type PerTruckCpmRow = {
+  unit_uuid: string;
+  display_id: string;
+  miles: number;
+  total_cost_cents: number;
+  cpm_cents: number;
+  rank: number;
+};
+
+export type Queryable = {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
+};
+
+function num(v: unknown): number {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Per-unit cost-per-mile for the period. Allocation mirrors profit-per-truck extended
+ * mode: driver pay (settlement bills), fuel transactions, maintenance WOs, plus
+ * period-proportional insurance + permit costs when tagged to the unit.
+ */
+export async function calculatePerTruckCpm(
+  client: Queryable,
+  operatingCompanyId: string,
+  from: string,
+  to: string
+): Promise<PerTruckCpmRow[]> {
+  const res = await client.query(
+    `
+      WITH load_scope AS (
+        SELECT
+          l.id,
+          l.assigned_unit_id,
+          COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles
+        FROM mdata.loads l
+        WHERE l.operating_company_id = $1::uuid
+          AND l.soft_deleted_at IS NULL
+          AND l.assigned_unit_id IS NOT NULL
+          AND l.created_at::date BETWEEN $2::date AND $3::date
+      ),
+      miles AS (
+        SELECT assigned_unit_id AS unit_id, COALESCE(SUM(trip_miles), 0)::bigint AS miles
+        FROM load_scope
+        GROUP BY assigned_unit_id
+      ),
+      driver_pay AS (
+        SELECT ls.assigned_unit_id AS unit_id, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS cents
+        FROM driver_finance.driver_bills db
+        JOIN load_scope ls ON ls.id = db.load_id
+        GROUP BY ls.assigned_unit_id
+      ),
+      fuel AS (
+        SELECT l.assigned_unit_id AS unit_id,
+               COALESCE(SUM(ROUND(ft.total_cost::numeric * 100)), 0)::bigint AS cents
+        FROM fuel.fuel_transactions ft
+        JOIN load_scope l ON l.id = ft.load_id
+        WHERE ft.operating_company_id = $1::uuid
+        GROUP BY l.assigned_unit_id
+      ),
+      maint AS (
+        SELECT wo.unit_id,
+               COALESCE(
+                 SUM(
+                   CASE
+                     WHEN COALESCE(wo.updated_at, wo.opened_at)::date BETWEEN $2::date AND $3::date
+                     THEN ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)::bigint
+                     ELSE 0
+                   END
+                 ),
+                 0
+               )::bigint AS cents
+        FROM maintenance.work_orders wo
+        WHERE wo.operating_company_id = $1::uuid
+        GROUP BY wo.unit_id
+      ),
+      insurance AS (
+        SELECT ipu.unit_id,
+               COALESCE(
+                 ROUND(
+                   (COALESCE(ip.annual_premium_cents, 0)::numeric / 365.0)
+                   * GREATEST(1, ($3::date - $2::date + 1))
+                 ),
+                 0
+               )::bigint AS cents
+        FROM insurance.insurance_policy_units ipu
+        JOIN insurance.insurance_policies ip ON ip.id = ipu.policy_id
+        WHERE ip.operating_company_id = $1::uuid
+          AND ip.cancelled_at IS NULL
+        GROUP BY ipu.unit_id
+      ),
+      permits AS (
+        SELECT up.unit_id,
+               COALESCE(
+                 ROUND(
+                   (COALESCE(up.annual_cost_cents, 0)::numeric / 365.0)
+                   * GREATEST(1, ($3::date - $2::date + 1))
+                 ),
+                 0
+               )::bigint AS cents
+        FROM master_data.unit_permits up
+        WHERE up.operating_company_id = $1::uuid
+          AND up.deleted_at IS NULL
+        GROUP BY up.unit_id
+      )
+      SELECT
+        u.id::text AS unit_uuid,
+        u.unit_number AS display_id,
+        COALESCE(m.miles, 0)::text AS miles,
+        (
+          COALESCE(dp.cents, 0) + COALESCE(f.cents, 0) + COALESCE(mt.cents, 0)
+          + COALESCE(ins.cents, 0) + COALESCE(p.cents, 0)
+        )::text AS total_cost_cents
+      FROM mdata.units u
+      JOIN miles m ON m.unit_id = u.id
+      LEFT JOIN driver_pay dp ON dp.unit_id = u.id
+      LEFT JOIN fuel f ON f.unit_id = u.id
+      LEFT JOIN maint mt ON mt.unit_id = u.id
+      LEFT JOIN insurance ins ON ins.unit_id = u.id
+      LEFT JOIN permits p ON p.unit_id = u.id
+      WHERE u.deactivated_at IS NULL
+      ORDER BY u.unit_number
+    `,
+    [operatingCompanyId, from, to]
+  );
+
+  const rows: PerTruckCpmRow[] = res.rows.map((row) => {
+    const miles = num(row.miles);
+    const totalCost = num(row.total_cost_cents);
+    const cpmCents = miles > 0 ? Math.round(totalCost / miles) : 0;
+    return {
+      unit_uuid: String(row.unit_uuid),
+      display_id: String(row.display_id ?? ""),
+      miles,
+      total_cost_cents: totalCost,
+      cpm_cents: cpmCents,
+      rank: 0,
+    };
+  });
+
+  rows.sort((a, b) => a.cpm_cents - b.cpm_cents);
+  rows.forEach((row, idx) => {
+    row.rank = idx + 1;
+  });
+  return rows;
+}

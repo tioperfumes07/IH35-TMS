@@ -4,6 +4,7 @@
   "branch": "feature/gap-45-cashflow-per-truck",
   "phase": "GAP-MEDIUM",
   "task": "Cash flow + per-truck CPM route fix (P6-C1)",
+  "classification": "ADDITIVE",
   "allowed_files": [
     ".block-ready/GAP-45.json",
     ".block-ready.json",
