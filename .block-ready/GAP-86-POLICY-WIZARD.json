@@ -45,7 +45,8 @@
     "scripts/verify-insurance-creator.mjs",
     "scripts/verify-insurance-policy-create-button.mjs",
     "scripts/verify-sidebar-contract.mjs",
-    "package.json"
+    "package.json",
+    ".block-ready/GAP-IDEMP-KEYS.json"
   ],
   "preview_provided": false,
   "extra_gates": [
