@@ -2,12 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listCustomers, listDrivers } from "../api/mdata";
-import { getDispatchDashboard } from "../api/dispatch";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
 import { listSettlements } from "../api/driverFinance";
 import { listGeofenceBreaches } from "../api/safetyGeofence";
-import { listLatestPositions } from "../api/telematics";
-import { getTelematicsHeatmap } from "../api/telematicsApi";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Button } from "../components/Button";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -22,10 +19,17 @@ import { FilterBar, type DispatchFilterState } from "../components/dispatch/Filt
 import { LoadDetailDrawer } from "../components/dispatch/LoadDetailDrawer";
 import { BookLoadModal } from "./dispatch/components/BookLoadModal";
 import { AssignmentHistoryPage } from "./dispatch/AssignmentHistoryPage";
+import { DispatchOverview } from "./dispatch/DispatchOverview";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
-import { CbpWaitTimesWidget } from "../components/border-crossing/CbpWaitTimesWidget";
 
-type ViewMode = "list" | "kanban";
+type ViewMode = "overview" | "list" | "kanban";
+
+function parseViewMode(raw: string | null, loadsRoute: boolean): ViewMode {
+  if (loadsRoute) return "list";
+  if (raw === "overview" || raw === "kanban" || raw === "list") return raw;
+  if (raw === "loads") return "kanban";
+  return "overview";
+}
 type DispatchSubTabId = "load_board" | "book_load" | "assignments" | "settlements" | "pre_settlements";
 
 const DISPATCH_SUB_TABS: Array<{ id: DispatchSubTabId; label: string }> = [
@@ -107,11 +111,9 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
       setSearchParams(next, { replace: true });
     }
   }, [loadsRoute, searchParams, setSearchParams]);
-  const [showPositionHeatmap, setShowPositionHeatmap] = useState(false);
-  const [heatmapFrom, setHeatmapFrom] = useState(() => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-  const [heatmapTo, setHeatmapTo] = useState(() => new Date().toISOString());
 
-  const view = (searchParams.get("view") as ViewMode) || "kanban";
+  const view = parseViewMode(searchParams.get("view"), loadsRoute);
+  const showLoadBoard = view === "kanban" || view === "list";
   const sort = searchParams.get("sort") ?? "created_at:desc";
   const offset = Number(searchParams.get("offset") ?? "0");
   const limit = Number(searchParams.get("limit") ?? "50");
@@ -126,12 +128,6 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
   }, [companies, selectedCompanyId]);
   const filters = useMemo(() => parseFilters(searchParams, defaultCompanyIds), [defaultCompanyIds, searchParams]);
 
-  const dispatchDashboardQuery = useQuery({
-    queryKey: ["dispatch", "dashboard", defaultCompanyIds[0] ?? ""],
-    queryFn: () => getDispatchDashboard(defaultCompanyIds[0] ?? ""),
-    enabled: Boolean(defaultCompanyIds[0]),
-    refetchInterval: 60_000,
-  });
   const loadsQuery = useLoadsList({
     limit,
     offset,
@@ -161,26 +157,6 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
     queryFn: () => listSettlements(defaultCompanyIds[0] ?? ""),
     enabled: Boolean(defaultCompanyIds[0]),
   });
-  const allActiveDriversQuery = useQuery({
-    queryKey: ["dispatch", "drivers", "all-active", defaultCompanyIds.join(",")],
-    queryFn: () => listDrivers({ status: "Active" }),
-  });
-  const latestPositionsQuery = useQuery({
-    queryKey: ["dispatch", "telematics", "latest-positions", defaultCompanyIds[0] ?? ""],
-    queryFn: () => listLatestPositions(defaultCompanyIds[0] ?? ""),
-    enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board",
-    refetchInterval: 30_000,
-  });
-  const heatmapQuery = useQuery({
-    queryKey: ["dispatch", "heatmap", defaultCompanyIds[0] ?? "", heatmapFrom, heatmapTo],
-    queryFn: () =>
-      getTelematicsHeatmap({
-        operating_company_id: defaultCompanyIds[0] ?? "",
-        from: heatmapFrom,
-        to: heatmapTo,
-      }),
-    enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board" && showPositionHeatmap,
-  });
   const geofenceBreachesQuery = useQuery({
     queryKey: ["dispatch", "geofence-breaches", defaultCompanyIds[0] ?? ""],
     queryFn: () =>
@@ -188,7 +164,7 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
         operating_company_id: defaultCompanyIds[0] ?? "",
         filter: "active",
       }),
-    enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board",
+    enabled: Boolean(defaultCompanyIds[0]) && subTab === "load_board" && showLoadBoard,
     refetchInterval: 30_000,
   });
 
@@ -224,18 +200,6 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
     return ids;
   }, [geofenceBreachesQuery.data?.events]);
   const totalCount = loadsQuery.data?.total_count ?? 0;
-  const kpis = useMemo(() => {
-    const dashboard = dispatchDashboardQuery.data;
-    const activeLoads = Number(dashboard?.active_loads ?? 0);
-    const inTransit = Number(dashboard?.in_transit ?? 0);
-    const awaitingPod = Number(dashboard?.delivered ?? loads.filter((load) => load.status === "delivered").length);
-    const onLoadDriverIds = new Set(loads.map((load) => load.assigned_primary_driver_id).filter(Boolean));
-    const activeDrivers = allActiveDriversQuery.data?.drivers ?? [];
-    const availableUnits = Math.max(activeDrivers.length - onLoadDriverIds.size, 0);
-    const today = new Date().toISOString().slice(0, 10);
-    const bookedToday = loads.filter((load) => String(load.created_at).slice(0, 10) === today).length;
-    return { activeLoads, inTransit, awaitingPod, availableUnits, bookedToday };
-  }, [dispatchDashboardQuery.data, loads, allActiveDriversQuery.data?.drivers]);
 
   const setFilterState = (nextFilters: DispatchFilterState) => {
     setSearchParams(serializeFilters(searchParams, nextFilters));
@@ -273,6 +237,19 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
           <div className="flex gap-2">
             <Button
               type="button"
+              variant={view === "overview" ? "primary" : "secondary"}
+              size="sm"
+              data-testid="dispatch-view-overview"
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.set("view", "overview");
+                setSearchParams(next);
+              }}
+            >
+              Overview
+            </Button>
+            <Button
+              type="button"
               variant={view === "kanban" ? "primary" : "secondary"}
               size="sm"
               onClick={() => {
@@ -306,135 +283,19 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
         <SecondaryNavTabs tabs={DISPATCH_SUB_TABS} activeId={subTab} onChange={(id) => setSubTab(id as DispatchSubTabId)} />
       </div>
 
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-        <div className="rounded border border-gray-200 bg-white p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active loads</p>
-          <p className="text-xl font-semibold text-gray-900">{kpis.activeLoads}</p>
-          <p className="text-xs text-gray-500">{kpis.inTransit} in transit</p>
-        </div>
-        <div className="rounded border border-gray-200 bg-white p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Awaiting POD</p>
-          <p className="text-xl font-semibold text-gray-900">{kpis.awaitingPod}</p>
-          <p className="text-xs text-gray-500">delivered</p>
-        </div>
-        <div className="rounded border border-gray-200 bg-white p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Available units</p>
-          <p className="text-xl font-semibold text-gray-900">{kpis.availableUnits}</p>
-          <p className="text-xs text-gray-500">ready to assign</p>
-        </div>
-        <div className="rounded border border-gray-200 bg-white p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Booked today</p>
-          <p className="text-xl font-semibold text-gray-900">{kpis.bookedToday}</p>
-          <p className="text-xs text-gray-500">new loads</p>
-        </div>
-      </div>
+      {subTab === "load_board" && view === "overview" ? (
+        <DispatchOverview
+          operatingCompanyId={defaultCompanyIds[0] ?? ""}
+          onLoadClick={(id) => {
+            const next = new URLSearchParams(searchParams);
+            next.set("load_id", id);
+            setSearchParams(next);
+          }}
+        />
+      ) : null}
 
-      <div className="max-w-sm">
-        <CbpWaitTimesWidget title="Border wait times (Dispatch home)" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <DataPanel title="Load board">
-          <DataPanelRow>
-            <span className="text-sm text-gray-700">Kanban and list views</span>
-            <span className="text-xs text-blue-700">open →</span>
-          </DataPanelRow>
-        </DataPanel>
-        <DataPanel title="Book load">
-          <DataPanelRow>
-            <span className="text-sm text-gray-700">New load wizard</span>
-            <button className="text-xs text-blue-700" onClick={() => setNewLoadOpen(true)} type="button">
-              open →
-            </button>
-          </DataPanelRow>
-        </DataPanel>
-        <DataPanel title="Assignments">
-          <DataPanelRow>
-            <span className="text-sm text-gray-700">Assignment history audit trail (D2)</span>
-            <button className="text-xs text-blue-700" onClick={() => setSubTab("assignments")} type="button">
-              open →
-            </button>
-          </DataPanelRow>
-        </DataPanel>
-        <DataPanel title="Dispatch map feed">
-          <DataPanelRow>
-            <span className="text-sm text-gray-700">
-              Live GPS positions: {latestPositionsQuery.data?.rows.length ?? 0} active units
-            </span>
-            <span className="text-xs text-gray-500">polls every 30s</span>
-          </DataPanelRow>
-        </DataPanel>
-        <DataPanel title="Settlements">
-          <DataPanelRow>
-            <span className="text-sm text-gray-700">Driver settlement runs in Driver Finance</span>
-            <Link to="/driver-finance/settlements" className="text-xs text-blue-700">
-              open →
-            </Link>
-          </DataPanelRow>
-        </DataPanel>
-      </div>
-
-      <DataPanel title="Dispatch map controls">
-        <DataPanelRow>
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={showPositionHeatmap}
-              onChange={(event) => setShowPositionHeatmap(event.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
-            />
-            Show position heatmap
-          </label>
-          <span className="text-xs text-gray-500">bucket size 0.001 deg</span>
-        </DataPanelRow>
-        {showPositionHeatmap ? (
-          <div className="space-y-2 px-3 pb-3">
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-              <label className="text-xs text-gray-600">
-                From
-                <input
-                  type="datetime-local"
-                  value={heatmapFrom.slice(0, 16)}
-                  onChange={(event) => setHeatmapFrom(new Date(event.target.value).toISOString())}
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
-                />
-              </label>
-              <label className="text-xs text-gray-600">
-                To
-                <input
-                  type="datetime-local"
-                  value={heatmapTo.slice(0, 16)}
-                  onChange={(event) => setHeatmapTo(new Date(event.target.value).toISOString())}
-                  className="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-xs"
-                />
-              </label>
-            </div>
-            {heatmapQuery.isLoading ? (
-              <p className="text-xs text-gray-500">Loading heatmap buckets...</p>
-            ) : heatmapQuery.isError ? (
-              <p className="text-xs text-red-700">Unable to load position heatmap buckets.</p>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500">
-                  {heatmapQuery.data?.rows.length ?? 0} bucket cells in selected range. Top buckets shown below.
-                </p>
-                <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
-                  {(heatmapQuery.data?.rows ?? []).slice(0, 12).map((bucket) => (
-                    <div key={`${bucket.lat_bucket}:${bucket.lng_bucket}`} className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs">
-                      <span className="font-medium text-gray-800">
-                        {bucket.lat_bucket.toFixed(3)}, {bucket.lng_bucket.toFixed(3)}
-                      </span>
-                      <span className="ml-2 text-gray-600">{bucket.hit_count} hits</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : null}
-      </DataPanel>
-
-      <FilterBar
+      {subTab === "load_board" && showLoadBoard ? (
+        <FilterBar
         value={filters}
         onChange={setFilterState}
         companies={companies.map((company) => ({
@@ -456,9 +317,10 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
             search: "",
           })
         }
-      />
+        />
+      ) : null}
 
-      {subTab === "load_board" ? (
+      {subTab === "load_board" && showLoadBoard ? (
         view === "list" ? (
           <DispatchBoard
             loads={loads}
