@@ -27,6 +27,8 @@ import { registerGeofenceReconciliationRoutes } from "./integrations/samsara/geo
 import { initializeGeofenceReconciliationWorker } from "./jobs/geofence-reconciliation-daily.js";
 import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
 import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-detector.js";
+import { registerSamsaraVehicleDriverPairingRoutes } from "./integrations/samsara/vehicle-driver-pairing/routes.js";
+import { initializeVehicleDriverPairingWorker } from "./jobs/vehicle-driver-pairing-worker.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -517,6 +519,7 @@ async function main() {
   await registerSamsaraConfigRoutes(app);
   await registerSamsaraLivePositionRoutes(app);
   await registerSamsaraHealthRoutes(app);
+  await registerSamsaraVehicleDriverPairingRoutes(app);
   await registerIntegrationHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
@@ -956,6 +959,13 @@ async function main() {
     app.log.info("[STARTUP] border-crossing-detector-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] border-crossing-detector-worker failed");
+  }
+
+  try {
+    initializeVehicleDriverPairingWorker(app);
+    app.log.info("[STARTUP] vehicle-driver-pairing-worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] vehicle-driver-pairing-worker failed");
   }
 
   try {
