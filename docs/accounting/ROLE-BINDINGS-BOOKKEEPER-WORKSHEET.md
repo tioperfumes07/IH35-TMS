@@ -37,14 +37,21 @@
 ### 2.1 — Role: `cash_dip`
 **Description:** The primary operating bank account under Ch. 11 DIP (Debtor-in-Possession) status. Designate which bank account serves as the DIP operating account. This account will be debited when DIP-period cash receipts are posted and credited when DIP-period disbursements are recorded.
 
+> **⚠️ UPDATED Jun 7 2026:** Jorge confirmed DIP accounts = Wells Fargo accounts. BOA-CHECKING-1135 was **closed December 2025** and has been removed as an option. WF accounts below are sourced live from `catalogs.accounts` (Neon query run Jun 7 2026).
+
+*Query used:* `SELECT id, account_number, account_name FROM catalogs.accounts WHERE account_name ILIKE '%wells%' OR account_name ILIKE '%WF%' OR account_name ILIKE '%wachovia%' AND deactivated_at IS NULL`
+
 | # | Account Number | Account Name | Account Type | Select? |
 |---|---------------|-------------|--------------|---------|
-| A | `1000` | Cash - Operating | Asset | ☐ |
-| B | `QBO-1150040124` | BOA-CHECKING-1135 | Asset | ☐ |
+| A | `QBO-1150040141` | WF - General Operating 6103 | Asset | ✅ **BOOKKEEPER CHOICE** |
+| B | `QBO-1150040142` | WF - Savings 6137 | Asset | ☐ |
+| C | `QBO-1150040143` | WF - Payroll 6129 | Asset | ☐ (already bound to `cash_payroll` in Section 1) |
 
-**BOOKKEEPER CHOICE:** _______________________________
+> ~~`QBO-1150040124` BOA-CHECKING-1135~~ — **REMOVED: account closed December 2025.**
 
-**Notes / Rationale:** ___________________________________________________________________
+**BOOKKEEPER CHOICE:** `QBO-1150040141` — WF - General Operating 6103 *(pending bookkeeper initials — confirm tomorrow)*
+
+**Notes / Rationale:** Jorge confirmed Wells Fargo is the active DIP banking relationship. General Operating 6103 is the primary operating checking account. Savings 6137 excluded (savings, not operating). Payroll 6129 already assigned to `cash_payroll` role.
 
 ---
 
@@ -67,6 +74,10 @@
 
 **Notes / Rationale:** ___________________________________________________________________
 
+> **⚠️ UPDATED Jun 7 2026:** Jorge confirmed maintenance expense mapping follows the QBO Products & Services / Items pattern — different maintenance item types map to different expense accounts. A single default `maintenance_expense` binding may not be appropriate. **Pending Claude's QBO Products & Services inspection** to identify exact item-to-account mappings before a binding is confirmed here.
+>
+> See QBO Products & Services query for exact item-to-account mapping. Different items map to different expense accounts. Pending QBO inspection.
+
 > **Note:** Options D and E (accident/damage repairs) are typically coded to insurance expense or a separate damage account — confirm with CPA whether they should remain distinct from routine maintenance.
 
 ---
@@ -76,20 +87,24 @@
 
 *Query used:* `SELECT id, account_number, account_name FROM catalogs.accounts WHERE account_name ILIKE '%factor%' OR account_name ILIKE '%FARO%' OR account_name ILIKE '%RTS%' AND account_type = 'Asset' AND deactivated_at IS NULL`
 
+> **⚠️ UPDATED Jun 7 2026:** Jorge confirmed currently using **FARO only**. Not yet transitioned to RTS. RTS options retained for reference but are not active.
+
 | # | Account Number | Account Name | Account Type | Select? |
 |---|---------------|-------------|--------------|---------|
-| A | `QBO-1150040080` | Faro Factoring Reserves | Asset | ☐ |
-| B | `QBO-1150040084` | Faro Escrow Account | Asset | ☐ |
+| A | `QBO-1150040080` | Faro Factoring Reserves | Asset | ✅ **BOOKKEEPER CHOICE — confirmed by Jorge** |
+| B | `QBO-1150040084` | Faro Escrow Account | Asset | ☐ (Faro reserve/escrow — see `factor_reserve_held` role) |
 | C | `QBO-1150040098` | FARO FACTORING | Asset | ☐ |
 | D | `QBO-125` | Factoring Reserves Love's Solutions | Asset | ☐ |
-| E | `QBO-247` | RTS FINANCIAL-VIRTUAL ACCT | Asset | ☐ |
-| F | `QBO-248` | RTS-Factoring Reserves | Asset | ☐ |
+| E | `QBO-247` | RTS FINANCIAL-VIRTUAL ACCT | Asset | ☐ (RTS not yet active) |
+| F | `QBO-248` | RTS-Factoring Reserves | Asset | ☐ (RTS not yet active) |
 
-**BOOKKEEPER CHOICE:** _______________________________
+**BOOKKEEPER CHOICE:** `QBO-1150040080` — Faro Factoring Reserves *(confirmed by Jorge Jun 7 2026)*
 
-**Notes / Rationale:** ___________________________________________________________________
+**Notes / Rationale:** Jorge confirmed FARO is the active factoring company. RTS transition has not occurred. When RTS transition occurs, add a separate role binding `factor_advances_receivable_rts` — do not reassign this binding.
 
 > **Guidance:** If the company factors with multiple companies simultaneously, the posting engine supports separate role bindings per factoring relationship (e.g., `factor_advances_receivable_faro`, `factor_advances_receivable_rts`). Confirm with operations which factoring company is primary, or whether per-company roles are needed.
+>
+> **RTS note:** RTS not yet active — when RTS transition occurs, add separate role binding `factor_advances_receivable_rts`.
 
 ---
 
@@ -106,10 +121,17 @@
 | D | `QBO-1150040127` | RTS-Loans | Liability | ☐ |
 | E | `QBO-286` | RTS - NEWCO LOAN | Liability | ☐ |
 
-**BOOKKEEPER CHOICE:** _______________________________
+**BOOKKEEPER CHOICE:** *(cannot bind — no suitable account exists yet)*
 
 **Notes / Rationale:** ___________________________________________________________________
 
+> **⚠️ UPDATED Jun 7 2026 — ACTION REQUIRED:** Jorge confirmed **no existing account** tracks factoring chargebacks. None of the options above are appropriate for this role. **Next steps:**
+> 1. Create a new liability account in QBO: **"Factoring Chargebacks Payable"** (Current Liability).
+> 2. Sync the new account to `catalogs.accounts` (via QBO sync or manual insert).
+> 3. Return to this worksheet and bind `factor_chargebacks_payable` to the new account number.
+>
+> See **`docs/accounting/FACTORING-ACCOUNTING-STRUCTURE.md`** for full accounting context on this account.
+>
 > **Guidance:** If no existing liability account specifically tracks factoring chargebacks, a new "Factoring Chargebacks Payable" account may need to be created in QBO and synced to the catalog. Notify operations if this is the case.
 
 ---
@@ -150,4 +172,4 @@ By signing below, I certify that I have reviewed the proposed chart-of-accounts 
 
 ---
 
-*Generated by IH35-TMS operations · Document version: 1.0 · Database: `tiny-field-89581227` (IH35-TMS / Neon) · Branch: main*
+*Generated by IH35-TMS operations · Document version: 1.1 · Database: `tiny-field-89581227` (IH35-TMS / Neon) · Branch: feat/factoring-accounting-structure · Last updated: Jun 7 2026 by Claude (Jorge confirmed)*

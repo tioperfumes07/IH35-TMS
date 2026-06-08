@@ -1,0 +1,19 @@
+{
+  "block_id": "DOCS-FACTORING-ACCOUNTING-STRUCTURE",
+  "branch": "feat/factoring-accounting-structure-v3",
+  "phase": "docs",
+  "task": "Factoring accounting structure proposal + bookkeeper worksheet v1.1 update (cash_dip WF, factor_advances_receivable FARO confirmed, factor_chargebacks_payable create note, maintenance_expense QBO items note).",
+  "is_read_only": false,
+  "db_required": false,
+  "guard_required": false,
+  "runtime_path": "src",
+  "extra_gates": [],
+  "allowed_files": [
+    ".block-ready/DOCS-FACTORING-ACCOUNTING-STRUCTURE.json",
+    ".block-ready/DOCS-ROLE-BINDINGS-WORKSHEET.json",
+    ".block-ready.agent1.json",
+    ".gitignore",
+    "docs/accounting/ROLE-BINDINGS-BOOKKEEPER-WORKSHEET.md",
+    "docs/accounting/FACTORING-ACCOUNTING-STRUCTURE.md"
+  ]
+}

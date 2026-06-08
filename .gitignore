@@ -22,3 +22,4 @@ recovery-artifacts/
 # PASS-8 pre-prod smoke run artifacts (generated locally; not committed)
 docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 # CI trigger
+.cursor/rules/
