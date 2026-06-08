@@ -443,6 +443,14 @@
     {
       "path": "/fuel/fraud-alerts",
       "reason": "Fuel fraud alerts flyout from sidebar restore (#717); route pending GAP-86 fuel audit block"
+    },
+    {
+      "path": "/dispatch/borders/geofence-history",
+      "reason": "Border crossing geofence history (PR #722); sub-nav pending dispatch block"
+    },
+    {
+      "path": "/dispatch/layovers/driver/:driverUuid",
+      "reason": "Driver layover history detail route; sub-nav pending driver block"
     }
   ]
 }
