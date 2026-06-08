@@ -1,0 +1,27 @@
+{
+  "block_id": "CLOSURE-18-PERF-AUDIT",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-closure18",
+  "branch": "feat/closure-18-perf-audit",
+  "phase": "CLOSURE",
+  "task": "Performance audit — bundle size + page load + API latency budgets",
+  "agent": "1",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/CLOSURE-18-PERF-AUDIT.json",
+    "docs/audits/PERF-AUDIT-2026-06-05.md",
+    "docs/perf-budgets.json",
+    "scripts/perf-bundle-size-snapshot.mjs",
+    "scripts/perf-lighthouse-on-prod.mjs",
+    "scripts/perf-api-latency-baseline.mjs",
+    "scripts/verify-perf-budgets-not-regressed.mjs",
+    "scripts/verify-closure-18-perf-artifacts.mjs",
+    "apps/backend/src/middleware/response-time.ts",
+    "apps/backend/src/middleware/response-time.test.ts",
+    ".github/workflows/perf-budget-check.yml",
+    "package.json"
+  ],
+  "extra_gates": ["verify:closure-18-perf-artifacts"],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
