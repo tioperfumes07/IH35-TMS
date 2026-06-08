@@ -1,0 +1,45 @@
+{
+  "block_id": "FIX-RLS-BILL-EXPENSE-LINES",
+  "branch": "fix/bill-lines-rls-and-role-bindings",
+  "phase": "implementation",
+  "task": "Accounting audit security fix: enable + force RLS with company-isolation policies on accounting.bill_lines, accounting.expense_lines, and accounting.line_category_load_required (all RLS-off in prod). Cross-OCI DB integration tests + live-DB RLS verifier. Plus a docs-only chart-of-accounts role mapping proposal (NO seeding).",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-rls-fix",
+  "allowed_files": [
+    ".block-ready/FIX-RLS-BILL-EXPENSE-LINES.json",
+    "db/migrations/202606080040_enable_rls_bill_lines_expense_lines_line_category_load_required.sql",
+    "apps/backend/src/accounting/__tests__/bill-expense-lines-rls.db.test.ts",
+    "scripts/db-verify-bill-expense-lines-rls.ts",
+    "docs/accounting/ROLE-BINDINGS-MAPPING-PROPOSAL.md",
+    "package.json"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "both",
+  "db_required": true,
+  "guard_required": false,
+  "fields": {
+    "scope": "RLS only (3 tables). Role-binding seeding explicitly EXCLUDED — proposal doc only, pending bookkeeper approval.",
+    "migration": "202606080040_enable_rls_bill_lines_expense_lines_line_category_load_required.sql — idempotent ENABLE + FORCE ROW LEVEL SECURITY plus company-isolation policies.",
+    "rls_tables": [
+      "accounting.bill_lines",
+      "accounting.expense_lines",
+      "accounting.line_category_load_required"
+    ],
+    "isolation_findings": "NONE of the three tables has an operating_company_id column, so the accounting.invoice_lines direct-OCI pattern is not literally applicable. bill_lines isolates via parent accounting.bills.operating_company_id. expense_lines parent (accounting.expenses) does NOT exist in prod or CI, so its policy is adaptive: parent-subquery when present, else deny-by-default (lucia bypass only). line_category_load_required is a GLOBAL reference table (line_category PK, description, effective_from) with no company linkage — RLS restored to the original 0093 authenticated-user policy (it had drifted to RLS-off in prod) plus FORCE.",
+    "policies": [
+      "bill_lines_company_isolation (FOR ALL TO ih35_app)",
+      "expense_lines_company_isolation (FOR ALL TO ih35_app)",
+      "line_category_load_required_select (FOR SELECT TO ih35_app)",
+      "line_category_load_required_write (FOR ALL TO ih35_app)"
+    ],
+    "pattern": "identity.is_lucia_bypass() OR <isolation predicate>; OCI predicate uses NULLIF(current_setting('app.operating_company_id', true), '')::uuid to match accounting.invoice_lines / accounting.bills.",
+    "tests": "apps/backend/src/accounting/__tests__/bill-expense-lines-rls.db.test.ts — real-Postgres cross-OCI suite (skipIf GITHUB_ACTIONS!=='true'): RLS enabled+forced on all 3 tables, policies present, per-company bill_line visibility isolation, WITH CHECK rejects cross-OCI bill_line insert (SQLSTATE 42501), expense_lines invisible to scoped sessions (deny-by-default) but visible under bypass, global reference table readable under bypass. Validated green against an isolated Neon branch.",
+    "verifier": "scripts/db-verify-bill-expense-lines-rls.ts (npm run db:verify:bill-expense-lines-rls) — asserts rowsecurity+forcerowsecurity true and expected policies present for all 3 tables; run against prod as a post-deploy gate.",
+    "role_binding_proposal": "docs/accounting/ROLE-BINDINGS-MAPPING-PROPOSAL.md — corrected to target the WIRED table accounting.chart_of_accounts_roles (FK account_id -> catalogs.accounts; per-company via operating_company_id; 11-value CoaRole CHECK), confirmed via resolver.service.ts + posting-engine.service.ts. Candidate accounts proposed from the 370-row TRANSP chart of accounts with HIGH/MEDIUM/LOW confidence. NO INSERT performed — bookkeeper approval required before seeding.",
+    "prod_state": "bill_lines + expense_lines = 0 rows (safe to enable). chart_of_accounts_roles = 0 rows. catalogs.accounts = 370 rows. accounting.expenses table does NOT exist in prod.",
+    "additive_only": true,
+    "merge_gate": "After deploy, npm run db:verify:bill-expense-lines-rls must return exit 0 against prod."
+  }
+}

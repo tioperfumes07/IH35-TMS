@@ -130,6 +130,7 @@
     "db:verify:wf-035": "node --import tsx scripts/db-verify-wf-035.ts",
     "db:verify:factoring": "tsx scripts/db-verify-factoring.ts",
     "db:verify:factoring-rls": "tsx scripts/db-verify-factoring-rls.ts",
+    "db:verify:bill-expense-lines-rls": "tsx scripts/db-verify-bill-expense-lines-rls.ts",
     "db:verify:phase1-gate": "node scripts/db-verify-phase1-gate.mjs",
     "lint:fastify-routes": "node scripts/lint-fastify-routes.mjs",
     "lint:deps": "node scripts/lint-deps.mjs",
