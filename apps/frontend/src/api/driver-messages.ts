@@ -53,28 +53,25 @@ export function markDriverMessageRead(messageId: string, operatingCompanyId: str
 
 export type DriverCommEntry = {
   id: string;
-  driver_id: string;
+  channel: "sms" | "email" | "in_app";
   direction: "inbound" | "outbound";
-  channel: string;
-  body: string;
   message: string;
   urgency: string | null;
-  delivery_status: string | null;
+  delivery_status: string;
   delivery_ref: string | null;
   created_at: string;
-  read_at: string | null;
 };
 
 export function getDriverCommunications(
   driverId: string,
   operatingCompanyId: string,
-  params?: { channel?: string; limit?: number; offset?: number }
+  params: { channel?: string; limit?: number; offset?: number } = {}
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  if (params?.channel) q.set("channel", params.channel);
-  if (params?.limit !== undefined) q.set("limit", String(params.limit));
-  if (params?.offset !== undefined) q.set("offset", String(params.offset));
+  if (params.channel) q.set("channel", params.channel);
+  if (params.limit !== undefined) q.set("limit", String(params.limit));
+  if (params.offset !== undefined) q.set("offset", String(params.offset));
   return apiRequest<{ entries: DriverCommEntry[]; total: number }>(
-    `/api/v1/drivers/${driverId}/communications?${q}`
+    `/api/v1/drivers/${encodeURIComponent(driverId)}/communications?${q.toString()}`
   );
 }

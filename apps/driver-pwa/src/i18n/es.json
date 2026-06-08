@@ -577,11 +577,7 @@
     "document_attach_failed": "Error al adjuntar documento",
     "action_failed": "Acción fallida. Intenta de nuevo.",
     "screen_loading": "Cargando despacho...",
-    "screen_not_found": "Carga no encontrada",
-    "status_pending": "Pendiente",
-    "status_arrived": "Llegado",
-    "status_docs_uploaded": "Documentos cargados",
-    "status_departed": "Salido"
+    "screen_not_found": "Carga no encontrada"
   },
   "photo": {
     "angle_label": "Ángulo"

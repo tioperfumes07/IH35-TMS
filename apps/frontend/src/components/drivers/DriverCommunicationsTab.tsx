@@ -162,7 +162,7 @@ export function DriverCommunicationsTab({
                         {entry.urgency}
                       </span>
                     ) : null}
-                    <DeliveryBadge status={entry.delivery_status ?? ""} />
+                    <DeliveryBadge status={entry.delivery_status} />
                   </div>
                   <p className="break-words text-sm text-gray-900">{entry.message}</p>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500">

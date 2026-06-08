@@ -6,7 +6,6 @@ import process from "node:process";
 const ROOT = process.cwd();
 
 export const PASS8_COUNTS = {
-  modules: 20,
   workflows: 65,
   error_codes: 261,
   must_clauses: 515,

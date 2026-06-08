@@ -577,11 +577,7 @@
     "document_attach_failed": "Failed to attach document",
     "action_failed": "Action failed. Please try again.",
     "screen_loading": "Loading dispatch...",
-    "screen_not_found": "Load not found",
-    "status_pending": "Pending",
-    "status_arrived": "Arrived",
-    "status_docs_uploaded": "Docs Uploaded",
-    "status_departed": "Departed"
+    "screen_not_found": "Load not found"
   },
   "photo": {
     "angle_label": "Angle"
