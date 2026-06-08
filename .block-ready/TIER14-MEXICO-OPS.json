@@ -1,0 +1,34 @@
+{
+  "block_id": "TIER14-MEXICO-OPS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "CROSS-BORDER",
+  "task": "Block 14 — Mexico Operations Module: cross-border loads, mx_permits, mx_tolls_ledger, B1 drivers",
+  "branch": "feat/tier14-mexico-ops",
+  "lane": "A",
+  "lane_position": "A14",
+  "stub_on_main": false,
+  "prior_state": "NET-NEW — no Mexico ops code existed on main",
+  "details": [
+    "Migration 202606080930_block14_mexico_ops.sql: adds is_cross_border + 6 MX columns to loads, creates mdata.mx_permits and mdata.mx_tolls_ledger with RLS + ih35_app grants",
+    "B1 visa fields added to identity.driver_profiles (has_b1_visa, b1_visa_number, b1_visa_expires_date)",
+    "mx-permits.routes.ts: CRUD + expiring-permits report (30/60/90 day alerts)",
+    "mx-tolls.routes.ts: CRUD + spend-by-unit report",
+    "Backfill: loads with existing border_crossing_events flagged as is_cross_border=true"
+  ],
+  "allowed_files": [
+    ".block-ready/TIER14-MEXICO-OPS.json",
+    "db/migrations/202606080930_block14_mexico_ops.sql",
+    "apps/backend/src/mexico-ops/mx-permits.routes.ts",
+    "apps/backend/src/mexico-ops/mx-tolls.routes.ts"
+  ],
+  "db_required": true,
+  "guard_required": false,
+  "acceptance": {
+    "schema_migrated": true,
+    "cross_border_backfill": true,
+    "permit_expiration_alerts": true,
+    "b1_driver_fields": true,
+    "reports_available": true
+  }
+}
