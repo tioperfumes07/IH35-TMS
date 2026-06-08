@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { listCustomers, listDrivers } from "../api/mdata";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
@@ -24,6 +24,7 @@ import { DispatchOverview } from "./dispatch/DispatchOverview";
 import { RoundTrips } from "./dispatch/RoundTrips";
 import { DispatchSubnav } from "../components/dispatch/DispatchSubnav";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
+import { DISPATCH_SECONDARY_TAB_PATH, dispatchSecondaryTabFromPath } from "../router/route-manifest";
 
 type ViewMode = "overview" | "list" | "kanban" | "units";
 
@@ -96,14 +97,25 @@ function customerMatchReason(search: string, customer: { name: string; customer_
   return null;
 }
 
-export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolean } = {}) {
+export function DispatchPage({
+  loadsDeepLink = false,
+  initialSubTab,
+}: {
+  loadsDeepLink?: boolean;
+  initialSubTab?: DispatchSubTabId;
+} = {}) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [newLoadOpen, setNewLoadOpen] = useState(false);
-  const [subTab, setSubTab] = useState<DispatchSubTabId>("load_board");
+  const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
   const loadsRoute = loadsDeepLink || location.pathname === "/dispatch/loads";
+
+  useEffect(() => {
+    setSubTab(dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!loadsRoute) return;
@@ -299,7 +311,14 @@ export function DispatchPage({ loadsDeepLink = false }: { loadsDeepLink?: boolea
       <DispatchSubnav operatingCompanyId={defaultCompanyIds[0] ?? ""} />
 
       <div data-testid="dispatch-secondary-nav">
-        <SecondaryNavTabs tabs={DISPATCH_SUB_TABS} activeId={subTab} onChange={(id) => setSubTab(id as DispatchSubTabId)} />
+        <SecondaryNavTabs
+          tabs={DISPATCH_SUB_TABS}
+          activeId={subTab}
+          onChange={(id) => {
+            const target = DISPATCH_SECONDARY_TAB_PATH[id];
+            if (target) navigate(target);
+          }}
+        />
       </div>
 
       {subTab === "load_board" && view === "overview" ? (

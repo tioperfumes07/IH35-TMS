@@ -1,0 +1,18 @@
+{
+  "block_id": "FIX-DISPATCH-SUBNAV-ROUTING",
+  "branch": "fix/dispatch-subnav-routing",
+  "phase": "DISPATCH",
+  "task": "Block V — wire 5 dispatch secondary tabs to distinct routes",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/FIX-DISPATCH-SUBNAV-ROUTING.json",
+    "apps/frontend/src/pages/Dispatch.tsx",
+    "apps/frontend/src/router/route-manifest.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-nav-integrity.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
