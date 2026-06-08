@@ -484,6 +484,8 @@
     "verify:operational-tuning-catalog": "node scripts/verify-operational-tuning-catalog.mjs",
     "verify:operational-tuning-catalog:test": "node --test scripts/__tests__/verify-operational-tuning-catalog.test.mjs",
     "verify:circuit-breakers": "node scripts/verify-circuit-breakers.mjs",
+    "verify:e2e-critical-paths": "node scripts/verify-e2e-critical-paths.mjs",
+    "test:e2e:critical-paths": "cd apps/frontend && npx playwright test --config=playwright.critical-paths.config.ts",
     "install:git-hooks": "node scripts/install-git-hooks.mjs",
     "block-ready": "node scripts/block-ready.mjs",
     "block-ready:test": "node --test scripts/__tests__/block-ready.test.mjs",

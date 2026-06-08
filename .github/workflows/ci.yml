@@ -912,6 +912,9 @@ jobs:
       - name: verify:circuit-breakers
         run: npm run verify:circuit-breakers
 
+      - name: verify:e2e-critical-paths
+        run: npm run verify:e2e-critical-paths
+
       - name: verify:driver-day-summary-empty-state-not-red
         run: npm run verify:driver-day-summary-empty-state-not-red
 
