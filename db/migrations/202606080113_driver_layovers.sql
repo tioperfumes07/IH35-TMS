@@ -30,7 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_layover_company
 ALTER TABLE dispatch.driver_layovers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dispatch.driver_layovers FORCE ROW LEVEL SECURITY;
 CREATE POLICY driver_layovers_tenant_isolation ON dispatch.driver_layovers
-  USING (operating_company_id IN (SELECT org.user_accessible_company_ids()));
+  USING (operating_company_id::uuid IN (SELECT org.user_accessible_company_ids()));
 
 GRANT USAGE ON SCHEMA dispatch TO ih35_app;
 GRANT SELECT, INSERT, UPDATE ON dispatch.driver_layovers TO ih35_app;

@@ -70,7 +70,7 @@ export type DispatchLoadRow = {
   samsara_eta_source?: "samsara" | "manual" | "prediction" | null;
   on_time_prediction?: "green" | "amber" | "red" | null;
   samsara_last_fetched_at?: string | null;
-  samsara_cache_tier?: string | null;
+  samsara_cache_tier?: 1 | 2 | 3 | 4 | null;
 };
 
 export type LoadsListResponse = {

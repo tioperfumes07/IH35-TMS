@@ -1466,3 +1466,86 @@ export function unmatchAccountingReconciliation(input: {
     body: JSON.stringify(input),
   });
 }
+
+export type RecurringBillFrequency = "weekly" | "biweekly" | "monthly" | "quarterly" | "annually";
+
+export type RecurringBillLineItem = {
+  description: string;
+  amount: number;
+  account_id?: string | null;
+};
+
+export type RecurringBillTemplate = {
+  uuid: string;
+  template_name: string;
+  vendor_uuid: string;
+  vendor_name?: string | null;
+  amount: number | string;
+  memo: string | null;
+  frequency: RecurringBillFrequency;
+  next_generation_date: string;
+  end_date: string | null;
+  auto_post: boolean;
+  is_active: boolean;
+  line_items: RecurringBillLineItem[];
+  created_at: string;
+  updated_at?: string;
+};
+
+export function createRecurringBillTemplate(
+  operatingCompanyId: string,
+  body: {
+    vendor_uuid: string;
+    template_name: string;
+    amount: number;
+    memo: string | null;
+    frequency: RecurringBillFrequency;
+    next_generation_date: string;
+    end_date: string | null;
+    auto_post: boolean;
+    line_items: RecurringBillLineItem[];
+  },
+  idempotencyKey: string
+) {
+  return apiRequest<{ uuid: string; template: RecurringBillTemplate }>(
+    `/api/v1/accounting/recurring-bill-templates`,
+    {
+      method: "POST",
+      body: { ...body, operating_company_id: operatingCompanyId },
+      headers: { "Idempotency-Key": idempotencyKey },
+    }
+  );
+}
+
+export function listRecurringBillTemplates(
+  operatingCompanyId: string,
+  params: { activeOnly?: boolean } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.activeOnly !== undefined) q.set("active_only", params.activeOnly ? "true" : "false");
+  return apiRequest<{ rows: RecurringBillTemplate[] }>(
+    `/api/v1/accounting/recurring-bill-templates?${q.toString()}`
+  );
+}
+
+export function deactivateRecurringBillTemplate(uuid: string, operatingCompanyId: string) {
+  return apiRequest<{ uuid: string; is_active: false }>(
+    `/api/v1/accounting/recurring-bill-templates/${encodeURIComponent(uuid)}/deactivate`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId } }
+  );
+}
+
+export function generateRecurringBillNow(
+  uuid: string,
+  operatingCompanyId: string,
+  idempotencyKey: string
+) {
+  return apiRequest<{ billUuid: string }>(
+    `/api/v1/accounting/recurring-bill-templates/${encodeURIComponent(uuid)}/generate-now`,
+    {
+      method: "POST",
+      body: { operating_company_id: operatingCompanyId },
+      headers: { "Idempotency-Key": idempotencyKey },
+    }
+  );
+}

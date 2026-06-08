@@ -1691,3 +1691,58 @@ export function runMaintenancePmAutoEngineNow(operatingCompanyId: string) {
     { method: "POST", body: { operating_company_id: operatingCompanyId } }
   );
 }
+
+export type DvirSeverityLevel = "major" | "minor" | "observation";
+
+export type PreFlightDvirQueueRow = {
+  id: string;
+  unit_id: string;
+  unit_number: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  item_key: string;
+  item_label: string | null;
+  severity: DvirSeverityLevel;
+  cfr_code?: string;
+  major_defect_code?: string | null;
+  notes: string | null;
+  submitted_at: string;
+  work_order_id: string | null;
+  work_order_display_id: string | null;
+  auto_wo_id?: string | null;
+  status: "open" | "routed" | "closed";
+  routed?: boolean;
+};
+
+export function listPreFlightDvirQueue(
+  operatingCompanyId: string,
+  params: { severity?: DvirSeverityLevel; status?: "open" | "routed" | "closed" } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.severity) q.set("severity", params.severity);
+  if (params.status) q.set("status", params.status);
+  return apiRequest<{ defects: PreFlightDvirQueueRow[] }>(
+    `/api/v1/maintenance/pre-flight-dvir/queue?${q.toString()}`
+  );
+}
+
+export function routePreFlightDvirDefect(defectId: string, operatingCompanyId: string) {
+  return apiRequest<{
+    action: "work_order_created" | "queued_next_pm" | "logged_observation" | "already_routed";
+    work_order_id?: string;
+    display_id?: string | null;
+  }>(`/api/v1/maintenance/pre-flight-dvir/${encodeURIComponent(defectId)}/route`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
+export function setPreFlightDvirSeverity(
+  defectId: string,
+  body: { operating_company_id: string; severity: DvirSeverityLevel }
+) {
+  return apiRequest<{ id: string; severity: DvirSeverityLevel }>(
+    `/api/v1/maintenance/pre-flight-dvir/${encodeURIComponent(defectId)}/severity`,
+    { method: "PATCH", body }
+  );
+}
