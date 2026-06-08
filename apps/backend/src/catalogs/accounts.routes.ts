@@ -29,7 +29,7 @@ const listQuerySchema = z.object({
 const idParamSchema = z.object({ id: z.string().uuid() });
 
 const createAccountBodySchema = z.object({
-  account_number: z.string().trim().min(1).max(50),
+  account_number: z.string().trim().min(1).max(50).optional().nullable(),
   account_name: z.string().trim().min(1).max(200),
   account_type: accountTypeSchema,
   account_subtype: z.string().trim().max(100).optional(),
@@ -39,13 +39,15 @@ const createAccountBodySchema = z.object({
   is_postable: z.boolean().default(true),
   currency_code: z.string().trim().regex(/^[A-Z]{3}$/).default("USD"),
   opening_balance_cents: z.coerce.number().int().optional(),
+  opening_balance_as_of: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  is_locked: z.boolean().default(false),
   notes: z.string().trim().max(2000).optional(),
   operating_company_id: z.string().uuid().optional(),
 });
 
 const updateAccountBodySchema = z
   .object({
-    account_number: z.string().trim().min(1).max(50).optional(),
+    account_number: z.string().trim().min(1).max(50).optional().nullable(),
     account_name: z.string().trim().min(1).max(200).optional(),
     account_type: accountTypeSchema.optional(),
     account_subtype: z.string().trim().max(100).nullable().optional(),
@@ -55,11 +57,21 @@ const updateAccountBodySchema = z
     is_postable: z.boolean().optional(),
     currency_code: z.string().trim().regex(/^[A-Z]{3}$/).optional(),
     opening_balance_cents: z.coerce.number().int().nullable().optional(),
+    opening_balance_as_of: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+    is_locked: z.boolean().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
     operating_company_id: z.string().uuid().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
+
+const ACCOUNT_SELECT_COLS = `
+  id, account_number, account_name, account_type, account_subtype, parent_account_id,
+  qbo_account_id, qbo_account_qrn, is_postable, currency_code,
+  opening_balance_cents, opening_balance_as_of,
+  is_locked, notes,
+  created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+`;
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -133,10 +145,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
-          SELECT
-            id, account_number, account_name, account_type, account_subtype, parent_account_id,
-            qbo_account_id, qbo_account_qrn, is_postable, currency_code, opening_balance_cents, notes,
-            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+          SELECT ${ACCOUNT_SELECT_COLS}
           FROM catalogs.accounts
           ${whereClause}
           ORDER BY created_at DESC
@@ -165,18 +174,17 @@ export async function registerAccountRoutes(app: FastifyInstance) {
           `
             INSERT INTO catalogs.accounts (
               account_number, account_name, account_type, account_subtype, parent_account_id,
-              qbo_account_id, qbo_account_qrn, is_postable, currency_code, opening_balance_cents, notes,
+              qbo_account_id, qbo_account_qrn, is_postable, currency_code,
+              opening_balance_cents, opening_balance_as_of,
+              is_locked, notes,
               created_by_user_id, updated_by_user_id
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14
             )
-            RETURNING
-              id, account_number, account_name, account_type, account_subtype, parent_account_id,
-              qbo_account_id, qbo_account_qrn, is_postable, currency_code, opening_balance_cents, notes,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            RETURNING ${ACCOUNT_SELECT_COLS}
           `,
           [
-            b.account_number,
+            b.account_number ?? null,
             b.account_name,
             b.account_type,
             b.account_subtype ?? null,
@@ -186,6 +194,8 @@ export async function registerAccountRoutes(app: FastifyInstance) {
             b.is_postable,
             b.currency_code,
             b.opening_balance_cents ?? null,
+            b.opening_balance_as_of ?? null,
+            b.is_locked,
             b.notes ?? null,
             authUser.uuid,
           ]
@@ -229,10 +239,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(
         `
-          SELECT
-            id, account_number, account_name, account_type, account_subtype, parent_account_id,
-            qbo_account_id, qbo_account_qrn, is_postable, currency_code, opening_balance_cents, notes,
-            created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+          SELECT ${ACCOUNT_SELECT_COLS}
           FROM catalogs.accounts
           WHERE id = $1
           LIMIT 1
@@ -276,6 +283,8 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     if ("is_postable" in b) add("is_postable", b.is_postable);
     if ("currency_code" in b) add("currency_code", b.currency_code ?? null);
     if ("opening_balance_cents" in b) add("opening_balance_cents", b.opening_balance_cents ?? null);
+    if ("opening_balance_as_of" in b) add("opening_balance_as_of", b.opening_balance_as_of ?? null);
+    if ("is_locked" in b) add("is_locked", b.is_locked);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     add("updated_by_user_id", authUser.uuid);
@@ -286,10 +295,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
         const oldRes = await client.query(
           `
-            SELECT
-              id, account_number, account_name, account_type, account_subtype, parent_account_id,
-              qbo_account_id, qbo_account_qrn, is_postable, currency_code, opening_balance_cents, notes,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            SELECT ${ACCOUNT_SELECT_COLS}
             FROM catalogs.accounts
             WHERE id = $1
             LIMIT 1
@@ -299,15 +305,16 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
 
+        if (oldRow.is_locked === true) {
+          return { __locked: true } as const;
+        }
+
         const res = await client.query(
           `
             UPDATE catalogs.accounts
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
-            RETURNING
-              id, account_number, account_name, account_type, account_subtype, parent_account_id,
-              qbo_account_id, qbo_account_qrn, is_postable, currency_code, opening_balance_cents, notes,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+            RETURNING ${ACCOUNT_SELECT_COLS}
           `,
           values
         );
@@ -334,6 +341,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "catalog_account_not_found" });
+      if ("__locked" in updated) return reply.code(423).send({ error: "account_is_locked" });
       return updated;
     } catch (err) {
       const code = (err as { code?: string }).code;
@@ -355,7 +363,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
       const oldRes = await client.query(
         `
-          SELECT id, deactivated_at
+          SELECT id, deactivated_at, is_locked
           FROM catalogs.accounts
           WHERE id = $1
           LIMIT 1
@@ -364,6 +372,10 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
+
+      if (oldRow.is_locked === true) {
+        return { __locked: true } as const;
+      }
 
       let deactivatedAt = oldRow.deactivated_at as string | null;
       let wasAlreadyDeactivated = oldRow.deactivated_at !== null;
@@ -399,6 +411,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       return { id: oldRow.id, deactivated_at: deactivatedAt, was_already_deactivated: wasAlreadyDeactivated };
     });
     if (!deactivated) return reply.code(404).send({ error: "catalog_account_not_found" });
+    if ("__locked" in deactivated) return reply.code(423).send({ error: "account_is_locked" });
     return deactivated;
   });
 }
