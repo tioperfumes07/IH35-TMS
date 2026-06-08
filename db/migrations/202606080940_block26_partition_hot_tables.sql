@@ -25,9 +25,18 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 GRANT SELECT, INSERT ON audit_log TO ih35_app;
 
--- Step 1a: Create new partitioned table alongside existing
+-- Step 1a: Create new partitioned table alongside existing.
+-- Primary key must include the partition key (created_at) per PostgreSQL requirement.
 CREATE TABLE IF NOT EXISTS audit_log_partitioned (
-  LIKE audit_log INCLUDING ALL
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  table_name text NOT NULL,
+  record_id uuid,
+  action text NOT NULL,
+  changed_by text,
+  change_data jsonb,
+  operating_company_id uuid,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
 
 -- Step 1b: Grant same permissions
@@ -137,7 +146,7 @@ CREATE TABLE IF NOT EXISTS audit_log_2027_12 PARTITION OF audit_log_partitioned
 -- For migration: copy all existing rows.
 INSERT INTO audit_log_partitioned
 SELECT * FROM audit_log
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id, created_at) DO NOTHING;
 
 -- ══════════════════════════════════════════════════════════════════════════════
 -- SECTION 2: Partition maintenance cron procedure
