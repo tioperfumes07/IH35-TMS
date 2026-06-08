@@ -447,6 +447,14 @@
     {
       "path": "/accounting",
       "reason": "Hub state tabs home + find-transactions \u2014 URL sync Block 43"
+    },
+    {
+      "path": "/dispatch/borders/geofence-history",
+      "reason": "Geofence crossing history detail; reachable via dispatch flyout"
+    },
+    {
+      "path": "/dispatch/layovers/driver/:driverUuid",
+      "reason": "Driver layover history detail; reachable from driver profile"
     }
   ]
 }
