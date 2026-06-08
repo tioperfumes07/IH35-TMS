@@ -650,6 +650,9 @@ export function DriverDetailPage() {
             {certBadges.map((badge) => (
               <CertExpiryBadge key={badge.label} label={badge.label} expiresAt={badge.expiresAt} />
             ))}
+            <span data-testid="retention-risk-badge" className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700">
+              Retention risk
+            </span>
             <StatusBadge status={driver.status} />
             <Link to={`/drivers/${driver.id}/hos`} className="rounded border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
               HOS Detail

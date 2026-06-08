@@ -247,6 +247,7 @@ import { registerCustomerLanesRoutes } from "./mdata/customer-lanes.routes.js";
 import { registerCustomerDetailAliasRoutes } from "./mdata/customer-detail-alias.routes.js";
 import { registerCustomerRoutes } from "./customers/index.js";
 import { registerCustomerRelationshipScoreRoutes } from "./customers/relationship-score/routes.js";
+import { registerDriverRetentionRoutes } from "./drivers/retention/routes.js";
 import { registerAssignmentsQuicksaveRoutes } from "./assignments/quicksave.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
 import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.js";
@@ -380,6 +381,10 @@ import {
   initializeCustomerRelationshipScorerWorker,
   stopCustomerRelationshipScorerWorker,
 } from "./jobs/customer-relationship-scorer.js";
+import {
+  initializeDriverRetentionScorerWorker,
+  stopDriverRetentionScorerWorker,
+} from "./jobs/driver-retention-scorer-worker.js";
 import { initializeDriverScoringAggregatorWorker } from "./jobs/driver-scoring-aggregator-worker.js";
 import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
 import { registerCap14CargoSensorRoutes } from "./integrations/samsara/cap-14-cargo-sensors/routes.js";
@@ -446,6 +451,7 @@ async function shutdown(signal: string) {
     stopAdminJobsWorker();
     stopBookingGapAggregatorWorker();
     stopCustomerRelationshipScorerWorker();
+    stopDriverRetentionScorerWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
   }
@@ -610,6 +616,7 @@ async function main() {
   await registerCustomerDetailAliasRoutes(app);
   await registerCustomerRoutes(app);
   await registerCustomerRelationshipScoreRoutes(app);
+  await registerDriverRetentionRoutes(app);
   await registerMdataWorkflowRoutes(app);
   await registerDriverTeamsAliasRoutes(app);
   await registerCatalogsRoutes(app);
@@ -1162,6 +1169,8 @@ async function main() {
   try {
     initializeCustomerRelationshipScorerWorker(app);
     app.log.info("[STARTUP] customer-relationship scorer worker initialized");
+    initializeDriverRetentionScorerWorker(app);
+    app.log.info("[STARTUP] driver-retention scorer worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] customer-relationship scorer worker failed");
   }
