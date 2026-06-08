@@ -251,3 +251,9 @@ export function useCancelLoad() {
     },
   });
 }
+
+// ─── Block 9 (DISP-PROFITABILITY): additive types ────────────────────────────
+// Full API helpers live in src/lib/loadProfit.ts (Lane B).
+// These re-exports let other modules stay in the loads import namespace.
+export type { LoadProfitabilitySnapshot, TripProfitabilityRow, TripProfitabilityResponse } from "../lib/loadProfit";
+export { getLoadProfitability, getTripProfitability } from "../lib/loadProfit";

@@ -1,0 +1,37 @@
+{
+  "block_id": "DISP-PROFITABILITY",
+  "lane": "B",
+  "block_number": 9,
+  "phase": "Dispatch",
+  "task": "Trip Profitability view + SettlementProfitabilityCard drawer child + loadProfit util",
+  "branch": "feat/disp-profitability",
+  "allowed_files": [
+    "apps/frontend/src/pages/dispatch/TripProfitability.tsx",
+    "apps/frontend/src/components/dispatch/tabs/SettlementProfitabilityCard.tsx",
+    "apps/frontend/src/lib/loadProfit.ts",
+    "apps/backend/src/dispatch/load-profitability.service.ts",
+    "apps/backend/src/dispatch/load-profitability.routes.ts",
+    "apps/frontend/src/api/loads.ts",
+    ".block-ready/DISP-PROFITABILITY.json"
+  ],
+  "forbidden_files": [
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/dispatch/LoadCard.tsx",
+    "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+    "apps/frontend/src/pages/Dispatch.tsx",
+    "apps/frontend/src/components/dispatch/DispatchKanban.tsx"
+  ],
+  "api_endpoints": [
+    "GET /api/v1/dispatch/loads/:loadId/profitability",
+    "GET /api/v1/reports/trip-profitability"
+  ],
+  "lane_a_integration": {
+    "badge": "Lane A (Block 3) imports classifyProfit + profitBadgeClassName + formatProfitCents from lib/loadProfit.ts",
+    "route": "Lane A (Block 12) adds <Route path='/reports/trip-profitability' element={<TripProfitability />} /> in manifest.tsx",
+    "drawer": "Lane A (Block 12) drops <SettlementProfitabilityCard loadId=... operatingCompanyId=... currencyCode=... /> into LoadDetailDrawer Settlement tab"
+  },
+  "reconcile_gap73": "No load_margin_snapshots migration. No calculator.service.ts. Routes share same formula as dispatch-margin.routes.ts (dedupe audit Option B).",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
