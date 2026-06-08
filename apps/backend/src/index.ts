@@ -342,6 +342,8 @@ import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
 import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js";
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
+import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
+import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-detector.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -483,6 +485,7 @@ async function main() {
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
+  await registerBorderCrossingDetectorRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -940,6 +943,9 @@ async function main() {
     app.log.info("[STARTUP] samsara-cache-warmer initialized");
     initializeSearchIndexerIncremental(app);
     app.log.info("[STARTUP] cert-expiry-monitor initialized");
+
+    initializeBorderCrossingDetectorWorker(app);
+    app.log.info("[STARTUP] border-crossing-detector-worker initialized");
 
     initializePmAutoEngineCron(app);
     app.log.info("[STARTUP] pm-auto-engine-cron initialized");

@@ -1,0 +1,28 @@
+{
+  "block_id": "GAP-26",
+  "status": "READY",
+  "branch": "feature/gap-26-border-geofences",
+  "phase": "GAP-MEDIUM",
+  "task": "Border 1000m Geofences + Customs Clearance Time",
+  "allowed_files": [
+    "db/migrations/202606080111_border_crossing_events.sql",
+    "apps/backend/src/integrations/samsara/border-crossings/detector.service.ts",
+    "apps/backend/src/integrations/samsara/border-crossings/customs-time.service.ts",
+    "apps/backend/src/integrations/samsara/border-crossings/routes.ts",
+    "apps/backend/src/integrations/samsara/border-crossings/__tests__/detector.test.ts",
+    "apps/backend/src/jobs/border-crossing-detector.ts",
+    "apps/backend/scripts/seed-border-geofences.mjs",
+    "apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx",
+    "apps/frontend/src/components/dispatch/CustomsTimePill.tsx",
+    "scripts/verify-border-geofence-seed.mjs",
+    "docs/specs/gap-26-border-crossings.md",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "package.json",
+    ".block-ready/GAP-26.json"
+  ],
+  "extra_gates": ["verify:border-geofence-seed"],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
