@@ -17,7 +17,10 @@
     "scripts/verify-multi-stop-extra-rates.mjs",
     "docs/specs/gap-31-multi-stop-extra-rates.md",
     "package.json",
-    ".github/workflows/ci.yml"
+    ".github/workflows/ci.yml",
+    ".block-ready/DISP-FINES-DEDUCT.json",
+    "apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx",
+    "apps/frontend/src/pages/safety/components/FineEntryForm.tsx"
   ],
   "extra_gates": [
     "verify:multi-stop-extra-rates"
