@@ -27,6 +27,10 @@ import { AtRiskQueuePage } from "../pages/dispatch/AtRiskQueuePage";
 import { InTransitIssuesPage } from "../pages/dispatch/InTransitIssuesPage";
 import { AssignmentHistoryPage } from "../pages/dispatch/AssignmentHistoryPage";
 import { PlannerCalendarPage } from "../pages/dispatch/PlannerCalendarPage";
+import { DispatchPlannersLayout } from "../pages/dispatch/planners/DispatchPlannersLayout";
+import { DriverPlanner } from "../pages/dispatch/planners/DriverPlanner";
+import { TruckPlanner } from "../pages/dispatch/planners/TruckPlanner";
+import { LoadsPlanner } from "../pages/dispatch/planners/LoadsPlanner";
 import { DetentionBoardPage } from "../pages/dispatch/DetentionBoardPage";
 import { OcrQueuePage } from "../pages/dispatch/OcrQueuePage";
 import { NotifyPreferencesPage } from "../pages/dispatch/NotifyPreferencesPage";
@@ -676,6 +680,30 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <PlannerCalendarPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/planners/driver"
+          element={
+            <ProtectedRoute>
+              <DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/planners/truck"
+          element={
+            <ProtectedRoute>
+              <DispatchPlannersLayout><TruckPlanner /></DispatchPlannersLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/planners/loads"
+          element={
+            <ProtectedRoute>
+              <DispatchPlannersLayout><LoadsPlanner /></DispatchPlannersLayout>
             </ProtectedRoute>
           }
         />
