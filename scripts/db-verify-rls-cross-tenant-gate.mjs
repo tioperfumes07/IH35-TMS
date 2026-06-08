@@ -99,6 +99,17 @@ function buildDisplayId(tableName, marker, prefix, digits) {
 
 function valueFromRegex(regexLiteral, tableName, marker) {
   if (!regexLiteral) return null;
+  // Two-segment pattern: ^PREFIX-[0-9]{N}-[0-9]{M}$  (e.g. ^CM-[0-9]{4}-[0-9]{4}$)
+  const twoGroupPattern =
+    regexLiteral.match(/^\^([A-Za-z]{1,8})-\[0-9\]\{(\d+)\}-\[0-9\]\{(\d+)\}\$$/) ??
+    regexLiteral.match(/^\^([A-Za-z]{1,8})-\\d\{(\d+)\}-\\d\{(\d+)\}\$$/);
+  if (twoGroupPattern) {
+    const prefix = twoGroupPattern[1];
+    const d1 = Number(twoGroupPattern[2]);
+    const d2 = Number(twoGroupPattern[3]);
+    return `${prefix}-${numericToken(`${tableName}:${marker}:g1`, d1)}-${numericToken(`${tableName}:${marker}:g2`, d2)}`;
+  }
+  // Single-segment pattern: ^PREFIX-[0-9]{N}$
   const explicitPrefixDigits =
     regexLiteral.match(/^\^([A-Za-z]{1,8})-\[0-9\]\{(\d+)\}\$$/) ??
     regexLiteral.match(/^\^([A-Za-z]{1,8})-\\d\{(\d+)\}\$$/);
