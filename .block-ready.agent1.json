@@ -1,37 +1,19 @@
 {
-  "block_id": "GAP-36",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap36",
-  "branch": "feature/gap-36-incident-reporting",
-  "phase": "GAP-HIGH",
-  "task": "Driver PWA full incident reporting (WF-048)",
-  "classification": "OVERLAP",
+  "block_id": "DISP-KANBAN-STATES",
+  "branch": "feat/disp-kanban-states",
+  "phase": "Dispatch",
+  "task": "Block 3 — True Kanban operational states (7 columns + Completed/Cancelled terminal)",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-disp-kanban",
   "allowed_files": [
     ".block-ready.agent1.json",
-    ".block-ready/GAP-36.json",
-    "apps/driver-pwa/src/pages/IncidentReport.tsx",
-    "apps/driver-pwa/src/components/incident/IncidentTypePicker.tsx",
-    "apps/driver-pwa/src/components/incident/PhotoChain.tsx",
-    "apps/driver-pwa/src/components/incident/WitnessForm.tsx",
-    "apps/driver-pwa/src/components/incident/PoliceReportPicker.tsx",
-    "apps/driver-pwa/src/api/incidents.ts",
-    "apps/driver-pwa/src/components/IncidentTypeRadio.tsx",
-    "apps/driver-pwa/src/i18n/en.json",
-    "apps/driver-pwa/src/i18n/es.json",
-    "packages/shared-types/src/incidents.ts",
-    "apps/backend/src/safety/incidents/full-report.service.ts",
-    "apps/backend/src/safety/incidents/auto-workflow-trigger.ts",
-    "apps/backend/src/safety/incidents/full-report.routes.ts",
-    "apps/backend/src/safety/incidents/__tests__/full-report.test.ts",
-    "apps/backend/src/index.ts",
-    "scripts/verify-driver-pwa-incident-full.mjs",
-    "docs/specs/gap-36-driver-pwa-incident-full.md",
-    "package.json",
-    ".github/workflows/ci.yml"
+    ".block-ready/DISP-KANBAN-STATES.json",
+    "apps/frontend/src/components/dispatch/DispatchKanban.tsx"
   ],
-  "extra_gates": [
-    "verify:driver-pwa-incident-full"
-  ],
+  "preview_provided": false,
+  "extra_gates": [],
   "runtime_path": "src",
-  "db_required": true,
-  "guard_required": true
+  "db_required": false,
+  "guard_required": false
 }
