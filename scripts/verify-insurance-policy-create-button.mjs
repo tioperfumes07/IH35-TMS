@@ -20,7 +20,7 @@ const modal = read(modalPath);
 if (!policies) failures.push(`missing:${policiesPath}`);
 if (!modal) failures.push(`missing:${modalPath}`);
 
-if (policies && !policies.includes("+ Policy")) failures.push("missing_create_button_label");
+if (policies && !policies.includes("+ Create policy")) failures.push("missing_create_button_label");
 if (policies && !policies.includes("PolicyCreateModal")) failures.push("missing_policy_create_modal_usage");
 if (policies && !policies.includes("Owner")) failures.push("missing_owner_rbac_gate");
 if (policies && !policies.includes("Administrator")) failures.push("missing_administrator_rbac_gate");

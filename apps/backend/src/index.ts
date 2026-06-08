@@ -198,6 +198,7 @@ import { registerInsuranceCoiRequestRoutes } from "./insurance/coi-request.route
 import { registerInsuranceClaimRoutes } from "./insurance/claim.routes.js";
 import { registerInsuranceDispersalRoutes } from "./insurance/dispersal.routes.js";
 import { registerInsuranceLawsuitRoutes } from "./insurance/lawsuit.routes.js";
+import { registerInsurancePolicyCreateAtomicRoutes } from "./insurance/policy-create-atomic.routes.js";
 import { initializeInsurancePaymentReminderCron } from "./insurance/payment-reminder.service.js";
 import { registerInsurancePaymentScheduleRoutes } from "./insurance/payment-schedule.routes.js";
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
@@ -740,6 +741,7 @@ async function main() {
   await registerMaintenanceKpiRoutes(app);
   await registerMaintPartsRoutes(app);
   await registerInsurancePolicyRoutes(app);
+  await registerInsurancePolicyCreateAtomicRoutes(app);
   await registerInsuranceClaimRoutes(app);
   await registerInsuranceLawsuitRoutes(app);
   await registerInsurancePaymentScheduleRoutes(app);

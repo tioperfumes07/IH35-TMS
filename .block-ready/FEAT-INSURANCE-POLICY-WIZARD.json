@@ -1,0 +1,49 @@
+{
+  "block_id": "FEAT-INSURANCE-POLICY-WIZARD",
+  "branch": "feat/insurance-policy-wizard",
+  "phase": "GAP-HIGH",
+  "task": "Insurance policy create wizard: 4-step wizard (Policy Details → Units → Schedule Preview → Confirm), additive PolicyCreateWizard.tsx alongside existing PolicyCreateModal.tsx, single atomic transaction wrapping dispersal math + generate-bills, cost-per-vehicle display, migration 202606080120.",
+  "financial_rule": "math via dispersal.service.ts + accounting/allocation.ts — NO NEW FINANCIAL CODE",
+  "agent": "1",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-insurance-wizard",
+  "runtime_path": "both",
+  "allowed_files": [
+    ".block-ready/FEAT-INSURANCE-POLICY-WIZARD.json",
+    ".block-ready/GAP-86-POLICY-WIZARD.json",
+    ".block-ready/GAP-IDEMP-KEYS.json",
+    ".block-ready/DISP-KANBAN-STATES.json",
+    "apps/backend/src/index.ts",
+    "apps/backend/src/insurance/__tests__/policy-create-atomic.service.test.ts",
+    "apps/backend/src/insurance/policy-create-atomic.routes.ts",
+    "apps/backend/src/insurance/policy-create-atomic.service.ts",
+    "apps/frontend/src/api/insurance.ts",
+    "apps/frontend/src/components/dispatch/DispatchKanban.tsx",
+    "apps/frontend/src/components/insurance/PolicyCreateWizard.test.tsx",
+    "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx",
+    "apps/frontend/src/components/insurance/useCostPerVehicle.ts",
+    "apps/frontend/src/pages/insurance/PoliciesList.create-modal.test.tsx",
+    "apps/frontend/src/pages/insurance/PoliciesList.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "db/migrations/202606080120_insurance_policy_wizard.sql",
+    "package.json",
+    "scripts/nav-integrity-allowlist.json",
+    "scripts/verify-insurance-creator.mjs",
+    "scripts/verify-insurance-policy-create-button.mjs"
+  ],
+  "preview_provided": false,
+  "extra_gates": [
+    "verify:insurance-policy-create-button",
+    "verify:nav-integrity"
+  ],
+  "db_required": true,
+  "guard_required": false,
+  "acceptance": [
+    "migration 202606080120 applied — allocation_method on insurance.policy, cost_per_month_cents on insurance.policy_unit",
+    "POST /api/v1/insurance/policies/with-bills creates policy + N bills atomically",
+    "PolicyCreateWizard.tsx mounts via '+ Create policy' button in PoliciesList",
+    "verify:insurance-policy-create-button exits 0",
+    "verify:insurance-creator exits 0",
+    "CI gates: build:backend, frontend tsc, vitest pass"
+  ]
+}

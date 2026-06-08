@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -66,6 +66,15 @@ vi.mock("../../api/safety", () => ({
   getUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),
 }));
 
+vi.mock("../../components/insurance/PolicyCreateWizard", () => ({
+  PolicyCreateWizard: ({ open, onClose }: { open: boolean; onClose: () => void }) =>
+    open ? (
+      <div data-testid="policy-wizard">
+        <button onClick={onClose}>Close wizard</button>
+      </div>
+    ) : null,
+}));
+
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
@@ -83,34 +92,20 @@ describe("PoliciesList create policy access and cancel behavior", () => {
     insuranceApiMocks.createPolicy.mockReset();
   });
 
-  it("shows + Policy only for allowed roles", async () => {
+  it("shows + Create policy only for allowed roles (Guard B vocabulary)", async () => {
     authState.role = "Driver";
     const { rerender } = render(wrap(<PoliciesList />));
-    expect(screen.queryByRole("button", { name: /\+ Policy/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /\+ Create policy/i })).toBeNull();
 
     authState.role = "Accountant";
     rerender(wrap(<PoliciesList />));
-    expect(await screen.findByRole("button", { name: /\+ Policy/i })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /\+ Create policy/i })).toBeInTheDocument();
   });
 
-  it("closes on cancel without persistence", async () => {
+  it("opens wizard (not modal) when + Create policy clicked", async () => {
     const user = userEvent.setup();
     render(wrap(<PoliciesList />));
-
-    await user.click(await screen.findByRole("button", { name: /\+ Policy/i }));
-    await screen.findByRole("heading", { name: /Create Policy/i });
-
-    const insurerInput = screen.getByLabelText(/Insurer Name/i);
-    await user.type(insurerInput, "IH35 Insurance Co");
-    await user.click(screen.getByRole("button", { name: /^Cancel$/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole("heading", { name: /Create Policy/i })).toBeNull();
-    });
-
-    await user.click(screen.getByRole("button", { name: /\+ Policy/i }));
-    await screen.findByRole("heading", { name: /Create Policy/i });
-    expect(screen.getByLabelText(/Insurer Name/i)).toHaveValue("");
-    expect(insuranceApiMocks.createPolicy).not.toHaveBeenCalled();
+    await user.click(await screen.findByRole("button", { name: /\+ Create policy/i }));
+    expect(screen.getByTestId("policy-wizard")).toBeInTheDocument();
   });
 });

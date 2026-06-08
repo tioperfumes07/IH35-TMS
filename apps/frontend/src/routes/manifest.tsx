@@ -3021,5 +3021,6 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/insurance" element={<Navigate to="/safety/insurance" replace />} />
   </>
 ) as React.ReactElement[];

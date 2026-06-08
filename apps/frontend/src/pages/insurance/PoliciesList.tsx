@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { PolicyCreateModal } from "../../components/insurance/PolicyCreateModal";
+import { PolicyCreateWizard } from "../../components/insurance/PolicyCreateWizard";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 function formatMoney(cents: number) {
@@ -37,6 +38,7 @@ export function PoliciesList() {
   const navigate = useNavigate();
   const companyId = selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<"" | InsurancePolicyStatus>("");
@@ -82,8 +84,8 @@ export function PoliciesList() {
             <p className="mt-1 text-xs text-slate-600">Filter and review insurance policies. Click any row to open policy details.</p>
           </div>
           {canCreatePolicy ? (
-            <Button type="button" onClick={() => setCreateOpen(true)}>
-              + Policy
+            <Button type="button" onClick={() => setWizardOpen(true)}>
+              + Create policy
             </Button>
           ) : null}
         </div>
@@ -187,6 +189,15 @@ export function PoliciesList() {
         onClose={() => setCreateOpen(false)}
         onCreated={async () => {
           setCreateOpen(false);
+          await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", companyId] });
+        }}
+      />
+      <PolicyCreateWizard
+        open={wizardOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setWizardOpen(false)}
+        onCreated={async () => {
+          setWizardOpen(false);
           await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", companyId] });
         }}
       />

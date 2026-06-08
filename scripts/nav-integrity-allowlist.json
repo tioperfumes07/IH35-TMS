@@ -455,6 +455,10 @@
     {
       "path": "/dispatch/layovers/driver/:driverUuid",
       "reason": "Driver layover history detail; reachable from driver profile"
+    },
+    {
+      "path": "/insurance",
+      "reason": "Redirect alias /insurance → /safety/insurance; sidebar deep-link compat (GAP-86)"
     }
   ]
 }

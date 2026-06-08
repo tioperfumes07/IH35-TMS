@@ -584,3 +584,42 @@ export function createCoiRequest(customerId: string, payload: {
     expires_at: payload.expires_at ?? null,
   });
 }
+
+export type AllocationMethod = "equal_split" | "pro_rata" | "weighted";
+
+export type CreatePolicyWithBillsPayload = {
+  operating_company_id: string;
+  insurer_name: string;
+  policy_number: string;
+  coverage_type: InsuranceCoverageType;
+  effective_date: string;
+  expiry_date: string;
+  total_premium_cents: number;
+  down_payment_cents?: number;
+  term_months: number;
+  allocation_method: AllocationMethod;
+  manual_pcts?: Record<string, number>;
+  unit_ids: string[];
+  due_day?: number | null;
+  pay_day?: number | null;
+  late_fee_pct?: number;
+  status?: InsurancePolicyStatus;
+  insurer_email?: string | null;
+  agent_contact?: string | null;
+};
+
+export type CreatePolicyWithBillsResult = {
+  policyId: string;
+  unitCount: number;
+  billCount: number;
+  totalAmountCents: number;
+};
+
+export function createPolicyWithBills(
+  payload: CreatePolicyWithBillsPayload
+): Promise<CreatePolicyWithBillsResult> {
+  return apiRequest<CreatePolicyWithBillsResult>("/api/v1/insurance/policies/with-bills", {
+    method: "POST",
+    body: payload,
+  });
+}
