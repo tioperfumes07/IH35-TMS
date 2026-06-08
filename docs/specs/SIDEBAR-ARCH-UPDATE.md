@@ -1,39 +1,39 @@
 # IH35_ARCHITECTURAL_DESIGN.md — sidebar update (apply, do not remove anything)
 
-## Sidebar order — LOCKED 2026-06-07 (Insurance inserted at index 8)
+## Sidebar order — LOCKED 2026-06-08 (source of truth: SIDEBAR_ITEM_IDS in sidebar-config.ts)
 
-Live config today = 21 items, no Insurance (regression — Insurance UI shipped PRs #351-353
-but the sidebar entry was never added). Fix = INSERT Insurance at index 8. Result = 22 items.
+Live config = 21 items. Insurance is confirmed at index 7. Factoring is at index 9. driver-hub is NOT in the array yet (pending its own block).
 
-| # | id            | label          |
-|---|---------------|----------------|
-| 1 | home          | HOME           |
-| 2 | maintenance   | MAINT          |
-| 3 | fuel          | FUEL           |
-| 4 | dispatch      | DISPATCH       |
-| 5 | driver-hub    | DRIVER HUB     |
-| 6 | safety        | SAFETY         |
-| 7 | drivers       | DRIVER PROFILE |
-| 8 | insurance     | INSURANCE      |  <-- INSERT HERE (new)
-| 9 | eld           | ELD            |
-|10 | accounting    | ACCTG          |
-|11 | bank          | BANK           |
-|12 | factoring     | FACT           |
-|13 | vendors       | VENDORS        |
-|14 | customers     | CUSTOMERS      |
-|15 | legal         | LEGAL          |
-|16 | form_425      | FORM 425       |
-|17 | drv_app       | DRV APP        |
-|18 | lists         | LISTS          |
-|19 | reports       | REPORTS        |
-|20 | docs          | DOCS           |
-|21 | users         | USERS          |
-|22 | help          | HELP           |
+| # | id          | label          |
+|---|-------------|----------------|
+| 0 | home        | HOME           |
+| 1 | maintenance | MAINT          |
+| 2 | fuel        | FUEL           |
+| 3 | dispatch    | DISPATCH       |
+| 4 | drivers     | DRIVER PROFILE |
+| 5 | safety      | SAFETY         |
+| 6 | accounting  | ACCTG          |
+| 7 | insurance   | INSURANCE      |
+| 8 | bank        | BANK           |
+| 9 | factoring   | FACT           |
+|10 | customers   | CUSTOMERS      |
+|11 | vendors     | VENDORS        |
+|12 | lists       | LISTS          |
+|13 | reports     | REPORTS        |
+|14 | legal       | LEGAL          |
+|15 | docs        | DOCS           |
+|16 | eld         | ELD            |
+|17 | form_425    | FORM 425       |
+|18 | drv_app     | DRV APP        |
+|19 | users       | USERS          |
+|20 | help        | HELP           |
 
-- File: apps/frontend/src/components/layout/sidebar-config.ts — insert the insurance entry at index 8 of
-  SIDEBAR_DEFAULT_ORDER. Preserve icons, active-route highlight, badge counts.
+Exact locked array (SIDEBAR_ITEM_IDS):
+["home","maintenance","fuel","dispatch","drivers","safety","accounting","insurance","bank","factoring","customers","vendors","lists","reports","legal","docs","eld","form_425","drv_app","users","help"]
+
+- File: apps/frontend/src/components/layout/sidebar-config.ts — SIDEBAR_ITEM_IDS is the single source of truth. 21 items. Additive only; never remove/reorder.
 - Role-based ordering (SIDEBAR_ROLE_ORDER): insurance available to owner/office_admin/accountant/safety.
-- Module count: bump expected count in scripts/verify-architectural-design.ts from 21 -> 22.
+- Module count: scripts/verify-sidebar-contract.mjs asserts length === 21.
 
-NOTE: Cash Flow page (separate, approved 2026-06-07) is also pending insertion BETWEEN eld and accounting
-(its own block). Do NOT bundle Cash Flow into the Insurance block. One block = one concern.
+NOTE: Cash Flow page (separate, approved 2026-06-07) is also pending insertion (its own block). Do NOT bundle Cash Flow into the Insurance block. One block = one concern.
+NOTE: driver-hub is NOT in SIDEBAR_ITEM_IDS yet — it is pending its own dedicated block.

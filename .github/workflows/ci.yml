@@ -419,6 +419,9 @@ jobs:
       - name: Verify no seed-data fixture imports in prod path
         run: npm run verify:no-seed-data-in-prod-fixtures
 
+      - name: Verify sidebar contract (21-item array, indexes locked)
+        run: npm run verify:sidebar-contract
+
       - name: Verify sidebar routes resolve to real pages
         run: npm run verify:sidebar-route-resolution
 

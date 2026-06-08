@@ -1,10 +1,12 @@
 # CI GUARD — prevent silent sidebar/insurance drift (add to CI)
 
 ## Guard A — sidebar contract (scripts/verify-sidebar-contract.mjs)
-Assert SIDEBAR_DEFAULT_ORDER:
-- length === 22
-- item at index 8 has id === 'insurance' (label 'INSURANCE')
-- the full ordered id list equals the locked array (exact order, no missing/extra)
+Assert SIDEBAR_DEFAULT_ORDER (source of truth: SIDEBAR_ITEM_IDS in sidebar-config.ts):
+- length === 21
+- item at index 7 has id === 'insurance' (label 'INSURANCE')
+- item at index 9 has id === 'factoring'
+- the full ordered id list equals exactly:
+  ["home","maintenance","fuel","dispatch","drivers","safety","accounting","insurance","bank","factoring","customers","vendors","lists","reports","legal","docs","eld","form_425","drv_app","users","help"]
 Fail build with a clear message naming the missing/moved id. This is what was absent — Insurance
 shipped but the sidebar entry silently never landed, and nothing caught it.
 
