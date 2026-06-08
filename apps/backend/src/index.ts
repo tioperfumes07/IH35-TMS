@@ -617,6 +617,7 @@ async function main() {
   await registerLoadStopExtraRateRoutes(app);
   await registerLateArrivalAnalyticsRoutes(app);
   await registerPreDispatchValidationRoutes(app);
+  await registerDispatchAuthGateRoutes(app);
   await registerDispatchDetentionApprovalRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);

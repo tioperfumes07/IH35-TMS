@@ -14,8 +14,7 @@
     "docs/specs/gap-47-dispatch-auth-gates.md",
     "apps/backend/src/index.ts",
     "package.json",
-    ".github/workflows/ci.yml",
-    ".block-ready.json"
+    ".github/workflows/ci.yml"
   ],
   "extra_gates": [
     "verify:dispatch-auth-gates-wired"
