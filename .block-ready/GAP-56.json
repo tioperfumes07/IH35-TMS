@@ -1,0 +1,29 @@
+{
+  "block_id": "GAP-56",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap56",
+  "branch": "feature/gap-56-auto-status",
+  "phase": "GAP-HIGH",
+  "task": "CAP-4 Auto status switching on vehicle movement",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/GAP-56.json",
+    "db/migrations/202606080215_auto_status_switch_events.sql",
+    "apps/backend/src/integrations/samsara/auto-status-switch/detector.service.ts",
+    "apps/backend/src/integrations/samsara/auto-status-switch/routes.ts",
+    "apps/backend/src/integrations/samsara/auto-status-switch/__tests__/detector.test.ts",
+    "apps/backend/src/jobs/auto-status-switch-worker.ts",
+    "apps/frontend/src/components/dispatch/AutoStatusSwitchedBadge.tsx",
+    "apps/driver-pwa/src/screens/AutoStatusNotice.tsx",
+    "scripts/verify-cap-4-auto-status-switch.mjs",
+    "docs/specs/gap-56-cap-4-auto-status-switch.md",
+    "apps/backend/src/index.ts",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:cap-4-auto-status-switch"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

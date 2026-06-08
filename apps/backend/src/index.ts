@@ -27,9 +27,11 @@ import { initializeDriverVendorMappingWorker } from "./jobs/driver-vendor-mappin
 import { registerGeofenceReconciliationRoutes } from "./integrations/samsara/geofences/reconciliation.routes.js";
 import { initializeGeofenceReconciliationWorker } from "./jobs/geofence-reconciliation-daily.js";
 import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
+import { registerAutoStatusSwitchRoutes } from "./integrations/samsara/auto-status-switch/routes.js";
 import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-detector.js";
 import { registerSamsaraVehicleDriverPairingRoutes } from "./integrations/samsara/vehicle-driver-pairing/routes.js";
 import { initializeVehicleDriverPairingWorker } from "./jobs/vehicle-driver-pairing-worker.js";
+import { initializeAutoStatusSwitchWorker } from "./jobs/auto-status-switch-worker.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -528,6 +530,7 @@ async function main() {
   await registerDriverVendorMappingIntegrityRoutes(app);
   await registerGeofenceReconciliationRoutes(app);
   await registerBorderCrossingDetectorRoutes(app);
+  await registerAutoStatusSwitchRoutes(app);
   await registerBookingGapRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
@@ -968,6 +971,13 @@ async function main() {
     app.log.info("[STARTUP] vehicle-driver-pairing-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] vehicle-driver-pairing-worker failed");
+  }
+
+  try {
+    initializeAutoStatusSwitchWorker(app);
+    app.log.info("[STARTUP] auto-status-switch-worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] auto-status-switch-worker failed");
   }
 
   try {
