@@ -134,6 +134,7 @@ import { registerSafetyTrainingProgramsRoutes } from "./safety/training-programs
 import { registerSafetyTrainingRecordsRoutes } from "./safety/training-records.routes.js";
 import { registerSafetyDvirRoutes } from "./safety/dvir.routes.js";
 import { registerSafetyIncidentsRoutes } from "./safety/incidents.routes.js";
+import { registerSafetyIncidentFullReportRoutes } from "./safety/incidents/full-report.routes.js";
 import { registerSafetyPermitsRoutes } from "./safety/permits.routes.js";
 import { registerSafetyOnboardingRoutes } from "./safety/onboarding.routes.js";
 import { registerOnboardingStateRoutes } from "./onboarding/state.routes.js";
@@ -682,6 +683,7 @@ async function main() {
   await registerSafetyTrainingRecordsRoutes(app);
   await registerSafetyDvirRoutes(app);
   await registerSafetyIncidentsRoutes(app);
+  await registerSafetyIncidentFullReportRoutes(app);
   await registerSafetyPermitsRoutes(app);
   await registerSafetyOnboardingRoutes(app);
   await registerOnboardingStateRoutes(app);

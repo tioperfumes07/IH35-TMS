@@ -6,15 +6,15 @@ const CARGO_BORDER = "border-[#ca8a04] text-[#fde047]";
 const OTHER_BORDER = "border-[#64748b] text-[#cbd5e1]";
 
 function borderForType(type: DriverIncidentType) {
-  if (type === "cargo_issue") return CARGO_BORDER;
+  if (type === "cargo") return CARGO_BORDER;
   if (type === "other") return OTHER_BORDER;
-  if (type === "accident_major" || type === "mechanical_breakdown") return CRITICAL_BORDER;
+  if (type === "accident" || type === "injury" || type === "breakdown") return CRITICAL_BORDER;
   return WARNING_BORDER;
 }
 
 export function inferSeverity(type: DriverIncidentType): IncidentSeverity {
-  if (type === "accident_major" || type === "mechanical_breakdown") return "critical";
-  if (type === "cargo_issue" || type === "accident_minor" || type === "check_engine_warning") return "warning";
+  if (type === "accident" || type === "injury" || type === "breakdown") return "critical";
+  if (type === "cargo" || type === "damage" || type === "equipment") return "warning";
   return "info";
 }
 
@@ -27,14 +27,7 @@ export function IncidentTypeRadio({
   onChange: (next: DriverIncidentType) => void;
   labels: Record<DriverIncidentType, string>;
 }) {
-  const ordered: DriverIncidentType[] = [
-    "check_engine_warning",
-    "mechanical_breakdown",
-    "accident_minor",
-    "accident_major",
-    "cargo_issue",
-    "other",
-  ];
+  const ordered: DriverIncidentType[] = ["accident", "damage", "cargo", "equipment", "injury", "breakdown", "other"];
   return (
     <div className="grid gap-2">
       {ordered.map((type) => (
