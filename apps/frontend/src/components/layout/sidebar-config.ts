@@ -32,7 +32,6 @@ export const SIDEBAR_ITEM_IDS = [
   "safety",
   "insurance",
   "accounting",
-  "insurance",
   "bank",
   "factoring",
   "customers",
