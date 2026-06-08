@@ -332,6 +332,9 @@ jobs:
       - name: Verify anomaly detection engine (GAP-46)
         run: npm run verify:anomaly-detection-engine
 
+      - name: Verify data sovereignty DS suite (GAP-51)
+        run: npm run verify:data-sovereignty-rows-exist
+
       - name: Verify cash flow and per-truck CPM routes (GAP-45)
         run: npm run verify:cash-flow-cpm-routes
 

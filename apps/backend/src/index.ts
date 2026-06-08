@@ -13,6 +13,8 @@ import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
 import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.js";
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
+import { registerIntegrationHealthRoutes } from "./integrations/integration-health.routes.js";
+import { initializeDataSovereigntyDailySync } from "./integrations/samsara/daily-sync-job.js";
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
 import { registerSamsaraVendorMappingActionsRoutes } from "./integrations/samsara/vendor-mapping-actions.routes.js";
 import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
@@ -505,6 +507,7 @@ async function main() {
   await registerSamsaraWebhookRoutes(app);
   await registerSamsaraConfigRoutes(app);
   await registerSamsaraHealthRoutes(app);
+  await registerIntegrationHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
   await registerGeofenceReconciliationRoutes(app);
@@ -927,6 +930,7 @@ async function main() {
   try {
     initializeGeofenceReconciliationWorker(app);
     initializeAnomalyDetectorWorker(app);
+    initializeDataSovereigntyDailySync(app);
     app.log.info("[STARTUP] geofence-reconciliation-daily worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] geofence-reconciliation-daily worker failed");

@@ -407,6 +407,7 @@
     "verify:driver-operations-depth": "node scripts/verify-driver-operations-depth.mjs",
     "verify:dispatch-auth-gates-wired": "node scripts/verify-dispatch-auth-gates-wired.mjs",
     "verify:anomaly-detection-engine": "node scripts/verify-anomaly-detection-engine.mjs",
+    "verify:data-sovereignty-rows-exist": "node scripts/verify-data-sovereignty-rows-exist.mjs",
     "verify:cash-flow-cpm-routes": "node scripts/verify-cash-flow-cpm-routes.mjs",
     "verify:equipment-transfer-dual-confirm": "node scripts/verify-equipment-transfer-dual-confirm.mjs",
     "verify:cache-tier-coverage": "node scripts/verify-cache-tier-coverage.mjs",
