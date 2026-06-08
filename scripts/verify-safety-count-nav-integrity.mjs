@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Block A23-2: Safety module count + nav integrity (canonical 28 tabs / 9 groups).
+ * Block A23-2: Safety module count + nav integrity (canonical 27 tabs / 9 groups).
  */
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
-const EXPECTED_TAB_COUNT = 28;
+const EXPECTED_TAB_COUNT = 27;
 const EXPECTED_GROUP_COUNT = 9;
 
 const paths = {
@@ -57,8 +57,8 @@ function main() {
   if (!sidebarConfig.includes('to: "/safety/dot-compliance"')) {
     failures.push("Safety sidebar flyout must include DOT Compliance under /safety/dot-compliance");
   }
-  if (!archDesign.includes("28 tabs across 9 groups")) {
-    failures.push("ARCHITECTURAL_DESIGN must document 28 tabs across 9 groups");
+  if (!archDesign.includes("27 tabs across 9 groups")) {
+    failures.push("ARCHITECTURAL_DESIGN must document 27 tabs across 9 groups");
   }
   const kpiPairs = (foundationKpis.match(/\["[\w-]+", "[\w-]+"\]/g) ?? []).length;
   if (kpiPairs < EXPECTED_TAB_COUNT) {

@@ -37,12 +37,6 @@ type UnitOption = {
   status?: string | null;
 };
 
-type VendorOption = {
-  id: string;
-  display_name: string;
-  is_active?: boolean;
-};
-
 const INITIAL_FORM: FormState = {
   insurer_name: "",
   policy_number: "",
@@ -126,7 +120,6 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
   const { pushToast } = useToast();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
-  const [selectedVendorId, setSelectedVendorId] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState | "covered_units", string>>>({});
   const [formError, setFormError] = useState<string>("");
   const [serverError, setServerError] = useState<string>("");
@@ -146,32 +139,19 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     },
   });
 
-  const vendorsQuery = useQuery({
-    queryKey: ["accounting", "vendors", operatingCompanyId],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: async () => {
-      const result = await apiRequest<{ items: VendorOption[] }>(
-        `/api/v1/accounting/vendors?operating_company_id=${operatingCompanyId}&limit=200`
-      );
-      return result.items ?? [];
-    },
-  });
-
   const units = useMemo(() => unitsQuery.data ?? [], [unitsQuery.data]);
-  const vendors = useMemo(() => vendorsQuery.data ?? [], [vendorsQuery.data]);
 
   useEffect(() => {
     if (!open) return;
     setForm(INITIAL_FORM);
     setSelectedUnitIds([]);
-    setSelectedVendorId("");
     setFieldErrors({});
     setFormError("");
     setServerError("");
   }, [open]);
 
   const createMutation = useMutation({
-    mutationFn: async (next: { payload: Omit<FormState, "total_premium" | "down_payment">; totalPremiumCents?: number; downPaymentCents?: number; unitIds: string[]; vendorId?: string }) => {
+    mutationFn: async (next: { payload: Omit<FormState, "total_premium" | "down_payment">; totalPremiumCents?: number; downPaymentCents?: number; unitIds: string[] }) => {
       const created = await insurancePoliciesApi.create({
         operating_company_id: operatingCompanyId,
         insurer_name: next.payload.insurer_name.trim(),
@@ -188,7 +168,6 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
         insurer_email: next.payload.insurer_email.trim() || null,
         agent_contact: next.payload.agent_contact.trim() || null,
         status: next.payload.status,
-        vendor_id: next.vendorId || null,
       });
 
       for (const assetId of next.unitIds) {
@@ -293,7 +272,6 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
       totalPremiumCents: typeof totalPremiumCents === "number" ? totalPremiumCents : undefined,
       downPaymentCents: typeof downPaymentCents === "number" ? downPaymentCents : undefined,
       unitIds: selectedUnitIds,
-      vendorId: selectedVendorId || undefined,
     });
   };
 
@@ -489,33 +467,6 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
             onChange={(event) => updateField("agent_contact", event.target.value)}
           />
         </label>
-
-        <div className="space-y-1">
-          <div className="flex items-center gap-1">
-            <span className="text-xs font-semibold text-slate-700">Accounting Vendor</span>
-            <span className="text-xs text-slate-400">(optional — links insurer for bill schedule)</span>
-          </div>
-          <select
-            className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
-            value={selectedVendorId}
-            onChange={(event) => setSelectedVendorId(event.target.value)}
-          >
-            <option value="">-- None / skip bill generation --</option>
-            {vendorsQuery.isLoading ? (
-              <option disabled>Loading vendors...</option>
-            ) : null}
-            {vendors.map((vendor) => (
-              <option key={vendor.id} value={vendor.id}>
-                {vendor.display_name}
-              </option>
-            ))}
-          </select>
-          {selectedVendorId && form.installment_count && Number(form.installment_count) > 0 ? (
-            <p className="text-xs text-emerald-700">
-              {form.installment_count} bill(s) will be created in Accounting when the policy is saved.
-            </p>
-          ) : null}
-        </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">

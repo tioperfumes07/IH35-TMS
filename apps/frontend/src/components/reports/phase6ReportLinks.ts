@@ -12,7 +12,6 @@ export const PHASE_6_REPORT_HREFS: Record<string, string> = {
   "fuel-reconciliation": "/reports/fuel-reconciliation",
   "maintenance-cost-per-unit": "/reports/maintenance-cost-per-unit",
   "dispatch-margin": "/reports/dispatch-margin",
-  "load-cancellations": "/reports/dispatch/load-cancellations",
   "geofence-dwell": "/reports/geofence-dwell",
   deadhead: "/reports/deadhead",
   "scheduled-reports": "/reports/scheduled",

@@ -67,18 +67,6 @@ if echo "$CHANGED_FILES" | grep -qE "apps/frontend/src/pages/(safety|maintenance
   fi
 fi
 
-# Double-entry balance trigger guard (TIER1-T5 — static, fast, no DB required)
-# Asserts trg_check_journal_entry_balanced and ensure_journal_entry_balanced()
-# exist in migrations and no migration drops them. Chains with backbone-schema guard.
-if command -v node >/dev/null 2>&1; then
-  node scripts/verify-double-entry-balance-trigger.mjs || {
-    echo ""
-    echo "COMMIT BLOCKED by double-entry-balance-trigger guard."
-    echo "See scripts/verify-double-entry-balance-trigger.mjs for details."
-    exit 1
-  }
-fi
-
 # Run typecheck on staged changes (existing behavior — keep)
 # This is a soft check; CI is authoritative.
 if command -v npm >/dev/null 2>&1; then

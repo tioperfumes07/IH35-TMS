@@ -22,12 +22,12 @@ function walkFiles(dir) {
 }
 
 function parseArgs(argv) {
-  const args = { distRoot: path.resolve(ROOT, "apps/backend/src"), autoloadRoot: path.resolve(ROOT, "apps/backend/src/accounting") };
+  const args = { distRoot: path.resolve(ROOT, "dist"), autoloadRoot: path.resolve(ROOT, "dist/accounting") };
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i];
     const value = argv[i + 1];
     if (!key.startsWith("--") || !value || value.startsWith("--")) continue;
-    if (key === "--src-root") args.distRoot = path.resolve(value);
+    if (key === "--dist-root") args.distRoot = path.resolve(value);
     if (key === "--autoload-root") args.autoloadRoot = path.resolve(value);
     i += 1;
   }
@@ -84,7 +84,7 @@ function parseRouteFunctionsInFile(filePath, source) {
 }
 
 function collectRouteFunctions(autoloadRoot) {
-  const files = walkFiles(autoloadRoot).filter((filePath) => filePath.endsWith(".routes.ts"));
+  const files = walkFiles(autoloadRoot).filter((filePath) => filePath.endsWith(".routes.js"));
   const functionRoutes = new Map();
   const autoloadRegistrations = [];
 
@@ -114,7 +114,7 @@ function collectRouteFunctions(autoloadRoot) {
 }
 
 function collectManualRegistrations(distRoot, functionRoutes) {
-  const files = walkFiles(distRoot).filter((filePath) => filePath.endsWith(".ts") && !filePath.endsWith(".routes.ts") && !filePath.endsWith(".d.ts") && !filePath.endsWith(".test.ts"));
+  const files = walkFiles(distRoot).filter((filePath) => filePath.endsWith(".js") && !filePath.endsWith(".routes.js"));
   const registrations = [];
   for (const filePath of files) {
     const source = fs.readFileSync(filePath, "utf8");
@@ -160,7 +160,7 @@ export function findDuplicateRoutes({ distRoot, autoloadRoot }) {
 function main() {
   const { distRoot, autoloadRoot } = parseArgs(process.argv.slice(2));
   if (!fs.existsSync(distRoot)) {
-    console.error(`verify:no-duplicate-routes FAIL: src root not found: ${path.relative(ROOT, distRoot)}`);
+    console.error(`verify:no-duplicate-routes FAIL: dist root not found: ${path.relative(ROOT, distRoot)}`);
     process.exit(1);
   }
   if (!fs.existsSync(autoloadRoot)) {

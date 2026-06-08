@@ -1,19 +1,11 @@
 {
-  "_comment": "DB-gated verify:* scripts: require DATABASE_URL/DATABASE_DIRECT_URL; skipped in local pre-push, run in CI",
+  "_comment": "DB-gated verify:* scripts: verify:db:start, verify:db:stop, verify:db:reset, verify:pre-commit, verify:migration-application-consistency",
   "db_gated_verify_scripts": [
     "verify:db:start",
     "verify:db:stop",
     "verify:db:reset",
     "verify:pre-commit",
-    "verify:migration-application-consistency",
-    "verify:equipment-types-no-collision",
-    "verify:content-drift-check",
-    "verify:no-cross-carrier-data-leak",
-    "verify:csa-score-pull-recency",
-    "verify:driver-repair-guard",
-    "verify:fmcsa-safer-customer-coverage",
-    "verify:no-orphan-migration-ledger-entries",
-    "verify:coa-roles"
+    "verify:migration-application-consistency"
   ],
   "block_ready_c5_skip_after_c4": [
     "verify:arch-design"

@@ -329,7 +329,7 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 - Header includes back-arrow, breadcrumb `Modules > Safety > {group}`, page title `Safety`, and descriptor text.
 - Driver filter strip defaults to **Active 7-10 days** and is visible on all safety routes.
 
-### Grouped top navigation (28 tabs across 9 groups)
+### Grouped top navigation (27 tabs across 9 groups)
 
 ### Sub-nav tabs (27 — V6.4 top hover-dropdown + Block K workforce)
 
@@ -381,7 +381,7 @@ Eleven backend route modules under `apps/backend/src/safety/` existed as code bu
 
 ### A23-2 — Safety count / nav integrity (2026-06-03)
 
-Canonical inventory is **28 tabs / 9 groups**, exported from `SAFETY_TABS_CONFIG.ts` as `SAFETY_CANONICAL_TAB_COUNT`, `SAFETY_CANONICAL_GROUP_COUNT`, and `SAFETY_CANONICAL_TAB_KEYS`. Home quick-jump badge reads `SAFETY_CANONICAL_TAB_COUNT` (replaces stale hardcoded `6`). Safety module sidebar flyout links only under `/safety/*` (DOT Compliance → `/safety/dot-compliance`; Compliance Dashboard → `/compliance` via Safety tab under Compliance Docs & Monitoring). `foundation-kpis.routes.ts` KPI route allowlist matches all 28 tab keys.
+Canonical inventory is **27 tabs / 9 groups**, exported from `SAFETY_TABS_CONFIG.ts` as `SAFETY_CANONICAL_TAB_COUNT`, `SAFETY_CANONICAL_GROUP_COUNT`, and `SAFETY_CANONICAL_TAB_KEYS`. Home quick-jump badge reads `SAFETY_CANONICAL_TAB_COUNT` (replaces stale hardcoded `6`). Safety module sidebar flyout links only under `/safety/*` (DOT Compliance → `/safety/dot-compliance`; global `/compliance` dashboard remains reachable from other modules). `foundation-kpis.routes.ts` KPI route allowlist matches all 27 tab keys.
 
 **CI guards:** `verify:safety-tab-coverage` (config ↔ backend KPI pairs), `verify:safety-count-nav-integrity` (Home + sidebar + arch doc + canonical constants).
 
@@ -1347,5 +1347,3 @@ Names Master (`/lists/names`) is a **read-only hub** that searches existing part
 - **P5-T1.3 (shipped):** PlaidLink wrapper + sync status panel + daily refresh cron alias.
 - **P5-T11 (shipped):** Manual JE 2-step modal (`ManualJEModal`) with balance enforcement; PR #489 · `584bf29c`.
 - **P5-T6 / P5-T7 (shipped):** Banking transfer + CC payment UI on main via P5 banking bundle (`TransferModal`, `RecordCCPaymentModal`, `/api/v1/banking/transfers`).
-
-- **QBO-Parity COA Design (locked 2026-06-07):** COA register + account-type/detail-type catalog approved as design law for CA-01..06. See [COA-REGISTER-QBO-PARITY-2026-06-07.md](./COA-REGISTER-QBO-PARITY-2026-06-07.md) and [ACCOUNT-TYPE-DETAIL-TYPE-CATALOG.md](./ACCOUNT-TYPE-DETAIL-TYPE-CATALOG.md); previews at docs/approved-screens/preview-coa-qbo.html and docs/approved-screens/preview-register-qbo.html.

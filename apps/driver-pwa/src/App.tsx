@@ -11,7 +11,6 @@ import { CashAdvanceNewPage } from "./pages/CashAdvanceNewPage";
 import { DvirPage } from "./pages/DVIR";
 import { EquipmentPage } from "./pages/Equipment";
 import { EquipmentTransferAckPage } from "./pages/EquipmentTransferAck";
-import { DispatchViewScreen } from "./screens/DispatchView";
 import { EarningsPage } from "./pages/Earnings";
 import { HomePage } from "./pages/Home";
 import { HosPage } from "./pages/HOS";
@@ -124,14 +123,6 @@ export default function App() {
         element={
           <ProtectedRoute>
             <TodayPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dispatch/:load_uuid"
-        element={
-          <ProtectedRoute>
-            <DispatchViewScreen />
           </ProtectedRoute>
         }
       />

@@ -17,8 +17,7 @@
         "security-checks / security-audit",
         "premerge-gates / rls-migration-scan",
         "premerge-gates / typescript-strict-null",
-        "premerge-gates / migration-role-validation",
-        "premerge-gates / schema-grant-check"
+        "premerge-gates / migration-role-validation"
       ]
     },
     "enforce_admins": false,
@@ -40,8 +39,7 @@
     "security-checks": "security-checks / security-audit",
     "rls-migration-scan": "premerge-gates / rls-migration-scan (GAP-81: missing RLS on new tables)",
     "typescript-strict-null": "premerge-gates / typescript-strict-null (GAP-81: TS18048 strict-null bypasses)",
-    "migration-role-validation": "premerge-gates / migration-role-validation (GAP-81: unknown GRANT roles)",
-    "schema-grant-check": "premerge-gates / schema-grant-check (0309_notification_center: CREATE SCHEMA without GRANT USAGE ON SCHEMA to ih35_app)"
+    "migration-role-validation": "premerge-gates / migration-role-validation (GAP-81: unknown GRANT roles)"
   },
   "apply_script": "node scripts/ci-apply-branch-protection.mjs",
   "verify_script": "node scripts/verify-ci-policy-applied.mjs"

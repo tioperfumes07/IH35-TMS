@@ -177,13 +177,6 @@ const AGGREGATE_SQL = `
     WHERE d.operating_company_id = $1::uuid AND d.mexican_license_expiration IS NOT NULL
 
     UNION ALL
-    SELECT 'passport', 'driver', d.id,
-           TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), 'Passport',
-           d.passport_expires_at, NULL
-    FROM mdata.drivers d
-    WHERE d.operating_company_id = $1::uuid AND d.passport_expires_at IS NOT NULL
-
-    UNION ALL
     SELECT 'drug_test_cycle', 'driver', d.id,
            TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), 'Drug Test Cycle',
            (dt.test_date + interval '90 days')::date, NULL
@@ -245,54 +238,4 @@ export function summarizeComplianceCredentials(rows: ComplianceCredential[]) {
   const summary = { red: 0, yellow: 0, green: 0, total: rows.length };
   for (const row of rows) summary[row.severity] += 1;
   return summary;
-}
-
-export type ComplianceOwnerStatus = "expired" | "expiring_soon" | "compliant";
-
-export type ComplianceOwnerRollup = {
-  owner_id: string;
-  owner_name: string;
-  status: ComplianceOwnerStatus;
-  credential_count: number;
-  worst_days_until_expiration: number | null;
-  action_link: string;
-};
-
-const SEVERITY_RANK: Record<ComplianceSeverity, number> = { red: 0, yellow: 1, green: 2 };
-
-export function severityToOwnerStatus(severity: ComplianceSeverity): ComplianceOwnerStatus {
-  if (severity === "red") return "expired";
-  if (severity === "yellow") return "expiring_soon";
-  return "compliant";
-}
-
-export function rollupComplianceOwners(
-  rows: ComplianceCredential[],
-  ownerType: string
-): ComplianceOwnerRollup[] {
-  const byOwner = new Map<string, ComplianceCredential[]>();
-  for (const row of rows) {
-    if (row.owner_type !== ownerType) continue;
-    const list = byOwner.get(row.owner_id) ?? [];
-    list.push(row);
-    byOwner.set(row.owner_id, list);
-  }
-
-  return [...byOwner.entries()]
-    .map(([ownerId, creds]) => {
-      const worst = creds.reduce((a, b) => (SEVERITY_RANK[a.severity] <= SEVERITY_RANK[b.severity] ? a : b));
-      const worstDays = creds.reduce<number | null>((min, c) => {
-        if (c.days_until_expiration === null) return min;
-        return min === null ? c.days_until_expiration : Math.min(min, c.days_until_expiration);
-      }, null);
-      return {
-        owner_id: ownerId,
-        owner_name: worst.owner_name,
-        status: severityToOwnerStatus(worst.severity),
-        credential_count: creds.length,
-        worst_days_until_expiration: worstDays,
-        action_link: worst.action_link,
-      };
-    })
-    .sort((a, b) => (a.worst_days_until_expiration ?? 9999) - (b.worst_days_until_expiration ?? 9999));
 }

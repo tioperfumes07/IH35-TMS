@@ -34,6 +34,7 @@ import { PodReviewPage } from "../pages/dispatch/PodReviewPage";
 import { DispatchSettingsPage } from "../pages/dispatch/DispatchSettingsPage";
 import { BorderCrossingWizardPage } from "../pages/dispatch/BorderCrossingWizardPage";
 import { BorderCrossingHistoryPage } from "../pages/dispatch/BorderCrossingHistoryPage";
+import { BorderCrossingHistory as GpsBorderCrossingHistory } from "../pages/dispatch/borders/BorderCrossingHistory";
 import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
 import { CashAdvanceRequestsPage } from "../pages/driver-finance/CashAdvanceRequestsPage";
 import { OwnerApprovalPortalPage } from "../pages/driver-finance/OwnerApprovalPortalPage";
@@ -44,7 +45,6 @@ import { PortalLoadDetailPage } from "../portal/PortalLoadDetailPage";
 import { PortalProfilePage } from "../portal/PortalProfilePage";
 import { PortalRouteGuard } from "../portal/PortalRouteGuard";
 import { FuelPlannerHomePage } from "../pages/fuel/FuelPlannerHome";
-import { FraudAlertsListPage } from "../pages/fuel/fraud-alerts/FraudAlertsList";
 import { BankingHomePage } from "../pages/banking/BankingHome";
 import { TransfersListPage } from "../pages/banking/TransfersListPage";
 import { BankingObligationReconcilePage } from "../pages/banking/BankingObligationReconcilePage";
@@ -90,7 +90,6 @@ import { WorkOrdersConsoleListPage } from "../pages/work-orders/WorkOrdersConsol
 import { WorkOrderDetailPage } from "../pages/maintenance/WorkOrderDetailPage";
 import { WorkOrderNewPage } from "../pages/maintenance/WorkOrderNewPage";
 import { DefectsInboxPage } from "../pages/maintenance/DefectsInboxPage";
-import { PreFlightDvirQueue } from "../pages/maintenance/pre-flight/PreFlightDvirQueue";
 import { DefectDetailPage } from "../pages/maintenance/DefectDetailPage";
 import { VehiclesMasterDataPage } from "../pages/maintenance/vehicles/VehiclesMasterDataPage";
 import { DriversMasterDataPage } from "../pages/maintenance/drivers/DriversMasterDataPage";
@@ -100,8 +99,6 @@ import { PmAutoEnginePage } from "../pages/maintenance/PmAutoEnginePage";
 import { MaintKpiDashboardPage } from "../pages/maintenance/MaintKpiDashboardPage";
 import { InspectionsPage } from "../pages/maintenance/inspections/InspectionsPage";
 import { TireProgramPage } from "../pages/maintenance/TireProgramPage";
-import { BrakeWearDashboard } from "../pages/maintenance/brakes/BrakeWearDashboard";
-import { TireWearDashboard } from "../pages/maintenance/tires/TireWearDashboard";
 import { WarrantyClaimsPage } from "../pages/maintenance/WarrantyClaimsPage";
 import { VendorsPage as MaintenanceVendorsPage } from "../pages/maintenance/vendors/VendorsPage";
 import { VendorDetailPage as MaintenanceVendorDetailPage } from "../pages/maintenance/VendorDetailPage";
@@ -121,7 +118,6 @@ import { ComplianceDashboardPage } from "../pages/compliance/ComplianceDashboard
 import { NotificationCenterPage } from "../pages/notifications/NotificationCenterPage";
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
-import { DriverHubPage } from "../pages/home/DriverHubPage";
 import { OwnerHome } from "../pages/home/OwnerHome";
 import { LoginPage } from "../pages/Login";
 import { LoginResetRequestPage } from "../pages/LoginResetRequestPage";
@@ -129,8 +125,6 @@ import { LoginResetConfirmPage } from "../pages/LoginResetConfirmPage";
 import { ComingSoonPage } from "../pages/ComingSoonPage";
 import { BulkDemoPage } from "../pages/dev/BulkDemoPage";
 import { SamsaraIntegrationPage } from "../pages/integrations/SamsaraIntegrationPage";
-import { EdiSetupWizard } from "../pages/integrations/edi/EdiSetupWizard";
-import { EdiTransactionLog } from "../pages/integrations/edi/EdiTransactionLog";
 import { DriverAppLandingPage } from "../pages/DriverAppLandingPage";
 import { DisputesPage } from "../pages/driver/DisputesPage";
 import { DriverShell } from "../pages/driver/DriverShell";
@@ -150,7 +144,6 @@ import { UsersPage } from "../pages/Users";
 import { VendorsPage } from "../pages/Vendors";
 import { VendorDetailPage } from "../pages/VendorDetail";
 import { Form425CHome } from "../pages/form425c/Form425CHome";
-import { ExhibitsViewer } from "../pages/reports/form-425c/ExhibitsViewer";
 import { HelpCenterPage } from "../pages/help/HelpCenterPage";
 import { HelpArticlePage } from "../pages/help/HelpArticlePage";
 import { HelpPage } from "../pages/help/HelpPage";
@@ -173,13 +166,11 @@ import { LaneProfitabilityPage } from "../pages/reports/LaneProfitabilityPage";
 import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage";
 import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
 import { DispatchMarginPage } from "../pages/reports/DispatchMarginPage";
-import { LoadCancellationsReportPage } from "../pages/dispatch/LoadCancellationsReportPage";
 import { ScheduledReportsPage } from "../pages/reports/ScheduledReportsPage";
 import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
 import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
 import { FaultRulesPage } from "../pages/maintenance/FaultRulesPage";
 import { DeadheadReportPage } from "../pages/reports/DeadheadReportPage";
-import { LateArrivalReport } from "../pages/reports/LateArrivalReport";
 import { QboSyncDetailPage } from "../pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "../pages/accounting/InvoicesListPage";
 import { MultiEntityAccountingPage } from "../pages/accounting/MultiEntityAccountingPage";
@@ -487,14 +478,6 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/driver-hub"
-          element={
-            <ProtectedRoute>
-              <DriverHubPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/settings/notifications"
           element={
             <ProtectedRoute>
@@ -767,6 +750,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/dispatch/borders/geofence-history"
+          element={
+            <ProtectedRoute>
+              <GpsBorderCrossingHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dispatch"
           element={
             <ProtectedRoute>
@@ -819,14 +810,6 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DailyTasksPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/fuel/fraud-alerts"
-          element={
-            <ProtectedRoute>
-              <FraudAlertsListPage />
             </ProtectedRoute>
           }
         />
@@ -1002,7 +985,6 @@ export const ROUTES = React.Children.toArray(
           <Route path="settings" element={<SettingsTab />} />
           <Route path="vehicle-inspections" element={<Navigate to="/safety/idvr" replace />} />
         </Route>
-        <Route path="/insurance" element={<Navigate to="/safety/insurance" replace />} />
         <Route
           path="/liabilities"
           element={
@@ -1043,16 +1025,6 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <MaintenanceShell>
                 <DefectsInboxPage />
-              </MaintenanceShell>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/maintenance/pre-flight/dvir"
-          element={
-            <ProtectedRoute>
-              <MaintenanceShell>
-                <PreFlightDvirQueue />
               </MaintenanceShell>
             </ProtectedRoute>
           }
@@ -1246,31 +1218,11 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/maintenance/tires/wear"
-          element={
-            <ProtectedRoute>
-              <MaintenanceShell>
-                <TireWearDashboard />
-              </MaintenanceShell>
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/maintenance/tires"
           element={
             <ProtectedRoute>
               <MaintenanceShell>
                 <TireProgramPage />
-              </MaintenanceShell>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/maintenance/brakes"
-          element={
-            <ProtectedRoute>
-              <MaintenanceShell>
-                <BrakeWearDashboard />
               </MaintenanceShell>
             </ProtectedRoute>
           }
@@ -1474,14 +1426,6 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route path="/form-425c" element={<Navigate to="/425c" replace />} />
-        <Route
-          path="/reports/form-425c/exhibits"
-          element={
-            <ProtectedRoute>
-              <ExhibitsViewer />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/work-orders"
           element={
@@ -2099,22 +2043,6 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/integrations/edi/setup"
-          element={
-            <OwnerOnlyRoute>
-              <EdiSetupWizard />
-            </OwnerOnlyRoute>
-          }
-        />
-        <Route
-          path="/integrations/edi/log"
-          element={
-            <OwnerOnlyRoute>
-              <EdiTransactionLog />
-            </OwnerOnlyRoute>
-          }
-        />
-        <Route
           path="/samsara/vendor-mapping-integrity"
           element={
             <ProtectedRoute>
@@ -2299,14 +2227,6 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
-          path="/reports/dispatch/load-cancellations"
-          element={
-            <ProtectedRoute>
-              <LoadCancellationsReportPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/reports/geofence-dwell"
           element={
             <ProtectedRoute>
@@ -2319,14 +2239,6 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DeadheadReportPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reports/late-arrival"
-          element={
-            <ProtectedRoute>
-              <LateArrivalReport />
             </ProtectedRoute>
           }
         />

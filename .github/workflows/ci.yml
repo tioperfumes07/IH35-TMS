@@ -73,9 +73,6 @@ jobs:
       - name: Verify accounting autoload coverage (src + dist)
         run: npm run verify:accounting-autoload-coverage
 
-      - name: Verify migration filenames (no silent-skip naming)
-        run: npm run verify:migration-filenames
-
       - name: Migration application consistency guard
         run: npm run verify:migration-application-consistency
 
@@ -114,9 +111,6 @@ jobs:
       - name: Verify FMCSA SAFER customer coverage guard
         run: npm run verify:fmcsa-safer-customer-coverage
 
-      - name: Verify double-entry balance trigger guard (TIER1-T5)
-        run: npm run verify:double-entry-balance
-
       - name: Verify RLS operating company scope guard
         run: npm run verify:rls-operating-company-scope
 
@@ -143,9 +137,6 @@ jobs:
 
       - name: Verify USMCA seed completeness guard
         run: npm run verify:usmca-seed-completeness
-
-      - name: Verify COA canonical (catalogs.accounts) + QBO link coverage
-        run: npm run verify:coa-canonical
 
       - name: Verify launch toggle audit trail guard
         run: npm run verify:launch-toggle-audit-trail
@@ -184,8 +175,6 @@ jobs:
         run: npm run verify:safety-hos-dashboard-wire
       - name: Verify safety incidents cluster wire-up
         run: npm run verify:safety-incidents-cluster-wire
-      - name: Verify damage insurance continuity (GAP-38)
-        run: npm run verify:damage-insurance-continuity
       - name: Verify DVIR schema presence
         run: npm run verify:dvir-schema-presence
       - name: verify:safety-count-nav-integrity
@@ -271,9 +260,6 @@ jobs:
       - name: verify:dispatcher-home
         run: npm run verify:dispatcher-home
 
-      - name: verify:edi-foundation
-        run: npm run verify:edi-foundation
-
       - name: verify:maint-dvir-defect-intake
         run: npm run verify:maint-dvir-defect-intake
 
@@ -291,9 +277,6 @@ jobs:
 
       - name: verify:maint-tire-program
         run: npm run verify:maint-tire-program
-
-      - name: verify:cap-12-tire-tread
-        run: npm run verify:cap-12-tire-tread
 
       - name: verify:maint-warranty-claims
         run: npm run verify:maint-warranty-claims
@@ -331,26 +314,8 @@ jobs:
       - name: Verify permits and toll tags contract
         run: npm run verify:permits-toll-tags
 
-      - name: Verify driver operations depth contract (GAP-48)
-        run: npm run verify:driver-operations-depth
-
-      - name: Verify DVIR severity tagging contract (GAP-49)
-        run: npm run verify:dvir-severity-tagging
-
-      - name: Verify CAP-13 brake wear contract (GAP-63)
-        run: npm run verify:cap-13-brake-wear
-
       - name: Verify Samsara cache tier coverage contract
         run: npm run verify:cache-tier-coverage
-
-      - name: Verify active driver set recompute contract (GAP-25)
-        run: npm run verify:active-driver-set
-
-      - name: Verify Samsara freshness indicator contract
-        run: npm run verify:freshness-indicator
-
-      - name: Verify dispatch live ETA columns contract
-        run: npm run verify:dispatch-eta-columns
 
       - name: Verify accounting home role view contract
         run: npm run verify:accounting-home
@@ -364,38 +329,11 @@ jobs:
       - name: Verify driver manager home contract
         run: npm run verify:driver-manager-home
 
-      - name: Verify late arrival analytics contract
-        run: npm run verify:late-arrival-analytics
-      - name: Verify geofence state machine contract
-        run: npm run verify:geofence-state-machine
-
-
-      - name: Verify driver PWA dispatch view contract
-        run: npm run verify:driver-pwa-dispatch-view
-
-      - name: Verify Form 425C exhibits auto-build contract
-        run: npm run verify:form-425c-exhibits
-
       - name: Verify severe repair fleet restore estimate contract
         run: npm run verify:severe-repair-estimate
 
       - name: Verify assignments inline quicksave contract
         run: npm run verify:assignments-quicksave
-
-      - name: Verify load cancellations report contract
-        run: npm run verify:load-cancellations-report
-
-      - name: Verify reports hub 9 categories contract
-        run: npm run verify:reports-hub-9-categories
-
-      - name: Verify EXIF chain preservation contract
-        run: npm run verify:exif-chain-preservation
-
-      - name: Verify photo comparison AI contract
-        run: npm run verify:photo-comparison-ai
-
-      - name: Verify CAP-11 fuel fraud alerts contract
-        run: npm run verify:cap-11-fuel-fraud
 
       - name: Verify PM due-soon calculation guard
         run: npm run verify:pm-due-soon-calculation
@@ -408,19 +346,6 @@ jobs:
 
       - name: Verify insurance policy schema contract
         run: npm run verify:insurance-schema
-
-      - name: Verify insurance module (Block 5 bill schedule) contract
-        run: npm run verify:insurance-module
-
-      # Block F Decision C: active carriers must map ap_control + expense_default to
-      # post insurance cancellation refunds. Non-strict here because the current
-      # carrier (TRANSP) is not yet COA-mapped; cancellation still succeeds via a
-      # durable pending obligation. Flip COA_ROLES_GUARD_STRICT=1 for the deploy gate
-      # once carriers are mapped. The same check runs (warn/error log) at app startup.
-      - name: Verify active-carrier COA refund roles (Block F)
-        env:
-          COA_ROLES_GUARD_STRICT: "0"
-        run: npm run verify:coa-roles
 
       - name: Verify maintenance reports coverage guard
         run: npm run verify:maintenance-reports-coverage

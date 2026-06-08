@@ -39,7 +39,6 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
   operations: [
     { id: "profit-per-truck", label: "Profit per truck", hint: "Revenue & cost by unit" },
     { id: "dispatch-board", label: "Dispatch board health", hint: "Live load movement" },
-    { id: "load-cancellations", label: "Load cancellations", hint: "Volume by reason, driver, customer" },
     { id: "detention-claims", label: "Detention claims", hint: "Billed vs collected" },
     { id: "fuel-reconciliation", label: "Fuel reconciliation", hint: "Card vs WO" },
     { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit", hint: "WO spend by unit" },

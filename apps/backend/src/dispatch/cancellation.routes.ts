@@ -1,13 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
-import {
-  approveCancellation,
-  cancelLoad,
-  getLoadCancellationsAnalytics,
-  listCancellationReasons,
-  listCancellations,
-} from "./cancellation.service.js";
+import { approveCancellation, cancelLoad, listCancellationReasons, listCancellations } from "./cancellation.service.js";
 
 const loadIdParamsSchema = z.object({ id: z.string().uuid() });
 const cancellationIdParamsSchema = z.object({ id: z.string().uuid() });
@@ -21,12 +15,6 @@ const cancelBodySchema = z.object({
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   since: z.string().datetime({ offset: true }).optional(),
-});
-const analyticsQuerySchema = z.object({
-  operating_company_id: z.string().uuid(),
-  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  group_by: z.enum(["reason", "driver", "customer", "date"]),
 });
 const approveBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -78,14 +66,6 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     return listCancellations(user.uuid, query.data);
-  });
-
-  app.get("/api/v1/dispatch/load-cancellations/analytics", async (req, reply) => {
-    const user = authed(req, reply);
-    if (!user) return;
-    const query = analyticsQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
-    return getLoadCancellationsAnalytics(user.uuid, query.data);
   });
 
   app.post("/api/v1/dispatch/load-cancellations/:id/approve", async (req, reply) => {

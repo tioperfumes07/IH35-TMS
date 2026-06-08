@@ -32,7 +32,6 @@ const CANONICAL_SAFETY_TABS = [
   ["fines-discipline", "external-fines"],
   ["fines-discipline", "complaints"],
   ["driver-financial", "escrow-record"],
-  ["compliance-monitoring", "compliance-dashboard"],
   ["compliance-monitoring", "geofence-alerts"],
   ["compliance-monitoring", "insurance"],
   ["compliance-monitoring", "permits"],

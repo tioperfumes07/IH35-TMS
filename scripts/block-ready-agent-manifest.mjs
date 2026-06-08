@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
 
 export const AGENT_MANIFEST_REGISTRY = Object.freeze({
   "1": ".block-ready.agent1.json",
@@ -23,37 +22,6 @@ function inferAgentFromWorktreePath(worktreePath) {
   return null;
 }
 
-function inferBlockIdFromBranch(worktreePath) {
-  try {
-    const branch = execSync("git branch --show-current", {
-      cwd: worktreePath,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-    const numbered = branch.match(/(?:^|\/)gap-(\d+)\b/i);
-    if (numbered) return `GAP-${numbered[1]}`;
-    const named = branch.match(/(?:^|\/)gap-([\w-]+)\b/i);
-    if (named) return `GAP-${named[1].toUpperCase()}`;
-  } catch {
-    return null;
-  }
-  return null;
-}
-
-function manifestCandidate(worktreePath, blockReadyDir, blockId) {
-  const exact = path.join(blockReadyDir, `${blockId}.json`);
-  if (fs.existsSync(exact)) {
-    return path.relative(worktreePath, exact);
-  }
-  const prefixMatches = fs
-    .readdirSync(blockReadyDir)
-    .filter((file) => file.endsWith(".json") && file.startsWith(`${blockId}-`));
-  if (prefixMatches.length === 1) {
-    return path.relative(worktreePath, path.join(blockReadyDir, prefixMatches[0]));
-  }
-  return null;
-}
-
 /**
  * Scan .block-ready/ for a per-block manifest JSON file.
  *
@@ -72,14 +40,10 @@ function resolvePerBlockManifest(worktreePath, legacyManifestPath) {
   // Priority 1: explicit BLOCK_ID env var
   const envBlockId = (process.env.BLOCK_ID ?? "").trim();
   if (envBlockId) {
-    const resolved = manifestCandidate(worktreePath, blockReadyDir, envBlockId);
-    if (resolved) return resolved;
-  }
-
-  const branchBlockId = inferBlockIdFromBranch(worktreePath);
-  if (branchBlockId) {
-    const resolved = manifestCandidate(worktreePath, blockReadyDir, branchBlockId);
-    if (resolved) return resolved;
+    const candidate = path.join(blockReadyDir, `${envBlockId}.json`);
+    if (fs.existsSync(candidate)) {
+      return path.relative(worktreePath, candidate);
+    }
   }
 
   // Priority 2: derive block_id from legacy manifest file
@@ -89,8 +53,10 @@ function resolvePerBlockManifest(worktreePath, legacyManifestPath) {
       const parsed = JSON.parse(fs.readFileSync(legacyAbs, "utf8"));
       const blockId = parsed?.block_id;
       if (blockId) {
-        const resolved = manifestCandidate(worktreePath, blockReadyDir, blockId);
-        if (resolved) return resolved;
+        const candidate = path.join(blockReadyDir, `${blockId}.json`);
+        if (fs.existsSync(candidate)) {
+          return path.relative(worktreePath, candidate);
+        }
       }
     } catch {
       // malformed legacy file; fall through

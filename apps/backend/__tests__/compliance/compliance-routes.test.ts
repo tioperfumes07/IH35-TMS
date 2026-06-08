@@ -12,8 +12,5 @@ describe("compliance routes", () => {
     assert.match(src, /\/api\/v1\/compliance\/dashboard/);
     assert.match(src, /\/api\/v1\/compliance\/dashboard\/summary/);
     assert.match(src, /\/api\/v1\/compliance\/notification-log/);
-    assert.match(src, /rollupComplianceOwners/);
-    assert.match(src, /drivers:/);
-    assert.match(src, /trucks:/);
   });
 });

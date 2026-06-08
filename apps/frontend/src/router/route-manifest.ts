@@ -7,7 +7,6 @@ export type RouteManifestEntry = {
 
 /** Single source of truth for deep-linkable app routes (AUDIT-FIX-6, extended AUDIT-FIX-14). */
 export const ROUTE_MANIFEST: RouteManifestEntry[] = [
-  { path: "/driver-hub", label: "Driver Hub", module: "drivers" },
   { path: "/drivers", label: "Drivers Home", module: "drivers" },
   { path: "/drivers/profiles", label: "Driver Profiles", module: "drivers" },
   { path: "/drivers/settlements", label: "Settlements", module: "drivers" },

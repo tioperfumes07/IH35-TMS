@@ -2,7 +2,7 @@ type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<unknown>;
 };
 
-type AuditSeverity = "info" | "warning" | "critical";
+type AuditSeverity = "info" | "warning";
 
 function normalizeAuditValue(value: unknown): unknown {
   if (value instanceof Date) return value.toISOString();

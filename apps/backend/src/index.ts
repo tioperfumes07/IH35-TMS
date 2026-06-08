@@ -11,14 +11,11 @@ import { registerAuthRoutes } from "./auth/routes.js";
 import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
 import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.js";
-import { registerEdiRoutes } from "./integrations/edi/edi.routes.js";
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
 import { registerSamsaraHealthRoutes } from "./integrations/samsara/samsara-health.routes.js";
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
 import { registerSamsaraVendorMappingActionsRoutes } from "./integrations/samsara/vendor-mapping-actions.routes.js";
 import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
-import { registerActiveDriverSetRoutes } from "./integrations/samsara/active-driver-set/routes.js";
-import { initializeActiveDriverSetRecomputeWorker } from "./jobs/active-driver-set-recompute.js";
 import { registerQboForensicAdminRoutes } from "./integrations/qbo/forensic-admin.routes.js";
 import { registerQboSyncAdminRoutes } from "./integrations/qbo/qbo-sync-admin.routes.js";
 import { registerQboVendorLinkageRoutes } from "./integrations/qbo/qbo-vendor-linkage.routes.js";
@@ -61,22 +58,17 @@ import { registerDispatchRefinementsRoutes } from "./dispatch/dispatch-refinemen
 import { registerIntransitIssuesRoutes } from "./dispatch/intransit-issues.routes.js";
 import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
-import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-arrival.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js";
-import { registerDispatchDetentionApprovalRoutes } from "./dispatch/detention-approval.routes.js";
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
 import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify.routes.js";
 import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
-import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
 import { registerDispatcherRoleViewRoutes } from "./dispatcher-board/role-views/routes.js";
 import { registerDriverRoutes } from "./driver/index.js";
 import { registerDriversMessagesRoutes } from "./drivers/messages.routes.js";
-import { registerDriverCommunicationsRoutes } from "./drivers/communications.routes.js";
 import { registerDriversDocumentAlertsRoutes } from "./drivers/document-alerts.routes.js";
 import { initializeDocumentAlertEngineCron } from "./drivers/document-alerts.cron.js";
 import { registerGeofencesRoutes } from "./telematics/geofences.routes.js";
-import { registerGeofenceStateMachineRoutes } from "./integrations/samsara/geofences/state-machine/routes.js";
 import { registerDashcamOnDemandRoutes } from "./telematics/dashcam-on-demand.routes.js";
 import { registerTelematicsPositionsRoutes } from "./telematics/positions.routes.js";
 import { registerDriverDaySummaryRoutes } from "./telematics/driver-day-summary.routes.js";
@@ -92,7 +84,6 @@ import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.j
 import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disputes.routes.js";
 import { registerHomeRoutes } from "./home/home.routes.js";
 import { registerReportsRoutes } from "./reports/index.js";
-import { registerReportCategoryCatalogRoutes } from "./reports/categories/routes.js";
 import { registerReportsScheduledCrudRoutes } from "./reports/scheduled-reports.routes.js";
 import { registerCustomReportBuilderRoutes } from "./reports/custom-report-builder.routes.js";
 import { initializeReportsRoleScheduler, stopReportsRoleScheduler } from "./reports/scheduler.js";
@@ -128,7 +119,6 @@ import { registerSafetyRemindersRoutes } from "./safety/reminders.routes.js";
 import { registerSafetyReportsRoutes } from "./safety/reports/safety-reports.routes.js";
 import { registerSafetyDrugProgramRoutes } from "./safety/drug-program.routes.js";
 import { registerDrugAlcoholProgramRoutes } from "./safety/drug-alcohol/routes.js";
-import { registerFuelFraudAlertRoutes } from "./integrations/fuel/fraud-detector/routes.js";
 import { registerCertExpiryTrackingRoutes } from "./safety/expiry-tracking/routes.js";
 import { registerFeatureFlagRoutes } from "./lib/feature-flags/routes.js";
 import { registerEldAuditTrailRoutes } from "./safety/eld-audit-trail/routes.js";
@@ -137,12 +127,7 @@ import { registerSafetySettingsRoutes } from "./safety/settings.routes.js";
 import { registerSafetyTrainingProgramsRoutes } from "./safety/training-programs.routes.js";
 import { registerSafetyTrainingRecordsRoutes } from "./safety/training-records.routes.js";
 import { registerSafetyDvirRoutes } from "./safety/dvir.routes.js";
-import { registerPreFlightDvirRoutes } from "./maintenance/pre-flight/routes.js";
-import { registerCap13BrakeWearRoutes } from "./integrations/samsara/cap-13-brake-wear/routes.js";
 import { registerSafetyIncidentsRoutes } from "./safety/incidents.routes.js";
-import { registerDamageContinuityRoutes } from "./safety/damage-continuity/continuity.routes.js";
-import { registerDamagePhotoEvidenceRoutes } from "./safety/damage-reports/photo-evidence.routes.js";
-import { registerPhotoComparisonRoutes } from "./safety/photo-comparison/routes.js";
 import { registerSafetyPermitsRoutes } from "./safety/permits.routes.js";
 import { registerSafetyOnboardingRoutes } from "./safety/onboarding.routes.js";
 import { registerOnboardingStateRoutes } from "./onboarding/state.routes.js";
@@ -169,7 +154,6 @@ import { registerReserveRoutes } from "./factoring/reserve.routes.js";
 import { registerFaroCsvImportRoutes } from "./factoring/faro-csv-import.routes.js";
 import { registerScanDuplicateVendorRoutes } from "./factoring/scan-duplicate-vendors.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
-import { registerDriverHubRequestRoutes } from "./cash-advances/driver-hub-requests.routes.js";
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
@@ -188,7 +172,6 @@ import { registerWoCostContextRoutes } from "./maintenance/wo-cost-context.route
 import { registerMaintenancePmScheduleRoutes } from "./maintenance/pm-schedule.routes.js";
 import { registerMaintenanceInspectionsRoutes } from "./maintenance/inspections.routes.js";
 import { registerMaintenanceTiresRoutes } from "./maintenance/tires.routes.js";
-import { registerCap12TireTreadRoutes } from "./integrations/samsara/cap-12-tire-tread/routes.js";
 import { registerMaintenanceWarrantyRoutes } from "./maintenance/warranty.routes.js";
 import { registerMaintenanceReeferHoursRoutes } from "./maintenance/reefer-hours.routes.js";
 import { registerMaintenanceVendorsRoutes } from "./maintenance/vendors.routes.js";
@@ -244,7 +227,6 @@ import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.route
 import { registerMdataWorkflowRoutes } from "./mdata/workflow-routes.js";
 import { registerUnitPermitsRoutes } from "./master-data/units/permits/routes.js";
 import { registerUnitTollTagsRoutes } from "./master-data/units/toll-tags/routes.js";
-import { registerDriverOperationsDepthRoutes } from "./master-data/drivers/operations-depth/routes.js";
 import { initializeAccountingCrons, registerAccountingRoutes } from "./accounting/index.js";
 import { registerApPaymentApplicationRoutes } from "./ap/payment-application.routes.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
@@ -270,7 +252,6 @@ import { initializeSamsaraMasterSyncCron } from "./cron/samsara-master-sync.cron
 import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
-import { initializeGeofenceStateWatcher } from "./jobs/geofence-state-watcher.js";
 import { initializeLegalMattersReminderCron } from "./legal/matters-reminder.cron.js";
 import { initializeSafetyRemindersCron } from "./safety/reminders.cron.js";
 import { initializeIntegrityAlertEngineCron } from "./safety/integrity-alert-engine.cron.js";
@@ -342,13 +323,7 @@ import { registerOwnerTodaysAttentionRoutes } from "./owner/todays-attention/rou
 import { registerAccountingRoleHomeRoutes } from "./accounting/role-home/routes.js";
 import { registerSafetyOfficerRoleHomeRoutes } from "./safety-officer/role-views/routes.js";
 import { registerDriverManagerRoleHomeRoutes } from "./driver-manager/role-views/routes.js";
-import { registerDispatchViewRoutes } from "./dispatch/driver-pwa/dispatch-view.routes.js";
 import { initializeTodaysAttentionWorker, stopTodaysAttentionWorker } from "./jobs/todays-attention-worker.js";
-import {
-  initializeLateArrivalAggregatorWorker,
-  stopLateArrivalAggregatorWorker,
-} from "./jobs/late-arrival-aggregator-worker.js";
-import { initializeRecurringBillGeneratorWorker, stopRecurringBillGeneratorWorker } from "./jobs/recurring-bill-generator-worker.js";
 import { registerPlaidBankingItemsRoutes } from "./banking/plaid-items.routes.js";
 import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.js";
 import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
@@ -357,21 +332,18 @@ import { registerDailyTasksRoutes } from "./daily-tasks/daily-tasks.routes.js";
 import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/daily-task-alerts.cron.js";
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
-import { initializeCap12TireTreadWorker } from "./jobs/cap-12-tire-tread-worker.js";
-import { initializeFuelFraudDetectorWorker } from "./jobs/fuel-fraud-detector-worker.js";
 import { initializeCertExpiryMonitor } from "./jobs/cert-expiry-monitor.js";
-import { initializeDamageContinuityWorker } from "./jobs/damage-continuity-worker.js";
-import { initializeCap13BrakeWearWorker } from "./jobs/cap-13-brake-wear-worker.js";
 import { initializeSamsaraCacheWarmer } from "./integrations/samsara/cache/cache-warmer.js";
 import { initializeSearchIndexerIncremental } from "./jobs/search-indexer-incremental.js";
 import { registerUniversalSearchRoutes } from "./search/universal/routes.js";
 import { runStartupMigrationDriftGuard } from "./db/startup-migration-drift-guard.js";
-import { runRefundCoaRolesStartupCheck } from "./accounting/coa-roles/refund-roles-guard.js";
 import { registerTelematicsHosRoutes } from "./telematics/hos.routes.js";
 import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-pairing.routes.js";
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
 import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js";
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
+import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
+import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-detector.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -384,7 +356,7 @@ let shuttingDown = false;
 function getAllowedOrigins(): string[] {
   const origins =
     process.env.CORS_ALLOWED_ORIGINS ??
-    "https://app.ih35dispatch.com,https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174";
+    "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174";
   return origins
     .split(",")
     .map((value) => value.trim())
@@ -426,8 +398,6 @@ async function shutdown(signal: string) {
     stopQboInboundSyncCron();
     stopDailyTaskAlertsCron();
     stopTodaysAttentionWorker();
-    stopLateArrivalAggregatorWorker();
-    stopRecurringBillGeneratorWorker();
     stopAdminJobsWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
@@ -467,15 +437,6 @@ async function main() {
   } finally {
     driftConn.release();
   }
-
-  // Block F Decision C: warn/error-log if any active carrier is missing the
-  // ap_control/expense_default COA roles needed to post insurance refunds.
-  // Non-fatal — cancellations fall back to durable pending obligations.
-  await runRefundCoaRolesStartupCheck({
-    withLuciaBypass,
-    logWarn: (obj, msg) => app.log.warn(obj, msg),
-    logError: (obj, msg) => app.log.error(obj, msg),
-  });
 
   try {
     await Promise.race([
@@ -520,12 +481,11 @@ async function main() {
   await registerQboOAuthRoutes(app);
   await registerQboWebhookRoutes(app);
   await registerSamsaraWebhookRoutes(app);
-  await registerEdiRoutes(app);
   await registerSamsaraConfigRoutes(app);
   await registerSamsaraHealthRoutes(app);
   await registerSamsaraVendorMappingIntegrityRoutes(app);
   await registerSamsaraVendorMappingActionsRoutes(app);
-  await registerActiveDriverSetRoutes(app);
+  await registerBorderCrossingDetectorRoutes(app);
   await registerQboForensicAdminRoutes(app);
   await registerQboSyncAdminRoutes(app);
   await registerQboVendorLinkageRoutes(app);
@@ -576,7 +536,6 @@ async function main() {
   await registerMdataRoutes(app);
   await registerUnitPermitsRoutes(app);
   await registerUnitTollTagsRoutes(app);
-  await registerDriverOperationsDepthRoutes(app);
   await registerAssignmentsQuicksaveRoutes(app);
   await registerFleetTrailerRoutes(app);
   await registerAssetsRoutes(app);
@@ -628,21 +587,16 @@ async function main() {
   await registerIntransitIssuesRoutes(app);
   await registerDispatchArchTabsRoutes(app);
   await registerDispatchAlertsRoutes(app);
-  await registerLateArrivalAnalyticsRoutes(app);
   await registerDispatchPlannerRoutes(app);
   await registerDispatchDetentionRoutes(app);
-  await registerDispatchDetentionApprovalRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
   await registerDispatchPodBolRoutes(app);
-  await registerPreDispatchValidationRoutes(app);
   await registerDispatcherRoleViewRoutes(app);
   await registerDriverRoutes(app);
   await registerDriversMessagesRoutes(app);
-  await registerDriverCommunicationsRoutes(app);
   await registerDriversDocumentAlertsRoutes(app);
   await registerGeofencesRoutes(app);
-  await registerGeofenceStateMachineRoutes(app);
   await registerDriverDaySummaryRoutes(app);
   await registerTelematicsHeatmapRoutes(app);
   await registerDashcamOnDemandRoutes(app);
@@ -663,9 +617,7 @@ async function main() {
   await registerAccountingRoleHomeRoutes(app);
   await registerSafetyOfficerRoleHomeRoutes(app);
   await registerDriverManagerRoleHomeRoutes(app);
-  await registerDispatchViewRoutes(app);
   await registerReportsRoutes(app);
-  await registerReportCategoryCatalogRoutes(app);
   await registerReportsScheduledCrudRoutes(app);
   await registerCustomReportBuilderRoutes(app);
   await registerIftaQuarterlyPreparerRoutes(app);
@@ -699,7 +651,6 @@ async function main() {
   await registerSafetyReportsRoutes(app);
   await registerSafetyDrugProgramRoutes(app);
   await registerDrugAlcoholProgramRoutes(app);
-  await registerFuelFraudAlertRoutes(app);
   await registerCertExpiryTrackingRoutes(app);
   await registerFeatureFlagRoutes(app);
   await registerUniversalSearchRoutes(app);
@@ -709,18 +660,12 @@ async function main() {
   await registerSafetyTrainingProgramsRoutes(app);
   await registerSafetyTrainingRecordsRoutes(app);
   await registerSafetyDvirRoutes(app);
-  await registerPreFlightDvirRoutes(app);
-  await registerCap13BrakeWearRoutes(app);
   await registerSafetyIncidentsRoutes(app);
-  await registerDamageContinuityRoutes(app);
-  await registerDamagePhotoEvidenceRoutes(app);
-  await registerPhotoComparisonRoutes(app);
   await registerSafetyPermitsRoutes(app);
   await registerSafetyOnboardingRoutes(app);
   await registerOnboardingStateRoutes(app);
   await registerLiabilitiesRoutes(app);
   await registerCashAdvancesRoutes(app);
-  await registerDriverHubRequestRoutes(app);
   await registerBankTxCategorizationRoutes(app);
   await registerBankingRoutes(app);
   await registerPlaidBankingItemsRoutes(app);
@@ -763,7 +708,6 @@ async function main() {
   await registerMaintenancePmScheduleRoutes(app);
   await registerMaintenanceInspectionsRoutes(app);
   await registerMaintenanceTiresRoutes(app);
-  await registerCap12TireTreadRoutes(app);
   await registerMaintenanceWarrantyRoutes(app);
   await registerMaintenanceReeferHoursRoutes(app);
   await registerMaintenanceVendorsRoutes(app);
@@ -937,9 +881,6 @@ async function main() {
 
   try {
     initializeGeofenceBreachDetectorCron(app);
-
-    initializeGeofenceStateWatcher(app);
-    app.log.info("[STARTUP] geofence-state-watcher initialized");
     app.log.info("[STARTUP] geofence-breach-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] geofence-breach-cron failed");
@@ -997,22 +938,14 @@ async function main() {
     initializeDaRandomPoolDrawWorker(app);
     app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
 
-    initializeCap12TireTreadWorker(app);
-    app.log.info("[STARTUP] cap-12-tire-tread-worker initialized");
-
-    initializeFuelFraudDetectorWorker(app);
-    app.log.info("[STARTUP] fuel-fraud-detector-worker initialized");
-
     initializeCertExpiryMonitor(app);
-    initializeDamageContinuityWorker(app);
-    app.log.info("[STARTUP] damage-continuity-worker initialized");
-    initializeCap13BrakeWearWorker(app);
-    app.log.info("[STARTUP] cap-13-brake-wear-worker initialized");
     initializeSamsaraCacheWarmer(app);
     app.log.info("[STARTUP] samsara-cache-warmer initialized");
-    initializeActiveDriverSetRecomputeWorker(app);
     initializeSearchIndexerIncremental(app);
     app.log.info("[STARTUP] cert-expiry-monitor initialized");
+
+    initializeBorderCrossingDetectorWorker(app);
+    app.log.info("[STARTUP] border-crossing-detector-worker initialized");
 
     initializePmAutoEngineCron(app);
     app.log.info("[STARTUP] pm-auto-engine-cron initialized");
@@ -1088,10 +1021,6 @@ async function main() {
     app.log.info("[STARTUP] daily-task-alerts cron initialized");
     initializeTodaysAttentionWorker(app);
     app.log.info("[STARTUP] todays-attention worker initialized");
-    initializeLateArrivalAggregatorWorker(app);
-    app.log.info("[STARTUP] late-arrival aggregator worker initialized");
-    initializeRecurringBillGeneratorWorker(app);
-    app.log.info("[STARTUP] recurring-bill-generator worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] daily-task-alerts cron failed");
   }

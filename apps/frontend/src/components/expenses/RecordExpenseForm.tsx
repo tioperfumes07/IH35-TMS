@@ -6,7 +6,6 @@ import { listUnits } from "../../api/mdata";
 import { Button } from "../Button";
 import { QboCombobox } from "../forms/QboCombobox";
 import { SelectCombobox } from "../shared/SelectCombobox";
-import { UploadZone } from "../UploadZone";
 import {
   initialRecordExpenseFormValues,
   RECORD_EXPENSE_PAYMENT_METHODS,
@@ -32,7 +31,6 @@ export function RecordExpenseForm({
   const [values, setValues] = useState<RecordExpenseFormValues>(initialRecordExpenseFormValues);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
 
   const costContextQuery = useQuery({
     queryKey: ["record-expense", "cost-context", operatingCompanyId],
@@ -206,14 +204,6 @@ export function RecordExpenseForm({
           </SelectCombobox>
         </div>
       </label>
-
-      <UploadZone
-        operatingCompanyId={operatingCompanyId}
-        entityType="expense"
-        entityId={draftAttachmentEntityId}
-        defaultCategory="receipt"
-        title="Receipt attachments"
-      />
 
       {error ? <div className="text-sm text-red-600">{error}</div> : null}
 

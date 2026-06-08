@@ -2,17 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
-  approveDetentionRequest,
   bridgeDetentionBilling,
   closeDetentionEvent,
-  getDetentionApprovalKpis,
   getDetentionBoard,
-  getDetentionRequests,
   notifyDetentionCustomer,
-  rejectDetentionRequest,
   syncDetentionFromArrivals,
   type DetentionBoardEvent,
-  type DetentionRequest,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -117,91 +112,6 @@ function EventRow({
   );
 }
 
-function ApprovalRow({
-  request,
-  companyId,
-  onAction,
-}: {
-  request: DetentionRequest;
-  companyId: string;
-  onAction: () => void;
-}) {
-  const [reason, setReason] = useState("");
-  const approveM = useMutation({
-    mutationFn: () => approveDetentionRequest(request.id, { operating_company_id: companyId }),
-    onSuccess: onAction,
-  });
-  const rejectM = useMutation({
-    mutationFn: () => rejectDetentionRequest(request.id, { operating_company_id: companyId, reason }),
-    onSuccess: onAction,
-  });
-  const isPending = request.status === "pending_review";
-
-  return (
-    <tr className="border-b last:border-b-0" data-testid={`detention-request-${request.id}`}>
-      <td className="px-3 py-2 font-medium">
-        <Link to={`/dispatch?view=loads&load=${request.load_id}`} className="text-sky-700 hover:underline">
-          {request.load_number}
-        </Link>
-      </td>
-      <td className="px-3 py-2">{request.customer_name ?? "—"}</td>
-      <td className="px-3 py-2">
-        {[request.stop_city, request.stop_state].filter(Boolean).join(", ") || "—"}
-        {request.stop_type ? <span className="ml-1 text-xs text-slate-500">({request.stop_type})</span> : null}
-      </td>
-      <td className="px-3 py-2 tabular-nums">{request.billable_minutes} min</td>
-      <td className="px-3 py-2 tabular-nums font-medium">{formatMoney(request.amount_cents)}</td>
-      <td className="px-3 py-2">
-        <StatusBadge status={request.status} />
-        {request.status === "rejected" && request.rejection_reason ? (
-          <span className="ml-1 text-xs text-slate-500">({request.rejection_reason})</span>
-        ) : null}
-      </td>
-      <td className="px-3 py-2">
-        {isPending ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className="rounded border border-emerald-300 px-2 py-1 text-xs text-emerald-800"
-              disabled={approveM.isPending}
-              onClick={() => approveM.mutate()}
-            >
-              Approve &amp; invoice
-            </button>
-            <input
-              type="text"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Reject reason"
-              className="w-32 rounded border px-2 py-1 text-xs"
-              aria-label="Rejection reason"
-            />
-            <button
-              type="button"
-              className="rounded border border-rose-300 px-2 py-1 text-xs text-rose-800"
-              disabled={rejectM.isPending || reason.trim().length < 3}
-              onClick={() => rejectM.mutate()}
-            >
-              Reject
-            </button>
-          </div>
-        ) : (
-          <span className="text-xs text-slate-500">Reviewed</span>
-        )}
-      </td>
-    </tr>
-  );
-}
-
-function KpiCard({ label, value, testId }: { label: string; value: string; testId: string }) {
-  return (
-    <div className="rounded border bg-white px-4 py-3" data-testid={testId}>
-      <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums text-slate-800">{value}</div>
-    </div>
-  );
-}
-
 export function DetentionBoardPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -220,30 +130,13 @@ export function DetentionBoardPage() {
     refetchInterval: 60_000,
   });
 
-  const kpisQ = useQuery({
-    queryKey: ["dispatch", "detention-kpis", companyId],
-    queryFn: () => getDetentionApprovalKpis(companyId),
-    enabled: Boolean(companyId),
-    refetchInterval: 60_000,
-  });
-
-  const requestsQ = useQuery({
-    queryKey: ["dispatch", "detention-requests", companyId],
-    queryFn: () => getDetentionRequests(companyId),
-    enabled: Boolean(companyId),
-    refetchInterval: 60_000,
-  });
-
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", companyId] });
-    queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-kpis", companyId] });
-    queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-requests", companyId] });
-  };
-
   const syncM = useMutation({
     mutationFn: () => syncDetentionFromArrivals(companyId),
-    onSuccess: invalidate,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", companyId] }),
   });
+
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", companyId] });
 
   if (!companyId) {
     return <div className="rounded border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
@@ -277,71 +170,6 @@ export function DetentionBoardPage() {
         Free time excluded · rate from load or customer · customer notify after{" "}
         {boardQ.data?.notify_threshold_minutes ?? 60} billable minutes.
       </p>
-
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3" data-testid="detention-kpi-header">
-        <KpiCard
-          label="Pending approval"
-          value={String(kpisQ.data?.pending_count ?? 0)}
-          testId="detention-kpi-pending"
-        />
-        <KpiCard
-          label="Approved this week"
-          value={formatMoney(kpisQ.data?.week_approved_cents ?? 0)}
-          testId="detention-kpi-week"
-        />
-        <KpiCard
-          label="Approved YTD"
-          value={formatMoney(kpisQ.data?.ytd_approved_cents ?? 0)}
-          testId="detention-kpi-ytd"
-        />
-      </section>
-
-      <section className="space-y-2" data-testid="detention-approval-queue">
-        <h2 className="text-sm font-semibold text-slate-700">Approval queue</h2>
-        <p className="text-xs text-slate-600">
-          Manager approval merges detention into the load linehaul total (bridge to billing) and builds the
-          customer invoice. Approving captures dwell evidence derived from stop timestamps.
-        </p>
-        <div className="overflow-x-auto rounded border bg-white">
-          <table className="min-w-full text-sm">
-            <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-3 py-2">Load</th>
-                <th className="px-3 py-2">Customer</th>
-                <th className="px-3 py-2">Stop</th>
-                <th className="px-3 py-2">Billable</th>
-                <th className="px-3 py-2">Amount</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Decision</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requestsQ.isLoading ? (
-                <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-slate-500">
-                    Loading detention requests…
-                  </td>
-                </tr>
-              ) : (requestsQ.data?.requests ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-slate-500">
-                    No detention awaiting approval. Closed accruals appear here for manager review.
-                  </td>
-                </tr>
-              ) : (
-                (requestsQ.data?.requests ?? []).map((request) => (
-                  <ApprovalRow
-                    key={request.id}
-                    request={request}
-                    companyId={companyId}
-                    onAction={invalidate}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
 
       <section className="overflow-x-auto rounded border bg-white">
         <table className="min-w-full text-sm">

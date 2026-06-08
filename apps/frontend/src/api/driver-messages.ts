@@ -50,35 +50,3 @@ export function markDriverMessageRead(messageId: string, operatingCompanyId: str
     { method: "PATCH" }
   );
 }
-
-export type DriverCommEntry = {
-  id: string;
-  operating_company_id: string;
-  driver_id: string;
-  message: string;
-  channel: "sms" | "email" | "in_app";
-  direction: "inbound" | "outbound";
-  urgency: string | null;
-  created_by: string | null;
-  created_at: string;
-  delivery_status: string;
-  delivery_ref: string | null;
-};
-
-export function getDriverCommunications(
-  driverId: string,
-  operatingCompanyId: string,
-  opts?: { channel?: string; limit?: number; offset?: number }
-) {
-  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  if (opts?.channel) params.set("channel", opts.channel);
-  if (opts?.limit != null) params.set("limit", String(opts.limit));
-  if (opts?.offset != null) params.set("offset", String(opts.offset));
-  return apiRequest<{
-    driver_id: string;
-    entries: DriverCommEntry[];
-    total: number;
-    limit: number;
-    offset: number;
-  }>(`/api/v1/drivers/${driverId}/communications?${params.toString()}`);
-}
