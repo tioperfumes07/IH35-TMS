@@ -18,9 +18,12 @@
     "docs/specs/gap-52-driver-vendor-mapping-integrity.md",
     "apps/backend/src/index.ts",
     "package.json",
-    "scripts/lib/migration-checksum-overrides.json"
+    "scripts/lib/migration-checksum-overrides.json",
+    ".github/workflows/ci.yml"
   ],
-  "extra_gates": ["verify:driver-vendor-mapping"],
+  "extra_gates": [
+    "verify:driver-vendor-mapping"
+  ],
   "runtime_path": "src",
   "db_required": true,
   "guard_required": true

@@ -26,11 +26,11 @@ async function runScan(app: FastifyInstance) {
           await createNotification({
             operating_company_id: id,
             user_id: userId,
-            type: "integrity_driver_vendor_mapping",
+            type: "system",
             severity: "critical",
             title: "Driver↔QBO vendor mapping drift detected",
             body: `${critical.length} critical mapping drift(s) require review.`,
-            metadata: { count: critical.length },
+            source_block: "GAP-52",
           });
         }
       }

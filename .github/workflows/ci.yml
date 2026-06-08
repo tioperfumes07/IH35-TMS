@@ -338,6 +338,9 @@ jobs:
       - name: Verify cash flow and per-truck CPM routes (GAP-45)
         run: npm run verify:cash-flow-cpm-routes
 
+      - name: Verify driver vendor mapping monitor (GAP-52)
+        run: npm run verify:driver-vendor-mapping
+
       - name: Verify equipment dual-confirm transfer contract
         run: npm run verify:equipment-transfer-dual-confirm
 
