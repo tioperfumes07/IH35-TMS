@@ -1,0 +1,24 @@
+{
+  "block_id": "BLOCK5-INSURANCE-FORWARD-FIX",
+  "gap": "GAP-86",
+  "branch": "feature/insurance-bill-creator-forward-fix",
+  "phase": "GAP-HIGH",
+  "task": "Forward-fix for the #687 double-bill vulnerability: require Idempotency-Key on /insurance/policies, partial-UNIQUE bill_uuid, replay-skip pre-check, atomic hard-fail+rollback with bill void / CRITICAL Sentry on orphans, and bill the down payment so down + sum(installments) === total_premium. Additive-only; keeps bill_uuid + vendor_id from #687.",
+  "financial_rule": "Bills are created/voided ONLY via createBill()/voidBill() from apps/backend/src/accounting/bills.service.ts. No new financial ledger code.",
+  "allowed_files": [
+    ".block-ready/BLOCK5-INSURANCE-FORWARD-FIX.json",
+    "db/migrations/202606072100_insurance_payment_schedule_bill_uuid_unique.sql",
+    "apps/backend/src/insurance/policy-bill-schedule.service.ts",
+    "apps/backend/src/insurance/policy.routes.ts",
+    "apps/backend/src/insurance/__tests__/policy-bill-schedule.service.test.ts",
+    "apps/backend/src/middleware/idempotency.ts",
+    "scripts/verify-insurance-module.mjs",
+    "docs/specs/gap-86-insurance-module.md"
+  ],
+  "extra_gates": [
+    "verify:insurance-module"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false
+}

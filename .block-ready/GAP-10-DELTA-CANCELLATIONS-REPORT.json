@@ -1,0 +1,30 @@
+{
+  "block_id": "GAP-10-DELTA-CANCELLATIONS-REPORT",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap10d",
+  "branch": "feature/gap-10-delta-cancellations-report",
+  "phase": "GAP-HIGH",
+  "task": "Load cancellations analytics report (group by reason, driver, customer, date)",
+  "allowed_files": [
+    ".block-ready/GAP-10-DELTA-CANCELLATIONS-REPORT.json",
+    "apps/backend/src/dispatch/cancellation.service.ts",
+    "apps/backend/src/dispatch/cancellation.routes.ts",
+    "apps/frontend/src/pages/dispatch/LoadCancellationsReportPage.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/reports/phase6ReportLinks.ts",
+    "apps/frontend/src/pages/reports/ReportsSubNav.tsx",
+    "apps/frontend/src/components/reports/CategoryHoverNav.tsx",
+    "scripts/verify-load-cancellations-report.mjs",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "forbidden_paths": [
+    "apps/backend/src/catalogs/**",
+    "apps/frontend/src/components/dispatch/CancelLoadModal.tsx"
+  ],
+  "extra_gates": [
+    "verify:load-cancellations-report"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}

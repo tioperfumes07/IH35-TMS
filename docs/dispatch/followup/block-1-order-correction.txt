@@ -1,0 +1,18 @@
+BLOCK 1 / PR #680 — ORDER CORRECTION (FIX) — Sidebar rail order
+TARGET: https://github.com/tioperfumes07/IH35-TMS/pull/680  (branch feature/sidebar-driver-hub)
+STATUS: OPEN. Do NOT merge until order is fixed AND CI green. Label already corrected to "Driver Profile" (commit 5d3ac46); module count already 19. The ORDER is wrong — fix it.
+
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+FIX:
+SIDEBAR_DEFAULT_ORDER must be EXACTLY these 21 ids, in this order:
+home, maintenance, fuel, dispatch, driver-hub, safety, drivers, eld, accounting, bank, factoring, vendors, customers, legal, form_425, drv_app, lists, reports, docs, users, help
+( drivers = the relabeled "Driver Profile"; route stays /drivers. )
+
+ROLE ARRAYS (Mechanic / Dispatcher / Accountant / Safety / Manager): do NOT force the order above onto them. Leave each role's existing order intact and ONLY insert driver-hub immediately after drivers in each. Owner / Admin / SuperAdmin inherit DEFAULT, so the Owner sees the order above.
+
+KEEP: modules = 19. KEEP: label "Driver Profile". PR title may stay stale.
+verify:no-duplicate-routes (dist/ missing): confirm it fails identically on a routes-untouched branch before calling it pre-existing infra; note in the PR that recon confirmed /driver-hub has no route collision. (Permanent fix = Block I.)
+
+ACCEPT: rendered DEFAULT order matches the 21 ids above exactly; role arrays keep their own order + driver-hub after drivers; CI green except the confirmed-pre-existing dist/ check.
+REPLY HERE WITH: final rendered DEFAULT order + checks status. Hold squash-merge for explicit GO.

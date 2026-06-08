@@ -1,0 +1,20 @@
+{
+  "block_id": "SIDEBAR-INSURANCE",
+  "branch": "feat/sidebar-insurance-clean",
+  "phase": "implementation",
+  "task": "Add Insurance sidebar entry after Drivers in sidebar-config.ts; add /insurance redirect route; bump PASS-8 module count to 20.",
+  "agent": "1",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    ".block-ready/SIDEBAR-INSURANCE.json",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/pass-8-shared.mjs"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}

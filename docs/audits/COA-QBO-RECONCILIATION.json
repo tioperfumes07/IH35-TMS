@@ -1,0 +1,3328 @@
+{
+  "block": "ACCT-COA-CANONICALIZATION",
+  "generated_at": "2026-06-08T00:32:05.342Z",
+  "canonical_coa": "catalogs.accounts",
+  "qbo_mirror": "accounting.qbo_accounts (TRANSP slice)",
+  "transp_company_id": "91e0bf0a-133f-4ce8-a734-2586cfa66d96",
+  "totals": {
+    "tms_catalogs_accounts": 370,
+    "qbo_accounts_transp": 365,
+    "matched": 347,
+    "conflict": 0,
+    "ambiguous": 18,
+    "tms_only": 5,
+    "qbo_only": 0,
+    "matchable": 365
+  },
+  "coverage": {
+    "observed_matched_pct_of_matchable": 95,
+    "suggested_verifier_threshold_pct": 90,
+    "floor_pct": 50,
+    "env_override": "COA_QBO_LINK_MIN_PCT"
+  },
+  "matched": [
+    {
+      "tms_id": "687cb37d-40c3-43f2-be56-7e755bd97562",
+      "account_number": "QBO-331",
+      "account_name": "VANTAGE-6107",
+      "account_type": "Asset",
+      "qbo_id": "331",
+      "qbo_name": "VANTAGE-6107",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "42994a07-1d0b-4514-ac4d-8007270aa3aa",
+      "account_number": "QBO-332",
+      "account_name": "VANTAGE-6224",
+      "account_type": "Asset",
+      "qbo_id": "332",
+      "qbo_name": "VANTAGE-6224",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "d7a076a5-85e8-42f8-8a26-5fbf1d9ea1ba",
+      "account_number": "QBO-333",
+      "account_name": "VANTAGE-6071",
+      "account_type": "Asset",
+      "qbo_id": "333",
+      "qbo_name": "VANTAGE-6071",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "308a21ca-d173-4ffb-a63c-ab1032fd462c",
+      "account_number": "QBO-41",
+      "account_name": "AUTO EXPENSE (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "41",
+      "qbo_name": "AUTO EXPENSE (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "250da8e1-7938-4b30-9d4b-ab52776a414d",
+      "account_number": "QBO-103",
+      "account_name": "Unloading & loading (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "103",
+      "qbo_name": "Unloading & loading (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "b4e2e9b9-677c-4529-9bbe-de5377798f08",
+      "account_number": "QBO-10",
+      "account_name": "Meals & Entertainment",
+      "account_type": "Expense",
+      "qbo_id": "10",
+      "qbo_name": "Meals & Entertainment",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "e22f1073-7a8f-499d-8903-b604d9edee6a",
+      "account_number": "QBO-100",
+      "account_name": "Permits/Vehicle (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "100",
+      "qbo_name": "Permits/Vehicle (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "e527110e-52ce-45ea-85b9-d5d8860b2990",
+      "account_number": "QBO-102",
+      "account_name": "IFTA Tax (deleted)",
+      "account_type": "OtherExpense",
+      "qbo_id": "102",
+      "qbo_name": "IFTA Tax (deleted)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "7efd5975-668d-48a8-b37b-cf6583e82c3e",
+      "account_number": "QBO-107",
+      "account_name": "Unapplied Cash Bill Payment Expense",
+      "account_type": "Expense",
+      "qbo_id": "107",
+      "qbo_name": "Unapplied Cash Bill Payment Expense",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "c75ff52d-3181-4d74-844f-06762e9103a5",
+      "account_number": "QBO-11",
+      "account_name": "Other Business Expenses",
+      "account_type": "Expense",
+      "qbo_id": "11",
+      "qbo_name": "Other Business Expenses",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "079a7c20-9a83-4128-8311-1c87a98aa5df",
+      "account_number": "QBO-114",
+      "account_name": "Scanner-Emails-Expenses",
+      "account_type": "Expense",
+      "qbo_id": "114",
+      "qbo_name": "Scanner-Emails-Expenses",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "3568788f-3457-4e1d-b4d3-39acd75838e7",
+      "account_number": "QBO-115",
+      "account_name": "Shipping, Freight & Delivery (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "115",
+      "qbo_name": "Shipping, Freight & Delivery (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "bc0f128d-a721-4001-b9cd-290595997df2",
+      "account_number": "QBO-1150040000",
+      "account_name": "admin fee (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "1150040000",
+      "qbo_name": "admin fee (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "15caadec-8f3f-4f63-b9fa-44021d6492f0",
+      "account_number": "QBO-1150040001",
+      "account_name": "EXPRESS CODE",
+      "account_type": "Liability",
+      "qbo_id": "1150040001",
+      "qbo_name": "EXPRESS CODE",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "c0cb9d37-ecba-4fdf-995c-d717fb438d21",
+      "account_number": "QBO-1150040002",
+      "account_name": "Travel-Airfare",
+      "account_type": "Expense",
+      "qbo_id": "1150040002",
+      "qbo_name": "Travel-Airfare",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "a9a64a22-0f79-4611-b947-cf128ac4327c",
+      "account_number": "QBO-1150040004",
+      "account_name": "Office Building-Repair & Maintenance",
+      "account_type": "Expense",
+      "qbo_id": "1150040004",
+      "qbo_name": "Office Building-Repair & Maintenance",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "bd7d42aa-9aff-4134-aba3-65897ffda749",
+      "account_number": "QBO-1150040007",
+      "account_name": "Travel-Auto Rental",
+      "account_type": "Expense",
+      "qbo_id": "1150040007",
+      "qbo_name": "Travel-Auto Rental",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "249c399d-3101-445b-9b20-d76316f728ac",
+      "account_number": "QBO-1150040009",
+      "account_name": "US-Office Auto-Vehicle Insurance",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040009",
+      "qbo_name": "US-Office Auto-Vehicle Insurance",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "64a4013f-7171-44d1-885a-29355aab65b5",
+      "account_number": "QBO-1150040010",
+      "account_name": "Travel-Meals",
+      "account_type": "Expense",
+      "qbo_id": "1150040010",
+      "qbo_name": "Travel-Meals",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "50c3cbd2-21b7-42bd-8098-ccdfaf0a8ea9",
+      "account_number": "QBO-1150040011",
+      "account_name": "Travel-Taxi",
+      "account_type": "Expense",
+      "qbo_id": "1150040011",
+      "qbo_name": "Travel-Taxi",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "3f693d35-1aa5-47d7-8018-b8d5475b190e",
+      "account_number": "QBO-1150040013",
+      "account_name": "Tax-Vehicle Inspection",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040013",
+      "qbo_name": "Tax-Vehicle Inspection",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "3267ec1c-cef9-44e5-9645-54187f2700ce",
+      "account_number": "QBO-1150040014",
+      "account_name": "US-Cargo & Liability Insurance",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040014",
+      "qbo_name": "US-Cargo & Liability Insurance",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "28281665-fe4e-4a33-adf9-baec037beb6a",
+      "account_number": "QBO-1150040015",
+      "account_name": "Current Liabilities",
+      "account_type": "Liability",
+      "qbo_id": "1150040015",
+      "qbo_name": "Current Liabilities",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "a55b1071-59eb-4125-92c7-dd60d57d016c",
+      "account_number": "QBO-1150040016",
+      "account_name": "Loan-Scentsx",
+      "account_type": "Liability",
+      "qbo_id": "1150040016",
+      "qbo_name": "Loan-Scentsx",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "26507146-99c2-42e5-8b3a-13ec674e448e",
+      "account_number": "QBO-1150040017",
+      "account_name": "Attorney Services",
+      "account_type": "Expense",
+      "qbo_id": "1150040017",
+      "qbo_name": "Attorney Services",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "2766a127-81b4-4b84-9bd5-65d36a212424",
+      "account_number": "QBO-1150040020",
+      "account_name": "Freight (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "1150040020",
+      "qbo_name": "Freight (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "9a91e201-6176-4094-a36c-fd486ed85593",
+      "account_number": "QBO-1150040021",
+      "account_name": "Permit-Driver Intl Permits",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040021",
+      "qbo_name": "Permit-Driver Intl Permits",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "b4c1018b-6eb0-4520-8271-243cafd2c129",
+      "account_number": "QBO-1150040022",
+      "account_name": "US-Physical Damage Insurance",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040022",
+      "qbo_name": "US-Physical Damage Insurance",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "af162063-167f-4f5c-9c57-b3ea6514418f",
+      "account_number": "QBO-1150040023",
+      "account_name": "BC-Factoring Fees-Faro",
+      "account_type": "Expense",
+      "qbo_id": "1150040023",
+      "qbo_name": "BC-Factoring Fees-Faro",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "c641e394-1bd8-498a-8973-b34d3e0d3daa",
+      "account_number": "QBO-1150040024",
+      "account_name": "Driver Travel Expense (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "1150040024",
+      "qbo_name": "Driver Travel Expense (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "5d9532b5-3969-4f8e-950e-5149e2b40178",
+      "account_number": "QBO-1150040029",
+      "account_name": "Lease-Owner Operators",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040029",
+      "qbo_name": "Lease-Owner Operators",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "27c4a09a-0d34-4908-9da1-44b6174b5bce",
+      "account_number": "QBO-1150040031",
+      "account_name": "Repair & Maintenance Expenses",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040031",
+      "qbo_name": "Repair & Maintenance Expenses",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "13432f66-2670-48f5-8244-369cabb5aba2",
+      "account_number": "QBO-1150040042",
+      "account_name": "Internal Mechanic Shop Maintenance and Repairs(645.30)",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040042",
+      "qbo_name": "Internal Mechanic Shop Maintenance and Repairs(645.30)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "05342493-3148-46e0-b6ff-4c223ebde355",
+      "account_number": "QBO-1150040043",
+      "account_name": "Operating Expenses (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "1150040043",
+      "qbo_name": "Operating Expenses (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "b34698de-aa72-4481-ad00-85d4e52c02cb",
+      "account_number": "QBO-1150040045",
+      "account_name": "Tax-Unified Carrier-UCR",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040045",
+      "qbo_name": "Tax-Unified Carrier-UCR",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "9e16c664-73a1-4387-ad9f-94d1110e8096",
+      "account_number": "QBO-1150040046",
+      "account_name": "External Carrier-Freight-Mexico",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040046",
+      "qbo_name": "External Carrier-Freight-Mexico",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "0c933f3c-25c5-4239-9baa-54d999a05355",
+      "account_number": "QBO-1150040048",
+      "account_name": "BC-Credit Card Annual Membership Fee",
+      "account_type": "Expense",
+      "qbo_id": "1150040048",
+      "qbo_name": "BC-Credit Card Annual Membership Fee",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "23aa9d18-87f4-4cab-b10c-fa5223479f43",
+      "account_number": "QBO-1150040055",
+      "account_name": "Uninsured Accident Vehicle Repair",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040055",
+      "qbo_name": "Uninsured Accident Vehicle Repair",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "f0b5bf52-f3a7-4c41-8a10-90f6dda5fd51",
+      "account_number": "QBO-1150040056",
+      "account_name": "Towing Services",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040056",
+      "qbo_name": "Towing Services",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "4e22c6b3-0c09-4bf5-a9f0-1a198470327f",
+      "account_number": "QBO-1150040057",
+      "account_name": "Operating Expenses Transportation",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040057",
+      "qbo_name": "Operating Expenses Transportation",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "43d01a64-2e5b-473d-bce4-f4f03a9c7546",
+      "account_number": "QBO-1150040058",
+      "account_name": "Permit-License Plates",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040058",
+      "qbo_name": "Permit-License Plates",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "ff3ac950-21a7-4b02-aab2-9df1017c4281",
+      "account_number": "QBO-1150040059",
+      "account_name": "Tax-IFTA-Motor Fuel Tax",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040059",
+      "qbo_name": "Tax-IFTA-Motor Fuel Tax",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "6c7435da-84ca-40a2-9ea8-18fd53aa94a2",
+      "account_number": "QBO-1150040060",
+      "account_name": "Vehicle Registration & Taxes",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040060",
+      "qbo_name": "Vehicle Registration & Taxes",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "1e8749b5-b773-4287-8c1c-39ad86406cf7",
+      "account_number": "QBO-1150040061",
+      "account_name": "Tax-2290-Heavy Highway Vehicle Tax",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040061",
+      "qbo_name": "Tax-2290-Heavy Highway Vehicle Tax",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "07546da2-d6cf-40f6-b4d6-f9169883e977",
+      "account_number": "QBO-1150040065",
+      "account_name": "Business Personal Property Tax-Webb County",
+      "account_type": "Expense",
+      "qbo_id": "1150040065",
+      "qbo_name": "Business Personal Property Tax-Webb County",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "e8f81c50-e178-402e-9a17-b7346f23ee0a",
+      "account_number": "QBO-1150040066",
+      "account_name": "Business Personal Property Tax-UISD",
+      "account_type": "Expense",
+      "qbo_id": "1150040066",
+      "qbo_name": "Business Personal Property Tax-UISD",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "29fe69ee-59d2-42cd-954b-2cf4b21ececf",
+      "account_number": "QBO-1150040067",
+      "account_name": "Business Personal Property Tax-City of Laredo",
+      "account_type": "Expense",
+      "qbo_id": "1150040067",
+      "qbo_name": "Business Personal Property Tax-City of Laredo",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "d6cdfbdc-997e-43ba-8b4a-0cfcace8b523",
+      "account_number": "QBO-1150040068",
+      "account_name": "Property Tax-City of Laredo",
+      "account_type": "Expense",
+      "qbo_id": "1150040068",
+      "qbo_name": "Property Tax-City of Laredo",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "0aaf1bef-885d-4353-a181-872a73be334b",
+      "account_number": "QBO-1150040069",
+      "account_name": "Property Tax-UISD",
+      "account_type": "Expense",
+      "qbo_id": "1150040069",
+      "qbo_name": "Property Tax-UISD",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "54f5393d-9188-429c-9682-1d2bb50667cd",
+      "account_number": "QBO-1150040070",
+      "account_name": "Lease-Trailer",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040070",
+      "qbo_name": "Lease-Trailer",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "2754b6bb-601b-47f9-8907-c0429b826011",
+      "account_number": "QBO-1150040071",
+      "account_name": "MX-Mexico Insurance",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040071",
+      "qbo_name": "MX-Mexico Insurance",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "3e5f082f-63d1-49a4-adbc-f94e625a0334",
+      "account_number": "QBO-1150040073",
+      "account_name": "Income Accounts",
+      "account_type": "Income",
+      "qbo_id": "1150040073",
+      "qbo_name": "Income Accounts",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "25038c36-a562-4471-b57b-179809b1db85",
+      "account_number": "QBO-1150040076",
+      "account_name": "Permit-Individual Load & Travel State Permits",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040076",
+      "qbo_name": "Permit-Individual Load & Travel State Permits",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "14449020-5d36-45ba-8919-e6e05b9278c4",
+      "account_number": "QBO-1150040080",
+      "account_name": "Faro Factoring Reserves",
+      "account_type": "Asset",
+      "qbo_id": "1150040080",
+      "qbo_name": "Faro Factoring Reserves",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "0f981d99-be34-4abd-a60e-99afcfae1d83",
+      "account_number": "QBO-1150040081",
+      "account_name": "Faro Loan",
+      "account_type": "Liability",
+      "qbo_id": "1150040081",
+      "qbo_name": "Faro Loan",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "39191731-941a-4e83-a03e-fb409c6a730c",
+      "account_number": "QBO-1150040083",
+      "account_name": "Comdata-Prepay Express Code Account",
+      "account_type": "Asset",
+      "qbo_id": "1150040083",
+      "qbo_name": "Comdata-Prepay Express Code Account",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "5f53046f-0274-4e7e-a603-e93689e4e885",
+      "account_number": "QBO-1150040084",
+      "account_name": "Faro Escrow Account",
+      "account_type": "Asset",
+      "qbo_id": "1150040084",
+      "qbo_name": "Faro Escrow Account",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "09688bea-6a32-4211-a984-b54f953280ec",
+      "account_number": "QBO-1150040086",
+      "account_name": "External Carrier-Usa",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040086",
+      "qbo_name": "External Carrier-Usa",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "388bf3e7-c9a7-43cc-a4a9-ebdd53457b0f",
+      "account_number": "QBO-1150040087",
+      "account_name": "Late Delivery/Pick Up Fee",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040087",
+      "qbo_name": "Late Delivery/Pick Up Fee",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "20c88842-69e6-4fe6-aa70-f30baadd85cf",
+      "account_number": "QBO-1150040090",
+      "account_name": "BC-Factoring Fees-RTS",
+      "account_type": "Expense",
+      "qbo_id": "1150040090",
+      "qbo_name": "BC-Factoring Fees-RTS",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "56ecc555-0b63-4ca1-8417-fa1b930fb5c4",
+      "account_number": "QBO-1150040091",
+      "account_name": "Driver Accident Damages & Repairs",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040091",
+      "qbo_name": "Driver Accident Damages & Repairs",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "8fa1b12a-c9a0-4698-80b3-835f510dd08e",
+      "account_number": "QBO-1150040093",
+      "account_name": "PNC CREDITS 2962 PRUEBA (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "1150040093",
+      "qbo_name": "PNC CREDITS 2962 PRUEBA (deleted)",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "ffe82473-40e2-4e21-b3d5-d1d45744b5a8",
+      "account_number": "QBO-1150040094",
+      "account_name": "Driver Meal Expenses",
+      "account_type": "Expense",
+      "qbo_id": "1150040094",
+      "qbo_name": "Driver Meal Expenses",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "93ed7b0c-74b1-4c63-8c7b-97903bfa57c2",
+      "account_number": "QBO-1150040096",
+      "account_name": "Comdata-Driven Fuel Card",
+      "account_type": "Liability",
+      "qbo_id": "1150040096",
+      "qbo_name": "Comdata-Driven Fuel Card",
+      "qbo_type": "Credit Card"
+    },
+    {
+      "tms_id": "4b67a349-6a36-4b79-a4ad-a5aefe113cd5",
+      "account_number": "QBO-1150040098",
+      "account_name": "FARO FACTORING",
+      "account_type": "Asset",
+      "qbo_id": "1150040098",
+      "qbo_name": "FARO FACTORING",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "559250b7-9529-454d-ad7e-c6860d4eb0a6",
+      "account_number": "QBO-1150040099",
+      "account_name": "CCG PAYMENTS BANK ACCOUNT (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "1150040099",
+      "qbo_name": "CCG PAYMENTS BANK ACCOUNT (deleted)",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "dbeaf745-6604-48a1-bda8-f41da64ad6e5",
+      "account_number": "QBO-1150040159",
+      "account_name": "Practica-Petty Cash",
+      "account_type": "Asset",
+      "qbo_id": "1150040159",
+      "qbo_name": "Practica-Petty Cash",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "b7bceaba-b5ea-4218-a3f2-115d3d482d91",
+      "account_number": "QBO-1150040102",
+      "account_name": "CL-UW-Anareli-Unauthorized Withdrawal",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040102",
+      "qbo_name": "CL-UW-Anareli-Unauthorized Withdrawal",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "69d0194b-a8d2-4a6e-b5e4-02898f985dde",
+      "account_number": "QBO-1150040103",
+      "account_name": "CL-UW-Ignacio Munoz-Unauthorized Withdrawals",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040103",
+      "qbo_name": "CL-UW-Ignacio Munoz-Unauthorized Withdrawals",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "d26620c9-6e76-4eba-82e9-37171970a887",
+      "account_number": "QBO-1150040104",
+      "account_name": "CL-CC",
+      "account_type": "Liability",
+      "qbo_id": "1150040104",
+      "qbo_name": "CL-CC",
+      "qbo_type": "Credit Card"
+    },
+    {
+      "tms_id": "2d5bfbcf-5bd2-433e-8a68-19e7634ecd9f",
+      "account_number": "QBO-1150040105",
+      "account_name": "Antidoping-Drug Test Services",
+      "account_type": "Expense",
+      "qbo_id": "1150040105",
+      "qbo_name": "Antidoping-Drug Test Services",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "7ed22741-9f86-4916-871a-ac6da3cfb625",
+      "account_number": "QBO-1150040109",
+      "account_name": "Owner Loan-Acct-4019",
+      "account_type": "Liability",
+      "qbo_id": "1150040109",
+      "qbo_name": "Owner Loan-Acct-4019",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "ca69fe46-5c56-46a1-997e-8e93294a7618",
+      "account_number": "QBO-1150040116",
+      "account_name": "CL-Driver Extra Pay-Tarp-Extra PU/Drop-Crossings-Local Movements",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040116",
+      "qbo_name": "CL-Driver Extra Pay-Tarp-Extra PU/Drop-Crossings-Local Movements",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "374839ab-f946-4637-9e65-7944ced25e50",
+      "account_number": "QBO-1150040121",
+      "account_name": "BC-Factoring Fees-Loves",
+      "account_type": "Expense",
+      "qbo_id": "1150040121",
+      "qbo_name": "BC-Factoring Fees-Loves",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "d0d2fd00-f5a2-4ba5-b699-4cc72a63d1ee",
+      "account_number": "QBO-1150040123",
+      "account_name": "5231 (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "1150040123",
+      "qbo_name": "5231 (deleted)",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "941ca478-8e53-48f8-bf2c-a0633d2f317b",
+      "account_number": "QBO-1150040124",
+      "account_name": "BOA-CHECKING-1135",
+      "account_type": "Asset",
+      "qbo_id": "1150040124",
+      "qbo_name": "BOA-CHECKING-1135",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "c9140428-6971-482f-96c1-7f7f6e0bf3f0",
+      "account_number": "QBO-1150040125",
+      "account_name": "BOA-SAVINGS-1148",
+      "account_type": "Asset",
+      "qbo_id": "1150040125",
+      "qbo_name": "BOA-SAVINGS-1148",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "27f587e4-228a-466d-9629-538b045e4d28",
+      "account_number": "QBO-1150040126",
+      "account_name": "CL-Safety Services",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040126",
+      "qbo_name": "CL-Safety Services",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "2d5433cf-9eef-4b3c-a065-bbbd146ec33d",
+      "account_number": "QBO-1150040127",
+      "account_name": "RTS-Loans",
+      "account_type": "Liability",
+      "qbo_id": "1150040127",
+      "qbo_name": "RTS-Loans",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "e102159d-2ceb-4752-bd91-48b8daa0e92a",
+      "account_number": "QBO-1150040128",
+      "account_name": "Returned/Reverse-NSF Checks",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040128",
+      "qbo_name": "Returned/Reverse-NSF Checks",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "ad466f4d-322b-4319-abec-00ac45f9fefd",
+      "account_number": "QBO-1150040129",
+      "account_name": "Bank-Finance-Factoring Expenses",
+      "account_type": "Expense",
+      "qbo_id": "1150040129",
+      "qbo_name": "Bank-Finance-Factoring Expenses",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "2506f7aa-bec7-44d7-8b09-2198c0c02450",
+      "account_number": "QBO-1150040130",
+      "account_name": "Transportation/Trucking Loan Account",
+      "account_type": "Asset",
+      "qbo_id": "1150040130",
+      "qbo_name": "Transportation/Trucking Loan Account",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "e319ca2d-e334-4cfb-b942-d4e41181d497",
+      "account_number": "QBO-1150040131",
+      "account_name": "Sent Payments to trucking",
+      "account_type": "Liability",
+      "qbo_id": "1150040131",
+      "qbo_name": "Sent Payments to trucking",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "06e2fdbe-0855-4ff1-99c6-9c453ad75f8a",
+      "account_number": "QBO-1150040132",
+      "account_name": "Unauthorized Expenses Ignacio Muñoz",
+      "account_type": "Asset",
+      "qbo_id": "1150040132",
+      "qbo_name": "Unauthorized Expenses Ignacio Muñoz",
+      "qbo_type": "Accounts Receivable"
+    },
+    {
+      "tms_id": "3ec0fe1e-d2f7-42fc-8445-cc6e658d38fc",
+      "account_number": "QBO-1150040133",
+      "account_name": "Unauthorized Expenses Anarely Alcazar",
+      "account_type": "Asset",
+      "qbo_id": "1150040133",
+      "qbo_name": "Unauthorized Expenses Anarely Alcazar",
+      "qbo_type": "Accounts Receivable"
+    },
+    {
+      "tms_id": "1cc2b4b5-0b1c-4a31-8542-67b757a16437",
+      "account_number": "QBO-1150040136",
+      "account_name": "OTR-Truck Parking",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040136",
+      "qbo_name": "OTR-Truck Parking",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "658e588f-faf2-4a27-bf4e-9ba55b9bf446",
+      "account_number": "QBO-1150040189",
+      "account_name": "CITI CARD",
+      "account_type": "Liability",
+      "qbo_id": "1150040189",
+      "qbo_name": "CITI CARD",
+      "qbo_type": "Credit Card"
+    },
+    {
+      "tms_id": "fe9dab48-b666-4a9d-8f80-c5bf432070d1",
+      "account_number": "QBO-1150040139",
+      "account_name": "Loan Northeast Bank (Independence bank)",
+      "account_type": "Liability",
+      "qbo_id": "1150040139",
+      "qbo_name": "Loan Northeast Bank (Independence bank)",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "8aa65ae3-f62e-4ddc-9925-39dfb362556f",
+      "account_number": "QBO-1150040140",
+      "account_name": "CL-Nomina-Driver Pay",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040140",
+      "qbo_name": "CL-Nomina-Driver Pay",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "75139185-7591-4707-89a9-0b989609fea1",
+      "account_number": "QBO-1150040141",
+      "account_name": "WF - General Operating 6103",
+      "account_type": "Asset",
+      "qbo_id": "1150040141",
+      "qbo_name": "WF - General Operating 6103",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "6262ffff-ec47-44c6-ba47-c54b9ee40493",
+      "account_number": "QBO-1150040142",
+      "account_name": "WF - Savings 6137",
+      "account_type": "Asset",
+      "qbo_id": "1150040142",
+      "qbo_name": "WF - Savings 6137",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "70e37332-7214-4b7a-bc42-7b405ced8d0a",
+      "account_number": "QBO-1150040143",
+      "account_name": "WF - Payroll 6129",
+      "account_type": "Asset",
+      "qbo_id": "1150040143",
+      "qbo_name": "WF - Payroll 6129",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "638bfe7a-5266-40c3-b50b-a4d04ab5ab62",
+      "account_number": "QBO-1150040146",
+      "account_name": "Tarp",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040146",
+      "qbo_name": "Tarp",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "58c69597-3765-4b57-9c54-eae1bb2bbfa5",
+      "account_number": "QBO-1150040147",
+      "account_name": "CL-Driver Overpayment",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040147",
+      "qbo_name": "CL-Driver Overpayment",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "3e7421fc-bfb1-47e7-99de-c12fe85bc9e9",
+      "account_number": "QBO-1150040148",
+      "account_name": "CL-Accounting & Bookkeeping Employees",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040148",
+      "qbo_name": "CL-Accounting & Bookkeeping Employees",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "2fbeffe6-b127-434b-bc5c-0167ffbcb48a",
+      "account_number": "QBO-1150040149",
+      "account_name": "CL-Nomina-Mecanics",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040149",
+      "qbo_name": "CL-Nomina-Mecanics",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "e6e5a37d-594d-409e-8849-996db8eb80b1",
+      "account_number": "QBO-1150040190",
+      "account_name": "CITI CARD LYM",
+      "account_type": "Liability",
+      "qbo_id": "1150040190",
+      "qbo_name": "CITI CARD LYM",
+      "qbo_type": "Credit Card"
+    },
+    {
+      "tms_id": "fc50a382-eb47-414f-a1d2-c9821cc8d762",
+      "account_number": "QBO-1150040160",
+      "account_name": "Sales-Warehouse-Lumper Fee-Income",
+      "account_type": "Income",
+      "qbo_id": "1150040160",
+      "qbo_name": "Sales-Warehouse-Lumper Fee-Income",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "607fdff3-a90f-43ae-9048-90679c0f7bbb",
+      "account_number": "QBO-1150040162",
+      "account_name": "Sales-Reefer-Trailer-Washout-Income",
+      "account_type": "Income",
+      "qbo_id": "1150040162",
+      "qbo_name": "Sales-Reefer-Trailer-Washout-Income",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "800e76dd-52fe-482b-b07d-26bdda135aa4",
+      "account_number": "QBO-1150040168",
+      "account_name": "CL-Nomina-Driver Deductions",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040168",
+      "qbo_name": "CL-Nomina-Driver Deductions",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "1da31b61-c032-49d5-98e6-875cb645be6d",
+      "account_number": "QBO-1150040172",
+      "account_name": "Capital One-Scentsx",
+      "account_type": "Liability",
+      "qbo_id": "1150040172",
+      "qbo_name": "Capital One-Scentsx",
+      "qbo_type": "Credit Card"
+    },
+    {
+      "tms_id": "73140237-f424-4c5b-9e7c-bb52ae100b14",
+      "account_number": "QBO-1150040173",
+      "account_name": "Capital Partners-Cash Advane",
+      "account_type": "Liability",
+      "qbo_id": "1150040173",
+      "qbo_name": "Capital Partners-Cash Advane",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "05e7511e-b1dc-4dbc-be4b-f2f53ccba9ad",
+      "account_number": "QBO-1150040174",
+      "account_name": "2026-Damage Claim Escrow",
+      "account_type": "Liability",
+      "qbo_id": "1150040174",
+      "qbo_name": "2026-Damage Claim Escrow",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "ee464fe6-6f41-4d80-a636-2d8d481387aa",
+      "account_number": "QBO-1150040175",
+      "account_name": "CL-Employee Overpayment",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040175",
+      "qbo_name": "CL-Employee Overpayment",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "3b08b32c-6e62-44b7-b9cf-a9388e04963d",
+      "account_number": "QBO-1150040176",
+      "account_name": "Administrative & Professional Services",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040176",
+      "qbo_name": "Administrative & Professional Services",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "a03949f7-ab6f-4973-a6d2-c79f27a7609f",
+      "account_number": "QBO-1150040177",
+      "account_name": "CL-Dispatch Services",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "1150040177",
+      "qbo_name": "CL-Dispatch Services",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "d66cf6ce-7fbd-4493-a2b6-38cb3f8b32c3",
+      "account_number": "QBO-1150040178",
+      "account_name": "Road Service-Repairs(645.30)",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040178",
+      "qbo_name": "Road Service-Repairs(645.30)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "151cac8c-7bc7-4e6a-9b2f-f39882526e6f",
+      "account_number": "QBO-1150040180",
+      "account_name": "Sales-Fuel Advance",
+      "account_type": "Income",
+      "qbo_id": "1150040180",
+      "qbo_name": "Sales-Fuel Advance",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "38dba478-f401-4def-aeb6-22a3f20b0620",
+      "account_number": "QBO-1150040181",
+      "account_name": "Sales-Transload Service",
+      "account_type": "Income",
+      "qbo_id": "1150040181",
+      "qbo_name": "Sales-Transload Service",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "014fd053-5545-455e-a3e3-4c5be2b22a1d",
+      "account_number": "QBO-1150040182",
+      "account_name": "Sales-International Border Crossing",
+      "account_type": "Income",
+      "qbo_id": "1150040182",
+      "qbo_name": "Sales-International Border Crossing",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "1ab9c8ba-b5ea-4fe3-96a7-508fc68be177",
+      "account_number": "QBO-1150040183",
+      "account_name": "Deduction-For Damaged Product",
+      "account_type": "Income",
+      "qbo_id": "1150040183",
+      "qbo_name": "Deduction-For Damaged Product",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "727ca349-25a4-4c04-86d4-1414314da799",
+      "account_number": "QBO-1150040184",
+      "account_name": "Sales-Income-From Layover, Shag,Extra Delivery, Escort Fee, Etc",
+      "account_type": "Income",
+      "qbo_id": "1150040184",
+      "qbo_name": "Sales-Income-From Layover, Shag,Extra Delivery, Escort Fee, Etc",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "9185def9-883f-466c-af61-b5e67686c7ed",
+      "account_number": "QBO-1150040185",
+      "account_name": "Telephone Expense",
+      "account_type": "Expense",
+      "qbo_id": "1150040185",
+      "qbo_name": "Telephone Expense",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "d7d485bf-ad1a-4573-9ad6-badbd565e9a3",
+      "account_number": "QBO-1150040187",
+      "account_name": "Damage Claim Escrow",
+      "account_type": "Liability",
+      "qbo_id": "1150040187",
+      "qbo_name": "Damage Claim Escrow",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "13cdfa5d-23d0-405b-8301-be776354b2c2",
+      "account_number": "QBO-1150040188",
+      "account_name": "Relay-Diesel Bank Account",
+      "account_type": "Asset",
+      "qbo_id": "1150040188",
+      "qbo_name": "Relay-Diesel Bank Account",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "206e383b-536a-4f4c-a769-b2503593e0cb",
+      "account_number": "QBO-1150040191",
+      "account_name": "Truck Tires-(645.30)",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040191",
+      "qbo_name": "Truck Tires-(645.30)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "24fd2ba1-e924-435f-aef4-703b9bbef561",
+      "account_number": "QBO-1150040192",
+      "account_name": "Trailer Tires-(645.30)",
+      "account_type": "OtherExpense",
+      "qbo_id": "1150040192",
+      "qbo_name": "Trailer Tires-(645.30)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "524a2044-4bbe-44b0-b77b-8d3db299cf89",
+      "account_number": "QBO-116",
+      "account_name": "Stays (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "116",
+      "qbo_name": "Stays (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "5f10ec68-6e4d-4104-a383-5ead562d7ed7",
+      "account_number": "QBO-117",
+      "account_name": "Warehouse-Lumper Fee Expense",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "117",
+      "qbo_name": "Warehouse-Lumper Fee Expense",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "cb4a14ad-75a9-42d5-b14e-92f21c0f4b4c",
+      "account_number": "QBO-119",
+      "account_name": "LOVES SOLUTIONS,LLC",
+      "account_type": "Asset",
+      "qbo_id": "119",
+      "qbo_name": "LOVES SOLUTIONS,LLC",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "2e482459-e722-439d-a444-6f700d42414e",
+      "account_number": "QBO-12",
+      "account_name": "Office/General/ Administrative Expenses-635",
+      "account_type": "Expense",
+      "qbo_id": "12",
+      "qbo_name": "Office/General/ Administrative Expenses-635",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "9b3e7124-2705-470b-a819-5a5faced8c30",
+      "account_number": "QBO-120",
+      "account_name": "BC-Bank Charges & Credit Card Fees",
+      "account_type": "Expense",
+      "qbo_id": "120",
+      "qbo_name": "BC-Bank Charges & Credit Card Fees",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "975809d7-6428-4120-b8e9-033d132501c0",
+      "account_number": "QBO-123",
+      "account_name": "Accounting Services",
+      "account_type": "Expense",
+      "qbo_id": "123",
+      "qbo_name": "Accounting Services",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "da611495-45cb-4a0e-b0e6-8e28936a0850",
+      "account_number": "QBO-124",
+      "account_name": "Kabbage Loan (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "124",
+      "qbo_name": "Kabbage Loan (deleted)",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "bce818e1-7d09-42f9-9b6e-46992f88edcf",
+      "account_number": "QBO-125",
+      "account_name": "Factoring Reserves Love's Solutions",
+      "account_type": "Asset",
+      "qbo_id": "125",
+      "qbo_name": "Factoring Reserves Love's Solutions",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "429ff573-6c31-41f5-81f2-1cf7a70c8057",
+      "account_number": "QBO-128",
+      "account_name": "Office supplies",
+      "account_type": "Expense",
+      "qbo_id": "128",
+      "qbo_name": "Office supplies",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "2ea18706-9442-4454-9b56-96e7c10cfabb",
+      "account_number": "QBO-129",
+      "account_name": "Insurance Claim Repair Payments (deleted)",
+      "account_type": "Income",
+      "qbo_id": "129",
+      "qbo_name": "Insurance Claim Repair Payments (deleted)",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "a59b457a-7ae9-469b-bd71-8c41bb1f1585",
+      "account_number": "QBO-13",
+      "account_name": "Reimbursable Expenses (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "13",
+      "qbo_name": "Reimbursable Expenses (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "3ea0e474-e844-446d-a0f8-f9ef1df15ead",
+      "account_number": "QBO-130",
+      "account_name": "Billable Expense Income",
+      "account_type": "Income",
+      "qbo_id": "130",
+      "qbo_name": "Billable Expense Income",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "bc94daa1-2438-4efe-92eb-28f3b109d0eb",
+      "account_number": "QBO-136",
+      "account_name": "Loan Lease/Horacio Munoz- T-06 (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "136",
+      "qbo_name": "Loan Lease/Horacio Munoz- T-06 (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "fe1399bc-f6f8-4a0f-a879-394b04d1d8db",
+      "account_number": "QBO-137",
+      "account_name": "Loan Lease/ Jashiel- T-05 (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "137",
+      "qbo_name": "Loan Lease/ Jashiel- T-05 (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "0a5769d1-9086-497b-ab00-926b15ad079a",
+      "account_number": "QBO-138",
+      "account_name": "Loan Lease/Fito- T-01 (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "138",
+      "qbo_name": "Loan Lease/Fito- T-01 (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "6286f318-bb90-42e9-8dd1-d26804aee8d1",
+      "account_number": "QBO-139",
+      "account_name": "Loan Lease/James Bayo (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "139",
+      "qbo_name": "Loan Lease/James Bayo (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "b60acf53-dcdf-46a4-b86e-3b36c74b01da",
+      "account_number": "QBO-14",
+      "account_name": "Building Rent & Lease Expense",
+      "account_type": "Expense",
+      "qbo_id": "14",
+      "qbo_name": "Building Rent & Lease Expense",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "1f908558-e35b-4e9d-8e1e-42fefadf909a",
+      "account_number": "QBO-140",
+      "account_name": "Loan Lease/Fito T-02 (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "140",
+      "qbo_name": "Loan Lease/Fito T-02 (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "1de61925-84e7-4060-b376-e3f12e9a5767",
+      "account_number": "QBO-142",
+      "account_name": "Loan Lease/Ignacio Munoz- T-07",
+      "account_type": "Asset",
+      "qbo_id": "142",
+      "qbo_name": "Loan Lease/Ignacio Munoz- T-07",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "83a2e0d9-5137-4ecd-8dad-03440e03c4ce",
+      "account_number": "QBO-145",
+      "account_name": "Driver Cash Advance- Domingo Barrientos (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "145",
+      "qbo_name": "Driver Cash Advance- Domingo Barrientos (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "0f901384-b8e7-419b-b05a-e6635fad1894",
+      "account_number": "QBO-147",
+      "account_name": "Employee Cash Advance-Merged Account",
+      "account_type": "Asset",
+      "qbo_id": "147",
+      "qbo_name": "Employee Cash Advance-Merged Account",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "8a3c039a-a254-48e3-8b63-f1aa631173b9",
+      "account_number": "QBO-148",
+      "account_name": "Travel-Lodging",
+      "account_type": "Expense",
+      "qbo_id": "148",
+      "qbo_name": "Travel-Lodging",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "6a46bfea-4020-46ea-9f3c-99bab3cc06f5",
+      "account_number": "QBO-149",
+      "account_name": "Driver Cash Advance",
+      "account_type": "Asset",
+      "qbo_id": "149",
+      "qbo_name": "Driver Cash Advance",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "5d39da78-926c-4bc0-b712-37d6a85ac33f",
+      "account_number": "QBO-15",
+      "account_name": "External Mechanic Shop Maintenance and Repair (645.30)",
+      "account_type": "OtherExpense",
+      "qbo_id": "15",
+      "qbo_name": "External Mechanic Shop Maintenance and Repair (645.30)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "ee81c7cf-5374-45c4-ad38-4f9701edb5dc",
+      "account_number": "QBO-150",
+      "account_name": "Rogelio Cornejo (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "150",
+      "qbo_name": "Rogelio Cornejo (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "8248619d-570d-40fc-83c8-6b525425120d",
+      "account_number": "QBO-152",
+      "account_name": "Enrique Munoz (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "152",
+      "qbo_name": "Enrique Munoz (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "3d580499-9efb-4fed-9327-d2eb70ed9264",
+      "account_number": "QBO-168",
+      "account_name": "Undeposited Funds",
+      "account_type": "Asset",
+      "qbo_id": "168",
+      "qbo_name": "Undeposited Funds",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "8f4bc797-9dc3-4990-a666-c80e74ec80c1",
+      "account_number": "QBO-153",
+      "account_name": "Jose Facundo Cruz Santana (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "153",
+      "qbo_name": "Jose Facundo Cruz Santana (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "c4b8cad6-a735-41a6-beee-ef31e47b3361",
+      "account_number": "QBO-154",
+      "account_name": "Salvador Amaro Rojas (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "154",
+      "qbo_name": "Salvador Amaro Rojas (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "4caf71d7-a402-4db4-b58b-e4baf0cb4feb",
+      "account_number": "QBO-155",
+      "account_name": "Fuel-Def",
+      "account_type": "OtherExpense",
+      "qbo_id": "155",
+      "qbo_name": "Fuel-Def",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "bf236841-9090-4378-b982-52e7eb23cd56",
+      "account_number": "QBO-157",
+      "account_name": "Jose Antonio Ramirez Tellez (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "157",
+      "qbo_name": "Jose Antonio Ramirez Tellez (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "d1e24991-f8a5-41bf-a50a-943096e28587",
+      "account_number": "QBO-16",
+      "account_name": "Job Supplies (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "16",
+      "qbo_name": "Job Supplies (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "ac2e3994-8104-479e-a1ce-66bf5f3cd1d1",
+      "account_number": "QBO-162",
+      "account_name": "OE-Tax-Vehicle-Tractor/Van License Plates (deleted)",
+      "account_type": "OtherExpense",
+      "qbo_id": "162",
+      "qbo_name": "OE-Tax-Vehicle-Tractor/Van License Plates (deleted)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "3308618e-8a0b-49ce-aa64-6873bbe350af",
+      "account_number": "QBO-163",
+      "account_name": "Juan Miranda (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "163",
+      "qbo_name": "Juan Miranda (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "f595794b-883f-4e3a-aeb6-f5d02467694e",
+      "account_number": "QBO-165",
+      "account_name": "Property Tax-Webb County",
+      "account_type": "Expense",
+      "qbo_id": "165",
+      "qbo_name": "Property Tax-Webb County",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "92def5ab-f087-41e0-ba88-9d9f89ec8a94",
+      "account_number": "QBO-169",
+      "account_name": "Raul Emilio Estrada Adame (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "169",
+      "qbo_name": "Raul Emilio Estrada Adame (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "19b6c7df-a89c-432e-8613-5f61dcb4ff1a",
+      "account_number": "QBO-17",
+      "account_name": "Taxes & Licenses",
+      "account_type": "Expense",
+      "qbo_id": "17",
+      "qbo_name": "Taxes & Licenses",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "419633d0-8e6f-4e1f-b0f2-81dd705f9b9f",
+      "account_number": "QBO-172",
+      "account_name": "Emmanuel Montoya Marquez (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "172",
+      "qbo_name": "Emmanuel Montoya Marquez (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "5d0ed7f4-e875-4c4b-9c21-c372cf7660f6",
+      "account_number": "QBO-174",
+      "account_name": "Rocali Vargas Alegria (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "174",
+      "qbo_name": "Rocali Vargas Alegria (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "9d6f90e9-c226-4018-97e5-8cd9fb126b8f",
+      "account_number": "QBO-176",
+      "account_name": "Lidio Herrera Castaneda (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "176",
+      "qbo_name": "Lidio Herrera Castaneda (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "6db13f5b-1b0b-4e91-a421-f2ff8092a1f3",
+      "account_number": "QBO-177",
+      "account_name": "Orbelin Flores Vidal (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "177",
+      "qbo_name": "Orbelin Flores Vidal (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "7a9e2b76-0d85-48bd-9b27-6bf32b3f27aa",
+      "account_number": "QBO-178",
+      "account_name": "Jose Antonio Ramos Soto (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "178",
+      "qbo_name": "Jose Antonio Ramos Soto (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "98a1521e-0ea7-4bcf-bcb9-fc6fdd758076",
+      "account_number": "QBO-179",
+      "account_name": "Roberto Carvajal Tiznado (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "179",
+      "qbo_name": "Roberto Carvajal Tiznado (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "c2b2af34-aa2f-4c54-ba4b-981b27fa960e",
+      "account_number": "QBO-18",
+      "account_name": "Travel Expenses",
+      "account_type": "Expense",
+      "qbo_id": "18",
+      "qbo_name": "Travel Expenses",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "2cfa0711-8b6e-46f7-a498-798d9211a172",
+      "account_number": "QBO-180",
+      "account_name": "Horacio Garcia Beristain (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "180",
+      "qbo_name": "Horacio Garcia Beristain (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "af177d9e-b171-46bb-8be4-2d5d37e32e21",
+      "account_number": "QBO-183",
+      "account_name": "Mariano Monarrez Davila (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "183",
+      "qbo_name": "Mariano Monarrez Davila (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "a13b70ab-4d92-48d0-8402-1a1e298c3d54",
+      "account_number": "QBO-184",
+      "account_name": "Emanuel Ramirez Solis (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "184",
+      "qbo_name": "Emanuel Ramirez Solis (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "56af7364-7aac-422f-873a-64ad27e29def",
+      "account_number": "QBO-185",
+      "account_name": "Jose Eduardo Dominguez (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "185",
+      "qbo_name": "Jose Eduardo Dominguez (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "97369660-1e7c-4677-94c3-453b80f769c1",
+      "account_number": "QBO-189",
+      "account_name": "Erick Jhoan Flores Pulido (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "189",
+      "qbo_name": "Erick Jhoan Flores Pulido (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "aeadf4ee-e7a8-4f1b-aa2a-d5585dd5bbf1",
+      "account_number": "QBO-19",
+      "account_name": "Utilities Expense",
+      "account_type": "Expense",
+      "qbo_id": "19",
+      "qbo_name": "Utilities Expense",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "b7e9b01c-c352-4e59-b49f-8fc9c7894b4f",
+      "account_number": "QBO-191",
+      "account_name": "Pedro Robles (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "191",
+      "qbo_name": "Pedro Robles (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "adb96475-47f6-49a4-aaed-efccfab94a6c",
+      "account_number": "QBO-193",
+      "account_name": "Sergio Sanchez Moreno (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "193",
+      "qbo_name": "Sergio Sanchez Moreno (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "42ea5edd-e125-4c36-814b-55e2784f5089",
+      "account_number": "QBO-194",
+      "account_name": "Jorge Octavio Castillo Pineda (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "194",
+      "qbo_name": "Jorge Octavio Castillo Pineda (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "a26a0e71-616b-4f8a-901c-0c3be74c880f",
+      "account_number": "QBO-195",
+      "account_name": "Javier Salvador Torres Martinez (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "195",
+      "qbo_name": "Javier Salvador Torres Martinez (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "1a673cef-c189-4d51-91e7-b98ef391eed8",
+      "account_number": "QBO-196",
+      "account_name": "Emmanuel Ramirez Vargas (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "196",
+      "qbo_name": "Emmanuel Ramirez Vargas (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "9facb3ed-ec25-48a5-84be-e89768ec3204",
+      "account_number": "QBO-2",
+      "account_name": "Retained Earnings",
+      "account_type": "Equity",
+      "qbo_id": "2",
+      "qbo_name": "Retained Earnings",
+      "qbo_type": "Equity"
+    },
+    {
+      "tms_id": "f29109fd-8319-4de7-b00a-89a8e10b7242",
+      "account_number": "QBO-200",
+      "account_name": "Jose Jesus Delgado Yanez (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "200",
+      "qbo_name": "Jose Jesus Delgado Yanez (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "37730fb4-7b73-4a6f-ae40-51b8acd1685d",
+      "account_number": "QBO-201",
+      "account_name": "Ivan Salvador Puente (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "201",
+      "qbo_name": "Ivan Salvador Puente (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "e9a293d1-e63a-447d-a09b-3a2268f3976f",
+      "account_number": "QBO-202",
+      "account_name": "Juan Manuel Saldana (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "202",
+      "qbo_name": "Juan Manuel Saldana (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "f54065b1-acb1-422e-88bf-02ec78b4222c",
+      "account_number": "QBO-204",
+      "account_name": "Isaac Martinez Gonzalez (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "204",
+      "qbo_name": "Isaac Martinez Gonzalez (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "d866a4ad-d24f-495a-8c12-bf0fa61abf31",
+      "account_number": "QBO-205",
+      "account_name": "AFLAC - ISAAC MARTINEZ GONZALEZ (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "205",
+      "qbo_name": "AFLAC - ISAAC MARTINEZ GONZALEZ (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "329477b7-25b8-4c89-bb46-d3c88910f305",
+      "account_number": "QBO-207",
+      "account_name": "Raul Zarate Tovar (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "207",
+      "qbo_name": "Raul Zarate Tovar (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "95340b87-3a64-450e-9d29-33ecbc8a7f8f",
+      "account_number": "QBO-208",
+      "account_name": "Enrique Aquino (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "208",
+      "qbo_name": "Enrique Aquino (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "a1c88195-e4e5-4a80-b5ed-d3f97942fa63",
+      "account_number": "QBO-209",
+      "account_name": "Miguel Angel Corona Garcia (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "209",
+      "qbo_name": "Miguel Angel Corona Garcia (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "ce2fbb7b-f464-4c44-9f80-9197e13222d9",
+      "account_number": "QBO-21",
+      "account_name": "Owner's Pay & Personal Expenses (deleted)",
+      "account_type": "Equity",
+      "qbo_id": "21",
+      "qbo_name": "Owner's Pay & Personal Expenses (deleted)",
+      "qbo_type": "Equity"
+    },
+    {
+      "tms_id": "5ae66747-8c1c-4af5-916e-0cebd841ded0",
+      "account_number": "QBO-210",
+      "account_name": "Manuel Escalona Molina (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "210",
+      "qbo_name": "Manuel Escalona Molina (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "740c794e-e48a-41f6-bd51-51b513e25666",
+      "account_number": "QBO-211",
+      "account_name": "BC-Ach & Wire Fees",
+      "account_type": "Expense",
+      "qbo_id": "211",
+      "qbo_name": "BC-Ach & Wire Fees",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "1ae97020-6e82-42b2-ac58-bedce320e509",
+      "account_number": "QBO-212",
+      "account_name": "BC-NSF Fee",
+      "account_type": "Expense",
+      "qbo_id": "212",
+      "qbo_name": "BC-NSF Fee",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "a4c2d2f0-eeb7-4683-bf55-b33b2ef6183b",
+      "account_number": "QBO-213",
+      "account_name": "Gregorio Antonio Martinez (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "213",
+      "qbo_name": "Gregorio Antonio Martinez (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "db29cf7a-2371-43fe-949a-530f820a2af1",
+      "account_number": "QBO-214",
+      "account_name": "Jose Luis Barrera Cabral (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "214",
+      "qbo_name": "Jose Luis Barrera Cabral (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "15f67b40-469f-4b1d-928c-4d040d33504d",
+      "account_number": "QBO-217",
+      "account_name": "AFLAC JAVIER VARGAS SAUCED (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "217",
+      "qbo_name": "AFLAC JAVIER VARGAS SAUCED (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "2fdaaf3e-cb8e-4077-90c4-985f30982acb",
+      "account_number": "QBO-219",
+      "account_name": "Felipe Ramirez Martinez (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "219",
+      "qbo_name": "Felipe Ramirez Martinez (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "c6800492-a32b-4e82-9dd7-e90872c37e21",
+      "account_number": "QBO-22",
+      "account_name": "Owner's Investment (deleted)",
+      "account_type": "Equity",
+      "qbo_id": "22",
+      "qbo_name": "Owner's Investment (deleted)",
+      "qbo_type": "Equity"
+    },
+    {
+      "tms_id": "35d8dfcc-d505-4087-8d3a-43eafb22c979",
+      "account_number": "QBO-222",
+      "account_name": "Joel Esparza (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "222",
+      "qbo_name": "Joel Esparza (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "a4af3763-bba6-4657-95dc-82f172e76867",
+      "account_number": "QBO-226",
+      "account_name": "Jorge Antonio Ojeda Salazar (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "226",
+      "qbo_name": "Jorge Antonio Ojeda Salazar (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "490f46db-fd5a-4163-b17a-82ea119e8538",
+      "account_number": "QBO-228",
+      "account_name": "Leased Trucks from IH35 TRUCKING",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "228",
+      "qbo_name": "Leased Trucks from IH35 TRUCKING",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "1dfbf5cb-8e39-4bb4-9b60-42ad658ecbc1",
+      "account_number": "QBO-23",
+      "account_name": "Uncategorized Asset",
+      "account_type": "Asset",
+      "qbo_id": "23",
+      "qbo_name": "Uncategorized Asset",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "b97f9b6a-ac6b-4b3f-91ef-deb08828e27d",
+      "account_number": "QBO-230",
+      "account_name": "Pero Ciriaco (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "230",
+      "qbo_name": "Pero Ciriaco (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "bf3e08de-0d5c-4bd4-b0ea-8d232018a207",
+      "account_number": "QBO-232",
+      "account_name": "Javier Morales Zamora (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "232",
+      "qbo_name": "Javier Morales Zamora (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "f21e71b4-af32-4db4-98c0-0715d9855f53",
+      "account_number": "QBO-233",
+      "account_name": "Jorge Olivo (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "233",
+      "qbo_name": "Jorge Olivo (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "a00875b5-a117-4583-b013-2e6dc75e171e",
+      "account_number": "QBO-236",
+      "account_name": "Leonel Antonio Morales Noguez (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "236",
+      "qbo_name": "Leonel Antonio Morales Noguez (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "88751a9b-0ae9-4095-bf17-f7b2c251f8b6",
+      "account_number": "QBO-237",
+      "account_name": "Rogelio Morales Zamora (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "237",
+      "qbo_name": "Rogelio Morales Zamora (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "9b435994-aaa4-4f06-90b2-2f162db4e85f",
+      "account_number": "QBO-238",
+      "account_name": "Roberto Carlos Villanueva Solis (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "238",
+      "qbo_name": "Roberto Carlos Villanueva Solis (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "f6887e5d-b952-4eb8-9cd3-ba6f39a4e94b",
+      "account_number": "QBO-24",
+      "account_name": "Uncategorized Income",
+      "account_type": "Income",
+      "qbo_id": "24",
+      "qbo_name": "Uncategorized Income",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "f0525aba-ca77-44e6-8589-24c9ab4351bc",
+      "account_number": "QBO-240",
+      "account_name": "Loan - Enrique Aquino (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "240",
+      "qbo_name": "Loan - Enrique Aquino (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "8253107a-8a37-45ad-a938-d26125e1dd9a",
+      "account_number": "QBO-242",
+      "account_name": "Equipment Rental - COS",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "242",
+      "qbo_name": "Equipment Rental - COS",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "8b96d029-af35-4a01-9f8d-5fab7a0f9531",
+      "account_number": "QBO-243",
+      "account_name": "Fuel-COGS",
+      "account_type": "OtherExpense",
+      "qbo_id": "243",
+      "qbo_name": "Fuel-COGS",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "820d6ae3-c09f-4a5f-8c10-4286a2a582b2",
+      "account_number": "QBO-244",
+      "account_name": "Software Expense",
+      "account_type": "Expense",
+      "qbo_id": "244",
+      "qbo_name": "Software Expense",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "2211f030-73a1-41ce-ae1f-3a9c2c80fdea",
+      "account_number": "QBO-245",
+      "account_name": "Sales Expenses (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "245",
+      "qbo_name": "Sales Expenses (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "b5638fdd-ae95-481d-91c4-8bfbf609ecb9",
+      "account_number": "QBO-246",
+      "account_name": "IBC-AHORROS-6089",
+      "account_type": "Asset",
+      "qbo_id": "246",
+      "qbo_name": "IBC-AHORROS-6089",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "223f654f-9310-4913-bff4-07ea948ffd31",
+      "account_number": "QBO-247",
+      "account_name": "RTS FINANCIAL-VIRTUAL ACCT",
+      "account_type": "Asset",
+      "qbo_id": "247",
+      "qbo_name": "RTS FINANCIAL-VIRTUAL ACCT",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "d76c02ab-a204-48e6-8192-999bceb24f98",
+      "account_number": "QBO-248",
+      "account_name": "RTS-Factoring Reserves",
+      "account_type": "Asset",
+      "qbo_id": "248",
+      "qbo_name": "RTS-Factoring Reserves",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "a35084ef-12e5-406a-94af-4d310d7b84c9",
+      "account_number": "QBO-249",
+      "account_name": "TRUCK INSURANCE (deleted)",
+      "account_type": "OtherExpense",
+      "qbo_id": "249",
+      "qbo_name": "TRUCK INSURANCE (deleted)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "4cec8ed2-4dbc-4765-8a59-ace3ce45a7d7",
+      "account_number": "QBO-25",
+      "account_name": "Uncategorized Expense",
+      "account_type": "Expense",
+      "qbo_id": "25",
+      "qbo_name": "Uncategorized Expense",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "645c4502-9f5e-4c28-af89-8203d489983a",
+      "account_number": "QBO-250",
+      "account_name": "2025-Damage Claim Escrow",
+      "account_type": "Liability",
+      "qbo_id": "250",
+      "qbo_name": "2025-Damage Claim Escrow",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "787016bb-fbfe-463c-9301-090b94cfbe4b",
+      "account_number": "QBO-251",
+      "account_name": "BENJAMIN MORALES (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "251",
+      "qbo_name": "BENJAMIN MORALES (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "c65d167b-bdf7-4dd5-85a2-ef39c5b2fc33",
+      "account_number": "QBO-253",
+      "account_name": "RAMON FIGUEROA (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "253",
+      "qbo_name": "RAMON FIGUEROA (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "9bee6273-8d13-49a3-8f75-110a2a168beb",
+      "account_number": "QBO-255",
+      "account_name": "JOSE DAVID ARRIOLA SILVA (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "255",
+      "qbo_name": "JOSE DAVID ARRIOLA SILVA (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "311a43f9-0079-4b7a-960f-40e8031b6d79",
+      "account_number": "QBO-256",
+      "account_name": "JAVIER SALVADOR TORRES (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "256",
+      "qbo_name": "JAVIER SALVADOR TORRES (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "c645fd65-d48d-481f-a87d-f32003f14c43",
+      "account_number": "QBO-257",
+      "account_name": "GUSTAVO ROMERO YANEZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "257",
+      "qbo_name": "GUSTAVO ROMERO YANEZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "a1fe7244-370a-4fdc-adfb-bfeefc5573e5",
+      "account_number": "QBO-258",
+      "account_name": "ISAAC CARBALLO R (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "258",
+      "qbo_name": "ISAAC CARBALLO R (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "31b9dca2-82ba-454c-b42e-8e25553a137a",
+      "account_number": "QBO-26",
+      "account_name": "Operational Expenses",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "26",
+      "qbo_name": "Operational Expenses",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "adf02b8d-62e0-401f-a033-6f5abbee3ea5",
+      "account_number": "QBO-260",
+      "account_name": "LUIS MANUEL ZAVALETA (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "260",
+      "qbo_name": "LUIS MANUEL ZAVALETA (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "bb28cd60-5b89-48aa-b1d9-bc4cdc3bc274",
+      "account_number": "QBO-261",
+      "account_name": "JAVIER MORALES (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "261",
+      "qbo_name": "JAVIER MORALES (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "9e25a2b9-a1af-46f6-b70f-3120ae0b9d65",
+      "account_number": "QBO-262",
+      "account_name": "ANTONIO NAVARRETE (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "262",
+      "qbo_name": "ANTONIO NAVARRETE (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "36774d6c-1332-443b-8498-d8f81199a850",
+      "account_number": "QBO-263",
+      "account_name": "EDUARDO ROJAS (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "263",
+      "qbo_name": "EDUARDO ROJAS (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "9ad22898-a47d-4710-9513-2f40f126fea6",
+      "account_number": "QBO-264",
+      "account_name": "BRANDON DELGADO (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "264",
+      "qbo_name": "BRANDON DELGADO (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "08f9e3d8-b478-41d9-b5c9-6000c2871d85",
+      "account_number": "QBO-265",
+      "account_name": "ROGELIO MORALES (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "265",
+      "qbo_name": "ROGELIO MORALES (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "f5ed5ef1-d9b7-4919-acd4-447cf3206c9b",
+      "account_number": "QBO-266",
+      "account_name": "Armando Moreno (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "266",
+      "qbo_name": "Armando Moreno (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "3ea7f61f-da64-4fab-bd4d-2978703a258f",
+      "account_number": "QBO-267",
+      "account_name": "ERIC RUIZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "267",
+      "qbo_name": "ERIC RUIZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "db470846-69c5-4e65-b7c9-ac34e4038f5c",
+      "account_number": "QBO-268",
+      "account_name": "FERNANDO MECOR (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "268",
+      "qbo_name": "FERNANDO MECOR (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "1a025187-f7de-45e8-9102-4761708c23f5",
+      "account_number": "QBO-269",
+      "account_name": "JOSE JOAQUIN RUIZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "269",
+      "qbo_name": "JOSE JOAQUIN RUIZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "00f8ed34-52c3-415d-bd85-3cc9c3befd8c",
+      "account_number": "QBO-27",
+      "account_name": "Shipping & Freight",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "27",
+      "qbo_name": "Shipping & Freight",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "5714ad15-80be-469d-9fcc-103e4b23d9ec",
+      "account_number": "QBO-271",
+      "account_name": "GERARDO ARIAS BARAJAS (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "271",
+      "qbo_name": "GERARDO ARIAS BARAJAS (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "690258d2-1057-4bf8-8f82-575ec551d1bb",
+      "account_number": "QBO-272",
+      "account_name": "CESAR GARDUNO (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "272",
+      "qbo_name": "CESAR GARDUNO (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "125a6a1e-648f-4a8a-a14e-5f1a51c3ef45",
+      "account_number": "QBO-273",
+      "account_name": "VICENTE AGAPITO (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "273",
+      "qbo_name": "VICENTE AGAPITO (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "eac5ff05-571d-44bf-bc8c-1224a4581ddf",
+      "account_number": "QBO-274",
+      "account_name": "JOSE LUIS BARRERA (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "274",
+      "qbo_name": "JOSE LUIS BARRERA (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "90c4f3f8-cf9c-4c4a-9df6-806bca8c5931",
+      "account_number": "QBO-275",
+      "account_name": "DANIEL CHAVEZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "275",
+      "qbo_name": "DANIEL CHAVEZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "0bc3735f-0426-4469-a70a-1aa5af97167f",
+      "account_number": "QBO-276",
+      "account_name": "ISAAC MARTINEZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "276",
+      "qbo_name": "ISAAC MARTINEZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "d7fc8f9d-0bac-49d0-bd25-0359a6f03251",
+      "account_number": "QBO-277",
+      "account_name": "JUAN GUILLERMO ARMAS (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "277",
+      "qbo_name": "JUAN GUILLERMO ARMAS (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "7051cdcb-4299-451d-a9ec-5d7cce3adac8",
+      "account_number": "QBO-278",
+      "account_name": "JUAN SALDANA (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "278",
+      "qbo_name": "JUAN SALDANA (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "ac16b50b-662c-4cd5-8a2b-daf462df9a6d",
+      "account_number": "QBO-279",
+      "account_name": "Roberto Carlos Villanueva (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "279",
+      "qbo_name": "Roberto Carlos Villanueva (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "aa062fcf-06fd-4d03-89a3-7416be5b60a4",
+      "account_number": "QBO-28",
+      "account_name": "Inventory (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "28",
+      "qbo_name": "Inventory (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "c77ec558-07ba-44be-ba3b-d4c70b314cd7",
+      "account_number": "QBO-282",
+      "account_name": "RENE RODRIGUEZ ALPIZAR (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "282",
+      "qbo_name": "RENE RODRIGUEZ ALPIZAR (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "65178b23-38cb-4e77-8c17-e95dbcc71d8d",
+      "account_number": "QBO-285",
+      "account_name": "AFLAC - JOSE MARIA GOMEZ GONZALEZ (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "285",
+      "qbo_name": "AFLAC - JOSE MARIA GOMEZ GONZALEZ (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "222321e0-fe33-4293-b5ef-583ec1a3ddd8",
+      "account_number": "QBO-286",
+      "account_name": "RTS - NEWCO LOAN",
+      "account_type": "Liability",
+      "qbo_id": "286",
+      "qbo_name": "RTS - NEWCO LOAN",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "dba16ede-4b61-48f6-9de3-d4797f6df7b1",
+      "account_number": "QBO-287",
+      "account_name": "JOSE LUIS CORONA (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "287",
+      "qbo_name": "JOSE LUIS CORONA (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "33efa03e-2a98-4f4c-9ede-9b042826beed",
+      "account_number": "QBO-288",
+      "account_name": "LUIS DANIEL HERNANDEZ CRUZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "288",
+      "qbo_name": "LUIS DANIEL HERNANDEZ CRUZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "c0124dee-426b-4169-b0d9-806c55028c31",
+      "account_number": "QBO-289",
+      "account_name": "MIGUEL ALEJANDRO GOMEZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "289",
+      "qbo_name": "MIGUEL ALEJANDRO GOMEZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "ec7bdd5b-7fc1-4fbe-99a9-8b4c7eb7a7d1",
+      "account_number": "QBO-29",
+      "account_name": "IBC-5231",
+      "account_type": "Asset",
+      "qbo_id": "29",
+      "qbo_name": "IBC-5231",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "fa93ca59-15e7-46a6-88b9-39657832365a",
+      "account_number": "QBO-290",
+      "account_name": "Esteban Rodriguez Fibela (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "290",
+      "qbo_name": "Esteban Rodriguez Fibela (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "13b323e9-6060-4b9a-8d7b-6fbebf96a62c",
+      "account_number": "QBO-291",
+      "account_name": "JAVIER ESPINOSA LOPEZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "291",
+      "qbo_name": "JAVIER ESPINOSA LOPEZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "15779ebe-29ed-4302-960f-9586d30bf72c",
+      "account_number": "QBO-293",
+      "account_name": "EDUARDO TREJO MARQUEZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "293",
+      "qbo_name": "EDUARDO TREJO MARQUEZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "8697d8f7-a428-4745-afd7-fae65813f2c5",
+      "account_number": "QBO-294",
+      "account_name": "HIRAM HUMBERTO GUAJARDO MONCADA (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "294",
+      "qbo_name": "HIRAM HUMBERTO GUAJARDO MONCADA (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "dbc2ba8d-8d47-49b9-9716-cbcc1fb4f002",
+      "account_number": "QBO-296",
+      "account_name": "LEONEL MORALES (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "296",
+      "qbo_name": "LEONEL MORALES (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "a4f5c381-2d1f-484a-aa78-09c515d55e9d",
+      "account_number": "QBO-297",
+      "account_name": "JORGE ELISEO MARTINEZ TORRES (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "297",
+      "qbo_name": "JORGE ELISEO MARTINEZ TORRES (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "4c09e78d-3aeb-4767-9715-a46405e78e0b",
+      "account_number": "QBO-298",
+      "account_name": "ALEJANDRO MONJARAZ PEREZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "298",
+      "qbo_name": "ALEJANDRO MONJARAZ PEREZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "4047fbc0-4119-423c-b005-b673519c7f6d",
+      "account_number": "QBO-33",
+      "account_name": "Opening Balance Equity",
+      "account_type": "Equity",
+      "qbo_id": "33",
+      "qbo_name": "Opening Balance Equity",
+      "qbo_type": "Equity"
+    },
+    {
+      "tms_id": "e8231071-0041-473c-a412-8dfc5e581140",
+      "account_number": "QBO-299",
+      "account_name": "JACOBO CASTILLO LIBRADO (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "299",
+      "qbo_name": "JACOBO CASTILLO LIBRADO (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "524b665e-0883-4d6b-b12e-72376539d39d",
+      "account_number": "QBO-3",
+      "account_name": "Marketing & Advertising",
+      "account_type": "Expense",
+      "qbo_id": "3",
+      "qbo_name": "Marketing & Advertising",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "0bb1e708-078c-4b23-b0e3-0eaac004e519",
+      "account_number": "QBO-30",
+      "account_name": "Billable Expense Income (deleted)",
+      "account_type": "Income",
+      "qbo_id": "30",
+      "qbo_name": "Billable Expense Income (deleted)",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "b36a07cd-b5c8-42b7-86d5-25d931898f12",
+      "account_number": "QBO-300",
+      "account_name": "LEONARDO JONATHAN RUBIO ROBLES (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "300",
+      "qbo_name": "LEONARDO JONATHAN RUBIO ROBLES (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "34ca221d-1e37-4b9a-a6cf-5fc14c4fe19c",
+      "account_number": "QBO-301",
+      "account_name": "Oscar David Huizar Chavez (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "301",
+      "qbo_name": "Oscar David Huizar Chavez (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "432f7a4f-8898-4fad-88ab-51c9bc60e0df",
+      "account_number": "QBO-303",
+      "account_name": "PNC-2786",
+      "account_type": "Asset",
+      "qbo_id": "303",
+      "qbo_name": "PNC-2786",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "7e62e3b5-fc98-4b18-8f8d-15129d4a3865",
+      "account_number": "QBO-304",
+      "account_name": "JORGE ELISEO MARTINEZ (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "304",
+      "qbo_name": "JORGE ELISEO MARTINEZ (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "07e6da16-883e-4a57-bd74-3a8b5be69f4e",
+      "account_number": "QBO-305",
+      "account_name": "Roberto Hilarion Contreras Pena (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "305",
+      "qbo_name": "Roberto Hilarion Contreras Pena (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "fdc7c405-cdf2-46c3-a89f-a5c51e82ac9c",
+      "account_number": "QBO-306",
+      "account_name": "Andres Arregui Calderon (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "306",
+      "qbo_name": "Andres Arregui Calderon (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "a12cd2d0-8894-4872-a108-15ba07392666",
+      "account_number": "QBO-307",
+      "account_name": "Moises Palacios Perez (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "307",
+      "qbo_name": "Moises Palacios Perez (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "12e3a065-7a50-4255-969e-eeba9715c124",
+      "account_number": "QBO-31",
+      "account_name": "Sales of Product Income",
+      "account_type": "Income",
+      "qbo_id": "31",
+      "qbo_name": "Sales of Product Income",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "e036121c-5c5a-4bff-9753-ba2e47571dcb",
+      "account_number": "QBO-310",
+      "account_name": "Jose Antonio Lopez Marquez (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "310",
+      "qbo_name": "Jose Antonio Lopez Marquez (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "0da33e0c-5550-4e15-bf83-dddd59749c02",
+      "account_number": "QBO-311",
+      "account_name": "Antonio Martinez Bastida (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "311",
+      "qbo_name": "Antonio Martinez Bastida (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "b7a05250-45b1-43b8-9139-ca47ab81d027",
+      "account_number": "QBO-312",
+      "account_name": "PNC-2954",
+      "account_type": "Asset",
+      "qbo_id": "312",
+      "qbo_name": "PNC-2954",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "563b929d-da14-4eec-a5a2-a7233c3be768",
+      "account_number": "QBO-313",
+      "account_name": "PNC-2962",
+      "account_type": "Asset",
+      "qbo_id": "313",
+      "qbo_name": "PNC-2962",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "294c53a1-1fbb-4650-9c97-16af193f396c",
+      "account_number": "QBO-314",
+      "account_name": "Exrta Pick Up / Drop Driver Pay (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "314",
+      "qbo_name": "Exrta Pick Up / Drop Driver Pay (deleted)",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "e8d8168c-6a7a-4ae7-9cd2-e69cf3b8724d",
+      "account_number": "QBO-315",
+      "account_name": "JORGE ALEJANDRO CAMPOS (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "315",
+      "qbo_name": "JORGE ALEJANDRO CAMPOS (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "77170f1c-f630-4d96-aa6c-f83eced77fe0",
+      "account_number": "QBO-330",
+      "account_name": "Fees (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "330",
+      "qbo_name": "Fees (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "673e2670-78a4-4348-b8f0-cc25635784f9",
+      "account_number": "QBO-316",
+      "account_name": "RAFAEL NAVARRO RAMIREZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "316",
+      "qbo_name": "RAFAEL NAVARRO RAMIREZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "7617f5f7-f057-4d76-8db6-fe3a5734e4c7",
+      "account_number": "QBO-319",
+      "account_name": "ADAN GUTIERREZ RAMIREZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "319",
+      "qbo_name": "ADAN GUTIERREZ RAMIREZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "ae9daa46-3951-4131-9ddb-aa3bd7860fc5",
+      "account_number": "QBO-32",
+      "account_name": "Inventory Asset",
+      "account_type": "Asset",
+      "qbo_id": "32",
+      "qbo_name": "Inventory Asset",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "4f2a804b-5b58-4cc1-a8f9-c6db6a86dbd4",
+      "account_number": "QBO-320",
+      "account_name": "HECTOR GIL BALTAZAR (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "320",
+      "qbo_name": "HECTOR GIL BALTAZAR (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "299def41-4651-418b-ac93-e8b101985a8d",
+      "account_number": "QBO-321",
+      "account_name": "OSCAR GIL BALTAZAR (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "321",
+      "qbo_name": "OSCAR GIL BALTAZAR (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "262724b8-3684-4e3b-a475-956e0ae9d6ee",
+      "account_number": "QBO-322",
+      "account_name": "ISIDRO PADILLA JIMENEZ (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "322",
+      "qbo_name": "ISIDRO PADILLA JIMENEZ (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "4c8974cf-b8a8-4dd0-97fe-573057b41f66",
+      "account_number": "QBO-323",
+      "account_name": "DEUDUCCION ANTONIO NAVARRETE (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "323",
+      "qbo_name": "DEUDUCCION ANTONIO NAVARRETE (deleted)",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "e6883e96-9a3b-426c-a117-25d1211438a4",
+      "account_number": "QBO-325",
+      "account_name": "Interest Earned (deleted)",
+      "account_type": "OtherIncome",
+      "qbo_id": "325",
+      "qbo_name": "Interest Earned (deleted)",
+      "qbo_type": "Other Income"
+    },
+    {
+      "tms_id": "429a40f2-52c4-4eeb-9bcb-a640afc2034e",
+      "account_number": "QBO-329",
+      "account_name": "CL-Sales Commission-USA",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "329",
+      "qbo_name": "CL-Sales Commission-USA",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "3cce1ac4-8250-471c-a9d3-bd3e4f5adb20",
+      "account_number": "QBO-336",
+      "account_name": "Inventory Shrinkage",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "336",
+      "qbo_name": "Inventory Shrinkage",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "27ae7fe4-0c19-4a61-a664-6c5878b62a91",
+      "account_number": "QBO-337",
+      "account_name": "Citi-Executive Card",
+      "account_type": "Liability",
+      "qbo_id": "337",
+      "qbo_name": "Citi-Executive Card",
+      "qbo_type": "Credit Card"
+    },
+    {
+      "tms_id": "8d7eabd2-ff49-4d5c-80cf-4c25029e29fe",
+      "account_number": "QBO-338",
+      "account_name": "Amex Card-",
+      "account_type": "Liability",
+      "qbo_id": "338",
+      "qbo_name": "Amex Card-",
+      "qbo_type": "Credit Card"
+    },
+    {
+      "tms_id": "0e77b808-8379-4fb2-99ce-5c56870cab2e",
+      "account_number": "QBO-339",
+      "account_name": "Discover Card-4451",
+      "account_type": "Liability",
+      "qbo_id": "339",
+      "qbo_name": "Discover Card-4451",
+      "qbo_type": "Credit Card"
+    },
+    {
+      "tms_id": "030f012e-8fed-454a-88b9-5731ec24faa0",
+      "account_number": "QBO-340",
+      "account_name": "Deferred Revenue",
+      "account_type": "Liability",
+      "qbo_id": "340",
+      "qbo_name": "Deferred Revenue",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "025b37d0-1e05-4e63-967a-f1050f82c43a",
+      "account_number": "QBO-341",
+      "account_name": "Cost of Goods Sold",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "341",
+      "qbo_name": "Cost of Goods Sold",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "069da68d-2b4f-4fbe-ac9a-d27d1f2c05a6",
+      "account_number": "QBO-342",
+      "account_name": "QuickBooks Tax Holding Account",
+      "account_type": "Asset",
+      "qbo_id": "342",
+      "qbo_name": "QuickBooks Tax Holding Account",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "42b51de4-de05-4e09-a3ae-de88aec0bf1b",
+      "account_number": "QBO-343",
+      "account_name": "Payroll Refunds (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "343",
+      "qbo_name": "Payroll Refunds (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "fb2581f6-0f96-4839-82b8-b7f4074d3000",
+      "account_number": "QBO-344",
+      "account_name": "Payroll Expenses",
+      "account_type": "Expense",
+      "qbo_id": "344",
+      "qbo_name": "Payroll Expenses",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "b0873ae8-02f4-40af-896d-0eadce7475df",
+      "account_number": "QBO-345",
+      "account_name": "Wages",
+      "account_type": "Expense",
+      "qbo_id": "345",
+      "qbo_name": "Wages",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "eea5b8db-7b1a-4976-b9b0-6083444d22c9",
+      "account_number": "QBO-346",
+      "account_name": "Payroll Liabilities",
+      "account_type": "Liability",
+      "qbo_id": "346",
+      "qbo_name": "Payroll Liabilities",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "053a3820-44ba-4888-9c87-ca01a4a4b0c2",
+      "account_number": "QBO-347",
+      "account_name": "Federal Unemployment (940)",
+      "account_type": "Liability",
+      "qbo_id": "347",
+      "qbo_name": "Federal Unemployment (940)",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "bfb34eca-6d40-4dd2-8069-7053c10a5cc8",
+      "account_number": "QBO-348",
+      "account_name": "Federal Taxes (941/943/944)",
+      "account_type": "Liability",
+      "qbo_id": "348",
+      "qbo_name": "Federal Taxes (941/943/944)",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "6ebf8640-df83-4aa0-b36c-0bee19eca64d",
+      "account_number": "QBO-349",
+      "account_name": "Taxes",
+      "account_type": "Expense",
+      "qbo_id": "349",
+      "qbo_name": "Taxes",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "f2337a8f-fdd8-442b-93f9-13a1689a4c14",
+      "account_number": "QBO-350",
+      "account_name": "TX Unemployment Tax",
+      "account_type": "Liability",
+      "qbo_id": "350",
+      "qbo_name": "TX Unemployment Tax",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "7945b592-7512-4eb4-a3e4-d04d8a2c8392",
+      "account_number": "QBO-8",
+      "account_name": "BC-Interest Paid",
+      "account_type": "Expense",
+      "qbo_id": "8",
+      "qbo_name": "BC-Interest Paid",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "069ad154-0db8-4be1-9a9e-dc9bf2298d8c",
+      "account_number": "QBO-352",
+      "account_name": "Direct Deposit Payable",
+      "account_type": "Liability",
+      "qbo_id": "352",
+      "qbo_name": "Direct Deposit Payable",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "4d065d6c-b7d0-4b34-962c-3fdb04ff2d5e",
+      "account_number": "QBO-353",
+      "account_name": "Direct Deposit Payable ( 353 )",
+      "account_type": "Liability",
+      "qbo_id": "353",
+      "qbo_name": "Direct Deposit Payable ( 353 )",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "09ae838e-4be7-4392-a09d-dd53b7febe85",
+      "account_number": "QBO-37",
+      "account_name": "Petty Cash",
+      "account_type": "Asset",
+      "qbo_id": "37",
+      "qbo_name": "Petty Cash",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "7d795152-0883-41ef-80ee-91de1f97f9bb",
+      "account_number": "QBO-38",
+      "account_name": "OTR-Bridge & Toll Expenses",
+      "account_type": "OtherExpense",
+      "qbo_id": "38",
+      "qbo_name": "OTR-Bridge & Toll Expenses",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "c1f4a04f-c4a1-443e-9f60-c9a2f6502c71",
+      "account_number": "QBO-39",
+      "account_name": "IH 35 Transportation AMEX (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "39",
+      "qbo_name": "IH 35 Transportation AMEX (deleted)",
+      "qbo_type": "Credit Card"
+    },
+    {
+      "tms_id": "747cd419-8fee-474b-866b-32abec65ff18",
+      "account_number": "QBO-40",
+      "account_name": "Other Miscellaneous Expense (deleted)",
+      "account_type": "OtherExpense",
+      "qbo_id": "40",
+      "qbo_name": "Other Miscellaneous Expense (deleted)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "5f25664d-2139-44dd-a24d-e523758bb67a",
+      "account_number": "QBO-42",
+      "account_name": "Company-Auto & Truck Expenses",
+      "account_type": "Expense",
+      "qbo_id": "42",
+      "qbo_name": "Company-Auto & Truck Expenses",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "9659ff0a-55d2-4440-b2fe-f272c5d7d04e",
+      "account_number": "QBO-43",
+      "account_name": "Truck-Fuel-Diesel (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "43",
+      "qbo_name": "Truck-Fuel-Diesel (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "a38c8450-541f-4565-8812-b18798f48c0e",
+      "account_number": "QBO-44",
+      "account_name": "Rent or Lease Equipment (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "44",
+      "qbo_name": "Rent or Lease Equipment (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "3bfa6640-cfab-4dae-b03d-8989f49ad910",
+      "account_number": "QBO-45",
+      "account_name": "Accounts Receivable (A/R)",
+      "account_type": "Asset",
+      "qbo_id": "45",
+      "qbo_name": "Accounts Receivable (A/R)",
+      "qbo_type": "Accounts Receivable"
+    },
+    {
+      "tms_id": "979fd17e-26ca-45b1-86a5-627c0af8f503",
+      "account_number": "QBO-46",
+      "account_name": "Unapplied Cash Payment Income",
+      "account_type": "Income",
+      "qbo_id": "46",
+      "qbo_name": "Unapplied Cash Payment Income",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "49ecd817-4f60-408d-8cc1-3f3ad3a5b533",
+      "account_number": "QBO-47",
+      "account_name": "Accounts Payable (A/P)",
+      "account_type": "Liability",
+      "qbo_id": "47",
+      "qbo_name": "Accounts Payable (A/P)",
+      "qbo_type": "Accounts Payable"
+    },
+    {
+      "tms_id": "4aa75ca4-859b-4721-bea4-947a98f2171d",
+      "account_number": "QBO-48",
+      "account_name": "COL-Line Haul Driver Payment",
+      "account_type": "CostOfGoodsSold",
+      "qbo_id": "48",
+      "qbo_name": "COL-Line Haul Driver Payment",
+      "qbo_type": "Cost of Goods Sold"
+    },
+    {
+      "tms_id": "f796b280-1de2-4e1a-b3ca-e54ccb419dc0",
+      "account_number": "QBO-49",
+      "account_name": "Layover-Driver Expense (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "49",
+      "qbo_name": "Layover-Driver Expense (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "ddda1213-8449-464b-81dd-38253641fc45",
+      "account_number": "QBO-5",
+      "account_name": "Bank Charges & Fees-612",
+      "account_type": "Expense",
+      "qbo_id": "5",
+      "qbo_name": "Bank Charges & Fees-612",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "63b7f3e2-e357-40c9-ad5b-8d5c2c516100",
+      "account_number": "QBO-50",
+      "account_name": "Cash on hand",
+      "account_type": "Asset",
+      "qbo_id": "50",
+      "qbo_name": "Cash on hand",
+      "qbo_type": "Bank"
+    },
+    {
+      "tms_id": "f797523a-5266-45de-b277-ff9fb833e262",
+      "account_number": "QBO-53",
+      "account_name": "Fuel-Truck-Diesel Expense",
+      "account_type": "OtherExpense",
+      "qbo_id": "53",
+      "qbo_name": "Fuel-Truck-Diesel Expense",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "a2f95625-c67c-4e72-9586-b646e8aa895a",
+      "account_number": "QBO-54",
+      "account_name": "Fuel Truck Diesel - 102 (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "54",
+      "qbo_name": "Fuel Truck Diesel - 102 (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "bb61ad4a-db7e-4ed9-b0a6-4066348f3bf3",
+      "account_number": "QBO-57",
+      "account_name": "Owner Loan-Acct-9745",
+      "account_type": "Liability",
+      "qbo_id": "57",
+      "qbo_name": "Owner Loan-Acct-9745",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "a0cc359b-6c85-41ee-91f0-0da944544c34",
+      "account_number": "QBO-58",
+      "account_name": "Owner Withdrawal (deleted)",
+      "account_type": "Liability",
+      "qbo_id": "58",
+      "qbo_name": "Owner Withdrawal (deleted)",
+      "qbo_type": "Other Current Liability"
+    },
+    {
+      "tms_id": "0e189b8a-30f5-45ff-a23b-21f9aeec152b",
+      "account_number": "QBO-59",
+      "account_name": "Owner Expenses (deleted)",
+      "account_type": "OtherExpense",
+      "qbo_id": "59",
+      "qbo_name": "Owner Expenses (deleted)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "1cb05242-965e-40ed-a521-60e0518a8859",
+      "account_number": "QBO-6",
+      "account_name": "Contractors (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "6",
+      "qbo_name": "Contractors (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "25f7bd4e-c82b-4586-b7a8-66ab7ace3633",
+      "account_number": "QBO-60",
+      "account_name": "Deduction-For late PU/Delivery by Customer",
+      "account_type": "Income",
+      "qbo_id": "60",
+      "qbo_name": "Deduction-For late PU/Delivery by Customer",
+      "qbo_type": "Income"
+    },
+    {
+      "tms_id": "3a3bf2e4-6eb1-4766-84cc-4cab9ab3f2d6",
+      "account_number": "QBO-62",
+      "account_name": "BC-Factoring Fees-SCH-Faro",
+      "account_type": "Expense",
+      "qbo_id": "62",
+      "qbo_name": "BC-Factoring Fees-SCH-Faro",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "58e95e81-1074-441e-85ee-756793260277",
+      "account_number": "QBO-64",
+      "account_name": "FR-ECAPITAL (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "64",
+      "qbo_name": "FR-ECAPITAL (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "f31be290-0455-447c-b03e-9a480bada532",
+      "account_number": "QBO-65",
+      "account_name": "eCapital",
+      "account_type": "Asset",
+      "qbo_id": "65",
+      "qbo_name": "eCapital",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "568399a3-fd2f-4349-babb-f094e3142cb7",
+      "account_number": "QBO-67",
+      "account_name": "Reconciliation Discrepancies",
+      "account_type": "OtherExpense",
+      "qbo_id": "67",
+      "qbo_name": "Reconciliation Discrepancies",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "cc5f99de-26de-49fe-a488-b2657c094c9f",
+      "account_number": "QBO-68",
+      "account_name": "Partner Contributions (deleted)",
+      "account_type": "Equity",
+      "qbo_id": "68",
+      "qbo_name": "Partner Contributions (deleted)",
+      "qbo_type": "Equity"
+    },
+    {
+      "tms_id": "fdfacf6c-5c60-4b60-a55d-84c88a497e59",
+      "account_number": "QBO-7",
+      "account_name": "Vehicle Insurance Expenses",
+      "account_type": "OtherExpense",
+      "qbo_id": "7",
+      "qbo_name": "Vehicle Insurance Expenses",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "aa5290df-996a-43c8-b715-0eb1ec62e085",
+      "account_number": "QBO-70",
+      "account_name": "Partner Distributions (deleted)",
+      "account_type": "Equity",
+      "qbo_id": "70",
+      "qbo_name": "Partner Distributions (deleted)",
+      "qbo_type": "Equity"
+    },
+    {
+      "tms_id": "afc8306f-9ff6-44cf-8e07-4adf58fba2ea",
+      "account_number": "QBO-71",
+      "account_name": "Vehicle registration (deleted)",
+      "account_type": "OtherExpense",
+      "qbo_id": "71",
+      "qbo_name": "Vehicle registration (deleted)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "7f5356e2-fd7e-4ed4-9a57-622c2f8f3af7",
+      "account_number": "QBO-72",
+      "account_name": "Loans to Others/IH 35 Trucking",
+      "account_type": "Asset",
+      "qbo_id": "72",
+      "qbo_name": "Loans to Others/IH 35 Trucking",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "8b4a5b5b-b49a-477e-9088-87faf458f8b4",
+      "account_number": "QBO-73",
+      "account_name": "Independence Bank-Credit Line",
+      "account_type": "Liability",
+      "qbo_id": "73",
+      "qbo_name": "Independence Bank-Credit Line",
+      "qbo_type": "Long Term Liability"
+    },
+    {
+      "tms_id": "cea6e1c8-c270-4d92-a88a-ac82851bb2e2",
+      "account_number": "QBO-74",
+      "account_name": "Dues & Suscriptions",
+      "account_type": "Expense",
+      "qbo_id": "74",
+      "qbo_name": "Dues & Suscriptions",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "5b978fd2-d630-4d43-83cb-07e559d753cc",
+      "account_number": "QBO-75",
+      "account_name": "Service Charge (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "75",
+      "qbo_name": "Service Charge (deleted)",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "cf7c73ad-4b5e-4c57-be7a-a42ca14c0c4e",
+      "account_number": "QBO-77",
+      "account_name": "BC-Late Payment Charge & Interest",
+      "account_type": "Expense",
+      "qbo_id": "77",
+      "qbo_name": "BC-Late Payment Charge & Interest",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "718fa50e-0d5a-4149-8825-4b78b9b1fdcd",
+      "account_number": "QBO-78",
+      "account_name": "OTR-Scale Expenses",
+      "account_type": "OtherExpense",
+      "qbo_id": "78",
+      "qbo_name": "OTR-Scale Expenses",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "d7ac105a-3860-40de-a265-1392498b2fe8",
+      "account_number": "QBO-82",
+      "account_name": "Penalties & Settlements",
+      "account_type": "OtherExpense",
+      "qbo_id": "82",
+      "qbo_name": "Penalties & Settlements",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "4fca8617-f5ae-40ea-b18d-726abac3ddcc",
+      "account_number": "QBO-83",
+      "account_name": "Fines",
+      "account_type": "OtherExpense",
+      "qbo_id": "83",
+      "qbo_name": "Fines",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "9c927a80-9bcc-4123-9424-e4b153b1c864",
+      "account_number": "QBO-85",
+      "account_name": "Employee Cash Advance-Merged Account (deleted)",
+      "account_type": "Asset",
+      "qbo_id": "85",
+      "qbo_name": "Employee Cash Advance-Merged Account (deleted)",
+      "qbo_type": "Other Current Asset"
+    },
+    {
+      "tms_id": "570f2f4a-e3a7-4b48-820b-aab91eb774e4",
+      "account_number": "QBO-86",
+      "account_name": "Purchases",
+      "account_type": "Expense",
+      "qbo_id": "86",
+      "qbo_name": "Purchases",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "789d3d71-71b9-4ebb-a04b-b792514e8e9b",
+      "account_number": "QBO-87",
+      "account_name": "Travel-Driver Layover Hotel Expenses",
+      "account_type": "Expense",
+      "qbo_id": "87",
+      "qbo_name": "Travel-Driver Layover Hotel Expenses",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "fb758e75-c219-4c6a-8177-0eee3e43e5f3",
+      "account_number": "QBO-9",
+      "account_name": "Legal & Professional Services",
+      "account_type": "Expense",
+      "qbo_id": "9",
+      "qbo_name": "Legal & Professional Services",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "5e9b9afd-5fee-46f7-aa77-37f4eb3bdfad",
+      "account_number": "QBO-92",
+      "account_name": "Fuel-Reefer-Diesel Expense",
+      "account_type": "OtherExpense",
+      "qbo_id": "92",
+      "qbo_name": "Fuel-Reefer-Diesel Expense",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "bf23b1e6-9682-47da-a9ac-4a591d50c20c",
+      "account_number": "QBO-95",
+      "account_name": "Office-Vehicles-Gas",
+      "account_type": "Expense",
+      "qbo_id": "95",
+      "qbo_name": "Office-Vehicles-Gas",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "d6a89590-d4ec-40e0-b0ea-af3fc4ce3ef1",
+      "account_number": "QBO-96",
+      "account_name": "Truck & Reefer Washout Expense-(345.30)",
+      "account_type": "OtherExpense",
+      "qbo_id": "96",
+      "qbo_name": "Truck & Reefer Washout Expense-(345.30)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "896dc87d-74d0-4d95-8980-29be005b9401",
+      "account_number": "QBO-97",
+      "account_name": "Medicines and First Aid",
+      "account_type": "Expense",
+      "qbo_id": "97",
+      "qbo_name": "Medicines and First Aid",
+      "qbo_type": "Expense"
+    },
+    {
+      "tms_id": "297e21f3-bfa3-488c-b82d-56ab63dd708d",
+      "account_number": "QBO-98",
+      "account_name": "Truck Plates (deleted)",
+      "account_type": "OtherExpense",
+      "qbo_id": "98",
+      "qbo_name": "Truck Plates (deleted)",
+      "qbo_type": "Other Expense"
+    },
+    {
+      "tms_id": "afd99579-0e1e-44b9-8f87-45e8a1ded0a8",
+      "account_number": "QBO-99",
+      "account_name": "Permits (deleted)",
+      "account_type": "Expense",
+      "qbo_id": "99",
+      "qbo_name": "Permits (deleted)",
+      "qbo_type": "Expense"
+    }
+  ],
+  "conflict": [],
+  "ambiguous": [
+    {
+      "tms_id": "bfeb06fb-a697-4053-8068-61061b8da9d4",
+      "account_number": "QBO-151",
+      "account_name": "Eric Cruz (deleted)",
+      "account_type": "Asset",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "28b041fe-0762-4da7-81b4-87353c0d6406",
+      "account_number": "QBO-166",
+      "account_name": "Gerardo Olvera (deleted)",
+      "account_type": "Asset",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "758e12dc-bab2-4123-963e-21b5869ac336",
+      "account_number": "QBO-170",
+      "account_name": "Jorge Luis Olvera (deleted)",
+      "account_type": "Asset",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "ace1f0fa-5c93-4f80-b626-4ff59d01c6bc",
+      "account_number": "QBO-175",
+      "account_name": "Jose Manuel Carrillo (deleted)",
+      "account_type": "Asset",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "a01f296f-6aba-4921-a33f-5fc1823e1a45",
+      "account_number": "QBO-182",
+      "account_name": "Miguel Angel Sanchez Cordova (deleted)",
+      "account_type": "Asset",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "9713aa70-3ef2-4568-93e7-e434311c66ca",
+      "account_number": "QBO-199",
+      "account_name": "Jose Maria Gomez (deleted)",
+      "account_type": "Asset",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "ef902873-363f-4a55-a4fc-b79d16254f18",
+      "account_number": "QBO-215",
+      "account_name": "Erick Corona Salas (deleted)",
+      "account_type": "Asset",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "7ce4892d-079f-4e22-9c02-8c7a789c48af",
+      "account_number": "QBO-216",
+      "account_name": "Javier Vargas Saucedo (deleted)",
+      "account_type": "Asset",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "182fb6a0-6d37-486e-a3e9-6be4433d0347",
+      "account_number": "QBO-235",
+      "account_name": "Javier Vargas Solis (deleted)",
+      "account_type": "Asset",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "a2dc5e1e-cbe4-44cd-8b9f-068ee81796c6",
+      "account_number": "QBO-252",
+      "account_name": "JAVIER VARGAS SOLIS (deleted)",
+      "account_type": "Liability",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "07b02b35-bad1-41f4-b226-bf528404010c",
+      "account_number": "QBO-254",
+      "account_name": "JORGE LUIS OLVERA (deleted)",
+      "account_type": "Liability",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "43a8ef78-28e9-4dbb-acac-421259aedcfb",
+      "account_number": "QBO-259",
+      "account_name": "ERIC CRUZ (deleted)",
+      "account_type": "Liability",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "73abcb4d-d6e7-45ec-9ffc-f25d47db0b1b",
+      "account_number": "QBO-270",
+      "account_name": "ERICK CORONA SALAS (deleted)",
+      "account_type": "Liability",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "6c89cf9a-1854-4bda-846d-2c3848c5e6e0",
+      "account_number": "QBO-280",
+      "account_name": "JOSE MANUEL CARRILLO (deleted)",
+      "account_type": "Liability",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "fa5f0958-d871-4ac1-b0f0-490c293807a3",
+      "account_number": "QBO-281",
+      "account_name": "JOSE MARIA GOMEZ (deleted)",
+      "account_type": "Liability",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "6a809520-d3b1-42c0-8169-40142b57d4fa",
+      "account_number": "QBO-283",
+      "account_name": "JAVIER VARGAS SAUCEDO (deleted)",
+      "account_type": "Liability",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "eddbff34-5d93-477a-bee5-b50dad148d23",
+      "account_number": "QBO-292",
+      "account_name": "MIGUEL ANGEL SANCHEZ CORDOVA (deleted)",
+      "account_type": "Liability",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    },
+    {
+      "tms_id": "cda0742b-5beb-460e-9b29-bf772977064a",
+      "account_number": "QBO-308",
+      "account_name": "Gerardo Olvera (deleted)",
+      "account_type": "Liability",
+      "qbo_candidate_count": 2,
+      "tms_name_collision_count": 2
+    }
+  ],
+  "tms_only": [
+    {
+      "tms_id": "2c6b8328-ee5a-4146-8d9e-586a967f9222",
+      "account_number": "1000",
+      "account_name": "Cash - Operating",
+      "account_type": "Asset"
+    },
+    {
+      "tms_id": "16ba4453-dfdb-4cdd-b50a-7ab3a2be57ec",
+      "account_number": "1100",
+      "account_name": "Accounts Receivable",
+      "account_type": "Asset"
+    },
+    {
+      "tms_id": "47c792e9-ba5b-4766-a904-4346122053eb",
+      "account_number": "2000",
+      "account_name": "Accounts Payable",
+      "account_type": "Liability"
+    },
+    {
+      "tms_id": "65ad54cd-6cc8-4f4e-8061-e1bc1009865b",
+      "account_number": "4100",
+      "account_name": "Freight Revenue",
+      "account_type": "Income"
+    },
+    {
+      "tms_id": "58c6e304-ab3e-4714-9c35-623ec51ae7cf",
+      "account_number": "6100",
+      "account_name": "Fuel Expense",
+      "account_type": "Expense"
+    }
+  ],
+  "qbo_only": []
+}

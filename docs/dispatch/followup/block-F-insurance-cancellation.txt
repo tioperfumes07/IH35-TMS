@@ -1,0 +1,22 @@
+Block F (follow-up) — PHASE <add tracker phase> / TASK <add tracker row, real ID> — Insurance cancellation + refund   [RECOMMENDED — needs Jorge GO to dispatch]
+RBC TARGET: insurance module backend + frontend; bills via createBill (apps/backend/src/accounting/bills.service.ts:483)
+DEPENDS: Block 5 merged.
+MODEL: Opus 4.8 thinking-high (financial — refunds).
+
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+WHY: cancel a policy before term end; stop future scheduled bills; record the unearned-premium refund.
+
+LANE LOCK: insurance module only. Call createBill / existing accounting service functions, do NOT modify them. Forbidden: detention, driver-finance, sidebar-config, accounting internals.
+
+RESPOND-BEFORE-CODE: post (1) cancellation effective-date handling, (2) how remaining un-issued scheduled bills are voided/stopped (without deleting issued ones), (3) refund as a SEPARATE expense/credit line per VQ6 (never a negative premium), (4) the endpoint, (5) additive status column (policy.cancelled_on / cancel_reason) + migration grants. WAIT for Jorge GO.
+
+SCOPE:
+- Cancel action sets policy.status = cancelled, cancelled_on = date.
+- Future scheduled-but-unissued bills: mark stopped/void (no delete of anything already issued).
+- Unearned-premium refund: separate credit line via existing accounting function, idempotency-keyed.
+- No deletes. Issued bills remain for audit.
+
+ACCEPT: cancelling stops future bills, leaves issued ones intact, records refund as its own line; idempotent; RLS test; vitest + tsc -b green; CI green.
+
+PAUSE: RECOMMENDED block — do NOT dispatch until Jorge says GO. Then RESPOND-BEFORE-CODE, then wait for code GO. Squash-merge holds for explicit GO.
