@@ -64,7 +64,7 @@ DO $$ BEGIN
   ) THEN
     CREATE POLICY internal_labor_log_tenant_isolation
       ON maintenance.internal_labor_log
-      USING (tenant_id = current_setting('app.operating_company_id', true)::uuid);
+      USING (tenant_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
   END IF;
 END $$;
 
