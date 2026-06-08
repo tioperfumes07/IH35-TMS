@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>IH35-TMS — Account Register (QBO parity preview)</title>
+<style>
+  :root{--bd:#e3e3df;--bd2:#cfcfc8;--mut:#6b6b66;--info:#185fa5;--dng:#a32d2d;--ok:#3b6d11;--bg:#fff;--bg2:#f6f5f1;}
+  *{box-sizing:border-box;} body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a18;background:var(--bg2);font-size:13px;}
+  .screen{min-height:100vh;background:var(--bg);position:relative;}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--bd);flex-wrap:wrap;}
+  .ttl{font-size:18px;font-weight:500;} .mut{color:var(--mut);font-size:12px;}
+  button{height:32px;border:1px solid var(--bd2);background:#fff;border-radius:8px;padding:0 10px;cursor:pointer;font-size:13px;} button:hover{background:var(--bg2);}
+  input,select{height:32px;border:1px solid var(--bd2);border-radius:8px;padding:0 8px;font-size:13px;background:#fff;}
+  table{border-collapse:collapse;font-size:12px;table-layout:fixed;}
+  th,td{padding:9px 10px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-bottom:1px solid var(--bd);}
+  th{color:var(--mut);position:relative;}
+  .lbl{cursor:pointer;user-select:none;} .rsz{position:absolute;top:0;right:0;width:6px;height:100%;cursor:col-resize;}
+  .pop{position:absolute;background:#fff;border:1px solid var(--bd2);border-radius:8px;padding:12px;z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.08);}
+  .seg{display:flex;gap:4px;} .seg button{flex:1;height:26px;} .sel{border:2px solid var(--info)!important;}
+  .fpanel{padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--bg2);display:none;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;align-items:start;}
+  .foot{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--bd);color:var(--mut);font-size:12px;}
+</style></head>
+<body>
+<div class="screen" id="reg">
+  <div class="bar">
+    <div style="display:flex;align-items:center;gap:10px;"><span class="ttl">Register</span>
+      <select aria-label="Select an account" style="width:200px;"><option>BOA-CHECKING-1135</option><option>PNC-2954</option><option>WF – General Operating 6103</option></select></div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <button id="btnFilter">Filter</button><button id="btnClear">Clear filter / View all</button>
+      <button>Batch edit</button><button>Reconcile</button><button title="Export to Excel">Export to Excel</button>
+      <button title="Print list">Print list</button><button id="rGear" title="Settings">⚙</button></div>
+  </div>
+  <div id="fpanel" class="fpanel">
+    <div class="grid">
+      <div><label class="mut">Date</label><br/><select style="width:100%;"><option>All dates</option><option>This month</option><option>This year</option><option>Custom</option></select></div>
+      <div><label class="mut">Transaction type</label><div id="ms-type"></div></div>
+      <div><label class="mut">Reconcile status</label><div id="ms-rec"></div></div>
+      <div><label class="mut">Payee</label><br/><input style="width:100%;" placeholder="Any"/></div>
+      <div><label class="mut">Memo</label><br/><input style="width:100%;" placeholder="Contains"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;"><button class="sel">Apply</button><button>Reset</button></div>
+  </div>
+  <div style="overflow-x:auto;"><table id="rtbl"><colgroup id="rcg"></colgroup><thead><tr id="rhr"></tr></thead><tbody id="rtb"></tbody></table></div>
+  <div class="foot"><span id="rpg">Showing 1–6</span><span style="display:flex;gap:6px;align-items:center;"><button>Previous</button><span>1</span><button>Next</button></span></div>
+  <div id="rgearp" class="pop" style="display:none;top:52px;right:16px;width:230px;">
+    <div style="font-weight:500;margin-bottom:6px;">Columns</div><div id="rcols" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-bottom:10px;"></div>
+    <div style="font-weight:500;border-top:1px solid var(--bd);padding-top:8px;">Page size</div><div id="rpsize" class="seg"></div>
+    <div style="font-weight:500;border-top:1px solid var(--bd);padding-top:8px;margin-top:10px;">Table density</div><div id="rdens" class="seg"></div>
+  </div>
+</div>
+<script>
+var COLS=[{k:"date",label:"DATE",w:100,type:"date"},{k:"ref",label:"REF NO.",w:80,type:"text"},{k:"p",label:"PAYEE",w:170,type:"text"},{k:"m",label:"MEMO",w:170,type:"text"},{k:"c",label:"CLASS (unit)",w:110,type:"text"},{k:"pay",label:"PAYMENT",w:110,type:"num",align:"right"},{k:"dep",label:"DEPOSIT",w:110,type:"num",align:"right"},{k:"tax",label:"TAX",w:60,sort:false},{k:"bal",label:"BALANCE",w:120,type:"num",align:"right"},{k:"t",label:"TYPE",w:110,type:"text"},{k:"a",label:"ACCOUNT",w:200,type:"text"},{k:"l",label:"LOCATION (lane)",w:130,type:"text"}];
+var R=[{date:"06/01/2026",ref:"1042",p:"Pilot Flying J",m:"Fuel TRK-204",c:"TRK-204",pay:"$1,240.18",dep:"",bal:"$146,512.00",t:"Expense",a:"Fuel-Truck-Diesel Expense",l:"Laredo"},{date:"06/02/2026",ref:"DEP",p:"Love's Solutions",m:"Factoring advance",c:"",pay:"",dep:"$38,400.00",bal:"$184,912.00",t:"Deposit",a:"Accounts Receivable (A/R)",l:""},{date:"06/03/2026",ref:"1043",p:"TX DMV",m:"Plate renewal",c:"TRK-118",pay:"$2,310.00",dep:"",bal:"$182,602.00",t:"Bill Payment",a:"Permit-License Plates",l:"Laredo"},{date:"06/04/2026",ref:"ACH",p:"Comdata",m:"Fuel card settle",c:"",pay:"$9,884.55",dep:"",bal:"$172,717.45",t:"Expense",a:"Comdata-Driven Fuel Card",l:""},{date:"06/05/2026",ref:"DEP",p:"RTS Financial",m:"Invoice batch 4471",c:"",pay:"",dep:"$61,205.00",bal:"$233,922.45",t:"Deposit",a:"Accounts Receivable (A/R)",l:""},{date:"06/06/2026",ref:"JE-88",p:"",m:"Reclass tolls",c:"",pay:"$418.90",dep:"",bal:"$233,503.55",t:"Journal",a:"OTR-Bridge & Toll Expenses",l:"Nuevo Laredo"}];
+var $=function(s){return document.querySelector(s);},pad=9,sortK=null,sortDir=-1,hidden={};
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+function num(s){if(!s)return null;var n=parseFloat(String(s).replace(/[^0-9.\-]/g,""));return isNaN(n)?null:n;}
+function datev(s){var m=s&&s.match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?new Date(+m[3],+m[2]-1,+m[1]).getTime():0;}
+var cg=$("#rcg"),hr=$("#rhr"),tw=0;COLS.forEach(function(c){tw+=c.w;});$("#rtbl").style.width=tw+"px";
+COLS.forEach(function(c){var col=document.createElement("col");col.style.width=c.w+"px";col.dataset.k=c.k;cg.appendChild(col);});
+COLS.forEach(function(c,i){var th=document.createElement("th");if(c.align==="right")th.style.textAlign="right";th.dataset.k=c.k;
+  th.innerHTML='<span class="lbl">'+c.label+' <span class="car" style="font-size:10px;"></span></span>';
+  var rz=document.createElement("span");rz.className="rsz";rz.onmousedown=function(e){e.preventDefault();e.stopPropagation();var sx=e.pageX,col=cg.children[i],sw=col.getBoundingClientRect().width;function mm(ev){col.style.width=Math.max(40,sw+(ev.pageX-sx))+"px";}function mu(){document.removeEventListener("mousemove",mm);document.removeEventListener("mouseup",mu);}document.addEventListener("mousemove",mm);document.addEventListener("mouseup",mu);};th.appendChild(rz);
+  if(c.sort!==false)th.querySelector(".lbl").onclick=function(){if(sortK===c.k)sortDir=-sortDir;else{sortK=c.k;sortDir=-1;}render();};hr.appendChild(th);});
+function render(){var data=R.slice();
+  if(sortK){var col=COLS.filter(function(c){return c.k===sortK;})[0];data.sort(function(a,b){var x,y;if(col.type==="num"){x=num(a[sortK]);y=num(b[sortK]);if(x===null)return 1;if(y===null)return -1;return (x-y)*sortDir;}if(col.type==="date"){return (datev(a[sortK])-datev(b[sortK]))*sortDir;}x=(a[sortK]||"").toLowerCase();y=(b[sortK]||"").toLowerCase();return x<y?-sortDir:x>y?sortDir:0;});}
+  document.querySelectorAll(".car").forEach(function(c){c.textContent="";});if(sortK){var th=hr.querySelector('th[data-k="'+sortK+'"]');if(th)th.querySelector(".car").textContent=sortDir===-1?"▼":"▲";}
+  var tb=$("#rtb");tb.innerHTML="";data.forEach(function(r){var tr=document.createElement("tr");tr.innerHTML=COLS.map(function(c){var v=c.k==="tax"?"":esc(r[c.k]);var clr=c.k==="pay"?"color:var(--dng);":c.k==="dep"?"color:var(--ok);":c.k==="bal"?"font-weight:500;":"";return '<td style="'+(c.align==="right"?"text-align:right;":"")+clr+(hidden[c.k]?"display:none;":"")+'padding:'+pad+'px 10px;" data-col="'+c.k+'">'+v+'</td>';}).join("");tb.appendChild(tr);});}
+function multi(host,opts){var w=document.createElement("div");w.style.position="relative";var b=document.createElement("button");b.style.cssText="width:100%;text-align:left;";b.textContent="All ▾";var p=document.createElement("div");p.className="pop";p.style.cssText="display:none;top:34px;left:0;width:100%;";p.innerHTML=opts.map(function(o){return '<label style="display:flex;gap:6px;padding:2px 0;"><input type="checkbox" checked/> '+o+'</label>';}).join("");b.onclick=function(){p.style.display=p.style.display==="none"?"block":"none";};p.onchange=function(){var n=p.querySelectorAll("input:checked").length;b.textContent=(n===opts.length?"All":n===0?"None":n+" selected")+" ▾";};w.appendChild(b);w.appendChild(p);host.appendChild(w);}
+multi($("#ms-type"),["Expense","Deposit","Bill Payment","Check","Journal","Transfer"]);
+multi($("#ms-rec"),["Cleared","Reconciled","Not cleared"]);
+var cd=[["m","Memo"],["c","Class"],["tax","Tax"],["l","Location"]];
+$("#rcols").innerHTML=cd.map(function(c){return '<label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" data-k="'+c[0]+'" checked/> '+c[1]+'</label>';}).join("");
+$("#rcols").onchange=function(e){var k=e.target.dataset.k;hidden[k]=!e.target.checked;cg.querySelector('col[data-k="'+k+'"]').style.display=e.target.checked?"":"none";hr.querySelector('th[data-k="'+k+'"]').style.display=e.target.checked?"":"none";render();};
+[50,75,100,200,300].forEach(function(n){var b=document.createElement("button");b.textContent=n;if(n===50)b.className="sel";b.onclick=function(){document.querySelectorAll("#rpsize button").forEach(function(x){x.className="";});b.className="sel";$("#rpg").textContent="Showing 1–"+Math.min(n,6);};$("#rpsize").appendChild(b);});
+["Cozy","Compact"].forEach(function(d){var b=document.createElement("button");b.textContent=d;if(d==="Cozy")b.className="sel";b.onclick=function(){pad=d==="Cozy"?9:4;document.querySelectorAll("#rdens button").forEach(function(x){x.className="";});b.className="sel";render();};$("#rdens").appendChild(b);});
+$("#btnFilter").onclick=function(){var f=$("#fpanel");f.style.display=f.style.display==="none"||!f.style.display?"block":"none";};
+$("#btnClear").onclick=function(){$("#fpanel").style.display="none";};
+$("#rGear").onclick=function(){var g=$("#rgearp");g.style.display=g.style.display==="none"?"block":"none";};
+render();
+</script></body></html>

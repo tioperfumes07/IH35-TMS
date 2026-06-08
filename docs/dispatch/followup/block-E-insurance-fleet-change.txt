@@ -1,0 +1,21 @@
+Block E (follow-up) — PHASE <add tracker phase> / TASK <add tracker row, real ID> — Insurance mid-term fleet add / remove + proration
+RBC TARGET: insurance module backend + frontend; bills via createBill (apps/backend/src/accounting/bills.service.ts:483)
+DEPENDS: Block 5 merged (insurance creator + POST /api/v1/insurance/policies/with-schedule).
+MODEL: Opus 4.8 thinking-high (financial — adjusts bills / premium).
+
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+WHY: add or remove a unit on an ACTIVE policy mid-term, with premium prorated for the remaining days of the term. Adding a truck increases premium for remaining days; removing one credits the unused portion.
+
+LANE LOCK: insurance module only. Call createBill, do NOT modify it. Forbidden: detention, driver-finance, sidebar-config, accounting internals.
+
+RESPOND-BEFORE-CODE: post (1) the proration formula (per-unit daily rate x remaining days, day-count basis), (2) how an add bills (new prorated charge via createBill) vs how a remove credits (separate credit line — per VQ6, a credit/refund is its own line, never a negative premium), (3) the endpoint, (4) any additive column (e.g. policy_unit.effective_from / removed_on) + its migration grants. WAIT for Jorge GO.
+
+SCOPE:
+- Add unit: insert policy_unit row (effective_from = change date); compute prorated premium for remaining term; create ONE prorated bill via createBill (idempotency-keyed, QBO outbox).
+- Remove unit: set policy_unit.removed_on = change date; compute unused-portion credit; record as a separate credit line (not a negative premium), per VQ6.
+- All money via existing accounting service functions only. No deletes — removal is a dated state change.
+
+ACCEPT: proration math correct to the day; add creates a prorated bill, remove records a credit line; idempotent on retry; policy_unit history preserved; RLS isolation test; vitest + tsc -b green; CI green (incl. Block A schema-GRANT gate if any column added).
+
+PAUSE: after RESPOND-BEFORE-CODE, before code — wait for Jorge GO. Squash-merge holds for explicit GO.

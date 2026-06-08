@@ -1,0 +1,27 @@
+{
+  "block_id": "BLOCK-E-INSURANCE-FLEET",
+  "gap": "BLOCK-E",
+  "branch": "feature/block-e-insurance-fleet",
+  "phase": "GAP-HIGH",
+  "task": "Insurance Fleet Add/Remove — add/remove trucks/trailers from an active policy mid-term. POST /insurance/policies/:id/units is idempotent on asset_id (insert/reactivate) and logs a pro-rata premium delta; DELETE /insurance/policies/:id/units/:unitId soft-deletes (removed_at) and logs a pro-rata premium credit. Both deltas/credits are posted ONLY via the existing accounting createJournalEntry().",
+  "financial_rule": "NO NEW FINANCIAL CODE — pro-rata premium movements are posted exclusively through createJournalEntry() from apps/backend/src/accounting/journal-entries.service.ts. policy-unit-fleet.service.ts only computes cents + selects two active GL accounts.",
+  "runtime_path": "src",
+  "allowed_files": [
+    ".block-ready/BLOCK-E-INSURANCE-FLEET.json",
+    "db/migrations/202606072330_insurance_policy_units_fleet.sql",
+    "apps/backend/src/insurance/policy.routes.ts",
+    "apps/backend/src/insurance/policy-unit-fleet.service.ts",
+    "apps/backend/src/insurance/policy-unit-fleet.service.test.ts",
+    "apps/backend/src/insurance/policy-unit-fleet.routes.test.ts"
+  ],
+  "db_required": true,
+  "guard_required": false,
+  "acceptance": [
+    "migration 202606072330 applied — insurance.policy_unit.removed_at column + idempotent grants (ih35_app)",
+    "POST /api/v1/insurance/policies/:id/units idempotent on asset_id (insert/reactivate, no double-charge) + pro-rata premium delta via createJournalEntry",
+    "DELETE /api/v1/insurance/policies/:id/units/:unitId soft-deletes (removed_at) + pro-rata premium credit via createJournalEntry",
+    "Idempotency-Key enforced (existing REQUIRED_MATCHERS /insurance/policies(/|$) already covers /units sub-routes)",
+    "all queries RLS-scoped on tenant_id; SQL uses ih35_app role",
+    "CI gates: build:backend, frontend tsc, vitest pass"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "block_id": "GAP-41",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap41",
+  "branch": "feature/gap-41",
+  "phase": "GAP-MEDIUM",
+  "task": "9 Reports Hub categories with hover-dropdown WF-061",
+  "classification": "OVERLAP",
+  "allowed_files": [
+    ".block-ready/GAP-41.json",
+    "apps/frontend/src/pages/reports/ReportsHub.tsx",
+    "apps/frontend/src/components/reports/ReportCategoryHoverNav.tsx",
+    "apps/frontend/src/components/reports/ReportCard.tsx",
+    "apps/frontend/src/pages/reports/categories/ops-dispatch.tsx",
+    "apps/frontend/src/pages/reports/categories/driver-perf.tsx",
+    "apps/frontend/src/pages/reports/categories/equipment.tsx",
+    "apps/frontend/src/pages/reports/categories/safety.tsx",
+    "apps/frontend/src/pages/reports/categories/customers.tsx",
+    "apps/frontend/src/pages/reports/categories/vendors.tsx",
+    "apps/frontend/src/pages/reports/categories/accounting.tsx",
+    "apps/frontend/src/pages/reports/categories/tax-reg.tsx",
+    "apps/frontend/src/pages/reports/categories/multi-company.tsx",
+    "apps/backend/src/reports/categories/category-catalog.ts",
+    "apps/backend/src/reports/categories/routes.ts",
+    "apps/backend/src/reports/categories/__tests__/category-catalog.test.ts",
+    "scripts/verify-reports-hub-9-categories.mjs",
+    "docs/specs/gap-41-reports-hub-9-categories.md",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/pages/reports/ReportsHome.tsx",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:reports-hub-9-categories"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}

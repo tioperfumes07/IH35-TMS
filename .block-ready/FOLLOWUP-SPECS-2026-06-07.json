@@ -1,0 +1,24 @@
+{
+  "block_id": "FOLLOWUP-SPECS-2026-06-07",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-followup-specs",
+  "branch": "docs/followup-block-specs",
+  "phase": "docs",
+  "task": "Follow-up block specs from June 6-7 sprint: insurance renewals, deduction cap, detention notifications, CI fixes, and Driver Hub extensions.",
+  "allowed_files": [
+    ".block-ready/FOLLOWUP-SPECS-2026-06-07.json",
+    "docs/dispatch/followup/README.md",
+    "docs/dispatch/followup/00-INDEX.txt",
+    "docs/dispatch/followup/HOUSE-RULES.txt",
+    "docs/dispatch/followup/block-1-order-correction.txt",
+    "docs/dispatch/followup/block-7-driver-hub-requests.txt",
+    "docs/dispatch/followup/block-C-deduction-cap.txt",
+    "docs/dispatch/followup/block-D-insurance-renewal.txt",
+    "docs/dispatch/followup/block-E-insurance-fleet-change.txt",
+    "docs/dispatch/followup/block-F-insurance-cancellation.txt",
+    "docs/dispatch/followup/block-G-insurance-COI.txt",
+    "docs/dispatch/followup/block-H-detention-notify.txt",
+    "docs/dispatch/followup/block-I-ci-dist-fix.txt",
+    "docs/dispatch/followup/block-J-master-data-grant-verify.txt"
+  ]
+}

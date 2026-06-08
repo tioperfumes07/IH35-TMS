@@ -1,0 +1,30 @@
+{
+  "block_id": "GAP-39",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap39",
+  "branch": "feature/gap-39-geofence-state-machine",
+  "phase": "GAP-HIGH",
+  "task": "G17 Geofencing full backend state machine",
+  "allowed_files": [
+    ".block-ready/GAP-39.json",
+    "db/migrations/202606071500_geofence_state_transitions.sql",
+    "apps/backend/src/integrations/samsara/geofences/state-machine/states.ts",
+    "apps/backend/src/integrations/samsara/geofences/state-machine/engine.ts",
+    "apps/backend/src/integrations/samsara/geofences/state-machine/transitions.service.ts",
+    "apps/backend/src/integrations/samsara/geofences/state-machine/routes.ts",
+    "apps/backend/src/integrations/samsara/geofences/state-machine/__tests__/engine.test.ts",
+    "apps/backend/src/integrations/samsara/geofences/state-machine/__tests__/transitions.test.ts",
+    "apps/backend/src/dispatch/geofences/load-geofence-binding.service.ts",
+    "apps/backend/src/jobs/geofence-state-watcher.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-geofence-state-machine.mjs",
+    "docs/specs/gap-39-geofence-state-machine.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:geofence-state-machine"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}

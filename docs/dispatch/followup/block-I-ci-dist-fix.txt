@@ -1,0 +1,18 @@
+Block I (follow-up) — PHASE 7 STABILIZATION / TASK <add tracker row, real ID> — CI-infra fix: verify:no-duplicate-routes dist/ availability
+RBC TARGET: CI workflow + scripts/verify-no-duplicate-routes (the check that fails with "dist root not found: dist")
+DEPENDS: none. Surfaced by PR #680. Standalone CI-infra block.
+MODEL: Sonnet 4.6 medium (CI/tooling). NOTE: touches a shared CI workflow — run this on its OWN with no other lane editing CI at the same time.
+
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+WHY: verify:no-duplicate-routes requires a built dist/ that does not exist in fresh CI clones/worktrees, so it fails on every PR regardless of route changes. That noise lets a real route collision hide. Fix the gate so it runs against a real build (or runs from source), turning it back into a true guard.
+
+RESPOND-BEFORE-CODE: post (1) root cause (does the check read built output, and is the build step missing/ordered after it?), (2) the fix option chosen — either (a) add/ensure a frontend build step BEFORE this check in CI, or (b) make the check read route definitions from source instead of dist, (c) gate the check to run only when dist exists AND ensure dist is built; recommend one with reasoning, (3) proof it then PASSES on main and FAILS on a deliberately-colliding test route. WAIT for Jorge GO.
+
+SCOPE:
+- Make verify:no-duplicate-routes deterministic in CI without a pre-existing dist/.
+- Add a tiny self-test (a known-duplicate fixture) so the guard provably catches collisions.
+
+ACCEPT: check passes on a routes-clean PR with no manual dist/, fails on an injected duplicate route, green across the matrix; no other CI gate altered.
+
+PAUSE: after RESPOND-BEFORE-CODE, before code — wait for Jorge GO. Squash-merge holds for explicit GO.

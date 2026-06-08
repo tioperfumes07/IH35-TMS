@@ -1,0 +1,31 @@
+{
+  "block_id": "BLOCK7-DRIVER-HUB-REQUESTS",
+  "branch": "feature/block7-driver-hub-requests",
+  "phase": "BLOCK",
+  "task": "Driver Hub Requests — Manager/Owner approve/deny cash advance requests; approve creates a settlement deduction via createSettlementDeduction()",
+  "classification": "ADDITIVE",
+  "runtime_path": "src",
+  "guard_required": false,
+  "extra_gates": [],
+  "depends_on": ["PREREQ-B-SETTLEMENT-DEDUCTION-SVC"],
+  "allowed_files": [
+    ".block-ready/BLOCK7-DRIVER-HUB-REQUESTS.json",
+    "apps/backend/src/cash-advances/driver-hub-requests.service.ts",
+    "apps/backend/src/cash-advances/driver-hub-requests.routes.ts",
+    "apps/backend/src/cash-advances/__tests__/driver-hub-requests.service.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/driverHubRequests.ts",
+    "apps/frontend/src/pages/home/DriverHubPage.tsx"
+  ],
+  "table": "driver_finance.cash_advance_requests",
+  "db_required": false,
+  "migration_required": false,
+  "design": {
+    "recovery_model": "driver_finance.driver_settlement_deductions (one-time, escrow-style) via createSettlementDeduction()",
+    "rbac": ["Owner", "Administrator", "Manager"],
+    "double_approve_guard": "cash_advance_requests.status pending/under_review -> approved/denied under FOR UPDATE (mirrors approvePendingDeduction escrow pattern)",
+    "no_raw_sql_deduction_inserts": "approve path inserts the deduction ONLY through createSettlementDeduction() (sourceType=cash_advance_repayment, no sourcePendingId)"
+  },
+  "lane_lock": "apps/backend/src/cash-advances/ + Driver Hub frontend only; no accounting/billing/detention files",
+  "note": "Imports (read-only) createSettlementDeduction from driver-finance/deductions.service.ts merged in PR #683. Existing office approve flow in driver-finance is left untouched; both flows share the same pending->approved status guard so a request can be actioned only once across either surface."
+}

@@ -1,0 +1,27 @@
+Block 7 of M — PHASE <tracker phase> / TASK <tracker task-ID> — Driver Hub Requests: approve/deny -> settlement deduction
+TARGET: https://github.com/tioperfumes07/IH35-TMS/pull/<new>  (Driver Hub Requests pane + driver-finance approve path)
+DEPENDS: Prereq B merged (createSettlementDeduction). Block 1 #680 merged (Driver Hub route live).
+MODEL: Opus 4.8 thinking-high (financial — approval posts a real deduction).
+
+STANDING ORDERS: foreground only, no subagents; no retries — STOP and paste the exact error; live updates every 5 min with CST/Laredo timestamp + real measured data, no guesses; confirm worktree pwd, git status, git log, git rev-parse HEAD; show diff --staged --stat before commit; stop on anything unexpected.
+
+WHY: Driver Hub Requests queue lets an operator approve/deny a driver cash-advance request; approval must create the corresponding settlement deduction through the locked service, with no path to double-post.
+
+LANE LOCK: Driver Hub Requests UI + the approve/deny handler only. CALL createSettlementDeduction — do NOT reimplement deduction logic, do NOT add new financial code. Forbidden: insurance, detention, sidebar-config, accounting internals, createBill.
+
+LOCKED DECISIONS (from session):
+- Approval posts via createSettlementDeduction(sourcePendingId) ONLY (escrow-only param; FK to escrow_deductions_pending).
+- Double-approve protection = caller status guard pending -> approved (escrow approvePendingDeduction pattern); the request row flips to approved in the same tx, so a second approve is a no-op.
+- Deny = status -> denied, no financial write. Both transitions audited.
+
+RESPOND-BEFORE-CODE (CURSOR-PERMANENT-RULES RULE 6): list the approve/deny handler shape, the status-guard tx, the audit event names, and confirm createSettlementDeduction is called (not re-implemented). WAIT for Jorge GO.
+
+SCOPE:
+- Requests queue: pending cash-advance requests with approve / deny.
+- Approve (one tx): guard request.status = pending; flip to approved; call createSettlementDeduction(sourcePendingId); audit.
+- Deny (one tx): guard pending; flip to denied; audit; no money.
+- Idempotent: re-approve or re-deny on a non-pending row is a no-op.
+
+ACCEPT: approve creates exactly one deduction via the service; second approve = no-op (no double-post); deny posts nothing; RLS scoped to operating company; vitest covers approve/deny/double-approve; tsc -b + CI green.
+
+PAUSE: after RESPOND-BEFORE-CODE, before code — wait for Jorge GO. Squash-merge holds for explicit GO.
