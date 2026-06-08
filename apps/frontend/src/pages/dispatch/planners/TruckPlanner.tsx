@@ -118,7 +118,7 @@ export function TruckPlanner() {
       {isError ? <div className="text-sm text-red-700">Failed to load truck planner grid.</div> : null}
 
       {!isLoading && !isError ? (
-        <div className="max-w-[calc(100vw-48px)] overflow-auto rounded border border-gray-200 bg-white">
+          <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded border border-gray-200 bg-white">
           <table className="min-w-max border-collapse text-[10px]">
             <thead>
               <tr>
