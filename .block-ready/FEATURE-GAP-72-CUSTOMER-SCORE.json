@@ -1,0 +1,32 @@
+{
+  "block_id": "GAP-72",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap72",
+  "branch": "feature/gap-72-customer-score",
+  "phase": "GAP-HIGH",
+  "task": "Customer Relationship Score + Health",
+  "allowed_files": [
+    ".block-ready/GAP-72.json",
+    ".block-ready.json",
+    "db/migrations/202606080221_customer_relationship_scores.sql",
+    "apps/backend/src/customers/relationship-score/scorer.service.ts",
+    "apps/backend/src/customers/relationship-score/routes.ts",
+    "apps/backend/src/customers/relationship-score/__tests__/scorer.test.ts",
+    "apps/backend/src/jobs/customer-relationship-scorer.ts",
+    "apps/backend/src/mdata/customers.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/components/customers/CustomerRelationshipScore.tsx",
+    "apps/frontend/src/pages/CustomerDetail.tsx",
+    "apps/frontend/src/pages/customers/CustomersListView.tsx",
+    "apps/frontend/src/api/mdata.ts",
+    "scripts/verify-customer-relationship-score.mjs",
+    "docs/specs/gap-72-customer-relationship-score.md",
+    "package.json",
+    ".github/workflows/ci.yml"
+  ],
+  "extra_gates": [
+    "verify:customer-relationship-score"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
