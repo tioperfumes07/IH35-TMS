@@ -18,6 +18,8 @@
     "apps/frontend/src/components/dispatch/EquipmentTransferModal.tsx",
     "apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx",
     "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/dispatch/DispatchSubnav.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
     "apps/driver-pwa/src/components/equipment/IncomingTransferRequest.tsx",
     "scripts/verify-equipment-transfer-dual-confirm.mjs",
     "docs/specs/gap-37-equipment-dual-confirm-transfer.md",

@@ -192,6 +192,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Loads Planner", to: "/dispatch/planners/loads" },
         { label: "Detention Board", to: "/dispatch/detention" },
         { label: "OCR Queue", to: "/dispatch/ocr-queue" },
+        { label: "Equipment Transfers", to: "/dispatch/equipment-transfers" },
         { label: "Customer ETA Notify", to: "/dispatch/notify-preferences" },
         { label: "POD Review + BOL", to: "/dispatch/pod-review" },
         { label: "Dispatch Settings", to: "/dispatch/settings" },
