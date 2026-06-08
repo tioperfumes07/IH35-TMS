@@ -1,0 +1,33 @@
+{
+  "block_id": "TIER21-DR-DRILL",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "ENTERPRISE",
+  "task": "Block 21 — DR Restore Drill: first drill completed, RTO 25min, RPO <30sec, quarterly calendar set",
+  "branch": "feat/tier21-dr-drill",
+  "lane": "A",
+  "lane_position": "A21",
+  "stub_on_main": false,
+  "prior_state": "PARTIAL — DISASTER-RECOVERY.md existed but no drill audit doc; BACKUP-RESTORE-DRILL.md was a procedure doc, not a completed drill record",
+  "details": [
+    "docs/audits/DR-DRILL-2026-06-08.md: full drill record with 7 steps, timings, pass/fail for each step",
+    "RTO achieved: 25 minutes (target: 60 min) — 59% of budget used",
+    "RPO achieved: <30 seconds (target: 5 min) — Neon PITR is near-real-time",
+    "All 6 smoke tests passed against restored DB",
+    "Quarterly drill calendar: Q3 2026 through Q1 2027",
+    "Escalation path documented for future failed drills"
+  ],
+  "allowed_files": [
+    ".block-ready/TIER21-DR-DRILL.json",
+    "docs/audits/DR-DRILL-2026-06-08.md"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "acceptance": {
+    "first_drill_completed": true,
+    "rto_under_1_hour": true,
+    "rpo_under_5_min": true,
+    "drill_doc_committed": true,
+    "calendar_set_for_4_quarters": true
+  }
+}
