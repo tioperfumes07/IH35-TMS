@@ -1,0 +1,25 @@
+{
+  "block_id": "CLOSURE-17-ON-HOLD-TRIAGE",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-closure17",
+  "branch": "feat/closure-17-on-hold-triage",
+  "phase": "CLOSURE",
+  "task": "ON HOLD blocks triage — A23-11, A23-14, B19, B20 scope review",
+  "agent": "1",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/CLOSURE-17-ON-HOLD-TRIAGE.json",
+    "docs/decisions/ON-HOLD-TRIAGE-2026-06-05.md",
+    "docs/decisions/A23-11-decision.md",
+    "docs/decisions/A23-14-decision.md",
+    "docs/decisions/B19-decision.md",
+    "docs/decisions/B20-decision.md",
+    "scripts/verify-closure-17-on-hold-triage.mjs",
+    "package.json"
+  ],
+  "extra_gates": [
+    "verify:closure-17-on-hold-triage"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
