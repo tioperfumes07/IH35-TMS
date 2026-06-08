@@ -7,6 +7,8 @@ import {
   INSURANCE_COVERAGE_TYPES,
   INSURANCE_POLICY_STATUSES,
 } from "./policy.shared.js";
+import { computeProRataPremiumDeltaCents, recordFleetPremiumJournalEntry } from "./policy-unit-fleet.service.js";
+import { createPolicyBillSchedule } from "./policy-bill-schedule.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -77,6 +79,21 @@ const updatePolicyUnitSchema = z
     insured_value_cents: z.number().int().nonnegative().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
+
+const policyUnitParamsSchema = z.object({
+  policy_id: z.string().uuid(),
+  unit_id: z.string().uuid(),
+});
+
+const renewPolicySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  policy_number: z.string().trim().min(1).max(120),
+  effective_date: z.string(),
+  expiry_date: z.string(),
+  total_premium_cents: z.number().int().nonnegative().default(0),
+  down_payment_cents: z.number().int().nonnegative().default(0),
+  installment_count: z.number().int().nonnegative().default(0),
+});
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -386,6 +403,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     return reply.code(204).send();
   });
 
+  // Block E — fleet add: idempotent, pro-rata premium delta via recordFleetPremiumJournalEntry
   app.post("/api/v1/insurance/policies/:policy_id/units", async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
@@ -397,15 +415,17 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const created = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+      type PolicyRow = { id: string; total_premium_cents: string; effective_date: string; expiry_date: string };
       const policyRes = await client.query(
         `
-          SELECT id::text
+          SELECT id::text, total_premium_cents::bigint, effective_date::text, expiry_date::text
           FROM insurance.policy
           WHERE tenant_id = $1::uuid AND id = $2::uuid
         `,
         [body.operating_company_id, params.data.policy_id]
       );
       if (!policyRes.rows[0]) return { kind: "policy_not_found" as const };
+      const policy = policyRes.rows[0] as PolicyRow;
 
       const assetRes = await client.query(
         `
@@ -417,28 +437,232 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       );
       if (!assetRes.rows[0]) return { kind: "asset_not_found" as const };
 
-      const result = await client.query(
+      type ExistingUnit = { id: string; is_active: boolean };
+      const existingRes = await client.query(
         `
-          INSERT INTO insurance.policy_unit (
-            tenant_id, policy_id, asset_id, insured_value_cents
-          )
-          VALUES ($1::uuid, $2::uuid, $3::uuid, $4)
-          RETURNING ${policyUnitSelectColumns()}
+          SELECT id::text, is_active
+          FROM insurance.policy_unit
+          WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND asset_id = $3::uuid
+          FOR UPDATE
         `,
-        [body.operating_company_id, params.data.policy_id, body.asset_id, body.insured_value_cents]
+        [body.operating_company_id, params.data.policy_id, body.asset_id]
       );
+      const existing = existingRes.rows[0] as ExistingUnit | undefined;
+
+      if (existing?.is_active) {
+        return { kind: "ok_idempotent" as const, row: { id: existing.id, premium_delta_cents: 0, premium_journal_entry_id: null } };
+      }
+
+      const countRes = await client.query(
+        `SELECT count(*)::int AS count FROM insurance.policy_unit WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND removed_at IS NULL`,
+        [body.operating_company_id, params.data.policy_id]
+      );
+      const activeCount = Number((countRes.rows[0] as { count?: number } | undefined)?.count ?? 0);
+
+      let unitRow: Record<string, unknown>;
+      if (existing && !existing.is_active) {
+        const upd = await client.query(
+          `UPDATE insurance.policy_unit SET is_active = true, removed_at = NULL, insured_value_cents = $4, updated_at = now()
+           WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND id = $3::uuid
+           RETURNING id::text, policy_id::text, asset_id::text, insured_value_cents::bigint, removed_at::text, created_at::text, updated_at::text`,
+          [body.operating_company_id, params.data.policy_id, existing.id, body.insured_value_cents]
+        );
+        unitRow = upd.rows[0] as Record<string, unknown>;
+      } else {
+        const ins = await client.query(
+          `INSERT INTO insurance.policy_unit (tenant_id, policy_id, asset_id, insured_value_cents)
+           VALUES ($1::uuid, $2::uuid, $3::uuid, $4)
+           RETURNING id::text, policy_id::text, asset_id::text, insured_value_cents::bigint, removed_at::text, created_at::text, updated_at::text`,
+          [body.operating_company_id, params.data.policy_id, body.asset_id, body.insured_value_cents]
+        );
+        unitRow = ins.rows[0] as Record<string, unknown>;
+      }
+
       await appendCrudAudit(client, user.uuid, "insurance.policy_unit.created", {
-        resource_id: result.rows[0]?.id,
+        resource_id: unitRow.id,
         operating_company_id: body.operating_company_id,
         policy_id: params.data.policy_id,
         asset_id: body.asset_id,
       });
-      return { kind: "ok" as const, row: result.rows[0] };
+
+      const premiumDeltaCents = computeProRataPremiumDeltaCents({
+        totalPremiumCents: Number(policy.total_premium_cents),
+        effectiveDate: policy.effective_date,
+        expiryDate: policy.expiry_date,
+        unitCount: activeCount + 1,
+      });
+
+      return { kind: "ok" as const, unitRow, premiumDeltaCents, policy };
     });
 
     if (created.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
     if (created.kind === "asset_not_found") return reply.code(404).send({ error: "asset_not_found" });
-    return reply.code(201).send(created.row);
+    if (created.kind === "ok_idempotent") return reply.code(201).send(created.row);
+
+    const jeId = await recordFleetPremiumJournalEntry({
+      actorUserId: user.uuid,
+      actorRole: user.role,
+      operatingCompanyId: body.operating_company_id,
+      policyId: params.data.policy_id,
+      assetId: body.asset_id,
+      direction: "add",
+      amountCents: created.premiumDeltaCents,
+    });
+
+    return reply.code(201).send({
+      ...created.unitRow,
+      premium_delta_cents: created.premiumDeltaCents,
+      premium_journal_entry_id: jeId,
+    });
+  });
+
+  // Block E — fleet remove: soft-delete + pro-rata premium credit
+  app.delete("/api/v1/insurance/policies/:policy_id/units/:unit_id", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = policyUnitParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+
+    const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      type PolicyRow = { id: string; total_premium_cents: string; effective_date: string; expiry_date: string };
+      const policyRes = await client.query(
+        `SELECT id::text, total_premium_cents::bigint, effective_date::text, expiry_date::text
+         FROM insurance.policy WHERE tenant_id = $1::uuid AND id = $2::uuid`,
+        [query.data.operating_company_id, params.data.policy_id]
+      );
+      const policy = policyRes.rows[0] as PolicyRow | undefined;
+
+      type UnitRow = { id: string; asset_id: string; is_active: boolean };
+      const unitRes = await client.query(
+        `SELECT id::text, asset_id::text, is_active
+         FROM insurance.policy_unit
+         WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND id = $3::uuid
+         FOR UPDATE`,
+        [query.data.operating_company_id, params.data.policy_id, params.data.unit_id]
+      );
+      const unit = unitRes.rows[0] as UnitRow | undefined;
+      if (!unit) return { kind: "not_found" as const };
+      if (!unit.is_active) return { kind: "ok_already_removed" as const };
+
+      const countRes = await client.query(
+        `SELECT count(*)::int AS count FROM insurance.policy_unit WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND removed_at IS NULL`,
+        [query.data.operating_company_id, params.data.policy_id]
+      );
+      const activeCount = Math.max(1, Number((countRes.rows[0] as { count?: number } | undefined)?.count ?? 1));
+
+      await client.query(
+        `UPDATE insurance.policy_unit SET removed_at = now(), is_active = false, updated_at = now()
+         WHERE tenant_id = $1::uuid AND id = $2::uuid`,
+        [query.data.operating_company_id, unit.id]
+      );
+
+      await appendCrudAudit(client, user.uuid, "insurance.policy_unit.removed", {
+        resource_id: unit.id,
+        operating_company_id: query.data.operating_company_id,
+        policy_id: params.data.policy_id,
+      });
+
+      const premiumCreditCents = policy
+        ? computeProRataPremiumDeltaCents({
+            totalPremiumCents: Number(policy.total_premium_cents),
+            effectiveDate: policy.effective_date,
+            expiryDate: policy.expiry_date,
+            unitCount: activeCount,
+          })
+        : 0;
+
+      return { kind: "ok" as const, assetId: unit.asset_id, premiumCreditCents };
+    });
+
+    if (result.kind === "not_found") return reply.code(404).send({ error: "policy_unit_not_found" });
+    if (result.kind === "ok_already_removed") return reply.code(204).send();
+
+    await recordFleetPremiumJournalEntry({
+      actorUserId: user.uuid,
+      actorRole: user.role,
+      operatingCompanyId: query.data.operating_company_id,
+      policyId: params.data.policy_id,
+      assetId: result.assetId,
+      direction: "remove",
+      amountCents: result.premiumCreditCents,
+    });
+
+    return reply.code(204).send();
+  });
+
+  // Policy renewal: clone source policy + units, regenerate bill schedule
+  app.post("/api/v1/insurance/policies/:policy_id/renew", async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = policyIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+    const parsed = renewPolicySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const body = parsed.data;
+
+    const result = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
+      const insertRes = await client.query(
+        `INSERT INTO insurance.policy (
+           tenant_id, renewed_from_policy_id, policy_number, coverage_type, coverage_type_id,
+           effective_date, expiry_date, total_premium_cents, down_payment_cents, installment_count,
+           due_day, pay_day, late_fee_pct, insurer_email, agent_contact, status, vendor_id, insurer_name
+         )
+         SELECT $1::uuid, $2::uuid, $3, coverage_type, coverage_type_id,
+           $4::date, $5::date, $6, $7, $8,
+           due_day, pay_day, late_fee_pct, insurer_email, agent_contact, 'pending', vendor_id, insurer_name
+         FROM insurance.policy
+         WHERE tenant_id = $1::uuid AND id = $2::uuid
+         RETURNING ${policySelectColumns()}, renewed_from_policy_id::text`,
+        [
+          body.operating_company_id,
+          params.data.policy_id,
+          body.policy_number,
+          body.effective_date,
+          body.expiry_date,
+          body.total_premium_cents,
+          body.down_payment_cents,
+          body.installment_count,
+        ]
+      );
+      const newPolicy = insertRes.rows[0] as Record<string, unknown> | undefined;
+      if (!newPolicy) return { kind: "policy_not_found" as const };
+
+      await client.query(
+        `INSERT INTO insurance.policy_unit (tenant_id, policy_id, asset_id, insured_value_cents)
+         SELECT $1::uuid, $2::uuid, asset_id, insured_value_cents
+         FROM insurance.policy_unit
+         WHERE tenant_id = $1::uuid AND policy_id = $3::uuid AND removed_at IS NULL`,
+        [body.operating_company_id, newPolicy.id, params.data.policy_id]
+      );
+
+      await appendCrudAudit(client, user.uuid, "insurance.policy.renewed", {
+        resource_id: newPolicy.id,
+        operating_company_id: body.operating_company_id,
+        renewed_from_policy_id: params.data.policy_id,
+      });
+
+      return { kind: "ok" as const, newPolicy };
+    });
+
+    if (result.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
+
+    const newPolicyId = String(result.newPolicy.id);
+
+    if (body.installment_count > 0) {
+      try {
+        await withCurrentUser(user.uuid, async (client) => {
+          await createPolicyBillSchedule(newPolicyId, user.uuid, client);
+        });
+      } catch {
+        return reply.code(502).send({ error: "bill_schedule_failed" });
+      }
+    }
+
+    return reply.code(201).send(result.newPolicy);
   });
 
   app.patch("/api/v1/insurance/policy-units/:id", async (req, reply) => {

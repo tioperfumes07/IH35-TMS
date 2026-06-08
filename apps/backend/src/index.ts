@@ -64,6 +64,7 @@ import { registerDispatchArchTabsRoutes } from "./dispatch/arch-tabs.routes.js";
 import { registerDispatchAlertsRoutes } from "./dispatch/alerts.routes.js";
 import { registerDispatchPlannerRoutes } from "./dispatch/planner.routes.js";
 import { registerDispatchDetentionRoutes } from "./dispatch/detention.routes.js";
+import { registerLayoverRoutes } from "./dispatch/layovers/routes.js";
 import { registerDispatchOcrIntakeRoutes } from "./dispatch/ocr-intake.routes.js";
 import { registerDispatchCustomerNotifyRoutes } from "./dispatch/customer-notify.routes.js";
 import { registerDispatchPodBolRoutes } from "./dispatch/pod.routes.js";
@@ -348,6 +349,10 @@ import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js"
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
 import { registerBookingGapRoutes } from "./dispatch/analytics/booking-gap.routes.js";
 import { initializeBookingGapAggregatorWorker, stopBookingGapAggregatorWorker } from "./jobs/booking-gap-aggregator-worker.js";
+import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-arrival.routes.js";
+import { initializeLateArrivalAggregatorWorker } from "./jobs/late-arrival-aggregator-worker.js";
+import { registerPreDispatchValidationRoutes } from "./dispatch/validation/pre-dispatch.routes.js";
+import { registerDispatchDetentionApprovalRoutes } from "./dispatch/detention-approval.routes.js";
 
 type CorsOriginValue = string | boolean | RegExp | Array<string | boolean | RegExp>;
 
@@ -596,6 +601,10 @@ async function main() {
   await registerDispatchAlertsRoutes(app);
   await registerDispatchPlannerRoutes(app);
   await registerDispatchDetentionRoutes(app);
+  await registerLayoverRoutes(app);
+  await registerLateArrivalAnalyticsRoutes(app);
+  await registerPreDispatchValidationRoutes(app);
+  await registerDispatchDetentionApprovalRoutes(app);
   await registerDispatchOcrIntakeRoutes(app);
   await registerDispatchCustomerNotifyRoutes(app);
   await registerDispatchPodBolRoutes(app);
@@ -1055,6 +1064,13 @@ async function main() {
     app.log.info("[STARTUP] admin-jobs-worker initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] admin-jobs-worker failed");
+  }
+
+  try {
+    initializeLateArrivalAggregatorWorker(app);
+    app.log.info("[STARTUP] late-arrival aggregator worker initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] late-arrival aggregator worker failed");
   }
 
   try {
