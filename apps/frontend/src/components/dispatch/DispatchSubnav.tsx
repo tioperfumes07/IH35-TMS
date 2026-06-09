@@ -20,8 +20,6 @@ import "../../components/forms/shared/HoverDropdownNav.css";
 type NavChild = { label: string; href: string; badgeKey?: string };
 type NavItem = { label: string; href?: string; badgeKey?: string; children?: readonly NavChild[] };
 
-const EXIT_MS = 150;
-
 const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
   { label: "Load board", href: "/dispatch?view=kanban", badgeKey: "load_board" },
   { label: "Assignments", href: "/dispatch/assignment-history", badgeKey: "assignments" },
@@ -34,6 +32,9 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
   {
     label: "Planning",
     children: [
+      { label: "Driver Planner", href: "/dispatch/planners/driver" },
+      { label: "Truck Planner", href: "/dispatch/planners/truck" },
+      { label: "Loads Planner", href: "/dispatch/planners/loads" },
       { label: "Planner Calendar", href: "/dispatch/planner" },
       { label: "Load Templates", href: "/dispatch/planner?panel=templates", badgeKey: "load_templates" },
       { label: "Unassigned Units", href: "/dispatch?view=overview&panel=unassigned", badgeKey: "unassigned_units" },
@@ -71,6 +72,9 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch/alerts/late-arrivals": "Late",
   "/dispatch/geofencing": "Live Map",
   "/accounting/factoring": "Factoring",
+  "/dispatch/planners/driver": "Driver Planner",
+  "/dispatch/planners/truck": "Truck Planner",
+  "/dispatch/planners/loads": "Loads Planner",
   "/dispatch/planner": "Planner Calendar",
   "/dispatch/planner?panel=templates": "Load Templates",
   "/dispatch?view=overview&panel=unassigned": "Unassigned Units",
@@ -102,6 +106,9 @@ export function dispatchSubNavActiveHref(pathname: string, search: string): stri
     if (pathname === "/dispatch/loads" || view === "list") return "/dispatch?view=list";
     return "/dispatch?view=kanban";
   }
+  if (pathname.startsWith("/dispatch/planners/truck")) return "/dispatch/planners/truck";
+  if (pathname.startsWith("/dispatch/planners/loads")) return "/dispatch/planners/loads";
+  if (pathname.startsWith("/dispatch/planners")) return "/dispatch/planners/driver";
   if (pathname === "/dispatch/planner") {
     return panel === "templates" ? "/dispatch/planner?panel=templates" : "/dispatch/planner";
   }
@@ -161,11 +168,6 @@ function DropdownColumn({
       hideTimer.current = null;
     }
   }, []);
-
-  const scheduleHide = useCallback(() => {
-    clearHide();
-    hideTimer.current = setTimeout(() => setOpen(false), EXIT_MS);
-  }, [clearHide]);
 
   const show = useCallback(() => {
     clearHide();
@@ -235,7 +237,9 @@ function DropdownColumn({
 
   return (
     <li role="none" className="nav-item-with-dropdown">
-      <div onMouseEnter={show} onMouseLeave={scheduleHide}>
+      {/* Click-to-toggle persistent menu (overrides locked-decision #728 hover pattern per Jorge).
+          Opens on click, STAYS open until an item is chosen, an outside click, or Escape. */}
+      <div>
         <button
           ref={btnRef}
           type="button"
@@ -245,6 +249,7 @@ function DropdownColumn({
           aria-controls={menuId}
           className={parentActive ? "active" : undefined}
           id={`${menuId}-trigger`}
+          onClick={() => (open ? setOpen(false) : show())}
           onKeyDown={onButtonKeyDown}
         >
           {item.label}
