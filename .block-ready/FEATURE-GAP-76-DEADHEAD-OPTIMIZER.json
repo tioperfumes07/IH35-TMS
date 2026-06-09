@@ -1,0 +1,30 @@
+{
+  "block_id": "GAP-76",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap76",
+  "branch": "feature/gap-76-deadhead-optimizer",
+  "phase": "GAP-HIGH",
+  "task": "Deadhead mile optimizer \u2014 ranked next-load suggestions",
+  "allowed_files": [
+    ".block-ready/GAP-76.json",
+    ".block-ready.json",
+    "apps/backend/src/dispatch/deadhead/optimizer.service.ts",
+    "apps/backend/src/dispatch/deadhead/routes.ts",
+    "apps/backend/src/dispatch/deadhead/__tests__/optimizer.test.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/components/dispatch/DeadheadOptimizerPanel.tsx",
+    "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    "apps/frontend/src/api/dispatch.ts",
+    "scripts/verify-deadhead-optimizer.mjs",
+    "docs/specs/gap-76-deadhead-optimizer.md",
+    "package.json",
+    ".github/workflows/ci.yml",
+    ".block-ready.agent1.json",
+    ".block-ready/FEATURE-GAP-76-DEADHEAD-OPTIMIZER.json"
+  ],
+  "extra_gates": [
+    "verify:deadhead-optimizer"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
