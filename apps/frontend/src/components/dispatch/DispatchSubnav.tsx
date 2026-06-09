@@ -34,6 +34,9 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
   {
     label: "Planning",
     children: [
+      { label: "Driver Planner", href: "/dispatch/planners/driver" },
+      { label: "Truck Planner", href: "/dispatch/planners/truck" },
+      { label: "Loads Planner", href: "/dispatch/planners/loads" },
       { label: "Planner Calendar", href: "/dispatch/planner" },
       { label: "Load Templates", href: "/dispatch/planner?panel=templates", badgeKey: "load_templates" },
       { label: "Unassigned Units", href: "/dispatch?view=overview&panel=unassigned", badgeKey: "unassigned_units" },
@@ -71,6 +74,9 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch/alerts/late-arrivals": "Late",
   "/dispatch/geofencing": "Live Map",
   "/accounting/factoring": "Factoring",
+  "/dispatch/planners/driver": "Driver Planner",
+  "/dispatch/planners/truck": "Truck Planner",
+  "/dispatch/planners/loads": "Loads Planner",
   "/dispatch/planner": "Planner Calendar",
   "/dispatch/planner?panel=templates": "Load Templates",
   "/dispatch?view=overview&panel=unassigned": "Unassigned Units",
@@ -102,6 +108,9 @@ export function dispatchSubNavActiveHref(pathname: string, search: string): stri
     if (pathname === "/dispatch/loads" || view === "list") return "/dispatch?view=list";
     return "/dispatch?view=kanban";
   }
+  if (pathname.startsWith("/dispatch/planners/truck")) return "/dispatch/planners/truck";
+  if (pathname.startsWith("/dispatch/planners/loads")) return "/dispatch/planners/loads";
+  if (pathname.startsWith("/dispatch/planners")) return "/dispatch/planners/driver";
   if (pathname === "/dispatch/planner") {
     return panel === "templates" ? "/dispatch/planner?panel=templates" : "/dispatch/planner";
   }
