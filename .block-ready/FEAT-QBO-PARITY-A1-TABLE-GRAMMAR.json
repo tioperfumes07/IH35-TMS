@@ -1,0 +1,19 @@
+{
+  "block_id": "FEAT-QBO-PARITY-A1-TABLE-GRAMMAR",
+  "branch": "feat/qbo-parity-a1-table-grammar",
+  "phase": "QBO Parity",
+  "task": "A1 — shared ParityTable grammar (density + gear column-toggle + advanced pager + select/batch). Additive new component; no existing files touched.",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    ".block-ready/FEAT-QBO-PARITY-A1-TABLE-GRAMMAR.json",
+    "apps/frontend/src/components/parity/ParityTable.tsx",
+    "apps/frontend/src/components/parity/ParityTable.test.tsx"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
