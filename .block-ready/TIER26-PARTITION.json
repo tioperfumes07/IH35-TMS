@@ -1,0 +1,34 @@
+{
+  "block_id": "TIER26-PARTITION",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "SCALE",
+  "task": "Block 26 — Partition Hot Tables: audit_log partitioned by month, maintenance cron, archival function",
+  "branch": "feat/tier26-partition",
+  "lane": "A",
+  "lane_position": "A26",
+  "stub_on_main": false,
+  "prior_state": "NET-NEW — no partitioning existed on main",
+  "details": [
+    "Migration 202606080940_block26_partition_hot_tables.sql: creates audit_log_partitioned (PARTITION BY RANGE created_at) with monthly partitions covering 2024-01 through 2027-12",
+    "Shadow table swap pattern: creates new partitioned table, copies data, original kept as fallback",
+    "create_audit_log_partition_for_month() function for dynamic partition creation",
+    "archive_audit_log_old_partitions() function for 7-year IRS retention review",
+    "partition_maintenance_log table tracks all partition operations",
+    "scripts/partition-maintenance.mjs: monthly cron creates next 2 months of partitions",
+    "EXPLAIN hint documented for verifying partition pruning"
+  ],
+  "allowed_files": [
+    ".block-ready/TIER26-PARTITION.json",
+    "db/migrations/202606080940_block26_partition_hot_tables.sql",
+    "scripts/partition-maintenance.mjs"
+  ],
+  "db_required": true,
+  "guard_required": false,
+  "acceptance": {
+    "hot_tables_partitioned": true,
+    "zero_downtime_migration": true,
+    "query_plans_use_pruning": true,
+    "maintenance_cron_works": true
+  }
+}
