@@ -1,0 +1,67 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { ParityTable, type ParityColumn } from "./ParityTable";
+
+type Row = { id: string; name: string; amount: string };
+
+const columns: Array<ParityColumn<Row>> = [
+  { key: "name", label: "Name", sortable: true },
+  { key: "amount", label: "Amount" },
+];
+
+const rows: Row[] = [
+  { id: "1", name: "Alpha", amount: "$10" },
+  { id: "2", name: "Bravo", amount: "$20" },
+];
+
+describe("ParityTable (A1 grammar)", () => {
+  it("renders rows and the 'N–M of TOTAL' pager", () => {
+    render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
+    expect(screen.getByText("Alpha")).toBeInTheDocument();
+    expect(screen.getByText("Bravo")).toBeInTheDocument();
+    expect(screen.getByText("1–2 of 2")).toBeInTheDocument();
+  });
+
+  it("shows the empty state", () => {
+    render(<ParityTable<Row> columns={columns} rows={[]} rowKey={(r) => r.id} emptyText="No records found." />);
+    expect(screen.getByText("No records found.")).toBeInTheDocument();
+  });
+
+  it("gear popover exposes density options and column toggles; hiding a column removes it", () => {
+    render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} />);
+    fireEvent.click(screen.getByLabelText("Table settings"));
+    expect(screen.getByText("Regular")).toBeInTheDocument();
+    expect(screen.getByText("Compact")).toBeInTheDocument();
+    expect(screen.getByText("Ultra compact")).toBeInTheDocument();
+
+    // "Amount" column header visible before toggle.
+    expect(screen.getAllByRole("columnheader").map((th) => th.textContent).join(" ")).toContain("Amount");
+
+    // Uncheck the "Amount" column in the gear column list (column toggles are the only checkboxes here).
+    const amountCheckbox = screen
+      .getAllByRole("checkbox")
+      .find((cb) => cb.closest("label")?.textContent?.includes("Amount"));
+    expect(amountCheckbox).toBeTruthy();
+    fireEvent.click(amountCheckbox as HTMLElement);
+
+    expect(
+      screen.getAllByRole("columnheader").map((th) => th.textContent).join(" "),
+    ).not.toContain("Amount");
+  });
+
+  it("supports selection → batch bar", () => {
+    render(
+      <ParityTable<Row>
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        selectable
+        batchActions={() => <button type="button">Batch edit</button>}
+      />,
+    );
+    const checkboxes = screen.getAllByLabelText("Select row");
+    fireEvent.click(checkboxes[0]);
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    expect(screen.getByText("Batch edit")).toBeInTheDocument();
+  });
+});
