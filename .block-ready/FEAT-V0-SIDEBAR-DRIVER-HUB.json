@@ -1,0 +1,19 @@
+{
+  "block_id": "FEAT-V0-SIDEBAR-DRIVER-HUB",
+  "branch": "feat/v0-sidebar-driver-hub",
+  "phase": "Visuals",
+  "task": "V0 (partial) — add DRIVER HUB sidebar entry adjacent to DRIVERS (additive insert; cash-flow nav deferred to Sidebar-V2). Updates coupled sidebar contract guard.",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    ".block-ready/FEAT-V0-SIDEBAR-DRIVER-HUB.json",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "scripts/verify-sidebar-contract.mjs"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}

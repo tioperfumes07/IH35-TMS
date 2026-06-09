@@ -25,6 +25,7 @@ const LOCKED_ORDER = [
   "fuel",
   "dispatch",
   "drivers",
+  "driver-hub",
   "safety",
   "accounting",
   "insurance",
@@ -71,7 +72,7 @@ const LOCKED_23_TARGET = [
 ];
 
 /** Sidebar ids not yet on main — excluded from additive presence check until their blocks ship. */
-const PENDING_IDS = new Set(["driver-hub", "cash-flow"]);
+const PENDING_IDS = new Set(["cash-flow"]);
 
 const EXPECTED_LENGTH = LOCKED_ORDER.length;
 const EXPECTED_INSURANCE_INDEX = LOCKED_ORDER.indexOf("insurance");
