@@ -1,0 +1,19 @@
+{
+  "block_id": "FEAT-V2-A2-REFERENCE-SELECT",
+  "branch": "feat/v2-a2-reference-select",
+  "phase": "QBO Parity",
+  "task": "A2 keystone — ReferenceSelect: Combobox + always-visible '+ Add new' -> QuickCreateEntityModal (nested-create-returns-selected) + lock-control slot. Additive new component.",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    ".block-ready/FEAT-V2-A2-REFERENCE-SELECT.json",
+    "apps/frontend/src/components/parity/ReferenceSelect.tsx",
+    "apps/frontend/src/components/parity/ReferenceSelect.test.tsx"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
