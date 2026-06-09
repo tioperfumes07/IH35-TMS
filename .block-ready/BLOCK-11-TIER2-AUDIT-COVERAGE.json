@@ -1,0 +1,17 @@
+{
+  "block_id": "BLOCK-11-TIER2-AUDIT-COVERAGE",
+  "branch": "feat/tier11-audit-coverage",
+  "phase": "TIER2-TRUST-HARDEN",
+  "task": "Per-block audit coverage verification and CI guards",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
+  "allowed_files": [
+    ".block-ready/BLOCK-11-TIER2-AUDIT-COVERAGE.json",
+    "scripts/verify-*.mjs",
+    ".github/workflows/ci.yml",
+    ".github/workflows/closure-checks.yml"
+  ],
+  "extra_gates": ["verify:audit-coverage"],
+  "runtime_path": "scripts",
+  "db_required": false,
+  "guard_required": true
+}
