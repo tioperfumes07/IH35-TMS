@@ -1,0 +1,17 @@
+{
+  "block_id": "BLOCK-10-TIER2-RLS-TEST-GATE",
+  "branch": "feat/tier10-rls-test-gate",
+  "phase": "TIER2-TRUST-HARDEN",
+  "task": "Cross-tenant RLS gate verification script with fixture generation",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
+  "allowed_files": [
+    ".block-ready/BLOCK-10-TIER2-RLS-TEST-GATE.json",
+    "scripts/db-verify-rls-cross-tenant-gate.mjs",
+    "scripts/__tests__/verify-rls-cross-tenant-gate.test.mjs",
+    "package.json"
+  ],
+  "extra_gates": ["db:verify:rls-cross-tenant-gate"],
+  "runtime_path": "scripts",
+  "db_required": true,
+  "guard_required": true
+}
