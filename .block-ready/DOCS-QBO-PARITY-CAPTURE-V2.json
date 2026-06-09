@@ -1,0 +1,20 @@
+{
+  "block_id": "DOCS-QBO-PARITY-CAPTURE-V2",
+  "branch": "docs/qbo-parity-capture-v2",
+  "phase": "QBO Parity",
+  "task": "Capture master progress report + QBO-parity v2/v3 specs + Visuals-First specs to repo (docs-only) so nothing is lost.",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    ".block-ready/DOCS-QBO-PARITY-CAPTURE-V2.json",
+    "docs/specs/qbo-parity/MASTER_PROGRESS_REPORT.md",
+    "docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM_v2_v3.md",
+    "docs/specs/qbo-parity/VISUALS_FIRST_V1.md"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
