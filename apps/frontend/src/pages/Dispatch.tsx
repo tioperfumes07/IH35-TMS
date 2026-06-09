@@ -301,6 +301,15 @@ export function DispatchPage({
             >
               Round Trips
             </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              data-testid="dispatch-open-planners"
+              onClick={() => navigate("/dispatch/planners/driver")}
+            >
+              Planner
+            </Button>
             <Button type="button" onClick={() => setNewLoadOpen(true)}>
               + Book Load
             </Button>

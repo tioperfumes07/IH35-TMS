@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as dispatchApi from "../../api/dispatch";
 import { DispatchPage } from "../Dispatch";
@@ -73,6 +73,14 @@ vi.mock("../../api/telematicsApi", () => ({
   getTelematicsHeatmap: vi.fn(async () => ({ rows: [] })),
 }));
 
+vi.mock("../../components/dispatch/DispatchSubnav", () => ({
+  DispatchSubnav: () => null,
+}));
+
+vi.mock("../dispatch/DispatchOverview", () => ({
+  DispatchOverview: () => <div data-testid="dispatch-overview-stub" />,
+}));
+
 vi.mock("../../components/dispatch/DispatchKanban", () => ({
   DispatchKanban: () => <div data-testid="dispatch-kanban-stub" />,
 }));
@@ -132,5 +140,22 @@ describe("DispatchPage secondary nav (B21-D12)", () => {
     const link = await screen.findByTestId("dispatch-settlements-link");
     expect(link.getAttribute("href")).toBe("/driver-finance/settlements");
     expect(screen.getByTestId("dispatch-settlements-quicklink")).toBeTruthy();
+  });
+
+  it("surfaces the existing dispatch planners from the header (V3)", async () => {
+    const user = userEvent.setup();
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={["/dispatch"]}>
+          <Routes>
+            <Route path="/dispatch" element={<DispatchPage />} />
+            <Route path="/dispatch/planners/driver" element={<div data-testid="planners-driver-route" />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await user.click(await screen.findByTestId("dispatch-open-planners"));
+    expect(await screen.findByTestId("planners-driver-route")).toBeTruthy();
   });
 });
