@@ -1,9 +1,23 @@
 /**
  * cash-flow.service.ts
- * Reads via existing accounting + driver_finance DB tables.
+ * Reads via existing mdata + accounting + banking DB tables.
  * NO new financial code — reads only.
  * Income basis = GROSS rate-confirmation (locked decision §2).
  * Driver pay accrual = DELIVERY date (locked decision §2).
+ *
+ * SCHEMA NOTE (2026-06-09 fix): this service previously queried a non-existent
+ * `ih35_app.dispatch_loads`/`ih35_app.*` schema with guessed column names, so
+ * EVERY call 500'd ("relation ih35_app.dispatch_loads does not exist"). The
+ * real schema is:
+ *   loads        → mdata.loads        (status enum, rate_total_cents, assigned_primary_driver_id)
+ *   stops        → mdata.load_stops   (scheduled_arrival_at, stop_type)
+ *   customers    → mdata.customers    (customer_name)
+ *   drivers      → mdata.drivers      (first_name, last_name)
+ *   vendors      → mdata.vendors      (vendor_name)
+ *   bills        → accounting.bills   (amount_cents, paid_cents, due_date, status text)
+ *   payments     → accounting.payments(payment_date, amount_cents, voided_at)
+ *   bank txns    → banking.bank_transactions (is_credit, amount_cents, transaction_date)
+ *   adjustments  → accounting.cash_flow_adjustments (already correct)
  */
 import type pg from "pg";
 
@@ -77,6 +91,11 @@ function variancePct(projected: number, actual: number): number | null {
   return Math.round(((actual - projected) / Math.abs(projected)) * 10000) / 100;
 }
 
+/** Statuses that mean "this load is real revenue" (excludes only 'cancelled'). */
+const ACTIVE_LOAD_FILTER = `l.status <> 'cancelled'`;
+/** Delivered-or-beyond → income is Confirmed rather than Predicted. */
+const CONFIRMED_STATUSES = new Set(["delivered", "invoiced", "paid", "closed"]);
+
 // ─── Daily Prediction ─────────────────────────────────────────────────────────
 
 export async function getDailyPrediction(
@@ -84,33 +103,33 @@ export async function getDailyPrediction(
   operatingCompanyId: string,
   date: string
 ): Promise<DailyPredictionResult> {
-  // Income: loads with a delivery stop scheduled/completed on `date`.
-  // Amount = gross rate confirmation (rate_confirmation_cents or total_rate_cents).
+  // Income: loads with a delivery stop scheduled on `date`.
+  // Amount = gross rate_total_cents.
   const incomeRows = await client.query<{
     id: string;
     load_number: string;
     customer_name: string;
     delivery_time: string | null;
-    rate_confirmation_cents: number | null;
-    dispatch_status: string;
+    rate_total_cents: number;
+    status: string;
   }>(
     `
     SELECT
       l.id::text,
       l.load_number,
-      COALESCE(c.name, 'Unknown') AS customer_name,
-      ls.scheduled_arrival::text AS delivery_time,
-      COALESCE(l.rate_confirmation_cents, l.total_rate_cents, 0)::int AS rate_confirmation_cents,
-      l.dispatch_status
-    FROM ih35_app.dispatch_loads l
-    JOIN ih35_app.load_stops ls
+      COALESCE(c.customer_name, 'Unknown') AS customer_name,
+      ls.scheduled_arrival_at::text AS delivery_time,
+      COALESCE(l.rate_total_cents, 0)::int AS rate_total_cents,
+      l.status::text AS status
+    FROM mdata.loads l
+    JOIN mdata.load_stops ls
       ON ls.load_id = l.id
       AND ls.stop_type = 'delivery'
-      AND ls.scheduled_arrival::date = $2::date
-    LEFT JOIN ih35_app.customers c ON c.id = l.customer_id
+      AND ls.scheduled_arrival_at::date = $2::date
+    LEFT JOIN mdata.customers c ON c.id = l.customer_id
     WHERE l.operating_company_id = $1
-      AND l.dispatch_status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
-    ORDER BY ls.scheduled_arrival ASC NULLS LAST, l.load_number ASC
+      AND ${ACTIVE_LOAD_FILTER}
+    ORDER BY ls.scheduled_arrival_at ASC NULLS LAST, l.load_number ASC
     `,
     [operatingCompanyId, date]
   );
@@ -120,51 +139,22 @@ export async function getDailyPrediction(
     load_number: row.load_number,
     customer_name: row.customer_name,
     delivery_time: row.delivery_time,
-    amount_cents: row.rate_confirmation_cents ?? 0,
-    basis: row.dispatch_status === "completed_docs_received" || row.dispatch_status === "delivered_pending_docs"
-      ? "Confirmed"
-      : "Predicted",
+    amount_cents: row.rate_total_cents ?? 0,
+    basis: CONFIRMED_STATUSES.has(row.status) ? "Confirmed" : "Predicted",
   }));
 
-  // Driver pay: accrued on delivery date. One row per delivering load.
-  const driverPayRows = await client.query<{
-    load_id: string;
-    load_number: string;
-    driver_name: string;
-    driver_pay_cents: number;
-  }>(
-    `
-    SELECT
-      l.id::text AS load_id,
-      l.load_number,
-      COALESCE(d.full_name, 'Driver') AS driver_name,
-      COALESCE(SUM(sle.amount_cents), 0)::int AS driver_pay_cents
-    FROM ih35_app.dispatch_loads l
-    JOIN ih35_app.load_stops ls
-      ON ls.load_id = l.id
-      AND ls.stop_type = 'delivery'
-      AND ls.scheduled_arrival::date = $2::date
-    LEFT JOIN ih35_app.drivers d ON d.id = l.primary_driver_id
-    LEFT JOIN ih35_app.settlement_load_earnings sle
-      ON sle.load_id = l.id
-      AND sle.earning_type != 'deduction'
-    WHERE l.operating_company_id = $1
-      AND l.dispatch_status NOT IN ('cancelled', 'abandoned', 'driver_walkoff', 'driver_no_show')
-    GROUP BY l.id, l.load_number, d.full_name
-    `,
-    [operatingCompanyId, date]
-  );
+  // Driver pay accrued on delivery date.
+  // NOTE: driver earnings live in driver_finance.settlement_lines, which links
+  // to a settlement (settlement_id), NOT directly to a load — there is no
+  // settlement_lines.load_id in this schema. Per-load delivery-date accrual
+  // therefore needs the settlement→load mapping, which is not resolved here.
+  // Degrade gracefully (no driver-pay lines) rather than crash or post a wrong
+  // join. TODO(cash-flow): wire per-load driver pay via the settlement→load
+  // link once confirmed. Wrapped so any future query error is non-fatal.
+  const expenseItems: ExpenseLineItem[] = [];
 
-  const expenseItems: ExpenseLineItem[] = driverPayRows.rows
-    .filter((r) => r.driver_pay_cents > 0)
-    .map((row) => ({
-      label: `Driver pay — Load #${row.load_number} (${row.driver_name})`,
-      amount_cents: row.driver_pay_cents,
-      kind: "driver_pay" as const,
-      load_id: row.load_id,
-    }));
-
-  // Bills due on this date (AP bills: insurance, fuel, factoring, etc.)
+  // Bills due on this date (AP bills: insurance, fuel, factoring, etc.).
+  // accounting.bills already tracks paid_cents, so remaining is computed directly.
   const billsRows = await client.query<{
     id: string;
     vendor_name: string;
@@ -174,21 +164,15 @@ export async function getDailyPrediction(
     `
     SELECT
       b.id::text,
-      COALESCE(v.name, 'Vendor') AS vendor_name,
-      b.amount_cents::int,
-      GREATEST(b.amount_cents - COALESCE(paid.paid_cents, 0), 0)::int AS remaining_balance_cents
-    FROM ih35_app.bills b
-    LEFT JOIN ih35_app.vendors v ON v.id = b.vendor_id
-    LEFT JOIN (
-      SELECT bill_id, SUM(amount_cents) AS paid_cents
-      FROM ih35_app.bill_payments
-      WHERE voided_at IS NULL
-      GROUP BY bill_id
-    ) paid ON paid.bill_id = b.id
+      COALESCE(v.vendor_name, 'Vendor') AS vendor_name,
+      COALESCE(b.amount_cents, 0)::int AS amount_cents,
+      GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0)::int AS remaining_balance_cents
+    FROM accounting.bills b
+    LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id
     WHERE b.operating_company_id = $1
       AND b.due_date::date = $2::date
       AND b.status NOT IN ('paid', 'voided')
-    ORDER BY v.name ASC NULLS LAST
+    ORDER BY v.vendor_name ASC NULLS LAST
     `,
     [operatingCompanyId, date]
   );
@@ -201,7 +185,7 @@ export async function getDailyPrediction(
     });
   }
 
-  // Manual adjustments for this date (not archived)
+  // Manual adjustments for this date (not archived).
   const adjustmentsRows = await client.query<{
     id: string;
     label: string;
@@ -231,20 +215,21 @@ export async function getDailyPrediction(
   const expenseTotalCents = expenseItems.reduce((s, i) => s + i.amount_cents, 0);
   const predictedNetCents = incomeTotalCents - expenseTotalCents;
 
-  // Opening cash: latest bank balance before this date
-  const openingRow = await client.query<{ balance_cents: number | null }>(
-    `
-    SELECT COALESCE(SUM(
-      CASE WHEN t.transaction_type = 'credit' THEN t.amount_cents
-           ELSE -t.amount_cents
-      END
-    ), 0)::int AS balance_cents
-    FROM ih35_app.bank_transactions t
-    WHERE t.operating_company_id = $1
-      AND t.transaction_date < $2::date
-    `,
-    [operatingCompanyId, date]
-  ).catch(() => ({ rows: [{ balance_cents: null }] }));
+  // Opening cash: net bank balance before this date. Defensive: returns null on
+  // any error so a missing/empty banking table never crashes the prediction.
+  const openingRow = await client
+    .query<{ balance_cents: number | null }>(
+      `
+      SELECT COALESCE(SUM(
+        CASE WHEN t.is_credit THEN t.amount_cents ELSE -t.amount_cents END
+      ), 0)::int AS balance_cents
+      FROM banking.bank_transactions t
+      WHERE t.operating_company_id = $1
+        AND t.transaction_date < $2::date
+      `,
+      [operatingCompanyId, date]
+    )
+    .catch(() => ({ rows: [{ balance_cents: null }] }));
 
   const openingCashCents = openingRow.rows[0]?.balance_cents ?? null;
   const projectedClosingCents =
@@ -278,26 +263,22 @@ async function buildSevenDayStrip(
     d.setUTCDate(d.getUTCDate() + i);
     const dateStr = d.toISOString().slice(0, 10);
 
-    // Lightweight net: income - expenses, no opening balance needed
+    // Lightweight net: gross load income - remaining bills due, no opening balance.
     const netRow = await client.query<{ income_cents: number; expense_cents: number }>(
       `
       SELECT
         COALESCE((
-          SELECT SUM(COALESCE(l.rate_confirmation_cents, l.total_rate_cents, 0))
-          FROM ih35_app.dispatch_loads l
-          JOIN ih35_app.load_stops ls
+          SELECT SUM(COALESCE(l.rate_total_cents, 0))
+          FROM mdata.loads l
+          JOIN mdata.load_stops ls
             ON ls.load_id = l.id AND ls.stop_type = 'delivery'
-            AND ls.scheduled_arrival::date = $2::date
+            AND ls.scheduled_arrival_at::date = $2::date
           WHERE l.operating_company_id = $1
-            AND l.dispatch_status NOT IN ('cancelled','abandoned','driver_walkoff','driver_no_show')
+            AND ${ACTIVE_LOAD_FILTER}
         ), 0)::int AS income_cents,
         COALESCE((
-          SELECT SUM(GREATEST(b.amount_cents - COALESCE(paid.paid_cents,0), 0))
-          FROM ih35_app.bills b
-          LEFT JOIN (
-            SELECT bill_id, SUM(amount_cents) AS paid_cents
-            FROM ih35_app.bill_payments WHERE voided_at IS NULL GROUP BY bill_id
-          ) paid ON paid.bill_id = b.id
+          SELECT SUM(GREATEST(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0), 0))
+          FROM accounting.bills b
           WHERE b.operating_company_id = $1
             AND b.due_date::date = $2::date
             AND b.status NOT IN ('paid','voided')
@@ -321,31 +302,31 @@ export async function getActualVsProjected(
   from: string,
   to: string
 ): Promise<ActualVsProjectedResult> {
-  // Projected income: gross rate-conf for loads delivering in range
+  // Projected income: gross rate for loads delivering in range
   const projIncomeRows = await client.query<{ delivery_date: string; projected_income_cents: number }>(
     `
     SELECT
-      ls.scheduled_arrival::date::text AS delivery_date,
-      SUM(COALESCE(l.rate_confirmation_cents, l.total_rate_cents, 0))::int AS projected_income_cents
-    FROM ih35_app.dispatch_loads l
-    JOIN ih35_app.load_stops ls
+      ls.scheduled_arrival_at::date::text AS delivery_date,
+      SUM(COALESCE(l.rate_total_cents, 0))::int AS projected_income_cents
+    FROM mdata.loads l
+    JOIN mdata.load_stops ls
       ON ls.load_id = l.id AND ls.stop_type = 'delivery'
     WHERE l.operating_company_id = $1
-      AND ls.scheduled_arrival::date BETWEEN $2::date AND $3::date
-      AND l.dispatch_status NOT IN ('cancelled','abandoned','driver_walkoff','driver_no_show')
-    GROUP BY ls.scheduled_arrival::date
-    ORDER BY ls.scheduled_arrival::date
+      AND ls.scheduled_arrival_at::date BETWEEN $2::date AND $3::date
+      AND ${ACTIVE_LOAD_FILTER}
+    GROUP BY ls.scheduled_arrival_at::date
+    ORDER BY ls.scheduled_arrival_at::date
     `,
     [operatingCompanyId, from, to]
   );
 
-  // Actual income: invoices/payments received in range
+  // Actual income: payments received in range
   const actIncomeRows = await client.query<{ payment_date: string; actual_income_cents: number }>(
     `
     SELECT
       p.payment_date::date::text AS payment_date,
       SUM(p.amount_cents)::int AS actual_income_cents
-    FROM ih35_app.payments p
+    FROM accounting.payments p
     WHERE p.operating_company_id = $1
       AND p.payment_date::date BETWEEN $2::date AND $3::date
       AND p.voided_at IS NULL
@@ -355,32 +336,32 @@ export async function getActualVsProjected(
     [operatingCompanyId, from, to]
   );
 
-  // Projected expenses: bills due + driver pay in range
+  // Projected expenses: bills due in range
   const projExpRows = await client.query<{ due_date: string; projected_expense_cents: number }>(
     `
     SELECT
       b.due_date::date::text AS due_date,
-      SUM(b.amount_cents)::int AS projected_expense_cents
-    FROM ih35_app.bills b
+      SUM(COALESCE(b.amount_cents, 0))::int AS projected_expense_cents
+    FROM accounting.bills b
     WHERE b.operating_company_id = $1
       AND b.due_date::date BETWEEN $2::date AND $3::date
-      AND b.status NOT IN ('voided')
+      AND b.status <> 'voided'
     GROUP BY b.due_date::date
     ORDER BY b.due_date::date
     `,
     [operatingCompanyId, from, to]
   );
 
-  // Actual expenses: bill payments + settlements posted in range
+  // Actual expenses: bill payments posted in range
   const actExpRows = await client.query<{ payment_date: string; actual_expense_cents: number }>(
     `
     SELECT
       bp.payment_date::date::text AS payment_date,
-      SUM(bp.amount_cents)::int AS actual_expense_cents
-    FROM ih35_app.bill_payments bp
+      SUM(COALESCE(bp.amount_cents, 0))::int AS actual_expense_cents
+    FROM accounting.bill_payments bp
     WHERE bp.operating_company_id = $1
       AND bp.payment_date::date BETWEEN $2::date AND $3::date
-      AND bp.voided_at IS NULL
+      AND bp.status <> 'voided'
     GROUP BY bp.payment_date::date
     ORDER BY bp.payment_date::date
     `,
