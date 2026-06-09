@@ -153,6 +153,136 @@ async function evaluateRuleMatches(
     }));
   }
 
+  // ── Accounting probe: unbalanced journal entries ────────────────────────────
+  if (rule.rule_code === "unbalanced_journal_entry") {
+    const lookbackDays = thresholdNumber(config, "lookback_days", 90);
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT
+          je.id::text AS journal_entry_id,
+          je.entry_date::text AS entry_date,
+          je.memo,
+          SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE 0 END) AS debit_total,
+          SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END) AS credit_total
+        FROM accounting.journal_entries je
+        JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
+        WHERE je.operating_company_id = $1
+          AND je.status = 'posted'
+          AND je.created_at > now() - ($2 || ' days')::interval
+        GROUP BY je.id, je.entry_date, je.memo
+        HAVING
+          SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE 0 END) <>
+          SUM(CASE WHEN jep.debit_or_credit = 'credit' THEN jep.amount_cents ELSE 0 END)
+        ORDER BY je.entry_date DESC
+        LIMIT 50
+      `,
+      [operatingCompanyId, lookbackDays]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `je:${String(row.journal_entry_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Unbalanced JE ${String(row.entry_date)}: DR ${String(row.debit_total)} vs CR ${String(row.credit_total)}`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  // ── Accounting probe: orphan bill — no GL account assigned ─────────────────
+  if (rule.rule_code === "orphan_bill_no_gl") {
+    const lookbackDays = thresholdNumber(config, "lookback_days", 90);
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT
+          b.id::text AS bill_id,
+          b.vendor_id,
+          b.bill_date::text AS bill_date,
+          b.amount_cents,
+          b.status
+        FROM accounting.bills b
+        WHERE b.operating_company_id = $1
+          AND b.revoked_at IS NULL
+          AND b.coa_account_id IS NULL
+          AND b.created_at > now() - ($2 || ' days')::interval
+        ORDER BY b.created_at DESC
+        LIMIT 50
+      `,
+      [operatingCompanyId, lookbackDays]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `bill:${String(row.bill_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: row.vendor_id ? String(row.vendor_id) : null,
+      detection_summary: `Bill ${String(row.bill_date)} has no GL account (coa_account_id IS NULL)`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  // ── Accounting probe: orphan customer payment — unapplied > 7 days ─────────
+  if (rule.rule_code === "orphan_payment_unapplied") {
+    const staleDays = thresholdNumber(config, "stale_days", 7);
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT
+          p.id::text AS payment_id,
+          p.payment_date::text AS payment_date,
+          p.amount_cents,
+          p.amount_unapplied_cents
+        FROM accounting.payments p
+        WHERE p.operating_company_id = $1
+          AND p.voided_at IS NULL
+          AND p.amount_unapplied_cents > 0
+          AND p.created_at < now() - ($2 || ' days')::interval
+        ORDER BY p.created_at ASC
+        LIMIT 50
+      `,
+      [operatingCompanyId, staleDays]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `payment:${String(row.payment_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Payment ${String(row.payment_date)} has ${String(row.amount_unapplied_cents)}¢ unapplied for >${staleDays} days`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
+  // ── Accounting probe: stale posting batch stuck in queued/in_progress ──────
+  if (rule.rule_code === "stale_posting_batch") {
+    const staleDays = thresholdNumber(config, "stale_days", 7);
+    const res = await client.query<Record<string, unknown>>(
+      `
+        SELECT
+          pb.id::text AS batch_id,
+          pb.batch_status,
+          pb.source_transaction_type,
+          pb.source_transaction_id::text AS source_transaction_id,
+          pb.created_at::text AS created_at
+        FROM accounting.posting_batches pb
+        WHERE pb.operating_company_id = $1
+          AND pb.batch_status IN ('queued', 'in_progress')
+          AND pb.created_at < now() - ($2 || ' days')::interval
+        ORDER BY pb.created_at ASC
+        LIMIT 50
+      `,
+      [operatingCompanyId, staleDays]
+    );
+    return res.rows.map((row) => ({
+      subject_key: `batch:${String(row.batch_id)}`,
+      subject_driver_id: null,
+      subject_unit_id: null,
+      subject_vendor_id: null,
+      detection_summary: `Posting batch ${String(row.source_transaction_type)}/${String(row.source_transaction_id)} stuck in '${String(row.batch_status)}' since ${String(row.created_at)}`,
+      detection_metric: row,
+      source_view: rule.source_view,
+    }));
+  }
+
   return [];
 }
 

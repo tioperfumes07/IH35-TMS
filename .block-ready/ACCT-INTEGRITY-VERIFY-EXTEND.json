@@ -1,0 +1,30 @@
+{
+  "block_id": "ACCT-INTEGRITY-VERIFY-EXTEND",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "ACCOUNTING",
+  "task": "Accounting integrity: verify and extend 4 items (period lock CI, bank-recon cron, accounting probes, CoA role bindings seed)",
+  "branch": "feat/accounting-integrity-verify-extend",
+  "lane": "A",
+  "details": [
+    "AI-1: period-lock-db-trigger.test.ts — CI guard asserting journal_entries INSERT is rejected by DB trigger in closed period.",
+    "AI-2: bank-recon-auto-match.cron.ts — nightly cron at 02:15 CST calling findCandidates() per company for 90-day rolling window.",
+    "AI-3: evaluateRuleMatches() extended with 4 accounting probes: unbalanced_journal_entry, orphan_bill_no_gl, orphan_payment_unapplied, stale_posting_batch.",
+    "AI-3: 202606080936 migration seeds 4 rule rows per company; extends subject_type CHECK to include 'accounting'.",
+    "AI-5: 202606080937 migration seeds 3 confirmed CoA role bindings (ar_control, ap_control, undeposited_funds) per company idempotently."
+  ],
+  "allowed_files": [
+    ".block-ready.agent1.json",
+    ".block-ready/ACCT-INTEGRITY-VERIFY-EXTEND.json",
+    "apps/backend/src/accounting/__tests__/period-lock-db-trigger.test.ts",
+    "apps/backend/src/cron/bank-recon-auto-match.cron.ts",
+    "apps/backend/src/index.ts",
+    "apps/backend/src/safety/integrity-alert-engine.service.ts",
+    "db/migrations/202606080936_accounting_integrity_probe_rules.sql",
+    "db/migrations/202606080937_coa_role_bindings_seed.sql"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
