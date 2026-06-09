@@ -528,6 +528,7 @@
     "verify:sentry-receives-test-error": "node scripts/verify-sentry-receives-test-error.mjs",
     "verify:closure-23-dr-artifacts": "node scripts/verify-closure-23-dr-artifacts.mjs",
     "verify:closure-20-a11y-artifacts": "node scripts/verify-closure-20-a11y-artifacts.mjs",
+    "verify:closure-24-onboarding-artifacts": "node scripts/verify-closure-24-onboarding-artifacts.mjs",
     "verify:closure-19-sec-artifacts": "node scripts/verify-closure-19-sec-artifacts.mjs",
     "verify:closure-17-on-hold-triage": "node scripts/verify-closure-17-on-hold-triage.mjs",
     "verify:closure-18-perf-artifacts": "node scripts/verify-closure-18-perf-artifacts.mjs",
