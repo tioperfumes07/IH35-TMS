@@ -13,8 +13,8 @@
     "apps/backend/src/cron/bank-recon-auto-match.cron.ts",
     "apps/backend/src/index.ts",
     "apps/backend/src/safety/integrity-alert-engine.service.ts",
-    "db/migrations/202606080230_accounting_integrity_probe_rules.sql",
-    "db/migrations/202606080231_coa_role_bindings_seed.sql"
+    "db/migrations/202606080936_accounting_integrity_probe_rules.sql",
+    "db/migrations/202606080937_coa_role_bindings_seed.sql"
   ],
   "preview_provided": false,
   "extra_gates": [],

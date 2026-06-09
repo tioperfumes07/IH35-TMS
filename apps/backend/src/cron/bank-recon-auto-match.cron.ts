@@ -64,7 +64,7 @@ export function initializeBankReconAutoMatchCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
 
-  if ((process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED ?? "true").trim() === "false") {
+  if ((process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED ?? "false").trim() === "false") {
     app.log.info("Bank recon auto-match cron disabled via BANK_RECON_AUTO_MATCH_CRON_ENABLED=false");
     return;
   }
