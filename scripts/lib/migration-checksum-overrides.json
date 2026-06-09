@@ -190,5 +190,13 @@
     "reason": "GAP-81 (#636): migration shipped with `TO app_user` (wrong role) and operating_company_id TEXT (should be UUID). Fixed before first production deploy — never applied to prod. Local ledger recorded original SHA; override accepts corrected version.",
     "added_at": "2026-06-07",
     "added_in_pr": "hotfix/0327-drug-alcohol-app-user"
+  },
+  {
+    "filename": "202606080937_coa_role_bindings_seed.sql",
+    "ledger_checksum": "afa4ff0439c4bd9780ebbb1ef53bdf473d0315c52528263116617ffbe848f0e2",
+    "disk_checksum": "c72c5b8d8596f6474eb16fd53cea273968143deef3e0ba24f863686aef7987e5",
+    "reason": "0937 edited post-apply to add EXISTS guard (catalogs.accounts) for CI-safety; prod already seeded, no behavior change",
+    "added_at": "2026-06-09",
+    "added_in_pr": "fix/0937-checksum-override"
   }
 ]
