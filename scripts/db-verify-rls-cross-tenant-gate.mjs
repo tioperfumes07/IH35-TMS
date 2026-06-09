@@ -174,6 +174,12 @@ async function buildValue(client, table, column, marker, checks, enumCache) {
     return buildDisplayId(table.table_name, marker, null, 6);
   }
 
+  // Special handling for payment_applications: populate invoice_id when target_kind is 'invoice'
+  // This satisfies the check constraint: (target_kind = 'invoice' AND invoice_id IS NOT NULL) OR (target_kind <> 'invoice')
+  if (table.table_name === "payment_applications" && column.column_name === "invoice_id") {
+    return crypto.randomUUID();
+  }
+
   if (column.typtype === "e") {
     const enumLabel = await getFirstEnumLabel(client, column.type_oid, enumCache);
     if (enumLabel !== null) return enumLabel;
