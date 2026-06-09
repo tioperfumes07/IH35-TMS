@@ -9,11 +9,12 @@ Source: Jorge directive, IH35-TMS-MASTER-RULES.md rule G3 / locked rule #20
 - Sidebar NEVER changes layout or adds nested items
 
 ## Top Bar (Page-Level Sub-Navigation)
-- ALL sub-navigation lives in a hover-dropdown bar at the TOP of each page
+- ALL sub-navigation lives in a grouped sub-nav bar at the TOP of each page
 - Each module's page has its own top bar with grouped tabs
-- Groups example for Dispatch: Load Board ▾ | Planning ▾ | Assignments ▾ | Settlements ▾ | Documents ▾ | Map ▾
-- Hover any group to see its items (dropdown)
-- Sub-items within groups: Planner Calendar, Load Templates, Unassigned Units, Reserve a Load (under Planning), etc.
+- Groups example for Dispatch: Load Board | Planning ▾ | Assignments | Settlements ▾ | Documents ▾ | Map
+- **OVERRIDE (Jorge directive, 2026-06-09): top-bar group menus open on CLICK and STAY OPEN until an item is chosen, an outside click, or `Escape` — NOT on hover.** Hover-only dropdowns hid the (deeply built) destinations and made the product "feel" incomplete. Persistent click-nav is now the rule for the top-bar sub-nav. Do NOT revert these to hover-reveal; do NOT rebuild as hover later.
+- Sub-items within groups must be reachable by click and persistently visible. Planning group surfaces: Driver Planner, Truck Planner, Loads Planner, Planner Calendar, Load Templates, Unassigned Units, Reserve a Load. Settlements group: Settlements, Pre-settlements.
+- The flat-sidebar rule below is UNCHANGED — this override applies only to the top-bar page-level sub-nav.
 
 ## What is FORBIDDEN
 - Sidebar flyout menus (hover on sidebar = tooltip ONLY)

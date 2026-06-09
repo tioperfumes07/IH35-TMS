@@ -308,7 +308,7 @@ export function DispatchPage({
               data-testid="dispatch-open-planners"
               onClick={() => navigate("/dispatch/planners/driver")}
             >
-              Planner
+              Planners
             </Button>
             <Button type="button" onClick={() => setNewLoadOpen(true)}>
               + Book Load
