@@ -1,0 +1,19 @@
+{
+  "block_id": "FEAT-DRIVER-HUB-ROUTE-WIRE",
+  "branch": "feat/driver-hub-route-wire",
+  "phase": "P5",
+  "task": "P5a — wire existing DriverHubPage to /driver-hub route (additive; mirrors /cash-flow)",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    ".block-ready/FEAT-DRIVER-HUB-ROUTE-WIRE.json",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/nav-integrity-allowlist.json"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}

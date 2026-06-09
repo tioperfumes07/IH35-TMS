@@ -455,6 +455,10 @@
     {
       "path": "/insurance",
       "reason": "Redirect alias /insurance → /safety/insurance; sidebar deep-link compat (GAP-86)"
+    },
+    {
+      "path": "/driver-hub",
+      "reason": "P5a — DriverHubPage route live; sidebar entry lands in P5b Sidebar-V2 (remove from allowlist then)"
     }
   ]
 }
