@@ -1,0 +1,27 @@
+{
+  "block_id": "CLOSURE-21-MONITORING-SETUP",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-closure21",
+  "branch": "feat/closure-21-monitoring",
+  "phase": "CLOSURE",
+  "task": "Production monitoring + alerting (Sentry + deep health + uptime)",
+  "agent": "2",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/CLOSURE-21-MONITORING-SETUP.json",
+    "apps/backend/src/observability/sentry.ts",
+    "apps/backend/src/observability/structured-logger.ts",
+    "apps/backend/src/observability/health-deep.routes.ts",
+    "apps/frontend/src/observability/sentry-client.ts",
+    "apps/driver-pwa/src/observability/sentry-pwa.ts",
+    "docs/runbooks/MONITORING-PLAYBOOK.md",
+    "docs/runbooks/INCIDENT-RESPONSE.md",
+    "scripts/uptime-monitor-config.mjs",
+    "scripts/verify-sentry-receives-test-error.mjs",
+    "scripts/verify-closure-21-monitoring-artifacts.mjs",
+    "package.json"
+  ],
+  "extra_gates": ["verify:closure-21-monitoring-artifacts"],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
