@@ -1,0 +1,19 @@
+{
+  "block_id": "CLOSURE-25-RUNBOOKS",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
+  "branch": "feat/closure-25-runbooks",
+  "phase": "CLOSURE",
+  "task": "Per-block manifest + artifact CI guard for runbooks",
+  "agent": "2",
+  "classification": "ADDITIVE",
+  "allowed_files": [
+    ".block-ready/CLOSURE-25-RUNBOOKS.json",
+    "docs/runbooks/*.md",
+    "scripts/verify-closure-25-runbooks-artifacts.mjs",
+    "package.json"
+  ],
+  "extra_gates": ["verify:closure-25-runbooks-artifacts"],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": true
+}
