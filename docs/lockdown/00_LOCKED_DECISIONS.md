@@ -54,3 +54,11 @@ RULES:
 6.2 verify-cashflow-module.mjs — assert /cash-flow top-level; assert does NOT import /reports/cash-flow-*; assert between eld and accounting.
 6.3 verify-insurance-financial-writes.mjs — assert insurance delegates math to computeInsuranceDispersal; no new journal debit-credit; bill writes carry idempotency key.
 6.4 verify-additive-only (sidebar) — fail if any id in locked 23-array is missing from SIDEBAR_ITEM_IDS.
+
+## 7. QBO-PARITY UI SYSTEM (locked 2026-06-08)
+See `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law).
+7.1 **Location dimension = driver/operator.** IH35 uses the QBO Location field to mean driver/operator; map Location→driver in TMS (CPA to confirm).
+7.2 **CoA page must render the QBO-mirror, not the local-seed.** Root cause of "CoA showing wrong accounts" = dual datasets (page = ~50-row local seed; posting engine = ~199 QBO-mirror accounts via `/api/v1/mdata/accounts`). Repoint page/register/role-bindings at the QBO-mirror, RLS-scoped. **GATED — Task 0 data-source audit + Jorge OK before changing.** Do NOT disconnect QBO; bug is internal (dual datasets).
+7.3 **Inline "+ Add new" is mandatory in every reference dropdown software-wide** (Category, Class, accounts, Payee, Vendor, Customer, Item, Terms, Payment method, Location). Opens an inline mini-create without closing the parent; returns with the new value selected. Account dropdowns KEEP the existing TMS lock-account control alongside.
+7.4 **Sizing:** create/edit panels = bounded right drawers ~30% viewport (~576–582px); transaction editors (Expense/Bill/Check/Invoice/etc.) = full-page (the exception); match/reconcile summaries = sticky bottom bar.
+7.5 **Every data table uses the shared QBO-parity table grammar** with density toggle (Regular/Compact/Ultra-compact) + configurable per-page. This is the fix for "TMS too wide/too large."

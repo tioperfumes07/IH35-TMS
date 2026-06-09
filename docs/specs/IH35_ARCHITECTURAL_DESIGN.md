@@ -1358,3 +1358,14 @@ Surfaces: Overview (default command center) · Load Board (true 7-state Kanban) 
 Cross-cutting: OOS units pinned bottom of every view; breadcrumb page-title; denser six-column layout; all column headers sortable.
 Load click anywhere → existing LoadDetailDrawer (?load_id=), edit-capable, additive tabs (Factoring, Customs, profitability in Settlement).
 Connectivity: Dispatch ↔ Settlements (pre-settlement NB→SB, deductions/fines, profitability) ↔ Factoring (FARO packet/reserve) ↔ Accounting/Cash Flow ↔ Safety (Driver Scheduler, geofence, compliance) ↔ Maintenance (OOS/in-shop) ↔ Banking (FARO).
+
+---
+
+## QBO-Parity UI System (added 2026-06-08)
+Spec: `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law). Locked decisions: `docs/lockdown/00_LOCKED_DECISIONS.md` §7. Additive — restructure existing accounting/catalog pages to consume the shared system; do not rebuild.
+
+- **Shared table grammar (A1):** one component for every data table — filter row (Type/Status/Date + Category/Class/Location), right toolbar (Print/Export/gear/More), gear popover = column show/hide + density (Regular/Compact/Ultra-compact) + save-default, multiselect → batch bar, configurable pager (per-page, "N–M of TOTAL", numbered + typed page), row 3-dots. Density target fixes "TMS too wide/too large."
+- **Inline "+ Add new" (A2):** every reference dropdown ends with a sticky inline mini-create that does not close the parent; account dropdowns keep the existing TMS lock-account control.
+- **Sizing tokens (A3):** create/edit = bounded right drawers ~30% viewport (~576–582px); transaction editors (Expense/Bill/Check/Invoice/…) = full-page; match/reconcile = sticky bottom summary bar.
+- **Dual-dataset CoA fix (GATED):** CoA page renders local-seed (~50 rows) while the posting engine reads the QBO-mirror (~199 accounts). Repoint page/CA-05 register/role-bindings at the QBO-mirror, RLS-scoped. Task 0 audit + owner OK first; do not disconnect QBO.
+- **Accounting pages added/restructured:** Reclassify Transactions (new, GATED), Reconcile (setup+working, GATED commit), Bank transactions + advancedmatch + resolve-the-difference bar (GATED commit), Bank Register = CA-05 running-balance (GATED read). Reuse existing posting/GL functions — no new GL math. Location dimension = driver/operator.
