@@ -1125,3 +1125,20 @@ Canonical `DRIVERS_TABS_CONFIG.ts` (9 query-synced subtabs, 5 list-status filter
 8. Driver fines (internal + DOT) → auto_deduction_policies → settlement (one payment or rolled over) → per-settlement confirm/defer.
 9. Everything connected to Cash Flow (CASHFLOW-BLUEPRINT-ADDITION.md).
 10. Load click → live LoadDetailDrawer everywhere, edit-enabled, additive tabs.
+
+---
+
+## QBO-Parity UI System — additive scope (added 2026-06-08)
+Spec: `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md`. ADDITIVE-ONLY — restructure existing pages onto the shared system; KEEP trucking custom fields (Settlement No/Truck No/Pick Up/Delivery/SB-Load No/Empty+Loaded Miles/Work Order) and KEEP the lock-account control. Mirror QuickBooks (IH35 Transportation) across these 9 screens:
+
+1. **Products & Services** (+ Categories) — 14-col list, two-mode item (full-page details + ~576px slide-over), "+ Create" type picker.
+2. **Customers** (+ detail) — sub-tabs (Transaction List/Activity/Statements/Recurring/Projects/Details/Late Fees), grammar table, centered New-Customer modal.
+3. **Vendors** (+ detail) — AP equivalent of Customers (Bill/Expense/Check/PO/Vendor Credit), leaner sub-tabs; must match & perform same as Customer detail.
+4. **Reclassify Transactions** (NEW page) — two-pane account tree + per-line reclassify (account/class/location), period-lock + audit, **GATED**.
+5. **Chart of Accounts** (+ New/Edit drawer w/ Lock account) — **dual-dataset fix: render QBO-mirror not local-seed, GATED (Task 0 first).**
+6. **Bank transactions** — For review/Categorized/Excluded, expand row (Categorize/Match/Transfer/CC payment), advancedmatch with **sticky resolve-the-difference bar**, **GATED commit**.
+7. **Reconcile** — setup + working, difference-must-be-$0.00 summary math, density, **GATED commit**.
+8. **Transaction editors** — full-page (Expense captured; Bill/Check/Bill Payment/Vendor Credit/PO/Invoice/Sales Receipt/Receive Payment/Deposit/Journal Entry/Transfer to capture), keep trucking custom fields, **GATED**.
+9. **Bank Register** = **CA-05** running-balance register (not a plain list), reuse posting reads, **GATED read**.
+
+Cross-cutting: shared table grammar (density + configurable per-page), inline "+ Add new" in every dropdown, ~30% drawers / full-page editors, Location = driver/operator. Reuse existing posting/GL functions — no new GL math.

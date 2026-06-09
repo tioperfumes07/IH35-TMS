@@ -1,0 +1,22 @@
+{
+  "block_id": "FEAT-QBO-PARITY-DOCS",
+  "branch": "feat/qbo-parity-docs",
+  "phase": "QBO Parity",
+  "task": "QBO-PARITY-UI-SYSTEM (PART D) — design-law spec + architecture/blueprint/locked-decisions docs (docs-only)",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    ".block-ready/FEAT-QBO-PARITY-DOCS.json",
+    "docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md",
+    "docs/specs/qbo-parity/00_INDEX.md",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+    "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
+    "docs/lockdown/00_LOCKED_DECISIONS.md"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
