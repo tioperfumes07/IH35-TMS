@@ -35,6 +35,10 @@ CROSS JOIN (
 ) AS r(role, account_id)
 WHERE c.is_active = true
   AND c.deactivated_at IS NULL
+  AND EXISTS (
+    SELECT 1 FROM catalogs.accounts a
+    WHERE a.id = r.account_id::uuid
+  )
 ON CONFLICT DO NOTHING;
 
 -- Verify: should show 3 rows per active company
