@@ -1,0 +1,20 @@
+{
+  "block_id": "FEAT-QBO-PARITY-A3-SIZING",
+  "branch": "feat/qbo-parity-a3-sizing",
+  "phase": "QBO Parity",
+  "task": "A3 — sizing tokens + ParityDrawer (~576px right-drawer shell for create/edit). Additive new files; no existing files touched.",
+  "agent": "A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS",
+  "allowed_files": [
+    ".block-ready/FEAT-QBO-PARITY-A3-SIZING.json",
+    "apps/frontend/src/components/parity/sizing.ts",
+    "apps/frontend/src/components/parity/ParityDrawer.tsx",
+    "apps/frontend/src/components/parity/ParityDrawer.test.tsx"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
