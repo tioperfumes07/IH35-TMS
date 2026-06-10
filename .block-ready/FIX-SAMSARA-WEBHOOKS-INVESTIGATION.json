@@ -1,0 +1,24 @@
+{
+  "block_id": "FIX-SAMSARA-WEBHOOKS-INVESTIGATION",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "P8 Audit",
+  "task": "Samsara webhooks investigation + restoration. Route mounted at dual paths, HMAC-SHA256 signature verifier present, per-tenant secret resolution, audit logging, CI guard all in place.",
+  "branch": "fix/samsara-webhooks-investigation",
+  "lane": "A",
+  "details": [
+    "RBC: Route registered at /api/v1/integrations/samsara/webhook + /api/v1/samsara/webhooks.",
+    "HMAC-SHA256 signature verifier with timing-safe compare (samsara-webhook-verify.ts).",
+    "Per-tenant signing secret via resolveSamsaraWebhookSigningSecret.",
+    "Audit event logging on both valid and invalid signature events.",
+    "CI guard verify-samsara-webhook-route-mounted.mjs passes.",
+    "5 vitest pass: 3 signature + 2 route integration tests."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-SAMSARA-WEBHOOKS-INVESTIGATION.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
