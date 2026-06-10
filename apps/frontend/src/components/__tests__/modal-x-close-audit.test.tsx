@@ -162,6 +162,38 @@ describe("modal x-close audit", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("WorkOrderDetailModal: single h2 — no doubled header (double-frame regression)", () => {
+    render(
+      wrap(
+        <WorkOrderDetailModal
+          open
+          workOrder={{ display_id: "WO-REG-1", source_type: "IS", status: "open" }}
+          onClose={vi.fn()}
+        />
+      )
+    );
+    expect(document.body.querySelectorAll("h2")).toHaveLength(1);
+  });
+
+  it("CustomerDrillModal: single h2 — no doubled header (double-frame regression)", () => {
+    const customer = {
+      id: "cust-reg-1",
+      operating_company_id: "oc-1",
+      name: "Regression Corp",
+      customer_code: "REG",
+      status: "active",
+      quality_overall_flag: "standard",
+      factoring_eligible: false,
+      free_time_pickup_minutes: 120,
+      free_time_delivery_minutes: 120,
+      detention_rate_per_hour: "0",
+      created_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    } as Customer;
+    render(wrap(<CustomerDrillModal open customer={customer} onClose={vi.fn()} />));
+    expect(document.body.querySelectorAll("h2")).toHaveLength(1);
+  });
+
   it("AnomalyDetailDrawer: clicking X calls onClose", () => {
     const onClose = vi.fn();
     render(

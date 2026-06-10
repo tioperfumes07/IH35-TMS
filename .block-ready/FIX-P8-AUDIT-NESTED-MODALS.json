@@ -1,0 +1,24 @@
+{
+  "block_id": "FIX-P8-AUDIT-NESTED-MODALS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "P8 Audit",
+  "task": "Fix nested-box modal pattern (double-frame headers). WorkOrderDetailModal + CustomerDrillModal already clean in main. Added double-frame regression tests to modal-x-close-audit.test.tsx. Spot-checked 100+ modals — no live double-frame violations found.",
+  "branch": "fix/audit-nested-modals",
+  "lane": "A",
+  "details": [
+    "WorkOrderDetailModal: already clean (single h2, no inner card wrapper).",
+    "CustomerDrillModal: already clean (single h2, no inner card wrapper).",
+    "Added double-frame regression tests to modal-x-close-audit.test.tsx (2 new tests).",
+    "14 vitest pass total across audit + WorkOrderDetailModal test files.",
+    "Broad grep of 108 Modal-using files found no live shadow-xl nested in <Modal> children."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-P8-AUDIT-NESTED-MODALS.json",
+    "apps/frontend/src/components/__tests__/modal-x-close-audit.test.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
