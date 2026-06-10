@@ -1361,6 +1361,11 @@ Connectivity: Dispatch ↔ Settlements (pre-settlement NB→SB, deductions/fines
 
 ---
 
+## Stub-Free Production (added 2026-06-10)
+CI guard: `scripts/verify-no-prod-stubs.mjs` (runs in pre-push hook and CI). Forbidden patterns in `apps/frontend/src/**` (non-test files): `coming soon`, `lorem ipsum`, `phase N stub`, `contract stub`, `stub mode`, `(stub)`, `phase N placeholder`, `not yet implemented`. Decision rules per occurrence: (1) post-MVP feature → replace with neutral empty-state copy ("This feature is being prepared"); (2) unused surface → deprecate per ARCHIVE-not-DELETE; (3) missing copy → insert real content per blueprint. P8 Audit (2026-06-01) found 13+ violations; all resolved before this addendum landed.
+
+---
+
 ## QBO-Parity UI System (added 2026-06-08)
 Spec: `docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md` (design law). Locked decisions: `docs/lockdown/00_LOCKED_DECISIONS.md` §7. Additive — restructure existing accounting/catalog pages to consume the shared system; do not rebuild.
 
