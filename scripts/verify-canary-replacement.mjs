@@ -100,14 +100,33 @@ mustNotContain(".github/workflows/prod-postdeploy-verify.yml", "Promote to produ
 // 7) package.json wires this very guard (so it actually runs in CI).
 mustContain("package.json", "verify:canary-replacement", "package.json must expose the verify:canary-replacement script");
 
-// 8) smoke.sh uses bearer token, NOT email/password.
+// 8) smoke.sh is health-only — no SMOKE_TEST_* secrets referenced anywhere.
+//    Auth is Google OAuth / Lucia session-cookie; no service-token route exists.
+//    Full smoke (loads/drivers) requires a new backend auth route (separate block).
 {
   const smoke = read("scripts/smoke.sh") || "";
-  if (smoke.includes("SMOKE_TEST_EMAIL") || smoke.includes("SMOKE_TEST_PASSWORD")) {
-    errors.push("scripts/smoke.sh still references SMOKE_TEST_EMAIL or SMOKE_TEST_PASSWORD — must use SMOKE_TEST_TOKEN instead");
+  const smokeSensitive = ["SMOKE_TEST_TOKEN", "SMOKE_TEST_EMAIL", "SMOKE_TEST_PASSWORD", "SMOKE_TEST_COMPANY_ID"];
+  for (const s of smokeSensitive) {
+    if (smoke.includes(s)) {
+      errors.push(`scripts/smoke.sh must NOT reference ${s} — smoke is health-only; no service-token auth route exists`);
+    }
   }
-  if (!smoke.includes("SMOKE_TEST_TOKEN")) {
-    errors.push("scripts/smoke.sh must use SMOKE_TEST_TOKEN for bearer auth");
+  if (!smoke.includes("/api/v1/health")) {
+    errors.push("scripts/smoke.sh must curl /api/v1/health");
+  }
+}
+
+// 9) Workflow files must not pass SMOKE_TEST_TOKEN or SMOKE_TEST_COMPANY_ID to smoke.sh.
+{
+  const wfFiles = [
+    ".github/workflows/prod-postdeploy-verify.yml",
+    ".github/workflows/pr-preview-smoke.yml",
+  ];
+  for (const wf of wfFiles) {
+    const txt = read(wf) || "";
+    if (txt.includes("SMOKE_TEST_TOKEN") || txt.includes("SMOKE_TEST_COMPANY_ID")) {
+      errors.push(`${wf} must not pass SMOKE_TEST_TOKEN or SMOKE_TEST_COMPANY_ID — smoke is health-only`);
+    }
   }
 }
 
@@ -116,4 +135,4 @@ if (errors.length) {
   for (const e of errors) console.error("  - " + e);
   process.exit(1);
 }
-console.log(`[${LABEL}] PASS - canary replaced; token-auth smoke in place; Layer-2-only ship; PR Preview Smoke exists but trigger disabled until preview service provisioned`);
+console.log(`[${LABEL}] PASS - canary replaced; health-only smoke (no SMOKE_TEST_* secrets); Layer-2-only ship; PR Preview Smoke exists but trigger disabled until preview service provisioned`);

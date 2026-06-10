@@ -67,6 +67,4 @@ jobs:
       - name: Smoke the PR preview
         env:
           BASE_URL: ${{ steps.preview.outputs.preview_url }}
-          SMOKE_TEST_TOKEN: ${{ secrets.SMOKE_TEST_TOKEN }}
-          SMOKE_TEST_COMPANY_ID: ${{ secrets.SMOKE_TEST_COMPANY_ID }}
         run: bash scripts/smoke.sh
