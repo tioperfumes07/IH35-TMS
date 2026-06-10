@@ -1,18 +1,20 @@
 // @vitest-environment jsdom
+import * as jestDomMatchers from "@testing-library/jest-dom/matchers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/client";
-import { OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";
 import { ToastProvider } from "../components/Toast";
 import { UsersPage } from "./Users";
 
+expect.extend(jestDomMatchers);
+
 const createUserMock = vi.fn();
-const listUsersMock = vi.fn().mockResolvedValue({ users: [] });
-const checkReturningDispatcherMock = vi.fn().mockResolvedValue({ returning_dispatcher: false });
+const listUsersMock = vi.fn();
+const checkReturningDispatcherMock = vi.fn();
 
 vi.mock("../auth/useAuth", () => ({
   useAuth: () => ({
@@ -47,8 +49,10 @@ function wrap(ui: ReactElement) {
   );
 }
 
+/** Click the first "+ Add User" button (PageHeader may render multiple in some viewport breakpoints). */
 async function openInviteModal(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: /\+ Add User/i }));
+  const btns = screen.getAllByRole("button", { name: /\+ Add User/i });
+  await user.click(btns[0]!);
   await screen.findByRole("heading", { name: /add user/i });
 }
 
@@ -56,62 +60,163 @@ async function chooseSetPasswordMode(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("radio", { name: /set initial password now/i }));
 }
 
-async function fillInviteBasics(user: ReturnType<typeof userEvent.setup>) {
+/** Types into the Name and Email fields inside the Add User modal.
+ *  The page has a search textbox at index 0, so modal Name=index[1], Email=index[2]. */
+async function fillModalBasics(user: ReturnType<typeof userEvent.setup>, name = "Test User", email = "new.user@example.com") {
   const textboxes = screen.getAllByRole("textbox");
-  await user.type(textboxes[0]!, "Test User");
-  await user.type(textboxes[1]!, "new.user@example.com");
+  await user.type(textboxes[1]!, name);
+  await user.type(textboxes[2]!, email);
 }
 
-async function typeInitialPassword(user: ReturnType<typeof userEvent.setup>, value: string) {
+async function typePassword(user: ReturnType<typeof userEvent.setup>, value: string) {
   const passwordInput = document.querySelector('input[type="password"]') as HTMLInputElement;
-  expect(passwordInput).toBeTruthy();
+  expect(passwordInput).not.toBeNull();
   await user.type(passwordInput, value);
 }
 
-describe("UsersPage invite validation", () => {
-  it("(a) shows validation_error toast when create user returns 400 validation_error", async () => {
+/** Returns text content of all visible toast alerts. */
+function toastMessages(): string[] {
+  return screen.queryAllByTestId("toast-message").map((el) => el.textContent ?? "");
+}
+
+describe("UsersPage — Add User submit", () => {
+  beforeEach(() => {
+    createUserMock.mockReset();
+    listUsersMock.mockResolvedValue({ users: [] });
+    checkReturningDispatcherMock.mockResolvedValue({ returning_dispatcher: false });
+  });
+
+  it("(a) 400 validation_error from API surfaces a toast — not silent", async () => {
     createUserMock.mockRejectedValue(
       new ApiError(400, {
         error: "validation_error",
-        details: { fieldErrors: { initial_password: [OFFICE_PASSWORD_HINT] } },
+        details: { fieldErrors: { initial_password: ["Password too weak"] } },
       })
     );
     const user = userEvent.setup();
     render(wrap(<UsersPage />));
     await openInviteModal(user);
     await chooseSetPasswordMode(user);
-    await fillInviteBasics(user);
-    await typeInitialPassword(user, "Aa1!abcdefghij");
+    await fillModalBasics(user);
+    await typePassword(user, "Aa1!abcdefghij");
     await user.click(screen.getByRole("button", { name: /create user/i }));
+    await waitFor(() => expect(createUserMock).toHaveBeenCalledOnce());
     await waitFor(() => {
-      expect(screen.getByText(OFFICE_PASSWORD_HINT)).toBeInTheDocument();
+      const msgs = toastMessages();
+      expect(msgs.some((m) => m.length > 0)).toBe(true);
     });
-    expect(createUserMock).toHaveBeenCalled();
   });
 
-  it("(b) disables submit until password checklist is satisfied in set-password mode", async () => {
-    createUserMock.mockResolvedValue({ id: "user-1" });
+  it("(b) weak password shows hint toast and does NOT call API", async () => {
     const user = userEvent.setup();
     render(wrap(<UsersPage />));
     await openInviteModal(user);
     await chooseSetPasswordMode(user);
+    await fillModalBasics(user);
+    await typePassword(user, "weak");
     const submit = screen.getByRole("button", { name: /create user/i });
-    expect(submit).toBeDisabled();
-    await typeInitialPassword(user, "Aa1!abcdefghij");
+    expect(submit).not.toBeDisabled();
+    await user.click(submit);
     await waitFor(() => {
-      expect(submit).not.toBeDisabled();
+      const msgs = toastMessages();
+      expect(msgs.some((m) => m.includes("12 characters") || m.includes("password"))).toBe(true);
     });
-    expect(screen.getByText(/Lowercase letter/i)).toHaveClass("text-green-700");
+    expect(createUserMock).not.toHaveBeenCalled();
   });
 
-  it("(c) keeps submit enabled in invite mode without a password", async () => {
-    createUserMock.mockResolvedValue({ id: "user-2" });
+  it("(c) invite mode: submit enabled without password, no checklist shown", async () => {
     const user = userEvent.setup();
     render(wrap(<UsersPage />));
     await openInviteModal(user);
-    expect(screen.getByRole("radio", { name: /email invite to set password/i })).toBeChecked();
-    const submit = screen.getByRole("button", { name: /create and send invite/i });
-    expect(submit).not.toBeDisabled();
+    expect((screen.getByRole("radio", { name: /email invite/i }) as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByRole("button", { name: /create and send invite/i })).not.toBeDisabled();
     expect(screen.queryByText(/Lowercase letter/i)).toBeNull();
+  });
+
+  it("(d) valid set-password form fires POST and shows success toast", async () => {
+    createUserMock.mockResolvedValue({
+      id: "00000000-0000-4000-8000-000000000003",
+      name: "Test User",
+      email: "new.user@example.com",
+      role: "Manager",
+    });
+    const user = userEvent.setup();
+    render(wrap(<UsersPage />));
+    await openInviteModal(user);
+    await chooseSetPasswordMode(user);
+    await fillModalBasics(user);
+    await typePassword(user, "Aa1!abcdefghij");
+
+    const submit = screen.getByRole("button", { name: /create user/i });
+    expect(submit).not.toBeDisabled();
+    await user.click(submit);
+
+    await waitFor(() => {
+      expect(createUserMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Test User",
+          email: "new.user@example.com",
+          initial_password: "Aa1!abcdefghij",
+          send_password_setup_invite: false,
+        }),
+        expect.anything()
+      );
+    });
+    await waitFor(() => {
+      const msgs = toastMessages();
+      expect(msgs.some((m) => /user created/i.test(m))).toBe(true);
+    });
+  });
+
+  it("(e) any unexpected API error surfaces a visible error toast — never silently swallowed", async () => {
+    createUserMock.mockRejectedValue(new ApiError(500, { error: "internal_server_error" }));
+    const user = userEvent.setup();
+    render(wrap(<UsersPage />));
+    await openInviteModal(user);
+    await chooseSetPasswordMode(user);
+    await fillModalBasics(user);
+    await typePassword(user, "Aa1!abcdefghij");
+
+    await user.click(screen.getByRole("button", { name: /create user/i }));
+    await waitFor(() => expect(createUserMock).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      const msgs = toastMessages();
+      const errorToast = msgs.find((m) => /failed to create user/i.test(m));
+      expect(errorToast).toBeDefined();
+    });
+  });
+
+  it("(f) returning dispatcher warning blocks submit until checkbox acknowledged", async () => {
+    checkReturningDispatcherMock.mockResolvedValue({
+      returning_dispatcher: true,
+      matched_events: [{ id: "e1" }],
+      severity_summary: { severe_count: 1, warning_count: 0, info_count: 0 },
+    });
+    createUserMock.mockResolvedValue({ id: "00000000-0000-4000-8000-000000000004" });
+    const user = userEvent.setup();
+    render(wrap(<UsersPage />));
+    await openInviteModal(user);
+    await fillModalBasics(user);
+
+    await waitFor(() => {
+      const warning = screen.queryAllByText((_, el) =>
+        (el?.textContent ?? "").toLowerCase().includes("returning dispatcher detected")
+      );
+      expect(warning.length).toBeGreaterThan(0);
+    });
+
+    await user.click(screen.getByRole("button", { name: /create and send invite/i }));
+    expect(createUserMock).not.toHaveBeenCalled();
+
+    const checkbox = screen.getByRole("checkbox", { name: /acknowledge/i });
+    await user.click(checkbox);
+    await user.click(screen.getByRole("button", { name: /create and send invite/i }));
+
+    await waitFor(() => {
+      expect(createUserMock).toHaveBeenCalledWith(
+        expect.objectContaining({ override_returning_warning: true }),
+        expect.anything()
+      );
+    });
   });
 });

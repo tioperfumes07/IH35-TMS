@@ -852,6 +852,9 @@ jobs:
       - name: verify:backend-column-references
         run: npm run verify:backend-column-references
 
+      - name: verify:users-add-user-submits
+        run: npm run verify:users-add-user-submits
+
       - name: verify:driver-listing-excludes-pseudo-users
         run: npm run verify:driver-listing-excludes-pseudo-users
 

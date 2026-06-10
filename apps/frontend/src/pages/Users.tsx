@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreHorizontal } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, MoreHorizontal } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/useAuth";
@@ -141,6 +141,7 @@ export function UsersPage() {
     overrideReturningWarning: false,
   });
   const [roleBaseline, setRoleBaseline] = useState({ roleChangeRole: "Manager" as UserRole, roleReason: "" });
+  const returningWarningRef = useRef<HTMLDivElement | null>(null);
   const { pushToast } = useToast();
   const userBulk = useBulkSelection({ cap: 200, onCapExceeded: (error) => pushToast(error.message, "error") });
   const queryClient = useQueryClient();
@@ -170,6 +171,9 @@ export function UsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       pushToast("User created successfully", "success");
+    },
+    onError: (error) => {
+      console.error("[Users] createUser mutation error:", error);
     },
   });
 
@@ -294,8 +298,21 @@ export function UsersPage() {
       pushToast("Name is required", "error");
       return;
     }
+    if (!inviteEmail.trim()) {
+      pushToast("Email is required", "error");
+      return;
+    }
+    if (provisionMode === "set_password" && !invitePasswordReady) {
+      pushToast(OFFICE_PASSWORD_HINT, "error");
+      return;
+    }
     if (provisionMode === "set_password" && inviteInitialPassword.trim().length === 0) {
       pushToast("Initial password is required", "error");
+      return;
+    }
+    if (Boolean(returningDetection) && !overrideReturningWarning) {
+      returningWarningRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      pushToast("Confirm the returning dispatcher override to continue.", "error");
       return;
     }
     try {
@@ -314,6 +331,7 @@ export function UsersPage() {
         resetInviteFields();
       }
     } catch (error) {
+      console.error("[Users] submitInvite error:", error);
       if (error instanceof ApiError && error.status === 409 && (error.data as { error?: string })?.error === "returning_dispatcher_detected") {
         const details = error.data as ReturningDispatcherDetectionResult & { error: string };
         setReturningDetection({
@@ -322,10 +340,11 @@ export function UsersPage() {
           severity_summary: details.severity_summary ?? { severe_count: 0, warning_count: 0, info_count: 0 },
         });
         pushToast("Returning dispatcher detected. Confirm override to continue.", "error");
+        setTimeout(() => returningWarningRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
         return;
       }
-      if (error instanceof ApiError && error.status === 409) {
-        pushToast("User with this email already exists", "error");
+      if (error instanceof ApiError && (error.status === 409 || (error.data as { error?: string })?.error === "identity_user_conflict")) {
+        pushToast("A user with this email already exists", "error");
         return;
       }
       if (error instanceof ApiError && error.status === 400) {
@@ -339,8 +358,10 @@ export function UsersPage() {
           pushToast(parsed.message ?? OFFICE_PASSWORD_HINT, "error");
           return;
         }
+        pushToast(`Create user failed: ${body?.error ?? "bad request"}`, "error");
+        return;
       }
-      pushToast("Failed to create user", "error");
+      pushToast("Failed to create user — check console for details", "error");
     }
   }
 
@@ -513,7 +534,7 @@ export function UsersPage() {
         confirmDiscardOnClose
         isDirty={inviteIsDirty}
       >
-        <form className="space-y-3">
+        <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Name</label>
             <input
@@ -584,19 +605,23 @@ export function UsersPage() {
           ) : null}
           {checkingReturningDispatcher ? <div className="text-xs text-gray-500">Checking returning dispatcher history...</div> : null}
           {returningDetection ? (
-            <div className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
-              <p className="font-semibold">
-                Returning dispatcher detected: {returningDetection.matched_events.length} prior safety events (
-                {returningDetection.severity_summary.severe_count} severe, {returningDetection.severity_summary.warning_count} warning,{" "}
-                {returningDetection.severity_summary.info_count} info)
+            <div ref={returningWarningRef} className="rounded border-2 border-amber-400 bg-amber-50 p-3 text-xs text-amber-900">
+              <p className="flex items-center gap-1.5 font-semibold text-amber-800">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                Returning dispatcher detected — review required
               </p>
-              <label className="mt-2 inline-flex items-center gap-2">
+              <p className="mt-1">
+                {returningDetection.matched_events.length} prior safety event{returningDetection.matched_events.length !== 1 ? "s" : ""}:{" "}
+                {returningDetection.severity_summary.severe_count} severe, {returningDetection.severity_summary.warning_count} warning,{" "}
+                {returningDetection.severity_summary.info_count} info
+              </p>
+              <label className="mt-2 inline-flex cursor-pointer items-center gap-2">
                 <input
                   type="checkbox"
                   checked={overrideReturningWarning}
                   onChange={(event) => setOverrideReturningWarning(event.target.checked)}
                 />
-                Override warning and create user anyway
+                <span>I acknowledge this history — create user anyway</span>
               </label>
             </div>
           ) : null}
@@ -608,9 +633,9 @@ export function UsersPage() {
               storageKey="users-invite"
               primaryLabel={provisionMode === "send_invite" ? "Create and send invite" : "Create user"}
               loading={createUserMutation.isPending}
-              disabled={(Boolean(returningDetection) && !overrideReturningWarning) || !invitePasswordReady}
-              onSave={() => submitInvite(false)}
-              onSaveAndClose={() => submitInvite(true)}
+              disabled={createUserMutation.isPending}
+              onSave={() => void submitInvite(false)}
+              onSaveAndClose={() => void submitInvite(true)}
             />
           </div>
         </form>

@@ -506,13 +506,19 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
         const passwordHash = parsedBody.data.initial_password ? await argon2id.hash(parsedBody.data.initial_password) : null;
         const setupToken = !passwordHash && parsedBody.data.send_password_setup_invite ? randomUUID() : null;
 
+        const creatorRes = await client.query<{ default_company_id: string | null }>(
+          `SELECT default_company_id FROM identity.users WHERE id = $1 LIMIT 1`,
+          [authUser.uuid]
+        );
+        const inheritedCompanyId = creatorRes.rows[0]?.default_company_id ?? null;
+
         const res = await client.query<IdentityUserRow>(
           `
-            INSERT INTO identity.users (email, role, first_name, last_name, password_hash)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO identity.users (email, role, first_name, last_name, password_hash, default_company_id)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id, email, role, first_name, last_name, google_user_id, password_hash, default_company_id, created_at, deactivated_at
           `,
-          [parsedBody.data.email, parsedBody.data.role, firstName, lastName, passwordHash]
+          [parsedBody.data.email, parsedBody.data.role, firstName, lastName, passwordHash, inheritedCompanyId]
         );
         const row = res.rows[0];
         if (setupToken) {
