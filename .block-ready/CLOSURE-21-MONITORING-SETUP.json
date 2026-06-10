@@ -18,9 +18,12 @@
     "scripts/uptime-monitor-config.mjs",
     "scripts/verify-sentry-receives-test-error.mjs",
     "scripts/verify-closure-21-monitoring-artifacts.mjs",
-    "package.json"
+    "package.json",
+    ".github/workflows/ci.yml"
   ],
-  "extra_gates": ["verify:closure-21-monitoring-artifacts"],
+  "extra_gates": [
+    "verify:closure-21-monitoring-artifacts"
+  ],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": true
