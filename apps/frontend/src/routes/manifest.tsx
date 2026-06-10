@@ -331,6 +331,23 @@ import { IntegrityAlertsPage } from "../pages/safety/IntegrityAlertsPage";
 import { DailyTasksPage } from "../pages/daily-tasks/DailyTasksPage";
 import { VendorMappingResolutionPage } from "../pages/samsara-vendor-mapping/VendorMappingResolutionPage";
 
+// Tasks module (SIDEBAR-V2-REORG-25)
+import { TaskBoardPage } from "../pages/tasks/TaskBoardPage";
+import { TasksCalendarPage } from "../pages/tasks/TasksCalendarPage";
+import { TasksMinePage } from "../pages/tasks/TasksMinePage";
+import { TasksChatPage } from "../pages/tasks/TasksChatPage";
+import { TasksReportPage } from "../pages/tasks/TasksReportPage";
+
+// Finance module (SIDEBAR-V2-REORG-25)
+import { FinanceOverviewPage } from "../pages/finance/FinanceOverviewPage";
+import { FinanceProjectionsPage } from "../pages/finance/FinanceProjectionsPage";
+import { FinanceScenariosPage } from "../pages/finance/FinanceScenariosPage";
+
+// Inventory module (SIDEBAR-V2-REORG-25)
+import { InventoryPartsStockPage } from "../pages/inventory/InventoryPartsStockPage";
+import { InventoryAssignmentsPage } from "../pages/inventory/InventoryAssignmentsPage";
+import { InventoryPurchasesPage } from "../pages/inventory/InventoryPurchasesPage";
+
 function RootRedirect() {
   const auth = useAuth();
   if (auth.isLoading) {
@@ -3237,6 +3254,20 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* Tasks module (SIDEBAR-V2-REORG-25) */}
+        <Route path="/tasks" element={<ProtectedRoute><TaskBoardPage /></ProtectedRoute>} />
+        <Route path="/tasks/calendar" element={<ProtectedRoute><TasksCalendarPage /></ProtectedRoute>} />
+        <Route path="/tasks/mine" element={<ProtectedRoute><TasksMinePage /></ProtectedRoute>} />
+        <Route path="/tasks/chat" element={<ProtectedRoute><TasksChatPage /></ProtectedRoute>} />
+        <Route path="/tasks/report" element={<ProtectedRoute><TasksReportPage /></ProtectedRoute>} />
+        {/* Finance module (SIDEBAR-V2-REORG-25) */}
+        <Route path="/finance" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />
+        <Route path="/finance/projections" element={<ProtectedRoute><FinanceProjectionsPage /></ProtectedRoute>} />
+        <Route path="/finance/scenarios" element={<ProtectedRoute><FinanceScenariosPage /></ProtectedRoute>} />
+        {/* Inventory module (SIDEBAR-V2-REORG-25) */}
+        <Route path="/inventory" element={<ProtectedRoute><InventoryPartsStockPage /></ProtectedRoute>} />
+        <Route path="/inventory/assignments" element={<ProtectedRoute><InventoryAssignmentsPage /></ProtectedRoute>} />
+        <Route path="/inventory/purchases" element={<ProtectedRoute><InventoryPurchasesPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/insurance" element={<Navigate to="/safety/insurance" replace />} />
   </>

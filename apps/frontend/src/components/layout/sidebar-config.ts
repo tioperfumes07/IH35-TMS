@@ -6,15 +6,19 @@ import {
   Building2,
   Calculator,
   CarFront,
+  CheckSquare,
   CircleHelp,
   FileText,
   Home,
+  LineChart,
   ListChecks,
+  Package,
   Radio,
   Scale,
   Shield,
   ShieldCheck,
   SquareStack,
+  TrendingUp,
   Truck,
   UserCog,
 } from "lucide-react";
@@ -24,25 +28,28 @@ import { MAINTENANCE_MODULE_NAV_LINKS } from "../maintenance/MAINTENANCE_NAV_CON
 /** Canonical sidebar ids (locked; single source for order + prefs overrides). */
 export const SIDEBAR_ITEM_IDS = [
   "home",
-  "maintenance",
+  "tasks",
   "fuel",
   "dispatch",
-  "drivers",
   "driver-hub",
+  "maintenance",
   "safety",
-  "accounting",
+  "drivers",
   "insurance",
+  "legal",
+  "eld",
+  "cash-flow",
+  "accounting",
   "bank",
   "factoring",
+  "finance",
   "customers",
   "vendors",
+  "inventory",
+  "form_425",
   "lists",
   "reports",
-  "legal",
   "docs",
-  "eld",
-  "form_425",
-  "drv_app",
   "users",
   "help",
 ] as const;
@@ -70,19 +77,19 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   home: { id: "home", label: "HOME", Icon: Home, to: "/home", dataTour: "tour-nav-home" },
   maintenance: {
     id: "maintenance",
-    label: "MAINT",
+    label: "MAINTENANCE",
     Icon: CarFront,
     to: "/maintenance",
     badgeKey: "maintenance_severe",
   },
   fuel: { id: "fuel", label: "FUEL", Icon: CarFront, to: "/fuel" },
   dispatch: { id: "dispatch", label: "DISPATCH", Icon: Truck, to: "/dispatch", dataTour: "tour-nav-dispatch" },
-  drivers: { id: "drivers", label: "DRIVERS", Icon: Truck, to: "/drivers" },
+  drivers: { id: "drivers", label: "DRIVER PROFILE", Icon: Truck, to: "/drivers" },
   "driver-hub": { id: "driver-hub", label: "DRIVER HUB", Icon: Activity, to: "/driver-hub" },
   safety: { id: "safety", label: "SAFETY", Icon: ShieldCheck, to: "/safety" },
-  accounting: { id: "accounting", label: "ACCTG", Icon: Calculator, to: "/accounting" },
+  accounting: { id: "accounting", label: "ACCOUNTING", Icon: Calculator, to: "/accounting" },
   insurance: { id: "insurance", label: "INSURANCE", Icon: Shield, to: "/safety/insurance" },
-  bank: { id: "bank", label: "BANK", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
+  bank: { id: "bank", label: "BANKING", Icon: Banknote, to: "/banking", dataTour: "tour-nav-banking" },
   factoring: { id: "factoring", label: "FACT", Icon: Calculator, to: "/accounting/factoring" },
   customers: { id: "customers", label: "CUSTOMERS", Icon: Building2, to: "/customers", dataTour: "tour-nav-customers" },
   vendors: { id: "vendors", label: "VENDORS", Icon: Building2, to: "/vendors" },
@@ -92,7 +99,10 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   docs: { id: "docs", label: "DOCS", Icon: FileText, to: "/docs", visibleRoles: ["Owner", "Administrator"] },
   eld: { id: "eld", label: "ELD", Icon: Radio, to: "/eld", visibleRoles: ["Owner"] },
   form_425: { id: "form_425", label: "425C", Icon: SquareStack, to: "/425c" },
-  drv_app: { id: "drv_app", label: "DRV APP", Icon: Activity, to: "/driver-app" },
+  tasks: { id: "tasks", label: "TASKS", Icon: CheckSquare, to: "/tasks" },
+  "cash-flow": { id: "cash-flow", label: "CASH FLOW", Icon: LineChart, to: "/cash-flow" },
+  finance: { id: "finance", label: "FINANCE", Icon: TrendingUp, to: "/finance" },
+  inventory: { id: "inventory", label: "INVENTORY", Icon: Package, to: "/inventory" },
   users: {
     id: "users",
     label: "USERS",
@@ -128,8 +138,8 @@ function parseUserOverride(raw: unknown): SidebarItemId[] | null {
 
 /** Role-first ordering; remaining ids append from `SIDEBAR_DEFAULT_ORDER`. Owner / Administrator / SuperAdmin use defaults only (no entry here). */
 export const SIDEBAR_ROLE_ORDER: Partial<Record<UserRole, readonly SidebarItemId[]>> = {
-  Mechanic: ["home", "maintenance", "fuel", "drivers", "safety", "lists", "docs", "eld", "reports", "drv_app", "users", "help"],
-  Dispatcher: ["home", "dispatch", "drivers", "fuel", "safety", "maintenance", "customers", "vendors", "lists", "reports", "help"],
+  Mechanic: ["home", "maintenance", "fuel", "drivers", "driver-hub", "safety", "lists", "docs", "eld", "reports", "users", "help"],
+  Dispatcher: ["home", "dispatch", "drivers", "driver-hub", "fuel", "safety", "maintenance", "customers", "vendors", "lists", "reports", "help"],
   Accountant: ["home", "accounting", "bank", "factoring", "vendors", "customers", "drivers", "fuel", "reports", "lists", "form_425", "legal", "docs", "help"],
   Safety: ["home", "safety", "drivers", "maintenance", "dispatch", "fuel", "lists", "reports", "help", "users"],
   Manager: ["home", "dispatch", "drivers", "maintenance", "fuel", "customers", "vendors", "safety", "lists", "reports", "help", "users"],
@@ -243,6 +253,31 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       }
       return rows;
     }
+    case "tasks":
+      return [
+        { label: "Task Board", to: "/tasks" },
+        { label: "Calendar", to: "/tasks/calendar" },
+        { label: "My Tasks", to: "/tasks/mine" },
+        { label: "Team Chat", to: "/tasks/chat" },
+        { label: "Admin Report", to: "/tasks/report" },
+      ];
+    case "finance":
+      return [
+        { label: "Overview", to: "/finance" },
+        { label: "Projections", to: "/finance/projections" },
+        { label: "Scenarios", to: "/finance/scenarios" },
+      ];
+    case "inventory":
+      return [
+        { label: "Parts & Stock", to: "/inventory" },
+        { label: "Assignments", to: "/inventory/assignments" },
+        { label: "Purchase History", to: "/inventory/purchases" },
+      ];
+    case "driver-hub":
+      return [
+        { label: "Driver Hub Home", to: "/driver-hub" },
+        { label: "Driver App", to: "/driver-app" },
+      ];
     default:
       return [];
   }
