@@ -1,0 +1,24 @@
+{
+  "block_id": "FIX-AUDIT-KPI-DRIFTS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "P8 Audit",
+  "task": "Reconcile 8 KPI drifts production vs app. All 8 canonical KPIs already fixed in main: canonical-kpis.ts, KPI_SOURCES_OF_TRUTH.md, verify-kpi-sources-of-truth-exists.mjs, 8 vitest.",
+  "branch": "fix/audit-kpi-drifts",
+  "lane": "A",
+  "details": [
+    "8 KPIs reconciled: Active Loads, In Transit, Open WOs, PM Due, Past Due WOs, Drivers on Active Loads, Pending Bills, Driver Escrow.",
+    "canonical-kpis.ts exports unified, filter-correct computations.",
+    "docs/specs/KPI_SOURCES_OF_TRUTH.md drift table.",
+    "IH35_ARCHITECTURAL_DESIGN.md section at line 1057.",
+    "verify-kpi-sources-of-truth-exists.mjs CI guard.",
+    "8 vitest pass in canonical-kpis.test.ts."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-AUDIT-KPI-DRIFTS.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
