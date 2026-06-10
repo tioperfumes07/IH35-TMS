@@ -1,7 +1,7 @@
 {
   "block_id": "FIX-CANARY-SMOKE-DURABLE",
   "phase": "CI Infrastructure",
-  "task": "Replace permanently-red Canary Preview Smoke with two honest gates: PR Preview Smoke (pre-merge, on pull_request) and Production Post-Deploy Verify (on push to main), sharing scripts/smoke.sh and guarded by scripts/verify-canary-replacement.mjs wired into ci.yml.",
+  "task": "Simplify smoke.sh to health-only: drop SMOKE_TEST_TOKEN/EMAIL/PASSWORD/COMPANY_ID — auth is Google OAuth/Lucia, no service-token route exists. Update prod-postdeploy-verify.yml and pr-preview-smoke.yml to not pass removed secrets. Update verify-canary-replacement.mjs to assert health-only smoke (checks 8+9).",
   "allowed_files": [
     ".github/workflows/pr-preview-smoke.yml",
     ".github/workflows/prod-postdeploy-verify.yml",
