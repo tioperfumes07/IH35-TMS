@@ -1,6 +1,10 @@
-import { render, screen } from "@testing-library/react";
+// @vitest-environment jsdom
+import * as matchers from "@testing-library/jest-dom/matchers";
+import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+expect.extend(matchers);
+afterEach(cleanup);
 
 function RedirectProbe({ to }: { to: string }) {
   return <div data-testid="redirect-target">{to}</div>;

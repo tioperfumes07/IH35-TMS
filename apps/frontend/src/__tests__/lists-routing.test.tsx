@@ -1,8 +1,11 @@
+// @vitest-environment jsdom
+import * as matchers from "@testing-library/jest-dom/matchers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+expect.extend(matchers);
 import { AccountRoleBindingsListPage } from "../pages/lists/accounting/AccountRoleBindingsListPage";
 import { ChartOfAccountsListPage } from "../pages/lists/accounting/ChartOfAccountsListPage";
 import { ChartOfAccountsSeedsListPage } from "../pages/lists/accounting/ChartOfAccountsSeedsListPage";
@@ -151,6 +154,7 @@ describe("lists catalog routing smoke", () => {
 
   afterEach(() => {
     consoleError.mockRestore();
+    cleanup();
   });
 
   it.each(LIST_ROUTES)("renders heading for $path", async ({ path, element, heading }) => {

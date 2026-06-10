@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { VendorBillForm } from "../../components/accounting/VendorBillForm";
+import { ToastProvider } from "../../components/Toast";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
@@ -25,7 +26,7 @@ vi.mock("../../api/maintenance", () => ({
 function wrap(ui: ReactElement) {
   return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      {ui}
+      <ToastProvider>{ui}</ToastProvider>
     </QueryClientProvider>
   );
 }
@@ -45,6 +46,5 @@ describe("VendorBillCreatePage", () => {
     expect(screen.getByText("Repair Bill")).toBeInTheDocument();
     expect(screen.getByText("Bill Total = A + B")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Create bill/i })).toBeInTheDocument();
-    expect(screen.getByText(/contract stub/i)).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { DriversListPage } from "./DriversListPage";
+import { ToastProvider } from "../../components/Toast";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
@@ -41,9 +42,11 @@ describe("DriversListPage", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <MemoryRouter>
-          <DriversListPage />
-        </MemoryRouter>
+        <ToastProvider>
+          <MemoryRouter>
+            <DriversListPage />
+          </MemoryRouter>
+        </ToastProvider>
       </QueryClientProvider>
     );
 
