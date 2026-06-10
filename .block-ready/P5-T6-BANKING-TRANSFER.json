@@ -1,0 +1,16 @@
+{
+  "block_id": "P5-T6-BANKING-TRANSFER",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
+  "branch": "feat/p5-t6-banking-transfer-test-fix",
+  "phase": "Phase5-Tier3",
+  "task": "Banking transfer between accounts (P5-T6) — fix broken test (missing jsdom env + jest-dom matchers); all surface already on main",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/P5-T6-BANKING-TRANSFER.json",
+    "apps/frontend/src/pages/banking/TransferModal.test.tsx"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
