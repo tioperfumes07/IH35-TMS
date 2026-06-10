@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
+import { cleanup } from "@testing-library/react";
 import * as clientApi from "../../../api/client";
 import * as mdataApi from "../../../api/mdata";
 import * as safetyApi from "../../../api/safety";
 import { DriverProfilePage } from "../DriverProfilePage";
+import { ToastProvider } from "../../../components/Toast";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
@@ -21,6 +23,7 @@ const driverFixture = {
   cdl_state: "TX",
   cdl_expires_at: "2027-01-01",
   dot_medical_expires_at: "2027-06-01",
+  settlement_auto_pay_enabled: false,
 };
 
 const profileFixture = {
@@ -56,16 +59,20 @@ function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={["/drivers/d-test-1/profile"]}>
-        <Routes>
-          <Route path="/drivers/:id/profile" element={<DriverProfilePage />} />
-        </Routes>
-      </MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={["/drivers/d-test-1/profile"]}>
+          <Routes>
+            <Route path="/drivers/:id/profile" element={<DriverProfilePage />} />
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
 
 describe("DriverProfilePage", () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     vi.spyOn(mdataApi, "getDriver").mockResolvedValue(driverFixture as never);
     vi.spyOn(clientApi, "apiRequest").mockResolvedValue(profileFixture as never);

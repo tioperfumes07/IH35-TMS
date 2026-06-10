@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../../api/client";
 import { ToastProvider } from "../../../components/Toast";
 import { DriversPage } from "../../Drivers";
@@ -69,6 +69,8 @@ async function clickSaveInCreateModal(user: ReturnType<typeof userEvent.setup>) 
 }
 
 describe("DriversPage create driver validation", () => {
+  afterEach(cleanup);
+
   it("shows inline field error when required fields missing", async () => {
     const user = userEvent.setup();
     render(wrap(<DriversPage />));

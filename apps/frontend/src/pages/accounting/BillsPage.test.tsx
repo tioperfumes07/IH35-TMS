@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 import * as accountingApi from "../../api/accounting";
 import { BillsPage } from "./BillsPage";
+import { ToastProvider } from "../../components/Toast";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
@@ -21,13 +23,17 @@ vi.mock("../../api/accounting", async (importOriginal) => {
 
 function wrap(ui: ReactElement) {
   return (
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      {ui}
-    </QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <ToastProvider>{ui}</ToastProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 }
 
 describe("BillsPage", () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     vi.mocked(accountingApi.listBills).mockResolvedValue({
       rows: [
