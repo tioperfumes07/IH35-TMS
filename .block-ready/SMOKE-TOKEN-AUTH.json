@@ -1,0 +1,32 @@
+{
+  "block_id": "SMOKE-TOKEN-AUTH",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
+  "branch": "fix/SMOKE-TOKEN-AUTH",
+  "phase": "HOTFIX",
+  "task": "Switch smoke auth to bearer token; disable dead PR-preview trigger; Layer-2-only ship; inherit BUG-ADD-USER-INERT fix",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/SMOKE-TOKEN-AUTH.json",
+    ".block-ready/FIX-CANARY-SMOKE-DURABLE.json",
+    "apps/backend/src/identity/users.routes.ts",
+    "apps/frontend/src/components/Toast.tsx",
+    "apps/frontend/src/pages/Users.test.tsx",
+    "apps/frontend/src/pages/Users.tsx",
+    "apps/frontend/src/test-setup.ts",
+    ".github/workflows/canary-smoke.yml",
+    ".github/workflows/ci.yml",
+    ".github/workflows/pr-preview-smoke.yml",
+    ".github/workflows/prod-postdeploy-verify.yml",
+    "package.json",
+    "scripts/smoke.sh",
+    "scripts/verify-canary-replacement.mjs",
+    "scripts/verify-users-add-user-submits.mjs"
+  ],
+  "extra_gates": [
+    "verify:canary-replacement",
+    "verify:users-add-user-submits"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
