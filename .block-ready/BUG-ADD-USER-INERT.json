@@ -1,0 +1,25 @@
+{
+  "block_id": "BUG-ADD-USER-INERT",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
+  "branch": "fix/BUG-ADD-USER-INERT",
+  "phase": "HOTFIX",
+  "task": "Fix inert Add User button: SaveDropdown disabled by silent returningDetection state; fix BE default_company_id; add regression tests",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/BUG-ADD-USER-INERT.json",
+    "apps/backend/src/identity/users.routes.ts",
+    "apps/frontend/src/components/Toast.tsx",
+    "apps/frontend/src/pages/Users.test.tsx",
+    "apps/frontend/src/pages/Users.tsx",
+    "apps/frontend/src/test-setup.ts",
+    ".github/workflows/ci.yml",
+    "package.json",
+    "scripts/verify-users-add-user-submits.mjs"
+  ],
+  "extra_gates": [
+    "verify:users-add-user-submits"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}
