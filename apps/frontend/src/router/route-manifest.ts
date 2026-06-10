@@ -49,6 +49,17 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/dispatch/assignments", label: "Assignments", module: "dispatch" },
   { path: "/dispatch/settlements", label: "Settlements", module: "dispatch" },
   { path: "/dispatch/pre-settlements", label: "Pre-settlements", module: "dispatch" },
+  { path: "/tasks", label: "Task Board", module: "tasks" },
+  { path: "/tasks/calendar", label: "Calendar", module: "tasks" },
+  { path: "/tasks/mine", label: "My Tasks", module: "tasks" },
+  { path: "/tasks/chat", label: "Team Chat", module: "tasks" },
+  { path: "/tasks/report", label: "Admin Report", module: "tasks" },
+  { path: "/finance", label: "Finance Overview", module: "finance" },
+  { path: "/finance/projections", label: "Projections", module: "finance" },
+  { path: "/finance/scenarios", label: "Scenarios", module: "finance" },
+  { path: "/inventory", label: "Parts & Stock", module: "inventory" },
+  { path: "/inventory/assignments", label: "Assignments", module: "inventory" },
+  { path: "/inventory/purchases", label: "Purchase History", module: "inventory" },
 ];
 
 export const BANKING_TAB_PATH: Record<string, string> = {

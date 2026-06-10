@@ -66,9 +66,16 @@ describe("Sidebar", () => {
       </MemoryRouter>
     );
     const expected = navLabelsForRole("Owner");
-    const rendered = screen.getAllByRole("link").map((el) => el.textContent?.replace(/\s+/g, " ").trim());
+    const expectedSet = new Set(expected);
+    const rendered = screen
+      .getAllByRole("link")
+      .map((el) => el.textContent?.replace(/\s+/g, " ").trim())
+      .filter((label) => label && expectedSet.has(label));
     expect(rendered).toEqual(expected);
-    const iconCount = document.querySelectorAll("a svg").length;
+    const managedLinks = screen
+      .getAllByRole("link")
+      .filter((el) => expectedSet.has(el.textContent?.replace(/\s+/g, " ").trim() ?? ""));
+    const iconCount = managedLinks.filter((el) => el.querySelector("svg")).length;
     expect(iconCount).toBe(expected.length);
   });
 

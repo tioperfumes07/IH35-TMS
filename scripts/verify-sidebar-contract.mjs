@@ -4,10 +4,8 @@
  * CI guard: asserts SIDEBAR_ITEM_IDS in sidebar-config.ts matches the locked current array.
  * Fails with a descriptive error if length, specific indexes, full order, or additive ids drift.
  *
- * TODO(driver-hub block): remove "driver-hub" from PENDING_IDS; set LOCKED_ORDER to the 22-item
- *   array (driver-hub inserted at index 4 per LOCKED_23_TARGET).
- * TODO(cash-flow block): remove "cash-flow" from PENDING_IDS; set LOCKED_ORDER to LOCKED_23_TARGET
- *   (23 items); add cash-flow position assertions (between eld and accounting).
+ * Last updated: SIDEBAR-V2-REORG-25 (25-item Owner default; drv_app removed from top rail;
+ *   tasks/finance/inventory/cash-flow added; eld→cash-flow→accounting adjacency enforced).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -18,52 +16,28 @@ const sidebarPath = path.join(
   "apps/frontend/src/components/layout/sidebar-config.ts"
 );
 
-/** Current locked sidebar order on main (21 items). Bump when PENDING_IDS entries land. */
+/** Locked Owner-default sidebar order — SIDEBAR-V2-REORG-25 (25 items). */
 const LOCKED_ORDER = [
   "home",
-  "maintenance",
+  "tasks",
   "fuel",
   "dispatch",
-  "drivers",
   "driver-hub",
+  "maintenance",
   "safety",
-  "accounting",
+  "drivers",
   "insurance",
-  "bank",
-  "factoring",
-  "customers",
-  "vendors",
-  "lists",
-  "reports",
   "legal",
-  "docs",
-  "eld",
-  "form_425",
-  "drv_app",
-  "users",
-  "help",
-];
-
-/** Final owner-locked target (23 items). Additive check uses non-pending subset today. */
-const LOCKED_23_TARGET = [
-  "home",
-  "maintenance",
-  "fuel",
-  "dispatch",
-  "driver-hub",
-  "safety",
-  "drivers",
-  "insurance",
   "eld",
   "cash-flow",
   "accounting",
   "bank",
   "factoring",
-  "vendors",
+  "finance",
   "customers",
-  "legal",
+  "vendors",
+  "inventory",
   "form_425",
-  "drv_app",
   "lists",
   "reports",
   "docs",
@@ -71,8 +45,8 @@ const LOCKED_23_TARGET = [
   "help",
 ];
 
-/** Sidebar ids not yet on main — excluded from additive presence check until their blocks ship. */
-const PENDING_IDS = new Set(["cash-flow"]);
+/** All ids are shipped — nothing pending. */
+const PENDING_IDS = new Set([]);
 
 const EXPECTED_LENGTH = LOCKED_ORDER.length;
 const EXPECTED_INSURANCE_INDEX = LOCKED_ORDER.indexOf("insurance");
@@ -135,7 +109,7 @@ if (rawItems.length > LOCKED_ORDER.length) {
   }
 }
 
-for (const id of LOCKED_23_TARGET) {
+for (const id of LOCKED_ORDER) {
   if (PENDING_IDS.has(id)) continue;
   if (!rawSet.has(id)) {
     errors.push(
@@ -165,7 +139,6 @@ if (errors.length > 0) {
     console.error(`  • ${e}`);
   }
   console.error("\nLocked array: " + JSON.stringify(LOCKED_ORDER));
-  console.error("23-target:    " + JSON.stringify(LOCKED_23_TARGET));
   console.error("Found array:  " + JSON.stringify(rawItems));
   process.exit(1);
 }
@@ -174,5 +147,5 @@ console.log(
   `verify-sidebar-contract OK — SIDEBAR_ITEM_IDS has ${rawItems.length} items, insurance at index ${EXPECTED_INSURANCE_INDEX}, factoring at index ${EXPECTED_FACTORING_INDEX}.`
 );
 console.log(
-  `  additive check: ${LOCKED_23_TARGET.length - PENDING_IDS.size}/${LOCKED_23_TARGET.length} locked ids present (${PENDING_IDS.size} pending: ${[...PENDING_IDS].join(", ")})`
+  `  additive check: ${LOCKED_ORDER.length - PENDING_IDS.size}/${LOCKED_ORDER.length} locked ids present (${PENDING_IDS.size} pending: ${[...PENDING_IDS].join(", ")})`
 );
