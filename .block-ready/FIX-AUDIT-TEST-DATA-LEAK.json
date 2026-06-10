@@ -1,0 +1,26 @@
+{
+  "block_id": "FIX-AUDIT-TEST-DATA-LEAK",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "P8 Audit",
+  "task": "Archive TEST/seed rows from prod listings. Infrastructure already in place (migrations 0320/0367/0369/0396, EXCLUDE_ARCHIVED_* constants, CI guard). Added 3rd vitest to test-seed-archive.test.ts.",
+  "branch": "fix/audit-test-data-leak",
+  "lane": "A",
+  "details": [
+    "Migrations 0320/0367/0369/0396 archive test/seed rows (archived_at IS NULL guards in place).",
+    "EXCLUDE_ARCHIVED_DRIVERS_SQL used in mdata/drivers.routes.ts.",
+    "EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL used in customers/list.routes.ts.",
+    "EXCLUDE_ARCHIVED_QBO_CUSTOMERS_SQL used in accounting/qbo-master-read.routes.ts.",
+    "EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL used in identity/users.routes.ts.",
+    "verify:no-test-seed-in-prod-listings.mjs CI guard passes.",
+    "3 vitest pass in test-seed-archive.test.ts."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-AUDIT-TEST-DATA-LEAK.json",
+    "apps/backend/src/mdata/__tests__/test-seed-archive.test.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
