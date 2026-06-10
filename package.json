@@ -44,7 +44,7 @@
     "plaid:backfill-webhook": "tsx scripts/plaid-backfill-webhook-url.ts",
     "smoke:email-queue": "tsx scripts/smoke-tests/email-queue-e2e.ts",
     "test": "vitest run --config apps/backend/vitest.config.ts && cd apps/frontend && npx vitest run src/components/ErrorBoundary.test.tsx src/pages/EquipmentTypesPage.test.tsx src/pages/Users.test.tsx && cd ../.. && node scripts/lint-deps.test.mjs",
-    "verify:users-add-user-submits": "cd apps/frontend && npx vitest run src/pages/Users.test.tsx",
+    "verify:users-add-user-submits": "node scripts/verify-users-add-user-submits.mjs",
     "test:a11y": "axe https://app.ih35dispatch.com/dashboard https://app.ih35dispatch.com/loads https://app.ih35dispatch.com/settlements https://app.ih35dispatch.com/banking https://app.ih35dispatch.com/drivers https://app.ih35dispatch.com/customers --tags wcag2a,wcag2aa --exit",
     "test:coverage": "vitest run --config apps/backend/vitest.config.ts --coverage",
     "db:migrate": "node scripts/db-migrate.mjs",

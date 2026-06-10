@@ -15,7 +15,8 @@
     "apps/frontend/src/pages/Users.tsx",
     "apps/frontend/src/test-setup.ts",
     ".github/workflows/ci.yml",
-    "package.json"
+    "package.json",
+    "scripts/verify-users-add-user-submits.mjs"
   ],
   "preview_provided": false,
   "extra_gates": [
