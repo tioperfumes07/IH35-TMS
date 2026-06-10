@@ -1,11 +1,10 @@
 {
   "block_id": "BUG-ADD-USER-INERT",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
   "branch": "fix/BUG-ADD-USER-INERT",
   "phase": "HOTFIX",
   "task": "Fix inert Add User button: SaveDropdown disabled by silent returningDetection state; fix BE default_company_id; add regression tests",
   "agent": "1",
-  "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
   "allowed_files": [
     ".block-ready/BUG-ADD-USER-INERT.json",
     ".block-ready.agent1.json",
@@ -17,7 +16,6 @@
     ".github/workflows/ci.yml",
     "package.json"
   ],
-  "preview_provided": false,
   "extra_gates": [
     "verify:users-add-user-submits"
   ],
