@@ -49,6 +49,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/dispatch/assignments", label: "Assignments", module: "dispatch" },
   { path: "/dispatch/settlements", label: "Settlements", module: "dispatch" },
   { path: "/dispatch/pre-settlements", label: "Pre-settlements", module: "dispatch" },
+  { path: "/products", label: "Products & Services", module: "products" },
 ];
 
 export const BANKING_TAB_PATH: Record<string, string> = {

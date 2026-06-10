@@ -151,6 +151,7 @@ import { DriverHubPage } from "../pages/home/DriverHubPage";
 import { UserDetailPage } from "../pages/UserDetail";
 import { UsersPage } from "../pages/Users";
 import { VendorsPage } from "../pages/Vendors";
+import { ProductsPage } from "../pages/products/ProductsPage";
 import { VendorDetailPage } from "../pages/VendorDetail";
 import { Form425CHome } from "../pages/form425c/Form425CHome";
 import { HelpCenterPage } from "../pages/help/HelpCenterPage";
@@ -681,6 +682,15 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <VendorDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* B1 Products & Services (QBO-parity, non-financial catalog) */}
+        <Route
+          path="/products"
+          element={
+            <ProtectedRoute>
+              <ProductsPage />
             </ProtectedRoute>
           }
         />

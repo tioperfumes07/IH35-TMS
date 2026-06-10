@@ -41,9 +41,18 @@ type Props = {
   vendors: VendorOption[];
   openByVendorId: Map<string, number>;
   onSelectVendor?: (vendorId: string) => void;
+  /** QBO-parity A1 density toggle. Defaults to "regular". */
+  density?: "regular" | "compact" | "ultra";
 };
 
-export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVendor }: Props) {
+const DENSITY_PAD: Record<"regular" | "compact" | "ultra", string> = {
+  regular: "py-2",
+  compact: "py-1",
+  ultra: "py-0.5",
+};
+
+export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVendor, density = "regular" }: Props) {
+  const rowPad = DENSITY_PAD[density];
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const selection = useBulkSelection();
@@ -167,7 +176,7 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
                       className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
                       onClick={() => onSelectVendor?.(vendor.id)}
                     >
-                      <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                      <td className={`px-2 ${rowPad}`} onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           aria-label={`Select ${vendor.name}`}
@@ -175,27 +184,27 @@ export function VendorsListView({ companyId, vendors, openByVendorId, onSelectVe
                           onChange={() => toggle(vendor.id)}
                         />
                       </td>
-                      <td style={{ width: widths.name }} className="truncate px-2 py-2 font-medium">
+                      <td style={{ width: widths.name }} className={`truncate px-2 ${rowPad} font-medium`}>
                         <Link to={`/vendors/${vendor.id}`} className="text-sky-700 hover:underline" onClick={(e) => e.stopPropagation()}>
                           {vendor.name}
                         </Link>
                       </td>
-                      <td style={{ width: widths.email }} className="truncate px-2 py-2">{vendor.email ?? "—"}</td>
-                      <td style={{ width: widths.phone }} className="truncate px-2 py-2">{vendor.phone ?? "—"}</td>
-                      <td style={{ width: widths.vendor_type }} className="truncate px-2 py-2">{vendor.vendor_type ?? "—"}</td>
-                      <td style={{ width: widths.open_balance }} className="truncate px-2 py-2 text-right">{fmtMoney(open)}</td>
-                      <td style={{ width: widths.quality }} className="truncate px-2 py-2">
+                      <td style={{ width: widths.email }} className={`truncate px-2 ${rowPad}`}>{vendor.email ?? "—"}</td>
+                      <td style={{ width: widths.phone }} className={`truncate px-2 ${rowPad}`}>{vendor.phone ?? "—"}</td>
+                      <td style={{ width: widths.vendor_type }} className={`truncate px-2 ${rowPad}`}>{vendor.vendor_type ?? "—"}</td>
+                      <td style={{ width: widths.open_balance }} className={`truncate px-2 ${rowPad} text-right`}>{fmtMoney(open)}</td>
+                      <td style={{ width: widths.quality }} className={`truncate px-2 ${rowPad}`}>
                         <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${quality.className}`}>
                           {quality.label}
                         </span>
                       </td>
-                      <td style={{ width: widths.fmcsa }} className="truncate px-2 py-2">
+                      <td style={{ width: widths.fmcsa }} className={`truncate px-2 ${rowPad}`}>
                         {isCarrier ? "Carrier" : "—"}
                       </td>
-                      <td style={{ width: widths.last_txn }} className="truncate px-2 py-2">
+                      <td style={{ width: widths.last_txn }} className={`truncate px-2 ${rowPad}`}>
                         {vendor.updated_at ? new Date(vendor.updated_at).toLocaleDateString() : "—"}
                       </td>
-                      <td style={{ width: widths.created }} className="truncate px-2 py-2">
+                      <td style={{ width: widths.created }} className={`truncate px-2 ${rowPad}`}>
                         {vendor.created_at ? new Date(vendor.created_at).toLocaleDateString() : "—"}
                       </td>
                     </tr>

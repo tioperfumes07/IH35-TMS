@@ -127,6 +127,9 @@ export function CustomersPage() {
   const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string }>({});
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
   const { viewMode, setViewMode } = useViewModePref("customers", "master-detail");
+  const [density, setDensity] = useState<"regular" | "compact" | "ultra">("regular");
+  const densityLabels: Record<"regular" | "compact" | "ultra", string> = { regular: "Regular", compact: "Compact", ultra: "Ultra" };
+  const densityCycle: Record<"regular" | "compact" | "ultra", "regular" | "compact" | "ultra"> = { regular: "compact", compact: "ultra", ultra: "regular" };
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -285,6 +288,14 @@ export function CustomersPage() {
                 Master-detail
               </button>
             </div>
+            <button
+              type="button"
+              title="Toggle density"
+              className="rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+              onClick={() => setDensity((d) => densityCycle[d])}
+            >
+              ⊞ {densityLabels[density]}
+            </button>
             <ActionButton onClick={() => setCreateOpen(true)}>
               + Create Customer
             </ActionButton>
@@ -297,6 +308,7 @@ export function CustomersPage() {
           companyId={companyId}
           customers={customersSorted}
           openByCustomerId={openByCustomerId}
+          density={density}
           onSelectCustomer={(customerId) => {
             setSelectedCustomerId(customerId);
             setViewMode("master-detail");

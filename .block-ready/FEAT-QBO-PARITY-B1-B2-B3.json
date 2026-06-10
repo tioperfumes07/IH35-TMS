@@ -1,0 +1,31 @@
+{
+  "block_id": "FEAT-QBO-PARITY-B1-B2-B3",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "QBO Parity",
+  "task": "B1 Products & Services new page (ParityTable + ParityDrawer); B2 Customers + B3 Vendors density toggle (QBO-parity A1 grammar). Non-financial catalog only.",
+  "branch": "feat/qbo-parity-b1-b2-b3",
+  "lane": "A",
+  "details": [
+    "B1: ProductsPage.tsx — ParityTable list with gear/density/pager + ProductCreateDrawer (ParityDrawer A3). Route /products wired.",
+    "B2: CustomersListView.tsx — density prop (regular/compact/ultra); Customers.tsx density toggle button.",
+    "B3: VendorsListView.tsx — density prop (regular/compact/ultra); Vendors.tsx density toggle button.",
+    "No GL posting, no accounting.* reads, no financial data writes."
+  ],
+  "allowed_files": [
+    ".block-ready/FEAT-QBO-PARITY-B1-B2-B3.json",
+    "apps/frontend/src/pages/products/ProductsPage.tsx",
+    "apps/frontend/src/pages/products/ProductCreateDrawer.tsx",
+    "apps/frontend/src/pages/Customers.tsx",
+    "apps/frontend/src/pages/Vendors.tsx",
+    "apps/frontend/src/pages/customers/CustomersListView.tsx",
+    "apps/frontend/src/pages/vendors/VendorsListView.tsx",
+    "apps/frontend/src/router/route-manifest.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/nav-integrity-allowlist.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

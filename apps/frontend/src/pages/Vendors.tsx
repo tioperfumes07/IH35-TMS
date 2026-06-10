@@ -95,6 +95,9 @@ export function VendorsPage() {
   );
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
   const { viewMode, setViewMode } = useViewModePref("vendors", "master-detail");
+  const [density, setDensity] = useState<"regular" | "compact" | "ultra">("regular");
+  const densityLabels: Record<"regular" | "compact" | "ultra", string> = { regular: "Regular", compact: "Compact", ultra: "Ultra" };
+  const densityCycle: Record<"regular" | "compact" | "ultra", "regular" | "compact" | "ultra"> = { regular: "compact", compact: "ultra", ultra: "regular" };
 
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "page", companyId],
@@ -196,20 +199,30 @@ export function VendorsPage() {
         title="Vendors"
         subtitle="Vendor list and transactions"
         actions={
-          <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="vendors">
+          <div className="flex items-center gap-2">
+            <div className="inline-flex rounded border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="vendors">
+              <button
+                type="button"
+                className={`rounded px-2 py-1 font-medium ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setViewMode("list")}
+              >
+                List view
+              </button>
+              <button
+                type="button"
+                className={`rounded px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setViewMode("master-detail")}
+              >
+                Master-detail
+              </button>
+            </div>
             <button
               type="button"
-              className={`rounded px-2 py-1 font-medium ${viewMode === "list" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
-              onClick={() => setViewMode("list")}
+              title="Toggle density"
+              className="rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+              onClick={() => setDensity((d) => densityCycle[d])}
             >
-              List view
-            </button>
-            <button
-              type="button"
-              className={`rounded px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
-              onClick={() => setViewMode("master-detail")}
-            >
-              Master-detail
+              ⊞ {densityLabels[density]}
             </button>
           </div>
         }
@@ -220,6 +233,7 @@ export function VendorsPage() {
           companyId={companyId}
           vendors={vendorsSorted}
           openByVendorId={openByVendorId}
+          density={density}
           onSelectVendor={(vendorId) => {
             setSelectedVendorId(vendorId);
             setViewMode("master-detail");

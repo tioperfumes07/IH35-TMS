@@ -108,11 +108,11 @@
     },
     {
       "path": "/dispatch/borders/geofence-history",
-      "reason": "gap-26 border crossing history — deep-link from Dispatch flyout; full subnav deferred Block 43"
+      "reason": "gap-26 border crossing history \u2014 deep-link from Dispatch flyout; full subnav deferred Block 43"
     },
     {
       "path": "/dispatch/layovers/driver/:driverUuid",
-      "reason": "gap-28 driver layover history — deep-link from Driver profile; subnav deferred Block 43"
+      "reason": "gap-28 driver layover history \u2014 deep-link from Driver profile; subnav deferred Block 43"
     },
     {
       "path": "/dispatch/loads",
@@ -324,7 +324,7 @@
     },
     {
       "path": "/cash-flow",
-      "reason": "Cash Flow MODULE top-level route — sidebar entry wired; nav-subnav deferred (Block 43)"
+      "reason": "Cash Flow MODULE top-level route \u2014 sidebar entry wired; nav-subnav deferred (Block 43)"
     },
     {
       "path": "/attorney-review/:token",
@@ -417,6 +417,10 @@
     {
       "path": "/dispatch/layovers/driver/:driverUuid",
       "reason": "GAP-28 per-driver layover history; drilldown from layover board, not top-level subnav"
+    },
+    {
+      "path": "/products",
+      "reason": "B1 Products & Services \u2014 top-level catalog page; sidebar entry added in SIDEBAR-V2-REORG-25 (pending merge)"
     }
   ],
   "URL_SYNC_DEFERRED": [
@@ -454,11 +458,11 @@
     },
     {
       "path": "/insurance",
-      "reason": "Redirect alias /insurance → /safety/insurance; sidebar deep-link compat (GAP-86)"
+      "reason": "Redirect alias /insurance \u2192 /safety/insurance; sidebar deep-link compat (GAP-86)"
     },
     {
       "path": "/driver-hub",
-      "reason": "P5a — DriverHubPage route live; sidebar entry lands in P5b Sidebar-V2 (remove from allowlist then)"
+      "reason": "P5a \u2014 DriverHubPage route live; sidebar entry lands in P5b Sidebar-V2 (remove from allowlist then)"
     }
   ]
 }
