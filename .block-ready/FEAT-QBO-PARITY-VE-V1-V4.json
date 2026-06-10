@@ -1,0 +1,30 @@
+{
+  "block_id": "FEAT-QBO-PARITY-VE-V1-V4",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "QBO Parity",
+  "task": "vE Transaction Linkage Map (read-only); V1 Cash Flow density grammar; V2 Driver Hub density grammar; V3 Dispatch Planner Timeline tab (additive). Non-financial display only.",
+  "branch": "feat/qbo-parity-ve-v1-v4",
+  "lane": "A",
+  "details": [
+    "vE: TransactionLinkageMapPage — read-only linkage map at /accounting/transaction-linkage. No writes, no GL.",
+    "V1: ActualVsProjectedTab — density toggle (regular/compact/ultra). QBO-parity A1 grammar.",
+    "V2: DriverHubPage — density toggle on requests table. QBO-parity A1 grammar.",
+    "V3: TimelinePlanner — additive 4th tab in DispatchPlannersLayout. Shell only.",
+    "V4: Grammar consistently applied across all 3 pages via density toggle pattern."
+  ],
+  "allowed_files": [
+    ".block-ready/FEAT-QBO-PARITY-VE-V1-V4.json",
+    "apps/frontend/src/pages/accounting/TransactionLinkageMapPage.tsx",
+    "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx",
+    "apps/frontend/src/pages/dispatch/planners/DispatchPlannersLayout.tsx",
+    "apps/frontend/src/pages/dispatch/planners/TimelinePlanner.tsx",
+    "apps/frontend/src/pages/home/DriverHubPage.tsx",
+    "apps/frontend/src/router/route-manifest.ts",
+    "apps/frontend/src/routes/manifest.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

@@ -8,6 +8,7 @@ const TABS = [
   { label: "Driver Planner", to: "/dispatch/planners/driver" },
   { label: "Truck Planner", to: "/dispatch/planners/truck" },
   { label: "Loads Planner", to: "/dispatch/planners/loads" },
+  { label: "Timeline", to: "/dispatch/planners/timeline" },
 ] as const;
 
 export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {

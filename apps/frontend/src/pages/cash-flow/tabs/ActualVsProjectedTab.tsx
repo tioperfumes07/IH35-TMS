@@ -63,9 +63,15 @@ function VarianceCell({ variance_cents, variance_pct }: { variance_cents: number
   );
 }
 
+type Density = "regular" | "compact" | "ultra";
+const DENSITY_PAD: Record<Density, string> = { regular: "py-3", compact: "py-1.5", ultra: "py-0.5" };
+
 export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
   const [from, setFrom] = useState<string>(sevenDaysAgoIso());
   const [to, setTo] = useState<string>(todayIso());
+  const [density, setDensity] = useState<Density>("regular");
+  const densityCycle: Record<Density, Density> = { regular: "compact", compact: "ultra", ultra: "regular" };
+  const rowPad = DENSITY_PAD[density];
 
   const { data, isLoading, isError } = useQuery<ActualVsProjectedResult>({
     queryKey: ["cash-flow-avp", operatingCompanyId, from, to],
@@ -157,6 +163,16 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
       )}
 
       {/* Per-line table */}
+      <div className="flex justify-end pb-1">
+        <button
+          type="button"
+          title="Toggle density"
+          className="rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+          onClick={() => setDensity((d) => densityCycle[d])}
+        >
+          ⊞ {density.charAt(0).toUpperCase() + density.slice(1)}
+        </button>
+      </div>
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
@@ -176,7 +192,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               [1, 2, 3, 4, 5].map((i) => (
                 <tr key={i}>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((j) => (
-                    <td key={j} className="px-4 py-3">
+                    <td key={j} className={`px-4 ${rowPad}`}>
                       <div className="h-4 animate-pulse rounded bg-gray-100" />
                     </td>
                   ))}
@@ -196,24 +212,24 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                 const netPos = netActual >= 0;
                 return (
                   <tr key={g.date} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">
+                    <td className={`px-4 ${rowPad} font-medium text-gray-900`}>
                       {new Date(g.date + "T00:00:00Z").toLocaleDateString("en-US", {
                         weekday: "short",
                         month: "short",
                         day: "numeric",
                       })}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-700">{formatCents(g.income.projected_cents)}</td>
-                    <td className="px-4 py-3 text-right text-gray-700">{formatCents(g.income.actual_cents)}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className={`px-4 ${rowPad} text-right text-gray-700`}>{formatCents(g.income.projected_cents)}</td>
+                    <td className={`px-4 ${rowPad} text-right text-gray-700`}>{formatCents(g.income.actual_cents)}</td>
+                    <td className={`px-4 ${rowPad} text-right`}>
                       <VarianceCell variance_cents={g.income.variance_cents} variance_pct={g.income.variance_pct} />
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-700">{formatCents(g.expenses.projected_cents)}</td>
-                    <td className="px-4 py-3 text-right text-gray-700">{formatCents(g.expenses.actual_cents)}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className={`px-4 ${rowPad} text-right text-gray-700`}>{formatCents(g.expenses.projected_cents)}</td>
+                    <td className={`px-4 ${rowPad} text-right text-gray-700`}>{formatCents(g.expenses.actual_cents)}</td>
+                    <td className={`px-4 ${rowPad} text-right`}>
                       <VarianceCell variance_cents={g.expenses.variance_cents} variance_pct={g.expenses.variance_pct} />
                     </td>
-                    <td className={`px-4 py-3 text-right font-bold ${netPos ? "text-emerald-700" : "text-red-700"}`}>
+                    <td className={`px-4 ${rowPad} text-right font-bold ${netPos ? "text-emerald-700" : "text-red-700"}`}>
                       {formatCents(netActual, { sign: true })}
                     </td>
                   </tr>

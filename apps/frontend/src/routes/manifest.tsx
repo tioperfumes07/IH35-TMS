@@ -33,6 +33,7 @@ import { DispatchPlannersLayout } from "../pages/dispatch/planners/DispatchPlann
 import { DriverPlanner } from "../pages/dispatch/planners/DriverPlanner";
 import { TruckPlanner } from "../pages/dispatch/planners/TruckPlanner";
 import { LoadsPlanner } from "../pages/dispatch/planners/LoadsPlanner";
+import { TimelinePlanner } from "../pages/dispatch/planners/TimelinePlanner";
 import { DetentionBoardPage } from "../pages/dispatch/DetentionBoardPage";
 import { EquipmentTransferRequestsPage } from "../pages/dispatch/EquipmentTransferRequests";
 import { OcrQueuePage } from "../pages/dispatch/OcrQueuePage";
@@ -189,6 +190,7 @@ import { QboSyncDetailPage } from "../pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "../pages/accounting/InvoicesListPage";
 import { MultiEntityAccountingPage } from "../pages/accounting/MultiEntityAccountingPage";
 import { AccountingHubPage } from "../pages/accounting/AccountingHubPage";
+import { TransactionLinkageMapPage } from "../pages/accounting/TransactionLinkageMapPage";
 import { DisputeQueuePage } from "../pages/accounting/DisputeQueuePage";
 import { AbandonmentQueuePage } from "../pages/accounting/AbandonmentQueuePage";
 import { InvoiceDetailPage } from "../pages/accounting/InvoiceDetailPage";
@@ -777,6 +779,15 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DispatchPlannersLayout><LoadsPlanner /></DispatchPlannersLayout>
+            </ProtectedRoute>
+          }
+        />
+        {/* V3 Timeline tab (additive) */}
+        <Route
+          path="/dispatch/planners/timeline"
+          element={
+            <ProtectedRoute>
+              <DispatchPlannersLayout><TimelinePlanner /></DispatchPlannersLayout>
             </ProtectedRoute>
           }
         />
@@ -2865,6 +2876,15 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CashForecastPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* vE Transaction Linkage Map (read-only) */}
+        <Route
+          path="/accounting/transaction-linkage"
+          element={
+            <ProtectedRoute>
+              <TransactionLinkageMapPage />
             </ProtectedRoute>
           }
         />

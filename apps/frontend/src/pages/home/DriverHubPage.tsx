@@ -24,6 +24,10 @@ export function DriverHubPage() {
   const [denyForId, setDenyForId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
   const [approveNotesById, setApproveNotesById] = useState<Record<string, string>>({});
+  const [density, setDensity] = useState<"regular" | "compact" | "ultra">("regular");
+  const densityCycle: Record<"regular" | "compact" | "ultra", "regular" | "compact" | "ultra"> = { regular: "compact", compact: "ultra", ultra: "regular" };
+  const DENSITY_PAD = { regular: "py-2", compact: "py-1", ultra: "py-0.5" } as const;
+  const rowPad = DENSITY_PAD[density];
 
   const requestsKey = ["driver-hub", "cash-advance-requests", "pending", companyId];
 
@@ -91,6 +95,17 @@ export function DriverHubPage() {
         ) : sorted.length === 0 ? (
           <p className="text-sm text-gray-600">No pending requests.</p>
         ) : (
+          <div className="space-y-1">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              title="Toggle density"
+              className="rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
+              onClick={() => setDensity((d) => densityCycle[d])}
+            >
+              ⊞ {density.charAt(0).toUpperCase() + density.slice(1)}
+            </button>
+          </div>
           <div className="overflow-x-auto rounded border border-gray-200 bg-white">
             <table className="min-w-full text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase text-gray-600">
@@ -110,22 +125,22 @@ export function DriverHubPage() {
                   const above = Boolean(row.is_above_policy);
                   return (
                     <tr key={id} className="border-t border-gray-100">
-                      <td className="px-3 py-2 font-mono text-xs">{String(row.display_id ?? "")}</td>
-                      <td className="min-w-0 max-w-[240px] px-3 py-2">
+                      <td className={`px-3 ${rowPad} font-mono text-xs`}>{String(row.display_id ?? "")}</td>
+                      <td className={`min-w-0 max-w-[240px] px-3 ${rowPad}`}>
                         <span title={String(row.driver_name ?? "")}>{String(row.driver_name ?? "")}</span>
                       </td>
-                      <td className="px-3 py-2">{formatUsdFromCents(row.requested_amount_cents)}</td>
-                      <td className="px-3 py-2">
+                      <td className={`px-3 ${rowPad}`}>{formatUsdFromCents(row.requested_amount_cents)}</td>
+                      <td className={`px-3 ${rowPad}`}>
                         {above ? (
                           <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Above policy</span>
                         ) : (
                           <span className="text-xs text-gray-500">Within policy</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-xs text-gray-600">
+                      <td className={`px-3 ${rowPad} text-xs text-gray-600`}>
                         {String(row.submitted_at ?? "").replace("T", " ").slice(0, 19)}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className={`px-3 ${rowPad}`}>
                         <input
                           className="w-40 max-w-full rounded border border-gray-200 px-2 py-1 text-xs"
                           placeholder="Approval notes"
@@ -133,7 +148,7 @@ export function DriverHubPage() {
                           onChange={(e) => setApproveNotesById((prev) => ({ ...prev, [id]: e.target.value }))}
                         />
                       </td>
-                      <td className="space-x-2 px-3 py-2 whitespace-nowrap">
+                      <td className={`space-x-2 px-3 ${rowPad} whitespace-nowrap`}>
                         <Button
                           size="sm"
                           disabled={approveMut.isPending}
@@ -151,6 +166,7 @@ export function DriverHubPage() {
                 })}
               </tbody>
             </table>
+          </div>
           </div>
         )}
 
