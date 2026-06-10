@@ -18,7 +18,8 @@
         "premerge-gates / rls-migration-scan",
         "premerge-gates / typescript-strict-null",
         "premerge-gates / migration-role-validation",
-        "pass-8-smoke-verify / pass-8"
+        "pass-8-smoke-verify / pass-8",
+        "pr-preview-smoke / PR Preview Smoke"
       ]
     },
     "enforce_admins": false,
@@ -41,7 +42,10 @@
     "rls-migration-scan": "premerge-gates / rls-migration-scan (GAP-81: missing RLS on new tables)",
     "typescript-strict-null": "premerge-gates / typescript-strict-null (GAP-81: TS18048 strict-null bypasses)",
     "migration-role-validation": "premerge-gates / migration-role-validation (GAP-81: unknown GRANT roles)",
-    "pass-8": "pass-8-smoke-verify / pass-8 (Pass-8 smoke + clean-baseline verification)"
+    "pass-8": "pass-8-smoke-verify / pass-8 (Pass-8 smoke + clean-baseline verification)",
+    "pr-preview-smoke": "pr-preview-smoke / PR Preview Smoke (Layer 1: polls Render API for PR preview deploy, runs smoke.sh — required pre-merge gate)",
+    "prod-postdeploy-verify": "prod-postdeploy-verify / Production Post-Deploy Verify (Layer 2: runs on push to main, NOT a required merge check — alerting gate only)",
+    "_canary-smoke-REMOVED": "canary-smoke.yml deleted FIX-CANARY-SMOKE-DURABLE — was permanently red: wrong trigger (push not PR), wrong health path (/health vs /api/v1/health), bogus promote-to-prod step"
   },
   "apply_script": "node scripts/ci-apply-branch-protection.mjs",
   "verify_script": "node scripts/verify-ci-policy-applied.mjs"

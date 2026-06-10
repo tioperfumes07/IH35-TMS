@@ -1,0 +1,69 @@
+name: PR Preview Smoke
+
+# LAYER 1 — runs WHILE a Render PR preview exists (render.yaml: previews
+# generation automatic = per-PR). This is the real pre-merge safety net:
+# a PR whose preview fails the smoke cannot merge. No "promote to prod" here —
+# merging is what triggers Render's prod auto-deploy.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: pr-preview-smoke-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-preview-smoke:
+    name: PR Preview Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      # Resolve the preview service's live deploy for THIS PR's head SHA, then
+      # read its service URL. We poll the Render API for status=live instead of a
+      # blind sleep, so a slow preview build doesn't produce a false failure.
+      - name: Wait for Render PR preview to be live
+        id: preview
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          PREVIEW_SERVICE_ID: ${{ secrets.RENDER_PREVIEW_SERVICE_ID }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # Render exposes the per-PR preview as a child service; its URL pattern
+          # is also available via the API. Poll up to ~9 min for a live deploy
+          # built from this PR's head commit.
+          DEADLINE=$(( $(date +%s) + 540 ))
+          URL=""
+          while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+            # find a live deploy whose commit matches this PR head
+            DEPLOYS=$(curl -s -H "Authorization: Bearer ${RENDER_API_KEY}" \
+              "https://api.render.com/v1/services/${PREVIEW_SERVICE_ID}/deploys?limit=10")
+            LIVE=$(printf '%s' "$DEPLOYS" | jq -r --arg sha "$HEAD_SHA" \
+              '[.[] | select(.deploy.commit.id == $sha and .deploy.status == "live")] | .[0].deploy.id // empty')
+            if [ -n "$LIVE" ]; then
+              SVC=$(curl -s -H "Authorization: Bearer ${RENDER_API_KEY}" \
+                "https://api.render.com/v1/services/${PREVIEW_SERVICE_ID}")
+              URL=$(printf '%s' "$SVC" | jq -r '.serviceDetails.url // .service.serviceDetails.url // empty')
+              break
+            fi
+            echo "preview not live yet for ${HEAD_SHA}; waiting 20s…"
+            sleep 20
+          done
+          if [ -z "$URL" ]; then
+            echo "::error::PR preview did not reach a live deploy for ${HEAD_SHA} within the wait window."
+            exit 1
+          fi
+          echo "preview_url=${URL}" >> "$GITHUB_OUTPUT"
+          echo "Preview live at ${URL}"
+
+      - name: Smoke the PR preview
+        env:
+          BASE_URL: ${{ steps.preview.outputs.preview_url }}
+          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
+          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+          SMOKE_TEST_COMPANY_ID: ${{ secrets.SMOKE_TEST_COMPANY_ID }}
+        run: bash scripts/smoke.sh
