@@ -1,6 +1,6 @@
 {
   "block_id": "CLOSURE-21-MONITORING-SETUP",
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-closure21",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
   "branch": "feat/closure-21-monitoring",
   "phase": "CLOSURE",
   "task": "Production monitoring + alerting (Sentry + deep health + uptime)",
