@@ -84,6 +84,7 @@ describe("UsersPage — Add User submit", () => {
     createUserMock.mockReset();
     listUsersMock.mockResolvedValue({ users: [] });
     checkReturningDispatcherMock.mockResolvedValue({ returning_dispatcher: false });
+    Element.prototype.scrollIntoView = vi.fn();
   });
 
   it("(a) 400 validation_error from API surfaces a toast — not silent", async () => {
