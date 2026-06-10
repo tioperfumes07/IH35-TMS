@@ -7,7 +7,6 @@
   "agent": "1",
   "allowed_files": [
     ".block-ready/BUG-ADD-USER-INERT.json",
-    ".block-ready.agent1.json",
     "apps/backend/src/identity/users.routes.ts",
     "apps/frontend/src/components/Toast.tsx",
     "apps/frontend/src/pages/Users.test.tsx",
