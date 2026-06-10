@@ -1,0 +1,25 @@
+{
+  "block_id": "BK7-INLINE-CREATE-DRAWERS",
+  "status": "BUILD",
+  "classification": "MIXED",
+  "gate": "MIXED — operational parts self-merge; account-create commit GATED (ACCOUNT_CREATE_GATED=true flag in NewAccountDrawerForm.tsx)",
+  "description": "Stackable ~576px right-drawer system for inline entity creation. New Account (two-col + cascade + live BS/P&L preview + lock flag, commit gated), New Class, New Service (two-sided sell+buy), New Vendor, New Customer. Builds on ReferenceSelect (A2). No financial writes ship until Jorge flips ACCOUNT_CREATE_GATED.",
+  "files_changed": [
+    "apps/frontend/src/components/parity/InlineCreateDrawer.tsx",
+    "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx",
+    "apps/frontend/src/components/parity/drawers/NewClassDrawerForm.tsx",
+    "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx",
+    "apps/frontend/src/components/parity/drawers/NewVendorDrawerForm.tsx",
+    "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx"
+  ],
+  "guard_required": false,
+  "financial_gate_detail": "NewAccountDrawerForm.tsx line 25: ACCOUNT_CREATE_GATED=true blocks account-create submit. Flip to false only on Jorge's explicit OK per financial-cluster policy.",
+  "spec_source": "docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md#BK7",
+  "done_when": [
+    "+Add new account/class/service/vendor/customer opens the 576px right drawer over parent",
+    "New Account drawer: two-column, cascading detail type, live BS/P&L preview, lock flag",
+    "New Account submit disabled (ACCOUNT_CREATE_GATED) — awaiting financial approval",
+    "Class/Service/Vendor/Customer create are live (operational)",
+    "Service item defaults income account to Service income, not Product income"
+  ]
+}
