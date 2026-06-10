@@ -5,13 +5,17 @@ name: PR Preview Smoke
 # a PR whose preview fails the smoke cannot merge. No "promote to prod" here —
 # merging is what triggers Render's prod auto-deploy.
 
+# TODO: Re-enable when a Render PR preview service is provisioned.
+# No preview service exists (confirmed: only IH35-TMS Node, ih35-tms-web,
+# IH35-TMS-Driver are live on Render). Layer-2-only ship for now.
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:  # manual trigger only until preview service exists
+  # pull_request:
+  #   branches: [main]
+  #   types: [opened, synchronize, reopened]
 
 concurrency:
-  group: pr-preview-smoke-${{ github.event.pull_request.number }}
+  group: pr-preview-smoke-${{ github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -30,7 +34,7 @@ jobs:
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           PREVIEW_SERVICE_ID: ${{ secrets.RENDER_PREVIEW_SERVICE_ID }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           # Render exposes the per-PR preview as a child service; its URL pattern
@@ -63,7 +67,6 @@ jobs:
       - name: Smoke the PR preview
         env:
           BASE_URL: ${{ steps.preview.outputs.preview_url }}
-          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
-          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+          SMOKE_TEST_TOKEN: ${{ secrets.SMOKE_TEST_TOKEN }}
           SMOKE_TEST_COMPANY_ID: ${{ secrets.SMOKE_TEST_COMPANY_ID }}
         run: bash scripts/smoke.sh

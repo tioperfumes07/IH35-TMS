@@ -56,8 +56,7 @@ jobs:
         continue-on-error: true
         env:
           BASE_URL: https://api.ih35dispatch.com
-          SMOKE_TEST_EMAIL: ${{ secrets.SMOKE_TEST_EMAIL }}
-          SMOKE_TEST_PASSWORD: ${{ secrets.SMOKE_TEST_PASSWORD }}
+          SMOKE_TEST_TOKEN: ${{ secrets.SMOKE_TEST_TOKEN }}
           SMOKE_TEST_COMPANY_ID: ${{ secrets.SMOKE_TEST_COMPANY_ID }}
         run: bash scripts/smoke.sh
 

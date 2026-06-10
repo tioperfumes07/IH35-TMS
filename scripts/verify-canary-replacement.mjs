@@ -65,41 +65,55 @@ mustContain("scripts/smoke.sh", "/api/v1/health", "health must hit /api/v1/healt
   if (brokenHealth) errors.push(`scripts/smoke.sh references the broken "/health" endpoint (must be /api/v1/health)`);
 }
 
-// 4) Triggers are correct: PR gate on pull_request, post-deploy on push to main.
-mustContain(".github/workflows/pr-preview-smoke.yml", "pull_request", "Layer 1 must trigger on pull_request");
+// 4) Triggers: Layer-1 file must exist (trigger disabled — no preview service yet).
+//    Layer-2 must trigger on push to main (active now).
+mustExist(".github/workflows/pr-preview-smoke.yml");
 mustContain(".github/workflows/prod-postdeploy-verify.yml", "push", "Layer 2 must trigger on push to main");
 
 // 5) Neither replacement self-triggers a production deploy (Render auto-deploy owns that).
 mustNotContain(".github/workflows/prod-postdeploy-verify.yml", "Promote to production",
   "post-deploy verify must not re-trigger a prod deploy");
 
-// 6) Required-checks wiring: the dead canary must be removed and the new PR gate present,
-//    wherever required checks are declared in this repo.
+// 6) Layer-1 trigger must be disabled (no preview service); dead canary must stay gone.
+//    LAYER-2-ONLY SHIP: trigger re-enabled when Render preview service is provisioned.
 {
+  const prSmoke = read(".github/workflows/pr-preview-smoke.yml") || "";
+  // Must NOT be actively triggering on pull_request (no preview service yet).
+  const activePrTrigger = /^\s*pull_request:/m.test(
+    prSmoke.replace(/#[^\n]*/g, "")  // strip comments
+  );
+  if (activePrTrigger) {
+    errors.push(".github/workflows/pr-preview-smoke.yml has an active pull_request trigger but no preview service exists — disable it with a comment until the service is provisioned");
+  }
+  // Dead canary must still be gone.
   const candidates = [
     ".github/workflows/required-checks.yml",
     ".github/branch-protection-config.json",
     "branch-protection-config.json",
   ].filter((rel) => fs.existsSync(path.join(ROOT, rel)));
-  if (candidates.length === 0) {
-    errors.push("Could not find a required-checks file (.github/workflows/required-checks.yml or branch-protection-config.json) to verify the gate wiring");
-  } else {
-    const joined = candidates.map((rel) => read(rel) || "").join("\n");
-    if (/Canary Preview Smoke/.test(joined)) {
-      errors.push(`A required-checks file still references "Canary Preview Smoke" (must be removed): ${candidates.join(", ")}`);
-    }
-    if (!/PR Preview Smoke/.test(joined)) {
-      errors.push(`No required-checks file declares "PR Preview Smoke" as a required check: ${candidates.join(", ")}`);
-    }
+  const joined = candidates.map((rel) => read(rel) || "").join("\n");
+  if (/Canary Preview Smoke/.test(joined)) {
+    errors.push(`A required-checks file still references "Canary Preview Smoke" (must be removed): ${candidates.join(", ")}`);
   }
 }
 
 // 7) package.json wires this very guard (so it actually runs in CI).
 mustContain("package.json", "verify:canary-replacement", "package.json must expose the verify:canary-replacement script");
 
+// 8) smoke.sh uses bearer token, NOT email/password.
+{
+  const smoke = read("scripts/smoke.sh") || "";
+  if (smoke.includes("SMOKE_TEST_EMAIL") || smoke.includes("SMOKE_TEST_PASSWORD")) {
+    errors.push("scripts/smoke.sh still references SMOKE_TEST_EMAIL or SMOKE_TEST_PASSWORD — must use SMOKE_TEST_TOKEN instead");
+  }
+  if (!smoke.includes("SMOKE_TEST_TOKEN")) {
+    errors.push("scripts/smoke.sh must use SMOKE_TEST_TOKEN for bearer auth");
+  }
+}
+
 if (errors.length) {
   console.error(`[${LABEL}] FAIL`);
   for (const e of errors) console.error("  - " + e);
   process.exit(1);
 }
-console.log(`[${LABEL}] PASS - canary replaced by PR Preview Smoke + Production Post-Deploy Verify; health path correct; required-checks rewired`);
+console.log(`[${LABEL}] PASS - canary replaced; token-auth smoke in place; Layer-2-only ship; PR Preview Smoke exists but trigger disabled until preview service provisioned`);
