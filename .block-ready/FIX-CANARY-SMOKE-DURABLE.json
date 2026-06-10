@@ -1,0 +1,21 @@
+{
+  "block_id": "FIX-CANARY-SMOKE-DURABLE",
+  "phase": "CI Infrastructure",
+  "task": "Replace permanently-red Canary Preview Smoke with two honest gates: PR Preview Smoke (pre-merge, on pull_request) and Production Post-Deploy Verify (on push to main), sharing scripts/smoke.sh and guarded by scripts/verify-canary-replacement.mjs wired into ci.yml.",
+  "allowed_files": [
+    ".github/workflows/pr-preview-smoke.yml",
+    ".github/workflows/prod-postdeploy-verify.yml",
+    ".github/workflows/canary-smoke.yml",
+    ".github/workflows/ci.yml",
+    ".github/workflows/required-checks.yml",
+    ".github/branch-protection-config.json",
+    "scripts/smoke.sh",
+    "scripts/verify-canary-replacement.mjs",
+    "package.json",
+    ".block-ready/FIX-CANARY-SMOKE-DURABLE.json"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}

@@ -54,6 +54,7 @@ jobs:
               'premerge-gates / rls-migration-scan',
               'premerge-gates / typescript-strict-null',
               'pass-8-smoke-verify / pass-8',
+              'pr-preview-smoke / PR Preview Smoke',
             ];
             const missing = mandatory.filter(c => !contexts.has(c));
             if (missing.length > 0) {

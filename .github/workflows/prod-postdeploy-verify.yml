@@ -1,0 +1,70 @@
+name: Production Post-Deploy Verify
+
+# LAYER 2 — replaces the old "Canary Smoke Tests". Runs on push to main, WAITS
+# for Render's production auto-deploy of THIS commit to go live (polls the API,
+# no blind sleep), then smokes PRODUCTION on the correct paths. On failure it
+# ALERTS — it does not pretend to gate a deploy that already happened. It never
+# triggers its own prod deploy (Render auto-deploy already owns that).
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: prod-postdeploy-verify-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  prod-postdeploy-verify:
+    name: Production Post-Deploy Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Wait for Render production deploy of this commit to be live
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          PROD_SERVICE_ID: ${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          DEADLINE=$(( $(date +%s) + 600 ))   # up to 10 min for build+deploy
+          while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+            DEPLOYS=$(curl -s -H "Authorization: Bearer ${RENDER_API_KEY}" \
+              "https://api.render.com/v1/services/${PROD_SERVICE_ID}/deploys?limit=10")
+            LIVE=$(printf '%s' "$DEPLOYS" | jq -r --arg sha "$SHA" \
+              '[.[] | select(.deploy.commit.id == $sha and .deploy.status == "live")] | .[0].deploy.id // empty')
+            if [ -n "$LIVE" ]; then
+              echo "Production deploy ${LIVE} for ${SHA} is live."
+              exit 0
+            fi
+            # if a NEWER commit already deployed past this one, this commit's deploy
+            # was superseded — that's fine, prod is ahead; stop waiting.
+            NEWER=$(printf '%s' "$DEPLOYS" | jq -r '[.[] | select(.deploy.status == "live")] | .[0].deploy.commit.id // empty')
+            if [ -n "$NEWER" ] && [ "$NEWER" != "$SHA" ]; then
+              echo "A newer commit (${NEWER}) is already live in prod; ${SHA} was superseded. Proceeding to verify current prod."
+              exit 0
+            fi
+            echo "prod deploy of ${SHA} not live yet; waiting 20s…"
+            sleep 20
+          done
+          echo "::warning::Did not observe a live prod deploy for ${SHA} within the window; verifying current prod state anyway."
+
+      - name: Smoke PRODUCTION
+        id: smoke
+        continue-on-error: true
+        env:
+          BASE_URL: https://api.ih35dispatch.com
+          SMOKE_TEST_TOKEN: ${{ secrets.SMOKE_TEST_TOKEN }}
+          SMOKE_TEST_COMPANY_ID: ${{ secrets.SMOKE_TEST_COMPANY_ID }}
+        run: bash scripts/smoke.sh
+
+      - name: Alert on failure (do NOT auto-rollback)
+        if: steps.smoke.outcome == 'failure'
+        run: |
+          echo "::error::Production post-deploy smoke FAILED for ${{ github.sha }}."
+          echo "Prod auto-deploy already shipped this commit. Investigate immediately."
+          echo "Rollback is a human decision: Render dashboard → redeploy the last known-good commit."
+          # Optional: wire a Slack/email/Sentry notification here using a secret webhook.
+          exit 1
