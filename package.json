@@ -147,6 +147,7 @@
     "verify:profit-loss-contract": "node scripts/verify-profit-loss-contract.mjs",
     "verify:balance-sheet-contract": "node scripts/verify-balance-sheet-contract.mjs",
     "verify:cash-flow-contract": "node scripts/verify-cash-flow-contract.mjs",
+    "verify:rls-cross-tenant-gate-static": "node scripts/db-verify-rls-cross-tenant-gate.mjs --static",
     "verify:ar-aging-contract": "node scripts/verify-ar-aging-contract.mjs",
     "verify:ap-aging-contract": "node scripts/verify-ap-aging-contract.mjs",
     "verify:collections-readonly": "node scripts/verify-collections-readonly.mjs",

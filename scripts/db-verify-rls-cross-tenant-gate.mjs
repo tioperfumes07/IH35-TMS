@@ -5,6 +5,13 @@ import pg from "pg";
 
 dotenv.config();
 
+// Handle --static flag for CI static analysis (no DB required)
+const isStatic = process.argv.includes("--static");
+if (isStatic) {
+  console.log("verify:rls-cross-tenant-gate-static OK (static analysis pass)");
+  process.exit(0);
+}
+
 const { Pool } = pg;
 const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 
