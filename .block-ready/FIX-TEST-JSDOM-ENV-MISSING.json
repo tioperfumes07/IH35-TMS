@@ -1,0 +1,17 @@
+{
+  "block_id": "FIX-TEST-JSDOM-ENV-MISSING",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
+  "branch": "fix/test-jsdom-env-missing",
+  "phase": "hotfix",
+  "task": "Fix 64 failing tests in dispatch-coming-soon-triage and lists-routing — missing @vitest-environment jsdom + jest-dom matchers + cleanup",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/FIX-TEST-JSDOM-ENV-MISSING.json",
+    "apps/frontend/src/__tests__/dispatch-coming-soon-triage.test.tsx",
+    "apps/frontend/src/__tests__/lists-routing.test.tsx"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
