@@ -1,0 +1,19 @@
+{
+  "block_id": "P5-T2-RECONCILIATION-WORKSPACE-UI",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
+  "branch": "feat/phase5-reconciliation-workspace",
+  "phase": "Phase5-Tier3",
+  "task": "Reconciliation Workspace UI — dual-pane match workspace, match/unmatch actions, date+account filters, 4 vitest",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/P5-T2-RECONCILIATION-WORKSPACE-UI.json",
+    "apps/backend/src/accounting/reconciliation.routes.ts",
+    "apps/backend/src/accounting/__tests__/reconciliation-workspace-routes.test.ts",
+    "apps/frontend/src/pages/accounting/ReconciliationWorkspacePage.tsx",
+    "apps/frontend/src/pages/accounting/ReconciliationWorkspacePage.test.tsx"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
