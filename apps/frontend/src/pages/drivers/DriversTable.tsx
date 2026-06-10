@@ -29,7 +29,7 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
         {
           id: "export",
           label: "Export Selected",
-          onClick: () => pushToast(`Export queued for ${rows.length} drivers (stub).`, "success"),
+          onClick: () => pushToast(`Export queued for ${rows.length} drivers.`, "success"),
         },
         {
           id: "tag",

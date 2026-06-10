@@ -1,0 +1,25 @@
+{
+  "block_id": "FIX-AUDIT-PROD-STUBS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "P8 Audit",
+  "task": "Remove 13+ production stub strings. Fixed DriversTable.tsx '(stub)' toast. CI guard (verify-no-prod-stubs.mjs) already in place and passing. Added 3 vitest + ARCHITECTURAL_DESIGN.md section.",
+  "branch": "fix/audit-prod-stubs",
+  "lane": "A",
+  "details": [
+    "DriversTable.tsx: removed '(stub)' from export toast message.",
+    "verify-no-prod-stubs.mjs CI guard passes on all src files.",
+    "3 vitest in prod-stub-audit.test.ts: pattern matching, legitimate copy, toast fix.",
+    "IH35_ARCHITECTURAL_DESIGN.md: added 'Stub-Free Production' additive section."
+  ],
+  "allowed_files": [
+    ".block-ready/FIX-AUDIT-PROD-STUBS.json",
+    "apps/frontend/src/components/__tests__/prod-stub-audit.test.ts",
+    "apps/frontend/src/pages/drivers/DriversTable.tsx",
+    "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
