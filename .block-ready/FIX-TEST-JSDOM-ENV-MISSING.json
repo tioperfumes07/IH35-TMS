@@ -8,7 +8,14 @@
   "allowed_files": [
     ".block-ready/FIX-TEST-JSDOM-ENV-MISSING.json",
     "apps/frontend/src/__tests__/dispatch-coming-soon-triage.test.tsx",
-    "apps/frontend/src/__tests__/lists-routing.test.tsx"
+    "apps/frontend/src/__tests__/lists-routing.test.tsx",
+    "apps/frontend/src/pages/accounting/AccountingHubPage.test.tsx",
+    "apps/frontend/src/pages/accounting/BillsPage.test.tsx",
+    "apps/frontend/src/pages/accounting/VendorBillCreatePage.test.tsx",
+    "apps/frontend/src/pages/drivers/DriverProfilePage.test.tsx",
+    "apps/frontend/src/pages/drivers/DriversListPage.test.tsx",
+    "apps/frontend/src/pages/drivers/__tests__/DriverProfilePage.test.tsx",
+    "apps/frontend/src/pages/drivers/__tests__/DriversPage.create.test.tsx"
   ],
   "extra_gates": [],
   "runtime_path": "src",
