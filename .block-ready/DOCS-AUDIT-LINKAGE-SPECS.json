@@ -1,0 +1,29 @@
+{
+  "block_id": "DOCS-AUDIT-LINKAGE-SPECS",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "AUDIT-LINKAGE",
+  "task": "Architecture specs for the A1–A9 audit linkage phase and Settlements page spec. Also adds an honest docs/ exemption to C9 in block-ready.mjs so documentation never needs a fake runtime_path.",
+  "branch": "docs/audit-linkage-specs",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/DOCS-AUDIT-LINKAGE-SPECS.json",
+    "scripts/block-ready.mjs",
+    "docs/audit-linkage/00-AUDIT-LINKAGE-ARCHITECTURE.md",
+    "docs/audit-linkage/A1-AUDIT-SPINE-LINK-COLUMNS.md",
+    "docs/audit-linkage/A2-AUDIT-EMIT-COVERAGE-DISPATCH.md",
+    "docs/audit-linkage/A3-AUDIT-EMIT-COVERAGE-MAINTENANCE.md",
+    "docs/audit-linkage/A4-AUDIT-EMIT-COVERAGE-ACCOUNTING.md",
+    "docs/audit-linkage/A5-AUDIT-EMIT-COVERAGE-BANKING.md",
+    "docs/audit-linkage/A6-AUDIT-UNIVERSAL-VIEW.md",
+    "docs/audit-linkage/A7-AUDIT-PER-ENTITY-TABS.md",
+    "docs/audit-linkage/A8-AUDIT-REPORTS-SECTION.md",
+    "docs/audit-linkage/A9-AUDIT-CI-EMIT-GUARD.md",
+    "docs/audit-linkage/README-BUILD-ORDER.md",
+    "docs/audit-linkage/SETTLEMENTS-PAGE-SPEC.md"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

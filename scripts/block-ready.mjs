@@ -137,8 +137,8 @@ export function validateManifest(manifest) {
         errors.push(`${key} must contain only strings`);
       }
     }
-    if (kind === "enum" && !["src", "dist", "both"].includes(value)) {
-      errors.push(`${key} must be one of src|dist|both`);
+    if (kind === "enum" && !["src", "dist", "both", "docs"].includes(value)) {
+      errors.push(`${key} must be one of src|dist|both|docs`);
     }
   }
 
@@ -479,9 +479,23 @@ function runCheckC8(manifest, range) {
   }
 }
 
+// Paths matching these patterns are documentation and are exempt from C9 scope.
+// Docs do not require a block manifest runtime_path entry or an allowed_files listing.
+const C9_DOCS_EXEMPT_PATTERNS = [
+  "docs/**",
+  "*.md",
+  "**/*.md",
+];
+
+function isDocsExempt(filePath) {
+  return C9_DOCS_EXEMPT_PATTERNS.some((pattern) => globToRegExp(pattern).test(filePath));
+}
+
 function runCheckC9(manifest, range) {
   const changed = getChangedFiles(range);
-  const outOfScope = changed.filter((filePath) => !matchesAnyAllowedFile(filePath, manifest.allowed_files));
+  const outOfScope = changed.filter(
+    (filePath) => !matchesAnyAllowedFile(filePath, manifest.allowed_files) && !isDocsExempt(filePath)
+  );
   if (outOfScope.length > 0) {
     fail("C9", `out-of-scope changed files: ${outOfScope.join(", ")}`);
   }
