@@ -982,6 +982,9 @@ jobs:
       - name: Verify CLOSURE-21 monitoring artifacts
         run: npm run verify:closure-21-monitoring-artifacts
 
+      - name: verify:profitability-engine
+        run: npm run verify:profitability-engine
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 

@@ -1,0 +1,30 @@
+{
+  "block_id": "W2A-PROFITABILITY-ENGINE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "W2",
+  "task": "ONE profitability engine, THREE groupings: By Lane / By Type / By Customer / By Load. Revenue/mile, cost/mile, margin. Read-only analytics.",
+  "branch": "feat/w2a-profitability",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/W2A-PROFITABILITY-ENGINE.json",
+    "apps/backend/migrations/0170_w2a_profitability_engine.sql",
+    "apps/backend/src/profitability/profitability.routes.ts",
+    "apps/frontend/src/pages/profitability/ProfitabilityPage.tsx",
+    "apps/frontend/src/pages/profitability/ByLaneView.tsx",
+    "apps/frontend/src/pages/profitability/ByTypeView.tsx",
+    "apps/frontend/src/pages/profitability/ByCustomerView.tsx",
+    "apps/frontend/src/pages/profitability/ByLoadView.tsx",
+    "apps/frontend/src/pages/profitability/FilterBar.tsx",
+    "apps/frontend/src/pages/profitability/KpiStrip.tsx",
+    "scripts/verify-profitability-engine.mjs",
+    "db/migrations/202606111101_w2a_analytics_schema_grants.sql",
+    ".github/workflows/ci.yml",
+    "package.json",
+    "package-lock.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}

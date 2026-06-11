@@ -534,6 +534,7 @@
     "verify:closure-20-a11y-artifacts": "node scripts/verify-closure-20-a11y-artifacts.mjs",
     "verify:closure-24-onboarding-artifacts": "node scripts/verify-closure-24-onboarding-artifacts.mjs",
     "verify:closure-21-monitoring-artifacts": "node scripts/verify-closure-21-monitoring-artifacts.mjs",
+    "verify:profitability-engine": "node scripts/verify-profitability-engine.mjs",
     "verify:closure-19-sec-artifacts": "node scripts/verify-closure-19-sec-artifacts.mjs",
     "verify:closure-17-on-hold-triage": "node scripts/verify-closure-17-on-hold-triage.mjs",
     "verify:closure-18-perf-artifacts": "node scripts/verify-closure-18-perf-artifacts.mjs",
