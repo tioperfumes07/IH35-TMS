@@ -1,0 +1,21 @@
+{
+  "block_id": "W4A-SIGNED-SAFETY-DOCS",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "WAVE-4",
+  "task": "Safety docs sent to driver → driver reads → e-signs. Signed records immutable (RAISE on UPDATE/DELETE). Send/read/sign each logged to spine via events.log_event(). Office-side evidence view. Schema: safetydoc (document, assignment).",
+  "branch": "feat/w4a-signed-safety-docs",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/W4A-SIGNED-SAFETY-DOCS.json",
+    "db/migrations/202606111220_w4a_signed_safety_docs.sql",
+    "apps/backend/src/safetydoc/safetydoc.routes.ts",
+    "scripts/verify-signed-safety-docs.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}
