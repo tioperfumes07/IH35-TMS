@@ -56,18 +56,32 @@ create table analytics.load_fact (
   ) stored,
   
   margin               numeric(14,2) generated always as (
-    total_revenue - total_cost
+    (linehaul_revenue + accessorial_revenue + detention_revenue + fuel_surcharge) -
+    (driver_pay + fuel_cost + tolls + layover_cost + lumper_wash_scale +
+     maintenance_alloc + insurance_alloc + other_alloc)
   ) stored,
   
   -- Per-mile metrics
   revenue_per_mile     numeric(10,4) generated always as (
-    case when total_miles > 0 then total_revenue / total_miles else 0 end
+    case when (loaded_miles + empty_miles) > 0
+      then (linehaul_revenue + accessorial_revenue + detention_revenue + fuel_surcharge) /
+           (loaded_miles + empty_miles)
+      else 0 end
   ) stored,
   cost_per_mile        numeric(10,4) generated always as (
-    case when total_miles > 0 then total_cost / total_miles else 0 end
+    case when (loaded_miles + empty_miles) > 0
+      then (driver_pay + fuel_cost + tolls + layover_cost + lumper_wash_scale +
+            maintenance_alloc + insurance_alloc + other_alloc) /
+           (loaded_miles + empty_miles)
+      else 0 end
   ) stored,
   margin_per_mile      numeric(10,4) generated always as (
-    case when total_miles > 0 then margin / total_miles else 0 end
+    case when (loaded_miles + empty_miles) > 0
+      then ((linehaul_revenue + accessorial_revenue + detention_revenue + fuel_surcharge) -
+            (driver_pay + fuel_cost + tolls + layover_cost + lumper_wash_scale +
+             maintenance_alloc + insurance_alloc + other_alloc)) /
+           (loaded_miles + empty_miles)
+      else 0 end
   ) stored,
   
   -- Time (for period filtering)
@@ -176,13 +190,13 @@ alter table analytics.type_rollup enable row level security;
 alter table analytics.customer_rollup enable row level security;
 
 create policy load_fact_tenant on analytics.load_fact
-  using (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+  using (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 create policy lane_rollup_tenant on analytics.lane_rollup
-  using (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+  using (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 create policy type_rollup_tenant on analytics.type_rollup
-  using (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+  using (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 create policy customer_rollup_tenant on analytics.customer_rollup
-  using (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+  using (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 
 -- Refresh function for rollups (called by cron or after data ingestion)
 create or replace function analytics.refresh_rollups(

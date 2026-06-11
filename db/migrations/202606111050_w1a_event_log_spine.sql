@@ -42,10 +42,10 @@ create index idx_event_log_ocid_type_time on events.event_log (operating_company
 alter table events.event_log enable row level security;
 
 create policy event_log_tenant_isolation on events.event_log
-    using (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+    using (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 
 create policy event_log_tenant_insert on events.event_log
-    with check (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+    with check (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 
 -- Comments for documentation
 comment on table events.event_log is 'Immutable event spine — append only, every event timestamped. All accountability flows through here.';

@@ -39,7 +39,7 @@ function expectNotContains(relativePath, pattern, label) {
 }
 
 // 1. Migration file present
-expectFile("apps/backend/migrations/0169_w1b_tasks_module.sql");
+expectFile("db/migrations/202606111055_w1b_tasks_module.sql");
 
 // 2. Schema grants in db/migrations
 expectFile("db/migrations/202606111100_w1b_tasks_schema_grants.sql");
@@ -51,17 +51,17 @@ expectContains(
 
 // 3. Migration has required tables
 expectContains(
-  "apps/backend/migrations/0169_w1b_tasks_module.sql",
+  "db/migrations/202606111055_w1b_tasks_module.sql",
   /create\s+table\s+tasks\.task/i,
   "tasks.task table"
 );
 expectContains(
-  "apps/backend/migrations/0169_w1b_tasks_module.sql",
+  "db/migrations/202606111055_w1b_tasks_module.sql",
   /enable\s+row\s+level\s+security/i,
   "RLS on tasks.task"
 );
 expectContains(
-  "apps/backend/migrations/0169_w1b_tasks_module.sql",
+  "db/migrations/202606111055_w1b_tasks_module.sql",
   /events\.log_event/i,
   "spine event logging"
 );
@@ -76,7 +76,7 @@ expectContains(
 
 // 5. No financial writes in migration
 expectNotContains(
-  "apps/backend/migrations/0169_w1b_tasks_module.sql",
+  "db/migrations/202606111055_w1b_tasks_module.sql",
   /insert\s+into\s+accounting/i,
   "insert into accounting"
 );
