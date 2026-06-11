@@ -1,0 +1,21 @@
+{
+  "block_id": "W3B-FORCED-DRIVER-ACK",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "WAVE-3",
+  "task": "Blocking driver acknowledgment modal in Driver PWA. Dispatches alerts to drivers, re-alarms until acked, timestamps all events to spine via events.log_event(). Office-side ack-evidence view. Schema: driveralert (dispatch, alarm_event).",
+  "branch": "feat/w3b-forced-driver-ack",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/W3B-FORCED-DRIVER-ACK.json",
+    "db/migrations/202606111210_w3b_forced_driver_ack.sql",
+    "apps/backend/src/driveralert/driveralert.routes.ts",
+    "scripts/verify-forced-driver-ack.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}
