@@ -1006,6 +1006,9 @@ jobs:
       - name: verify:broker-auto-update
         run: npm run verify:broker-auto-update
 
+      - name: verify:time-utilization
+        run: npm run verify:time-utilization
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
