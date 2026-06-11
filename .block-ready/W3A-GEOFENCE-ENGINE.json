@@ -1,0 +1,22 @@
+{
+  "block_id": "W3A-GEOFENCE-ENGINE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "WAVE-3",
+  "task": "Geofence engine: schema geofence (fence, event). Enter/exit debounced via geofence-state-watcher. Spine writes via events.log_event(). Extends GAP-54/55/56. Does not duplicate Samsara position cron.",
+  "branch": "feat/w3a-geofence",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/W3A-GEOFENCE-ENGINE.json",
+    ".github/workflows/ci.yml",
+    "db/migrations/202606111200_w3a_geofence_engine.sql",
+    "apps/backend/src/geofence/geofence.routes.ts",
+    "db/migrations/202606111103_w3a_geofence_schema_grants.sql",
+    "package.json",
+    "scripts/verify-geofence-engine.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}
