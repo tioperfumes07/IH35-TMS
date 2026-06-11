@@ -1,0 +1,18 @@
+{
+  "block_id": "C6-HOME-DASHBOARD",
+  "phase": "Accounting",
+  "task": "QBO-style home dashboard at /app/homepage. Read-only aggregation. Sidebar HOME item wired to /app/homepage. No financial writes.",
+  "classification": "NON-FINANCIAL",
+  "gate": "SELF-MERGE-ON-GREEN",
+  "allowed_files": [
+    ".block-ready/C6-HOME-DASHBOARD.json",
+    "apps/frontend/src/pages/home/QboStyleHomePage.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "scripts/nav-integrity-allowlist.json"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}

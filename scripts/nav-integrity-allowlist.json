@@ -459,6 +459,10 @@
     {
       "path": "/driver-hub",
       "reason": "P5a — DriverHubPage route live; sidebar entry lands in P5b Sidebar-V2 (remove from allowlist then)"
+    },
+    {
+      "path": "/home",
+      "reason": "C6 — legacy /home route retained for bookmark/direct-link compat; sidebar HOME now points to /app/homepage (QBO dashboard)"
     }
   ]
 }

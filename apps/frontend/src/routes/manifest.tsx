@@ -132,6 +132,7 @@ import { NotificationCenterPage } from "../pages/notifications/NotificationCente
 import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
 import { HomePage } from "../pages/Home";
 import { OwnerHome } from "../pages/home/OwnerHome";
+import { QboStyleHomePage } from "../pages/home/QboStyleHomePage";
 import { LoginPage } from "../pages/Login";
 import { LoginResetRequestPage } from "../pages/LoginResetRequestPage";
 import { LoginResetConfirmPage } from "../pages/LoginResetConfirmPage";
@@ -425,6 +426,12 @@ function HomeRoute() {
   return <HomePage auth={auth.user} />;
 }
 
+function QboHomepageRoute() {
+  const auth = useAuth();
+  if (!auth.user) return null;
+  return <QboStyleHomePage auth={auth.user} />;
+}
+
 function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
   return <MaintenanceHomePage initialTab={tabId} />;
 }
@@ -560,6 +567,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <HomeRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/homepage"
+          element={
+            <ProtectedRoute>
+              <QboHomepageRoute />
             </ProtectedRoute>
           }
         />
