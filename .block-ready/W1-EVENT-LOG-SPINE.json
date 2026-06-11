@@ -1,0 +1,16 @@
+{
+  "block_id": "W1-EVENT-LOG-SPINE",
+  "phase": "Foundation",
+  "task": "Immutable timestamped event spine — events.event_log table + logEvent() helper. All downstream Waves (2-5) write to this for accountability. NON-FINANCIAL.",
+  "classification": "NON-FINANCIAL",
+  "gate": "SELF-MERGE-ON-GREEN",
+  "allowed_files": [
+    ".block-ready/W1-EVENT-LOG-SPINE.json",
+    "apps/backend/migrations/0168_w1_event_log_spine.sql",
+    "scripts/verify-event-log-spine.mjs"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
