@@ -982,8 +982,13 @@ jobs:
       - name: Verify CLOSURE-21 monitoring artifacts
         run: npm run verify:closure-21-monitoring-artifacts
 
+<<<<<<< HEAD
       - name: verify:profitability-engine
         run: npm run verify:profitability-engine
+=======
+      - name: verify:tasks-module
+        run: npm run verify:tasks-module
+>>>>>>> 160e3c3e (fix(W1B): wire verify:tasks-module into ci.yml + package.json)
 
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
