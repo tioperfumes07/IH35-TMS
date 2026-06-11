@@ -1,0 +1,21 @@
+{
+  "block_id": "W4B-BROKER-AUTO-UPDATE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "WAVE-4",
+  "task": "Auto-email broker load status updates. Gated: all sends go to hold-for-review queue by default. Auto-send is OFF unless explicitly enabled per broker profile. Recipients from configured profiles ONLY — no free-typed addresses. Status transitions logged to spine via events.log_event(). Schema: brokerupdate (profile, send).",
+  "branch": "feat/w4b-broker-auto-update",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/W4B-BROKER-AUTO-UPDATE.json",
+    "db/migrations/202606111230_w4b_broker_auto_update.sql",
+    "apps/backend/src/brokerupdate/brokerupdate.routes.ts",
+    "scripts/verify-broker-auto-update.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}
