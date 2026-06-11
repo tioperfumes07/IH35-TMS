@@ -1,0 +1,25 @@
+{
+  "block_id": "C7-ACCT-SUBNAV-CHROME",
+  "phase": "Accounting",
+  "task": "Accounting sub-nav 12 QBO items (exact live order) + global topbar + Create and Tasks buttons. Shell pages for missing routes. Additive only. No posting, no financial writes.",
+  "classification": "NON-FINANCIAL",
+  "gate": "SELF-MERGE-ON-GREEN",
+  "allowed_files": [
+    ".block-ready/C7-ACCT-SUBNAV-CHROME.json",
+    "apps/frontend/src/pages/accounting/subnav-manifest.ts",
+    "apps/frontend/src/pages/accounting/QboAccountingSubNav.tsx",
+    "apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx",
+    "apps/frontend/src/pages/accounting/ReceiptsPage.tsx",
+    "apps/frontend/src/pages/accounting/RevenueRecognitionPage.tsx",
+    "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx",
+    "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx",
+    "apps/frontend/src/pages/accounting/MyAccountantPage.tsx",
+    "apps/frontend/src/components/Topbar.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/nav-integrity-allowlist.json"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}

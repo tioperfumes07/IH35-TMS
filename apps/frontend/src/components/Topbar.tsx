@@ -1,4 +1,4 @@
-import { ChevronDown, Menu } from "lucide-react";
+import { ChevronDown, Menu, Plus, ClipboardList } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -39,6 +39,16 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
   const navigate = useNavigate();
   const [now, setNow] = useState(() => new Date());
   const [open, setOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const createMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (!createMenuRef.current?.contains(e.target as Node)) setCreateOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
   const { t } = useTranslation();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -199,6 +209,56 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       </div>
 
       <div className="relative flex items-center justify-end gap-2 text-sm text-gray-700">
+        {office ? (
+          <div ref={createMenuRef} className="relative">
+            <button
+              type="button"
+              aria-label={t("topbar.global_create", "+ Create")}
+              className="flex h-7 items-center gap-1 rounded border px-2 font-semibold hover:bg-white/10"
+              style={{ borderColor: "#16A34A", backgroundColor: "#16A34A", color: "#ffffff", fontSize: 12 }}
+              onClick={() => setCreateOpen((v) => !v)}
+            >
+              <Plus className="h-3 w-3" />
+              {t("topbar.create", "Create")}
+            </button>
+            {createOpen ? (
+              <div
+                className="absolute right-0 z-30 mt-1 min-w-[200px] rounded border border-gray-200 bg-white py-1 shadow-lg"
+                data-testid="global-create-menu"
+              >
+                {([
+                  [t("topbar.create_invoice", "Invoice"), "/accounting/invoices"],
+                  [t("topbar.create_bill", "Bill"), "/accounting/bills/vendor"],
+                  [t("topbar.create_expense", "Expense"), "/accounting/expenses"],
+                  [t("topbar.create_receive_payment", "Receive payment"), "/accounting/payments"],
+                  [t("topbar.create_journal_entry", "Journal entry"), "/accounting/journal-entries"],
+                  [t("topbar.create_bill_payment", "Bill payment"), "/accounting/bill-payments"],
+                ] as [string, string][]).map(([label, to]) => (
+                  <button
+                    key={to}
+                    type="button"
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-gray-50"
+                    onClick={() => { setCreateOpen(false); navigate(to); }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {office ? (
+          <button
+            type="button"
+            aria-label={t("topbar.tasks", "Tasks")}
+            className="flex h-7 items-center gap-1 rounded border px-2 hover:bg-white/10"
+            style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.75)", fontSize: 12 }}
+            onClick={() => navigate("/tasks")}
+          >
+            <ClipboardList className="h-3 w-3" />
+            {t("topbar.tasks", "Tasks")}
+          </button>
+        ) : null}
         {office ? <LocaleSwitcher /> : null}
         {office ? <PageHelpLink /> : null}
         {office ? <NotificationBell /> : null}
