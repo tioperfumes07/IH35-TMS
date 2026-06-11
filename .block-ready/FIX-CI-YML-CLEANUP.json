@@ -1,0 +1,17 @@
+{
+  "block_id": "FIX-CI-YML-CLEANUP",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "HOTFIX",
+  "task": "Remove git conflict markers committed to ci.yml during W1B/W2B/W2P squash merges. YAML validated.",
+  "branch": "fix/ci-yml-cleanup",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FIX-CI-YML-CLEANUP.json",
+    ".github/workflows/ci.yml"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

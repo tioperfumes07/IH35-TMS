@@ -982,25 +982,17 @@ jobs:
       - name: Verify CLOSURE-21 monitoring artifacts
         run: npm run verify:closure-21-monitoring-artifacts
 
-<<<<<<< HEAD
       - name: verify:profitability-engine
         run: npm run verify:profitability-engine
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
+
       - name: verify:tasks-module
         run: npm run verify:tasks-module
->>>>>>> 160e3c3e (fix(W1B): wire verify:tasks-module into ci.yml + package.json)
-=======
+
       - name: verify:alert-rules-profiles
         run: npm run verify:alert-rules-profiles
->>>>>>> 462e4ffa (feat(W2B): ALERT-RULES-PROFILES — three QBO profile pages + broker queue)
->>>>>>> fdbba3f5 (feat(W2B): ALERT-RULES-PROFILES — three QBO profile pages + broker queue)
-=======
+
       - name: verify:planner-universal-grid
         run: npm run verify:planner-universal-grid
->>>>>>> 46f52ef5 (feat(W2P): PLANNER-REDESIGN — universal grid, shared FilterBar, resizable columns)
->>>>>>> b19eae18 (feat(W2P): PLANNER-REDESIGN — universal grid, shared FilterBar, resizable columns)
 
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
