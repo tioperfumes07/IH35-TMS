@@ -1,8 +1,9 @@
 import { NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { PlannerRangeProvider } from "./PlannerRangeContext";
-import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
+import { UniversalFilterBar, type FilterState } from "../../../components/planner/UniversalFilterBar";
 
 const TABS = [
   { label: "Driver Planner", to: "/dispatch/planners/driver" },
@@ -11,6 +12,13 @@ const TABS = [
 ] as const;
 
 export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
+  const today = new Date().toISOString().split("T")[0];
+  const [filters, setFilters] = useState<FilterState>({
+    period: "this_week",
+    from: today,
+    to: today,
+  });
+
   return (
     <PlannerRangeProvider>
       <div data-testid="dispatch-planners-layout" className="mx-auto max-w-[1400px] space-y-3">
@@ -28,7 +36,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <PlannerRangeToolbar />
+        <UniversalFilterBar value={filters} onChange={setFilters} />
         {children}
       </div>
     </PlannerRangeProvider>

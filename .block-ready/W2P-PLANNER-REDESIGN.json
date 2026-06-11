@@ -1,0 +1,23 @@
+{
+  "block_id": "W2P-PLANNER-REDESIGN",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "W2",
+  "task": "Rebuild existing planner pages with universal grid: narrow day cols, gridlines YES/shading NO, day headers, ~27-30px rows, shared UniversalFilterBar, resizable columns (persisted).",
+  "branch": "feat/w2p-planner-redesign",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/W2P-PLANNER-REDESIGN.json",
+    "apps/frontend/src/components/planner/UniversalFilterBar.tsx",
+    "apps/frontend/src/components/planner/useResizableColumns.ts",
+    "apps/frontend/src/components/planner/index.ts",
+    "apps/frontend/src/pages/dispatch/planners/DispatchPlannersLayout.tsx",
+    "scripts/verify-planner-universal-grid.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": []
+}
