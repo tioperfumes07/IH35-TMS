@@ -997,6 +997,9 @@ jobs:
       - name: verify:geofence-engine
         run: npm run verify:geofence-engine
 
+      - name: verify:forced-driver-ack
+        run: npm run verify:forced-driver-ack
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
