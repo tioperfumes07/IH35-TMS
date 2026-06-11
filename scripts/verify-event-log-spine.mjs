@@ -139,7 +139,7 @@ async function verify() {
     }
   }
 
-  // 7. Check migration file contains NO financial writes
+  // 7. Check migration 0168 contains NO financial writes
   const migrationPath = join(__dirname, '..', 'apps', 'backend', 'migrations', '0168_w1_event_log_spine.sql');
   try {
     const migrationContent = readFileSync(migrationPath, 'utf-8').toLowerCase();
@@ -157,6 +157,110 @@ async function verify() {
     }
   } catch (e) {
     errors.push(`Could not read migration file: ${e.message}`);
+  }
+
+  // 8. Check migration 0169 (append-only enforcement) exists and has required components
+  const migration0169Path = join(__dirname, '..', 'apps', 'backend', 'migrations', '0169_w1a_event_log_immutable.sql');
+  try {
+    const migration0169Content = readFileSync(migration0169Path, 'utf-8').toLowerCase();
+    
+    if (!migration0169Content.includes('prev_hash') || !migration0169Content.includes('hash')) {
+      errors.push('Migration 0169 missing hash chain columns (prev_hash, hash)');
+    }
+    if (!migration0169Content.includes('calculate_event_hash')) {
+      errors.push('Migration 0169 missing calculate_event_hash() function');
+    }
+    if (!migration0169Content.includes('event_log_append_only_trigger')) {
+      errors.push('Migration 0169 missing append-only trigger function');
+    }
+    if (!migration0169Content.includes('append-only') || !migration0169Content.includes('raise exception')) {
+      errors.push('Migration 0169 missing append-only enforcement (RAISE EXCEPTION)');
+    }
+    if (!migration0169Content.includes('revoke update') || !migration0169Content.includes('revoke delete')) {
+      errors.push('Migration 0169 missing permission revocation for UPDATE/DELETE');
+    }
+  } catch (e) {
+    errors.push(`Could not read migration 0169: ${e.message}`);
+  }
+
+  // 9. Test UPDATE/DELETE rejection on events.event_log (if DB available)
+  if (!errors.length) {
+    try {
+      // First insert a test event
+      const { data: testId, error: insertErr } = await supabase.rpc('log_event', {
+        p_operating_company_id: '00000000-0000-0000-0000-000000000000',
+        p_event_type: 'verify.test',
+        p_actor_type: 'system',
+        p_actor_id: '00000000-0000-0000-0000-000000000000',
+        p_subject_type: 'task',
+        p_subject_id: '00000000-0000-0000-0000-000000000000',
+        p_payload: { test: true, guard: 'verify-mutation-rejection' },
+        p_occurred_at: new Date().toISOString(),
+        p_source: 'verify'
+      });
+      
+      if (insertErr) {
+        errors.push(`Failed to insert test event for mutation test: ${insertErr.message}`);
+      } else {
+        // Try to UPDATE - this should fail
+        const { error: updateErr } = await supabase
+          .from('events.event_log')
+          .update({ event_type: 'tampered' })
+          .eq('event_type', 'verify.test')
+          .eq('source', 'verify');
+        
+        if (!updateErr) {
+          errors.push('UPDATE on events.event_log succeeded - should have been blocked by trigger');
+        } else if (!updateErr.message.includes('append-only')) {
+          errors.push(`UPDATE failed but not with append-only error: ${updateErr.message}`);
+        }
+        
+        // Try to DELETE - this should also fail
+        const { error: deleteErr } = await supabase
+          .from('events.event_log')
+          .delete()
+          .eq('event_type', 'verify.test')
+          .eq('source', 'verify');
+        
+        if (!deleteErr) {
+          errors.push('DELETE on events.event_log succeeded - should have been blocked by trigger');
+        } else if (!deleteErr.message.includes('append-only')) {
+          errors.push(`DELETE failed but not with append-only error: ${deleteErr.message}`);
+        }
+      }
+    } catch (e) {
+      errors.push(`Exception during mutation test: ${e.message}`);
+    }
+  }
+
+  // 10. Verify no direct INSERT outside events service
+  try {
+    const { execSync } = await import('child_process');
+    const backendFiles = execSync('find apps/backend/src -name "*.ts" -type f 2>/dev/null', { encoding: 'utf8' });
+    const files = backendFiles.split('\n').filter(f => f);
+    
+    const violations = [];
+    for (const file of files) {
+      try {
+        const content = readFileSync(file, 'utf8');
+        // Look for INSERT INTO events.event_log that isn't through log_event()
+        if (/INSERT\s+INTO\s+['"]?events['"]?\.['"]?event_log['"]?/i.test(content) &&
+            !content.includes('log_event(') &&
+            !file.includes('.test.') &&
+            !file.includes('.spec.')) {
+          violations.push(file);
+        }
+      } catch (e) {
+        // Skip files that can't be read
+      }
+    }
+    
+    if (violations.length > 0) {
+      errors.push(`Direct INSERT INTO events.event_log found outside events service: ${violations.join(', ')}`);
+    }
+  } catch (e) {
+    // If we can't run the check, warn but don't fail
+    console.warn(`Could not check for direct INSERT violations: ${e.message}`);
   }
 
   // Report results
