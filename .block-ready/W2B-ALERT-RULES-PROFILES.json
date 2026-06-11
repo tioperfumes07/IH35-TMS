@@ -1,0 +1,23 @@
+{
+  "block_id": "W2B-ALERT-RULES-PROFILES",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "W2",
+  "task": "THREE QBO alert profile pages: App, Driver (force_ack + force_alarm), Broker (auto_send vs hold_for_review). Config only — engines ship in Waves 3/4.",
+  "branch": "feat/w2b-alert-rules",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/W2B-ALERT-RULES-PROFILES.json",
+    "apps/backend/migrations/0171_w2b_alert_rules.sql",
+    "apps/backend/src/alerts/alert.routes.ts",
+    "scripts/verify-alert-rules-profiles.mjs",
+    "db/migrations/202606111102_w2b_alerts_schema_grants.sql",
+    ".github/workflows/ci.yml",
+    "package.json",
+    "package-lock.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}
