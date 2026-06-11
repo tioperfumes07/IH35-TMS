@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS geofence.fence (
 ALTER TABLE geofence.fence ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY geofence_fence_tenant ON geofence.fence
-  USING (operating_company_id = current_setting('app.operating_company_id', true)::uuid);
+  USING (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
 CREATE INDEX IF NOT EXISTS idx_geofence_fence_company_active
   ON geofence.fence (operating_company_id, is_active)
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS geofence.event (
 ALTER TABLE geofence.event ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY geofence_event_tenant ON geofence.event
-  USING (operating_company_id = current_setting('app.operating_company_id', true)::uuid);
+  USING (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
 CREATE INDEX IF NOT EXISTS idx_geofence_event_fence_occurred
   ON geofence.event (fence_id, occurred_at DESC);

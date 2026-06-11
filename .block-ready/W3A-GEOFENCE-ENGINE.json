@@ -9,7 +9,7 @@
   "allowed_files": [
     ".block-ready/W3A-GEOFENCE-ENGINE.json",
     ".github/workflows/ci.yml",
-    "apps/backend/migrations/0172_w3a_geofence_engine.sql",
+    "db/migrations/202606111200_w3a_geofence_engine.sql",
     "apps/backend/src/geofence/geofence.routes.ts",
     "db/migrations/202606111103_w3a_geofence_schema_grants.sql",
     "package.json",

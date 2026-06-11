@@ -33,7 +33,7 @@ function expectNotContains(content, pattern, label) {
 console.log("\n── W3A-GEOFENCE-ENGINE verification ──\n");
 
 // C1: migration exists
-const migration = expectFile("apps/backend/migrations/0172_w3a_geofence_engine.sql");
+const migration = expectFile("db/migrations/202606111200_w3a_geofence_engine.sql");
 if (migration) {
   expectContains(migration, "CREATE SCHEMA IF NOT EXISTS geofence", "migration: CREATE SCHEMA IF NOT EXISTS geofence");
   expectContains(migration, "CREATE TABLE IF NOT EXISTS geofence.fence", "migration: geofence.fence table");
