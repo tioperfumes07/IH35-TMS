@@ -994,6 +994,9 @@ jobs:
       - name: verify:planner-universal-grid
         run: npm run verify:planner-universal-grid
 
+      - name: verify:geofence-engine
+        run: npm run verify:geofence-engine
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
