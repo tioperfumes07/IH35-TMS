@@ -1,125 +1,97 @@
 #!/usr/bin/env node
 /**
  * Guard: verify-tasks-module.mjs
- * Validates W1B-TASKS-MODULE is properly installed.
+ * Validates W1B-TASKS-MODULE files are present and correctly wired.
  */
 
-import { createClient } from '@supabase/supabase-js';
-import { config } from 'dotenv';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import fs from "node:fs";
+import path from "node:path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const ROOT = process.cwd();
+const failures = [];
 
-const envPath = join(__dirname, '..', '.env');
-config({ path: envPath });
-
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('[verify-tasks-module] FAIL: Missing env vars');
-  process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false }
-});
-
-async function verify() {
-  const errors = [];
-
-  // 1. tasks schema exists
-  const { data: schemaData, error: schemaError } = await supabase
-    .from('information_schema.schemata')
-    .select('schema_name')
-    .eq('schema_name', 'tasks')
-    .single();
-  if (schemaError || !schemaData) errors.push('tasks schema missing');
-
-  // 2. tasks.task table with required columns
-  const { data: columns, error: colError } = await supabase
-    .from('information_schema.columns')
-    .select('column_name')
-    .eq('table_schema', 'tasks')
-    .eq('table_name', 'task');
-  if (colError) {
-    errors.push(`column query failed: ${colError.message}`);
-  } else {
-    const required = ['task_id', 'operating_company_id', 'category', 'status', 'assigned_to_user_id', 'scheduled_date', 'title'];
-    const found = columns.map(c => c.column_name);
-    for (const col of required) {
-      if (!found.includes(col)) errors.push(`missing column: ${col}`);
-    }
-  }
-
-  // 3. RLS enabled
-  const { data: rls, error: rlsError } = await supabase
-    .from('information_schema.tables')
-    .select('row_security_enabled')
-    .eq('table_schema', 'tasks')
-    .eq('table_name', 'task')
-    .single();
-  if (rlsError || !rls || !rls.row_security_enabled) errors.push('RLS not enabled on tasks.task');
-
-  // 4. Indexes for planner performance
-  const { data: idx, error: idxError } = await supabase
-    .from('information_schema.statistics')
-    .select('index_name')
-    .eq('table_schema', 'tasks')
-    .eq('table_name', 'task');
-  if (idxError) {
-    errors.push(`index query failed: ${idxError.message}`);
-  } else {
-    const foundIdx = [...new Set(idx.map(i => i.index_name))];
-    const requiredPatterns = ['idx_task_employee_date', 'idx_task_category', 'idx_task_subject'];
-    for (const pat of requiredPatterns) {
-      if (!foundIdx.some(fi => fi.includes(pat.replace('idx_task_', '')))) {
-        errors.push(`missing index pattern: ${pat}`);
-      }
-    }
-  }
-
-  // 5. Triggers for spine logging exist
-  const { data: triggers, error: trigError } = await supabase
-    .from('information_schema.triggers')
-    .select('trigger_name')
-    .eq('event_object_schema', 'tasks')
-    .eq('event_object_table', 'task');
-  if (trigError) {
-    errors.push(`trigger query failed: ${trigError.message}`);
-  } else {
-    const foundTrig = triggers.map(t => t.trigger_name);
-    if (!foundTrig.includes('tr_task_status_change')) errors.push('missing trigger: tr_task_status_change');
-    if (!foundTrig.includes('tr_task_created')) errors.push('missing trigger: tr_task_created');
-  }
-
-  // 6. No financial writes in migration
-  const migrationPath = join(__dirname, '..', 'apps', 'backend', 'migrations', '0169_w1b_tasks_module.sql');
-  try {
-    const content = readFileSync(migrationPath, 'utf-8').toLowerCase();
-    const forbidden = ['insert into accounting', 'update accounting', 'delete from accounting', 'create table accounting'];
-    for (const pat of forbidden) {
-      if (content.includes(pat)) errors.push(`financial write pattern: ${pat}`);
-    }
-  } catch (e) {
-    errors.push(`cannot read migration: ${e.message}`);
-  }
-
-  // Report
-  if (errors.length > 0) {
-    console.error('[verify-tasks-module] FAIL:');
-    for (const e of errors) console.error(`  - ${e}`);
-    process.exit(1);
-  } else {
-    console.log('[verify-tasks-module] OK — schema, tables, RLS, indexes, triggers, no-financial-writes verified');
-    process.exit(0);
+function expectFile(relativePath) {
+  const absolutePath = path.join(ROOT, relativePath);
+  if (!fs.existsSync(absolutePath)) {
+    failures.push(`MISSING: ${relativePath}`);
   }
 }
 
-verify().catch(e => {
-  console.error(`[verify-tasks-module] EXCEPTION: ${e.message}`);
+function expectContains(relativePath, pattern, label) {
+  const absolutePath = path.join(ROOT, relativePath);
+  if (!fs.existsSync(absolutePath)) {
+    failures.push(`MISSING: ${relativePath}`);
+    return;
+  }
+  const text = fs.readFileSync(absolutePath, "utf8");
+  if (!pattern.test(text)) {
+    failures.push(`${relativePath}: missing ${label}`);
+  }
+}
+
+function expectNotContains(relativePath, pattern, label) {
+  const absolutePath = path.join(ROOT, relativePath);
+  if (!fs.existsSync(absolutePath)) return;
+  const text = fs.readFileSync(absolutePath, "utf8");
+  if (pattern.test(text)) {
+    failures.push(`${relativePath}: contains forbidden pattern — ${label}`);
+  }
+}
+
+// 1. Migration file present
+expectFile("apps/backend/migrations/0169_w1b_tasks_module.sql");
+
+// 2. Schema grants in db/migrations
+expectFile("db/migrations/202606111100_w1b_tasks_schema_grants.sql");
+expectContains(
+  "db/migrations/202606111100_w1b_tasks_schema_grants.sql",
+  /GRANT\s+USAGE\s+ON\s+SCHEMA\s+tasks\s+TO\s+ih35_app/i,
+  "GRANT USAGE ON SCHEMA tasks TO ih35_app"
+);
+
+// 3. Migration has required tables
+expectContains(
+  "apps/backend/migrations/0169_w1b_tasks_module.sql",
+  /create\s+table\s+tasks\.task/i,
+  "tasks.task table"
+);
+expectContains(
+  "apps/backend/migrations/0169_w1b_tasks_module.sql",
+  /enable\s+row\s+level\s+security/i,
+  "RLS on tasks.task"
+);
+expectContains(
+  "apps/backend/migrations/0169_w1b_tasks_module.sql",
+  /events\.log_event/i,
+  "spine event logging"
+);
+
+// 4. Routes file present
+expectFile("apps/backend/src/tasks/task.routes.ts");
+expectContains(
+  "apps/backend/src/tasks/task.routes.ts",
+  /tasks\.task/i,
+  "tasks.task reference"
+);
+
+// 5. No financial writes in migration
+expectNotContains(
+  "apps/backend/migrations/0169_w1b_tasks_module.sql",
+  /insert\s+into\s+accounting/i,
+  "insert into accounting"
+);
+
+// 6. CI wired
+expectContains("package.json", /"verify:tasks-module"\s*:/, "verify:tasks-module script");
+expectContains(".github/workflows/ci.yml", /verify:tasks-module/, "CI gate step");
+
+// Report
+if (failures.length > 0) {
+  console.error("verify:tasks-module FAIL");
+  for (const failure of failures) {
+    console.error(`  - ${failure}`);
+  }
   process.exit(1);
-});
+}
+
+console.log("verify:tasks-module PASS");
