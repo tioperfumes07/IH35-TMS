@@ -1,20 +1,19 @@
 {
   "block_id": "W1A-EVENT-LOG-IMMUTABLE",
-  "title": "W1-A Fix-Forward: Event Log Spine Append-Only Enforcement",
+  "status": "BUILD",
   "classification": "NON-FINANCIAL",
   "phase": "W1",
-  "task": "Add hash chain columns and append-only trigger to events.event_log. Blocks UPDATE/DELETE at DB level. Corrections are new rows.",
-  "description": "Adds hash chain columns and append-only trigger to events.event_log table. Blocks UPDATE/DELETE at DB level. Corrections are new rows.",
+  "task": "Event log append-only enforcement + hash chain",
+  "branch": "fix/w1a-append-only",
+  "lane": "A",
   "allowed_files": [
     ".block-ready/W1A-EVENT-LOG-IMMUTABLE.json",
     "apps/backend/migrations/0169_w1a_event_log_immutable.sql",
-    "scripts/verify-event-log-spine.mjs"
+    "scripts/verify-event-log-spine.mjs",
+    "package-lock.json"
   ],
-  "depends_on": ["W1-EVENT-LOG-SPINE"],
-  "guard_script": "scripts/verify-event-log-spine.mjs",
-  "migration": "apps/backend/migrations/0169_w1a_event_log_immutable.sql",
   "runtime_path": "src",
-  "db_required": false,
-  "guard_required": false,
+  "db_required": true,
+  "guard_required": true,
   "extra_gates": []
 }
