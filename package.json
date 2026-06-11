@@ -541,6 +541,7 @@
     "verify:geofence-engine": "node scripts/verify-geofence-engine.mjs",
     "verify:forced-driver-ack": "node scripts/verify-forced-driver-ack.mjs",
     "verify:signed-safety-docs": "node scripts/verify-signed-safety-docs.mjs",
+    "verify:broker-auto-update": "node scripts/verify-broker-auto-update.mjs",
     "verify:closure-19-sec-artifacts": "node scripts/verify-closure-19-sec-artifacts.mjs",
     "verify:closure-17-on-hold-triage": "node scripts/verify-closure-17-on-hold-triage.mjs",
     "verify:closure-18-perf-artifacts": "node scripts/verify-closure-18-perf-artifacts.mjs",
