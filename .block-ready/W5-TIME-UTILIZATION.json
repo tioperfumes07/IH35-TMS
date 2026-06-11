@@ -1,0 +1,21 @@
+{
+  "block_id": "W5-TIME-UTILIZATION",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "WAVE-5",
+  "task": "Per-driver + per-truck minute ledger. READ-ONLY reporting (no financial writes). Surfaces UNACCOUNTED time. $/productive-hr, $/driving-hr, utilization%. Reuses analytics schema for rate inputs. Computed-summary events logged to spine via log_event(). UI: Finance > Time Utilization, By Driver / By Truck / Detail. Schema: utilization (driver_period, unit_period).",
+  "branch": "feat/w5-time-utilization",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/W5-TIME-UTILIZATION.json",
+    "db/migrations/202606111240_w5_time_utilization.sql",
+    "apps/backend/src/utilization/utilization.routes.ts",
+    "scripts/verify-time-utilization.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}
