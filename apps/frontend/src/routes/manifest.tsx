@@ -52,6 +52,12 @@ import { PortalLoadDetailPage } from "../portal/PortalLoadDetailPage";
 import { PortalProfilePage } from "../portal/PortalProfilePage";
 import { PortalRouteGuard } from "../portal/PortalRouteGuard";
 import { FuelPlannerHomePage, type FuelTabId } from "../pages/fuel/FuelPlannerHome";
+import { IntegrationTransactionsPage } from "../pages/accounting/IntegrationTransactionsPage";
+import { ReceiptsPage } from "../pages/accounting/ReceiptsPage";
+import { RevenueRecognitionPage } from "../pages/accounting/RevenueRecognitionPage";
+import { FixedAssetsPage } from "../pages/accounting/FixedAssetsPage";
+import { PrepaidExpensesPage } from "../pages/accounting/PrepaidExpensesPage";
+import { MyAccountantPage } from "../pages/accounting/MyAccountantPage";
 import { BankingHomePage } from "../pages/banking/BankingHome";
 import { TransfersListPage } from "../pages/banking/TransfersListPage";
 import { BankingObligationReconcilePage } from "../pages/banking/BankingObligationReconcilePage";
@@ -1167,6 +1173,7 @@ export const ROUTES = React.Children.toArray(
         >
           <Route index element={<Navigate to="/safety/safety-events" replace />} />
           <Route path="driver-files" element={<DriverFilesTab />} />
+          <Route path="/safety/driver-files" element={<DriverFilesTab />} />
           <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
           <Route path="safety-meetings" element={<SafetyMeetingsTab />} />
           <Route path="/safety/training/programs" element={<TrainingProgramsTab />} />
@@ -1176,11 +1183,13 @@ export const ROUTES = React.Children.toArray(
           <Route path="/safety/hos/exceptions" element={<HosExceptionsPage />} />
           <Route path="hos-violations" element={<HOSViolationsTab />} />
           <Route path="idvr" element={<IDVRTab />} />
+          <Route path="/safety/idvr" element={<IDVRTab />} />
           <Route path="dot-inspections" element={<DOTInspectionsTab />} />
           <Route path="driver-scoring" element={<DriverScoringTab />} />
           <Route path="csa-score" element={<CSAScoreTab />} />
           <Route path="dot-compliance" element={<DOTComplianceTab />} />
           <Route path="safety-events" element={<SafetyEventsTab />} />
+          <Route path="/safety/safety-events" element={<SafetyEventsTab />} />
           <Route path="accidents" element={<AccidentsIncidentsTab />} />
           <Route path="damage-reports" element={<DamageReportsTab />} />
           <Route path="trailer-interchanges" element={<TrailerInterchangesTab />} />
@@ -3037,19 +3046,66 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
-        {[
-          "/safety/accidents-incidents",
-        ].map((path) => (
-          <Route
-            key={path}
-            path={path}
-            element={
-              <ProtectedRoute>
-                <ComingSoonPage />
-              </ProtectedRoute>
-            }
-          />
-        ))}
+        <Route
+          path="/safety/accidents-incidents"
+          element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/tasks"
+          element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/accounting/recurring-transactions"
+          element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
+        />
+        <Route
+          path="/accounting/integration-transactions"
+          element={
+            <ProtectedRoute>
+              <IntegrationTransactionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/receipts"
+          element={
+            <ProtectedRoute>
+              <ReceiptsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/revenue-recognition"
+          element={
+            <ProtectedRoute>
+              <RevenueRecognitionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/fixed-assets"
+          element={
+            <ProtectedRoute>
+              <FixedAssetsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/prepaid-expenses"
+          element={
+            <ProtectedRoute>
+              <PrepaidExpensesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/my-accountant"
+          element={
+            <ProtectedRoute>
+              <MyAccountantPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/reports/run/:reportId"
           element={
