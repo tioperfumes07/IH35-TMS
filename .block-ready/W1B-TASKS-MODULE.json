@@ -11,6 +11,7 @@
     "apps/backend/migrations/0169_w1b_tasks_module.sql",
     "apps/backend/src/tasks/task.routes.ts",
     "scripts/verify-tasks-module.mjs",
+    "db/migrations/202606111100_w1b_tasks_schema_grants.sql",
     "package-lock.json"
   ],
   "runtime_path": "src",
