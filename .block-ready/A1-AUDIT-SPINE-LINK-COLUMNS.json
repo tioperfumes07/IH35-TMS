@@ -1,0 +1,21 @@
+{
+  "block_id": "A1-AUDIT-SPINE-LINK-COLUMNS",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "AUDIT-LINKAGE",
+  "task": "Additive columns on events.event_log: source_table, source_reference_id, actor_user_id, correlation_id — all NULLABLE, no defaults, no backfill. Indexes for source/entity/correlation lookup. Immutability trigger verified still intact. log_event() extended with optional new params (backward-compatible). No past rows rewritten.",
+  "branch": "feat/a1-audit-spine-link-columns",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/A1-AUDIT-SPINE-LINK-COLUMNS.json",
+    "db/migrations/202606111250_a1_audit_spine_link_columns.sql",
+    "scripts/verify-a1-audit-spine-link.mjs",
+    "scripts/block-ready.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}

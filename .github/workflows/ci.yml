@@ -1009,6 +1009,9 @@ jobs:
       - name: verify:time-utilization
         run: npm run verify:time-utilization
 
+      - name: verify:a1-audit-spine-link
+        run: npm run verify:a1-audit-spine-link
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
