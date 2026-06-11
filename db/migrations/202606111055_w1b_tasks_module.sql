@@ -108,15 +108,15 @@ alter table tasks.note enable row level security;
 
 -- Tenant isolation policies
 create policy task_tenant_isolation on tasks.task
-  using (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+  using (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 create policy task_tenant_insert on tasks.task
-  with check (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+  with check (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 
 create policy status_history_tenant_isolation on tasks.status_history
-  using (task_id in (select task_id from tasks.task where operating_company_id = current_setting('app.current_operating_company_id', true)::uuid));
+  using (task_id in (select task_id from tasks.task where operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid));
 
 create policy note_tenant_isolation on tasks.note
-  using (task_id in (select task_id from tasks.task where operating_company_id = current_setting('app.current_operating_company_id', true)::uuid));
+  using (task_id in (select task_id from tasks.task where operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid));
 
 -- Trigger: update tasks.task.updated_at
 create or replace function tasks.set_updated_at()

@@ -43,7 +43,7 @@ $$ language plpgsql immutable;
 -- 3. Trigger function to enforce append-only and populate hash chain
 create or replace function events.event_log_append_only_trigger()
 returns trigger as $$
-decl
+declare
     v_prev_hash text;
     v_calculated_hash text;
 begin

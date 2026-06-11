@@ -1,0 +1,30 @@
+{
+  "block_id": "FIX-DEPLOY-MIGRATION-DRIFT",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "HOTFIX",
+  "task": "Re-home wave SQL migrations from apps/backend/migrations/ (never scanned by db-migrate.mjs) into db/migrations/ with timestamp names that interleave correctly before their grants files. Update migration-status.ts boot guard to accept 12-digit timestamps and scan only db/migrations/. Fixes 14h backend deploy failure.",
+  "branch": "fix/deploy-migration-drift",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FIX-DEPLOY-MIGRATION-DRIFT.json",
+    "apps/backend/migrations/0168_w1_event_log_spine.sql",
+    "apps/backend/migrations/0169_w1a_event_log_immutable.sql",
+    "apps/backend/migrations/0169_w1b_tasks_module.sql",
+    "apps/backend/migrations/0170_w2a_profitability_engine.sql",
+    "apps/backend/migrations/0171_w2b_alert_rules.sql",
+    "apps/backend/src/lib/migration-status.ts",
+    "db/migrations/202606111050_w1a_event_log_spine.sql",
+    "db/migrations/202606111051_w1a_event_log_immutable.sql",
+    "db/migrations/202606111055_w1b_tasks_module.sql",
+    "db/migrations/202606111056_w2a_profitability_engine.sql",
+    "db/migrations/202606111057_w2b_alert_rules.sql",
+    "scripts/verify-profitability-engine.mjs",
+    "scripts/verify-alert-rules-profiles.mjs",
+    "scripts/verify-tasks-module.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}

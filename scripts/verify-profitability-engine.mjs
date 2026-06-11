@@ -33,7 +33,7 @@ function expectNotContains(relativePath, pattern, label) {
 }
 
 // 1. Migration and grants present
-expectFile("apps/backend/migrations/0170_w2a_profitability_engine.sql");
+expectFile("db/migrations/202606111056_w2a_profitability_engine.sql");
 expectFile("db/migrations/202606111101_w2a_analytics_schema_grants.sql");
 expectContains(
   "db/migrations/202606111101_w2a_analytics_schema_grants.sql",
@@ -42,9 +42,9 @@ expectContains(
 );
 
 // 2. Migration has required tables + RLS
-expectContains("apps/backend/migrations/0170_w2a_profitability_engine.sql", /create\s+schema.*analytics/i, "analytics schema");
-expectContains("apps/backend/migrations/0170_w2a_profitability_engine.sql", /load_fact/i, "load_fact table");
-expectContains("apps/backend/migrations/0170_w2a_profitability_engine.sql", /enable\s+row\s+level\s+security/i, "RLS");
+expectContains("db/migrations/202606111056_w2a_profitability_engine.sql", /create\s+schema.*analytics/i, "analytics schema");
+expectContains("db/migrations/202606111056_w2a_profitability_engine.sql", /load_fact/i, "load_fact table");
+expectContains("db/migrations/202606111056_w2a_profitability_engine.sql", /enable\s+row\s+level\s+security/i, "RLS");
 
 // 3. Backend routes present
 expectFile("apps/backend/src/profitability/profitability.routes.ts");
@@ -60,7 +60,7 @@ expectFile("apps/frontend/src/pages/profitability/FilterBar.tsx");
 expectFile("apps/frontend/src/pages/profitability/KpiStrip.tsx");
 
 // 5. No financial writes in migration
-expectNotContains("apps/backend/migrations/0170_w2a_profitability_engine.sql", /insert\s+into\s+accounting/i, "insert into accounting");
+expectNotContains("db/migrations/202606111056_w2a_profitability_engine.sql", /insert\s+into\s+accounting/i, "insert into accounting");
 
 // 6. CI wired
 expectContains("package.json", /"verify:profitability-engine"\s*:/, "verify:profitability-engine script");

@@ -93,11 +93,11 @@ alter table alerts.rule enable row level security;
 alter table alerts.broker_queue enable row level security;
 
 create policy profile_tenant on alerts.profile
-  using (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+  using (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 create policy rule_tenant on alerts.rule
-  using (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+  using (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 create policy broker_queue_tenant on alerts.broker_queue
-  using (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid);
+  using (operating_company_id = NULLIF(current_setting('app.current_operating_company_id', true), '')::uuid);
 
 -- Trigger: log profile/rule changes to event spine
 create or replace function alerts.log_config_change()

@@ -3,7 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import type pg from "pg";
 
-const MIGRATION_FILE_PATTERN = /^\d{4}[a-z]?_.+\.sql$/i;
+const MIGRATION_FILE_PATTERN = /^(?:\d{4}[a-z]?|\d{12})_.+\.sql$/i;
 
 export type MigrationDrift = {
   missingInDB: string[];
@@ -23,7 +23,7 @@ function sortUnique(names: string[]): string[] {
 }
 
 export async function listExpectedMigrations(repoRoot: string): Promise<string[]> {
-  const dirs = [path.join(repoRoot, "db", "migrations"), path.join(repoRoot, "apps", "backend", "migrations")];
+  const dirs = [path.join(repoRoot, "db", "migrations")];
   const names: string[] = [];
   for (const dir of dirs) {
     if (!fs.existsSync(dir)) continue;
