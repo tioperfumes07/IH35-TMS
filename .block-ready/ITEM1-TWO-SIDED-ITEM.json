@@ -1,0 +1,16 @@
+{
+  "block_id": "ITEM1-TWO-SIDED-ITEM",
+  "phase": "Accounting",
+  "task": "Two-sided item model: sell side (income account, defaults to Service income) + buy side (expense account + preferred vendor). ItemEditorModal replaces generic metadata modal. No financial writes.",
+  "classification": "NON-FINANCIAL",
+  "gate": "SELF-MERGE-ON-GREEN",
+  "allowed_files": [
+    ".block-ready/ITEM1-TWO-SIDED-ITEM.json",
+    "apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx",
+    "apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false
+}
