@@ -536,6 +536,7 @@
     "verify:closure-21-monitoring-artifacts": "node scripts/verify-closure-21-monitoring-artifacts.mjs",
     "verify:profitability-engine": "node scripts/verify-profitability-engine.mjs",
     "verify:tasks-module": "node scripts/verify-tasks-module.mjs",
+    "verify:alert-rules-profiles": "node scripts/verify-alert-rules-profiles.mjs",
     "verify:closure-19-sec-artifacts": "node scripts/verify-closure-19-sec-artifacts.mjs",
     "verify:closure-17-on-hold-triage": "node scripts/verify-closure-17-on-hold-triage.mjs",
     "verify:closure-18-perf-artifacts": "node scripts/verify-closure-18-perf-artifacts.mjs",

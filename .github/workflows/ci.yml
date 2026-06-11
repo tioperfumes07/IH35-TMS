@@ -986,9 +986,15 @@ jobs:
       - name: verify:profitability-engine
         run: npm run verify:profitability-engine
 =======
+<<<<<<< HEAD
       - name: verify:tasks-module
         run: npm run verify:tasks-module
 >>>>>>> 160e3c3e (fix(W1B): wire verify:tasks-module into ci.yml + package.json)
+=======
+      - name: verify:alert-rules-profiles
+        run: npm run verify:alert-rules-profiles
+>>>>>>> 462e4ffa (feat(W2B): ALERT-RULES-PROFILES — three QBO profile pages + broker queue)
+>>>>>>> fdbba3f5 (feat(W2B): ALERT-RULES-PROFILES — three QBO profile pages + broker queue)
 
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
