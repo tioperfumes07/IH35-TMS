@@ -1,0 +1,20 @@
+{
+  "block_id": "W1B-TASKS-MODULE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "W1",
+  "task": "Employee×day task planner grid — tasks.task schema, status workflow, spine writes, 5-tab categories, REST routes",
+  "branch": "feat/w1b-tasks-module",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/W1B-TASKS-MODULE.json",
+    "apps/backend/migrations/0169_w1b_tasks_module.sql",
+    "apps/backend/src/tasks/task.routes.ts",
+    "scripts/verify-tasks-module.mjs",
+    "package-lock.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": []
+}
