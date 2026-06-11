@@ -1000,6 +1000,9 @@ jobs:
       - name: verify:forced-driver-ack
         run: npm run verify:forced-driver-ack
 
+      - name: verify:signed-safety-docs
+        run: npm run verify:signed-safety-docs
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
