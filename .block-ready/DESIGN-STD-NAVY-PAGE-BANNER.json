@@ -1,0 +1,27 @@
+{
+  "block_id": "DESIGN-STD-NAVY-PAGE-BANNER",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "UI-CLEANUP",
+  "task": "Create NavyPageSubNav as the software-wide navy banner standard. Swap SettlementsPage onto it. Lock approved tokens in CI via verify:navy-page-subnav in locked-guards.yml.",
+  "branch": "feat/design-std-navy-page-banner",
+  "lane": "A",
+  "details": [
+    "NavyPageSubNav.tsx: shared component with locked tokens bg-[#1A1F36] text-white text-[11px] overflow-x-auto; NavLink per item; active = border-b border-white pb-0.5 font-semibold",
+    "SettlementsPage.tsx: like-for-like swap — inline nav replaced with NavyPageSubNav; zero visual change",
+    "verify-navy-page-subnav.mjs: 9 checks locking all approved tokens; PASS on main",
+    "locked-guards.yml: verify:navy-page-subnav added as step 36 in CI",
+    "package.json: verify:navy-page-subnav wired"
+  ],
+  "allowed_files": [
+    ".block-ready/DESIGN-STD-NAVY-PAGE-BANNER.json",
+    "apps/frontend/src/components/layout/NavyPageSubNav.tsx",
+    "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+    "scripts/verify-navy-page-subnav.mjs",
+    ".github/workflows/locked-guards.yml",
+    "package.json"
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:navy-page-subnav"]
+}

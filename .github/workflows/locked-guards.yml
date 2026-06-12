@@ -119,3 +119,6 @@ jobs:
 
       - name: verify:fleet-counters-match-rows
         run: npm run verify:fleet-counters-match-rows
+
+      - name: verify:navy-page-subnav
+        run: npm run verify:navy-page-subnav
