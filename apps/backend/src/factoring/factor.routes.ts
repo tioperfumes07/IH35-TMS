@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 import {
   assignCustomerToFactor,
   createFactor,
@@ -93,8 +94,8 @@ export async function registerFactorRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     try {
-      const factor = await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
-        createFactor(
+      const factor = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+        const created = await createFactor(
           body.data.operating_company_id,
           {
             name: body.data.name,
@@ -105,8 +106,15 @@ export async function registerFactorRoutes(app: FastifyInstance) {
             active: body.data.active,
           },
           { client }
-        )
-      );
+        );
+        await appendCrudAudit(client, user.uuid, "factoring.factor.created", {
+          resource_type: "factoring.factor",
+          resource_id: created.id,
+          operating_company_id: body.data.operating_company_id,
+          name: body.data.name,
+        }, "info", "C2-FACTORING-PROFILE");
+        return created;
+      });
       return reply.code(201).send(factor);
     } catch (error) {
       if (sendFactorError(reply, error)) return;
@@ -125,8 +133,8 @@ export async function registerFactorRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     try {
-      const factor = await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
-        updateFactor(
+      const factor = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+        const updated = await updateFactor(
           body.data.operating_company_id,
           params.data.id,
           {
@@ -138,8 +146,14 @@ export async function registerFactorRoutes(app: FastifyInstance) {
             active: body.data.active,
           },
           { client }
-        )
-      );
+        );
+        await appendCrudAudit(client, user.uuid, "factoring.factor.updated", {
+          resource_type: "factoring.factor",
+          resource_id: params.data.id,
+          operating_company_id: body.data.operating_company_id,
+        }, "info", "C2-FACTORING-PROFILE");
+        return updated;
+      });
       return factor;
     } catch (error) {
       if (sendFactorError(reply, error)) return;
@@ -158,9 +172,15 @@ export async function registerFactorRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     try {
-      const factor = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
-        deactivateFactor(query.data.operating_company_id, params.data.id, { client })
-      );
+      const factor = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        const deactivated = await deactivateFactor(query.data.operating_company_id, params.data.id, { client });
+        await appendCrudAudit(client, user.uuid, "factoring.factor.deactivated", {
+          resource_type: "factoring.factor",
+          resource_id: params.data.id,
+          operating_company_id: query.data.operating_company_id,
+        }, "info", "C2-FACTORING-PROFILE");
+        return deactivated;
+      });
       return factor;
     } catch (error) {
       if (sendFactorError(reply, error)) return;
@@ -200,15 +220,23 @@ export async function registerFactorRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     try {
-      const assignment = await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
-        assignCustomerToFactor(
+      const assignment = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+        const created = await assignCustomerToFactor(
           body.data.operating_company_id,
           params.data.customerId,
           body.data.factor_id,
           body.data.effective_from,
           { client }
-        )
-      );
+        );
+        await appendCrudAudit(client, user.uuid, "factoring.customer_assignment.created", {
+          resource_type: "factoring.customer_factor_assignment",
+          resource_id: created.id,
+          operating_company_id: body.data.operating_company_id,
+          customer_id: params.data.customerId,
+          factor_id: body.data.factor_id,
+        }, "info", "C2-FACTORING-PROFILE");
+        return created;
+      });
       return reply.code(201).send(assignment);
     } catch (error) {
       if (sendFactorError(reply, error)) return;

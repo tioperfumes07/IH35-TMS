@@ -1,0 +1,27 @@
+{
+  "block_id": "C2-FACTORING-PROFILE",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUILD-DATA",
+  "task": "Enrich factoring.factor profile (remittance_details, fee_schedule, notes, updated_at trigger, NULLIF RLS). Link invoices to factor profile. Add spine emits to all factor mutations.",
+  "branch": "feat/c2-factoring-profile",
+  "lane": "A",
+  "details": [
+    "db/migrations/202606120400_c2_factoring_profile.sql: ADD COLUMN remittance_details + fee_schedule + notes on factoring.factor; factoring.set_updated_at() trigger; NULLIF RLS policy v2; factor_profile_id FK on accounting.invoices",
+    "apps/backend/src/factoring/factor.routes.ts: appendCrudAudit on POST /factors, PATCH /factors/:id, DELETE /factors/:id, POST /customers/:id/factor",
+    "scripts/verify-factoring-profile.mjs: 14/14 PASS",
+    ".github/workflows/ci.yml: verify:factoring-profile step added",
+    "package.json: verify:factoring-profile wired"
+  ],
+  "allowed_files": [
+    ".block-ready/C2-FACTORING-PROFILE.json",
+    "db/migrations/202606120400_c2_factoring_profile.sql",
+    "apps/backend/src/factoring/factor.routes.ts",
+    "scripts/verify-factoring-profile.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["verify:factoring-profile"]
+}
