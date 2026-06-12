@@ -1012,6 +1012,9 @@ jobs:
       - name: verify:a1-audit-spine-link
         run: npm run verify:a1-audit-spine-link
 
+      - name: verify:a2-audit-emit-dispatch
+        run: npm run verify:a2-audit-emit-dispatch
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
