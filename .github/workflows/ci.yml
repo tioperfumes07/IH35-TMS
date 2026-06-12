@@ -1030,6 +1030,9 @@ jobs:
       - name: verify:a6-audit-universal-view
         run: npm run verify:a6-audit-universal-view
 
+      - name: verify:settlements-sidebar
+        run: npm run verify:settlements-sidebar
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 

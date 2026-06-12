@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { NavLink, useLocation } from "react-router-dom";
-import { Scale } from "lucide-react";
+
 import { getArrivingSoon } from "../api/maintenance";
 import { getUserPreferences, patchUserPreferences } from "../api/safety";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -139,34 +139,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
               </div>
             );
           })}
-          {/* CLOSURE-12: PAYROLL Integration sidebar entry */}
-          <div className="relative w-full">
-            <NavLink
-              to="/payroll-integration"
-              className={({ isActive }) =>
-                `relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${isActive ? "bg-white/10" : ""}`
-              }
-              style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
-            >
-              {({ isActive }) => (
-                <>
-                  <div className="flex items-center justify-center">
-                    <Scale className="h-4 w-4" />
-                  </div>
-                  <span
-                    className="mt-1 text-[10px] leading-none uppercase"
-                    style={{
-                      color: "white",
-                      letterSpacing: "0.4px",
-                      fontWeight: isActive ? 600 : 400,
-                    }}
-                  >
-                    PAYROLL
-                  </span>
-                </>
-              )}
-            </NavLink>
-          </div>
+
           {hasSidebarOverride ? (
             <button
               type="button"
