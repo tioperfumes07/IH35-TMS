@@ -85,6 +85,9 @@ jobs:
       - name: Verify maintenance routes bootstrapped
         run: npm run verify:maintenance-routes-bootstrapped
 
+      - name: Verify M1 positioned-parts picker
+        run: npm run verify:m1-positioned-parts
+
       - name: Verify maintenance tab coverage
         run: npm run verify:maintenance-tab-coverage
 
