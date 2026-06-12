@@ -1,0 +1,34 @@
+{
+  "block_id": "E1-SMOKE-SERVICE-TOKEN-AUTH",
+  "status": "BUILD",
+  "classification": "HARDENING",
+  "phase": "FINAL",
+  "task": "Service-token auth middleware for service-to-service/cron HTTP calls. Daily smoke probe (read-only critical path checks). No migration. No financial writes.",
+  "branch": "feat/e1-smoke-service-token-auth",
+  "lane": "A",
+  "details": [
+    "apps/backend/src/auth/service-token.middleware.ts: requireServiceToken() — checks Authorization: Bearer $SERVICE_TOKEN_SECRET, 401 on mismatch, 503 if unconfigured.",
+    "apps/backend/src/admin/smoke-probe.routes.ts: GET /api/v1/internal/smoke-probe — service-token gated, read-only, 5 checks (db_ping, event_log_read, loads_read, invoices_read, spine_write_gate). 200/503.",
+    "apps/backend/src/middleware/response-time.ts: /api/v1/internal/perf-metrics now accepts service token OR session auth.",
+    "apps/backend/src/index.ts: registerSmokeProbeRoutes wired.",
+    ".env.example: SERVICE_TOKEN_SECRET documented with openssl rand -hex 32 instruction.",
+    "scripts/verify-smoke-service-token-auth.mjs: 21/21 PASS",
+    ".github/workflows/ci.yml + package.json: verify:smoke-service-token-auth wired."
+  ],
+  "allowed_files": [
+    ".block-ready/E1-SMOKE-SERVICE-TOKEN-AUTH.json",
+    "apps/backend/src/auth/service-token.middleware.ts",
+    "apps/backend/src/admin/smoke-probe.routes.ts",
+    "apps/backend/src/middleware/response-time.ts",
+    "apps/backend/src/index.ts",
+    ".env.example",
+    "scripts/verify-smoke-service-token-auth.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:smoke-service-token-auth"],
+  "financial_writes": false,
+  "note": "Final block. After merge + deploy-green the planned deferred build scope is complete."
+}
