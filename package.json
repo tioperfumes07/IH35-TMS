@@ -551,6 +551,7 @@
     "verify:a5-audit-emit-banking": "node scripts/verify-a5-audit-emit-banking.mjs",
     "verify:a6-audit-universal-view": "node scripts/verify-a6-audit-universal-view.mjs",
     "verify:a8-audit-reports-section": "node scripts/verify-a8-audit-reports-section.mjs",
+    "verify:pre-settlements": "node scripts/verify-pre-settlements.mjs",
     "verify:tasks-planner-v3": "node scripts/verify-tasks-planner-v3.mjs",
     "verify:settlements-sidebar": "node scripts/verify-settlements-sidebar.mjs",
     "verify:ob1-nav-header-unify": "node scripts/verify-ob1-nav-header-unify.mjs",

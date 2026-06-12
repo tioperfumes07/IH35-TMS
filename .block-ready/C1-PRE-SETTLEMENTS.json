@@ -1,0 +1,27 @@
+{
+  "block_id": "C1-PRE-SETTLEMENTS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUILD-DATA",
+  "task": "Settlement data model (read side). Schema settlement, tables settlement/settlement_line/settlement_deduction. RLS+NULLIF. 3 read-only GET endpoints. No financial writes. Spine event on detail view.",
+  "branch": "feat/c1-pre-settlements",
+  "lane": "A",
+  "details": [
+    "db/migrations/202606120100_c1_pre_settlements.sql: schema settlement, 3 tables, RLS NULLIF, updated_at triggers, no GENERATED columns",
+    "apps/backend/src/settlements/pre-settlements.routes.ts: GET /api/v1/settlements (list + 4 metric cards), GET /api/v1/settlements/:id (lines+deductions+spine emit), GET /api/v1/settlements/pending-deductions (driver_finance.escrow_deductions_pending feed)",
+    "index.ts: registerC1PreSettlementsRoutes registered",
+    "verify-pre-settlements.mjs: 16/16 PASS",
+    "package.json: verify:pre-settlements wired"
+  ],
+  "allowed_files": [
+    ".block-ready/C1-PRE-SETTLEMENTS.json",
+    "db/migrations/202606120100_c1_pre_settlements.sql",
+    "apps/backend/src/settlements/pre-settlements.routes.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-pre-settlements.mjs",
+    "package.json"
+  ],
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["verify:pre-settlements"]
+}
