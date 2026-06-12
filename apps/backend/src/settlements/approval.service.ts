@@ -362,7 +362,7 @@ async function updateEscrowBalance(
     // Record in ledger
     await client.query(`
       INSERT INTO driver_finance.escrow_ledger (
-        operating_company_id, driver_id, escrow_balance_id, settlement_id, settlement_line_item_id,
+        operating_company_id, driver_id, escrow_balance_id, settlement_id, settlement_line_id,
         transaction_type, amount_cents, running_balance_cents, description
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `, [
