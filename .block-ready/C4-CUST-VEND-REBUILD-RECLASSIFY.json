@@ -1,0 +1,31 @@
+{
+  "block_id": "C4-CUST-VEND-REBUILD-RECLASSIFY",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUILD-DATA",
+  "task": "Additive reclassification columns on mdata.customers + mdata.vendors, append-only entity_reclassification_log table, reclassify/flag-duplicate routes with category.reclassified spine emit, before/after payload, role-gate, no hard-deletes. UI changes deferred (preview-gated).",
+  "branch": "feat/c4-cust-vend-reclassify",
+  "lane": "A",
+  "details": [
+    "db/migrations/202606120500_c4_cust_vend_reclassify.sql: ADD COLUMN entity_classification, qbo_classification_ref, reclassified_at, reclassified_by_user_id, merge_target_id, is_duplicate on mdata.customers + mdata.vendors. CREATE TABLE mdata.entity_reclassification_log (append-only). NULLIF RLS. updated_at triggers.",
+    "apps/backend/src/mdata/reclassify.routes.ts: POST /customers/:id/reclassify, POST /customers/:id/flag-duplicate, POST /vendors/:id/reclassify, POST /vendors/:id/flag-duplicate, GET */reclassification-history. appendCrudAudit category.reclassified with before/after. Soft-update only. canReclassify role-gate.",
+    "apps/backend/src/index.ts: registerReclassifyRoutes wired.",
+    "scripts/verify-cust-vend-reclassify.mjs: 25/25 PASS",
+    ".github/workflows/ci.yml + package.json: verify:cust-vend-reclassify wired",
+    "UI changes to Customers/Vendors pages are DEFERRED — preview-gated per spec."
+  ],
+  "allowed_files": [
+    ".block-ready/C4-CUST-VEND-REBUILD-RECLASSIFY.json",
+    "db/migrations/202606120500_c4_cust_vend_reclassify.sql",
+    "apps/backend/src/mdata/reclassify.routes.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-cust-vend-reclassify.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["verify:cust-vend-reclassify"],
+  "ui_deferred": true,
+  "ui_note": "Reclassify UI on Customers/Vendors pages requires visual preview before dispatch."
+}

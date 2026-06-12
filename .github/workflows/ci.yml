@@ -1039,6 +1039,9 @@ jobs:
       - name: verify:factoring-profile
         run: npm run verify:factoring-profile
 
+      - name: verify:cust-vend-reclassify
+        run: npm run verify:cust-vend-reclassify
+
       - name: verify:settlements-sidebar
         run: npm run verify:settlements-sidebar
 

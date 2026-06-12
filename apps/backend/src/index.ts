@@ -257,6 +257,7 @@ import { registerCustomerRelationshipScoreRoutes } from "./customers/relationshi
 import { registerDriverRetentionRoutes } from "./drivers/retention/routes.js";
 import { registerAssignmentsQuicksaveRoutes } from "./assignments/quicksave.routes.js";
 import { registerMdataRoutes } from "./mdata/index.js";
+import { registerReclassifyRoutes } from "./mdata/reclassify.routes.js";
 import { registerQboAutocompleteRoutes } from "./mdata/qbo-autocomplete.routes.js";
 import { registerQboMasterWriteRoutes } from "./mdata/qbo-master-write.routes.js";
 import { registerDriverTeamsAliasRoutes } from "./mdata/driver-teams-alias.routes.js";
@@ -624,6 +625,7 @@ async function main() {
   await registerCustomerLanesRoutes(app);
   await registerCustomerDetailAliasRoutes(app);
   await registerCustomerRoutes(app);
+  await registerReclassifyRoutes(app);
   await registerCustomerRelationshipScoreRoutes(app);
   await registerDriverRetentionRoutes(app);
   await registerMdataWorkflowRoutes(app);
