@@ -4,6 +4,10 @@ import crypto from "node:crypto";
 import { createRequire } from "node:module";
 import dotenv from "dotenv";
 import pg from "pg";
+import {
+  validateMigrationFilenames,
+  listMigrationFiles,
+} from "./lib/migration-filename-validation.mjs";
 
 dotenv.config();
 
@@ -21,10 +25,6 @@ const SEARCH_PATH =
   "mdata, dispatch, docs, catalogs, identity, org, integrations, qbo_archive, accounting, banking, factor, documents, pwa, audit, outbox, safety, fuel, driver_finance, maintenance, views, public, email";
 const MIGRATIONS_DIR = path.resolve("db/migrations");
 const CHECKSUM_OVERRIDES_FILE = path.resolve("scripts/lib/migration-checksum-overrides.json");
-// Legacy format: 0001_name.sql, 0001a_name.sql
-// New timestamp format: 20260607_120000_name.sql (12-digit prefix)
-const MIGRATION_FILE_PATTERN_LEGACY = /^\d{4}[a-z]?_.+\.sql$/i;
-const MIGRATION_FILE_PATTERN_TIMESTAMP = /^\d{12}_.+\.sql$/i;
 const CANONICAL_LEDGER_TABLE = "_system._schema_migrations";
 const MIRROR_LEDGER_TABLE = "ih35_migrations.applied_migrations";
 const ARGS = new Set(process.argv.slice(2));
@@ -32,18 +32,18 @@ const VERIFY_ONLY = ARGS.has("--verify-only");
 const BACKFILL_LEDGER = ARGS.has("--backfill-ledger");
 
 /**
- * Returns true for migration filenames matching either the legacy 4-digit format
- * (e.g. 0001_name.sql, 0001a_name.sql) or the new 12-digit timestamp format
- * (e.g. 20260607_120000_name.sql). Both coexist in the same migrations directory;
- * filenames sort correctly because timestamp names (2026…) sort after all legacy
- * 4-digit names (0001…0999).
+ * Wrapper that uses the imported listMigrationFiles with the correct migrations directory.
+ * @returns {string[]} Sorted list of migration filenames
  */
-function isMigrationFile(name) {
-  return MIGRATION_FILE_PATTERN_LEGACY.test(name) || MIGRATION_FILE_PATTERN_TIMESTAMP.test(name);
+function getMigrationFiles() {
+  return listMigrationFiles(MIGRATIONS_DIR);
 }
 
-function listMigrationFiles() {
-  return fs.readdirSync(MIGRATIONS_DIR).filter((name) => isMigrationFile(name)).sort();
+/**
+ * Wrapper that validates filenames in the configured migrations directory.
+ */
+function checkMigrationFilenames() {
+  validateMigrationFilenames(MIGRATIONS_DIR);
 }
 
 /**
@@ -256,10 +256,13 @@ async function runBackfillLedger(client, diskMigrations, ledgerByFile) {
 const client = new Client(buildPgClientConfig(connectionString));
 
 try {
+  // Fail fast if any migration files have unrecognized filenames (prevent silent skips)
+  checkMigrationFilenames();
+
   await client.connect();
   await ensureLedgers(client);
 
-  const diskMigrations = listMigrationFiles();
+  const diskMigrations = getMigrationFiles();
   const ledgerRows = await getCanonicalLedgerRows(client);
   const mirrorRows = await getMirrorLedgerRows(client);
   const ledgerByFile = new Map(ledgerRows.map((row) => [row.filename, row]));
