@@ -66,6 +66,7 @@ import { EldAuditTrailViewer } from "../pages/safety/eld/EldAuditTrailViewer";
 import {
   AccidentsIncidentsTab,
   CargoClaimsTab,
+  ComplaintsTab,
   CSAScoreTab,
   DamageReportsTab,
   DOTComplianceTab,
@@ -76,6 +77,7 @@ import {
   DrugAlcoholTab,
   EscrowRecordTab,
   ExternalFinesTab,
+  GeofenceBreachesTab,
   HOSViolationsTab,
   HoursOfServiceTab,
   IDVRTab,
@@ -1213,7 +1215,9 @@ export const ROUTES = React.Children.toArray(
           <Route path="cargo-claims" element={<CargoClaimsTab />} />
           <Route path="internal-fines" element={<InternalFinesTab />} />
           <Route path="external-fines" element={<ExternalFinesTab />} />
+          <Route path="complaints" element={<ComplaintsTab />} />
           <Route path="escrow-record" element={<EscrowRecordTab />} />
+          <Route path="geofence-alerts" element={<GeofenceBreachesTab />} />
           <Route path="insurance" element={<InsuranceTab />} />
           <Route path="insurance/*" element={<InsuranceTab />} />
           <Route path="permits" element={<PermitsTab />} />

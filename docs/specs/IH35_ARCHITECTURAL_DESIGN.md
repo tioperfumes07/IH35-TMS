@@ -329,9 +329,9 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 - Header includes back-arrow, breadcrumb `Modules > Safety > {group}`, page title `Safety`, and descriptor text.
 - Driver filter strip defaults to **Active 7-10 days** and is visible on all safety routes.
 
-### Grouped top navigation (25 tabs across 9 groups)
+### Grouped top navigation (27 tabs across 9 groups)
 
-### Sub-nav tabs (25 — V6.4 top hover-dropdown + Block K workforce)
+### Sub-nav tabs (27 — V6.4 top hover-dropdown + Block K workforce)
 
 | Group | Tabs |
 |---|---|
@@ -339,9 +339,9 @@ MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings
 | Hours & Fatigue | Hours of Service, HOS Violations |
 | Inspections & FMCSA | Vehicle Inspections-IDVR, DOT Inspections, Driver Scoring, CSA Score, DOT Compliance |
 | Incidents & Claims | Safety Events, Accidents & Incidents, Damage Reports, Trailer Interchanges, Cargo Claims |
-| Fines & Discipline | Internal Fines, External Fines |
+| Fines & Discipline | Internal Fines, External Fines, Complaints |
 | Driver Financial Safety | Escrow Record |
-| Compliance Docs & Monitoring | Insurance, Permits, Integrity Reports |
+| Compliance Docs & Monitoring | Geofence Alerts, Insurance, Permits, Integrity Reports |
 | Workforce Planning (Block K) | Driver Scheduler, Leave Requests, Leave Balances |
 | Settings | Settings |
 
