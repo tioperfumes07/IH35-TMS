@@ -1,0 +1,26 @@
+{
+  "block_id": "A9-AUDIT-CI-EMIT-GUARD",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "AUDIT-ENFORCEMENT",
+  "task": "CI gate that fails the build if any mutating route/service lacks a spine audit emit. No migration. Script + allowlist + ci.yml wiring.",
+  "branch": "feat/a9-audit-ci-emit-guard",
+  "lane": "A",
+  "details": [
+    "scripts/verify-audit-emit-coverage.mjs: walks *.routes.ts + *.service.ts, asserts every mutation has emit or allowlist entry",
+    "scripts/audit-emit-allowlist.json: explicit reviewed allowlist of 143 infra/integration files",
+    ".github/workflows/ci.yml: verify:audit-emit-coverage step added after verify:a6",
+    "package.json: verify:audit-emit-coverage wired",
+    "Local run: 320 checked, 143 allowlisted, 0 failures — PASS"
+  ],
+  "allowed_files": [
+    ".block-ready/A9-AUDIT-CI-EMIT-GUARD.json",
+    "scripts/verify-audit-emit-coverage.mjs",
+    "scripts/audit-emit-allowlist.json",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:audit-emit-coverage"]
+}
