@@ -786,6 +786,7 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        <Route path="/dispatch/planners" element={<Navigate replace to="/dispatch/planners/loads" />} />
         <Route
           path="/dispatch/planner"
           element={
@@ -3063,10 +3064,6 @@ export const ROUTES = React.Children.toArray(
         />
         <Route
           path="/safety/accidents-incidents"
-          element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
-        />
-        <Route
-          path="/tasks"
           element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
         />
         <Route
