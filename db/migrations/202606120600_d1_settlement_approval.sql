@@ -38,11 +38,18 @@ COMMENT ON COLUMN settlement.settlement_line.driver_visible IS 'If false, line i
 COMMENT ON COLUMN settlement.settlement_line.category IS 'Line category: escrow_for_claims, cash_advance, admin_fee_gas, pay_enlonada, etc.';
 
 -- RLS policy for settlement_line (extends C1)
-CREATE POLICY IF NOT EXISTS settlement_line_tenant_isolation
-ON settlement.settlement_line
-FOR ALL
-TO ih35_app
-USING (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'settlement_line_tenant_isolation' AND tablename = 'settlement_line'
+  ) THEN
+    CREATE POLICY settlement_line_tenant_isolation
+    ON settlement.settlement_line
+    FOR ALL
+    TO ih35_app
+    USING (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+  END IF;
+END $$;
 
 -- Indexes for settlement_line approval tracking
 CREATE INDEX IF NOT EXISTS idx_settlement_line_approval_status ON settlement.settlement_line(approval_status);
