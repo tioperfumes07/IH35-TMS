@@ -55,7 +55,7 @@ const checks = [
   () => checkFileContains("apps/backend/src/settlements/trip-link.engine.ts", "findTripMatches", "Trip-link: findTripMatches function"),
   () => checkFileContains("apps/backend/src/settlements/trip-link.engine.ts", "autoLinkExpense", "Trip-link: autoLinkExpense function"),
   () => checkFileContains("apps/backend/src/settlements/trip-link.engine.ts", "queueForTripLink", "Trip-link: queueForTripLink function"),
-  () => checkFileContains("apps/backend/src/settlements/trip-link.engine.ts", "dispatch.loads", "Trip-link: queries dispatch.loads"),
+  () => checkFileContains("apps/backend/src/settlements/trip-link.engine.ts", "mdata.loads", "Trip-link: queries mdata.loads"),
   () => checkFileContains("apps/backend/src/settlements/trip-link.engine.ts", "dispatched on load", "Trip-link: match reason"),
   
   // 4. Approval service
