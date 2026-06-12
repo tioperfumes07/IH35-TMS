@@ -15,6 +15,7 @@ import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
 import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countActiveDispatchLoads, countInTransitDispatchLoads } from "./active-loads-count.js";
+import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 
 const dispatchStatusSchema = z.enum([
   "unassigned",
@@ -784,6 +785,19 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           req.log.warn({ err, load_id: createdLoadId }, "auto_geofence_post_book_failed");
         });
       }
+      const createdLoadIdForSpine = String(result.row.id ?? "");
+      const createdCompanyIdForSpine = String(result.row.operating_company_id ?? body.data.operating_company_id);
+      if (createdLoadIdForSpine && createdCompanyIdForSpine) {
+        void withCurrentUser(authUser.uuid, (client) =>
+          emitDispatchSpineEvent(client, {
+            operating_company_id: createdCompanyIdForSpine,
+            actor_user_id: authUser.uuid,
+            event_type: "load.created",
+            load_id: createdLoadIdForSpine,
+            payload: { load_number: result.row.load_number ?? null },
+          })
+        ).catch((err) => req.log.warn({ err }, "spine_emit_load_created_failed"));
+      }
       return reply.code(201).send(result.row);
     } catch (error) {
       const code = (error as { code?: string }).code;
@@ -838,6 +852,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           "info",
           "P6-D2"
         );
+        await emitDispatchSpineEvent(client, {
+          operating_company_id: body.data.operating_company_id,
+          actor_user_id: authUser.uuid,
+          event_type: "load.chargeback_flagged",
+          load_id: String(row.id),
+          payload: { customer_chargeback_reason: body.data.customer_chargeback_reason ?? null },
+        });
       }
       return row;
     });
@@ -899,6 +920,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       } catch (err) {
         console.warn({ err }, "dispatch_load_settlement_ping_failed");
       }
+      await emitDispatchSpineEvent(client, {
+        operating_company_id: operatingCompanyId,
+        actor_user_id: authUser.uuid,
+        event_type: "load.status_changed",
+        load_id: params.data.id,
+        payload: { from_status: currentStatus, to_status: targetStatus },
+      });
       return { ok: true as const, status: targetStatus };
     });
 

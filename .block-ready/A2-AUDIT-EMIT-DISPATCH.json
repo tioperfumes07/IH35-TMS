@@ -1,0 +1,31 @@
+{
+  "block_id": "A2-AUDIT-EMIT-DISPATCH",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "AUDIT-EMIT",
+  "task": "Dispatch mutations emit spine events via emitDispatchSpineEvent helper calling events.log_event(). Covers: load.created, load.status_changed, load.chargeback_flagged, load.cancelled, load.cancellation_approved, load.assigned_to_driver, load.quicksave_draft_completed.",
+  "branch": "feat/a2-audit-emit-dispatch",
+  "lane": "A",
+  "details": [
+    "New helper: dispatch-spine-emit.ts — wraps events.log_event() for all dispatch event types.",
+    "loads.routes.ts: load.created (withCurrentUser), load.chargeback_flagged, load.status_changed.",
+    "cancellation.routes.ts: load.cancelled, load.cancellation_approved.",
+    "quicksave.routes.ts: load.assigned_to_driver, load.quicksave_draft_completed.",
+    "verify-a2-audit-emit-dispatch.mjs: guards helper calls log_event, no raw INSERT bypass, all event types present in union.",
+    "ci.yml + package.json: verify:a2-audit-emit-dispatch wired."
+  ],
+  "allowed_files": [
+    ".block-ready/A2-AUDIT-EMIT-DISPATCH.json",
+    "apps/backend/src/dispatch/dispatch-spine-emit.ts",
+    "apps/backend/src/dispatch/loads.routes.ts",
+    "apps/backend/src/dispatch/cancellation.routes.ts",
+    "apps/backend/src/dispatch/quicksave.routes.ts",
+    "scripts/verify-a2-audit-emit-dispatch.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:a2-audit-emit-dispatch"]
+}
