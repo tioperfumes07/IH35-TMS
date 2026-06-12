@@ -21,6 +21,7 @@ import {
   TrendingUp,
   Truck,
   UserCog,
+  Receipt,
 } from "lucide-react";
 import type { UserRole } from "../../types/api";
 import { MAINTENANCE_MODULE_NAV_LINKS } from "../maintenance/MAINTENANCE_NAV_CONFIG";
@@ -39,6 +40,7 @@ export const SIDEBAR_ITEM_IDS = [
   "legal",
   "eld",
   "cash-flow",
+  "settlements",
   "accounting",
   "bank",
   "factoring",
@@ -101,6 +103,7 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   form_425: { id: "form_425", label: "425C", Icon: SquareStack, to: "/425c" },
   tasks: { id: "tasks", label: "TASKS", Icon: CheckSquare, to: "/tasks" },
   "cash-flow": { id: "cash-flow", label: "CASH FLOW", Icon: LineChart, to: "/cash-flow" },
+  settlements: { id: "settlements", label: "SETTLEMENTS", Icon: Receipt, to: "/driver-finance/settlements" },
   finance: { id: "finance", label: "FINANCE", Icon: TrendingUp, to: "/finance" },
   inventory: { id: "inventory", label: "INVENTORY", Icon: Package, to: "/inventory" },
   users: {

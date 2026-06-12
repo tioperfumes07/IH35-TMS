@@ -16,7 +16,7 @@ const sidebarPath = path.join(
   "apps/frontend/src/components/layout/sidebar-config.ts"
 );
 
-/** Locked Owner-default sidebar order — SIDEBAR-V2-REORG-25 (25 items). */
+/** Locked Owner-default sidebar order — SIDEBAR-V3-SETTLEMENTS-26 (26 items). */
 const LOCKED_ORDER = [
   "home",
   "tasks",
@@ -30,6 +30,7 @@ const LOCKED_ORDER = [
   "legal",
   "eld",
   "cash-flow",
+  "settlements",
   "accounting",
   "bank",
   "factoring",
@@ -121,12 +122,13 @@ for (const id of LOCKED_ORDER) {
 if (!PENDING_IDS.has("cash-flow") && rawSet.has("cash-flow")) {
   const eldIdx = rawItems.indexOf("eld");
   const cashFlowIdx = rawItems.indexOf("cash-flow");
+  const settlementsIdx = rawItems.indexOf("settlements");
   const accountingIdx = rawItems.indexOf("accounting");
-  if (eldIdx === -1 || cashFlowIdx === -1 || accountingIdx === -1) {
-    errors.push("cash-flow position: eld, cash-flow, and accounting must all be present");
-  } else if (cashFlowIdx !== eldIdx + 1 || accountingIdx !== cashFlowIdx + 1) {
+  if (eldIdx === -1 || cashFlowIdx === -1 || settlementsIdx === -1 || accountingIdx === -1) {
+    errors.push("cash-flow position: eld, cash-flow, settlements, and accounting must all be present");
+  } else if (cashFlowIdx !== eldIdx + 1 || settlementsIdx !== cashFlowIdx + 1 || accountingIdx !== settlementsIdx + 1) {
     errors.push(
-      `cash-flow position: expected eld → cash-flow → accounting; found eld@${eldIdx}, cash-flow@${cashFlowIdx}, accounting@${accountingIdx}`
+      `cash-flow position: expected eld → cash-flow → settlements → accounting; found eld@${eldIdx}, cash-flow@${cashFlowIdx}, settlements@${settlementsIdx}, accounting@${accountingIdx}`
     );
   }
 }

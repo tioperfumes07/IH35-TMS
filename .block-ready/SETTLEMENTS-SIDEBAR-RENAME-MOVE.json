@@ -1,0 +1,28 @@
+{
+  "block_id": "SETTLEMENTS-SIDEBAR-RENAME-MOVE",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "UI-DESIGN",
+  "task": "Rename Payroll sidebar entry to Settlements, reposition between Cash Flow and Accounting. Non-financial label+order change only.",
+  "branch": "feat/settlements-sidebar-rename-move",
+  "lane": "A",
+  "details": [
+    "apps/frontend/src/components/layout/sidebar-config.ts: added settlements id between cash-flow and accounting; Receipt icon; route /driver-finance/settlements",
+    "apps/frontend/src/components/Sidebar.tsx: removed hardcoded PAYROLL NavLink (CLOSURE-12); removed unused Scale import",
+    "scripts/verify-sidebar-contract.mjs: updated LOCKED_ORDER to 26 items; adjacency now eld→cash-flow→settlements→accounting",
+    "scripts/verify-settlements-sidebar.mjs: 8/8 checks passing",
+    "ci.yml + package.json: verify:settlements-sidebar wired"
+  ],
+  "allowed_files": [
+    ".block-ready/SETTLEMENTS-SIDEBAR-RENAME-MOVE.json",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "apps/frontend/src/components/Sidebar.tsx",
+    "scripts/verify-sidebar-contract.mjs",
+    "scripts/verify-settlements-sidebar.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:settlements-sidebar", "verify:sidebar-contract"]
+}
