@@ -250,6 +250,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       if (role === "Owner" || role === "SuperAdmin") {
         rows.push({ label: "Activity log", to: "/admin/activity" });
         rows.push({ label: "Audit log", to: "/admin/audit-log" });
+        rows.push({ label: "Audit Trail", to: "/audit/trail" });
       }
       return rows;
     }

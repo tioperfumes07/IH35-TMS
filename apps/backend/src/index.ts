@@ -227,6 +227,8 @@ import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.rou
 import { registerCashFlowModuleRoutes } from "./cash-flow/cash-flow.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
 import { registerDriverAuditEventsRoutes } from "./audit/driver-events.routes.js";
+import { registerSpineEventsRoutes } from "./audit/spine-events.routes.js";
+import { registerAuditViewerRoutes } from "./audit/viewer/routes.js";
 import { registerDriverMetricsRoutes } from "./integrity/driver-metrics.routes.js";
 import { registerAnomalyStatusRoutes } from "./integrity/anomaly-status.routes.js";
 import { runAnomalyDetectionForTenant } from "./integrity/anomaly-detector.service.js";
@@ -817,6 +819,8 @@ async function main() {
   await registerCashFlowModuleRoutes(app);
   await registerAuditRoutes(app);
   await registerDriverAuditEventsRoutes(app);
+  await registerSpineEventsRoutes(app);
+  await registerAuditViewerRoutes(app);
   await registerDriverMetricsRoutes(app);
   await registerAnomalyStatusRoutes(app);
   await registerMaintPmRoutes(app);
