@@ -1,0 +1,21 @@
+{
+  "block_id": "GAP-E-PLANNER-TASKS-ROUTES",
+  "status": "BUILD",
+  "classification": "BUGFIX",
+  "phase": "GAP-E",
+  "task": "Fix two dead routes: add /dispatch/planners index redirect to /loads; remove stale /tasks ComingSoonPage stub so real TaskBoardPage routes fire.",
+  "branch": "fix/gap-e-planner-tasks-routes",
+  "lane": "A",
+  "details": [
+    "Bug 1: /dispatch/planners (bare) had no index route → fell through to /home. Fix: Navigate redirect to /dispatch/planners/loads.",
+    "Bug 2: /tasks route at line 3069 pointed to ComingSoonPage stub, shadowing the real TaskBoardPage/TasksCalendarPage/etc. routes at line 3329+. Fix: delete stub."
+  ],
+  "allowed_files": [
+    ".block-ready/GAP-E-PLANNER-TASKS-ROUTES.json",
+    "apps/frontend/src/routes/manifest.tsx"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
