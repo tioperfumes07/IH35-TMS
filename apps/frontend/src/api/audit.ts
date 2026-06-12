@@ -46,6 +46,7 @@ export type AuditEventListItem = {
   created_at: string;
   event_type: string;
   severity: string;
+  summary: string | null;
   payload: unknown;
   actor_user_id: string | null;
   actor_email: string | null;
@@ -58,6 +59,11 @@ export type ListAuditEventsParams = {
   bulkCallId?: string;
   eventType?: string;
   entityType?: string;
+  entityId?: string;
+  actor?: string;
+  status?: string;
+  source?: string;
+  voidsOnly?: boolean;
   from?: string;
   to?: string;
   limit?: number;
@@ -71,6 +77,11 @@ export async function listAuditEvents(params: ListAuditEventsParams) {
   if (params.bulkCallId) search.set("bulk_call_id", params.bulkCallId);
   if (params.eventType) search.set("event_type", params.eventType);
   if (params.entityType) search.set("entity_type", params.entityType);
+  if (params.entityId) search.set("entity_id", params.entityId);
+  if (params.actor) search.set("actor", params.actor);
+  if (params.status) search.set("status", params.status);
+  if (params.source) search.set("source", params.source);
+  if (params.voidsOnly) search.set("voids_only", "true");
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
   if (params.limit != null) search.set("limit", String(params.limit));

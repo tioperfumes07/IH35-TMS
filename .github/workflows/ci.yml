@@ -1030,6 +1030,9 @@ jobs:
       - name: verify:a6-audit-universal-view
         run: npm run verify:a6-audit-universal-view
 
+      - name: verify:a7-audit-per-entity-tabs
+        run: npm run verify:a7-audit-per-entity-tabs
+
       - name: verify:audit-emit-coverage
         run: npm run verify:audit-emit-coverage
 

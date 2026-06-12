@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listDriverAuditEvents } from "../../api/audit";
+import { listDriverAuditEvents, type DriverAuditEvent } from "../../api/audit";
 import { Button } from "../Button";
+import { Download, AlertTriangle } from "lucide-react";
 
 type Props = {
   driverId: string;
@@ -23,17 +24,42 @@ function payloadDiff(payload: unknown): string {
   return JSON.stringify(record, null, 2);
 }
 
+const SOURCE_OPTIONS = [
+  { value: "", label: "All Sources" },
+  { value: "dispatch", label: "Dispatch" },
+  { value: "maint", label: "Maintenance" },
+  { value: "accounting", label: "Accounting" },
+  { value: "banking", label: "Banking" },
+  { value: "safety", label: "Safety" },
+  { value: "driver", label: "Driver Hub" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "", label: "All Statuses" },
+  { value: "open", label: "Open" },
+  { value: "paid", label: "Paid" },
+  { value: "void", label: "Void" },
+  { value: "overdue", label: "Overdue" },
+  { value: "pending", label: "Pending" },
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
+
 export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
   const [eventTypeFilter, setEventTypeFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [actorFilter, setActorFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sourceFilter, setSourceFilter] = useState("");
+  const [voidsOnly, setVoidsOnly] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fromIso = fromDate ? new Date(`${fromDate}T00:00:00`).toISOString() : undefined;
   const toIso = toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined;
 
   const auditQuery = useQuery({
-    queryKey: ["driver-audit-events", driverId, operatingCompanyId, eventTypeFilter, fromIso, toIso],
+    queryKey: ["driver-audit-events", driverId, operatingCompanyId, eventTypeFilter, fromIso, toIso, actorFilter, statusFilter, sourceFilter, voidsOnly],
     queryFn: () =>
       listDriverAuditEvents({
         operatingCompanyId,
@@ -46,6 +72,27 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
     enabled: Boolean(driverId) && Boolean(operatingCompanyId),
   });
 
+  const exportCSV = () => {
+    const events = auditQuery.data?.events ?? [];
+    if (!events.length) return;
+    const rows = events.map((e: DriverAuditEvent) => ({
+      Date: e.created_at,
+      Actor: e.actor_email || e.actor_user_id || "—",
+      Type: e.event_type,
+      Summary: e.summary,
+      Source: e.source || "—",
+    }));
+    const headers = Object.keys(rows[0]);
+    const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => `"${String((r as Record<string, string>)[h] ?? "")}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `driver-${driverId}-audit.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const events = auditQuery.data?.events ?? [];
   const eventTypeOptions = useMemo(() => {
     const unique = new Set(events.map((row) => row.event_type));
@@ -54,8 +101,8 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="driver-audit-history-tab">
-      {/* ARCHIVE (A24-6): prior placeholder lived inline on DriverDetail — now live drill-down */}
-      <div className="flex flex-wrap items-end gap-2">
+      {/* ARCHIVE (A24-6): prior placeholder lived inline on DriverDetail — now live drill-down with QBO-style filters */}
+      <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 rounded border">
         <label className="text-xs text-gray-600">
           From
           <input
@@ -92,6 +139,54 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
             ))}
           </select>
         </label>
+        <label className="text-xs text-gray-600">
+          Actor
+          <input
+            type="text"
+            placeholder="Email or ID"
+            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm w-32"
+            value={actorFilter}
+            onChange={(e) => setActorFilter(e.target.value)}
+            data-testid="driver-audit-filter-actor"
+          />
+        </label>
+        <label className="text-xs text-gray-600">
+          Status
+          <select
+            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            data-testid="driver-audit-filter-status"
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs text-gray-600">
+          Source
+          <select
+            className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+            value={sourceFilter}
+            onChange={(e) => setSourceFilter(e.target.value)}
+            data-testid="driver-audit-filter-source"
+          >
+            {SOURCE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </label>
+        <button
+          onClick={() => setVoidsOnly((v) => !v)}
+          className={`text-xs px-2 py-1 rounded border flex items-center gap-1 mt-4 ${
+            voidsOnly ? "bg-red-100 border-red-300 text-red-700" : "bg-white hover:bg-gray-100"
+          }`}
+          data-testid="driver-audit-filter-voids"
+        >
+          <AlertTriangle size={12} />
+          Voids & Reversals
+        </button>
+        <div className="flex-1" />
         <Button
           size="sm"
           variant="secondary"
@@ -99,6 +194,16 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
           onClick={() => void auditQuery.refetch()}
         >
           Refresh
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          data-testid="driver-audit-export"
+          onClick={exportCSV}
+          disabled={!events.length}
+        >
+          <Download size={14} className="mr-1" />
+          Export CSV
         </Button>
       </div>
 
