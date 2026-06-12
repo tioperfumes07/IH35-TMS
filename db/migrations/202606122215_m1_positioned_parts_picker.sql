@@ -220,30 +220,6 @@ WHERE NOT EXISTS (
     AND code = v.code
 );
 
--- 10. Grants for ih35_app role
+-- 10. Grants for ih35_app role (Neon-compatible)
 GRANT SELECT, INSERT, UPDATE, DELETE ON maint.position_set TO ih35_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON maint.part_position_assignment TO ih35_app;
-
--- 11. Grants for authenticated role if exists
-DO $$
-DECLARE
-  role_exists boolean;
-BEGIN
-  SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') INTO role_exists;
-  IF role_exists THEN
-    GRANT SELECT, INSERT, UPDATE, DELETE ON maint.position_set TO authenticated;
-    GRANT SELECT, INSERT, UPDATE, DELETE ON maint.part_position_assignment TO authenticated;
-  END IF;
-END $$;
-
--- 12. Grants for service_role if exists
-DO $$
-DECLARE
-  role_exists boolean;
-BEGIN
-  SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') INTO role_exists;
-  IF role_exists THEN
-    GRANT SELECT, INSERT, UPDATE, DELETE ON maint.position_set TO service_role;
-    GRANT SELECT, INSERT, UPDATE, DELETE ON maint.part_position_assignment TO service_role;
-  END IF;
-END $$;

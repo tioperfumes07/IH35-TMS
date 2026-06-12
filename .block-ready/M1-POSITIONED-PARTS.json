@@ -1,0 +1,38 @@
+{
+  "block_id": "M1-POSITIONED-PARTS",
+  "status": "BUILD",
+  "classification": "Standard",
+  "phase": "Maintenance",
+  "task": "Positioned-parts picker for work orders. position_set catalog, part_position_assignment linking, picker UI with SVG map views, RLS policies, verify script.",
+  "branch": "feat/m1-positioned-parts",
+  "lane": "A",
+  "details": [
+    "Migration: maint.position_set catalog table with position definitions",
+    "Migration: maint.part_position_assignment linking table",
+    "Migration: position_set_id and requires_position columns on maint.part",
+    "RLS policies for tenant isolation on both tables",
+    "PositionedPartPicker React component with SVG map visualization",
+    "Multiple view support (top, front, rear, side, battery-bank)",
+    "Verify script for CI gate checking schema and RLS"
+  ],
+  "allowed_files": [
+    ".block-ready/M1-POSITIONED-PARTS.json",
+    ".block-ready.json",
+    ".block-ready.agent1.json",
+    ".env",
+    "db/migrations/20260612_221500_m1_positioned_parts_picker.sql",
+    "apps/frontend/src/components/maintenance/PositionedPartPicker.tsx",
+    "scripts/verify-m1-positioned-parts.mjs",
+    "scripts/verify-db-reset.mjs",
+    "scripts/lib/pg-connection-options.cjs",
+    ".github/workflows/locked-guards.yml",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["verify:m1-positioned-parts"],
+  "financial_writes": false,
+  "note": "Standard maintenance block. Position-aware parts for work orders."
+}

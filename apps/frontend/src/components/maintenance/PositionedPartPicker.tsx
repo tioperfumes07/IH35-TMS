@@ -186,7 +186,8 @@ export function PositionedPartPicker({
 
       {/* Position details table */}
       <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[500px]">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-3 py-2 text-left font-medium">Code</th>
@@ -214,6 +215,7 @@ export function PositionedPartPicker({
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
