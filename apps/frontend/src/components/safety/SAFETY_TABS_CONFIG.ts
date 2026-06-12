@@ -61,7 +61,6 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     tabs: [
       { id: "internal-fines", label: "Internal Fines", route: "/safety/internal-fines", badge: null },
       { id: "external-fines", label: "External Fines", route: "/safety/external-fines", badge: null },
-      { id: "complaints", label: "Complaints", route: "/safety/complaints", badge: "new" },
     ],
   },
   {
@@ -73,7 +72,6 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     id: "compliance-monitoring",
     label: "Compliance Docs & Monitoring",
     tabs: [
-      { id: "geofence-alerts", label: "Geofence Alerts", route: "/safety/geofence-alerts", badge: "new" },
       { id: "insurance", label: "Insurance", route: "/safety/insurance", badge: null },
       { id: "permits", label: "Permits", route: "/safety/permits", badge: null, status: "Live" },
       { id: "integrity-reports", label: "Integrity Reports", route: "/safety/integrity-reports", badge: "new" },
@@ -114,9 +112,7 @@ export const TABS = [
   { id: "cargo-claims" },
   { id: "internal-fines" },
   { id: "external-fines" },
-  { id: "complaints" },
   { id: "escrow-record" },
-  { id: "geofence-alerts" },
   { id: "insurance" },
   { id: "permits" },
   { id: "integrity-reports" },
@@ -137,7 +133,7 @@ export function findSafetyTab(tabId: string) {
 
 /** Canonical inventory for count/nav integrity guards (Block A23-2). */
 export const SAFETY_CANONICAL_GROUP_COUNT = 9;
-export const SAFETY_CANONICAL_TAB_COUNT = 27;
+export const SAFETY_CANONICAL_TAB_COUNT = 25;
 export const SAFETY_CANONICAL_TAB_KEYS = SAFETY_GROUPS.flatMap((group) =>
   group.tabs.map((tab) => [group.id, tab.id] as const)
 );

@@ -27,6 +27,9 @@ jobs:
       - name: verify:ob1-nav-header-unify
         run: npm run verify:ob1-nav-header-unify
 
+      - name: verify:ob2-dead-tab-audit
+        run: npm run verify:ob2-dead-tab-audit
+
       - name: verify:settlements-sidebar
         run: npm run verify:settlements-sidebar
 

@@ -578,7 +578,8 @@
     "verify:load-test-baseline": "node scripts/verify-load-test-baseline.mjs",
     "verify:deadhead-optimizer": "node scripts/verify-deadhead-optimizer.mjs",
     "verify:a7-audit-per-entity-tabs": "node scripts/verify-a7-audit-per-entity-tabs.mjs",
-    "verify:d1-settlement-approval": "node scripts/verify-d1-settlement-approval.mjs"
+    "verify:d1-settlement-approval": "node scripts/verify-d1-settlement-approval.mjs",
+    "verify:ob2-dead-tab-audit": "node scripts/verify-ob2-dead-tab-audit.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
