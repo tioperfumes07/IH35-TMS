@@ -1,0 +1,41 @@
+{
+  "block_id": "A8-AUDIT-REPORTS-SECTION",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "AUDIT-READ",
+  "task": "7 pre-built audit report pages under Reports > Audit. Read-only, RLS+pagination, CSV export. Backend: 7 GET endpoints in audit-reports.routes.ts. Frontend: shared AuditReportPage + 7 thin pages + nav entry in ReportsSubNav.",
+  "branch": "feat/a8-audit-reports-section",
+  "lane": "A",
+  "details": [
+    "audit-reports.routes.ts: 7 GET endpoints, read-only SQL, SET LOCAL RLS, LIMIT/OFFSET pagination",
+    "index.ts: registerAuditReportRoutes registered",
+    "api/auditReports.ts: fetchAuditReport + AUDIT_REPORT_ENDPOINTS",
+    "pages/reports/audit/AuditReportPage.tsx: shared filter bar + table + CSV export + pagination",
+    "7 thin page files under pages/reports/audit/",
+    "ReportsSubNav.tsx: Audit nav item with 7 children; activeHref covers /reports/audit/*",
+    "manifest.tsx: 7 routes under /reports/audit/* (OwnerAdminRoute)",
+    "verify-a8-audit-reports-section.mjs: 33/33 PASS",
+    "package.json: verify:a8-audit-reports-section wired"
+  ],
+  "allowed_files": [
+    ".block-ready/A8-AUDIT-REPORTS-SECTION.json",
+    "apps/backend/src/audit/audit-reports.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/auditReports.ts",
+    "apps/frontend/src/pages/reports/audit/AuditReportPage.tsx",
+    "apps/frontend/src/pages/reports/audit/AuditActivityByUserPage.tsx",
+    "apps/frontend/src/pages/reports/audit/AuditActivityByModulePage.tsx",
+    "apps/frontend/src/pages/reports/audit/AuditFinancialChangeLogPage.tsx",
+    "apps/frontend/src/pages/reports/audit/AuditMaintenanceDecisionLogPage.tsx",
+    "apps/frontend/src/pages/reports/audit/AuditDeductionTrailPage.tsx",
+    "apps/frontend/src/pages/reports/audit/AuditVoidReversalPage.tsx",
+    "apps/frontend/src/pages/reports/audit/AuditPeriodCloseHistoryPage.tsx",
+    "apps/frontend/src/pages/reports/ReportsSubNav.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-a8-audit-reports-section.mjs",
+    "package.json"
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:a8-audit-reports-section"]
+}

@@ -49,12 +49,24 @@ function flattenReportRunLinks(): NavChild[] {
 }
 
 /** Top /reports sub-nav (invariant #20). Runner links deduped in same order as CategoryHoverNav flyouts. */
+const AUDIT_REPORT_CHILDREN: NavChild[] = [
+  { label: "Activity by user",           href: "/reports/audit/activity-by-user" },
+  { label: "Activity by module",          href: "/reports/audit/activity-by-module" },
+  { label: "Financial change log",        href: "/reports/audit/financial-change-log" },
+  { label: "Maintenance decision log",    href: "/reports/audit/maintenance-decision-log" },
+  { label: "Deduction trail",             href: "/reports/audit/deduction-trail" },
+  { label: "Void & reversal",             href: "/reports/audit/void-reversal" },
+  { label: "Period close history",        href: "/reports/audit/period-close-history" },
+];
+
 export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [
   { label: "Reports", href: "/reports" },
   { label: "Run report", children: flattenReportRunLinks() },
+  { label: "Audit", children: AUDIT_REPORT_CHILDREN },
 ];
 
 export function reportsSubNavActiveHref(pathname: string): string {
+  if (pathname.startsWith("/reports/audit/")) return pathname;
   if (pathname.startsWith("/reports/run/")) return pathname;
   if (
     pathname === "/reports/ar-aging" ||

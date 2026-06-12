@@ -192,6 +192,13 @@ import BookingGapReport from "../pages/reports/BookingGapReport";
 import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
 import { FaultRulesPage } from "../pages/maintenance/FaultRulesPage";
 import { DeadheadReportPage } from "../pages/reports/DeadheadReportPage";
+import { AuditActivityByUserPage } from "../pages/reports/audit/AuditActivityByUserPage";
+import { AuditActivityByModulePage } from "../pages/reports/audit/AuditActivityByModulePage";
+import { AuditFinancialChangeLogPage } from "../pages/reports/audit/AuditFinancialChangeLogPage";
+import { AuditMaintenanceDecisionLogPage } from "../pages/reports/audit/AuditMaintenanceDecisionLogPage";
+import { AuditDeductionTrailPage } from "../pages/reports/audit/AuditDeductionTrailPage";
+import { AuditVoidReversalPage } from "../pages/reports/audit/AuditVoidReversalPage";
+import { AuditPeriodCloseHistoryPage } from "../pages/reports/audit/AuditPeriodCloseHistoryPage";
 import { QboSyncDetailPage } from "../pages/qbo-sync-detail/QboSyncDetailPage";
 import { InvoicesListPage } from "../pages/accounting/InvoicesListPage";
 import { MultiEntityAccountingPage } from "../pages/accounting/MultiEntityAccountingPage";
@@ -2551,6 +2558,13 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        <Route path="/reports/audit/activity-by-user" element={<OwnerAdminRoute><AuditActivityByUserPage /></OwnerAdminRoute>} />
+        <Route path="/reports/audit/activity-by-module" element={<OwnerAdminRoute><AuditActivityByModulePage /></OwnerAdminRoute>} />
+        <Route path="/reports/audit/financial-change-log" element={<OwnerAdminRoute><AuditFinancialChangeLogPage /></OwnerAdminRoute>} />
+        <Route path="/reports/audit/maintenance-decision-log" element={<OwnerAdminRoute><AuditMaintenanceDecisionLogPage /></OwnerAdminRoute>} />
+        <Route path="/reports/audit/deduction-trail" element={<OwnerAdminRoute><AuditDeductionTrailPage /></OwnerAdminRoute>} />
+        <Route path="/reports/audit/void-reversal" element={<OwnerAdminRoute><AuditVoidReversalPage /></OwnerAdminRoute>} />
+        <Route path="/reports/audit/period-close-history" element={<OwnerAdminRoute><AuditPeriodCloseHistoryPage /></OwnerAdminRoute>} />
         <Route
           path="/legal"
           element={
