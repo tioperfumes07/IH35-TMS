@@ -1,0 +1,33 @@
+{
+  "block_id": "A5-AUDIT-EMIT-BANKING",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "AUDIT-EMIT",
+  "task": "Banking mutations emit spine events via emitBankingSpineEvent helper calling events.log_event(). Covers transfers (created/cc_payment/revoked), categorization (categorized/skipped/investigate_flagged), reconciliation (started/completed), manual JE (created) — 9 event types across 4 route files.",
+  "branch": "feat/a5-audit-emit-banking",
+  "lane": "A",
+  "details": [
+    "New helper: banking-spine-emit.ts — wraps events.log_event() for all banking event types.",
+    "transfers.routes.ts: banking.transfer.created, banking.cc_payment.created, banking.transfer.revoked.",
+    "categorization.routes.ts: banking.transaction.categorized, banking.transaction.skipped, banking.transaction.investigate_flagged.",
+    "reconciliation.routes.ts: banking.reconciliation.started, banking.reconciliation.completed.",
+    "manual-je.routes.ts: banking.manual_je.created.",
+    "verify-a5-audit-emit-banking.mjs: 25-check guard (all passing).",
+    "ci.yml + package.json: verify:a5-audit-emit-banking wired."
+  ],
+  "allowed_files": [
+    ".block-ready/A5-AUDIT-EMIT-BANKING.json",
+    "apps/backend/src/banking/banking-spine-emit.ts",
+    "apps/backend/src/banking/transfers.routes.ts",
+    "apps/backend/src/banking/categorization.routes.ts",
+    "apps/backend/src/banking/reconciliation.routes.ts",
+    "apps/backend/src/banking/manual-je.routes.ts",
+    "scripts/verify-a5-audit-emit-banking.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:a5-audit-emit-banking"]
+}

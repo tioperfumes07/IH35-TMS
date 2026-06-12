@@ -2,7 +2,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { createTransfer, getTransferDetail, listTransfers, revokeTransfer } from "./transfers.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 
 const createBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -71,6 +72,17 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
         },
         user.uuid
       );
+      void withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+        emitBankingSpineEvent(client, {
+          operating_company_id: body.data.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "banking.transfer.created",
+          entity_id: (transfer as { id?: string })?.id ?? "",
+          entity_type: "transfer",
+          source_table: "banking.transfers",
+          payload: { transfer_type: body.data.transfer_type },
+        })
+      ).catch(() => undefined);
       return reply.code(201).send({ transfer });
     } catch (error) {
       const message = String((error as Error)?.message ?? "transfer_create_failed");
@@ -110,6 +122,16 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
         },
         user.uuid
       );
+      void withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+        emitBankingSpineEvent(client, {
+          operating_company_id: body.data.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "banking.cc_payment.created",
+          entity_id: (transfer as { id?: string })?.id ?? "",
+          entity_type: "transfer",
+          source_table: "banking.transfers",
+        })
+      ).catch(() => undefined);
       return reply.code(201).send({ transfer });
     } catch (error) {
       const message = String((error as Error)?.message ?? "cc_payment_create_failed");
@@ -175,6 +197,17 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
 
     try {
       const transfer = await revokeTransfer(params.data.id, query.data.operating_company_id, body.data.reason, user.uuid);
+      void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+        emitBankingSpineEvent(client, {
+          operating_company_id: query.data.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "banking.transfer.revoked",
+          entity_id: params.data.id,
+          entity_type: "transfer",
+          source_table: "banking.transfers",
+          payload: { reason: body.data.reason ?? null },
+        })
+      ).catch(() => undefined);
       return { transfer };
     } catch (error) {
       const message = String((error as Error)?.message ?? "transfer_revoke_failed");

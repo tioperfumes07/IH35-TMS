@@ -8,6 +8,7 @@ import { computePayloadHashFromTxn, enqueueSyncJob } from "../integrations/qbo/q
 import { insertCsvStatementBankTransaction } from "./transaction-ingestion.js";
 import { applyBankingRulesForTransaction } from "./banking-rules.engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -280,6 +281,17 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     });
 
     if (!created) return reply.code(500).send({ error: "failed_to_create_session" });
+    void withCompanyScope(user.uuid, accountContext.operating_company_id, (client) =>
+      emitBankingSpineEvent(client, {
+        operating_company_id: accountContext.operating_company_id,
+        actor_user_id: String(user.uuid),
+        event_type: "banking.reconciliation.started",
+        entity_id: created,
+        entity_type: "reconciliation_session",
+        source_table: "banking.reconciliation_sessions",
+        payload: { bank_account_id: body.data.bank_account_id },
+      })
+    ).catch(() => undefined);
     return { session_id: created };
   });
 
@@ -719,6 +731,17 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       });
     }
 
+    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      emitBankingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: String(user.uuid),
+        event_type: "banking.reconciliation.completed",
+        entity_id: session.id,
+        entity_type: "reconciliation_session",
+        source_table: "banking.reconciliation_sessions",
+        payload: { variance_cents: varianceCents },
+      })
+    ).catch(() => undefined);
     return { ok: true, variance_cents: varianceCents };
   });
 
