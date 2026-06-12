@@ -550,6 +550,7 @@
     "verify:a4-audit-emit-accounting": "node scripts/verify-a4-audit-emit-accounting.mjs",
     "verify:a5-audit-emit-banking": "node scripts/verify-a5-audit-emit-banking.mjs",
     "verify:a6-audit-universal-view": "node scripts/verify-a6-audit-universal-view.mjs",
+    "verify:tasks-planner-v3": "node scripts/verify-tasks-planner-v3.mjs",
     "verify:closure-19-sec-artifacts": "node scripts/verify-closure-19-sec-artifacts.mjs",
     "verify:closure-17-on-hold-triage": "node scripts/verify-closure-17-on-hold-triage.mjs",
     "verify:closure-18-perf-artifacts": "node scripts/verify-closure-18-perf-artifacts.mjs",

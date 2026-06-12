@@ -365,6 +365,7 @@ import { registerWeeklyCloseRoutes } from "./driver-finance/weekly-close.routes.
 import { registerErrorMonitorRoutes } from "./admin/error-monitor.routes.js";
 import { initializeErrorDigestCron } from "./cron/error-digest.cron.js";
 import { registerDailyTasksRoutes } from "./daily-tasks/daily-tasks.routes.js";
+import taskRoutes from "./tasks/task.routes.js";
 import { initializeDailyTaskAlertsCron, stopDailyTaskAlertsCron } from "./cron/daily-task-alerts.cron.js";
 import { initializeAdminJobsWorker, stopAdminJobsWorker } from "./admin/admin-jobs.service.js";
 import { initializeDaRandomPoolDrawWorker } from "./jobs/da-random-pool-draw-worker.js";
@@ -840,6 +841,7 @@ async function main() {
   await registerLegalAttorneyReviewRoutes(app);
   await registerLegalMattersRoutes(app);
   await registerDailyTasksRoutes(app);
+  await app.register(taskRoutes, { prefix: "/api/v1/tasks" });
   await registerTelematicsHosRoutes(app);
   await registerVehicleDriverPairingRoutes(app);
   await registerPayrollDriverSettlementRoutes(app);
