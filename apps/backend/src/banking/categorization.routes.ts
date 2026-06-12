@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import {
   BULK_TXN_MAX,
   bulkCategorizeTransactions,
@@ -294,6 +295,17 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    void withCompanyScope(user.uuid, companyId, (client) =>
+      emitBankingSpineEvent(client, {
+        operating_company_id: companyId,
+        actor_user_id: String(user.uuid),
+        event_type: "banking.transaction.categorized",
+        entity_id: params.data.id,
+        entity_type: "bank_transaction",
+        source_table: "banking.bank_transactions",
+        payload: { category_kind: body.data.category_kind },
+      })
+    ).catch(() => undefined);
     return result.data;
   });
 
@@ -486,6 +498,16 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     });
 
     if (!res.ok) return reply.code(404).send({ error: "transaction_not_found" });
+    void withCompanyScope(user.uuid, companyId, (client) =>
+      emitBankingSpineEvent(client, {
+        operating_company_id: companyId,
+        actor_user_id: String(user.uuid),
+        event_type: "banking.transaction.skipped",
+        entity_id: params.data.id,
+        entity_type: "bank_transaction",
+        source_table: "banking.bank_transactions",
+      })
+    ).catch(() => undefined);
     return { ok: true };
   });
 
@@ -528,6 +550,16 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     });
 
     if (!res.ok) return reply.code(404).send({ error: "transaction_not_found" });
+    void withCompanyScope(user.uuid, companyId, (client) =>
+      emitBankingSpineEvent(client, {
+        operating_company_id: companyId,
+        actor_user_id: String(user.uuid),
+        event_type: "banking.transaction.investigate_flagged",
+        entity_id: params.data.id,
+        entity_type: "bank_transaction",
+        source_table: "banking.bank_transactions",
+      })
+    ).catch(() => undefined);
     return { ok: true };
   });
 

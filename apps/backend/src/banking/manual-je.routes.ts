@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 
 const manualJeBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -119,6 +120,17 @@ export async function registerBankingManualJeRoutes(app: FastifyInstance) {
       return je;
     });
 
+    void withCompanyScope(user.uuid, b.operating_company_id, (client) =>
+      emitBankingSpineEvent(client, {
+        operating_company_id: b.operating_company_id,
+        actor_user_id: String(user.uuid),
+        event_type: "banking.manual_je.created",
+        entity_id: (created as { id?: string })?.id ?? "",
+        entity_type: "journal_entry",
+        source_table: "accounting.journal_entries",
+        payload: { line_count: b.lines.length },
+      })
+    ).catch(() => undefined);
     return reply.code(201).send(created);
   });
 }
