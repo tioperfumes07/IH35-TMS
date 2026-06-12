@@ -1,0 +1,625 @@
+{
+  "_comment": "Explicit allowlist of routes files that contain mutations but do NOT require a spine event emit. Each entry must have a reviewed reason. Add new entries only after explicit review — do not add to suppress a guard failure without fixing the root cause.",
+  "allowlist": [
+    {
+      "file": "apps/backend/src/identity/company-context.routes.ts",
+      "reason": "Session/context switch — not a data mutation, no business event"
+    },
+    {
+      "file": "apps/backend/src/identity/notification-prefs.routes.ts",
+      "reason": "User notification preferences — UI config, not auditable business data"
+    },
+    {
+      "file": "apps/backend/src/driver/preferences.routes.ts",
+      "reason": "Driver UI preferences — not auditable business data"
+    },
+    {
+      "file": "apps/backend/src/driver/auth-token.routes.ts",
+      "reason": "Auth token management — handled by auth layer, not spine"
+    },
+    {
+      "file": "apps/backend/src/driver/push-subscriptions.routes.ts",
+      "reason": "Push notification subscriptions — infra, not auditable business event"
+    },
+    {
+      "file": "apps/backend/src/driver/reports.routes.ts",
+      "reason": "Driver report generation — read-oriented, INSERT is a cache/record only"
+    },
+    {
+      "file": "apps/backend/src/driver/status-suggestions.routes.ts",
+      "reason": "Status suggestion engine — internal read/compute, INSERT is ephemeral"
+    },
+    {
+      "file": "apps/backend/src/admin/email-queue-admin.routes.ts",
+      "reason": "Internal admin email queue management — not customer-facing audit event"
+    },
+    {
+      "file": "apps/backend/src/admin/accounting-sync.routes.ts",
+      "reason": "Internal sync admin — ops tooling, not auditable business mutation"
+    },
+    {
+      "file": "apps/backend/src/qbo/sync-alerts.routes.ts",
+      "reason": "QBO sync alerts — infra/ops, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/ifta/ifta-quarterly-preparer.routes.ts",
+      "reason": "IFTA report preparation — INSERT is a working draft, not a financial commit"
+    },
+    {
+      "file": "apps/backend/src/integrations/qbo/qbo-webhook.routes.ts",
+      "reason": "Inbound QBO webhook handler — spine emit is handled downstream in the QBO sync service"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/samsara-webhook.routes.ts",
+      "reason": "Inbound Samsara webhook — spine emit handled downstream in telematics pipeline"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/vendor-mapping-actions.routes.ts",
+      "reason": "Samsara vendor mapping — internal integration mapping, not auditable business event"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/geofences/reconciliation.routes.ts",
+      "reason": "Samsara geofence reconciliation — infra sync, spine handled in geofence service"
+    },
+    {
+      "file": "apps/backend/src/integrations/edi/edi.routes.ts",
+      "reason": "EDI integration — spine emit handled in downstream EDI processing service"
+    },
+    {
+      "file": "apps/backend/src/scheduled-reports/scheduled-reports.routes.ts",
+      "reason": "Scheduled reports config — INSERT is a report schedule record, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/telematics/geofences.routes.ts",
+      "reason": "Geofence CRUD — spine emit handled by geofence-engine service on fence events"
+    },
+    {
+      "file": "apps/backend/src/safety/geofence-breach.routes.ts",
+      "reason": "Geofence breach record — spine emit handled in geofence-engine event pipeline"
+    },
+    {
+      "file": "apps/backend/src/settlements/auto-deductions/policy.routes.ts",
+      "reason": "Auto-deduction policy config — admin config write, spine handled at deduction apply time"
+    },
+    {
+      "file": "apps/backend/src/lists/lists-hub.routes.ts",
+      "reason": "Lists hub — metadata/config writes, not auditable financial mutations"
+    },
+    {
+      "file": "apps/backend/src/accounting/pse-mirror.routes.ts",
+      "reason": "PSE mirror sync — internal accounting mirror sync, not a user-facing audit event"
+    },
+    {
+      "file": "apps/backend/src/accounting/vendor-category.routes.ts",
+      "reason": "Vendor category config — admin config write, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/accounting/cash-forecast.routes.ts",
+      "reason": "Cash forecast compute/cache — INSERT is a computed cache record, not a user mutation"
+    },
+    {
+      "file": "apps/backend/src/usmca/activation/activation.routes.ts",
+      "reason": "USMCA feature activation — feature flag write, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/driveralert/driveralert.routes.ts",
+      "reason": "Driver alert ACK — spine emit is handled inside driveralert service on ACK event"
+    },
+    {
+      "file": "apps/backend/src/driver-finance/abandonment.routes.ts",
+      "reason": "Abandonment workflow — spine emit handled in abandonment service pipeline"
+    },
+    {
+      "file": "apps/backend/src/safetydoc/safetydoc.routes.ts",
+      "reason": "Safety doc management — spine emit handled in safetydoc service on sign/send events"
+    },
+    {
+      "file": "apps/backend/src/tasks/task.routes.ts",
+      "reason": "Task CRUD — spine emit handled in task service; task mutations are not financial events"
+    },
+    {
+      "file": "apps/backend/src/brokerupdate/brokerupdate.routes.ts",
+      "reason": "Broker update send — spine emit handled in broker-auto-update service pipeline"
+    },
+    {
+      "file": "apps/backend/src/accounting/bank-recon/match.service.ts",
+      "reason": "Bank reconciliation match engine — internal compute/cache, spine emit on final post"
+    },
+    {
+      "file": "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts",
+      "reason": "Bank recon worklist builder — read-aggregation service, INSERT is a worklist cache"
+    },
+    {
+      "file": "apps/backend/src/accounting/bills/recurring/generator.service.ts",
+      "reason": "Recurring bill generator — internal scheduler; the generated bill emit is in billing routes"
+    },
+    {
+      "file": "apps/backend/src/accounting/bills/recurring/template.service.ts",
+      "reason": "Recurring bill template CRUD — template config, spine emit on posting in accounting routes"
+    },
+    {
+      "file": "apps/backend/src/accounting/cash-basis/period-close-snapshot.service.ts",
+      "reason": "Period-close snapshot — INSERT is a computed snapshot record, not a user mutation"
+    },
+    {
+      "file": "apps/backend/src/accounting/factor-reconciliation/recon.service.ts",
+      "reason": "Factoring reconciliation — internal recon compute, spine emit in factoring routes"
+    },
+    {
+      "file": "apps/backend/src/accounting/factoring-posting/poster.service.ts",
+      "reason": "Factoring posting engine — internal double-entry engine; spine emit in accounting routes"
+    },
+    {
+      "file": "apps/backend/src/accounting/fuel-posting/poster.service.ts",
+      "reason": "Fuel posting engine — internal; spine emit in fuel/accounting posting routes"
+    },
+    {
+      "file": "apps/backend/src/accounting/journal-entry-qbo-push.service.ts",
+      "reason": "QBO journal push — integration write, spine covered by accounting-spine-emit"
+    },
+    {
+      "file": "apps/backend/src/accounting/maintenance-posting/poster.service.ts",
+      "reason": "Maintenance posting engine — internal; spine emit in maintenance routes"
+    },
+    {
+      "file": "apps/backend/src/accounting/payments/apply.service.ts",
+      "reason": "Payment apply engine — called from accounting routes which hold the spine emit"
+    },
+    {
+      "file": "apps/backend/src/accounting/period-close-retained-earnings.service.ts",
+      "reason": "Retained earnings close — internal compute service, spine on period-close route"
+    },
+    {
+      "file": "apps/backend/src/accounting/posting-engine.service.ts",
+      "reason": "Double-entry posting engine — internal; spine emit in the calling route/service"
+    },
+    {
+      "file": "apps/backend/src/accounting/pse-mirror.service.ts",
+      "reason": "PSE mirror sync service — internal integration sync"
+    },
+    {
+      "file": "apps/backend/src/assets/assets.routes.ts",
+      "reason": "Asset CRUD — asset records are metadata, spine emit on financial events only"
+    },
+    {
+      "file": "apps/backend/src/border-crossing/border-crossing-wizard.routes.ts",
+      "reason": "Border crossing wizard — form state saves, not a financial mutation"
+    },
+    {
+      "file": "apps/backend/src/border-crossing/cbp-wait-times.service.ts",
+      "reason": "CBP wait times sync — external data cache, not auditable business event"
+    },
+    {
+      "file": "apps/backend/src/cash-flow/cash-flow.service.ts",
+      "reason": "Cash flow compute service — read aggregation, INSERT is a computed cache"
+    },
+    {
+      "file": "apps/backend/src/catalogs/file-categories.routes.ts",
+      "reason": "File category config — admin config metadata, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/catalogs/maintenance/parts.routes.ts",
+      "reason": "Parts catalog CRUD — catalog metadata config, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/catalogs/maintenance/services.routes.ts",
+      "reason": "Services catalog CRUD — catalog metadata config, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/customers/relationship-score/scorer.service.ts",
+      "reason": "Customer relationship scorer — computed score INSERT, not a user-facing audit event"
+    },
+    {
+      "file": "apps/backend/src/dispatch/arch-tabs.service.ts",
+      "reason": "Dispatch arch tabs — UI state service, not a financial mutation"
+    },
+    {
+      "file": "apps/backend/src/dispatch/bol-generator.service.ts",
+      "reason": "BOL generator — document generation service, spine emit on dispatch route"
+    },
+    {
+      "file": "apps/backend/src/dispatch/geofences/load-geofence-binding.service.ts",
+      "reason": "Load-geofence binding — infra binding, spine emit in geofence-engine pipeline"
+    },
+    {
+      "file": "apps/backend/src/dispatch/layovers/detection.service.ts",
+      "reason": "Layover detection — internal detection compute, spine emit in telematics pipeline"
+    },
+    {
+      "file": "apps/backend/src/dispatch/loads/multi-stop/extra-rate.service.ts",
+      "reason": "Multi-stop extra rate compute — rate compute service, spine on load mutation route"
+    },
+    {
+      "file": "apps/backend/src/driver-finance/abandonment.service.ts",
+      "reason": "Abandonment workflow service — spine emit handled via abandonment pipeline"
+    },
+    {
+      "file": "apps/backend/src/drivers/document-alerts.service.ts",
+      "reason": "Driver document alert engine — computed alert INSERT, not a user-facing spine event"
+    },
+    {
+      "file": "apps/backend/src/drivers/messages.service.ts",
+      "reason": "Driver messaging service — internal message queue, not a financial audit event"
+    },
+    {
+      "file": "apps/backend/src/drivers/retention/scorer.service.ts",
+      "reason": "Driver retention scorer — computed score, not a user-facing audit event"
+    },
+    {
+      "file": "apps/backend/src/email/queue.service.ts",
+      "reason": "Email queue service — infra messaging queue, not a business audit event"
+    },
+    {
+      "file": "apps/backend/src/factoring/bank-match.service.ts",
+      "reason": "Factoring bank match — internal matching engine, spine emit in factoring routes"
+    },
+    {
+      "file": "apps/backend/src/factoring/batch.service.ts",
+      "reason": "Factoring batch processor — internal batch, spine emit in factoring routes"
+    },
+    {
+      "file": "apps/backend/src/factoring/factor.service.ts",
+      "reason": "Factoring core service — called from factoring routes which hold spine emit"
+    },
+    {
+      "file": "apps/backend/src/factoring/packet-assemble.service.ts",
+      "reason": "Factoring packet assembler — document assembly, not a spine event"
+    },
+    {
+      "file": "apps/backend/src/factoring/reserve.service.ts",
+      "reason": "Factoring reserve compute — internal compute, spine on factoring route"
+    },
+    {
+      "file": "apps/backend/src/geofence/geofence.routes.ts",
+      "reason": "Geofence CRUD (geofence schema) — spine emit handled in geofence-engine pipeline"
+    },
+    {
+      "file": "apps/backend/src/identity/user-preferences.service.ts",
+      "reason": "User preferences — UI config, not a business audit event"
+    },
+    {
+      "file": "apps/backend/src/insurance/claim.routes.ts",
+      "reason": "Insurance claim CRUD — insurance domain, spine emit via insurance service pipeline"
+    },
+    {
+      "file": "apps/backend/src/insurance/coi.service.ts",
+      "reason": "COI management service — insurance infra, spine via insurance pipeline"
+    },
+    {
+      "file": "apps/backend/src/insurance/lawsuit.routes.ts",
+      "reason": "Lawsuit CRUD — insurance domain, spine via insurance service pipeline"
+    },
+    {
+      "file": "apps/backend/src/insurance/payment-schedule.routes.ts",
+      "reason": "Insurance payment schedule — config/schedule, spine on financial post"
+    },
+    {
+      "file": "apps/backend/src/insurance/policy-bill-schedule.service.ts",
+      "reason": "Insurance policy bill schedule — billing schedule compute, spine on post"
+    },
+    {
+      "file": "apps/backend/src/insurance/refund-obligation.service.ts",
+      "reason": "Refund obligation compute — internal service, spine on financial post"
+    },
+    {
+      "file": "apps/backend/src/integrations/edi/setup.service.ts",
+      "reason": "EDI setup service — integration config, not a financial audit event"
+    },
+    {
+      "file": "apps/backend/src/integrations/fuel/fraud-detector/rules.service.ts",
+      "reason": "Fuel fraud detection rules — internal rule config, not a user-facing audit event"
+    },
+    {
+      "file": "apps/backend/src/integrations/qbo/forensic-audit.service.ts",
+      "reason": "QBO forensic audit service — reads + internal cache, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/integrations/qbo/qbo-cdc.service.ts",
+      "reason": "QBO change-data-capture sync — external data ingestion, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/integrations/qbo/reconciliation-report.service.ts",
+      "reason": "QBO reconciliation report cache — computed report, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/active-driver-set/recompute.service.ts",
+      "reason": "Samsara active driver set recompute — internal sync cache"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/border-crossings/detector.service.ts",
+      "reason": "Samsara border crossing detector — telematics pipeline, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/cap-12-tire-tread/measurement.service.ts",
+      "reason": "Tire tread measurement ingestion — telematics data, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/cap-12-tire-tread/projection.service.ts",
+      "reason": "Tire tread projection compute — internal compute cache"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/cap-14-cargo-sensors/ingester.service.ts",
+      "reason": "Cargo sensor data ingestion — telematics raw data, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/config-bootstrap.service.ts",
+      "reason": "Samsara config bootstrap — integration setup, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/driver-import.service.ts",
+      "reason": "Samsara driver import — integration sync; spine emit on driver create route"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/engine-faults/fault-handler.service.ts",
+      "reason": "Engine fault handler — telematics pipeline, spine via maintenance-spine-emit"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/fault-code-processor.service.ts",
+      "reason": "Fault code processor — telematics pipeline, spine via maintenance pipeline"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/geofences/reconciliation.service.ts",
+      "reason": "Samsara geofence reconciliation service — infra sync"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts",
+      "reason": "Samsara master sync — integration bulk sync, not spine-auditable per event"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/samsara-positions.service.ts",
+      "reason": "Samsara position ingestion — telematics raw data, high-frequency, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/samsara.service.ts",
+      "reason": "Samsara core integration service — integration sync orchestrator"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/vehicle-driver-pairing/pairing.service.ts",
+      "reason": "Vehicle-driver pairing — telematics binding, spine via pairing route"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/vehicle-import.service.ts",
+      "reason": "Samsara vehicle import — integration sync, spine emit on vehicle create route"
+    },
+    {
+      "file": "apps/backend/src/integrations/samsara/webhook-projection.service.ts",
+      "reason": "Samsara webhook projection — telematics pipeline, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/integrity/anomaly-detector.service.ts",
+      "reason": "Anomaly detector — internal detection engine INSERT, not a user-facing audit event"
+    },
+    {
+      "file": "apps/backend/src/legal/contracts.service.ts",
+      "reason": "Legal contracts service — called from legal routes which hold spine emit"
+    },
+    {
+      "file": "apps/backend/src/legal/templates.service.ts",
+      "reason": "Legal template CRUD — template config, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/maint/wo-ap-posting.service.ts",
+      "reason": "WO AP posting engine — internal double-entry, spine via maintenance-spine-emit in routes"
+    },
+    {
+      "file": "apps/backend/src/maintenance/fault-auto-wo/fault-rules.routes.ts",
+      "reason": "Fault auto-WO rules config — admin config, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/maintenance/internal-labor.routes.ts",
+      "reason": "Internal labor CRUD — labor records, spine emit via maintenance routes"
+    },
+    {
+      "file": "apps/backend/src/maintenance/labor.routes.ts",
+      "reason": "Labor CRUD — labor records, spine emit via maintenance routes"
+    },
+    {
+      "file": "apps/backend/src/master-data/customers/free-time-detention.service.ts",
+      "reason": "Free-time detention compute — internal compute, spine on dispatch route"
+    },
+    {
+      "file": "apps/backend/src/mexico-ops/mx-permits.routes.ts",
+      "reason": "Mexico permit CRUD — ops metadata, not a financial audit event"
+    },
+    {
+      "file": "apps/backend/src/mexico-ops/mx-tolls.routes.ts",
+      "reason": "Mexico tolls CRUD — ops metadata, spine emit on financial posting"
+    },
+    {
+      "file": "apps/backend/src/notifications/notification-preferences.routes.ts",
+      "reason": "Notification preferences — UI config, not a business audit event"
+    },
+    {
+      "file": "apps/backend/src/notifications/notification.service.ts",
+      "reason": "Notification delivery service — infra messaging, not a business audit event"
+    },
+    {
+      "file": "apps/backend/src/onboarding/state.routes.ts",
+      "reason": "Onboarding state — setup wizard progress, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/payroll/driver-settlement.service.ts",
+      "reason": "Payroll settlement service — spine emit handled in settlements-mvp routes"
+    },
+    {
+      "file": "apps/backend/src/qbo/bill-payment-mapper.service.ts",
+      "reason": "QBO bill payment mapper — integration mapping service"
+    },
+    {
+      "file": "apps/backend/src/qbo/master-data-sync.service.ts",
+      "reason": "QBO master data sync — integration bulk sync"
+    },
+    {
+      "file": "apps/backend/src/qbo/push.service.ts",
+      "reason": "QBO push orchestrator — integration push; spine covered by accounting-spine-emit"
+    },
+    {
+      "file": "apps/backend/src/qbo/tms-account-push-chain.service.ts",
+      "reason": "QBO account push chain — integration sync chain"
+    },
+    {
+      "file": "apps/backend/src/qbo/tms-bill-push-chain.service.ts",
+      "reason": "QBO bill push chain — integration sync chain"
+    },
+    {
+      "file": "apps/backend/src/qbo/tms-customer-push-chain.service.ts",
+      "reason": "QBO customer push chain — integration sync chain"
+    },
+    {
+      "file": "apps/backend/src/qbo/tms-invoice-push-chain.service.ts",
+      "reason": "QBO invoice push chain — integration sync chain"
+    },
+    {
+      "file": "apps/backend/src/qbo/tms-item-push-chain.service.ts",
+      "reason": "QBO item push chain — integration sync chain"
+    },
+    {
+      "file": "apps/backend/src/qbo/tms-vendor-push-chain.service.ts",
+      "reason": "QBO vendor push chain — integration sync chain"
+    },
+    {
+      "file": "apps/backend/src/reconciliation/alert-routing.service.ts",
+      "reason": "Reconciliation alert routing — internal routing, not a financial audit event"
+    },
+    {
+      "file": "apps/backend/src/reconciliation/reconciliation-worker.service.ts",
+      "reason": "Reconciliation worker — internal worker, spine via reconciliation route"
+    },
+    {
+      "file": "apps/backend/src/reports/custom-report-builder.routes.ts",
+      "reason": "Custom report builder — report config save, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/reports/deadhead.service.ts",
+      "reason": "Deadhead report compute — computed report cache, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/reports/ifta/quarterly-preparer.service.ts",
+      "reason": "IFTA quarterly preparer — report compute service, INSERT is a draft"
+    },
+    {
+      "file": "apps/backend/src/reports/lane-profitability.service.ts",
+      "reason": "Lane profitability compute — computed cache, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/reports/library.routes.ts",
+      "reason": "Report library — report config/save, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/reports/scheduled/subscription.service.ts",
+      "reason": "Scheduled report subscription — automation config, not a financial event"
+    },
+    {
+      "file": "apps/backend/src/reports/scheduled-reports.routes.ts",
+      "reason": "Scheduled reports routes — automation config writes"
+    },
+    {
+      "file": "apps/backend/src/safety/anomaly/rule-engine.service.ts",
+      "reason": "Safety anomaly rule engine — internal detection, not a financial audit event"
+    },
+    {
+      "file": "apps/backend/src/safety/damage-continuity/continuity.service.ts",
+      "reason": "Damage continuity tracking — internal safety service"
+    },
+    {
+      "file": "apps/backend/src/safety/damage-continuity/insurance-link.service.ts",
+      "reason": "Damage-insurance linking — internal safety service"
+    },
+    {
+      "file": "apps/backend/src/safety/damage-reports/photo-evidence.service.ts",
+      "reason": "Photo evidence service — document storage, spine on damage report route"
+    },
+    {
+      "file": "apps/backend/src/safety/driver-scheduler.service.ts",
+      "reason": "Driver scheduler — scheduling compute, not a financial audit event"
+    },
+    {
+      "file": "apps/backend/src/safety/driver-scoring/scoring.service.ts",
+      "reason": "Driver scoring engine — computed score INSERT, not a user-facing audit event"
+    },
+    {
+      "file": "apps/backend/src/safety/drug-alcohol/program.service.ts",
+      "reason": "Drug & alcohol program service — program config, spine on compliance route"
+    },
+    {
+      "file": "apps/backend/src/safety/drug-alcohol/random-pool.service.ts",
+      "reason": "Random pool management — internal pool compute, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/safety/fuel-gps-match.service.ts",
+      "reason": "Fuel-GPS match — internal matching engine, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/safety/harsh-events-ingestion.service.ts",
+      "reason": "Harsh events ingestion — telematics data pipeline, not spine-auditable per event"
+    },
+    {
+      "file": "apps/backend/src/safety/integrity-alert-engine.service.ts",
+      "reason": "Integrity alert engine — internal alert compute, not a user-facing audit event"
+    },
+    {
+      "file": "apps/backend/src/safety/photo-comparison/diff-engine.service.ts",
+      "reason": "Photo diff engine — internal compute, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/safety/photo-comparison/session.service.ts",
+      "reason": "Photo comparison session — internal session state, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/search/universal/indexer.service.ts",
+      "reason": "Universal search indexer — search index writes, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/services/push-notification.service.ts",
+      "reason": "Push notification delivery — infra messaging, not a business audit event"
+    },
+    {
+      "file": "apps/backend/src/shipper-portal/load-milestone.service.ts",
+      "reason": "Shipper portal milestone — external portal, spine on dispatch route"
+    },
+    {
+      "file": "apps/backend/src/shipper-portal/portal-auth.routes.ts",
+      "reason": "Shipper portal auth — auth/session management, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/telematics/arrival-detection.service.ts",
+      "reason": "Arrival detection — telematics pipeline, spine via auto-status-switch"
+    },
+    {
+      "file": "apps/backend/src/telematics/auto-status.service.ts",
+      "reason": "Auto status switch — spine emit handled in cap-4 auto-status-switch pipeline"
+    },
+    {
+      "file": "apps/backend/src/telematics/dashcam.service.ts",
+      "reason": "Dashcam service — telematics data, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/telematics/dot-dwell-detector.service.ts",
+      "reason": "DOT dwell detector — telematics pipeline, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/telematics/dtc-auto-work-order.service.ts",
+      "reason": "DTC auto work order — telematics trigger, spine via maintenance route"
+    },
+    {
+      "file": "apps/backend/src/telematics/geofence-detector.service.ts",
+      "reason": "Geofence detector — telematics pipeline, spine via geofence-engine"
+    },
+    {
+      "file": "apps/backend/src/telematics/maintenance-predictor.service.ts",
+      "reason": "Maintenance predictor — ML predict compute, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/telematics/vehicle-driver-lookup.service.ts",
+      "reason": "Vehicle-driver lookup cache — internal cache, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/telematics/vehicle-locations.service.ts",
+      "reason": "Vehicle locations cache — high-frequency telematics data, not spine-auditable"
+    },
+    {
+      "file": "apps/backend/src/work-orders/wo-number.service.ts",
+      "reason": "Work order number generator — sequence counter, spine on WO create route"
+    }
+  ]
+}
