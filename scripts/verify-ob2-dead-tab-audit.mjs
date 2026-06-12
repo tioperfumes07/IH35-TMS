@@ -59,34 +59,59 @@ const deadAccountingRoutes = [
 const hasDeadAccountingTabs = deadAccountingRoutes.some(r => accountingSubnavContent.includes(r));
 assert(!hasDeadAccountingTabs, "QBO_ACCOUNTING_SUBNAV has no ComingSoon/dead tabs");
 
-// 2. Check SAFETY_TABS_CONFIG has no dead tabs removed
-console.log("\n2. Safety tabs — no dead tabs:");
-const deadSafetyTabs = ['complaints', 'geofence-alerts'];
-const hasDeadSafetyTabs = deadSafetyTabs.some(t => safetyTabsContent.includes(`id: "${t}"`));
-assert(!hasDeadSafetyTabs, "SAFETY_TABS_CONFIG has no dead tabs (complaints, geofence-alerts)");
+// 2. Check SAFETY_TABS_CONFIG — all tabs have registered routes in manifest
+console.log("\n2. Safety tabs — all routes registered:");
+const safetyTabMatches = [...safetyTabsContent.matchAll(/id:\s*"([^"]+)",\s*label:\s*"([^"]+)",\s*route:\s*"([^"]+)"/g)];
+const safetyTabs = safetyTabMatches.map(m => ({ id: m[1], label: m[2], route: m[3] }));
 
-// 3. Check no ComingSoonPage in accounting routes (nav-configured dead tabs)
-console.log("\n3. Accounting routes — no ComingSoonPage stubs:");
-// Only check for removed accounting routes that were in nav
-const deadAccountingPatterns = [
-  '/accounting/recurring-transactions',
-  '/accounting/integration-transactions', 
-  '/accounting/receipts',
-  '/accounting/revenue-recognition',
-  '/accounting/fixed-assets',
-  '/accounting/prepaid-expenses',
-  '/accounting/my-accountant',
-];
-const hasDeadAccountingRoutes = deadAccountingPatterns.some(p => manifestContent.includes(`path="${p}"`));
-assert(!hasDeadAccountingRoutes, "No dead accounting routes in manifest");
+// Extract all route paths from manifest (both absolute and relative)
+const manifestRouteMatches = [...manifestContent.matchAll(/path={?"([^"}]+)"}?/g)];
+const manifestRoutes = manifestRouteMatches.map(m => m[1]);
+
+// Check each safety tab route exists in manifest
+// Safety routes in config are absolute (/safety/xxx) but in manifest they're relative (xxx) inside /safety layout
+let missingSafetyRoutes = [];
+for (const tab of safetyTabs) {
+  const route = tab.route;
+  // Extract relative path from absolute route (e.g., /safety/drug-alcohol -> drug-alcohol)
+  const relativeRoute = route.replace(/^\/safety\//, '');
+  // Check both absolute and relative forms in manifest
+  const exists = manifestRoutes.some(mr => 
+    mr === route ||                       // Exact absolute match
+    mr === relativeRoute ||             // Relative match inside /safety layout
+    mr.replace(/^\/safety\//, '') === relativeRoute  // Strip prefix and compare
+  );
+  if (!exists) {
+    missingSafetyRoutes.push(`${tab.id} (${route})`);
+  }
+}
+assert(missingSafetyRoutes.length === 0, 
+  `All safety tabs have registered routes (missing: ${missingSafetyRoutes.join(", ") || "none"})`);
+
+// 3. Check no ComingSoonPage in any nav-reachable route
+console.log("\n3. No ComingSoonPage stubs in nav routes:");
+// Find all Route elements with ComingSoonPage in manifest
+const comingSoonRouteMatches = [...manifestContent.matchAll(
+  /<Route\s+path={?"([^"}]+)"}?\s+element=\{<ProtectedRoute><ComingSoonPage \/><\/ProtectedRoute>\}/g
+)];
+const comingSoonRoutes = comingSoonRouteMatches.map(m => m[1]);
+
+// Also check for standalone ComingSoonPage usages that aren't the explicit /coming-soon route
+const standaloneComingSoon = comingSoonRoutes.filter(r => r !== '/coming-soon');
+
+// The ListsDomainRoute and ListsCatalogKeyRoute fallbacks are internal fallbacks,
+// not directly linked from nav — they redirect to real routes. Verify they're redirects.
+const hasRedirectLogic = manifestContent.includes('function ListsDomainRoute') && 
+                         manifestContent.includes('return <Navigate to=');
+
+assert(standaloneComingSoon.length === 0 && hasRedirectLogic, 
+  `No ComingSoonPage stubs reachable from nav (found: ${standaloneComingSoon.join(", ") || "none"})`);
 
 // 4. Check safety canonical count matches actual tabs
 console.log("\n4. Safety canonical counts:");
-const safetyRouteMatches = safetyTabsContent.match(/route:\s*"([^"]+)"/g) || [];
-const safetyRoutes = safetyRouteMatches.map(m => m.replace(/route:\s*"/, '').replace('"', ''));
 const tabCountMatch = safetyTabsContent.match(/SAFETY_CANONICAL_TAB_COUNT\s*=\s*(\d+)/);
 const declaredCount = tabCountMatch ? parseInt(tabCountMatch[1]) : 0;
-const actualTabCount = safetyRoutes.length;
+const actualTabCount = safetyTabs.length;
 assert(declaredCount === actualTabCount, 
   `SAFETY_CANONICAL_TAB_COUNT (${declaredCount}) matches actual tabs (${actualTabCount})`);
 
