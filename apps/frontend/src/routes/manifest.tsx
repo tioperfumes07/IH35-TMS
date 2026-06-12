@@ -3062,10 +3062,7 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/safety/accidents-incidents"
-          element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
-        />
+        <Route path="/safety/accidents-incidents" element={<Navigate replace to="/safety/accidents" />} />
         <Route
           path="/accounting/recurring-transactions"
           element={<ProtectedRoute><ComingSoonPage /></ProtectedRoute>}
@@ -3174,7 +3171,7 @@ export const ROUTES = React.Children.toArray(
           path="/catalogs/classes"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Classes&phase=5&eta=After%20accounting%20cutover" replace />
+              <Navigate to="/lists/accounting/classes" replace />
             </ProtectedRoute>
           }
         />
@@ -3190,7 +3187,7 @@ export const ROUTES = React.Children.toArray(
           path="/catalogs/payment-terms"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Payment%20Terms&phase=5&eta=After%20accounting%20cutover" replace />
+              <Navigate to="/lists/accounting/payment-terms" replace />
             </ProtectedRoute>
           }
         />
@@ -3198,7 +3195,7 @@ export const ROUTES = React.Children.toArray(
           path="/catalogs/posting-templates"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Posting%20Templates&phase=5&eta=After%20accounting%20cutover" replace />
+              <Navigate to="/lists/accounting/posting-templates" replace />
             </ProtectedRoute>
           }
         />
@@ -3206,7 +3203,7 @@ export const ROUTES = React.Children.toArray(
           path="/catalogs/account-role-bindings"
           element={
             <ProtectedRoute>
-              <Navigate to="/coming-soon?feature=Account%20Role%20Bindings&phase=5&eta=After%20accounting%20cutover" replace />
+              <Navigate to="/lists/accounting/account-role-bindings" replace />
             </ProtectedRoute>
           }
         />

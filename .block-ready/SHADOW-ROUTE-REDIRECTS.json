@@ -1,0 +1,28 @@
+{
+  "block_id": "SHADOW-ROUTE-REDIRECTS",
+  "status": "BUILD",
+  "classification": "BUGFIX",
+  "phase": "GAP-E",
+  "task": "Replace 5 alias-shadow routes (ComingSoonPage) with proper Navigate redirects to their real pages. Leave honest stubs (/catalogs/accounts, /catalogs/items, /accounting/recurring-transactions) untouched.",
+  "branch": "fix/shadow-route-redirects",
+  "lane": "A",
+  "details": [
+    "/safety/accidents-incidents → /safety/accidents (real AccidentsIncidentsTab)",
+    "/catalogs/classes → /lists/accounting/classes",
+    "/catalogs/payment-terms → /lists/accounting/payment-terms",
+    "/catalogs/posting-templates → /lists/accounting/posting-templates",
+    "/catalogs/account-role-bindings → /lists/accounting/account-role-bindings",
+    "Honest stubs left: /catalogs/accounts (no real route), /catalogs/items (no real page), /accounting/recurring-transactions (unbuilt distinct feature)"
+  ],
+  "allowed_files": [
+    ".block-ready/SHADOW-ROUTE-REDIRECTS.json",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-shadow-redirects.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:shadow-redirects"]
+}
