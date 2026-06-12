@@ -1,0 +1,28 @@
+{
+  "block_id": "OB1-NAV-HEADER-UNIFY",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "UI-CLEANUP",
+  "task": "Replace legacy 38-item hover-dropdown AccountingSubNav with unified 12-tab clean nav bar. All accounting pages automatically get the new nav via the shared AccountingSubNav component.",
+  "branch": "feat/ob1-nav-header-unify",
+  "lane": "A",
+  "details": [
+    "subnav-manifest.ts: added ACCOUNTING_CLEAN_TABS export (12 tabs: Home, Bills, Expenses, Bill Payment, Invoices, Receive Payment, Settlements, Factoring, Journal Entries, Find Transactions, Reports, Settings)",
+    "AccountingSubNav.tsx: rewritten — NavLink tab bar using ACCOUNTING_CLEAN_TABS; removed HoverDropdownNav; data-testid=accounting-subnav-unified",
+    "AccountingSubNavWrapper.tsx: imports ACCOUNTING_CLEAN_TABS from manifest; removed local duplicate ACCOUNTING_TABS const",
+    "All 21 pages using AccountingSubNav automatically get the unified nav with zero per-page changes",
+    "verify-ob1-nav-header-unify.mjs: 8/8 PASS; wired to CI + package.json"
+  ],
+  "allowed_files": [
+    ".block-ready/OB1-NAV-HEADER-UNIFY.json",
+    "apps/frontend/src/pages/accounting/subnav-manifest.ts",
+    "apps/frontend/src/pages/accounting/AccountingSubNav.tsx",
+    "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx",
+    "scripts/verify-ob1-nav-header-unify.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:ob1-nav-header-unify"]
+}

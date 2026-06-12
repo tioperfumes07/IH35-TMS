@@ -81,6 +81,22 @@ function bySection(section: AccountingSubNavItem["section"]): AccountingSubNavIt
   return SUBNAV_ITEMS.filter((item) => item.section === section);
 }
 
+/** OB1 — unified 12-tab clean nav (replaces the legacy 38-item hover-dropdown). All accounting pages use this. */
+export const ACCOUNTING_CLEAN_TABS = [
+  { label: "Home",                    to: "/accounting" },
+  { label: "Bills",                   to: "/accounting/bills" },
+  { label: "Expenses",                to: "/accounting/expenses" },
+  { label: "Bill Payment",            to: "/accounting/bill-payments" },
+  { label: "Invoices",                to: "/accounting/invoices" },
+  { label: "Receive Payment",         to: "/accounting/payments" },
+  { label: "Settlements",             to: "/driver-finance/settlements" },
+  { label: "Factoring",               to: "/accounting/factoring" },
+  { label: "Journal Entries",         to: "/accounting/journal-entries" },
+  { label: "Find Transactions",       to: "/banking/qbo-sync-queue" },
+  { label: "Reports",                 to: "/reports" },
+  { label: "Settings",                to: "/accounting/settings/expense-category-map" },
+] as const;
+
 export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   {
     label: GROUP_LABELS.bills,

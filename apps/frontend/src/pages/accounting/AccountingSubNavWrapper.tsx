@@ -1,20 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-
-const ACCOUNTING_TABS = [
-  { label: "Home", to: "/accounting" },
-  { label: "Bills", to: "/accounting/bills" },
-  { label: "Expenses", to: "/accounting/expenses" },
-  { label: "Bill Payment", to: "/accounting/bill-payments" },
-  { label: "Invoices", to: "/accounting/invoices" },
-  { label: "Receive Payment", to: "/accounting/payments" },
-  { label: "Settlements", to: "/driver-finance/settlements" },
-  { label: "Find Transactions", to: "/accounting/payments" },
-  { label: "Unmatched / Needs Review", to: "/banking/qbo-sync-queue" },
-  { label: "Factoring", to: "/accounting/factoring" },
-  { label: "Journal Entries", to: "/accounting/journal-entries" },
-  { label: "Reports", to: "/reports" },
-] as const;
+import { ACCOUNTING_CLEAN_TABS } from "./subnav-manifest";
 
 const CREATE_MENU = [
   { label: "New Bill", to: "/accounting/bills/vendor" },
@@ -92,7 +78,7 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, childr
 
       <nav className="overflow-x-auto rounded border border-gray-200 bg-white px-2 py-1" aria-label="Accounting sub-navigation">
         <div className="flex min-w-max gap-1">
-          {ACCOUNTING_TABS.map((tab) => {
+          {ACCOUNTING_CLEAN_TABS.map((tab) => {
             const active = tabActive(pathname, tab.to);
             return (
               <NavLink
