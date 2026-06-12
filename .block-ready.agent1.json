@@ -1,27 +1,24 @@
 {
-  "block_id": "E1-SMOKE-SERVICE-TOKEN-AUTH",
-  "branch": "feat/e1-smoke-service-token-auth",
-  "phase": "FINAL",
-  "task": "Service-token auth middleware for service-to-service/cron HTTP calls. Daily smoke probe (read-only critical path checks). No migration. No financial writes.",
+  "block_id": "ACCT-INTEGRITY-VERIFY-EXTEND",
+  "branch": "feat/accounting-integrity-verify-extend",
+  "phase": "Accounting",
+  "task": "Accounting integrity: verify-extend 4 items (period lock CI, bank-recon cron, accounting probes, CoA role bindings seed)",
   "agent": "A",
   "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/IH35-TMS-fixed",
+  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-acct-verify-extend",
   "allowed_files": [
     ".block-ready.agent1.json",
-    ".block-ready/E1-SMOKE-SERVICE-TOKEN-AUTH.json",
-    "apps/backend/src/auth/service-token.middleware.ts",
-    "apps/backend/src/admin/smoke-probe.routes.ts",
-    "apps/backend/src/middleware/response-time.ts",
+    ".block-ready/ACCT-INTEGRITY-VERIFY-EXTEND.json",
+    "apps/backend/src/accounting/__tests__/period-lock-db-trigger.test.ts",
+    "apps/backend/src/cron/bank-recon-auto-match.cron.ts",
     "apps/backend/src/index.ts",
-    ".env.example",
-    "scripts/verify-smoke-service-token-auth.mjs",
-    "scripts/verify-aggregate-schema-grants.mjs",
-    ".github/workflows/ci.yml",
-    "package.json"
+    "apps/backend/src/safety/integrity-alert-engine.service.ts",
+    "db/migrations/202606080936_accounting_integrity_probe_rules.sql",
+    "db/migrations/202606080937_coa_role_bindings_seed.sql"
   ],
   "preview_provided": false,
-  "extra_gates": ["verify:smoke-service-token-auth"],
+  "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": false
 }
