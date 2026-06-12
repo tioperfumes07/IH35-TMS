@@ -23,6 +23,7 @@
     "apps/backend/src/index.ts",
     ".env.example",
     "scripts/verify-smoke-service-token-auth.mjs",
+    "scripts/verify-aggregate-schema-grants.mjs",
     ".github/workflows/ci.yml",
     "package.json"
   ],
