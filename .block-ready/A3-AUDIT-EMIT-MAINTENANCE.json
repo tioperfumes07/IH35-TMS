@@ -1,0 +1,27 @@
+{
+  "block_id": "A3-AUDIT-EMIT-MAINTENANCE",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "AUDIT-EMIT",
+  "task": "Maintenance WO lifecycle mutations emit spine events via emitMaintenanceSpineEvent helper calling events.log_event(). Covers: wo.created, wo.completed, wo.status_changed, wo.line_item_added, wo.line_item_removed.",
+  "branch": "feat/a3-audit-emit-maintenance",
+  "lane": "A",
+  "details": [
+    "New helper: maintenance-spine-emit.ts — wraps events.log_event() for all maintenance event types.",
+    "work-orders.routes.ts: wo.created (POST /work-orders), wo.completed (PATCH /complete), wo.status_changed (PATCH /transition + POST /status), wo.line_item_added (POST /line-items), wo.line_item_removed (DELETE /line-items/:lid).",
+    "verify-a3-audit-emit-maintenance.mjs: 13-check guard (all passing).",
+    "ci.yml + package.json: verify:a3-audit-emit-maintenance wired."
+  ],
+  "allowed_files": [
+    ".block-ready/A3-AUDIT-EMIT-MAINTENANCE.json",
+    "apps/backend/src/maintenance/maintenance-spine-emit.ts",
+    "apps/backend/src/maintenance/work-orders.routes.ts",
+    "scripts/verify-a3-audit-emit-maintenance.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:a3-audit-emit-maintenance"]
+}
