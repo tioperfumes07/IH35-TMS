@@ -554,6 +554,7 @@
     "verify:a8-audit-reports-section": "node scripts/verify-a8-audit-reports-section.mjs",
     "verify:pre-settlements": "node scripts/verify-pre-settlements.mjs",
     "verify:customer-contract-upload": "node scripts/verify-customer-contract-upload.mjs",
+    "verify:factoring-profile": "node scripts/verify-factoring-profile.mjs",
     "verify:tasks-planner-v3": "node scripts/verify-tasks-planner-v3.mjs",
     "verify:settlements-sidebar": "node scripts/verify-settlements-sidebar.mjs",
     "verify:ob1-nav-header-unify": "node scripts/verify-ob1-nav-header-unify.mjs",

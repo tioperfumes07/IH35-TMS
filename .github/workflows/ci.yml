@@ -1036,6 +1036,9 @@ jobs:
       - name: verify:customer-contract-upload
         run: npm run verify:customer-contract-upload
 
+      - name: verify:factoring-profile
+        run: npm run verify:factoring-profile
+
       - name: verify:settlements-sidebar
         run: npm run verify:settlements-sidebar
 
