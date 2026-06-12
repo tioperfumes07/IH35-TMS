@@ -547,6 +547,7 @@
     "verify:a2-audit-emit-dispatch": "node scripts/verify-a2-audit-emit-dispatch.mjs",
     "verify:shadow-redirects": "node scripts/verify-shadow-redirects.mjs",
     "verify:a3-audit-emit-maintenance": "node scripts/verify-a3-audit-emit-maintenance.mjs",
+    "verify:a4-audit-emit-accounting": "node scripts/verify-a4-audit-emit-accounting.mjs",
     "verify:closure-19-sec-artifacts": "node scripts/verify-closure-19-sec-artifacts.mjs",
     "verify:closure-17-on-hold-triage": "node scripts/verify-closure-17-on-hold-triage.mjs",
     "verify:closure-18-perf-artifacts": "node scripts/verify-closure-18-perf-artifacts.mjs",

@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { nextPaymentDisplayId } from "./display-id.js";
 import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -269,6 +270,16 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      emitAccountingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: String(user.uuid),
+        event_type: "customer_payment.created",
+        entity_id: (result as { data?: { id?: string } })?.data?.id ?? "",
+        entity_type: "customer_payment",
+        source_table: "accounting.payments",
+      })
+    ).catch(() => undefined);
     return reply.code(result.code).send(result.data);
   });
 }
