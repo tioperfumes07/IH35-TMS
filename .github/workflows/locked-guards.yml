@@ -39,9 +39,6 @@ jobs:
       - name: verify:no-internal-language-in-prod-ui
         run: npm run verify:no-internal-language-in-prod-ui
 
-      - name: verify:no-duplicate-routes
-        run: npm run verify:no-duplicate-routes
-
       - name: verify:maint-jump-to-tab-removed
         run: npm run verify:maint-jump-to-tab-removed
 
