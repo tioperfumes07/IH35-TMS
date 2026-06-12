@@ -111,30 +111,30 @@ export async function getSettlementSummary(
       s.finalized_at,
       s.pdf_generated_at,
       COALESCE(
-        (SELECT SUM(amount_cents) FROM driver_finance.settlement_line_items 
-         WHERE settlement_id = s.id AND line_type IN ('additional_pay') AND approval_status != 'rejected'),
+        (SELECT SUM(amount_cents) FROM settlement.settlement_line 
+         WHERE settlement_id = s.id AND line_type IN ('extra_pay', 'load_pay') AND approval_status != 'rejected'),
         0
       ) as gross_pay_cents,
       COALESCE(
-        (SELECT SUM(ABS(amount_cents)) FROM driver_finance.settlement_line_items 
-         WHERE settlement_id = s.id AND line_type IN ('deduction', 'escrow') AND approval_status != 'rejected'),
+        (SELECT SUM(ABS(amount_cents)) FROM settlement.settlement_line 
+         WHERE settlement_id = s.id AND line_type IN ('reimbursement', 'other') AND approval_status != 'rejected'),
         0
       ) as deductions_cents,
       COALESCE(
-        (SELECT SUM(amount_cents) FROM driver_finance.settlement_line_items 
+        (SELECT SUM(amount_cents) FROM settlement.settlement_line 
          WHERE settlement_id = s.id AND approval_status != 'rejected'),
         0
       ) as net_due_cents,
       (
-        SELECT COUNT(*) FROM driver_finance.settlement_line_items 
+        SELECT COUNT(*) FROM settlement.settlement_line 
         WHERE settlement_id = s.id AND approval_status = 'pending'
       ) as pending_count,
       (
-        SELECT COUNT(*) FROM driver_finance.settlement_line_items 
+        SELECT COUNT(*) FROM settlement.settlement_line 
         WHERE settlement_id = s.id
       ) as total_count,
       COALESCE(eb.current_balance_cents, 0) as escrow_balance_cents
-    FROM driver_finance.settlements s
+    FROM settlement.settlement s
     JOIN mdata.drivers d ON d.id = s.driver_id
     LEFT JOIN driver_finance.escrow_balances eb ON eb.driver_id = s.driver_id AND eb.operating_company_id = s.operating_company_id
     WHERE s.id = $1 AND s.operating_company_id = $2
@@ -198,7 +198,7 @@ export async function getSettlementLineItems(
       li.disputed,
       li.dispute_reason,
       li.created_at
-    FROM driver_finance.settlement_line_items li
+    FROM settlement.settlement_line li
     WHERE li.settlement_id = $1
     ORDER BY 
       CASE li.line_type 
@@ -237,7 +237,7 @@ export async function approveLineItem(
   operatingCompanyId: string
 ): Promise<void> {
   const result = await client.query<{ settlement_id: string; category: string; amount_cents: number }>(`
-    UPDATE driver_finance.settlement_line_items
+    UPDATE settlement.settlement_line
     SET 
       approval_status = 'approved',
       approved_at = now(),
@@ -284,7 +284,7 @@ export async function rejectLineItem(
   operatingCompanyId: string
 ): Promise<void> {
   const result = await client.query<{ settlement_id: string; category: string; amount_cents: number }>(`
-    UPDATE driver_finance.settlement_line_items
+    UPDATE settlement.settlement_line
     SET 
       approval_status = 'rejected',
       rejected_at = now(),
@@ -331,7 +331,7 @@ async function updateEscrowBalance(
 ): Promise<void> {
   // Get driver from settlement
   const settlementResult = await client.query<{ driver_id: string; operating_company_id: string }>(`
-    SELECT driver_id, operating_company_id FROM driver_finance.settlements WHERE id = $1
+    SELECT driver_id, operating_company_id FROM settlement.settlement WHERE id = $1
   `, [settlementId]);
   
   if (settlementResult.rows.length === 0) return;
@@ -390,7 +390,7 @@ export async function checkAllLinesApproved(
     SELECT 
       COUNT(*) FILTER (WHERE approval_status = 'pending') as pending_count,
       COUNT(*) FILTER (WHERE approval_status = 'rejected') as rejected_count
-    FROM driver_finance.settlement_line_items
+    FROM settlement.settlement_line
     WHERE settlement_id = $1
   `, [settlementId]);
   
@@ -418,7 +418,7 @@ export async function approveSettlement(
   }
   
   await client.query(`
-    UPDATE driver_finance.settlements
+    UPDATE settlement.settlement
     SET 
       approval_status = 'approved',
       approved_at = now(),
@@ -437,7 +437,7 @@ export async function finalizeSettlement(
 ): Promise<void> {
   // Must be approved first
   const result = await client.query<{ approval_status: ApprovalStatus }>(`
-    UPDATE driver_finance.settlements
+    UPDATE settlement.settlement
     SET 
       approval_status = 'finalized',
       finalized_at = now()
@@ -461,7 +461,7 @@ export async function recordPdfGenerated(
   operatingCompanyId: string
 ): Promise<void> {
   await client.query(`
-    UPDATE driver_finance.settlements
+    UPDATE settlement.settlement
     SET pdf_generated_at = now(), pdf_generated_by = $1
     WHERE id = $2 AND operating_company_id = $3
   `, [generatedBy, settlementId, operatingCompanyId]);

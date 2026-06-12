@@ -268,7 +268,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
       
       // Get settlement status
       const statusResult = await client.query<{ approval_status: string }>(`
-        SELECT approval_status FROM driver_finance.settlements 
+        SELECT approval_status FROM settlement.settlement 
         WHERE id = $1 AND operating_company_id = $2
       `, [parsed.data.settlement_id, operatingCompanyId]);
       

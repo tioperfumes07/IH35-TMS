@@ -1,8 +1,8 @@
 -- D1: Settlement Approval Workspace Schema
 -- Trip-number auto-link, per-line approval, escrow balance, driver-visible flags, dispute flags
 
--- Settlement approval state machine
-ALTER TABLE driver_finance.settlements
+-- Settlement approval state machine (adds to C1 settlement.settlement table)
+ALTER TABLE settlement.settlement
 ADD COLUMN IF NOT EXISTS approval_status VARCHAR(20) NOT NULL DEFAULT 'needs_review'
   CHECK (approval_status IN ('needs_review', 'approved', 'finalized')),
 ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ,
@@ -11,13 +11,13 @@ ADD COLUMN IF NOT EXISTS finalized_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS pdf_generated_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS pdf_generated_by UUID REFERENCES identity.users(id);
 
-COMMENT ON COLUMN driver_finance.settlements.approval_status IS 'Needs review → Approved → Finalized. PDF only after Finalized.';
+COMMENT ON COLUMN settlement.settlement.approval_status IS 'Needs review → Approved → Finalized. PDF only after Finalized.';
 
 -- Settlement line items (deductions, additional pay, expenses) with approval tracking
 CREATE TABLE IF NOT EXISTS driver_finance.settlement_line_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id UUID NOT NULL REFERENCES org.operating_companies(id) ON DELETE CASCADE,
-  settlement_id UUID NOT NULL REFERENCES driver_finance.settlements(id) ON DELETE CASCADE,
+  settlement_id UUID NOT NULL REFERENCES settlement.settlement(id) ON DELETE CASCADE,
 
   -- Line classification
   line_type VARCHAR(30) NOT NULL CHECK (line_type IN ('deduction', 'additional_pay', 'expense', 'cash_advance', 'escrow')),
@@ -67,10 +67,10 @@ COMMENT ON COLUMN driver_finance.settlement_line_items.load_id IS 'Trip number l
 COMMENT ON COLUMN driver_finance.settlement_line_items.driver_visible IS 'If false, line is internal-only (not shown on driver PDF)';
 
 -- RLS for settlement line items
-ALTER TABLE driver_finance.settlement_line_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE settlement.settlement_line ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY settlement_line_items_tenant_isolation
-ON driver_finance.settlement_line_items
+CREATE POLICY settlement_line_tenant_isolation
+ON settlement.settlement_line
 FOR ALL
 TO ih35_app
 USING (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS driver_finance.escrow_balances (
   current_balance_cents INTEGER NOT NULL DEFAULT 0,
 
   -- Tracking
-  last_settlement_id UUID REFERENCES driver_finance.settlements(id),
+  last_settlement_id UUID REFERENCES settlement.settlement(id),
   last_updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
   -- Escrow release schedule (when driver leaves)
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS driver_finance.escrow_ledger (
   driver_id UUID NOT NULL REFERENCES mdata.drivers(id) ON DELETE CASCADE,
   escrow_balance_id UUID NOT NULL REFERENCES driver_finance.escrow_balances(id) ON DELETE CASCADE,
 
-  settlement_id UUID REFERENCES driver_finance.settlements(id),
+  settlement_id UUID REFERENCES settlement.settlement(id),
   settlement_line_item_id UUID REFERENCES driver_finance.settlement_line_items(id),
 
   transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('hold', 'release', 'forfeit')),
@@ -186,6 +186,7 @@ USING (operating_company_id = NULLIF(current_setting('app.operating_company_id',
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_settlement_line_items_settlement_id ON driver_finance.settlement_line_items(settlement_id);
+CREATE INDEX IF NOT EXISTS idx_settlement_line_items_settlement_id ON settlement.settlement_line(settlement_id);
 CREATE INDEX IF NOT EXISTS idx_settlement_line_items_load_id ON driver_finance.settlement_line_items(load_id);
 CREATE INDEX IF NOT EXISTS idx_settlement_line_items_approval_status ON driver_finance.settlement_line_items(approval_status);
 CREATE INDEX IF NOT EXISTS idx_trip_link_queue_status ON driver_finance.trip_link_queue(status);
