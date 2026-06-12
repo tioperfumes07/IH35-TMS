@@ -553,6 +553,7 @@
     "verify:tasks-planner-v3": "node scripts/verify-tasks-planner-v3.mjs",
     "verify:settlements-sidebar": "node scripts/verify-settlements-sidebar.mjs",
     "verify:ob1-nav-header-unify": "node scripts/verify-ob1-nav-header-unify.mjs",
+    "verify:navy-page-subnav": "node scripts/verify-navy-page-subnav.mjs",
     "verify:closure-19-sec-artifacts": "node scripts/verify-closure-19-sec-artifacts.mjs",
     "verify:closure-17-on-hold-triage": "node scripts/verify-closure-17-on-hold-triage.mjs",
     "verify:closure-18-perf-artifacts": "node scripts/verify-closure-18-perf-artifacts.mjs",

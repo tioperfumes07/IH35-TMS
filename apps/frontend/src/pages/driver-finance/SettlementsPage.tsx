@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { listSettlements } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -72,13 +73,19 @@ export function SettlementsPage() {
     <div className="space-y-3">
       <PageHeader title="Driver Settlements" subtitle="List + detail settlement workflow" />
 
-      <div className="overflow-x-auto rounded bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
-        <div className="flex min-w-max gap-4">
-          {["Drivers", "Profiles", "Pre-Settlements", "Settlements", "Cash Advances", "Liabilities", "Escrow", "Driver Pay Catalog", "Deduction Catalog"].map((item) => (
-            <span key={item} className={item === "Settlements" ? "border-b border-white pb-0.5 font-semibold" : ""}>{item}</span>
-          ))}
-        </div>
-      </div>
+      <NavyPageSubNav
+        items={[
+          { label: "Drivers",           to: "/drivers" },
+          { label: "Profiles",           to: "/drivers/profiles" },
+          { label: "Pre-Settlements",    to: "/drivers/pre-settlements" },
+          { label: "Settlements",        to: "/driver-finance/settlements" },
+          { label: "Cash Advances",      to: "/cash-advances" },
+          { label: "Liabilities",        to: "/liabilities" },
+          { label: "Escrow",             to: "/accounting/escrow" },
+          { label: "Driver Pay Catalog", to: "/accounting/settings/expense-category-map" },
+          { label: "Deduction Catalog",  to: "/accounting/settings/expense-category-map" },
+        ]}
+      />
 
       <div className="flex items-center gap-2">
         <Button
