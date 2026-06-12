@@ -13,72 +13,45 @@ ADD COLUMN IF NOT EXISTS pdf_generated_by UUID REFERENCES identity.users(id);
 
 COMMENT ON COLUMN settlement.settlement.approval_status IS 'Needs review → Approved → Finalized. PDF only after Finalized.';
 
--- Settlement line items (deductions, additional pay, expenses) with approval tracking
-CREATE TABLE IF NOT EXISTS driver_finance.settlement_line_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id UUID NOT NULL REFERENCES org.operating_companies(id) ON DELETE CASCADE,
-  settlement_id UUID NOT NULL REFERENCES settlement.settlement(id) ON DELETE CASCADE,
+-- Settlement line items: extends C1 settlement.settlement_line with approval tracking
+ALTER TABLE settlement.settlement_line
+ADD COLUMN IF NOT EXISTS approval_status VARCHAR(20) NOT NULL DEFAULT 'pending'
+  CHECK (approval_status IN ('pending', 'approved', 'rejected')),
+ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES identity.users(id),
+ADD COLUMN IF NOT EXISTS rejected_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS rejected_by UUID REFERENCES identity.users(id),
+ADD COLUMN IF NOT EXISTS rejection_reason TEXT,
+ADD COLUMN IF NOT EXISTS driver_visible BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN IF NOT EXISTS disputed BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS disputed_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS disputed_by UUID REFERENCES identity.drivers(id),
+ADD COLUMN IF NOT EXISTS dispute_reason TEXT,
+ADD COLUMN IF NOT EXISTS dispute_resolved_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS dispute_resolved_by UUID REFERENCES identity.users(id),
+ADD COLUMN IF NOT EXISTS category VARCHAR(50),
+ADD COLUMN IF NOT EXISTS source_type VARCHAR(30) CHECK (source_type IN ('policy_auto', 'driver_requested', 'manual_entry', 'linked_expense')),
+ADD COLUMN IF NOT EXISTS source_id UUID,
+ADD COLUMN IF NOT EXISTS source_table VARCHAR(100);
 
-  -- Line classification
-  line_type VARCHAR(30) NOT NULL CHECK (line_type IN ('deduction', 'additional_pay', 'expense', 'cash_advance', 'escrow')),
-  category VARCHAR(50) NOT NULL, -- 'escrow_for_claims', 'cash_advance', 'admin_fee_gas', 'pay_enlonada', etc.
+COMMENT ON COLUMN settlement.settlement_line.driver_visible IS 'If false, line is internal-only (not shown on driver PDF)';
+COMMENT ON COLUMN settlement.settlement_line.category IS 'Line category: escrow_for_claims, cash_advance, admin_fee_gas, pay_enlonada, etc.';
 
-  -- Financials
-  amount_cents INTEGER NOT NULL,
-  currency CHAR(3) NOT NULL DEFAULT 'USD',
-
-  -- Trip link (critical for expense tracking)
-  load_id UUID REFERENCES dispatch.loads(id),
-  load_number VARCHAR(50), -- Denormalized for display
-
-  -- Source tracking
-  source_type VARCHAR(30) NOT NULL CHECK (source_type IN ('policy_auto', 'driver_requested', 'manual_entry', 'linked_expense')),
-  source_id UUID, -- Links to original expense, cash advance request, etc.
-  source_table VARCHAR(100), -- 'banking.driver_expenses', 'banking.cash_advances', etc.
-
-  -- Approval state (per-line)
-  approval_status VARCHAR(20) NOT NULL DEFAULT 'pending'
-    CHECK (approval_status IN ('pending', 'approved', 'rejected')),
-  approved_at TIMESTAMPTZ,
-  approved_by UUID REFERENCES identity.users(id),
-  rejected_at TIMESTAMPTZ,
-  rejected_by UUID REFERENCES identity.users(id),
-  rejection_reason TEXT,
-
-  -- Driver-visible flag (controls PDF content)
-  driver_visible BOOLEAN NOT NULL DEFAULT true,
-
-  -- Dispute flag
-  disputed BOOLEAN NOT NULL DEFAULT false,
-  disputed_at TIMESTAMPTZ,
-  disputed_by UUID REFERENCES identity.drivers(id),
-  dispute_reason TEXT,
-  dispute_resolved_at TIMESTAMPTZ,
-  dispute_resolved_by UUID REFERENCES identity.users(id),
-
-  -- Audit
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_by UUID REFERENCES identity.users(id),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-COMMENT ON TABLE driver_finance.settlement_line_items IS 'Per-line items in a settlement with individual approval tracking';
-COMMENT ON COLUMN driver_finance.settlement_line_items.load_id IS 'Trip number link - every expense must link to a load';
-COMMENT ON COLUMN driver_finance.settlement_line_items.driver_visible IS 'If false, line is internal-only (not shown on driver PDF)';
-
--- RLS for settlement line items
-ALTER TABLE settlement.settlement_line ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY settlement_line_tenant_isolation
+-- RLS policy for settlement_line (extends C1)
+CREATE POLICY IF NOT EXISTS settlement_line_tenant_isolation
 ON settlement.settlement_line
 FOR ALL
 TO ih35_app
 USING (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
+-- Indexes for settlement_line approval tracking
+CREATE INDEX IF NOT EXISTS idx_settlement_line_approval_status ON settlement.settlement_line(approval_status);
+CREATE INDEX IF NOT EXISTS idx_settlement_line_disputed ON settlement.settlement_line(disputed) WHERE disputed = true;
+
 -- Trip-link queue: expenses needing manual load assignment
 CREATE TABLE IF NOT EXISTS driver_finance.trip_link_queue (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id UUID NOT NULL REFERENCES org.operating_companies(id) ON DELETE CASCADE,
+  operating_company_id UUID NOT NULL REFERENCES org.companies(id) ON DELETE CASCADE,
 
   -- The expense needing a trip link
   expense_id UUID NOT NULL,
@@ -100,7 +73,7 @@ CREATE TABLE IF NOT EXISTS driver_finance.trip_link_queue (
   assigned_by UUID REFERENCES identity.users(id),
 
   -- Settlement link (once resolved and added to settlement)
-  settlement_line_item_id UUID REFERENCES driver_finance.settlement_line_items(id),
+  settlement_line_id UUID REFERENCES settlement.settlement_line(id),
 
   status VARCHAR(20) NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'suggested', 'assigned', 'linked')),
@@ -123,7 +96,7 @@ USING (operating_company_id = NULLIF(current_setting('app.operating_company_id',
 -- Escrow running balance per driver
 CREATE TABLE IF NOT EXISTS driver_finance.escrow_balances (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id UUID NOT NULL REFERENCES org.operating_companies(id) ON DELETE CASCADE,
+  operating_company_id UUID NOT NULL REFERENCES org.companies(id) ON DELETE CASCADE,
   driver_id UUID NOT NULL REFERENCES mdata.drivers(id) ON DELETE CASCADE,
 
   total_held_cents INTEGER NOT NULL DEFAULT 0,
@@ -158,12 +131,12 @@ USING (operating_company_id = NULLIF(current_setting('app.operating_company_id',
 -- Escrow ledger (detailed history)
 CREATE TABLE IF NOT EXISTS driver_finance.escrow_ledger (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id UUID NOT NULL REFERENCES org.operating_companies(id) ON DELETE CASCADE,
+  operating_company_id UUID NOT NULL REFERENCES org.companies(id) ON DELETE CASCADE,
   driver_id UUID NOT NULL REFERENCES mdata.drivers(id) ON DELETE CASCADE,
   escrow_balance_id UUID NOT NULL REFERENCES driver_finance.escrow_balances(id) ON DELETE CASCADE,
 
   settlement_id UUID REFERENCES settlement.settlement(id),
-  settlement_line_item_id UUID REFERENCES driver_finance.settlement_line_items(id),
+  settlement_line_id UUID REFERENCES settlement.settlement_line(id),
 
   transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('hold', 'release', 'forfeit')),
   amount_cents INTEGER NOT NULL,
