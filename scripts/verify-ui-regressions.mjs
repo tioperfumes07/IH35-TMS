@@ -84,7 +84,9 @@ try {
 
   const customerDetail = read("apps/frontend/src/pages/CustomerDetail.tsx");
   assertIncludes(customerDetail, '"Contracts"', "Customer contracts tab missing");
-  assertIncludes(customerDetail, "Upload broker/customer contract PDFs", "Customer contracts section missing");
+  assertIncludes(customerDetail, "CustomerContractsTab", "Customer contracts section missing");
+  const contractsTab = read("apps/frontend/src/components/customers/CustomerContractsTab.tsx");
+  assertIncludes(contractsTab, "Upload Contract", "Customer contracts upload action missing");
 
   console.log("✅ UI regression guards passed");
 } catch (error) {
