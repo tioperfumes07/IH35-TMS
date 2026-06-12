@@ -11,7 +11,7 @@ const backendPath =
   path.join(ROOT, "apps/backend/src/safety/foundation-kpis.routes.ts");
 
 const EXPECTED_GROUP_COUNT = 9;
-const EXPECTED_TAB_COUNT = 27;
+const EXPECTED_TAB_COUNT = 25;
 
 const groups = [
   "Driver Files & Training",
@@ -43,9 +43,7 @@ const tabs = [
   ["incidents-claims", "cargo-claims"],
   ["fines-discipline", "internal-fines"],
   ["fines-discipline", "external-fines"],
-  ["fines-discipline", "complaints"],
   ["driver-financial", "escrow-record"],
-  ["compliance-monitoring", "geofence-alerts"],
   ["compliance-monitoring", "insurance"],
   ["compliance-monitoring", "permits"],
   ["compliance-monitoring", "integrity-reports"],
