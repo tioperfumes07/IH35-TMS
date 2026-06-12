@@ -1,0 +1,23 @@
+{
+  "block_id": "GAP-CI-WIRE-PREPUSH-GUARDS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "CI-HARDENING",
+  "task": "Wire all static pre-push locked guards into GitHub Actions CI so git push --no-verify cannot silently break a locked rule. Adds .github/workflows/locked-guards.yml with 36 static guards that all PASS on main (aadf2aab).",
+  "branch": "feat/gap-ci-wire-prepush-guards",
+  "lane": "A",
+  "details": [
+    "locked-guards.yml: 36 static guards, one step each, no continue-on-error, no || true",
+    "All 36 guards verified PASS on aadf2aab before wiring",
+    "1 excluded guard (verify:no-orphan-migration-ledger-entries) needs DATABASE_URL — db-gated, not added",
+    "run-guard-audit.mjs: audit helper script used to verify guards before wiring"
+  ],
+  "allowed_files": [
+    ".block-ready/GAP-CI-WIRE-PREPUSH-GUARDS.json",
+    ".github/workflows/locked-guards.yml",
+    "scripts/run-guard-audit.mjs"
+  ],
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}

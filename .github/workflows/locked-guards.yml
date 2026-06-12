@@ -1,0 +1,121 @@
+name: locked-guards
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  locked-guards:
+    name: locked-guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+
+      - name: verify:deep-audit-b-invoices-subnav
+        run: npm run verify:deep-audit-b-invoices-subnav
+
+      - name: verify:deep-audit-b-bell-icon
+        run: npm run verify:deep-audit-b-bell-icon
+
+      - name: verify:nav-integrity
+        run: npm run verify:nav-integrity
+
+      - name: verify:ob1-nav-header-unify
+        run: npm run verify:ob1-nav-header-unify
+
+      - name: verify:settlements-sidebar
+        run: npm run verify:settlements-sidebar
+
+      - name: verify:tasks-planner-v3
+        run: npm run verify:tasks-planner-v3
+
+      - name: verify:no-bare-health-references
+        run: npm run verify:no-bare-health-references
+
+      - name: verify:no-internal-language-in-prod-ui
+        run: npm run verify:no-internal-language-in-prod-ui
+
+      - name: verify:maint-jump-to-tab-removed
+        run: npm run verify:maint-jump-to-tab-removed
+
+      - name: verify:startup-migration-drift-guard
+        run: npm run verify:startup-migration-drift-guard
+
+      - name: verify:canonical-schema-names
+        run: npm run verify:canonical-schema-names
+
+      - name: verify:arch-design
+        run: npm run verify:arch-design
+
+      - name: verify:canonical-audit-table-name
+        run: npm run verify:canonical-audit-table-name
+
+      - name: verify:accounting-route-map
+        run: npm run verify:accounting-route-map
+
+      - name: verify:postgres-ssl-explicit
+        run: npm run verify:postgres-ssl-explicit
+
+      - name: verify:migration-chain-runbook
+        run: npm run verify:migration-chain-runbook
+
+      - name: verify:samsara-config-shape
+        run: npm run verify:samsara-config-shape
+
+      - name: verify:samsara-webhook-route-mounted
+        run: npm run verify:samsara-webhook-route-mounted
+
+      - name: verify:eld-tabs-canonical
+        run: npm run verify:eld-tabs-canonical
+
+      - name: verify:mdata-insert-arity
+        run: npm run verify:mdata-insert-arity
+
+      - name: verify:maintenance-insert-column-drift
+        run: npm run verify:maintenance-insert-column-drift
+
+      - name: verify:no-test-users-in-production-list
+        run: npm run verify:no-test-users-in-production-list
+
+      - name: verify:ds-admin-route-boundary
+        run: npm run verify:ds-admin-route-boundary
+
+      - name: verify:tenant-scope-on-routes
+        run: npm run verify:tenant-scope-on-routes
+
+      - name: verify:wo-display-id-format
+        run: npm run verify:wo-display-id-format
+
+      - name: verify:wo-status-transitions
+        run: npm run verify:wo-status-transitions
+
+      - name: verify:block-ready-c5-no-duplicate-arch-design
+        run: npm run verify:block-ready-c5-no-duplicate-arch-design
+
+      - name: verify:accounting-backbone-schema
+        run: npm run verify:accounting-backbone-schema
+
+      - name: verify:accounting-reports-ui-contract
+        run: npm run verify:accounting-reports-ui-contract
+
+      - name: verify:no-unledgered-migrations
+        run: npm run verify:no-unledgered-migrations
+
+      - name: verify:safety-events-append-only
+        run: npm run verify:safety-events-append-only
+
+      - name: verify:safety-rls-coverage
+        run: npm run verify:safety-rls-coverage
+
+      - name: verify:safety-expiry-tracking-coverage
+        run: npm run verify:safety-expiry-tracking-coverage
+
+      - name: verify:fleet-table-rows-clickable
+        run: npm run verify:fleet-table-rows-clickable
+
+      - name: verify:fleet-counters-match-rows
+        run: npm run verify:fleet-counters-match-rows
