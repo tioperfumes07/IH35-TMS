@@ -102,5 +102,18 @@ CREATE POLICY reclassif_log_company_isolation
   );
 
 -- ── 6. Grants ─────────────────────────────────────────────────────────────────
-GRANT SELECT, INSERT ON mdata.entity_reclassification_log TO authenticated;
-GRANT USAGE ON SCHEMA mdata TO authenticated;
+GRANT USAGE ON SCHEMA mdata TO ih35_app;
+GRANT SELECT, INSERT ON mdata.entity_reclassification_log TO ih35_app;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    EXECUTE 'GRANT USAGE ON SCHEMA mdata TO authenticated';
+    EXECUTE 'GRANT SELECT, INSERT ON mdata.entity_reclassification_log TO authenticated';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+    EXECUTE 'GRANT USAGE ON SCHEMA mdata TO service_role';
+    EXECUTE 'GRANT SELECT, INSERT ON mdata.entity_reclassification_log TO service_role';
+  END IF;
+END $$;
