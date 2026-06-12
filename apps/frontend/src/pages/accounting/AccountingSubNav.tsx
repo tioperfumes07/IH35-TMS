@@ -1,38 +1,49 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { ACCOUNTING_CLEAN_TABS } from "./subnav-manifest";
+import { useLocation } from "react-router-dom";
+import { HoverDropdownNav } from "../../components/forms/shared/HoverDropdownNav";
+import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
 
-function tabActive(pathname: string, to: string): boolean {
-  if (to === "/accounting") return pathname === "/accounting";
-  return pathname === to || pathname.startsWith(`${to}/`);
+const BILL_CATEGORY_PATHS: Record<string, string> = {
+  maintenance: "/accounting/bills/maintenance",
+  repair: "/accounting/bills/repair",
+  fuel: "/accounting/bills/fuel",
+  driver: "/accounting/bills/driver",
+};
+
+/** Map detail paths to list href so leaf tabs stay active (primitive compares exact href). */
+export function accountingSubNavActiveHref(pathname: string, search: string): string {
+  if (pathname === "/accounting/bills") {
+    const category = new URLSearchParams(search).get("category");
+    if (category && BILL_CATEGORY_PATHS[category]) return BILL_CATEGORY_PATHS[category];
+  }
+  if (pathname.startsWith("/accounting/invoices/")) return "/accounting/invoices";
+  if (pathname.startsWith("/accounting/multi-entity")) return "/accounting/multi-entity";
+  if (pathname.startsWith("/accounting/payments/")) return "/accounting/payments";
+  if (pathname.startsWith("/accounting/factoring/")) return "/accounting/factoring";
+  if (pathname.startsWith("/accounting/factor-reconciliation")) return "/accounting/factor-reconciliation";
+  if (pathname.startsWith("/accounting/sales-tax")) return "/accounting/sales-tax";
+  if (pathname.startsWith("/accounting/month-close")) return "/accounting/month-close";
+  if (pathname.startsWith("/accounting/audit-trail")) return "/accounting/audit-trail";
+  if (pathname.startsWith("/accounting/posting-lineage")) return "/accounting/posting-lineage";
+  if (pathname.startsWith("/accounting/escrow")) return "/accounting/escrow";
+  if (pathname.startsWith("/accounting/cash-forecast")) return "/accounting/cash-forecast";
+  if (pathname.startsWith("/accounting/collections")) return "/accounting/collections";
+  if (pathname.startsWith("/accounting/period-comparison")) return "/accounting/period-comparison";
+  if (pathname.startsWith("/accounting/pre-settlements")) return "/accounting/pre-settlements";
+  if (pathname.startsWith("/accounting/dispute-queue")) return "/accounting/dispute-queue";
+  if (pathname.startsWith("/accounting/abandonment-queue")) return "/accounting/abandonment-queue";
+  if (pathname.startsWith("/reports/ar-aging")) return "/reports/ar-aging";
+  if (pathname.startsWith("/reports/ap-aging")) return "/reports/ap-aging";
+  if (pathname.startsWith("/accounting/settings/expense-category-map")) return "/accounting/settings/expense-category-map";
+  if (pathname.startsWith("/accounting/settings/coa-roles")) return "/accounting/settings/coa-roles";
+  return pathname;
 }
 
-/** OB1 — unified 12-tab accounting nav. Replaces the legacy 38-item hover-dropdown. */
 export function AccountingSubNav() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   return (
-    <nav
-      className="overflow-x-auto rounded border border-gray-200 bg-white px-2 py-1 mb-4"
-      aria-label="Accounting sub-navigation"
-      data-testid="accounting-subnav-unified"
-    >
-      <div className="flex min-w-max gap-1">
-        {ACCOUNTING_CLEAN_TABS.map((tab) => {
-          const active = tabActive(pathname, tab.to);
-          return (
-            <NavLink
-              key={tab.label}
-              to={tab.to}
-              className={`rounded px-3 py-1 text-sm whitespace-nowrap ${
-                active
-                  ? "border-b-2 border-sky-600 bg-gray-100 font-semibold text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              {tab.label}
-            </NavLink>
-          );
-        })}
-      </div>
-    </nav>
+    <HoverDropdownNav
+      items={ACCOUNTING_SUB_NAV_ITEMS.map((item) => item)}
+      activeHref={accountingSubNavActiveHref(pathname, search)}
+    />
   );
 }

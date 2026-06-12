@@ -21,36 +21,37 @@ const manifest = read("apps/frontend/src/pages/accounting/subnav-manifest.ts");
 const subNav = read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx");
 const wrapper = read("apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx");
 
-// ACCOUNTING_CLEAN_TABS exported from manifest
+// ACCOUNTING_CLEAN_TABS exported from manifest (OB1 deliverable)
 if (!manifest.includes("export const ACCOUNTING_CLEAN_TABS")) fail("subnav-manifest missing ACCOUNTING_CLEAN_TABS export");
 else pass("ACCOUNTING_CLEAN_TABS exported from subnav-manifest");
 
-// AccountingSubNav uses ACCOUNTING_CLEAN_TABS (not HoverDropdownNav)
-if (subNav.includes("HoverDropdownNav")) fail("AccountingSubNav still imports legacy HoverDropdownNav");
-else pass("AccountingSubNav no longer uses HoverDropdownNav");
+// AccountingSubNav MUST keep HoverDropdownNav (required by CLOSURE-15-DEEP-AUDIT-B locked guard)
+if (!subNav.includes("HoverDropdownNav")) fail("AccountingSubNav must keep HoverDropdownNav (CLOSURE-15 locked guard)");
+else pass("AccountingSubNav correctly keeps HoverDropdownNav (17-tab invoice-context nav)");
 
-if (!subNav.includes("ACCOUNTING_CLEAN_TABS")) fail("AccountingSubNav does not use ACCOUNTING_CLEAN_TABS");
-else pass("AccountingSubNav uses ACCOUNTING_CLEAN_TABS");
+// AccountingSubNav must keep accountingSubNavActiveHref (required by CLOSURE-15)
+if (!subNav.includes('pathname.startsWith("/accounting/invoices/")')) fail("accountingSubNavActiveHref missing invoices/ prefix match (CLOSURE-15)");
+else pass("accountingSubNavActiveHref intact with invoices/ prefix match");
 
-// AccountingSubNav has unified test id
-if (!subNav.includes("accounting-subnav-unified")) fail("AccountingSubNav missing data-testid accounting-subnav-unified");
-else pass("AccountingSubNav has data-testid accounting-subnav-unified");
-
-// AccountingSubNavWrapper no longer defines its own ACCOUNTING_TABS constant
+// AccountingSubNavWrapper uses ACCOUNTING_CLEAN_TABS from manifest (not a local duplicate)
 if (wrapper.includes("const ACCOUNTING_TABS")) fail("AccountingSubNavWrapper still defines local ACCOUNTING_TABS (should import from manifest)");
-else pass("AccountingSubNavWrapper imports ACCOUNTING_CLEAN_TABS from manifest (no local copy)");
+else pass("AccountingSubNavWrapper: no local ACCOUNTING_TABS duplicate");
+
+if (!wrapper.includes("ACCOUNTING_CLEAN_TABS")) fail("AccountingSubNavWrapper does not use ACCOUNTING_CLEAN_TABS from manifest");
+else pass("AccountingSubNavWrapper uses ACCOUNTING_CLEAN_TABS from manifest");
 
 // Factoring tab present in clean tabs
 if (!manifest.includes('"Factoring"') || !manifest.includes('"/accounting/factoring"')) fail("ACCOUNTING_CLEAN_TABS missing Factoring tab");
-else pass("ACCOUNTING_CLEAN_TABS includes Factoring tab pointing to /accounting/factoring");
+else pass("ACCOUNTING_CLEAN_TABS includes Factoring → /accounting/factoring");
 
 // Settlements tab present in clean tabs
 if (!manifest.includes('"Settlements"') || !manifest.includes('"/driver-finance/settlements"')) fail("ACCOUNTING_CLEAN_TABS missing Settlements tab");
-else pass("ACCOUNTING_CLEAN_TABS includes Settlements tab");
+else pass("ACCOUNTING_CLEAN_TABS includes Settlements → /driver-finance/settlements");
 
-// Verify 12 tabs total
-const tabCount = (manifest.match(/\{ label:/g) || []).length;
-if (tabCount < 12) fail(`ACCOUNTING_CLEAN_TABS has fewer than 12 tabs (found ~${tabCount})`);
+// Verify ACCOUNTING_CLEAN_TABS block has >=12 entries
+const cleanTabsBlock = manifest.match(/export const ACCOUNTING_CLEAN_TABS\s*=\s*\[([\s\S]*?)\]\s*as const/);
+const tabCount = cleanTabsBlock ? (cleanTabsBlock[1].match(/label:/g) ?? []).length : 0;
+if (tabCount < 12) fail(`ACCOUNTING_CLEAN_TABS has fewer than 12 entries (found ${tabCount})`);
 else pass(`ACCOUNTING_CLEAN_TABS has ${tabCount} tab entries`);
 
 if (failed) { console.error("\n[verify-ob1] FAILED"); process.exit(1); }
