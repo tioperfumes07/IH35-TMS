@@ -48,17 +48,16 @@ export async function findTripMatches(
     dispatch_date: string;
     delivery_date: string;
   }>(`
-    SELECT 
+    SELECT
       l.id as load_id,
       l.load_number,
       u.id as truck_id,
       u.unit_number as truck_number,
       l.pickup_appointment_start::date as dispatch_date,
       COALESCE(l.delivery_appointment_end, l.delivery_appointment_start)::date as delivery_date
-    FROM dispatch.loads l
-    JOIN dispatch.load_assignments la ON la.load_id = l.id
-    JOIN mdata.units u ON u.id = la.unit_id
-    WHERE la.unit_id = $1
+    FROM mdata.loads l
+    JOIN mdata.units u ON u.id = l.assigned_unit_id
+    WHERE l.assigned_unit_id = $1
       AND l.pickup_appointment_start::date <= $2::date
       AND COALESCE(l.delivery_appointment_end, l.delivery_appointment_start)::date >= $2::date
       AND l.status NOT IN ('cancelled', 'draft')

@@ -70,12 +70,12 @@ CREATE TABLE IF NOT EXISTS driver_finance.trip_link_queue (
   expense_date DATE NOT NULL,
 
   -- Suggested match (if auto-link found one)
-  suggested_load_id UUID REFERENCES dispatch.loads(id),
+  suggested_load_id UUID REFERENCES mdata.loads(id),
   suggested_load_number VARCHAR(50),
   suggested_reason TEXT, -- 'Truck T169 dispatched on load 13263, date 2026-05-19 in window'
 
   -- Resolution
-  assigned_load_id UUID REFERENCES dispatch.loads(id),
+  assigned_load_id UUID REFERENCES mdata.loads(id),
   assigned_at TIMESTAMPTZ,
   assigned_by UUID REFERENCES identity.users(id),
 
