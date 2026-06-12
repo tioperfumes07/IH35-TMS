@@ -1,0 +1,35 @@
+{
+  "block_id": "C3-CUSTOMER-CONTRACT-UPLOAD",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "BUILD-DATA",
+  "task": "Upload + store customer contracts. Append-only. Supersede by new version. Audit-linked. Reuses existing docs/R2 storage.",
+  "branch": "feat/c3-customer-contract-upload",
+  "lane": "A",
+  "details": [
+    "db/migrations/202606120300_c3_customer_contract.sql: schema customer, table customer.contract, file_categories seed (customer_contract), RLS+NULLIF, supersede chain, identity.users FK",
+    "apps/backend/src/customer-contracts/customer-contract.routes.ts: POST create, GET list, GET single, POST supersede — all with appendCrudAudit spine emit",
+    "apps/backend/src/index.ts: registerCustomerContractRoutes registered",
+    "apps/frontend/src/api/customer-contracts.ts: listCustomerContracts, createCustomerContract, supersedeCustomerContract",
+    "apps/frontend/src/components/customers/CustomerContractsTab.tsx: upload+list+supersede UI using UploadModal + DataTable",
+    "apps/frontend/src/pages/CustomerDetail.tsx: Contracts tab wired to CustomerContractsTab",
+    "scripts/verify-customer-contract-upload.mjs: 27/27 PASS",
+    ".github/workflows/ci.yml: verify:customer-contract-upload step added",
+    "package.json: verify:customer-contract-upload wired"
+  ],
+  "allowed_files": [
+    ".block-ready/C3-CUSTOMER-CONTRACT-UPLOAD.json",
+    "db/migrations/202606120300_c3_customer_contract.sql",
+    "apps/backend/src/customer-contracts/customer-contract.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/customer-contracts.ts",
+    "apps/frontend/src/components/customers/CustomerContractsTab.tsx",
+    "apps/frontend/src/pages/CustomerDetail.tsx",
+    "scripts/verify-customer-contract-upload.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["verify:customer-contract-upload"]
+}

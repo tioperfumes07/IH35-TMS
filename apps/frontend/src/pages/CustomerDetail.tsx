@@ -46,6 +46,7 @@ import { FMCSAVerificationModal } from "../components/customers/FMCSAVerificatio
 import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetentionEditor";
 import { CustomerRelationshipScore } from "../components/customers/CustomerRelationshipScore";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
+import { CustomerContractsTab } from "../components/customers/CustomerContractsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
 import { CoiRequestsTab } from "./customers/tabs/CoiRequestsTab";
@@ -1448,18 +1449,19 @@ export function CustomerDetailPage() {
       ) : null}
 
       {activeTab === "Contracts" ? (
-        canViewDocuments ? (
+        canViewDocuments && operatingCompanyId ? (
           <ErrorBoundary>
             <DataPanel title="Contracts">
-              <p className="mb-2 text-xs text-gray-600">
-                Upload broker/customer contract PDFs. Files are stored per-customer and remain viewable and downloadable.
-              </p>
-              <DocumentsTab entityType="customer" entityId={customer.id} entityName={customer.name} />
+              <CustomerContractsTab
+                customerId={customer.id}
+                customerName={customer.name}
+                operatingCompanyId={operatingCompanyId}
+              />
             </DataPanel>
           </ErrorBoundary>
         ) : (
           <div className="rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-            You do not have permission to view customer contracts.
+            {!canViewDocuments ? "You do not have permission to view customer contracts." : "Loading…"}
           </div>
         )
       ) : null}
