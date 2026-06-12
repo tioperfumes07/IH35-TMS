@@ -14,7 +14,6 @@ const routes = [
   "/safety/cargo-claims",
   "/safety/internal-fines",
   "/safety/external-fines",
-  "/safety/complaints",
   "/safety/escrow-record",
   "/safety/insurance",
   "/safety/permits",
