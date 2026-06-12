@@ -16,6 +16,7 @@
     ".github/workflows/ci.yml + package.json: verify:smoke-service-token-auth wired."
   ],
   "allowed_files": [
+    ".block-ready.agent1.json",
     ".block-ready/E1-SMOKE-SERVICE-TOKEN-AUTH.json",
     "apps/backend/src/auth/service-token.middleware.ts",
     "apps/backend/src/admin/smoke-probe.routes.ts",
@@ -31,5 +32,6 @@
   "guard_required": true,
   "extra_gates": ["verify:smoke-service-token-auth"],
   "financial_writes": false,
+  "runtime_path": "src",
   "note": "Final block. After merge + deploy-green the planned deferred build scope is complete."
 }
