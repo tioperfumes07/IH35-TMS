@@ -185,22 +185,14 @@ TO ih35_app
 USING (operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
 
 -- Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_settlement_line_items_settlement_id ON driver_finance.settlement_line_items(settlement_id);
-CREATE INDEX IF NOT EXISTS idx_settlement_line_items_settlement_id ON settlement.settlement_line(settlement_id);
-CREATE INDEX IF NOT EXISTS idx_settlement_line_items_load_id ON driver_finance.settlement_line_items(load_id);
-CREATE INDEX IF NOT EXISTS idx_settlement_line_items_approval_status ON driver_finance.settlement_line_items(approval_status);
+CREATE INDEX IF NOT EXISTS idx_settlement_line_approval_status ON settlement.settlement_line(approval_status);
+CREATE INDEX IF NOT EXISTS idx_settlement_line_load_id ON settlement.settlement_line(load_id) WHERE load_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_trip_link_queue_status ON driver_finance.trip_link_queue(status);
 CREATE INDEX IF NOT EXISTS idx_trip_link_queue_unit_date ON driver_finance.trip_link_queue(unit_id, expense_date);
 CREATE INDEX IF NOT EXISTS idx_escrow_balances_driver ON driver_finance.escrow_balances(operating_company_id, driver_id);
-CREATE INDEX IF NOT EXISTS idx_escrow_ledger_driver ON driver_finance.escrow_ledger(escrow_balance_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_escrow_ledger_balance ON driver_finance.escrow_ledger(escrow_balance_id, created_at DESC);
 
 -- Grants
-GRANT SELECT, INSERT, UPDATE, DELETE ON driver_finance.settlement_line_items TO ih35_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON driver_finance.trip_link_queue TO ih35_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON driver_finance.escrow_balances TO ih35_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON driver_finance.escrow_ledger TO ih35_app;
-
-GRANT USAGE ON SEQUENCE driver_finance.settlement_line_items_id_seq TO ih35_app;
-GRANT USAGE ON SEQUENCE driver_finance.trip_link_queue_id_seq TO ih35_app;
-GRANT USAGE ON SEQUENCE driver_finance.escrow_balances_id_seq TO ih35_app;
-GRANT USAGE ON SEQUENCE driver_finance.escrow_ledger_id_seq TO ih35_app;

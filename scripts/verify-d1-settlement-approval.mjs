@@ -3,7 +3,7 @@
  * verify-d1-settlement-approval.mjs
  *
  * Verifies D1 Settlement Approval Workspace implementation:
- * 1. Database schema exists (settlement_line_items, trip_link_queue, escrow_balances, escrow_ledger)
+ * 1. Database schema exists (settlement_line, trip_link_queue, escrow_balances, escrow_ledger)
  * 2. Settlement approval status enum exists
  * 3. Trip-link engine exists and exports key functions
  * 4. Approval service exists with per-line approve/reject
@@ -43,15 +43,13 @@ const checks = [
   () => checkFile("db/migrations/202606120600_d1_settlement_approval.sql", "D1 migration"),
   
   // 2. Schema elements in migration
-  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "settlement_line_items", "Migration: settlement_line_items table"),
+  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "ALTER TABLE settlement.settlement_line", "Migration: settlement_line table altered"),
   () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "trip_link_queue", "Migration: trip_link_queue table"),
   () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "escrow_balances", "Migration: escrow_balances table"),
   () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "escrow_ledger", "Migration: escrow_ledger table"),
   () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "approval_status", "Migration: approval_status column"),
   () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "driver_visible", "Migration: driver_visible flag"),
   () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "disputed", "Migration: disputed flag"),
-  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "GRANT USAGE ON SEQUENCE", "Migration: sequence grants"),
-  
   // 3. Trip-link engine
   () => checkFile("apps/backend/src/settlements/trip-link.engine.ts", "Trip-link engine"),
   () => checkFileContains("apps/backend/src/settlements/trip-link.engine.ts", "findTripMatches", "Trip-link: findTripMatches function"),
@@ -82,16 +80,15 @@ const checks = [
   
   // 6. RLS policies
   () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "ENABLE ROW LEVEL SECURITY", "RLS: enabled"),
-  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "settlement_line_items_tenant_isolation", "RLS: settlement_line_items policy"),
+  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "settlement_line_tenant_isolation", "RLS: settlement_line policy"),
   () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "trip_link_queue_tenant_isolation", "RLS: trip_link_queue policy"),
   
   // 7. Indexes
-  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "idx_settlement_line_items_settlement_id", "Index: settlement_id"),
+  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "idx_settlement_line_approval_status", "Index: settlement_line approval_status"),
   () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "idx_trip_link_queue_status", "Index: trip_link_queue status"),
   
   // 8. Database grants
-  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "GRANT SELECT, INSERT, UPDATE, DELETE ON driver_finance.settlement_line_items", "Grants: settlement_line_items"),
-  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "GRANT USAGE ON SEQUENCE", "Grants: sequences"),
+  () => checkFileContains("db/migrations/202606120600_d1_settlement_approval.sql", "GRANT SELECT, INSERT, UPDATE, DELETE ON driver_finance.trip_link_queue", "Grants: trip_link_queue"),
 ];
 
 let passed = 0;
