@@ -339,6 +339,7 @@ import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 import { registerLaunchReadinessRoutes } from "./admin/launch-readiness.routes.js";
 import { registerHealthDeepRoutes } from "./admin/health-deep.routes.js";
+import { registerSmokeProbeRoutes } from "./admin/smoke-probe.routes.js";
 import { registerAdminJobsRoutes } from "./admin/admin-jobs.routes.js";
 import { registerDataImportAdminRoutes } from "./admin/data-import.routes.js";
 import { resolveMonorepoRoot } from "./lib/monorepo-root.js";
@@ -590,6 +591,7 @@ async function main() {
   await registerAdminSyncHealthRoutes(app);
   await registerLaunchReadinessRoutes(app);
   await registerHealthDeepRoutes(app);
+  await registerSmokeProbeRoutes(app);
   await registerAdminJobsRoutes(app);
   await registerMigrationStatusRoutes(app);
   await registerAdminObservabilityRoutes(app);

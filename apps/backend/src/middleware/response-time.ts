@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { requireServiceToken } from "../auth/service-token.middleware.js";
 
 export type PerfPercentiles = {
   count: number;
@@ -65,7 +66,10 @@ export async function registerPerfMetricsRoute(
   requireAuth: (req: FastifyRequest, reply: FastifyReply) => Promise<boolean>
 ) {
   app.get("/api/v1/internal/perf-metrics", async (req, reply) => {
-    if (!(await requireAuth(req, reply))) {
+    const hasServiceToken = (req.headers["authorization"] ?? "").startsWith("Bearer ");
+    if (hasServiceToken) {
+      if (!requireServiceToken(req, reply)) return;
+    } else if (!(await requireAuth(req, reply))) {
       return reply.code(401).send({ error: "unauthorized" });
     }
     return getPerfMetrics();

@@ -1042,6 +1042,9 @@ jobs:
       - name: verify:cust-vend-reclassify
         run: npm run verify:cust-vend-reclassify
 
+      - name: verify:smoke-service-token-auth
+        run: npm run verify:smoke-service-token-auth
+
       - name: verify:settlements-sidebar
         run: npm run verify:settlements-sidebar
 
