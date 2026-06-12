@@ -1,0 +1,35 @@
+{
+  "block_id": "A6-AUDIT-UNIVERSAL-VIEW",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "AUDIT-READ",
+  "task": "Universal read API over events.event_log at GET /api/v1/audit/events with RLS + pagination. AuditTrailPage at /audit/trail: filterable, expandable rows, CSV export. No mutations. No migration.",
+  "branch": "feat/a6-audit-universal-view",
+  "lane": "A",
+  "details": [
+    "audit/spine-events.routes.ts — reads events.event_log, SET LOCAL RLS, LIMIT/OFFSET, read-only.",
+    "index.ts: registerSpineEventsRoutes + registerAuditViewerRoutes both registered.",
+    "api/audit.ts: listSpineEvents() + SpineEvent type.",
+    "pages/audit/AuditTrailPage.tsx — filter bar, table, expandable rows, CSV export.",
+    "manifest.tsx: /audit/trail route (OwnerSuperAdminRoute).",
+    "sidebar-config.ts: Audit Trail link for Owner/SuperAdmin.",
+    "verify-a6-audit-universal-view.mjs: 15/15 passing.",
+    "ci.yml + package.json: verify:a6 wired."
+  ],
+  "allowed_files": [
+    ".block-ready/A6-AUDIT-UNIVERSAL-VIEW.json",
+    "apps/backend/src/audit/spine-events.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/audit.ts",
+    "apps/frontend/src/pages/audit/AuditTrailPage.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/components/layout/sidebar-config.ts",
+    "scripts/verify-a6-audit-universal-view.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:a6-audit-universal-view"]
+}

@@ -1027,6 +1027,9 @@ jobs:
       - name: verify:a5-audit-emit-banking
         run: npm run verify:a5-audit-emit-banking
 
+      - name: verify:a6-audit-universal-view
+        run: npm run verify:a6-audit-universal-view
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 

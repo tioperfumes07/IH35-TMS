@@ -231,6 +231,7 @@ import { ForensicReviewPage } from "../pages/forensic/ForensicReviewPage";
 import { ActivityLogPage } from "../pages/admin/ActivityLogPage";
 import AuditEventsList from "../pages/audit/AuditEventsList";
 import AuditLogViewer from "../pages/admin/audit-log/AuditLogViewer";
+import AuditTrailPage from "../pages/audit/AuditTrailPage";
 import { MigrationStatusPage } from "../pages/admin/MigrationStatus";
 import { ErrorMonitorPage } from "../pages/admin/ErrorMonitor";
 import { IntegrityAdminPage } from "../pages/admin/IntegrityAdminPage";
@@ -2691,6 +2692,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <OwnerSuperAdminRoute>
               <AuditLogViewer />
+            </OwnerSuperAdminRoute>
+          }
+        />
+        <Route
+          path="/audit/trail"
+          element={
+            <OwnerSuperAdminRoute>
+              <AuditTrailPage />
             </OwnerSuperAdminRoute>
           }
         />
