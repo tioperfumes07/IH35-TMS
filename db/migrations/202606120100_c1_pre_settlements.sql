@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS settlement.settlement_line (
   id                    uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   settlement_id         uuid        NOT NULL REFERENCES settlement.settlement(id) ON DELETE CASCADE,
   operating_company_id  uuid        NOT NULL REFERENCES org.companies(id),
-  load_id               uuid        REFERENCES dispatch.loads(id),
+  load_id               uuid        REFERENCES mdata.loads(id),
   line_type             text        NOT NULL CHECK (
                           line_type IN ('load_pay', 'mileage_pay', 'extra_pay', 'reimbursement', 'other')
                         ),
