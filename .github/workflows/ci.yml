@@ -1048,6 +1048,9 @@ jobs:
       - name: verify:settlements-sidebar
         run: npm run verify:settlements-sidebar
 
+      - name: verify:d1-settlement-approval
+        run: npm run verify:d1-settlement-approval
+
       - name: verify:ob1-nav-header-unify
         run: npm run verify:ob1-nav-header-unify
 

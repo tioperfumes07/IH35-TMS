@@ -122,3 +122,6 @@ jobs:
 
       - name: verify:navy-page-subnav
         run: npm run verify:navy-page-subnav
+
+      - name: verify:d1-settlement-approval
+        run: npm run verify:d1-settlement-approval
