@@ -1,0 +1,35 @@
+{
+  "block_id": "A4-AUDIT-EMIT-ACCOUNTING",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "AUDIT-EMIT",
+  "task": "Accounting transaction mutations emit spine events via emitAccountingSpineEvent helper calling events.log_event(). Covers invoices (created/updated/sent/voided), bills (created/paid/voided/bill_payment.voided), expenses (created/reattributed), payments (created/voided), customer_payment (created) — 14 event types across 5 route files.",
+  "branch": "feat/a4-audit-emit-accounting",
+  "lane": "A",
+  "details": [
+    "New helper: accounting-spine-emit.ts — wraps events.log_event() for all accounting event types.",
+    "invoices.routes.ts: invoice.created, invoice.updated, invoice.sent, invoice.voided.",
+    "bills.routes.ts: bill.created, bill.paid, bill.voided, bill_payment.voided.",
+    "expenses.routes.ts: expense.created, expense.reattributed.",
+    "payments.routes.ts: payment.created, payment.voided.",
+    "customer-payments.routes.ts: customer_payment.created.",
+    "verify-a4-audit-emit-accounting.mjs: 34-check guard (all passing).",
+    "ci.yml + package.json: verify:a4-audit-emit-accounting wired."
+  ],
+  "allowed_files": [
+    ".block-ready/A4-AUDIT-EMIT-ACCOUNTING.json",
+    "apps/backend/src/accounting/accounting-spine-emit.ts",
+    "apps/backend/src/accounting/invoices.routes.ts",
+    "apps/backend/src/accounting/bills.routes.ts",
+    "apps/backend/src/accounting/expenses.routes.ts",
+    "apps/backend/src/accounting/payments.routes.ts",
+    "apps/backend/src/accounting/customer-payments.routes.ts",
+    "scripts/verify-a4-audit-emit-accounting.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:a4-audit-emit-accounting"]
+}

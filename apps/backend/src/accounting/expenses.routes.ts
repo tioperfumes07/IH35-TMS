@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { attributeExpenseToLoad } from "../expense-attribution/attribute.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
+import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -228,6 +229,16 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       });
 
       if ("unavailable" in payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
+      void withCompanyScope(user.uuid, (payload as { operating_company_id?: string })?.operating_company_id ?? body.operating_company_id, (client) =>
+        emitAccountingSpineEvent(client, {
+          operating_company_id: body.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "expense.created",
+          entity_id: (payload as { id?: string })?.id ?? "",
+          entity_type: "expense",
+          source_table: "accounting.expenses",
+        })
+      ).catch(() => undefined);
       return reply.code(201).send(payload);
     } catch (error) {
       const code = (error as { code?: string }).code;
@@ -368,6 +379,17 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       });
 
       if ("unavailable" in payload) return reply.code(501).send({ error: "accounting_expenses_schema_missing" });
+      void withCompanyScope(user.uuid, body.operating_company_id, (client) =>
+        emitAccountingSpineEvent(client, {
+          operating_company_id: body.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "expense.reattributed",
+          entity_id: params.data.expenseId,
+          entity_type: "expense",
+          source_table: "accounting.expenses",
+          payload: { new_load_id: body.new_load_id },
+        })
+      ).catch(() => undefined);
       return reply.code(200).send(payload);
     } catch (error) {
       const code = (error as { code?: string }).code;

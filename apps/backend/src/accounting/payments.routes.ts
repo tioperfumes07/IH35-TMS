@@ -4,6 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { nextPaymentDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -338,6 +339,16 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      emitAccountingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: String(user.uuid),
+        event_type: "payment.created",
+        entity_id: (result as { data?: { id?: string } })?.data?.id ?? "",
+        entity_type: "payment",
+        source_table: "accounting.payments",
+      })
+    ).catch(() => undefined);
     return reply.code(result.code).send(result.data);
   });
 
@@ -399,6 +410,17 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     });
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      emitAccountingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: String(user.uuid),
+        event_type: "payment.voided",
+        entity_id: params.data.id,
+        entity_type: "payment",
+        source_table: "accounting.payments",
+        payload: { void_reason: body.data.void_reason ?? null },
+      })
+    ).catch(() => undefined);
     return result.data;
   });
 }

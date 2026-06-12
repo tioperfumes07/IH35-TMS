@@ -8,6 +8,7 @@ import { nextInvoiceDisplayId } from "./display-id.js";
 import { buildInvoiceFromLoad } from "./from-load.js";
 import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
+import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -276,6 +277,16 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       return { code: 201 as const, data: detail };
     });
     if ("error" in created) return reply.code(created.code).send({ error: created.error });
+    void withCompanyScope(user.uuid, (created as { data?: { operating_company_id?: string } })?.data?.operating_company_id ?? "", (client) =>
+      emitAccountingSpineEvent(client, {
+        operating_company_id: (created as { data?: { operating_company_id?: string } })?.data?.operating_company_id ?? "",
+        actor_user_id: user.uuid,
+        event_type: "invoice.created",
+        entity_id: (created as { data?: { id?: string } })?.data?.id ?? "",
+        entity_type: "invoice",
+        source_table: "accounting.invoices",
+      })
+    ).catch(() => undefined);
     return reply.code(created.code).send(created.data);
   });
 
@@ -433,6 +444,16 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      emitAccountingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: user.uuid,
+        event_type: "invoice.updated",
+        entity_id: params.data.id,
+        entity_type: "invoice",
+        source_table: "accounting.invoices",
+      })
+    ).catch(() => undefined);
     return result.data;
   });
 
@@ -522,6 +543,16 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      emitAccountingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: user.uuid,
+        event_type: "invoice.sent",
+        entity_id: params.data.id,
+        entity_type: "invoice",
+        source_table: "accounting.invoices",
+      })
+    ).catch(() => undefined);
     return result.data;
   });
 
@@ -577,6 +608,17 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       return { code: 200 as const, data: detail };
     });
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      emitAccountingSpineEvent(client, {
+        operating_company_id: query.data.operating_company_id,
+        actor_user_id: user.uuid,
+        event_type: "invoice.voided",
+        entity_id: params.data.id,
+        entity_type: "invoice",
+        source_table: "accounting.invoices",
+        payload: { reason: body.data.reason ?? null },
+      })
+    ).catch(() => undefined);
     return result.data;
   });
 }

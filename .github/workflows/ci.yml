@@ -1021,6 +1021,9 @@ jobs:
       - name: verify:a3-audit-emit-maintenance
         run: npm run verify:a3-audit-emit-maintenance
 
+      - name: verify:a4-audit-emit-accounting
+        run: npm run verify:a4-audit-emit-accounting
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 

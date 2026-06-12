@@ -15,6 +15,7 @@ import {
   voidBillPayment,
 } from "./bills.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
@@ -169,6 +170,16 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         },
         String(user.uuid)
       );
+      void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
+        emitAccountingSpineEvent(client, {
+          operating_company_id: query.data.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "bill.created",
+          entity_id: (bill as { id?: string })?.id ?? "",
+          entity_type: "bill",
+          source_table: "accounting.bills",
+        })
+      ).catch(() => undefined);
       return reply.code(201).send({ bill });
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_create_failed");
@@ -203,6 +214,16 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         },
         String(user.uuid)
       );
+      void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
+        emitAccountingSpineEvent(client, {
+          operating_company_id: query.data.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "bill.paid",
+          entity_id: params.data.id,
+          entity_type: "bill",
+          source_table: "accounting.bills",
+        })
+      ).catch(() => undefined);
       return reply.code(201).send({ payment });
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_payment_failed");
@@ -233,6 +254,17 @@ export async function registerBillsRoutes(app: FastifyInstance) {
 
     try {
       await voidBill(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid));
+      void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
+        emitAccountingSpineEvent(client, {
+          operating_company_id: query.data.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "bill.voided",
+          entity_id: params.data.id,
+          entity_type: "bill",
+          source_table: "accounting.bills",
+          payload: { reason: body.data.reason ?? null },
+        })
+      ).catch(() => undefined);
       return { ok: true };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_void_failed");
@@ -254,6 +286,17 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
     try {
       await voidBillPayment(query.data.operating_company_id, params.data.id, body.data.reason, String(user.uuid));
+      void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
+        emitAccountingSpineEvent(client, {
+          operating_company_id: query.data.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "bill_payment.voided",
+          entity_id: params.data.id,
+          entity_type: "bill_payment",
+          source_table: "accounting.bill_payments",
+          payload: { reason: body.data.reason ?? null },
+        })
+      ).catch(() => undefined);
       return { ok: true };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_payment_void_failed");
