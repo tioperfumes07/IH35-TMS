@@ -1,7 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { withCurrentUser } from "../auth/db.js";
 import { approveCancellation, cancelLoad, listCancellationReasons, listCancellations } from "./cancellation.service.js";
+import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 
 const loadIdParamsSchema = z.object({ id: z.string().uuid() });
 const cancellationIdParamsSchema = z.object({ id: z.string().uuid() });
@@ -49,10 +51,20 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
     const body = cancelBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
     try {
-      return await cancelLoad(user.uuid, user.role, {
+      const result = await cancelLoad(user.uuid, user.role, {
         ...body.data,
         load_id: params.data.id,
       });
+      void withCurrentUser(user.uuid, (client) =>
+        emitDispatchSpineEvent(client, {
+          operating_company_id: body.data.operating_company_id,
+          actor_user_id: user.uuid,
+          event_type: "load.cancelled",
+          load_id: params.data.id,
+          payload: { reason_code: body.data.reason_code },
+        })
+      ).catch(() => undefined);
+      return result;
     } catch (error) {
       const mapped = mapServiceError(error);
       if (mapped) return reply.code(mapped.status).send(mapped.payload);
@@ -76,10 +88,22 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
     const body = approveBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
     try {
-      return await approveCancellation(user.uuid, user.role, {
+      const result = await approveCancellation(user.uuid, user.role, {
         operating_company_id: body.data.operating_company_id,
         cancellation_id: params.data.id,
       });
+      const loadId = (result as { load_id?: string })?.load_id ?? "";
+      if (loadId) {
+        void withCurrentUser(user.uuid, (client) =>
+          emitDispatchSpineEvent(client, {
+            operating_company_id: body.data.operating_company_id,
+            actor_user_id: user.uuid,
+            event_type: "load.cancellation_approved",
+            load_id: loadId,
+          })
+        ).catch(() => undefined);
+      }
+      return result;
     } catch (error) {
       const mapped = mapServiceError(error);
       if (mapped) return reply.code(mapped.status).send(mapped.payload);

@@ -1,6 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { withCurrentUser } from "../auth/db.js";
+import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import {
   completeQuicksaveDraft,
   getAssignmentHistory,
@@ -50,6 +52,15 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
         ...body.data,
         load_id: params.data.id,
       });
+      void withCurrentUser(user.uuid, (client) =>
+        emitDispatchSpineEvent(client, {
+          operating_company_id: body.data.operating_company_id,
+          actor_user_id: user.uuid,
+          event_type: "load.assigned_to_driver",
+          load_id: params.data.id,
+          payload: { driver_id: body.data.driver_id, unit_id: body.data.unit_id ?? null },
+        })
+      ).catch(() => undefined);
       return result;
     } catch (error) {
       const mapped = mapQuickAssignError(error);
@@ -66,11 +77,20 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
     const body = completeBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
     try {
-      return await completeQuicksaveDraft(user.uuid, {
+      const result = await completeQuicksaveDraft(user.uuid, {
         operating_company_id: body.data.operating_company_id,
         load_id: params.data.id,
         fields: body.data.fields,
       });
+      void withCurrentUser(user.uuid, (client) =>
+        emitDispatchSpineEvent(client, {
+          operating_company_id: body.data.operating_company_id,
+          actor_user_id: user.uuid,
+          event_type: "load.quicksave_draft_completed",
+          load_id: params.data.id,
+        })
+      ).catch(() => undefined);
+      return result;
     } catch (error) {
       if (String((error as Error)?.message ?? "") === "E_LOAD_NOT_FOUND") {
         return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
