@@ -4,7 +4,7 @@
   "classification": "ADDITIVE",
   "phase": "P8 Audit",
   "task": "Fix nested-box modal pattern (double-frame headers). WorkOrderDetailModal + CustomerDrillModal already clean in main. Added double-frame regression tests to modal-x-close-audit.test.tsx. Spot-checked 100+ modals — no live double-frame violations found.",
-  "branch": "fix/audit-nested-modals",
+  "branch": "fix/audit-nested-modals-fresh",
   "lane": "A",
   "details": [
     "WorkOrderDetailModal: already clean (single h2, no inner card wrapper).",
