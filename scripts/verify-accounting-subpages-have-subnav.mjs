@@ -6,7 +6,7 @@ import process from "node:process";
 const repoRoot = process.cwd();
 
 const WRAPPER_FILE = "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx";
-const REQUIRED_WRAPPER_MARKERS = ["ACCOUNTING_TABS", "+ Create", "+ Vendor", "data-accounting-subnav-wrapper"];
+const REQUIRED_WRAPPER_MARKERS = ["ACCOUNTING_CLEAN_TABS", "+ Create", "+ Vendor", "data-accounting-subnav-wrapper"];
 
 const REQUIRED_PAGES = ["apps/frontend/src/pages/accounting/BillsPage.tsx"];
 
@@ -20,8 +20,10 @@ if (!fs.existsSync(wrapperPath)) {
   for (const marker of REQUIRED_WRAPPER_MARKERS) {
     if (!wrapperSource.includes(marker)) failures.push(`${WRAPPER_FILE} (missing marker: ${marker})`);
   }
-  const tabCount = (wrapperSource.match(/label:/g) ?? []).length;
-  if (tabCount < 12) failures.push(`${WRAPPER_FILE} (expected >=12 tab labels, found ${tabCount})`);
+  const manifestPath = path.join(repoRoot, "apps/frontend/src/pages/accounting/subnav-manifest.ts");
+  const manifestSource = fs.existsSync(manifestPath) ? fs.readFileSync(manifestPath, "utf8") : "";
+  const tabCount = (manifestSource.match(/label:/g) ?? []).length;
+  if (tabCount < 12) failures.push(`subnav-manifest.ts (expected >=12 tab labels in ACCOUNTING_CLEAN_TABS, found ${tabCount})`);
 }
 
 for (const pageFile of REQUIRED_PAGES) {
