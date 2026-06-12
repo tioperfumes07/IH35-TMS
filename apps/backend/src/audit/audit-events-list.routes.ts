@@ -15,6 +15,12 @@ export type ListAuditEventsInput = {
   to?: string;
   limit: number;
   offset: number;
+  entity_type?: string;
+  entity_id?: string;
+  actor?: string;
+  status?: string;
+  source?: string;
+  voids_only?: boolean;
 };
 
 type AuditEventListRow = {
@@ -39,6 +45,12 @@ const querySchema = z.object({
   to: z.string().datetime({ offset: true }).optional(),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
+  entity_type: z.string().trim().min(1).max(100).optional(),
+  entity_id: z.string().uuid().optional(),
+  actor: z.string().trim().min(1).max(300).optional(),
+  status: z.string().trim().min(1).max(100).optional(),
+  source: z.string().trim().min(1).max(100).optional(),
+  voids_only: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
 });
 
 function normalizeLimit(limit: number): number {
@@ -75,6 +87,29 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
   if (input.event_type) {
     values.push(`%${input.event_type}%`);
     filters.push(`e.event_class ILIKE $${values.length}`);
+  }
+  if (input.entity_type) {
+    values.push(input.entity_type);
+    filters.push(`e.payload->>'entity_type' = $${values.length}`);
+  }
+  if (input.entity_id) {
+    values.push(input.entity_id);
+    filters.push(`e.payload->>'entity_id' = $${values.length}`);
+  }
+  if (input.actor) {
+    values.push(`%${input.actor}%`);
+    filters.push(`(u.email ILIKE $${values.length} OR e.actor_user_uuid::text = $${values.length})`);
+  }
+  if (input.status) {
+    values.push(input.status);
+    filters.push(`e.payload->>'status' = $${values.length}`);
+  }
+  if (input.source) {
+    values.push(input.source);
+    filters.push(`e.source = $${values.length}`);
+  }
+  if (input.voids_only) {
+    filters.push(`(e.event_class ILIKE '%void%' OR e.event_class ILIKE '%reverse%' OR e.event_class ILIKE '%delete%')`);
   }
   if (input.from) {
     values.push(input.from);

@@ -576,7 +576,8 @@
     "verify:cap-10-driver-scoring": "node scripts/verify-cap-10-driver-scoring.mjs",
     "verify:cap-14-cargo-sensors": "node scripts/verify-cap-14-cargo-sensors.mjs",
     "verify:load-test-baseline": "node scripts/verify-load-test-baseline.mjs",
-    "verify:deadhead-optimizer": "node scripts/verify-deadhead-optimizer.mjs"
+    "verify:deadhead-optimizer": "node scripts/verify-deadhead-optimizer.mjs",
+    "verify:a7-audit-per-entity-tabs": "node scripts/verify-a7-audit-per-entity-tabs.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

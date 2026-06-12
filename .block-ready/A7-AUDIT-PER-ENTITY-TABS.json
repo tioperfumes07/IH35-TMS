@@ -1,0 +1,43 @@
+{
+  "block_id": "A7-AUDIT-PER-ENTITY-TABS",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "P8 Audit",
+  "task": "Add Audit/History tab to entity detail views (Vehicle, Load, Driver, Invoice, Bill, Banking txn, Customer, Vendor) with QBO-style filters (type, status, actor, source, date range). Uses NavyPageSubNav. Extends audit-events-list API.",
+  "branch": "feat/a7-audit-per-entity-tabs",
+  "lane": "A",
+  "details": [
+    "Extend audit-events-list API with entity_type, entity_id, actor, status, source filters",
+    "Create AuditHistoryTab component with QBO-style filter bar",
+    "Add navy banner sub-nav to 8 entity detail pages",
+    "Audit tab shows: WHEN, WHO, ACTION, SOURCE, before→after diff on expand",
+    "CSV export of filtered audit view",
+    "Voids & reversals quick filter",
+    "verify:a7-audit-per-entity-tabs wired into locked-guards.yml"
+  ],
+  "allowed_files": [
+    ".block-ready/A7-AUDIT-PER-ENTITY-TABS.json",
+    "apps/backend/src/audit/audit-events-list.routes.ts",
+    "apps/backend/src/audit/audit-events-list.routes.test.ts",
+    "apps/frontend/src/api/audit.ts",
+    "apps/frontend/src/components/audit/AuditHistoryTab.tsx",
+    "apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx",
+    "apps/frontend/src/components/drivers/AuditHistoryTab.tsx",
+    "apps/frontend/src/pages/units/UnitDetailPage.tsx",
+    "apps/frontend/src/pages/dispatch/LoadDetailPage.tsx",
+    "apps/frontend/src/pages/drivers/DriverDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
+    "apps/frontend/src/pages/banking/BankingTxnDetailPage.tsx",
+    "apps/frontend/src/pages/customers/CustomerDetailPage.tsx",
+    "apps/frontend/src/pages/vendors/VendorDetailPage.tsx",
+    "scripts/verify-a7-audit-per-entity-tabs.mjs",
+    ".github/workflows/locked-guards.yml",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": ["verify:a7-audit-per-entity-tabs"]
+}
