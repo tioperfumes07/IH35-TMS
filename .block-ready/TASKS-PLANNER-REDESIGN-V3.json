@@ -1,0 +1,35 @@
+{
+  "block_id": "TASKS-PLANNER-REDESIGN-V3",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "TASKS-PLANNER",
+  "task": "Rebuild Task Board into a full employee×day planner grid. Migration adds progress_pct + task_type table. Backend adds /types and /:id/progress endpoints. Frontend: TaskPlannerGrid with UniversalFilterBar, narrow day cols, gridlines, resizable employee column (persisted), ~170px detail drawer. No financial writes.",
+  "branch": "feat/tasks-planner-redesign-v3",
+  "lane": "A",
+  "runtime_path": "src",
+  "details": [
+    "db/migrations/202606120001_tasks_planner_v3.sql: progress_pct + task_type table + RLS",
+    "apps/backend/src/tasks/task.routes.ts: extended with /types CRUD, /:id/progress PATCH, new columns in CREATE, by_employee grouping in planner",
+    "apps/backend/src/index.ts: registered taskRoutes at /api/v1/tasks",
+    "apps/frontend/src/api/tasks.ts: fetchPlannerTasks, fetchTaskTypes, createTask, updateTaskProgress",
+    "apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx: full planner grid component",
+    "apps/frontend/src/pages/tasks/TaskBoardPage.tsx: wired to TaskPlannerGrid",
+    "scripts/verify-tasks-planner-v3.mjs: 17/17 passing",
+    "ci.yml + package.json: verify:tasks-planner-v3 wired"
+  ],
+  "allowed_files": [
+    ".block-ready/TASKS-PLANNER-REDESIGN-V3.json",
+    "db/migrations/202606120001_tasks_planner_v3.sql",
+    "apps/backend/src/tasks/task.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/tasks.ts",
+    "apps/frontend/src/pages/tasks/TaskPlannerGrid.tsx",
+    "apps/frontend/src/pages/tasks/TaskBoardPage.tsx",
+    "scripts/verify-tasks-planner-v3.mjs",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["verify:tasks-planner-v3"]
+}
