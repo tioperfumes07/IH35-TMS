@@ -1018,6 +1018,9 @@ jobs:
       - name: verify:shadow-redirects
         run: npm run verify:shadow-redirects
 
+      - name: verify:a3-audit-emit-maintenance
+        run: npm run verify:a3-audit-emit-maintenance
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 

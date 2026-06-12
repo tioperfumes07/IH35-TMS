@@ -11,6 +11,7 @@ import {
   createWorkOrderWithLines,
 } from "./two-section-service.js";
 import { assertRoadsideFields, listWorkOrdersByBucket } from "./work-orders.service.js";
+import { emitMaintenanceSpineEvent } from "./maintenance-spine-emit.js";
 import { isWoInvoiceMismatch, validateWoVendorInvoiceTotals } from "./wo-cost-validation.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
@@ -456,6 +457,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             message: "vendor_id must reference a synced QuickBooks vendor for this operating company",
           });
         }
+        void withCurrentUser(user.uuid, (client) =>
+          emitMaintenanceSpineEvent(client, {
+            operating_company_id: body.header.operating_company_id,
+            actor_user_id: user.uuid,
+            event_type: "wo.created",
+            work_order_id: (result as { wo?: { uuid: string } })?.wo?.uuid ?? "",
+            payload: { bucket: body.header.bucket, payment_timing: body.header.payment_timing },
+          })
+        ).catch(() => undefined);
         return reply.code(201).send(result);
       } catch (error) {
         if (isWoInvoiceMismatch(error)) {
@@ -867,6 +877,14 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       work_order_id: params.data.id,
       actor_user_id: user.uuid,
     });
+    void withCurrentUser(user.uuid, (client) =>
+      emitMaintenanceSpineEvent(client, {
+        operating_company_id: companyId,
+        actor_user_id: user.uuid,
+        event_type: "wo.completed",
+        work_order_id: params.data.id,
+      })
+    ).catch(() => undefined);
     return { ok: true, work_order: result.row };
   });
 
@@ -937,6 +955,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
+    void withCurrentUser(user.uuid, (client) =>
+      emitMaintenanceSpineEvent(client, {
+        operating_company_id: companyId,
+        actor_user_id: user.uuid,
+        event_type: "wo.status_changed",
+        work_order_id: params.data.id,
+        payload: { new_status: parsed.data.new_status },
+      })
+    ).catch(() => undefined);
     if (CLOSED_STATUSES.has(parsed.data.new_status)) {
       await processMaintenanceWorkOrderClose({
         operating_company_id: companyId,
@@ -993,6 +1020,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if ("unavailable" in result) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if ("notFound" in result) return reply.code(404).send({ error: "work_order_not_found" });
     if ("invalid" in result) return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
+    void withCurrentUser(user.uuid, (client) =>
+      emitMaintenanceSpineEvent(client, {
+        operating_company_id: companyId,
+        actor_user_id: user.uuid,
+        event_type: "wo.status_changed",
+        work_order_id: params.data.id,
+        payload: { new_status: parsed.data.new_status },
+      })
+    ).catch(() => undefined);
     return { ok: true };
   });
 
@@ -1041,6 +1077,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     }
     if (row === null) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if (row === undefined) return reply.code(404).send({ error: "work_order_not_found" });
+    void withCurrentUser(user.uuid, (client) =>
+      emitMaintenanceSpineEvent(client, {
+        operating_company_id: companyId,
+        actor_user_id: user.uuid,
+        event_type: "wo.line_item_added",
+        work_order_id: params.data.id,
+        payload: { line_type: parsed.data.line_type },
+      })
+    ).catch(() => undefined);
     return reply.code(201).send(row);
   });
 
@@ -1087,6 +1132,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     }
     if (deleted === null) return reply.code(501).send({ error: "maintenance_schema_not_available" });
     if (!deleted) return reply.code(404).send({ error: "line_item_not_found" });
+    void withCurrentUser(user.uuid, (client) =>
+      emitMaintenanceSpineEvent(client, {
+        operating_company_id: companyId,
+        actor_user_id: user.uuid,
+        event_type: "wo.line_item_removed",
+        work_order_id: params.data.id,
+        payload: { line_item_id: params.data.lid },
+      })
+    ).catch(() => undefined);
     return reply.code(204).send();
   });
 }
