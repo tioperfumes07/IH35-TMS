@@ -11,6 +11,11 @@ export type FactorRow = {
   reserve_rate: number;
   recourse_days: number;
   active: boolean;
+  fee_schedule: unknown[] | null;
+  reserve_schedule: unknown[] | null;
+  fee_application_mode: string;
+  remittance_details: unknown | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -59,6 +64,11 @@ function mapFactorRow(row: Record<string, unknown>): FactorRow {
     reserve_rate: toNumber(row.reserve_rate),
     recourse_days: toNumber(row.recourse_days),
     active: Boolean(row.active),
+    fee_schedule: Array.isArray(row.fee_schedule) ? row.fee_schedule : null,
+    reserve_schedule: Array.isArray(row.reserve_schedule) ? row.reserve_schedule : null,
+    fee_application_mode: String(row.fee_application_mode ?? "replace"),
+    remittance_details: row.remittance_details ?? null,
+    notes: row.notes != null ? String(row.notes) : null,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   };
@@ -110,6 +120,11 @@ export async function listFactors(
         reserve_rate::numeric,
         recourse_days,
         active,
+        fee_schedule,
+        reserve_schedule,
+        fee_application_mode,
+        remittance_details,
+        notes,
         created_at::text,
         updated_at::text
       FROM factoring.factor
@@ -139,6 +154,11 @@ export async function getFactorForCustomer(
         f.reserve_rate::numeric,
         f.recourse_days,
         f.active,
+        f.fee_schedule,
+        f.reserve_schedule,
+        f.fee_application_mode,
+        f.remittance_details,
+        f.notes,
         f.created_at::text,
         f.updated_at::text,
         a.id::text AS assignment_id,
@@ -176,6 +196,11 @@ export async function createFactor(
     reserve_rate: number;
     recourse_days: number;
     active?: boolean;
+    fee_schedule?: unknown[] | null;
+    reserve_schedule?: unknown[] | null;
+    fee_application_mode?: string;
+    remittance_details?: unknown | null;
+    notes?: string | null;
   },
   deps: { client: Queryable }
 ): Promise<FactorRow> {
@@ -190,6 +215,11 @@ export async function createFactor(
           reserve_rate,
           recourse_days,
           active,
+          fee_schedule,
+          reserve_schedule,
+          fee_application_mode,
+          remittance_details,
+          notes,
           created_at,
           updated_at
         )
@@ -201,6 +231,11 @@ export async function createFactor(
           $5::numeric,
           $6::int,
           COALESCE($7::boolean, true),
+          $8::jsonb,
+          $9::jsonb,
+          COALESCE($10, 'replace'),
+          $11::jsonb,
+          $12,
           now(),
           now()
         )
@@ -213,10 +248,28 @@ export async function createFactor(
           reserve_rate::numeric,
           recourse_days,
           active,
+          fee_schedule,
+          reserve_schedule,
+          fee_application_mode,
+          remittance_details,
+          notes,
           created_at::text,
           updated_at::text
       `,
-      [tenantId, input.name.trim(), input.advance_rate, input.fee_rate, input.reserve_rate, input.recourse_days, input.active]
+      [
+        tenantId,
+        input.name.trim(),
+        input.advance_rate,
+        input.fee_rate,
+        input.reserve_rate,
+        input.recourse_days,
+        input.active,
+        input.fee_schedule != null ? JSON.stringify(input.fee_schedule) : null,
+        input.reserve_schedule != null ? JSON.stringify(input.reserve_schedule) : null,
+        input.fee_application_mode ?? null,
+        input.remittance_details != null ? JSON.stringify(input.remittance_details) : null,
+        input.notes ?? null,
+      ]
     );
     return mapFactorRow(insert.rows[0] ?? {});
   } catch (error) {
@@ -237,6 +290,11 @@ export async function updateFactor(
     reserve_rate: number;
     recourse_days: number;
     active: boolean;
+    fee_schedule: unknown[] | null;
+    reserve_schedule: unknown[] | null;
+    fee_application_mode: string;
+    remittance_details: unknown | null;
+    notes: string | null;
   }>,
   deps: { client: Queryable }
 ): Promise<FactorRow> {
@@ -267,6 +325,26 @@ export async function updateFactor(
     values.push(patch.active);
     updates.push(`active = $${values.length}::boolean`);
   }
+  if (Object.prototype.hasOwnProperty.call(patch, "fee_schedule")) {
+    values.push(patch.fee_schedule != null ? JSON.stringify(patch.fee_schedule) : null);
+    updates.push(`fee_schedule = $${values.length}::jsonb`);
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "reserve_schedule")) {
+    values.push(patch.reserve_schedule != null ? JSON.stringify(patch.reserve_schedule) : null);
+    updates.push(`reserve_schedule = $${values.length}::jsonb`);
+  }
+  if (patch.fee_application_mode !== undefined) {
+    values.push(patch.fee_application_mode);
+    updates.push(`fee_application_mode = $${values.length}`);
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "remittance_details")) {
+    values.push(patch.remittance_details != null ? JSON.stringify(patch.remittance_details) : null);
+    updates.push(`remittance_details = $${values.length}::jsonb`);
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "notes")) {
+    values.push(patch.notes ?? null);
+    updates.push(`notes = $${values.length}`);
+  }
 
   if (updates.length === 0) {
     const current = await deps.client.query<Record<string, unknown>>(
@@ -280,6 +358,11 @@ export async function updateFactor(
           reserve_rate::numeric,
           recourse_days,
           active,
+          fee_schedule,
+          reserve_schedule,
+          fee_application_mode,
+          remittance_details,
+          notes,
           created_at::text,
           updated_at::text
         FROM factoring.factor
@@ -311,6 +394,11 @@ export async function updateFactor(
           reserve_rate::numeric,
           recourse_days,
           active,
+          fee_schedule,
+          reserve_schedule,
+          fee_application_mode,
+          remittance_details,
+          notes,
           created_at::text,
           updated_at::text
       `,
@@ -344,6 +432,11 @@ export async function deactivateFactor(tenantId: string, factorId: string, deps:
         reserve_rate::numeric,
         recourse_days,
         active,
+        fee_schedule,
+        reserve_schedule,
+        fee_application_mode,
+        remittance_details,
+        notes,
         created_at::text,
         updated_at::text
     `,
