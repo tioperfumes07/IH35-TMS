@@ -84,6 +84,15 @@ CREATE INDEX IF NOT EXISTS ix_settlement_deduction_settlement
 CREATE INDEX IF NOT EXISTS ix_settlement_deduction_driver
   ON settlement.settlement_deduction (driver_id) WHERE is_active = true;
 
+-- ── updated_at trigger function ────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION settlement.set_updated_at()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
 -- ── updated_at triggers ────────────────────────────────────────────────────────
 DO $$ BEGIN
   IF NOT EXISTS (
@@ -91,7 +100,7 @@ DO $$ BEGIN
   ) THEN
     CREATE TRIGGER trg_settlement_updated_at
       BEFORE UPDATE ON settlement.settlement
-      FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+      FOR EACH ROW EXECUTE FUNCTION settlement.set_updated_at();
   END IF;
 END $$;
 
@@ -101,7 +110,7 @@ DO $$ BEGIN
   ) THEN
     CREATE TRIGGER trg_settlement_line_updated_at
       BEFORE UPDATE ON settlement.settlement_line
-      FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+      FOR EACH ROW EXECUTE FUNCTION settlement.set_updated_at();
   END IF;
 END $$;
 
@@ -111,7 +120,7 @@ DO $$ BEGIN
   ) THEN
     CREATE TRIGGER trg_settlement_deduction_updated_at
       BEFORE UPDATE ON settlement.settlement_deduction
-      FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+      FOR EACH ROW EXECUTE FUNCTION settlement.set_updated_at();
   END IF;
 END $$;
 
