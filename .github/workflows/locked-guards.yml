@@ -125,3 +125,6 @@ jobs:
 
       - name: verify:a7-audit-per-entity-tabs
         run: npm run verify:a7-audit-per-entity-tabs
+
+      - name: verify:d1-settlement-approval
+        run: npm run verify:d1-settlement-approval

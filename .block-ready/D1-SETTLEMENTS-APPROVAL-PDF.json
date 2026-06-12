@@ -1,0 +1,42 @@
+{
+  "block_id": "D1-SETTLEMENTS-APPROVAL-PDF",
+  "status": "BUILD",
+  "classification": "GATED",
+  "phase": "Financial",
+  "task": "Settlements approval workspace + driver/company PDF. Trip-number auto-link engine, per-line approve/reject, escrow running balance, driver-visible flags, dispute flags. PDF generation gated until all lines approved. Matches real settlement No. 5666 layout.",
+  "branch": "feat/d1-settlements-approval-pdf",
+  "lane": "A",
+  "details": [
+    "Trip-number auto-link engine: expenses auto-link to active load by truck+date",
+    "Approval workspace: settlement status Needs review → Approved → Finalized",
+    "Per-line approve/reject for deductions, expenses, cash advances, escrow",
+    "Trip expenses needing load link queue (surfaces unlinked expenses)",
+    "Escrow running balance across all settlements",
+    "Approval audit trail (who/when per line, ties to A7)",
+    "Dispute flag per line (driver can flag via app)",
+    "Driver-visible toggle per line (controls PDF content)",
+    "Driver settlement PDF (formal export, matches No. 5666)",
+    "Company settlement PDF + view (carrier per-trip P&L)",
+    "PDF generation blocked until all lines approved",
+    "Cash advance reconciliation (links to original request + wire)",
+    "Per-load approval for multi-load settlements",
+    "Negative-margin load flag"
+  ],
+  "allowed_files": [
+    ".block-ready/D1-SETTLEMENTS-APPROVAL-PDF.json",
+    "db/migrations/202606120600_d1_settlement_approval.sql",
+    "apps/backend/src/settlements/trip-link.engine.ts",
+    "apps/backend/src/settlements/approval.service.ts",
+    "apps/backend/src/settlements/approval.routes.ts",
+    "scripts/verify-d1-settlement-approval.mjs",
+    ".github/workflows/locked-guards.yml",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["verify:d1-settlement-approval"],
+  "financial_writes": true,
+  "note": "GATED financial block. Numbers validated against real settlement No. 5666. Build structure now; finalize numbers after finance blocks land."
+}
