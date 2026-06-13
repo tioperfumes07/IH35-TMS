@@ -50,7 +50,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 | Order | Wave | Block / Item | Why now | Risk | Effort | Depends on | Status |
 |---|---|---|---|---|---|---|---|
 | 1 | A | A3 — Settlement recovery fix (wire capped net-floor ledger) | Only live path that can mishandle real money | HIGH | M | B5 (done) | 🟡 ORPHANED |
-| 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | ✅ SEED SHIPPED — PR __AI4PR__ (gated; ops must enable PERIODS_INIT_ENABLED in prod) |
+| 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | ✅ SEED SHIPPED — PR #927 (gated; ops must enable PERIODS_INIT_ENABLED in prod) |
 | 3 | A | AI-1b/AI-3b — CONFIRM closed-period lock + financial probes enforce | Already shipped; validate, don't rebuild | LOW | S | none | ✅ verify |
 | 4 | B | B1 — /inventory parts 404 (repoint to /api/v1/maintenance/parts) | Visibly broken live page; trivial; independent | LOW-MED | XS | none | ✅ DONE — PR #926 |
 | 5 | B | UNVERIFIED reconcile pass (DIR-G/H, BLOCK-11, CA-04, GAP-76, F3) | Make tracker fully trustworthy | LOW | S | none | 🟡 confirm |
@@ -73,7 +73,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 
 | # | Item | Section | True Status | Why pending | What it needs |
 |---|---|---|---|---|---|
-| A1 | AI-4 periods init | Accounting/Periods | ✅ SEED SHIPPED (PR __AI4PR__) | Seed extended to full coverage | DONE: TRANSP Jul–Dec 2026 + all 2025, TRK all 2025+2026 (portable code-resolved, generate_series, gated). Remaining ops step: enable PERIODS_INIT_ENABLED in prod (read-only prod flag check still pending) |
+| A1 | AI-4 periods init | Accounting/Periods | ✅ SEED SHIPPED (PR #927) | Seed extended to full coverage | DONE: TRANSP Jul–Dec 2026 + all 2025, TRK all 2025+2026 (portable code-resolved, generate_series, gated). Remaining ops step: enable PERIODS_INIT_ENABLED in prod (read-only prod flag check still pending) |
 | A2 | BLOCK-01 depreciation | Accounting/Fixed Assets | NOT BUILT | No fixed-asset accounting | Asset register + schedule + monthly posting |
 | A3 | Block-F settlement auto-deduct (capped ledger) | Driver-Finance | ORPHANED (money risk) | Ledger written but never read | Wire capped path or delete dead ledger; current path has no net-floor cap |
 | B1 | /inventory parts → 404 | Inventory | ✅ DONE (PR #926) | Page called a missing endpoint | FIXED: repointed Parts & Stock page + create drawer to the real /api/v1/maintenance/parts (single source of truth, frontend-only, field-mapped) |
