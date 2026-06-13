@@ -2,6 +2,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isOwnerOrAdmin } from "../bulk/bulk-update.factory.js";
 import { postSourceTransaction } from "../accounting/posting-engine.service.js";
+import { emitDriverRequestSpineEvent } from "../driver-finance/driver-request-spine-emit.js";
 
 type PostingResult = Awaited<ReturnType<typeof postSourceTransaction>>;
 
@@ -108,6 +109,39 @@ export async function disburseDriverAdvanceCore(
     },
     { userId: actorUserUuid }
   );
+
+  // B4: timeline 'posted' step — if this advance originated from a cash-advance request, link
+  // the money event back to that request. Best-effort: the disbursement + GL post already
+  // committed, so a timeline emit failure must not surface as a disbursement error.
+  try {
+    await withCurrentUser(actorUserUuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+      const reqRes = await client.query(
+        `
+          SELECT id::text
+          FROM driver_finance.cash_advance_requests
+          WHERE operating_company_id = $1::uuid AND linked_advance_id = $2::uuid
+          LIMIT 1
+        `,
+        [companyId, input.advance_id]
+      );
+      const requestId = (reqRes.rows[0] as { id?: string } | undefined)?.id;
+      if (requestId) {
+        await emitDriverRequestSpineEvent(client, "posted", {
+          operating_company_id: companyId,
+          request_id: requestId,
+          request_type: "cash_advance",
+          source_table: "driver_finance.cash_advance_requests",
+          actor_type: "user",
+          actor_user_id: actorUserUuid,
+          actor_role: actorRole,
+          payload: { driver_advance_id: input.advance_id, journal_entry_id: posting.journal_entry_id },
+        });
+      }
+    });
+  } catch {
+    // swallow — money already moved; timeline is best-effort post-commit.
+  }
 
   return { ok: true, advanceId: input.advance_id, postingDate: phase1.postingDate, posting };
 }
