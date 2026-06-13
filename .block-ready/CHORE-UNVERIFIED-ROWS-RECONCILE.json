@@ -1,0 +1,19 @@
+{
+  "block_id": "CHORE-UNVERIFIED-ROWS-RECONCILE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "TRACKER",
+  "task": "Reconcile every UNVERIFIED tracker row against the GitHub merged-PR record (871 PRs). Confirmed: CA-04 = DONE #815; GAP-76 = DONE #844 (original #812 closed/superseded); DIR-G = SUPERSEDED via #462/#398/#437; DIR-H = SUPERSEDED via #262/#272/#312; BLOCK-11 Audit-Coverage = STILL PENDING (#803 never merged). Also resolved 3 clearly-merged rows (P8-AUDIT-CUST-BILLING-500 #386, A14 #396, B12 #397) and relabeled the genuinely-pending ones (DIR-I/J/K/M, DS-REMEDIATE-10, BLOCK-06). 0 UNVERIFIED flags remain. Docs-only. Stacked on AI-4 (#927) so allowed_files includes AI-4's files until it merges.",
+  "branch": "chore/unverified-rows-reconcile",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/CHORE-UNVERIFIED-ROWS-RECONCILE.json",
+    ".block-ready/FEAT-PERIODS-INIT-TRK-2025-H2.json",
+    "db/migrations/202606131500_accounting_periods_init_trk_2025_h2.sql",
+    "docs/trackers/MASTER_PROGRESS_REPORT.md"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
