@@ -7,10 +7,18 @@ import {
 } from "../cash-advances/cash-advance-create.js";
 import { createSettlementDeduction, type Queryable as DeductionsQueryable } from "./deductions.service.js";
 import { emitDriverRequestSpineEvent } from "./driver-request-spine-emit.js";
+import { resolveAccountForCategory } from "../accounting/expense-category-map/resolver.service.js";
 
 // B4: driver-request timeline source identity (generic so future request types reuse it).
 const CASH_ADVANCE_REQUEST_TYPE = "cash_advance";
 const CASH_ADVANCE_REQUEST_SOURCE_TABLE = "driver_finance.cash_advance_requests";
+
+export type CashAdvanceCascadeBranch = "load_bill" | "open_bill" | "loan";
+export type CashAdvanceCascadeDetection = {
+  branch: CashAdvanceCascadeBranch;
+  activeLoadId: string | null;
+  linkedDriverBillId: string | null;
+};
 
 export type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -402,6 +410,148 @@ export async function getCashAdvanceRequestDetail(client: QueryableClient, opera
   return { request, audit_log: auditRes.rows };
 }
 
+/**
+ * B5 cascade branch detection — shared by approveCashAdvanceRequest and the B6 cascade-preview.
+ * Pure read (no writes). Routes the advance:
+ *   1) active load WITH an open driver_bill for it -> 'load_bill' (linked to that bill)
+ *   2) else any open driver_bill -> 'open_bill'
+ *   3) else -> 'loan' (employee loan, no bill link)
+ * Fork 3: an active load with no open bill falls through 2 -> 3.
+ */
+export async function detectCashAdvanceCascadeBranch(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  driverId: string
+): Promise<CashAdvanceCascadeDetection> {
+  let linkedDriverBillId: string | null = null;
+  let branch: CashAdvanceCascadeBranch = "loan";
+
+  const activeLoadRes = await client.query(
+    `
+      SELECT id::text
+      FROM mdata.loads
+      WHERE operating_company_id = $1
+        AND assigned_primary_driver_id = $2
+        AND status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
+        AND soft_deleted_at IS NULL
+      ORDER BY created_at DESC
+      LIMIT 1
+    `,
+    [operatingCompanyId, driverId]
+  );
+  const activeLoadId = (activeLoadRes.rows[0] as { id?: string } | undefined)?.id ?? null;
+
+  if (activeLoadId) {
+    const loadBillRes = await client.query(
+      `
+        SELECT id::text
+        FROM driver_finance.driver_bills
+        WHERE operating_company_id = $1 AND driver_id = $2 AND load_id = $3 AND status = 'open'
+        ORDER BY created_at ASC
+        LIMIT 1
+      `,
+      [operatingCompanyId, driverId, activeLoadId]
+    );
+    const loadBillId = (loadBillRes.rows[0] as { id?: string } | undefined)?.id ?? null;
+    if (loadBillId) {
+      linkedDriverBillId = loadBillId;
+      branch = "load_bill";
+    }
+  }
+  if (!linkedDriverBillId) {
+    const openBillRes = await client.query(
+      `
+        SELECT id::text
+        FROM driver_finance.driver_bills
+        WHERE operating_company_id = $1 AND driver_id = $2 AND status = 'open'
+        ORDER BY created_at ASC
+        LIMIT 1
+      `,
+      [operatingCompanyId, driverId]
+    );
+    const openBillId = (openBillRes.rows[0] as { id?: string } | undefined)?.id ?? null;
+    if (openBillId) {
+      linkedDriverBillId = openBillId;
+      branch = "open_bill";
+    }
+  }
+
+  return { branch, activeLoadId, linkedDriverBillId };
+}
+
+/**
+ * B6 — read-only DRY RUN of the B5 cascade for a pending request. Shows the office user what
+ * "Approve & post" WILL do — which branch, the linked load/bill, and the resolved GL account
+ * (via the B1 map) — WITHOUT posting or writing anything.
+ */
+export async function previewCashAdvanceCascade(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  requestId: string
+): Promise<
+  | { error: "not_found" }
+  | {
+      branch: CashAdvanceCascadeBranch;
+      active_load_id: string | null;
+      linked_driver_bill_id: string | null;
+      amount_cents: number;
+      resolved_account: { id: string; account_number: string | null; account_name: string | null; posting_side: string } | null;
+    }
+> {
+  const reqRes = await client.query(
+    `SELECT driver_id::text, requested_amount_cents::bigint FROM driver_finance.cash_advance_requests WHERE operating_company_id = $1 AND id = $2 LIMIT 1`,
+    [operatingCompanyId, requestId]
+  );
+  const req = reqRes.rows[0] as { driver_id?: string; requested_amount_cents?: string } | undefined;
+  if (!req?.driver_id) return { error: "not_found" };
+
+  const detection = await detectCashAdvanceCascadeBranch(client, operatingCompanyId, String(req.driver_id));
+
+  let resolved_account: { id: string; account_number: string | null; account_name: string | null; posting_side: string } | null = null;
+  try {
+    const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
+    const acc = await client.query(
+      `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid LIMIT 1`,
+      [mapped.account_id]
+    );
+    const a = acc.rows[0] as { account_number?: string | null; account_name?: string | null } | undefined;
+    resolved_account = {
+      id: mapped.account_id,
+      account_number: a?.account_number ?? null,
+      account_name: a?.account_name ?? null,
+      posting_side: mapped.posting_side,
+    };
+  } catch {
+    resolved_account = null; // map not seeded for this company -> surface as unresolved
+  }
+
+  return {
+    branch: detection.branch,
+    active_load_id: detection.activeLoadId,
+    linked_driver_bill_id: detection.linkedDriverBillId,
+    amount_cents: Number(req.requested_amount_cents ?? 0),
+    resolved_account,
+  };
+}
+
+/**
+ * B6 — read the B4 accountability timeline for one request (requested/viewed/approved/denied/
+ * posted + actor/role + elapsed-between-steps) from views.driver_request_timeline. Pure read.
+ * Sets app.current_operating_company_id (the event_log RLS key the view runs under).
+ */
+export async function getCashAdvanceRequestTimeline(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  requestId: string
+): Promise<Record<string, unknown> | null> {
+  await client.query(`SELECT set_config('app.current_operating_company_id', $1::text, true)`, [operatingCompanyId]);
+  const r = await client.query(
+    `SELECT * FROM views.driver_request_timeline WHERE request_id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+    [requestId, operatingCompanyId]
+  );
+  return (r.rows[0] as Record<string, unknown> | undefined) ?? null;
+}
+
 export async function approveCashAdvanceRequest(
   client: QueryableClient,
   args: {
@@ -434,64 +584,13 @@ export async function approveCashAdvanceRequest(
   const amountCents = Number(row.requested_amount_cents);
   const schedule = repaymentScheduleFromRequest(row);
 
-  // B5 cascade — route the approved advance:
-  //   1) driver on an ACTIVE load WITH an OPEN driver_bill for it -> apply against that bill
-  //   2) else any OPEN driver_bill -> apply against it
-  //   3) else -> EMPLOYEE LOAN (type='loan', no bill link)
-  // All branches post identically via B3's driver_advance engine; branches differ ONLY in the
-  // driver_bill linkage (+ recovery). Fork 3: an active load with no open bill falls through 2->3.
-  let linkedDriverBillId: string | null = null;
-  let cascadeBranch: "load_bill" | "open_bill" | "loan" = "loan";
-
-  const activeLoadRes = await client.query(
-    `
-      SELECT id::text
-      FROM mdata.loads
-      WHERE operating_company_id = $1
-        AND assigned_primary_driver_id = $2
-        AND status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
-        AND soft_deleted_at IS NULL
-      ORDER BY created_at DESC
-      LIMIT 1
-    `,
-    [args.operatingCompanyId, driverId]
+  // B5 cascade branch detection — extracted into a shared, read-only function so the B6
+  // cascade-preview reuses the exact same logic (never duplicated in the frontend).
+  const { branch: cascadeBranch, linkedDriverBillId } = await detectCashAdvanceCascadeBranch(
+    client,
+    args.operatingCompanyId,
+    driverId
   );
-  const activeLoadId = (activeLoadRes.rows[0] as { id?: string } | undefined)?.id ?? null;
-
-  if (activeLoadId) {
-    const loadBillRes = await client.query(
-      `
-        SELECT id::text
-        FROM driver_finance.driver_bills
-        WHERE operating_company_id = $1 AND driver_id = $2 AND load_id = $3 AND status = 'open'
-        ORDER BY created_at ASC
-        LIMIT 1
-      `,
-      [args.operatingCompanyId, driverId, activeLoadId]
-    );
-    const loadBillId = (loadBillRes.rows[0] as { id?: string } | undefined)?.id ?? null;
-    if (loadBillId) {
-      linkedDriverBillId = loadBillId;
-      cascadeBranch = "load_bill";
-    }
-  }
-  if (!linkedDriverBillId) {
-    const openBillRes = await client.query(
-      `
-        SELECT id::text
-        FROM driver_finance.driver_bills
-        WHERE operating_company_id = $1 AND driver_id = $2 AND status = 'open'
-        ORDER BY created_at ASC
-        LIMIT 1
-      `,
-      [args.operatingCompanyId, driverId]
-    );
-    const openBillId = (openBillRes.rows[0] as { id?: string } | undefined)?.id ?? null;
-    if (openBillId) {
-      linkedDriverBillId = openBillId;
-      cascadeBranch = "open_bill";
-    }
-  }
 
   const recipientInfo = {
     recipient_type: "driver" as const,
