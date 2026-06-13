@@ -2,7 +2,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 
-export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance";
+export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance";
 export type PostingPurpose = "initial_post" | "reversal";
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
@@ -89,7 +89,7 @@ const INVOICE_ELIGIBLE_STATUSES = new Set(["sent", "partial", "paid", "factored"
 const PERIOD_LOCKED_TOKEN = "IH35_CLOSED_PERIOD";
 
 function assertKnownSourceType(value: string): asserts value is PostingSourceType {
-  if (!["invoice", "bill", "customer_payment", "bill_payment", "cash_advance"].includes(value)) {
+  if (!["invoice", "bill", "customer_payment", "bill_payment", "cash_advance", "driver_advance"].includes(value)) {
     throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source_transaction_type: ${value}`);
   }
 }
@@ -833,6 +833,93 @@ async function buildCashAdvanceLines(
   };
 }
 
+// B3 — Driver advance / employee-loan disbursement posting (Design 2, modeled on
+// buildCashAdvanceLines but reading the disbursement record directly):
+//   DEBIT  the cash_advance mapped account (QBO-149 Driver Cash Advance receivable,
+//          resolved via the B1 map — never hardcoded).
+//   CREDIT the operator-chosen source/bank account (creditAccountId from the disburse
+//          call) or the company-default cash-like account when omitted.
+// Reads driver_finance.driver_advances directly, so it posts for ANY advance (request-
+// backed or direct). Posts only when disbursement_status='disbursed'. The journal
+// entry_date = the user-settable posting_date (falls back to disbursed_at / created_at).
+// amount is numeric(10,2) DOLLARS → converted to cents. assertBalanced + the central
+// transaction_source_links spine apply as for every source type.
+async function buildDriverAdvanceLines(
+  client: DbClient,
+  operatingCompanyId: string,
+  sourceId: string,
+  creditAccountId: string | null
+): Promise<PostingDraft> {
+  const advanceRes = await client.query<{
+    id: string;
+    amount: string;
+    disbursement_status: string;
+    posting_date: string | null;
+    disbursed_at: string | null;
+    created_at: string;
+  }>(
+    `
+      SELECT
+        id::text,
+        amount::text,
+        disbursement_status::text,
+        posting_date::text,
+        disbursed_at::text,
+        created_at::text
+      FROM driver_finance.driver_advances
+      WHERE operating_company_id = $1::uuid
+        AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const advance = advanceRes.rows[0];
+  if (!advance) throw new PostingEngineError("SOURCE_NOT_FOUND", "Driver advance not found");
+  if (advance.disbursement_status !== "disbursed") {
+    throw new PostingEngineError(
+      "ADVANCE_NOT_POSTING_ELIGIBLE",
+      `Driver advance is not posting-eligible (disbursement_status=${advance.disbursement_status})`
+    );
+  }
+
+  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
+  const debitAccountId = mapped.account_id;
+
+  const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+  if (!creditAccount) {
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver advance is missing");
+  }
+
+  // posting_date is the user-settable book date; fall back to disbursed_at / created_at.
+  const postingDate =
+    advance.posting_date ??
+    (advance.disbursed_at ? advance.disbursed_at.slice(0, 10) : advance.created_at.slice(0, 10));
+  // amount is numeric(10,2) dollars → cents for the ledger.
+  const amountCents = Math.round(Number(advance.amount) * 100);
+  const label = `Driver advance ${sourceId}`;
+  return {
+    postingDate,
+    memo: `${label} posting`,
+    lines: [
+      {
+        account_id: debitAccountId,
+        debit_or_credit: "debit",
+        amount_cents: amountCents,
+        description: `${label} driver advance`,
+        source_transaction_line_id: null,
+      },
+      {
+        account_id: creditAccount,
+        debit_or_credit: "credit",
+        amount_cents: amountCents,
+        description: `${label} cash`,
+        source_transaction_line_id: null,
+      },
+    ],
+  };
+}
+
 async function buildPostingDraft(
   client: DbClient,
   sourceType: PostingSourceType,
@@ -845,6 +932,7 @@ async function buildPostingDraft(
   if (sourceType === "customer_payment") return buildCustomerPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
+  if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source type: ${sourceType}`);
 }
 

@@ -24,6 +24,9 @@ export type CreateDriverCashAdvanceCoreInput = {
   };
   linked_bill_id?: string | null;
   repayment_schedule: CashAdvanceRepaymentScheduleInput;
+  // B3 (additive): the driver_liabilities.type to record. Defaults to "advance" so existing
+  // callers are unchanged; the no-trip/no-bill fallback passes "loan". Free text, no DDL.
+  liability_type?: "advance" | "loan";
 };
 
 export async function resolveCompanyCashAdvanceThresholdDollars(client: PgishClient, companyId: string) {
@@ -116,7 +119,7 @@ export async function createDriverCashAdvanceCore(
       ) VALUES ($1, $2, $3, $4, $5, $5, 0, false)
       RETURNING id
     `,
-    [companyId, body.driver_id, "advance", `Cash advance ${displayId}`, body.amount]
+    [companyId, body.driver_id, body.liability_type ?? "advance", `Cash advance ${displayId}`, body.amount]
   );
   const liabilityId = String(liabilityRes.rows[0]?.id ?? "");
   if (!liabilityId) return { ok: false, code: 500, error: "liability_create_failed" };
@@ -209,4 +212,27 @@ export async function createDriverCashAdvanceCore(
     liabilityId,
     data: detailRes.rows[0] ?? { id: advanceId, display_id: displayId },
   };
+}
+
+export type CreateEmployeeLoanCoreInput = Omit<CreateDriverCashAdvanceCoreInput, "linked_bill_id" | "liability_type">;
+
+/**
+ * B3 — canonical "create employee loan" entry point for the cash-advance cascade's
+ * no-trip / no-bill fallback (B5 calls this when an advance can't be attached to a load
+ * or open bill). Books a driver_liabilities row of type='loan' (a receivable recovered on
+ * future settlements via the deduction_schedule), plus the driver_advances disbursement
+ * record. Reuses createDriverCashAdvanceCore — the GL posting happens at disbursement
+ * (disburseDriverAdvanceCore), not here. No linked bill by definition.
+ */
+export async function createEmployeeLoanCore(
+  client: PgishClient,
+  actorUserUuid: string,
+  companyId: string,
+  body: CreateEmployeeLoanCoreInput
+): Promise<CreateDriverCashAdvanceCoreResult> {
+  return createDriverCashAdvanceCore(client, actorUserUuid, companyId, {
+    ...body,
+    linked_bill_id: null,
+    liability_type: "loan",
+  });
 }
