@@ -88,6 +88,7 @@ import {
   HoursOfServiceTab,
   IDVRTab,
   IntegrityReportsTab,
+  PositionHistoryPage,
   InsuranceTab,
   InternalFinesTab,
   PermitsTab,
@@ -1230,6 +1231,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="/safety/permits" element={<PermitsTab />} />
           <Route path="integrity-reports" element={<IntegrityReportsTab />} />
           <Route path="/safety/integrity-reports" element={<IntegrityReportsTab />} />
+          <Route path="/safety/position-history" element={<PositionHistoryPage />} />
           <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
           <Route path="/safety/audit-425c" element={<Audit425cPage />} />
           <Route path="/safety/reports" element={<SafetyReportsPage />} />
@@ -1530,6 +1532,16 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <MaintenanceShell>
                 <Compliance425CPage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/position-history"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <PositionHistoryPage />
               </MaintenanceShell>
             </ProtectedRoute>
           }

@@ -55,6 +55,7 @@
     "verify:outbox-handler-parity": "node scripts/verify-outbox-handler-parity.mjs",
     "verify:outbox-handler-parity:test": "node --test scripts/__tests__/verify-outbox-handler-parity.test.mjs",
     "verify:migration-runner-hardening": "node scripts/verify-migration-runner-hardening.mjs",
+    "verify:m2-integrity-position-history": "node scripts/verify-m2-integrity-position-history.mjs",
     "verify:migration-application-consistency": "node scripts/verify-migration-application-consistency.mjs",
     "verify:migration-application-consistency:test": "node --test scripts/__tests__/verify-migration-application-consistency.test.mjs",
     "verify:migration-chain-runbook": "node scripts/runbook-verify-migration-chain.mjs",

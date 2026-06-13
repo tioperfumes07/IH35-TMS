@@ -1,0 +1,35 @@
+{
+  "block_id": "M2-INTEGRITY-POSITION-HISTORY",
+  "status": "BUILD",
+  "classification": "Standard",
+  "phase": "Maintenance",
+  "task": "Position History tracking for Integrity/Positioned-Parts. Immutable audit trail of part installations/removals/replacements per unit position.",
+  "branch": "feat/m2-integrity-position-history",
+  "lane": "A",
+  "details": [
+    "Migration: maint.position_history table with tenant RLS and FORCE",
+    "Backend API: CRUD routes for position history with auth pattern from maintenance services",
+    "Frontend: PositionHistoryPage with filters and timeline view",
+    "Route: /safety/position-history accessible from Integrity section",
+    "Verify script for CI gate"
+  ],
+  "allowed_files": [
+    "db/migrations/202606122230_m2_position_history.sql",
+    "apps/backend/src/safety/position-history/position-history.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/position-history.ts",
+    "apps/frontend/src/pages/safety/PositionHistoryPage.tsx",
+    "apps/frontend/src/pages/safety/tabs/index.ts",
+    "apps/frontend/src/routes/manifest.tsx",
+    "scripts/verify-m2-integrity-position-history.mjs",
+    "package.json",
+    ".env",
+    ".block-ready/M2-INTEGRITY-POSITION-HISTORY.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["verify:m2-integrity-position-history"],
+  "financial_writes": false,
+  "note": "Builds on M1's position_set/part_position_assignment. Appends immutable history records only - no updates/deletes."
+}
