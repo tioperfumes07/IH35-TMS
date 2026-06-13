@@ -53,7 +53,7 @@ Money-risk first → books-safety → cheap P0 → trust cleanup → features. (
 | 2 | A | AI-4 — Periods init: TRK + 2025 + H2-2026 + confirm flag in prod | Books-safety foundation; close period gaps | MED | S | none | ✅ SEED SHIPPED — PR #927 (gated; ops must enable PERIODS_INIT_ENABLED in prod) |
 | 3 | A | AI-1b/AI-3b — CONFIRM closed-period lock + financial probes enforce | Already shipped; validate, don't rebuild | LOW | S | none | ✅ verify |
 | 4 | B | B1 — /inventory parts 404 (repoint to /api/v1/maintenance/parts) | Visibly broken live page; trivial; independent | LOW-MED | XS | none | ✅ DONE — PR #926 |
-| 5 | B | UNVERIFIED reconcile pass (DIR-G/H, BLOCK-11, CA-04, GAP-76, F3) | Make tracker fully trustworthy | LOW | S | none | ✅ DONE — PR __UVPR__ |
+| 5 | B | UNVERIFIED reconcile pass (DIR-G/H, BLOCK-11, CA-04, GAP-76, F3) | Make tracker fully trustworthy | LOW | S | none | ✅ DONE — PR #928 |
 | 6 | B | Commit tracker → this file (Markdown) + xlsx export | Living, version-controlled doc | LOW | S | step 5 | THIS PR |
 | 7 | C | Diesel-code request type (request→approve→inbox) | Highest ops value; reuses B4 timeline + B6 inbox | — | M | B4/B6 | ❌ empty tab |
 | 8 | C | B7 — Driver-inbox reporting (resume; paused) | Preflighted; cross-request analytics; pure read | — | M | B4/B6 | PAUSED |
