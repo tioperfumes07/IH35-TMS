@@ -25,15 +25,19 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const res = await fetch("/api/v1/inventory/parts", {
+      // B1: create against the real maintenance.parts_inventory backend (no /api/v1/inventory/parts route exists).
+      // Company id goes in the query string (the POST handler reads it from req.query); map this drawer's
+      // field names onto the maintenance createSchema (sku -> part_number, on_hand_qty -> qty_on_hand, etc.).
+      const res = await fetch(`/api/v1/maintenance/parts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data,
-          operating_company_id: operatingCompanyId,
-          on_hand_qty: Number(data.on_hand_qty) || 0,
-          reorder_point: Number(data.reorder_point) || 0,
+          part_number: data.sku.trim() || data.name.trim(),
+          name: data.name.trim(),
+          qty_on_hand: Number(data.on_hand_qty) || 0,
+          reorder_threshold: Number(data.reorder_point) || 0,
           unit_cost: Number(data.unit_cost) || 0,
+          location: data.location.trim() || undefined,
         }),
       });
       if (!res.ok) throw new Error("Failed to create part");
