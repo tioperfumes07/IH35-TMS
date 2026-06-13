@@ -1,0 +1,33 @@
+{
+  "block_id": "FEAT-B5-CASH-ADVANCE-APPROVE-CASCADE",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "DRIVER-FINANCE",
+  "task": "B5 (capstone): rework approveCashAdvanceRequest into the link+post cascade orchestrating B2/B3/B4. On approval the advance routes 1) active load with open driver_bill -> link to that bill, 2) else open driver_bill -> link to it, 3) else employee LOAN; all branches post via B3 driver_advance (Dr QBO-149/Cr cash), keep createSettlementDeduction recovery, fire B4 approved+posted timeline emits, honor an optional role-gated posting_date.",
+  "branch": "feat/b5-cash-advance-approve-cascade",
+  "lane": "A",
+  "details": [
+    "Cascade in approveCashAdvanceRequest (office path only): active load (mdata.loads.assigned_primary_driver_id, status in dispatched/at_pickup/in_transit/at_delivery) WITH an open driver_finance.driver_bills for it -> linkedDriverBillId; else any open driver_bill; else employee loan (createEmployeeLoanCore, no bill link). Fork 3: active load but no open bill falls through to branch 2 then 3 (no speculative bill creation).",
+    "Fork 4(a): ONE posting path — all branches post via B3 driver_advance engine (Dr QBO-149 / Cr cash). Branches differ only in the driver_bill linkage (new driver_advances.linked_driver_bill_id column, migration 202606130556) + recovery.",
+    "Fork 5: keep BOTH recoveries — createSettlementDeduction (cash_advance_repayment netting line, all 3 branches) AND the B3 deduction_schedule amortization.",
+    "Fork 6/7: post AT APPROVAL — the approve tx commits (advance+link+status+deduction+B4 approved emit), then the route calls disburseDriverAdvanceCore (separate, idempotent tx; B2 idempotency key + 'approved'->'disbursed' status guard prevent double/lost posts; fires B4 'posted'). Optional posting_date back-dating is role-gated (isOwnerOrAdmin) — disburse gate made CONDITIONAL on posting_date so Manager/Accountant/Dispatcher approvers can disburse at today's date.",
+    "Validated: cascade unit tests 5/5 (3 branches + Fork-3 fall-through + deduction/emit), disburse tests updated (conditional gate, non-owner default-date disburse, Fork-7 second-disburse 409), typecheck 0, CI_MIGRATION_TEST=1 verify:db:reset 0. Existing approve behavior preserved where not intentionally changed."
+  ],
+  "known_gaps": [
+    "Fork 1 (documented, not silent): approveHubCashAdvanceRequest (driver-hub-requests.service.ts) is NOT reworked into the cascade in B5 — it stays deduction-only to limit live-money surface. Unifying the Hub path into the cascade is a candidate follow-up block."
+  ],
+  "allowed_files": [
+    ".block-ready/FEAT-B5-CASH-ADVANCE-APPROVE-CASCADE.json",
+    "db/migrations/202606130556_driver_advance_linked_driver_bill.sql",
+    "apps/backend/src/cash-advances/cash-advance-create.ts",
+    "apps/backend/src/cash-advances/cash-advance-disburse.ts",
+    "apps/backend/src/driver-finance/cash-advance-requests.service.ts",
+    "apps/backend/src/driver-finance/cash-advance-requests.routes.ts",
+    "apps/backend/src/cash-advances/__tests__/cash-advance-disburse.test.ts",
+    "apps/backend/src/driver-finance/__tests__/cash-advance-approve-cascade.test.ts"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": false,
+  "extra_gates": []
+}

@@ -18,6 +18,7 @@ import {
 } from "./cash-advance-requests.service.js";
 import { escalateCashAdvanceRequestToOwner, listPendingOwnerApprovalCashAdvanceRequests, sendOwnerEscalationEmails } from "./cash-advance-owner-approval.service.js";
 import { emitDriverRequestViewedOnce } from "./driver-request-spine-emit.js";
+import { disburseDriverAdvanceCore } from "../cash-advances/cash-advance-disburse.js";
 import { notifyOwnersCashAdvanceSubmitted } from "../notifications/dispatcher.js";
 
 const companyQuerySchema = z.object({
@@ -268,7 +269,32 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
       }
       return reply.code(409).send({ error: result.error });
     }
-    return { request: result.request, advance: result.advance };
+
+    // B5: the approve tx has committed (advance created + linked + status='approved' +
+    // settlement deduction + B4 'approved' emit). Now disburse + post via B3 (Dr QBO-149 /
+    // Cr cash) on a separate, idempotent tx — this also fires the B4 'posted' timeline emit.
+    // Back-dating posting_date is role-gated to Owner/Administrator inside disburse.
+    const disbursement = await disburseDriverAdvanceCore(
+      user.uuid,
+      String(user.role ?? ""),
+      parsedQuery.data.operating_company_id,
+      {
+        advance_id: result.advanceId,
+        posting_date: parsedBody.data.posting_date ?? null,
+        credit_account_id: parsedBody.data.credit_account_id ?? null,
+      }
+    );
+    if (!disbursement.ok && disbursement.code === 403) {
+      return reply.code(403).send({ error: "posting_date_requires_owner_admin" });
+    }
+
+    return {
+      request: result.request,
+      advance: result.advance,
+      cascade_branch: result.cascadeBranch,
+      linked_driver_bill_id: result.linkedDriverBillId,
+      disbursement,
+    };
   });
 
   app.post("/api/v1/driver-finance/cash-advance-requests/:id/deny", async (req, reply) => {

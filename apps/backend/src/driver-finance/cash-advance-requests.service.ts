@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { createDriverCashAdvanceCore, resolveCompanyCashAdvanceThresholdDollars } from "../cash-advances/cash-advance-create.js";
+import {
+  createDriverCashAdvanceCore,
+  createEmployeeLoanCore,
+  resolveCompanyCashAdvanceThresholdDollars,
+} from "../cash-advances/cash-advance-create.js";
+import { createSettlementDeduction, type Queryable as DeductionsQueryable } from "./deductions.service.js";
 import { emitDriverRequestSpineEvent } from "./driver-request-spine-emit.js";
 
 // B4: driver-request timeline source identity (generic so future request types reuse it).
@@ -20,6 +25,11 @@ export const driverCreateCashAdvanceRequestSchema = z.object({
 
 export const officeApproveBodySchema = z.object({
   approval_notes: z.string().trim().max(4000).optional(),
+  // B5: optional book/document date for the disbursement post. Back-dating is role-gated
+  // (Owner/Administrator) at the disburse step. YYYY-MM-DD.
+  posting_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // B5: optional source/bank account credited for the cash-out (defaults to company cash).
+  credit_account_id: z.string().uuid().optional(),
 });
 
 export const officeDenyBodySchema = z.object({
@@ -421,17 +431,95 @@ export async function approveCashAdvanceRequest(
 
   const driverId = String(row.driver_id);
   const amountDollars = Number(row.requested_amount_cents) / 100;
+  const amountCents = Number(row.requested_amount_cents);
   const schedule = repaymentScheduleFromRequest(row);
 
-  const core = await createDriverCashAdvanceCore(client, args.actorUserId, args.operatingCompanyId, {
-    driver_id: driverId,
-    amount: amountDollars,
-    purpose: "other",
-    disbursement_method: "comdata",
-    recipient_info: { recipient_type: "driver", recipient_name: null, bank_reference: null, notes: null },
-    linked_bill_id: null,
-    repayment_schedule: schedule,
-  });
+  // B5 cascade — route the approved advance:
+  //   1) driver on an ACTIVE load WITH an OPEN driver_bill for it -> apply against that bill
+  //   2) else any OPEN driver_bill -> apply against it
+  //   3) else -> EMPLOYEE LOAN (type='loan', no bill link)
+  // All branches post identically via B3's driver_advance engine; branches differ ONLY in the
+  // driver_bill linkage (+ recovery). Fork 3: an active load with no open bill falls through 2->3.
+  let linkedDriverBillId: string | null = null;
+  let cascadeBranch: "load_bill" | "open_bill" | "loan" = "loan";
+
+  const activeLoadRes = await client.query(
+    `
+      SELECT id::text
+      FROM mdata.loads
+      WHERE operating_company_id = $1
+        AND assigned_primary_driver_id = $2
+        AND status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
+        AND soft_deleted_at IS NULL
+      ORDER BY created_at DESC
+      LIMIT 1
+    `,
+    [args.operatingCompanyId, driverId]
+  );
+  const activeLoadId = (activeLoadRes.rows[0] as { id?: string } | undefined)?.id ?? null;
+
+  if (activeLoadId) {
+    const loadBillRes = await client.query(
+      `
+        SELECT id::text
+        FROM driver_finance.driver_bills
+        WHERE operating_company_id = $1 AND driver_id = $2 AND load_id = $3 AND status = 'open'
+        ORDER BY created_at ASC
+        LIMIT 1
+      `,
+      [args.operatingCompanyId, driverId, activeLoadId]
+    );
+    const loadBillId = (loadBillRes.rows[0] as { id?: string } | undefined)?.id ?? null;
+    if (loadBillId) {
+      linkedDriverBillId = loadBillId;
+      cascadeBranch = "load_bill";
+    }
+  }
+  if (!linkedDriverBillId) {
+    const openBillRes = await client.query(
+      `
+        SELECT id::text
+        FROM driver_finance.driver_bills
+        WHERE operating_company_id = $1 AND driver_id = $2 AND status = 'open'
+        ORDER BY created_at ASC
+        LIMIT 1
+      `,
+      [args.operatingCompanyId, driverId]
+    );
+    const openBillId = (openBillRes.rows[0] as { id?: string } | undefined)?.id ?? null;
+    if (openBillId) {
+      linkedDriverBillId = openBillId;
+      cascadeBranch = "open_bill";
+    }
+  }
+
+  const recipientInfo = {
+    recipient_type: "driver" as const,
+    recipient_name: null,
+    bank_reference: null,
+    notes: null,
+  };
+  const core =
+    cascadeBranch === "loan"
+      ? await createEmployeeLoanCore(client, args.actorUserId, args.operatingCompanyId, {
+          driver_id: driverId,
+          amount: amountDollars,
+          purpose: "other",
+          disbursement_method: "comdata",
+          recipient_info: recipientInfo,
+          repayment_schedule: schedule,
+        })
+      : await createDriverCashAdvanceCore(client, args.actorUserId, args.operatingCompanyId, {
+          driver_id: driverId,
+          amount: amountDollars,
+          purpose: "other",
+          disbursement_method: "comdata",
+          recipient_info: recipientInfo,
+          linked_bill_id: null,
+          repayment_schedule: schedule,
+          liability_type: "advance",
+          linked_driver_bill_id: linkedDriverBillId,
+        });
   if (!core.ok) return { error: "advance_create_failed" as const, details: core };
 
   const notes = input.approval_notes?.trim() ?? null;
@@ -502,7 +590,24 @@ export async function approveCashAdvanceRequest(
     },
   });
 
-  return { request: updated, advance: core.data };
+  // B5: keep the settlement-deduction recovery in ALL branches (the netting line on the next
+  // settlement). Complementary to the deduction_schedule amortization created by the core.
+  await createSettlementDeduction(client as unknown as DeductionsQueryable, {
+    operatingCompanyId: args.operatingCompanyId,
+    driverId,
+    amountCents,
+    sourceType: "cash_advance_repayment",
+    reason: `Cash advance ${core.displayId} (request ${String(updated.display_id ?? args.requestId)})`,
+    createdByUserId: args.actorUserId,
+  });
+
+  return {
+    request: updated,
+    advance: core.data,
+    advanceId: core.advanceId,
+    cascadeBranch,
+    linkedDriverBillId,
+  };
 }
 
 export async function denyCashAdvanceRequest(

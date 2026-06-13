@@ -27,6 +27,9 @@ export type CreateDriverCashAdvanceCoreInput = {
   // B3 (additive): the driver_liabilities.type to record. Defaults to "advance" so existing
   // callers are unchanged; the no-trip/no-bill fallback passes "loan". Free text, no DDL.
   liability_type?: "advance" | "loan";
+  // B5 (additive): the driver_finance.driver_bills the advance is applied against (cascade
+  // branches 1/2). NULL for the loan branch. Recorded on driver_advances for settlement netting.
+  linked_driver_bill_id?: string | null;
 };
 
 export async function resolveCompanyCashAdvanceThresholdDollars(client: PgishClient, companyId: string) {
@@ -156,8 +159,9 @@ export async function createDriverCashAdvanceCore(
         recipient_name,
         linked_bill_id,
         requires_owner_approval,
-        created_by_user_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'approved', $8, $9, $10, false, $11)
+        created_by_user_id,
+        linked_driver_bill_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'approved', $8, $9, $10, false, $11, $12)
       RETURNING id
     `,
     [
@@ -172,6 +176,7 @@ export async function createDriverCashAdvanceCore(
       body.recipient_info.recipient_name ?? null,
       body.linked_bill_id ?? null,
       actorUserUuid,
+      body.linked_driver_bill_id ?? null,
     ]
   );
   const advanceId = String(advanceRes.rows[0]?.id ?? "");

@@ -42,12 +42,41 @@ function installApproved() {
 }
 
 describe("disburseDriverAdvanceCore (B3)", () => {
-  it("returns 403 for a non-owner/admin and never posts", async () => {
+  it("B5: back-dating (explicit posting_date) by a non-owner/admin is 403 and never posts", async () => {
     mockPost.mockReset();
     mockAudit.mockReset();
     const r = await disburseDriverAdvanceCore(ACTOR, "Driver", OPCO, { advance_id: ADV, posting_date: "2026-05-25" });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.code).toBe(403);
+    expect(mockPost).not.toHaveBeenCalled();
+  });
+
+  it("B5: a non-owner approver CAN disburse at the default date (no posting_date) -> posts", async () => {
+    mockWithCurrentUser.mockClear();
+    mockAudit.mockReset();
+    mockPost.mockReset();
+    mockPost.mockResolvedValue({ result: "posted", source_transaction_type: "driver_advance" });
+    installApproved();
+    const r = await disburseDriverAdvanceCore(ACTOR, "Dispatcher", OPCO, { advance_id: ADV });
+    expect(r.ok).toBe(true);
+    expect(mockPost).toHaveBeenCalled();
+  });
+
+  it("Fork 7: a second disburse (already disbursed) is 409 and never double-posts", async () => {
+    mockWithCurrentUser.mockClear();
+    mockAudit.mockReset();
+    mockPost.mockReset();
+    mockQuery.mockReset();
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("SELECT") && sql.includes("driver_advances")) {
+        return { rows: [{ id: ADV, disbursement_status: "disbursed", posting_date: "2026-05-25" }] };
+      }
+      return { rows: [] };
+    });
+    const r = await disburseDriverAdvanceCore(ACTOR, "Owner", OPCO, { advance_id: ADV });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.code).toBe(409);
     expect(mockPost).not.toHaveBeenCalled();
   });
 
