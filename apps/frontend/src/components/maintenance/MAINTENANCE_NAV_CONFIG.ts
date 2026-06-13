@@ -12,6 +12,7 @@ export const MAINTENANCE_MODULE_NAV_LINKS: MaintenanceNavLink[] = [
   { label: "Vendors", path: "/maintenance/vendors" },
   { label: "Reports", path: "/maintenance/reports" },
   { label: "Compliance", path: "/maintenance/compliance" },
+  { label: "Position History", path: "/maintenance/position-history" },
 ];
 
 /** Master Data hover dropdown — excludes Dashboard + operational-only tabs (8). */
@@ -24,6 +25,7 @@ export const MAINTENANCE_MASTER_DATA_LINKS: MaintenanceNavLink[] = [
   { label: "Vendors", path: "/maintenance/vendors" },
   { label: "Reports", path: "/maintenance/reports" },
   { label: "Compliance", path: "/maintenance/compliance" },
+  { label: "Position History", path: "/maintenance/position-history" },
 ];
 
 /** Dashboard operational sub-tabs — guarded by verify:maintenance-tab-coverage (10). */

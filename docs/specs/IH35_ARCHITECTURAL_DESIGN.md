@@ -1359,6 +1359,11 @@ Cross-cutting: OOS units pinned bottom of every view; breadcrumb page-title; den
 Load click anywhere → existing LoadDetailDrawer (?load_id=), edit-capable, additive tabs (Factoring, Customs, profitability in Settlement).
 Connectivity: Dispatch ↔ Settlements (pre-settlement NB→SB, deductions/fines, profitability) ↔ Factoring (FARO packet/reserve) ↔ Accounting/Cash Flow ↔ Safety (Driver Scheduler, geofence, compliance) ↔ Maintenance (OOS/in-shop) ↔ Banking (FARO).
 
+## Safety Module Nav Counts (Block A23-2)
+Safety module maintains 28 tabs across 9 groups.
+- Groups: Driver Files & Training, Hours & Fatigue, Inspections & FMCSA, Incidents & Claims, Fines & Discipline, Driver Financial Safety, Compliance Docs & Monitoring, Workforce Planning, Settings.
+- Includes Position History under Compliance Docs & Monitoring (M2-INTEGRITY-POSITION-HISTORY).
+
 ---
 
 ## Stub-Free Production (added 2026-06-10)

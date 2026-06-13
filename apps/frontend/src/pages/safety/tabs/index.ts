@@ -21,4 +21,5 @@ export { EscrowRecordTab } from "./EscrowRecordTab";
 export { InsuranceTab } from "./InsuranceTab";
 export { PermitsTab } from "./PermitsTab";
 export { IntegrityReportsTab } from "./IntegrityReportsTab";
+export { default as PositionHistoryPage } from "../PositionHistoryPage";
 export { SettingsTab } from "./SettingsTab";
